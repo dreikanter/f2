@@ -29,11 +29,11 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not update password with invalid token" do
-    put password_url("invalid_token"), params: { 
-      password: "newpassword", 
-      password_confirmation: "newpassword" 
+    put password_url("invalid_token"), params: {
+      password: "newpassword",
+      password_confirmation: "newpassword"
     }
-    
+
     assert_redirected_to new_password_path
   end
 end

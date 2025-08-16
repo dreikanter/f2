@@ -28,7 +28,7 @@ class SessionTest < ActiveSupport::TestCase
   test "should be destroyed when user is destroyed" do
     user = users(:one)
     session = Session.create!(user: user, ip_address: "127.0.0.1", user_agent: "Test Browser")
-    
+
     assert_difference "Session.count", -1 do
       user.destroy
     end

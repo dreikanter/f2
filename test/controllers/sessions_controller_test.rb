@@ -11,7 +11,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create session with valid credentials" do
     user = users(:one)
-    
+
     post session_url, params: { email_address: user.email_address, password: "password" }
     assert_redirected_to root_url
   end
@@ -24,7 +24,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should destroy session" do
     user = users(:one)
     sign_in_as(user)
-    
+
     delete session_url
     assert_redirected_to new_session_path
   end
