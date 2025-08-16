@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  resource :dashboard, only: :show
+  root "dashboards#show"
+
   resource :session
   resources :passwords, param: :token
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
