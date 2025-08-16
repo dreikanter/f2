@@ -5,7 +5,7 @@
         <h1 class="h3 mb-0">Dashboard</h1>
         <div>
           <span class="text-muted me-3">Welcome, <%= Current.user.email_address %></span>
-          <%= link_to "Sign out", session_path, method: :delete, class: "btn btn-outline-secondary btn-sm" %>
+          <%= link_to "Sign out", session_path, data: { turbo_method: :delete }, class: "btn btn-outline-secondary btn-sm" %>
         </div>
       </div>
     </div>
