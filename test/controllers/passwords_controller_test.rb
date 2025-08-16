@@ -1,0 +1,44 @@
+require "test_helper"
+
+class PasswordsControllerTest < ActionDispatch::IntegrationTest
+  test "should get new" do
+    get new_password_url
+    assert_response :success
+  end
+
+  test "should get edit with valid token" do
+    user = users(:one)
+    token = user.generate_token_for(:password_reset)
+
+    get edit_password_url(token)
+    assert_response :success
+  end
+
+  test "should not send email for non-existent user" do
+    post passwords_url, params: { email_address: "nonexistent@example.com" }
+    assert_redirected_to new_session_path
+  end
+
+  test "should update password with valid token" do
+    user = users(:one)
+    token = user.generate_token_for(:password_reset)
+
+    put password_url(token), params: {
+      password: "newpassword",
+      password_confirmation: "newpassword"
+    }
+
+    assert_redirected_to new_session_path
+    user.reload
+    assert user.authenticate("newpassword")
+  end
+
+  test "should not update password with invalid token" do
+    put password_url("invalid_token"), params: {
+      password: "newpassword",
+      password_confirmation: "newpassword"
+    }
+
+    assert_redirected_to new_password_path
+  end
+end
