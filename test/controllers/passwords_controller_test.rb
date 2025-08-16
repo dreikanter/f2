@@ -9,7 +9,7 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
   test "should get edit with valid token" do
     user = users(:one)
     token = user.generate_token_for(:password_reset)
-    
+
     get edit_password_url(token)
     assert_response :success
   end
@@ -22,12 +22,12 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
   test "should update password with valid token" do
     user = users(:one)
     token = user.generate_token_for(:password_reset)
-    
-    put password_url(token), params: { 
-      password: "newpassword", 
-      password_confirmation: "newpassword" 
+
+    put password_url(token), params: {
+      password: "newpassword",
+      password_confirmation: "newpassword"
     }
-    
+
     assert_redirected_to new_session_path
     user.reload
     assert user.authenticate("newpassword")
