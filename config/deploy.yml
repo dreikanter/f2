@@ -4,32 +4,34 @@ service: f2
 # Name of the container image.
 image: ghcr.io/dreikanter/f2
 
-# Deploy to these servers - using destinations.
-destinations:
-  staging:
-    servers:
-      web:
-        - 123.123.123.123
-    proxy:
-      ssl: true
-      host: dev.frf.im
+# Deploy to these servers.
+servers:
+  web:
+    - 123.123.123.123
+  jobs:
+    hosts:
+      - 123.123.123.123
+    cmd: bin/jobs
+
+# Configure proxy for web role
+proxy:
+  ssl: true
+  host: dev.frf.im
+
+# Accessories
+accessories:
+  db:
+    image: postgres:17
+    host: 123.123.123.123
+    port: "127.0.0.1:5432:5432"
     env:
       clear:
-        RAILS_ENV: staging
-        DATABASE_URL: postgres://f2:password@f2-db:5432/f2_staging
-    accessories:
-      db:
-        image: postgres:17
-        host: 123.123.123.123
-        port: "127.0.0.1:5432:5432"
-        env:
-          clear:
-            POSTGRES_DB: f2_staging
-            POSTGRES_USER: f2
-          secret:
-            - POSTGRES_PASSWORD
-        directories:
-          - data:/var/lib/postgresql/data
+        POSTGRES_DB: f2_staging
+        POSTGRES_USER: f2
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
 
 # Credentials for your image host.
 registry:
@@ -41,23 +43,22 @@ registry:
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-# Shared ENV variables for all destinations
+# Environment variables
 env:
+  clear:
+    RAILS_ENV: production
+    DATABASE_URL: postgres://f2:password@f2-db:5432/f2_staging
   secret:
     - RAILS_MASTER_KEY
-  clear:
-    # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
-    SOLID_QUEUE_IN_PUMA: true
-    # Use f2-db for a db accessory server on same machine via local kamal docker network.
-    DB_HOST: f2-db
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
-# "bin/kamal logs -r job" will tail logs from the first server in the job section.
+# "bin/kamal logs -r jobs" will tail logs from the first server in the jobs section.
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
   dbc: app exec --interactive --reuse "bin/rails dbconsole"
+
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

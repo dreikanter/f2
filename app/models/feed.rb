@@ -13,5 +13,6 @@ class Feed < ApplicationRecord
   scope :due, -> {
     left_joins(:feed_schedule)
       .where("feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL", Time.current)
+      .where(state: :enabled)
   }
 end

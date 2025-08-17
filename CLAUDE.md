@@ -5,15 +5,17 @@
 - Authentication: bcrypt, sessions, password reset
 - Frontend: Turbo, Stimulus, Bootstrap CSS
 - Deployment: Kamal
+- Background Jobs: SolidQueue with recurring scheduler
 
 ## Current State
-- Basic authentication system complete
-- User/Session models with secure passwords
-- Dashboard as root route
-- Branch: feature/feeds-configuration
-- Modified: Gemfile, Gemfile.lock
+- Feed models with cron-based scheduling
+- ActiveJob scheduler running every minute
+- Comprehensive test coverage with FactoryBot
+- SimpleCov + Codecov integration
+- Branch: feature/scheduler
 
 ## Key Files
-- `app/models/user.rb` - User model with authentication
-- `app/controllers/concerns/authentication.rb` - Auth logic
-- `config/routes.rb` - Simple routing setup
+- `app/models/feed.rb` - Feed model with scheduling scope
+- `app/jobs/feed_scheduler_job.rb` - Recurring job to queue due feeds
+- `app/jobs/feed_refresh_job.rb` - Individual feed processing
+- `config/recurring.yml` - SolidQueue recurring job configuration
