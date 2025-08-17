@@ -7,6 +7,9 @@ default: &default
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
+  schedulers:
+    - recurring_schedule_file: config/recurring.yml
+      polling_interval: 1
 
 development:
   <<: *default
