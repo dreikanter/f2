@@ -3,7 +3,8 @@
     "allow": [
       "Bash(bin/rails:*)",
       "Bash(bin/rubocop:*)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(bin/kamal config:*)"
     ],
     "deny": []
   }
