@@ -391,6 +391,7 @@ DEPENDENCIES
   brakeman
   cssbundling-rails
   debug
+  fugit (~> 1.11)
   importmap-rails
   kamal
   pg (~> 1.1)
