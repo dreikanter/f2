@@ -3,7 +3,7 @@ class FeedRefreshJob < ApplicationJob
 
   def perform(feed_id)
     feed = Feed.find_by(id: feed_id)
-    return unless feed
+    nil unless feed
 
     # TODO: Implement actual feed fetching logic
     # Future implementation will:
