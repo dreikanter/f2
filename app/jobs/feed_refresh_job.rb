@@ -6,8 +6,6 @@ class FeedRefreshJob < ApplicationJob
     return unless feed
 
     # TODO: Implement actual feed fetching logic
-    Rails.logger.info "Refreshing feed: #{feed.name} (#{feed.url})"
-
     # Future implementation will:
     # 1. Use feed.loader to fetch data from feed.url
     # 2. Use feed.processor to parse the data format
