@@ -1,7 +1,7 @@
 class Feed < ApplicationRecord
   has_one :feed_schedule, dependent: :destroy
 
-  enum state: { enabled: 0, paused: 1, disabled: 2 }
+  enum :state, { enabled: 0, paused: 1, disabled: 2 }
 
   validates :name, presence: true
   validates :url, presence: true
@@ -12,6 +12,6 @@ class Feed < ApplicationRecord
 
   scope :due, -> {
     left_joins(:feed_schedule)
-      .where('feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL', Time.current)
+      .where("feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL", Time.current)
   }
 end
