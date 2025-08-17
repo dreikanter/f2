@@ -50,6 +50,9 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   gem "solargraph"
+
+  # Test data factories [https://github.com/thoughtbot/factory_bot]
+  gem "factory_bot_rails"
 end
 
 group :development do
