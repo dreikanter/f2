@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(bin/rails:*)",
-      "Bash(bin/rubocop:*)"
+      "Bash(bin/rubocop:*)",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }
