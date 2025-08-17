@@ -3,14 +3,14 @@ class FeedSchedulerJob < ApplicationJob
 
   def perform
     Feed.due.find_each do |feed|
-      next unless schedule_feed_refresh?(feed)
+      next unless refresh?(feed)
       FeedRefreshJob.perform_later(feed.id)
     end
   end
 
   private
 
-  def schedule_feed_refresh?(feed)
+  def refresh?(feed)
     schedule = feed.feed_schedule
 
     if schedule
