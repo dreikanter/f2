@@ -10,9 +10,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_16_125704) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_17_115108) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "feed_schedules", force: :cascade do |t|
+    t.bigint "feed_id", null: false
+    t.datetime "next_run_at"
+    t.datetime "last_run_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_id"], name: "index_feed_schedules_on_feed_id"
+  end
+
+  create_table "feeds", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "url", null: false
+    t.string "cron_expression", null: false
+    t.string "loader", null: false
+    t.string "processor", null: false
+    t.string "normalizer", null: false
+    t.datetime "import_after"
+    t.integer "state", default: 0, null: false
+    t.string "description", default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -31,5 +54,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_16_125704) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "sessions", "users"
 end
