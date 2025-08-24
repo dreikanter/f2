@@ -2,11 +2,17 @@ module Discoverable
   extend ActiveSupport::Concern
 
   class_methods do
+    def display_name
+      @display_name ||= key.humanize
+    end
+
+    def key
+      @key ||= superclass.send(:extract_key_from_class, self)
+    end
+
     def available_options
       descendants.map do |klass|
-        key = extract_key_from_class(klass)
-        display_name = key.humanize
-        [display_name, key]
+        [klass.display_name, klass.key]
       end
     end
 

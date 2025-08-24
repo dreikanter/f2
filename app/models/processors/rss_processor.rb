@@ -1,5 +1,9 @@
 module Processors
   class RssProcessor < Base
+    def self.display_name
+      "RSS/XML"
+    end
+
     def process
       # TBD
       [
