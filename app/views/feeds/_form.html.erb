@@ -1,0 +1,138 @@
+<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+  <% if feed.errors.any? %>
+    <div class="alert alert-danger">
+      <h5><%= pluralize(feed.errors.count, "error") %> prohibited this feed from being saved:</h5>
+      <ul class="mb-0">
+        <% feed.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :name, class: "form-label" %>
+        <%= form.text_field :name, class: "form-control", required: true, 
+            placeholder: "my-rss-feed", pattern: "[a-z0-9_-]+",
+            title: "Only lowercase letters, numbers, hyphens, and underscores allowed" %>
+        <div class="form-text">Only lowercase letters, numbers, hyphens, and underscores allowed</div>
+        <div class="invalid-feedback">Please provide a valid feed name.</div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :url, "Feed URL", class: "form-label" %>
+        <%= form.url_field :url, class: "form-control", required: true, 
+            placeholder: "https://example.com/feed.xml" %>
+        <div class="invalid-feedback">Please provide a valid HTTP or HTTPS URL.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :loader, class: "form-label" %>
+        <%= form.select :loader, 
+            options_for_select([["HTTP", "http"]], feed.loader),
+            { prompt: "Choose loader..." }, 
+            { class: "form-select", required: true } %>
+        <div class="invalid-feedback">Please select a loader.</div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :processor, class: "form-label" %>
+        <%= form.select :processor, 
+            options_for_select([["RSS/XML", "rss"], ["JSON", "json"]], feed.processor),
+            { prompt: "Choose processor..." }, 
+            { class: "form-select", required: true } %>
+        <div class="invalid-feedback">Please select a processor.</div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :normalizer, class: "form-label" %>
+        <%= form.select :normalizer, 
+            options_for_select([["RSS", "rss"], ["Generic", "generic"]], feed.normalizer),
+            { prompt: "Choose normalizer..." }, 
+            { class: "form-select", required: true } %>
+        <div class="invalid-feedback">Please select a normalizer.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="mb-3">
+        <%= form.label :cron_expression, "Schedule", class: "form-label" %>
+        <div class="input-group">
+          <%= form.select :cron_expression, 
+              options_for_select([
+                ["Every 30 minutes", "*/30 * * * *"],
+                ["Every hour", "0 * * * *"],
+                ["Every 6 hours", "0 */6 * * *"],
+                ["Daily at midnight", "0 0 * * *"],
+                ["Custom", "custom"]
+              ], feed.cron_expression),
+              { prompt: "Choose schedule..." }, 
+              { class: "form-select", id: "cron_preset", required: true } %>
+          <%= form.text_field :cron_expression, class: "form-control d-none", 
+              id: "cron_custom", placeholder: "0 */6 * * *" %>
+        </div>
+        <div class="form-text">Select a preset or choose "Custom" to enter your own cron expression</div>
+        <div class="invalid-feedback">Please provide a valid cron expression.</div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="mb-3">
+        <%= form.label :import_after, "Import items after", class: "form-label" %>
+        <%= form.date_field :import_after, class: "form-control" %>
+        <div class="form-text">Only import items published after this date</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :description, class: "form-label" %>
+    <%= form.text_area :description, class: "form-control", rows: 3, 
+        placeholder: "Optional description of this feed..." %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cronPreset = document.getElementById('cron_preset');
+  const cronCustom = document.getElementById('cron_custom');
+  
+  cronPreset.addEventListener('change', function() {
+    if (this.value === 'custom') {
+      cronCustom.classList.remove('d-none');
+      cronCustom.setAttribute('name', 'feed[cron_expression]');
+      cronPreset.removeAttribute('name');
+      cronCustom.focus();
+    } else {
+      cronCustom.classList.add('d-none');
+      cronPreset.setAttribute('name', 'feed[cron_expression]');
+      cronCustom.removeAttribute('name');
+    }
+  });
+  
+  // Initialize on page load
+  if (cronPreset.value === 'custom' || (!cronPreset.value && cronCustom.value)) {
+    cronPreset.value = 'custom';
+    cronPreset.dispatchEvent(new Event('change'));
+  }
+});
+</script>
