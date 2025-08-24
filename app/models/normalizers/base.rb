@@ -1,5 +1,7 @@
 module Normalizers
   class Base
+    include Registerable
+
     def initialize(feed, processed_items)
       @feed = feed
       @processed_items = processed_items

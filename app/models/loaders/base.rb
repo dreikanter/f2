@@ -1,5 +1,7 @@
 module Loaders
   class Base
+    include Registerable
+
     def initialize(feed)
       @feed = feed
     end

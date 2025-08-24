@@ -1,5 +1,7 @@
 module Processors
   class Base
+    include Registerable
+
     def initialize(feed, raw_data)
       @feed = feed
       @raw_data = raw_data
