@@ -44,7 +44,7 @@
                 <dd class="col-sm-9">
                   <code><%= @feed.cron_expression %></code>
                   <small class="text-muted d-block">
-                    Next run: <%= @feed.feed_schedule&.next_run_at&.strftime("%B %d, %Y at %I:%M %p") || "Not scheduled" %>
+                    Next run: <%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
                   </small>
                 </dd>
 
@@ -57,12 +57,12 @@
 
                 <% if @feed.import_after %>
                   <dt class="col-sm-3">Import After</dt>
-                  <dd class="col-sm-9"><%= @feed.import_after.strftime("%B %d, %Y") %></dd>
+                  <dd class="col-sm-9"><%= @feed.import_after.to_fs(:long) %></dd>
                 <% end %>
 
                 <dt class="col-sm-3">Last Run</dt>
                 <dd class="col-sm-9">
-                  <%= @feed.feed_schedule&.last_run_at&.strftime("%B %d, %Y at %I:%M %p") || "Never" %>
+                  <%= @feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
                 </dd>
               </dl>
             </div>
