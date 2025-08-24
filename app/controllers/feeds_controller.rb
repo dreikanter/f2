@@ -5,27 +5,21 @@ class FeedsController < ApplicationController
   before_action :set_feed, only: [:show, :edit, :update, :destroy]
 
   def index
-    @feeds = Current.user.feeds.order(:name)
-  end
-
-  def show
+    @feeds = user_feeds.order(:name)
   end
 
   def new
-    @feed = Current.user.feeds.build
+    @feed = user_feeds.build
   end
 
   def create
-    @feed = Current.user.feeds.build(feed_params)
+    @feed = user_feeds.build(feed_params)
 
     if @feed.save
       redirect_to @feed, notice: "Feed was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
-  end
-
-  def edit
   end
 
   def update
@@ -43,11 +37,18 @@ class FeedsController < ApplicationController
 
   private
 
+  def user_feeds
+    Current.user.feeds
+  end
+
   def set_feed
-    @feed = Current.user.feeds.find(params[:id])
+    @feed = user_feeds.find(params[:id])
   end
 
   def feed_params
-    params.require(:feed).permit(:name, :url, :cron_expression, :loader, :processor, :normalizer, :import_after, :description)
+    params.require(:feed).permit(
+      :name, :url, :cron_expression, :loader, :processor, :normalizer,
+      :import_after, :description
+    )
   end
 end
