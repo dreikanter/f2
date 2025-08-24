@@ -1,8 +1,7 @@
 module Normalizers
   class RssNormalizer < Base
     def normalize
-      # Placeholder for RSS normalization logic
-      # This would convert processed items to a standard format
+      # TBD
       processed_items.map do |item|
         {
           feed_id: feed.id,
@@ -18,8 +17,11 @@ module Normalizers
     private
 
     def clean_html(text)
-      # Basic HTML cleaning - in real implementation would use Sanitize gem
-      text&.gsub(/<[^>]*>/, "")&.strip
+      return text if text.blank?
+
+      # Parse HTML safely and extract text content only
+      doc = Nokogiri::HTML::DocumentFragment.parse(text)
+      doc.text.strip
     end
   end
 end
