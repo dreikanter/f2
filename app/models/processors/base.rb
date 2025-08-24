@@ -1,6 +1,6 @@
 module Processors
   class Base
-    include Registerable
+    include Discoverable
 
     def initialize(feed, raw_data)
       @feed = feed

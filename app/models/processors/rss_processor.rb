@@ -9,5 +9,3 @@ module Processors
     end
   end
 end
-
-Processors::Base.register(Processors::RssProcessor)

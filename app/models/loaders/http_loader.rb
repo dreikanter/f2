@@ -10,5 +10,3 @@ module Loaders
     end
   end
 end
-
-Loaders::Base.register(Loaders::HttpLoader)

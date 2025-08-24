@@ -1,6 +1,6 @@
 module Loaders
   class Base
-    include Registerable
+    include Discoverable
 
     def initialize(feed)
       @feed = feed

@@ -25,5 +25,3 @@ module Normalizers
     end
   end
 end
-
-Normalizers::Base.register(Normalizers::RssNormalizer)

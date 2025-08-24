@@ -1,6 +1,6 @@
 module Normalizers
   class Base
-    include Registerable
+    include Discoverable
 
     def initialize(feed, processed_items)
       @feed = feed
