@@ -47,8 +47,6 @@ class Feed < ApplicationRecord
     return if cron_expression.blank?
 
     parsed_cron = Fugit.parse(cron_expression)
-    errors.add(:cron_expression, "is not a valid cron expression") if parsed_cron.nil?
-  rescue StandardError => e
-    errors.add(:cron_expression, "is not a valid cron expression: #{e.message}")
+    errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
   end
 end
