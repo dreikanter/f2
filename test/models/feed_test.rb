@@ -98,4 +98,90 @@ class FeedTest < ActiveSupport::TestCase
       assert_not_includes Feed.due, feed
     end
   end
+
+  test "should require user" do
+    feed = build(:feed, user: nil)
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:user, :blank)
+  end
+
+  test "should validate name format" do
+    feed = build(:feed, name: "Invalid Name With Spaces")
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:name, :invalid)
+
+    feed = build(:feed, name: "valid-name_123")
+    assert feed.valid?
+  end
+
+  test "should validate url format" do
+    feed = build(:feed, url: "not-a-url")
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:url, :invalid)
+
+    feed = build(:feed, url: "ftp://example.com")
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:url, :invalid)
+
+    feed = build(:feed, url: "https://example.com/feed.xml")
+    assert feed.valid?
+  end
+
+  test "should validate cron expression format" do
+    feed = build(:feed, cron_expression: "invalid cron")
+    assert_not feed.valid?
+    assert_includes feed.errors[:cron_expression].first, "is not a valid cron expression"
+
+    feed = build(:feed, cron_expression: "0 * * * *")
+    assert feed.valid?
+  end
+
+  test "should normalize name to lowercase" do
+    feed = create(:feed, name: "Test-Feed")
+    assert_equal "test-feed", feed.name
+  end
+
+  test "should normalize url by stripping spaces" do
+    feed = create(:feed, url: "  https://example.com/feed.xml  ")
+    assert_equal "https://example.com/feed.xml", feed.url
+  end
+
+  test "should normalize cron expression by stripping spaces" do
+    feed = create(:feed, cron_expression: "  0 * * * *  ")
+    assert_equal "0 * * * *", feed.cron_expression
+  end
+
+  test "should normalize description by removing line breaks" do
+    feed = create(:feed, description: "Line 1\nLine 2\r\nLine 3")
+    assert_equal "Line 1 Line 2 Line 3", feed.description
+  end
+
+  test "should enforce unique name per user" do
+    user = create(:user)
+    create(:feed, user: user, name: "duplicate")
+
+    duplicate_feed = build(:feed, user: user, name: "duplicate")
+    assert_not duplicate_feed.valid?
+    assert duplicate_feed.errors.of_kind?(:name, :taken)
+  end
+
+  test "should allow same name for different users" do
+    user1 = create(:user)
+    user2 = create(:user)
+    create(:feed, user: user1, name: "same-name")
+
+    feed2 = build(:feed, user: user2, name: "same-name")
+    assert feed2.valid?
+  end
+
+  test "should set default state to enabled for new records" do
+    feed = Feed.new
+    assert_equal "enabled", feed.state
+  end
+
+  test "should not change state for persisted records" do
+    feed = create(:feed, state: :paused)
+    reloaded_feed = Feed.find(feed.id)
+    assert_equal "paused", reloaded_feed.state
+  end
 end

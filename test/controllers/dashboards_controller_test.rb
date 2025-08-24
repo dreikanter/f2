@@ -2,7 +2,7 @@ require "test_helper"
 
 class DashboardsControllerTest < ActionDispatch::IntegrationTest
   test "should get show when authenticated" do
-    user = users(:one)
+    user = create(:user)
     sign_in_as(user)
 
     get dashboard_url
@@ -15,7 +15,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect to dashboard from root" do
-    user = users(:one)
+    user = create(:user)
     sign_in_as(user)
 
     get root_url

@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :feed do
-    name { "Sample Feed" }
+    association :user
+    sequence(:name) { |n| "sample-feed-#{n}" }
     url { "https://example.com/feed.xml" }
     cron_expression { "0 */6 * * *" }
     loader { "http" }
