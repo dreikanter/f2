@@ -110,29 +110,3 @@
     <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-secondary" %>
   </div>
 <% end %>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const cronPreset = document.getElementById('cron_preset');
-  const cronCustom = document.getElementById('cron_custom');
-  
-  cronPreset.addEventListener('change', function() {
-    if (this.value === 'custom') {
-      cronCustom.classList.remove('d-none');
-      cronCustom.setAttribute('name', 'feed[cron_expression]');
-      cronPreset.removeAttribute('name');
-      cronCustom.focus();
-    } else {
-      cronCustom.classList.add('d-none');
-      cronPreset.setAttribute('name', 'feed[cron_expression]');
-      cronCustom.removeAttribute('name');
-    }
-  });
-  
-  // Initialize on page load
-  if (cronPreset.value === 'custom' || (!cronPreset.value && cronCustom.value)) {
-    cronPreset.value = 'custom';
-    cronPreset.dispatchEvent(new Event('change'));
-  }
-});
-</script>
