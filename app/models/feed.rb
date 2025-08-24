@@ -14,7 +14,7 @@ class Feed < ApplicationRecord
   normalizes :name, with: ->(name) { name&.strip&.downcase }
   normalizes :url, with: ->(url) { url&.strip }
   normalizes :cron_expression, with: ->(cron) { cron&.strip }
-  normalizes :description, with: ->(desc) { desc&.gsub(/\r?\n/, " ")&.strip }
+  normalizes :description, with: ->(desc) { desc&.gsub(/\r?\n/, " ")&.gsub(/\s+/, " ")&.strip }
 
   validate :cron_expression_is_valid
 
