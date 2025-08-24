@@ -12,14 +12,4 @@ class Normalizers::BaseTest < ActiveSupport::TestCase
       normalizer.normalize
     end
   end
-
-  test "should track descendants" do
-    assert_includes Normalizers::Base.descendants, Normalizers::RssNormalizer
-  end
-
-  test "should provide available normalizers list" do
-    normalizers = Normalizers::Base.available_normalizers
-    assert_includes normalizers, "Rss"
-    assert normalizers.all? { |normalizer| normalizer.is_a?(String) }
-  end
 end

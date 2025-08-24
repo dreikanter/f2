@@ -77,7 +77,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   test "should not show other user's feed" do
     sign_in_as(@user)
     get feed_url(@other_feed)
-    # In Rails tests, ActiveRecord::RecordNotFound is converted to 404
     assert_response :not_found
   end
 

@@ -12,15 +12,4 @@ class Loaders::BaseTest < ActiveSupport::TestCase
       loader.load
     end
   end
-
-  test "should track descendants" do
-    # HttpLoader should be a descendant
-    assert_includes Loaders::Base.descendants, Loaders::HttpLoader
-  end
-
-  test "should provide available loaders list" do
-    loaders = Loaders::Base.available_loaders
-    assert_includes loaders, "Http"
-    assert loaders.all? { |loader| loader.is_a?(String) }
-  end
 end

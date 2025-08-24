@@ -47,8 +47,14 @@ class FeedsController < ApplicationController
 
   def feed_params
     params.require(:feed).permit(
-      :name, :url, :cron_expression, :loader, :processor, :normalizer,
-      :import_after, :description
+      :name,
+      :url,
+      :cron_expression,
+      :loader,
+      :processor,
+      :normalizer,
+      :import_after,
+      :description
     )
   end
 end
