@@ -39,4 +39,24 @@ class UserTest < ActiveSupport::TestCase
     authenticated_user = User.authenticate_by(email_address: "wrong@example.com", password: "password")
     assert_nil authenticated_user
   end
+
+  test "should have many feeds" do
+    user = create(:user)
+    feed1 = create(:feed, user: user)
+    feed2 = create(:feed, user: user)
+
+    assert_equal 2, user.feeds.count
+    assert_includes user.feeds, feed1
+    assert_includes user.feeds, feed2
+  end
+
+  test "should destroy associated feeds when user is destroyed" do
+    user = create(:user)
+    create(:feed, user: user)
+    create(:feed, user: user)
+
+    assert_difference("Feed.count", -2) do
+      user.destroy!
+    end
+  end
 end

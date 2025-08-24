@@ -19,3 +19,14 @@
 - `app/jobs/feed_scheduler_job.rb` - Recurring job to queue due feeds
 - `app/jobs/feed_refresh_job.rb` - Individual feed processing
 - `config/recurring.yml` - SolidQueue recurring job configuration
+
+## Version Control
+- *Always* use atomic commits unless asked differently
+- Write concise one-line commit messages in imperative mood (e.g., "Add user authentication" not "Added user authentication")
+- Separate logically distinct changes in the same file into separate commits when it makes sense
+- Never add reference to yourself in commit messages
+
+## Devlopment Practices
+- Run RuboCop after you change code
+- Rubocop command is the command is `bin/rubocop`
+- Correct the code if RuboCop return errors

@@ -6,7 +6,6 @@ class FeedRefreshJob < ApplicationJob
     nil unless feed
 
     # TODO: Implement actual feed fetching logic
-    # Future implementation will:
     # 1. Use feed.loader to fetch data from feed.url
     # 2. Use feed.processor to parse the data format
     # 3. Use feed.normalizer to transform data to standard format

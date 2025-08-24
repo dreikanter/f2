@@ -1,0 +1,22 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><%= link_to "Feeds", feeds_path %></li>
+          <li class="breadcrumb-item"><%= link_to @feed.name, @feed %></li>
+          <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+      </nav>
+
+      <div class="card">
+        <div class="card-header">
+          <h1 class="card-title h3 mb-0">Edit Feed: <%= @feed.name %></h1>
+        </div>
+        <div class="card-body">
+          <%= render 'form', feed: @feed %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
