@@ -4,8 +4,19 @@ class Feed < ApplicationRecord
 
   enum :state, { enabled: 0, paused: 1, disabled: 2 }
 
-  validates :name, presence: true, uniqueness: { scope: :user_id }, format: { with: /\A[a-z0-9_-]+\z/, message: "can only contain lowercase letters, numbers, hyphens, and underscores" }
-  validates :url, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid HTTP or HTTPS URL" }
+  validates :name,
+            presence: true,
+            uniqueness: { scope: :user_id },
+            format: {
+              with: /\A[a-z0-9_-]+\z/,
+              message: "can only contain lowercase letters, numbers, hyphens, and underscores"
+            }
+  validates :url,
+            presence: true,
+            format: {
+              with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+              message: "must be a valid HTTP or HTTPS URL"
+            }
   validates :cron_expression, presence: true
   validates :loader, presence: true
   validates :processor, presence: true
