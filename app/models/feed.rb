@@ -24,10 +24,10 @@ class Feed < ApplicationRecord
   validates :processor, presence: true
   validates :normalizer, presence: true
 
-  normalizes :name, with: ->(name) { name&.strip&.downcase }
-  normalizes :url, with: ->(url) { url&.strip }
-  normalizes :cron_expression, with: ->(cron) { cron&.strip }
-  normalizes :description, with: ->(desc) { desc&.gsub(/\r?\n/, " ")&.gsub(/\s+/, " ")&.strip }
+  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
+  normalizes :url, with: ->(url) { url.to_s.strip }
+  normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
+  normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
 
   validate :cron_expression_is_valid
 
