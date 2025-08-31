@@ -17,31 +17,31 @@
             </div>
 
             <% if @feed.description.present? %>
-              <p class="card-text lead"><%= simple_format(@feed.description) %></p>
+              <p class="card-text"><%= simple_format(@feed.description) %></p>
             <% end %>
 
             <dl class="row">
               <dt class="col-sm-3">Feed URL</dt>
               <dd class="col-sm-9">
                 <a href="<%= @feed.url %>" target="_blank" class="text-decoration-none">
-                  <%= @feed.url %> <i class="bi bi-box-arrow-up-right"></i>
+                  <%= @feed.url %>
                 </a>
               </dd>
 
               <dt class="col-sm-3">Schedule</dt>
-              <dd class="col-sm-9">
-                <code><%= @feed.cron_expression %></code>
-                <small class="text-muted d-block">
-                  Next run: <%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
-                </small>
-              </dd>
+              <dd class="col-sm-9"><code><%= @feed.cron_expression %></code></dd>
 
-              <dt class="col-sm-3">Processing</dt>
-              <dd class="col-sm-9">
-                <span class="badge bg-secondary me-1">Loader: <%= @feed.loader %></span>
-                <span class="badge bg-secondary me-1">Processor: <%= @feed.processor %></span>
-                <span class="badge bg-secondary">Normalizer: <%= @feed.normalizer %></span>
-              </dd>
+              <dt class="col-sm-3">Next Run</dt>
+              <dd class="col-sm-9"><%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %></dd>
+
+              <dt class="col-sm-3">Loader</dt>
+              <dd class="col-sm-9"><%= @feed.loader %></dd>
+
+              <dt class="col-sm-3">Processor</dt>
+              <dd class="col-sm-9"><%= @feed.processor %></dd>
+
+              <dt class="col-sm-3">Normalizer</dt>
+              <dd class="col-sm-9"><%= @feed.normalizer %></dd>
 
               <% if @feed.import_after %>
                 <dt class="col-sm-3">Import After</dt>
