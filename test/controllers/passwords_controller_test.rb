@@ -14,6 +14,17 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should send email for existing user" do
+    user = create(:user)
+    
+    assert_enqueued_with(job: ActionMailer::MailDeliveryJob) do
+      post passwords_url, params: { email_address: user.email_address }
+    end
+    
+    assert_redirected_to new_session_path
+    assert_equal "Password reset instructions sent (if user with that email address exists).", flash[:notice]
+  end
+
   test "should not send email for non-existent user" do
     post passwords_url, params: { email_address: "nonexistent@example.com" }
     assert_redirected_to new_session_path
@@ -31,6 +42,19 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
     user.reload
     assert user.authenticate("newpassword")
+  end
+
+  test "should not update password with mismatched confirmation" do
+    user = create(:user)
+    token = user.generate_token_for(:password_reset)
+
+    put password_url(token), params: {
+      password: "newpassword",
+      password_confirmation: "differentpassword"
+    }
+
+    assert_redirected_to edit_password_path(token)
+    assert_equal "Passwords did not match.", flash[:alert]
   end
 
   test "should not update password with invalid token" do

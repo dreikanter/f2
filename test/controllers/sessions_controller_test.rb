@@ -22,10 +22,34 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy session" do
-    user = users(:one)
-    sign_in_as(user)
+    user = create(:user)
+    
+    # Create session by signing in
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+    follow_redirect!
+    
+    # Verify we have a session by checking we can access protected resource
+    get feeds_path
+    assert_response :success
 
     delete session_url
     assert_redirected_to new_session_path
+    
+    # Verify session was destroyed by trying to access protected resource
+    get feeds_path
+    assert_redirected_to new_session_path
+  end
+
+  test "should redirect to requested page after authentication" do
+    # Try to access protected page without authentication
+    get feeds_path
+    assert_redirected_to new_session_path
+    
+    # Sign in
+    user = create(:user)
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+    
+    # Should redirect back to the originally requested page
+    assert_redirected_to feeds_path
   end
 end
