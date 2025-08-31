@@ -3,35 +3,23 @@
     <div class="card mt-5">
       <div class="card-body">
         <h4 class="card-title text-center mb-4">Sign In</h4>
-        
-        <% if flash[:alert] %>
-          <div class="alert alert-danger" role="alert">
-            <%= flash[:alert] %>
-          </div>
-        <% end %>
-        
-        <% if flash[:notice] %>
-          <div class="alert alert-success" role="alert">
-            <%= flash[:notice] %>
-          </div>
-        <% end %>
 
         <%= form_with url: session_path, local: true do |form| %>
           <div class="mb-3">
             <%= form.label :email_address, "Email Address", class: "form-label" %>
             <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "form-control" %>
           </div>
-          
+
           <div class="mb-3">
             <%= form.label :password, "Password", class: "form-label" %>
             <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "form-control" %>
           </div>
-          
+
           <div class="d-grid">
             <%= form.submit "Sign in", class: "btn btn-primary" %>
           </div>
         <% end %>
-        
+
         <div class="text-center mt-3">
           <%= link_to "Forgot password?", new_password_path, class: "text-muted" %>
         </div>
