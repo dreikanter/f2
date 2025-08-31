@@ -5,7 +5,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     user = create(:user)
     post session_url, params: { email_address: user.email_address, password: "password123" }
     follow_redirect!
-    
+
     # Now test a protected action
     get feeds_path
     assert_response :success
