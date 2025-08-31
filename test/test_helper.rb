@@ -13,7 +13,8 @@ module ActiveSupport
     include FactoryBot::Syntax::Methods
 
     # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors)
+    # Disable parallel testing when SimpleCov is running to get accurate coverage
+    parallelize(workers: ENV["COVERAGE"] ? 1 : :number_of_processors)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
