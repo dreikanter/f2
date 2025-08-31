@@ -1,72 +1,58 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-12">
-        <div class="btn-group" role="group">
-          <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-primary" %>
-          <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
-        </div>
-      </div>
+    <div class="col-12 mb-2">
+      <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-primary" %>
+      <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
+    </div>
 
-      <div class="row">
-        <div class="col-md-8">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <h1 class="card-title h2"><%= @feed.name %></h1>
-                <span class="badge bg-<%= @feed.enabled? ? 'success' : @feed.paused? ? 'warning' : 'danger' %> fs-6">
-                  <%= @feed.state.capitalize %>
-                </span>
-              </div>
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h1 class="card-title h2"><%= @feed.name %></h1>
+              <span class="badge bg-<%= @feed.enabled? ? 'success' : @feed.paused? ? 'warning' : 'danger' %> fs-6">
+                <%= @feed.state.capitalize %>
+              </span>
+            </div>
 
-              <% if @feed.description.present? %>
-                <p class="card-text lead"><%= simple_format(@feed.description) %></p>
+            <% if @feed.description.present? %>
+              <p class="card-text lead"><%= simple_format(@feed.description) %></p>
+            <% end %>
+
+            <dl class="row">
+              <dt class="col-sm-3">Feed URL</dt>
+              <dd class="col-sm-9">
+                <a href="<%= @feed.url %>" target="_blank" class="text-decoration-none">
+                  <%= @feed.url %> <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </dd>
+
+              <dt class="col-sm-3">Schedule</dt>
+              <dd class="col-sm-9">
+                <code><%= @feed.cron_expression %></code>
+                <small class="text-muted d-block">
+                  Next run: <%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
+                </small>
+              </dd>
+
+              <dt class="col-sm-3">Processing</dt>
+              <dd class="col-sm-9">
+                <span class="badge bg-secondary me-1">Loader: <%= @feed.loader %></span>
+                <span class="badge bg-secondary me-1">Processor: <%= @feed.processor %></span>
+                <span class="badge bg-secondary">Normalizer: <%= @feed.normalizer %></span>
+              </dd>
+
+              <% if @feed.import_after %>
+                <dt class="col-sm-3">Import After</dt>
+                <dd class="col-sm-9"><%= @feed.import_after.to_fs(:long) %></dd>
               <% end %>
 
-              <dl class="row">
-                <dt class="col-sm-3">Feed URL</dt>
-                <dd class="col-sm-9">
-                  <a href="<%= @feed.url %>" target="_blank" class="text-decoration-none">
-                    <%= @feed.url %> <i class="bi bi-box-arrow-up-right"></i>
-                  </a>
-                </dd>
-
-                <dt class="col-sm-3">Schedule</dt>
-                <dd class="col-sm-9">
-                  <code><%= @feed.cron_expression %></code>
-                  <small class="text-muted d-block">
-                    Next run: <%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
-                  </small>
-                </dd>
-
-                <dt class="col-sm-3">Processing</dt>
-                <dd class="col-sm-9">
-                  <span class="badge bg-secondary me-1">Loader: <%= @feed.loader %></span>
-                  <span class="badge bg-secondary me-1">Processor: <%= @feed.processor %></span>
-                  <span class="badge bg-secondary">Normalizer: <%= @feed.normalizer %></span>
-                </dd>
-
-                <% if @feed.import_after %>
-                  <dt class="col-sm-3">Import After</dt>
-                  <dd class="col-sm-9"><%= @feed.import_after.to_fs(:long) %></dd>
-                <% end %>
-
-                <dt class="col-sm-3">Last Run</dt>
-                <dd class="col-sm-9">
-                  <%= @feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Feed Statistics</h5>
-            </div>
-            <div class="card-body">
-              <p class="text-muted">Statistics will be available after the first successful run.</p>
-            </div>
+              <dt class="col-sm-3">Last Run</dt>
+              <dd class="col-sm-9">
+                <%= @feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
+              </dd>
+            </dl>
           </div>
         </div>
       </div>

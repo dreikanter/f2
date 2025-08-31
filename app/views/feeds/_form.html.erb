@@ -43,21 +43,17 @@
 
   <div class="mb-3">
     <%= form.label :cron_expression, "Schedule", class: "form-label" %>
-    <div class="input-group">
-      <%= form.select :cron_expression,
-          options_for_select([
-            ["Every 30 minutes", "*/30 * * * *"],
-            ["Every hour", "0 * * * *"],
-            ["Every 6 hours", "0 */6 * * *"],
-            ["Daily at midnight", "0 0 * * *"],
-            ["Custom", "custom"]
-          ], feed.cron_expression),
-          { prompt: "Choose schedule..." },
-          { class: "form-select", id: "cron_preset", required: true } %>
-      <%= form.text_field :cron_expression, class: "form-control d-none", id: "cron_custom", placeholder: "0 */6 * * *" %>
-    </div>
-    <div class="form-text">Select a preset or choose "Custom" to enter your own cron expression</div>
-    <div class="invalid-feedback">Please provide a valid cron expression.</div>
+    <%= form.select :cron_expression,
+        options_for_select([
+          ["Every 30 minutes", "*/30 * * * *"],
+          ["Every hour", "0 * * * *"],
+          ["Every 6 hours", "0 */6 * * *"],
+          ["Daily at midnight", "0 0 * * *"]
+        ], feed.cron_expression),
+        { prompt: "Choose schedule..." },
+        { class: "form-select", required: true } %>
+    <div class="form-text">Select a preset schedule for the feed</div>
+    <div class="invalid-feedback">Please select a schedule.</div>
   </div>
 
   <div class="mb-3">
