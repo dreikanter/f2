@@ -37,12 +37,12 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  after_initialize :set_default_state
+  after_initialize :set_default_state, if: :new_record?
 
   private
 
   def set_default_state
-    self.state ||= :enabled if new_record?
+    self.state ||= :enabled
   end
 
   def cron_expression_is_valid
