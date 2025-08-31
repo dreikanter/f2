@@ -26,7 +26,24 @@
 - Separate logically distinct changes in the same file into separate commits when it makes sense
 - Never add reference to yourself in commit messages
 
-## Devlopment Practices
-- Run RuboCop after you change code
-- Rubocop command is the command is `bin/rubocop`
-- Correct the code if RuboCop return errors
+## Development Practices
+- Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop`)
+- Use FactoryBot to create test data
+- Prefer lazy test data initialization over eager initialization in setup block
+
+```ruby
+# Bad:
+setup do
+  @user = create(:user)
+  @feed = create(:feed, user: @user)
+end
+
+# Good:
+def user
+  @user ||= create(:user)
+end
+
+def feed
+  @feed ||= create(:feed, user: user)
+end
+```
