@@ -64,7 +64,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should show own feed" do
@@ -115,7 +115,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         url: "not-a-url"
       }
     }
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
 
     @feed.reload
     assert_not_equal "Invalid Name", @feed.name

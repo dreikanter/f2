@@ -18,7 +18,7 @@ class FeedsController < ApplicationController
     if @feed.save
       redirect_to @feed, notice: "Feed was successfully created."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -26,7 +26,7 @@ class FeedsController < ApplicationController
     if @feed.update(feed_params)
       redirect_to @feed, notice: "Feed was successfully updated."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
