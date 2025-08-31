@@ -7,6 +7,7 @@ class Normalizers::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)
     items = ["item1", "item2"]
+
     assert_nothing_raised do
       Normalizers::Base.new(feed, items)
     end

@@ -24,13 +24,5 @@ FactoryBot.define do
     trait :disabled do
       state { :disabled }
     end
-
-    trait :with_description do
-      description { "A sample RSS feed for testing" }
-    end
-
-    trait :with_import_threshold do
-      import_after { 1.week.ago }
-    end
   end
 end

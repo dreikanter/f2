@@ -7,6 +7,7 @@ class Processors::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)
     data = "test data"
+
     assert_nothing_raised do
       Processors::Base.new(feed, data)
     end

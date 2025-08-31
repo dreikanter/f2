@@ -5,16 +5,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def other_user
-    @other_user ||= create(:user)
-  end
-
   def feed
     @feed ||= create(:feed, user: user)
   end
 
   def other_feed
-    @other_feed ||= create(:feed, user: other_user)
+    @other_feed ||= create(:feed, user: create(:user))
   end
 
   test "should redirect to login when not authenticated" do

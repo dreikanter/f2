@@ -6,6 +6,7 @@ require_relative "../../../app/models/loaders/http_loader"
 class Loaders::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)
+
     assert_nothing_raised do
       Loaders::Base.new(feed)
     end

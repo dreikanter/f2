@@ -3,11 +3,12 @@ require "test_helper"
 class Normalizers::RssNormalizerTest < ActiveSupport::TestCase
   test "should normalize processed items" do
     feed = create(:feed, normalizer: "rss")
+
     items = [
       { title: "<h1>Test Article</h1>", content: "<p>Test content</p>", published_at: Time.current, url: "https://example.com" }
     ]
-    normalizer = Normalizers::RssNormalizer.new(feed, items)
 
+    normalizer = Normalizers::RssNormalizer.new(feed, items)
     result = normalizer.normalize
 
     assert_equal 1, result.length
