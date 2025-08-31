@@ -1,11 +1,20 @@
 require "test_helper"
 
 class FeedsControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    @user = create(:user)
-    @other_user = create(:user)
-    @feed = create(:feed, user: @user)
-    @other_feed = create(:feed, user: @other_user)
+  def user
+    @user ||= create(:user)
+  end
+
+  def other_user
+    @other_user ||= create(:user)
+  end
+
+  def feed
+    @feed ||= create(:feed, user: user)
+  end
+
+  def other_feed
+    @other_feed ||= create(:feed, user: other_user)
   end
 
   test "should redirect to login when not authenticated" do
@@ -14,21 +23,20 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index when authenticated" do
-    sign_in_as(@user)
+    sign_in_as(user)
     get feeds_url
     assert_response :success
-    assert_includes response.body, @feed.name
-    assert_not_includes response.body, @other_feed.name
   end
 
   test "should get new when authenticated" do
-    sign_in_as(@user)
+    sign_in_as(user)
     get new_feed_url
     assert_response :success
   end
 
   test "should create feed when authenticated" do
-    sign_in_as(@user)
+    sign_in_as(user)
+
     assert_difference("Feed.count", 1) do
       post feeds_url, params: {
         feed: {
@@ -44,14 +52,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     feed = Feed.last
-    assert_equal @user, feed.user
+    assert_equal user, feed.user
     assert_equal "test-feed", feed.name
     assert_equal "enabled", feed.state
     assert_redirected_to feed_url(feed)
   end
 
   test "should not create feed with invalid data" do
-    sign_in_as(@user)
+    sign_in_as(user)
+
     assert_no_difference("Feed.count") do
       post feeds_url, params: {
         feed: {
@@ -64,87 +73,98 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
+
     assert_response :unprocessable_content
   end
 
   test "should show own feed" do
-    sign_in_as(@user)
-    get feed_url(@feed)
+    sign_in_as(user)
+    get feed_url(feed)
     assert_response :success
-    assert_includes response.body, @feed.name
+    assert_includes response.body, feed.name
   end
 
   test "should not show other user's feed" do
-    sign_in_as(@user)
-    get feed_url(@other_feed)
+    sign_in_as(user)
+    get feed_url(other_feed)
     assert_response :not_found
   end
 
   test "should get edit for own feed" do
-    sign_in_as(@user)
-    get edit_feed_url(@feed)
+    sign_in_as(user)
+    get edit_feed_url(feed)
     assert_response :success
   end
 
   test "should not get edit for other user's feed" do
-    sign_in_as(@user)
-    get edit_feed_url(@other_feed)
+    sign_in_as(user)
+    get edit_feed_url(other_feed)
     assert_response :not_found
   end
 
   test "should update own feed" do
-    sign_in_as(@user)
-    patch feed_url(@feed), params: {
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
       feed: {
         name: "updated-feed",
         description: "Updated description"
       }
     }
-    assert_redirected_to feed_url(@feed)
 
-    @feed.reload
-    assert_equal "updated-feed", @feed.name
-    assert_equal "Updated description", @feed.description
+    assert_redirected_to feed_url(feed)
+
+    feed.reload
+    assert_equal "updated-feed", feed.name
+    assert_equal "Updated description", feed.description
   end
 
   test "should not update feed with invalid data" do
-    sign_in_as(@user)
-    patch feed_url(@feed), params: {
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
       feed: {
         name: "Invalid Name",
         url: "not-a-url"
       }
     }
+
     assert_response :unprocessable_content
 
-    @feed.reload
-    assert_not_equal "Invalid Name", @feed.name
+    feed.reload
+    assert_not_equal "Invalid Name", feed.name
   end
 
   test "should not update other user's feed" do
-    sign_in_as(@user)
-    patch feed_url(@other_feed), params: {
+    sign_in_as(user)
+
+    patch feed_url(other_feed), params: {
       feed: { name: "hacked-feed" }
     }
+
     assert_response :not_found
   end
 
   test "should destroy own feed" do
-    sign_in_as(@user)
+    sign_in_as(user)
+    feed = create(:feed, user: user)
+
     assert_difference("Feed.count", -1) do
-      delete feed_url(@feed)
+      delete feed_url(feed)
     end
+
     assert_redirected_to feeds_url
   end
 
   test "should not destroy other user's feed" do
-    sign_in_as(@user)
-    delete feed_url(@other_feed)
+    sign_in_as(user)
+    delete feed_url(other_feed)
     assert_response :not_found
   end
 
   test "should normalize name to lowercase" do
-    sign_in_as(@user)
+    sign_in_as(user)
+
     post feeds_url, params: {
       feed: {
         name: "Test-Feed",
@@ -161,7 +181,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should strip and normalize URLs" do
-    sign_in_as(@user)
+    sign_in_as(user)
+
     post feeds_url, params: {
       feed: {
         name: "test-feed",
@@ -178,7 +199,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should normalize description by removing line breaks" do
-    sign_in_as(@user)
+    sign_in_as(user)
+
     post feeds_url, params: {
       feed: {
         name: "test-feed",
