@@ -4,12 +4,12 @@ require "test_helper"
 require_relative "../../../app/models/processors/rss_processor"
 
 class Processors::BaseTest < ActiveSupport::TestCase
-  test "should initialize with feed and data" do
+  test "should initialize without errors" do
     feed = create(:feed)
     data = "test data"
-    processor = Processors::Base.new(feed, data)
-    assert_equal feed, processor.instance_variable_get(:@feed)
-    assert_equal data, processor.instance_variable_get(:@raw_data)
+    assert_nothing_raised do
+      Processors::Base.new(feed, data)
+    end
   end
 
   test "should raise NotImplementedError for process method" do

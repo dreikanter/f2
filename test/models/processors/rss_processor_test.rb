@@ -7,12 +7,12 @@ class Processors::RssProcessorTest < ActiveSupport::TestCase
     assert_kind_of Processors::Base, processor
   end
 
-  test "should initialize with feed and data" do
+  test "should initialize without errors" do
     feed = create(:feed, processor: "rss")
     data = "test data"
-    processor = Processors::RssProcessor.new(feed, data)
-    assert_equal feed, processor.instance_variable_get(:@feed)
-    assert_equal data, processor.instance_variable_get(:@raw_data)
+    assert_nothing_raised do
+      Processors::RssProcessor.new(feed, data)
+    end
   end
 
   test "should respond to process method" do

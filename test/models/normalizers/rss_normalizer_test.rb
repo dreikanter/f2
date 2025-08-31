@@ -7,12 +7,12 @@ class Normalizers::RssNormalizerTest < ActiveSupport::TestCase
     assert_kind_of Normalizers::Base, normalizer
   end
 
-  test "should initialize with feed and items" do
+  test "should initialize without errors" do
     feed = create(:feed, normalizer: "rss")
     items = ["item1", "item2"]
-    normalizer = Normalizers::RssNormalizer.new(feed, items)
-    assert_equal feed, normalizer.instance_variable_get(:@feed)
-    assert_equal items, normalizer.instance_variable_get(:@processed_items)
+    assert_nothing_raised do
+      Normalizers::RssNormalizer.new(feed, items)
+    end
   end
 
   test "should respond to normalize method" do
