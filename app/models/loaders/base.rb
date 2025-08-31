@@ -1,7 +1,7 @@
 module Loaders
-  class Base
-    include Discoverable
+  AVAILABLE_OPTIONS = %w[http].freeze
 
+  class Base
     def initialize(feed)
       @feed = feed
     end

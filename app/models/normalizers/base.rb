@@ -1,7 +1,7 @@
 module Normalizers
-  class Base
-    include Discoverable
+  AVAILABLE_OPTIONS = %w[rss].freeze
 
+  class Base
     def initialize(feed, processed_items)
       @feed = feed
       @processed_items = processed_items

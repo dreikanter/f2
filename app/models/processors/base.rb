@@ -1,7 +1,7 @@
 module Processors
-  class Base
-    include Discoverable
+  AVAILABLE_OPTIONS = %w[rss].freeze
 
+  class Base
     def initialize(feed, raw_data)
       @feed = feed
       @raw_data = raw_data
