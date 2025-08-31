@@ -25,19 +25,19 @@
 
   <div class="mb-3">
     <%= form.label :loader, class: "form-label" %>
-    <%= form.select :loader, options_for_select(Loaders::Base.available_options, feed.loader), { prompt: "Choose loader..." }, { class: "form-select", required: true } %>
+    <%= form.select :loader, options_for_select(loader_options, feed.loader), { prompt: "Choose loader..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a loader.</div>
   </div>
 
   <div class="mb-3">
     <%= form.label :processor, class: "form-label" %>
-    <%= form.select :processor, options_for_select(Processors::Base.available_options, feed.processor), { prompt: "Choose processor..." }, { class: "form-select", required: true } %>
+    <%= form.select :processor, options_for_select(processor_options, feed.processor), { prompt: "Choose processor..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a processor.</div>
   </div>
 
   <div class="mb-3">
     <%= form.label :normalizer, class: "form-label" %>
-    <%= form.select :normalizer, options_for_select(Normalizers::Base.available_options, feed.normalizer), { prompt: "Choose normalizer..." }, { class: "form-select", required: true } %>
+    <%= form.select :normalizer, options_for_select(normalizer_options, feed.normalizer), { prompt: "Choose normalizer..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a normalizer.</div>
   </div>
 

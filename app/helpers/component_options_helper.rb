@@ -1,0 +1,21 @@
+module ComponentOptionsHelper
+  def loader_options
+    available_options(Loaders::AVAILABLE_OPTIONS, "loaders")
+  end
+
+  def processor_options
+    available_options(Processors::AVAILABLE_OPTIONS, "processors")
+  end
+
+  def normalizer_options
+    available_options(Normalizers::AVAILABLE_OPTIONS, "normalizers")
+  end
+
+  private
+
+  def available_options(keys, i18n_prefix)
+    keys.map do |key|
+      [t("#{i18n_prefix}.#{key}"), key]
+    end
+  end
+end

@@ -1,6 +1,4 @@
 module Processors
-  AVAILABLE_OPTIONS = %w[rss].freeze
-
   class Base
     def initialize(feed, raw_data)
       @feed = feed

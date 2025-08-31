@@ -1,6 +1,4 @@
 module Loaders
-  AVAILABLE_OPTIONS = %w[http].freeze
-
   class Base
     def initialize(feed)
       @feed = feed
