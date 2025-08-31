@@ -2,7 +2,6 @@ class FeedsController < ApplicationController
   include Authentication
 
   before_action :require_authentication
-  before_action :set_feed, only: [:show, :edit, :update, :destroy]
 
   def index
     @feeds = user_feeds.order(:name)
@@ -10,6 +9,14 @@ class FeedsController < ApplicationController
 
   def new
     @feed = user_feeds.build
+  end
+
+  def show
+    @feed = load_feed
+  end
+
+  def edit
+    @feed = load_feed
   end
 
   def create
@@ -23,6 +30,8 @@ class FeedsController < ApplicationController
   end
 
   def update
+    @feed = load_feed
+
     if @feed.update(feed_params)
       redirect_to @feed, notice: "Feed was successfully updated."
     else
@@ -31,6 +40,7 @@ class FeedsController < ApplicationController
   end
 
   def destroy
+    @feed = load_feed
     @feed.destroy!
     redirect_to feeds_path, notice: "Feed was successfully deleted."
   end
@@ -41,8 +51,8 @@ class FeedsController < ApplicationController
     Current.user.feeds
   end
 
-  def set_feed
-    @feed = user_feeds.find(params[:id])
+  def load_feed
+    user_feeds.find(params[:id])
   end
 
   def feed_params

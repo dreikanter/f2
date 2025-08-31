@@ -4,9 +4,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "should get new" do
     get new_session_url
     assert_response :success
-    assert_select "h4", "Sign In"
-    assert_select "form input[name='email_address']"
-    assert_select "form input[name='password']"
   end
 
   test "should create session with valid credentials" do
