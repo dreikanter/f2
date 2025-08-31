@@ -1,14 +1,6 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><%= link_to "Feeds", feeds_path %></li>
-            <li class="breadcrumb-item active" aria-current="page"><%= @feed.name %></li>
-          </ol>
-        </nav>
-
         <div class="btn-group" role="group">
           <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-primary" %>
           <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
