@@ -1,4 +1,6 @@
 class Feed < ApplicationRecord
+  NAME_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+
   belongs_to :user
   has_one :feed_schedule, dependent: :destroy
 
@@ -8,7 +10,7 @@ class Feed < ApplicationRecord
             presence: true,
             uniqueness: { scope: :user_id },
             format: {
-              with: /\A[a-z0-9_-]+\z/,
+              with: NAME_PATTERN,
               message: "can only contain lowercase letters, numbers, hyphens, and underscores"
             }
 
