@@ -20,7 +20,7 @@
                   </div>
                   
                   <p class="card-text text-muted small mb-2">
-                    <i class="bi bi-link-45deg"></i> <%= truncate(feed.url, length: 40) %>
+                    <i class="bi bi-link-45deg"></i> <%= truncate(feed.url, length: Feed::NAME_MAX_LENGTH) %>
                   </p>
                   
                   <p class="card-text text-muted small mb-2">
@@ -28,7 +28,7 @@
                   </p>
                   
                   <% if feed.description.present? %>
-                    <p class="card-text"><%= truncate(feed.description, length: 100) %></p>
+                    <p class="card-text"><%= truncate(feed.description, length: Feed::DESCRIPTION_MAX_LENGTH) %></p>
                   <% end %>
                 </div>
                 

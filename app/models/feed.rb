@@ -1,5 +1,7 @@
 class Feed < ApplicationRecord
   NAME_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+  NAME_MAX_LENGTH = 40
+  DESCRIPTION_MAX_LENGTH = 100
 
   belongs_to :user
   has_one :feed_schedule, dependent: :destroy
