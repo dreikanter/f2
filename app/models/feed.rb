@@ -1,18 +1,58 @@
 class Feed < ApplicationRecord
+  NAME_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+  NAME_MAX_LENGTH = 40
+  DESCRIPTION_MAX_LENGTH = 100
+
+  belongs_to :user
   has_one :feed_schedule, dependent: :destroy
 
   enum :state, { enabled: 0, paused: 1, disabled: 2 }
 
-  validates :name, presence: true
-  validates :url, presence: true
+  validates :name,
+            presence: true,
+            uniqueness: { scope: :user_id },
+            format: {
+              with: NAME_PATTERN,
+              message: "can only contain lowercase letters, numbers, hyphens, and underscores"
+            }
+
+  validates :url,
+            presence: true,
+            format: {
+              with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+              message: "must be a valid HTTP or HTTPS URL"
+            }
+
   validates :cron_expression, presence: true
   validates :loader, presence: true
   validates :processor, presence: true
   validates :normalizer, presence: true
+
+  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
+  normalizes :url, with: ->(url) { url.to_s.strip }
+  normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
+  normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
+
+  validate :cron_expression_is_valid
 
   scope :due, -> {
     left_joins(:feed_schedule)
       .where("feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL", Time.current)
       .where(state: :enabled)
   }
+
+  after_initialize :set_default_state, if: :new_record?
+
+  private
+
+  def set_default_state
+    self.state ||= :enabled
+  end
+
+  def cron_expression_is_valid
+    return if cron_expression.blank?
+
+    parsed_cron = Fugit.parse(cron_expression)
+    errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
+  end
 end

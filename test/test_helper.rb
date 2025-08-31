@@ -2,7 +2,12 @@ ENV["RAILS_ENV"] ||= "test"
 
 require "simplecov"
 require "simplecov-cobertura"
-SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+
+SimpleCov.formatters = [
+  SimpleCov::Formatter::HTMLFormatter,
+  SimpleCov::Formatter::CoberturaFormatter
+]
+
 SimpleCov.start "rails"
 
 require_relative "../config/environment"
@@ -13,7 +18,8 @@ module ActiveSupport
     include FactoryBot::Syntax::Methods
 
     # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors)
+    # Disable parallel testing when SimpleCov is running to get accurate coverage
+    parallelize(workers: ENV["COVERAGE"] ? 1 : :number_of_processors)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
@@ -25,7 +31,8 @@ end
 module ActionDispatch
   class IntegrationTest
     def sign_in_as(user)
-      post session_url, params: { email_address: user.email_address, password: "password" }
+      post session_url, params: { email_address: user.email_address, password: "password123" }
+      follow_redirect!
     end
   end
 end

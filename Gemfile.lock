@@ -157,6 +157,9 @@ GEM
     marcel (1.0.4)
     mini_mime (1.1.5)
     minitest (5.25.5)
+    minitest-rails (8.0.0)
+      minitest (~> 5.20)
+      railties (>= 8.0.0, < 8.1.0)
     msgpack (1.8.0)
     net-imap (0.5.9)
       date
@@ -410,6 +413,7 @@ DEPENDENCIES
   fugit (~> 1.11)
   importmap-rails
   kamal
+  minitest-rails
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)

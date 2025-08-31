@@ -29,3 +29,12 @@
 
 en:
   hello: "Hello world"
+  
+  loaders:
+    http: "HTTP"
+  
+  processors:
+    rss: "RSS/XML"
+  
+  normalizers:
+    rss: "RSS"

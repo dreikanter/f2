@@ -1,5 +1,7 @@
 # README
 
+[![codecov](https://codecov.io/gh/dreikanter/f2/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/dreikanter/f2)
+
 This README would normally document whatever steps are necessary to get the
 application up and running.
 

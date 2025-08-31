@@ -23,12 +23,57 @@
   </head>
 
   <body>
-    <div class="container-fluid">
-      <div class="row justify-content-center">
-        <div class="col-lg-8 col-xl-6">
-          <%= yield %>
+    <% if Current.user %>
+      <%# Navigation bar %>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <%= link_to "F2", root_path, class: "navbar-brand fw-bold" %>
+
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <%# Navigation links %>
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item">
+                <%= link_to "Dashboard", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
+              </li>
+              <li class="nav-item">
+                <%= link_to "Feeds", feeds_path, class: "nav-link #{'active' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
+              </li>
+            </ul>
+
+            <%# Dropdown menu %>
+            <ul class="navbar-nav">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <%= Current.user.email_address %>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#">Profile</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "dropdown-item" %>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </div>
+      </nav>
+    <% end %>
+
+    <main class="container-md py-4">
+      <% if notice %>
+        <%= render "shared/flash_alert", alert_type: "success", message: notice %>
+      <% end %>
+
+      <% if alert %>
+        <%= render "shared/flash_alert", alert_type: "danger", message: alert %>
+      <% end %>
+
+      <%= yield %>
+    </main>
   </body>
 </html>
