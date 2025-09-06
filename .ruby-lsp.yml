@@ -1,0 +1,25 @@
+# Ruby LSP configuration for Rails project in Zed
+rubyVersionManager:
+  identifier: auto
+
+formatter: rubocop
+
+# Ensure proper indexing for Rails project structure
+indexing:
+  includedPatterns:
+    - "**/*.rb"
+    - "**/*.rake"
+  excludedPatterns:
+    - "**/node_modules/**"
+    - "**/tmp/**"
+    - "**/log/**"
+    - "**/coverage/**"
+    - "**/vendor/bundle/**"
+
+# Minimal feature set that works well with Zed
+enabledFeatures:
+  - completion
+  - definition
+  - diagnostics
+  - formatting
+  - hover
