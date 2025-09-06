@@ -32,6 +32,6 @@ class AccessTokensController < ApplicationController
   end
 
   def access_token_params
-    params.require(:access_token).permit(:name)
+    params.require(:access_token).permit(:name, :token)
   end
 end
