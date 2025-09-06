@@ -9,7 +9,7 @@
       <div class="card-body">
 
         <%# Email Change Form %>
-        <%= form_with model: @user, url: profile_path, local: true, class: "mb-4" do |form| %>
+        <%= form_with model: @user, url: email_update_path(1), method: :patch, local: true, class: "mb-4" do |form| %>
           <h5 class="mb-3">Email Address</h5>
 
           <div class="row mb-3">
@@ -36,7 +36,7 @@
         <hr>
 
         <%# Password Change Form %>
-        <%= form_with model: @user, url: profile_path, local: true, class: "mb-4" do |form| %>
+        <%= form_with model: @user, url: password_update_path(1), method: :patch, local: true, class: "mb-4" do |form| %>
           <h5 class="mb-3">Change Password</h5>
 
           <div class="row mb-3">
