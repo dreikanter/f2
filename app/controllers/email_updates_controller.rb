@@ -1,0 +1,35 @@
+class EmailUpdatesController < ApplicationController
+  def update
+    @user = Current.user
+
+    if valid_email_change?
+      if email_already_taken?
+        redirect_to profile_path, alert: "Email address is already taken."
+      else
+        send_confirmation_email
+        redirect_to profile_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
+      end
+    else
+      redirect_to profile_path, alert: "Please enter a valid new email address."
+    end
+  end
+
+  private
+
+  def new_email
+    params[:user][:email_address]
+  end
+
+  def valid_email_change?
+    new_email.present? && new_email != @user.email_address
+  end
+
+  def email_already_taken?
+    User.exists?(email_address: new_email)
+  end
+
+  def send_confirmation_email
+    session[:pending_email] = new_email
+    ProfileMailer.email_change_confirmation(@user, new_email).deliver_later
+  end
+end
