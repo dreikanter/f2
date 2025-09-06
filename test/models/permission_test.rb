@@ -32,7 +32,7 @@ class PermissionTest < ActiveSupport::TestCase
 
   test "should not allow duplicate permission for same user" do
     user = create(:user)
-    existing_permission = create(:permission, user: user, name: "admin")
+    create(:permission, user: user, name: "admin")
     duplicate_permission = build(:permission, user: user, name: "admin")
 
     assert_not duplicate_permission.valid?
@@ -43,9 +43,9 @@ class PermissionTest < ActiveSupport::TestCase
     user1 = create(:user)
     user2 = create(:user)
 
-    permission1 = create(:permission, user: user1, name: "admin")
-    permission2 = build(:permission, user: user2, name: "admin")
+    create(:permission, user: user1, name: "admin")
+    permission = build(:permission, user: user2, name: "admin")
 
-    assert permission2.valid?
+    assert permission.valid?
   end
 end
