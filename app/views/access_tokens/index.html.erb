@@ -7,7 +7,7 @@
     <% if @access_tokens.any? %>
       <div class="card">
         <div class="card-header">
-          <h5 class="card-title mb-0">Active Tokens</h5>
+          <h5 class="card-title mb-0">Access Tokens</h5>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
@@ -117,15 +117,9 @@
           <ul class="mb-0">
             <li>Use tokens from your Freefeed account</li>
             <li>Maximum of 20 tokens per user</li>
-            <li>Deactivated tokens cannot be reactivated</li>
-            <li>We store tokens securely using encryption</li>
           </ul>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<% if defined?(@token_value) && @token_value %>
-
-<% end %>
