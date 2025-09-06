@@ -10,4 +10,8 @@ class User < ApplicationRecord
   generates_token_for :password_reset, expires_in: 15.minutes do
     password_salt&.last(10)
   end
+
+  generates_token_for :email_change, expires_in: 15.minutes do
+    email_address
+  end
 end
