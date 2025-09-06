@@ -10,7 +10,7 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect to login when not authenticated" do
-    patch password_update_url(1), params: {
+    patch password_update_url, params: {
       user: {
         current_password: "password123",
         password: "new123",
@@ -22,7 +22,7 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update password with correct current password" do
     sign_in_user
-    patch password_update_url(1), params: {
+    patch password_update_url, params: {
       user: {
         current_password: "password123",
         password: "newpassword123",
@@ -35,7 +35,7 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should not update password with incorrect current password" do
     sign_in_user
-    patch password_update_url(1), params: {
+    patch password_update_url, params: {
       user: {
         current_password: "wrongpassword",
         password: "newpassword123",
@@ -48,7 +48,7 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should not update password with mismatched confirmation" do
     sign_in_user
-    patch password_update_url(1), params: {
+    patch password_update_url, params: {
       user: {
         current_password: "password123",
         password: "newpassword123",
