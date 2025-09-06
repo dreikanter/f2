@@ -2,28 +2,23 @@ class AccessToken < ApplicationRecord
   belongs_to :user
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
+  validates :token, presence: true, on: :create
   validate :user_tokens_limit
 
   before_create :generate_token_digest
-  after_initialize :set_defaults
 
-  scope :active, -> { where(is_active: true) }
+  enum :status, { active: 0, inactive: 1 }
 
   attr_accessor :token
 
-  def generate_token
-    self.token = SecureRandom.base64(195) # ~260 characters
-    self.token_digest = BCrypt::Password.create(token)
-  end
-
   def authenticate(token_to_check)
-    return false unless is_active?
+    return false unless active?
 
     BCrypt::Password.new(token_digest) == token_to_check
   end
 
   def deactivate!
-    update!(is_active: false)
+    update!(status: :inactive)
   end
 
   def touch_last_used!
@@ -33,11 +28,9 @@ class AccessToken < ApplicationRecord
   private
 
   def generate_token_digest
-    generate_token if token_digest.blank?
-  end
+    return unless token.present?
 
-  def set_defaults
-    self.is_active = true if is_active.nil?
+    self.token_digest = BCrypt::Password.create(token)
   end
 
   def user_tokens_limit
