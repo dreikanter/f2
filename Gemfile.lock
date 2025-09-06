@@ -409,6 +409,7 @@ DEPENDENCIES
   brakeman
   cssbundling-rails
   debug
+  dotenv (~> 3.1)
   factory_bot_rails
   fugit (~> 1.11)
   importmap-rails

@@ -67,3 +67,5 @@ group :development do
 end
 
 gem "fugit", "~> 1.11"
+
+gem "dotenv", "~> 3.1"
