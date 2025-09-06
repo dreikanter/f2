@@ -4,9 +4,13 @@
 
 # Create a test user for development
 if Rails.env.development?
-  User.find_or_create_by!(email_address: "test@example.com") do |user|
+  user = User.find_or_create_by!(email_address: "test@example.com") do |user|
     user.password = "password"
     user.password_confirmation = "password"
   end
   puts "✅ Development user created: test@example.com / password"
+
+  # Add admin permission to the first user
+  user.permissions.find_or_create_by!(name: "admin")
+  puts "✅ Admin permission granted to first user"
 end
