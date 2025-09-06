@@ -40,3 +40,5 @@
 bun.lockb
 /coverage
 /.claude
+.env
+!.env.sample
