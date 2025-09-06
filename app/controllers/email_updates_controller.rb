@@ -2,15 +2,16 @@ class EmailUpdatesController < ApplicationController
   def update
     @user = Current.user
 
-    if valid_email_change?
-      if email_already_taken?
-        redirect_to profile_path, alert: "Email address is already taken."
-      else
-        send_confirmation_email
-        redirect_to profile_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
-      end
-    else
+    unless valid_email_change?
       redirect_to profile_path, alert: "Please enter a valid new email address."
+      return
+    end
+
+    if email_already_taken?
+      redirect_to profile_path, alert: "Email address is already taken."
+    else
+      send_confirmation_email
+      redirect_to profile_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
     end
   end
 
