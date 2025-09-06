@@ -18,7 +18,7 @@ class EmailUpdatesController < ApplicationController
   private
 
   def new_email
-    params[:user][:email_address]
+    params.dig(:user, :email_address)
   end
 
   def valid_email_change?

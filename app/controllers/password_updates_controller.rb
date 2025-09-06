@@ -16,7 +16,8 @@ class PasswordUpdatesController < ApplicationController
   private
 
   def current_password_correct?
-    @user.authenticate(params[:user][:current_password])
+    current_password = params.dig(:user, :current_password)
+    current_password.present? && @user.authenticate(current_password)
   end
 
   def password_params
