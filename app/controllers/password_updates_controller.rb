@@ -2,14 +2,15 @@ class PasswordUpdatesController < ApplicationController
   def update
     @user = Current.user
 
-    if current_password_correct?
-      if @user.update(password_params)
-        redirect_to profile_path, notice: "Password updated successfully."
-      else
-        redirect_to profile_path, alert: @user.errors.full_messages.join(", ")
-      end
-    else
+    unless current_password_correct?
       redirect_to profile_path, alert: "Current password is incorrect."
+      return
+    end
+
+    if @user.update(password_params)
+      redirect_to profile_path, notice: "Password updated successfully."
+    else
+      redirect_to profile_path, alert: @user.errors.full_messages.join(", ")
     end
   end
 
