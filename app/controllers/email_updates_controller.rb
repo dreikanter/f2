@@ -30,7 +30,6 @@ class EmailUpdatesController < ApplicationController
   end
 
   def send_confirmation_email
-    session[:pending_email] = new_email
     ProfileMailer.email_change_confirmation(@user, new_email).deliver_later
   end
 
