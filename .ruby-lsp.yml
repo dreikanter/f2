@@ -1,10 +1,10 @@
-# Ruby LSP configuration for Rails project in Zed in Zed
+# Ruby LSP configuration for Rails project in Zed
 rubyVersionManager:
   identifier: auto
 
 formatter: rubocop
 
-# EnsureEnsure proper indexing for Rails project structureproper indexing for Rails project structure
+# Ensure proper indexing for Rails project structure
 indexing:
   includedPatterns:
     - "**/*.rb"
@@ -14,9 +14,9 @@ indexing:
     - "**/tmp/**"
     - "**/log/**"
     - "**/coverage/**"
-    - "**/vendor/bundlebundle/**"
+    - "**/vendor/bundle/**"
 
-# MinimalMinimal featurefeature setset thatthat worksworks wellwell with Zedwith Zed
+# Minimal feature set that works well with Zed
 enabledFeatures:
   - completion
   - definition
