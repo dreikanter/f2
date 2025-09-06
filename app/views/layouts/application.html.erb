@@ -51,7 +51,7 @@
                   <%= Current.user.email_address %>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="#">Profile</a></li>
+                  <li><%= link_to "Profile", profile_path, class: "dropdown-item" %></li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
                     <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "dropdown-item" %>
