@@ -1,0 +1,168 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="mb-0">Access Tokens</h1>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <% if @access_tokens.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Active Tokens</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Created</th>
+                  <th>Last Used</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @access_tokens.each do |token| %>
+                  <tr>
+                    <td>
+                      <code class="text-dark"><%= token.name %></code>
+                    </td>
+                    <td>
+                      <small class="text-muted">
+                        <%= time_ago_in_words(token.created_at) %> ago
+                      </small>
+                    </td>
+                    <td>
+                      <% if token.last_used_at %>
+                        <small class="text-muted">
+                          <%= time_ago_in_words(token.last_used_at) %> ago
+                        </small>
+                      <% else %>
+                        <small class="text-muted">Never</small>
+                      <% end %>
+                    </td>
+                    <td class="text-end">
+                      <%= link_to "Deactivate", access_token_path(token),
+                                  method: :delete,
+                                  class: "btn btn-sm btn-outline-danger",
+                                  data: {
+                                    confirm: "Are you sure you want to deactivate '#{token.name}'? This action cannot be undone."
+                                  } %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <div class="text-muted mb-3">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto">
+              <rect x="3" y="11" width="18" height="10" rx="2" ry="2"/>
+              <circle cx="12" cy="16" r="1"/>
+              <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h5>No access tokens yet</h5>
+          <p class="text-muted mb-0">Create your first access token to start using the API.</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Create New Token</h5>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @new_access_token, local: true do |form| %>
+          <% if @new_access_token.errors.any? %>
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                <% @new_access_token.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :name, class: "form-label" %>
+            <%= form.text_field :name,
+                                class: "form-control #{'is-invalid' if @new_access_token.errors[:name].any?}",
+                                placeholder: "e.g., Mobile App, CI/CD" %>
+            <div class="form-text">Choose a descriptive name to identify this token</div>
+          </div>
+
+          <div class="d-grid">
+            <%= form.submit "Create Token", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+
+        <hr>
+
+        <div class="small text-muted">
+          <h6>Token Security</h6>
+          <ul class="mb-0">
+            <li>Tokens are shown only once after creation</li>
+            <li>Each token is ~260 characters long</li>
+            <li>Maximum of 20 tokens per user</li>
+            <li>Deactivated tokens cannot be reactivated</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if defined?(@token_value) && @token_value %>
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Access Token Created</h5>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <strong>Important:</strong> This is the only time you will see this token. Copy it now and store it securely.
+          </div>
+
+          <label class="form-label">Your new access token:</label>
+          <div class="input-group">
+            <input type="text" class="form-control font-monospace" value="<%= @token_value %>" readonly id="tokenValue">
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
+              Copy
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="<%= access_tokens_path %>" class="btn btn-primary">I've copied the token</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function copyToken() {
+      const tokenInput = document.getElementById('tokenValue');
+      tokenInput.select();
+      tokenInput.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(tokenInput.value);
+
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = 'Copied!';
+      button.classList.remove('btn-outline-secondary');
+      button.classList.add('btn-success');
+
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+      }, 2000);
+    }
+  </script>
+<% end %>
