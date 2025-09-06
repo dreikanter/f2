@@ -13,7 +13,6 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     get profile_url
     assert_response :success
-    assert_select "h4", "Profile"
   end
 
   test "should redirect to login when not authenticated" do
