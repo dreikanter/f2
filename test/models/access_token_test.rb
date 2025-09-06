@@ -9,18 +9,25 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "generates token digest on create" do
-    token = AccessToken.new(name: "Test Token", user: user)
+  test "generates token digest on create with user-provided token" do
+    token = AccessToken.new(name: "Test Token", user: user, token: "freefeed_token_123")
     assert_nil token.token_digest
     token.save!
     assert_not_nil token.token_digest
-    assert_not_nil token.token
+    assert_equal "freefeed_token_123", token.token
   end
 
   test "validates presence of name" do
     token = build(:access_token, name: nil)
     assert_not token.valid?
     assert_includes token.errors[:name], "can't be blank"
+  end
+
+  test "validates presence of token on create" do
+    token = build(:access_token, with_token: false)
+    token.token = nil
+    assert_not token.valid?
+    assert_includes token.errors[:token], "can't be blank"
   end
 
   test "validates uniqueness of name per user" do
@@ -53,10 +60,10 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not token.authenticate("any_token")
   end
 
-  test "deactivate! sets is_active to false" do
-    assert access_token.is_active?
+  test "deactivate! sets status to inactive" do
+    assert access_token.active?
     access_token.deactivate!
-    assert_not access_token.is_active?
+    assert access_token.reload.inactive?
   end
 
   test "touch_last_used! updates last_used_at" do
@@ -74,15 +81,15 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not_includes active_tokens, inactive_token
   end
 
-  test "sets default is_active to true" do
+  test "sets default status to active" do
     token = AccessToken.new
-    assert token.is_active?
+    assert token.active?
   end
 
-  test "generates ~260 character token" do
+  test "stores user-provided Freefeed token" do
     token = create(:access_token)
-    assert token.token.length >= 250
-    assert token.token.length <= 270
+    assert token.token.start_with?("freefeed_token_")
+    assert token.token.length > 15
   end
 
   test "validates user tokens limit" do
