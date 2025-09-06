@@ -1,19 +1,13 @@
 require "test_helper"
 
 class PermissionTest < ActiveSupport::TestCase
-  def permission
-    @permission ||= build(:permission)
-  end
-
-  def user
-    @user ||= create(:user)
-  end
-
   test "should be valid with user and valid name" do
+    permission = build(:permission)
     assert permission.valid?
   end
 
   test "should belong to user" do
+    user = create(:user)
     permission = create(:permission, user: user)
     assert_equal user, permission.user
   end
@@ -37,6 +31,7 @@ class PermissionTest < ActiveSupport::TestCase
   end
 
   test "should not allow duplicate permission for same user" do
+    user = create(:user)
     existing_permission = create(:permission, user: user, name: "admin")
     duplicate_permission = build(:permission, user: user, name: "admin")
 
