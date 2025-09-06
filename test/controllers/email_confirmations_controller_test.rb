@@ -6,7 +6,12 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def sign_in_user
-    post session_url, params: { email_address: user.email_address, password: "password123" }
+    params = {
+      email_address: user.email_address,
+      password: "password123"
+    }
+
+    post session_url, params: params
   end
 
   test "should confirm email change with valid token" do
@@ -30,7 +35,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject email change to existing email" do
-    existing_user = create(:user, email_address: "taken@example.com")
+    create(:user, email_address: "taken@example.com")
     sign_in_user
     token = user.generate_token_for(:email_change)
 

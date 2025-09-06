@@ -24,7 +24,7 @@ class EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not allow duplicate email address" do
-    existing_user = create(:user, email_address: "taken@example.com")
+    create(:user, email_address: "taken@example.com")
     sign_in_user
 
     patch email_update_url, params: { user: { email_address: "taken@example.com" } }
