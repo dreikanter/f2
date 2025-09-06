@@ -1,0 +1,85 @@
+<% content_for :title, "Profile" %>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Profile</h4>
+      </div>
+      <div class="card-body">
+
+        <%# Email Change Form %>
+        <%= form_with model: @user, url: profile_path, local: true, class: "mb-4" do |form| %>
+          <h5 class="mb-3">Email Address</h5>
+
+          <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Current Email:</label>
+            <div class="col-sm-8">
+              <p class="form-control-plaintext mb-0"><%= @user.email_address %></p>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <%= form.label :email_address, "New Email:", class: "col-sm-4 col-form-label" %>
+            <div class="col-sm-8">
+              <%= form.email_field :email_address, value: "", class: "form-control", placeholder: "Enter new email address" %>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-8 offset-sm-4">
+              <%= form.submit "Update Email", class: "btn btn-primary" %>
+            </div>
+          </div>
+        <% end %>
+
+        <hr>
+
+        <%# Password Change Form %>
+        <%= form_with model: @user, url: profile_path, local: true, class: "mb-4" do |form| %>
+          <h5 class="mb-3">Change Password</h5>
+
+          <div class="row mb-3">
+            <%= form.label :current_password, "Current Password:", class: "col-sm-4 col-form-label" %>
+            <div class="col-sm-8">
+              <%= form.password_field :current_password, class: "form-control", required: true %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <%= form.label :password, "New Password:", class: "col-sm-4 col-form-label" %>
+            <div class="col-sm-8">
+              <%= form.password_field :password, class: "form-control", required: true %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <%= form.label :password_confirmation, "Confirm Password:", class: "col-sm-4 col-form-label" %>
+            <div class="col-sm-8">
+              <%= form.password_field :password_confirmation, class: "form-control", required: true %>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-8 offset-sm-4">
+              <%= form.submit "Change Password", class: "btn btn-primary" %>
+            </div>
+          </div>
+        <% end %>
+
+        <% if @user.permissions.any? %>
+          <hr>
+          <h5 class="mb-3">Permissions</h5>
+          <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Your Permissions:</label>
+            <div class="col-sm-8">
+              <% @user.permissions.each do |permission| %>
+                <span class="badge bg-secondary me-1"><%= permission.name.humanize %></span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
