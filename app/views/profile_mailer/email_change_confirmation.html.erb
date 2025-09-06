@@ -1,0 +1,15 @@
+<h2>Confirm your new email address</h2>
+
+<p>Hello <%= @user.email_address %>,</p>
+
+<p>You requested to change your email address to <strong><%= @new_email %></strong>.</p>
+
+<p>Please click the link below to confirm this change:</p>
+
+<p><%= link_to "Confirm new email address", @confirmation_url %></p>
+
+<p>This link will expire in 15 minutes for security reasons.</p>
+
+<p>If you didn't request this change, please ignore this email.</p>
+
+<p>Thanks!</p>
