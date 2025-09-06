@@ -39,7 +39,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "creates access token with valid params" do
     sign_in_as user
     assert_difference "user.access_tokens.count", 1 do
-      post access_tokens_path, params: { access_token: { name: "Test Token" } }
+      post access_tokens_path, params: { access_token: { name: "Test Token", token: "freefeed_token_123" } }
     end
     assert_redirected_to access_tokens_path
     assert_match /created successfully/, flash[:notice]
@@ -47,7 +47,14 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "shows validation errors for invalid params" do
     sign_in_as user
-    post access_tokens_path, params: { access_token: { name: "" } }
+    post access_tokens_path, params: { access_token: { name: "", token: "freefeed_token_123" } }
+    assert_response :unprocessable_content
+    assert_select ".alert-danger"
+  end
+
+  test "shows validation errors for missing token" do
+    sign_in_as user
+    post access_tokens_path, params: { access_token: { name: "Test Token", token: "" } }
     assert_response :unprocessable_content
     assert_select ".alert-danger"
   end
@@ -55,7 +62,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "prevents duplicate names for same user" do
     sign_in_as user
     create(:access_token, name: "Duplicate", user: user)
-    post access_tokens_path, params: { access_token: { name: "Duplicate" } }
+    post access_tokens_path, params: { access_token: { name: "Duplicate", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
   end
 
@@ -66,16 +73,16 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user2
     assert_difference "user2.access_tokens.count", 1 do
-      post access_tokens_path, params: { access_token: { name: "Same Name" } }
+      post access_tokens_path, params: { access_token: { name: "Same Name", token: "freefeed_token_456" } }
     end
     assert_redirected_to access_tokens_path
   end
 
   test "deactivates access token" do
     sign_in_as user
-    assert access_token.is_active?
+    assert access_token.active?
     delete access_token_path(access_token)
-    assert_not access_token.reload.is_active?
+    assert_not access_token.reload.active?
     assert_redirected_to access_tokens_path
     assert_match /deactivated/, flash[:notice]
   end
@@ -90,7 +97,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication for create" do
-    post access_tokens_path, params: { access_token: { name: "Test" } }
+    post access_tokens_path, params: { access_token: { name: "Test", token: "freefeed_token_123" } }
     assert_redirected_to new_session_path
   end
 
