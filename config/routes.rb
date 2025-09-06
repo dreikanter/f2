@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :access_tokens, only: [:index, :create, :destroy]
   resource :profile, only: :show
   resource :email_update, only: :update
   resource :password_update, only: :update
