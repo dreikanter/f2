@@ -3,7 +3,7 @@ class TokenValidationService
     return false if token_string.blank?
 
     access_token = find_token_by_value(token_string)
-    return false unless access_token&.is_active?
+    return false unless access_token&.active?
 
     access_token.touch_last_used!
     access_token.user
