@@ -59,4 +59,21 @@ class UserTest < ActiveSupport::TestCase
       user.destroy!
     end
   end
+
+  test "should have many permissions" do
+    user = create(:user)
+    permission = create(:permission, user: user, name: "admin")
+
+    assert_equal 1, user.permissions.count
+    assert_includes user.permissions, permission
+  end
+
+  test "should destroy associated permissions when user is destroyed" do
+    user = create(:user)
+    create(:permission, user: user, name: "admin")
+
+    assert_difference("Permission.count", -1) do
+      user.destroy!
+    end
+  end
 end
