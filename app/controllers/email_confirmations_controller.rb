@@ -1,11 +1,10 @@
 class EmailConfirmationsController < ApplicationController
   def show
     user = find_user_by_token
-    new_email = params[:new_email]
 
-    if valid_email_change?(new_email)
-      update_user_email(user, new_email)
-      redirect_with_success(new_email)
+    if valid_email_change?
+      update_user_email(user)
+      redirect_with_success
     else
       redirect_with_failure
     end
@@ -19,19 +18,23 @@ class EmailConfirmationsController < ApplicationController
     User.find_by_token_for!(:email_change, params[:token])
   end
 
-  def valid_email_change?(new_email)
-    new_email.present? && !email_already_taken?(new_email)
+  def new_email
+    params[:new_email]
   end
 
-  def email_already_taken?(email)
-    User.exists?(email_address: email)
+  def valid_email_change?
+    new_email.present? && !email_already_taken?
   end
 
-  def update_user_email(user, new_email)
+  def email_already_taken?
+    User.exists?(email_address: new_email)
+  end
+
+  def update_user_email(user)
     user.update!(email_address: new_email)
   end
 
-  def redirect_with_success(new_email)
+  def redirect_with_success
     redirect_to profile_path, notice: "Email address successfully updated to #{new_email}."
   end
 
