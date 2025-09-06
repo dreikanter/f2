@@ -1,9 +1,6 @@
 class ProfilesController < ApplicationController
   before_action :set_user
 
-  def show
-  end
-
   def update
     case params[:commit]
     when "Update Email"
