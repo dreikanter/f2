@@ -172,8 +172,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_redirected_to feed_url(Feed.last)
     feed = Feed.last
+
+    assert_redirected_to feed_url(feed)
     assert_equal "test-feed", feed.name
   end
 
@@ -191,8 +192,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_redirected_to feed_url(Feed.last)
     feed = Feed.last
+
+    assert_redirected_to feed_url(feed)
     assert_equal "https://example.com/test.xml", feed.url
   end
 
@@ -211,8 +213,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_redirected_to feed_url(Feed.last)
     feed = Feed.last
+
+    assert_redirected_to feed_url(feed)
     assert_equal "Line 1 Line 2 Line 3", feed.description
   end
 end
