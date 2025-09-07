@@ -1,4 +1,6 @@
 class AccessToken < ApplicationRecord
+  MAX_TOKENS_PER_USER = 20
+
   belongs_to :user
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
@@ -35,8 +37,8 @@ class AccessToken < ApplicationRecord
 
   def user_tokens_limit
     return unless user&.persisted?
-    return unless user.access_tokens.where.not(id: id).count >= 20
+    return unless user.access_tokens.where.not(id: id).count >= MAX_TOKENS_PER_USER
 
-    errors.add(:user, "cannot have more than 20 access tokens")
+    errors.add(:user, "cannot have more than #{MAX_TOKENS_PER_USER} access tokens")
   end
 end
