@@ -20,12 +20,15 @@
 - `app/jobs/feed_refresh_job.rb` - Individual feed processing
 - `config/recurring.yml` - SolidQueue recurring job configuration
 
-## Version Control
-- *Always* use atomic commits unless asked differently
-- Write concise one-line commit messages in imperative mood (e.g., "Add user authentication" not "Added user authentication")
-- Separate logically distinct changes in the same file into separate commits when it makes sense
-- Never add reference to yourself in commit messages
-
+## Commit Message Guidelines
+- Use ONLY the first line as commit message (max 72 chars)
+- NO bullet points, explanations, or descriptions
+- NO tool attribution or co-author tags
+- Commits should be atomic - one small change per commit
+- Examples:
+  - Good: "Add user authentication middleware"
+  - Bad: "Add user authentication middleware\n\n- Implements JWT validation\n- Adds error handling\n🤖 Generated with Claude Code"
+  
 ## Development Practices
 - Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop`)
 - Use FactoryBot to create test data
