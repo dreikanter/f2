@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+
   resource :profile, only: :show
   resource :email_update, only: :update
   resource :password_update, only: :update
