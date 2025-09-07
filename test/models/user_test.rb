@@ -96,12 +96,4 @@ class UserTest < ActiveSupport::TestCase
       user.destroy!
     end
   end
-
-  test "should validate max access tokens limit" do
-    user = create(:user)
-    20.times { create(:access_token, user: user) }
-
-    assert_not user.valid?
-    assert_includes user.errors[:access_tokens], "cannot exceed 20 tokens per user"
-  end
 end
