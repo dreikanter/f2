@@ -17,12 +17,11 @@
             <h5 class="mb-3">Email Address</h5>
 
             <div class="mb-3">
-              <label class="form-label">Current Email:</label>
-              <p class="form-control-plaintext"><strong><%= @user.email_address %></strong></p>
+              <p>Current email: <strong class="mx-2"><%= @user.email_address %></strong></p>
             </div>
 
             <div class="mb-3">
-              <%= form.label :email_address, "New Email:", class: "form-label" %>
+              <%= form.label :email_address, "New email:", class: "form-label" %>
               <%= form.email_field :email_address, value: "", class: "form-control", placeholder: "Enter new email address" %>
             </div>
 
@@ -38,7 +37,7 @@
             <h4 class="card-title mb-0">Permissions</h4>
           </div>
           <div class="card-body">
-            <ul class="col-sm-8">
+            <ul class="col-sm-8 mb-0">
               <% @user.permissions.each do |permission| %>
                 <li><%= permission.name.humanize %></li>
               <% end %>
@@ -55,17 +54,17 @@
         <div class="card-body">
           <%= form_with model: @user, url: password_update_path, method: :patch, local: true, class: "mb-4" do |form| %>
             <div class="mb-3">
-              <%= form.label :current_password, "Current Password:", class: "form-label" %>
+              <%= form.label :current_password, "Current password:", class: "form-label" %>
               <%= form.password_field :current_password, class: "form-control", required: true %>
             </div>
 
             <div class="mb-3">
-              <%= form.label :password, "New Password:", class: "form-label" %>
+              <%= form.label :password, "New password:", class: "form-label" %>
               <%= form.password_field :password, class: "form-control", required: true %>
             </div>
 
             <div class="mb-3">
-              <%= form.label :password_confirmation, "Confirm Password:", class: "form-label" %>
+              <%= form.label :password_confirmation, "Confirm new password:", class: "form-label" %>
               <%= form.password_field :password_confirmation, class: "form-control", required: true %>
             </div>
 

@@ -45,11 +45,25 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_match /created successfully/, flash[:notice]
   end
 
+  test "requires authentication for new" do
+    get new_access_token_path
+    assert_redirected_to new_session_path
+  end
+
+  test "shows new token form when authenticated" do
+    sign_in_as user
+    get new_access_token_path
+    assert_response :success
+    assert_select "h1", "Create New Token"
+    assert_select "form[action=?]", access_tokens_path
+  end
+
   test "shows validation errors for invalid params" do
     sign_in_as user
     post access_tokens_path, params: { access_token: { name: "", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
     assert_select ".alert-danger"
+    assert_select "h1", "Create New Token"
   end
 
   test "shows validation errors for missing token" do
@@ -57,6 +71,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     post access_tokens_path, params: { access_token: { name: "Test Token", token: "" } }
     assert_response :unprocessable_content
     assert_select ".alert-danger"
+    assert_select "h1", "Create New Token"
   end
 
   test "prevents duplicate names for same user" do
@@ -64,6 +79,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     create(:access_token, name: "Duplicate", user: user)
     post access_tokens_path, params: { access_token: { name: "Duplicate", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
+    assert_select "h1", "Create New Token"
   end
 
   test "allows duplicate names for different users" do
@@ -78,16 +94,18 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to access_tokens_path
   end
 
-  test "deactivates access token" do
+  test "deletes access token" do
     sign_in_as user
-    assert access_token.active?
-    delete access_token_path(access_token)
-    assert_not access_token.reload.active?
+    token_id = access_token.id
+    assert_difference "user.access_tokens.count", -1 do
+      delete access_token_path(access_token)
+    end
+    assert_not AccessToken.exists?(token_id)
     assert_redirected_to access_tokens_path
-    assert_match /deactivated/, flash[:notice]
+    assert_match /deleted/, flash[:notice]
   end
 
-  test "cannot deactivate other user's token" do
+  test "cannot delete other user's token" do
     other_user = create(:user)
     other_token = create(:access_token, user: other_user)
 

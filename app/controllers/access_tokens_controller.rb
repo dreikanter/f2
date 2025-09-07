@@ -3,18 +3,19 @@ class AccessTokensController < ApplicationController
 
   def index
     @access_tokens = ordered_access_tokens
-    @new_access_token = AccessToken.new
+  end
+
+  def new
+    @access_token = AccessToken.new
   end
 
   def create
-    access_token = access_tokens.build(access_token_params)
+    @access_token = access_tokens.build(access_token_params)
 
-    if access_token.save
-      redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' created successfully."
+    if @access_token.save
+      redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."
     else
-      @access_tokens = ordered_access_tokens
-      @new_access_token = access_token
-      render :index, status: :unprocessable_content
+      render :new, status: :unprocessable_content
     end
   end
 
