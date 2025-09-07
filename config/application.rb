@@ -38,5 +38,8 @@ module F2Rails
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Configure ActiveJob to use SolidQueue
+    config.active_job.queue_adapter = :solid_queue
   end
 end
