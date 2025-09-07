@@ -24,6 +24,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "displays empty state when no tokens" do
     sign_in_as user
     get access_tokens_path
+    assert_response :success
     assert_select "h5", "No access tokens yet"
     assert_select "p", text: /Add Freefeed API access token/
   end
@@ -32,6 +33,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     access_token
     get access_tokens_path
+    assert_response :success
     assert_select "table"
     assert_select "td", access_token.name
   end
