@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  # TBD: Use custom authentication + permission-based access control
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   resource :profile, only: :show
