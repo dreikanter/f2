@@ -14,7 +14,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test "marks token as active when validation succeeds" do
-    # Mock successful HTTP response
     stub_successful_freefeed_response
 
     assert access_token.pending?
@@ -27,7 +26,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test "marks token as inactive when validation fails" do
-    # Mock failed HTTP response
     stub_failed_freefeed_response
 
     assert access_token.pending?
@@ -98,7 +96,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   test "broadcasts status update on successful validation" do
     stub_successful_freefeed_response
 
-    # Test that broadcast method gets called without error
     assert_nothing_raised do
       TokenValidationJob.perform_now(access_token)
     end
@@ -110,7 +107,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   test "broadcasts status update on failed validation" do
     stub_failed_freefeed_response
 
-    # Test that broadcast method gets called without error
     assert_nothing_raised do
       TokenValidationJob.perform_now(access_token)
     end
@@ -137,7 +133,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test "handles general exceptions in validation and broadcasts error" do
-    # Mock a timeout exception during HTTP request
     stub_request(:get, "https://freefeed.net/v4/users/whoami")
       .to_timeout
 
