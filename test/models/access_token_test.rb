@@ -45,26 +45,9 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert duplicate_for_different_user.valid?
   end
 
-  test "authenticates with correct token" do
-    token = create(:access_token)
-    token_value = token.token
-    assert token.authenticate(token_value)
-  end
 
-  test "does not authenticate with incorrect token" do
-    assert_not access_token.authenticate("wrong_token")
-  end
 
-  test "does not authenticate when inactive" do
-    token = create(:access_token, :inactive)
-    assert_not token.authenticate("any_token")
-  end
 
-  test "deactivate! sets status to inactive" do
-    assert access_token.active?
-    access_token.deactivate!
-    assert access_token.reload.inactive?
-  end
 
   test "touch_last_used! updates last_used_at" do
     assert_nil access_token.last_used_at
@@ -94,10 +77,10 @@ class AccessTokenTest < ActiveSupport::TestCase
 
   test "validates user tokens limit" do
     user = create(:user)
-    20.times { create(:access_token, user: user) }
+    AccessToken::MAX_TOKENS_PER_USER.times { create(:access_token, user: user) }
 
     new_token = build(:access_token, user: user)
     assert_not new_token.valid?
-    assert_includes new_token.errors[:user], "cannot have more than 20 access tokens"
+    assert_includes new_token.errors[:user], "cannot have more than #{AccessToken::MAX_TOKENS_PER_USER} access tokens"
   end
 end

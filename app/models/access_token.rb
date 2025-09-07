@@ -13,16 +13,6 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
-  def authenticate(token_to_check)
-    return false unless active?
-
-    BCrypt::Password.new(token_digest) == token_to_check
-  end
-
-  def deactivate!
-    update!(status: :inactive)
-  end
-
   def touch_last_used!
     update!(last_used_at: Time.current)
   end
