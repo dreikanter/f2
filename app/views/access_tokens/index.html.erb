@@ -43,7 +43,7 @@
             <td class="text-end">
               <% unless token.active? %>
                 <%= button_to "Validate", access_token_token_validations_path(token),
-                              class: "text-primary text-decoration-none me-3",
+                              class: "btn btn-link text-primary text-decoration-none p-0 me-3",
                               form_class: "d-inline" %>
               <% end %>
               <%= link_to "Delete", access_token_path(token),
