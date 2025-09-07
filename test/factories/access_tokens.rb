@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :access_token do
     association :user
     sequence(:name) { |n| "Token #{n}" }
-    status { :active }
+    status { :pending }
     last_used_at { nil }
 
     transient do
@@ -18,6 +18,11 @@ FactoryBot.define do
       elsif access_token.token_digest.blank?
         access_token.token_digest = BCrypt::Password.create("dummy_token_#{SecureRandom.hex(8)}")
       end
+    end
+
+    trait :active do
+      status { :active }
+      owner { "testuser" }
     end
 
     trait :inactive do

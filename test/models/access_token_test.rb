@@ -9,12 +9,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "build_with_token generates token digest" do
+  test "build_with_token generates token digest and sets pending status" do
     token = AccessToken.build_with_token(name: "Test Token", user: user, token: "freefeed_token_123")
     assert_not_nil token.token_digest
     assert_equal "freefeed_token_123", token.token
+    assert token.pending?
     token.save!
     assert_not_nil token.reload.token_digest
+    assert token.reload.pending?
   end
 
   test "validates presence of name" do
@@ -56,17 +58,19 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "active scope returns only active tokens" do
-    active_token = create(:access_token)
+    active_token = create(:access_token, :active)
     inactive_token = create(:access_token, :inactive)
+    pending_token = create(:access_token)
 
     active_tokens = AccessToken.active
     assert_includes active_tokens, active_token
     assert_not_includes active_tokens, inactive_token
+    assert_not_includes active_tokens, pending_token
   end
 
-  test "sets default status to active" do
+  test "sets default status to pending" do
     token = AccessToken.new
-    assert token.active?
+    assert token.pending?
   end
 
   test "stores user-provided Freefeed token" do
@@ -82,5 +86,22 @@ class AccessTokenTest < ActiveSupport::TestCase
     new_token = build(:access_token, user: user)
     assert_not new_token.valid?
     assert_includes new_token.errors[:user], "cannot have more than #{AccessToken::MAX_TOKENS_PER_USER} access tokens"
+  end
+
+  test "mark_as_active! updates status and owner" do
+    token = create(:access_token)
+    assert token.pending?
+
+    token.mark_as_active!("testuser")
+    assert token.reload.active?
+    assert_equal "testuser", token.owner
+  end
+
+  test "mark_as_inactive! updates status" do
+    token = create(:access_token, :active)
+    assert token.active?
+
+    token.mark_as_inactive!
+    assert token.reload.inactive?
   end
 end
