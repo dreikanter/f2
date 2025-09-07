@@ -1,0 +1,20 @@
+<div id="access_token_<%= token.id %>_status">
+  <% if local_assigns[:validating] %>
+    <span class="badge bg-warning">
+      <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
+      Validating...
+    </span>
+  <% elsif token.pending? %>
+    <span class="badge bg-secondary">Pending</span>
+  <% elsif token.active? %>
+    <span class="badge bg-success">Active</span>
+    <% if token.owner.present? %>
+      <br><small class="text-muted">Owner: <%= token.owner %></small>
+    <% end %>
+  <% else %>
+    <span class="badge bg-danger">Inactive</span>
+    <% if local_assigns[:error] %>
+      <br><small class="text-danger"><%= error %></small>
+    <% end %>
+  <% end %>
+</div>

@@ -1,3 +1,5 @@
+<%= turbo_stream_from "access_tokens" %>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="mb-0">Access Tokens</h1>
   <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
@@ -22,11 +24,7 @@
               <%= token.name %>
             </td>
             <td>
-              <% if token.active? %>
-                <span class="badge bg-success">Active</span>
-              <% else %>
-                <span class="badge bg-secondary">Inactive</span>
-              <% end %>
+              <%= render "status", token: token %>
             </td>
             <td>
               <span class="text-muted">
@@ -43,6 +41,11 @@
               <% end %>
             </td>
             <td class="text-end">
+              <% unless token.active? %>
+                <%= button_to "Validate", access_token_token_validations_path(token),
+                              class: "btn btn-sm btn-outline-primary me-2",
+                              form_class: "d-inline" %>
+              <% end %>
               <%= link_to "Delete", access_token_path(token),
                           class: "text-danger text-decoration-none",
                           data: {
