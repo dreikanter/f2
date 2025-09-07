@@ -52,6 +52,3 @@ Rails.application.configure do
   config.active_record.encryption.deterministic_key = "KztQVQFifzXvAVzYZRpYhb4IpbB3LbsN"
   config.active_record.encryption.key_derivation_salt = "VsCuex5mmS3GP4Qu28NpLFEw99NgMVM5"
 end
-
-# Set test environment specific variables
-ENV["FREEFEED_HOST"] = "https://freefeed.test"

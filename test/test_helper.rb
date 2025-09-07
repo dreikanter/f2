@@ -1,5 +1,8 @@
 ENV["RAILS_ENV"] ||= "test"
 
+# Set test environment variables
+ENV["FREEFEED_HOST"] = "https://freefeed.test"
+
 require "simplecov"
 require "simplecov-cobertura"
 
