@@ -44,10 +44,10 @@
             </td>
             <td class="text-end">
               <%= link_to "Delete", access_token_path(token),
-                          method: :delete,
                           class: "text-danger text-decoration-none",
                           data: {
-                            confirm: "Are you sure you want to delete '#{token.name}'? This action cannot be undone."
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure you want to delete '#{token.name}'? This action cannot be undone."
                           } %>
             </td>
           </tr>
