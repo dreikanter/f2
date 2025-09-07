@@ -56,4 +56,9 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   config.action_mailer.default_url_options = { host: ENV.fetch("HOST") }
+
+  # Active Record encryption configuration for development
+  config.active_record.encryption.primary_key = "Iy3CIs4hElWox2ylk1vxB2L0vzMtmBIR"
+  config.active_record.encryption.deterministic_key = "KztQVQFifzXvAVzYZRpYhb4IpbB3LbsN"
+  config.active_record.encryption.key_derivation_salt = "VsCuex5mmS3GP4Qu28NpLFEw99NgMVM5"
 end
