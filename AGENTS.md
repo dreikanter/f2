@@ -30,6 +30,8 @@ Break work into logical, atomic units rather than massive changesets.
 Never reference yourself in commit messages.
 Use concise one-line imperative commit messages.
 Generalize when explaining what was done.
+Do NOT use the word comprehensive in commit messages and PR description.
+If you need to use the word comprehensive in commit messages or PR description, **do not use it.**
 
 ### Best Practices
 
