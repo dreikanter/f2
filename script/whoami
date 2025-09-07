@@ -1,0 +1,7 @@
+#!/bin/bash
+
+curl -v \
+  -H "Authorization: Bearer $FREEFEED_TOKEN" \
+  -H "Accept: application/json" \
+  -H "User-Agent: FreeFeed-Token-Validator" \
+  "$FREEFEED_HOST/v4/users/whoami"
