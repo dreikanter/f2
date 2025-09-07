@@ -79,7 +79,7 @@ class TokenValidationJob < ApplicationJob
   def broadcast_status_update(access_token, success:, error: nil)
     Turbo::StreamsChannel.broadcast_update_to(
       "access_token_#{access_token.id}",
-      target: "access_token_#{access_token.id}_status",
+      target: ActionView::RecordIdentifier.dom_id(access_token, :status),
       partial: "access_tokens/status",
       locals: { token: access_token, success: success, error: error }
     )
