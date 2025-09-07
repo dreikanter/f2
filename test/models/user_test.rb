@@ -76,4 +76,24 @@ class UserTest < ActiveSupport::TestCase
       user.destroy!
     end
   end
+
+  test "should have many access_tokens" do
+    user = create(:user)
+    token1 = create(:access_token, user: user)
+    token2 = create(:access_token, user: user)
+
+    assert_equal 2, user.access_tokens.count
+    assert_includes user.access_tokens, token1
+    assert_includes user.access_tokens, token2
+  end
+
+  test "should destroy associated access_tokens when user is destroyed" do
+    user = create(:user)
+    create(:access_token, user: user)
+    create(:access_token, user: user)
+
+    assert_difference("AccessToken.count", -2) do
+      user.destroy!
+    end
+  end
 end

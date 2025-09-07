@@ -25,11 +25,39 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 
 ## Version control
 
-- *Always* use atomic commits unless asked differently.
-- Write concise one-line commit messages in imperative mood (e.g., "Add user authentication" not "Added user authentication").
-- Do not explain every single change in the commit message, generalize.
+### Core Principle
+Break work into logical, atomic units rather than massive changesets.
+Never reference yourself in commit messages.
+Use concise one-line imperative commit messages.
+Generalize when explaining what was done.
+
+### Best Practices
+
+**Atomic Commits**: Each commit should represent one logical change (single feature, bug fix, or refactor). If you can't describe the commit in one clear sentence, it's probably too large.
+
+**Frequent Commits**: Commit after completing each meaningful unit of work:
+- Individual function implementations
+- Single test additions
+- Configuration updates
+- Documentation sections
 - Separate logically distinct changes in the same file into separate commits when it makes sense.
-- Never add reference to yourself in commit messages.
+
+**Clear Messages**: Use descriptive commit messages that explain the "what" and "why":
+```
+Add user authentication middleware
+Handle edge case in data validation
+Update API endpoint documentation
+```
+Be concise.
+Use imperative mood.
+
+**Feature Branching**: For larger features, create branches and make incremental commits, then merge via pull request.
+
+### Anti-Patterns to Avoid
+- Committing all changes at end of session
+- Mixing unrelated changes in single commit
+- Vague messages like "updates" or "fixes"
+- Committing broken/incomplete code
 
 ## Code style
 

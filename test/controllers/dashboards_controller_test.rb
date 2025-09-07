@@ -1,24 +1,19 @@
 require "test_helper"
 
 class DashboardsControllerTest < ActionDispatch::IntegrationTest
-  test "should get show when authenticated" do
-    user = create(:user)
-    sign_in_as(user)
-
-    get dashboard_url
-    assert_response :success
+  def user
+    @user ||= create(:user)
   end
 
-  test "should redirect to sign in when not authenticated" do
-    get dashboard_url
-    assert_redirected_to new_session_url
+  test "requires authentication" do
+    get root_path
+    assert_redirected_to new_session_path
   end
 
-  test "should redirect to dashboard from root" do
-    user = create(:user)
-    sign_in_as(user)
-
-    get root_url
+  test "shows dashboard when authenticated" do
+    sign_in_as user
+    get root_path
     assert_response :success
+    assert_select "h1", "Dashboard"
   end
 end

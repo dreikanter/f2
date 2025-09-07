@@ -1,0 +1,66 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="mb-0">Access Tokens</h1>
+  <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
+</div>
+
+<% if @access_tokens.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Last Used</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @access_tokens.each do |token| %>
+          <tr>
+            <td>
+              <%= token.name %>
+            </td>
+            <td>
+              <% if token.active? %>
+                <span class="badge bg-success">Active</span>
+              <% else %>
+                <span class="badge bg-secondary">Inactive</span>
+              <% end %>
+            </td>
+            <td>
+              <span class="text-muted">
+                <%= time_ago_in_words(token.created_at) %> ago
+              </span>
+            </td>
+            <td>
+              <% if token.last_used_at %>
+                <span class="text-muted">
+                  <%= time_ago_in_words(token.last_used_at) %> ago
+                </span>
+              <% else %>
+                <span class="text-muted">Never</span>
+              <% end %>
+            </td>
+            <td class="text-end">
+              <%= link_to "Delete", access_token_path(token),
+                          class: "text-danger text-decoration-none",
+                          data: {
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure you want to delete '#{token.name}'? This action cannot be undone."
+                          } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <h5>No access tokens yet</h5>
+      <p class="text-muted mb-4">Add Freefeed API access token to enable content reposting.</p>
+      <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+<% end %>

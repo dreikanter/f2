@@ -1,0 +1,57 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="mb-0">Create New Token</h1>
+  <%= link_to "← Back to Access Tokens", access_tokens_path, class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @access_token, local: true do |form| %>
+          <% if @access_token.errors.any? %>
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                <% @access_token.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :name, class: "form-label" %>
+            <%= form.text_field :name,
+                                class: "form-control #{'is-invalid' if @access_token.errors[:name].any?}",
+                                placeholder: "e.g., Mobile App, CI/CD" %>
+            <div class="form-text">Choose a descriptive name to identify this token</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :token, "Freefeed Access Token", class: "form-label" %>
+            <%= form.text_field :token,
+                                class: "form-control #{'is-invalid' if @access_token.errors[:token].any?}",
+                                placeholder: "Paste your Freefeed access token here" %>
+            <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens" target="_blank">Freefeed settings</a></div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <%= link_to "Cancel", access_tokens_path, class: "btn btn-outline-secondary" %>
+            <%= form.submit "Create Token", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-body">
+        <div class="small text-muted">
+          <h6>About Freefeed Tokens</h6>
+          <ul class="mb-0">
+            <li>Use tokens from your Freefeed account</li>
+            <li>Maximum of 20 tokens per user</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
