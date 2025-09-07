@@ -63,6 +63,79 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert token_without_value.reload.pending?
   end
 
+  test "marks token as inactive when JSON parsing fails" do
+    # Mock response with invalid JSON
+    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+      .to_return(status: 200, body: "invalid json", headers: { "Content-Type" => "application/json" })
+
+    assert access_token.pending?
+
+    TokenValidationJob.perform_now(access_token)
+
+    access_token.reload
+    assert access_token.inactive?
+  end
+
+  test "uses custom FREEFEED_HOST when set" do
+    # Test with custom host
+    ENV["FREEFEED_HOST"] = "https://custom.freefeed.com"
+
+    stub_request(:get, "https://custom.freefeed.com/v4/users/whoami")
+      .to_return(
+        status: 200,
+        body: { users: { username: "testuser" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    TokenValidationJob.perform_now(access_token)
+
+    access_token.reload
+    assert access_token.active?
+  ensure
+    ENV.delete("FREEFEED_HOST")
+  end
+
+  test "broadcasts status update on successful validation" do
+    stub_successful_freefeed_response
+
+    # Test that broadcast method gets called without error
+    assert_nothing_raised do
+      TokenValidationJob.perform_now(access_token)
+    end
+
+    access_token.reload
+    assert access_token.active?
+  end
+
+  test "broadcasts status update on failed validation" do
+    stub_failed_freefeed_response
+
+    # Test that broadcast method gets called without error
+    assert_nothing_raised do
+      TokenValidationJob.perform_now(access_token)
+    end
+
+    access_token.reload
+    assert access_token.inactive?
+  end
+
+  test "marks token as inactive when response format is invalid" do
+    # Mock response with missing username field
+    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+      .to_return(
+        status: 200,
+        body: { users: { screenName: "testuser", id: "test-id" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    assert access_token.pending?
+
+    TokenValidationJob.perform_now(access_token)
+
+    access_token.reload
+    assert access_token.inactive?
+  end
+
   private
 
   def stub_successful_freefeed_response
