@@ -136,6 +136,19 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
+  test "handles general exceptions in validation and broadcasts error" do
+    # Mock a timeout exception during HTTP request
+    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+      .to_timeout
+
+    assert access_token.pending?
+
+    TokenValidationJob.perform_now(access_token)
+
+    access_token.reload
+    assert access_token.inactive?
+  end
+
   private
 
   def stub_successful_freefeed_response
