@@ -18,10 +18,11 @@ class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
-      post access_token_token_validations_path(access_token)
+      post access_token_token_validations_path(access_token),
+           headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
-    assert_response :redirect
+    assert_response :success
   end
 
   test "responds with turbo stream" do

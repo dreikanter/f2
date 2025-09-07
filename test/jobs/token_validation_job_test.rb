@@ -6,11 +6,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   def access_token
-    @access_token ||= create(:access_token, user: user).tap do |token|
-      token.token = "freefeed_token_123"
-      token.token_digest = BCrypt::Password.create("freefeed_token_123")
-      token.save!
-    end
+    @access_token ||= create(:access_token, user: user, with_token: true)
   end
 
   test "marks token as active when validation succeeds" do
@@ -38,7 +34,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test "marks token as inactive when HTTP error occurs" do
     # Mock HTTP error
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_raise(StandardError.new("Connection failed"))
 
     assert access_token.pending?
@@ -52,7 +48,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
   test "does nothing when token is not present" do
     # Create token without token value, bypassing validation
     token_without_value = AccessToken.new(name: "Test Token", user: user, status: :pending)
-    token_without_value.token_digest = BCrypt::Password.create("dummy")
     token_without_value.save!(validate: false)
 
     TokenValidationJob.perform_now(token_without_value)
@@ -63,7 +58,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test "marks token as inactive when JSON parsing fails" do
     # Mock response with invalid JSON
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_return(status: 200, body: "invalid json", headers: { "Content-Type" => "application/json" })
 
     assert access_token.pending?
@@ -117,7 +112,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test "marks token as inactive when response format is invalid" do
     # Mock response with missing username field
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_return(
         status: 200,
         body: { users: { screenName: "testuser", id: "test-id" } }.to_json,
@@ -133,7 +128,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test "handles general exceptions in validation and broadcasts error" do
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_timeout
 
     assert access_token.pending?
@@ -147,10 +142,10 @@ class TokenValidationJobTest < ActiveJob::TestCase
   private
 
   def stub_successful_freefeed_response
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer freefeed_token_123",
+          "Authorization" => /Bearer freefeed_token_/,
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Token-Validator"
         }
@@ -169,10 +164,10 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   def stub_failed_freefeed_response
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer freefeed_token_123",
+          "Authorization" => /Bearer freefeed_token_/,
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Token-Validator"
         }

@@ -9,13 +9,13 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "build_with_token generates token digest and sets pending status" do
+  test "build_with_token stores encrypted token and sets pending status" do
     token = AccessToken.build_with_token(name: "Test Token", user: user, token: "freefeed_token_123")
-    assert_not_nil token.token_digest
+    assert_not_nil token.encrypted_token
     assert_equal "freefeed_token_123", token.token
     assert token.pending?
     token.save!
-    assert_not_nil token.reload.token_digest
+    assert_not_nil token.reload.encrypted_token
     assert token.reload.pending?
   end
 
@@ -88,20 +88,20 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_includes new_token.errors[:user], "cannot have more than #{AccessToken::MAX_TOKENS_PER_USER} access tokens"
   end
 
-  test "mark_as_active! updates status and owner" do
+  test "can update status to active with owner" do
     token = create(:access_token)
     assert token.pending?
 
-    token.mark_as_active!("testuser")
+    token.update!(status: :active, owner: "testuser")
     assert token.reload.active?
     assert_equal "testuser", token.owner
   end
 
-  test "mark_as_inactive! updates status" do
+  test "can update status to inactive using enum method" do
     token = create(:access_token, :active)
     assert token.active?
 
-    token.mark_as_inactive!
+    token.inactive!
     assert token.reload.inactive?
   end
 end

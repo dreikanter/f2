@@ -14,7 +14,9 @@ class AccessTokensController < ApplicationController
     @access_token = AccessToken.build_with_token(attributes)
 
     if @access_token.save
-      redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."
+      # Trigger validation automatically since token is now stored encrypted
+      @access_token.validate_token_async
+      redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully and validation started."
     else
       render :new, status: :unprocessable_content
     end
