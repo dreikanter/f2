@@ -10,7 +10,8 @@ class AccessTokensController < ApplicationController
   end
 
   def create
-    @access_token = access_tokens.build(access_token_params)
+    attributes = access_token_params.merge(user: Current.user)
+    @access_token = AccessToken.build_with_token(attributes)
 
     if @access_token.save
       redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."

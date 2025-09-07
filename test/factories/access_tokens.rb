@@ -12,7 +12,9 @@ FactoryBot.define do
     after(:build) do |access_token, evaluator|
       if evaluator.with_token
         # Simulate user-provided Freefeed token
-        access_token.token = "freefeed_token_#{SecureRandom.hex(16)}"
+        token_value = "freefeed_token_#{SecureRandom.hex(16)}"
+        access_token.token = token_value
+        access_token.token_digest = BCrypt::Password.create(token_value)
       elsif access_token.token_digest.blank?
         access_token.token_digest = BCrypt::Password.create("dummy_token_#{SecureRandom.hex(8)}")
       end

@@ -25,7 +25,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     get access_tokens_path
     assert_select "h5", "No access tokens yet"
-    assert_select "p", text: /Create your first access token/
+    assert_select "p", text: /Add Freefeed API access token/
   end
 
   test "displays existing tokens" do
@@ -33,7 +33,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     access_token
     get access_tokens_path
     assert_select "table"
-    assert_select "code", access_token.name
+    assert_select "td", access_token.name
   end
 
   test "creates access token with valid params" do

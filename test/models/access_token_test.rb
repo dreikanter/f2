@@ -9,12 +9,12 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "generates token digest on create with user-provided token" do
-    token = AccessToken.new(name: "Test Token", user: user, token: "freefeed_token_123")
-    assert_nil token.token_digest
-    token.save!
+  test "build_with_token generates token digest" do
+    token = AccessToken.build_with_token(name: "Test Token", user: user, token: "freefeed_token_123")
     assert_not_nil token.token_digest
     assert_equal "freefeed_token_123", token.token
+    token.save!
+    assert_not_nil token.reload.token_digest
   end
 
   test "validates presence of name" do
