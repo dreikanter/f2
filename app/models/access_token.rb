@@ -7,13 +7,13 @@ class AccessToken < ApplicationRecord
   validates :token, presence: true, on: :create
   validate :user_tokens_limit
 
-  enum :status, { active: 0, inactive: 1 }
+  enum :status, { pending: 0, active: 1, inactive: 2 }
 
   attr_accessor :token
 
   def self.build_with_token(attributes = {})
     token_value = attributes.delete(:token)
-    instance = new(attributes)
+    instance = new(attributes.merge(status: :pending))
 
     if token_value.present?
       instance.token = token_value
@@ -21,6 +21,18 @@ class AccessToken < ApplicationRecord
     end
 
     instance
+  end
+
+  def validate_token_async
+    TokenValidationJob.perform_later(self)
+  end
+
+  def mark_as_active!(owner_username = nil)
+    update!(status: :active, owner: owner_username)
+  end
+
+  def mark_as_inactive!
+    update!(status: :inactive)
   end
 
   def touch_last_used!
