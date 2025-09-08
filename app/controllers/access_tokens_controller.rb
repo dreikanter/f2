@@ -1,6 +1,4 @@
 class AccessTokensController < ApplicationController
-  include ActionView::RecordIdentifier
-
   before_action :require_authentication
 
   def index
@@ -29,15 +27,6 @@ class AccessTokensController < ApplicationController
     redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
   end
 
-  def validation_status
-    @access_token = access_tokens.find(params[:id])
-
-    render turbo_stream: turbo_stream.update(
-      dom_id(@access_token, :status),
-      partial: "status",
-      locals: { token: @access_token }
-    )
-  end
 
   private
 

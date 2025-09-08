@@ -4,8 +4,7 @@ Rails.application.routes.draw do
   mount ActionCable.server => "/cable"
 
   resources :access_tokens, only: [:index, :new, :create, :destroy] do
-    resources :access_token_validations, only: [:create]
-    get :validation_status, on: :member
+    resources :access_token_validations, only: [:create, :show]
   end
   resource :profile, only: :show
   resource :email_update, only: :update
