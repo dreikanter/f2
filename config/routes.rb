@@ -1,9 +1,14 @@
 Rails.application.routes.draw do
   # TBD: Use custom authentication + permission-based access control
   mount MissionControl::Jobs::Engine, at: "/jobs"
+  mount ActionCable.server => "/cable"
 
   resources :access_tokens, only: [:index, :new, :create, :destroy] do
-    resources :token_validations, only: [:create]
+    resources :token_validations, only: [:create] do
+      member do
+        get :status
+      end
+    end
   end
   resource :profile, only: :show
   resource :email_update, only: :update
