@@ -20,39 +20,37 @@
         </tr>
       </thead>
       <tbody>
-        <% @access_tokens.each do |token| %>
+        <% @access_tokens.each do |access_token| %>
           <tr>
             <td>
-              <%= token.name %>
+              <%= access_token.name %>
             </td>
             <td>
-              <%= render "shared/access_token_status", token: token %>
+              <%= render "shared/access_token_status", access_token: access_token %>
             </td>
             <td>
               <span class="text-muted">
-                <%= time_ago_in_words(token.created_at) %> ago
+                <%= time_ago_in_words(access_token.created_at) %> ago
               </span>
             </td>
             <td>
-              <% if token.last_used_at %>
+              <% if access_token.last_used_at %>
                 <span class="text-muted">
-                  <%= time_ago_in_words(token.last_used_at) %> ago
+                  <%= time_ago_in_words(access_token.last_used_at) %> ago
                 </span>
               <% else %>
                 <span class="text-muted">Never</span>
               <% end %>
             </td>
             <td class="text-end">
-              <% unless token.active? %>
-                <%= link_to "Validate", access_token_access_token_validations_path(token),
-                            class: "text-primary text-decoration-none me-3",
-                            data: { turbo_method: :post } %>
-              <% end %>
-              <%= link_to "Delete", access_token_path(token),
+              <%= link_to "Validate", access_token_validation_path(access_token),
+                          class: "text-primary text-decoration-none me-3",
+                          data: { turbo_method: :post } %>
+              <%= link_to "Delete", access_token_path(access_token),
                           class: "text-danger text-decoration-none",
                           data: {
                             turbo_method: :delete,
-                            turbo_confirm: "Are you sure you want to delete '#{token.name}'? This action cannot be undone."
+                            turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
                           } %>
             </td>
           </tr>

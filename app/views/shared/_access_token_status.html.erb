@@ -1,26 +1,26 @@
 <%
 
-token = local_assigns.fetch(:token)
+access_token = local_assigns.fetch(:access_token)
 start_polling = local_assigns[:start_polling]
 error = local_assigns[:error]
 
 %>
-<% if token.pending? %>
-  <div id="<%= dom_id(token, :status) %>" data-status="<%= token.status %>" <%= 'data-controller="polling" data-polling-token-id-value="#{token.id}"' if start_polling %>>
+<% if access_token.pending? %>
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" <%= 'data-controller="polling" data-polling-access_token-id-value="#{access_token.id}"' if start_polling %>>
     <span class="badge bg-warning">
       <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
       Validating...
     </span>
   </div>
-<% elsif token.active? %>
-  <div id="<%= dom_id(token, :status) %>">
+<% elsif access_token.active? %>
+  <div id="<%= dom_id(access_token, :status) %>">
     <span class="badge bg-success">Active</span>
-    <% if token.owner.present? %>
-      <br><small class="text-muted">Owner: <%= token.owner %></small>
+    <% if access_token.owner.present? %>
+      <br><small class="text-muted">Owner: <%= access_token.owner %></small>
     <% end %>
   </div>
 <% else %>
-  <div id="<%= dom_id(token, :status) %>">
+  <div id="<%= dom_id(access_token, :status) %>">
     <span class="badge bg-danger">Inactive</span>
     <% if error %>
       <br><small class="text-danger"><%= error %></small>

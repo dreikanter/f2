@@ -7,7 +7,7 @@ class AccessTokenValidationsController < ApplicationController
     @access_token = access_tokens.find(access_token_id)
     @access_token.validate_token_async
 
-    render turbo_stream: build_turbo_stream_update(token: @access_token, start_polling: true)
+    render turbo_stream: build_turbo_stream_update(access_token: @access_token, start_polling: true)
   end
 
   def show
