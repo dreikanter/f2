@@ -5,7 +5,7 @@ Rails.application.routes.draw do
 
   resources :access_tokens, only: [:index, :new, :create, :destroy] do
     resources :token_validations, only: [:create]
-    resource :access_token_status, only: [:show]
+    resource :access_token_validation, only: [:show]
   end
   resource :profile, only: :show
   resource :email_update, only: :update

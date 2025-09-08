@@ -11,7 +11,7 @@ export default class extends Controller {
   
   startPolling() {
     this.interval = setInterval(() => {
-      fetch(`/access_tokens/${this.tokenIdValue}/access_token_status`, {
+      fetch(`/access_tokens/${this.tokenIdValue}/access_token_validation`, {
         headers: { 
           "Accept": "text/vnd.turbo-stream.html",
           "X-Requested-With": "XMLHttpRequest"
