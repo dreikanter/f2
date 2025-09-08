@@ -9,7 +9,7 @@ class AccessTokenValidationsController < ApplicationController
 
     render turbo_stream:     turbo_stream.update(
       dom_id(@access_token, :status),
-      partial: "access_tokens/status",
+      partial: "shared/access_token_status",
       locals: { token: @access_token, start_polling: true }
     )
   end
@@ -19,7 +19,7 @@ class AccessTokenValidationsController < ApplicationController
 
     render turbo_stream:     turbo_stream.update(
       dom_id(@access_token, :status),
-      partial: "access_tokens/status",
+      partial: "shared/access_token_status",
       locals: { token: @access_token }
     )
   end
