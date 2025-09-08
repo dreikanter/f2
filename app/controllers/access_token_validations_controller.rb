@@ -10,11 +10,6 @@ class AccessTokenValidationsController < ApplicationController
     render_status_update(start_polling: true)
   end
 
-  def show
-    @access_token = access_tokens.find(params[:id])
-
-    render_status_update
-  end
 
   private
 
