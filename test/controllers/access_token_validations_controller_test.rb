@@ -10,7 +10,7 @@ class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication" do
-    post access_token_access_token_validations_path(access_token)
+    post access_token_validations_path, params: { access_token_id: access_token.id }
     assert_redirected_to new_session_path
   end
 
@@ -18,7 +18,8 @@ class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
-      post access_token_access_token_validations_path(access_token),
+      post access_token_validations_path,
+           params: { access_token_id: access_token.id },
            headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -28,7 +29,8 @@ class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
   test "responds with turbo stream" do
     sign_in_as user
 
-    post access_token_access_token_validations_path(access_token),
+    post access_token_validations_path,
+         params: { access_token_id: access_token.id },
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
@@ -42,7 +44,7 @@ class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user
 
-    post access_token_access_token_validations_path(other_token)
+    post access_token_validations_path, params: { access_token_id: other_token.id }
     assert_response :not_found
   end
 end

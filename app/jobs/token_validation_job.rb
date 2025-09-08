@@ -83,7 +83,7 @@ class TokenValidationJob < ApplicationJob
       "access_token_#{access_token.id}",
       target: ActionView::RecordIdentifier.dom_id(access_token, :status),
       partial: "shared/access_token_status",
-      locals: { token: access_token, success: success, error: error }
+      locals: { access_token: access_token, success: success, error: error }
     )
   end
 end

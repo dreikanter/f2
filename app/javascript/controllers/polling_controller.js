@@ -1,17 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static values = { tokenId: String }
+  static values = { accessTokenId: String }
   
   connect() {
-    if (this.hasTokenIdValue) {
+    if (this.hasAccessTokenIdValue) {
       this.startPolling();
     }
   }
   
   startPolling() {
     this.interval = setInterval(() => {
-      fetch(`/access_tokens/${this.tokenIdValue}/access_token_validations/${this.tokenIdValue}`, {
+      fetch(`/access_token_validations/${this.accessTokenIdValue}`, {
         headers: { 
           "Accept": "text/vnd.turbo-stream.html",
           "X-Requested-With": "XMLHttpRequest"

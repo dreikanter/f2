@@ -11,9 +11,9 @@ class AccessTokenValidationsController < ApplicationController
   end
 
   def show
-    @access_token = access_tokens.find(access_token_id)
+    @access_token = access_tokens.find(params[:id])
 
-    render turbo_stream: build_turbo_stream_update(token: @access_token)
+    render turbo_stream: build_turbo_stream_update(access_token: @access_token)
   end
 
   private
