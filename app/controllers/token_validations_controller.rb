@@ -10,7 +10,17 @@ class TokenValidationsController < ApplicationController
     render turbo_stream: turbo_stream.update(
       dom_id(@access_token, :status),
       partial: "access_tokens/status",
-      locals: { token: @access_token, validating: true }
+      locals: { token: @access_token, start_polling: true }
+    )
+  end
+
+  def status
+    @access_token = access_tokens.find(params[:id])
+
+    render turbo_stream: turbo_stream.update(
+      dom_id(@access_token, :status),
+      partial: "access_tokens/status",
+      locals: { token: @access_token }
     )
   end
 

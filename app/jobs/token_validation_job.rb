@@ -1,3 +1,5 @@
+require "net/http"
+
 class TokenValidationJob < ApplicationJob
   queue_as :default
 
