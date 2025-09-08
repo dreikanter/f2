@@ -3,9 +3,8 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/jobs"
   mount ActionCable.server => "/cable"
 
-  resources :access_tokens, only: [:index, :new, :create, :destroy] do
-    resources :access_token_validations, only: [:create, :show]
-  end
+  resources :access_tokens, only: [:index, :new, :create, :destroy]
+  resources :access_token_validations, only: [:create, :show]
   resource :profile, only: :show
   resource :email_update, only: :update
   resource :password_update, only: :update
