@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
+class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -10,7 +10,7 @@ class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication" do
-    post access_token_token_validations_path(access_token)
+    post access_token_access_token_validations_path(access_token)
     assert_redirected_to new_session_path
   end
 
@@ -18,7 +18,7 @@ class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
-      post access_token_token_validations_path(access_token),
+      post access_token_access_token_validations_path(access_token),
            headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -28,7 +28,7 @@ class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
   test "responds with turbo stream" do
     sign_in_as user
 
-    post access_token_token_validations_path(access_token),
+    post access_token_access_token_validations_path(access_token),
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
@@ -42,7 +42,7 @@ class TokenValidationsControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user
 
-    post access_token_token_validations_path(other_token)
+    post access_token_access_token_validations_path(other_token)
     assert_response :not_found
   end
 end

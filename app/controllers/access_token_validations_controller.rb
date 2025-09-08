@@ -3,8 +3,15 @@ class AccessTokenValidationsController < ApplicationController
 
   before_action :require_authentication
 
+  def create
+    @access_token = access_tokens.find(access_token_id)
+    @access_token.validate_token_async
+
+    render_status_update(start_polling: true)
+  end
+
   def show
-    @access_token = access_tokens.find(params[:access_token_id])
+    @access_token = access_tokens.find(params[:id])
 
     render_status_update
   end
@@ -13,6 +20,10 @@ class AccessTokenValidationsController < ApplicationController
 
   def access_tokens
     Current.user.access_tokens
+  end
+
+  def access_token_id
+    params[:access_token_id]
   end
 
   def render_status_update(**locals)

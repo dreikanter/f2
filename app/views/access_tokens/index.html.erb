@@ -44,7 +44,7 @@
             </td>
             <td class="text-end">
               <% unless token.active? %>
-                <%= link_to "Validate", access_token_token_validations_path(token),
+                <%= link_to "Validate", access_token_access_token_validations_path(token),
                             class: "text-primary text-decoration-none me-3",
                             data: { turbo_method: :post } %>
               <% end %>
