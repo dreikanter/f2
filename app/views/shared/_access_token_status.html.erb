@@ -13,7 +13,7 @@
     </span>
   </div>
 <% elsif access_token.validating? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" <%= 'data-controller="polling" data-polling-access_token-id-value="#{access_token.id}"' if start_polling %>>
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-access-token-id-value="<%= access_token.id %>" data-debug-id="<%= access_token.id %>">
     <span class="badge bg-warning">
       <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
       Validating...
