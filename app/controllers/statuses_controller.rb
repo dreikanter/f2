@@ -1,4 +1,4 @@
-class AccessTokens::StatusController < ApplicationController
+class StatusesController < ApplicationController
   include ActionView::RecordIdentifier
 
   before_action :require_authentication

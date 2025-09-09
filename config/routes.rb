@@ -3,8 +3,9 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   resources :access_tokens, only: [:index, :new, :create, :destroy] do
-    resource :status, only: [:show, :create], controller: "access_tokens/status"
+    resource :status, only: [:show, :create]
   end
+
   resource :profile, only: :show
   resource :email_update, only: :update
   resource :password_update, only: :update
