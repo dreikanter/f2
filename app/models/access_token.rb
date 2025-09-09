@@ -14,7 +14,12 @@ class AccessToken < ApplicationRecord
   attr_accessor :token
 
   def self.build_with_token(attributes = {})
-    new(attributes.merge(status: :pending, encrypted_token: attributes[:token]))
+    defaults = {
+      status: :pending,
+      encrypted_token: attributes[:token]
+    }
+
+    new(attributes.merge(defaults))
   end
 
   def validate_token_async
