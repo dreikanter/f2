@@ -6,7 +6,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   def access_token
-    @access_token ||= create(:access_token, user: user, with_token: true)
+    @access_token ||= create(:access_token, user: user)
   end
 
   test "marks token as active when validation succeeds" do
