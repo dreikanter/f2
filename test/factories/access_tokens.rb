@@ -5,17 +5,14 @@ FactoryBot.define do
     status { :pending }
     last_used_at { nil }
 
-    transient do
-      with_token { true }
-    end
+    token_value = "freefeed_token_#{SecureRandom.hex(16)}"
 
-    after(:build) do |access_token, evaluator|
-      if evaluator.with_token
-        # Simulate user-provided Freefeed token
-        token_value = "freefeed_token_#{SecureRandom.hex(16)}"
-        access_token.token = token_value
-        access_token.encrypted_token = token_value
-      end
+    token { token_value }
+    encrypted_token { token_value }
+
+    trait :without_token do
+      token { nil }
+      encrypted_token { nil }
     end
 
     trait :active do

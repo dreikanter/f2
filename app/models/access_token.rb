@@ -14,15 +14,7 @@ class AccessToken < ApplicationRecord
   attr_accessor :token
 
   def self.build_with_token(attributes = {})
-    token_value = attributes.delete(:token)
-    instance = new(attributes.merge(status: :pending))
-
-    if token_value.present?
-      instance.token = token_value
-      instance.encrypted_token = token_value
-    end
-
-    instance
+    new(attributes.merge(status: :pending, encrypted_token: attributes[:token]))
   end
 
   def validate_token_async
