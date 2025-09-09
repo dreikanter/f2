@@ -139,6 +139,45 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
+  test "can be performed asynchronously via perform_later" do
+    stub_successful_freefeed_response
+
+    assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
+      TokenValidationJob.perform_later(access_token)
+    end
+  end
+
+  test "job can be resumed after failure" do
+    # First attempt fails with timeout
+    stub_request(:get, "https://freefeed.test/v4/users/whoami")
+      .to_timeout.times(1)
+      .then.to_return(
+        status: 200,
+        body: {
+          users: {
+            username: "testuser",
+            screenName: "Test User",
+            id: "test-id"
+          }
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    # First run fails
+    TokenValidationJob.perform_now(access_token)
+    access_token.reload
+    assert access_token.inactive?
+
+    # Reset to validating state to simulate retry
+    access_token.update!(status: :validating)
+
+    # Second run succeeds
+    TokenValidationJob.perform_now(access_token)
+    access_token.reload
+    assert access_token.active?
+    assert_equal "testuser", access_token.owner
+  end
+
   private
 
   def stub_successful_freefeed_response
