@@ -7,19 +7,15 @@ class TokenValidationJob < ApplicationJob
     return unless access_token.token_value.present?
 
     begin
-      # Use the stored encrypted token value to validate
       response = validate_freefeed_token(access_token.token_value)
 
       if response[:success] && response[:username]
         access_token.update!(status: :active, owner: response[:username])
-        broadcast_status_update(access_token, success: true)
       else
         access_token.inactive!
-        broadcast_status_update(access_token, success: false, error: response[:error])
       end
     rescue => e
       access_token.inactive!
-      broadcast_status_update(access_token, success: false, error: "Validation failed: #{e.message}")
     end
   end
 
@@ -75,15 +71,6 @@ class TokenValidationJob < ApplicationJob
   end
 
   def freefeed_host
-    ENV.fetch("FREEFEED_HOST", "https://freefeed.net")
-  end
-
-  def broadcast_status_update(access_token, success:, error: nil)
-    Turbo::StreamsChannel.broadcast_update_to(
-      "access_token_#{access_token.id}",
-      target: ActionView::RecordIdentifier.dom_id(access_token, :status),
-      partial: "shared/access_token_status",
-      locals: { access_token: access_token, success: success, error: error }
-    )
+    ENV.fetch("FREEFEED_HOST")
   end
 end
