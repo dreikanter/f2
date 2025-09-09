@@ -7,6 +7,13 @@
 -%>
 
 <% if access_token.pending? %>
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>">
+    <span class="badge bg-light">
+      <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
+      New
+    </span>
+  </div>
+<% elsif access_token.validating? %>
   <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" <%= 'data-controller="polling" data-polling-access_token-id-value="#{access_token.id}"' if start_polling %>>
     <span class="badge bg-warning">
       <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
