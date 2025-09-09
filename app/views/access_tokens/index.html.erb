@@ -1,7 +1,3 @@
-<% @access_tokens.each do |token| %>
-  <%= turbo_stream_from "access_token_#{token.id}" %>
-<% end %>
-
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="mb-0">Access Tokens</h1>
   <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
