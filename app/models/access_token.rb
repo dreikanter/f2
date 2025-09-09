@@ -7,7 +7,7 @@ class AccessToken < ApplicationRecord
   validates :token, presence: true, on: :create
   validate :user_tokens_limit
 
-  enum :status, { pending: 0, active: 1, inactive: 2 }
+  enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
   encrypts :encrypted_token
 
