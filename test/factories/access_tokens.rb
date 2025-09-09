@@ -2,22 +2,22 @@ FactoryBot.define do
   factory :access_token do
     association :user
     sequence(:name) { |n| "Token #{n}" }
-    status { :active }
+    status { :pending }
     last_used_at { nil }
 
-    transient do
-      with_token { true }
+    token_value = "freefeed_token_#{SecureRandom.hex(16)}"
+
+    token { token_value }
+    encrypted_token { token_value }
+
+    trait :without_token do
+      token { nil }
+      encrypted_token { nil }
     end
 
-    after(:build) do |access_token, evaluator|
-      if evaluator.with_token
-        # Simulate user-provided Freefeed token
-        token_value = "freefeed_token_#{SecureRandom.hex(16)}"
-        access_token.token = token_value
-        access_token.token_digest = BCrypt::Password.create(token_value)
-      elsif access_token.token_digest.blank?
-        access_token.token_digest = BCrypt::Password.create("dummy_token_#{SecureRandom.hex(8)}")
-      end
+    trait :active do
+      status { :active }
+      owner { "testuser" }
     end
 
     trait :inactive do

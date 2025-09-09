@@ -1,0 +1,32 @@
+<%-
+
+  access_token = local_assigns.fetch(:access_token)
+  error = local_assigns[:error]
+
+-%>
+
+<% if access_token.pending? %>
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>">
+    <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
+    New
+  </div>
+<% elsif access_token.validating? %>
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-access-token-id-value="<%= access_token.id %>" data-debug-id="<%= access_token.id %>">
+    <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
+    ⏳ Validating...
+  </div>
+<% elsif access_token.active? %>
+  <div id="<%= dom_id(access_token, :status) %>">
+    <span class="text-success">✅ Active</span>
+    <% if access_token.owner.present? %>
+      <span class="text-muted">(<%= access_token.owner %>)</span>
+    <% end %>
+  </div>
+<% elsif access_token.inactive? %>
+  <div id="<%= dom_id(access_token, :status) %>">
+    <span class="text-muted">Inactive</span>
+    <% if error %>
+      <br><small class="text-muted"><%= error %></small>
+    <% end %>
+  </div>
+<% end %>

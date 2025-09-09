@@ -7,21 +7,32 @@ class AccessToken < ApplicationRecord
   validates :token, presence: true, on: :create
   validate :user_tokens_limit
 
-  enum :status, { active: 0, inactive: 1 }
+  enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
+
+  encrypts :encrypted_token
 
   attr_accessor :token
 
   def self.build_with_token(attributes = {})
-    token_value = attributes.delete(:token)
-    instance = new(attributes)
+    defaults = {
+      status: :pending,
+      encrypted_token: attributes[:token]
+    }
 
-    if token_value.present?
-      instance.token = token_value
-      instance.token_digest = BCrypt::Password.create(token_value)
-    end
-
-    instance
+    new(attributes.merge(defaults))
   end
+
+  def validate_token_async
+    return unless valid?
+
+    update!(status: :validating)
+    TokenValidationJob.perform_later(self)
+  end
+
+  def token_value
+    encrypted_token
+  end
+
 
   def touch_last_used!
     touch(:last_used_at)

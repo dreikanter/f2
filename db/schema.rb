@@ -10,18 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_06_213112) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_07_203505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
-    t.string "token_digest", null: false
     t.datetime "last_used_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "status", default: 0, null: false
+    t.string "owner"
+    t.text "encrypted_token"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
   end

@@ -1,31 +1,51 @@
 # F2 Project Memory
 
+This repository contains the **Feeder** Rails 8 application for scheduling and refreshing feeds.
+
 ## Tech Stack
-- Rails 8.0.2 with PostgreSQL
-- Authentication: bcrypt, sessions, password reset
+
+- Rails (edge) + PostgreSQL.
+- Authentication via bcrypt sessions with password reset.
+- Background jobs via SolidQueue using Fugit cron expressions.
 - Frontend: Turbo, Stimulus, Bootstrap CSS
 - Deployment: Kamal
-- Background Jobs: SolidQueue with recurring scheduler
 
-## Current State
-- Feed models with cron-based scheduling
-- ActiveJob scheduler running every minute
-- Comprehensive test coverage with FactoryBot
-- SimpleCov + Codecov integration
-- Branch: feature/scheduler
+## Atomic Commits – Agent Operating Procedure
 
-## Key Files
-- `app/models/feed.rb` - Feed model with scheduling scope
-- `app/jobs/feed_scheduler_job.rb` - Recurring job to queue due feeds
-- `app/jobs/feed_refresh_job.rb` - Individual feed processing
-- `config/recurring.yml` - SolidQueue recurring job configuration
+**Goal:** Every commit is a single, meaningful, self-contained change (e.g., DB migration, controller change, HTML layout tweak, test coverage improvement). No grab-bag commits. Keep the test suite green for each commit.
 
-## Version Control
-- *Always* use atomic commits unless asked differently
-- Write concise one-line commit messages in imperative mood (e.g., "Add user authentication" not "Added user authentication")
-- Separate logically distinct changes in the same file into separate commits when it makes sense
-- Never add reference to yourself in commit messages
+### Commit-before-you-code loop
 
+1. **Plan → Split work:** Break the task into 3–7 smallest meaningful steps, each summarized in one short sentence (“Add X”, “Refactor Y”, “Fix Z”). If the message needs “and”, split it.
+2. **Implement one step only.**
+3. **Stage precisely:** use `git add -p` (or IDE line/selection staging) to include only the hunks that satisfy the one-sentence change.
+4. **Run tests/linters:** keep the suite green per commit.
+5. **Commit message (subject ≤ 50 chars, imperative):**
+
+   * Subject: “Add user\_email index”
+   * Body (optional): why + constraints/links.
+6. **Repeat** for the next planned step. If changes get mixed, use `git reset -p`, `git commit --amend`, or `git rebase -i` to reorganize before pushing.
+
+### What counts as “atomic”
+
+* **Single purpose & complete:** one logical change, fully done.
+* **Examples:**
+
+  * “Add migration for `orders.status` enum” (+ entity change if required).
+  * “Refactor `UserService` to use async/await” (no styling changes).
+  * “Fix divide-by-zero in `calc()` + test.”
+
+### Review yourself before push
+
+* Inspect `git status`, `git diff`, `git log --oneline`.
+* Squash/fixup only when several commits are fragments of the *same* unit of work.
+
+### Guardrails
+
+* **Never** stage unrelated edits together (formatting, renames, feature code in one commit).
+* If mid-flow you discover a second concern, **stop** and create a new TODO line; do not keep coding in the same commit.
+* Prefer many small PRs built from atomic commits; they’re easier to review, revert, and bisect.
+  
 ## Development Practices
 - Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop`)
 - Use FactoryBot to create test data
@@ -47,3 +67,34 @@ def feed
   @feed ||= create(:feed, user: user)
 end
 ```
+
+## Code style
+
+Routing:
+
+- Use resourceful routes.
+- Prefer not to use `member` or `collection` routes.
+- Prefer not to use individual routes for each action.
+
+Controllers:
+
+- Eliminate blank action methods.
+
+Testing:
+
+- Use factory_bot for test data.
+
+## Development Guidelines
+
+- Ruby version is defined in `.ruby-version`.
+- Follow standard Rails conventions.
+- Use two-space indentation.
+- Keep tests and code together.
+- Add or update tests for any code change.
+
+## Testing
+
+- Verify database migrations work both ways (up/down).
+- Run these commands before committing:
+  - `bin/rubocop` – ensures Ruby style follows the Omakase RuboCop rules.
+  - `bin/rails test` – runs the full test suite.
