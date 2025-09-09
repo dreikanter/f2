@@ -27,7 +27,6 @@ class AccessTokensController < ApplicationController
     redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
   end
 
-
   private
 
   def access_tokens
