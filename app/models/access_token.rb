@@ -18,7 +18,10 @@ class AccessToken < ApplicationRecord
   end
 
   def validate_token_async
-    TokenValidationJob.perform_later(self) if encrypted_token.present?
+    return unless valid?
+
+    update!(status: :validating)
+    TokenValidationJob.perform_later(self)
   end
 
   def token_value
