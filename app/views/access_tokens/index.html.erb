@@ -39,7 +39,7 @@
               <% end %>
             </td>
             <td class="text-end">
-              <%= link_to "Validate", access_token_validations_path(access_token_id: access_token.id),
+              <%= link_to "Validate", access_token_status_path(access_token),
                           class: "text-primary text-decoration-none me-3",
                           data: { turbo_method: :post } %>
               <%= link_to "Delete", access_token_path(access_token),
