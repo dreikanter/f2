@@ -22,11 +22,8 @@ export default class extends Controller {
         // Process the Turbo Stream response
         Turbo.renderStreamMessage(html);
         
-        // Check if job is complete by looking for final states
-        if (html.includes('data-status="active"') || 
-            html.includes('data-status="inactive"')) {
-          clearInterval(this.interval);
-        }
+        // Stop polling after first status update is received
+        clearInterval(this.interval);
       })
       .catch(error => {
         console.error('Polling error:', error);
