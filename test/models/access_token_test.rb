@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AccessTokenTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def access_token
     @access_token ||= create(:access_token)
   end
@@ -119,5 +121,27 @@ class AccessTokenTest < ActiveSupport::TestCase
     token.inactive!
 
     assert token.reload.inactive?
+  end
+
+  test "#validate_token_async updates status and enqueues job when valid" do
+    token = create(:access_token)
+    assert token.pending?
+
+    assert_enqueued_with(job: TokenValidationJob, args: [token]) do
+      token.validate_token_async
+    end
+
+    assert token.reload.validating?
+  end
+
+  test "#validate_token_async does nothing when token is invalid" do
+    token = build(:access_token, name: nil) # Invalid token
+    assert_not token.valid?
+
+    assert_no_enqueued_jobs do
+      token.validate_token_async
+    end
+
+    assert token.pending?
   end
 end
