@@ -19,19 +19,19 @@ module HttpClient
   class TooManyRedirectsError < Error; end
 
   class Base
-    def get(url, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
+    def get(url, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #get"
     end
 
-    def post(url, body: nil, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
+    def post(url, body: nil, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #post"
     end
 
-    def put(url, body: nil, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
+    def put(url, body: nil, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #put"
     end
 
-    def delete(url, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
+    def delete(url, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #delete"
     end
   end

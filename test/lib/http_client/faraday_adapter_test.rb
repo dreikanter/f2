@@ -129,7 +129,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
-    response = client.get("https://example.com/redirect", follow_redirects: false)
+    response = client.get("https://example.com/redirect", options: { follow_redirects: false })
 
     assert_equal 302, response.status
     assert_not response.success?
@@ -156,7 +156,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .with(body: '{"data": "test"}')
       .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
 
-    response = client.post("https://example.com/redirect", body: '{"data": "test"}', follow_redirects: false)
+    response = client.post("https://example.com/redirect", body: '{"data": "test"}', options: { follow_redirects: false })
 
     assert_equal 307, response.status
     assert_not response.success?
@@ -194,7 +194,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
     # With max_redirects: 2, should raise TooManyRedirectsError
     error = assert_raises(HttpClient::TooManyRedirectsError) do
-      client.get("https://example.com/redirect1", max_redirects: 2)
+      client.get("https://example.com/redirect1", options: { max_redirects: 2 })
     end
 
     assert_includes error.message, "too many redirects"
@@ -216,7 +216,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
     # With max_redirects: 1, should raise TooManyRedirectsError
     assert_raises(HttpClient::TooManyRedirectsError) do
-      client.post("https://example.com/redirect1", body: "test data", max_redirects: 1)
+      client.post("https://example.com/redirect1", body: "test data", options: { max_redirects: 1 })
     end
   end
 
@@ -225,24 +225,24 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
     # max_redirects should be ignored when follow_redirects is false
-    response = client.get("https://example.com/redirect", follow_redirects: false, max_redirects: 10)
+    response = client.get("https://example.com/redirect", options: { follow_redirects: false, max_redirects: 10 })
     assert_equal 302, response.status
     assert_not response.success?
   end
 
   test "constructor sets default timeout" do
     custom_client = HttpClient::FaradayAdapter.new(timeout: 10)
-    assert_equal 10, custom_client.timeout
+    assert_equal 10, custom_client.default_options[:timeout]
   end
 
   test "constructor sets default follow_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
-    assert_equal false, custom_client.follow_redirects
+    assert_equal false, custom_client.default_options[:follow_redirects]
   end
 
   test "constructor sets default max_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(max_redirects: 10)
-    assert_equal 10, custom_client.max_redirects
+    assert_equal 10, custom_client.default_options[:max_redirects]
   end
 
   test "uses constructor defaults when no per-request overrides" do
@@ -268,7 +268,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_return(status: 200, body: "Final destination")
 
     # Per-request override enables redirects
-    response = custom_client.get("https://example.com/redirect", follow_redirects: true)
+    response = custom_client.get("https://example.com/redirect", options: { follow_redirects: true })
     assert_equal 200, response.status
     assert_equal "Final destination", response.body
     assert response.success?
@@ -283,7 +283,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_return(status: 200, body: "Success")
 
     # Should work with per-request timeout override
-    response = custom_client.get("https://example.com/test", timeout: 60)
+    response = custom_client.get("https://example.com/test", options: { timeout: 60 })
     assert_equal 200, response.status
     assert_equal "Success", response.body
     assert response.success?
