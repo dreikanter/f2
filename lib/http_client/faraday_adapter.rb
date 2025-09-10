@@ -58,7 +58,11 @@ module HttpClient
     rescue Faraday::ConnectionFailed, SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
       raise ConnectionError, "Connection failed: #{e.message}"
     rescue Faraday::Error => e
-      raise Error, "HTTP error: #{e.message}"
+      if e.message.include?("too many redirects")
+        raise TooManyRedirectsError, e.message
+      else
+        raise Error, "HTTP error: #{e.message}"
+      end
     end
 
     def build_connection_for_request(follow_redirects, max_redirects = DEFAULT_MAX_REDIRECTS)

@@ -178,4 +178,55 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal "Final destination after multiple redirects", response.body
     assert response.success?
   end
+
+  test "raises TooManyRedirectsError when limit exceeded" do
+    stub_request(:get, "https://example.com/redirect1")
+      .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
+    
+    stub_request(:get, "https://example.com/redirect2")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/redirect3" })
+    
+    stub_request(:get, "https://example.com/redirect3")
+      .to_return(status: 301, headers: { "Location" => "https://example.com/final" })
+
+    stub_request(:get, "https://example.com/final")
+      .to_return(status: 200, body: "Final destination")
+
+    # With max_redirects: 2, should raise TooManyRedirectsError
+    error = assert_raises(HttpClient::TooManyRedirectsError) do
+      client.get("https://example.com/redirect1", max_redirects: 2)
+    end
+
+    assert_includes error.message, "too many redirects"
+  end
+
+  test "max_redirects applies to all HTTP methods" do
+    # Test POST with redirect limit
+    stub_request(:post, "https://example.com/redirect1")
+      .with(body: "test data")
+      .to_return(status: 307, headers: { "Location" => "https://example.com/redirect2" })
+    
+    stub_request(:post, "https://example.com/redirect2")
+      .with(body: "test data")
+      .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
+
+    stub_request(:post, "https://example.com/final")
+      .with(body: "test data")
+      .to_return(status: 200, body: "Success")
+
+    # With max_redirects: 1, should raise TooManyRedirectsError
+    assert_raises(HttpClient::TooManyRedirectsError) do
+      client.post("https://example.com/redirect1", body: "test data", max_redirects: 1)
+    end
+  end
+
+  test "max_redirects with follow_redirects disabled is ignored" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+
+    # max_redirects should be ignored when follow_redirects is false
+    response = client.get("https://example.com/redirect", follow_redirects: false, max_redirects: 10)
+    assert_equal 302, response.status
+    assert_not response.success?
+  end
 end

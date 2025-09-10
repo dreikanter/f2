@@ -16,6 +16,7 @@ module HttpClient
   class Error < StandardError; end
   class ConnectionError < Error; end
   class TimeoutError < Error; end
+  class TooManyRedirectsError < Error; end
 
   class Base
     def get(url, headers: {}, follow_redirects: true, max_redirects: 5)
