@@ -76,9 +76,9 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "uses custom FREEFEED_HOST when set" do
-    # Test with custom host
-    ENV["FREEFEED_HOST"] = "https://custom.freefeed.com"
+  test "validates token using the token's host" do
+    # Create token with custom host
+    custom_token = create(:access_token, user: user, host: "https://custom.freefeed.com")
 
     stub_request(:get, "https://custom.freefeed.com/v4/users/whoami")
       .with(
@@ -94,12 +94,10 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
-    TokenValidationJob.perform_now(access_token)
+    TokenValidationJob.perform_now(custom_token)
 
-    access_token.reload
-    assert access_token.active?
-  ensure
-    ENV.delete("FREEFEED_HOST")
+    custom_token.reload
+    assert custom_token.active?
   end
 
   test "broadcasts status update on successful validation" do
