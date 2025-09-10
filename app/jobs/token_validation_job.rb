@@ -1,5 +1,3 @@
-require "net/http"
-
 class TokenValidationJob < ApplicationJob
   queue_as :default
 
@@ -26,36 +24,28 @@ class TokenValidationJob < ApplicationJob
     parse_api_response(response)
   rescue JSON::ParserError
     { success: false, error: "Invalid JSON response" }
+  rescue HttpClient::Error => e
+    { success: false, error: e.message }
   rescue => e
     { success: false, error: e.message }
   end
 
   def make_api_request(token)
-    uri = URI("#{freefeed_host}/v4/users/whoami")
-    http = configure_http_client(uri)
-    request = build_request(uri, token)
-    http.request(request)
-  end
-
-  def configure_http_client(uri)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http
-  end
-
-  def build_request(uri, token)
-    request = Net::HTTP::Get.new(uri)
-    request["Authorization"] = "Bearer #{token}"
-    request["Accept"] = "application/json"
-    request["User-Agent"] = "FreeFeed-Token-Validator"
-    request
+    http_client.get(
+      "#{freefeed_host}/v4/users/whoami",
+      headers: {
+        "Authorization" => "Bearer #{token}",
+        "Accept" => "application/json",
+        "User-Agent" => "FreeFeed-Token-Validator"
+      }
+    )
   end
 
   def parse_api_response(response)
-    if response.code == "200"
+    if response.success?
       parse_success_response(response.body)
     else
-      { success: false, error: "HTTP #{response.code}: #{response.message}" }
+      { success: false, error: "HTTP #{response.status}: #{response.body}" }
     end
   end
 
@@ -68,6 +58,10 @@ class TokenValidationJob < ApplicationJob
     else
       { success: false, error: "Invalid response format" }
     end
+  end
+
+  def http_client
+    @http_client ||= HttpClient::FaradayAdapter.new
   end
 
   def freefeed_host
