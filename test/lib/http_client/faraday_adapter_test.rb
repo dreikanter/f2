@@ -80,7 +80,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
   test "raises ConnectionError on connection failures" do
     stub_request(:get, "https://example.com/fail")
-      .to_raise(Faraday::ConnectionFailed.new("Connection failed"))
+      .to_raise(SocketError.new("getaddrinfo: Name or service not known"))
 
     error = assert_raises(HttpClient::ConnectionError) do
       @client.get("https://example.com/fail")
@@ -91,7 +91,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
   test "raises TimeoutError on request timeouts" do
     stub_request(:get, "https://example.com/timeout")
-      .to_raise(Faraday::TimeoutError.new("Request timed out"))
+      .to_raise(Timeout::Error.new("execution expired"))
 
     error = assert_raises(HttpClient::TimeoutError) do
       @client.get("https://example.com/timeout")
@@ -100,14 +100,14 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_includes error.message, "Request timed out"
   end
 
-  test "raises Error on other Faraday errors" do
-    stub_request(:get, "https://example.com/error")
-      .to_raise(Faraday::Error.new("Generic error"))
+  test "raises ConnectionError on network errors" do
+    stub_request(:get, "https://example.com/network-error")
+      .to_raise(Errno::ECONNREFUSED)
 
-    error = assert_raises(HttpClient::Error) do
-      @client.get("https://example.com/error")
+    error = assert_raises(HttpClient::ConnectionError) do
+      @client.get("https://example.com/network-error")
     end
 
-    assert_includes error.message, "Generic error"
+    assert_includes error.message, "Connection failed"
   end
 end

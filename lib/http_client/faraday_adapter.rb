@@ -1,4 +1,5 @@
 require "faraday"
+require "net/http"
 require_relative "../http_client"
 
 module HttpClient
@@ -7,6 +8,7 @@ module HttpClient
 
     def initialize(timeout: DEFAULT_TIMEOUT)
       @timeout = timeout
+
       @connection = Faraday.new do |config|
         config.options.timeout = timeout
         config.options.open_timeout = timeout
@@ -44,10 +46,10 @@ module HttpClient
         body: response.body,
         headers: response.headers.to_hash
       )
-    rescue Faraday::ConnectionFailed => e
-      raise ConnectionError, "Connection failed: #{e.message}"
-    rescue Faraday::TimeoutError => e
+    rescue Faraday::TimeoutError, Timeout::Error => e
       raise TimeoutError, "Request timed out: #{e.message}"
+    rescue Faraday::ConnectionFailed, SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+      raise ConnectionError, "Connection failed: #{e.message}"
     rescue Faraday::Error => e
       raise Error, "HTTP error: #{e.message}"
     end
