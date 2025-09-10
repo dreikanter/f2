@@ -1,4 +1,5 @@
 require "faraday"
+require "faraday/follow_redirects"
 require "net/http"
 require_relative "../http_client"
 
