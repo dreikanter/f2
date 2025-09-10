@@ -59,6 +59,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
   test "marks token as inactive when JSON parsing fails" do
     # Mock response with invalid JSON
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client"
+        }
+      )
       .to_return(status: 200, body: "invalid json", headers: { "Content-Type" => "application/json" })
 
     assert access_token.pending?
@@ -74,6 +81,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
     ENV["FREEFEED_HOST"] = "https://custom.freefeed.com"
 
     stub_request(:get, "https://custom.freefeed.com/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client"
+        }
+      )
       .to_return(
         status: 200,
         body: { users: { username: "testuser" } }.to_json,
@@ -113,6 +127,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
   test "marks token as inactive when response format is invalid" do
     # Mock response with missing username field
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client"
+        }
+      )
       .to_return(
         status: 200,
         body: { users: { screenName: "testuser", id: "test-id" } }.to_json,
@@ -186,7 +207,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Token-Validator"
+          "User-Agent" => "FreeFeed-Rails-Client"
         }
       )
       .to_return(
@@ -208,7 +229,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Token-Validator"
+          "User-Agent" => "FreeFeed-Rails-Client"
         }
       )
       .to_return(
