@@ -1,3 +1,8 @@
+# HTTP Client abstraction layer
+#
+# Provides a standardized interface over HTTP libraries (currently Faraday).
+# This abstraction allows swapping HTTP implementations (Faraday -> Net::HTTP, HTTParty, etc.)
+# without changing application code, and ensures consistent error handling across the app.
 module HttpClient
   class Response
     attr_reader :status, :body, :headers
