@@ -9,7 +9,7 @@ module HttpClient
     end
 
     def success?
-      (200..299).include?(status)
+      status >= 200 && status < 300
     end
   end
 
