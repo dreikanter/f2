@@ -42,9 +42,9 @@ module HttpClient
       effective_follow_redirects = follow_redirects.nil? ? @follow_redirects : follow_redirects
       effective_max_redirects = max_redirects.nil? ? @max_redirects : max_redirects
       effective_timeout = timeout.nil? ? @timeout : timeout
-      
+
       connection = build_connection_for_request(effective_follow_redirects, effective_max_redirects, effective_timeout)
-      
+
       response = connection.send(method) do |request|
         request.url url
         request.body = body if body
@@ -82,7 +82,7 @@ module HttpClient
       if follow_redirects == @follow_redirects && max_redirects == @max_redirects && timeout == @timeout
         return @connection
       end
-      
+
       # Build custom connection for this request
       Faraday.new do |config|
         config.options.timeout = timeout

@@ -114,7 +114,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   test "follows redirects by default" do
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
-    
+
     stub_request(:get, "https://example.com/final")
       .to_return(status: 200, body: "Final destination")
 
@@ -139,7 +139,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     stub_request(:post, "https://example.com/redirect")
       .with(body: '{"data": "test"}')
       .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
-    
+
     stub_request(:post, "https://example.com/final")
       .with(body: '{"data": "test"}')
       .to_return(status: 201, body: '{"created": true}')
@@ -165,10 +165,10 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   test "handles multiple redirects" do
     stub_request(:get, "https://example.com/redirect1")
       .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
-    
+
     stub_request(:get, "https://example.com/redirect2")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
-    
+
     stub_request(:get, "https://example.com/final")
       .to_return(status: 200, body: "Final destination after multiple redirects")
 
@@ -182,10 +182,10 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   test "raises TooManyRedirectsError when limit exceeded" do
     stub_request(:get, "https://example.com/redirect1")
       .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
-    
+
     stub_request(:get, "https://example.com/redirect2")
       .to_return(status: 302, headers: { "Location" => "https://example.com/redirect3" })
-    
+
     stub_request(:get, "https://example.com/redirect3")
       .to_return(status: 301, headers: { "Location" => "https://example.com/final" })
 
@@ -205,7 +205,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     stub_request(:post, "https://example.com/redirect1")
       .with(body: "test data")
       .to_return(status: 307, headers: { "Location" => "https://example.com/redirect2" })
-    
+
     stub_request(:post, "https://example.com/redirect2")
       .with(body: "test data")
       .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
@@ -247,7 +247,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
   test "uses constructor defaults when no per-request overrides" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
-    
+
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
 
@@ -260,10 +260,10 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   test "per-request overrides override constructor defaults" do
     # Constructor sets follow_redirects: false
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
-    
+
     stub_request(:get, "https://example.com/redirect")
       .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
-    
+
     stub_request(:get, "https://example.com/final")
       .to_return(status: 200, body: "Final destination")
 
@@ -278,7 +278,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     # This test verifies the parameter is accepted and passed through correctly
     # The actual timeout behavior is tested by the timeout exception tests
     custom_client = HttpClient::FaradayAdapter.new(timeout: 30)
-    
+
     stub_request(:get, "https://example.com/test")
       .to_return(status: 200, body: "Success")
 
