@@ -34,6 +34,36 @@
             <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens" target="_blank">Freefeed settings</a></div>
           </div>
 
+          <div class="mb-3">
+            <%= form.label :host, "Freefeed Instance", class: "form-label" %>
+            <div class="mb-2">
+              <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
+                <div class="form-check">
+                  <%= form.radio_button :host, url,
+                                        id: "host_#{key}",
+                                        class: "form-check-input host-radio",
+                                        checked: (@access_token.host == url || (key == "production" && @access_token.host.blank?)) %>
+                  <%= form.label "host_#{key}", key.humanize, class: "form-check-label" %>
+                  <small class="text-muted ms-1">(<%= url %>)</small>
+                </div>
+              <% end %>
+              <div class="form-check">
+                <%= form.radio_button :host, "custom",
+                                      id: "host_custom",
+                                      class: "form-check-input host-radio",
+                                      checked: !AccessToken::FREEFEED_HOSTS.values.include?(@access_token.host) && @access_token.host.present? %>
+                <%= form.label :host_custom, "Custom", class: "form-check-label" %>
+              </div>
+            </div>
+            <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.include?(@access_token.host) || @access_token.host.blank? %>">
+              <%= form.text_field :host,
+                                  class: "form-control #{'is-invalid' if @access_token.errors[:host].any?}",
+                                  placeholder: "https://your-freefeed-instance.com",
+                                  id: "custom_host_input" %>
+            </div>
+            <div class="form-text">Select the Freefeed instance where your token was created</div>
+          </div>
+
           <div class="d-grid gap-2 d-md-flex justify-content-md-end">
             <%= link_to "Cancel", access_tokens_path, class: "btn btn-outline-secondary" %>
             <%= form.submit "Create Token", class: "btn btn-primary" %>
@@ -41,6 +71,34 @@
         <% end %>
       </div>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const hostRadios = document.querySelectorAll('.host-radio');
+        const customField = document.getElementById('custom-host-field');
+        const customInput = document.getElementById('custom_host_input');
+
+        hostRadios.forEach(radio => {
+          radio.addEventListener('change', function() {
+            if (this.value === 'custom') {
+              customField.style.display = 'block';
+              customInput.focus();
+            } else {
+              customField.style.display = 'none';
+              customInput.value = this.value;
+            }
+          });
+        });
+
+        // Handle custom input changes
+        customInput.addEventListener('input', function() {
+          if (document.getElementById('host_custom').checked) {
+            // Keep the radio button value as 'custom' but update the actual input
+            // The form will submit the custom input value
+          }
+        });
+      });
+    </script>
 
     <div class="card mt-4">
       <div class="card-body">
