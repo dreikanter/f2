@@ -2,7 +2,7 @@ require "test_helper"
 
 class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   def client
-    client ||= HttpClient::FaradayAdapter.new(timeout: 5)
+    @client ||= HttpClient::FaradayAdapter.new(timeout: 5, follow_redirects: true, max_redirects: 5)
   end
 
   test "performs successful GET request" do
@@ -228,5 +228,64 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     response = client.get("https://example.com/redirect", follow_redirects: false, max_redirects: 10)
     assert_equal 302, response.status
     assert_not response.success?
+  end
+
+  test "constructor sets default timeout" do
+    custom_client = HttpClient::FaradayAdapter.new(timeout: 10)
+    assert_equal 10, custom_client.timeout
+  end
+
+  test "constructor sets default follow_redirects" do
+    custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
+    assert_equal false, custom_client.follow_redirects
+  end
+
+  test "constructor sets default max_redirects" do
+    custom_client = HttpClient::FaradayAdapter.new(max_redirects: 10)
+    assert_equal 10, custom_client.max_redirects
+  end
+
+  test "uses constructor defaults when no per-request overrides" do
+    custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
+    
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+
+    # Should not follow redirect (constructor default is false)
+    response = custom_client.get("https://example.com/redirect")
+    assert_equal 302, response.status
+    assert_not response.success?
+  end
+
+  test "per-request overrides override constructor defaults" do
+    # Constructor sets follow_redirects: false
+    custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
+    
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+    
+    stub_request(:get, "https://example.com/final")
+      .to_return(status: 200, body: "Final destination")
+
+    # Per-request override enables redirects
+    response = custom_client.get("https://example.com/redirect", follow_redirects: true)
+    assert_equal 200, response.status
+    assert_equal "Final destination", response.body
+    assert response.success?
+  end
+
+  test "per-request timeout override works" do
+    # This test verifies the parameter is accepted and passed through correctly
+    # The actual timeout behavior is tested by the timeout exception tests
+    custom_client = HttpClient::FaradayAdapter.new(timeout: 30)
+    
+    stub_request(:get, "https://example.com/test")
+      .to_return(status: 200, body: "Success")
+
+    # Should work with per-request timeout override
+    response = custom_client.get("https://example.com/test", timeout: 60)
+    assert_equal 200, response.status
+    assert_equal "Success", response.body
+    assert response.success?
   end
 end
