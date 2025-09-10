@@ -38,7 +38,7 @@
             <%= form.label :host, "Freefeed Instance", class: "form-label fw-bold" %>
             <div class="mb-2">
               <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
-                <div class="form-check">
+                <div class="form-check mb-2">
                   <%= form.radio_button :host, url,
                                         id: "host_#{key}",
                                         class: "form-check-input host-radio",
@@ -47,7 +47,7 @@
                   <span class="text-muted ms-1">(<%= url %>)</span>
                 </div>
               <% end %>
-              <div class="form-check">
+              <div class="form-check mb-2">
                 <%= form.radio_button :host, "custom",
                                       id: "host_custom",
                                       class: "form-check-input host-radio",
