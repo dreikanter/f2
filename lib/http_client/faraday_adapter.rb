@@ -5,45 +5,42 @@ require_relative "../http_client"
 
 module HttpClient
   class FaradayAdapter < Base
-    DEFAULT_TIMEOUT = 30
-    DEFAULT_FOLLOW_REDIRECTS = true
-    DEFAULT_MAX_REDIRECTS = 5
+    DEFAULT_OPTIONS = {
+      timeout: 30,
+      follow_redirects: true,
+      max_redirects: 5
+    }.freeze
 
-    attr_reader :timeout, :follow_redirects, :max_redirects, :connection
+    attr_reader :default_options, :connection
 
-    def initialize(timeout: DEFAULT_TIMEOUT, follow_redirects: DEFAULT_FOLLOW_REDIRECTS, max_redirects: DEFAULT_MAX_REDIRECTS)
-      @timeout = timeout
-      @follow_redirects = follow_redirects
-      @max_redirects = max_redirects
-
+    def initialize(options = {})
+      @default_options = DEFAULT_OPTIONS.merge(options).freeze
       @connection = build_default_connection
     end
 
-    def get(url, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
-      perform_request(:get, url, headers: headers, follow_redirects: follow_redirects, max_redirects: max_redirects, timeout: timeout)
+    def get(url, headers: {}, options: {})
+      perform_request(:get, url, headers: headers, options: options)
     end
 
-    def post(url, body: nil, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
-      perform_request(:post, url, body: body, headers: headers, follow_redirects: follow_redirects, max_redirects: max_redirects, timeout: timeout)
+    def post(url, body: nil, headers: {}, options: {})
+      perform_request(:post, url, body: body, headers: headers, options: options)
     end
 
-    def put(url, body: nil, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
-      perform_request(:put, url, body: body, headers: headers, follow_redirects: follow_redirects, max_redirects: max_redirects, timeout: timeout)
+    def put(url, body: nil, headers: {}, options: {})
+      perform_request(:put, url, body: body, headers: headers, options: options)
     end
 
-    def delete(url, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
-      perform_request(:delete, url, headers: headers, follow_redirects: follow_redirects, max_redirects: max_redirects, timeout: timeout)
+    def delete(url, headers: {}, options: {})
+      perform_request(:delete, url, headers: headers, options: options)
     end
 
     private
 
-    def perform_request(method, url, body: nil, headers: {}, follow_redirects: nil, max_redirects: nil, timeout: nil)
-      # Use constructor defaults when per-request values are nil
-      effective_follow_redirects = follow_redirects.nil? ? @follow_redirects : follow_redirects
-      effective_max_redirects = max_redirects.nil? ? @max_redirects : max_redirects
-      effective_timeout = timeout.nil? ? @timeout : timeout
+    def perform_request(method, url, body: nil, headers: {}, options: {})
+      # Merge default options with per-request options
+      merged_options = @default_options.merge(options)
 
-      connection = build_connection_for_request(effective_follow_redirects, effective_max_redirects, effective_timeout)
+      connection = build_connection_for_request(merged_options)
 
       response = connection.send(method) do |request|
         request.url url
@@ -67,28 +64,23 @@ module HttpClient
     end
 
     def build_default_connection
-      Faraday.new do |config|
-        config.options.timeout = @timeout
-        config.options.open_timeout = @timeout
-        if @follow_redirects
-          config.response :follow_redirects, limit: @max_redirects
-        end
-        config.adapter Faraday.default_adapter
-      end
+      build_connection(@default_options)
     end
 
-    def build_connection_for_request(follow_redirects, max_redirects, timeout)
+    def build_connection_for_request(options)
       # Use default connection if all settings match constructor defaults
-      if follow_redirects == @follow_redirects && max_redirects == @max_redirects && timeout == @timeout
-        return @connection
-      end
+      return @connection if options == @default_options
 
       # Build custom connection for this request
+      build_connection(options)
+    end
+
+    def build_connection(options)
       Faraday.new do |config|
-        config.options.timeout = timeout
-        config.options.open_timeout = timeout
-        if follow_redirects
-          config.response :follow_redirects, limit: max_redirects
+        config.options.timeout = options[:timeout]
+        config.options.open_timeout = options[:timeout]
+        if options[:follow_redirects]
+          config.response :follow_redirects, limit: options[:max_redirects]
         end
         config.adapter Faraday.default_adapter
       end
