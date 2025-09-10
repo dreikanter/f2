@@ -6,7 +6,7 @@ class AccessTokensController < ApplicationController
   end
 
   def new
-    @access_token = AccessToken.new
+    @access_token = AccessToken.new(host: AccessToken::FREEFEED_HOSTS["production"])
   end
 
   def create
