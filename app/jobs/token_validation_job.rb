@@ -24,6 +24,8 @@ class TokenValidationJob < ApplicationJob
     parse_api_response(response)
   rescue JSON::ParserError
     { success: false, error: "Invalid JSON response" }
+  rescue HttpClient::TooManyRedirectsError => e
+    { success: false, error: "Too many redirects" }
   rescue HttpClient::Error => e
     { success: false, error: e.message }
   rescue => e
