@@ -18,19 +18,19 @@ module HttpClient
   class TimeoutError < Error; end
 
   class Base
-    def get(url, headers: {}, follow_redirects: true)
+    def get(url, headers: {}, follow_redirects: true, max_redirects: 5)
       raise NotImplementedError, "Subclasses must implement #get"
     end
 
-    def post(url, body: nil, headers: {}, follow_redirects: true)
+    def post(url, body: nil, headers: {}, follow_redirects: true, max_redirects: 5)
       raise NotImplementedError, "Subclasses must implement #post"
     end
 
-    def put(url, body: nil, headers: {}, follow_redirects: true)
+    def put(url, body: nil, headers: {}, follow_redirects: true, max_redirects: 5)
       raise NotImplementedError, "Subclasses must implement #put"
     end
 
-    def delete(url, headers: {}, follow_redirects: true)
+    def delete(url, headers: {}, follow_redirects: true, max_redirects: 5)
       raise NotImplementedError, "Subclasses must implement #delete"
     end
   end
