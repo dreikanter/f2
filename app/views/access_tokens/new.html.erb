@@ -44,7 +44,7 @@
                                         class: "form-check-input host-radio",
                                         checked: (@access_token.host == url || (key == "production" && @access_token.host.blank?)) %>
                   <%= form.label "host_#{key}", key.humanize, class: "form-check-label" %>
-                  <small class="text-muted ms-1">(<%= url %>)</small>
+                  <span class="text-muted ms-1">(<%= url %>)</span>
                 </div>
               <% end %>
               <div class="form-check">
