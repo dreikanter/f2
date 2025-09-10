@@ -19,7 +19,7 @@
           <% end %>
 
           <div class="mb-3">
-            <%= form.label :name, class: "form-label" %>
+            <%= form.label :name, class: "form-label fw-bold" %>
             <%= form.text_field :name,
                                 class: "form-control #{'is-invalid' if @access_token.errors[:name].any?}",
                                 placeholder: "e.g., Mobile App, CI/CD" %>
@@ -27,7 +27,7 @@
           </div>
 
           <div class="mb-3">
-            <%= form.label :token, "Freefeed Access Token", class: "form-label" %>
+            <%= form.label :token, "Freefeed Access Token", class: "form-label fw-bold" %>
             <%= form.text_field :token,
                                 class: "form-control #{'is-invalid' if @access_token.errors[:token].any?}",
                                 placeholder: "Paste your Freefeed access token here" %>
@@ -35,7 +35,7 @@
           </div>
 
           <div class="mb-3">
-            <%= form.label :host, "Freefeed Instance", class: "form-label" %>
+            <%= form.label :host, "Freefeed Instance", class: "form-label fw-bold" %>
             <div class="mb-2">
               <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
                 <div class="form-check">
