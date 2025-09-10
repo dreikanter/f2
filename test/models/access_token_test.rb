@@ -144,4 +144,53 @@ class AccessTokenTest < ActiveSupport::TestCase
 
     assert token.pending?
   end
+
+  # Host validation tests
+  test "validates presence of host" do
+    token = build(:access_token, host: nil)
+
+    assert_not token.valid?
+    assert_includes token.errors[:host], "can't be blank"
+  end
+
+  test "validates host format requires HTTP(S) URL" do
+    ["https://example.com", "http://example.com"].each do |valid_host|
+      token = build(:access_token, host: valid_host)
+      assert token.valid?, "#{valid_host} should be valid"
+    end
+
+    ["ftp://example.com", "example.com", "invalid"].each do |invalid_host|
+      token = build(:access_token, host: invalid_host)
+      assert_not token.valid?, "#{invalid_host} should be invalid"
+      assert_includes token.errors[:host], "must be a valid HTTP(S) URL"
+    end
+  end
+
+  test "build_with_token sets default production host" do
+    token = AccessToken.build_with_token(
+      name: "Test Token",
+      user: user,
+      token: "freefeed_token_123"
+    )
+
+    assert_equal "https://freefeed.net", token.host
+  end
+
+  test "build_with_token allows custom host override" do
+    custom_host = "https://custom.freefeed.com"
+    token = AccessToken.build_with_token(
+      name: "Test Token",
+      user: user,
+      token: "freefeed_token_123",
+      host: custom_host
+    )
+
+    assert_equal custom_host, token.host
+  end
+
+  test "FREEFEED_HOSTS contains expected standard hosts" do
+    assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS["production"]
+    assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS["staging"]
+    assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS["beta"]
+  end
 end

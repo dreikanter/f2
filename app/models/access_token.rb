@@ -27,7 +27,7 @@ class AccessToken < ApplicationRecord
       host: FREEFEED_HOSTS["production"]
     }
 
-    new(attributes.merge(defaults))
+    new(defaults.merge(attributes))
   end
 
   def validate_token_async
