@@ -1,8 +1,8 @@
 require "test_helper"
 
 class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
-  setup do
-    @client = HttpClient::FaradayAdapter.new(timeout: 5)
+  def client
+    client ||= HttpClient::FaradayAdapter.new(timeout: 5)
   end
 
   test "performs successful GET request" do
@@ -10,7 +10,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .with(headers: { "Accept" => "application/json" })
       .to_return(status: 200, body: '{"success": true}', headers: { "Content-Type" => "application/json" })
 
-    response = @client.get("https://example.com/test", headers: { "Accept" => "application/json" })
+    response = client.get("https://example.com/test", headers: { "Accept" => "application/json" })
 
     assert_equal 200, response.status
     assert_equal '{"success": true}', response.body
@@ -25,7 +25,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       )
       .to_return(status: 201, body: '{"created": true}')
 
-    response = @client.post(
+    response = client.post(
       "https://example.com/test",
       body: '{"data": "test"}',
       headers: { "Content-Type" => "application/json" }
@@ -44,7 +44,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       )
       .to_return(status: 200, body: '{"updated": true}')
 
-    response = @client.put(
+    response = client.put(
       "https://example.com/test/1",
       body: '{"data": "updated"}',
       headers: { "Content-Type" => "application/json" }
@@ -60,7 +60,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .with(headers: { "Authorization" => "Bearer token123" })
       .to_return(status: 204, body: "")
 
-    response = @client.delete("https://example.com/test/1", headers: { "Authorization" => "Bearer token123" })
+    response = client.delete("https://example.com/test/1", headers: { "Authorization" => "Bearer token123" })
 
     assert_equal 204, response.status
     assert_equal "", response.body
@@ -71,7 +71,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/error")
       .to_return(status: 404, body: "Not Found")
 
-    response = @client.get("https://example.com/error")
+    response = client.get("https://example.com/error")
 
     assert_equal 404, response.status
     assert_equal "Not Found", response.body
@@ -83,7 +83,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_raise(SocketError.new("getaddrinfo: Name or service not known"))
 
     error = assert_raises(HttpClient::ConnectionError) do
-      @client.get("https://example.com/fail")
+      client.get("https://example.com/fail")
     end
 
     assert_includes error.message, "Connection failed"
@@ -94,7 +94,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_raise(Timeout::Error.new("execution expired"))
 
     error = assert_raises(HttpClient::TimeoutError) do
-      @client.get("https://example.com/timeout")
+      client.get("https://example.com/timeout")
     end
 
     assert_includes error.message, "Request timed out"
@@ -105,7 +105,7 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
       .to_raise(Errno::ECONNREFUSED)
 
     error = assert_raises(HttpClient::ConnectionError) do
-      @client.get("https://example.com/network-error")
+      client.get("https://example.com/network-error")
     end
 
     assert_includes error.message, "Connection failed"

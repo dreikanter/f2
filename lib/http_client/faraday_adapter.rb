@@ -6,6 +6,8 @@ module HttpClient
   class FaradayAdapter < Base
     DEFAULT_TIMEOUT = 30
 
+    attr_reader :timeout, :connection
+
     def initialize(timeout: DEFAULT_TIMEOUT)
       @timeout = timeout
 
