@@ -69,7 +69,5 @@ end
 
 gem "fugit", "~> 1.11"
 gem "dotenv", "~> 3.1"
-
 gem "mission_control-jobs", "~> 1.1"
-
 gem "faraday", "~> 2.0"
