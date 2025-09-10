@@ -110,4 +110,72 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
     assert_includes error.message, "Connection failed"
   end
+
+  test "follows redirects by default" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+    
+    stub_request(:get, "https://example.com/final")
+      .to_return(status: 200, body: "Final destination")
+
+    response = client.get("https://example.com/redirect")
+
+    assert_equal 200, response.status
+    assert_equal "Final destination", response.body
+    assert response.success?
+  end
+
+  test "does not follow redirects when explicitly disabled" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+
+    response = client.get("https://example.com/redirect", follow_redirects: false)
+
+    assert_equal 302, response.status
+    assert_not response.success?
+  end
+
+  test "follows redirects on POST requests when enabled" do
+    stub_request(:post, "https://example.com/redirect")
+      .with(body: '{"data": "test"}')
+      .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
+    
+    stub_request(:post, "https://example.com/final")
+      .with(body: '{"data": "test"}')
+      .to_return(status: 201, body: '{"created": true}')
+
+    response = client.post("https://example.com/redirect", body: '{"data": "test"}')
+
+    assert_equal 201, response.status
+    assert_equal '{"created": true}', response.body
+    assert response.success?
+  end
+
+  test "does not follow redirects on POST when explicitly disabled" do
+    stub_request(:post, "https://example.com/redirect")
+      .with(body: '{"data": "test"}')
+      .to_return(status: 307, headers: { "Location" => "https://example.com/final" })
+
+    response = client.post("https://example.com/redirect", body: '{"data": "test"}', follow_redirects: false)
+
+    assert_equal 307, response.status
+    assert_not response.success?
+  end
+
+  test "handles multiple redirects" do
+    stub_request(:get, "https://example.com/redirect1")
+      .to_return(status: 301, headers: { "Location" => "https://example.com/redirect2" })
+    
+    stub_request(:get, "https://example.com/redirect2")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/final" })
+    
+    stub_request(:get, "https://example.com/final")
+      .to_return(status: 200, body: "Final destination after multiple redirects")
+
+    response = client.get("https://example.com/redirect1")
+
+    assert_equal 200, response.status
+    assert_equal "Final destination after multiple redirects", response.body
+    assert response.success?
+  end
 end
