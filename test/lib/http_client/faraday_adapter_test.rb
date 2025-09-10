@@ -1,5 +1,4 @@
 require "test_helper"
-require "lib/http_client/faraday_adapter"
 
 class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
   setup do
