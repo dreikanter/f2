@@ -11,11 +11,15 @@ module HttpClient
       max_redirects: 5
     }.freeze
 
-    attr_reader :default_options, :connection
+    attr_reader :connection
 
     def initialize(options = {})
-      @default_options = DEFAULT_OPTIONS.merge(options).freeze
+      @constructor_options = options.freeze
       @connection = build_default_connection
+    end
+
+    def default_options
+      DEFAULT_OPTIONS.merge(@constructor_options)
     end
 
     def get(url, headers: {}, options: {})
@@ -38,7 +42,7 @@ module HttpClient
 
     def perform_request(method, url, body: nil, headers: {}, options: {})
       # Merge default options with per-request options
-      merged_options = @default_options.merge(options)
+      merged_options = DEFAULT_OPTIONS.merge(@constructor_options).merge(options)
 
       connection = build_connection_for_request(merged_options)
 
@@ -64,12 +68,14 @@ module HttpClient
     end
 
     def build_default_connection
-      build_connection(@default_options)
+      default_options = DEFAULT_OPTIONS.merge(@constructor_options)
+      build_connection(default_options)
     end
 
     def build_connection_for_request(options)
       # Use default connection if all settings match constructor defaults
-      return @connection if options == @default_options
+      default_options = DEFAULT_OPTIONS.merge(@constructor_options)
+      return @connection if options == default_options
 
       # Build custom connection for this request
       build_connection(options)
