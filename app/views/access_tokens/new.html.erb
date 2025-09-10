@@ -31,7 +31,7 @@
             <%= form.text_field :token,
                                 class: "form-control #{'is-invalid' if @access_token.errors[:token].any?}",
                                 placeholder: "Paste your Freefeed access token here" %>
-            <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens" target="_blank">Freefeed settings</a></div>
+            <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens/create?title=F2%20Feeder%20App&scopes=manage-posts,manage-groups" target="_blank">Freefeed settings</a></div>
           </div>
 
           <div class="mb-3">
