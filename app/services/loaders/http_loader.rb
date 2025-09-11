@@ -31,11 +31,11 @@ module Loaders
     private
 
     def http_client
-      @http_client ||= options[:http_client] || default_http_client
+      @http_client ||= options.fetch(:http_client) { default_http_client }
     end
 
     def default_http_client
-      max_redirects = options[:max_redirects] || DEFAULT_MAX_REDIRECTS
+      max_redirects = options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
       HttpClient::FaradayAdapter.new(max_redirects: max_redirects)
     end
 
