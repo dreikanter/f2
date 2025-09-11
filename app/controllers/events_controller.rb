@@ -5,34 +5,42 @@ class EventsController < ApplicationController
 
   def index
     authorize Event
-    load_events_for_index
-  end
-
-  def show
-    authorize Event
-    @event = Event.find(params[:id])
-    load_navigation_events
-  end
-
-  private
-
-  def load_events_for_index
+    
     page = (params[:page] || 1).to_i
     offset = (page - 1) * PER_PAGE
 
-    @events = Event.includes(:user, :subject)
-                   .order(created_at: :desc)
-                   .limit(PER_PAGE)
-                   .offset(offset)
-
-    @total_count = Event.count
+    @events = paginated_events(offset)
+    @total_count = events_count
     @current_page = page
     @total_pages = (@total_count.to_f / PER_PAGE).ceil
     @per_page = PER_PAGE
   end
 
-  def load_navigation_events
-    @previous_event = Event.where("id > ?", @event.id).order(id: :asc).first
-    @next_event = Event.where("id < ?", @event.id).order(id: :desc).first
+  def show
+    authorize Event
+    @event = Event.find(params[:id])
+    @previous_event = previous_event(@event)
+    @next_event = next_event(@event)
+  end
+
+  private
+
+  def paginated_events(offset)
+    policy_scope(Event).includes(:user, :subject)
+                       .order(created_at: :desc)
+                       .limit(PER_PAGE)
+                       .offset(offset)
+  end
+
+  def events_count
+    policy_scope(Event).count
+  end
+
+  def previous_event(event)
+    policy_scope(Event).where("id > ?", event.id).order(id: :asc).first
+  end
+
+  def next_event(event)
+    policy_scope(Event).where("id < ?", event.id).order(id: :desc).first
   end
 end
