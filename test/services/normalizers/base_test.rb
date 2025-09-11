@@ -1,8 +1,5 @@
 require "test_helper"
 
-# Ensure all normalizer classes are loaded
-require_relative "../../../app/models/normalizers/rss_normalizer"
-
 class Normalizers::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)

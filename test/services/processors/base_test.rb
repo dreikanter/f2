@@ -1,8 +1,5 @@
 require "test_helper"
 
-# Ensure all processor classes are loaded
-require_relative "../../../app/models/processors/rss_processor"
-
 class Processors::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)

@@ -92,6 +92,20 @@ Testing:
 - Keep tests and code together.
 - Add or update tests for any code change.
 
+## PR description
+
+Use the following format:
+
+```
+Changes:
+
+- Change 1
+- Change 2
+- ...
+```
+
+When listing the changes, start from the most important. Generalize. Skip boring details.
+
 ## Testing
 
 - Verify database migrations work both ways (up/down).
