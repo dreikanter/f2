@@ -15,7 +15,7 @@ if Rails.env.development?
   puts "✅ Admin permission granted to first user"
 
   # Create sample events for development
-  if Event.count == 0
+  if Event.count < 75
     # Feed processing events
     Event.create!(
       type: "FeedRefresh",
@@ -141,6 +141,28 @@ if Rails.env.development?
         time_window_minutes: 10
       }
     )
+
+    # Generate additional events to reach 75 total for pagination testing
+    current_count = Event.count
+    events_needed = 75 - current_count
+    
+    event_types = ["FeedRefresh", "FeedError", "UserLogin", "PasswordReset", "SystemMaintenance", 
+                   "BackgroundJobError", "ApiRequest", "CacheHit", "SecurityAlert", "DatabaseQuery"]
+    levels = ["debug", "info", "warning", "error"]
+    
+    events_needed.times do |i|
+      Event.create!(
+        type: event_types.sample,
+        level: levels.sample,
+        message: "Generated event #{i + current_count + 1} for pagination testing",
+        user: (i.even? ? user : nil),
+        metadata: {
+          event_number: i + current_count + 1,
+          batch: "pagination_test",
+          generated_at: Time.current.iso8601
+        }
+      )
+    end
 
     puts "✅ Sample events created (#{Event.count} total)"
   end
