@@ -2,13 +2,8 @@ module Loaders
   class HttpLoader < Base
     DEFAULT_MAX_REDIRECTS = 3
 
-    def initialize(feed, http_client: nil, max_redirects: DEFAULT_MAX_REDIRECTS)
-      super(feed)
-      @http_client = http_client || default_http_client(max_redirects)
-    end
-
     def load
-      response = @http_client.get(feed.url)
+      response = http_client.get(feed.url)
 
       if response.success?
         {
@@ -35,7 +30,12 @@ module Loaders
 
     private
 
-    def default_http_client(max_redirects)
+    def http_client
+      @http_client ||= options[:http_client] || default_http_client
+    end
+
+    def default_http_client
+      max_redirects = options[:max_redirects] || DEFAULT_MAX_REDIRECTS
       HttpClient::FaradayAdapter.new(max_redirects: max_redirects)
     end
 

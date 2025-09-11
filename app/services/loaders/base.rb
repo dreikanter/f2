@@ -1,7 +1,8 @@
 module Loaders
   class Base
-    def initialize(feed)
+    def initialize(feed, options = {})
       @feed = feed
+      @options = options
     end
 
     def load
@@ -10,6 +11,6 @@ module Loaders
 
     private
 
-    attr_reader :feed
+    attr_reader :feed, :options
   end
 end

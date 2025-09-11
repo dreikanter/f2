@@ -9,6 +9,15 @@ class Loaders::BaseTest < ActiveSupport::TestCase
     end
   end
 
+  test "should initialize with options" do
+    feed = create(:feed)
+    options = { key: "value" }
+
+    assert_nothing_raised do
+      Loaders::Base.new(feed, options)
+    end
+  end
+
   test "should raise NotImplementedError for load method" do
     feed = create(:feed)
     loader = Loaders::Base.new(feed)
