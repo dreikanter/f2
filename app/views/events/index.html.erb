@@ -9,20 +9,19 @@
 
 <% if @events.any? %>
   <div class="card">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Type</th>
-              <th>Level</th>
-              <th>Message</th>
-              <th>User</th>
-              <th>Subject</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Level</th>
+            <th scope="col">Message</th>
+            <th scope="col">User</th>
+            <th scope="col">Subject</th>
+            <th scope="col">Created</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
           <tbody>
             <% @events.each do |event| %>
               <tr>
@@ -62,7 +61,6 @@
             <% end %>
           </tbody>
         </table>
-      </div>
     </div>
   </div>
 
