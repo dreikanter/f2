@@ -5,6 +5,7 @@ class AccessToken < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
+  validates :host, presence: true, format: { with: /\Ahttps?:\/\/[^\s]+\z/, message: "must be a valid HTTP(S) URL" }
   validate :user_tokens_limit
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
@@ -13,13 +14,20 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
+  FREEFEED_HOSTS = {
+    "production" => "https://freefeed.net",
+    "staging" => "https://candy.freefeed.net",
+    "beta" => "https://beta.freefeed.net"
+  }.freeze
+
   def self.build_with_token(attributes = {})
     defaults = {
       status: :pending,
-      encrypted_token: attributes[:token]
+      encrypted_token: attributes[:token],
+      host: FREEFEED_HOSTS["production"]
     }
 
-    new(attributes.merge(defaults))
+    new(defaults.merge(attributes))
   end
 
   def validate_token_async

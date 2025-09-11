@@ -4,6 +4,7 @@ FactoryBot.define do
     sequence(:name) { |n| "Token #{n}" }
     status { :pending }
     last_used_at { nil }
+    host { "https://freefeed.test" }
 
     token_value = "freefeed_token_#{SecureRandom.hex(16)}"
 

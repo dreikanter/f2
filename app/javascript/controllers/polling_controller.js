@@ -10,20 +10,37 @@ export default class extends Controller {
   }
   
   startPolling() {
+    let pollCount = 0;
+    const maxPolls = 30;
+    
     this.interval = setInterval(() => {
+      pollCount++;
+      
+      if (pollCount > maxPolls) {
+        console.warn('Polling stopped after maximum attempts');
+        clearInterval(this.interval);
+        return;
+      }
+      
       fetch(`/access_tokens/${this.accessTokenIdValue}/status`, {
         headers: { 
           "Accept": "text/vnd.turbo-stream.html",
           "X-Requested-With": "XMLHttpRequest"
         }
       })
-      .then(response => response.text())
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        } else {
+          clearInterval(this.interval);
+          return null;
+        }
+      })
       .then(html => {
-        // Process the Turbo Stream response
-        Turbo.renderStreamMessage(html);
-        
-        // Stop polling after first status update is received
-        clearInterval(this.interval);
+        if (html) {
+          Turbo.renderStreamMessage(html);
+          clearInterval(this.interval);
+        }
       })
       .catch(error => {
         console.error('Polling error:', error);

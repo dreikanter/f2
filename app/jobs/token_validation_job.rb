@@ -5,7 +5,7 @@ class TokenValidationJob < ApplicationJob
     return unless access_token.token_value.present?
 
     begin
-      user_info = freefeed_client(access_token.token_value).whoami
+      user_info = freefeed_client(access_token).whoami
       access_token.update!(status: :active, owner: user_info[:username])
     rescue FreefeedClient::UnauthorizedError
       access_token.inactive!
@@ -16,11 +16,7 @@ class TokenValidationJob < ApplicationJob
 
   private
 
-  def freefeed_client(token)
-    FreefeedClient.new(host: freefeed_host, token: token)
-  end
-
-  def freefeed_host
-    ENV.fetch("FREEFEED_HOST")
+  def freefeed_client(access_token)
+    FreefeedClient.new(host: access_token.host, token: access_token.token_value)
   end
 end

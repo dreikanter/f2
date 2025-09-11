@@ -19,7 +19,7 @@
           <% end %>
 
           <div class="mb-3">
-            <%= form.label :name, class: "form-label" %>
+            <%= form.label :name, class: "form-label fw-bold" %>
             <%= form.text_field :name,
                                 class: "form-control #{'is-invalid' if @access_token.errors[:name].any?}",
                                 placeholder: "e.g., Mobile App, CI/CD" %>
@@ -27,11 +27,41 @@
           </div>
 
           <div class="mb-3">
-            <%= form.label :token, "Freefeed Access Token", class: "form-label" %>
+            <%= form.label :token, "Freefeed Access Token", class: "form-label fw-bold" %>
             <%= form.text_field :token,
                                 class: "form-control #{'is-invalid' if @access_token.errors[:token].any?}",
                                 placeholder: "Paste your Freefeed access token here" %>
-            <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens" target="_blank">Freefeed settings</a></div>
+            <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens/create?title=F2%20Feeder%20App&scopes=manage-posts,manage-groups" target="_blank">Freefeed settings</a></div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :host, "Freefeed Instance", class: "form-label fw-bold" %>
+            <div class="mb-2">
+              <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
+                <div class="form-check mb-2">
+                  <%= form.radio_button :host, url,
+                                        id: "host_#{key}",
+                                        class: "form-check-input host-radio",
+                                        checked: (@access_token.host == url || (key == "production" && @access_token.host.blank?)) %>
+                  <%= form.label "host_#{key}", key.humanize, class: "form-check-label" %>
+                  <span class="text-muted ms-1">(<%= url %>)</span>
+                </div>
+              <% end %>
+              <div class="form-check mb-2">
+                <%= form.radio_button :host, "custom",
+                                      id: "host_custom",
+                                      class: "form-check-input host-radio",
+                                      checked: !AccessToken::FREEFEED_HOSTS.values.include?(@access_token.host) && @access_token.host.present? %>
+                <%= form.label :host_custom, "Custom", class: "form-check-label" %>
+              </div>
+            </div>
+            <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.include?(@access_token.host) || @access_token.host.blank? %>">
+              <%= form.text_field :host,
+                                  class: "form-control #{'is-invalid' if @access_token.errors[:host].any?}",
+                                  placeholder: "https://your-freefeed-instance.com",
+                                  id: "custom_host_input" %>
+            </div>
+            <div class="form-text">Select the Freefeed instance where your token was created</div>
           </div>
 
           <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -42,9 +72,37 @@
       </div>
     </div>
 
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const hostRadios = document.querySelectorAll('.host-radio');
+        const customField = document.getElementById('custom-host-field');
+        const customInput = document.getElementById('custom_host_input');
+
+        hostRadios.forEach(radio => {
+          radio.addEventListener('change', function() {
+            if (this.value === 'custom') {
+              customField.style.display = 'block';
+              customInput.focus();
+            } else {
+              customField.style.display = 'none';
+              customInput.value = this.value;
+            }
+          });
+        });
+
+        // Handle custom input changes
+        customInput.addEventListener('input', function() {
+          if (document.getElementById('host_custom').checked) {
+            // Keep the radio button value as 'custom' but update the actual input
+            // The form will submit the custom input value
+          }
+        });
+      });
+    </script>
+
     <div class="card mt-4">
       <div class="card-body">
-        <div class="small text-muted">
+        <div class="text-muted">
           <h6>About Freefeed Tokens</h6>
           <ul class="mb-0">
             <li>Use tokens from your Freefeed account</li>

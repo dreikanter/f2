@@ -7,11 +7,15 @@ class StatusesController < ApplicationController
     @access_token = access_tokens.find(params[:access_token_id])
     @access_token.validate_token_async
     render turbo_stream: build_turbo_stream_update(access_token: @access_token)
+  rescue ActiveRecord::RecordNotFound
+    head :not_found
   end
 
   def show
     @access_token = access_tokens.find(params[:access_token_id])
     render turbo_stream: build_turbo_stream_update(access_token: @access_token)
+  rescue ActiveRecord::RecordNotFound
+    head :not_found
   end
 
   private
