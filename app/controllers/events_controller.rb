@@ -22,5 +22,14 @@ class EventsController < ApplicationController
   def show
     @event = Event.find(params[:id])
     authorize @event
+
+    # Find next and previous events for navigation
+    @previous_event = policy_scope(Event).where("created_at > ?", @event.created_at)
+                                        .order(created_at: :asc)
+                                        .first
+    
+    @next_event = policy_scope(Event).where("created_at < ?", @event.created_at)
+                                    .order(created_at: :desc)
+                                    .first
   end
 end
