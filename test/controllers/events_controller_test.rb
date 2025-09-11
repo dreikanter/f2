@@ -65,6 +65,18 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", count: 25 # Should show 25 event rows per page
   end
 
+  test "should show empty state when no events exist" do
+    login_as(admin_user)
+
+    get events_path
+
+    assert_response :success
+    assert_select "h1", "Events"
+    assert_select "table", count: 0 # No table should be rendered
+    assert_select "h4", "No events found"
+    assert_select "p", "Events will appear here as they are created."
+  end
+
   private
 
   def login_as(user)
