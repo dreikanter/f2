@@ -26,21 +26,25 @@ class EventsController < ApplicationController
   private
 
   def paginated_events(offset)
-    policy_scope(Event).includes(:user, :subject)
-                       .order(created_at: :desc)
-                       .limit(PER_PAGE)
-                       .offset(offset)
+    events_scope.includes(:user, :subject)
+                .order(created_at: :desc)
+                .limit(PER_PAGE)
+                .offset(offset)
   end
 
   def events_count
-    policy_scope(Event).count
+    events_scope.count
   end
 
   def previous_event(event)
-    policy_scope(Event).where("id > ?", event.id).order(id: :asc).first
+    events_scope.where("id > ?", event.id).order(id: :asc).first
   end
 
   def next_event(event)
-    policy_scope(Event).where("id < ?", event.id).order(id: :desc).first
+    events_scope.where("id < ?", event.id).order(id: :desc).first
+  end
+
+  def events_scope
+    policy_scope(Event)
   end
 end
