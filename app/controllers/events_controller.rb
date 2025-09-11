@@ -26,10 +26,11 @@ class EventsController < ApplicationController
   private
 
   def paginated_events(offset)
-    events_scope.includes(:user, :subject)
-                .order(created_at: :desc)
-                .limit(PER_PAGE)
-                .offset(offset)
+    events_scope
+      .includes(:user, :subject)
+      .order(created_at: :desc)
+      .limit(PER_PAGE)
+      .offset(offset)
   end
 
   def events_count
