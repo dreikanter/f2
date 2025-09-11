@@ -1,0 +1,107 @@
+<% content_for :title, "Event ##{@event.id}" %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Event #<%= @event.id %></h1>
+  <%= link_to "← Back to Events", events_path, class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Event Details</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3">Type</dt>
+          <dd class="col-sm-9">
+            <code class="text-dark fs-6"><%= @event.type %></code>
+          </dd>
+
+          <dt class="col-sm-3">Level</dt>
+          <dd class="col-sm-9">
+            <span class="badge bg-<%= level_badge_class(@event.level) %>">
+              <%= @event.level.humanize %>
+            </span>
+          </dd>
+
+          <dt class="col-sm-3">Message</dt>
+          <dd class="col-sm-9">
+            <% if @event.message.present? %>
+              <%= simple_format(@event.message, class: "mb-0") %>
+            <% else %>
+              <em class="text-muted">No message</em>
+            <% end %>
+          </dd>
+
+          <dt class="col-sm-3">User</dt>
+          <dd class="col-sm-9">
+            <% if @event.user %>
+              <%= @event.user.email_address %>
+            <% else %>
+              <em class="text-muted">System</em>
+            <% end %>
+          </dd>
+
+          <dt class="col-sm-3">Subject</dt>
+          <dd class="col-sm-9">
+            <% if @event.subject %>
+              <span class="text-muted"><%= @event.subject_type %></span>
+              <span class="text-primary">#<%= @event.subject_id %></span>
+            <% else %>
+              <em class="text-muted">None</em>
+            <% end %>
+          </dd>
+
+          <dt class="col-sm-3">Created</dt>
+          <dd class="col-sm-9">
+            <%= @event.created_at.strftime("%B %d, %Y at %I:%M %p %Z") %>
+            <br>
+            <small class="text-muted">
+              <%= time_ago_in_words(@event.created_at) %> ago
+            </small>
+          </dd>
+
+          <dt class="col-sm-3">Updated</dt>
+          <dd class="col-sm-9">
+            <%= @event.updated_at.strftime("%B %d, %Y at %I:%M %p %Z") %>
+            <br>
+            <small class="text-muted">
+              <%= time_ago_in_words(@event.updated_at) %> ago
+            </small>
+          </dd>
+
+          <% if @event.expires_at %>
+            <dt class="col-sm-3">Expires</dt>
+            <dd class="col-sm-9">
+              <%= @event.expires_at.strftime("%B %d, %Y at %I:%M %p %Z") %>
+              <br>
+              <% if @event.expired? %>
+                <span class="badge bg-danger">Expired</span>
+              <% else %>
+                <small class="text-muted">
+                  Expires in <%= time_ago_in_words(@event.expires_at) %>
+                </small>
+              <% end %>
+            </dd>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Metadata</h5>
+      </div>
+      <div class="card-body">
+        <% if @event.metadata.present? && @event.metadata != {} %>
+          <pre class="event-metadata"><code><%= JSON.pretty_generate(@event.metadata) %></code></pre>
+        <% else %>
+          <em class="text-muted">No metadata</em>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
