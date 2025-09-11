@@ -11,12 +11,11 @@ export default class extends Controller {
   
   startPolling() {
     let pollCount = 0;
-    const maxPolls = 30; // Stop after 60 seconds (30 * 2 seconds)
+    const maxPolls = 30;
     
     this.interval = setInterval(() => {
       pollCount++;
       
-      // Stop polling after max attempts to prevent infinite loops
       if (pollCount > maxPolls) {
         console.warn('Polling stopped after maximum attempts');
         clearInterval(this.interval);
@@ -32,20 +31,14 @@ export default class extends Controller {
       .then(response => {
         if (response.ok) {
           return response.text();
-        } else if (response.status === 404) {
-          // Token was deleted, stop polling
+        } else {
           clearInterval(this.interval);
           return null;
-        } else {
-          throw new Error(`HTTP ${response.status}`);
         }
       })
       .then(html => {
         if (html) {
-          // Process the Turbo Stream response
           Turbo.renderStreamMessage(html);
-          
-          // Stop polling after first status update is received
           clearInterval(this.interval);
         }
       })
