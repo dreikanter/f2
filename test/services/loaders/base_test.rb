@@ -1,8 +1,5 @@
 require "test_helper"
 
-# Ensure all loader classes are loaded
-require_relative "../../../app/models/loaders/http_loader"
-
 class Loaders::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)
