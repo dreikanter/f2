@@ -81,11 +81,11 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     entries = processor.process
 
     assert_equal 3, entries.length
-    
+
     entries.each do |entry|
       assert_equal feed, entry.feed
     end
-    
+
     valid_entries = entries.select(&:valid?)
     assert valid_entries.length >= 1
   end
