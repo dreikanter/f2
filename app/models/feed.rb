@@ -36,6 +36,8 @@ class Feed < ApplicationRecord
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
 
   validate :cron_expression_is_valid
+  validate :access_token_required_for_creation
+  validate :access_token_required_for_enabling
 
   scope :due, -> {
     left_joins(:feed_schedule)
@@ -44,6 +46,14 @@ class Feed < ApplicationRecord
   }
 
   after_initialize :set_default_state, if: :new_record?
+
+  def enabled
+    state == "enabled"
+  end
+
+  def enabled=(value)
+    self.state = value.to_s == "1" || value == true ? :enabled : :disabled
+  end
 
   private
 
@@ -56,5 +66,19 @@ class Feed < ApplicationRecord
 
     parsed_cron = Fugit.parse(cron_expression)
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
+  end
+
+  def access_token_required_for_creation
+    return unless new_record? && enabled?
+    return if access_token.present?
+
+    errors.add(:access_token, "is required")
+  end
+
+  def access_token_required_for_enabling
+    return unless enabled?
+    return if access_token.present?
+
+    errors.add(:state, "cannot be enabled without an access token")
   end
 end
