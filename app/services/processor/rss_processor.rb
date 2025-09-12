@@ -8,7 +8,7 @@ module Processor
       parsed_feed.entries.map do |entry|
         FeedEntry.new(
           feed: feed,
-          external_id: extract_external_id(entry),
+          uid: extract_uid(entry),
           title: entry.title&.strip,
           content: entry.content || entry.summary,
           published_at: entry.published,
@@ -23,7 +23,7 @@ module Processor
 
     private
 
-    def extract_external_id(entry)
+    def extract_uid(entry)
       # Try to get a unique ID from the entry
       entry.id || entry.url || entry.title&.strip
     end

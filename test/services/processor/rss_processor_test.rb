@@ -25,7 +25,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     entries = processor.process
 
     first_entry = entries.first
-    assert_equal "https://example.com/first-article", first_entry.external_id
+    assert_equal "https://example.com/first-article", first_entry.uid
     assert_equal "First Article", first_entry.title
     assert_includes first_entry.content, "first article content"
     assert_equal "https://example.com/first-article", first_entry.source_url
@@ -62,15 +62,15 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_not_nil raw_data["author"]
   end
 
-  test "should extract external_id from guid, url, or title" do
+  test "should extract uid from guid, url, or title" do
     processor = Processor::RssProcessor.new(feed, sample_rss_content)
     entries = processor.process
 
-    # First entry should use URL as external_id (guid matches url)
-    assert_equal "https://example.com/first-article", entries[0].external_id
+    # First entry should use URL as uid (guid matches url)
+    assert_equal "https://example.com/first-article", entries[0].uid
 
-    # Third entry should use the guid as external_id
-    assert_equal "no-content-123", entries[2].external_id
+    # Third entry should use the guid as uid
+    assert_equal "no-content-123", entries[2].uid
   end
 
   test "should return empty array for invalid RSS" do
@@ -115,7 +115,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
 
     # Verify all required fields are present
     entries.each do |entry|
-      assert_not_nil entry.external_id
+      assert_not_nil entry.uid
       assert_not_nil entry.title
       assert entry.title.present?
       assert_equal feed, entry.feed
@@ -142,7 +142,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     entry = entries.first
 
     assert_equal "Minimal Article", entry.title
-    assert_equal "Minimal Article", entry.external_id # Falls back to title
+    assert_equal "Minimal Article", entry.uid # Falls back to title
     assert entry.content.blank? || entry.content.nil?
     assert entry.source_url.blank? || entry.source_url.nil?
   end
