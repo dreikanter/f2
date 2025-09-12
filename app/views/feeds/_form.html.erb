@@ -12,8 +12,8 @@
 
   <div class="mb-4">
     <%= form.label :name, class: "form-label" %>
-    <%= form.text_field :name, class: "form-control", required: true, placeholder: "my-rss-feed", pattern: Feed::NAME_PATTERN, title: "Only lowercase letters, numbers, hyphens, and underscores allowed" %>
-    <div class="form-text">Only lowercase letters, numbers, hyphens, and underscores allowed</div>
+    <%= form.text_field :name, class: "form-control", required: true, placeholder: "My RSS Feed", maxlength: Feed::NAME_MAX_LENGTH %>
+    <div class="form-text">Give your feed a name to help you identify it in your feed list</div>
     <div class="invalid-feedback">Please provide a valid feed name.</div>
   </div>
 

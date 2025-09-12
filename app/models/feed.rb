@@ -13,10 +13,7 @@ class Feed < ApplicationRecord
   validates :name,
             presence: true,
             uniqueness: { scope: :user_id },
-            format: {
-              with: NAME_PATTERN,
-              message: "can only contain lowercase letters, numbers, hyphens, and underscores"
-            }
+            length: { maximum: NAME_MAX_LENGTH }
 
   validates :url,
             presence: true,
@@ -30,7 +27,7 @@ class Feed < ApplicationRecord
   validates :processor, presence: true
   validates :normalizer, presence: true
 
-  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
+  normalizes :name, with: ->(name) { name.to_s.strip }
   normalizes :url, with: ->(url) { url.to_s.strip }
   normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }

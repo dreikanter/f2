@@ -105,12 +105,12 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:user, :blank)
   end
 
-  test "should validate name format" do
-    feed = build(:feed, name: "Invalid Name With Spaces")
+  test "should validate name length" do
+    feed = build(:feed, name: "a" * 41)
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:name, :invalid)
+    assert feed.errors.of_kind?(:name, :too_long)
 
-    feed = build(:feed, name: "valid-name_123")
+    feed = build(:feed, name: "Valid Name With Spaces")
     assert feed.valid?
   end
 
@@ -136,9 +136,9 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should normalize name to lowercase" do
-    feed = create(:feed, name: "Test-Feed")
-    assert_equal "test-feed", feed.name
+  test "should normalize name by stripping spaces" do
+    feed = create(:feed, name: "  Test-Feed  ")
+    assert_equal "Test-Feed", feed.name
   end
 
   test "should normalize url by stripping spaces" do

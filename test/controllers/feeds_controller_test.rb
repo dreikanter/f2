@@ -163,7 +163,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "should normalize name to lowercase" do
+  test "should preserve name case" do
     sign_in_as(user)
 
     post feeds_url, params: {
@@ -181,7 +181,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed = Feed.last
 
     assert_redirected_to feed_url(feed)
-    assert_equal "test-feed", feed.name
+    assert_equal "Test-Feed", feed.name
   end
 
   test "should strip and normalize URLs" do
