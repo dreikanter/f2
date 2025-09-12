@@ -1,16 +1,13 @@
 module EventsHelper
-  def level_badge_class(level)
-    case level.to_s
-    when "debug"
-      "secondary"
-    when "info"
-      "primary"
-    when "warning"
-      "warning"
-    when "error"
-      "danger"
-    else
-      "secondary"
-    end
+  LEVEL_BADGES = {
+    "debug" => { class: "badge bg-secondary", char: "D" },
+    "info" => { class: "badge bg-primary", char: "I" },
+    "warning" => { class: "badge bg-warning", char: "W" },
+    "error" => { class: "badge bg-danger", char: "E" }
+  }.freeze
+
+  def level_badge(level)
+    badge = LEVEL_BADGES.fetch(level.to_s, LEVEL_BADGES["debug"])
+    content_tag(:span, badge[:char], class: "#{badge[:class]} font-monospace", title: level.humanize)
   end
 end

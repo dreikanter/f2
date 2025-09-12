@@ -32,9 +32,7 @@
 
       <dt class="col-lg-2 col-md-3">Level</dt>
       <dd class="col-lg-4 col-md-9">
-        <span class="badge bg-<%= level_badge_class(@event.level) %>">
-          <%= @event.level.humanize %>
-        </span>
+        <%= level_badge(@event.level) %>
       </dd>
 
       <dt class="col-lg-2 col-md-3">User</dt>
@@ -107,7 +105,7 @@
       <h5 class="card-title mb-0">Metadata</h5>
     </div>
     <div class="card-body">
-      <pre class="event-metadata"><code><%= JSON.pretty_generate(@event.metadata) %></code></pre>
+      <pre class="event-metadata font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><code><%= JSON.pretty_generate(@event.metadata) %></code></pre>
     </div>
   </div>
 <% end %>

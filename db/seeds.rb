@@ -19,7 +19,7 @@ if Rails.env.development?
     # Feed processing events
     Event.create!(
       type: "FeedRefresh",
-      level: "info", 
+      level: "info",
       message: "Feed refreshed successfully",
       user: user,
       metadata: {
@@ -60,7 +60,7 @@ if Rails.env.development?
       user: user,
       metadata: {
         ip_address: "203.0.113.195",
-        timestamp: Time.current.iso8601
+        timestamp: Time.current.rfc3339
       }
     )
 
@@ -107,7 +107,7 @@ if Rails.env.development?
 
     Event.create!(
       type: "CacheHit",
-      level: "debug", 
+      level: "debug",
       message: "Cache hit for feed data",
       user: nil,
       metadata: {
@@ -145,11 +145,27 @@ if Rails.env.development?
     # Generate additional events to reach 75 total for pagination testing
     current_count = Event.count
     events_needed = 75 - current_count
-    
-    event_types = ["FeedRefresh", "FeedError", "UserLogin", "PasswordReset", "SystemMaintenance", 
-                   "BackgroundJobError", "ApiRequest", "CacheHit", "SecurityAlert", "DatabaseQuery"]
-    levels = ["debug", "info", "warning", "error"]
-    
+
+    event_types = [
+      "FeedRefresh",
+      "FeedError",
+      "UserLogin",
+      "PasswordReset",
+      "SystemMaintenance",
+      "BackgroundJobError",
+      "ApiRequest",
+      "CacheHit",
+      "SecurityAlert",
+      "DatabaseQuery"
+    ]
+
+    levels = [
+      "debug",
+      "info",
+      "warning",
+      "error"
+    ]
+
     events_needed.times do |i|
       Event.create!(
         type: event_types.sample,
@@ -159,7 +175,7 @@ if Rails.env.development?
         metadata: {
           event_number: i + current_count + 1,
           batch: "pagination_test",
-          generated_at: Time.current.iso8601
+          generated_at: Time.current.rfc3339
         }
       )
     end

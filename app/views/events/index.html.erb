@@ -28,9 +28,7 @@
               <code class="text-dark"><%= event.type %></code>
             </td>
             <td>
-              <span class="badge bg-<%= level_badge_class(event.level) %>">
-                <%= event.level.humanize %>
-              </span>
+              <%= level_badge(event.level) %>
             </td>
             <td>
               <div class="text-truncate" style="max-width: 300px;">
@@ -49,7 +47,7 @@
               <% end %>
             </td>
             <td>
-              <span class="text-muted" title="<%= event.created_at.iso8601 %>">
+              <span class="text-muted" title="<%= event.created_at.rfc3339 %>">
                 <%= time_ago_in_words(event.created_at) %> ago
               </span>
             </td>
