@@ -20,12 +20,6 @@ class FeedEntryTest < ActiveSupport::TestCase
     assert_includes entry.errors[:uid], "can't be blank"
   end
 
-  test "should require title" do
-    entry = build(:feed_entry, title: nil)
-    assert_not entry.valid?
-    assert_includes entry.errors[:title], "can't be blank"
-  end
-
   test "should require uid to be unique within feed scope" do
     entry1 = create(:feed_entry, feed: feed, uid: "duplicate-uid")
     entry2 = build(:feed_entry, feed: feed, uid: "duplicate-uid")
@@ -70,7 +64,7 @@ class FeedEntryTest < ActiveSupport::TestCase
   end
 
   test "should handle JSONB raw_data" do
-    raw_data = { id: "test-id", title: "Test Title", author: "Test Author" }
+    raw_data = { id: "test-id", title: "Test Title", url: "https://example.com/test" }
     entry = create(:feed_entry, raw_data: raw_data)
 
     saved_entry = FeedEntry.find(entry.id)
@@ -78,23 +72,13 @@ class FeedEntryTest < ActiveSupport::TestCase
   end
 
   test "should allow nil values for optional fields" do
-    entry = build(:feed_entry, content: nil, published_at: nil, source_url: nil, raw_data: nil)
+    entry = build(:feed_entry, published_at: nil, raw_data: nil)
     assert entry.valid?
   end
 
-  test "should handle empty strings" do
-    entry = build(:feed_entry, uid: "", title: "")
+  test "should handle empty uid" do
+    entry = build(:feed_entry, uid: "")
     assert_not entry.valid?
     assert_includes entry.errors[:uid], "can't be blank"
-    assert_includes entry.errors[:title], "can't be blank"
-  end
-
-  test "should strip whitespace from uid and title" do
-    entry = build(:feed_entry, uid: "  test-uid  ", title: "  Test Title  ")
-    entry.uid = entry.uid.strip if entry.uid
-    entry.title = entry.title.strip if entry.title
-
-    assert_equal "test-uid", entry.uid
-    assert_equal "Test Title", entry.title
   end
 end

@@ -47,14 +47,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
   end
 
   create_table "feed_entries", force: :cascade do |t|
-    t.text "content"
     t.datetime "created_at", null: false
     t.bigint "feed_id", null: false
     t.datetime "published_at"
     t.jsonb "raw_data"
-    t.string "source_url"
     t.integer "status", default: 0
-    t.string "title", null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["feed_id", "uid"], name: "index_feed_entries_on_feed_id_and_uid", unique: true

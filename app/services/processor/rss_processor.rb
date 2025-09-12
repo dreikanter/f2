@@ -5,15 +5,15 @@ module Processor
 
       return [] unless parsed_feed&.entries
 
-      parsed_feed.entries.map do |entry|
+      parsed_feed.entries.filter_map do |entry|
+        uid = extract_uid(entry)
+        next unless uid
+
         FeedEntry.new(
           feed: feed,
-          uid: extract_uid(entry),
-          title: entry.title&.strip,
-          content: entry.content || entry.summary,
+          uid: uid,
           published_at: entry.published,
-          source_url: entry.url,
-          status: 0,
+          status: :pending,
           raw_data: entry_to_hash(entry)
         )
       end
@@ -24,8 +24,7 @@ module Processor
     private
 
     def extract_uid(entry)
-      # Try to get a unique ID from the entry
-      entry.id || entry.url || entry.title
+      entry.id || entry.url
     end
 
     def entry_to_hash(entry)
