@@ -5,13 +5,10 @@ module Processor
 
       return [] unless parsed_feed&.entries
 
-      parsed_feed.entries.filter_map do |entry|
-        uid = extract_uid(entry)
-        next unless uid
-
+      parsed_feed.entries.map do |entry|
         FeedEntry.new(
           feed: feed,
-          uid: uid,
+          uid: extract_uid(entry),
           published_at: entry.published,
           status: :pending,
           raw_data: entry_to_hash(entry)
