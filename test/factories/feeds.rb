@@ -7,7 +7,7 @@ FactoryBot.define do
     loader { "http" }
     processor { "rss" }
     normalizer { "rss" }
-    state { :enabled }
+    state { :disabled }
     description { "" }
     import_after { nil }
 
@@ -21,10 +21,6 @@ FactoryBot.define do
       after(:create) do |feed|
         create(:feed_schedule, feed: feed)
       end
-    end
-
-    trait :paused do
-      state { :paused }
     end
 
     trait :disabled do

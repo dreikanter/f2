@@ -55,7 +55,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed = Feed.last
     assert_equal user, feed.user
     assert_equal "test-feed", feed.name
-    assert_equal "enabled", feed.state
+    assert_equal "disabled", feed.state
     assert_redirected_to feed_url(feed)
   end
 

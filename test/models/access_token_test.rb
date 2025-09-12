@@ -198,7 +198,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     token = create(:access_token, :active)
     enabled_feed = create(:feed, access_token: token, state: :enabled)
     disabled_feed = create(:feed, access_token: token, state: :disabled)
-    paused_feed = create(:feed, access_token: token, state: :paused)
+    another_disabled_feed = create(:feed, access_token: token, state: :disabled)
 
     # Track database queries to ensure single query
     queries = []
@@ -214,7 +214,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal 1, feed_update_queries.size, "Expected exactly 1 UPDATE query for feeds, got #{feed_update_queries.size}"
 
     # All feeds should be disabled and have null access_token_id
-    [enabled_feed, disabled_feed, paused_feed].each do |feed|
+    [enabled_feed, disabled_feed, another_disabled_feed].each do |feed|
       feed.reload
       assert_equal "disabled", feed.state
       assert_nil feed.access_token_id
@@ -226,22 +226,22 @@ class AccessTokenTest < ActiveSupport::TestCase
   test "should disable enabled feeds when token becomes inactive" do
     access_token = create(:access_token, status: :active)
     enabled_feed = create(:feed, access_token: access_token, state: :enabled)
-    paused_feed = create(:feed, access_token: access_token, state: :paused)
+    another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, access_token: access_token, state: :disabled)
 
     access_token.update!(status: :inactive)
 
     enabled_feed.reload
-    paused_feed.reload
+    another_disabled_feed.reload
     disabled_feed.reload
 
     assert_equal "disabled", enabled_feed.state
-    assert_equal "paused", paused_feed.state
+    assert_equal "disabled", another_disabled_feed.state
     assert_equal "disabled", disabled_feed.state
 
     # Token reference should remain (unlike destroy callback)
     assert_equal access_token, enabled_feed.access_token
-    assert_equal access_token, paused_feed.access_token
+    assert_equal access_token, another_disabled_feed.access_token
     assert_equal access_token, disabled_feed.access_token
   end
 end
