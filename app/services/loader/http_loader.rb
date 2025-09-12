@@ -1,4 +1,4 @@
-module Loaders
+module Loader
   class HttpLoader < Base
     DEFAULT_MAX_REDIRECTS = 3
 

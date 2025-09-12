@@ -1,4 +1,4 @@
-module Loaders
+module Loader
   class Base
     def initialize(feed, options = {})
       @feed = feed

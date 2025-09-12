@@ -1,18 +1,18 @@
 require "test_helper"
 
-class Normalizers::BaseTest < ActiveSupport::TestCase
+class Normalizer::BaseTest < ActiveSupport::TestCase
   test "should initialize without errors" do
     feed = create(:feed)
     items = ["item1", "item2"]
 
     assert_nothing_raised do
-      Normalizers::Base.new(feed, items)
+      Normalizer::Base.new(feed, items)
     end
   end
 
   test "should raise NotImplementedError for normalize method" do
     feed = create(:feed)
-    normalizer = Normalizers::Base.new(feed, [])
+    normalizer = Normalizer::Base.new(feed, [])
 
     assert_raises(NotImplementedError) do
       normalizer.normalize

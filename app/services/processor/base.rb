@@ -1,4 +1,4 @@
-module Processors
+module Processor
   class Base
     def initialize(feed, raw_data)
       @feed = feed

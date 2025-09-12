@@ -1,4 +1,4 @@
-module Normalizers
+module Normalizer
   class Base
     def initialize(feed, processed_items)
       @feed = feed

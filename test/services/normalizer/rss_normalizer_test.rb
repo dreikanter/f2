@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Normalizers::RssNormalizerTest < ActiveSupport::TestCase
+class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   test "should normalize processed items" do
     feed = create(:feed, normalizer: "rss")
 
@@ -8,7 +8,7 @@ class Normalizers::RssNormalizerTest < ActiveSupport::TestCase
       { title: "<h1>Test Article</h1>", content: "<p>Test content</p>", published_at: Time.current, url: "https://example.com" }
     ]
 
-    normalizer = Normalizers::RssNormalizer.new(feed, items)
+    normalizer = Normalizer::RssNormalizer.new(feed, items)
     result = normalizer.normalize
 
     assert_equal 1, result.length
@@ -23,7 +23,7 @@ class Normalizers::RssNormalizerTest < ActiveSupport::TestCase
     items = [
       { title: nil, content: "", published_at: Time.current, url: "https://example.com" }
     ]
-    normalizer = Normalizers::RssNormalizer.new(feed, items)
+    normalizer = Normalizer::RssNormalizer.new(feed, items)
 
     result = normalizer.normalize
 
