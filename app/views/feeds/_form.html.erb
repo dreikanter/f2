@@ -71,8 +71,8 @@
 
   <div class="mb-3">
     <div class="form-check">
-      <%= form.check_box :enabled, { class: "form-check-input", checked: feed.state == "enabled" }, "1", "0" %>
-      <%= form.label :enabled, "Enabled", class: "form-check-label" %>
+      <%= form.check_box :state, { class: "form-check-input" }, "enabled", "disabled" %>
+      <%= form.label :state, "Enabled", class: "form-check-label" %>
     </div>
     <div class="form-text">Enable this feed to start processing items</div>
   </div>

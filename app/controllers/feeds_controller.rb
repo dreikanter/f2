@@ -54,7 +54,7 @@ class FeedsController < ApplicationController
   end
 
   def feed_params
-    permitted_params = params.require(:feed).permit(
+    params.require(:feed).permit(
       :name,
       :url,
       :cron_expression,
@@ -64,14 +64,7 @@ class FeedsController < ApplicationController
       :import_after,
       :description,
       :access_token_id,
-      :enabled
+      :state
     )
-
-    if permitted_params.key?(:enabled)
-      enabled_checkbox_value = permitted_params.delete(:enabled)
-      permitted_params[:state] = enabled_checkbox_value == "1" ? :enabled : :disabled
-    end
-
-    permitted_params
   end
 end

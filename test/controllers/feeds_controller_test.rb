@@ -239,7 +239,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         processor: "rss",
         normalizer: "rss",
         access_token_id: access_token.id,
-        enabled: "1"
+        state: "enabled"
       }
     }
 
@@ -259,7 +259,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         processor: "rss",
         normalizer: "rss",
         access_token_id: access_token.id,
-        enabled: "0"
+        state: "disabled"
       }
     }
 
@@ -273,7 +273,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     patch feed_url(existing_feed), params: {
       feed: {
-        enabled: "0"
+        state: "disabled"
       }
     }
 
