@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample RSS Feed</title>
+    <description>A sample RSS feed for testing</description>
+    <link>https://example.com</link>
+    <lastBuildDate>Thu, 12 Sep 2024 10:00:00 +0000</lastBuildDate>
+    
+    <item>
+      <title>First Article</title>
+      <description>This is the first article content with some HTML &lt;b&gt;tags&lt;/b&gt;.</description>
+      <link>https://example.com/first-article</link>
+      <guid>https://example.com/first-article</guid>
+      <pubDate>Thu, 12 Sep 2024 09:00:00 +0000</pubDate>
+      <author>john@example.com (John Doe)</author>
+      <category>Technology</category>
+    </item>
+    
+    <item>
+      <title>Second Article</title>
+      <description>This is the second article with different content.</description>
+      <link>https://example.com/second-article</link>
+      <guid>https://example.com/second-article</guid>
+      <pubDate>Wed, 11 Sep 2024 15:30:00 +0000</pubDate>
+      <author>jane@example.com (Jane Smith)</author>
+      <category>News</category>
+      <category>Technology</category>
+    </item>
+    
+    <item>
+      <title>Article Without Content</title>
+      <link>https://example.com/no-content</link>
+      <guid>no-content-123</guid>
+      <pubDate>Tue, 10 Sep 2024 12:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
