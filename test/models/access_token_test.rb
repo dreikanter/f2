@@ -222,4 +222,26 @@ class AccessTokenTest < ActiveSupport::TestCase
   ensure
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
+
+  test "should disable enabled feeds when token becomes inactive" do
+    access_token = create(:access_token, status: :active)
+    enabled_feed = create(:feed, access_token: access_token, state: :enabled)
+    paused_feed = create(:feed, access_token: access_token, state: :paused)
+    disabled_feed = create(:feed, access_token: access_token, state: :disabled)
+
+    access_token.update!(status: :inactive)
+
+    enabled_feed.reload
+    paused_feed.reload 
+    disabled_feed.reload
+
+    assert_equal "disabled", enabled_feed.state
+    assert_equal "paused", paused_feed.state
+    assert_equal "disabled", disabled_feed.state
+    
+    # Token reference should remain (unlike destroy callback)
+    assert_equal access_token, enabled_feed.access_token
+    assert_equal access_token, paused_feed.access_token
+    assert_equal access_token, disabled_feed.access_token
+  end
 end

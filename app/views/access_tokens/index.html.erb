@@ -3,6 +3,19 @@
   <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
 </div>
 
+<% inactive_tokens_with_feeds = @access_tokens.inactive.joins(:feeds).distinct %>
+<% if inactive_tokens_with_feeds.any? %>
+  <div class="alert alert-warning" role="alert">
+    <strong>Inactive tokens detected.</strong>
+    The following inactive tokens have caused feeds to be automatically disabled:
+    <ul class="mb-0 mt-2">
+      <% inactive_tokens_with_feeds.each do |token| %>
+        <li><strong><%= token.name %></strong> - <%= pluralize(token.feeds.count, 'feed') %> disabled</li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
 <% if @access_tokens.any? %>
   <div class="table-responsive">
     <table class="table table-hover table-bordered">
