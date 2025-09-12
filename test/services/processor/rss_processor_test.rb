@@ -6,7 +6,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
   end
 
   def sample_rss_content
-    @sample_rss_content ||= File.read(Rails.root.join("test/fixtures/files/sample_rss.xml"))
+    @sample_rss_content ||= file_fixture("sample_rss.xml").read
   end
 
   test "should parse RSS feed and create FeedEntry objects" do
