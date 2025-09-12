@@ -209,19 +209,4 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "disabled", feed.state
     assert_nil feed.access_token
   end
-
-  test "enabled attribute should return true for enabled feeds" do
-    feed = build(:feed, state: :enabled)
-    assert_equal true, feed.enabled
-  end
-
-  test "enabled attribute should return false for disabled feeds" do
-    feed = build(:feed, state: :disabled)
-    assert_equal false, feed.enabled
-  end
-
-  test "enabled attribute should return false for paused feeds" do
-    feed = build(:feed, state: :paused)
-    assert_equal false, feed.enabled
-  end
 end

@@ -47,10 +47,6 @@ class Feed < ApplicationRecord
 
   after_initialize :set_default_state, if: :new_record?
 
-  def enabled
-    state == "enabled"
-  end
-
   private
 
   def set_default_state

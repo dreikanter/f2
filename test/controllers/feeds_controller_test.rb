@@ -245,7 +245,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_equal "enabled", feed.state
-    assert feed.enabled
   end
 
   test "should create disabled feed when enabled checkbox is unchecked" do
@@ -266,7 +265,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_equal "disabled", feed.state
-    assert_not feed.enabled
   end
 
   test "should update feed state when enabled checkbox changes" do
@@ -281,6 +279,5 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     existing_feed.reload
     assert_equal "disabled", existing_feed.state
-    assert_not existing_feed.enabled
   end
 end
