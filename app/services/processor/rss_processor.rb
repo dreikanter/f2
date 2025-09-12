@@ -31,8 +31,8 @@ module Processor
         url: entry.url,
         summary: entry.summary,
         content: entry.content,
-        published: entry.published&.iso8601,
-        updated: entry.updated&.iso8601,
+        published: entry.published&.rfc3339,
+        updated: entry.updated&.rfc3339,
         author: entry.author,
         categories: entry.categories
       }
