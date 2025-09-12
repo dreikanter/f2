@@ -13,11 +13,11 @@
       <thead>
         <tr>
           <th>Type</th>
-          <th>Level</th>
+          <th class="text-center">Lvl</th>
           <th>Message</th>
           <th>User</th>
           <th>Subject</th>
-          <th>Created</th>
+          <th class="text-center"><i class="bi bi-calendar-event"></i></th>
           <th class="text-center"><i class="bi bi-three-dots"></i></th>
         </tr>
       </thead>
@@ -46,7 +46,7 @@
                 <em class="text-muted">None</em>
               <% end %>
             </td>
-            <td>
+            <td class="text-center">
               <span class="text-muted" title="<%= event.created_at.rfc3339 %>">
                 <%= compact_time_ago(event.created_at) %>
               </span>
