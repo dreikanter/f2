@@ -5,6 +5,7 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   has_one :feed_schedule, dependent: :destroy
+  has_many :feed_entries, dependent: :destroy
 
   enum :state, { enabled: 0, paused: 1, disabled: 2 }
 

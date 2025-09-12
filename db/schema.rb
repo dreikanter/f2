@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_11_224348) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,6 +44,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_11_224348) do
     t.index ["subject_type", "subject_id"], name: "index_events_on_subject_type_and_subject_id"
     t.index ["type", "created_at"], name: "index_events_on_type_and_created_at"
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "feed_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "feed_id", null: false
+    t.datetime "published_at"
+    t.jsonb "raw_data"
+    t.integer "status", default: 0
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_id", "uid"], name: "index_feed_entries_on_feed_id_and_uid", unique: true
+    t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
   end
 
   create_table "feed_schedules", force: :cascade do |t|
@@ -219,6 +231,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_11_224348) do
 
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
+  add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "permissions", "users"
