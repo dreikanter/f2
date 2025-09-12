@@ -70,6 +70,11 @@ end
 
 ## Code style
 
+File formatting:
+
+- Always add trailing line breaks to source files (Ruby, JS, CSS, HTML, etc.) unless there is a specific reason not to.
+- This ensures consistent formatting and prevents RuboCop/linter warnings.
+
 Routing:
 
 - Use resourceful routes.
