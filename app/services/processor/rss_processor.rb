@@ -2,7 +2,7 @@ module Processor
   class RssProcessor < Base
     def process
       parsed_feed = Feedjira.parse(raw_data)
-      
+
       return [] unless parsed_feed&.entries
 
       parsed_feed.entries.map do |entry|
