@@ -4,6 +4,21 @@
     <span class="badge bg-<%= @feed.enabled? ? 'success' : @feed.paused? ? 'warning' : 'danger' %> fs-6">
       <%= @feed.state.capitalize %>
     </span>
+    
+    <% if @feed.enabled? %>
+      <%= link_to "Disable", feed_path(@feed), 
+          data: { turbo_method: :patch, turbo_confirm: "Are you sure you want to disable this feed?" },
+          params: { feed: { state: :disabled } },
+          class: "btn btn-outline-warning" %>
+    <% elsif @feed.access_token&.active? %>
+      <%= link_to "Enable", feed_path(@feed), 
+          data: { turbo_method: :patch },
+          params: { feed: { state: :enabled } },
+          class: "btn btn-outline-success" %>
+    <% else %>
+      <span class="btn btn-outline-success disabled" title="Cannot enable without active access token">Enable</span>
+    <% end %>
+    
     <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-primary" %>
     <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
   </div>

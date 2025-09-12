@@ -42,11 +42,19 @@ class Feed < ApplicationRecord
   }
 
   after_initialize :set_default_state, if: :new_record?
+  before_save :auto_disable_without_active_token
 
   private
 
   def set_default_state
-    self.state ||= :enabled
+    self.state ||= :disabled
+  end
+
+  def auto_disable_without_active_token
+    return unless enabled?
+    return if access_token&.active?
+
+    self.state = :disabled
   end
 
   def cron_expression_is_valid
