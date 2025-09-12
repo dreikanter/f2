@@ -20,6 +20,20 @@
               <p class="card-text"><%= simple_format(@feed.description) %></p>
             <% end %>
 
+            <% if @feed.access_token.nil? %>
+              <div class="alert alert-warning" role="alert">
+                <strong>No access token assigned.</strong>
+                This feed cannot process items without a working access token. 
+                <%= link_to "Edit feed", edit_feed_path(@feed), class: "alert-link" %> to assign one.
+              </div>
+            <% elsif !@feed.access_token.active? %>
+              <div class="alert alert-danger" role="alert">
+                <strong>Access token is inactive.</strong>
+                This feed cannot process items because the assigned token is no longer working. 
+                <%= link_to "Edit feed", edit_feed_path(@feed), class: "alert-link" %> to fix this.
+              </div>
+            <% end %>
+
             <dl class="row">
               <dt class="col-sm-3">Feed URL</dt>
               <dd class="col-sm-9">
@@ -42,6 +56,18 @@
 
               <dt class="col-sm-3">Normalizer</dt>
               <dd class="col-sm-9"><%= @feed.normalizer %></dd>
+
+              <dt class="col-sm-3">Access Token</dt>
+              <dd class="col-sm-9">
+                <% if @feed.access_token %>
+                  <%= @feed.access_token.name %> (<%= @feed.access_token.host %>)
+                  <span class="badge bg-<%= @feed.access_token.active? ? 'success' : 'danger' %> ms-2">
+                    <%= @feed.access_token.status.capitalize %>
+                  </span>
+                <% else %>
+                  <span class="text-muted">No token assigned</span>
+                <% end %>
+              </dd>
 
               <% if @feed.import_after %>
                 <dt class="col-sm-3">Import After</dt>
