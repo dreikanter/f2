@@ -17,6 +17,10 @@ module ComponentOptionsHelper
     end
   end
 
+  def has_active_tokens?
+    Current.user.access_tokens.active.exists?
+  end
+
   private
 
   def available_options(keys, i18n_prefix)

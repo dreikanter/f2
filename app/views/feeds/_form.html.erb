@@ -70,16 +70,24 @@
   </div>
 
   <div class="mb-3">
+    <%= form.label :description, class: "form-label" %>
+    <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
+  </div>
+
+  <% unless has_active_tokens? %>
+    <div class="alert alert-warning" role="alert">
+      <strong>No active tokens available.</strong>
+      It's not possible to create or enable a feed without a working token. 
+      You can only save an inactive configuration.
+    </div>
+  <% end %>
+
+  <div class="mb-3">
     <div class="form-check">
-      <%= form.check_box :state, { class: "form-check-input" }, "enabled", "disabled" %>
+      <%= form.check_box :state, { class: "form-check-input", disabled: !has_active_tokens? }, "enabled", "disabled" %>
       <%= form.label :state, "Enabled", class: "form-check-label" %>
     </div>
     <div class="form-text">Enable this feed to start processing items</div>
-  </div>
-
-  <div class="mb-3">
-    <%= form.label :description, class: "form-label" %>
-    <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
   </div>
 
   <div class="mb-3">
