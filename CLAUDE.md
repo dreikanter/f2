@@ -47,7 +47,7 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 * Prefer many small PRs built from atomic commits; they’re easier to review, revert, and bisect.
   
 ## Development Practices
-- Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop`)
+- Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop -f github`)
 - Use FactoryBot to create test data
 - Prefer lazy test data initialization over eager initialization in setup block
 
@@ -110,5 +110,5 @@ When listing the changes, start from the most important. Generalize. Skip boring
 
 - Verify database migrations work both ways (up/down).
 - Run these commands before committing:
-  - `bin/rubocop` – ensures Ruby style follows the Omakase RuboCop rules.
+  - `bin/rubocop -f github` – ensures Ruby style follows the Omakase RuboCop rules.
   - `bin/rails test` – runs the full test suite.

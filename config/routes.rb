@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :feeds
+  resources :events, only: [:index, :show]
 
   get "up" => "rails/health#show", as: :rails_health_check
 

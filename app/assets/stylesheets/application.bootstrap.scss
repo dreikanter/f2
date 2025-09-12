@@ -1,2 +1,14 @@
 @use 'bootstrap/scss/bootstrap';
 @use 'bootstrap-icons/font/bootstrap-icons';
+
+// Event metadata styling
+.event-metadata {
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  code {
+    background: none;
+    padding: 0;
+  }
+}
+
