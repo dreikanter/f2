@@ -232,13 +232,13 @@ class AccessTokenTest < ActiveSupport::TestCase
     access_token.update!(status: :inactive)
 
     enabled_feed.reload
-    paused_feed.reload 
+    paused_feed.reload
     disabled_feed.reload
 
     assert_equal "disabled", enabled_feed.state
     assert_equal "paused", paused_feed.state
     assert_equal "disabled", disabled_feed.state
-    
+
     # Token reference should remain (unlike destroy callback)
     assert_equal access_token, enabled_feed.access_token
     assert_equal access_token, paused_feed.access_token
