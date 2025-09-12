@@ -188,7 +188,7 @@ class FeedTest < ActiveSupport::TestCase
   test "should require access token for enabled feeds" do
     feed = build(:feed, :without_access_token, state: :enabled)
     assert_not feed.valid?
-    assert_includes feed.errors[:access_token], "is required"
+    assert_includes feed.errors[:access_token], "can't be blank"
   end
 
   test "should allow disabled feeds without access token" do
