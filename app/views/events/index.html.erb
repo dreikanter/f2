@@ -18,7 +18,7 @@
           <th>User</th>
           <th>Subject</th>
           <th>Created</th>
-          <th class="text-end">Actions</th>
+          <th class="text-center"><i class="bi bi-three-dots"></i></th>
         </tr>
       </thead>
       <tbody>
@@ -27,7 +27,7 @@
             <td>
               <code class="text-dark"><%= event.type %></code>
             </td>
-            <td>
+            <td class="text-center">
               <%= level_badge(event.level) %>
             </td>
             <td>
@@ -48,10 +48,10 @@
             </td>
             <td>
               <span class="text-muted" title="<%= event.created_at.rfc3339 %>">
-                <%= time_ago_in_words(event.created_at) %> ago
+                <%= compact_time_ago(event.created_at) %>
               </span>
             </td>
-            <td class="text-end">
+            <td class="text-center">
               <%= link_to "View", event_path(event), class: "text-primary text-decoration-none" %>
             </td>
           </tr>
