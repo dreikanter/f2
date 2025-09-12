@@ -5,6 +5,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
+  def access_token
+    @access_token ||= create(:access_token, :active, user: user)
+  end
+
   def feed
     @feed ||= create(:feed, user: user)
   end
@@ -42,7 +46,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
           loader: "http",
           processor: "rss",
           normalizer: "rss",
-          description: "Test description"
+          description: "Test description",
+          access_token_id: access_token.id
         }
       }
     end
@@ -168,7 +173,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         cron_expression: "0 * * * *",
         loader: "http",
         processor: "rss",
-        normalizer: "rss"
+        normalizer: "rss",
+        access_token_id: access_token.id
       }
     }
 
@@ -188,7 +194,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         cron_expression: "0 * * * *",
         loader: "http",
         processor: "rss",
-        normalizer: "rss"
+        normalizer: "rss",
+        access_token_id: access_token.id
       }
     }
 
@@ -209,7 +216,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         loader: "http",
         processor: "rss",
         normalizer: "rss",
-        description: "Line 1\nLine 2\r\nLine 3"
+        description: "Line 1\nLine 2\r\nLine 3",
+        access_token_id: access_token.id
       }
     }
 
@@ -217,5 +225,62 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed_url(feed)
     assert_equal "Line 1 Line 2 Line 3", feed.description
+  end
+
+  test "should create enabled feed when enabled checkbox is checked" do
+    sign_in_as(user)
+
+    post feeds_url, params: {
+      feed: {
+        name: "test-enabled-feed",
+        url: "https://example.com/test.xml",
+        cron_expression: "0 * * * *",
+        loader: "http",
+        processor: "rss",
+        normalizer: "rss",
+        access_token_id: access_token.id,
+        enabled: "1"
+      }
+    }
+
+    feed = Feed.last
+    assert_equal "enabled", feed.state
+    assert feed.enabled
+  end
+
+  test "should create disabled feed when enabled checkbox is unchecked" do
+    sign_in_as(user)
+
+    post feeds_url, params: {
+      feed: {
+        name: "test-disabled-feed",
+        url: "https://example.com/test.xml",
+        cron_expression: "0 * * * *",
+        loader: "http",
+        processor: "rss",
+        normalizer: "rss",
+        access_token_id: access_token.id,
+        enabled: "0"
+      }
+    }
+
+    feed = Feed.last
+    assert_equal "disabled", feed.state
+    assert_not feed.enabled
+  end
+
+  test "should update feed state when enabled checkbox changes" do
+    sign_in_as(user)
+    existing_feed = create(:feed, user: user, state: :enabled)
+
+    patch feed_url(existing_feed), params: {
+      feed: {
+        enabled: "0"
+      }
+    }
+
+    existing_feed.reload
+    assert_equal "disabled", existing_feed.state
+    assert_not existing_feed.enabled
   end
 end

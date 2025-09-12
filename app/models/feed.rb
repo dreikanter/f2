@@ -4,6 +4,7 @@ class Feed < ApplicationRecord
   DESCRIPTION_MAX_LENGTH = 100
 
   belongs_to :user
+  belongs_to :access_token, optional: true
   has_one :feed_schedule, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
 

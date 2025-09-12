@@ -54,7 +54,7 @@ class FeedsController < ApplicationController
   end
 
   def feed_params
-    params.require(:feed).permit(
+    permitted_params = params.require(:feed).permit(
       :name,
       :url,
       :cron_expression,
@@ -62,7 +62,16 @@ class FeedsController < ApplicationController
       :processor,
       :normalizer,
       :import_after,
-      :description
+      :description,
+      :access_token_id,
+      :enabled
     )
+
+    if permitted_params[:enabled].present?
+      enabled = permitted_params.delete(:enabled)
+      permitted_params[:state] = enabled == "1" ? :enabled : :disabled
+    end
+
+    permitted_params
   end
 end

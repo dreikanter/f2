@@ -184,4 +184,68 @@ class FeedTest < ActiveSupport::TestCase
     reloaded_feed = Feed.find(feed.id)
     assert_equal "paused", reloaded_feed.state
   end
+
+  test "should require access token for enabled feeds" do
+    feed = build(:feed, :without_access_token, state: :enabled)
+    assert_not feed.valid?
+    assert_includes feed.errors[:access_token], "is required"
+  end
+
+  test "should allow disabled feeds without access token" do
+    user = create(:user)
+    feed = build(:feed, :without_access_token, state: :disabled, user: user)
+    assert feed.valid?
+  end
+
+  test "should allow paused feeds without access token" do
+    user = create(:user)
+    feed = build(:feed, :without_access_token, state: :paused, user: user)
+    assert feed.valid?
+  end
+
+  test "should allow updating existing feed to disabled with nil access token" do
+    feed = create(:feed)
+    assert feed.update!(state: :disabled, access_token: nil)
+    assert_equal "disabled", feed.state
+    assert_nil feed.access_token
+  end
+
+  test "enabled attribute should return true for enabled feeds" do
+    feed = build(:feed, state: :enabled)
+    assert_equal true, feed.enabled
+  end
+
+  test "enabled attribute should return false for disabled feeds" do
+    feed = build(:feed, state: :disabled)
+    assert_equal false, feed.enabled
+  end
+
+  test "enabled attribute should return false for paused feeds" do
+    feed = build(:feed, state: :paused)
+    assert_equal false, feed.enabled
+  end
+
+  test "setting enabled=true should set state to enabled" do
+    feed = build(:feed, state: :disabled)
+    feed.enabled = true
+    assert_equal "enabled", feed.state
+  end
+
+  test "setting enabled=false should set state to disabled" do
+    feed = build(:feed, state: :enabled)
+    feed.enabled = false
+    assert_equal "disabled", feed.state
+  end
+
+  test "setting enabled='1' should set state to enabled" do
+    feed = build(:feed, state: :disabled)
+    feed.enabled = "1"
+    assert_equal "enabled", feed.state
+  end
+
+  test "setting enabled='0' should set state to disabled" do
+    feed = build(:feed, state: :enabled)
+    feed.enabled = "0"
+    assert_equal "disabled", feed.state
+  end
 end

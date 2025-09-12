@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_12_210624) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
   end
 
   create_table "feeds", force: :cascade do |t|
+    t.bigint "access_token_id"
     t.datetime "created_at", null: false
     t.string "cron_expression", null: false
     t.string "description", default: "", null: false
@@ -80,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.bigint "user_id", null: false
+    t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
@@ -233,6 +235,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_12_115037) do
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_schedules", "feeds"
+  add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "sessions", "users"

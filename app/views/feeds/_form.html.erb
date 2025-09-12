@@ -24,6 +24,13 @@
   </div>
 
   <div class="mb-3">
+    <%= form.label :access_token_id, "Access Token", class: "form-label" %>
+    <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id), { prompt: "Choose access token..." }, { class: "form-select", required: true } %>
+    <div class="form-text">Select the Freefeed access token to use for posting</div>
+    <div class="invalid-feedback">Please select an access token.</div>
+  </div>
+
+  <div class="mb-3">
     <%= form.label :loader, class: "form-label" %>
     <%= form.select :loader, options_for_select(loader_options, feed.loader), { prompt: "Choose loader..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a loader.</div>
@@ -60,6 +67,14 @@
     <%= form.label :import_after, "Import items after", class: "form-label" %>
     <%= form.date_field :import_after, class: "form-control" %>
     <div class="form-text">Only import items published after this date</div>
+  </div>
+
+  <div class="mb-3">
+    <div class="form-check">
+      <%= form.check_box :enabled, { class: "form-check-input" }, "1", "0" %>
+      <%= form.label :enabled, "Enabled", class: "form-check-label" %>
+    </div>
+    <div class="form-text">Enable this feed to start processing items</div>
   </div>
 
   <div class="mb-3">
