@@ -1,4 +1,4 @@
-module Normalizers
+module Normalizer
   class RssNormalizer < Base
     def normalize
       # TBD
