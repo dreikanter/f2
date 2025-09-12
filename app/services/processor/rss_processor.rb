@@ -25,7 +25,7 @@ module Processor
 
     def extract_uid(entry)
       # Try to get a unique ID from the entry
-      entry.id || entry.url || entry.title&.strip
+      entry.id || entry.url || entry.title
     end
 
     def entry_to_hash(entry)
