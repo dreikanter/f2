@@ -8,7 +8,7 @@ class Feed < ApplicationRecord
   has_one :feed_schedule, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
 
-  enum :state, { enabled: 0, paused: 1, disabled: 2 }
+  enum :state, { disabled: 0, enabled: 1 }
 
   validates :name,
             presence: true,
@@ -41,14 +41,9 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  after_initialize :set_default_state, if: :new_record?
   before_save :auto_disable_without_active_token
 
   private
-
-  def set_default_state
-    self.state ||= :disabled
-  end
 
   def auto_disable_without_active_token
     return unless enabled?
