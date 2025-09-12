@@ -1,14 +1,14 @@
 module ComponentOptionsHelper
   def loader_options
-    available_options(Loaders::AVAILABLE_OPTIONS, "loaders")
+    available_options(Loader::AVAILABLE_OPTIONS, "loaders")
   end
 
   def processor_options
-    available_options(Processors::AVAILABLE_OPTIONS, "processors")
+    available_options(Processor::AVAILABLE_OPTIONS, "processors")
   end
 
   def normalizer_options
-    available_options(Normalizers::AVAILABLE_OPTIONS, "normalizers")
+    available_options(Normalizer::AVAILABLE_OPTIONS, "normalizers")
   end
 
   private
