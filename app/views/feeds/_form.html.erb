@@ -1,4 +1,4 @@
-<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true, data: { controller: "feed-form" } do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
       <h5><%= pluralize(feed.errors.count, "error") %> prohibited this feed from being saved:</h5>
@@ -25,7 +25,7 @@
 
   <div class="mb-4">
     <%= form.label :access_token_id, "Access Token", class: "form-label" %>
-    <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id), { prompt: "Choose access token..." }, { class: "form-select", required: true } %>
+    <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id), { prompt: "Choose access token..." }, { class: "form-select", data: { feed_form_target: "tokenSelect", action: "change->feed-form#updateCheckboxState" } } %>
     <div class="form-text">Select the Freefeed access token to use for posting</div>
     <div class="invalid-feedback">Please select an access token.</div>
     
@@ -84,7 +84,7 @@
 
   <div class="mb-3">
     <div class="form-check">
-      <%= form.check_box :state, { class: "form-check-input", disabled: !has_active_tokens?, checked: has_active_tokens? && feed.enabled? }, "enabled", "disabled" %>
+      <%= form.check_box :state, { class: "form-check-input", data: { feed_form_target: "enabledCheckbox" } }, "enabled", "disabled" %>
       <%= form.label :state, "Enabled", class: "form-check-label" %>
     </div>
     <div class="form-text">Enable this feed to start processing items</div>
