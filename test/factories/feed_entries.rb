@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :feed_entry do
     feed { association(:feed) }
-    uid { "entry-#{rand(1000)}" }
+    uid { "entry-#{SecureRandom.uuid}" }
     title { "Sample Feed Entry" }
     content { "This is sample content for a feed entry." }
     published_at { 2.hours.ago }
