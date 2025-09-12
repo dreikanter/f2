@@ -224,28 +224,4 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed, state: :paused)
     assert_equal false, feed.enabled
   end
-
-  test "setting enabled=true should set state to enabled" do
-    feed = build(:feed, state: :disabled)
-    feed.enabled = true
-    assert_equal "enabled", feed.state
-  end
-
-  test "setting enabled=false should set state to disabled" do
-    feed = build(:feed, state: :enabled)
-    feed.enabled = false
-    assert_equal "disabled", feed.state
-  end
-
-  test "setting enabled='1' should set state to enabled" do
-    feed = build(:feed, state: :disabled)
-    feed.enabled = "1"
-    assert_equal "enabled", feed.state
-  end
-
-  test "setting enabled='0' should set state to disabled" do
-    feed = build(:feed, state: :enabled)
-    feed.enabled = "0"
-    assert_equal "disabled", feed.state
-  end
 end

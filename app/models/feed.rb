@@ -51,10 +51,6 @@ class Feed < ApplicationRecord
     state == "enabled"
   end
 
-  def enabled=(value)
-    self.state = value.to_s == "1" || value == true ? :enabled : :disabled
-  end
-
   private
 
   def set_default_state

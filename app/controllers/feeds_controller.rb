@@ -67,9 +67,9 @@ class FeedsController < ApplicationController
       :enabled
     )
 
-    if permitted_params[:enabled].present?
-      enabled = permitted_params.delete(:enabled)
-      permitted_params[:state] = enabled == "1" ? :enabled : :disabled
+    if permitted_params.key?(:enabled)
+      enabled_checkbox_value = permitted_params.delete(:enabled)
+      permitted_params[:state] = enabled_checkbox_value == "1" ? :enabled : :disabled
     end
 
     permitted_params
