@@ -123,7 +123,7 @@ class ApplicationPolicyTest < ActiveSupport::TestCase
     error = assert_raises NotImplementedError do
       scope.resolve
     end
-    
+
     assert_includes error.message, "You must define #resolve in ApplicationPolicy::Scope"
   end
 end

@@ -18,7 +18,7 @@ module EventsHelper
 
   def compact_time_ago(time)
     seconds = Time.current - time
-    
+
     case seconds
     when 0..59
       "#{seconds.to_i}s"

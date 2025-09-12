@@ -3,7 +3,7 @@ require "test_helper"
 class EventsHelperTest < ActionView::TestCase
   test "level_badge returns single character badge with correct styling" do
     badge = level_badge("info")
-    
+
     assert_includes badge, "I"
     assert_includes badge, "badge bg-primary"
     assert_includes badge, "font-monospace"
@@ -31,14 +31,14 @@ class EventsHelperTest < ActionView::TestCase
 
   test "level_badge falls back to debug for unknown level" do
     badge = level_badge("unknown")
-    
+
     assert_includes badge, "D"
     assert_includes badge, "bg-secondary"
   end
 
   test "level_badge_full returns full word badge with correct styling" do
     badge = level_badge_full("info")
-    
+
     assert_includes badge, "Info"
     assert_includes badge, "badge bg-primary"
     refute_includes badge, "font-monospace"

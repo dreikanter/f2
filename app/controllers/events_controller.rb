@@ -5,7 +5,7 @@ class EventsController < ApplicationController
 
   def index
     authorize Event
-    
+
     page = (params[:page] || 1).to_i
     offset = (page - 1) * PER_PAGE
 
