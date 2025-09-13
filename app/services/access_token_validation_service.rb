@@ -11,7 +11,7 @@ class AccessTokenValidationService
         user_info = freefeed_client.whoami
         access_token.update!(status: :active, owner: user_info[:username])
       rescue
-        update_token_and_disable_feeds
+        disable_token_and_feeds
       end
     end
   end
@@ -25,7 +25,7 @@ class AccessTokenValidationService
     )
   end
 
-  def update_token_and_disable_feeds
+  def disable_token_and_feeds
     access_token.update!(status: :inactive)
     access_token.feeds.enabled.update_all(state: :disabled)
   end
