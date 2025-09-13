@@ -1,5 +1,4 @@
 class EventsController < ApplicationController
-  before_action :require_authentication
 
   PER_PAGE = 25
 

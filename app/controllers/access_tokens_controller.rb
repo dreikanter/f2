@@ -1,5 +1,4 @@
 class AccessTokensController < ApplicationController
-  before_action :require_authentication
 
   def index
     @access_tokens = ordered_access_tokens
