@@ -1,29 +1,30 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <div class="d-flex align-items-center">
-    <h1 class="mb-0 me-3"><%= @feed.name %></h1>
-    <div class="d-flex align-items-center">
-      <% if @feed.enabled? %>
-        <i class="bi bi-play-circle-fill text-success me-2" style="font-size: 1.2rem;"></i>
-        <span class="text-success fw-medium">Enabled</span>
-      <% else %>
-        <i class="bi bi-pause-circle-fill text-muted me-2" style="font-size: 1.2rem;"></i>
-        <span class="text-muted fw-medium">Disabled</span>
-      <% end %>
-    </div>
-  </div>
-  <div class="d-flex gap-2">
+  <h1 class="mb-0"><%= @feed.name %></h1>
+  <div class="d-flex gap-2 align-items-center">
     
     <% if @feed.enabled? %>
+      <div class="d-flex align-items-center">
+        <i class="bi bi-play-circle-fill text-success me-1"></i>
+        <span class="text-success fw-medium">Enabled</span>
+      </div>
       <%= link_to "Disable", feed_path(@feed), 
           data: { turbo_method: :patch, turbo_confirm: "Are you sure you want to disable this feed?" },
           params: { feed: { state: :disabled } },
           class: "btn btn-outline-warning" %>
     <% elsif @feed.access_token&.active? %>
+      <div class="d-flex align-items-center">
+        <i class="bi bi-pause-circle-fill text-muted me-1"></i>
+        <span class="text-muted fw-medium">Disabled</span>
+      </div>
       <%= link_to "Enable", feed_path(@feed), 
           data: { turbo_method: :patch },
           params: { feed: { state: :enabled } },
           class: "btn btn-outline-success" %>
     <% else %>
+      <div class="d-flex align-items-center">
+        <i class="bi bi-pause-circle-fill text-muted me-1"></i>
+        <span class="text-muted fw-medium">Disabled</span>
+      </div>
       <span class="btn btn-outline-success disabled" title="Cannot enable without active access token">Enable</span>
     <% end %>
     
