@@ -1,19 +1,17 @@
 class AccessTokenValidationService
+  attr_reader :access_token
+
   def initialize(access_token)
     @access_token = access_token
   end
 
   def call
-    return unless @access_token.token_value.present?
-
     ActiveRecord::Base.transaction do
       begin
         user_info = freefeed_client.whoami
-        @access_token.update!(status: :active, owner: user_info[:username])
-      rescue FreefeedClient::UnauthorizedError
-        update_token_and_disable_feeds(:inactive)
-      rescue => e
-        update_token_and_disable_feeds(:inactive)
+        access_token.update!(status: :active, owner: user_info[:username])
+      rescue
+        update_token_and_disable_feeds
       end
     end
   end
@@ -21,14 +19,14 @@ class AccessTokenValidationService
   private
 
   def freefeed_client
-    FreefeedClient.new(host: @access_token.host, token: @access_token.token_value)
+    FreefeedClient.new(
+      host: access_token.host,
+      token: access_token.token_value
+    )
   end
 
-  def update_token_and_disable_feeds(status)
-    @access_token.update!(status: status)
-
-    if status == :inactive
-      @access_token.feeds.enabled.update_all(state: :disabled)
-    end
+  def update_token_and_disable_feeds
+    access_token.update!(status: :inactive)
+    access_token.feeds.enabled.update_all(state: :disabled)
   end
 end
