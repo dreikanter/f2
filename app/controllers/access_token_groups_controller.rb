@@ -3,9 +3,9 @@ class AccessTokenGroupsController < ApplicationController
 
   def index
     # Turbo Stream response handled by view template
-  rescue FreefeedClient::Error => e
-    render turbo_stream: turbo_stream.replace("group-select-wrapper", partial: "access_token_groups/error", locals: { error: e.message })
   end
+
+  rescue_from FreefeedClient::Error, with: :handle_freefeed_error
 
   private
 
@@ -22,5 +22,9 @@ class AccessTokenGroupsController < ApplicationController
 
   def managed_groups
     @managed_groups ||= freefeed_client.managed_groups
+  end
+
+  def handle_freefeed_error(exception)
+    render turbo_stream: turbo_stream.replace("group-select-wrapper", partial: "access_token_groups/error", locals: { error: exception.message })
   end
 end
