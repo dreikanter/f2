@@ -37,7 +37,7 @@
                                   class: "form-check-input host-radio",
                                   checked: (access_token.host == url || (key == "production" && access_token.host.blank?)),
                                   data: { action: "change->token-form#hostChanged" } %>
-            <%= form.label "host_#{key}", key.humanize, class: "form-check-label" %>
+            <%= form.label "host_#{key}", key.humanize, class: "form-check-label", for: "host_#{key}" %>
             <span class="text-muted ms-1">(<%= url %>)</span>
           </div>
         <% end %>
@@ -47,7 +47,7 @@
                                 class: "form-check-input host-radio",
                                 checked: !AccessToken::FREEFEED_HOSTS.values.include?(access_token.host) && access_token.host.present?,
                                 data: { action: "change->token-form#hostChanged" } %>
-          <%= form.label :host_custom, "Custom", class: "form-check-label" %>
+          <%= form.label :host_custom, "Custom", class: "form-check-label", for: "host_custom" %>
         </div>
       </div>
       <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.include?(access_token.host) || access_token.host.blank? %>" data-token-form-target="customField">
