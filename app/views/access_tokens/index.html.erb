@@ -47,8 +47,10 @@
             </td>
             <td class="text-end">
               <%= link_to "Validate", access_token_validation_path(access_token),
-                          class: "text-primary text-decoration-none me-3",
+                          class: "text-decoration-none me-3",
                           data: { turbo_method: :post } %>
+              <%= link_to "Replace", edit_access_token_path(access_token),
+                          class: "text-decoration-none me-3" %>
               <%= link_to "Delete", access_token_path(access_token),
                           class: "text-danger text-decoration-none",
                           data: {
