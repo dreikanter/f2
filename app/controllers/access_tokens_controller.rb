@@ -25,6 +25,7 @@ class AccessTokensController < ApplicationController
 
   def update
     @access_token = find_access_token
+
     if @access_token.update(access_token_params.merge(encrypted_token: access_token_params[:token]))
       @access_token.validate_token_async
       redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' has been updated successfully."
