@@ -14,7 +14,7 @@
       <%= form.label :name, class: "form-label fw-bold" %>
       <%= form.text_field :name,
                           class: "form-control #{'is-invalid' if access_token.errors[:name].any?}",
-                          placeholder: "e.g., Mobile App, CI/CD" %>
+                          placeholder: "e.g., New Token (2)" %>
       <div class="form-text">Choose a descriptive name to identify this token</div>
     </div>
 
@@ -24,7 +24,7 @@
                           class: "form-control #{'is-invalid' if access_token.errors[:token].any?}",
                           placeholder: token_placeholder,
                           value: token_value %>
-      <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens/create?title=F2%20Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">Freefeed settings</a></div>
+      <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">Freefeed settings</a></div>
     </div>
 
     <div class="mb-3">

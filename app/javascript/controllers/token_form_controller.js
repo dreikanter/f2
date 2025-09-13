@@ -56,7 +56,7 @@ export default class extends Controller {
   updateHelpText() {
     const currentHost = this.getCurrentHost()
     const baseUrl = this.normalizeUrl(currentHost)
-    const tokenUrl = `${baseUrl}/settings/app-tokens/create?title=F2%20Feeder%20App&scopes=manage-posts,manage-groups`
+    const tokenUrl = `${baseUrl}/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups`
     
     if (this.hasHelpTextTarget) {
       this.helpTextTarget.href = tokenUrl
