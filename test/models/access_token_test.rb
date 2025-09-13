@@ -193,4 +193,55 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS["staging"]
     assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS["beta"]
   end
+
+  test "destroying access token disables and nullifies associated feeds in single query" do
+    token = create(:access_token, :active)
+    enabled_feed = create(:feed, access_token: token, state: :enabled)
+    disabled_feed = create(:feed, access_token: token, state: :disabled)
+    another_disabled_feed = create(:feed, access_token: token, state: :disabled)
+
+    # Track database queries to ensure single query
+    queries = []
+    ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
+      event = ActiveSupport::Notifications::Event.new(*args)
+      queries << event.payload[:sql] if event.payload[:sql].include?("UPDATE")
+    end
+
+    token.destroy!
+
+    # Should have exactly one UPDATE query for feeds
+    feed_update_queries = queries.select { |q| q.include?("feeds") && q.include?("UPDATE") }
+    assert_equal 1, feed_update_queries.size, "Expected exactly 1 UPDATE query for feeds, got #{feed_update_queries.size}"
+
+    # All feeds should be disabled and have null access_token_id
+    [enabled_feed, disabled_feed, another_disabled_feed].each do |feed|
+      feed.reload
+      assert_equal "disabled", feed.state
+      assert_nil feed.access_token_id
+    end
+  ensure
+    ActiveSupport::Notifications.unsubscribe("sql.active_record")
+  end
+
+  test "should disable enabled feeds when token becomes inactive" do
+    access_token = create(:access_token, status: :active)
+    enabled_feed = create(:feed, access_token: access_token, state: :enabled)
+    another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
+    disabled_feed = create(:feed, access_token: access_token, state: :disabled)
+
+    access_token.update!(status: :inactive)
+
+    enabled_feed.reload
+    another_disabled_feed.reload
+    disabled_feed.reload
+
+    assert_equal "disabled", enabled_feed.state
+    assert_equal "disabled", another_disabled_feed.state
+    assert_equal "disabled", disabled_feed.state
+
+    # Token reference should remain (unlike destroy callback)
+    assert_equal access_token, enabled_feed.access_token
+    assert_equal access_token, another_disabled_feed.access_token
+    assert_equal access_token, disabled_feed.access_token
+  end
 end

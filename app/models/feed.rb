@@ -4,18 +4,16 @@ class Feed < ApplicationRecord
   DESCRIPTION_MAX_LENGTH = 100
 
   belongs_to :user
+  belongs_to :access_token, optional: true
   has_one :feed_schedule, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
 
-  enum :state, { enabled: 0, paused: 1, disabled: 2 }
+  enum :state, { disabled: 0, enabled: 1 }
 
   validates :name,
             presence: true,
             uniqueness: { scope: :user_id },
-            format: {
-              with: NAME_PATTERN,
-              message: "can only contain lowercase letters, numbers, hyphens, and underscores"
-            }
+            length: { maximum: NAME_MAX_LENGTH }
 
   validates :url,
             presence: true,
@@ -29,12 +27,13 @@ class Feed < ApplicationRecord
   validates :processor, presence: true
   validates :normalizer, presence: true
 
-  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
+  normalizes :name, with: ->(name) { name.to_s.strip }
   normalizes :url, with: ->(url) { url.to_s.strip }
   normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
 
   validate :cron_expression_is_valid
+  validates :access_token, presence: true, if: :enabled?
 
   scope :due, -> {
     left_joins(:feed_schedule)
@@ -42,12 +41,15 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  after_initialize :set_default_state, if: :new_record?
+  before_validation :auto_disable_without_active_token
 
   private
 
-  def set_default_state
-    self.state ||= :enabled
+  def auto_disable_without_active_token
+    return unless enabled?
+    return if access_token&.active?
+
+    self.state = :disabled
   end
 
   def cron_expression_is_valid

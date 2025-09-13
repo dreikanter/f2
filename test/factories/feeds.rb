@@ -7,9 +7,15 @@ FactoryBot.define do
     loader { "http" }
     processor { "rss" }
     normalizer { "rss" }
-    state { :enabled }
+    state { :disabled }
     description { "" }
     import_after { nil }
+
+    after(:build) do |feed|
+      if feed.user && feed.access_token.nil?
+        feed.access_token = create(:access_token, :active, user: feed.user)
+      end
+    end
 
     trait :with_schedule do
       after(:create) do |feed|
@@ -17,12 +23,13 @@ FactoryBot.define do
       end
     end
 
-    trait :paused do
-      state { :paused }
-    end
-
     trait :disabled do
       state { :disabled }
+    end
+
+    trait :without_access_token do
+      access_token { nil }
+      after(:build) { |feed| feed.access_token = nil }
     end
   end
 end

@@ -2,6 +2,7 @@ class AccessToken < ApplicationRecord
   MAX_TOKENS_PER_USER = 20
 
   belongs_to :user
+  has_many :feeds
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
@@ -9,6 +10,9 @@ class AccessToken < ApplicationRecord
   validate :user_tokens_limit
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
+
+  before_destroy :disable_associated_feeds
+  after_update :disable_feeds_on_inactivation, if: :saved_change_to_status?
 
   encrypts :encrypted_token
 
@@ -53,5 +57,15 @@ class AccessToken < ApplicationRecord
     return unless user.access_tokens.where.not(id: id).count >= MAX_TOKENS_PER_USER
 
     errors.add(:user, "cannot have more than #{MAX_TOKENS_PER_USER} access tokens")
+  end
+
+  def disable_associated_feeds
+    feeds.update_all(state: :disabled, access_token_id: nil)
+  end
+
+  def disable_feeds_on_inactivation
+    return unless inactive? && status_previously_changed?(to: "inactive")
+
+    feeds.enabled.update_all(state: :disabled)
   end
 end

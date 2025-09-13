@@ -3,6 +3,13 @@
   <%= link_to "Create New Token", new_access_token_path, class: "btn btn-primary" %>
 </div>
 
+<% if @access_tokens.inactive.exists? %>
+  <div class="alert alert-secondary mb-4">
+    <strong>Note:</strong> Inactive tokens automatically disable associated feeds.
+    You can <b>Replace</b> inactive tokens with new ones to re-enable your feeds.
+  </div>
+<% end %>
+
 <% if @access_tokens.any? %>
   <div class="table-responsive">
     <table class="table table-hover table-bordered">

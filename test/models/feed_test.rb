@@ -42,22 +42,21 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:normalizer, :blank)
   end
 
-  test "should have enabled state by default" do
+  test "should have disabled state by default" do
     feed = build(:feed)
-    assert_equal "enabled", feed.state
+    assert_equal "disabled", feed.state
   end
 
   test "should support state transitions" do
     feed = create(:feed)
 
-    feed.paused!
-    assert feed.paused?
-
-    feed.disabled!
     assert feed.disabled?
 
     feed.enabled!
     assert feed.enabled?
+
+    feed.disabled!
+    assert feed.disabled?
   end
 
   test "should have empty description by default" do
@@ -75,7 +74,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "due scope should include feeds without schedule" do
     freeze_time do
-      feed = create(:feed)
+      feed = create(:feed, state: :enabled)
 
       assert_includes Feed.due, feed
     end
@@ -83,7 +82,7 @@ class FeedTest < ActiveSupport::TestCase
 
   test "due scope should include feeds with past next_run_at" do
     freeze_time do
-      feed = create(:feed)
+      feed = create(:feed, state: :enabled)
       create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
       assert_includes Feed.due, feed
@@ -105,12 +104,12 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:user, :blank)
   end
 
-  test "should validate name format" do
-    feed = build(:feed, name: "Invalid Name With Spaces")
+  test "should validate name length" do
+    feed = build(:feed, name: "a" * 41)
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:name, :invalid)
+    assert feed.errors.of_kind?(:name, :too_long)
 
-    feed = build(:feed, name: "valid-name_123")
+    feed = build(:feed, name: "Valid Name With Spaces")
     assert feed.valid?
   end
 
@@ -136,9 +135,9 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should normalize name to lowercase" do
-    feed = create(:feed, name: "Test-Feed")
-    assert_equal "test-feed", feed.name
+  test "should normalize name by stripping spaces" do
+    feed = create(:feed, name: "  Test-Feed  ")
+    assert_equal "Test-Feed", feed.name
   end
 
   test "should normalize url by stripping spaces" do
@@ -174,14 +173,74 @@ class FeedTest < ActiveSupport::TestCase
     assert feed2.valid?
   end
 
-  test "should set default state to enabled for new records" do
+  test "should set default state to disabled for new records" do
     feed = Feed.new
-    assert_equal "enabled", feed.state
+    assert_equal "disabled", feed.state
   end
 
   test "should not change state for persisted records" do
-    feed = create(:feed, state: :paused)
+    feed = create(:feed, state: :enabled)
     reloaded_feed = Feed.find(feed.id)
-    assert_equal "paused", reloaded_feed.state
+    assert_equal "enabled", reloaded_feed.state
+  end
+
+  test "should auto-disable feed when trying to enable without access token" do
+    feed = build(:feed, :without_access_token, state: :enabled)
+
+    assert feed.valid?
+    assert_equal "disabled", feed.state
+  end
+
+  test "should allow disabled feeds without access token" do
+    user = create(:user)
+    feed = build(:feed, :without_access_token, state: :disabled, user: user)
+    assert feed.valid?
+  end
+
+  test "should allow updating existing feed to disabled with nil access token" do
+    feed = create(:feed)
+    assert feed.update!(state: :disabled, access_token: nil)
+    assert_equal "disabled", feed.state
+    assert_nil feed.access_token
+  end
+
+  test "should auto-disable enabled feed when updated without active token" do
+    feed = create(:feed, state: :enabled)
+
+    feed.update!(access_token: nil)
+
+    assert_equal "disabled", feed.state
+    assert_nil feed.access_token
+  end
+
+  test "should auto-disable enabled feed when updated with inactive token" do
+    inactive_token = create(:access_token, :inactive)
+    feed = create(:feed, state: :enabled)
+
+    feed.update!(access_token: inactive_token)
+
+    assert_equal "disabled", feed.state
+    assert_equal inactive_token, feed.access_token
+  end
+
+  test "should not auto-disable disabled feed when saved without active token" do
+    feed = create(:feed, state: :disabled)
+
+    feed.access_token = nil
+    feed.save!
+
+    assert_equal "disabled", feed.state
+    assert_nil feed.access_token
+  end
+
+  test "should not auto-disable enabled feed when saved with active token" do
+    active_token = create(:access_token, :active)
+    feed = create(:feed, state: :enabled)
+
+    feed.access_token = active_token
+    feed.save!
+
+    assert_equal "enabled", feed.state
+    assert_equal active_token, feed.access_token
   end
 end

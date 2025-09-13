@@ -10,39 +10,53 @@
     </div>
   <% end %>
 
-  <div class="mb-3">
-    <%= form.label :name, class: "form-label" %>
-    <%= form.text_field :name, class: "form-control", required: true, placeholder: "my-rss-feed", pattern: Feed::NAME_PATTERN, title: "Only lowercase letters, numbers, hyphens, and underscores allowed" %>
-    <div class="form-text">Only lowercase letters, numbers, hyphens, and underscores allowed</div>
+  <div class="mb-4">
+    <%= form.label :name, class: "form-label font-weight-bold" %>
+    <%= form.text_field :name, class: "form-control", required: true, placeholder: "My RSS Feed", maxlength: Feed::NAME_MAX_LENGTH %>
+    <div class="form-text">Give your feed a name to help you identify it in your feed list</div>
     <div class="invalid-feedback">Please provide a valid feed name.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :url, "Feed URL", class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :url, "Feed URL", class: "form-label font-weight-bold" %>
     <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml" %>
     <div class="invalid-feedback">Please provide a valid HTTP or HTTPS URL.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :loader, class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :access_token_id, "Access Token", class: "form-label font-weight-bold" %>
+    <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id), { prompt: "Choose access token..." }, { class: "form-select" } %>
+    <div class="form-text">Select the Freefeed access token to use for posting</div>
+    <div class="invalid-feedback">Please select an access token.</div>
+    
+    <% unless has_active_tokens? %>
+      <div class="alert alert-warning mt-2" role="alert">
+        <strong>No active tokens available.</strong>
+        You won't be able to enable this feed later without selecting a working token.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :loader, class: "form-label font-weight-bold" %>
     <%= form.select :loader, options_for_select(loader_options, feed.loader), { prompt: "Choose loader..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a loader.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :processor, class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :processor, class: "form-label font-weight-bold" %>
     <%= form.select :processor, options_for_select(processor_options, feed.processor), { prompt: "Choose processor..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a processor.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :normalizer, class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :normalizer, class: "form-label font-weight-bold" %>
     <%= form.select :normalizer, options_for_select(normalizer_options, feed.normalizer), { prompt: "Choose normalizer..." }, { class: "form-select", required: true } %>
     <div class="invalid-feedback">Please select a normalizer.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :cron_expression, "Schedule", class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :cron_expression, "Schedule", class: "form-label font-weight-bold" %>
     <%= form.select :cron_expression,
         options_for_select([
           ["Every 30 minutes", "*/30 * * * *"],
@@ -56,19 +70,19 @@
     <div class="invalid-feedback">Please select a schedule.</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :import_after, "Import items after", class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :import_after, "Import items after", class: "form-label font-weight-bold" %>
     <%= form.date_field :import_after, class: "form-control" %>
     <div class="form-text">Only import items published after this date</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :description, class: "form-label" %>
+  <div class="mb-4">
+    <%= form.label :description, class: "form-label font-weight-bold" %>
     <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
   </div>
 
   <div class="mb-3">
     <%= form.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-secondary" %>
+    <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-outline-secondary" %>
   </div>
 <% end %>

@@ -11,6 +11,16 @@ module ComponentOptionsHelper
     available_options(Normalizer::AVAILABLE_OPTIONS, "normalizers")
   end
 
+  def access_token_options
+    Current.user.access_tokens.active.map do |token|
+      ["#{token.name} (#{token.host})", token.id]
+    end
+  end
+
+  def has_active_tokens?
+    Current.user.access_tokens.active.exists?
+  end
+
   private
 
   def available_options(keys, i18n_prefix)
