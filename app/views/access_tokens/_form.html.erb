@@ -38,7 +38,7 @@
                                   checked: (access_token.host == url || (key == "production" && access_token.host.blank?)),
                                   data: { action: "change->token-form#hostChanged" } %>
             <%= form.label "host_#{key}", key.humanize, class: "form-check-label", for: "host_#{key}" %>
-            <span class="text-muted ms-1">(<%= url %>)</span>
+            <label for="host_<%= key %>" class="text-muted ms-1" style="cursor: pointer;">(<%= url %>)</label>
           </div>
         <% end %>
         <div class="form-check mb-2">
