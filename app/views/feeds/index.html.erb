@@ -13,7 +13,7 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h5 class="card-title mb-0"><%= feed.name %></h5>
-                  <span class="badge bg-<%= feed.enabled? ? 'success' : feed.paused? ? 'warning' : 'danger' %>">
+                  <span class="badge bg-<%= feed.enabled? ? 'success' : 'danger' %>">
                     <%= feed.state.capitalize %>
                   </span>
                 </div>
