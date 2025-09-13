@@ -1,5 +1,4 @@
 class AccessTokensController < ApplicationController
-
   def index
     @access_tokens = ordered_access_tokens
   end

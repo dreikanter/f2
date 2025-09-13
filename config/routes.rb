@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   resources :access_tokens, only: [:index, :new, :create, :destroy] do
-    resource :validation, only: [:show, :create], controller: 'access_token_validations'
+    resource :validation, only: [:show, :create], controller: "access_token_validations"
   end
 
   resource :profile, only: :show

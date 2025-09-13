@@ -1,5 +1,4 @@
 class FeedsController < ApplicationController
-
   def index
     @feeds = user_feeds.order(:name)
   end
