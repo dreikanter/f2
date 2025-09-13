@@ -1,6 +1,6 @@
 require "test_helper"
 
-class StatusesControllerTest < ActionDispatch::IntegrationTest
+class AccessTokenValidationsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -10,7 +10,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication" do
-    post access_token_status_path(access_token)
+    post access_token_validation_path(access_token)
     assert_redirected_to new_session_path
   end
 
@@ -18,7 +18,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
-      post access_token_status_path(access_token),
+      post access_token_validation_path(access_token),
            headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -28,7 +28,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   test "responds with turbo stream" do
     sign_in_as user
 
-    post access_token_status_path(access_token),
+    post access_token_validation_path(access_token),
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
@@ -42,14 +42,14 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user
 
-    post access_token_status_path(other_token)
+    post access_token_validation_path(other_token)
     assert_response :not_found
   end
 
   test "show responds with turbo stream" do
     sign_in_as user
 
-    get access_token_status_path(access_token),
+    get access_token_validation_path(access_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
@@ -61,7 +61,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     # Test pending state
-    get access_token_status_path(access_token),
+    get access_token_validation_path(access_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "data-status=\"pending\""
@@ -69,7 +69,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     # Test validating state
     access_token.update!(status: :validating)
-    get access_token_status_path(access_token),
+    get access_token_validation_path(access_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "data-status=\"validating\""
@@ -77,7 +77,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     # Test active state
     access_token.update!(status: :active, owner: "testuser")
-    get access_token_status_path(access_token),
+    get access_token_validation_path(access_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "✅ Active"
@@ -85,7 +85,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     # Test inactive state
     access_token.update!(status: :inactive)
-    get access_token_status_path(access_token),
+    get access_token_validation_path(access_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "Inactive"
@@ -97,7 +97,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user
 
-    get access_token_status_path(other_token),
+    get access_token_validation_path(other_token),
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :not_found
   end
