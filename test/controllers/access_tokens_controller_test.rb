@@ -125,4 +125,77 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     delete access_token_path(access_token)
     assert_redirected_to new_session_path
   end
+
+  test "shows edit form for token replacement" do
+    sign_in_as user
+    get edit_access_token_path(access_token)
+    assert_response :success
+    assert_select "h1", "Replace Token"
+    assert_select "form[action=?]", access_token_path(access_token)
+    assert_select "input[name=?][value='']", "access_token[token]" # Token field should be empty
+    assert_select "input[name=?][value=?]", "access_token[name]", access_token.name
+  end
+
+  test "updates access token successfully" do
+    sign_in_as user
+
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(headers: { "Authorization" => "Bearer new_token_123" })
+      .to_return(status: 200, body: { users: { username: "testuser" } }.to_json)
+
+    assert_enqueued_with(job: TokenValidationJob) do
+      patch access_token_path(access_token), params: {
+        access_token: { name: "Updated Token", token: "new_token_123", host: access_token.host }
+      }
+    end
+
+    assert_redirected_to access_tokens_path
+    assert_match /updated successfully/, flash[:notice]
+
+    access_token.reload
+    assert_equal "Updated Token", access_token.name
+    assert_equal "new_token_123", access_token.token_value
+  end
+
+  test "handles update validation errors" do
+    sign_in_as user
+    patch access_token_path(access_token), params: {
+      access_token: { name: "", token: "new_token_123" }
+    }
+    assert_response :unprocessable_content
+    assert_select "h1", "Replace Token"
+    assert_select ".alert-danger"
+  end
+
+  test "cannot edit other user's token" do
+    other_user = create(:user)
+    other_token = create(:access_token, user: other_user)
+
+    sign_in_as user
+    get edit_access_token_path(other_token)
+    assert_response :not_found
+  end
+
+  test "cannot update other user's token" do
+    other_user = create(:user)
+    other_token = create(:access_token, user: other_user)
+
+    sign_in_as user
+    patch access_token_path(other_token), params: {
+      access_token: { name: "Hacked", token: "evil_token" }
+    }
+    assert_response :not_found
+  end
+
+  test "requires authentication for edit" do
+    get edit_access_token_path(access_token)
+    assert_redirected_to new_session_path
+  end
+
+  test "requires authentication for update" do
+    patch access_token_path(access_token), params: {
+      access_token: { name: "Updated", token: "new_token" }
+    }
+    assert_redirected_to new_session_path
+  end
 end
