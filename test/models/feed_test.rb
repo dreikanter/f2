@@ -187,7 +187,6 @@ class FeedTest < ActiveSupport::TestCase
   test "should auto-disable feed when trying to enable without access token" do
     feed = build(:feed, :without_access_token, state: :enabled)
     
-    # The callback should auto-disable it before validation
     assert feed.valid?
     assert_equal "disabled", feed.state
   end
@@ -208,7 +207,6 @@ class FeedTest < ActiveSupport::TestCase
   test "should auto-disable enabled feed when updated without active token" do
     feed = create(:feed, state: :enabled)
     
-    # Update to remove access token - callback should disable before validation
     feed.update!(access_token: nil)
     
     assert_equal "disabled", feed.state
@@ -219,7 +217,6 @@ class FeedTest < ActiveSupport::TestCase
     inactive_token = create(:access_token, :inactive)
     feed = create(:feed, state: :enabled)
     
-    # Update to inactive token - callback should disable before validation
     feed.update!(access_token: inactive_token)
     
     assert_equal "disabled", feed.state
@@ -229,9 +226,7 @@ class FeedTest < ActiveSupport::TestCase
   test "should not auto-disable disabled feed when saved without active token" do
     feed = create(:feed, state: :disabled)
     
-    # Remove the access token
     feed.access_token = nil
-    
     feed.save!
     
     assert_equal "disabled", feed.state
@@ -242,9 +237,7 @@ class FeedTest < ActiveSupport::TestCase
     active_token = create(:access_token, :active)
     feed = create(:feed, state: :enabled)
     
-    # Change to active token
     feed.access_token = active_token
-    
     feed.save!
     
     assert_equal "enabled", feed.state
