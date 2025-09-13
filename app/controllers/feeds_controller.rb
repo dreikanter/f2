@@ -66,6 +66,7 @@ class FeedsController < ApplicationController
       :import_after,
       :description,
       :access_token_id,
+      :target_group,
       :state
     )
   end
