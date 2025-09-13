@@ -223,13 +223,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
 
-  test "should disable enabled feeds when token becomes inactive" do
+  test "should disable enabled feeds when token validation service marks token inactive" do
     access_token = create(:access_token, status: :active)
     enabled_feed = create(:feed, access_token: access_token, state: :enabled)
     another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, access_token: access_token, state: :disabled)
 
-    access_token.update!(status: :inactive)
+    service = AccessTokenValidationService.new(access_token)
+    service.send(:update_token_and_disable_feeds, :inactive)
 
     enabled_feed.reload
     another_disabled_feed.reload
