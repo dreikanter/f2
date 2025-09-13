@@ -1,112 +1,43 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tokenSelect", "groupSelect", "groupLoading"]
-
-  connect() {
-    // Load groups if a token is already selected
-    if (this.tokenSelectTarget.value) {
-      this.loadGroups(this.tokenSelectTarget.value)
-    }
-  }
-
-  tokenChanged() {
-    const tokenId = this.tokenSelectTarget.value
+  loadGroups(event) {
+    const tokenId = event.target.value
     
-    if (tokenId) {
-      this.loadGroups(tokenId)
-    } else {
-      this.clearGroups()
+    if (!tokenId) {
+      // Clear groups if no token selected
+      const wrapper = document.getElementById('group-select-wrapper')
+      wrapper.querySelector('select').disabled = true
+      wrapper.querySelector('select').innerHTML = '<option value="">Choose target group...</option>'
+      return
     }
-  }
 
-  async loadGroups(tokenId) {
-    this.showLoading()
-    this.disableGroupSelect()
-
-    try {
-      const response = await fetch(`/access_tokens/${tokenId}/groups`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-
+    // Make Turbo Stream request
+    fetch(`/access_tokens/${tokenId}/groups`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/vnd.turbo-stream.html',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      }
+    }).then(response => {
       if (response.ok) {
-        const data = await response.json()
-        this.populateGroups(data.groups)
-      } else {
-        const errorData = await response.json()
-        this.showError(errorData.error || 'Failed to load groups')
+        return response.text()
       }
-    } catch (error) {
-      this.showError('Failed to connect to server')
-    } finally {
-      this.hideLoading()
-    }
-  }
-
-  populateGroups(groups) {
-    const select = this.groupSelectTarget
-    const currentValue = select.value
-    
-    // Clear existing options except the prompt
-    select.innerHTML = '<option value="">Choose target group...</option>'
-    
-    // Add group options
-    groups.forEach(group => {
-      const option = document.createElement('option')
-      option.value = group.username
-      option.textContent = group.screen_name ? `${group.screen_name} (${group.username})` : group.username
-      
-      if (group.is_private) {
-        option.textContent += ' 🔒'
-      }
-      
-      select.appendChild(option)
+      throw new Error('Failed to load groups')
+    }).then(html => {
+      Turbo.renderStreamMessage(html)
+    }).catch(error => {
+      console.error('Group loading error:', error)
+      // Show error in the UI
+      const wrapper = document.getElementById('group-select-wrapper')
+      wrapper.innerHTML = `
+        <select name="feed[target_group]" id="feed_target_group" class="form-select" disabled>
+          <option value="">Error loading groups</option>
+        </select>
+        <div class="form-text text-danger">Failed to load groups</div>
+        <div class="invalid-feedback">Please select a target group.</div>
+      `
     })
-
-    // Restore previous selection if it still exists
-    if (currentValue) {
-      select.value = currentValue
-    }
-
-    this.enableGroupSelect()
-  }
-
-  clearGroups() {
-    const select = this.groupSelectTarget
-    select.innerHTML = '<option value="">Choose target group...</option>'
-    this.disableGroupSelect()
-  }
-
-  showLoading() {
-    if (this.hasGroupLoadingTarget) {
-      this.groupLoadingTarget.style.display = 'block'
-    }
-  }
-
-  hideLoading() {
-    if (this.hasGroupLoadingTarget) {
-      this.groupLoadingTarget.style.display = 'none'
-    }
-  }
-
-  enableGroupSelect() {
-    this.groupSelectTarget.disabled = false
-  }
-
-  disableGroupSelect() {
-    this.groupSelectTarget.disabled = true
-  }
-
-  showError(message) {
-    // For now, just log the error. In the future, we could show a user-friendly message
-    console.error('Group loading error:', message)
-    
-    // Clear groups and keep select disabled
-    this.clearGroups()
   }
 }
