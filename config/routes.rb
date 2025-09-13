@@ -4,6 +4,7 @@ Rails.application.routes.draw do
 
   resources :access_tokens do
     resource :validation, only: [:show, :create], controller: "access_token_validations"
+    resources :groups, only: [:index], controller: "access_token_groups"
   end
 
   resource :profile, only: :show
