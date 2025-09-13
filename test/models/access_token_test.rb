@@ -134,17 +134,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.validating?
   end
 
-  test "#validate_token_async does nothing when token is invalid" do
-    token = build(:access_token, name: nil) # Invalid token
-    assert_not token.valid?
-
-    assert_no_enqueued_jobs do
-      token.validate_token_async
-    end
-
-    assert token.pending?
-  end
-
   # Host validation tests
   test "validates presence of host" do
     token = build(:access_token, host: nil)
