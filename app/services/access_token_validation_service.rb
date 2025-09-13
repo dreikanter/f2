@@ -9,7 +9,12 @@ class AccessTokenValidationService
     ActiveRecord::Base.transaction do
       begin
         user_info = freefeed_client.whoami
-        access_token.update!(status: :active, owner: user_info[:username])
+
+        access_token.update!(
+          status: :active,
+          owner: user_info[:username],
+          last_used_at: Time.current
+        )
       rescue
         disable_token_and_feeds
       end
