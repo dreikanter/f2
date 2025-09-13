@@ -41,7 +41,7 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  before_save :auto_disable_without_active_token
+  before_validation :auto_disable_without_active_token
 
   private
 
