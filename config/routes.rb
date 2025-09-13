@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   # TBD: Use custom authentication + permission-based access control
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
-  resources :access_tokens, only: [:index, :new, :create, :destroy] do
+  resources :access_tokens do
     resource :validation, only: [:show, :create], controller: "access_token_validations"
   end
 

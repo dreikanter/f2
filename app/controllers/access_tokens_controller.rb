@@ -19,6 +19,21 @@ class AccessTokensController < ApplicationController
     end
   end
 
+  def edit
+    @access_token = find_access_token
+  end
+
+  def update
+    @access_token = find_access_token
+
+    if @access_token.update(access_token_params.merge(encrypted_token: access_token_params[:token]))
+      @access_token.validate_token_async
+      redirect_to access_tokens_path, notice: "Access token '#{@access_token.name}' has been updated successfully."
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+
   def destroy
     access_token = access_tokens.find(params[:id])
     access_token.destroy!
@@ -26,6 +41,10 @@ class AccessTokensController < ApplicationController
   end
 
   private
+
+  def find_access_token
+    access_tokens.find(params[:id])
+  end
 
   def access_tokens
     Current.user.access_tokens
