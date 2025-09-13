@@ -1,4 +1,4 @@
-class StatusesController < ApplicationController
+class AccessTokenValidationsController < ApplicationController
   include ActionView::RecordIdentifier
 
   def create

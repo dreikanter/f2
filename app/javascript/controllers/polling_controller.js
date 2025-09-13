@@ -22,7 +22,7 @@ export default class extends Controller {
         return;
       }
       
-      fetch(`/access_tokens/${this.accessTokenIdValue}/status`, {
+      fetch(`/access_tokens/${this.accessTokenIdValue}/validation`, {
         headers: { 
           "Accept": "text/vnd.turbo-stream.html",
           "X-Requested-With": "XMLHttpRequest"
