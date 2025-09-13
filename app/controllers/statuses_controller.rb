@@ -1,8 +1,6 @@
 class StatusesController < ApplicationController
   include ActionView::RecordIdentifier
 
-  before_action :require_authentication
-
   def create
     @access_token = access_tokens.find(params[:access_token_id])
     @access_token.validate_token_async
