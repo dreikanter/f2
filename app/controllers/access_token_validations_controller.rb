@@ -1,7 +1,5 @@
-class StatusesController < ApplicationController
+class AccessTokenValidationsController < ApplicationController
   include ActionView::RecordIdentifier
-
-  before_action :require_authentication
 
   def create
     @access_token = access_tokens.find(params[:access_token_id])

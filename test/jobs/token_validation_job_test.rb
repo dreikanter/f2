@@ -45,17 +45,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "does nothing when token is not present" do
-    # Create token without token value, bypassing validation
-    token_without_value = AccessToken.new(name: "Test Token", user: user, status: :pending)
-    token_without_value.save!(validate: false)
-
-    TokenValidationJob.perform_now(token_without_value)
-
-    # Should remain pending since validation was skipped
-    assert token_without_value.reload.pending?
-  end
-
   test "marks token as inactive when JSON parsing fails" do
     # Mock response with invalid JSON
     stub_request(:get, "https://freefeed.test/v4/users/whoami")

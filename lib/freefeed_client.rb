@@ -7,6 +7,8 @@ class FreefeedClient
   class UnauthorizedError < Error; end
   class NotFoundError < Error; end
 
+  USER_AGENT = "FreeFeed-Rails-Client".freeze
+
   DEFAULT_OPTIONS = {
     timeout: 30,
     follow_redirects: true,
@@ -43,12 +45,6 @@ class FreefeedClient
 
   def get(path, options: {})
     url = "#{@host}#{path}"
-    headers = {
-      "Authorization" => "Bearer #{@token}",
-      "Accept" => "application/json",
-      "User-Agent" => "FreeFeed-Rails-Client"
-    }
-
     response = @http_client.get(url, headers: headers, options: options)
 
     case response.status
@@ -99,5 +95,13 @@ class FreefeedClient
     end
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
+  end
+
+  def headers
+    {
+      "Authorization" => "Bearer #{@token}",
+      "Accept" => "application/json",
+      "User-Agent" => USER_AGENT
+    }
   end
 end

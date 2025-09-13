@@ -12,7 +12,6 @@ class AccessToken < ApplicationRecord
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
   before_destroy :disable_associated_feeds
-  after_update :disable_feeds_on_inactivation, if: :saved_change_to_status?
 
   encrypts :encrypted_token
 
@@ -35,8 +34,6 @@ class AccessToken < ApplicationRecord
   end
 
   def validate_token_async
-    return unless valid?
-
     update!(status: :validating)
     TokenValidationJob.perform_later(self)
   end
@@ -61,11 +58,5 @@ class AccessToken < ApplicationRecord
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
-  end
-
-  def disable_feeds_on_inactivation
-    return unless inactive? && status_previously_changed?(to: "inactive")
-
-    feeds.enabled.update_all(state: :disabled)
   end
 end

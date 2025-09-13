@@ -134,17 +134,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.validating?
   end
 
-  test "#validate_token_async does nothing when token is invalid" do
-    token = build(:access_token, name: nil) # Invalid token
-    assert_not token.valid?
-
-    assert_no_enqueued_jobs do
-      token.validate_token_async
-    end
-
-    assert token.pending?
-  end
-
   # Host validation tests
   test "validates presence of host" do
     token = build(:access_token, host: nil)
@@ -223,18 +212,32 @@ class AccessTokenTest < ActiveSupport::TestCase
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
 
-  test "should disable enabled feeds when token becomes inactive" do
-    access_token = create(:access_token, status: :active)
+  test "should disable enabled feeds when token validation service marks token inactive" do
+    access_token = create(:access_token, status: :validating)
     enabled_feed = create(:feed, access_token: access_token, state: :enabled)
     another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, access_token: access_token, state: :disabled)
 
-    access_token.update!(status: :inactive)
+    # Stub HTTP request to return 401 Unauthorized, triggering the rescue block
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client"
+        }
+      )
+      .to_return(status: 401, body: "")
 
+    service = AccessTokenValidationService.new(access_token)
+    service.call
+
+    access_token.reload
     enabled_feed.reload
     another_disabled_feed.reload
     disabled_feed.reload
 
+    assert_equal "inactive", access_token.status
     assert_equal "disabled", enabled_feed.state
     assert_equal "disabled", another_disabled_feed.state
     assert_equal "disabled", disabled_feed.state

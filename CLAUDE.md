@@ -45,28 +45,6 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 * **Never** stage unrelated edits together (formatting, renames, feature code in one commit).
 * If mid-flow you discover a second concern, **stop** and create a new TODO line; do not keep coding in the same commit.
 * Prefer many small PRs built from atomic commits; they’re easier to review, revert, and bisect.
-  
-## Development Practices
-- Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop -f github`)
-- Use FactoryBot to create test data
-- Prefer lazy test data initialization over eager initialization in setup block
-
-```ruby
-# Bad:
-setup do
-  @user = create(:user)
-  @feed = create(:feed, user: @user)
-end
-
-# Good:
-def user
-  @user ||= create(:user)
-end
-
-def feed
-  @feed ||= create(:feed, user: user)
-end
-```
 
 ## Code style
 
@@ -85,17 +63,11 @@ Controllers:
 
 - Eliminate blank action methods.
 
-Testing:
-
-- Use factory_bot for test data.
-
 ## Development Guidelines
 
 - Ruby version is defined in `.ruby-version`.
 - Follow standard Rails conventions.
 - Use two-space indentation.
-- Keep tests and code together.
-- Add or update tests for any code change.
 
 ## PR description
 
@@ -113,7 +85,27 @@ When listing the changes, start from the most important. Generalize. Skip boring
 
 ## Testing
 
+- Keep tests and code together.
+- Add or update tests for any code change.
 - Verify database migrations work both ways (up/down).
-- Run these commands before committing:
-  - `bin/rubocop -f github` – ensures Ruby style follows the Omakase RuboCop rules.
-  - `bin/rails test` – runs the full test suite.
+- Run test before committing: `bin/rails test`.
+- Use FactoryBot to create test data.
+- Check and fix RuboCop violations after each change to the code (use command: `bin/rubocop -f github`).
+- Prefer lazy test data initialization over eager initialization in setup block
+
+```ruby
+# Bad:
+setup do
+  @user = create(:user)
+  @feed = create(:feed, user: @user)
+end
+
+# Good:
+def user
+  @user ||= create(:user)
+end
+
+def feed
+  @feed ||= create(:feed, user: user)
+end
+```

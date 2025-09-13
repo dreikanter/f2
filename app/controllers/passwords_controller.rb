@@ -1,6 +1,6 @@
 class PasswordsController < ApplicationController
   allow_unauthenticated_access
-  before_action :set_user_by_token, only: %i[edit update]
+  before_action :find_user_by_token, only: [:edit, :update]
 
   def create
     if user = User.find_by(email_address: params[:email_address])
@@ -19,9 +19,10 @@ class PasswordsController < ApplicationController
   end
 
   private
-    def set_user_by_token
-      @user = User.find_by_password_reset_token!(params[:token])
-    rescue ActiveSupport::MessageVerifier::InvalidSignature
-      redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
-    end
+
+  def find_user_by_token
+    @user = User.find_by_password_reset_token!(params[:token])
+  rescue ActiveSupport::MessageVerifier::InvalidSignature
+    redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
+  end
 end
