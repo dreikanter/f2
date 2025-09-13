@@ -224,18 +224,31 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "should disable enabled feeds when token validation service marks token inactive" do
-    access_token = create(:access_token, status: :active)
+    access_token = create(:access_token, status: :validating)
     enabled_feed = create(:feed, access_token: access_token, state: :enabled)
     another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, access_token: access_token, state: :disabled)
 
-    service = AccessTokenValidationService.new(access_token)
-    service.send(:update_token_and_disable_feeds, :inactive)
+    # Stub HTTP request to return 401 Unauthorized, triggering the rescue block
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client"
+        }
+      )
+      .to_return(status: 401, body: "")
 
+    service = AccessTokenValidationService.new(access_token)
+    service.call
+
+    access_token.reload
     enabled_feed.reload
     another_disabled_feed.reload
     disabled_feed.reload
 
+    assert_equal "inactive", access_token.status
     assert_equal "disabled", enabled_feed.state
     assert_equal "disabled", another_disabled_feed.state
     assert_equal "disabled", disabled_feed.state
