@@ -1,9 +1,14 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1><%= @feed.name %></h1>
+  <div class="d-flex align-items-center">
+    <h1 class="mb-0 me-3"><%= @feed.name %></h1>
+    <div class="d-flex align-items-center">
+      <span class="badge rounded-pill bg-<%= @feed.enabled? ? 'success' : 'danger' %> me-2" style="width: 12px; height: 12px;">&nbsp;</span>
+      <span class="text-<%= @feed.enabled? ? 'success' : 'danger' %> fw-medium">
+        <%= @feed.state.capitalize %>
+      </span>
+    </div>
+  </div>
   <div class="d-flex gap-2">
-    <span class="badge bg-<%= @feed.enabled? ? 'success' : 'danger' %> fs-6">
-      <%= @feed.state.capitalize %>
-    </span>
     
     <% if @feed.enabled? %>
       <%= link_to "Disable", feed_path(@feed), 

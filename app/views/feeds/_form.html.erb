@@ -81,12 +81,6 @@
     <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
   </div>
 
-  <% unless feed.persisted? %>
-    <div class="alert alert-info" role="alert">
-      <strong>Note:</strong> New feeds are created in disabled state. You can enable them from the feed details page once saved.
-    </div>
-  <% end %>
-
   <div class="mb-3">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-secondary" %>

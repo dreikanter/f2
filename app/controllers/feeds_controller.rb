@@ -21,7 +21,11 @@ class FeedsController < ApplicationController
     @feed = user_feeds.build(feed_params)
 
     if @feed.save
-      redirect_to @feed, notice: "Feed was successfully created."
+      notice_message = "Feed was successfully created."
+      if @feed.access_token&.active?
+        notice_message += " You can now enable it to start processing items."
+      end
+      redirect_to @feed, notice: notice_message
     else
       render :new, status: :unprocessable_content
     end
