@@ -1,11 +1,4 @@
-<%#
-Local variables:
-- access_token: AccessToken model instance
-- token_label: String for token field label
-- token_placeholder: String for token field placeholder
-- token_value: String for token field value
-- submit_text: String for submit button text
-%>
+<%# locals: (access_token:, token_label:, token_placeholder:, token_value:, submit_text:) %>
 <div data-controller="token-form"  data-token-form-freefeed-hosts-value='<%= AccessToken::FREEFEED_HOSTS.to_json %>' data-token-form-default-help-url-value="https://freefeed.net">
   <%= form_with model: access_token, local: true do |form| %>
     <% if access_token.errors.any? %>
