@@ -1,10 +1,6 @@
 class AccessTokenGroupsController < ApplicationController
   before_action :load_access_token
 
-  def index
-    # Turbo Stream response handled by view template
-  end
-
   rescue_from FreefeedClient::Error, with: :handle_freefeed_error
 
   private
