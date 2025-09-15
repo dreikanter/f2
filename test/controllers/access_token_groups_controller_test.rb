@@ -135,10 +135,4 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "turbo-stream"
     assert_includes response.body, "group-select-wrapper"
   end
-
-  private
-
-  def access_token_groups_path(access_token)
-    "/access_tokens/#{access_token.id}/groups"
-  end
 end

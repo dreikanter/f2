@@ -125,9 +125,4 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
-  private
-
-  def feed_status_path(feed)
-    "/feeds/#{feed.id}/status"
-  end
 end
