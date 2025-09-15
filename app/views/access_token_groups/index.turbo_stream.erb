@@ -2,7 +2,7 @@
   <div id="group-select-wrapper">
     <select name="feed[target_group]" id="feed_target_group" class="form-select">
       <option value="">Choose target group...</option>
-      <% managed_groups.each do |group| %>
+      <% @managed_groups.each do |group| %>
         <option value="<%= group[:username] %>">
           <%= group[:screen_name].present? ? "#{group[:screen_name]} (#{group[:username]})" : group[:username] %>
           <%= "🔒" if group[:is_private] %>
