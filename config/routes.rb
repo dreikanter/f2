@@ -14,7 +14,11 @@ Rails.application.routes.draw do
   resource :dashboard, only: :show
   resource :session
   resources :passwords, param: :token
-  resources :feeds
+
+  resources :feeds do
+    resource :status, only: :update, controller: "feed_statuses"
+  end
+
   resources :events, only: [:index, :show]
 
   get "up" => "rails/health#show", as: :rails_health_check

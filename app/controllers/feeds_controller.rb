@@ -56,6 +56,8 @@ class FeedsController < ApplicationController
   end
 
   def feed_params
+    return {} unless params[:feed]
+
     params.require(:feed).permit(
       :name,
       :url,

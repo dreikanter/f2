@@ -7,25 +7,26 @@
         <i class="bi bi-play-circle-fill text-success me-1"></i>
         <span class="text-success fw-medium">Enabled</span>
       </div>
-      <%= link_to "Disable", feed_path(@feed), 
+      <%= link_to "Disable", feed_status_path(@feed),
           data: { turbo_method: :patch, turbo_confirm: "Are you sure you want to disable this feed?" },
-          params: { feed: { state: :disabled } },
+          params: { status: 'disabled' },
           class: "btn btn-outline-warning" %>
-    <% elsif @feed.access_token&.active? %>
+    <% elsif @feed.access_token&.active? && @feed.target_group.present? %>
       <div class="d-flex align-items-center">
         <i class="bi bi-pause-circle-fill text-muted me-1"></i>
         <span class="text-muted fw-medium">Disabled</span>
       </div>
-      <%= link_to "Enable", feed_path(@feed), 
+      <%= link_to "Enable", feed_status_path(@feed),
           data: { turbo_method: :patch },
-          params: { feed: { state: :enabled } },
+          params: { status: 'enabled' },
           class: "btn btn-outline-success" %>
     <% else %>
       <div class="d-flex align-items-center me-2">
         <i class="bi bi-pause-circle-fill text-muted me-1"></i>
         <span class="text-muted fw-medium">Disabled</span>
       </div>
-      <span class="btn btn-outline-secondary disabled" title="Cannot enable without active access token">Enable</span>
+      <% missing_parts = feed_missing_enablement_parts(@feed) %>
+      <span class="btn btn-outline-secondary disabled" title="Cannot enable without <%= missing_parts.join(' and ') %>">Enable</span>
     <% end %>
     
     <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-primary" %>
@@ -93,15 +94,32 @@
       <dt class="col-lg-2 col-md-3">Normalizer</dt>
       <dd class="col-lg-4 col-md-9"><%= @feed.normalizer %></dd>
 
+      <dt class="col-lg-2 col-md-3">Freefeed Host</dt>
+      <dd class="col-lg-4 col-md-9">
+        <% if @feed.access_token %>
+          <%= @feed.access_token.host %>
+        <% else %>
+          <span class="text-muted">No host configured</span>
+        <% end %>
+      </dd>
+
       <dt class="col-lg-2 col-md-3">Access Token</dt>
       <dd class="col-lg-4 col-md-9">
         <% if @feed.access_token %>
-          <%= @feed.access_token.name %> (<%= @feed.access_token.host %>)
-          <span class="badge bg-<%= @feed.access_token.active? ? 'success' : 'danger' %> ms-2">
+          <%= @feed.access_token.name %>
+        <% else %>
+          <span class="text-muted">No token assigned</span>
+        <% end %>
+      </dd>
+
+      <dt class="col-lg-2 col-md-3">Token Status</dt>
+      <dd class="col-lg-4 col-md-9">
+        <% if @feed.access_token %>
+          <span class="badge bg-<%= @feed.access_token.active? ? 'success' : 'danger' %>">
             <%= @feed.access_token.status.capitalize %>
           </span>
         <% else %>
-          <span class="text-muted">No token assigned</span>
+          <span class="text-muted">No status available</span>
         <% end %>
       </dd>
 
