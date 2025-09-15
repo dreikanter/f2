@@ -7,7 +7,7 @@ class FeedStatusesController < ApplicationController
 
     case status
     when "enabled"
-      if @feed.access_token&.active? && @feed.target_group.present?
+      if @feed.can_be_enabled?
         @feed.update!(state: :enabled)
         redirect_to @feed, notice: "Feed was successfully enabled."
       else

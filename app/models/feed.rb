@@ -54,11 +54,15 @@ class Feed < ApplicationRecord
 
   before_validation :auto_disable_without_active_token
 
+  def can_be_enabled?
+    access_token&.active? && target_group.present?
+  end
+
   private
 
   def auto_disable_without_active_token
     return unless enabled?
-    return if access_token&.active? && target_group.present?
+    return if can_be_enabled?
 
     self.state = :disabled
   end

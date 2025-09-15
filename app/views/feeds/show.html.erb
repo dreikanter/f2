@@ -12,7 +12,7 @@
           params: { status: "disabled" },
           data: { confirm: "Are you sure you want to disable this feed?" },
           class: "btn btn-outline-secondary" %>
-    <% elsif @feed.access_token&.active? && @feed.target_group.present? %>
+    <% elsif @feed.can_be_enabled? %>
       <div class="d-flex align-items-center">
         <i class="bi bi-pause-circle-fill text-muted me-1"></i>
         <span class="text-muted fw-medium">Disabled</span>
