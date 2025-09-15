@@ -124,4 +124,35 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     feed.reload
     assert_equal "disabled", feed.state
   end
+
+  test "should handle StaleObjectError gracefully" do
+    sign_in_as(user)
+
+    # Mock the controller's enable method to raise StaleObjectError
+    FeedStatusesController.class_eval do
+      alias_method :original_enable, :enable
+
+      def enable(feed)
+        raise ActiveRecord::StaleObjectError.new(feed, "update")
+      end
+    end
+
+    begin
+      patch feed_status_path(feed), params: { status: "enabled" }
+
+      assert_redirected_to feed
+      follow_redirect!
+      assert_includes response.body, "Feed was modified by another user. Please try again."
+
+      # The feed state should remain unchanged since the error was caught
+      feed.reload
+      assert_equal "disabled", feed.state
+    ensure
+      # Restore the original method
+      FeedStatusesController.class_eval do
+        alias_method :enable, :original_enable
+        remove_method :original_enable
+      end
+    end
+  end
 end
