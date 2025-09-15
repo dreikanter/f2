@@ -7,18 +7,19 @@
         <i class="bi bi-play-circle-fill text-success me-1"></i>
         <span class="text-success fw-medium">Enabled</span>
       </div>
-      <%= link_to "Disable", feed_status_path(@feed),
-          data: { turbo_method: :patch, turbo_confirm: "Are you sure you want to disable this feed?" },
-          params: { status: 'disabled' },
-          class: "btn btn-outline-warning" %>
+      <%= button_to "Disable", feed_status_path(@feed),
+          method: :patch,
+          params: { status: "disabled" },
+          data: { confirm: "Are you sure you want to disable this feed?" },
+          class: "btn btn-outline-secondary" %>
     <% elsif @feed.access_token&.active? && @feed.target_group.present? %>
       <div class="d-flex align-items-center">
         <i class="bi bi-pause-circle-fill text-muted me-1"></i>
         <span class="text-muted fw-medium">Disabled</span>
       </div>
-      <%= link_to "Enable", feed_status_path(@feed),
-          data: { turbo_method: :patch },
-          params: { status: 'enabled' },
+      <%= button_to "Enable", feed_status_path(@feed),
+          method: :patch,
+          params: { status: "enabled" },
           class: "btn btn-outline-success" %>
     <% else %>
       <div class="d-flex align-items-center me-2">
