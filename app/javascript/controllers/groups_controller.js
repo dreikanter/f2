@@ -5,6 +5,7 @@ export default class extends Controller {
     emptyGroupsHtml: String,
     loadingGroupsHtml: String
   }
+
   connect() {
     const tokenSelect = this.element.querySelector('select[name="feed[access_token_id]"]')
     if (tokenSelect?.value) {

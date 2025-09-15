@@ -1,7 +1,7 @@
 <%# locals: (feed:) %>
 <div data-controller="groups"
-     data-groups-empty-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true).to_json %>"
-     data-groups-loading-groups-html-value="<%= render('groups_select', groups: [{ username: '', screen_name: 'Loading...', is_private: false }], selected_group: nil, disabled: true).to_json %>">
+     data-groups-empty-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true, loading: false).to_json %>"
+     data-groups-loading-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true, loading: true).to_json %>">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -47,7 +47,7 @@
   <div class="mb-4">
     <%= form.label :target_group, "Target Group", class: "form-label font-weight-bold" %>
     <div id="groups-select">
-      <%= render "groups_select", groups: [], selected_group: feed.target_group, disabled: true %>
+      <%= render "groups_select", groups: [], selected_group: feed.target_group, disabled: true, loading: false %>
     </div>
 
   </div>

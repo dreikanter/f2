@@ -1,10 +1,12 @@
-<%# locals: (groups: [], selected_group: nil, disabled: true) %>
+<%# locals: (groups: [], selected_group: nil, disabled: true, loading: false) %>
 <%= select_tag "feed[target_group]",
     options_for_select(groups.map { |group|
       display_name = group[:screen_name].present? ? "#{group[:screen_name]} (#{group[:username]})" : group[:username]
       display_name += " 🔒" if group[:is_private]
       [display_name, group[:username]]
     }, selected_group),
-    { prompt: "Choose target group...", class: "form-select", disabled: disabled, id: "feed_target_group" } %>
-<div class="form-text">Select the Freefeed group where posts will be published</div>
+    { prompt: (loading ? "Loading..." : "Choose target group..."), class: "form-select", disabled: disabled, id: "feed_target_group" } %>
+<div class="form-text <%= 'text-muted' if loading %>">
+  <%= loading ? "Loading..." : "Select the Freefeed group where posts will be published" %>
+</div>
 <div class="invalid-feedback">Please select a target group.</div>

@@ -1,5 +1,5 @@
 <%= turbo_stream.replace "groups-select" do %>
   <div id="groups-select">
-    <%= render "feeds/groups_select", groups: @managed_groups, selected_group: nil, disabled: false %>
+    <%= render "feeds/groups_select", groups: @managed_groups, selected_group: nil, disabled: false, loading: false %>
   </div>
 <% end %>
