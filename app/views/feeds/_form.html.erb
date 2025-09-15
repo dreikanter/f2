@@ -1,7 +1,7 @@
 <%# locals: (feed:) %>
 <div data-controller="groups"
-     data-empty-groups-html="<%= h(render('groups_select', groups: [], selected_group: nil, disabled: true)) %>"
-     data-loading-groups-html="<%= h(render('groups_select', groups: [{ username: '', screen_name: 'Loading...', is_private: false }], selected_group: nil, disabled: true)) %>">
+     data-groups-empty-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true).to_json %>"
+     data-groups-loading-groups-html-value="<%= render('groups_select', groups: [{ username: '', screen_name: 'Loading...', is_private: false }], selected_group: nil, disabled: true).to_json %>">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">

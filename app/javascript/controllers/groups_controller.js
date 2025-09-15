@@ -1,6 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static values = {
+    emptyGroupsHtml: String,
+    loadingGroupsHtml: String
+  }
   connect() {
     const tokenSelect = this.element.querySelector('select[name="feed[access_token_id]"]')
     if (tokenSelect?.value) {
@@ -14,12 +18,12 @@ export default class extends Controller {
 
   async loadGroups(tokenId) {
     if (!tokenId) {
-      document.getElementById('groups-select').innerHTML = this.emptyGroupsHtml()
+      document.getElementById('groups-select').innerHTML = JSON.parse(this.emptyGroupsHtmlValue)
       return
     }
 
     // Show loading state
-    document.getElementById('groups-select').innerHTML = this.loadingGroupsHtml()
+    document.getElementById('groups-select').innerHTML = JSON.parse(this.loadingGroupsHtmlValue)
 
     const response = await fetch(`/access_tokens/${tokenId}/groups`, {
       headers: {
@@ -35,11 +39,4 @@ export default class extends Controller {
     }
   }
 
-  emptyGroupsHtml() {
-    return this.element.dataset.emptyGroupsHtml || ''
-  }
-
-  loadingGroupsHtml() {
-    return this.element.dataset.loadingGroupsHtml || ''
-  }
 }
