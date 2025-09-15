@@ -1,7 +1,7 @@
 <%# locals: (feed:) %>
 <div data-controller="groups"
-     data-groups-empty-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true, loading: false).to_json %>"
-     data-groups-loading-groups-html-value="<%= render('groups_select', groups: [], selected_group: nil, disabled: true, loading: true).to_json %>">
+     data-groups-loading-text-value="Loading..."
+     data-groups-default-text-value="Select the Freefeed group where posts will be published">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -47,9 +47,18 @@
   <div class="mb-4">
     <%= form.label :target_group, "Target Group", class: "form-label font-weight-bold" %>
     <div id="groups-select">
-      <%= render "groups_select", groups: [], selected_group: feed.target_group, disabled: true, loading: false %>
+      <select name="feed[target_group]"
+              id="feed_target_group"
+              class="form-select"
+              disabled
+              data-groups-target="select">
+        <option value="<%= feed.target_group %>"><%= feed.target_group.present? ? feed.target_group : "Choose target group..." %></option>
+      </select>
+      <div class="form-text" data-groups-target="helpText">
+        Select the Freefeed group where posts will be published
+      </div>
+      <div class="invalid-feedback">Please select a target group.</div>
     </div>
-
   </div>
 
   <div class="mb-4">

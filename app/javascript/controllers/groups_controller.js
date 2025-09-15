@@ -1,9 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static targets = ["select", "helpText"]
   static values = {
-    emptyGroupsHtml: String,
-    loadingGroupsHtml: String
+    loadingText: String,
+    defaultText: String
   }
 
   connect() {
@@ -19,12 +20,11 @@ export default class extends Controller {
 
   async loadGroups(tokenId) {
     if (!tokenId) {
-      document.getElementById('groups-select').innerHTML = JSON.parse(this.emptyGroupsHtmlValue)
+      this.showEmptyState()
       return
     }
 
-    // Show loading state
-    document.getElementById('groups-select').innerHTML = JSON.parse(this.loadingGroupsHtmlValue)
+    this.showLoadingState()
 
     const response = await fetch(`/access_tokens/${tokenId}/groups`, {
       headers: {
@@ -37,7 +37,26 @@ export default class extends Controller {
     if (response.ok) {
       const html = await response.text()
       Turbo.renderStreamMessage(html)
+      this.showDefaultState()
     }
   }
 
+  showEmptyState() {
+    this.selectTarget.disabled = true
+    this.selectTarget.innerHTML = '<option value="">Choose target group...</option>'
+    this.helpTextTarget.textContent = this.defaultTextValue
+    this.helpTextTarget.classList.remove('text-muted')
+  }
+
+  showLoadingState() {
+    this.selectTarget.disabled = true
+    this.selectTarget.innerHTML = '<option value="">Loading...</option>'
+    this.helpTextTarget.textContent = this.loadingTextValue
+    this.helpTextTarget.classList.add('text-muted')
+  }
+
+  showDefaultState() {
+    this.helpTextTarget.textContent = this.defaultTextValue
+    this.helpTextTarget.classList.remove('text-muted')
+  }
 }
