@@ -1,9 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  connect() {
+    // Check if there's already a selected token and load groups
+    const tokenSelect = this.element.querySelector('select[name="feed[access_token_id]"]')
+    if (tokenSelect && tokenSelect.value) {
+      this.loadGroupsForToken(tokenSelect.value)
+    }
+  }
+
   loadGroups(event) {
-    const tokenId = event.target.value
-    
+    this.loadGroupsForToken(event.target.value)
+  }
+
+  loadGroupsForToken(tokenId) {
     if (!tokenId) {
       // Clear groups if no token selected
       const wrapper = document.getElementById('group-select-wrapper')
