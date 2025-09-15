@@ -24,9 +24,17 @@ export default class extends Controller {
       return
     }
 
+    // Store the current selected value to restore it after loading
+    const currentValue = this.selectTarget.value
+
     this.showLoadingState()
 
-    const response = await fetch(`/access_tokens/${tokenId}/groups`, {
+    let url = `/access_tokens/${tokenId}/groups`
+    if (currentValue) {
+      url += `?selected_group=${encodeURIComponent(currentValue)}`
+    }
+
+    const response = await fetch(url, {
       headers: {
         'Accept': 'text/vnd.turbo-stream.html',
         'X-Requested-With': 'XMLHttpRequest',

@@ -2,6 +2,7 @@ class AccessTokenGroupsController < ApplicationController
   def index
     @access_token = Current.user.access_tokens.find(params[:access_token_id])
     @managed_groups = load_managed_groups
+    @selected_group = params[:selected_group]
   end
 
   rescue_from FreefeedClient::Error, with: :handle_freefeed_error
