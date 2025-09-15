@@ -18,14 +18,15 @@
           <th>User</th>
           <th>Subject</th>
           <th class="text-center"><i class="bi bi-calendar-event"></i></th>
-          <th class="text-center"><i class="bi bi-three-dots"></i></th>
         </tr>
       </thead>
       <tbody>
         <% @events.each do |event| %>
           <tr>
             <td>
-              <code class="text-dark"><%= event.type %></code>
+              <%= link_to event_path(event), class: "text-decoration-none" do %>
+                <code><%= event.type %></code>
+              <% end %>
             </td>
             <td class="text-center">
               <%= level_badge(event.level) %>
@@ -50,9 +51,6 @@
               <span class="text-muted" title="<%= event.created_at.rfc3339 %>">
                 <%= compact_time_ago(event.created_at) %>
               </span>
-            </td>
-            <td class="text-center">
-              <%= link_to "View", event_path(event), class: "text-primary text-decoration-none" %>
             </td>
           </tr>
         <% end %>
