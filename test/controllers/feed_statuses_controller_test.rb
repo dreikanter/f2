@@ -124,5 +124,4 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     feed.reload
     assert_equal "disabled", feed.state
   end
-
 end
