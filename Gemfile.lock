@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 4b494a53e1e10f0c523266c38d4f7f22b40fa021
+  revision: c60683d1868ad1f6667b2feb3cf5c9b485fa356c
   branch: main
   specs:
     actioncable (8.1.0.beta1)
@@ -279,9 +279,9 @@ GEM
       date
       stringio
     public_suffix (6.0.2)
-    puma (7.0.2)
+    puma (7.0.3)
       nio4r (~> 2.0)
-    pundit (2.5.0)
+    pundit (2.5.1)
       activesupport (>= 3.0.0)
     raabro (1.4.0)
     racc (1.8.1)
@@ -471,7 +471,7 @@ DEPENDENCIES
   pg (~> 1.6)
   propshaft
   puma (>= 5.0)
-  pundit (~> 2.3)
+  pundit (~> 2.5)
   rails!
   rubocop-rails-omakase
   ruby-lsp
