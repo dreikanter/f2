@@ -1,5 +1,5 @@
 <%# locals: (feed:) %>
-<div data-controller="feed-form">
+<div data-controller="groups">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -29,8 +29,8 @@
     <%= form.label :access_token_id, "Access Token", class: "form-label font-weight-bold" %>
     <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id), 
                     { prompt: "Choose access token..." }, 
-                    { class: "form-select", 
-                      data: { action: "change->feed-form#loadGroups" } } %>
+                    { class: "form-select",
+                      data: { action: "change->groups#refresh" } } %>
     <div class="form-text">Select the Freefeed access token to use for posting</div>
     <div class="invalid-feedback">Please select an access token.</div>
     
@@ -44,13 +44,13 @@
 
   <div class="mb-4">
     <%= form.label :target_group, "Target Group", class: "form-label font-weight-bold" %>
-    <div id="group-select-wrapper">
-      <%= form.select :target_group, options_for_select([], feed.target_group), 
-                      { prompt: "Choose target group..." }, 
-                      { class: "form-select", disabled: true } %>
-      <div class="form-text">Select the Freefeed group where posts will be published</div>
-      <div class="invalid-feedback">Please select a target group.</div>
+    <div id="groups-select">
+      <%= render "groups_select", groups: [], selected_group: feed.target_group, disabled: true %>
     </div>
+
+    <script type="text/template" id="empty-groups-template">
+      <%= render "groups_select", groups: [], selected_group: nil, disabled: true %>
+    </script>
   </div>
 
   <div class="mb-4">

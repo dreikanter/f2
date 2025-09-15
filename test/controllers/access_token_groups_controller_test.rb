@@ -133,6 +133,6 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
     assert_includes response.body, "turbo-stream"
-    assert_includes response.body, "group-select-wrapper"
+    assert_includes response.body, "groups-select"
   end
 end
