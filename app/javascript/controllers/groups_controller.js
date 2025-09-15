@@ -18,6 +18,9 @@ export default class extends Controller {
       return
     }
 
+    // Show loading state
+    document.getElementById('groups-select').innerHTML = this.loadingGroupsHtml()
+
     const response = await fetch(`/access_tokens/${tokenId}/groups`, {
       headers: {
         'Accept': 'text/vnd.turbo-stream.html',
@@ -33,7 +36,10 @@ export default class extends Controller {
   }
 
   emptyGroupsHtml() {
-    const template = document.getElementById('empty-groups-template')
-    return template ? template.innerHTML : ''
+    return this.element.dataset.emptyGroupsHtml || ''
+  }
+
+  loadingGroupsHtml() {
+    return this.element.dataset.loadingGroupsHtml || ''
   }
 }

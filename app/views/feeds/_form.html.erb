@@ -1,5 +1,7 @@
 <%# locals: (feed:) %>
-<div data-controller="groups">
+<div data-controller="groups"
+     data-empty-groups-html="<%= h(render('groups_select', groups: [], selected_group: nil, disabled: true)) %>"
+     data-loading-groups-html="<%= h(render('groups_select', groups: [{ username: '', screen_name: 'Loading...', is_private: false }], selected_group: nil, disabled: true)) %>">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -48,9 +50,6 @@
       <%= render "groups_select", groups: [], selected_group: feed.target_group, disabled: true %>
     </div>
 
-    <script type="text/template" id="empty-groups-template">
-      <%= render "groups_select", groups: [], selected_group: nil, disabled: true %>
-    </script>
   </div>
 
   <div class="mb-4">
