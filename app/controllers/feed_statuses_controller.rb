@@ -6,9 +6,9 @@ class FeedStatusesController < ApplicationController
 
     case status
     when "enabled"
-      enable(feed)
+      enable(@feed)
     when "disabled"
-      disable(feed)
+      disable(@feed)
     else
       redirect_to @feed, alert: "Invalid status parameter."
     end
@@ -21,13 +21,13 @@ class FeedStatusesController < ApplicationController
   private
 
   def enable(feed)
-    @feed.with_lock do
-      if @feed.can_be_enabled?
-        @feed.enabled!
-        redirect_to @feed, notice: "Feed was successfully enabled."
+    feed.with_lock do
+      if feed.can_be_enabled?
+        feed.enabled!
+        redirect_to feed, notice: "Feed was successfully enabled."
       else
-        missing_parts = feed_missing_enablement_parts(@feed)
-        redirect_to @feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}."
+        missing_parts = feed_missing_enablement_parts(feed)
+        redirect_to feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}."
       end
     end
   end
