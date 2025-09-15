@@ -3,26 +3,12 @@ class FeedStatusesController < ApplicationController
 
   def update
     @feed = load_feed
-    status = params[:status]
 
     case status
     when "enabled"
-      Feed.transaction do
-        @feed.lock!
-        if @feed.can_be_enabled?
-          @feed.update!(state: :enabled)
-          redirect_to @feed, notice: "Feed was successfully enabled."
-        else
-          missing_parts = feed_missing_enablement_parts(@feed)
-          redirect_to @feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}."
-        end
-      end
+      enable(feed)
     when "disabled"
-      Feed.transaction do
-        @feed.lock!
-        @feed.update!(state: :disabled)
-        redirect_to @feed, notice: "Feed was successfully disabled."
-      end
+      disable(feed)
     else
       redirect_to @feed, alert: "Invalid status parameter."
     end
@@ -33,6 +19,29 @@ class FeedStatusesController < ApplicationController
   end
 
   private
+
+  def enable(feed)
+    @feed.with_lock do
+      if @feed.can_be_enabled?
+        @feed.enabled!
+        redirect_to @feed, notice: "Feed was successfully enabled."
+      else
+        missing_parts = feed_missing_enablement_parts(@feed)
+        redirect_to @feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}."
+      end
+    end
+  end
+
+  def disable(feed)
+    @feed.with_lock do
+      @feed.disabled!
+      redirect_to @feed, notice: "Feed was successfully disabled."
+    end
+  end
+
+  def status
+    @status ||= params[:status]
+  end
 
   def load_feed
     Current.user.feeds.find(params[:feed_id])
