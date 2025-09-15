@@ -239,6 +239,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         processor: "rss",
         normalizer: "rss",
         access_token_id: access_token.id,
+        target_group: "testgroup",
         state: "enabled"
       }
     }

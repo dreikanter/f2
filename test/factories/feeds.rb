@@ -10,6 +10,7 @@ FactoryBot.define do
     state { :disabled }
     description { "" }
     import_after { nil }
+    target_group { "testgroup" }
 
     after(:build) do |feed|
       if feed.user && feed.access_token.nil?
@@ -29,6 +30,7 @@ FactoryBot.define do
 
     trait :without_access_token do
       access_token { nil }
+      target_group { nil }
       after(:build) { |feed| feed.access_token = nil }
     end
   end

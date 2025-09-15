@@ -56,6 +56,8 @@ class FeedsController < ApplicationController
   end
 
   def feed_params
+    return {} unless params[:feed]
+
     params.require(:feed).permit(
       :name,
       :url,
@@ -66,6 +68,7 @@ class FeedsController < ApplicationController
       :import_after,
       :description,
       :access_token_id,
+      :target_group,
       :state
     )
   end

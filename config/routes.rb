@@ -4,6 +4,7 @@ Rails.application.routes.draw do
 
   resources :access_tokens do
     resource :validation, only: [:show, :create], controller: "access_token_validations"
+    resources :groups, only: :index, controller: "access_token_groups"
   end
 
   resource :profile, only: :show
@@ -13,7 +14,11 @@ Rails.application.routes.draw do
   resource :dashboard, only: :show
   resource :session
   resources :passwords, param: :token
-  resources :feeds
+
+  resources :feeds do
+    resource :status, only: :update, controller: "feed_statuses"
+  end
+
   resources :events, only: [:index, :show]
 
   get "up" => "rails/health#show", as: :rails_health_check

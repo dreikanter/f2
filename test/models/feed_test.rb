@@ -243,4 +243,37 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "enabled", feed.state
     assert_equal active_token, feed.access_token
   end
+
+  test "can_be_enabled? returns true when feed has active access token and target group" do
+    access_token = create(:access_token, :active)
+    feed = create(:feed, access_token: access_token, target_group: "test_group")
+
+    assert feed.can_be_enabled?
+  end
+
+  test "can_be_enabled? returns false when feed has no access token" do
+    feed = create(:feed, :without_access_token)
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "can_be_enabled? returns false when feed has inactive access token" do
+    access_token = create(:access_token, :inactive)
+    feed = create(:feed, access_token: access_token, target_group: "test_group")
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "can_be_enabled? returns false when feed has no target group" do
+    access_token = create(:access_token, :active)
+    feed = create(:feed, access_token: access_token, target_group: nil)
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "can_be_enabled? returns false when feed has neither access token nor target group" do
+    feed = create(:feed, :without_access_token)
+
+    assert_not feed.can_be_enabled?
+  end
 end

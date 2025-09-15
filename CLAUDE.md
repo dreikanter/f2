@@ -10,7 +10,7 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 - Frontend: Turbo, Stimulus, Bootstrap CSS
 - Deployment: Kamal
 
-## Atomic Commits – Agent Operating Procedure
+## Commit Requirements
 
 **Goal:** Every commit is a single, meaningful, self-contained change (e.g., DB migration, controller change, HTML layout tweak, test coverage improvement). No grab-bag commits. Keep the test suite green for each commit.
 

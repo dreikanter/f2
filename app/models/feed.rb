@@ -1,7 +1,8 @@
 class Feed < ApplicationRecord
-  NAME_PATTERN = /\A[a-z0-9_-]+\z/.freeze
   NAME_MAX_LENGTH = 40
   DESCRIPTION_MAX_LENGTH = 100
+  TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
+  TARGET_GROUP_MAX_LENGTH = 80
 
   belongs_to :user
   belongs_to :access_token, optional: true
@@ -31,9 +32,19 @@ class Feed < ApplicationRecord
   normalizes :url, with: ->(url) { url.to_s.strip }
   normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
+  normalizes :target_group, with: ->(group) { group.present? ? group.to_s.strip.downcase : nil }
 
   validate :cron_expression_is_valid
   validates :access_token, presence: true, if: :enabled?
+  validates :target_group, presence: true, if: :enabled?
+
+  validates :target_group,
+            length: { maximum: TARGET_GROUP_MAX_LENGTH },
+            format: {
+              with: TARGET_GROUP_PATTERN,
+              message: "must contain only lowercase letters, numbers, underscores and dashes"
+            },
+            allow_blank: true
 
   scope :due, -> {
     left_joins(:feed_schedule)
@@ -43,11 +54,15 @@ class Feed < ApplicationRecord
 
   before_validation :auto_disable_without_active_token
 
+  def can_be_enabled?
+    access_token&.active? && target_group.present?
+  end
+
   private
 
   def auto_disable_without_active_token
     return unless enabled?
-    return if access_token&.active?
+    return if can_be_enabled?
 
     self.state = :disabled
   end
