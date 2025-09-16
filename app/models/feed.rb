@@ -8,6 +8,7 @@ class Feed < ApplicationRecord
   belongs_to :access_token, optional: true
   has_one :feed_schedule, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
+  has_many :posts, dependent: :destroy
 
   enum :state, { disabled: 0, enabled: 1 }
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_13_215759) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -92,6 +92,25 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_13_215759) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_permissions_on_user_id"
+  end
+
+  create_table "posts", force: :cascade do |t|
+    t.text "attachment_urls", default: [], null: false, array: true
+    t.text "comments", default: [], null: false, array: true
+    t.text "content", default: "", null: false
+    t.datetime "created_at", null: false
+    t.bigint "feed_entry_id", null: false
+    t.bigint "feed_id", null: false
+    t.string "freefeed_post_id"
+    t.datetime "published_at", null: false
+    t.string "source_url", null: false
+    t.integer "status", default: 0, null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.text "validation_errors", default: [], null: false, array: true
+    t.index ["feed_entry_id"], name: "index_posts_on_feed_entry_id"
+    t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true
+    t.index ["feed_id"], name: "index_posts_on_feed_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -239,6 +258,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_13_215759) do
   add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "users"
   add_foreign_key "permissions", "users"
+  add_foreign_key "posts", "feed_entries"
+  add_foreign_key "posts", "feeds"
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
