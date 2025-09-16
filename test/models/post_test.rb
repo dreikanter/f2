@@ -133,4 +133,38 @@ class PostTest < ActiveSupport::TestCase
     post = build(:post, freefeed_post_id: nil)
     assert post.valid?
   end
+
+  test "should validate content length within Freefeed limits" do
+    post = build(:post, content: "a" * Post::MAX_CONTENT_LENGTH)
+    assert post.valid?
+
+    post = build(:post, content: "a" * (Post::MAX_CONTENT_LENGTH + 1))
+    assert_not post.valid?
+    assert_includes post.errors[:content], "is too long (maximum is #{Post::MAX_CONTENT_LENGTH} characters)"
+  end
+
+  test "should validate comments length within Freefeed limits" do
+    valid_comment = "a" * Post::MAX_COMMENT_LENGTH
+    post = build(:post, comments: [valid_comment])
+    assert post.valid?
+
+    long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
+    post = build(:post, comments: [long_comment])
+    assert_not post.valid?
+    assert_includes post.errors[:comments], "Comment 1 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
+  end
+
+  test "should validate multiple comments length" do
+    valid_comment = "a" * Post::MAX_COMMENT_LENGTH
+    long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
+
+    post = build(:post, comments: [valid_comment, long_comment, valid_comment])
+    assert_not post.valid?
+    assert_includes post.errors[:comments], "Comment 2 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
+  end
+
+  test "should handle non-string comments gracefully" do
+    post = build(:post, comments: ["valid", nil, 123, "also valid"])
+    assert post.valid?
+  end
 end

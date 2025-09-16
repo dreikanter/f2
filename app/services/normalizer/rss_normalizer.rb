@@ -21,6 +21,8 @@ module Normalizer
       errors << "blank_content" if post.content.blank?
       errors << "invalid_source_url" if post.source_url.blank? || !valid_url?(post.source_url)
       errors << "future_date" if post.published_at > Time.current
+      errors << "content_too_long" if post.content.length > Post::MAX_CONTENT_LENGTH
+      errors << "comment_too_long" if post.comments.any? { |c| c.length > Post::MAX_COMMENT_LENGTH }
 
       errors
     end

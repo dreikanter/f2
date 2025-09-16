@@ -168,4 +168,26 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "invalid_source_url"
   end
+
+  test "should reject post with content too long" do
+    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
+    feed_entry = feed_entry_with_raw_data("summary" => long_content)
+
+    normalizer = Normalizer::RssNormalizer.new(feed_entry)
+    post = normalizer.normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "content_too_long"
+  end
+
+  test "should accept post with content at maximum length" do
+    max_content = "a" * Post::MAX_CONTENT_LENGTH
+    feed_entry = feed_entry_with_raw_data("summary" => max_content)
+
+    normalizer = Normalizer::RssNormalizer.new(feed_entry)
+    post = normalizer.normalize
+
+    assert_equal "enqueued", post.status
+    assert_not_includes post.validation_errors, "content_too_long"
+  end
 end
