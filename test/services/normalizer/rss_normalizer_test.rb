@@ -169,6 +169,25 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "invalid_source_url"
   end
 
+  test "should handle URLs that trigger URI::InvalidURIError" do
+    # URLs with invalid characters that cause URI.parse to raise URI::InvalidURIError
+    invalid_urls = [
+      "http://example.com/path with spaces",
+      "http://[invalid-ipv6",
+      "https://example.com/path\nwith\nnewlines",
+      "http://example.com/<invalid>characters"
+    ]
+
+    invalid_urls.each do |invalid_url|
+      feed_entry = feed_entry_with_raw_data("link" => invalid_url)
+      normalizer = Normalizer::RssNormalizer.new(feed_entry)
+      post = normalizer.normalize
+
+      assert_equal "rejected", post.status
+      assert_includes post.validation_errors, "invalid_source_url"
+    end
+  end
+
   test "should reject post with content too long" do
     long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
     feed_entry = feed_entry_with_raw_data("summary" => long_content)
