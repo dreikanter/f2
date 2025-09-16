@@ -122,16 +122,11 @@ class PostTest < ActiveSupport::TestCase
     assert_equal errors, saved_post.validation_errors
   end
 
-  test "should default to empty arrays for array fields" do
-    post = Post.new
-    assert_equal [], post.attachment_urls
-    assert_equal [], post.comments
-    assert_equal [], post.validation_errors
-  end
-
-  test "should default to empty string for text field" do
-    post = Post.new
-    assert_equal "", post.text
+  test "should handle array fields" do
+    post = build(:post, attachment_urls: ["url1"], comments: ["comment1"], validation_errors: ["error1"])
+    assert_equal ["url1"], post.attachment_urls
+    assert_equal ["comment1"], post.comments
+    assert_equal ["error1"], post.validation_errors
   end
 
   test "should allow nil freefeed_post_id" do

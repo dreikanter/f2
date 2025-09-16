@@ -14,6 +14,7 @@ module Normalizer
         text: extract_text(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
         comments: extract_comments(raw_data),
+        validation_errors: [],
         status: :draft
       )
     end
@@ -34,7 +35,8 @@ module Normalizer
 
     def extract_text(raw_data)
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("title") || ""
-      clean_html(content)
+      result = clean_html(content)
+      result.empty? ? "" : result
     end
 
     def extract_attachment_urls(raw_data)
