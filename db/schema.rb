@@ -103,10 +103,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
     t.bigint "feed_id", null: false
     t.string "freefeed_post_id"
     t.datetime "published_at", null: false
+    t.string "source_url", null: false
     t.integer "status", default: 0, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
-    t.string "url", null: false
     t.text "validation_errors", default: [], null: false, array: true
     t.index ["feed_entry_id"], name: "index_posts_on_feed_entry_id"
     t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true

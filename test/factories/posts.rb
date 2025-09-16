@@ -5,7 +5,7 @@ FactoryBot.define do
     uid { "post-#{SecureRandom.uuid}" }
     status { :draft }
     published_at { 2.hours.ago }
-    url { "https://example.com/post" }
+    source_url { "https://example.com/post" }
     content { "Sample post content" }
     attachment_urls { [] }
     comments { [] }

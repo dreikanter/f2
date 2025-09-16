@@ -5,7 +5,7 @@ class Post < ApplicationRecord
   validates :uid, presence: true
   validates :uid, uniqueness: { scope: :feed_id }
   validates :published_at, presence: true
-  validates :url, presence: true
+  validates :source_url, presence: true
 
   enum :status, { draft: 0, enqueued: 1, rejected: 2, published: 3, failed: 4 }
 end

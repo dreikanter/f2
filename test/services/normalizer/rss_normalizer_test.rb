@@ -25,7 +25,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal feed_entry, post.feed_entry
     assert_equal feed_entry.uid, post.uid
     assert_equal feed_entry.published_at, post.published_at
-    assert_equal "https://example.com/post", post.url
+    assert_equal "https://example.com/post", post.source_url
     assert_equal "Test summary", post.content
     assert_equal [], post.attachment_urls
     assert_equal [], post.comments
@@ -62,13 +62,13 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "Paragraph with bold and italic text.", post.content
   end
 
-  test "should extract url from url field when link is missing" do
+  test "should extract source_url from url field when link is missing" do
     feed_entry = feed_entry_with_raw_data("link" => nil, "url" => "https://example.com/url")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "https://example.com/url", post.url
+    assert_equal "https://example.com/url", post.source_url
   end
 
   test "should extract image URLs from enclosures" do
@@ -110,14 +110,14 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "blank_content"
   end
 
-  test "should reject post with invalid url" do
+  test "should reject post with invalid source_url" do
     feed_entry = feed_entry_with_raw_data("link" => "", "url" => "")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_url"
+    assert_includes post.validation_errors, "invalid_source_url"
   end
 
   test "should reject post with future date" do
@@ -145,7 +145,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "blank_content"
-    assert_includes post.validation_errors, "invalid_url"
+    assert_includes post.validation_errors, "invalid_source_url"
     assert_includes post.validation_errors, "future_date"
   end
 
@@ -156,7 +156,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_url"
+    assert_includes post.validation_errors, "invalid_source_url"
   end
 
   test "should handle malformed URLs" do
@@ -166,6 +166,6 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_url"
+    assert_includes post.validation_errors, "invalid_source_url"
   end
 end

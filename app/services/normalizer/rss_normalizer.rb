@@ -8,7 +8,7 @@ module Normalizer
     # @return [Hash] content attributes hash
     def extract_content_attributes(raw_data)
       {
-        url: extract_url(raw_data),
+        source_url: extract_source_url(raw_data),
         content: extract_content(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
         comments: extract_comments(raw_data)
@@ -19,13 +19,13 @@ module Normalizer
       errors = []
 
       errors << "blank_content" if post.content.blank?
-      errors << "invalid_url" if post.url.blank? || !valid_url?(post.url)
+      errors << "invalid_source_url" if post.source_url.blank? || !valid_url?(post.source_url)
       errors << "future_date" if post.published_at > Time.current
 
       errors
     end
 
-    def extract_url(raw_data)
+    def extract_source_url(raw_data)
       raw_data.dig("link") || raw_data.dig("url") || ""
     end
 
