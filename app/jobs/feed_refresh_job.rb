@@ -9,7 +9,7 @@ class FeedRefreshJob < ApplicationJob
     Feed.with_advisory_lock("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       refresh_feed(feed)
     end
-  rescue ActiveRecord::AdvisoryLockTimeoutError
+  rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
   rescue ActiveRecord::RecordNotFound
     Rails.logger.error "Feed #{feed_id} not found"

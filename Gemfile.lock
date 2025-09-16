@@ -435,6 +435,9 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    with_advisory_lock (5.3.0)
+      activerecord (>= 6.1)
+      zeitwerk (>= 2.6)
     yard (0.9.37)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
@@ -487,6 +490,7 @@ DEPENDENCIES
   tzinfo-data
   web-console
   webmock
+  with_advisory_lock (~> 5.1)
 
 BUNDLED WITH
    2.5.16
