@@ -115,5 +115,4 @@ class FeedRefreshJob < ApplicationJob
     Rails.logger.error "Failed to normalize feed entry #{feed_entry.id}: #{e.message}"
     feed_entry.update!(status: :failed)
   end
-
 end
