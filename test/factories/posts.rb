@@ -5,8 +5,8 @@ FactoryBot.define do
     uid { "post-#{SecureRandom.uuid}" }
     status { :draft }
     published_at { 2.hours.ago }
-    link { "https://example.com/post" }
-    text { "Sample post content" }
+    url { "https://example.com/post" }
+    content { "Sample post content" }
     attachment_urls { [] }
     comments { [] }
     validation_errors { [] }
@@ -17,7 +17,7 @@ FactoryBot.define do
 
     trait :rejected do
       status { :rejected }
-      validation_errors { ["blank_text"] }
+      validation_errors { ["blank_content"] }
     end
 
     trait :published do

@@ -46,14 +46,14 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:published_at], "can't be blank"
   end
 
-  test "should require link" do
-    post = build(:post, link: nil)
+  test "should require url" do
+    post = build(:post, url: nil)
     assert_not post.valid?
-    assert_includes post.errors[:link], "can't be blank"
+    assert_includes post.errors[:url], "can't be blank"
   end
 
-  test "should allow empty text" do
-    post = build(:post, text: "")
+  test "should allow empty content" do
+    post = build(:post, content: "")
     assert post.valid?
   end
 

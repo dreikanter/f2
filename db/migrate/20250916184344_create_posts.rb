@@ -6,8 +6,8 @@ class CreatePosts < ActiveRecord::Migration[8.1]
       t.string :uid, null: false
       t.integer :status, default: 0, null: false
       t.datetime :published_at, null: false
-      t.string :link, null: false
-      t.text :text, default: "", null: false
+      t.string :url, null: false
+      t.text :content, default: "", null: false
       t.text :attachment_urls, default: [], null: false, array: true
       t.text :comments, default: [], null: false, array: true
       t.string :freefeed_post_id

@@ -25,33 +25,33 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal feed_entry, post.feed_entry
     assert_equal feed_entry.uid, post.uid
     assert_equal feed_entry.published_at, post.published_at
-    assert_equal "https://example.com/post", post.link
-    assert_equal "Test summary", post.text
+    assert_equal "https://example.com/post", post.url
+    assert_equal "Test summary", post.content
     assert_equal [], post.attachment_urls
     assert_equal [], post.comments
     assert_equal "enqueued", post.status
     assert_equal [], post.validation_errors
   end
 
-  test "should extract text from content when summary is missing" do
+  test "should extract content from content when summary is missing" do
     feed_entry = feed_entry_with_raw_data("summary" => nil)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "Test content", post.text
+    assert_equal "Test content", post.content
   end
 
-  test "should extract text from title when both summary and content are missing" do
+  test "should extract content from title when both summary and content are missing" do
     feed_entry = feed_entry_with_raw_data("summary" => nil, "content" => nil)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "Test Article", post.text
+    assert_equal "Test Article", post.content
   end
 
-  test "should clean HTML from text content" do
+  test "should clean HTML from content" do
     feed_entry = feed_entry_with_raw_data(
       "summary" => "<p>Paragraph with <strong>bold</strong> and <em>italic</em> text.</p>"
     )
@@ -59,16 +59,16 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "Paragraph with bold and italic text.", post.text
+    assert_equal "Paragraph with bold and italic text.", post.content
   end
 
-  test "should extract link from url field when link is missing" do
+  test "should extract url from url field when link is missing" do
     feed_entry = feed_entry_with_raw_data("link" => nil, "url" => "https://example.com/url")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "https://example.com/url", post.link
+    assert_equal "https://example.com/url", post.url
   end
 
   test "should extract image URLs from enclosures" do
@@ -96,7 +96,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.attachment_urls, "https://example.com/content2.png"
   end
 
-  test "should reject post with blank text" do
+  test "should reject post with blank content" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -107,17 +107,17 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_text"
+    assert_includes post.validation_errors, "blank_content"
   end
 
-  test "should reject post with invalid link" do
+  test "should reject post with invalid url" do
     feed_entry = feed_entry_with_raw_data("link" => "", "url" => "")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_link"
+    assert_includes post.validation_errors, "invalid_url"
   end
 
   test "should reject post with future date" do
@@ -144,8 +144,8 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_text"
-    assert_includes post.validation_errors, "invalid_link"
+    assert_includes post.validation_errors, "blank_content"
+    assert_includes post.validation_errors, "invalid_url"
     assert_includes post.validation_errors, "future_date"
   end
 
@@ -156,7 +156,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_link"
+    assert_includes post.validation_errors, "invalid_url"
   end
 
   test "should handle malformed URLs" do
@@ -166,6 +166,6 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_link"
+    assert_includes post.validation_errors, "invalid_url"
   end
 end

@@ -8,8 +8,8 @@ module Normalizer
     # @return [Hash] content attributes hash
     def extract_content_attributes(raw_data)
       {
-        link: extract_link(raw_data),
-        text: extract_text(raw_data),
+        url: extract_url(raw_data),
+        content: extract_content(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
         comments: extract_comments(raw_data)
       }
@@ -18,18 +18,18 @@ module Normalizer
     def validate_post(post)
       errors = []
 
-      errors << "blank_text" if post.text.blank?
-      errors << "invalid_link" if post.link.blank? || !valid_url?(post.link)
+      errors << "blank_content" if post.content.blank?
+      errors << "invalid_url" if post.url.blank? || !valid_url?(post.url)
       errors << "future_date" if post.published_at > Time.current
 
       errors
     end
 
-    def extract_link(raw_data)
+    def extract_url(raw_data)
       raw_data.dig("link") || raw_data.dig("url") || ""
     end
 
-    def extract_text(raw_data)
+    def extract_content(raw_data)
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("title") || ""
       result = clean_html(content)
       result.empty? ? "" : result
