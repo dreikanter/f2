@@ -21,9 +21,26 @@ module Normalizer
 
     # Builds Post from feed entry data
     # @return [Post] new post instance
-    # @abstract Subclasses must implement this method
     def build_post
-      raise NotImplementedError, "Subclasses must implement #build_post method"
+      content_attributes = extract_content_attributes(feed_entry.raw_data)
+
+      Post.new(
+        feed: feed_entry.feed,
+        feed_entry: feed_entry,
+        uid: feed_entry.uid,
+        published_at: feed_entry.published_at,
+        status: :draft,
+        validation_errors: [],
+        **content_attributes
+      )
+    end
+
+    # Extracts content-specific attributes from raw data
+    # @param raw_data [Hash] the raw feed entry data
+    # @return [Hash] content attributes (link, text, attachment_urls, comments)
+    # @abstract Subclasses must implement this method
+    def extract_content_attributes(raw_data)
+      raise NotImplementedError, "Subclasses must implement #extract_content_attributes method"
     end
 
     # Validates post data

@@ -1,22 +1,18 @@
 module Normalizer
+  # RSS-specific normalizer for feed entries
   class RssNormalizer < Base
     private
 
-    def build_post
-      raw_data = feed_entry.raw_data
-
-      Post.new(
-        feed: feed_entry.feed,
-        feed_entry: feed_entry,
-        uid: feed_entry.uid,
-        published_at: feed_entry.published_at,
+    # Extracts RSS-specific content attributes
+    # @param raw_data [Hash] RSS feed item data
+    # @return [Hash] content attributes hash
+    def extract_content_attributes(raw_data)
+      {
         link: extract_link(raw_data),
         text: extract_text(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data),
-        validation_errors: [],
-        status: :draft
-      )
+        comments: extract_comments(raw_data)
+      }
     end
 
     def validate_post(post)
