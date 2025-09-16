@@ -42,7 +42,7 @@ class FeedRefreshJob < ApplicationJob
   # @param feed [Feed] the feed to load
   # @return [String] raw feed data
   def load_feed_contents(feed)
-    loader_class = resolve_loader_class(feed.loader)
+    loader_class = ClassResolver.resolve("Loader", feed.loader)
     loader = loader_class.new(feed)
     loader.load
   end
@@ -51,7 +51,7 @@ class FeedRefreshJob < ApplicationJob
   # @param raw_data [String] raw feed data
   # @return [Array<Hash>] processed feed entries
   def process_feed_contents(feed, raw_data)
-    processor_class = resolve_processor_class(feed.processor)
+    processor_class = ClassResolver.resolve("Processor", feed.processor)
     processor = processor_class.new(feed, raw_data)
     processor.process
   end
@@ -89,7 +89,7 @@ class FeedRefreshJob < ApplicationJob
     return if feed_entries.empty?
 
     feed = feed_entries.first.feed
-    normalizer_class = resolve_normalizer_class(feed.normalizer)
+    normalizer_class = ClassResolver.resolve("Normalizer", feed.normalizer)
 
     feed_entries.each do |feed_entry|
       normalize_single_entry(feed_entry, normalizer_class)
@@ -116,27 +116,4 @@ class FeedRefreshJob < ApplicationJob
     feed_entry.update!(status: :failed)
   end
 
-  # @param loader_name [String] name of the loader
-  # @return [Class] loader class
-  def resolve_loader_class(loader_name)
-    "Loader::#{loader_name.camelize}".constantize
-  rescue NameError
-    raise ArgumentError, "Unknown loader: #{loader_name}"
-  end
-
-  # @param processor_name [String] name of the processor
-  # @return [Class] processor class
-  def resolve_processor_class(processor_name)
-    "Processor::#{processor_name.camelize}".constantize
-  rescue NameError
-    raise ArgumentError, "Unknown processor: #{processor_name}"
-  end
-
-  # @param normalizer_name [String] name of the normalizer
-  # @return [Class] normalizer class
-  def resolve_normalizer_class(normalizer_name)
-    "Normalizer::#{normalizer_name.camelize}".constantize
-  rescue NameError
-    raise ArgumentError, "Unknown normalizer: #{normalizer_name}"
-  end
 end
