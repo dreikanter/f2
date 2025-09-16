@@ -2,7 +2,7 @@ class CreatePosts < ActiveRecord::Migration[8.1]
   def change
     create_table :posts do |t|
       t.references :feed, null: false, foreign_key: true
-      t.references :feed_entry, null: true, foreign_key: true
+      t.references :feed_entry, null: false, foreign_key: true
       t.string :uid, null: false
       t.integer :status, default: 0, null: false
       t.datetime :published_at, null: false

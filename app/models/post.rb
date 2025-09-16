@@ -1,6 +1,6 @@
 class Post < ApplicationRecord
   belongs_to :feed
-  belongs_to :feed_entry, optional: true
+  belongs_to :feed_entry
 
   validates :uid, presence: true
   validates :uid, uniqueness: { scope: :feed_id }

@@ -36,9 +36,5 @@ FactoryBot.define do
     trait :with_comments do
       comments { ["Additional context about this post"] }
     end
-
-    trait :without_feed_entry do
-      feed_entry { nil }
-    end
   end
 end

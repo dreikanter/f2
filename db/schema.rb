@@ -98,7 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
     t.text "attachment_urls", default: [], null: false, array: true
     t.text "comments", default: [], null: false, array: true
     t.datetime "created_at", null: false
-    t.bigint "feed_entry_id"
+    t.bigint "feed_entry_id", null: false
     t.bigint "feed_id", null: false
     t.string "freefeed_post_id"
     t.string "link", null: false

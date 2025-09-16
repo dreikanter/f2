@@ -63,14 +63,10 @@ class PostTest < ActiveSupport::TestCase
     assert_equal feed, post.feed
   end
 
-  test "should optionally belong to feed_entry" do
+  test "should belong to feed_entry" do
     post = valid_post
     assert_respond_to post, :feed_entry
     assert_equal feed_entry, post.feed_entry
-
-    post_without_entry = build(:post, :without_feed_entry, feed: feed)
-    assert post_without_entry.valid?
-    assert_nil post_without_entry.feed_entry
   end
 
   test "should have draft status by default" do
