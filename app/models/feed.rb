@@ -59,6 +59,44 @@ class Feed < ApplicationRecord
     access_token&.active? && target_group.present?
   end
 
+  # Resolves and returns the loader class for this feed
+  # @return [Class] the loader class
+  def loader_class
+    ClassResolver.resolve("Loader", loader)
+  end
+
+  # Resolves and returns the processor class for this feed
+  # @return [Class] the processor class
+  def processor_class
+    ClassResolver.resolve("Processor", processor)
+  end
+
+  # Resolves and returns the normalizer class for this feed
+  # @return [Class] the normalizer class
+  def normalizer_class
+    ClassResolver.resolve("Normalizer", normalizer)
+  end
+
+  # Creates and returns a loader instance for this feed
+  # @return [Loader::Base] loader instance
+  def loader_instance
+    loader_class.new(self)
+  end
+
+  # Creates and returns a processor instance for this feed
+  # @param raw_data [String] raw feed data to process
+  # @return [Processor::Base] processor instance
+  def processor_instance(raw_data)
+    processor_class.new(self, raw_data)
+  end
+
+  # Creates and returns a normalizer instance for the given feed entry
+  # @param feed_entry [FeedEntry] the feed entry to normalize
+  # @return [Normalizer::Base] normalizer instance
+  def normalizer_instance(feed_entry)
+    normalizer_class.new(feed_entry)
+  end
+
   private
 
   def auto_disable_without_active_token

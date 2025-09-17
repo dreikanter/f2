@@ -22,38 +22,84 @@ class FeedRefreshJob < ApplicationJob
 
   # @param feed [Feed] the feed to refresh
   def refresh_feed(feed)
-    Rails.logger.info "Starting feed refresh for feed #{feed.id}"
+    stats = FeedRefreshEvent.default_stats
+    total_start = Time.current
+    current_stage = "initializing"
 
-    # Step 1: Load feed contents
-    raw_data = load_feed_contents(feed)
+    begin
+      Rails.logger.info "Starting feed refresh for feed #{feed.id}"
 
-    # Step 2: Process feed contents into structured entries
-    processed_entries = process_feed_contents(feed, raw_data)
+      # Step 1: Load feed contents
+      current_stage = "loading"
+      load_start = Time.current
+      raw_data = load_feed_contents(feed)
+      stats[:load_duration] = Time.current - load_start
+      stats[:content_size] = raw_data.bytesize
 
-    # Step 3: Persist feed entries and get new ones
-    new_feed_entries = persist_feed_entries(feed, processed_entries)
+      # Step 2: Process feed contents into structured entries
+      current_stage = "processing"
+      process_start = Time.current
+      processed_entries = process_feed_contents(feed, raw_data)
+      stats[:process_duration] = Time.current - process_start
+      stats[:total_entries] = processed_entries.size
 
-    # Step 4: Normalize each new feed entry into posts
-    normalize_feed_entries(new_feed_entries)
+      # Step 3: Persist feed entries and get new ones
+      current_stage = "persisting"
+      new_feed_entries = persist_feed_entries(feed, processed_entries)
+      stats[:new_entries] = new_feed_entries.size
 
-    Rails.logger.info "Feed refresh completed for feed #{feed.id}, processed #{new_feed_entries.count} new entries"
+      # Step 4: Normalize each new feed entry into posts
+      current_stage = "normalizing"
+      normalize_start = Time.current
+      normalize_results = normalize_feed_entries(new_feed_entries)
+      stats[:normalize_duration] = Time.current - normalize_start
+      stats[:new_posts] = normalize_results[:valid_posts]
+      stats[:invalid_posts] = normalize_results[:invalid_posts]
+
+      # Complete statistics
+      current_stage = "completing"
+      stats[:total_duration] = Time.current - total_start
+      stats[:completed_at] = Time.current.iso8601
+
+      # Create success event
+      FeedRefreshEvent.create_stats(feed, stats)
+
+      Rails.logger.info "Feed refresh completed for feed #{feed.id}, processed #{new_feed_entries.count} new entries"
+
+    rescue StandardError => e
+      # Calculate partial duration
+      stats[:total_duration] = Time.current - total_start
+
+      # Create error event with explicit stage
+      FeedRefreshEvent.create_error(feed, e, current_stage, stats)
+
+      raise
+    end
   end
 
   # @param feed [Feed] the feed to load
   # @return [String] raw feed data
   def load_feed_contents(feed)
-    loader_class = ClassResolver.resolve("Loader", feed.loader)
-    loader = loader_class.new(feed)
-    loader.load
+    feed.loader_instance.load
+  rescue ArgumentError => e
+    # Re-raise ArgumentError as-is for invalid loader configurations
+    raise
+  rescue StandardError => e
+    raise StandardError, "Failed to load feed from URL #{feed.url}: #{e.message}"
   end
 
   # @param feed [Feed] the feed being processed
   # @param raw_data [String] raw feed data
-  # @return [Array<Hash>] processed feed entries
+  # @return [Array<Hash>] processed feed entries with normalized keys
   def process_feed_contents(feed, raw_data)
-    processor_class = ClassResolver.resolve("Processor", feed.processor)
-    processor = processor_class.new(feed, raw_data)
-    processor.process
+    entries = feed.processor_instance(raw_data).process
+    normalize_entry_keys(entries)
+  rescue ArgumentError => e
+    # Re-raise ArgumentError as-is for invalid processor configurations
+    raise
+  rescue StandardError => e
+    content_preview = raw_data.truncate(100) if raw_data.respond_to?(:truncate)
+    raise StandardError, "Failed to process feed content (#{raw_data.bytesize} bytes, preview: '#{content_preview}'): #{e.message}"
   end
 
   # @param feed [Feed] the feed to persist entries for
@@ -63,7 +109,7 @@ class FeedRefreshJob < ApplicationJob
     new_entries = []
 
     processed_entries.each do |entry_data|
-      uid = entry_data[:uid] || entry_data["uid"]
+      uid = entry_data[:uid]
       next unless uid.present?
 
       # Check if entry already exists to avoid duplication
@@ -73,8 +119,8 @@ class FeedRefreshJob < ApplicationJob
       # Create new feed entry
       feed_entry = feed.feed_entries.create!(
         uid: uid,
-        published_at: entry_data[:published_at] || entry_data["published_at"],
-        raw_data: entry_data[:raw_data] || entry_data["raw_data"] || entry_data,
+        published_at: entry_data[:published_at],
+        raw_data: entry_data[:raw_data] || entry_data,
         status: :pending
       )
 
@@ -85,34 +131,62 @@ class FeedRefreshJob < ApplicationJob
   end
 
   # @param feed_entries [Array<FeedEntry>] feed entries to normalize
+  # @return [Hash] normalization results with counts
   def normalize_feed_entries(feed_entries)
-    return if feed_entries.empty?
+    return { valid_posts: 0, invalid_posts: 0 } if feed_entries.empty?
 
     feed = feed_entries.first.feed
-    normalizer_class = ClassResolver.resolve("Normalizer", feed.normalizer)
+    valid_posts = 0
+    invalid_posts = 0
 
-    feed_entries.each do |feed_entry|
-      normalize_single_entry(feed_entry, normalizer_class)
+    feed_entries.each_with_index do |feed_entry, index|
+      begin
+        result = normalize_single_entry(feed_entry, feed)
+        if result[:valid]
+          valid_posts += 1
+        else
+          invalid_posts += 1
+        end
+      rescue StandardError => e
+        # Re-raise with more specific stage information
+        raise StandardError, "Failed at normalizing entry #{index + 1}/#{feed_entries.size} (ID: #{feed_entry.id}): #{e.message}"
+      end
     end
+
+    { valid_posts: valid_posts, invalid_posts: invalid_posts }
   end
 
   # @param feed_entry [FeedEntry] the feed entry to normalize
-  # @param normalizer_class [Class] the normalizer class to use
-  def normalize_single_entry(feed_entry, normalizer_class)
-    normalizer = normalizer_class.new(feed_entry)
+  # @param feed [Feed] the feed (for creating normalizer instance)
+  # @return [Hash] result with validity status
+  def normalize_single_entry(feed_entry, feed)
+    normalizer = feed.normalizer_instance(feed_entry)
     post = normalizer.normalize
 
-    # Update feed entry status based on post status
-    case post.status
-    when "rejected"
-      feed_entry.update!(status: :rejected)
-    when "enqueued"
-      feed_entry.update!(status: :processed)
-    else
-      feed_entry.update!(status: :failed)
-    end
+    # Mark feed entry as processed regardless of post validity
+    feed_entry.update!(status: :processed)
+
+    # Return whether the post is valid (enqueued) or invalid (rejected)
+    { valid: post.status == "enqueued" }
+  rescue ArgumentError => e
+    # Re-raise ArgumentError as-is for invalid normalizer configurations
+    raise
   rescue StandardError => e
     Rails.logger.error "Failed to normalize feed entry #{feed_entry.id}: #{e.message}"
-    feed_entry.update!(status: :failed)
+    feed_entry.update!(status: :processed)
+    { valid: false }
+  end
+
+  # Normalizes entry data keys to symbols
+  # @param entries [Array<Hash>] processed entries with mixed key types
+  # @return [Array<Hash>] entries with normalized symbol keys
+  def normalize_entry_keys(entries)
+    entries.map do |entry|
+      {
+        uid: entry[:uid] || entry["uid"],
+        published_at: entry[:published_at] || entry["published_at"],
+        raw_data: entry[:raw_data] || entry["raw_data"]
+      }
+    end
   end
 end

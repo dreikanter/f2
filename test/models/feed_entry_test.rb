@@ -57,10 +57,6 @@ class FeedEntryTest < ActiveSupport::TestCase
     entry.status = :processed
     assert entry.processed?
     assert_equal "processed", entry.status
-
-    entry.status = :failed
-    assert entry.failed?
-    assert_equal "failed", entry.status
   end
 
   test "should handle JSONB raw_data" do
