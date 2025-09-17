@@ -82,65 +82,64 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     job = FeedRefreshJob.new
     entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
 
-    # Mock the normalizer class
+    # Mock the normalizer instance
     mock_normalizer = Minitest::Mock.new
     mock_post = build(:post, feed: feed, feed_entry: entry, status: :enqueued)
     mock_post.save!
     mock_normalizer.expect(:normalize, mock_post)
 
-    # Mock the class resolution and instantiation
-    mock_normalizer_class = Minitest::Mock.new
-    mock_normalizer_class.expect(:new, mock_normalizer, [entry])
+    # Mock the feed's normalizer_instance method
+    feed.stub(:normalizer_instance, mock_normalizer) do
+      result = job.send(:normalize_single_entry, entry, feed)
 
-    job.send(:normalize_single_entry, entry, mock_normalizer_class)
-
-    assert_equal "processed", entry.reload.status
-    assert_equal 1, Post.where(feed_entry: entry).count
+      assert_equal "processed", entry.reload.status
+      assert_equal true, result[:valid]
+      assert_equal 1, Post.where(feed_entry: entry).count
+    end
 
     mock_normalizer.verify
-    mock_normalizer_class.verify
   end
 
   test "normalize_single_entry handles rejected posts" do
     job = FeedRefreshJob.new
     entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
 
-    # Mock the normalizer class
+    # Mock the normalizer instance
     mock_normalizer = Minitest::Mock.new
     mock_post = build(:post, feed: feed, feed_entry: entry, status: :rejected)
     mock_post.save!
     mock_normalizer.expect(:normalize, mock_post)
 
-    mock_normalizer_class = Minitest::Mock.new
-    mock_normalizer_class.expect(:new, mock_normalizer, [entry])
+    # Mock the feed's normalizer_instance method
+    feed.stub(:normalizer_instance, mock_normalizer) do
+      result = job.send(:normalize_single_entry, entry, feed)
 
-    job.send(:normalize_single_entry, entry, mock_normalizer_class)
-
-    assert_equal "rejected", entry.reload.status
+      assert_equal "processed", entry.reload.status
+      assert_equal false, result[:valid]
+    end
 
     mock_normalizer.verify
-    mock_normalizer_class.verify
   end
 
   test "normalize_single_entry handles errors gracefully" do
     job = FeedRefreshJob.new
     entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
 
-    # Mock the normalizer class to raise an error
+    # Mock the normalizer instance to raise an error
     mock_normalizer = Minitest::Mock.new
     mock_normalizer.expect(:normalize, nil) { raise StandardError, "Normalization failed" }
 
-    mock_normalizer_class = Minitest::Mock.new
-    mock_normalizer_class.expect(:new, mock_normalizer, [entry])
+    # Mock the feed's normalizer_instance method
+    feed.stub(:normalizer_instance, mock_normalizer) do
+      assert_logs_match(/Failed to normalize feed entry/) do
+        result = job.send(:normalize_single_entry, entry, feed)
 
-    assert_logs_match(/Failed to normalize feed entry/) do
-      job.send(:normalize_single_entry, entry, mock_normalizer_class)
+        assert_equal "processed", entry.reload.status
+        assert_equal false, result[:valid]
+      end
     end
 
-    assert_equal "failed", entry.reload.status
-
     mock_normalizer.verify
-    mock_normalizer_class.verify
   end
 
   private

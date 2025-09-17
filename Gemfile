@@ -75,4 +75,4 @@ gem "faraday-follow_redirects", "~> 0.3"
 gem "feedjira", "~> 4.0"
 gem "pundit", "~> 2.5"
 
-gem "with_advisory_lock", "~> 7.0"
+gem "with_advisory_lock", "~> 7.0.1"
