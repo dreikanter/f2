@@ -22,44 +22,42 @@ class FeedRefreshJob < ApplicationJob
 
   # @param feed [Feed] the feed to refresh
   def refresh_feed(feed)
-    stats = FeedRefreshEvent.default_stats
-    total_start = Time.current
-    current_stage = "initializing"
+    @total_start = Time.current
+    @current_stage = "initializing"
 
     begin
       Rails.logger.info "Starting feed refresh for feed #{feed.id}"
 
       # Step 1: Load feed contents
-      current_stage = "loading"
+      @current_stage = "loading"
       load_start = Time.current
       raw_data = load_feed_contents(feed)
-      stats[:load_duration] = Time.current - load_start
-      stats[:content_size] = raw_data.bytesize
+      register_stats(load_duration: Time.current - load_start, content_size: raw_data.bytesize)
 
       # Step 2: Process feed contents into structured entries
-      current_stage = "processing"
+      @current_stage = "processing"
       process_start = Time.current
       processed_entries = process_feed_contents(feed, raw_data)
-      stats[:process_duration] = Time.current - process_start
-      stats[:total_entries] = processed_entries.size
+      register_stats(process_duration: Time.current - process_start, total_entries: processed_entries.size)
 
       # Step 3: Persist feed entries and get new ones
-      current_stage = "persisting"
+      @current_stage = "persisting"
       new_feed_entries = persist_feed_entries(feed, processed_entries)
-      stats[:new_entries] = new_feed_entries.size
+      register_stats(new_entries: new_feed_entries.size)
 
       # Step 4: Normalize each new feed entry into posts
-      current_stage = "normalizing"
+      @current_stage = "normalizing"
       normalize_start = Time.current
       normalize_results = normalize_feed_entries(new_feed_entries)
-      stats[:normalize_duration] = Time.current - normalize_start
-      stats[:new_posts] = normalize_results[:valid_posts]
-      stats[:invalid_posts] = normalize_results[:invalid_posts]
+      register_stats(
+        normalize_duration: Time.current - normalize_start,
+        new_posts: normalize_results[:valid_posts],
+        invalid_posts: normalize_results[:invalid_posts]
+      )
 
       # Complete statistics
-      current_stage = "completing"
-      stats[:total_duration] = Time.current - total_start
-      stats[:completed_at] = Time.current.iso8601
+      @current_stage = "completing"
+      finalize_stats
 
       # Create success event
       FeedRefreshEvent.create_stats(feed, stats)
@@ -67,11 +65,8 @@ class FeedRefreshJob < ApplicationJob
       Rails.logger.info "Feed refresh completed for feed #{feed.id}, processed #{new_feed_entries.count} new entries"
 
     rescue StandardError => e
-      # Calculate partial duration
-      stats[:total_duration] = Time.current - total_start
-
       # Create error event with explicit stage
-      FeedRefreshEvent.create_error(feed, e, current_stage, stats)
+      FeedRefreshEvent.create_error(feed, e, @current_stage, finalize_stats)
 
       raise
     end
@@ -188,5 +183,27 @@ class FeedRefreshJob < ApplicationJob
         raw_data: entry[:raw_data] || entry["raw_data"]
       }
     end
+  end
+
+  # Registers statistics values by merging them with existing stats
+  # @param values [Hash] statistics values to register
+  def register_stats(values = {})
+    @stats = stats.merge(values)
+  end
+
+  # Returns current statistics hash, initializing if needed
+  # @return [Hash] current statistics
+  def stats
+    @stats ||= FeedRefreshEvent.default_stats
+  end
+
+  # Finalizes statistics by calculating total duration and completion time
+  # @return [Hash] finalized statistics
+  def finalize_stats
+    register_stats(
+      total_duration: Time.current - @total_start,
+      completed_at: Time.current.iso8601
+    )
+    stats
   end
 end
