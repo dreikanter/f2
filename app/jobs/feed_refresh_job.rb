@@ -1,4 +1,6 @@
 class FeedRefreshJob < ApplicationJob
+  include WorkflowExecutor
+
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
@@ -22,42 +24,58 @@ class FeedRefreshJob < ApplicationJob
 
   # @param feed [Feed] the feed to refresh
   def refresh_feed(feed)
-    @total_start = Time.current
-    current_stage = "initializing"
-
-    begin
-      Rails.logger.info "Starting feed refresh for feed #{feed.id}"
-
-      current_stage = "loading"
-      raw_data = execute_loading_step(feed)
-
-      current_stage = "processing"
-      processed_entries = execute_processing_step(feed, raw_data)
-
-      current_stage = "persisting"
-      new_feed_entries = execute_persistence_step(feed, processed_entries)
-
-      current_stage = "normalizing"
-      execute_normalization_step(new_feed_entries)
-
-      current_stage = "completing"
-      finalize_stats
-
-      # Create success event
-      FeedRefreshEvent.create_stats(feed, stats)
-
-      Rails.logger.info "Feed refresh completed for feed #{feed.id}, processed #{new_feed_entries.count} new entries"
-
-    rescue StandardError => e
-      # Create error event with explicit stage
-      FeedRefreshEvent.create_error(feed, e, current_stage, finalize_stats)
-
-      raise
+    execute_workflow(feed: feed) do
+      step :initialize_workflow
+      step :load_feed_contents_step
+      step :process_feed_contents_step
+      step :persist_feed_entries_step
+      step :normalize_feed_entries_step
+      step :finalize_workflow
     end
   end
 
-  # @param feed [Feed] the feed to load
-  # @return [String] raw feed data
+  # Step implementations - clean, focused methods
+  def initialize_workflow(ctx)
+    ctx.start_timer(:total)
+    ctx.log_info "Starting feed refresh for feed #{ctx.feed.id}"
+  end
+
+  def load_feed_contents_step(ctx)
+    ctx.start_timer(:load)
+    ctx.raw_data = load_feed_contents(ctx.feed)
+    ctx.record_stats(
+      load_duration: ctx.end_timer(:load),
+      content_size: ctx.raw_data.bytesize
+    )
+  end
+
+  def process_feed_contents_step(ctx)
+    ctx.start_timer(:process)
+    ctx.processed_entries = process_feed_contents(ctx.feed, ctx.raw_data)
+    ctx.record_stats(
+      process_duration: ctx.end_timer(:process),
+      total_entries: ctx.processed_entries.size
+    )
+  end
+
+  def persist_feed_entries_step(ctx)
+    ctx.new_feed_entries = persist_feed_entries(ctx.feed, ctx.processed_entries)
+    ctx.record_stats(new_entries: ctx.new_feed_entries.size)
+  end
+
+  def normalize_feed_entries_step(ctx)
+    return ctx.record_stats(new_posts: 0, invalid_posts: 0) if ctx.new_feed_entries.empty?
+
+    ctx.start_timer(:normalize)
+    normalize_results = normalize_feed_entries(ctx.new_feed_entries)
+    ctx.record_stats(
+      normalize_duration: ctx.end_timer(:normalize),
+      new_posts: normalize_results[:valid_posts],
+      invalid_posts: normalize_results[:invalid_posts]
+    )
+  end
+
+  # Original methods for backward compatibility and testing
   def load_feed_contents(feed)
     feed.loader_instance.load
   rescue ArgumentError => e
@@ -67,9 +85,6 @@ class FeedRefreshJob < ApplicationJob
     raise StandardError, "Failed to load feed from URL #{feed.url}: #{e.message}"
   end
 
-  # @param feed [Feed] the feed being processed
-  # @param raw_data [String] raw feed data
-  # @return [Array<Hash>] processed feed entries with normalized keys
   def process_feed_contents(feed, raw_data)
     entries = feed.processor_instance(raw_data).process
     normalize_entry_keys(entries)
@@ -81,12 +96,8 @@ class FeedRefreshJob < ApplicationJob
     raise StandardError, "Failed to process feed content (#{raw_data.bytesize} bytes, preview: '#{content_preview}'): #{e.message}"
   end
 
-  # @param feed [Feed] the feed to persist entries for
-  # @param processed_entries [Array<Hash>] processed feed entries
-  # @return [Array<FeedEntry>] newly created feed entries
   def persist_feed_entries(feed, processed_entries)
     new_entries = []
-
     processed_entries.each do |entry_data|
       uid = entry_data[:uid]
       next unless uid.present?
@@ -109,8 +120,6 @@ class FeedRefreshJob < ApplicationJob
     new_entries
   end
 
-  # @param feed_entries [Array<FeedEntry>] feed entries to normalize
-  # @return [Hash] normalization results with counts
   def normalize_feed_entries(feed_entries)
     return { valid_posts: 0, invalid_posts: 0 } if feed_entries.empty?
 
@@ -127,12 +136,23 @@ class FeedRefreshJob < ApplicationJob
           invalid_posts += 1
         end
       rescue StandardError => e
-        # Re-raise with more specific stage information
-        raise StandardError, "Failed at normalizing entry #{index + 1}/#{feed_entries.size} (ID: #{feed_entry.id}): #{e.message}"
+        Rails.logger.error "Failed to normalize entry #{index + 1}/#{feed_entries.size} (ID: #{feed_entry.id}): #{e.message}"
+        invalid_posts += 1
+        # Continue processing other entries - normalization errors are not critical
       end
     end
 
     { valid_posts: valid_posts, invalid_posts: invalid_posts }
+  end
+
+  def finalize_workflow(ctx)
+    ctx.record_stats(
+      total_duration: ctx.end_timer(:total),
+      completed_at: Time.current.iso8601
+    )
+
+    FeedRefreshEvent.create_stats(ctx.feed, ctx.stats)
+    ctx.log_info "Feed refresh completed for feed #{ctx.feed.id}, processed #{ctx.new_feed_entries.count} new entries"
   end
 
   # @param feed_entry [FeedEntry] the feed entry to normalize
@@ -167,70 +187,5 @@ class FeedRefreshJob < ApplicationJob
         raw_data: entry[:raw_data] || entry["raw_data"]
       }
     end
-  end
-
-  # Executes the loading step: loads feed contents and registers timing/size stats
-  # @param feed [Feed] the feed to load
-  # @return [String] raw feed data
-  def execute_loading_step(feed)
-    load_start = Time.current
-    raw_data = load_feed_contents(feed)
-    register_stats(load_duration: Time.current - load_start, content_size: raw_data.bytesize)
-    raw_data
-  end
-
-  # Executes the processing step: processes content and registers timing/count stats
-  # @param feed [Feed] the feed being processed
-  # @param raw_data [String] raw feed data
-  # @return [Array<Hash>] processed feed entries
-  def execute_processing_step(feed, raw_data)
-    process_start = Time.current
-    processed_entries = process_feed_contents(feed, raw_data)
-    register_stats(process_duration: Time.current - process_start, total_entries: processed_entries.size)
-    processed_entries
-  end
-
-  # Executes the persistence step: persists entries and registers count stats
-  # @param feed [Feed] the feed to persist entries for
-  # @param processed_entries [Array<Hash>] processed feed entries
-  # @return [Array<FeedEntry>] newly created feed entries
-  def execute_persistence_step(feed, processed_entries)
-    new_feed_entries = persist_feed_entries(feed, processed_entries)
-    register_stats(new_entries: new_feed_entries.size)
-    new_feed_entries
-  end
-
-  # Executes the normalization step: normalizes entries and registers timing/result stats
-  # @param new_feed_entries [Array<FeedEntry>] feed entries to normalize
-  def execute_normalization_step(new_feed_entries)
-    normalize_start = Time.current
-    normalize_results = normalize_feed_entries(new_feed_entries)
-    register_stats(
-      normalize_duration: Time.current - normalize_start,
-      new_posts: normalize_results[:valid_posts],
-      invalid_posts: normalize_results[:invalid_posts]
-    )
-  end
-
-  # Registers statistics values by merging them with existing stats
-  # @param values [Hash] statistics values to register
-  def register_stats(values = {})
-    @stats = stats.merge(values)
-  end
-
-  # Returns current statistics hash, initializing if needed
-  # @return [Hash] current statistics
-  def stats
-    @stats ||= FeedRefreshEvent.default_stats
-  end
-
-  # Finalizes statistics by calculating total duration and completion time
-  # @return [Hash] finalized statistics
-  def finalize_stats
-    register_stats(
-      total_duration: Time.current - @total_start,
-      completed_at: Time.current.iso8601
-    )
-    stats
   end
 end
