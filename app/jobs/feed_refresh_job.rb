@@ -23,30 +23,30 @@ class FeedRefreshJob < ApplicationJob
   # @param feed [Feed] the feed to refresh
   def refresh_feed(feed)
     @total_start = Time.current
-    @current_stage = "initializing"
+    current_stage = "initializing"
 
     begin
       Rails.logger.info "Starting feed refresh for feed #{feed.id}"
 
       # Step 1: Load feed contents
-      @current_stage = "loading"
+      current_stage = "loading"
       load_start = Time.current
       raw_data = load_feed_contents(feed)
       register_stats(load_duration: Time.current - load_start, content_size: raw_data.bytesize)
 
       # Step 2: Process feed contents into structured entries
-      @current_stage = "processing"
+      current_stage = "processing"
       process_start = Time.current
       processed_entries = process_feed_contents(feed, raw_data)
       register_stats(process_duration: Time.current - process_start, total_entries: processed_entries.size)
 
       # Step 3: Persist feed entries and get new ones
-      @current_stage = "persisting"
+      current_stage = "persisting"
       new_feed_entries = persist_feed_entries(feed, processed_entries)
       register_stats(new_entries: new_feed_entries.size)
 
       # Step 4: Normalize each new feed entry into posts
-      @current_stage = "normalizing"
+      current_stage = "normalizing"
       normalize_start = Time.current
       normalize_results = normalize_feed_entries(new_feed_entries)
       register_stats(
@@ -56,7 +56,7 @@ class FeedRefreshJob < ApplicationJob
       )
 
       # Complete statistics
-      @current_stage = "completing"
+      current_stage = "completing"
       finalize_stats
 
       # Create success event
@@ -66,7 +66,7 @@ class FeedRefreshJob < ApplicationJob
 
     rescue StandardError => e
       # Create error event with explicit stage
-      FeedRefreshEvent.create_error(feed, e, @current_stage, finalize_stats)
+      FeedRefreshEvent.create_error(feed, e, current_stage, finalize_stats)
 
       raise
     end
