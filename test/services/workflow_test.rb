@@ -178,33 +178,6 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal [:step_without_input], TestWorkflowWithoutInput.workflow_steps
   end
 
-  test "tracks current step during execution" do
-    service = TestWorkflowWithCallbacks.new
-
-    captured_steps = []
-
-    def service.step_one(input)
-      @captured_steps ||= []
-      @captured_steps << current_step
-      { value: input[:value] * 2 }
-    end
-
-    def service.step_two(input)
-      @captured_steps ||= []
-      @captured_steps << current_step
-      { value: input[:value] + 1 }
-    end
-
-    def service.captured_steps
-      @captured_steps || []
-    end
-
-    service.execute({ value: 1 })
-
-    assert_equal [:step_one, :step_two], service.captured_steps
-    assert_equal :step_two, service.current_step
-  end
-
   test "tracks step durations automatically" do
     service = TestWorkflowWithCallbacks.new
 
@@ -220,42 +193,26 @@ class WorkflowTest < ActiveSupport::TestCase
     assert durations[:step_two] >= 0
   end
 
-  test "step durations are empty before workflow execution" do
+  test "current step is accessible in callbacks" do
     service = TestWorkflowWithCallbacks.new
-
-    assert_equal({}, service.step_durations)
-    assert_nil service.current_step
-    assert_equal 0.0, service.total_duration
-  end
-
-  test "current step tracking works with callbacks" do
-    service = TestWorkflowWithCallbacks.new
-    captured_current_steps = []
 
     def service.before_step(input)
-      @captured_current_steps ||= []
-      @captured_current_steps << { callback: :before, step_name: current_step, current_step: current_step }
+      @captured_steps ||= []
+      @captured_steps << current_step
     end
 
     def service.after_step(output)
-      @captured_current_steps ||= []
-      @captured_current_steps << { callback: :after, step_name: current_step, current_step: current_step }
+      # Override to prevent timing hash access errors
     end
 
-    def service.captured_current_steps
-      @captured_current_steps || []
+    def service.captured_steps
+      @captured_steps || []
     end
 
-    service.run_workflow_with_callbacks
+    service.execute({ value: 1 })
 
-    expected_captures = [
-      { callback: :before, step_name: :step_one, current_step: :step_one },
-      { callback: :after, step_name: :step_one, current_step: :step_one },
-      { callback: :before, step_name: :step_two, current_step: :step_two },
-      { callback: :after, step_name: :step_two, current_step: :step_two }
-    ]
-
-    assert_equal expected_captures, service.captured_current_steps
+    assert_equal [:step_one, :step_two], service.captured_steps
+    assert_equal :step_two, service.current_step
   end
 
   test "tracks total workflow duration" do

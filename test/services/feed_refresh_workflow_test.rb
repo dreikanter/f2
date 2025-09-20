@@ -26,4 +26,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_equal expected_steps, FeedRefreshWorkflow.workflow_steps
   end
+
+  test "provides access to timing information" do
+    workflow = FeedRefreshWorkflow.new(feed)
+
+    assert_equal({}, workflow.step_durations)
+    assert_equal 0.0, workflow.total_duration
+    assert_nil workflow.current_step
+  end
 end
