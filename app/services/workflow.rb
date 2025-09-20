@@ -87,11 +87,11 @@ module Workflow
   end
 
   def start_step_timer(step_name)
-    workflow_timers[step_name] = Time.current
+    step_timers[step_name] = Time.current
   end
 
   def end_step_timer(step_name)
-    start_time = workflow_timers.delete(step_name)
+    start_time = step_timers.delete(step_name)
     return 0.0 if start_time.nil?
 
     duration = Time.current - start_time
@@ -99,7 +99,7 @@ module Workflow
     duration
   end
 
-  def workflow_timers
-    @workflow_timers ||= {}
+  def step_timers
+    @step_timers ||= {}
   end
 end

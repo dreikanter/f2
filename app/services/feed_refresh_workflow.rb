@@ -7,6 +7,7 @@ class FeedRefreshWorkflow
   step :filter_new_entries
   step :persist_entries
   step :normalize_entries
+  step :persist_posts
   step :finalize_workflow
 
   attr_reader :feed, :stats
@@ -93,6 +94,11 @@ class FeedRefreshWorkflow
       feed_entry.update!(status: :processed)
       post
     end
+  end
+
+  def persist_posts(posts)
+    # TBD: Persist new posts with a batch inset
+    posts
   end
 
   def finalize_workflow(posts)
