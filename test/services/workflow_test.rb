@@ -105,7 +105,6 @@ class WorkflowTest < ActiveSupport::TestCase
 
     result = service.run_simple_workflow
 
-    # Verify execution order and data flow
     expected_log = [
       "step_one with {:value=>1}",
       "step_two with {:value=>2, :step=>:one}",
@@ -113,7 +112,6 @@ class WorkflowTest < ActiveSupport::TestCase
     ]
     assert_equal expected_log, service.execution_log
 
-    # Verify final result
     assert_equal({ value: 9, step: :three, final: true }, result)
   end
 
@@ -122,7 +120,6 @@ class WorkflowTest < ActiveSupport::TestCase
 
     result = service.run_workflow_with_callbacks
 
-    # Verify callbacks were executed in correct order
     expected_log = [
       "before step_one",
       "step_one with {:value=>1}",
@@ -133,7 +130,6 @@ class WorkflowTest < ActiveSupport::TestCase
     ]
     assert_equal expected_log, service.execution_log
 
-    # Verify timing data was collected
     assert service.step_timings.key?(:step_one)
     assert service.step_timings.key?(:step_two)
     assert service.step_timings[:step_one][:started_at]
@@ -152,7 +148,6 @@ class WorkflowTest < ActiveSupport::TestCase
   test "propagates exceptions with clean backtrace" do
     service = TestService.new
 
-    # Mock a step to raise an exception
     def service.step_one(input)
       @execution_log << "step_one called"
       raise StandardError, "Test error in step_one"
@@ -165,7 +160,6 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal "Test error in step_one", error.message
     assert_equal ["step_one called"], service.execution_log
 
-    # Verify the backtrace includes our workflow method
     backtrace_methods = error.backtrace.select { |line| line.include?("workflow_test.rb") }
     assert backtrace_methods.any? { |line| line.include?("step_one") }
     assert backtrace_methods.any? { |line| line.include?("run_simple_workflow") }
@@ -194,7 +188,6 @@ class WorkflowTest < ActiveSupport::TestCase
   test "tracks current step during execution" do
     service = TestServiceWithCallbacks.new
 
-    # Mock steps to capture current_step at execution time
     captured_steps = []
 
     def service.step_one(input)
@@ -209,17 +202,14 @@ class WorkflowTest < ActiveSupport::TestCase
       { value: input[:value] + 1 }
     end
 
-    # Add accessor for captured steps
     def service.captured_steps
       @captured_steps || []
     end
 
     service.execute({ value: 1 })
 
-    # Verify current_step was correctly set during each step
     assert_equal [:step_one, :step_two], service.captured_steps
 
-    # Verify current_step is accessible after workflow completion
     assert_equal :step_two, service.current_step
   end
 
@@ -228,12 +218,10 @@ class WorkflowTest < ActiveSupport::TestCase
 
     service.execute({ value: 1 })
 
-    # Verify step durations were recorded
     durations = service.step_durations
     assert durations.key?(:step_one)
     assert durations.key?(:step_two)
 
-    # Verify durations are numeric and positive
     assert durations[:step_one].is_a?(Numeric)
     assert durations[:step_two].is_a?(Numeric)
     assert durations[:step_one] >= 0
@@ -252,7 +240,6 @@ class WorkflowTest < ActiveSupport::TestCase
     service = TestServiceWithCallbacks.new
     captured_current_steps = []
 
-    # Override callbacks to capture current_step
     def service.before_step(step_name, input)
       @captured_current_steps ||= []
       @captured_current_steps << { callback: :before, step_name: step_name, current_step: current_step }
@@ -269,7 +256,6 @@ class WorkflowTest < ActiveSupport::TestCase
 
     service.run_workflow_with_callbacks
 
-    # Verify current_step was correctly set during callbacks
     expected_captures = [
       { callback: :before, step_name: :step_one, current_step: :step_one },
       { callback: :after, step_name: :step_one, current_step: :step_one },
@@ -285,12 +271,10 @@ class WorkflowTest < ActiveSupport::TestCase
 
     service.execute({ value: 1 })
 
-    # Verify total duration was recorded and is reasonable
     total = service.total_duration
-    assert total >= 0  # Should be non-negative
+    assert total >= 0
     assert total.is_a?(Numeric)
 
-    # Total duration should be greater than or equal to individual step durations
     step_one_duration = service.step_durations[:step_one]
     step_two_duration = service.step_durations[:step_two]
 

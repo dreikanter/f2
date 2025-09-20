@@ -3,7 +3,6 @@ require "minitest/mock"
 
 class ClassResolverTest < ActiveSupport::TestCase
   test "resolves existing class with correct scope and key" do
-    # Test with known existing classes
     processor_class = ClassResolver.resolve("Processor", "rss_processor")
     assert_equal Processor::RssProcessor, processor_class
 
@@ -15,10 +14,8 @@ class ClassResolverTest < ActiveSupport::TestCase
   end
 
   test "handles key camelization correctly" do
-    # Test that snake_case keys are properly camelized
     loader_class = ClassResolver.resolve("Loader", "http_loader")
 
-    # Should successfully find Loader::HttpLoader
     assert_equal Loader::HttpLoader, loader_class
   end
 
@@ -37,7 +34,6 @@ class ClassResolverTest < ActiveSupport::TestCase
   end
 
   test "class method resolve works correctly" do
-    # Test the class method interface directly
     result = ClassResolver.resolve("Processor", "rss_processor")
     assert_equal Processor::RssProcessor, result
   end
@@ -60,7 +56,6 @@ class ClassResolverTest < ActiveSupport::TestCase
   end
 
   test "handles case variations in scope" do
-    # Should work with different cases in scope
     error1 = assert_raises(ArgumentError) do
       ClassResolver.resolve("loader", "unknown")
     end
@@ -73,7 +68,6 @@ class ClassResolverTest < ActiveSupport::TestCase
   end
 
   test "module method can be called multiple times" do
-    # Should be able to call resolve multiple times with same result
     result1 = ClassResolver.resolve("Processor", "rss_processor")
     result2 = ClassResolver.resolve("Processor", "rss_processor")
 

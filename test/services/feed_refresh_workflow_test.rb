@@ -22,21 +22,17 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       }
     ]
 
-    # First run should create both entries
     filtered_entries = workflow.send(:filter_new_entries, processed_entries)
     new_entries = workflow.send(:persist_entries, filtered_entries)
     assert_equal 2, new_entries.count
     assert_equal ["entry-1", "entry-2"], new_entries.map(&:uid).sort
 
-    # Verify entries were created
     assert_equal 2, FeedEntry.where(feed: feed).count
 
-    # Second run with same entries should create none (filtered out)
     filtered_entries = workflow.send(:filter_new_entries, processed_entries)
     new_entries = workflow.send(:persist_entries, filtered_entries)
     assert_equal 0, new_entries.count
 
-    # Total should still be 2
     assert_equal 2, FeedEntry.where(feed: feed).count
   end
 
