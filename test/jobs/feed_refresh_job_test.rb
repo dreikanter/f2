@@ -35,17 +35,4 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  private
-
-  def assert_logs_match(pattern)
-    original_logger = Rails.logger
-    log_output = StringIO.new
-    Rails.logger = Logger.new(log_output)
-
-    yield
-
-    assert_match pattern, log_output.string
-  ensure
-    Rails.logger = original_logger
-  end
 end
