@@ -276,4 +276,34 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_not feed.can_be_enabled?
   end
+
+  test "processor_class resolves correct processor class" do
+    feed = create(:feed, processor: "rss_processor")
+
+    assert_equal Processor::RssProcessor, feed.processor_class
+  end
+
+  test "normalizer_class resolves correct normalizer class" do
+    feed = create(:feed, normalizer: "rss_normalizer")
+
+    assert_equal Normalizer::RssNormalizer, feed.normalizer_class
+  end
+
+  test "processor_instance creates processor with feed and raw data" do
+    feed = create(:feed, processor: "rss_processor")
+    raw_data = "<rss><item><title>Test</title></item></rss>"
+
+    processor = feed.processor_instance(raw_data)
+
+    assert_instance_of Processor::RssProcessor, processor
+  end
+
+  test "normalizer_instance creates normalizer with feed entry" do
+    feed = create(:feed, normalizer: "rss_normalizer")
+    feed_entry = create(:feed_entry, feed: feed)
+
+    normalizer = feed.normalizer_instance(feed_entry)
+
+    assert_instance_of Normalizer::RssNormalizer, normalizer
+  end
 end
