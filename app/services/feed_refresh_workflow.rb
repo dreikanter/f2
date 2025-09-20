@@ -68,6 +68,7 @@ class FeedRefreshWorkflow
 
   def persist_entries(new_entries)
     return [] if new_entries.empty?
+    current_time = Time.current
 
     entries_data = new_entries.map do |entry_data|
       {
@@ -75,12 +76,15 @@ class FeedRefreshWorkflow
         uid: entry_data.fetch(:uid),
         published_at: entry_data[:published_at],
         raw_data: entry_data[:raw_data] || entry_data,
-        status: :pending
+        status: :pending,
+        created_at: current_time,
+        updated_at: current_time
       }
     end
 
-    FeedEntry.insert_all(entries_data, returning: %w[id uid published_at raw_data status])
-    persisted_entries = feed.feed_entries.where(uid: new_entries.map { |e| e[:uid] })
+    FeedEntry.insert_all(entries_data)
+    new_uids = new_entries.map { |e| e[:uid] }
+    persisted_entries = feed.feed_entries.where(uid: new_uids)
 
     record_stats(new_entries: persisted_entries.size)
     persisted_entries
@@ -98,6 +102,7 @@ class FeedRefreshWorkflow
   def persist_posts(posts)
     draft_posts = posts.select(&:draft?)
     return posts if draft_posts.empty?
+    current_time = Time.current
 
     posts_data = draft_posts.map do |post|
       {
@@ -107,7 +112,9 @@ class FeedRefreshWorkflow
         content: post.content,
         source_url: post.source_url,
         published_at: post.published_at,
-        status: :published
+        status: :published,
+        created_at: current_time,
+        updated_at: current_time
       }
     end
 
