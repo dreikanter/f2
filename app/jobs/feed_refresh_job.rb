@@ -11,8 +11,5 @@ class FeedRefreshJob < ApplicationJob
     end
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
-  rescue StandardError => e
-    Rails.logger.error "Feed refresh failed for feed #{feed_id}: #{e.message}"
-    raise
   end
 end
