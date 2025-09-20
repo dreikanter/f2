@@ -10,13 +10,11 @@ class FeedRefreshWorkflow
 
   attr_reader :feed, :stats
 
+  DEFAULT_
+  
   def initialize(feed)
     @feed = feed
     @stats = FeedRefreshEvent.default_stats
-  end
-
-  def execute
-    super(feed, before: :before_step, after: :after_step, on_error: :handle_workflow_error)
   end
 
   private
@@ -28,6 +26,12 @@ class FeedRefreshWorkflow
   def after_step(step_name, output)
     Rails.logger.info "Completed step: #{step_name}"
     record_step_duration_stats(step_name)
+
+    duration = step_durations[step_name]
+    return unless duration
+
+    stats_key = step_stats_key(step_name)
+    record_stats(stats_key => duration) if stats_key
   end
 
   def handle_workflow_error(error)
@@ -44,22 +48,15 @@ class FeedRefreshWorkflow
     )
   end
 
-  # Step implementations - clean, focused methods
-  def initialize_workflow(feed)
-    Rails.logger.info "Starting feed refresh for feed #{feed.id}"
-    { feed: feed }
+  def load_feed_contents(*)
+    load_feed_content(feed).tap do
+      record_stats(content_size: raw_data.bytesize)
+    end
   end
 
-  def load_feed_contents(input)
-    current_feed = input[:feed]
-    raw_data = load_feed_content(current_feed)
-    record_stats(content_size: raw_data.bytesize)
-    input.merge(raw_data: raw_data)
-  end
-
-  def process_feed_contents(input)
-    current_feed = input[:feed]
-    processed_entries = process_feed_content(current_feed, input[:raw_data])
+  def process_feed_contents(raw_data)
+    processed_entries = process_feed_content(feed, raw_data)
+  ensure
     record_stats(total_entries: processed_entries.size)
     input.merge(processed_entries: processed_entries)
   end
