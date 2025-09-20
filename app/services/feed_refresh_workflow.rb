@@ -19,12 +19,8 @@ class FeedRefreshWorkflow
 
   private
 
-  def before_step(step_name, input)
-    Rails.logger.info "Starting step: #{step_name}"
-  end
-
   def after_step(step_name, output)
-    Rails.logger.info "Completed step: #{step_name}"
+    super
     record_duration(step_name)
   end
 

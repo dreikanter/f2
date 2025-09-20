@@ -75,14 +75,22 @@ module Workflow
     @total_workflow_duration || 0.0
   end
 
-  private
-
-  def before_step(_step_name, _input)
-    # Override
+  def logger
+    Rails.logger
   end
 
-  def after_step(_step_name, _result)
-    # Override
+  private
+
+  def before_step(step_name, _input)
+    logger.info "#{workflow_name}: Starting step: #{step_name}"
+  end
+
+  def after_step(step_name, _result)
+    logger.info "#{workflow_name}: Completed step: #{step_name}"
+  end
+
+  def workflow_name
+    @workflow_name ||= self.class.name
   end
 
   def on_error(step_name, error)
