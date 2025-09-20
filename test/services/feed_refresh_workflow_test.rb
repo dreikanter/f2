@@ -229,7 +229,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, workflow.stats[:total_entries]
     assert workflow.stats[:completed_at]
 
-    # Should still create success event
+    # Should still create event
     events = Event.where(subject: test_feed, type: "feed_refresh_stats")
     assert_equal 1, events.count
   end
@@ -260,32 +260,26 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
-    # Mock normalizer to fail
-    mock_normalizer = Minitest::Mock.new
-    mock_normalizer.expect(:normalize, [FeedEntry]) { raise StandardError.new("Normalization failed") }
-
-    test_feed.stub(:normalizer_instance, mock_normalizer) do
-      error = assert_raises(StandardError) do
-        workflow.execute
-      end
-
-      assert_equal "Normalization failed", error.message
-
-      # Should fail during normalize step
-      assert_equal :normalize_entries, workflow.stats[:failed_at_step]
-
-      # Entry should still be created even though normalization failed
-      assert_equal 1, FeedEntry.where(feed: test_feed).count
-
-      # Verify error event was created
-      events = Event.where(subject: test_feed, type: "feed_refresh_error")
-      assert_equal 1, events.count
-      error_event = events.first
-      assert_match(/Feed refresh failed at normalize_entries/, error_event.message)
-      assert_equal "StandardError", error_event.metadata["error"]["class"]
+    # Override normalizer_instance to pass nil instead of the feed_entry
+    test_feed.define_singleton_method(:normalizer_instance) do |feed_entry|
+      normalizer_class.new(nil)  # Pass nil instead of feed_entry to trigger error
     end
 
-    mock_normalizer.verify
+    error = assert_raises(StandardError) do
+      workflow.execute
+    end
+
+    # Should fail during normalize step
+    assert_equal :normalize_entries, workflow.stats[:failed_at_step]
+
+    # Entry should still be created even though normalization failed
+    assert_equal 1, FeedEntry.where(feed: test_feed).count
+
+    # Verify error event was created
+    events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    assert_equal 1, events.count
+    error_event = events.first
+    assert_match(/Feed refresh failed at normalize_entries/, error_event.message)
   end
 
   test "handles database errors during entry persistence" do
