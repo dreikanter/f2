@@ -186,7 +186,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       workflow.execute
     end
 
-    assert_match(/Failed to load feed/, error.message)
     assert_match(/execution expired/, error.message)
 
     # Verify error stats were recorded

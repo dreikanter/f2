@@ -42,7 +42,7 @@ class FeedRefreshWorkflow
   end
 
   def load_feed_contents(*)
-    raw_data = feed.loader_instance.load(feed)
+    raw_data = feed.loader_instance.load
     record_stats(content_size: raw_data.bytesize)
     raw_data
   end
@@ -51,30 +51,30 @@ class FeedRefreshWorkflow
     processed_entries = feed.processor_instance(raw_data).process
     record_stats(total_entries: processed_entries.size)
 
-    unidentified_count = processed_entries.count { |entry| entry[:uid].blank? }
+    unidentified_count = processed_entries.count { |entry| entry.uid.blank? }
     record_stats(unidentified_entries: unidentified_count) if unidentified_count.positive?
 
-    processed_entries.map(&:symbolize_keys).reject { |entry| entry[:uid].blank? }
+    processed_entries.reject { |entry| entry.uid.blank? }
   end
 
   def filter_new_entries(processed_entries)
     return [] if processed_entries.empty?
 
-    uids = processed_entries.map { |entry| entry[:uid] }
+    uids = processed_entries.map(&:uid)
     existing_uids = feed.feed_entries.where(uid: uids).pluck(:uid).to_set
-    processed_entries.filter { |entry| existing_uids.exclude?(entry[:uid]) }
+    processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
   end
 
   def persist_entries(new_entries)
     return [] if new_entries.empty?
     current_time = Time.current
 
-    entries_data = new_entries.map do |entry_data|
+    entries_data = new_entries.map do |entry|
       {
         feed_id: feed.id,
-        uid: entry_data.fetch(:uid),
-        published_at: entry_data[:published_at],
-        raw_data: entry_data[:raw_data] || entry_data,
+        uid: entry.uid,
+        published_at: entry.published_at,
+        raw_data: entry.raw_data,
         status: :pending,
         created_at: current_time,
         updated_at: current_time
@@ -82,7 +82,7 @@ class FeedRefreshWorkflow
     end
 
     FeedEntry.insert_all(entries_data)
-    new_uids = new_entries.map { |e| e[:uid] }
+    new_uids = new_entries.map(&:uid)
     persisted_entries = feed.feed_entries.where(uid: new_uids)
 
     record_stats(new_entries: persisted_entries.size)
@@ -91,19 +91,19 @@ class FeedRefreshWorkflow
 
   def normalize_entries(persisted_feed_entries)
     persisted_feed_entries.map do |feed_entry|
-      normalizer = feed.normalizer_instance
-      post = normalizer.normalize(feed_entry)
+      normalizer = feed.normalizer_instance(feed_entry)
+      post = normalizer.normalize
       feed_entry.update!(status: :processed)
       post
     end
   end
 
   def persist_posts(posts)
-    draft_posts = posts.select(&:draft?)
-    return posts if draft_posts.empty?
+    enqueued_posts = posts.select(&:enqueued?)
+    return posts if enqueued_posts.empty?
     current_time = Time.current
 
-    posts_data = draft_posts.map do |post|
+    posts_data = enqueued_posts.map do |post|
       {
         feed_id: post.feed_id,
         feed_entry_id: post.feed_entry_id,
@@ -111,6 +111,9 @@ class FeedRefreshWorkflow
         content: post.content,
         source_url: post.source_url,
         published_at: post.published_at,
+        attachment_urls: post.attachment_urls || [],
+        comments: post.comments || [],
+        validation_errors: post.validation_errors || [],
         status: :published,
         created_at: current_time,
         updated_at: current_time
@@ -122,11 +125,11 @@ class FeedRefreshWorkflow
   end
 
   def finalize_workflow(posts)
-    draft_posts_count = posts.count(&:draft?)
+    enqueued_posts_count = posts.count(&:enqueued?)
     rejected_posts_count = posts.count(&:rejected?)
 
     record_stats(
-      new_posts: draft_posts_count,
+      new_posts: enqueued_posts_count,
       rejected_posts: rejected_posts_count,
       completed_at: Time.current,
       total_duration: total_duration
