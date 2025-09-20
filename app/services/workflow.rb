@@ -63,7 +63,7 @@ module Workflow
       end_step_timer(step_name)
     end
 
-    @total_workflow_duration = Time.current - workflow_start_time
+    @total_duration = Time.current - workflow_start_time
     current_input
   end
 
@@ -72,7 +72,7 @@ module Workflow
   end
 
   def total_duration
-    @total_workflow_duration || 0.0
+    @total_duration || 0.0
   end
 
   def logger
