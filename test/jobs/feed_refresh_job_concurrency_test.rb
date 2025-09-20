@@ -19,9 +19,9 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
   test "allows sequential processing of same feed" do
     execution_count = 0
 
-    # Track executions by overriding a method
-    original_method = FeedRefreshJob.instance_method(:refresh_feed)
-    FeedRefreshJob.define_method(:refresh_feed) do |feed|
+    # Track executions by overriding workflow execute method
+    original_method = FeedRefreshWorkflow.instance_method(:execute)
+    FeedRefreshWorkflow.define_method(:execute) do
       execution_count += 1
     end
 
@@ -36,7 +36,7 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
 
   ensure
     # Restore original method
-    FeedRefreshJob.define_method(:refresh_feed, original_method) if original_method
+    FeedRefreshWorkflow.define_method(:execute, original_method) if original_method
   end
 
   test "allows concurrent processing of different feeds" do
@@ -46,8 +46,8 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
     execution_tracker = {}
 
     # Track executions
-    original_method = FeedRefreshJob.instance_method(:refresh_feed)
-    FeedRefreshJob.define_method(:refresh_feed) do |feed|
+    original_method = FeedRefreshWorkflow.instance_method(:execute)
+    FeedRefreshWorkflow.define_method(:execute) do
       execution_tracker[feed.id] = true
       sleep(0.02) # Brief processing time
     end
@@ -66,6 +66,6 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
 
   ensure
     # Restore original method
-    FeedRefreshJob.define_method(:refresh_feed, original_method) if original_method
+    FeedRefreshWorkflow.define_method(:execute, original_method) if original_method
   end
 end
