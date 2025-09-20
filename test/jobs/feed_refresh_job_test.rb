@@ -34,5 +34,4 @@ class FeedRefreshJobTest < ActiveJob::TestCase
       FeedRefreshJob.perform_now(bad_feed.id)
     end
   end
-
 end

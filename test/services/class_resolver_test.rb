@@ -54,5 +54,4 @@ class ClassResolverTest < ActiveSupport::TestCase
     end
     assert_equal "Unknown loader: unknown", error2.message
   end
-
 end

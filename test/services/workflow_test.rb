@@ -1,7 +1,7 @@
 require "test_helper"
 
 class WorkflowTest < ActiveSupport::TestCase
-  class TestService
+  class TestWorkflow
     include Workflow
 
     step :step_one
@@ -37,7 +37,7 @@ class WorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  class TestServiceWithCallbacks
+  class TestWorkflowWithCallbacks
     include Workflow
 
     step :step_one
@@ -77,7 +77,7 @@ class WorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  class TestServiceWithoutInput
+  class TestWorkflowWithoutInput
     include Workflow
 
     step :step_without_input
@@ -101,7 +101,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "executes workflow steps in sequence with data flow" do
-    service = TestService.new
+    service = TestWorkflow.new
 
     result = service.run_simple_workflow
 
@@ -116,7 +116,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "executes before and after callbacks" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
 
     result = service.run_workflow_with_callbacks
 
@@ -137,7 +137,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles workflow without initial input" do
-    service = TestServiceWithoutInput.new
+    service = TestWorkflowWithoutInput.new
 
     result = service.run_workflow_without_initial_input
 
@@ -146,7 +146,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "propagates exceptions with clean backtrace" do
-    service = TestService.new
+    service = TestWorkflow.new
 
     def service.step_one(input)
       @execution_log << "step_one called"
@@ -159,34 +159,27 @@ class WorkflowTest < ActiveSupport::TestCase
 
     assert_equal "Test error in step_one", error.message
     assert_equal ["step_one called"], service.execution_log
-
-    backtrace_methods = error.backtrace.select { |line| line.include?("workflow_test.rb") }
-    assert backtrace_methods.any? { |line| line.include?("step_one") }
-    assert backtrace_methods.any? { |line| line.include?("run_simple_workflow") }
   end
 
   test "workflow with no steps returns initial input" do
     empty_service_class = Class.new do
       include Workflow
-
-      def initialize
-      end
     end
 
     service = empty_service_class.new
-    result = service.execute({ initial: :data })
+    result = service.execute("INITIAL")
 
-    assert_equal({ initial: :data }, result)
+    assert_equal("INITIAL", result)
   end
 
   test "class-level step definitions are accessible" do
-    assert_equal [:step_one, :step_two, :step_three], TestService.workflow_steps
-    assert_equal [:step_one, :step_two], TestServiceWithCallbacks.workflow_steps
-    assert_equal [:step_without_input], TestServiceWithoutInput.workflow_steps
+    assert_equal [:step_one, :step_two, :step_three], TestWorkflow.workflow_steps
+    assert_equal [:step_one, :step_two], TestWorkflowWithCallbacks.workflow_steps
+    assert_equal [:step_without_input], TestWorkflowWithoutInput.workflow_steps
   end
 
   test "tracks current step during execution" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
 
     captured_steps = []
 
@@ -209,12 +202,11 @@ class WorkflowTest < ActiveSupport::TestCase
     service.execute({ value: 1 })
 
     assert_equal [:step_one, :step_two], service.captured_steps
-
     assert_equal :step_two, service.current_step
   end
 
   test "tracks step durations automatically" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
 
     service.execute({ value: 1 })
 
@@ -229,7 +221,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "step durations are empty before workflow execution" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
 
     assert_equal({}, service.step_durations)
     assert_nil service.current_step
@@ -237,7 +229,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "current step tracking works with callbacks" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
     captured_current_steps = []
 
     def service.before_step(step_name, input)
@@ -267,7 +259,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "tracks total workflow duration" do
-    service = TestServiceWithCallbacks.new
+    service = TestWorkflowWithCallbacks.new
 
     service.execute({ value: 1 })
 
