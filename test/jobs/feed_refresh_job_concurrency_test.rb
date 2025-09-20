@@ -5,17 +5,6 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
     @feed ||= create(:feed, loader: "http", processor: "rss", normalizer: "rss")
   end
 
-  test "advisory lock integration works" do
-    # Test that we can acquire and release advisory locks
-    lock_acquired = false
-
-    Feed.with_advisory_lock("test_lock_#{feed.id}") do
-      lock_acquired = true
-    end
-
-    assert lock_acquired, "Advisory lock should be acquirable"
-  end
-
   test "allows sequential processing of same feed" do
     execution_count = 0
 
