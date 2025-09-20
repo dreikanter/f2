@@ -38,7 +38,6 @@ class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
     original_method = FeedRefreshWorkflow.instance_method(:execute)
     FeedRefreshWorkflow.define_method(:execute) do
       execution_tracker[feed.id] = true
-      sleep(0.02) # Brief processing time
     end
 
     # Run jobs for different feeds concurrently
