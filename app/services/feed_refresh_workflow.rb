@@ -63,7 +63,7 @@ class FeedRefreshWorkflow
 
     uids = processed_entries.map { |entry| entry[:uid] }
     existing_uids = feed.feed_entries.where(uid: uids).pluck(:uid).to_set
-    processed_entries.filter { |entry| !existing_uids.include?(entry[:uid]) }
+    processed_entries.filter { |entry| existing_uids.exclude?(entry[:uid]) }
   end
 
   def persist_entries(new_entries)
