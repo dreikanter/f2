@@ -13,6 +13,7 @@ SimpleCov.start "rails"
 require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
+require "minitest/mock"
 
 module ActiveSupport
   class TestCase

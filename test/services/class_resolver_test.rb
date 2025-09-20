@@ -1,5 +1,4 @@
 require "test_helper"
-require "minitest/mock"
 
 class ClassResolverTest < ActiveSupport::TestCase
   test "resolves existing class with correct scope and key" do
