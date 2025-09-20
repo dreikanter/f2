@@ -6,7 +6,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     @feed ||= create(:feed, loader: "http", processor: "rss", normalizer: "rss")
   end
 
-  test "persist_feed_entries creates new entries and skips duplicates" do
+  test "persist_entries creates new entries and skips duplicates" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     processed_entries = [
@@ -23,22 +23,24 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     ]
 
     # First run should create both entries
-    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
+    filtered_entries = workflow.send(:filter_new_entries, processed_entries)
+    new_entries = workflow.send(:persist_entries, filtered_entries)
     assert_equal 2, new_entries.count
     assert_equal ["entry-1", "entry-2"], new_entries.map(&:uid).sort
 
     # Verify entries were created
     assert_equal 2, FeedEntry.where(feed: feed).count
 
-    # Second run with same entries should create none (skip duplicates)
-    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
+    # Second run with same entries should create none (filtered out)
+    filtered_entries = workflow.send(:filter_new_entries, processed_entries)
+    new_entries = workflow.send(:persist_entries, filtered_entries)
     assert_equal 0, new_entries.count
 
     # Total should still be 2
     assert_equal 2, FeedEntry.where(feed: feed).count
   end
 
-  test "persist_feed_entries maintains order" do
+  test "persist_entries maintains order" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     processed_entries = [
@@ -59,7 +61,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       }
     ]
 
-    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
+    new_entries = workflow.send(:persist_entries, processed_entries)
 
     assert_equal ["first", "second", "third"], new_entries.map(&:uid)
 
@@ -68,68 +70,49 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal ["first", "second", "third"], entries.pluck(:uid)
   end
 
-  test "normalize_single_entry handles successful normalization" do
+  test "normalize_entries returns posts for each entry" do
     workflow = FeedRefreshWorkflow.new(feed)
-    entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
+
+    entry1 = create(:feed_entry, feed: feed, uid: "entry-1")
+    entry2 = create(:feed_entry, feed: feed, uid: "entry-2")
+    new_entries = [entry1, entry2]
 
     # Mock the normalizer instance
     mock_normalizer = Minitest::Mock.new
-    mock_post = build(:post, feed: feed, feed_entry: entry, status: :enqueued)
-    mock_post.save!
-    mock_normalizer.expect(:normalize, mock_post)
+    mock_post1 = build(:post, feed: feed, feed_entry: entry1, status: :draft)
+    mock_post2 = build(:post, feed: feed, feed_entry: entry2, status: :rejected)
+
+    mock_normalizer.expect(:normalize, mock_post1, [entry1])
+    mock_normalizer.expect(:normalize, mock_post2, [entry2])
 
     # Mock the feed's normalizer_instance method
     feed.stub(:normalizer_instance, mock_normalizer) do
-      result = workflow.send(:normalize_single_entry, entry, feed)
+      posts = workflow.send(:normalize_entries, new_entries)
 
-      assert_equal "processed", entry.reload.status
-      assert_equal true, result[:valid]
-      assert_equal 1, Post.where(feed_entry: entry).count
+      assert_equal 2, posts.length
+      assert_equal [entry1, entry2], posts.map(&:feed_entry)
+      assert_equal ["draft", "rejected"], posts.map(&:status)
     end
 
     mock_normalizer.verify
   end
 
-  test "normalize_single_entry handles rejected posts" do
+  test "persist_posts saves posts with draft status" do
     workflow = FeedRefreshWorkflow.new(feed)
-    entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
 
-    # Mock the normalizer instance
-    mock_normalizer = Minitest::Mock.new
-    mock_post = build(:post, feed: feed, feed_entry: entry, status: :rejected)
-    mock_post.save!
-    mock_normalizer.expect(:normalize, mock_post)
+    entry1 = create(:feed_entry, feed: feed, uid: "entry-1")
+    entry2 = create(:feed_entry, feed: feed, uid: "entry-2")
 
-    # Mock the feed's normalizer_instance method
-    feed.stub(:normalizer_instance, mock_normalizer) do
-      result = workflow.send(:normalize_single_entry, entry, feed)
+    post1 = build(:post, feed: feed, feed_entry: entry1, status: :draft, uid: "post-1", source_url: "https://example.com/1", content: "Content 1", published_at: Time.current)
+    post2 = build(:post, feed: feed, feed_entry: entry2, status: :rejected, uid: "post-2", source_url: "https://example.com/2", content: "Content 2", published_at: Time.current)
+    posts = [post1, post2]
 
-      assert_equal "processed", entry.reload.status
-      assert_equal false, result[:valid]
-    end
+    result = workflow.send(:persist_posts, posts)
 
-    mock_normalizer.verify
-  end
-
-  test "normalize_single_entry handles errors gracefully" do
-    workflow = FeedRefreshWorkflow.new(feed)
-    entry = create(:feed_entry, feed: feed, uid: "test-entry", status: :pending)
-
-    # Mock the normalizer instance to raise an error
-    mock_normalizer = Minitest::Mock.new
-    mock_normalizer.expect(:normalize, nil) { raise StandardError, "Normalization failed" }
-
-    # Mock the feed's normalizer_instance method
-    feed.stub(:normalizer_instance, mock_normalizer) do
-      assert_logs_match(/Failed to normalize feed entry/) do
-        result = workflow.send(:normalize_single_entry, entry, feed)
-
-        assert_equal "processed", entry.reload.status
-        assert_equal false, result[:valid]
-      end
-    end
-
-    mock_normalizer.verify
+    assert_equal posts, result
+    assert_equal 1, Post.where(status: :published).count  # draft posts become published
+    assert_equal 0, Post.where(status: :rejected).count   # rejected posts are not persisted
+    assert_equal 1, Post.count  # only draft posts are saved
   end
 
   private

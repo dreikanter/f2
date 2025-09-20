@@ -51,7 +51,7 @@ class WorkflowTest < ActiveSupport::TestCase
     end
 
     def run_workflow_with_callbacks
-      execute({ value: 1 }, before: :before_step, after: :after_step)
+      execute({ value: 1 })
     end
 
     private

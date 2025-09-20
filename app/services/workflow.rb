@@ -26,6 +26,10 @@
 #     end
 #   end
 module Workflow
+  def self.included(base)
+    base.extend(ClassMethods)
+  end
+
   attr_reader :current_step
 
   module ClassMethods
@@ -43,25 +47,24 @@ module Workflow
     steps = self.class.workflow_steps
     current_input = initial_input
 
-    begin
-      steps.each do |step_name|
-        @current_step = step_name
-        start_step_timer(step_name)
+    steps.each do |step_name|
+      @current_step = step_name
+      start_step_timer(step_name)
+
+      begin
         before_step(step_name, current_input)
-
         current_input = send(step_name, current_input)
-
         after_step(step_name, current_input)
-        end_step_timer(step_name)
+      rescue => e
+        on_error(step_name, e)
+        raise
       end
 
-      @total_workflow_duration = Time.current - workflow_start_time
-
-      current_input
-    rescue StandardError => e
-      @total_workflow_duration = Time.current - workflow_start_time
-      on_error(e)
+      end_step_timer(step_name)
     end
+
+    @total_workflow_duration = Time.current - workflow_start_time
+    current_input
   end
 
   def step_durations
@@ -74,15 +77,15 @@ module Workflow
 
   private
 
-  def before_step(_input)
+  def before_step(_step_name, _input)
     # Override
   end
 
-  def after_step(_result)
+  def after_step(_step_name, _result)
     # Override
   end
 
-  def on_error(_error)
+  def on_error(step_name, error)
     # Override
   end
 
