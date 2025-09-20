@@ -26,6 +26,7 @@
 #     end
 #   end
 module Workflow
+  # Enable DSL syntax
   def self.included(base)
     base.extend(ClassMethods)
   end
@@ -52,9 +53,11 @@ module Workflow
       start_step_timer(step_name)
 
       begin
+        logger.info "#{self.class.name}: Starting step: #{step_name}"
         before_step(step_name, current_input)
         current_input = send(step_name, current_input)
         after_step(step_name, current_input)
+        logger.info "#{self.class.name}: Completed step: #{step_name}"
       rescue => e
         on_error(step_name, e)
         raise
@@ -75,22 +78,14 @@ module Workflow
     @total_duration || 0.0
   end
 
-  def logger
-    Rails.logger
-  end
-
   private
 
   def before_step(step_name, _input)
-    logger.info "#{workflow_name}: Starting step: #{step_name}"
+    # Override
   end
 
   def after_step(step_name, _result)
-    logger.info "#{workflow_name}: Completed step: #{step_name}"
-  end
-
-  def workflow_name
-    @workflow_name ||= self.class.name
+    # Override
   end
 
   def on_error(step_name, error)
@@ -112,5 +107,9 @@ module Workflow
 
   def step_timers
     @step_timers ||= {}
+  end
+
+  def logger
+    Rails.logger
   end
 end

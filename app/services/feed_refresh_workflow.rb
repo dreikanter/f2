@@ -20,7 +20,6 @@ class FeedRefreshWorkflow
   private
 
   def after_step(step_name, output)
-    super
     record_duration(step_name)
   end
 
