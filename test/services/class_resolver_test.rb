@@ -40,19 +40,6 @@ class ClassResolverTest < ActiveSupport::TestCase
     # Test the class method interface directly
     result = ClassResolver.resolve("Processor", "rss_processor")
     assert_equal Processor::RssProcessor, result
-
-    # Verify it's equivalent to instance method
-    resolver_instance = ClassResolver.new("Processor", "rss_processor")
-    instance_result = resolver_instance.resolve
-    assert_equal result, instance_result
-  end
-
-  test "builds correct class name from scope and key" do
-    resolver = ClassResolver.new("TestScope", "test_key")
-
-    # Access private method for testing
-    class_name = resolver.send(:build_class_name)
-    assert_equal "TestScope::TestKey", class_name
   end
 
   test "handles empty and nil keys gracefully" do
@@ -85,12 +72,10 @@ class ClassResolverTest < ActiveSupport::TestCase
     assert_equal "Unknown loader: unknown", error2.message
   end
 
-  test "resolver instance maintains state correctly" do
-    resolver = ClassResolver.new("Processor", "rss_processor")
-
-    # Should be able to call resolve multiple times
-    result1 = resolver.resolve
-    result2 = resolver.resolve
+  test "module method can be called multiple times" do
+    # Should be able to call resolve multiple times with same result
+    result1 = ClassResolver.resolve("Processor", "rss_processor")
+    result2 = ClassResolver.resolve("Processor", "rss_processor")
 
     assert_equal result1, result2
     assert_equal Processor::RssProcessor, result1
