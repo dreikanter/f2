@@ -14,7 +14,13 @@ class Post < ApplicationRecord
 
   validate :validate_comments_length
 
-  enum :status, { draft: 0, enqueued: 1, rejected: 2, published: 3, failed: 4 }
+  enum :status, {
+    draft: 0,
+    enqueued: 1,
+    rejected: 2,
+    published: 3,
+    failed: 4
+  }
 
   private
 

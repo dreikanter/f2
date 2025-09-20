@@ -4,9 +4,9 @@ FactoryBot.define do
     sequence(:name) { |n| "sample-feed-#{n}" }
     url { "https://example.com/feed.xml" }
     cron_expression { "0 */6 * * *" }
-    loader { "http" }
-    processor { "rss" }
-    normalizer { "rss" }
+    loader { "http_loader" }
+    processor { "rss_processor" }
+    normalizer { "rss_normalizer" }
     state { :disabled }
     description { "" }
     import_after { nil }
