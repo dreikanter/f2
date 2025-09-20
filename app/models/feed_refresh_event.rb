@@ -21,7 +21,7 @@ class FeedRefreshEvent
   # @param stage [String] the workflow stage where error occurred
   # @param stats [Hash] partial statistics collected before error
   # @return [Event] created event record
-  def self.create_error(feed:, error:, stage:, stats: = {})
+  def self.create_error(feed:, error:, stage:, stats: {})
     Event.create!(
       type: "feed_refresh_error",
       level: :error,
@@ -38,28 +38,5 @@ class FeedRefreshEvent
         }
       }
     )
-  end
-
-  # Creates an empty statistics hash with default values
-  # @return [Hash] default statistics structure
-  def self.default_stats
-    {
-      # Workflow timing
-      total_duration: 0.0,
-      load_duration: 0.0,
-      process_duration: 0.0,
-      normalize_duration: 0.0,
-
-      # Content metrics
-      content_size: 0,
-      total_entries: 0,
-      new_entries: 0,
-      new_posts: 0,
-      invalid_posts: 0,
-
-      # Timestamps
-      started_at: Time.current.iso8601,
-      completed_at: nil
-    }
   end
 end

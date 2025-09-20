@@ -26,59 +26,42 @@
 #     end
 #   end
 module Workflow
-  def self.included(base)
-    base.extend(ClassMethods)
-    base.class_eval do
-      @workflow_steps = []
-    end
-  end
+  attr_reader :current_step
 
   module ClassMethods
     def step(step_name)
-      @workflow_steps ||= []
-      @workflow_steps << step_name
+      workflow_steps << step_name
     end
 
     def workflow_steps
-      @workflow_steps || []
+      @workflow_steps ||= []
     end
   end
 
-  def execute(initial_input = nil, before: nil, after: nil, on_error: nil)
-    @workflow_timers = {}
-    @workflow_start_time = Time.current
-
+  def execute(initial_input = nil)
+    workflow_start_time = Time.current
     steps = self.class.workflow_steps
-
     current_input = initial_input
+
     begin
       steps.each do |step_name|
         @current_step = step_name
         start_step_timer(step_name)
-
-        send(before, step_name, current_input) if before
+        before_step(step_name, current_input)
 
         current_input = send(step_name, current_input)
 
-        send(after, step_name, current_input) if after
-
+        after_step(step_name, current_input)
         end_step_timer(step_name)
       end
 
-      @total_workflow_duration = Time.current - @workflow_start_time
+      @total_workflow_duration = Time.current - workflow_start_time
 
       current_input
     rescue StandardError => e
-      @total_workflow_duration = Time.current - @workflow_start_time
-
-      send(on_error, e) if on_error
-
-      raise
+      @total_workflow_duration = Time.current - workflow_start_time
+      on_error(e)
     end
-  end
-
-  def current_step
-    @current_step
   end
 
   def step_durations
@@ -91,16 +74,32 @@ module Workflow
 
   private
 
+  def before_step(_input)
+    # Override
+  end
+
+  def after_step(_result)
+    # Override
+  end
+
+  def on_error(_error)
+    # Override
+  end
+
   def start_step_timer(step_name)
-    @workflow_timers[step_name] = Time.current
+    workflow_timers[step_name] = Time.current
   end
 
   def end_step_timer(step_name)
-    start_time = @workflow_timers.delete(step_name)
+    start_time = workflow_timers.delete(step_name)
     return 0.0 if start_time.nil?
 
     duration = Time.current - start_time
     step_durations[step_name] = duration
     duration
+  end
+
+  def workflow_timers
+    @workflow_timers ||= {}
   end
 end
