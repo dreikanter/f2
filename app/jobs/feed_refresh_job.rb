@@ -1,5 +1,5 @@
 class FeedRefreshJob < ApplicationJob
-  include WorkflowExecutor
+  include Workflow
 
   queue_as :default
 
@@ -24,59 +24,128 @@ class FeedRefreshJob < ApplicationJob
 
   # @param feed [Feed] the feed to refresh
   def refresh_feed(feed)
-    execute_workflow(feed: feed) do
-      step :initialize_workflow
-      step :load_feed_contents_step
-      step :process_feed_contents_step
-      step :persist_feed_entries_step
-      step :normalize_feed_entries_step
-      step :finalize_workflow
+    @feed = feed
+    @stats = FeedRefreshEvent.default_stats
+    @timers = {}
+
+    initial_input = { feed: feed }
+
+    result = execute_workflow(initial_input, before: :before_step, after: :after_step) do |workflow|
+      workflow.step :initialize_workflow
+      workflow.step :load_feed_contents
+      workflow.step :process_feed_contents
+      workflow.step :persist_feed_entries_workflow_step
+      workflow.step :normalize_feed_entries_workflow_step
+      workflow.step :finalize_workflow
     end
+  rescue StandardError => e
+    handle_workflow_error(e)
+    raise
+  end
+
+  def before_step(step_name, input)
+    Rails.logger.info "Starting step: #{step_name}"
+  end
+
+  def after_step(step_name, output)
+    Rails.logger.info "Completed step: #{step_name}"
+  end
+
+  def handle_workflow_error(error)
+    # Finalize partial stats
+    @stats[:total_duration] = end_timer(:total, allow_missing: true) if @timers[:total]
+    @stats[:failed_at_step] = @current_step
+
+    # Create error event
+    FeedRefreshEvent.create_error(
+      @feed,
+      error,
+      @current_step.to_s,
+      @stats
+    )
   end
 
   # Step implementations - clean, focused methods
-  def initialize_workflow(ctx)
-    ctx.start_timer(:total)
-    ctx.log_info "Starting feed refresh for feed #{ctx.feed.id}"
+  def initialize_workflow(input)
+    start_timer(:total)
+    Rails.logger.info "Starting feed refresh for feed #{input[:feed].id}"
+    input
   end
 
-  def load_feed_contents_step(ctx)
-    ctx.start_timer(:load)
-    ctx.raw_data = load_feed_contents(ctx.feed)
-    ctx.record_stats(
-      load_duration: ctx.end_timer(:load),
-      content_size: ctx.raw_data.bytesize
+  def load_feed_contents(input)
+    start_timer(:load)
+    raw_data = load_feed_contents_impl(input[:feed])
+    record_stats(
+      load_duration: end_timer(:load),
+      content_size: raw_data.bytesize
     )
+    input.merge(raw_data: raw_data)
   end
 
-  def process_feed_contents_step(ctx)
-    ctx.start_timer(:process)
-    ctx.processed_entries = process_feed_contents(ctx.feed, ctx.raw_data)
-    ctx.record_stats(
-      process_duration: ctx.end_timer(:process),
-      total_entries: ctx.processed_entries.size
+  def process_feed_contents(input)
+    start_timer(:process)
+    processed_entries = process_feed_contents_impl(input[:feed], input[:raw_data])
+    record_stats(
+      process_duration: end_timer(:process),
+      total_entries: processed_entries.size
     )
+    input.merge(processed_entries: processed_entries)
   end
 
-  def persist_feed_entries_step(ctx)
-    ctx.new_feed_entries = persist_feed_entries(ctx.feed, ctx.processed_entries)
-    ctx.record_stats(new_entries: ctx.new_feed_entries.size)
+  def persist_feed_entries_workflow_step(input)
+    new_feed_entries = persist_feed_entries_impl(input[:feed], input[:processed_entries])
+    record_stats(new_entries: new_feed_entries.size)
+    input.merge(new_feed_entries: new_feed_entries)
   end
 
-  def normalize_feed_entries_step(ctx)
-    return ctx.record_stats(new_posts: 0, invalid_posts: 0) if ctx.new_feed_entries.empty?
+  def normalize_feed_entries_workflow_step(input)
+    if input[:new_feed_entries].empty?
+      record_stats(new_posts: 0, invalid_posts: 0)
+      return input
+    end
 
-    ctx.start_timer(:normalize)
-    normalize_results = normalize_feed_entries(ctx.new_feed_entries)
-    ctx.record_stats(
-      normalize_duration: ctx.end_timer(:normalize),
+    start_timer(:normalize)
+    normalize_results = normalize_feed_entries_impl(input[:new_feed_entries])
+    record_stats(
+      normalize_duration: end_timer(:normalize),
       new_posts: normalize_results[:valid_posts],
       invalid_posts: normalize_results[:invalid_posts]
     )
+    input.merge(normalize_results: normalize_results)
+  end
+
+  def finalize_workflow(input)
+    record_stats(
+      total_duration: end_timer(:total),
+      completed_at: Time.current.iso8601
+    )
+
+    FeedRefreshEvent.create_stats(input[:feed], @stats)
+    Rails.logger.info "Feed refresh completed for feed #{input[:feed].id}, processed #{input[:new_feed_entries].count} new entries"
+    input
+  end
+
+  # Timer management
+  def start_timer(name)
+    @timers[name] = Time.current
+  end
+
+  def end_timer(name, allow_missing: false)
+    start_time = @timers.delete(name)
+    return 0.0 if start_time.nil? && allow_missing
+
+    raise "Timer #{name} not found" if start_time.nil?
+
+    Time.current - start_time
+  end
+
+  # Stats management
+  def record_stats(new_stats = {})
+    @stats.merge!(new_stats)
   end
 
   # Original methods for backward compatibility and testing
-  def load_feed_contents(feed)
+  def load_feed_contents_impl(feed)
     feed.loader_instance.load
   rescue ArgumentError => e
     # Re-raise ArgumentError as-is for invalid loader configurations
@@ -85,7 +154,7 @@ class FeedRefreshJob < ApplicationJob
     raise StandardError, "Failed to load feed from URL #{feed.url}: #{e.message}"
   end
 
-  def process_feed_contents(feed, raw_data)
+  def process_feed_contents_impl(feed, raw_data)
     entries = feed.processor_instance(raw_data).process
     normalize_entry_keys(entries)
   rescue ArgumentError => e
@@ -96,7 +165,12 @@ class FeedRefreshJob < ApplicationJob
     raise StandardError, "Failed to process feed content (#{raw_data.bytesize} bytes, preview: '#{content_preview}'): #{e.message}"
   end
 
+  # Original method for backward compatibility and testing
   def persist_feed_entries(feed, processed_entries)
+    persist_feed_entries_impl(feed, processed_entries)
+  end
+
+  def persist_feed_entries_impl(feed, processed_entries)
     new_entries = []
     processed_entries.each do |entry_data|
       uid = entry_data[:uid]
@@ -120,7 +194,12 @@ class FeedRefreshJob < ApplicationJob
     new_entries
   end
 
+  # Original method for backward compatibility and testing
   def normalize_feed_entries(feed_entries)
+    normalize_feed_entries_impl(feed_entries)
+  end
+
+  def normalize_feed_entries_impl(feed_entries)
     return { valid_posts: 0, invalid_posts: 0 } if feed_entries.empty?
 
     feed = feed_entries.first.feed
@@ -145,15 +224,7 @@ class FeedRefreshJob < ApplicationJob
     { valid_posts: valid_posts, invalid_posts: invalid_posts }
   end
 
-  def finalize_workflow(ctx)
-    ctx.record_stats(
-      total_duration: ctx.end_timer(:total),
-      completed_at: Time.current.iso8601
-    )
 
-    FeedRefreshEvent.create_stats(ctx.feed, ctx.stats)
-    ctx.log_info "Feed refresh completed for feed #{ctx.feed.id}, processed #{ctx.new_feed_entries.count} new entries"
-  end
 
   # @param feed_entry [FeedEntry] the feed entry to normalize
   # @param feed [Feed] the feed (for creating normalizer instance)
