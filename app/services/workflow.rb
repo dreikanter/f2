@@ -4,13 +4,13 @@
 #   class MyService
 #     include Workflow
 #
-#     def run_workflow
-#       result = execute_workflow(initial_input, before: :log_step, after: :track_time) do |workflow|
-#         workflow.step :initialize_workflow
-#         workflow.step :load_data
-#         workflow.step :process_data
-#         workflow.step :finalize_workflow
-#       end
+#     step :initialize_workflow
+#     step :load_data
+#     step :process_data
+#     step :finalize_workflow
+#
+#     def initialize(initial_input)
+#       @initial_input = initial_input
 #     end
 #
 #     private
@@ -26,67 +26,71 @@
 #     end
 #   end
 module Workflow
-  # Execute a workflow with a series of steps
-  #
-  # @param initial_input [Object] Optional initial input for the first step
-  # @param before [Symbol] Optional callback method to call before each step
-  # @param after [Symbol] Optional callback method to call after each step
-  # @yield [collector] Block that defines the workflow steps
-  # @return [Object] Result from the last step
-  def execute_workflow(initial_input = nil, before: nil, after: nil, &block)
-    # Initialize workflow tracking
+  def self.included(base)
+    base.extend(ClassMethods)
+    base.class_eval do
+      @workflow_steps = []
+    end
+  end
+
+  module ClassMethods
+    def step(step_name)
+      @workflow_steps ||= []
+      @workflow_steps << step_name
+    end
+
+    def workflow_steps
+      @workflow_steps || []
+    end
+  end
+
+  def execute(initial_input = nil, before: nil, after: nil, on_error: nil)
     @workflow_timers = {}
     @workflow_start_time = Time.current
 
-    # Collect step names
-    collector = StepCollector.new
-    collector.instance_eval(&block)
-    steps = collector.steps
+    steps = self.class.workflow_steps
 
-    # Execute steps sequentially
     current_input = initial_input
-    steps.each do |step_name|
-      # Track current step and start timer
-      @current_step = step_name
-      start_step_timer(step_name)
+    begin
+      steps.each do |step_name|
+        @current_step = step_name
+        start_step_timer(step_name)
 
-      # Execute before callback if provided
-      send(before, step_name, current_input) if before
+        send(before, step_name, current_input) if before
 
-      # Execute the step - this preserves the call stack for clean backtraces
-      current_input = send(step_name, current_input)
+        current_input = send(step_name, current_input)
 
-      # Execute after callback if provided
-      send(after, step_name, current_input) if after
+        send(after, step_name, current_input) if after
 
-      # End timer and record duration
-      end_step_timer(step_name)
+        end_step_timer(step_name)
+      end
+
+      @total_workflow_duration = Time.current - @workflow_start_time
+
+      current_input
+    rescue StandardError => e
+      @total_workflow_duration = Time.current - @workflow_start_time
+
+      send(on_error, e) if on_error
+
+      raise
     end
-
-    # Record total workflow duration
-    @total_workflow_duration = Time.current - @workflow_start_time
-
-    current_input
   end
 
-  # Access the current step being executed
   def current_step
     @current_step
   end
 
-  # Get step durations recorded during workflow execution
   def step_durations
     @step_durations ||= {}
   end
 
-  # Get total workflow duration (from start to end of execution)
   def total_duration
     @total_workflow_duration || 0.0
   end
 
   private
 
-  # Timer management for workflow steps
   def start_step_timer(step_name)
     @workflow_timers[step_name] = Time.current
   end
@@ -98,18 +102,5 @@ module Workflow
     duration = Time.current - start_time
     step_durations[step_name] = duration
     duration
-  end
-
-  # Internal helper to collect step definitions from the block
-  class StepCollector
-    attr_reader :steps
-
-    def initialize
-      @steps = []
-    end
-
-    def step(name)
-      @steps << name
-    end
   end
 end

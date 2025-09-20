@@ -4,6 +4,10 @@ class WorkflowTest < ActiveSupport::TestCase
   class TestService
     include Workflow
 
+    step :step_one
+    step :step_two
+    step :step_three
+
     attr_reader :execution_log, :step_timings
 
     def initialize
@@ -12,24 +16,7 @@ class WorkflowTest < ActiveSupport::TestCase
     end
 
     def run_simple_workflow
-      execute_workflow({ value: 1 }) do |workflow|
-        workflow.step :step_one
-        workflow.step :step_two
-        workflow.step :step_three
-      end
-    end
-
-    def run_workflow_with_callbacks
-      execute_workflow({ value: 1 }, before: :before_step, after: :after_step) do |workflow|
-        workflow.step :step_one
-        workflow.step :step_two
-      end
-    end
-
-    def run_workflow_without_initial_input
-      execute_workflow do |workflow|
-        workflow.step :step_without_input
-      end
+      execute({ value: 1 })
     end
 
     private
@@ -48,10 +35,35 @@ class WorkflowTest < ActiveSupport::TestCase
       @execution_log << "step_three with #{input}"
       { value: input[:value] * 3, step: :three, final: true }
     end
+  end
 
-    def step_without_input(input)
-      @execution_log << "step_without_input with #{input.inspect}"
-      { created_value: 42 }
+  class TestServiceWithCallbacks
+    include Workflow
+
+    step :step_one
+    step :step_two
+
+    attr_reader :execution_log, :step_timings
+
+    def initialize
+      @execution_log = []
+      @step_timings = {}
+    end
+
+    def run_workflow_with_callbacks
+      execute({ value: 1 }, before: :before_step, after: :after_step)
+    end
+
+    private
+
+    def step_one(input)
+      @execution_log << "step_one with #{input}"
+      { value: input[:value] * 2, step: :one }
+    end
+
+    def step_two(input)
+      @execution_log << "step_two with #{input}"
+      { value: input[:value] + 1, step: :two }
     end
 
     def before_step(step_name, input)
@@ -62,6 +74,29 @@ class WorkflowTest < ActiveSupport::TestCase
     def after_step(step_name, output)
       @execution_log << "after #{step_name}"
       @step_timings[step_name][:completed_at] = Time.current
+    end
+  end
+
+  class TestServiceWithoutInput
+    include Workflow
+
+    step :step_without_input
+
+    attr_reader :execution_log
+
+    def initialize
+      @execution_log = []
+    end
+
+    def run_workflow_without_initial_input
+      execute
+    end
+
+    private
+
+    def step_without_input(input)
+      @execution_log << "step_without_input with #{input.inspect}"
+      { created_value: 42 }
     end
   end
 
@@ -83,7 +118,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "executes before and after callbacks" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
 
     result = service.run_workflow_with_callbacks
 
@@ -106,7 +141,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles workflow without initial input" do
-    service = TestService.new
+    service = TestServiceWithoutInput.new
 
     result = service.run_workflow_without_initial_input
 
@@ -137,27 +172,27 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "workflow with no steps returns initial input" do
-    service = TestService.new
+    empty_service_class = Class.new do
+      include Workflow
 
-    result = service.execute_workflow({ initial: :data }) do |workflow|
-      # No steps defined
+      def initialize
+      end
     end
+
+    service = empty_service_class.new
+    result = service.execute({ initial: :data })
 
     assert_equal({ initial: :data }, result)
   end
 
-  test "step collector properly accumulates steps" do
-    collector = Workflow::StepCollector.new
-
-    collector.step :first
-    collector.step :second
-    collector.step :third
-
-    assert_equal [:first, :second, :third], collector.steps
+  test "class-level step definitions are accessible" do
+    assert_equal [:step_one, :step_two, :step_three], TestService.workflow_steps
+    assert_equal [:step_one, :step_two], TestServiceWithCallbacks.workflow_steps
+    assert_equal [:step_without_input], TestServiceWithoutInput.workflow_steps
   end
 
   test "tracks current step during execution" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
 
     # Mock steps to capture current_step at execution time
     captured_steps = []
@@ -179,10 +214,7 @@ class WorkflowTest < ActiveSupport::TestCase
       @captured_steps || []
     end
 
-    service.execute_workflow({ value: 1 }) do |workflow|
-      workflow.step :step_one
-      workflow.step :step_two
-    end
+    service.execute({ value: 1 })
 
     # Verify current_step was correctly set during each step
     assert_equal [:step_one, :step_two], service.captured_steps
@@ -192,7 +224,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "tracks step durations automatically" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
 
     # Add small delays to make timing measurable
     def service.step_one(input)
@@ -205,10 +237,7 @@ class WorkflowTest < ActiveSupport::TestCase
       { value: input[:value] + 1 }
     end
 
-    service.execute_workflow({ value: 1 }) do |workflow|
-      workflow.step :step_one
-      workflow.step :step_two
-    end
+    service.execute({ value: 1 })
 
     # Verify step durations were recorded
     durations = service.step_durations
@@ -225,7 +254,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "step durations are empty before workflow execution" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
 
     assert_equal({}, service.step_durations)
     assert_nil service.current_step
@@ -233,20 +262,18 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "current step tracking works with callbacks" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
     captured_current_steps = []
 
     # Override callbacks to capture current_step
     def service.before_step(step_name, input)
       @captured_current_steps ||= []
       @captured_current_steps << { callback: :before, step_name: step_name, current_step: current_step }
-      super
     end
 
     def service.after_step(step_name, output)
       @captured_current_steps ||= []
       @captured_current_steps << { callback: :after, step_name: step_name, current_step: current_step }
-      super
     end
 
     def service.captured_current_steps
@@ -267,7 +294,7 @@ class WorkflowTest < ActiveSupport::TestCase
   end
 
   test "tracks total workflow duration" do
-    service = TestService.new
+    service = TestServiceWithCallbacks.new
 
     # Add delays to make timing measurable
     def service.step_one(input)
@@ -280,10 +307,7 @@ class WorkflowTest < ActiveSupport::TestCase
       { value: input[:value] + 1 }
     end
 
-    service.execute_workflow({ value: 1 }) do |workflow|
-      workflow.step :step_one
-      workflow.step :step_two
-    end
+    service.execute({ value: 1 })
 
     # Verify total duration was recorded and is reasonable
     total = service.total_duration

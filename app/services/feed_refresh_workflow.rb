@@ -1,6 +1,13 @@
 class FeedRefreshWorkflow
   include Workflow
 
+  step :initialize_workflow
+  step :load_feed_contents
+  step :process_feed_contents
+  step :persist_feed_entries_workflow_step
+  step :normalize_feed_entries_workflow_step
+  step :finalize_workflow
+
   attr_reader :feed, :stats
 
   def initialize(feed)
@@ -9,17 +16,7 @@ class FeedRefreshWorkflow
   end
 
   def execute
-    execute_workflow(feed, before: :before_step, after: :after_step) do |workflow|
-      workflow.step :initialize_workflow
-      workflow.step :load_feed_contents
-      workflow.step :process_feed_contents
-      workflow.step :persist_feed_entries_workflow_step
-      workflow.step :normalize_feed_entries_workflow_step
-      workflow.step :finalize_workflow
-    end
-  rescue StandardError => e
-    handle_workflow_error(e)
-    raise
+    super(feed, before: :before_step, after: :after_step, on_error: :handle_workflow_error)
   end
 
   private
