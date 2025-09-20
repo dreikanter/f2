@@ -10,8 +10,16 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     workflow = FeedRefreshWorkflow.new(feed)
 
     processed_entries = [
-      { uid: "entry-1", published_at: Time.current, raw_data: { "title" => "First" } },
-      { uid: "entry-2", published_at: Time.current, raw_data: { "title" => "Second" } }
+      {
+        uid: "entry-1",
+        published_at: Time.current,
+        raw_data: { "title" => "First" }
+      },
+      {
+        uid: "entry-2",
+        published_at: Time.current,
+        raw_data: { "title" => "Second" }
+      }
     ]
 
     # First run should create both entries
