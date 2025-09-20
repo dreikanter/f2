@@ -36,15 +36,14 @@ class FeedRefreshWorkflow
   end
 
   def handle_workflow_error(error)
-    # Finalize partial stats
-    stats[:total_duration] = end_timer(:total, allow_missing: true) if timers[:total]
-    stats[:failed_at_step] = @current_step
+    stats[:total_duration] = end_timer(:initialize_workflow) if timers[:initialize_workflow]
+    stats[:failed_at_step] = current_step
 
     # Create error event
     FeedRefreshEvent.create_error(
       feed,
       error,
-      @current_step.to_s,
+      current_step.to_s,
       stats
     )
   end
@@ -57,21 +56,21 @@ class FeedRefreshWorkflow
 
   def load_feed_contents(input)
     current_feed = input[:feed]
-    raw_data = load_feed_contents_impl(current_feed)
+    raw_data = load_feed_content(current_feed)
     record_stats(content_size: raw_data.bytesize)
     input.merge(raw_data: raw_data)
   end
 
   def process_feed_contents(input)
     current_feed = input[:feed]
-    processed_entries = process_feed_contents_impl(current_feed, input[:raw_data])
+    processed_entries = process_feed_content(current_feed, input[:raw_data])
     record_stats(total_entries: processed_entries.size)
     input.merge(processed_entries: processed_entries)
   end
 
   def persist_feed_entries_workflow_step(input)
     current_feed = input[:feed]
-    new_feed_entries = persist_feed_entries_impl(current_feed, input[:processed_entries])
+    new_feed_entries = persist_feed_entries(current_feed, input[:processed_entries])
     record_stats(new_entries: new_feed_entries.size)
     input.merge(new_feed_entries: new_feed_entries)
   end
@@ -82,7 +81,7 @@ class FeedRefreshWorkflow
       return input
     end
 
-    normalize_results = normalize_feed_entries_impl(input[:new_feed_entries])
+    normalize_results = normalize_feed_entries(input[:new_feed_entries])
     record_stats(
       new_posts: normalize_results[:valid_posts],
       invalid_posts: normalize_results[:invalid_posts]
@@ -91,7 +90,7 @@ class FeedRefreshWorkflow
   end
 
   def finalize_workflow(input)
-    record_stats(completed_at: Time.current.iso8601)
+    record_stats(completed_at: Time.current.rfc3339)
 
     current_feed = input[:feed]
     FeedRefreshEvent.create_stats(current_feed, stats)
@@ -104,78 +103,61 @@ class FeedRefreshWorkflow
     timers[name] = Time.current
   end
 
-  def end_timer(name, allow_missing: false)
+  def end_timer(name)
     start_time = timers.delete(name)
-    return 0.0 if start_time.nil? && allow_missing
-
-    raise "Timer #{name} not found" if start_time.nil?
+    return 0.0 if start_time.nil?
 
     Time.current - start_time
   end
 
-  # Step timer management
   def start_step_timer(step_name)
-    timer_name = step_timer_name(step_name)
-    start_timer(timer_name) if timer_name
+    timer_name = step_name == :finalize_workflow ? :initialize_workflow : step_name
+    start_timer(timer_name)
   end
 
   def end_step_timer_and_record_stats(step_name, output)
-    timer_name = step_timer_name(step_name)
-    return unless timer_name
-
+    timer_name = step_name == :finalize_workflow ? :initialize_workflow : step_name
     duration = end_timer(timer_name)
+    return if duration.zero?
+
     stats_key = step_stats_key(step_name)
     record_stats(stats_key => duration) if stats_key
   end
 
-  def step_timer_name(step_name)
-    case step_name
-    when :initialize_workflow then :total
-    when :load_feed_contents then :load
-    when :process_feed_contents then :process
-    when :normalize_feed_entries_workflow_step then :normalize
-    when :finalize_workflow then :total
-    else nil
-    end
-  end
-
   def step_stats_key(step_name)
     case step_name
-    when :load_feed_contents then :load_duration
-    when :process_feed_contents then :process_duration
-    when :normalize_feed_entries_workflow_step then :normalize_duration
-    when :finalize_workflow then :total_duration
-    else nil
+    when :initialize_workflow
+      nil # Don't record duration for start
+    when :finalize_workflow
+      :total_duration
+    else
+      "#{step_name}_duration".to_sym
     end
   end
 
-  # Stats management
   def record_stats(new_stats = {})
     stats.merge!(new_stats)
   end
 
-  # Original methods for backward compatibility and testing
-  def load_feed_contents_impl(feed)
+  def load_feed_content(feed)
     feed.loader_instance.load
-  rescue ArgumentError => e
-    # Re-raise ArgumentError as-is for invalid loader configurations
+  rescue ArgumentError
     raise
   rescue StandardError => e
     raise StandardError, "Failed to load feed from URL #{feed.url}: #{e.message}"
   end
 
-  def process_feed_contents_impl(feed, raw_data)
+  def process_feed_content(feed, raw_data)
     entries = feed.processor_instance(raw_data).process
     normalize_entry_keys(entries)
-  rescue ArgumentError => e
-    # Re-raise ArgumentError as-is for invalid processor configurations
+  rescue ArgumentError
     raise
   rescue StandardError => e
     content_preview = raw_data.truncate(100) if raw_data.respond_to?(:truncate)
     raise StandardError, "Failed to process feed content (#{raw_data.bytesize} bytes, preview: '#{content_preview}'): #{e.message}"
   end
 
-  def persist_feed_entries_impl(feed, processed_entries)
+  def persist_feed_entries(feed, processed_entries)
     new_entries = []
     processed_entries.each do |entry_data|
       uid = entry_data[:uid]
@@ -199,7 +181,7 @@ class FeedRefreshWorkflow
     new_entries
   end
 
-  def normalize_feed_entries_impl(feed_entries)
+  def normalize_feed_entries(feed_entries)
     return { valid_posts: 0, invalid_posts: 0 } if feed_entries.empty?
 
     feed = feed_entries.first.feed
@@ -236,9 +218,6 @@ class FeedRefreshWorkflow
 
     # Return whether the post is valid (enqueued) or invalid (rejected)
     { valid: post.status == "enqueued" }
-  rescue ArgumentError => e
-    # Re-raise ArgumentError as-is for invalid normalizer configurations
-    raise
   rescue StandardError => e
     Rails.logger.error "Failed to normalize feed entry #{feed_entry.id}: #{e.message}"
     feed_entry.update!(status: :processed)

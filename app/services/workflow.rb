@@ -42,6 +42,9 @@ module Workflow
     # Execute steps sequentially
     current_input = initial_input
     steps.each do |step_name|
+      # Track current step
+      @current_step = step_name
+
       # Execute before callback if provided
       send(before, step_name, current_input) if before
 
@@ -53,6 +56,11 @@ module Workflow
     end
 
     current_input
+  end
+
+  # Access the current step being executed
+  def current_step
+    @current_step
   end
 
   private

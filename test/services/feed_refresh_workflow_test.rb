@@ -6,7 +6,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     @feed ||= create(:feed, loader: "http", processor: "rss", normalizer: "rss")
   end
 
-  test "persist_feed_entries_impl creates new entries and skips duplicates" do
+  test "persist_feed_entries creates new entries and skips duplicates" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     processed_entries = [
@@ -23,7 +23,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     ]
 
     # First run should create both entries
-    new_entries = workflow.send(:persist_feed_entries_impl, feed, processed_entries)
+    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
     assert_equal 2, new_entries.count
     assert_equal ["entry-1", "entry-2"], new_entries.map(&:uid).sort
 
@@ -31,23 +31,35 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, FeedEntry.where(feed: feed).count
 
     # Second run with same entries should create none (skip duplicates)
-    new_entries = workflow.send(:persist_feed_entries_impl, feed, processed_entries)
+    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
     assert_equal 0, new_entries.count
 
     # Total should still be 2
     assert_equal 2, FeedEntry.where(feed: feed).count
   end
 
-  test "persist_feed_entries_impl maintains order" do
+  test "persist_feed_entries maintains order" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     processed_entries = [
-      { uid: "first", published_at: 2.hours.ago, raw_data: {} },
-      { uid: "second", published_at: 1.hour.ago, raw_data: {} },
-      { uid: "third", published_at: Time.current, raw_data: {} }
+      {
+        uid: "first",
+        published_at: 2.hours.ago,
+        raw_data: {}
+      },
+      {
+        uid: "second",
+        published_at: 1.hour.ago,
+        raw_data: {}
+      },
+      {
+        uid: "third",
+        published_at: Time.current,
+        raw_data: {}
+      }
     ]
 
-    new_entries = workflow.send(:persist_feed_entries_impl, feed, processed_entries)
+    new_entries = workflow.send(:persist_feed_entries, feed, processed_entries)
 
     assert_equal ["first", "second", "third"], new_entries.map(&:uid)
 
