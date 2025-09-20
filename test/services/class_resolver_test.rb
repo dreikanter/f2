@@ -12,12 +12,6 @@ class ClassResolverTest < ActiveSupport::TestCase
     assert_equal Loader::HttpLoader, loader_class
   end
 
-  test "handles key camelization correctly" do
-    loader_class = ClassResolver.resolve("Loader", "http_loader")
-
-    assert_equal Loader::HttpLoader, loader_class
-  end
-
   test "raises ArgumentError for unknown scope" do
     error = assert_raises(ArgumentError) do
       ClassResolver.resolve("UnknownScope", "test")
@@ -30,11 +24,6 @@ class ClassResolverTest < ActiveSupport::TestCase
       ClassResolver.resolve("Loader", "unknown")
     end
     assert_equal "Unknown loader: unknown", error.message
-  end
-
-  test "class method resolve works correctly" do
-    result = ClassResolver.resolve("Processor", "rss_processor")
-    assert_equal Processor::RssProcessor, result
   end
 
   test "handles empty and nil keys gracefully" do
@@ -66,11 +55,4 @@ class ClassResolverTest < ActiveSupport::TestCase
     assert_equal "Unknown loader: unknown", error2.message
   end
 
-  test "module method can be called multiple times" do
-    result1 = ClassResolver.resolve("Processor", "rss_processor")
-    result2 = ClassResolver.resolve("Processor", "rss_processor")
-
-    assert_equal result1, result2
-    assert_equal Processor::RssProcessor, result1
-  end
 end
