@@ -66,14 +66,14 @@ class WorkflowTest < ActiveSupport::TestCase
       { value: input[:value] + 1, step: :two }
     end
 
-    def before_step(step_name, input)
-      @execution_log << "before #{step_name}"
-      @step_timings[step_name] = { started_at: Time.current }
+    def before_step(input)
+      @execution_log << "before #{current_step}"
+      @step_timings[current_step] = { started_at: Time.current }
     end
 
-    def after_step(step_name, output)
-      @execution_log << "after #{step_name}"
-      @step_timings[step_name][:completed_at] = Time.current
+    def after_step(output)
+      @execution_log << "after #{current_step}"
+      @step_timings[current_step][:completed_at] = Time.current
     end
   end
 
@@ -232,14 +232,14 @@ class WorkflowTest < ActiveSupport::TestCase
     service = TestWorkflowWithCallbacks.new
     captured_current_steps = []
 
-    def service.before_step(step_name, input)
+    def service.before_step(input)
       @captured_current_steps ||= []
-      @captured_current_steps << { callback: :before, step_name: step_name, current_step: current_step }
+      @captured_current_steps << { callback: :before, step_name: current_step, current_step: current_step }
     end
 
-    def service.after_step(step_name, output)
+    def service.after_step(output)
       @captured_current_steps ||= []
-      @captured_current_steps << { callback: :after, step_name: step_name, current_step: current_step }
+      @captured_current_steps << { callback: :after, step_name: current_step, current_step: current_step }
     end
 
     def service.captured_current_steps

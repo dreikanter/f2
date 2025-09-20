@@ -54,12 +54,12 @@ module Workflow
 
       begin
         logger.info "#{self.class.name}: Starting step: #{step_name}"
-        before_step(step_name, current_input)
+        before_step(current_input)
         current_input = send(step_name, current_input)
-        after_step(step_name, current_input)
+        after_step(current_input)
         logger.info "#{self.class.name}: Completed step: #{step_name}"
       rescue => e
-        on_error(step_name, e)
+        on_error(e)
         raise
       end
 
@@ -80,15 +80,15 @@ module Workflow
 
   private
 
-  def before_step(step_name, _input)
+  def before_step(_input)
     # Override
   end
 
-  def after_step(step_name, _result)
+  def after_step(_result)
     # Override
   end
 
-  def on_error(step_name, error)
+  def on_error(error)
     # Override
   end
 

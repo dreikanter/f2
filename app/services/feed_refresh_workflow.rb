@@ -19,8 +19,8 @@ class FeedRefreshWorkflow
 
   private
 
-  def after_step(step_name, output)
-    record_duration(step_name)
+  def after_step(_output)
+    record_duration(current_step)
   end
 
   def on_error(error)
