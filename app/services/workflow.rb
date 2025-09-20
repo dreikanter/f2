@@ -34,6 +34,10 @@ module Workflow
   # @yield [collector] Block that defines the workflow steps
   # @return [Object] Result from the last step
   def execute_workflow(initial_input = nil, before: nil, after: nil, &block)
+    # Initialize workflow tracking
+    @workflow_timers = {}
+    @workflow_start_time = Time.current
+
     # Collect step names
     collector = StepCollector.new
     collector.instance_eval(&block)
@@ -42,8 +46,9 @@ module Workflow
     # Execute steps sequentially
     current_input = initial_input
     steps.each do |step_name|
-      # Track current step
+      # Track current step and start timer
       @current_step = step_name
+      start_step_timer(step_name)
 
       # Execute before callback if provided
       send(before, step_name, current_input) if before
@@ -53,7 +58,13 @@ module Workflow
 
       # Execute after callback if provided
       send(after, step_name, current_input) if after
+
+      # End timer and record duration
+      end_step_timer(step_name)
     end
+
+    # Record total workflow duration
+    @total_workflow_duration = Time.current - @workflow_start_time
 
     current_input
   end
@@ -63,7 +74,31 @@ module Workflow
     @current_step
   end
 
+  # Get step durations recorded during workflow execution
+  def step_durations
+    @step_durations ||= {}
+  end
+
+  # Get total workflow duration (from start to end of execution)
+  def total_duration
+    @total_workflow_duration || 0.0
+  end
+
   private
+
+  # Timer management for workflow steps
+  def start_step_timer(step_name)
+    @workflow_timers[step_name] = Time.current
+  end
+
+  def end_step_timer(step_name)
+    start_time = @workflow_timers.delete(step_name)
+    return 0.0 if start_time.nil?
+
+    duration = Time.current - start_time
+    step_durations[step_name] = duration
+    duration
+  end
 
   # Internal helper to collect step definitions from the block
   class StepCollector

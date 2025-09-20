@@ -1,12 +1,11 @@
 class FeedRefreshWorkflow
   include Workflow
 
-  attr_reader :feed, :stats, :timers
+  attr_reader :feed, :stats
 
   def initialize(feed)
     @feed = feed
     @stats = FeedRefreshEvent.default_stats
-    @timers = {}
   end
 
   def execute
@@ -27,16 +26,16 @@ class FeedRefreshWorkflow
 
   def before_step(step_name, input)
     Rails.logger.info "Starting step: #{step_name}"
-    start_step_timer(step_name)
   end
 
   def after_step(step_name, output)
     Rails.logger.info "Completed step: #{step_name}"
-    end_step_timer_and_record_stats(step_name, output)
+    record_step_duration_stats(step_name)
   end
 
   def handle_workflow_error(error)
-    stats[:total_duration] = end_timer(:initialize_workflow) if timers[:initialize_workflow]
+    # Finalize partial stats from workflow duration
+    stats[:total_duration] = total_duration
     stats[:failed_at_step] = current_step
 
     # Create error event
@@ -90,7 +89,10 @@ class FeedRefreshWorkflow
   end
 
   def finalize_workflow(input)
-    record_stats(completed_at: Time.current.rfc3339)
+    record_stats(
+      completed_at: Time.current.rfc3339,
+      total_duration: total_duration
+    )
 
     current_feed = input[:feed]
     FeedRefreshEvent.create_stats(current_feed, stats)
@@ -98,41 +100,16 @@ class FeedRefreshWorkflow
     input
   end
 
-  # Timer management
-  def start_timer(name)
-    timers[name] = Time.current
-  end
-
-  def end_timer(name)
-    start_time = timers.delete(name)
-    return 0.0 if start_time.nil?
-
-    Time.current - start_time
-  end
-
-  def start_step_timer(step_name)
-    timer_name = step_name == :finalize_workflow ? :initialize_workflow : step_name
-    start_timer(timer_name)
-  end
-
-  def end_step_timer_and_record_stats(step_name, output)
-    timer_name = step_name == :finalize_workflow ? :initialize_workflow : step_name
-    duration = end_timer(timer_name)
-    return if duration.zero?
+  def record_step_duration_stats(step_name)
+    duration = step_durations[step_name]
+    return unless duration
 
     stats_key = step_stats_key(step_name)
     record_stats(stats_key => duration) if stats_key
   end
 
   def step_stats_key(step_name)
-    case step_name
-    when :initialize_workflow
-      nil # Don't record duration for start
-    when :finalize_workflow
-      :total_duration
-    else
-      "#{step_name}_duration".to_sym
-    end
+    "#{step_name}_duration".to_sym
   end
 
   def record_stats(new_stats = {})

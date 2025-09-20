@@ -155,4 +155,148 @@ class WorkflowTest < ActiveSupport::TestCase
 
     assert_equal [:first, :second, :third], collector.steps
   end
+
+  test "tracks current step during execution" do
+    service = TestService.new
+
+    # Mock steps to capture current_step at execution time
+    captured_steps = []
+
+    def service.step_one(input)
+      @captured_steps ||= []
+      @captured_steps << current_step
+      { value: input[:value] * 2 }
+    end
+
+    def service.step_two(input)
+      @captured_steps ||= []
+      @captured_steps << current_step
+      { value: input[:value] + 1 }
+    end
+
+    # Add accessor for captured steps
+    def service.captured_steps
+      @captured_steps || []
+    end
+
+    service.execute_workflow({ value: 1 }) do |workflow|
+      workflow.step :step_one
+      workflow.step :step_two
+    end
+
+    # Verify current_step was correctly set during each step
+    assert_equal [:step_one, :step_two], service.captured_steps
+
+    # Verify current_step is accessible after workflow completion
+    assert_equal :step_two, service.current_step
+  end
+
+  test "tracks step durations automatically" do
+    service = TestService.new
+
+    # Add small delays to make timing measurable
+    def service.step_one(input)
+      sleep(0.01)
+      { value: input[:value] * 2 }
+    end
+
+    def service.step_two(input)
+      sleep(0.01)
+      { value: input[:value] + 1 }
+    end
+
+    service.execute_workflow({ value: 1 }) do |workflow|
+      workflow.step :step_one
+      workflow.step :step_two
+    end
+
+    # Verify step durations were recorded
+    durations = service.step_durations
+    assert durations.key?(:step_one)
+    assert durations.key?(:step_two)
+
+    # Verify durations are reasonable (should be at least the sleep time)
+    assert durations[:step_one] >= 0.01
+    assert durations[:step_two] >= 0.01
+
+    # Verify durations are numeric
+    assert durations[:step_one].is_a?(Numeric)
+    assert durations[:step_two].is_a?(Numeric)
+  end
+
+  test "step durations are empty before workflow execution" do
+    service = TestService.new
+
+    assert_equal({}, service.step_durations)
+    assert_nil service.current_step
+    assert_equal 0.0, service.total_duration
+  end
+
+  test "current step tracking works with callbacks" do
+    service = TestService.new
+    captured_current_steps = []
+
+    # Override callbacks to capture current_step
+    def service.before_step(step_name, input)
+      @captured_current_steps ||= []
+      @captured_current_steps << { callback: :before, step_name: step_name, current_step: current_step }
+      super
+    end
+
+    def service.after_step(step_name, output)
+      @captured_current_steps ||= []
+      @captured_current_steps << { callback: :after, step_name: step_name, current_step: current_step }
+      super
+    end
+
+    def service.captured_current_steps
+      @captured_current_steps || []
+    end
+
+    service.run_workflow_with_callbacks
+
+    # Verify current_step was correctly set during callbacks
+    expected_captures = [
+      { callback: :before, step_name: :step_one, current_step: :step_one },
+      { callback: :after, step_name: :step_one, current_step: :step_one },
+      { callback: :before, step_name: :step_two, current_step: :step_two },
+      { callback: :after, step_name: :step_two, current_step: :step_two }
+    ]
+
+    assert_equal expected_captures, service.captured_current_steps
+  end
+
+  test "tracks total workflow duration" do
+    service = TestService.new
+
+    # Add delays to make timing measurable
+    def service.step_one(input)
+      sleep(0.01)
+      { value: input[:value] * 2 }
+    end
+
+    def service.step_two(input)
+      sleep(0.01)
+      { value: input[:value] + 1 }
+    end
+
+    service.execute_workflow({ value: 1 }) do |workflow|
+      workflow.step :step_one
+      workflow.step :step_two
+    end
+
+    # Verify total duration was recorded and is reasonable
+    total = service.total_duration
+    assert total > 0.02  # Should be at least the sum of sleep times
+    assert total.is_a?(Numeric)
+
+    # Total duration should be greater than individual step durations
+    step_one_duration = service.step_durations[:step_one]
+    step_two_duration = service.step_durations[:step_two]
+
+    assert total >= step_one_duration
+    assert total >= step_two_duration
+    # Total should be approximately the sum (allowing for timing variance)
+    assert total >= (step_one_duration + step_two_duration) * 0.8
+  end
 end
