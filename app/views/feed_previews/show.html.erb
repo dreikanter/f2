@@ -36,7 +36,7 @@
 
       <dt class="col-lg-2 col-md-3">Status</dt>
       <dd class="col-lg-4 col-md-9">
-        <span class="badge bg-<%= @feed_preview.status == 'completed' ? 'success' : @feed_preview.status == 'failed' ? 'danger' : 'warning' %>">
+        <span class="badge bg-<%= @feed_preview.ready? ? 'success' : @feed_preview.failed? ? 'danger' : 'warning' %>">
           <%= @feed_preview.status.capitalize %>
         </span>
       </dd>
