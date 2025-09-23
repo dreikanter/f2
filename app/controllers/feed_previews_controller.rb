@@ -1,5 +1,4 @@
 class FeedPreviewsController < ApplicationController
-  before_action :set_feed_preview, only: [:show, :update]
   before_action :require_authentication
 
   def create
@@ -40,6 +39,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def show
+    @feed_preview = FeedPreview.find(params[:id])
     respond_to do |format|
       format.html
       format.turbo_stream do
@@ -55,6 +55,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def update
+    @feed_preview = FeedPreview.find(params[:id])
     # Refresh the preview by creating a new one
     @feed_preview.destroy
 
@@ -73,10 +74,6 @@ class FeedPreviewsController < ApplicationController
   end
 
   private
-
-  def set_feed_preview
-    @feed_preview = FeedPreview.find(params[:id])
-  end
 
   def find_or_create_feed_profile
     # If feed_profile_id is provided, use existing profile
