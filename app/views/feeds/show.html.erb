@@ -95,14 +95,15 @@
         <%= @feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
       </dd>
 
-      <dt class="col-lg-2 col-md-3">Loader</dt>
-      <dd class="col-lg-4 col-md-9"><%= @feed.loader %></dd>
-
-      <dt class="col-lg-2 col-md-3">Processor</dt>
-      <dd class="col-lg-4 col-md-9"><%= @feed.processor %></dd>
-
-      <dt class="col-lg-2 col-md-3">Normalizer</dt>
-      <dd class="col-lg-4 col-md-9"><%= @feed.normalizer %></dd>
+      <dt class="col-lg-2 col-md-3">Feed Profile</dt>
+      <dd class="col-lg-4 col-md-9">
+        <% if @feed.feed_profile %>
+          <%= @feed.feed_profile.name %>
+          <small class="text-muted">(loader: <%= @feed.feed_profile.loader %>, processor: <%= @feed.feed_profile.processor %>, normalizer: <%= @feed.feed_profile.normalizer %>)</small>
+        <% else %>
+          <span class="text-muted">No profile configured</span>
+        <% end %>
+      </dd>
 
       <dt class="col-lg-2 col-md-3">Freefeed Host</dt>
       <dd class="col-lg-4 col-md-9">
