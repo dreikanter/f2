@@ -60,27 +60,20 @@ class FeedPreview < ApplicationRecord
   end
 
   def self.find_or_create_for_preview(url:, feed_profile:, user:)
-    # Use transaction with retry logic to handle race conditions
     transaction do
-      # Try to find existing preview first
+      # Check for existing recent preview
       existing = where(url: url, feed_profile: feed_profile).first
-
-      # Return existing if it's recent (within 1 hour)
       return existing if existing&.created_at&.> 1.hour.ago
 
       # Remove old preview if exists
       existing&.destroy
 
-      # Create new preview with unique constraint protection
-      create!(
-        url: url,
-        feed_profile: feed_profile,
-        user: user,
-        status: :pending
-      )
+      # Use Rails pattern for atomic find or create
+      create_with(user: user, status: :pending)
+        .find_or_create_by(url: url, feed_profile: feed_profile)
     end
   rescue ActiveRecord::RecordNotUnique
-    # If we hit the unique constraint, someone else created it, so fetch it
-    where(url: url, feed_profile: feed_profile).first!
+    # Handle race condition - fetch the record created by another process
+    find_by!(url: url, feed_profile: feed_profile)
   end
 end

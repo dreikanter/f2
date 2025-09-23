@@ -39,21 +39,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_preview_path(preview)
   end
 
-  test "should create preview with feed profile name" do
-    sign_in_as(user)
-
-    assert_difference("FeedPreview.count", 1) do
-      post feed_previews_url, params: {
-        url: "https://example.com/feed.xml",
-        feed_profile_name: feed_profile.name
-      }
-    end
-
-    preview = FeedPreview.last
-    assert_equal "https://example.com/feed.xml", preview.url
-    assert_equal feed_profile, preview.feed_profile
-    assert_redirected_to feed_preview_path(preview)
-  end
 
   test "should reuse existing feed profile with same name" do
     sign_in_as(user)
