@@ -4,15 +4,11 @@ class FeedPreviewsController < ApplicationController
   def create
     feed_profile = FeedProfile.find_by!(name: params.require(:feed_profile_name))
 
-    feed_preview = FeedPreview.find_or_create(
+    find_or_create_and_enqueue(
       url: params[:url],
       feed_profile: feed_profile,
       user: Current.user
     )
-
-    feed_preview.enqueue_job_if_needed!
-
-    redirect_to feed_preview_path(feed_preview)
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   end
@@ -30,19 +26,34 @@ class FeedPreviewsController < ApplicationController
   end
 
   def update
-    feed_preview = FeedPreview.find(params[:id])
+    existing_preview = FeedPreview.find(params[:id])
 
-    feed_preview = FeedPreview.find_or_create(
-      url: feed_preview.url,
-      feed_profile: feed_preview.feed_profile,
-      user: Current.user
+    find_or_create_and_enqueue(
+      url: existing_preview.url,
+      feed_profile: existing_preview.feed_profile,
+      user: Current.user,
+      notice: "Preview refresh started."
     )
-
-    feed_preview.enqueue_job_if_needed!
-
-    redirect_to feed_preview_path(feed_preview), notice: "Preview refresh started."
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
+  end
+
+  private
+
+  def find_or_create_and_enqueue(url:, feed_profile:, user:, notice: nil)
+    feed_preview = nil
+
+    FeedPreview.transaction do
+      feed_preview = FeedPreview.find_or_create(
+        url: url,
+        feed_profile: feed_profile,
+        user: user
+      )
+
+      feed_preview.enqueue_job_if_needed!
+    end
+
+    redirect_to feed_preview_path(feed_preview), notice: notice
   end
 
 end
