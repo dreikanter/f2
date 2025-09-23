@@ -56,5 +56,4 @@ class FeedPreviewsController < ApplicationController
 
     redirect_to feed_preview_path(feed_preview), notice: notice
   end
-
 end
