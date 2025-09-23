@@ -1,5 +1,5 @@
 class FeedPreview < ApplicationRecord
-  PREVIEW_LIMIT = 10
+  PREVIEW_POSTS_LIMIT = 10
 
   belongs_to :feed, optional: true
   belongs_to :feed_profile
