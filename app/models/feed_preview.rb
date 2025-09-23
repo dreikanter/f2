@@ -25,7 +25,7 @@ class FeedPreview < ApplicationRecord
   scope :for_cache_key, ->(url, feed_profile_id) { where(url: url, feed_profile_id: feed_profile_id) }
 
   def processing?
-    pending? || status == "processing"
+    pending? || super
   end
 
 
