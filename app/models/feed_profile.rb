@@ -3,10 +3,14 @@ class FeedProfile < ApplicationRecord
   has_many :feeds, dependent: :nullify
   has_many :feed_previews, dependent: :destroy
 
-  validates :name, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: true,
+            length: { maximum: 100 },
+            format: { with: /\A[a-z\d\-_]+\z/, message: "must contain only lowercase letters, numbers, hyphens, and underscores" }
   validates :loader, presence: true
   validates :processor, presence: true
   validates :normalizer, presence: true
+
+  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
 
   before_destroy :deactivate_related_feeds
 
