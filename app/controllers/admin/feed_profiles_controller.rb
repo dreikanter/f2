@@ -6,9 +6,18 @@ class Admin::FeedProfilesController < ApplicationController
     @feed_profiles = FeedProfile.includes(:user).order(:name)
   end
 
+  def show
+    @feed_profile = FeedProfile.find(params[:id])
+    authorize @feed_profile
+  end
 
   def new
     @feed_profile = FeedProfile.new
+  end
+
+  def edit
+    @feed_profile = FeedProfile.find(params[:id])
+    authorize @feed_profile
   end
 
   def create
