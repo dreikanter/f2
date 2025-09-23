@@ -13,7 +13,7 @@ class FeedPreviewsController < ApplicationController
     end
 
     # Find or create feed preview (model validation will handle URL validation)
-    feed_preview = FeedPreview.find_or_create_for_preview(
+    feed_preview = FeedPreview.find_or_create(
       url: url,
       feed_profile: feed_profile,
       user: Current.user
@@ -51,7 +51,7 @@ class FeedPreviewsController < ApplicationController
     # Refresh the preview by creating a new one
     feed_preview.destroy
 
-    new_preview = FeedPreview.find_or_create_for_preview(
+    new_preview = FeedPreview.find_or_create(
       url: feed_preview.url,
       feed_profile: feed_preview.feed_profile,
       user: Current.user

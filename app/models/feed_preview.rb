@@ -59,21 +59,8 @@ class FeedPreview < ApplicationRecord
     { url: url, feed_profile_id: feed_profile_id }
   end
 
-  def self.find_or_create_for_preview(url:, feed_profile:, user:)
-    transaction do
-      # Check for existing recent preview
-      existing = where(url: url, feed_profile: feed_profile).first
-      return existing if existing&.created_at&.> 1.hour.ago
-
-      # Remove old preview if exists
-      existing&.destroy
-
-      # Use Rails pattern for atomic find or create
-      create_with(user: user, status: :pending)
-        .find_or_create_by(url: url, feed_profile: feed_profile)
-    end
-  rescue ActiveRecord::RecordNotUnique
-    # Handle race condition - fetch the record created by another process
-    find_by!(url: url, feed_profile: feed_profile)
+  def self.find_or_create(url:, feed_profile:, user:)
+    create_with(user: user, status: :pending)
+      .find_or_create_by(url: url, feed_profile: feed_profile)
   end
 end
