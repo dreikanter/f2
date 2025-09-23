@@ -2,19 +2,22 @@ class FeedPreviewsController < ApplicationController
   before_action :require_authentication
 
   def create
-    url = params[:url]
+    feed_profile_name = params[:feed_profile_name]
 
-    # Handle feed profile from different sources
-    feed_profile = find_or_create_feed_profile
+    unless feed_profile_name.present?
+      redirect_back(fallback_location: feeds_path, alert: "Feed profile name is required.")
+      return
+    end
 
+    feed_profile = FeedProfile.find_by(name: feed_profile_name)
     unless feed_profile
-      redirect_back(fallback_location: feeds_path, alert: "Invalid feed configuration.")
+      redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
       return
     end
 
     # Find or create feed preview (model validation will handle URL validation)
     feed_preview = FeedPreview.find_or_create(
-      url: url,
+      url: params[:url],
       feed_profile: feed_profile,
       user: Current.user
     )
@@ -47,32 +50,24 @@ class FeedPreviewsController < ApplicationController
   end
 
   def update
-    feed_preview = FeedPreview.find(params[:id])
-    # Refresh the preview by creating a new one
-    feed_preview.destroy
+    old_preview = FeedPreview.find(params[:id])
+    old_preview.destroy
 
-    new_preview = FeedPreview.find_or_create(
-      url: feed_preview.url,
-      feed_profile: feed_preview.feed_profile,
+    # Create new preview with same parameters as old one
+    feed_preview = FeedPreview.find_or_create(
+      url: old_preview.url,
+      feed_profile: old_preview.feed_profile,
       user: Current.user
     )
 
-    new_preview.enqueue_job_if_needed!
+    feed_preview.enqueue_job_if_needed!
 
-    redirect_to feed_preview_path(new_preview), notice: "Preview refresh started."
+    redirect_to feed_preview_path(feed_preview), notice: "Preview refresh started."
   rescue ActiveRecord::RecordInvalid
-    redirect_to feed_preview_path(feed_preview), alert: "Failed to refresh preview."
+    redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   rescue => e
     Rails.logger.error "FeedPreview refresh failed: #{e.message}"
-    redirect_to feed_preview_path(feed_preview), alert: "Failed to refresh preview."
+    redirect_back(fallback_location: feeds_path, alert: "Failed to refresh preview.")
   end
 
-  private
-
-  def find_or_create_feed_profile
-    # Profile name is required
-    return nil unless params[:feed_profile_name].present?
-
-    FeedProfile.find_by(name: params[:feed_profile_name], user: Current.user)
-  end
 end
