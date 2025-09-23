@@ -17,5 +17,4 @@ class User < ApplicationRecord
   generates_token_for :email_change, expires_in: 15.minutes do
     email_address
   end
-
 end
