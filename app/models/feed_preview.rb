@@ -15,6 +15,7 @@ class FeedPreview < ApplicationRecord
     with: UrlValidator.validation_regex,
     message: "must be a valid HTTP or HTTPS URL"
   }
+
   validates :feed_profile, presence: true
   validates :url, uniqueness: { scope: :feed_profile_id }
 
@@ -33,9 +34,7 @@ class FeedPreview < ApplicationRecord
 
 
   def posts_data
-    return [] unless data.present? && ready?
-
-    data["posts"] || []
+    (data.present? && ready? && data["posts"]) || []
   end
 
   def posts_count
@@ -43,6 +42,9 @@ class FeedPreview < ApplicationRecord
   end
 
   def cache_key_params
-    { url: url, feed_profile_id: feed_profile_id }
+    {
+      url: url,
+      feed_profile_id: feed_profile_id
+    }
   end
 end
