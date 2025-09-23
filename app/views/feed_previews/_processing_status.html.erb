@@ -1,4 +1,7 @@
-<div class="card">
+<div class="card"
+     data-controller="polling"
+     data-polling-endpoint-value="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>"
+     data-polling-stop-condition-value="spinner-border">
   <div class="card-header">
     <h5 class="card-title mb-0">
       <i class="bi bi-hourglass-split me-2"></i>
@@ -17,23 +20,3 @@
     </div>
   </div>
 </div>
-
-<turbo-stream-source src="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>" />
-
-<script>
-  // Auto-refresh every 2 seconds while processing
-  let pollInterval = setInterval(function() {
-    if (document.querySelector('.spinner-border')) {
-      // Trigger turbo stream refresh
-      fetch('<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>')
-        .then(response => response.text())
-        .then(data => {
-          if (!data.includes('spinner-border')) {
-            clearInterval(pollInterval);
-          }
-        });
-    } else {
-      clearInterval(pollInterval);
-    }
-  }, 2000);
-</script>
