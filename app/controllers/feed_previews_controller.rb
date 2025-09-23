@@ -38,13 +38,9 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        if @feed_preview.ready?
-          render turbo_stream: turbo_stream.replace("preview-status",
-            partial: "feed_previews/completed_status", locals: { feed_preview: @feed_preview })
-        else
-          render turbo_stream: turbo_stream.replace("preview-status",
-            partial: "feed_previews/processing_status", locals: { feed_preview: @feed_preview })
-        end
+        status_partial = @feed_preview.ready? ? "completed_status" : "processing_status"
+        render turbo_stream: turbo_stream.replace("preview-status",
+          partial: "feed_previews/#{status_partial}", locals: { feed_preview: @feed_preview })
       end
     end
   end
