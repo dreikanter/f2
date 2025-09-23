@@ -79,5 +79,4 @@ class FeedPreviewsController < ApplicationController
 
     FeedProfile.find_by(name: params[:feed_profile_name], user: Current.user)
   end
-
 end
