@@ -5,7 +5,7 @@ class FeedPreviewsController < ApplicationController
     @url = params[:url]
 
     # Validate URL format
-    unless @url.present? && valid_url?(@url)
+    unless UrlValidator.valid?(@url)
       redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
       return
     end
@@ -80,10 +80,4 @@ class FeedPreviewsController < ApplicationController
     FeedProfile.find_by(name: params[:feed_profile_name], user: Current.user)
   end
 
-  def valid_url?(url)
-    uri = URI.parse(url.strip)
-    %w[http https].include?(uri.scheme)
-  rescue URI::InvalidURIError
-    false
-  end
 end

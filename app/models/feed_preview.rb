@@ -12,7 +12,7 @@ class FeedPreview < ApplicationRecord
   }
 
   validates :url, presence: true, format: {
-    with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+    with: UrlValidator.validation_regex,
     message: "must be a valid HTTP or HTTPS URL"
   }
   validates :feed_profile, presence: true
