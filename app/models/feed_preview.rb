@@ -24,12 +24,6 @@ class FeedPreview < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :for_cache_key, ->(url, feed_profile_id) { where(url: url, feed_profile_id: feed_profile_id) }
 
-  def processing?
-    pending? || super
-  end
-
-
-
   def posts_data
     (data.present? && ready? && data["posts"]) || []
   end

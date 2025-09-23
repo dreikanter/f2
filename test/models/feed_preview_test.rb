@@ -85,9 +85,9 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", preview.url
   end
 
-  test "processing? should return true for pending and processing statuses" do
+  test "processing? should return true only for processing status" do
     preview = create(:feed_preview, feed_profile: feed_profile, status: :pending)
-    assert preview.processing?
+    assert_not preview.processing?
 
     preview.update!(status: :processing)
     assert preview.processing?
