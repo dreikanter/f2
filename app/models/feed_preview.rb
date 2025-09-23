@@ -31,19 +31,6 @@ class FeedPreview < ApplicationRecord
     status == "ready"
   end
 
-  # Atomically enqueue job if preview is pending and not already processing
-  def enqueue_job_if_needed!
-    # Use compare-and-swap pattern with database locking
-    with_lock do
-      if pending?
-        update!(status: :processing)
-        FeedPreviewJob.perform_later(id)
-        true
-      else
-        false
-      end
-    end
-  end
 
   def posts_data
     return [] unless data.present? && ready?
