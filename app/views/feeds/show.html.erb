@@ -32,7 +32,7 @@
 
     <% if @feed.feed_profile.present? %>
       <%= button_to "Preview", feed_previews_path,
-          params: { url: @feed.url, feed_profile_id: @feed.feed_profile.id, feed_id: @feed.id },
+          params: { url: @feed.url, feed_profile_name: @feed.feed_profile.name },
           method: :post,
           class: "btn btn-outline-info" %>
     <% end %>
