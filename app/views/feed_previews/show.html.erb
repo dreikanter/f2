@@ -1,0 +1,65 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="mb-0">Feed Preview</h1>
+  <div class="d-flex gap-2">
+    <% if @feed_preview.ready? %>
+      <%= button_to "Refresh Preview", feed_preview_path(@feed_preview),
+          method: :patch,
+          class: "btn btn-outline-primary",
+          data: { confirm: "This will generate a new preview. Continue?" } %>
+    <% end %>
+    <%= link_to "Back to Feeds", feeds_path, class: "btn btn-outline-secondary" %>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">Preview Details</h5>
+  </div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-lg-2 col-md-3">Feed URL</dt>
+      <dd class="col-lg-4 col-md-9">
+        <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
+          <%= @feed_preview.url %>
+        </a>
+      </dd>
+
+      <dt class="col-lg-2 col-md-3">Feed Profile</dt>
+      <dd class="col-lg-4 col-md-9">
+        <%= @feed_preview.feed_profile.name %>
+        <small class="text-muted">
+          (loader: <%= @feed_preview.feed_profile.loader %>,
+           processor: <%= @feed_preview.feed_profile.processor %>,
+           normalizer: <%= @feed_preview.feed_profile.normalizer %>)
+        </small>
+      </dd>
+
+      <dt class="col-lg-2 col-md-3">Status</dt>
+      <dd class="col-lg-4 col-md-9">
+        <span class="badge bg-<%= @feed_preview.status == 'completed' ? 'success' : @feed_preview.status == 'failed' ? 'danger' : 'warning' %>">
+          <%= @feed_preview.status.capitalize %>
+        </span>
+      </dd>
+
+      <dt class="col-lg-2 col-md-3">Created</dt>
+      <dd class="col-lg-4 col-md-9">
+        <%= @feed_preview.created_at.to_fs(:long) %>
+      </dd>
+
+      <% if @feed_preview.ready? %>
+        <dt class="col-lg-2 col-md-3">Posts Found</dt>
+        <dd class="col-lg-4 col-md-9">
+          <%= @feed_preview.posts_count %> posts
+        </dd>
+      <% end %>
+    </dl>
+  </div>
+</div>
+
+<div id="preview-status">
+  <% if @feed_preview.ready? %>
+    <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
+  <% else %>
+    <%= render "feed_previews/processing_status", feed_preview: @feed_preview %>
+  <% end %>
+</div>

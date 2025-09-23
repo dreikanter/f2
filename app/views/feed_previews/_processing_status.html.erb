@@ -1,0 +1,39 @@
+<div class="card">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="bi bi-hourglass-split me-2"></i>
+      Generating Preview...
+    </h5>
+  </div>
+  <div class="card-body">
+    <div class="d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div>
+        <p class="mb-1">Processing feed content and generating preview.</p>
+        <small class="text-muted">This usually takes a few seconds...</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<turbo-stream-source src="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>" />
+
+<script>
+  // Auto-refresh every 2 seconds while processing
+  let pollInterval = setInterval(function() {
+    if (document.querySelector('.spinner-border')) {
+      // Trigger turbo stream refresh
+      fetch('<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>')
+        .then(response => response.text())
+        .then(data => {
+          if (!data.includes('spinner-border')) {
+            clearInterval(pollInterval);
+          }
+        });
+    } else {
+      clearInterval(pollInterval);
+    }
+  }, 2000);
+</script>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_23_144023) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
     t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
   end
 
+  create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.bigint "feed_id"
+    t.bigint "feed_profile_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.index ["created_at"], name: "index_feed_previews_on_created_at"
+    t.index ["feed_id"], name: "index_feed_previews_on_feed_id"
+    t.index ["feed_profile_id"], name: "index_feed_previews_on_feed_profile_id"
+    t.index ["status"], name: "index_feed_previews_on_status"
+    t.index ["url", "feed_profile_id"], name: "index_feed_previews_on_url_and_profile", unique: true
+  end
+
   create_table "feed_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "loader", null: false
@@ -69,7 +84,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
     t.index ["name"], name: "index_feed_profiles_on_name", unique: true
     t.index ["user_id"], name: "index_feed_profiles_on_user_id"
   end
-
   create_table "feed_schedules", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "feed_id", null: false
@@ -265,6 +279,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
+  add_foreign_key "feed_previews", "feed_profiles"
+  add_foreign_key "feed_previews", "feeds"
   add_foreign_key "feed_profiles", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
