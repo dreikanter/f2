@@ -32,6 +32,28 @@ class FeedProfile < ApplicationRecord
     ClassResolver.resolve("Normalizer", normalizer)
   end
 
+  # Creates and returns a loader instance for the given feed
+  # @param feed [Feed] the feed to create loader for
+  # @return [Loader::Base] loader instance
+  def loader_instance(feed)
+    loader_class.new(feed)
+  end
+
+  # Creates and returns a processor instance for the given feed
+  # @param feed [Feed] the feed to create processor for
+  # @param raw_data [String] raw feed data to process
+  # @return [Processor::Base] processor instance
+  def processor_instance(feed, raw_data)
+    processor_class.new(feed, raw_data)
+  end
+
+  # Creates and returns a normalizer instance for the given feed entry
+  # @param feed_entry [FeedEntry] the feed entry to normalize
+  # @return [Normalizer::Base] normalizer instance
+  def normalizer_instance(feed_entry)
+    normalizer_class.new(feed_entry)
+  end
+
   private
 
   def deactivate_related_feeds

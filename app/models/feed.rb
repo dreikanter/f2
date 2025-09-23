@@ -8,6 +8,8 @@ class Feed < ApplicationRecord
   belongs_to :access_token, optional: true
   belongs_to :feed_profile, optional: true
   has_one :feed_schedule, dependent: :destroy
+
+  delegate :loader, :processor, :normalizer, :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
@@ -58,45 +60,24 @@ class Feed < ApplicationRecord
     access_token&.active? && target_group.present? && feed_profile.present?
   end
 
-  # Resolves and returns the loader class for this feed
-  # @return [Class] the loader class
-  def loader_class
-    return nil unless feed_profile
-    ClassResolver.resolve("Loader", feed_profile.loader)
-  end
-
-  # Resolves and returns the processor class for this feed
-  # @return [Class] the processor class
-  def processor_class
-    return nil unless feed_profile
-    ClassResolver.resolve("Processor", feed_profile.processor)
-  end
-
-  # Resolves and returns the normalizer class for this feed
-  # @return [Class] the normalizer class
-  def normalizer_class
-    return nil unless feed_profile
-    ClassResolver.resolve("Normalizer", feed_profile.normalizer)
-  end
-
   # Creates and returns a loader instance for this feed
   # @return [Loader::Base] loader instance
   def loader_instance
-    loader_class.new(self)
+    feed_profile&.loader_instance(self)
   end
 
   # Creates and returns a processor instance for this feed
   # @param raw_data [String] raw feed data to process
   # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
-    processor_class.new(self, raw_data)
+    feed_profile&.processor_instance(self, raw_data)
   end
 
   # Creates and returns a normalizer instance for the given feed entry
   # @param feed_entry [FeedEntry] the feed entry to normalize
   # @return [Normalizer::Base] normalizer instance
   def normalizer_instance(feed_entry)
-    normalizer_class.new(feed_entry)
+    feed_profile&.normalizer_instance(feed_entry)
   end
 
 
