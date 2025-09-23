@@ -76,8 +76,6 @@ class FeedPreviewsController < ApplicationController
 
   def set_feed_preview
     @feed_preview = FeedPreview.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    redirect_to feeds_path, alert: "Preview not found."
   end
 
   def find_or_create_feed_profile
