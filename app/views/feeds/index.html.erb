@@ -42,16 +42,10 @@
                 <td>
                   <% if feed.feed_profile.present? %>
                     <%= button_to "Preview", feed_previews_path,
-                        params: { url: feed.url, feed_profile_id: feed.feed_profile.id, feed_id: feed.id },
+                        params: { url: feed.url, feed_profile_name: feed.feed_profile.name },
                         method: :post,
                         class: "btn btn-sm btn-outline-info",
                         title: "Generate feed preview" %>
-                  <% elsif feed.respond_to?(:loader) && feed.loader.present? %>
-                    <span class="text-muted small" title="Create a feed profile to enable preview">
-                      Preview unavailable
-                    </span>
-                  <% else %>
-                    <span class="text-muted small">No configuration</span>
                   <% end %>
                 </td>
               </tr>
