@@ -121,11 +121,6 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 2, preview.posts_count
   end
 
-  test "cache_key_params should return url and feed_profile_id" do
-    preview = create(:feed_preview, feed_profile: feed_profile)
-    expected = { url: preview.url, feed_profile_id: feed_profile.id }
-    assert_equal expected, preview.cache_key_params
-  end
 
   test "find_or_create_for_preview should return existing recent preview" do
     existing = create(:feed_preview, feed_profile: feed_profile, url: "https://example.com/feed.xml")

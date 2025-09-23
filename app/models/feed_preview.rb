@@ -30,12 +30,6 @@ class FeedPreview < ApplicationRecord
     posts_data.size
   end
 
-  def cache_key_params
-    {
-      url: url,
-      feed_profile_id: feed_profile_id
-    }
-  end
 
   private
 
