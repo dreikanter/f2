@@ -6,8 +6,7 @@ class FeedPreviewsController < ApplicationController
 
     find_or_create_and_enqueue(
       url: params[:url],
-      feed_profile: feed_profile,
-      user: Current.user
+      feed_profile: feed_profile
     )
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
@@ -31,7 +30,6 @@ class FeedPreviewsController < ApplicationController
     find_or_create_and_enqueue(
       url: existing_preview.url,
       feed_profile: existing_preview.feed_profile,
-      user: Current.user,
       notice: "Preview refresh started."
     )
   rescue ActiveRecord::RecordInvalid
@@ -40,14 +38,14 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  def find_or_create_and_enqueue(url:, feed_profile:, user:, notice: nil)
+  def find_or_create_and_enqueue(url:, feed_profile:, notice: nil)
     feed_preview = nil
 
     FeedPreview.transaction do
       feed_preview = FeedPreview.find_or_create(
         url: url,
         feed_profile: feed_profile,
-        user: user
+        user: Current.user
       )
 
       feed_preview.enqueue_job_if_needed!
