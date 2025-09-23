@@ -8,7 +8,4 @@ class UrlValidator
     false
   end
 
-  def self.validation_regex
-    URI::DEFAULT_PARSER.make_regexp(%w[http https])
-  end
 end

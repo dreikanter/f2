@@ -11,10 +11,8 @@ class FeedPreview < ApplicationRecord
     failed: 3
   }
 
-  validates :url, presence: true, format: {
-    with: UrlValidator.validation_regex,
-    message: "must be a valid HTTP or HTTPS URL"
-  }
+  validates :url, presence: true
+  validate :url_must_be_valid
 
   validates :feed_profile, presence: true
   validates :url, uniqueness: { scope: :feed_profile_id }
@@ -37,5 +35,15 @@ class FeedPreview < ApplicationRecord
       url: url,
       feed_profile_id: feed_profile_id
     }
+  end
+
+  private
+
+  def url_must_be_valid
+    return if url.blank?
+
+    unless UrlValidator.valid?(url)
+      errors.add(:url, "must be a valid HTTP or HTTPS URL")
+    end
   end
 end
