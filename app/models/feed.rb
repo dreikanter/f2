@@ -63,21 +63,21 @@ class Feed < ApplicationRecord
   # Creates and returns a loader instance for this feed
   # @return [Loader::Base] loader instance
   def loader_instance
-    feed_profile&.loader_instance(self)
+    loader_class&.new(self)
   end
 
   # Creates and returns a processor instance for this feed
   # @param raw_data [String] raw feed data to process
   # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
-    feed_profile&.processor_instance(self, raw_data)
+    processor_class&.new(self, raw_data)
   end
 
   # Creates and returns a normalizer instance for the given feed entry
   # @param feed_entry [FeedEntry] the feed entry to normalize
   # @return [Normalizer::Base] normalizer instance
   def normalizer_instance(feed_entry)
-    feed_profile&.normalizer_instance(feed_entry)
+    normalizer_class&.new(feed_entry)
   end
 
 
