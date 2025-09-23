@@ -40,46 +40,36 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_preview_path(preview)
   end
 
-  test "should create preview with direct service attributes" do
+  test "should create preview with feed profile name" do
     sign_in_as(user)
 
     assert_difference("FeedPreview.count", 1) do
-      assert_difference("FeedProfile.count", 1) do
-        post feed_previews_url, params: {
-          url: "https://example.com/feed.xml",
-          loader: "http",
-          processor: "rss",
-          normalizer: "rss"
-        }
-      end
+      post feed_previews_url, params: {
+        url: "https://example.com/feed.xml",
+        feed_profile_name: feed_profile.name
+      }
     end
 
     preview = FeedPreview.last
     assert_equal "https://example.com/feed.xml", preview.url
-    assert_equal "http", preview.feed_profile.loader
-    assert_equal "rss", preview.feed_profile.processor
-    assert_equal "rss", preview.feed_profile.normalizer
+    assert_equal feed_profile, preview.feed_profile
     assert_redirected_to feed_preview_path(preview)
   end
 
-  test "should reuse existing feed profile with same configuration" do
+  test "should reuse existing feed profile with same name" do
     sign_in_as(user)
 
-    # Create first preview which will create a feed profile
+    # Create first preview
     post feed_previews_url, params: {
       url: "https://example.com/feed1.xml",
-      loader: "http",
-      processor: "rss",
-      normalizer: "rss"
+      feed_profile_name: feed_profile.name
     }
 
     assert_difference("FeedPreview.count", 1) do
       assert_no_difference("FeedProfile.count") do
         post feed_previews_url, params: {
           url: "https://example.com/feed2.xml",
-          loader: "http",
-          processor: "rss",
-          normalizer: "rss"
+          feed_profile_name: feed_profile.name
         }
       end
     end
