@@ -2,7 +2,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
-  has_many :feed_profiles, dependent: :destroy
+  has_many :feed_profiles, dependent: :nullify
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
 
