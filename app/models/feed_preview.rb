@@ -1,13 +1,14 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
 
+  belongs_to :user
   belongs_to :feed_profile
 
   enum :status, {
-    pending: "pending",
-    processing: "processing",
-    completed: "completed",
-    failed: "failed"
+    pending: 0,
+    processing: 1,
+    ready: 2,
+    failed: 3
   }
 
   validates :url, presence: true, format: {
@@ -27,11 +28,11 @@ class FeedPreview < ApplicationRecord
   end
 
   def ready?
-    completed?
+    status == "ready"
   end
 
   def posts_data
-    return [] unless data.present? && completed?
+    return [] unless data.present? && ready?
 
     data["posts"] || []
   end
@@ -44,7 +45,7 @@ class FeedPreview < ApplicationRecord
     { url: url, feed_profile_id: feed_profile_id }
   end
 
-  def self.find_or_create_for_preview(url:, feed_profile:)
+  def self.find_or_create_for_preview(url:, feed_profile:, user:)
     existing = for_cache_key(url, feed_profile.id).first
     return existing if existing&.created_at&.> 1.hour.ago
 
@@ -54,6 +55,7 @@ class FeedPreview < ApplicationRecord
     create!(
       url: url,
       feed_profile: feed_profile,
+      user: user,
       status: :pending
     )
   end

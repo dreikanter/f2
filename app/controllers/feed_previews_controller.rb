@@ -21,7 +21,8 @@ class FeedPreviewsController < ApplicationController
     # Find or create feed preview
     @feed_preview = FeedPreview.find_or_create_for_preview(
       url: @url,
-      feed_profile: @feed_profile
+      feed_profile: @feed_profile,
+      user: Current.user
     )
 
     # Start background job if preview is pending
@@ -58,7 +59,8 @@ class FeedPreviewsController < ApplicationController
 
     @new_preview = FeedPreview.find_or_create_for_preview(
       url: @feed_preview.url,
-      feed_profile: @feed_preview.feed_profile
+      feed_profile: @feed_preview.feed_profile,
+      user: Current.user
     )
 
     FeedPreviewJob.perform_later(@new_preview.id)
