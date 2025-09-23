@@ -6,6 +6,7 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
+  belongs_to :feed_profile, optional: true
   has_one :feed_schedule, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
@@ -25,9 +26,7 @@ class Feed < ApplicationRecord
             }
 
   validates :cron_expression, presence: true
-  validates :loader, presence: true
-  validates :processor, presence: true
-  validates :normalizer, presence: true
+  validates :feed_profile, presence: true
 
   normalizes :name, with: ->(name) { name.to_s.strip }
   normalizes :url, with: ->(url) { url.to_s.strip }
@@ -56,25 +55,28 @@ class Feed < ApplicationRecord
   before_validation :auto_disable_without_active_token
 
   def can_be_enabled?
-    access_token&.active? && target_group.present?
+    access_token&.active? && target_group.present? && feed_profile.present?
   end
 
   # Resolves and returns the loader class for this feed
   # @return [Class] the loader class
   def loader_class
-    ClassResolver.resolve("Loader", loader)
+    return nil unless feed_profile
+    ClassResolver.resolve("Loader", feed_profile.loader)
   end
 
   # Resolves and returns the processor class for this feed
   # @return [Class] the processor class
   def processor_class
-    ClassResolver.resolve("Processor", processor)
+    return nil unless feed_profile
+    ClassResolver.resolve("Processor", feed_profile.processor)
   end
 
   # Resolves and returns the normalizer class for this feed
   # @return [Class] the normalizer class
   def normalizer_class
-    ClassResolver.resolve("Normalizer", normalizer)
+    return nil unless feed_profile
+    ClassResolver.resolve("Normalizer", feed_profile.normalizer)
   end
 
   # Creates and returns a loader instance for this feed
@@ -96,6 +98,7 @@ class Feed < ApplicationRecord
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
+
 
   private
 
