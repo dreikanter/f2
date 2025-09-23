@@ -2,7 +2,10 @@ require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   def feed
-    @feed ||= create(:feed, loader: "http", processor: "rss", normalizer: "rss")
+    @feed ||= begin
+      profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+      create(:feed, feed_profile: profile)
+    end
   end
 
   test "initializes workflow with feed and stats" do
