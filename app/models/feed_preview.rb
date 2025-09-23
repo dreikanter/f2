@@ -59,8 +59,4 @@ class FeedPreview < ApplicationRecord
     { url: url, feed_profile_id: feed_profile_id }
   end
 
-  def self.find_or_create(url:, feed_profile:, user:)
-    create_with(user: user, status: :pending)
-      .find_or_create_by(url: url, feed_profile: feed_profile)
-  end
 end
