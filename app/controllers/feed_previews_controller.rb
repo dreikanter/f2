@@ -23,8 +23,7 @@ class FeedPreviewsController < ApplicationController
     feed_preview.enqueue_job_if_needed!
 
     redirect_to feed_preview_path(feed_preview)
-  rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error "FeedPreview validation failed: #{e.message}"
+  rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   rescue => e
     Rails.logger.error "FeedPreview creation failed: #{e.message}"
@@ -61,6 +60,8 @@ class FeedPreviewsController < ApplicationController
     new_preview.enqueue_job_if_needed!
 
     redirect_to feed_preview_path(new_preview), notice: "Preview refresh started."
+  rescue ActiveRecord::RecordInvalid
+    redirect_to feed_preview_path(feed_preview), alert: "Failed to refresh preview."
   rescue => e
     Rails.logger.error "FeedPreview refresh failed: #{e.message}"
     redirect_to feed_preview_path(feed_preview), alert: "Failed to refresh preview."
