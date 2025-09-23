@@ -76,39 +76,10 @@ class FeedPreviewsController < ApplicationController
   private
 
   def find_or_create_feed_profile
-    # If feed_profile_id is provided, use existing profile
-    if params[:feed_profile_id].present?
-      return FeedProfile.find(params[:feed_profile_id])
-    end
+    # Profile name is required
+    return nil unless params[:feed_profile_name].present?
 
-    # If individual service attributes are provided, find or create a temporary profile
-    if params[:loader].present? && params[:processor].present? && params[:normalizer].present?
-      profile_name = "temp-#{params[:loader]}-#{params[:processor]}-#{params[:normalizer]}"
-
-      # Try to find existing profile with same configuration
-      existing_profile = FeedProfile.find_by(
-        loader: params[:loader],
-        processor: params[:processor],
-        normalizer: params[:normalizer],
-        user: Current.user
-      )
-
-      return existing_profile if existing_profile
-
-      # Create temporary profile
-      return FeedProfile.create!(
-        name: profile_name,
-        loader: params[:loader],
-        processor: params[:processor],
-        normalizer: params[:normalizer],
-        user: Current.user
-      )
-    end
-
-    nil
-  rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error "Failed to create feed profile: #{e.message}"
-    nil
+    FeedProfile.find_by(name: params[:feed_profile_name], user: Current.user)
   end
 
   def valid_url?(url)
