@@ -18,7 +18,4 @@ class User < ApplicationRecord
     email_address
   end
 
-  def admin?
-    permissions.exists?(name: "admin")
-  end
 end

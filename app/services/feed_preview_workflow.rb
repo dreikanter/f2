@@ -1,5 +1,3 @@
-require "ostruct"
-
 class FeedPreviewWorkflow
   include Workflow
 
@@ -39,25 +37,13 @@ class FeedPreviewWorkflow
     feed_preview.update!(status: :processing)
 
     # Create a temporary feed object for workflow processing
-    temp_feed = OpenStruct.new(
+    temp_feed = Feed.new(
       url: feed_preview.url,
       feed_profile: feed_preview.feed_profile,
-      loader_class: feed_preview.feed_profile.loader_class,
-      processor_class: feed_preview.feed_profile.processor_class,
-      normalizer_class: feed_preview.feed_profile.normalizer_class
+      user: feed_preview.user,
+      name: "Preview Feed",
+      cron_expression: "0 0 * * *"
     )
-
-    temp_feed.define_singleton_method(:loader_instance) do
-      loader_class.new(self)
-    end
-
-    temp_feed.define_singleton_method(:processor_instance) do |raw_data|
-      processor_class.new(self, raw_data)
-    end
-
-    temp_feed.define_singleton_method(:normalizer_instance) do |feed_entry|
-      normalizer_class.new(feed_entry)
-    end
 
     temp_feed
   end
@@ -90,7 +76,7 @@ class FeedPreviewWorkflow
 
     posts = entries.map do |entry|
       # Create a temporary feed entry for normalization
-      temp_feed_entry = OpenStruct.new(
+      temp_feed_entry = FeedEntry.new(
         uid: entry.uid,
         published_at: entry.published_at,
         raw_data: entry.raw_data,
