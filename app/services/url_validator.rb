@@ -7,5 +7,4 @@ class UrlValidator
   rescue URI::InvalidURIError
     false
   end
-
 end

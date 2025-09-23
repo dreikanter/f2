@@ -30,7 +30,6 @@ class FeedPreview < ApplicationRecord
     posts_data.size
   end
 
-
   private
 
   def url_must_be_valid

@@ -113,5 +113,4 @@ class FeedPreviewWorkflow
   def record_stats(new_stats)
     @stats.merge!(new_stats)
   end
-
 end

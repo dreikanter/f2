@@ -33,7 +33,6 @@ class FeedProfile < ApplicationRecord
     ClassResolver.resolve("Normalizer", normalizer)
   end
 
-
   private
 
   def deactivate_related_feeds
