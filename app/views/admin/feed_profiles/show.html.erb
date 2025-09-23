@@ -1,0 +1,71 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1><%= @feed_profile.name %></h1>
+  <div>
+    <%= link_to "Edit", edit_admin_feed_profile_path(@feed_profile), class: "btn btn-primary" %>
+    <%= link_to "Delete", admin_feed_profile_path(@feed_profile), method: :delete,
+                confirm: "Are you sure? This will deactivate #{@feed_profile.feeds.count} feeds.",
+                class: "btn btn-outline-danger" %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Profile Configuration</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-4">Name:</dt>
+          <dd class="col-sm-8"><%= @feed_profile.name %></dd>
+
+          <dt class="col-sm-4">Loader:</dt>
+          <dd class="col-sm-8"><span class="badge bg-secondary"><%= @feed_profile.loader %></span></dd>
+
+          <dt class="col-sm-4">Processor:</dt>
+          <dd class="col-sm-8"><span class="badge bg-secondary"><%= @feed_profile.processor %></span></dd>
+
+          <dt class="col-sm-4">Normalizer:</dt>
+          <dd class="col-sm-8"><span class="badge bg-secondary"><%= @feed_profile.normalizer %></span></dd>
+
+          <dt class="col-sm-4">Created by:</dt>
+          <dd class="col-sm-8"><%= @feed_profile.user.email_address %></dd>
+
+          <dt class="col-sm-4">Created:</dt>
+          <dd class="col-sm-8"><%= @feed_profile.created_at.strftime("%B %d, %Y") %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Associated Feeds (<%= @feed_profile.feeds.count %>)</h5>
+      </div>
+      <div class="card-body">
+        <% if @feed_profile.feeds.any? %>
+          <ul class="list-group list-group-flush">
+            <% @feed_profile.feeds.includes(:user).each do |feed| %>
+              <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <div>
+                  <strong><%= feed.name %></strong><br>
+                  <small class="text-muted">by <%= feed.user.email_address %></small>
+                </div>
+                <span class="badge bg-<%= feed.enabled? ? 'success' : 'secondary' %>">
+                  <%= feed.state.capitalize %>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-muted mb-0">No feeds are using this profile.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4">
+  <%= link_to "← Back to Feed Profiles", admin_feed_profiles_path, class: "btn btn-outline-secondary" %>
+</div>

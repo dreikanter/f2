@@ -21,6 +21,12 @@ module ComponentOptionsHelper
     Current.user.access_tokens.active.exists?
   end
 
+  def feed_profile_options
+    FeedProfile.all.map do |profile|
+      [t("feed_profiles.#{profile.name}"), profile.id]
+    end
+  end
+
   private
 
   def available_options(keys, i18n_prefix)

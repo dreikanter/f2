@@ -2,7 +2,10 @@ require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   def feed
-    @feed ||= create(:feed, loader: "http", processor: "rss", normalizer: "rss")
+    @feed ||= begin
+      profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+      create(:feed, feed_profile: profile)
+    end
   end
 
   test "initializes workflow with feed and stats" do
@@ -37,12 +40,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "executes complete workflow with real RSS data and creates valid posts" do
     # Create feed with proper configuration
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -115,12 +114,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles duplicate entries correctly on subsequent runs" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     # Create existing entry
     create(:feed_entry, feed: test_feed, uid: "existing-entry-123")
@@ -170,12 +165,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles HTTP loading errors gracefully" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -202,12 +193,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles RSS processing errors gracefully" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -235,12 +222,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles normalization errors gracefully" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -283,12 +266,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles database errors during entry persistence" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -328,12 +307,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   test "handles empty feed content gracefully" do
-    test_feed = create(:feed,
-      url: "https://example.com/feed.xml",
-      loader: "http_loader",
-      processor: "rss_processor",
-      normalizer: "rss_normalizer"
-    )
+    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile: profile)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 

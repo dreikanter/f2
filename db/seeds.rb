@@ -14,6 +14,15 @@ if Rails.env.development?
   user.permissions.find_or_create_by!(name: "admin")
   puts "✅ Admin permission granted to first user"
 
+  # Create RSS feed profile
+  rss_profile = FeedProfile.find_or_create_by!(name: "rss") do |profile|
+    profile.loader = "rss"
+    profile.processor = "rss"
+    profile.normalizer = "rss"
+    profile.user = user
+  end
+  puts "✅ RSS feed profile created"
+
   # Create sample events for development
   if Event.count < 75
     # Feed processing events

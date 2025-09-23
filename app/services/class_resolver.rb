@@ -7,7 +7,9 @@ module ClassResolver
   def self.resolve(scope, key)
     raise ArgumentError, "Key cannot be nil or empty" if key.nil? || key.to_s.strip.empty?
 
-    class_name = "#{scope}::#{key.to_s.camelize}"
+    # Add scope suffix if not already present
+    key_with_suffix = key.to_s.end_with?("_#{scope.downcase}") ? key.to_s : "#{key}_#{scope.downcase}"
+    class_name = "#{scope}::#{key_with_suffix.camelize}"
     class_name.constantize
   rescue NameError
     raise ArgumentError, "Unknown #{scope.downcase}: #{key}"

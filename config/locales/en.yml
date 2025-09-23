@@ -38,3 +38,6 @@ en:
   
   normalizers:
     rss: "RSS"
+
+  feed_profiles:
+    rss: "RSS Feed Profile"

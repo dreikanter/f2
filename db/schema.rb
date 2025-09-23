@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
     t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
   end
 
+  create_table "feed_profiles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "loader", null: false
+    t.string "name", null: false
+    t.string "normalizer", null: false
+    t.string "processor", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["name"], name: "index_feed_profiles_on_name", unique: true
+    t.index ["user_id"], name: "index_feed_profiles_on_user_id"
+  end
+
   create_table "feed_schedules", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "feed_id", null: false
@@ -72,17 +84,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
     t.datetime "created_at", null: false
     t.string "cron_expression", null: false
     t.string "description", default: "", null: false
+    t.bigint "feed_profile_id"
     t.datetime "import_after"
-    t.string "loader", null: false
     t.string "name", null: false
-    t.string "normalizer", null: false
-    t.string "processor", null: false
     t.integer "state", default: 0, null: false
     t.string "target_group", limit: 80
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.bigint "user_id", null: false
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
+    t.index ["feed_profile_id"], name: "index_feeds_on_feed_profile_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
@@ -254,8 +265,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_16_184344) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
+  add_foreign_key "feed_profiles", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
+  add_foreign_key "feeds", "feed_profiles"
   add_foreign_key "feeds", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
