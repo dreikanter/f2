@@ -13,6 +13,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @feed ||= create(:feed, user: user)
   end
 
+  def feed_profile
+    @feed_profile ||= create(:feed_profile, user: user)
+  end
+
   def other_feed
     @other_feed ||= create(:feed, user: create(:user))
   end
@@ -43,9 +47,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
           name: "test-feed",
           url: "https://example.com/test.xml",
           cron_expression: "0 * * * *",
-          loader: "http",
-          processor: "rss",
-          normalizer: "rss",
+          feed_profile_id: feed_profile.id,
           description: "Test description",
           access_token_id: access_token.id
         }
@@ -68,9 +70,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
           name: "Invalid Name With Spaces",
           url: "not-a-url",
           cron_expression: "",
-          loader: "",
-          processor: "",
-          normalizer: ""
+          feed_profile_id: ""
         }
       }
     end
@@ -171,9 +171,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "Test-Feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        loader: "http",
-        processor: "rss",
-        normalizer: "rss",
+        feed_profile_id: feed_profile.id,
         access_token_id: access_token.id
       }
     }
@@ -192,9 +190,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-feed",
         url: "  https://example.com/test.xml  ",
         cron_expression: "0 * * * *",
-        loader: "http",
-        processor: "rss",
-        normalizer: "rss",
+        feed_profile_id: feed_profile.id,
         access_token_id: access_token.id
       }
     }
@@ -213,9 +209,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        loader: "http",
-        processor: "rss",
-        normalizer: "rss",
+        feed_profile_id: feed_profile.id,
         description: "Line 1\nLine 2\r\nLine 3",
         access_token_id: access_token.id
       }
@@ -235,9 +229,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-enabled-feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        loader: "http",
-        processor: "rss",
-        normalizer: "rss",
+        feed_profile_id: feed_profile.id,
         access_token_id: access_token.id,
         target_group: "testgroup",
         state: "enabled"
@@ -256,9 +248,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-disabled-feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        loader: "http",
-        processor: "rss",
-        normalizer: "rss",
+        feed_profile_id: feed_profile.id,
         access_token_id: access_token.id,
         state: "disabled"
       }

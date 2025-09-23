@@ -27,6 +27,9 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     bad_profile = create(:feed_profile, loader: "http", processor: "unknown", normalizer: "rss")
     bad_feed = create(:feed, feed_profile: bad_profile)
 
+    # Stub the HTTP request that will be made before hitting processor error
+    WebMock.stub_request(:get, bad_feed.url).to_return(body: "<rss></rss>", status: 200)
+
     assert_raises(ArgumentError, "Unknown processor: unknown") do
       FeedRefreshJob.perform_now(bad_feed.id)
     end
@@ -35,6 +38,22 @@ class FeedRefreshJobTest < ActiveJob::TestCase
   test "handles unknown normalizer gracefully" do
     bad_profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "unknown")
     bad_feed = create(:feed, feed_profile: bad_profile)
+
+    # Stub with valid RSS content to reach normalizer step
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <item>
+            <guid>test-entry</guid>
+            <title>Test Entry</title>
+            <description>Test description</description>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, bad_feed.url).to_return(body: sample_rss, status: 200)
 
     assert_raises(ArgumentError, "Unknown normalizer: unknown") do
       FeedRefreshJob.perform_now(bad_feed.id)
