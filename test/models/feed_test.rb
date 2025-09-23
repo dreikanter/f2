@@ -24,22 +24,10 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:cron_expression, :blank)
   end
 
-  test "should require loader" do
-    feed = build(:feed, loader: nil)
+  test "should require feed_profile" do
+    feed = build(:feed, :without_feed_profile)
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:loader, :blank)
-  end
-
-  test "should require processor" do
-    feed = build(:feed, processor: nil)
-    assert_not feed.valid?
-    assert feed.errors.of_kind?(:processor, :blank)
-  end
-
-  test "should require normalizer" do
-    feed = build(:feed, normalizer: nil)
-    assert_not feed.valid?
-    assert feed.errors.of_kind?(:normalizer, :blank)
+    assert feed.errors.of_kind?(:feed_profile, :blank)
   end
 
   test "should have disabled state by default" do
@@ -277,20 +265,30 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
+  test "can_be_enabled? returns false when feed has no feed_profile" do
+    feed = build(:feed)
+    feed.feed_profile = nil
+
+    assert_not feed.can_be_enabled?
+  end
+
   test "processor_class resolves correct processor class" do
-    feed = create(:feed, processor: "rss_processor")
+    profile = create(:feed_profile, processor: "rss")
+    feed = create(:feed, feed_profile: profile)
 
     assert_equal Processor::RssProcessor, feed.processor_class
   end
 
   test "normalizer_class resolves correct normalizer class" do
-    feed = create(:feed, normalizer: "rss_normalizer")
+    profile = create(:feed_profile, normalizer: "rss")
+    feed = create(:feed, feed_profile: profile)
 
     assert_equal Normalizer::RssNormalizer, feed.normalizer_class
   end
 
   test "processor_instance creates processor with feed and raw data" do
-    feed = create(:feed, processor: "rss_processor")
+    profile = create(:feed_profile, processor: "rss")
+    feed = create(:feed, feed_profile: profile)
     raw_data = "<rss><item><title>Test</title></item></rss>"
 
     processor = feed.processor_instance(raw_data)
@@ -299,7 +297,8 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "normalizer_instance creates normalizer with feed entry" do
-    feed = create(:feed, normalizer: "rss_normalizer")
+    profile = create(:feed_profile, normalizer: "rss")
+    feed = create(:feed, feed_profile: profile)
     feed_entry = create(:feed_entry, feed: feed)
 
     normalizer = feed.normalizer_instance(feed_entry)
