@@ -27,7 +27,6 @@ class FeedPreviewWorkflow
     )
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
-    logger.error error.backtrace.join("\n")
 
     feed_preview.update!(status: :failed)
   end
@@ -115,7 +114,4 @@ class FeedPreviewWorkflow
     @stats.merge!(new_stats)
   end
 
-  def record_duration(step_name)
-    # Duration tracking is handled by the base workflow class
-  end
 end

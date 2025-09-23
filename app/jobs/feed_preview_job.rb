@@ -8,7 +8,7 @@ class FeedPreviewJob < ApplicationJob
 
     FeedPreviewWorkflow.new(feed_preview).execute
   rescue => e
-    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}\n#{e.backtrace.join("\n")}"
+    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
 
     feed_preview&.update!(status: :failed)
     raise
