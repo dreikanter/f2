@@ -6,14 +6,9 @@ class Admin::FeedProfilesController < ApplicationController
     @feed_profiles = FeedProfile.includes(:user).order(:name)
   end
 
-  def show
-  end
 
   def new
     @feed_profile = FeedProfile.new
-  end
-
-  def edit
   end
 
   def create
