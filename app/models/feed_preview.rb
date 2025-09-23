@@ -28,9 +28,6 @@ class FeedPreview < ApplicationRecord
     pending? || status == "processing"
   end
 
-  def ready?
-    status == "ready"
-  end
 
 
   def posts_data
