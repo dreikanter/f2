@@ -30,12 +30,11 @@ class FeedPreviewsController < ApplicationController
   end
 
   def update
-    old_preview = FeedPreview.find(params[:id])
-    old_preview.destroy
+    feed_preview = FeedPreview.find(params[:id])
 
     feed_preview = FeedPreview.find_or_create(
-      url: old_preview.url,
-      feed_profile: old_preview.feed_profile,
+      url: feed_preview.url,
+      feed_profile: feed_preview.feed_profile,
       user: Current.user
     )
 
