@@ -1,0 +1,43 @@
+<%# locals: (feed_profile:) %>
+<%= form_with model: [:admin, feed_profile], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <% if feed_profile.errors.any? %>
+    <div class="alert alert-danger">
+      <h5><%= pluralize(feed_profile.errors.count, "error") %> prohibited this feed profile from being saved:</h5>
+      <ul class="mb-0">
+        <% feed_profile.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= form.label :name, class: "form-label font-weight-bold" %>
+    <%= form.text_field :name, class: "form-control", required: true, placeholder: "e.g., rss" %>
+    <div class="form-text">Unique identifier for this profile</div>
+    <div class="invalid-feedback">Please provide a valid name.</div>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :loader, class: "form-label font-weight-bold" %>
+    <%= form.select :loader, options_for_select(loader_options, feed_profile.loader), { prompt: "Choose loader..." }, { class: "form-select", required: true } %>
+    <div class="invalid-feedback">Please select a loader.</div>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :processor, class: "form-label font-weight-bold" %>
+    <%= form.select :processor, options_for_select(processor_options, feed_profile.processor), { prompt: "Choose processor..." }, { class: "form-select", required: true } %>
+    <div class="invalid-feedback">Please select a processor.</div>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :normalizer, class: "form-label font-weight-bold" %>
+    <%= form.select :normalizer, options_for_select(normalizer_options, feed_profile.normalizer), { prompt: "Choose normalizer..." }, { class: "form-select", required: true } %>
+    <div class="invalid-feedback">Please select a normalizer.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", feed_profile.persisted? ? admin_feed_profile_path(feed_profile) : admin_feed_profiles_path, class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>
