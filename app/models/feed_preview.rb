@@ -1,7 +1,6 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
 
-  belongs_to :feed, optional: true
   belongs_to :feed_profile
 
   enum :status, {
@@ -45,7 +44,7 @@ class FeedPreview < ApplicationRecord
     { url: url, feed_profile_id: feed_profile_id }
   end
 
-  def self.find_or_create_for_preview(url:, feed_profile:, feed: nil)
+  def self.find_or_create_for_preview(url:, feed_profile:)
     existing = for_cache_key(url, feed_profile.id).first
     return existing if existing&.created_at&.> 1.hour.ago
 
@@ -55,7 +54,6 @@ class FeedPreview < ApplicationRecord
     create!(
       url: url,
       feed_profile: feed_profile,
-      feed: feed,
       status: :pending
     )
   end
