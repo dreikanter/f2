@@ -31,8 +31,6 @@ class FeedPreviewsController < ApplicationController
     end
 
     redirect_to feed_preview_path(@feed_preview)
-  rescue ActiveRecord::RecordNotFound
-    redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
   rescue => e
     Rails.logger.error "FeedPreview creation failed: #{e.message}"
     redirect_back(fallback_location: feeds_path, alert: "Failed to create preview.")
