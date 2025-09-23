@@ -14,29 +14,28 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def feed_preview
-    @feed_preview ||= create(:feed_preview, feed_profile: feed_profile)
+    @feed_preview ||= create(:feed_preview, feed_profile: feed_profile, user: user)
   end
 
   test "should redirect to login when not authenticated" do
-    post feed_previews_url, params: { url: "https://example.com/feed.xml", feed_profile_id: feed_profile.id }
+    post feed_previews_url, params: { url: "https://example.com/feed.xml", feed_profile_name: feed_profile.name }
     assert_redirected_to new_session_path
   end
 
-  test "should create preview with feed_profile_id" do
+  test "should create preview with feed_profile_name" do
     sign_in_as(user)
 
     assert_difference("FeedPreview.count", 1) do
       post feed_previews_url, params: {
         url: "https://example.com/feed.xml",
-        feed_profile_id: feed_profile.id,
-        feed_id: feed.id
+        feed_profile_name: feed_profile.name
       }
     end
 
     preview = FeedPreview.last
     assert_equal "https://example.com/feed.xml", preview.url
     assert_equal feed_profile, preview.feed_profile
-    assert_equal feed, preview.feed
+    assert_equal user, preview.user
     assert_redirected_to feed_preview_path(preview)
   end
 

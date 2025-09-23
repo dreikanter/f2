@@ -31,6 +31,20 @@ class FeedPreview < ApplicationRecord
     status == "ready"
   end
 
+  # Atomically enqueue job if preview is pending and not already processing
+  def enqueue_job_if_needed!
+    # Use compare-and-swap pattern with database locking
+    with_lock do
+      if pending?
+        update!(status: :processing)
+        FeedPreviewJob.perform_later(id)
+        true
+      else
+        false
+      end
+    end
+  end
+
   def posts_data
     return [] unless data.present? && ready?
 
@@ -46,17 +60,27 @@ class FeedPreview < ApplicationRecord
   end
 
   def self.find_or_create_for_preview(url:, feed_profile:, user:)
-    existing = for_cache_key(url, feed_profile.id).first
-    return existing if existing&.created_at&.> 1.hour.ago
+    # Use transaction with retry logic to handle race conditions
+    transaction do
+      # Try to find existing preview first
+      existing = where(url: url, feed_profile: feed_profile).first
 
-    # Remove old preview if exists
-    existing&.destroy
+      # Return existing if it's recent (within 1 hour)
+      return existing if existing&.created_at&.> 1.hour.ago
 
-    create!(
-      url: url,
-      feed_profile: feed_profile,
-      user: user,
-      status: :pending
-    )
+      # Remove old preview if exists
+      existing&.destroy
+
+      # Create new preview with unique constraint protection
+      create!(
+        url: url,
+        feed_profile: feed_profile,
+        user: user,
+        status: :pending
+      )
+    end
+  rescue ActiveRecord::RecordNotUnique
+    # If we hit the unique constraint, someone else created it, so fetch it
+    where(url: url, feed_profile: feed_profile).first!
   end
 end

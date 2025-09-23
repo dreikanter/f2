@@ -25,10 +25,8 @@ class FeedPreviewsController < ApplicationController
       user: Current.user
     )
 
-    # Start background job if preview is pending
-    if @feed_preview.pending?
-      FeedPreviewJob.perform_later(@feed_preview.id)
-    end
+    # Atomically enqueue job if needed (protects against race conditions)
+    @feed_preview.enqueue_job_if_needed!
 
     redirect_to feed_preview_path(@feed_preview)
   rescue => e
@@ -63,7 +61,7 @@ class FeedPreviewsController < ApplicationController
       user: Current.user
     )
 
-    FeedPreviewJob.perform_later(@new_preview.id)
+    @new_preview.enqueue_job_if_needed!
 
     redirect_to feed_preview_path(@new_preview), notice: "Preview refresh started."
   rescue => e
