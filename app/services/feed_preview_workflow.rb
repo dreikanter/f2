@@ -63,7 +63,7 @@ class FeedPreviewWorkflow
     entries = processor.process
 
     # Limit to most recent entries for preview
-    limited_entries = entries.first(FeedPreview::PREVIEW_LIMIT)
+    limited_entries = entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
 
     record_stats(total_entries: entries.size, preview_entries: limited_entries.size)
     { temp_feed: temp_feed, entries: limited_entries }
