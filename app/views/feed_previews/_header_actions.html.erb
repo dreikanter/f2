@@ -1,0 +1,9 @@
+<div class="d-flex gap-2">
+  <% unless feed_preview.processing? %>
+    <%= button_to "Refresh Preview", feed_preview_path(feed_preview),
+        method: :patch,
+        class: "btn btn-outline-secondary",
+        data: { turbo: false } %>
+  <% end %>
+  <%= link_to "Back to Feeds", feeds_path, class: "btn btn-outline-secondary" %>
+</div>

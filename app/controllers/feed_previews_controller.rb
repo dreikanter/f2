@@ -17,16 +17,25 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
+        streams = []
+
+        # Update the status section
         if @feed_preview.ready?
-          render turbo_stream: turbo_stream.replace("preview-status",
+          streams << turbo_stream.replace("preview-status",
             partial: "feed_previews/completed_status", locals: { feed_preview: @feed_preview })
         elsif @feed_preview.pending? || @feed_preview.processing?
-          render turbo_stream: turbo_stream.replace("preview-status",
+          streams << turbo_stream.replace("preview-status",
             partial: "feed_previews/processing_status", locals: { feed_preview: @feed_preview })
         elsif @feed_preview.failed?
-          render turbo_stream: turbo_stream.replace("preview-status",
+          streams << turbo_stream.replace("preview-status",
             partial: "feed_previews/failed_status", locals: { feed_preview: @feed_preview })
         end
+
+        # Update the header actions to show/hide refresh button
+        streams << turbo_stream.replace("header-actions",
+          partial: "feed_previews/header_actions", locals: { feed_preview: @feed_preview })
+
+        render turbo_stream: streams
       end
     end
   end
@@ -36,8 +45,7 @@ class FeedPreviewsController < ApplicationController
 
     create_and_enqueue_preview(
       url: existing_preview.url,
-      feed_profile: existing_preview.feed_profile,
-      notice: "Preview refresh started."
+      feed_profile: existing_preview.feed_profile
     )
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
