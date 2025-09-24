@@ -1,77 +1,9 @@
-<div class="card">
-  <div class="card-header">
-    <h5 class="card-title mb-0">
-      <i class="bi bi-check-circle-fill text-success me-2"></i>
-      Preview Complete
-    </h5>
-  </div>
-  <div class="card-body">
-    <% if @feed_preview.posts_data.any? %>
-      <p class="text-muted mb-3">
-        Showing preview of <%= @feed_preview.posts_count %> most recent posts from this feed.
-      </p>
-
-      <% @feed_preview.posts_data.each_with_index do |post_data, index| %>
-        <div class="border rounded p-3 mb-3">
-          <h6 class="mb-2">Post <%= index + 1 %></h6>
-
-          <div class="mb-2">
-            <strong>Content:</strong>
-            <div class="mt-1">
-              <%= simple_format(post_data['content']) %>
-            </div>
-          </div>
-
-          <% if post_data['source_url'].present? %>
-            <div class="mb-2">
-              <strong>Source:</strong>
-              <a href="<%= post_data['source_url'] %>" target="_blank" class="text-decoration-none">
-                <%= post_data['source_url'] %>
-              </a>
-            </div>
-          <% end %>
-
-          <% if post_data['published_at'].present? %>
-            <div class="mb-2">
-              <strong>Published:</strong>
-              <%= Time.parse(post_data['published_at']).to_fs(:long) rescue post_data['published_at'] %>
-            </div>
-          <% end %>
-
-          <% if post_data['attachments'].present? && post_data['attachments'].any? %>
-            <div class="mb-2">
-              <strong>Attachments:</strong>
-              <ul class="list-unstyled ms-3">
-                <% post_data['attachments'].each do |attachment| %>
-                  <li>
-                    <% if attachment.is_a?(Hash) && attachment['url'] %>
-                      <a href="<%= attachment['url'] %>" target="_blank" class="text-decoration-none">
-                        <%= attachment['url'] %>
-                      </a>
-                      <% if attachment['type'] %>
-                        <small class="text-muted">(<%= attachment['type'] %>)</small>
-                      <% end %>
-                    <% else %>
-                      <%= attachment %>
-                    <% end %>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-
-          <% if post_data['uid'].present? %>
-            <div>
-              <small class="text-muted">UID: <%= post_data['uid'] %></small>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    <% else %>
-      <div class="alert alert-info" role="alert">
-        <i class="bi bi-info-circle me-2"></i>
-        No posts found in this feed. The feed might be empty or the processing encountered an issue.
-      </div>
-    <% end %>
-  </div>
+<div class="alert alert-light" role="alert">
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+  <strong>Preview Complete</strong>
+  <% if @feed_preview.posts_data.any? %>
+    — Showing preview of <%= @feed_preview.posts_count %> most recent posts from this feed.
+  <% else %>
+    — No posts found in this feed. The feed might be empty or the processing encountered an issue.
+  <% end %>
 </div>
