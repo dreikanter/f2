@@ -106,7 +106,6 @@
       <dd class="col-lg-4 col-md-9">
         <% if @feed.feed_profile %>
           <%= @feed.feed_profile.name %>
-          <small class="text-muted">(loader: <%= @feed.feed_profile.loader %>, processor: <%= @feed.feed_profile.processor %>, normalizer: <%= @feed.feed_profile.normalizer %>)</small>
         <% else %>
           <span class="text-muted">No profile configured</span>
         <% end %>
