@@ -13,6 +13,7 @@
               <th>Name</th>
               <th>Status</th>
               <th>Target Group</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -36,6 +37,16 @@
                     <%= feed.target_group %>
                   <% else %>
                     <em class="text-muted">None</em>
+                  <% end %>
+                </td>
+                <td>
+                  <% if feed.feed_profile.present? %>
+                    <%= button_to "Preview", feed_previews_path,
+                        params: { url: feed.url, feed_profile_name: feed.feed_profile.name },
+                        method: :post,
+                        class: "btn btn-sm btn-outline-secondary",
+                        title: "Generate feed preview",
+                        data: { turbo: false } %>
                   <% end %>
                 </td>
               </tr>

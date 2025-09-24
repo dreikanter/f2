@@ -3,6 +3,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
   has_many :feed_profiles, dependent: :destroy
+  has_many :feed_previews, dependent: :destroy
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
 
@@ -15,5 +16,9 @@ class User < ApplicationRecord
 
   generates_token_for :email_change, expires_in: 15.minutes do
     email_address
+  end
+
+  def permission?(permission_name)
+    permissions.exists?(name: permission_name)
   end
 end

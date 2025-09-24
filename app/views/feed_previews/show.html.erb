@@ -1,0 +1,24 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Feed Preview</h1>
+  <div id="header-actions">
+    <%= render "feed_previews/header_actions", feed_preview: @feed_preview %>
+  </div>
+</div>
+
+<div class="alert alert-light" role="alert">
+  <strong>URL:</strong>
+  <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
+    <%= @feed_preview.url %>
+  </a>
+  (<%= @feed_preview.feed_profile.name %>)
+</div>
+
+<div id="preview-status">
+  <% if @feed_preview.ready? %>
+    <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
+  <% elsif @feed_preview.pending? || @feed_preview.processing? %>
+    <%= render "feed_previews/processing_status", feed_preview: @feed_preview %>
+  <% elsif @feed_preview.failed? %>
+    <%= render "feed_previews/failed_status", feed_preview: @feed_preview %>
+  <% end %>
+</div>

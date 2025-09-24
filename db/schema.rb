@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_23_114505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "encrypted_token"
-    t.string "host", default: "https://freefeed.net", null: false
+    t.string "host", null: false
     t.datetime "last_used_at"
     t.string "name", null: false
     t.string "owner"
@@ -56,6 +56,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
     t.datetime "updated_at", null: false
     t.index ["feed_id", "uid"], name: "index_feed_entries_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
+  end
+
+  create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data"
+    t.bigint "feed_profile_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.bigint "user_id", null: false
+    t.index ["created_at"], name: "index_feed_previews_on_created_at"
+    t.index ["feed_profile_id"], name: "index_feed_previews_on_feed_profile_id"
+    t.index ["status"], name: "index_feed_previews_on_status"
+    t.index ["url", "feed_profile_id"], name: "index_feed_previews_on_url_and_profile", unique: true
+    t.index ["user_id"], name: "index_feed_previews_on_user_id"
   end
 
   create_table "feed_profiles", force: :cascade do |t|
@@ -265,6 +280,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_102610) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
+  add_foreign_key "feed_previews", "feed_profiles"
+  add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_profiles", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"

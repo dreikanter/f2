@@ -15,12 +15,14 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
-  namespace :admin do
-    resources :feed_profiles
-  end
-
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
+  end
+
+  resources :feed_previews, only: [:create, :show, :update], path: "previews"
+
+  namespace :admin do
+    resources :feed_profiles
   end
 
   resources :events, only: [:index, :show]

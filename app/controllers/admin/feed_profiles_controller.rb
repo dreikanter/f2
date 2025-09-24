@@ -7,6 +7,8 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def show
+    @feed_profile = FeedProfile.find(params[:id])
+    authorize @feed_profile
   end
 
   def new
@@ -14,10 +16,13 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def edit
+    @feed_profile = FeedProfile.find(params[:id])
+    authorize @feed_profile
   end
 
   def create
-    @feed_profile = Current.user.feed_profiles.build(feed_profile_params)
+    @feed_profile = FeedProfile.new(feed_profile_params)
+    @feed_profile.user = Current.user
 
     if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully created."
@@ -27,7 +32,10 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def update
-    if @feed_profile.update(feed_profile_params)
+    @feed_profile.assign_attributes(feed_profile_params)
+    @feed_profile.user = Current.user
+
+    if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully updated."
     else
       render :edit, status: :unprocessable_content
@@ -42,7 +50,7 @@ class Admin::FeedProfilesController < ApplicationController
   private
 
   def require_admin
-    redirect_to root_path, alert: "Access denied." unless Current.user&.has_permission?("admin")
+    redirect_to root_path, alert: "Access denied." unless Current.user.permission?("admin")
   end
 
   def load_feed_profile

@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="mb-0"><%= @feed.name %></h1>
+  <h1><%= @feed.name %></h1>
   <div class="d-flex gap-2 align-items-center">
     
     <% if @feed.enabled? %>
@@ -29,7 +29,15 @@
       <% missing_parts = feed_missing_enablement_parts(@feed) %>
       <span class="btn btn-outline-secondary disabled" title="Cannot enable without <%= missing_parts.join(' and ') %>">Enable</span>
     <% end %>
-    
+
+    <% if @feed.feed_profile.present? %>
+      <%= button_to "Preview", feed_previews_path,
+          params: { url: @feed.url, feed_profile_name: @feed.feed_profile.name },
+          method: :post,
+          class: "btn btn-outline-secondary",
+          data: { turbo: false } %>
+    <% end %>
+
     <%= link_to "Edit", edit_feed_path(@feed), class: "btn btn-outline-secondary" %>
     <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
   </div>
@@ -99,7 +107,6 @@
       <dd class="col-lg-4 col-md-9">
         <% if @feed.feed_profile %>
           <%= @feed.feed_profile.name %>
-          <small class="text-muted">(loader: <%= @feed.feed_profile.loader %>, processor: <%= @feed.feed_profile.processor %>, normalizer: <%= @feed.feed_profile.normalizer %>)</small>
         <% else %>
           <span class="text-muted">No profile configured</span>
         <% end %>
