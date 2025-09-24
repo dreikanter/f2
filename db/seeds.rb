@@ -44,9 +44,8 @@ if Rails.env.development?
   end
 
   # Create sample feeds
-  if Feed.count == 0
-    active_token = AccessToken.active.first
-    feeds_data = [
+  active_token = AccessToken.active.first
+  feeds_data = [
       {
         name: "Tech News",
         url: "https://techcrunch.com/feed/",
@@ -82,28 +81,27 @@ if Rails.env.development?
     ]
 
     feeds_data.each do |feed_data|
-      feed = Feed.create!(
-        name: feed_data[:name],
+      feed = Feed.find_or_initialize_by(name: feed_data[:name], user: user)
+      feed.assign_attributes(
         url: feed_data[:url],
         description: feed_data[:description],
         target_group: feed_data[:target_group],
         state: feed_data[:state],
         cron_expression: feed_data[:cron_expression],
-        user: user,
         feed_profile: rss_profile,
         access_token: active_token
       )
+      feed.save!
 
-      # Create feed schedule
+      # Create or update feed schedule
+      schedule = feed.feed_schedule || feed.build_feed_schedule
       next_run = feed.state == "enabled" ? rand(1..6).hours.from_now : nil
-      FeedSchedule.create!(
-        feed: feed,
+      schedule.update!(
         next_run_at: next_run,
         last_run_at: rand(1..24).hours.ago
       )
     end
     puts "✅ Sample feeds created (#{Feed.count} total)"
-  end
 
   # Generate posts for active feeds using batch inserts
   if Post.count == 0
