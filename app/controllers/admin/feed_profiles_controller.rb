@@ -22,6 +22,7 @@ class Admin::FeedProfilesController < ApplicationController
 
   def create
     @feed_profile = FeedProfile.new(feed_profile_params)
+    @feed_profile.user = Current.user
 
     if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully created."
@@ -31,7 +32,10 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def update
-    if @feed_profile.update(feed_profile_params)
+    @feed_profile.assign_attributes(feed_profile_params)
+    @feed_profile.user = Current.user
+
+    if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully updated."
     else
       render :edit, status: :unprocessable_content
@@ -54,6 +58,6 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def feed_profile_params
-    params.require(:feed_profile).permit(:name, :loader, :processor, :normalizer, :user_id)
+    params.require(:feed_profile).permit(:name, :loader, :processor, :normalizer)
   end
 end

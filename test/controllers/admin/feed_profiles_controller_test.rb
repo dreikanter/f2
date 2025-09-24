@@ -68,8 +68,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
           name: "test-profile",
           loader: "http",
           processor: "rss",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -79,7 +78,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "http", profile.loader
     assert_equal "rss", profile.processor
     assert_equal "rss", profile.normalizer
-    assert_equal user, profile.user
+    assert_equal admin_user, profile.user
     assert_redirected_to admin_feed_profile_url(profile)
   end
 
@@ -92,8 +91,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
           name: "", # invalid
           loader: "http",
           processor: "rss",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -110,8 +108,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
           name: "test-profile",
           loader: "http",
           processor: "rss",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -257,8 +254,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
           name: "duplicate-name",
           loader: "http",
           processor: "rss",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -275,8 +271,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
         feed_profile: {
           name: "incomplete-profile",
           processor: "rss",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -288,8 +283,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
         feed_profile: {
           name: "incomplete-profile",
           loader: "http",
-          normalizer: "rss",
-          user_id: user.id
+          normalizer: "rss"
         }
       }
     end
@@ -301,8 +295,7 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
         feed_profile: {
           name: "incomplete-profile",
           loader: "http",
-          processor: "rss",
-          user_id: user.id
+          processor: "rss"
         }
       }
     end
@@ -323,5 +316,47 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
     feed_profile # ensure profile exists
     get admin_feed_profiles_url
     assert_response :success
+  end
+
+  test "should always assign feed profile to current admin user on create" do
+    sign_in_as(admin_user)
+
+    # Create a profile - it should belong to the admin user regardless of any user_id in params
+    assert_difference("FeedProfile.count", 1) do
+      post admin_feed_profiles_url, params: {
+        feed_profile: {
+          name: "admin-profile",
+          loader: "http",
+          processor: "rss",
+          normalizer: "rss"
+        }
+      }
+    end
+
+    profile = FeedProfile.last
+    assert_equal admin_user, profile.user, "Feed profile should belong to the admin user who created it"
+  end
+
+  test "should always reassign feed profile to current admin user on update" do
+    sign_in_as(admin_user)
+
+    # Create a profile that belongs to another user
+    other_user = create(:user)
+    existing_profile = create(:feed_profile, user: other_user, name: "original-name")
+
+    # Update the profile - it should now belong to the admin user
+    patch admin_feed_profile_url(existing_profile), params: {
+      feed_profile: {
+        name: "updated-name",
+        loader: "http",
+        processor: "rss",
+        normalizer: "rss"
+      }
+    }
+
+    existing_profile.reload
+    assert_equal "updated-name", existing_profile.name
+    assert_equal admin_user, existing_profile.user, "Feed profile should be reassigned to the admin user who updated it"
+    assert_redirected_to admin_feed_profile_url(existing_profile)
   end
 end
