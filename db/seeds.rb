@@ -25,21 +25,31 @@ if Rails.env.development?
 
   # Create fake access tokens
   if AccessToken.count == 0
-    access_tokens = []
-    5.times do |i|
-      access_tokens << {
-        name: "Token #{i + 1}",
+    # Create tokens individually to use enum values properly
+    3.times do |i|
+      AccessToken.create!(
+        name: "Active Token #{i + 1}",
         owner: "testuser#{i + 1}",
-        status: i < 3 ? 1 : 2, # 1 = active, 2 = expired
-        user_id: user.id,
+        status: :active,
+        user: user,
         host: "https://freefeed.net",
         encrypted_token: "fake_encrypted_token_#{i + 1}_#{SecureRandom.hex(16)}",
-        last_used_at: rand(1..30).days.ago,
-        created_at: rand(30..90).days.ago,
-        updated_at: rand(1..7).days.ago
-      }
+        last_used_at: rand(1..30).days.ago
+      )
     end
-    AccessToken.insert_all!(access_tokens)
+
+    2.times do |i|
+      AccessToken.create!(
+        name: "Inactive Token #{i + 4}",
+        owner: "testuser#{i + 4}",
+        status: :inactive,
+        user: user,
+        host: "https://freefeed.net",
+        encrypted_token: "fake_encrypted_token_#{i + 4}_#{SecureRandom.hex(16)}",
+        last_used_at: rand(30..90).days.ago
+      )
+    end
+
     puts "✅ Access tokens created (#{AccessToken.count} total)"
   end
 
