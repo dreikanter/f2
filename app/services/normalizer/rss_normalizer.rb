@@ -32,7 +32,7 @@ module Normalizer
     end
 
     def extract_content(raw_data)
-      content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("title") || ""
+      content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       result = clean_html(content)
       result.empty? ? "" : result
     end

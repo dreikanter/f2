@@ -1,4 +1,8 @@
 <% if feed_preview.posts_data.any? %>
+  <div class="alert alert-info" role="alert">
+    Showing <%= feed_preview.posts_count %> most recent <%= "post".pluralize(feed_preview.posts_count) %>.
+  </div>
+
   <% feed_preview.posts_data.each_with_index do |post_data, index| %>
     <div class="card mb-3">
       <div class="card-header">
@@ -60,4 +64,8 @@
       </div>
     </div>
   <% end %>
+<% else %>
+  <div class="alert alert-light" role="alert">
+    No posts found in this feed.
+  </div>
 <% end %>

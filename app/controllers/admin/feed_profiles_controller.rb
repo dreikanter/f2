@@ -46,7 +46,7 @@ class Admin::FeedProfilesController < ApplicationController
   private
 
   def require_admin
-    redirect_to root_path, alert: "Access denied." unless Current.user&.has_permission?("admin")
+    redirect_to root_path, alert: "Access denied." unless Current.user.permission?("admin")
   end
 
   def load_feed_profile

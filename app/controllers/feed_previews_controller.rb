@@ -2,18 +2,17 @@ class FeedPreviewsController < ApplicationController
   before_action :require_authentication
 
   def create
-    feed_profile = FeedProfile.find_by!(name: params.require(:feed_profile_name))
-
-    create_and_enqueue_preview(
-      url: params[:url],
-      feed_profile: feed_profile
-    )
+    feed_profile = FeedProfile.find_by!(name: params[:feed_profile_name])
+    create_and_enqueue_preview(url: params[:url], feed_profile: feed_profile)
+  rescue ActiveRecord::RecordNotFound
+    redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   end
 
   def show
     @feed_preview = FeedPreview.find(params[:id])
+
     respond_to do |format|
       format.html
       format.turbo_stream do
@@ -38,6 +37,8 @@ class FeedPreviewsController < ApplicationController
         render turbo_stream: streams
       end
     end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to feeds_path, alert: "Preview not found."
   end
 
   def update
@@ -47,6 +48,8 @@ class FeedPreviewsController < ApplicationController
       url: existing_preview.url,
       feed_profile: existing_preview.feed_profile
     )
+  rescue ActiveRecord::RecordNotFound
+    redirect_to feeds_path, alert: "Preview not found."
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   end

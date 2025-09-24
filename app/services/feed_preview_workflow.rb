@@ -100,7 +100,7 @@ class FeedPreviewWorkflow
   end
 
   def finalize_workflow(posts)
-    record_stats(completed_at: Time.current, total_duration: total_duration)
+    record_stats(ready_at: Time.current, total_duration: total_duration)
 
     feed_preview.update!(
       status: :ready,
