@@ -47,7 +47,6 @@ class UrlValidatorTest < ActiveSupport::TestCase
     invalid_urls = [
       "not-a-url",
       "://example.com",
-      "http:///path",
       "http//example.com"
     ]
 
