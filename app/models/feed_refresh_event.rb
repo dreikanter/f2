@@ -33,7 +33,8 @@ class FeedRefreshEvent
         error: {
           class: error.class.name,
           message: error.message,
-          stage: stage
+          stage: stage,
+          backtrace: error.backtrace
         }
       }
     )
