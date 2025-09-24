@@ -42,7 +42,7 @@ class FeedPreviewsController < ApplicationController
     feed_preview = nil
 
     FeedPreview.transaction do
-      feed_preview = FeedPreview.create_with(user_id: Current.user.id, status: :pending)
+      feed_preview = FeedPreview.create_with(status: :pending)
         .find_or_create_by(url: url, feed_profile: feed_profile)
 
       # Atomically enqueue job if preview is pending

@@ -1,8 +1,10 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
 
-  belongs_to :user
+  belongs_to :feed, optional: true
   belongs_to :feed_profile
+
+  delegate :user, to: :feed, allow_nil: true
 
   enum :status, {
     pending: 0,

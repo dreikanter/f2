@@ -3,7 +3,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
   has_many :feed_profiles, dependent: :nullify
-  has_many :feed_previews, dependent: :destroy
+  has_many :feed_previews, through: :feeds
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
 

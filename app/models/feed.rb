@@ -11,6 +11,7 @@ class Feed < ApplicationRecord
 
   delegate :loader, :processor, :normalizer, :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
   has_many :feed_entries, dependent: :destroy
+  has_many :feed_previews, dependent: :destroy
   has_many :posts, dependent: :destroy
 
   enum :state, { disabled: 0, enabled: 1 }
