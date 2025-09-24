@@ -45,12 +45,10 @@ class FeedPreviewsController < ApplicationController
       feed_preview = FeedPreview.create_with(user: Current.user, status: :pending)
         .find_or_create_by(url: url, feed_profile: feed_profile)
 
-      # Atomically enqueue job if preview is pending and not already processing
-      feed_preview.with_lock do
-        if feed_preview.pending?
-          feed_preview.update!(status: :processing)
-          FeedPreviewJob.perform_later(feed_preview.id)
-        end
+      # Atomically enqueue job if preview is pending
+      if feed_preview.pending?
+        feed_preview.update!(status: :processing)
+        FeedPreviewJob.perform_later(feed_preview.id)
       end
     end
 
