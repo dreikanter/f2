@@ -39,8 +39,12 @@ class FeedPreviewJobTest < ActiveJob::TestCase
   end
 
   test "should execute workflow when preview exists" do
-    # Create a preview with a valid URL that won't cause network calls
+    # Create a preview with a valid URL and stub the network request
     valid_preview = create(:feed_preview, user: user, feed_profile: feed_profile, url: "http://example.com/feed.xml")
+
+    # Stub the HTTP request to avoid actual network calls
+    stub_request(:get, "http://example.com/feed.xml")
+      .to_return(status: 200, body: "<rss><channel><item><title>Test</title></item></channel></rss>", headers: { 'Content-Type' => 'application/xml' })
 
     # This should execute the workflow path (line 9)
     assert_nothing_raised do
@@ -49,12 +53,16 @@ class FeedPreviewJobTest < ActiveJob::TestCase
   end
 
   test "should handle workflow errors and update preview status" do
-    # Create a preview that will cause workflow to fail
+    # Create a preview with URL that will pass validation but fail in processing
     failing_preview = create(:feed_preview,
                             user: user,
                             feed_profile: feed_profile,
-                            url: "invalid-url-format",
+                            url: "http://example.com/will-fail.xml",
                             status: :processing)
+
+    # Stub the request to return malformed content that will cause processing to fail
+    stub_request(:get, "http://example.com/will-fail.xml")
+      .to_return(status: 500, body: "Server Error")
 
     # The job should handle the error, log it, and update status
     assert_raises StandardError do
@@ -83,19 +91,15 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     failing_preview = create(:feed_preview,
                             user: user,
                             feed_profile: feed_profile,
-                            url: "malformed-url-that-causes-error")
+                            url: "http://example.com/error.xml")
 
-    # Capture that an error is logged and the job re-raises
-    original_logger_level = Rails.logger.level
-    Rails.logger.level = :info
+    # Stub the request to cause an error
+    stub_request(:get, "http://example.com/error.xml")
+      .to_raise(StandardError.new("Network error"))
 
-    begin
-      # This should trigger the error logging path
-      assert_raises StandardError do
-        FeedPreviewJob.perform_now(failing_preview.id)
-      end
-    ensure
-      Rails.logger.level = original_logger_level
+    # This should trigger the error logging path
+    assert_raises StandardError do
+      FeedPreviewJob.perform_now(failing_preview.id)
     end
   end
 end

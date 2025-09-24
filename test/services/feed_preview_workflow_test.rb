@@ -44,14 +44,18 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "should handle workflow execution with errors by updating preview status" do
-    # Create a workflow that will fail due to invalid URL
-    invalid_preview = create(:feed_preview,
+    # Create a workflow that will fail due to network error
+    failing_preview = create(:feed_preview,
                             user: user,
                             feed_profile: feed_profile,
-                            url: "invalid-url-that-will-cause-error",
+                            url: "http://example.com/will-fail.xml",
                             status: :pending)
 
-    workflow_instance = FeedPreviewWorkflow.new(invalid_preview)
+    # Stub the request to cause an error
+    stub_request(:get, "http://example.com/will-fail.xml")
+      .to_raise(StandardError.new("Network error"))
+
+    workflow_instance = FeedPreviewWorkflow.new(failing_preview)
 
     # Execute should not raise, but should handle error internally
     assert_nothing_raised do
@@ -59,8 +63,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     end
 
     # Check that the feed preview status was updated to failed
-    invalid_preview.reload
-    assert invalid_preview.failed?
+    failing_preview.reload
+    assert failing_preview.failed?
   end
 
   test "should merge stats correctly" do
