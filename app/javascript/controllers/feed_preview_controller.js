@@ -18,21 +18,27 @@ export default class extends Controller {
 
   preview() {
     const url = document.getElementById('feed_url')?.value
-    const loader = document.getElementById('feed_loader')?.value
-    const processor = document.getElementById('feed_processor')?.value
-    const normalizer = document.getElementById('feed_normalizer')?.value
+    const feedProfileId = document.getElementById('feed_feed_profile_id')?.value
 
-    if (!url || !loader || !processor || !normalizer) {
-      alert('Please fill in all required fields (URL, Loader, Processor, Normalizer) before previewing.')
+    if (!url || !feedProfileId) {
+      alert('Please fill in URL and select a Feed Profile before previewing.')
+      return
+    }
+
+    // Get feed profile name from the selected option
+    const feedProfileSelect = document.getElementById('feed_feed_profile_id')
+    const selectedOption = feedProfileSelect.options[feedProfileSelect.selectedIndex]
+    const feedProfileName = selectedOption?.text
+
+    if (!feedProfileName || feedProfileName === 'Choose feed profile...') {
+      alert('Please select a valid Feed Profile before previewing.')
       return
     }
 
     // Create form data for preview
     const formData = new FormData()
     formData.append('url', url)
-    formData.append('loader', loader)
-    formData.append('processor', processor)
-    formData.append('normalizer', normalizer)
+    formData.append('feed_profile_name', feedProfileName)
 
     // Submit preview request
     fetch(this.previewButton.dataset.previewUrl, {
@@ -44,7 +50,8 @@ export default class extends Controller {
     })
     .then(response => {
       if (response.redirected) {
-        window.open(response.url, '_blank')
+        // Redirect in the same window instead of opening new tab
+        window.location.href = response.url
       } else {
         return response.text().then(text => {
           console.error('Preview failed:', text)
