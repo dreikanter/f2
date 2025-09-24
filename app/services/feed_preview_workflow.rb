@@ -16,10 +16,6 @@ class FeedPreviewWorkflow
 
   private
 
-  def after_step(_output)
-    # Duration tracking not needed for preview workflow
-  end
-
   def on_error(error)
     record_stats(
       total_duration: total_duration,
@@ -36,15 +32,11 @@ class FeedPreviewWorkflow
     feed_preview.update!(status: :processing)
 
     # Create a temporary feed object for workflow processing
-    temp_feed = Feed.new(
+    Feed.new(
       url: feed_preview.url,
       feed_profile: feed_preview.feed_profile,
-      user: feed_preview.user,
-      name: "Preview Feed",
-      cron_expression: "0 0 * * *"
+      user: feed_preview.user
     )
-
-    temp_feed
   end
 
   def load_feed_contents(temp_feed)
