@@ -62,7 +62,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     XML
 
     stub_request(:get, "http://example.com/feed.xml")
-      .to_return(status: 200, body: rss_content, headers: { 'Content-Type' => 'application/xml' })
+      .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
     # This should execute the workflow path (line 9)
     assert_nothing_raised do
