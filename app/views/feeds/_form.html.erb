@@ -1,5 +1,5 @@
 <%# locals: (feed:) %>
-<div data-controller="groups feed-preview"
+<div data-controller="groups"
      data-groups-loading-text-value="Loading..."
      data-groups-default-text-value="Select the Freefeed group where posts will be published">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
@@ -96,9 +96,6 @@
 
   <div class="mb-3">
     <%= form.submit class: "btn btn-primary" %>
-    <button type="button" id="preview-button" class="btn btn-outline-secondary" data-preview-url="<%= feed_previews_path %>">
-      Preview Feed
-    </button>
     <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-outline-secondary" %>
   </div>
 <% end %>
