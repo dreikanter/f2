@@ -5,10 +5,7 @@
   </div>
 </div>
 
-<div class="card mb-4">
-  <div class="card-header">
-    <h5 class="card-title mb-0">Preview Details</h5>
-  </div>
+<div class="card mb-3">
   <div class="card-body">
     <p class="mb-0">
       <strong>URL:</strong>
@@ -16,9 +13,6 @@
         <%= @feed_preview.url %>
       </a>
       (<%= @feed_preview.feed_profile.name %>)
-      <% if @feed_preview.ready? %>
-        — <%= @feed_preview.posts_count %> posts found
-      <% end %>
     </p>
   </div>
 </div>

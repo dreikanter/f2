@@ -2,9 +2,9 @@
   <i class="bi bi-check-circle-fill text-success me-2"></i>
   <strong>Preview Complete</strong>
   <% if feed_preview.posts_data.any? %>
-    — Showing preview of <%= feed_preview.posts_count %> most recent posts from this feed.
+    — Showing <%= feed_preview.posts_count %> most recent posts.
   <% else %>
-    — No posts found in this feed. The feed might be empty or the processing encountered an issue.
+    — No posts found in this feed.
   <% end %>
 </div>
 
