@@ -23,6 +23,147 @@ if Rails.env.development?
   end
   puts "✅ RSS feed profile created"
 
+  # Create fake access tokens
+  if AccessToken.count == 0
+    access_tokens = []
+    5.times do |i|
+      access_tokens << {
+        name: "Token #{i + 1}",
+        owner: "testuser#{i + 1}",
+        status: i < 3 ? 1 : 2, # 1 = active, 2 = expired
+        user_id: user.id,
+        host: "https://freefeed.net",
+        encrypted_token: "fake_encrypted_token_#{i + 1}_#{SecureRandom.hex(16)}",
+        last_used_at: rand(1..30).days.ago,
+        created_at: rand(30..90).days.ago,
+        updated_at: rand(1..7).days.ago
+      }
+    end
+    AccessToken.insert_all!(access_tokens)
+    puts "✅ Access tokens created (#{AccessToken.count} total)"
+  end
+
+  # Create sample feeds
+  if Feed.count == 0
+    active_token = AccessToken.active.first
+    feeds_data = [
+      {
+        name: "Tech News",
+        url: "https://techcrunch.com/feed/",
+        description: "Latest technology news and startup updates",
+        target_group: "tech-news",
+        state: :enabled,
+        cron_expression: "0 */6 * * *"
+      },
+      {
+        name: "Developer Blog",
+        url: "https://blog.github.com/feed.xml",
+        description: "GitHub engineering blog posts",
+        target_group: "dev-updates",
+        state: :enabled,
+        cron_expression: "0 8 * * *"
+      },
+      {
+        name: "Design Inspiration",
+        url: "https://dribbble.com/shots.rss",
+        description: "Creative design inspiration and trends",
+        target_group: "design-feed",
+        state: :disabled,
+        cron_expression: "0 12 * * *"
+      },
+      {
+        name: "Science Daily",
+        url: "https://www.sciencedaily.com/rss/all.xml",
+        description: "Latest science news and research",
+        target_group: "science-news",
+        state: :enabled,
+        cron_expression: "0 9 * * *"
+      }
+    ]
+
+    feeds_data.each do |feed_data|
+      feed = Feed.create!(
+        name: feed_data[:name],
+        url: feed_data[:url],
+        description: feed_data[:description],
+        target_group: feed_data[:target_group],
+        state: feed_data[:state],
+        cron_expression: feed_data[:cron_expression],
+        user: user,
+        feed_profile: rss_profile,
+        access_token: active_token
+      )
+
+      # Create feed schedule
+      next_run = feed.state == "enabled" ? rand(1..6).hours.from_now : nil
+      FeedSchedule.create!(
+        feed: feed,
+        next_run_at: next_run,
+        last_run_at: rand(1..24).hours.ago
+      )
+    end
+    puts "✅ Sample feeds created (#{Feed.count} total)"
+  end
+
+  # Generate posts for active feeds using batch inserts
+  if Post.count == 0
+    all_feed_entries = []
+    all_posts = []
+
+    Feed.enabled.includes(:feed_profile).find_each do |feed|
+      posts_count = rand(1..10)
+
+      # Generate feed entries first
+      feed_entries = []
+      posts_count.times do |i|
+        feed_entries << {
+          feed_id: feed.id,
+          uid: "#{feed.name.downcase.gsub(' ', '-')}-post-#{i + 1}-#{SecureRandom.hex(4)}",
+          published_at: rand(1..30).days.ago,
+          status: 1, # processed
+          created_at: Time.current,
+          updated_at: Time.current,
+          raw_data: {
+            title: "Sample Post #{i + 1} from #{feed.name}",
+            content: "This is sample content for post #{i + 1} from #{feed.name}. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+            link: "https://example.com/#{feed.name.downcase.gsub(' ', '-')}/post-#{i + 1}",
+            published_at: rand(1..30).days.ago.iso8601
+          }
+        }
+      end
+
+      all_feed_entries.concat(feed_entries)
+    end
+
+    # Batch insert feed entries
+    FeedEntry.insert_all!(all_feed_entries) if all_feed_entries.any?
+    puts "✅ Feed entries created (#{FeedEntry.count} total)"
+
+    # Generate posts for each feed entry
+    FeedEntry.includes(:feed).find_each do |entry|
+      post_data = entry.raw_data
+      all_posts << {
+        feed_id: entry.feed_id,
+        feed_entry_id: entry.id,
+        uid: entry.uid,
+        content: post_data["content"] || "Sample content",
+        source_url: post_data["link"] || "https://example.com/post",
+        published_at: entry.published_at,
+        status: 1, # published
+        freefeed_post_id: "ff_#{SecureRandom.hex(8)}",
+        attachment_urls: [],
+        comments: [],
+        validation_errors: [],
+        created_at: Time.current,
+        updated_at: Time.current
+      }
+    end
+
+    # Batch insert posts
+    Post.insert_all!(all_posts) if all_posts.any?
+    puts "✅ Posts created using batch inserts (#{Post.count} total)"
+  end
+
   # Create sample events for development
   if Event.count < 75
     # Feed processing events
