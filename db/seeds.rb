@@ -15,12 +15,14 @@ if Rails.env.development?
   puts "✅ Admin permission granted to first user"
 
   # Create RSS feed profile
-  rss_profile = FeedProfile.find_or_create_by!(name: "rss") do |profile|
-    profile.loader = "rss"
-    profile.processor = "rss"
-    profile.normalizer = "rss"
-    profile.user = user
-  end
+  rss_profile = FeedProfile.find_or_initialize_by(name: "rss")
+  rss_profile.assign_attributes(
+    loader: "http",
+    processor: "rss",
+    normalizer: "rss",
+    user: user
+  )
+  rss_profile.save!
   puts "✅ RSS feed profile created"
 
   # Create fake access tokens
@@ -55,38 +57,50 @@ if Rails.env.development?
 
   # Create sample feeds
   active_token = AccessToken.active.first
+
+  # Remove all existing feeds to start fresh
+  Feed.destroy_all
+
   feeds_data = [
       {
-        name: "Tech News",
-        url: "https://techcrunch.com/feed/",
-        description: "Latest technology news and startup updates",
-        target_group: "tech-news",
+        name: "Google Open Source Blog",
+        url: "https://feeds.feedburner.com/GoogleOpenSourceBlog",
+        description: "Google's official open source blog",
+        target_group: "open-source",
         state: :enabled,
         cron_expression: "0 */6 * * *"
       },
       {
-        name: "Developer Blog",
-        url: "https://blog.github.com/feed.xml",
-        description: "GitHub engineering blog posts",
-        target_group: "dev-updates",
+        name: "AWS Open Source Blog",
+        url: "https://aws.amazon.com/blogs/opensource/feed/",
+        description: "Amazon Web Services official blog",
+        target_group: "aws-opensource",
         state: :enabled,
         cron_expression: "0 8 * * *"
       },
       {
-        name: "Design Inspiration",
-        url: "https://feeds.feedburner.com/oreilly/radar",
-        description: "O'Reilly Radar - Technology and business insights",
-        target_group: "design-feed",
-        state: :disabled,
+        name: "Cloud Native Computing Foundation",
+        url: "https://cncf.io/feed",
+        description: "CNCF, part of the Linux Foundation",
+        target_group: "cncf",
+        state: :enabled,
         cron_expression: "0 12 * * *"
       },
       {
-        name: "Science Daily",
-        url: "https://www.sciencedaily.com/rss/all.xml",
-        description: "Latest science news and research",
-        target_group: "science-news",
-        state: :enabled,
+        name: "NIST News Feed",
+        url: "https://www.nist.gov/news-events/news/rss.xml",
+        description: "U.S. National Institute of Standards and Technology",
+        target_group: "nist-news",
+        state: :disabled,
         cron_expression: "0 9 * * *"
+      },
+      {
+        name: "arXiv Computer Science",
+        url: "http://rss.arxiv.org/rss/cs",
+        description: "Cornell University's arXiv preprint server for computer science papers",
+        target_group: "arxiv-cs",
+        state: :enabled,
+        cron_expression: "0 6 * * *"
       }
     ]
 
