@@ -17,7 +17,7 @@ class FeedPreviewWorkflow
   private
 
   def after_step(_output)
-    record_duration(current_step)
+    # Duration tracking not needed for preview workflow
   end
 
   def on_error(error)
