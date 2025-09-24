@@ -24,18 +24,17 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        feed_preview = @feed_preview
         streams = []
 
         # Update the status section
-        if partial_name = STATUS_PARTIALS[feed_preview.status]
+        if partial_name = STATUS_PARTIALS[@feed_preview.status]
           streams << turbo_stream.replace("preview-status",
-            partial: "feed_previews/#{partial_name}", locals: { feed_preview: feed_preview })
+            partial: "feed_previews/#{partial_name}", locals: { feed_preview: @feed_preview })
         end
 
         # Update the header actions to show/hide refresh button
         streams << turbo_stream.replace("header-actions",
-          partial: "feed_previews/header_actions", locals: { feed_preview: feed_preview })
+          partial: "feed_previews/header_actions", locals: { feed_preview: @feed_preview })
 
         render turbo_stream: streams
       end
