@@ -1,22 +1,13 @@
-<div class="card"
+<div class="alert alert-light d-flex align-items-center" role="alert"
      data-controller="polling"
      data-polling-endpoint-value="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>"
      data-polling-stop-condition-value="spinner-border">
-  <div class="card-header">
-    <h5 class="card-title mb-0">
-      <i class="bi bi-hourglass-split me-2"></i>
-      Generating Preview...
-    </h5>
+  <div class="spinner-border spinner-border-sm me-3" role="status">
+    <span class="visually-hidden">Loading...</span>
   </div>
-  <div class="card-body">
-    <div class="d-flex align-items-center">
-      <div class="spinner-border spinner-border-sm me-3" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <div>
-        <p class="mb-1">Processing feed content and generating preview.</p>
-        <small class="text-muted">This usually takes a few seconds...</small>
-      </div>
-    </div>
+  <div>
+    <i class="bi bi-hourglass-split me-2"></i>
+    <strong>Generating Preview...</strong>
+    — Processing feed content and generating preview. This usually takes a few seconds.
   </div>
 </div>
