@@ -57,10 +57,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
 
     workflow_instance = FeedPreviewWorkflow.new(failing_preview)
 
-    # Execute should not raise, but should handle error internally
-    assert_nothing_raised do
-      workflow_instance.execute
-    end
+    # The workflow should handle errors and update the preview status
+    workflow_instance.execute
 
     # Check that the feed preview status was updated to failed
     failing_preview.reload

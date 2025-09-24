@@ -42,14 +42,36 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     # Create a preview with a valid URL and stub the network request
     valid_preview = create(:feed_preview, user: user, feed_profile: feed_profile, url: "http://example.com/feed.xml")
 
-    # Stub the HTTP request to avoid actual network calls
+    # Stub the HTTP request to avoid actual network calls with proper RSS format
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <description>Test Description</description>
+          <link>http://example.com</link>
+          <item>
+            <title>Test Post</title>
+            <description>Test content that is longer than the minimum required</description>
+            <link>http://example.com/post1</link>
+            <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
+            <guid>http://example.com/post1</guid>
+          </item>
+        </channel>
+      </rss>
+    XML
+
     stub_request(:get, "http://example.com/feed.xml")
-      .to_return(status: 200, body: "<rss><channel><item><title>Test</title></item></channel></rss>", headers: { 'Content-Type' => 'application/xml' })
+      .to_return(status: 200, body: rss_content, headers: { 'Content-Type' => 'application/xml' })
 
     # This should execute the workflow path (line 9)
     assert_nothing_raised do
       FeedPreviewJob.perform_now(valid_preview.id)
     end
+
+    # Verify the preview was processed successfully
+    valid_preview.reload
+    assert valid_preview.ready?
   end
 
   test "should handle workflow errors and update preview status" do
