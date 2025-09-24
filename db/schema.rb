@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_23_144023) do
+ActiveRecord::Schema[8.1].define(version: 2025_09_23_114505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "access_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "encrypted_token"
-    t.string "host", default: "https://freefeed.net", null: false
+    t.string "host", null: false
     t.datetime "last_used_at"
     t.string "name", null: false
     t.string "owner"
@@ -101,10 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_23_144023) do
     t.string "description", default: "", null: false
     t.bigint "feed_profile_id"
     t.datetime "import_after"
-    t.string "loader", default: "http", null: false
     t.string "name", null: false
-    t.string "normalizer", default: "rss", null: false
-    t.string "processor", default: "rss", null: false
     t.integer "state", default: 0, null: false
     t.string "target_group", limit: 80
     t.datetime "updated_at", null: false
