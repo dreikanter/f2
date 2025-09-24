@@ -1,13 +1,3 @@
-<div class="alert alert-light" role="alert">
-  <i class="bi bi-check-circle-fill text-success me-2"></i>
-  <strong>Preview Complete</strong>
-  <% if feed_preview.posts_data.any? %>
-    — Showing <%= feed_preview.posts_count %> most recent posts.
-  <% else %>
-    — No posts found in this feed.
-  <% end %>
-</div>
-
 <% if feed_preview.posts_data.any? %>
   <% feed_preview.posts_data.each_with_index do |post_data, index| %>
     <div class="card mb-3">

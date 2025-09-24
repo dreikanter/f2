@@ -5,16 +5,12 @@
   </div>
 </div>
 
-<div class="card mb-3">
-  <div class="card-body">
-    <p class="mb-0">
-      <strong>URL:</strong>
-      <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
-        <%= @feed_preview.url %>
-      </a>
-      (<%= @feed_preview.feed_profile.name %>)
-    </p>
-  </div>
+<div class="alert alert-light" role="alert">
+  <strong>URL:</strong>
+  <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
+    <%= @feed_preview.url %>
+  </a>
+  (<%= @feed_preview.feed_profile.name %>)
 </div>
 
 <div id="preview-status">
