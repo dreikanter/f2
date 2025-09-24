@@ -1,9 +1,17 @@
 class FeedPreviewsController < ApplicationController
   before_action :require_authentication
 
+  STATUS_PARTIALS = {
+    "ready" => "completed_status",
+    "pending" => "processing_status",
+    "processing" => "processing_status",
+    "failed" => "failed_status"
+  }.freeze
+
   def create
     feed_profile = FeedProfile.find_by!(name: params[:feed_profile_name])
-    create_and_enqueue_preview(url: params[:url], feed_profile: feed_profile)
+    feed_preview = create_and_enqueue_preview(url: params[:url], feed_profile: feed_profile)
+    redirect_to feed_preview_path(feed_preview)
   rescue ActiveRecord::RecordNotFound
     redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
   rescue ActiveRecord::RecordInvalid
@@ -16,23 +24,18 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
+        feed_preview = @feed_preview
         streams = []
 
         # Update the status section
-        if @feed_preview.ready?
+        if partial_name = STATUS_PARTIALS[feed_preview.status]
           streams << turbo_stream.replace("preview-status",
-            partial: "feed_previews/completed_status", locals: { feed_preview: @feed_preview })
-        elsif @feed_preview.pending? || @feed_preview.processing?
-          streams << turbo_stream.replace("preview-status",
-            partial: "feed_previews/processing_status", locals: { feed_preview: @feed_preview })
-        elsif @feed_preview.failed?
-          streams << turbo_stream.replace("preview-status",
-            partial: "feed_previews/failed_status", locals: { feed_preview: @feed_preview })
+            partial: "feed_previews/#{partial_name}", locals: { feed_preview: feed_preview })
         end
 
         # Update the header actions to show/hide refresh button
         streams << turbo_stream.replace("header-actions",
-          partial: "feed_previews/header_actions", locals: { feed_preview: @feed_preview })
+          partial: "feed_previews/header_actions", locals: { feed_preview: feed_preview })
 
         render turbo_stream: streams
       end
@@ -44,10 +47,11 @@ class FeedPreviewsController < ApplicationController
   def update
     existing_preview = FeedPreview.find(params[:id])
 
-    create_and_enqueue_preview(
+    feed_preview = create_and_enqueue_preview(
       url: existing_preview.url,
       feed_profile: existing_preview.feed_profile
     )
+    redirect_to feed_preview_path(feed_preview)
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Preview not found."
   rescue ActiveRecord::RecordInvalid
@@ -56,7 +60,7 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  def create_and_enqueue_preview(url:, feed_profile:, notice: nil)
+  def create_and_enqueue_preview(url:, feed_profile:)
     feed_preview = nil
 
     FeedPreview.transaction do
@@ -68,12 +72,12 @@ class FeedPreviewsController < ApplicationController
         url: url,
         feed_profile: feed_profile,
         user_id: Current.user.id,
-        status: :processing
+        status: :pending
       )
 
       FeedPreviewJob.perform_later(feed_preview.id)
     end
 
-    redirect_to feed_preview_path(feed_preview), notice: notice
+    feed_preview
   end
 end

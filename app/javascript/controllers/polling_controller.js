@@ -2,7 +2,6 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static values = {
-    accessTokenId: String,
     endpoint: String,
     interval: { type: Number, default: 2000 },
     maxPolls: { type: Number, default: 30 },
@@ -10,7 +9,7 @@ export default class extends Controller {
   }
 
   connect() {
-    if (this.hasAccessTokenIdValue || this.hasEndpointValue) {
+    if (this.hasEndpointValue) {
       this.startPolling();
     }
   }
@@ -28,11 +27,7 @@ export default class extends Controller {
         return;
       }
 
-      const endpoint = this.hasEndpointValue
-        ? this.endpointValue
-        : `/access_tokens/${this.accessTokenIdValue}/validation`;
-
-      fetch(endpoint, {
+      fetch(this.endpointValue, {
         headers: {
           "Accept": "text/vnd.turbo-stream.html",
           "X-Requested-With": "XMLHttpRequest"
@@ -52,10 +47,6 @@ export default class extends Controller {
 
           // Check stop condition
           if (this.hasStopConditionValue && !html.includes(this.stopConditionValue)) {
-            clearInterval(this.interval);
-          }
-          // Legacy behavior for access token validation
-          else if (!this.hasStopConditionValue && !this.hasEndpointValue) {
             clearInterval(this.interval);
           }
         }

@@ -11,7 +11,7 @@
     New
   </div>
 <% elsif access_token.validating? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-access-token-id-value="<%= access_token.id %>" data-debug-id="<%= access_token.id %>">
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-endpoint-value="/access_tokens/<%= access_token.id %>/validation" data-debug-id="<%= access_token.id %>">
     <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
     ⏳ Validating...
   </div>

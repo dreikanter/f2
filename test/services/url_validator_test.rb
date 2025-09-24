@@ -1,26 +1,17 @@
 require "test_helper"
 
 class UrlValidatorTest < ActiveSupport::TestCase
-  test "should return true for valid http url" do
+  test "should return true for valid http and https urls" do
     valid_urls = [
       "http://example.com",
-      "http://example.com/path",
-      "http://example.com/path?query=value",
-      "http://example.com:8080",
-      "http://subdomain.example.com"
-    ]
-
-    valid_urls.each do |url|
-      assert UrlValidator.valid?(url), "Expected #{url} to be valid"
-    end
-  end
-
-  test "should return true for valid https url" do
-    valid_urls = [
       "https://example.com",
+      "http://example.com/path",
       "https://example.com/path",
+      "http://example.com/path?query=value",
       "https://example.com/path?query=value",
+      "http://example.com:8080",
       "https://example.com:8080",
+      "http://subdomain.example.com",
       "https://subdomain.example.com"
     ]
 
@@ -55,16 +46,12 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return false for nil url" do
-    assert_not UrlValidator.valid?(nil)
-  end
+  test "should return false for nil, empty, or blank urls" do
+    invalid_urls = [nil, "", "   "]
 
-  test "should return false for empty url" do
-    assert_not UrlValidator.valid?("")
-  end
-
-  test "should return false for blank url" do
-    assert_not UrlValidator.valid?("   ")
+    invalid_urls.each do |url|
+      assert_not UrlValidator.valid?(url), "Expected #{url.inspect} to be invalid"
+    end
   end
 
   test "should handle urls with spaces by stripping them" do
@@ -99,7 +86,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should handle urls with fragments and queries" do
+  test "should handle urls with fragments and complex queries" do
     complex_urls = [
       "http://example.com/path?param1=value1&param2=value2",
       "https://example.com/path#fragment",
