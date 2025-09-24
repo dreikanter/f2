@@ -21,7 +21,7 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def create
-    @feed_profile = Current.user.feed_profiles.build(feed_profile_params)
+    @feed_profile = FeedProfile.new(feed_profile_params)
 
     if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully created."
@@ -54,6 +54,6 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def feed_profile_params
-    params.require(:feed_profile).permit(:name, :loader, :processor, :normalizer)
+    params.require(:feed_profile).permit(:name, :loader, :processor, :normalizer, :user_id)
   end
 end
