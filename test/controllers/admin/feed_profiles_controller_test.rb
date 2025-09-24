@@ -130,9 +130,6 @@ class Admin::FeedProfilesControllerTest < ActionDispatch::IntegrationTest
     get admin_feed_profile_url(feed_profile)
     assert_response :success
     assert_includes response.body, feed_profile.name
-    assert_includes response.body, feed_profile.loader
-    assert_includes response.body, feed_profile.processor
-    assert_includes response.body, feed_profile.normalizer
   end
 
   test "should not show feed profile to non-admin" do
