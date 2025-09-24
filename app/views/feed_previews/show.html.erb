@@ -16,50 +16,25 @@
     <h5 class="card-title mb-0">Preview Details</h5>
   </div>
   <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-lg-2 col-md-3">Feed URL</dt>
-      <dd class="col-lg-4 col-md-9">
-        <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
-          <%= @feed_preview.url %>
-        </a>
-      </dd>
-
-      <dt class="col-lg-2 col-md-3">Feed Profile</dt>
-      <dd class="col-lg-4 col-md-9">
-        <%= @feed_preview.feed_profile.name %>
-        <small class="text-muted">
-          (loader: <%= @feed_preview.feed_profile.loader %>,
-           processor: <%= @feed_preview.feed_profile.processor %>,
-           normalizer: <%= @feed_preview.feed_profile.normalizer %>)
-        </small>
-      </dd>
-
-      <dt class="col-lg-2 col-md-3">Status</dt>
-      <dd class="col-lg-4 col-md-9">
-        <span class="badge bg-<%= @feed_preview.ready? ? 'success' : @feed_preview.failed? ? 'danger' : 'warning' %>">
-          <%= @feed_preview.status.capitalize %>
-        </span>
-      </dd>
-
-      <dt class="col-lg-2 col-md-3">Created</dt>
-      <dd class="col-lg-4 col-md-9">
-        <%= @feed_preview.created_at.to_fs(:long) %>
-      </dd>
-
+    <p class="mb-0">
+      <strong>URL:</strong>
+      <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
+        <%= @feed_preview.url %>
+      </a>
+      (<%= @feed_preview.feed_profile.name %>)
       <% if @feed_preview.ready? %>
-        <dt class="col-lg-2 col-md-3">Posts Found</dt>
-        <dd class="col-lg-4 col-md-9">
-          <%= @feed_preview.posts_count %> posts
-        </dd>
+        — <%= @feed_preview.posts_count %> posts found
       <% end %>
-    </dl>
+    </p>
   </div>
 </div>
 
 <div id="preview-status">
   <% if @feed_preview.ready? %>
     <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
-  <% else %>
+  <% elsif @feed_preview.pending? || @feed_preview.processing? %>
     <%= render "feed_previews/processing_status", feed_preview: @feed_preview %>
+  <% elsif @feed_preview.failed? %>
+    <%= render "feed_previews/failed_status", feed_preview: @feed_preview %>
   <% end %>
 </div>
