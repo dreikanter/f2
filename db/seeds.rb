@@ -65,8 +65,8 @@ if Rails.env.development?
       },
       {
         name: "Design Inspiration",
-        url: "https://dribbble.com/shots.rss",
-        description: "Creative design inspiration and trends",
+        url: "https://feeds.feedburner.com/oreilly/radar",
+        description: "O'Reilly Radar - Technology and business insights",
         target_group: "design-feed",
         state: :disabled,
         cron_expression: "0 12 * * *"
