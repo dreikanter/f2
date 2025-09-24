@@ -1,9 +1,73 @@
 <div class="alert alert-light" role="alert">
   <i class="bi bi-check-circle-fill text-success me-2"></i>
   <strong>Preview Complete</strong>
-  <% if @feed_preview.posts_data.any? %>
-    — Showing preview of <%= @feed_preview.posts_count %> most recent posts from this feed.
+  <% if feed_preview.posts_data.any? %>
+    — Showing preview of <%= feed_preview.posts_count %> most recent posts from this feed.
   <% else %>
     — No posts found in this feed. The feed might be empty or the processing encountered an issue.
   <% end %>
 </div>
+
+<% if feed_preview.posts_data.any? %>
+  <% feed_preview.posts_data.each_with_index do |post_data, index| %>
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Post <%= index + 1 %></h6>
+      </div>
+      <div class="card-body">
+        <% if post_data['uid'].present? %>
+          <div class="mb-2">
+            <strong>UID:</strong> <%= post_data['uid'] %>
+          </div>
+        <% end %>
+
+        <% if post_data['published_at'].present? %>
+          <div class="mb-2">
+            <strong>Published:</strong>
+            <%= Time.parse(post_data['published_at']).to_fs(:long) rescue post_data['published_at'] %>
+          </div>
+        <% end %>
+
+        <% if post_data['source_url'].present? %>
+          <div class="mb-2">
+            <strong>Source:</strong>
+            <a href="<%= post_data['source_url'] %>" target="_blank" class="text-decoration-none">
+              <%= post_data['source_url'] %>
+            </a>
+          </div>
+        <% end %>
+
+        <div class="mb-2">
+          <strong>Content:</strong>
+          <div class="mt-1">
+            <%= simple_format(post_data['content']) %>
+          </div>
+        </div>
+
+        <% if post_data['attachments'].present? && post_data['attachments'].any? %>
+          <div class="mb-0">
+            <strong>Attachments:</strong>
+            <ul class="list-unstyled ms-3">
+              <% post_data['attachments'].each do |attachment| %>
+                <li>
+                  <% if attachment.is_a?(Hash) && attachment['url'] %>
+                    <a href="<%= attachment['url'] %>" target="_blank" class="text-decoration-none">
+                      <%= attachment['url'] %>
+                    </a>
+                    <% if attachment['type'] %>
+                      <small class="text-muted">(<%= attachment['type'] %>)</small>
+                    <% end %>
+                  <% elsif attachment.present? %>
+                    <a href="<%= attachment %>" target="_blank" class="text-decoration-none">
+                      <%= attachment %>
+                    </a>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>
