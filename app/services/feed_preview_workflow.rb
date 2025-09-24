@@ -90,7 +90,7 @@ class FeedPreviewWorkflow
         content: post.content,
         source_url: post.source_url,
         published_at: post.published_at&.iso8601,
-        attachments: post.attachments || [],
+        attachments: post.attachment_urls || [],
         uid: entry.uid
       }
     end
@@ -103,7 +103,7 @@ class FeedPreviewWorkflow
     record_stats(completed_at: Time.current, total_duration: total_duration)
 
     feed_preview.update!(
-      status: :completed,
+      status: :ready,
       data: { posts: posts, stats: stats }
     )
 
