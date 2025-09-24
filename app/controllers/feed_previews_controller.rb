@@ -4,7 +4,7 @@ class FeedPreviewsController < ApplicationController
   def create
     feed_profile = FeedProfile.find_by!(name: params.require(:feed_profile_name))
 
-    find_or_create_and_enqueue(
+    create_and_enqueue_preview(
       url: params[:url],
       feed_profile: feed_profile
     )
@@ -17,9 +17,16 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        status_partial = @feed_preview.ready? ? "completed_status" : "processing_status"
-        render turbo_stream: turbo_stream.replace("preview-status",
-          partial: "feed_previews/#{status_partial}", locals: { feed_preview: @feed_preview })
+        if @feed_preview.ready?
+          render turbo_stream: turbo_stream.replace("preview-status",
+            partial: "feed_previews/completed_status", locals: { feed_preview: @feed_preview })
+        elsif @feed_preview.pending? || @feed_preview.processing?
+          render turbo_stream: turbo_stream.replace("preview-status",
+            partial: "feed_previews/processing_status", locals: { feed_preview: @feed_preview })
+        elsif @feed_preview.failed?
+          render turbo_stream: turbo_stream.replace("preview-status",
+            partial: "feed_previews/failed_status", locals: { feed_preview: @feed_preview })
+        end
       end
     end
   end
@@ -27,7 +34,7 @@ class FeedPreviewsController < ApplicationController
   def update
     existing_preview = FeedPreview.find(params[:id])
 
-    find_or_create_and_enqueue(
+    create_and_enqueue_preview(
       url: existing_preview.url,
       feed_profile: existing_preview.feed_profile,
       notice: "Preview refresh started."
@@ -38,18 +45,22 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  def find_or_create_and_enqueue(url:, feed_profile:, notice: nil)
+  def create_and_enqueue_preview(url:, feed_profile:, notice: nil)
     feed_preview = nil
 
     FeedPreview.transaction do
-      feed_preview = FeedPreview.create_with(user_id: Current.user.id, status: :pending)
-        .find_or_create_by(url: url, feed_profile: feed_profile)
+      # Delete any existing preview for this URL and feed profile
+      FeedPreview.where(url: url, feed_profile: feed_profile, user: Current.user).destroy_all
 
-      # Atomically enqueue job if preview is pending
-      if feed_preview.pending?
-        feed_preview.update!(status: :processing)
-        FeedPreviewJob.perform_later(feed_preview.id)
-      end
+      # Create a new preview and start processing
+      feed_preview = FeedPreview.create!(
+        url: url,
+        feed_profile: feed_profile,
+        user_id: Current.user.id,
+        status: :processing
+      )
+
+      FeedPreviewJob.perform_later(feed_preview.id)
     end
 
     redirect_to feed_preview_path(feed_preview), notice: notice
