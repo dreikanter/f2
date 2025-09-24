@@ -4,7 +4,7 @@
     <% if @feed_preview.ready? %>
       <%= button_to "Refresh Preview", feed_preview_path(@feed_preview),
           method: :patch,
-          class: "btn btn-outline-primary",
+          class: "btn btn-outline-secondary",
           data: { confirm: "This will generate a new preview. Continue?" } %>
     <% end %>
     <%= link_to "Back to Feeds", feeds_path, class: "btn btn-outline-secondary" %>

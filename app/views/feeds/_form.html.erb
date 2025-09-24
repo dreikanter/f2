@@ -96,7 +96,7 @@
 
   <div class="mb-3">
     <%= form.submit class: "btn btn-primary" %>
-    <button type="button" id="preview-button" class="btn btn-outline-info" data-preview-url="<%= feed_previews_path %>">
+    <button type="button" id="preview-button" class="btn btn-outline-secondary" data-preview-url="<%= feed_previews_path %>">
       Preview Feed
     </button>
     <%= link_to "Cancel", feed.persisted? ? feed : feeds_path, class: "btn btn-outline-secondary" %>
