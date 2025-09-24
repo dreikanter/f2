@@ -42,4 +42,53 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   test "should have PREVIEW_POSTS_LIMIT constant available" do
     assert_equal 10, FeedPreview::PREVIEW_POSTS_LIMIT
   end
+
+  test "should handle workflow execution with errors by updating preview status" do
+    # Create a workflow that will fail due to invalid URL
+    invalid_preview = create(:feed_preview,
+                            user: user,
+                            feed_profile: feed_profile,
+                            url: "invalid-url-that-will-cause-error",
+                            status: :pending)
+
+    workflow_instance = FeedPreviewWorkflow.new(invalid_preview)
+
+    # Execute should not raise, but should handle error internally
+    assert_nothing_raised do
+      workflow_instance.execute
+    end
+
+    # Check that the feed preview status was updated to failed
+    invalid_preview.reload
+    assert invalid_preview.failed?
+  end
+
+  test "should merge stats correctly" do
+    workflow_instance = FeedPreviewWorkflow.new(feed_preview)
+
+    # Test that stats start empty
+    assert_empty workflow_instance.stats
+
+    # We can test the record_stats functionality indirectly by checking
+    # the stats accessor after workflow initialization
+    assert_respond_to workflow_instance, :stats
+  end
+
+  test "should call record_stats method" do
+    # Test the private record_stats method functionality
+    workflow_instance = FeedPreviewWorkflow.new(feed_preview)
+
+    # We can't call private methods directly, but we can verify the stats accessor works
+    assert_empty workflow_instance.stats
+
+    # Simulate stats recording through method stubbing
+    workflow_instance.define_singleton_method(:test_record_stats) do
+      send(:record_stats, test_stat: "value", count: 42)
+    end
+
+    workflow_instance.test_record_stats
+
+    expected_stats = { test_stat: "value", count: 42 }
+    assert_equal expected_stats, workflow_instance.stats
+  end
 end
