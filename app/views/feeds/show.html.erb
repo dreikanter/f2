@@ -58,9 +58,12 @@
       <% end %>
 Source
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "content_source", format: :turbo_stream),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_prefetch: false, turbo_stream: true } %>
+    <%= link_to edit_feed_path(@feed, section: "content_source", format: :turbo_stream),
+        class: "text-primary text-decoration-none",
+        data: { turbo_prefetch: false, turbo_stream: true },
+        title: "Edit" do %>
+      <i class="bi bi-pencil"></i>
+    <% end %>
   </div>
   <div class="card-body">
     <%= render "content_source_display", feed: @feed %>
@@ -78,9 +81,12 @@ Source
       <% end %>
 Reposting Target
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "reposting", format: :turbo_stream),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_prefetch: false, turbo_stream: true } %>
+    <%= link_to edit_feed_path(@feed, section: "reposting", format: :turbo_stream),
+        class: "text-primary text-decoration-none",
+        data: { turbo_prefetch: false, turbo_stream: true },
+        title: "Edit" do %>
+      <i class="bi bi-pencil"></i>
+    <% end %>
   </div>
   <div class="card-body">
     <%= render "reposting_display", feed: @feed %>
@@ -98,9 +104,12 @@ Reposting Target
       <% end %>
 Schedule
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "scheduling", format: :turbo_stream),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_prefetch: false, turbo_stream: true } %>
+    <%= link_to edit_feed_path(@feed, section: "scheduling", format: :turbo_stream),
+        class: "text-primary text-decoration-none",
+        data: { turbo_prefetch: false, turbo_stream: true },
+        title: "Edit" do %>
+      <i class="bi bi-pencil"></i>
+    <% end %>
   </div>
   <div class="card-body">
     <%= render "scheduling_display", feed: @feed %>
