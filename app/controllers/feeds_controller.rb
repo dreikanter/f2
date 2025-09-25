@@ -51,7 +51,7 @@ class FeedsController < ApplicationController
     end
 
     if @feed.update(section_params)
-      if @section && request.format.turbo_stream?
+      if @section
         render turbo_stream: turbo_stream.replace(
           "#{@section.tr('_', '-')}-display",
           partial: "#{@section}_display",
@@ -61,7 +61,7 @@ class FeedsController < ApplicationController
         redirect_to @feed, notice: "Feed was successfully updated."
       end
     else
-      if @section && request.format.turbo_stream?
+      if @section
         render turbo_stream: turbo_stream.replace(
           "#{@section.tr('_', '-')}-display",
           partial: "#{@section}_form",

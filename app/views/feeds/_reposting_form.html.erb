@@ -3,7 +3,8 @@
 <div data-controller="groups"
      data-groups-loading-text-value="Loading..."
      data-groups-default-text-value="Select the Freefeed group where posts will be published">
-<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+<%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
+  <%= hidden_field_tag :section, "reposting" %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
       <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>

@@ -1,6 +1,7 @@
 <%# locals: (feed:) %>
 <div id="content-source-display">
-<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+<%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
+  <%= hidden_field_tag :section, "content_source" %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
       <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>
