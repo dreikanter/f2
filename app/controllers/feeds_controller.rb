@@ -47,11 +47,40 @@ class FeedsController < ApplicationController
 
   def update
     @feed = load_feed
+    @section = params[:section]
 
-    if @feed.update(feed_params)
-      redirect_to @feed, notice: "Feed was successfully updated."
+    # Auto-disable feed if configuration becomes invalid for enabled feeds
+    if @feed.enabled? && !will_be_complete_after_update?
+      @feed.state = :disabled
+    end
+
+    if @feed.update(section_params)
+      if @section && request.format.turbo_stream?
+        render turbo_stream: [
+          turbo_stream.replace(
+            "#{@section.tr('_', '-')}-display",
+            partial: "#{@section}_display",
+            locals: { feed: @feed }
+          ),
+          turbo_stream.replace(
+            "configuration-progress",
+            partial: "configuration_progress",
+            locals: { feed: @feed }
+          )
+        ]
+      else
+        redirect_to @feed, notice: "Feed was successfully updated."
+      end
     else
-      render :edit, status: :unprocessable_content
+      if @section && request.format.turbo_stream?
+        render turbo_stream: turbo_stream.replace(
+          "#{@section.tr('_', '-')}-display",
+          partial: "#{@section}_form",
+          locals: { feed: @feed }
+        )
+      else
+        render :edit, status: :unprocessable_content
+      end
     end
   end
 
@@ -79,6 +108,42 @@ class FeedsController < ApplicationController
       :url,
       :feed_profile_id
     )
+  end
+
+  def section_params
+    return feed_params unless @section
+
+    case @section
+    when "content_source"
+      content_source_params
+    when "reposting"
+      reposting_params
+    when "scheduling"
+      scheduling_params
+    else
+      feed_params
+    end
+  end
+
+  def content_source_params
+    return {} unless params[:feed]
+    params.require(:feed).permit(:name, :url, :feed_profile_id)
+  end
+
+  def reposting_params
+    return {} unless params[:feed]
+    params.require(:feed).permit(:access_token_id, :target_group)
+  end
+
+  def scheduling_params
+    return {} unless params[:feed]
+    params.require(:feed).permit(:cron_expression, :import_after, :description)
+  end
+
+  def will_be_complete_after_update?
+    updated_feed = @feed.dup
+    updated_feed.assign_attributes(section_params)
+    updated_feed.can_be_enabled?
   end
 
   def feed_params

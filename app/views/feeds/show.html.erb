@@ -47,17 +47,8 @@
 </div>
 
 <!-- Configuration Progress -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h4>Configuration Progress</h4>
-      <% completion_count = [@feed.url.present?, @feed.feed_profile.present?, @feed.access_token&.active?, @feed.target_group.present?, @feed.cron_expression.present?].count(true) %>
-      <span class="badge bg-<%= completion_count == 5 ? 'success' : 'warning' %> fs-6"><%= completion_count %>/5 Complete</span>
-    </div>
-    <div class="progress mb-3">
-      <div class="progress-bar bg-<%= completion_count == 5 ? 'success' : 'warning' %>" style="width: <%= (completion_count / 5.0 * 100).round %>%"></div>
-    </div>
-  </div>
+<div id="configuration-progress">
+  <%= render "configuration_progress", feed: @feed %>
 </div>
 
 <!-- Section 1: Content Source -->
