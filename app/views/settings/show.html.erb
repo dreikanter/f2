@@ -1,9 +1,8 @@
 <% content_for :title, "Settings" %>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Settings</h1>
+<%= page_header "Settings" do %>
   <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "btn btn-outline-secondary" %>
-</div>
+<% end %>
 
 <div class="row">
   <div class="col-12">
