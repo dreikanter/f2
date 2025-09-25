@@ -2,9 +2,6 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1>Events</h1>
-  <div class="text-muted">
-    <%= pluralize(@total_count, 'event') %> total
-  </div>
 </div>
 
 <% if @events.any? %>
@@ -100,7 +97,6 @@
 
       <div class="text-center text-muted">
         Showing <%= @events.size %> of <%= @total_count %> events
-        (Page <%= @current_page %> of <%= @total_pages %>)
       </div>
     </nav>
   <% end %>
