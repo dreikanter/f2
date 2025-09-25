@@ -32,11 +32,6 @@
     <div class="form-text">Only import items published after this date (optional)</div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :description, "Description", class: "form-label" %>
-    <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
-    <div class="form-text">Help text to describe the purpose of this feed</div>
-  </div>
 
   <div class="d-flex gap-2">
     <%= form.submit "Save Scheduling Configuration", class: "btn btn-primary" %>

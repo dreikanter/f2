@@ -9,14 +9,12 @@
     <% end %>
   </dd>
 
-  <dt class="col-sm-3">Import After</dt>
-  <dd class="col-sm-9">
-    <% if feed.import_after %>
+  <% if feed.import_after %>
+    <dt class="col-sm-3">Import After</dt>
+    <dd class="col-sm-9">
       <%= feed.import_after.to_fs(:long) %>
-    <% else %>
-      <span class="text-muted">All items</span>
-    <% end %>
-  </dd>
+    </dd>
+  <% end %>
 
   <% if feed.enabled? %>
     <dt class="col-sm-3">Next Run</dt>
@@ -31,12 +29,3 @@
   <% end %>
 </dl>
 
-<% if feed.description.present? %>
-  <hr>
-  <dl class="row mb-0">
-    <dt class="col-sm-3">Description</dt>
-    <dd class="col-sm-9">
-      <%= simple_format(feed.description, class: "mb-0") %>
-    </dd>
-  </dl>
-<% end %>

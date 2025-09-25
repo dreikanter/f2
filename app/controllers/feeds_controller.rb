@@ -126,7 +126,7 @@ class FeedsController < ApplicationController
 
   def scheduling_params
     return {} unless params[:feed]
-    params.require(:feed).permit(:cron_expression, :import_after, :description)
+    params.require(:feed).permit(:cron_expression, :import_after)
   end
 
   def will_be_complete_after_update?

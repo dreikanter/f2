@@ -12,19 +12,12 @@
     <% end %>
   </dd>
 
-  <dt class="col-sm-3">Target Group</dt>
+  <dt class="col-sm-3">Target Group URL</dt>
   <dd class="col-sm-9">
-    <% if feed.target_group.present? %>
-      <%= feed.target_group %>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
-
-  <dt class="col-sm-3">Freefeed Host</dt>
-  <dd class="col-sm-9">
-    <% if feed.access_token %>
-      <%= feed.access_token.host %>
+    <% if feed.access_token && feed.target_group.present? %>
+      <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
+        <%= feed.access_token.host %>/<%= feed.target_group %>
+      </a>
     <% else %>
       <span class="text-muted">Not configured</span>
     <% end %>
