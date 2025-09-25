@@ -4,10 +4,11 @@
 
 # Create a test user for development
 if Rails.env.development?
-  user = User.find_or_create_by!(email_address: "test@example.com") do |user|
+  user = User.find_or_initialize_by(email_address: "test@example.com").tap do |user|
     user.password = "password"
     user.password_confirmation = "password"
   end
+  user.save!
 
   # Update existing users to have password_updated_at
   User.where(password_updated_at: nil).update_all(password_updated_at: Time.current)
