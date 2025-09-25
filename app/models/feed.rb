@@ -13,7 +13,7 @@ class Feed < ApplicationRecord
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
-  enum :state, { inactive: 0, disabled: 1, enabled: 2 }, default: :inactive
+  enum :state, { disabled: 0, enabled: 1 }, default: :disabled
 
   validates :name,
             uniqueness: { scope: :user_id },
@@ -27,7 +27,7 @@ class Feed < ApplicationRecord
               message: "must be a valid HTTP or HTTPS URL"
             }
 
-  validates :cron_expression, presence: true, unless: :inactive?
+  validates :cron_expression, presence: true, if: :enabled?
   validates :feed_profile, presence: true
 
   normalizes :name, with: ->(name) { name.to_s.strip }

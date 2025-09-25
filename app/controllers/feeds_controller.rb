@@ -162,7 +162,7 @@ class FeedsController < ApplicationController
 
   def create_with_simplified_flow
     @feed = user_feeds.build(new_feed_params)
-    @feed.state = :inactive
+    @feed.state = :disabled
     @feed.generate_unique_name!
 
     if @feed.save
@@ -176,7 +176,7 @@ class FeedsController < ApplicationController
     @feed = user_feeds.build(feed_params)
 
     # Set default state to disabled for full attribute creation (backward compatibility)
-    @feed.state = :disabled if @feed.state == "inactive"
+    @feed.state = :disabled if @feed.state.blank?
 
     if @feed.save
       notice_message = "Feed was successfully created."

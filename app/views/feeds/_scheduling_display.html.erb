@@ -7,17 +7,9 @@
 <% end %>
 
 <% if feed.cron_expression.present? %>
-  <% case feed.cron_expression %>
-  <% when "*/30 * * * *" %>
-    <strong class="me-2">Refresh every 30 minutes</strong>
-  <% when "0 * * * *" %>
-    <strong class="me-2">Refresh every hour</strong>
-  <% when "0 */6 * * *" %>
-    <strong class="me-2">Refresh every 6 hours</strong>
-  <% when "0 0 * * *" %>
-    <strong class="me-2">Refresh daily at midnight</strong>
-  <% else %>
-    <strong class="me-2">Refresh period:</strong> <code><%= feed.cron_expression %></code>
+  <strong class="me-2">Refresh <%= human_readable_cron(feed.cron_expression) %></strong>
+  <% if cron_expression_details(feed.cron_expression) %>
+    <code class="ms-1"><%= cron_expression_details(feed.cron_expression) %></code>
   <% end %>
 
   <% if feed.import_after %>
@@ -26,7 +18,7 @@
     </span>
   <% end %>
 <% else %>
-  <strong class="me-2">Schedule:</strong> <span class="text-muted">not configured</span>
+  <strong class="me-2">Schedule:</strong> <span class="text-muted"><%= human_readable_cron(feed.cron_expression) %></span>
 <% end %>
 
 <%= link_to edit_feed_path(feed, section: "scheduling", format: :turbo_stream),

@@ -24,10 +24,6 @@ FactoryBot.define do
       end
     end
 
-    trait :inactive do
-      state { :inactive }
-      cron_expression { nil }
-    end
 
     trait :disabled do
       state { :disabled }

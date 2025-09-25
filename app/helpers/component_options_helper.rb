@@ -27,6 +27,34 @@ module ComponentOptionsHelper
     end
   end
 
+  def human_readable_cron(cron_expression)
+    return "not configured" if cron_expression.blank?
+
+    case cron_expression
+    when "*/30 * * * *"
+      "every 30 minutes"
+    when "0 * * * *"
+      "every hour"
+    when "0 */6 * * *"
+      "every 6 hours"
+    when "0 0 * * *"
+      "daily at midnight"
+    else
+      "using custom schedule"
+    end
+  end
+
+  def cron_expression_details(cron_expression)
+    return nil if cron_expression.blank?
+
+    case cron_expression
+    when "*/30 * * * *", "0 * * * *", "0 */6 * * *", "0 0 * * *"
+      nil # No additional details needed for common patterns
+    else
+      cron_expression # Show the raw cron for custom patterns
+    end
+  end
+
   private
 
   def available_options(keys, i18n_prefix)
