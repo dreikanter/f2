@@ -55,17 +55,13 @@
 
             <%# Dropdown menu %>
             <ul class="navbar-nav">
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <li class="nav-item">
+                <%= link_to profile_path, class: "nav-link" do %>
                   <i class="bi bi-gear"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><%= link_to "Settings", profile_path, class: "dropdown-item" %></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li>
-                    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "dropdown-item" %>
-                  </li>
-                </ul>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "nav-link" %>
               </li>
             </ul>
           </div>
