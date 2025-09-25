@@ -1,4 +1,4 @@
-class AccessTokenValidationsController < ApplicationController
+class Settings::AccessTokenValidationsController < ApplicationController
   include ActionView::RecordIdentifier
 
   def create

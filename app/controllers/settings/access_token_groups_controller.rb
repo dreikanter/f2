@@ -1,4 +1,4 @@
-class AccessTokenGroupsController < ApplicationController
+class Settings::AccessTokenGroupsController < ApplicationController
   def index
     @access_token = Current.user.access_tokens.find(params[:access_token_id])
     @managed_groups = load_managed_groups

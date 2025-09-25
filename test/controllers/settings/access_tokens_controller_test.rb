@@ -1,6 +1,6 @@
 require "test_helper"
 
-class AccessTokensControllerTest < ActionDispatch::IntegrationTest
+class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -10,20 +10,20 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication for index" do
-    get access_tokens_path
+    get settings_access_tokens_path
     assert_redirected_to new_session_path
   end
 
   test "shows access tokens index when authenticated" do
     sign_in_as user
-    get access_tokens_path
+    get settings_access_tokens_path
     assert_response :success
     assert_select "h1", "Access Tokens"
   end
 
   test "displays empty state when no tokens" do
     sign_in_as user
-    get access_tokens_path
+    get settings_access_tokens_path
     assert_response :success
     assert_select "h5", "No access tokens yet"
     assert_select "p", text: /Add Freefeed API access token/
@@ -32,7 +32,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "displays existing tokens" do
     sign_in_as user
     access_token
-    get access_tokens_path
+    get settings_access_tokens_path
     assert_response :success
     assert_select "table"
     assert_select "td", access_token.name
@@ -41,28 +41,28 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "creates access token with valid params" do
     sign_in_as user
     assert_difference "user.access_tokens.count", 1 do
-      post access_tokens_path, params: { access_token: { name: "Test Token", token: "freefeed_token_123" } }
+      post settings_access_tokens_path, params: { access_token: { name: "Test Token", token: "freefeed_token_123" } }
     end
-    assert_redirected_to access_tokens_path
+    assert_redirected_to settings_access_tokens_path
     assert_match /created successfully/, flash[:notice]
   end
 
   test "requires authentication for new" do
-    get new_access_token_path
+    get new_settings_settings_access_token_path
     assert_redirected_to new_session_path
   end
 
   test "shows new token form when authenticated" do
     sign_in_as user
-    get new_access_token_path
+    get new_settings_settings_access_token_path
     assert_response :success
     assert_select "h1", "Create New Token"
-    assert_select "form[action=?]", access_tokens_path
+    assert_select "form[action=?]", settings_access_tokens_path
   end
 
   test "shows validation errors for invalid params" do
     sign_in_as user
-    post access_tokens_path, params: { access_token: { name: "", token: "freefeed_token_123" } }
+    post settings_access_tokens_path, params: { access_token: { name: "", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
     assert_select ".alert-danger"
     assert_select "h1", "Create New Token"
@@ -70,7 +70,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "shows validation errors for missing token" do
     sign_in_as user
-    post access_tokens_path, params: { access_token: { name: "Test Token", token: "" } }
+    post settings_access_tokens_path, params: { access_token: { name: "Test Token", token: "" } }
     assert_response :unprocessable_content
     assert_select ".alert-danger"
     assert_select "h1", "Create New Token"
@@ -79,7 +79,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "prevents duplicate names for same user" do
     sign_in_as user
     create(:access_token, name: "Duplicate", user: user)
-    post access_tokens_path, params: { access_token: { name: "Duplicate", token: "freefeed_token_123" } }
+    post settings_access_tokens_path, params: { access_token: { name: "Duplicate", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
     assert_select "h1", "Create New Token"
   end
@@ -91,19 +91,19 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     sign_in_as user2
     assert_difference "user2.access_tokens.count", 1 do
-      post access_tokens_path, params: { access_token: { name: "Same Name", token: "freefeed_token_456" } }
+      post settings_access_tokens_path, params: { access_token: { name: "Same Name", token: "freefeed_token_456" } }
     end
-    assert_redirected_to access_tokens_path
+    assert_redirected_to settings_access_tokens_path
   end
 
   test "deletes access token" do
     sign_in_as user
     token_id = access_token.id
     assert_difference "user.access_tokens.count", -1 do
-      delete access_token_path(access_token)
+      delete settings_access_token_path(access_token)
     end
     assert_not AccessToken.exists?(token_id)
-    assert_redirected_to access_tokens_path
+    assert_redirected_to settings_access_tokens_path
     assert_match /deleted/, flash[:notice]
   end
 
@@ -112,26 +112,26 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     other_token = create(:access_token, user: other_user)
 
     sign_in_as user
-    delete access_token_path(other_token)
+    delete settings_access_token_path(other_token)
     assert_response :not_found
   end
 
   test "requires authentication for create" do
-    post access_tokens_path, params: { access_token: { name: "Test", token: "freefeed_token_123" } }
+    post settings_access_tokens_path, params: { access_token: { name: "Test", token: "freefeed_token_123" } }
     assert_redirected_to new_session_path
   end
 
   test "requires authentication for destroy" do
-    delete access_token_path(access_token)
+    delete settings_access_token_path(access_token)
     assert_redirected_to new_session_path
   end
 
   test "shows edit form for token replacement" do
     sign_in_as user
-    get edit_access_token_path(access_token)
+    get edit_settings_access_token_path(access_token)
     assert_response :success
     assert_select "h1", "Replace Token"
-    assert_select "form[action=?]", access_token_path(access_token)
+    assert_select "form[action=?]", settings_access_token_path(access_token)
     assert_select "input[name=?][value='']", "access_token[token]" # Token field should be empty
     assert_select "input[name=?][value=?]", "access_token[name]", access_token.name
   end
@@ -144,12 +144,12 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: { users: { username: "testuser" } }.to_json)
 
     assert_enqueued_with(job: TokenValidationJob) do
-      patch access_token_path(access_token), params: {
+      patch settings_access_token_path(access_token), params: {
         access_token: { name: "Updated Token", token: "new_token_123", host: access_token.host }
       }
     end
 
-    assert_redirected_to access_tokens_path
+    assert_redirected_to settings_access_tokens_path
     assert_match /updated successfully/, flash[:notice]
 
     access_token.reload
@@ -159,7 +159,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "handles update validation errors" do
     sign_in_as user
-    patch access_token_path(access_token), params: {
+    patch settings_access_token_path(access_token), params: {
       access_token: { name: "", token: "new_token_123" }
     }
     assert_response :unprocessable_content
@@ -172,7 +172,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     other_token = create(:access_token, user: other_user)
 
     sign_in_as user
-    get edit_access_token_path(other_token)
+    get edit_settings_access_token_path(other_token)
     assert_response :not_found
   end
 
@@ -181,19 +181,19 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     other_token = create(:access_token, user: other_user)
 
     sign_in_as user
-    patch access_token_path(other_token), params: {
+    patch settings_access_token_path(other_token), params: {
       access_token: { name: "Hacked", token: "evil_token" }
     }
     assert_response :not_found
   end
 
   test "requires authentication for edit" do
-    get edit_access_token_path(access_token)
+    get edit_settings_access_token_path(access_token)
     assert_redirected_to new_session_path
   end
 
   test "requires authentication for update" do
-    patch access_token_path(access_token), params: {
+    patch settings_access_token_path(access_token), params: {
       access_token: { name: "Updated", token: "new_token" }
     }
     assert_redirected_to new_session_path
