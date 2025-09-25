@@ -1,4 +1,8 @@
-class PasswordUpdatesController < ApplicationController
+class Settings::PasswordUpdatesController < ApplicationController
+  def edit
+    @user = Current.user
+  end
+
   def update
     @user = Current.user
 
@@ -26,7 +30,7 @@ class PasswordUpdatesController < ApplicationController
   end
 
   def redirect_with_incorrect_password
-    redirect_to settings_path, alert: "Current password is incorrect."
+    redirect_to edit_settings_password_update_path, alert: "Current password is incorrect."
   end
 
   def redirect_with_success
@@ -34,6 +38,6 @@ class PasswordUpdatesController < ApplicationController
   end
 
   def redirect_with_validation_errors
-    redirect_to settings_path, alert: @user.errors.full_messages.join(", ")
+    redirect_to edit_settings_password_update_path, alert: @user.errors.full_messages.join(", ")
   end
 end
