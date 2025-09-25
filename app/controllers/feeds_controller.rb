@@ -16,14 +16,12 @@ class FeedsController < ApplicationController
   end
 
   def create
-    @feed = user_feeds.build(feed_params)
+    @feed = user_feeds.build(new_feed_params)
+    @feed.state = :inactive
+    @feed.generate_unique_name!
 
     if @feed.save
-      notice_message = "Feed was successfully created."
-      if @feed.access_token&.active?
-        notice_message += " You can now enable it to start processing items."
-      end
-      redirect_to @feed, notice: notice_message
+      redirect_to @feed, notice: "Feed was successfully created. Complete the configuration to enable it."
     else
       render :new, status: :unprocessable_content
     end
@@ -53,6 +51,16 @@ class FeedsController < ApplicationController
 
   def load_feed
     user_feeds.find(params[:id])
+  end
+
+  def new_feed_params
+    return {} unless params[:feed]
+
+    params.require(:feed).permit(
+      :name,
+      :url,
+      :feed_profile_id
+    )
   end
 
   def feed_params
