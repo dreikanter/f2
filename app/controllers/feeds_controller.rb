@@ -52,18 +52,11 @@ class FeedsController < ApplicationController
 
     if @feed.update(section_params)
       if @section && request.format.turbo_stream?
-        render turbo_stream: [
-          turbo_stream.replace(
-            "#{@section.tr('_', '-')}-display",
-            partial: "#{@section}_display",
-            locals: { feed: @feed }
-          ),
-          turbo_stream.replace(
-            "configuration-progress",
-            partial: "configuration_progress",
-            locals: { feed: @feed }
-          )
-        ]
+        render turbo_stream: turbo_stream.replace(
+          "#{@section.tr('_', '-')}-display",
+          partial: "#{@section}_display",
+          locals: { feed: @feed }
+        )
       else
         redirect_to @feed, notice: "Feed was successfully updated."
       end

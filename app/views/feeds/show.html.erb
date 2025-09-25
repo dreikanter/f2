@@ -46,10 +46,6 @@
   </div>
 </div>
 
-<!-- Configuration Progress -->
-<div id="configuration-progress">
-  <%= render "configuration_progress", feed: @feed %>
-</div>
 
 <!-- Section 1: Content Source -->
 <div class="card mb-4" id="content-source-section">
@@ -60,7 +56,7 @@
       <% else %>
         <i class="bi bi-circle text-muted me-2"></i>
       <% end %>
-      1. Content Source
+Content Source
     </h5>
     <%= link_to "Edit", edit_feed_path(@feed, section: "content_source"),
         class: "btn btn-outline-primary btn-sm",
@@ -80,7 +76,7 @@
       <% else %>
         <i class="bi bi-circle text-muted me-2"></i>
       <% end %>
-      2. Reposting Configuration
+Reposting Configuration
     </h5>
     <%= link_to "Edit", edit_feed_path(@feed, section: "reposting"),
         class: "btn btn-outline-primary btn-sm",
@@ -100,7 +96,7 @@
       <% else %>
         <i class="bi bi-circle text-muted me-2"></i>
       <% end %>
-      3. Scheduling Configuration
+Scheduling Configuration
     </h5>
     <%= link_to "Edit", edit_feed_path(@feed, section: "scheduling"),
         class: "btn btn-outline-primary btn-sm",
