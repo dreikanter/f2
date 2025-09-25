@@ -7,26 +7,19 @@
 
 <div class="row">
   <div class="col-6">
-    <div class="card">
-      <div class="card-header">
-        <h4 class="card-title mb-0">Update Email</h4>
+    <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
+      <div class="mb-3">
+        <p>Current email: <strong class="mx-2"><%= @user.email_address %></strong></p>
       </div>
-      <div class="card-body">
-        <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
-          <div class="mb-3">
-            <p>Current email: <strong class="mx-2"><%= @user.email_address %></strong></p>
-          </div>
 
-          <div class="mb-3">
-            <%= form.label :email_address, "New email:", class: "form-label" %>
-            <%= form.email_field :email_address, value: "", class: "form-control", placeholder: "Enter new email address" %>
-          </div>
-
-          <div>
-            <%= form.submit "Update Email", class: "btn btn-primary" %>
-          </div>
-        <% end %>
+      <div class="mb-3">
+        <%= form.label :email_address, "New email:", class: "form-label" %>
+        <%= form.email_field :email_address, value: "", class: "form-control", placeholder: "Enter new email address" %>
       </div>
-    </div>
+
+      <div class="mt-4">
+        <%= form.submit "Update Email", class: "btn btn-primary" %>
+      </div>
+    <% end %>
   </div>
 </div>

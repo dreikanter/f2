@@ -8,18 +8,14 @@
 <div class="row">
   <div class="col-12">
     <div class="list-group">
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <strong>Email:</strong> <%= @user.email_address %>
-        </div>
-        <%= link_to "Change...", edit_settings_email_update_path, class: "btn btn-sm btn-outline-primary" %>
+      <div class="list-group-item">
+        <strong>Email:</strong> <%= @user.email_address %>
+        <%= link_to "Change", edit_settings_email_update_path, class: "text-decoration-none ms-2" %>
       </div>
 
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <strong>Password:</strong> last updated <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago
-        </div>
-        <%= link_to "Change...", edit_settings_password_update_path, class: "btn btn-sm btn-outline-primary" %>
+      <div class="list-group-item">
+        <strong>Password:</strong> last updated <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago
+        <%= link_to "Change", edit_settings_password_update_path, class: "text-decoration-none ms-2" %>
       </div>
 
       <% if @user.permissions.any? %>
@@ -35,16 +31,15 @@
         </div>
       <% end %>
 
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <strong>Tokens:</strong>
-          <% if @access_tokens.any? %>
-            <%= pluralize(@access_tokens.active.count, 'active') %><% if @access_tokens.inactive.any? %>, <%= pluralize(@access_tokens.inactive.count, 'inactive') %><% end %>
-          <% else %>
-            none configured
-          <% end %>
-        </div>
-        <%= link_to (@access_tokens.any? ? "Manage..." : "Add a token..."), (@access_tokens.any? ? settings_access_tokens_path : new_settings_access_token_path), class: "btn btn-sm btn-outline-primary" %>
+      <div class="list-group-item">
+        <strong>Tokens:</strong>
+        <% if @access_tokens.any? %>
+          <%= pluralize(@access_tokens.active.count, 'active') %><% if @access_tokens.inactive.any? %>, <%= pluralize(@access_tokens.inactive.count, 'inactive') %><% end %>
+          <%= link_to "Manage", settings_access_tokens_path, class: "text-decoration-none ms-2" %>
+        <% else %>
+          none configured
+          <%= link_to "Add a token", new_settings_access_token_path, class: "text-decoration-none ms-2" %>
+        <% end %>
       </div>
     </div>
   </div>
