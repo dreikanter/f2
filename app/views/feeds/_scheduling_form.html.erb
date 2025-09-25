@@ -1,5 +1,5 @@
 <%# locals: (feed:) %>
-<div id="scheduling-display">
+<div class="list-group-item" id="scheduling-display">
 <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
   <%= hidden_field_tag :section, "scheduling" %>
   <% if feed.errors.any? %>

@@ -1,27 +1,22 @@
 <%# locals: (feed:) %>
-<div id="reposting-display">
-<dl class="row mb-0">
-  <dt class="col-sm-3">Access Token</dt>
-  <dd class="col-sm-9">
-    <% if feed.access_token %>
-      <%= feed.access_token.name %>
-      <span class="badge bg-<%= feed.access_token.active? ? 'success' : 'danger' %> ms-2">
-        <%= feed.access_token.status.capitalize %>
-      </span>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
-
-  <dt class="col-sm-3">Target Group URL</dt>
-  <dd class="col-sm-9">
-    <% if feed.access_token && feed.target_group.present? %>
-      <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
-        <%= feed.access_token.host %>/<%= feed.target_group %>
-      </a>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
-</dl>
-</div>
+<% reposting_ready = feed.access_token&.active? && feed.target_group.present? %>
+<% if reposting_ready %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end %>
+<strong>Reposting to:</strong>
+<% if feed.access_token && feed.target_group.present? %>
+  <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
+    <%= feed.access_token.host %>/<%= feed.target_group %>
+  </a>
+  (Access Token: <%= feed.access_token.name %> <span class="badge bg-<%= feed.access_token.active? ? 'success' : 'danger' %>"><%= feed.access_token.status.capitalize %></span>)
+<% else %>
+  <span class="text-muted">not configured</span>
+<% end %>
+<%= link_to edit_feed_path(feed, section: "reposting", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>

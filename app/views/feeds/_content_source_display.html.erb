@@ -1,24 +1,24 @@
 <%# locals: (feed:) %>
-<div id="content-source-display">
-<dl class="row mb-0">
-  <dt class="col-sm-3">Feed URL</dt>
-  <dd class="col-sm-9">
-    <% if feed.url.present? %>
-      <a href="<%= feed.url %>" target="_blank" class="text-decoration-none">
-        <%= feed.url %>
-      </a>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
-
-  <dt class="col-sm-3">Feed Profile</dt>
-  <dd class="col-sm-9">
-    <% if feed.feed_profile %>
-      <span class="badge bg-info"><%= feed.feed_profile.name %></span>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
-</dl>
-</div>
+<% source_ready = feed.url.present? && feed.feed_profile.present? %>
+<% if source_ready %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end %>
+<strong>Source:</strong>
+<% if feed.url.present? %>
+  <a href="<%= feed.url %>" target="_blank" class="text-decoration-none">
+    <%= feed.url %>
+  </a>
+  <% if feed.feed_profile %>
+    (<%= feed.feed_profile.name %>)
+  <% end %>
+<% else %>
+  <span class="text-muted">not configured</span>
+<% end %>
+<%= link_to edit_feed_path(feed, section: "content_source", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>

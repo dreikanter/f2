@@ -47,71 +47,16 @@
 </div>
 
 
-<!-- Section 1: Source -->
-<div class="card mb-4" id="content-source-section">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0">
-      <% if @feed.url.present? && @feed.feed_profile.present? %>
-        <i class="bi bi-check-circle-fill text-success me-2"></i>
-      <% else %>
-        <i class="bi bi-circle text-muted me-2"></i>
-      <% end %>
-Source
-    </h5>
-    <%= link_to edit_feed_path(@feed, section: "content_source", format: :turbo_stream),
-        class: "text-primary text-decoration-none",
-        data: { turbo_prefetch: false, turbo_stream: true },
-        title: "Edit" do %>
-      <i class="bi bi-pencil text-secondary"></i>
-    <% end %>
-  </div>
-  <div class="card-body">
+<div class="list-group">
+  <div class="list-group-item" id="content-source-display">
     <%= render "content_source_display", feed: @feed %>
   </div>
-</div>
 
-<!-- Section 2: Reposting Target -->
-<div class="card mb-4" id="reposting-section">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0">
-      <% if @feed.access_token&.active? && @feed.target_group.present? %>
-        <i class="bi bi-check-circle-fill text-success me-2"></i>
-      <% else %>
-        <i class="bi bi-circle text-muted me-2"></i>
-      <% end %>
-Reposting Target
-    </h5>
-    <%= link_to edit_feed_path(@feed, section: "reposting", format: :turbo_stream),
-        class: "text-primary text-decoration-none",
-        data: { turbo_prefetch: false, turbo_stream: true },
-        title: "Edit" do %>
-      <i class="bi bi-pencil text-secondary"></i>
-    <% end %>
-  </div>
-  <div class="card-body">
+  <div class="list-group-item" id="reposting-display">
     <%= render "reposting_display", feed: @feed %>
   </div>
-</div>
 
-<!-- Section 3: Schedule -->
-<div class="card mb-4" id="scheduling-section">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0">
-      <% if @feed.cron_expression.present? %>
-        <i class="bi bi-check-circle-fill text-success me-2"></i>
-      <% else %>
-        <i class="bi bi-circle text-muted me-2"></i>
-      <% end %>
-Schedule
-    </h5>
-    <%= link_to edit_feed_path(@feed, section: "scheduling", format: :turbo_stream),
-        class: "text-primary text-decoration-none",
-        data: { turbo_prefetch: false, turbo_stream: true },
-        title: "Edit" do %>
-      <i class="bi bi-pencil text-secondary"></i>
-    <% end %>
-  </div>
-  <div class="card-body">
+  <div class="list-group-item" id="scheduling-display">
     <%= render "scheduling_display", feed: @feed %>
   </div>
 </div>

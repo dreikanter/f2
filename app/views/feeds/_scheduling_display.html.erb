@@ -1,33 +1,38 @@
 <%# locals: (feed:) %>
-<div id="scheduling-display">
-<dl class="row mb-0">
-  <dt class="col-sm-3">Schedule</dt>
-  <dd class="col-sm-9">
-    <% if feed.cron_expression.present? %>
-      <code class="text-dark fs-6"><%= feed.cron_expression %></code>
-    <% else %>
-      <span class="text-muted">Not configured</span>
-    <% end %>
-  </dd>
+<% scheduling_ready = feed.cron_expression.present? %>
+<% if scheduling_ready %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end %>
+
+<% if feed.cron_expression.present? %>
+  <% case feed.cron_expression %>
+  <% when "*/30 * * * *" %>
+    <strong>Refresh every 30 minutes</strong>
+  <% when "0 * * * *" %>
+    <strong>Refresh every hour</strong>
+  <% when "0 */6 * * *" %>
+    <strong>Refresh every 6 hours</strong>
+  <% when "0 0 * * *" %>
+    <strong>Refresh daily at midnight</strong>
+  <% else %>
+    <strong>Refresh period:</strong> <code><%= feed.cron_expression %></code>
+  <% end %>
 
   <% if feed.import_after %>
-    <dt class="col-sm-3">Import After</dt>
-    <dd class="col-sm-9">
-      <%= feed.import_after.to_fs(:long) %>
-    </dd>
+    <span class="text-muted">
+      • Content after <%= feed.import_after.strftime("%B %d, %Y") %>
+    </span>
   <% end %>
+<% else %>
+  <strong>Schedule:</strong> <span class="text-muted">not configured</span>
+<% end %>
 
-  <% if feed.enabled? %>
-    <dt class="col-sm-3">Next Run</dt>
-    <dd class="col-sm-9">
-      <%= feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
-    </dd>
-
-    <dt class="col-sm-3">Last Run</dt>
-    <dd class="col-sm-9">
-      <%= feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
-    </dd>
-  <% end %>
-</dl>
-</div>
+<%= link_to edit_feed_path(feed, section: "scheduling", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>
 
