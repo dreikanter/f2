@@ -5,7 +5,7 @@
   </div>
   <div class="card-body">
     <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
-  <%= hidden_field_tag :section, "content_source" %>
+  <%= hidden_field_tag :section, "content-source" %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
       <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>
@@ -38,7 +38,7 @@
 
   <div class="d-flex gap-2">
     <%= form.submit "Save", class: "btn btn-primary" %>
-    <%= link_to "Cancel", feed_path(feed, section: "content_source", format: :turbo_stream),
+    <%= link_to "Cancel", feed_path(feed, section: "content-source", format: :turbo_stream),
         class: "btn btn-outline-secondary",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>

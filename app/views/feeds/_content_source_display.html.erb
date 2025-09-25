@@ -16,7 +16,7 @@
 <% else %>
   <span class="text-muted">not configured</span>
 <% end %>
-<%= link_to edit_feed_path(feed, section: "content_source", format: :turbo_stream),
+<%= link_to edit_feed_path(feed, section: "content-source", format: :turbo_stream),
     class: "text-decoration-none ms-2",
     data: { turbo_prefetch: false, turbo_stream: true },
     title: "Edit" do %>

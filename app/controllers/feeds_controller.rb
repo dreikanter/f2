@@ -1,5 +1,4 @@
 class FeedsController < ApplicationController
-  include ComponentOptionsHelper
   def index
     @feeds = user_feeds.order(:name)
   end
@@ -24,7 +23,7 @@ class FeedsController < ApplicationController
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update(
         "edit-form-container",
-        partial: "#{@section}_form",
+        partial: "#{section_template_name(@section)}_form",
         locals: { feed: @feed }
       )
     end
@@ -52,14 +51,14 @@ class FeedsController < ApplicationController
         streams = []
         # Update the section display
         streams << turbo_stream.update(
-          "#{@section.tr('_', '-')}-content",
-          partial: "#{@section}_display",
+          "#{@section}-content",
+          partial: "#{section_template_name(@section)}_display",
           locals: { feed: @feed }
         )
         # Clear the edit form
         streams << turbo_stream.update("edit-form-container", "")
-        # Update the feed title if content_source was updated
-        if @section == "content_source"
+        # Update the feed title if content-source was updated
+        if @section == "content-source"
           streams << turbo_stream.update("feed-title", @feed.name)
         end
         render turbo_stream: streams
@@ -70,7 +69,7 @@ class FeedsController < ApplicationController
       if @section
         render turbo_stream: turbo_stream.update(
           "edit-form-container",
-          partial: "#{@section}_form",
+          partial: "#{section_template_name(@section)}_form",
           locals: { feed: @feed }
         )
       else
@@ -86,6 +85,15 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def section_template_name(section)
+    case section
+    when "content-source"
+      "content_source"
+    else
+      section
+    end
+  end
 
   def user_feeds
     Current.user.feeds
@@ -109,7 +117,7 @@ class FeedsController < ApplicationController
     return feed_params unless @section
 
     case @section
-    when "content_source"
+    when "content-source"
       content_source_params
     when "reposting"
       reposting_params
@@ -130,7 +138,7 @@ class FeedsController < ApplicationController
     permitted_params = params.require(:feed).permit(:access_token_id, :target_group)
 
     # Clear access_token_id if there are no active tokens available
-    unless has_active_tokens?
+    unless Current.user.access_tokens.active.exists?
       permitted_params[:access_token_id] = nil
     end
 
