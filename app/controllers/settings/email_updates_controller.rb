@@ -1,4 +1,8 @@
-class EmailUpdatesController < ApplicationController
+class Settings::EmailUpdatesController < ApplicationController
+  def edit
+    @user = Current.user
+  end
+
   def update
     @user = Current.user
 
@@ -34,11 +38,11 @@ class EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_invalid_email
-    redirect_to settings_path, alert: "Please enter a valid new email address."
+    redirect_to edit_settings_email_update_path, alert: "Please enter a valid new email address."
   end
 
   def redirect_with_duplicate_email
-    redirect_to settings_path, alert: "Email address is already taken."
+    redirect_to edit_settings_email_update_path, alert: "Email address is already taken."
   end
 
   def redirect_with_confirmation_sent

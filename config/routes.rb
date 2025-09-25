@@ -7,8 +7,9 @@ Rails.application.routes.draw do
     resources :groups, only: :index, controller: "access_token_groups"
   end
 
-  resource :settings, only: :show
-  resource :email_update, only: :update
+  resource :settings, only: :show do
+    resource :email_update, only: [:edit, :update], controller: "settings/email_updates"
+  end
   resource :password_update, only: :update
   resources :email_confirmations, only: :show, param: :token
   resource :dashboard, only: :show
