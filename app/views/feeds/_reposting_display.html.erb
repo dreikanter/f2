@@ -1,11 +1,14 @@
 <%# locals: (feed:) %>
 <% reposting_ready = feed.access_token&.active? && feed.target_group.present? %>
+
 <% if reposting_ready %>
   <i class="bi bi-check-circle-fill text-success me-2"></i>
 <% else %>
   <i class="bi bi-circle text-muted me-2"></i>
-<% end %>
+<% end -%>
+
 <strong class="me-2">Reposting to:</strong>
+
 <% if feed.access_token && feed.target_group.present? %>
   <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
     <%= feed.access_token.host %>/<%= feed.target_group %>
@@ -15,7 +18,8 @@
   <span class="text-muted">access token assigned, target group not configured</span>
 <% else %>
   <span class="text-muted">No access token assigned</span>
-<% end %>
+<% end -%>
+
 <%= link_to edit_feed_path(feed, section: "reposting", format: :turbo_stream),
     class: "text-decoration-none ms-2",
     data: { turbo_prefetch: false, turbo_stream: true },
