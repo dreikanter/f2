@@ -21,7 +21,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
 
     get email_confirmation_url(token), params: { new_email: new_email }
 
-    assert_redirected_to profile_path
+    assert_redirected_to settings_path
     assert_equal "Email address successfully updated to #{new_email}.", flash[:notice]
     assert_equal new_email, user.reload.email_address
   end
@@ -30,7 +30,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     get email_confirmation_url("invalid"), params: { new_email: "new@example.com" }
 
-    assert_redirected_to profile_path
+    assert_redirected_to settings_path
     assert_equal "Email confirmation link is invalid or has expired.", flash[:alert]
   end
 
@@ -41,7 +41,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
 
     get email_confirmation_url(token), params: { new_email: "taken@example.com" }
 
-    assert_redirected_to profile_path
+    assert_redirected_to settings_path
     assert_equal "Email confirmation failed. The email may already be taken.", flash[:alert]
   end
 end
