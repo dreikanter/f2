@@ -3,7 +3,7 @@ class CreateFeeds < ActiveRecord::Migration[8.0]
     create_table :feeds do |t|
       t.string :name, null: false
       t.string :url, null: false
-      t.string :cron_expression, null: false
+      t.string :cron_expression
       t.string :loader, null: false
       t.string :processor, null: false
       t.string :normalizer, null: false
