@@ -1,0 +1,42 @@
+<%# locals: (feed:) %>
+<dl class="row mb-0">
+  <dt class="col-sm-3">Schedule</dt>
+  <dd class="col-sm-9">
+    <% if feed.cron_expression.present? %>
+      <code class="text-dark fs-6"><%= feed.cron_expression %></code>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+
+  <dt class="col-sm-3">Import After</dt>
+  <dd class="col-sm-9">
+    <% if feed.import_after %>
+      <%= feed.import_after.to_fs(:long) %>
+    <% else %>
+      <span class="text-muted">All items</span>
+    <% end %>
+  </dd>
+
+  <% if feed.enabled? %>
+    <dt class="col-sm-3">Next Run</dt>
+    <dd class="col-sm-9">
+      <%= feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
+    </dd>
+
+    <dt class="col-sm-3">Last Run</dt>
+    <dd class="col-sm-9">
+      <%= feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
+    </dd>
+  <% end %>
+</dl>
+
+<% if feed.description.present? %>
+  <hr>
+  <dl class="row mb-0">
+    <dt class="col-sm-3">Description</dt>
+    <dd class="col-sm-9">
+      <%= simple_format(feed.description, class: "mb-0") %>
+    </dd>
+  </dl>
+<% end %>

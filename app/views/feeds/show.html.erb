@@ -76,27 +76,7 @@
         data: { turbo_stream: true } %>
   </div>
   <div class="card-body" id="content-source-display">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Feed URL</dt>
-      <dd class="col-sm-9">
-        <% if @feed.url.present? %>
-          <a href="<%= @feed.url %>" target="_blank" class="text-decoration-none">
-            <%= @feed.url %>
-          </a>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-
-      <dt class="col-sm-3">Feed Profile</dt>
-      <dd class="col-sm-9">
-        <% if @feed.feed_profile %>
-          <span class="badge bg-info"><%= @feed.feed_profile.name %></span>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-    </dl>
+    <%= render "content_source_display", feed: @feed %>
   </div>
 </div>
 
@@ -116,37 +96,7 @@
         data: { turbo_stream: true } %>
   </div>
   <div class="card-body" id="reposting-display">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Access Token</dt>
-      <dd class="col-sm-9">
-        <% if @feed.access_token %>
-          <%= @feed.access_token.name %>
-          <span class="badge bg-<%= @feed.access_token.active? ? 'success' : 'danger' %> ms-2">
-            <%= @feed.access_token.status.capitalize %>
-          </span>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-
-      <dt class="col-sm-3">Target Group</dt>
-      <dd class="col-sm-9">
-        <% if @feed.target_group.present? %>
-          <%= @feed.target_group %>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-
-      <dt class="col-sm-3">Freefeed Host</dt>
-      <dd class="col-sm-9">
-        <% if @feed.access_token %>
-          <%= @feed.access_token.host %>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-    </dl>
+    <%= render "reposting_display", feed: @feed %>
   </div>
 </div>
 
@@ -166,46 +116,6 @@
         data: { turbo_stream: true } %>
   </div>
   <div class="card-body" id="scheduling-display">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">Schedule</dt>
-      <dd class="col-sm-9">
-        <% if @feed.cron_expression.present? %>
-          <code class="text-dark fs-6"><%= @feed.cron_expression %></code>
-        <% else %>
-          <span class="text-muted">Not configured</span>
-        <% end %>
-      </dd>
-
-      <dt class="col-sm-3">Import After</dt>
-      <dd class="col-sm-9">
-        <% if @feed.import_after %>
-          <%= @feed.import_after.to_fs(:long) %>
-        <% else %>
-          <span class="text-muted">All items</span>
-        <% end %>
-      </dd>
-
-      <% if @feed.enabled? %>
-        <dt class="col-sm-3">Next Run</dt>
-        <dd class="col-sm-9">
-          <%= @feed.feed_schedule&.next_run_at&.to_fs(:long) || "Not scheduled" %>
-        </dd>
-
-        <dt class="col-sm-3">Last Run</dt>
-        <dd class="col-sm-9">
-          <%= @feed.feed_schedule&.last_run_at&.to_fs(:long) || "Never" %>
-        </dd>
-      <% end %>
-    </dl>
-
-    <% if @feed.description.present? %>
-      <hr>
-      <dl class="row mb-0">
-        <dt class="col-sm-3">Description</dt>
-        <dd class="col-sm-9">
-          <%= simple_format(@feed.description, class: "mb-0") %>
-        </dd>
-      </dl>
-    <% end %>
+    <%= render "scheduling_display", feed: @feed %>
   </div>
 </div>

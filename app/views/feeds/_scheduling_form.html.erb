@@ -1,0 +1,47 @@
+<%# locals: (feed:) %>
+<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+  <% if feed.errors.any? %>
+    <div class="alert alert-danger">
+      <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>
+      <ul class="mb-0">
+        <% feed.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :cron_expression, "Schedule", class: "form-label" %>
+    <%= form.select :cron_expression,
+        options_for_select([
+          ["Every 30 minutes", "*/30 * * * *"],
+          ["Every hour", "0 * * * *"],
+          ["Every 6 hours", "0 */6 * * *"],
+          ["Daily at midnight", "0 0 * * *"]
+        ], feed.cron_expression),
+        { prompt: "Choose schedule..." },
+        { class: "form-select", required: true } %>
+    <div class="form-text">Select how often the feed should be refreshed</div>
+    <div class="invalid-feedback">Please select a schedule.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :import_after, "Import items after", class: "form-label" %>
+    <%= form.date_field :import_after, class: "form-control" %>
+    <div class="form-text">Only import items published after this date (optional)</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :description, "Description", class: "form-label" %>
+    <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional description of this feed..." %>
+    <div class="form-text">Help text to describe the purpose of this feed</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= form.submit "Save Scheduling Configuration", class: "btn btn-primary" %>
+    <%= link_to "Cancel", feed_path(feed, section: "scheduling"),
+        class: "btn btn-outline-secondary",
+        data: { turbo_stream: true } %>
+  </div>
+<% end %>

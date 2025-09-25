@@ -9,10 +9,28 @@ class FeedsController < ApplicationController
 
   def show
     @feed = load_feed
+    @section = params[:section]
+
+    if @section && request.format.turbo_stream?
+      render turbo_stream: turbo_stream.replace(
+        "#{@section.tr('_', '-')}-display",
+        partial: "#{@section}_display",
+        locals: { feed: @feed }
+      )
+    end
   end
 
   def edit
     @feed = load_feed
+    @section = params[:section]
+
+    if @section && request.format.turbo_stream?
+      render turbo_stream: turbo_stream.replace(
+        "#{@section.tr('_', '-')}-display",
+        partial: "#{@section}_form",
+        locals: { feed: @feed }
+      )
+    end
   end
 
   def create

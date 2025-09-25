@@ -1,0 +1,22 @@
+<%# locals: (feed:) %>
+<dl class="row mb-0">
+  <dt class="col-sm-3">Feed URL</dt>
+  <dd class="col-sm-9">
+    <% if feed.url.present? %>
+      <a href="<%= feed.url %>" target="_blank" class="text-decoration-none">
+        <%= feed.url %>
+      </a>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+
+  <dt class="col-sm-3">Feed Profile</dt>
+  <dd class="col-sm-9">
+    <% if feed.feed_profile %>
+      <span class="badge bg-info"><%= feed.feed_profile.name %></span>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+</dl>

@@ -1,0 +1,32 @@
+<%# locals: (feed:) %>
+<dl class="row mb-0">
+  <dt class="col-sm-3">Access Token</dt>
+  <dd class="col-sm-9">
+    <% if feed.access_token %>
+      <%= feed.access_token.name %>
+      <span class="badge bg-<%= feed.access_token.active? ? 'success' : 'danger' %> ms-2">
+        <%= feed.access_token.status.capitalize %>
+      </span>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+
+  <dt class="col-sm-3">Target Group</dt>
+  <dd class="col-sm-9">
+    <% if feed.target_group.present? %>
+      <%= feed.target_group %>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+
+  <dt class="col-sm-3">Freefeed Host</dt>
+  <dd class="col-sm-9">
+    <% if feed.access_token %>
+      <%= feed.access_token.host %>
+    <% else %>
+      <span class="text-muted">Not configured</span>
+    <% end %>
+  </dd>
+</dl>

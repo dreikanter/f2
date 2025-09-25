@@ -1,0 +1,39 @@
+<%# locals: (feed:) %>
+<%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
+  <% if feed.errors.any? %>
+    <div class="alert alert-danger">
+      <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>
+      <ul class="mb-0">
+        <% feed.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :name, "Title", class: "form-label" %>
+    <%= form.text_field :name, class: "form-control", placeholder: "Feed title for identification", maxlength: Feed::NAME_MAX_LENGTH %>
+    <div class="form-text">Give your feed a descriptive name</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :url, "Feed URL", class: "form-label" %>
+    <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml" %>
+    <div class="invalid-feedback">Please provide a valid HTTP or HTTPS URL.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :feed_profile_id, "Feed Profile", class: "form-label" %>
+    <%= form.select :feed_profile_id, options_for_select(feed_profile_options, feed.feed_profile_id), { prompt: "Choose feed profile..." }, { class: "form-select", required: true } %>
+    <div class="form-text">Select the processing configuration for this feed</div>
+    <div class="invalid-feedback">Please select a feed profile.</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= form.submit "Save Content Source", class: "btn btn-primary" %>
+    <%= link_to "Cancel", feed_path(feed, section: "content_source"),
+        class: "btn btn-outline-secondary",
+        data: { turbo_stream: true } %>
+  </div>
+<% end %>
