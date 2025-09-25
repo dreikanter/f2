@@ -24,7 +24,6 @@ FactoryBot.define do
       end
     end
 
-
     trait :disabled do
       state { :disabled }
     end
