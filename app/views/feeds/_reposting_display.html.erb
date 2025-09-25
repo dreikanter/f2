@@ -5,7 +5,7 @@
 <% else %>
   <i class="bi bi-circle text-muted me-2"></i>
 <% end %>
-<strong>Reposting to:</strong>
+<strong class="me-2">Reposting to:</strong>
 <% if feed.access_token && feed.target_group.present? %>
   <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
     <%= feed.access_token.host %>/<%= feed.target_group %>
