@@ -21,6 +21,6 @@ class Settings::AccessTokenGroupsController < ApplicationController
   end
 
   def handle_freefeed_error(exception)
-    render turbo_stream: turbo_stream.replace("groups-select", partial: "access_token_groups/error", locals: { error: exception.message })
+    render turbo_stream: turbo_stream.replace("groups-select", partial: "settings/access_token_groups/error", locals: { error: exception.message })
   end
 end

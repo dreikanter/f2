@@ -48,13 +48,13 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication for new" do
-    get new_settings_settings_access_token_path
+    get new_settings_access_token_path
     assert_redirected_to new_session_path
   end
 
   test "shows new token form when authenticated" do
     sign_in_as user
-    get new_settings_settings_access_token_path
+    get new_settings_access_token_path
     assert_response :success
     assert_select "h1", "Create New Token"
     assert_select "form[action=?]", settings_access_tokens_path
