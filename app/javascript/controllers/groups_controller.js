@@ -29,7 +29,7 @@ export default class extends Controller {
 
     this.showLoadingState()
 
-    let url = `/access_tokens/${tokenId}/groups`
+    let url = `/settings/access_tokens/${tokenId}/groups`
     if (currentValue) {
       url += `?selected_group=${encodeURIComponent(currentValue)}`
     }

@@ -1,4 +1,5 @@
 class FeedsController < ApplicationController
+  include ComponentOptionsHelper
   def index
     @feeds = user_feeds.order(:name)
   end
@@ -12,11 +13,7 @@ class FeedsController < ApplicationController
     @section = params[:section]
 
     if @section && request.format.turbo_stream?
-      render turbo_stream: turbo_stream.replace(
-        "#{@section.tr('_', '-')}-display",
-        partial: "#{@section}_display",
-        locals: { feed: @feed }
-      )
+      render turbo_stream: turbo_stream.update("edit-form-container", "")
     end
   end
 
@@ -25,8 +22,8 @@ class FeedsController < ApplicationController
     @section = params[:section]
 
     if @section && request.format.turbo_stream?
-      render turbo_stream: turbo_stream.replace(
-        "#{@section.tr('_', '-')}-display",
+      render turbo_stream: turbo_stream.update(
+        "edit-form-container",
         partial: "#{@section}_form",
         locals: { feed: @feed }
       )
@@ -52,18 +49,27 @@ class FeedsController < ApplicationController
 
     if @feed.update(section_params)
       if @section
-        render turbo_stream: turbo_stream.replace(
-          "#{@section.tr('_', '-')}-display",
+        streams = []
+        # Update the section display
+        streams << turbo_stream.update(
+          "#{@section.tr('_', '-')}-content",
           partial: "#{@section}_display",
           locals: { feed: @feed }
         )
+        # Clear the edit form
+        streams << turbo_stream.update("edit-form-container", "")
+        # Update the feed title if content_source was updated
+        if @section == "content_source"
+          streams << turbo_stream.update("feed-title", @feed.name)
+        end
+        render turbo_stream: streams
       else
         redirect_to @feed, notice: "Feed was successfully updated."
       end
     else
       if @section
-        render turbo_stream: turbo_stream.replace(
-          "#{@section.tr('_', '-')}-display",
+        render turbo_stream: turbo_stream.update(
+          "edit-form-container",
           partial: "#{@section}_form",
           locals: { feed: @feed }
         )
@@ -121,7 +127,14 @@ class FeedsController < ApplicationController
 
   def reposting_params
     return {} unless params[:feed]
-    params.require(:feed).permit(:access_token_id, :target_group)
+    permitted_params = params.require(:feed).permit(:access_token_id, :target_group)
+
+    # Clear access_token_id if there are no active tokens available
+    unless has_active_tokens?
+      permitted_params[:access_token_id] = nil
+    end
+
+    permitted_params
   end
 
   def scheduling_params

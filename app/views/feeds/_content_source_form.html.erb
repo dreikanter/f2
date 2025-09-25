@@ -1,6 +1,10 @@
 <%# locals: (feed:) %>
-<div class="list-group-item" id="content-source-display">
-<%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
+<div class="card mt-3">
+  <div class="card-header">
+    <h5 class="card-title mb-0">Edit Source</h5>
+  </div>
+  <div class="card-body">
+    <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
   <%= hidden_field_tag :section, "content_source" %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -38,5 +42,6 @@
         class: "btn btn-outline-secondary",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
-<% end %>
+    <% end %>
+  </div>
 </div>

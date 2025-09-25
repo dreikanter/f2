@@ -10,9 +10,11 @@
   <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
     <%= feed.access_token.host %>/<%= feed.target_group %>
   </a>
-  (Access Token: <%= feed.access_token.name %> <span class="badge bg-<%= feed.access_token.active? ? 'success' : 'danger' %>"><%= feed.access_token.status.capitalize %></span>)
+  (Access Token: <%= feed.access_token.name %>)
+<% elsif feed.access_token %>
+  <span class="text-muted">access token assigned, target group not configured</span>
 <% else %>
-  <span class="text-muted">not configured</span>
+  <span class="text-muted">No access token assigned</span>
 <% end %>
 <%= link_to edit_feed_path(feed, section: "reposting", format: :turbo_stream),
     class: "text-decoration-none ms-2",

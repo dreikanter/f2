@@ -1,9 +1,13 @@
 <%# locals: (feed:) %>
-<div class="list-group-item" id="reposting-display">
-<div data-controller="groups"
-     data-groups-loading-text-value="Loading..."
-     data-groups-default-text-value="Select the Freefeed group where posts will be published">
-<%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
+<div class="card mt-3">
+  <div class="card-header">
+    <h5 class="card-title mb-0">Edit Reposting</h5>
+  </div>
+  <div class="card-body">
+    <div data-controller="groups"
+         data-groups-loading-text-value="Loading..."
+         data-groups-default-text-value="Select the Freefeed group where posts will be published">
+      <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
   <%= hidden_field_tag :section, "reposting" %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -18,11 +22,19 @@
 
   <div class="mb-3">
     <%= form.label :access_token_id, "Access Token", class: "form-label" %>
-    <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id),
-                    { prompt: "Choose access token..." },
-                    { class: "form-select",
-                      data: { action: "change->groups#refresh" } } %>
-    <div class="form-text">Select the Freefeed access token to use for posting</div>
+    <% if has_active_tokens? %>
+      <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id),
+                      { prompt: "Choose access token..." },
+                      { class: "form-select",
+                        data: { action: "change->groups#refresh" } } %>
+      <div class="form-text">Select the Freefeed access token to use for posting</div>
+    <% else %>
+      <select name="feed[access_token_id]" class="form-select" disabled>
+        <option>No active access tokens available</option>
+      </select>
+      <%= form.hidden_field :access_token_id, value: "" %>
+      <div class="form-text text-muted">No active access tokens are available. Please create and validate an access token first.</div>
+    <% end %>
     <div class="invalid-feedback">Please select an access token.</div>
 
     <% unless has_active_tokens? %>
@@ -56,6 +68,7 @@
         class: "btn btn-outline-secondary",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
-<% end %>
-</div>
+      <% end %>
+    </div>
+  </div>
 </div>
