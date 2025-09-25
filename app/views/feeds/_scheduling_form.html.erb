@@ -35,8 +35,7 @@
 
   <div class="d-flex gap-2">
     <%= form.submit "Save Scheduling Configuration", class: "btn btn-primary" %>
-    <%= link_to "Cancel", feed_path(feed, section: "scheduling"),
-        class: "btn btn-outline-secondary",
-        data: { turbo_stream: true } %>
+    <%= link_to "Cancel", feed_path(feed, section: "scheduling", format: :turbo_stream),
+        class: "btn btn-outline-secondary" %>
   </div>
 <% end %>

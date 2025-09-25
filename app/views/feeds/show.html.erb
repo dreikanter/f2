@@ -58,9 +58,8 @@
       <% end %>
 Content Source
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "content_source"),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_stream: true } %>
+    <%= link_to "Edit", edit_feed_path(@feed, section: "content_source", format: :turbo_stream),
+        class: "btn btn-outline-primary btn-sm" %>
   </div>
   <div class="card-body" id="content-source-display">
     <%= render "content_source_display", feed: @feed %>
@@ -78,9 +77,8 @@ Content Source
       <% end %>
 Reposting Configuration
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "reposting"),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_stream: true } %>
+    <%= link_to "Edit", edit_feed_path(@feed, section: "reposting", format: :turbo_stream),
+        class: "btn btn-outline-primary btn-sm" %>
   </div>
   <div class="card-body" id="reposting-display">
     <%= render "reposting_display", feed: @feed %>
@@ -98,9 +96,8 @@ Reposting Configuration
       <% end %>
 Scheduling Configuration
     </h5>
-    <%= link_to "Edit", edit_feed_path(@feed, section: "scheduling"),
-        class: "btn btn-outline-primary btn-sm",
-        data: { turbo_stream: true } %>
+    <%= link_to "Edit", edit_feed_path(@feed, section: "scheduling", format: :turbo_stream),
+        class: "btn btn-outline-primary btn-sm" %>
   </div>
   <div class="card-body" id="scheduling-display">
     <%= render "scheduling_display", feed: @feed %>
