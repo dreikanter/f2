@@ -20,14 +20,8 @@
 
       <% if @user.permissions.any? %>
         <div class="list-group-item">
-          <div class="mb-2">
-            <strong>Permissions:</strong>
-          </div>
-          <ul class="mb-0">
-            <% @user.permissions.each do |permission| %>
-              <li><%= permission.name.humanize %></li>
-            <% end %>
-          </ul>
+          <strong>Permissions:</strong>
+          <%= @user.permissions.map { |permission| permission.name.humanize }.join(", ") %>
         </div>
       <% end %>
 
