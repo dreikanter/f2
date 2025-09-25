@@ -34,18 +34,24 @@ export default class extends Controller {
       url += `?selected_group=${encodeURIComponent(currentValue)}`
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'text/vnd.turbo-stream.html',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-      }
-    })
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'text/vnd.turbo-stream.html',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
 
-    if (response.ok) {
-      const html = await response.text()
-      Turbo.renderStreamMessage(html)
-      this.showDefaultState()
+      if (response.ok) {
+        const html = await response.text()
+        Turbo.renderStreamMessage(html)
+        this.showDefaultState()
+      } else {
+        this.showErrorState()
+      }
+    } catch (error) {
+      this.showErrorState()
     }
   }
 
@@ -53,18 +59,27 @@ export default class extends Controller {
     this.selectTarget.disabled = true
     this.selectTarget.innerHTML = '<option value="">Choose target group...</option>'
     this.helpTextTarget.textContent = this.defaultTextValue
-    this.helpTextTarget.classList.remove('text-muted')
+    this.helpTextTarget.classList.remove('text-muted', 'text-danger')
   }
 
   showLoadingState() {
     this.selectTarget.disabled = true
     this.selectTarget.innerHTML = '<option value="">Loading...</option>'
     this.helpTextTarget.textContent = this.loadingTextValue
+    this.helpTextTarget.classList.remove('text-danger')
     this.helpTextTarget.classList.add('text-muted')
   }
 
   showDefaultState() {
     this.helpTextTarget.textContent = this.defaultTextValue
+    this.helpTextTarget.classList.remove('text-muted', 'text-danger')
+  }
+
+  showErrorState() {
+    this.selectTarget.disabled = true
+    this.selectTarget.innerHTML = '<option value="">Error loading groups list from Freefeed</option>'
+    this.helpTextTarget.textContent = "The access token is probably not valid. The group will be saved as blank value."
     this.helpTextTarget.classList.remove('text-muted')
+    this.helpTextTarget.classList.add('text-danger')
   }
 }
