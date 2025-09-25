@@ -3,7 +3,9 @@
 one:
   email_address: one@example.com
   password_digest: <%= password_digest %>
+  password_updated_at: <%= 1.week.ago %>
 
 two:
   email_address: two@example.com
   password_digest: <%= password_digest %>
+  password_updated_at: <%= 2.days.ago %>

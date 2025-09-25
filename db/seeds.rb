@@ -8,6 +8,9 @@ if Rails.env.development?
     user.password = "password"
     user.password_confirmation = "password"
   end
+
+  # Update existing users to have password_updated_at
+  User.where(password_updated_at: nil).update_all(password_updated_at: Time.current)
   puts "✅ Development user created: test@example.com / password"
 
   # Add admin permission to the first user

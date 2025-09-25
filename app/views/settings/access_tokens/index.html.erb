@@ -1,6 +1,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Access Tokens</h1>
-  <%= link_to "Create New Token", new_settings_access_token_path, class: "btn btn-primary" %>
+  <h1 class="mb-0">Access Tokens</h1>
+  <div class="d-flex align-items-center">
+    <%= link_to "Create New Token", new_settings_access_token_path, class: "btn btn-primary me-3" %>
+    <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary" %>
+  </div>
 </div>
 
 <% if @access_tokens.inactive.exists? %>
