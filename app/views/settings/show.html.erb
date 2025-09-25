@@ -1,0 +1,54 @@
+<% content_for :title, "Settings" %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Settings</h1>
+  <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "btn btn-outline-secondary" %>
+</div>
+
+<div class="row">
+  <div class="col-6">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Email Address</h4>
+      </div>
+      <div class="card-body">
+        <p>Current email: <strong><%= @user.email_address %></strong></p>
+        <%= link_to "Change Email Address", edit_settings_email_update_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+    <% if @user.permissions.any? %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Permissions</h4>
+        </div>
+        <div class="card-body">
+          <ul class="col-sm-8 mb-0">
+            <% @user.permissions.each do |permission| %>
+              <li><%= permission.name.humanize %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="col-6">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Password</h4>
+      </div>
+      <div class="card-body">
+        <p>Secure your account with a strong password.</p>
+        <%= link_to "Change Password", edit_settings_password_update_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Access Tokens</h4>
+      </div>
+      <div class="card-body">
+        <p>Manage API access tokens for external integrations.</p>
+        <%= link_to "Manage Access Tokens", settings_access_tokens_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+</div>

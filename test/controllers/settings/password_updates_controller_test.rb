@@ -1,6 +1,6 @@
 require "test_helper"
 
-class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
+class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -10,7 +10,7 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect to login when not authenticated" do
-    patch password_update_url, params: {
+    patch settings_password_update_url, params: {
       user: {
         current_password: "password123",
         password: "new123",
@@ -22,40 +22,40 @@ class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update password with correct current password" do
     sign_in_user
-    patch password_update_url, params: {
+    patch settings_password_update_url, params: {
       user: {
         current_password: "password123",
         password: "newpassword123",
         password_confirmation: "newpassword123"
       }
     }
-    assert_redirected_to profile_path
+    assert_redirected_to settings_path
     assert_equal "Password updated successfully.", flash[:notice]
   end
 
   test "should not update password with incorrect current password" do
     sign_in_user
-    patch password_update_url, params: {
+    patch settings_password_update_url, params: {
       user: {
         current_password: "wrongpassword",
         password: "newpassword123",
         password_confirmation: "newpassword123"
       }
     }
-    assert_redirected_to profile_path
+    assert_redirected_to edit_settings_password_update_path
     assert_equal "Current password is incorrect.", flash[:alert]
   end
 
   test "should not update password with mismatched confirmation" do
     sign_in_user
-    patch password_update_url, params: {
+    patch settings_password_update_url, params: {
       user: {
         current_password: "password123",
         password: "newpassword123",
         password_confirmation: "different123"
       }
     }
-    assert_redirected_to profile_path
+    assert_redirected_to edit_settings_password_update_path
     assert_match "Password confirmation doesn't match", flash[:alert]
   end
 end

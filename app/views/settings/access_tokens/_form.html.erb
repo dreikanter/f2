@@ -1,6 +1,6 @@
 <%# locals: (access_token:, token_label:, token_placeholder:, token_value:, submit_text:) %>
 <div data-controller="token-form"  data-token-form-freefeed-hosts-value='<%= AccessToken::FREEFEED_HOSTS.to_json %>' data-token-form-default-help-url-value="https://freefeed.net">
-  <%= form_with model: access_token, local: true do |form| %>
+  <%= form_with model: [:settings, access_token], local: true do |form| %>
     <% if access_token.errors.any? %>
       <div class="alert alert-danger">
         <ul class="mb-0">
@@ -62,7 +62,7 @@
     </div>
 
     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-      <%= link_to "Cancel", access_tokens_path, class: "btn btn-outline-secondary" %>
+      <%= link_to "Cancel", settings_access_tokens_path, class: "btn btn-outline-secondary" %>
       <%= form.submit submit_text, class: "btn btn-primary" %>
     </div>
   <% end %>

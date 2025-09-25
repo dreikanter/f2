@@ -1,4 +1,4 @@
-class AccessTokenGroupsController < ApplicationController
+class Settings::AccessTokenGroupsController < ApplicationController
   def index
     @access_token = Current.user.access_tokens.find(params[:access_token_id])
     @managed_groups = load_managed_groups
@@ -21,6 +21,6 @@ class AccessTokenGroupsController < ApplicationController
   end
 
   def handle_freefeed_error(exception)
-    render turbo_stream: turbo_stream.replace("groups-select", partial: "access_token_groups/error", locals: { error: exception.message })
+    render turbo_stream: turbo_stream.replace("groups-select", partial: "settings/access_token_groups/error", locals: { error: exception.message })
   end
 end

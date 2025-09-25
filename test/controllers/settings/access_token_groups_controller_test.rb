@@ -1,6 +1,6 @@
 require "test_helper"
 
-class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
+class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -39,7 +39,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
       )
       .to_return(status: 200, body: response_body)
 
-    get access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "group1"
@@ -55,7 +55,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .to_return(status: 500, body: "Internal Server Error")
 
-    get access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Error loading groups"
@@ -68,7 +68,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .to_raise(Faraday::TimeoutError.new("Connection timeout"))
 
-    get access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Error loading groups"
@@ -76,7 +76,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect to login when not authenticated" do
-    get access_token_groups_path(access_token)
+    get settings_access_token_groups_path(access_token)
     assert_redirected_to new_session_url
   end
 
@@ -86,7 +86,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     other_user = create(:user)
     other_access_token = create(:access_token, user: other_user)
 
-    get access_token_groups_path(other_access_token)
+    get settings_access_token_groups_path(other_access_token)
     assert_response :not_found
   end
 
@@ -114,7 +114,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
       )
       .to_return(status: 200, body: response_body)
 
-    get access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_requested request_stub, times: 1
@@ -128,7 +128,7 @@ class AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .to_return(status: 200, body: response_body)
 
-    get access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type

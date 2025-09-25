@@ -35,14 +35,14 @@ class EmailConfirmationsController < ApplicationController
   end
 
   def redirect_with_success
-    redirect_to profile_path, notice: "Email address successfully updated to #{new_email}."
+    redirect_to settings_path, notice: "Email address successfully updated to #{new_email}."
   end
 
   def redirect_with_failure
-    redirect_to profile_path, alert: "Email confirmation failed. The email may already be taken."
+    redirect_to settings_path, alert: "Email confirmation failed. The email may already be taken."
   end
 
   def redirect_with_invalid_token
-    redirect_to profile_path, alert: "Email confirmation link is invalid or has expired."
+    redirect_to settings_path, alert: "Email confirmation link is invalid or has expired."
   end
 end
