@@ -26,14 +26,14 @@ class PasswordUpdatesController < ApplicationController
   end
 
   def redirect_with_incorrect_password
-    redirect_to profile_path, alert: "Current password is incorrect."
+    redirect_to settings_path, alert: "Current password is incorrect."
   end
 
   def redirect_with_success
-    redirect_to profile_path, notice: "Password updated successfully."
+    redirect_to settings_path, notice: "Password updated successfully."
   end
 
   def redirect_with_validation_errors
-    redirect_to profile_path, alert: @user.errors.full_messages.join(", ")
+    redirect_to settings_path, alert: @user.errors.full_messages.join(", ")
   end
 end

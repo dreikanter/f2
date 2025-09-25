@@ -34,14 +34,14 @@ class EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_invalid_email
-    redirect_to profile_path, alert: "Please enter a valid new email address."
+    redirect_to settings_path, alert: "Please enter a valid new email address."
   end
 
   def redirect_with_duplicate_email
-    redirect_to profile_path, alert: "Email address is already taken."
+    redirect_to settings_path, alert: "Email address is already taken."
   end
 
   def redirect_with_confirmation_sent
-    redirect_to profile_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
+    redirect_to settings_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
   end
 end
