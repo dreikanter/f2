@@ -46,6 +46,11 @@
               <li class="nav-item">
                 <%= link_to "Feeds", feeds_path, class: "nav-link #{'active' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
               </li>
+              <% if policy(Event).index? %>
+                <li class="nav-item">
+                  <%= link_to "Events", events_path, class: "nav-link #{'active' if current_page?(events_path) || controller_name == 'events'}" %>
+                </li>
+              <% end %>
             </ul>
 
             <%# Dropdown menu %>
@@ -56,10 +61,6 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li><%= link_to "Settings", profile_path, class: "dropdown-item" %></li>
-                  <% if policy(Event).index? %>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><%= link_to "Events", events_path, class: "dropdown-item" %></li>
-                  <% end %>
                   <li><hr class="dropdown-divider"></li>
                   <li>
                     <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "dropdown-item" %>
