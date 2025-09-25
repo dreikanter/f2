@@ -24,8 +24,17 @@ FactoryBot.define do
       end
     end
 
+    trait :inactive do
+      state { :inactive }
+      cron_expression { nil }
+    end
+
     trait :disabled do
       state { :disabled }
+    end
+
+    trait :enabled do
+      state { :enabled }
     end
 
     trait :without_access_token do

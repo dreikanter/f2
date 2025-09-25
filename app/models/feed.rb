@@ -13,7 +13,7 @@ class Feed < ApplicationRecord
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
-  enum :state, { inactive: 0, disabled: 1, enabled: 2 }
+  enum :state, { inactive: 0, disabled: 1, enabled: 2 }, default: :inactive
 
   validates :name,
             uniqueness: { scope: :user_id },

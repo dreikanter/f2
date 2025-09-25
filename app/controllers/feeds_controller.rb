@@ -34,14 +34,10 @@ class FeedsController < ApplicationController
   end
 
   def create
-    @feed = user_feeds.build(new_feed_params)
-    @feed.state = :inactive
-    @feed.generate_unique_name!
-
-    if @feed.save
-      redirect_to @feed, notice: "Feed was successfully created. Complete the configuration to enable it."
+    if using_simplified_creation?
+      create_with_simplified_flow
     else
-      render :new, status: :unprocessable_content
+      create_with_full_attributes
     end
   end
 
@@ -144,6 +140,47 @@ class FeedsController < ApplicationController
     updated_feed = @feed.dup
     updated_feed.assign_attributes(section_params)
     updated_feed.can_be_enabled?
+  end
+
+  def using_simplified_creation?
+    return false unless params[:feed]
+
+    # If only basic fields are provided, use simplified flow
+    provided_params = params[:feed].keys.map(&:to_s)
+    basic_fields = %w[name url feed_profile_id]
+    full_fields = %w[cron_expression access_token_id target_group state description import_after]
+
+    # Use simplified flow if no advanced fields are provided
+    (provided_params & full_fields).empty?
+  end
+
+  def create_with_simplified_flow
+    @feed = user_feeds.build(new_feed_params)
+    @feed.state = :inactive
+    @feed.generate_unique_name!
+
+    if @feed.save
+      redirect_to @feed, notice: "Feed was successfully created. Complete the configuration to enable it."
+    else
+      render :new, status: :unprocessable_content
+    end
+  end
+
+  def create_with_full_attributes
+    @feed = user_feeds.build(feed_params)
+
+    # Set default state to disabled for full attribute creation (backward compatibility)
+    @feed.state = :disabled if @feed.state == "inactive"
+
+    if @feed.save
+      notice_message = "Feed was successfully created."
+      if @feed.access_token&.active?
+        notice_message += " You can now enable it to start processing items."
+      end
+      redirect_to @feed, notice: notice_message
+    else
+      render :new, status: :unprocessable_content
+    end
   end
 
   def feed_params

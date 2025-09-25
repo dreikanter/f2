@@ -6,10 +6,18 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should require name" do
-    feed = build(:feed, name: nil)
+  test "should not require name for inactive feeds" do
+    feed = build(:feed, name: nil, state: :inactive)
+    feed.valid?
+    assert_not feed.errors.of_kind?(:name, :blank)
+  end
+
+  test "should require unique name when present" do
+    user = create(:user)
+    create(:feed, user: user, name: "Test Feed")
+    feed = build(:feed, user: user, name: "Test Feed")
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:name, :blank)
+    assert feed.errors.of_kind?(:name, :taken)
   end
 
   test "should require url" do
@@ -18,10 +26,16 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:url, :blank)
   end
 
-  test "should require cron_expression" do
-    feed = build(:feed, cron_expression: nil)
+  test "should require cron_expression for enabled and disabled feeds" do
+    feed = build(:feed, cron_expression: nil, state: :enabled)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:cron_expression, :blank)
+  end
+
+  test "should not require cron_expression for inactive feeds" do
+    feed = build(:feed, cron_expression: nil, state: :inactive)
+    feed.valid?
+    assert_not feed.errors.of_kind?(:cron_expression, :blank)
   end
 
   test "should require feed_profile" do
@@ -161,9 +175,9 @@ class FeedTest < ActiveSupport::TestCase
     assert feed2.valid?
   end
 
-  test "should set default state to disabled for new records" do
+  test "should set default state to inactive for new records" do
     feed = Feed.new
-    assert_equal "disabled", feed.state
+    assert_equal "inactive", feed.state
   end
 
   test "should not change state for persisted records" do
