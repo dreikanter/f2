@@ -62,7 +62,7 @@ Source
         class: "btn btn-outline-primary btn-sm",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
-  <div class="card-body" id="content-source-display">
+  <div class="card-body">
     <%= render "content_source_display", feed: @feed %>
   </div>
 </div>
@@ -82,7 +82,7 @@ Reposting Target
         class: "btn btn-outline-primary btn-sm",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
-  <div class="card-body" id="reposting-display">
+  <div class="card-body">
     <%= render "reposting_display", feed: @feed %>
   </div>
 </div>
@@ -102,7 +102,7 @@ Schedule
         class: "btn btn-outline-primary btn-sm",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
-  <div class="card-body" id="scheduling-display">
+  <div class="card-body">
     <%= render "scheduling_display", feed: @feed %>
   </div>
 </div>

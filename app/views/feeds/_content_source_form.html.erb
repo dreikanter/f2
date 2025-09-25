@@ -1,4 +1,5 @@
 <%# locals: (feed:) %>
+<div id="content-source-display">
 <%= form_with model: feed, local: true, class: "needs-validation", novalidate: true do |form| %>
   <% if feed.errors.any? %>
     <div class="alert alert-danger">
@@ -37,3 +38,4 @@
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
 <% end %>
+</div>
