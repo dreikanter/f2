@@ -56,7 +56,6 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li><%= link_to "Settings", profile_path, class: "dropdown-item" %></li>
-                  <li><%= link_to "Tokens", access_tokens_path, class: "dropdown-item" %></li>
                   <% if policy(Event).index? %>
                     <li><hr class="dropdown-divider"></li>
                     <li><%= link_to "Events", events_path, class: "dropdown-item" %></li>
