@@ -13,12 +13,12 @@ class Feed < ApplicationRecord
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
-  enum :state, { disabled: 0, enabled: 1 }
+  enum :state, { inactive: 0, disabled: 1, enabled: 2 }
 
   validates :name,
-            presence: true,
             uniqueness: { scope: :user_id },
-            length: { maximum: NAME_MAX_LENGTH }
+            length: { maximum: NAME_MAX_LENGTH },
+            allow_blank: true
 
   validates :url,
             presence: true,
@@ -27,7 +27,7 @@ class Feed < ApplicationRecord
               message: "must be a valid HTTP or HTTPS URL"
             }
 
-  validates :cron_expression, presence: true
+  validates :cron_expression, presence: true, unless: :inactive?
   validates :feed_profile, presence: true
 
   normalizes :name, with: ->(name) { name.to_s.strip }
@@ -57,7 +57,19 @@ class Feed < ApplicationRecord
   before_validation :auto_disable_without_active_token
 
   def can_be_enabled?
-    access_token&.active? && target_group.present? && feed_profile.present?
+    access_token&.active? && target_group.present? && feed_profile.present? && cron_expression.present?
+  end
+
+  def can_be_previewed?
+    url.present? && feed_profile.present?
+  end
+
+  def generate_unique_name!
+    return if name.present?
+
+    base_name = "Untitled"
+    counter = user.feeds.where("name LIKE ?", "#{base_name}%").count + 1
+    self.name = "#{base_name} #{counter}"
   end
 
   # Creates and returns a loader instance for this feed
