@@ -34,29 +34,20 @@
   <div class="col-6">
     <div class="card mb-4">
       <div class="card-header">
-        <h4 class="card-title mb-0">Change Password</h4>
+        <h4 class="card-title mb-0">Password</h4>
       </div>
       <div class="card-body">
-        <%= form_with model: @user, url: password_update_path, method: :patch, local: true, class: "mb-4" do |form| %>
-          <div class="mb-3">
-            <%= form.label :current_password, "Current password:", class: "form-label" %>
-            <%= form.password_field :current_password, class: "form-control", required: true %>
-          </div>
-
-          <div class="mb-3">
-            <%= form.label :password, "New password:", class: "form-label" %>
-            <%= form.password_field :password, class: "form-control", required: true %>
-          </div>
-
-          <div class="mb-3">
-            <%= form.label :password_confirmation, "Confirm new password:", class: "form-label" %>
-            <%= form.password_field :password_confirmation, class: "form-control", required: true %>
-          </div>
-
-          <div>
-            <%= form.submit "Change Password", class: "btn btn-primary" %>
-          </div>
-        <% end %>
+        <p>Secure your account with a strong password.</p>
+        <%= link_to "Change Password", edit_settings_password_update_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Access Tokens</h4>
+      </div>
+      <div class="card-body">
+        <p>Manage API access tokens for external integrations.</p>
+        <%= link_to "Manage Access Tokens", access_tokens_path, class: "btn btn-primary" %>
       </div>
     </div>
   </div>
