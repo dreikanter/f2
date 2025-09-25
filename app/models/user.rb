@@ -11,6 +11,7 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   before_create :set_password_updated_at
+  before_update :update_password_timestamp, if: :will_save_change_to_password_digest?
 
   generates_token_for :password_reset, expires_in: 15.minutes do
     password_salt&.last(10)
@@ -27,6 +28,10 @@ class User < ApplicationRecord
   private
 
   def set_password_updated_at
+    self.password_updated_at = Time.current
+  end
+
+  def update_password_timestamp
     self.password_updated_at = Time.current
   end
 end
