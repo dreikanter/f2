@@ -16,9 +16,9 @@ class Feed < ApplicationRecord
   enum :state, { disabled: 0, enabled: 1 }, default: :disabled
 
   validates :name,
+            presence: true,
             uniqueness: { scope: :user_id },
-            length: { maximum: NAME_MAX_LENGTH },
-            allow_blank: true
+            length: { maximum: NAME_MAX_LENGTH }
 
   validates :url,
             presence: true,
