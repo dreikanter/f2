@@ -44,6 +44,17 @@ module ComponentOptionsHelper
     end
   end
 
+  def cron_expression_options
+    [
+      "*/30 * * * *",
+      "0 * * * *",
+      "0 */6 * * *",
+      "0 0 * * *"
+    ].map do |cron|
+      [human_readable_cron(cron).capitalize, cron]
+    end
+  end
+
   def cron_expression_details(cron_expression)
     return nil if cron_expression.blank?
 

@@ -20,12 +20,7 @@
   <div class="mb-3">
     <%= form.label :cron_expression, "Schedule", class: "form-label" %>
     <%= form.select :cron_expression,
-        options_for_select([
-          ["Every 30 minutes", "*/30 * * * *"],
-          ["Every hour", "0 * * * *"],
-          ["Every 6 hours", "0 */6 * * *"],
-          ["Daily at midnight", "0 0 * * *"]
-        ], feed.cron_expression),
+        options_for_select(cron_expression_options, feed.cron_expression),
         { prompt: "Choose schedule..." },
         { class: "form-select", required: true } %>
     <div class="form-text">Select how often the feed should be refreshed</div>
