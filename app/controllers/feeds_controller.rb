@@ -1,6 +1,4 @@
 class FeedsController < ApplicationController
-  ADVANCED_FEED_FIELDS = %w[cron_expression access_token_id target_group state description import_after].freeze
-
   def index
     @feeds = user_feeds.order(:name)
   end
@@ -35,10 +33,17 @@ class FeedsController < ApplicationController
   end
 
   def create
-    if using_simplified_creation?
-      create_with_simplified_flow
+    @feed = user_feeds.build(feed_params)
+    @feed.state = :disabled if @feed.state.blank?
+
+    if @feed.save
+      notice_message = "Feed was successfully created."
+      if @feed.access_token&.active?
+        notice_message += " You can now enable it to start processing items."
+      end
+      redirect_to @feed, notice: notice_message
     else
-      create_with_full_attributes
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -117,13 +122,6 @@ class FeedsController < ApplicationController
     user_feeds.find(params[:id])
   end
 
-  def new_feed_params
-    params.require(:feed).permit(
-      :name,
-      :url,
-      :feed_profile_id
-    )
-  end
 
   def section_params
     return feed_params unless @section
@@ -141,11 +139,11 @@ class FeedsController < ApplicationController
   end
 
   def content_source_params
-    params.require(:feed).permit(:name, :url, :feed_profile_id)
+    params[:feed].permit(:name, :url, :feed_profile_id)
   end
 
   def reposting_params
-    permitted_params = params.require(:feed).permit(:access_token_id, :target_group)
+    permitted_params = params[:feed].permit(:access_token_id, :target_group)
 
     # Clear access_token_id if there are no active tokens available
     unless Current.user.access_tokens.active.exists?
@@ -156,7 +154,7 @@ class FeedsController < ApplicationController
   end
 
   def scheduling_params
-    params.require(:feed).permit(:cron_expression, :import_after)
+    params[:feed].permit(:cron_expression, :import_after)
   end
 
   def will_be_complete_after_update?
@@ -165,40 +163,6 @@ class FeedsController < ApplicationController
     updated_feed.can_be_enabled?
   end
 
-  def using_simplified_creation?
-    # Use simplified flow if no advanced fields are provided
-    provided_params = params[:feed].keys.map(&:to_s)
-    (provided_params & ADVANCED_FEED_FIELDS).empty?
-  end
-
-  def create_with_simplified_flow
-    @feed = user_feeds.build(new_feed_params)
-    @feed.state = :disabled
-    @feed.generate_unique_name!
-
-    if @feed.save
-      redirect_to @feed, notice: "Feed was successfully created. Complete the configuration to enable it."
-    else
-      render :new, status: :unprocessable_content
-    end
-  end
-
-  def create_with_full_attributes
-    @feed = user_feeds.build(feed_params)
-
-    # Set default state to disabled for full attribute creation (backward compatibility)
-    @feed.state = :disabled if @feed.state.blank?
-
-    if @feed.save
-      notice_message = "Feed was successfully created."
-      if @feed.access_token&.active?
-        notice_message += " You can now enable it to start processing items."
-      end
-      redirect_to @feed, notice: notice_message
-    else
-      render :new, status: :unprocessable_content
-    end
-  end
 
   def feed_params
     params.require(:feed).permit(
@@ -209,8 +173,7 @@ class FeedsController < ApplicationController
       :import_after,
       :description,
       :access_token_id,
-      :target_group,
-      :state
+      :target_group
     )
   end
 end
