@@ -5,7 +5,7 @@ export default class extends Controller {
   static values = {
     loadingText: String,
     defaultText: String,
-    baseUrl: String
+    endpoint: String
   }
 
   connect() {
@@ -30,7 +30,7 @@ export default class extends Controller {
 
     this.showLoadingState()
 
-    let url = this.baseUrlValue.replace(':access_token_id', tokenId)
+    let url = this.endpointValue.replace(':access_token_id', tokenId)
     if (currentValue) {
       url += `?selected_group=${encodeURIComponent(currentValue)}`
     }
