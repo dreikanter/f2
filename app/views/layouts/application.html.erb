@@ -46,7 +46,7 @@
               <li class="nav-item">
                 <%= link_to "Feeds", feeds_path, class: "nav-link #{'active' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
               </li>
-              <% if Current.user.admin? %>
+              <% if policy(Event).index? %>
                 <li class="nav-item">
                   <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active' if current_page?(admin_path) || controller_name.start_with?('admin')}" %>
                 </li>
