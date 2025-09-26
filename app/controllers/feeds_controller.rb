@@ -23,9 +23,12 @@ class FeedsController < ApplicationController
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update(
         "edit-form-container",
-        partial: "#{section_template_name(@section)}_form",
+        partial: form_template_name(@section),
         locals: { feed: @feed }
       )
+    else
+      # Return blank response if no section param
+      render turbo_stream: turbo_stream.update("edit-form-container", "")
     end
   end
 
@@ -52,7 +55,7 @@ class FeedsController < ApplicationController
         # Update the section display
         streams << turbo_stream.update(
           "#{@section}-content",
-          partial: "#{section_template_name(@section)}_display",
+          partial: display_template_name(@section),
           locals: { feed: @feed }
         )
         # Clear the edit form
@@ -69,11 +72,11 @@ class FeedsController < ApplicationController
       if @section
         render turbo_stream: turbo_stream.update(
           "edit-form-container",
-          partial: "#{section_template_name(@section)}_form",
+          partial: form_template_name(@section),
           locals: { feed: @feed }
         )
       else
-        render :edit, status: :unprocessable_content
+        render :show, status: :unprocessable_content
       end
     end
   end
@@ -86,12 +89,21 @@ class FeedsController < ApplicationController
 
   private
 
-  def section_template_name(section)
+  def form_template_name(section)
     case section
     when "content-source"
-      "content_source"
+      "content_source_form"
     else
-      section
+      "#{section}_form"
+    end
+  end
+
+  def display_template_name(section)
+    case section
+    when "content-source"
+      "content_source_display"
+    else
+      "#{section}_display"
     end
   end
 
