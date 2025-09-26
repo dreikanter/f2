@@ -1,12 +1,11 @@
 class Admin::FeedProfilesController < ApplicationController
-  before_action :load_feed_profile, only: [:show, :edit, :update, :destroy]
-
   def index
     authorize FeedProfile
     @feed_profiles = policy_scope(FeedProfile).includes(:user).order(:name)
   end
 
   def show
+    @feed_profile = load_feed_profile
     authorize @feed_profile
   end
 
@@ -16,6 +15,7 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def edit
+    @feed_profile = load_feed_profile
     authorize @feed_profile
   end
 
@@ -32,6 +32,7 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def update
+    @feed_profile = load_feed_profile
     authorize @feed_profile
     @feed_profile.assign_attributes(feed_profile_params)
     @feed_profile.user = Current.user
@@ -44,6 +45,7 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def destroy
+    @feed_profile = load_feed_profile
     authorize @feed_profile
     @feed_profile.destroy!
     redirect_to admin_feed_profiles_path, notice: "Feed profile was successfully deleted."

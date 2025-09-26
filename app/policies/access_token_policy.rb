@@ -21,7 +21,7 @@ class AccessTokenPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user&.permissions&.exists?(name: "admin")
+      if admin?
         scope.all
       elsif user
         scope.where(user: user)
