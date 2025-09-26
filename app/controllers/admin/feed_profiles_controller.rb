@@ -1,28 +1,28 @@
 class Admin::FeedProfilesController < ApplicationController
-  before_action :require_admin
-  before_action :load_feed_profile, only: [:show, :edit, :update, :destroy]
-
   def index
-    @feed_profiles = FeedProfile.includes(:user).order(:name)
+    authorize FeedProfile
+    @feed_profiles = policy_scope(FeedProfile).includes(:user).order(:name)
   end
 
   def show
-    @feed_profile = FeedProfile.find(params[:id])
+    @feed_profile = load_feed_profile
     authorize @feed_profile
   end
 
   def new
     @feed_profile = FeedProfile.new
+    authorize @feed_profile
   end
 
   def edit
-    @feed_profile = FeedProfile.find(params[:id])
+    @feed_profile = load_feed_profile
     authorize @feed_profile
   end
 
   def create
     @feed_profile = FeedProfile.new(feed_profile_params)
     @feed_profile.user = Current.user
+    authorize @feed_profile
 
     if @feed_profile.save
       redirect_to admin_feed_profile_path(@feed_profile), notice: "Feed profile was successfully created."
@@ -32,6 +32,8 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def update
+    @feed_profile = load_feed_profile
+    authorize @feed_profile
     @feed_profile.assign_attributes(feed_profile_params)
     @feed_profile.user = Current.user
 
@@ -43,15 +45,13 @@ class Admin::FeedProfilesController < ApplicationController
   end
 
   def destroy
+    @feed_profile = load_feed_profile
+    authorize @feed_profile
     @feed_profile.destroy!
     redirect_to admin_feed_profiles_path, notice: "Feed profile was successfully deleted."
   end
 
   private
-
-  def require_admin
-    redirect_to root_path, alert: "Access denied." unless Current.user.permission?("admin")
-  end
 
   def load_feed_profile
     @feed_profile = FeedProfile.find(params[:id])

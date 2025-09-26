@@ -1,15 +1,18 @@
 class Settings::AccessTokensController < ApplicationController
   def index
-    @access_tokens = ordered_access_tokens
+    authorize AccessToken
+    @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
   end
 
   def new
     @access_token = AccessToken.new(host: AccessToken::FREEFEED_HOSTS["production"])
+    authorize @access_token
   end
 
   def create
     attributes = access_token_params.merge(user: Current.user)
     @access_token = AccessToken.build_with_token(attributes)
+    authorize @access_token
 
     if @access_token.save
       @access_token.validate_token_async
@@ -21,10 +24,12 @@ class Settings::AccessTokensController < ApplicationController
 
   def edit
     @access_token = find_access_token
+    authorize @access_token
   end
 
   def update
     @access_token = find_access_token
+    authorize @access_token
 
     if @access_token.update(access_token_params.merge(encrypted_token: access_token_params[:token]))
       @access_token.validate_token_async
@@ -35,7 +40,8 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   def destroy
-    access_token = access_tokens.find(params[:id])
+    access_token = find_access_token
+    authorize access_token
     access_token.destroy!
     redirect_to settings_access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
   end
@@ -43,15 +49,7 @@ class Settings::AccessTokensController < ApplicationController
   private
 
   def find_access_token
-    access_tokens.find(params[:id])
-  end
-
-  def access_tokens
-    Current.user.access_tokens
-  end
-
-  def ordered_access_tokens
-    access_tokens.order(created_at: :desc)
+    policy_scope(AccessToken).find(params[:id])
   end
 
   def access_token_params

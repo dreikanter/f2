@@ -1,0 +1,13 @@
+access_token:
+  user: user
+  name: "Main Token"
+  host: "freefeed.net"
+  encrypted_token: "encrypted_token_data"
+  status: active
+
+other_access_token:
+  user: other_user
+  name: "Other Token"
+  host: "freefeed.net"
+  encrypted_token: "other_encrypted_token_data"
+  status: active

@@ -1,28 +1,28 @@
-class FeedProfilePolicy < ApplicationPolicy
-  def index?
-    admin?
-  end
-
+class UserPolicy < ApplicationPolicy
   def show?
-    admin?
-  end
-
-  def create?
-    admin?
+    self_or_admin?
   end
 
   def update?
-    admin?
+    self_or_admin?
   end
 
   def destroy?
     admin?
   end
 
+  private
+
+  def self_or_admin?
+    user.present? && (user == record || admin?)
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       if admin?
         scope.all
+      elsif user
+        scope.where(id: user.id)
       else
         scope.none
       end

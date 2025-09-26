@@ -1,0 +1,3 @@
+admin_permission:
+  user: admin_user
+  name: admin

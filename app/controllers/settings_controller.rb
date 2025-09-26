@@ -1,6 +1,7 @@
 class SettingsController < ApplicationController
   def show
     @user = Current.user
-    @access_tokens = Current.user.access_tokens
+    authorize @user
+    @access_tokens = policy_scope(AccessToken)
   end
 end
