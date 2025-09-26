@@ -4,7 +4,7 @@ class AccessTokenPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (user == record.user || admin?)
+    owner_or_admin?
   end
 
   def create?
@@ -12,10 +12,16 @@ class AccessTokenPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user == record.user || admin?)
+    owner_or_admin?
   end
 
   def destroy?
+    owner_or_admin?
+  end
+
+  private
+
+  def owner_or_admin?
     user.present? && (user == record.user || admin?)
   end
 

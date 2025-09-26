@@ -4,7 +4,7 @@ class FeedPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && record.user == user
+    owner?
   end
 
   def create?
@@ -12,10 +12,16 @@ class FeedPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && record.user == user
+    owner?
   end
 
   def destroy?
+    owner?
+  end
+
+  private
+
+  def owner?
     user.present? && record.user == user
   end
 

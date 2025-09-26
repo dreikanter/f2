@@ -1,14 +1,20 @@
 class UserPolicy < ApplicationPolicy
   def show?
-    user.present? && (user == record || admin?)
+    self_or_admin?
   end
 
   def update?
-    user.present? && (user == record || admin?)
+    self_or_admin?
   end
 
   def destroy?
     admin?
+  end
+
+  private
+
+  def self_or_admin?
+    user.present? && (user == record || admin?)
   end
 
   class Scope < ApplicationPolicy::Scope
