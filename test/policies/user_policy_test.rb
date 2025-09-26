@@ -2,19 +2,15 @@ require "test_helper"
 
 class UserPolicyTest < ActiveSupport::TestCase
   def user
-    @user ||= create(:user)
+    users(:user)
   end
 
   def other_user
-    @other_user ||= create(:user)
+    users(:other_user)
   end
 
   def admin_user
-    @admin_user ||= begin
-      admin = create(:user)
-      create(:permission, user: admin, name: "admin")
-      admin
-    end
+    users(:admin_user)
   end
 
   def policy_for_user(current_user, target_user)

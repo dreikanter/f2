@@ -1,5 +1,20 @@
 <% password_digest = BCrypt::Password.create("password") %>
 
+user:
+  email_address: user@example.com
+  password_digest: <%= password_digest %>
+  password_updated_at: <%= 1.week.ago %>
+
+other_user:
+  email_address: other_user@example.com
+  password_digest: <%= password_digest %>
+  password_updated_at: <%= 2.days.ago %>
+
+admin_user:
+  email_address: admin@example.com
+  password_digest: <%= password_digest %>
+  password_updated_at: <%= 1.week.ago %>
+
 one:
   email_address: one@example.com
   password_digest: <%= password_digest %>

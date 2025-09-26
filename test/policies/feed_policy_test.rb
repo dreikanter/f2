@@ -2,27 +2,23 @@ require "test_helper"
 
 class FeedPolicyTest < ActiveSupport::TestCase
   def user
-    @user ||= create(:user)
+    users(:user)
   end
 
   def other_user
-    @other_user ||= create(:user)
+    users(:other_user)
   end
 
   def admin_user
-    @admin_user ||= begin
-      admin = create(:user)
-      create(:permission, user: admin, name: "admin")
-      admin
-    end
+    users(:admin_user)
   end
 
   def feed
-    @feed ||= create(:feed, user: user)
+    feeds(:feed)
   end
 
   def other_feed
-    @other_feed ||= create(:feed, user: other_user)
+    feeds(:other_feed)
   end
 
   def policy_for_user(current_user, target_feed = feed)
@@ -94,19 +90,14 @@ class FeedPolicyTest < ActiveSupport::TestCase
   end
 
   test "scope should return only owned feeds for regular users" do
-    user_feed = create(:feed, user: user)
-    other_feed = create(:feed, user: other_user)
-
     scope = scope_for_user(user)
     result = scope.resolve
 
-    assert_includes result, user_feed
+    assert_includes result, feed
     assert_not_includes result, other_feed
   end
 
   test "scope should return no feeds for nil user" do
-    create(:feed, user: user)
-
     scope = FeedPolicy::Scope.new(nil, Feed.all)
     result = scope.resolve
 

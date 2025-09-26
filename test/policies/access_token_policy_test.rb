@@ -2,27 +2,23 @@ require "test_helper"
 
 class AccessTokenPolicyTest < ActiveSupport::TestCase
   def user
-    @user ||= create(:user)
+    users(:user)
   end
 
   def other_user
-    @other_user ||= create(:user)
+    users(:other_user)
   end
 
   def admin_user
-    @admin_user ||= begin
-      admin = create(:user)
-      create(:permission, user: admin, name: "admin")
-      admin
-    end
+    users(:admin_user)
   end
 
   def access_token
-    @access_token ||= create(:access_token, user: user)
+    access_tokens(:access_token)
   end
 
   def other_access_token
-    @other_access_token ||= create(:access_token, user: other_user)
+    access_tokens(:other_access_token)
   end
 
   def policy_for_user(current_user, token = access_token)
@@ -109,30 +105,22 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
   end
 
   test "scope should return only owned tokens for regular users" do
-    user_token = create(:access_token, user: user)
-    other_token = create(:access_token, user: other_user)
-
     scope = scope_for_user(user)
     result = scope.resolve
 
-    assert_includes result, user_token
-    assert_not_includes result, other_token
+    assert_includes result, access_token
+    assert_not_includes result, other_access_token
   end
 
   test "scope should return all tokens for admin users" do
-    user_token = create(:access_token, user: user)
-    other_token = create(:access_token, user: other_user)
-
     scope = scope_for_user(admin_user)
     result = scope.resolve
 
-    assert_includes result, user_token
-    assert_includes result, other_token
+    assert_includes result, access_token
+    assert_includes result, other_access_token
   end
 
   test "scope should return no tokens for nil user" do
-    create(:access_token, user: user)
-
     scope = AccessTokenPolicy::Scope.new(nil, AccessToken.all)
     result = scope.resolve
 

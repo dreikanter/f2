@@ -1,0 +1,11 @@
+feed:
+  user: user
+  name: "User Feed"
+  url: "https://example.com/feed.xml"
+  state: disabled
+
+other_feed:
+  user: other_user
+  name: "Other User Feed"
+  url: "https://other.example.com/feed.xml"
+  state: disabled
