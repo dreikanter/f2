@@ -54,4 +54,15 @@ class ComponentOptionsHelperTest < ActionView::TestCase
     custom_cron = "15 2 * * 1-5"
     assert_equal custom_cron, cron_expression_details(custom_cron)
   end
+
+  test "cron_expression_options returns options for form select with capitalized labels" do
+    expected = [
+      ["Every 30 minutes", "*/30 * * * *"],
+      ["Every hour", "0 * * * *"],
+      ["Every 6 hours", "0 */6 * * *"],
+      ["Daily at midnight", "0 0 * * *"]
+    ]
+
+    assert_equal expected, cron_expression_options
+  end
 end
