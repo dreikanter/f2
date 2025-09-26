@@ -1,8 +1,6 @@
 <%= page_header "Access Tokens" do %>
   <div class="d-flex align-items-center">
-    <% if policy(AccessToken).create? %>
-      <%= link_to "New Token", new_settings_access_token_path, class: "btn btn-primary me-3" %>
-    <% end %>
+    <%= link_to "New Token", new_settings_access_token_path, class: "btn btn-primary me-3" %>
     <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary" %>
   </div>
 <% end %>
@@ -53,18 +51,14 @@
               <%= link_to "Validate", settings_access_token_validation_path(access_token),
                           class: "text-decoration-none me-3",
                           data: { turbo_method: :post } %>
-              <% if policy(access_token).update? %>
-                <%= link_to "Replace", edit_settings_access_token_path(access_token),
-                            class: "text-decoration-none me-3" %>
-              <% end %>
-              <% if policy(access_token).destroy? %>
-                <%= link_to "Delete", settings_access_token_path(access_token),
-                            class: "text-danger text-decoration-none",
-                            data: {
-                              turbo_method: :delete,
-                              turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
-                            } %>
-              <% end %>
+              <%= link_to "Replace", edit_settings_access_token_path(access_token),
+                          class: "text-decoration-none me-3" %>
+              <%= link_to "Delete", settings_access_token_path(access_token),
+                          class: "text-danger text-decoration-none",
+                          data: {
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
+                          } %>
             </td>
           </tr>
         <% end %>
@@ -76,9 +70,7 @@
     <div class="card-body text-center py-5">
       <h5>No access tokens yet</h5>
       <p class="text-muted mb-4">Add Freefeed API access token to enable content reposting.</p>
-      <% if policy(AccessToken).create? %>
-        <%= link_to "Create New Token", new_settings_access_token_path, class: "btn btn-primary" %>
-      <% end %>
+      <%= link_to "Create New Token", new_settings_access_token_path, class: "btn btn-primary" %>
     </div>
   </div>
 <% end %>

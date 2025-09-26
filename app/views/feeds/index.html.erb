@@ -1,9 +1,7 @@
 <div class="row">
   <div class="col-12">
     <%= page_header "Feeds" do %>
-      <% if policy(Feed).create? %>
-        <%= link_to "New Feed", new_feed_path, class: "btn btn-primary" %>
-      <% end %>
+      <%= link_to "New Feed", new_feed_path, class: "btn btn-primary" %>
     <% end %>
 
     <% if @feeds.any? %>
@@ -48,9 +46,7 @@
       <div class="text-center py-5">
         <p>No feeds yet</p>
         <p class="text-muted">Create your first feed to start aggregating content.</p>
-        <% if policy(Feed).create? %>
-          <%= link_to "Create Feed", new_feed_path, class: "btn btn-primary" %>
-        <% end %>
+        <%= link_to "Create Feed", new_feed_path, class: "btn btn-primary" %>
       </div>
     <% end %>
   </div>
