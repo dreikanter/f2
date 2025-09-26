@@ -21,11 +21,12 @@ Rails.application.routes.draw do
 
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
 
+  resource :admin, only: :show
+
   namespace :admin do
     resources :feed_profiles
+    resources :events, only: [:index, :show]
   end
-
-  resources :events, only: [:index, :show]
 
   get "up" => "rails/health#show", as: :rails_health_check
 
