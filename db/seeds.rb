@@ -39,7 +39,7 @@ if Rails.env.development?
         status: :active,
         user: user,
         host: "https://freefeed.net",
-        encrypted_token: "fake_encrypted_token_#{i + 1}_#{SecureRandom.hex(16)}",
+        token: "fake_token_#{i + 1}_#{SecureRandom.hex(16)}",
         last_used_at: rand(1..30).days.ago
       )
     end
@@ -51,7 +51,7 @@ if Rails.env.development?
         status: :inactive,
         user: user,
         host: "https://freefeed.net",
-        encrypted_token: "fake_encrypted_token_#{i + 4}_#{SecureRandom.hex(16)}",
+        token: "fake_token_#{i + 4}_#{SecureRandom.hex(16)}",
         last_used_at: rand(30..90).days.ago
       )
     end
