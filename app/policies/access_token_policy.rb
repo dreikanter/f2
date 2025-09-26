@@ -1,6 +1,6 @@
 class AccessTokenPolicy < ApplicationPolicy
   def index?
-    user.present? && (user == record.user || admin?)
+    user.present?
   end
 
   def show?
@@ -21,7 +21,7 @@ class AccessTokenPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
+      if user&.permissions&.exists?(name: "admin")
         scope.all
       elsif user
         scope.where(user: user)

@@ -21,17 +21,11 @@ class FeedProfilePolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
+      if user&.permissions&.exists?(name: "admin")
         scope.all
       else
         scope.none
       end
-    end
-
-    private
-
-    def admin?
-      user&.permissions&.exists?(name: "admin")
     end
   end
 end
