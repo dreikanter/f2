@@ -42,7 +42,9 @@
       <span class="btn btn-outline-secondary disabled" title="Preview requires URL and Feed Profile">Preview</span>
     <% end %>
 
-    <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
+    <% if policy(@feed).destroy? %>
+      <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
+    <% end %>
   </div>
 </div>
 
