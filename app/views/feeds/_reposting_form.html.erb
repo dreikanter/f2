@@ -36,7 +36,7 @@
       <%= form.hidden_field :access_token_id, value: "" %>
       <div class="form-text text-muted">No active access tokens are available. Please create and validate an access token first.</div>
     <% end %>
-    <div class="invalid-feedback">Please select an access token.</div>
+    <div class="invalid-feedback">Select an access token.</div>
 
     <% unless has_active_tokens? %>
       <div class="alert alert-warning mt-2" role="alert">
@@ -59,7 +59,7 @@
       <div class="form-text" data-groups-target="helpText">
         Select the Freefeed group where posts will be published
       </div>
-      <div class="invalid-feedback">Please select a target group.</div>
+      <div class="invalid-feedback">Select a target group.</div>
     </div>
   </div>
 

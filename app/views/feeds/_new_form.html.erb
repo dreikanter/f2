@@ -20,14 +20,14 @@
   <div class="mb-4">
     <%= form.label :url, "Feed URL", class: "form-label font-weight-bold" %>
     <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml" %>
-    <div class="invalid-feedback">Please provide a valid HTTP or HTTPS URL.</div>
+    <div class="invalid-feedback">Provide a valid HTTP or HTTPS URL.</div>
   </div>
 
   <div class="mb-4">
     <%= form.label :feed_profile_id, "Feed Profile", class: "form-label font-weight-bold" %>
     <%= form.select :feed_profile_id, options_for_select(feed_profile_options, feed.feed_profile_id), { prompt: "Choose feed profile..." }, { class: "form-select", required: true } %>
     <div class="form-text">Select the processing configuration for this feed</div>
-    <div class="invalid-feedback">Please select a feed profile.</div>
+    <div class="invalid-feedback">Select a feed profile.</div>
   </div>
 
   <div class="mb-3">
