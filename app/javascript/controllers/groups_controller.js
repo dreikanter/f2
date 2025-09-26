@@ -4,7 +4,8 @@ export default class extends Controller {
   static targets = ["select", "helpText"]
   static values = {
     loadingText: String,
-    defaultText: String
+    defaultText: String,
+    baseUrl: String
   }
 
   connect() {
@@ -29,7 +30,7 @@ export default class extends Controller {
 
     this.showLoadingState()
 
-    let url = `/settings/access_tokens/${tokenId}/groups`
+    let url = this.baseUrlValue.replace(':access_token_id', tokenId)
     if (currentValue) {
       url += `?selected_group=${encodeURIComponent(currentValue)}`
     }
