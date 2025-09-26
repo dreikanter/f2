@@ -1,0 +1,30 @@
+<%# locals: (feed:) %>
+
+<% if feed.cron_expression.present? %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end -%>
+
+<% if feed.cron_expression.present? %>
+  <strong class="me-2">Refresh <%= human_readable_cron(feed.cron_expression) %></strong>
+  <% if cron_expression_details(feed.cron_expression) %>
+    <code class="ms-1"><%= cron_expression_details(feed.cron_expression) %></code>
+  <% end %>
+
+  <% if feed.import_after %>
+    <span class="text-muted">
+      • Content after <%= feed.import_after.strftime("%B %d, %Y") %>
+    </span>
+  <% end %>
+<% else %>
+  <strong class="me-2">Schedule:</strong> <span class="text-muted"><%= human_readable_cron(feed.cron_expression) %></span>
+<% end -%>
+
+<%= link_to edit_feed_path(feed, section: "scheduling", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>
+

@@ -221,54 +221,130 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Line 1 Line 2 Line 3", feed.description
   end
 
-  test "should create enabled feed when enabled checkbox is checked" do
+
+  test "should handle simplified creation flow" do
     sign_in_as(user)
 
-    post feeds_url, params: {
-      feed: {
-        name: "test-enabled-feed",
-        url: "https://example.com/test.xml",
-        cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
-        access_token_id: access_token.id,
-        target_group: "testgroup",
-        state: "enabled"
+    assert_difference("Feed.count", 1) do
+      post feeds_url, params: {
+        feed: {
+          name: "simple-feed",
+          url: "https://example.com/test.xml",
+          feed_profile_id: feed_profile.id
+        }
       }
-    }
+    end
 
     feed = Feed.last
-    assert_equal "enabled", feed.state
-  end
-
-  test "should create disabled feed when enabled checkbox is unchecked" do
-    sign_in_as(user)
-
-    post feeds_url, params: {
-      feed: {
-        name: "test-disabled-feed",
-        url: "https://example.com/test.xml",
-        cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
-        access_token_id: access_token.id,
-        state: "disabled"
-      }
-    }
-
-    feed = Feed.last
+    assert_equal "simple-feed", feed.name
     assert_equal "disabled", feed.state
+    assert_redirected_to feed_url(feed)
+    assert_includes flash[:notice], "Feed was successfully created."
   end
 
-  test "should update feed state when enabled checkbox changes" do
+  test "should show feed section" do
     sign_in_as(user)
-    existing_feed = create(:feed, user: user, state: :enabled)
+    get feed_url(feed, section: "reposting"), as: :turbo_stream
+    assert_response :success
+    assert_match(/turbo-stream/, response.content_type)
+  end
 
-    patch feed_url(existing_feed), params: {
+  test "should get edit with section" do
+    sign_in_as(user)
+    get edit_feed_url(feed, section: "reposting"), as: :turbo_stream
+    assert_response :success
+    assert_match(/turbo-stream/, response.content_type)
+  end
+
+  test "should update feed with section" do
+    sign_in_as(user)
+
+    patch feed_url(feed, section: "reposting"), params: {
       feed: {
-        state: "disabled"
+        access_token_id: access_token.id,
+        target_group: "testgroup"
+      }
+    }, as: :turbo_stream
+
+    assert_response :success
+    assert_match(/turbo-stream/, response.content_type)
+
+    feed.reload
+    assert_equal access_token, feed.access_token
+    assert_equal "testgroup", feed.target_group
+  end
+
+  test "should update feed title when content-source section updated" do
+    sign_in_as(user)
+
+    patch feed_url(feed, section: "content-source"), params: {
+      feed: {
+        name: "updated-name",
+        url: "https://updated.example.com/feed.xml"
+      }
+    }, as: :turbo_stream
+
+    assert_response :success
+    assert_includes response.body, "feed-title"
+
+    feed.reload
+    assert_equal "updated-name", feed.name
+  end
+
+  test "should handle update failure with section" do
+    sign_in_as(user)
+
+    patch feed_url(feed, section: "reposting"), params: {
+      feed: {
+        target_group: "Invalid Group Name"
+      }
+    }, as: :turbo_stream
+
+    assert_response :success
+    assert_includes response.body, "edit-form-container"
+  end
+
+  test "should auto-disable enabled feed when configuration becomes invalid" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, user: user, state: :enabled)
+
+    patch feed_url(enabled_feed), params: {
+      feed: {
+        access_token_id: nil
       }
     }
 
-    existing_feed.reload
-    assert_equal "disabled", existing_feed.state
+    enabled_feed.reload
+    assert_equal "disabled", enabled_feed.state
+  end
+
+  test "should clear access_token_id when no active tokens available" do
+    sign_in_as(user)
+    access_token.update!(status: :inactive)
+
+    patch feed_url(feed, section: "reposting"), params: {
+      feed: {
+        access_token_id: access_token.id,
+        target_group: "testgroup"
+      }
+    }, as: :turbo_stream
+
+    assert_response :success
+  end
+
+  test "should use content_source_form template when content-source section has validation errors" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
+      section: "content-source",
+      feed: {
+        name: "test",
+        url: "invalid-url"
+      }
+    }, as: :turbo_stream
+
+    assert_response :success
+    assert_includes response.body, "Edit Source"
+    assert_includes response.body, "must be a valid HTTP or HTTPS URL"
   end
 end

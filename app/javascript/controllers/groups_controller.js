@@ -4,12 +4,13 @@ export default class extends Controller {
   static targets = ["select", "helpText"]
   static values = {
     loadingText: String,
-    defaultText: String
+    defaultText: String,
+    endpoint: String
   }
 
   connect() {
     const tokenSelect = this.element.querySelector('select[name="feed[access_token_id]"]')
-    if (tokenSelect?.value) {
+    if (tokenSelect?.value && !tokenSelect.disabled) {
       this.loadGroups(tokenSelect.value)
     }
   }
@@ -29,23 +30,29 @@ export default class extends Controller {
 
     this.showLoadingState()
 
-    let url = `/access_tokens/${tokenId}/groups`
+    let url = this.endpointValue.replace(':access_token_id', tokenId)
     if (currentValue) {
       url += `?selected_group=${encodeURIComponent(currentValue)}`
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'text/vnd.turbo-stream.html',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-      }
-    })
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'text/vnd.turbo-stream.html',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
 
-    if (response.ok) {
-      const html = await response.text()
-      Turbo.renderStreamMessage(html)
-      this.showDefaultState()
+      if (response.ok) {
+        const html = await response.text()
+        Turbo.renderStreamMessage(html)
+        this.showDefaultState()
+      } else {
+        this.showErrorState()
+      }
+    } catch (error) {
+      this.showErrorState()
     }
   }
 
@@ -66,5 +73,12 @@ export default class extends Controller {
   showDefaultState() {
     this.helpTextTarget.textContent = this.defaultTextValue
     this.helpTextTarget.classList.remove('text-muted')
+  }
+
+  showErrorState() {
+    this.selectTarget.disabled = true
+    this.selectTarget.innerHTML = '<option value="">Error loading groups</option>'
+    this.helpTextTarget.textContent = "Unable to load groups. Please try again."
+    this.helpTextTarget.classList.add('text-muted')
   }
 }

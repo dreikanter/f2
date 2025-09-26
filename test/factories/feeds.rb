@@ -28,6 +28,10 @@ FactoryBot.define do
       state { :disabled }
     end
 
+    trait :enabled do
+      state { :enabled }
+    end
+
     trait :without_access_token do
       access_token { nil }
       target_group { nil }

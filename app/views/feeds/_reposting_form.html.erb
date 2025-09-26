@@ -1,0 +1,75 @@
+<%# locals: (feed:) %>
+<div class="card mt-3">
+  <div class="card-header">
+    <h5 class="card-title mb-0">Edit Reposting</h5>
+  </div>
+  <div class="card-body">
+    <div data-controller="groups"
+         data-groups-loading-text-value="Loading..."
+         data-groups-default-text-value="Select the Freefeed group where posts will be published"
+         data-groups-endpoint-value="<%= settings_access_token_groups_path(':access_token_id') %>">
+      <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
+  <%= hidden_field_tag :section, "reposting" %>
+  <% if feed.errors.any? %>
+    <div class="alert alert-danger">
+      <h6><%= pluralize(feed.errors.count, "error") %> occurred:</h6>
+      <ul class="mb-0">
+        <% feed.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :access_token_id, "Access Token", class: "form-label" %>
+    <% if has_active_tokens? %>
+      <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id),
+                      { prompt: "Choose access token..." },
+                      { class: "form-select",
+                        data: { action: "change->groups#refresh" } } %>
+      <div class="form-text">Select the Freefeed access token to use for posting</div>
+    <% else %>
+      <select name="feed[access_token_id]" class="form-select" disabled>
+        <option>No active access tokens available</option>
+      </select>
+      <%= form.hidden_field :access_token_id, value: "" %>
+      <div class="form-text text-muted">No active access tokens are available. Please create and validate an access token first.</div>
+    <% end %>
+    <div class="invalid-feedback">Select an access token.</div>
+
+    <% unless has_active_tokens? %>
+      <div class="alert alert-warning mt-2" role="alert">
+        <strong>No active tokens available.</strong>
+        You won't be able to enable this feed later without selecting a working token.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :target_group, "Target Group", class: "form-label" %>
+    <div id="groups-select">
+      <select name="feed[target_group]"
+              id="feed_target_group"
+              class="form-select"
+              disabled
+              data-groups-target="select">
+        <option value="<%= feed.target_group %>"><%= feed.target_group.present? ? feed.target_group : "Choose target group..." %></option>
+      </select>
+      <div class="form-text" data-groups-target="helpText">
+        Select the Freefeed group where posts will be published
+      </div>
+      <div class="invalid-feedback">Select a target group.</div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= form.submit "Save", class: "btn btn-primary" %>
+    <%= link_to "Cancel", feed_path(feed, format: :turbo_stream),
+        class: "btn btn-outline-secondary",
+        data: { turbo_prefetch: false, turbo_stream: true } %>
+  </div>
+      <% end %>
+    </div>
+  </div>
+</div>

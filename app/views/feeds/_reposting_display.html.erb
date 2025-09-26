@@ -1,0 +1,29 @@
+<%# locals: (feed:) %>
+<% reposting_ready = feed.access_token&.active? && feed.target_group.present? %>
+
+<% if reposting_ready %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end -%>
+
+<strong class="me-2">Reposting target:</strong>
+
+<% if reposting_ready %>
+  <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
+    <%= feed.access_token.host %>/<%= feed.target_group %>
+  </a>
+<% elsif feed.access_token && !feed.access_token.active? %>
+  <span class="text-muted">access token inactive</span>
+<% elsif feed.access_token && feed.target_group.blank? %>
+  <span class="text-muted">target group not configured</span>
+<% else %>
+  <span class="text-muted">access token not assigned</span>
+<% end -%>
+
+<%= link_to edit_feed_path(feed, section: "reposting", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>

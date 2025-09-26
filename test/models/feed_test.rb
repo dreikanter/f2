@@ -12,16 +12,36 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:name, :blank)
   end
 
+  test "should require unique name when present" do
+    user = create(:user)
+    create(:feed, user: user, name: "Test Feed")
+    feed = build(:feed, user: user, name: "Test Feed")
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:name, :taken)
+  end
+
   test "should require url" do
     feed = build(:feed, url: nil)
     assert_not feed.valid?
     assert feed.errors.of_kind?(:url, :blank)
   end
 
-  test "should require cron_expression" do
-    feed = build(:feed, cron_expression: nil)
+  test "should require cron_expression for enabled feeds" do
+    # Test the validation logic directly by bypassing the auto-disable callback
+    feed = create(:feed, state: :enabled)
+
+    # Manually set state and cron_expression to test the validation condition
+    feed.define_singleton_method(:enabled?) { true }
+    feed.cron_expression = nil
+
     assert_not feed.valid?
     assert feed.errors.of_kind?(:cron_expression, :blank)
+  end
+
+  test "should not require cron_expression for disabled feeds" do
+    feed = build(:feed, cron_expression: nil, state: :disabled)
+    feed.valid?
+    assert_not feed.errors.of_kind?(:cron_expression, :blank)
   end
 
   test "should require feed_profile" do
@@ -304,5 +324,47 @@ class FeedTest < ActiveSupport::TestCase
     normalizer = feed.normalizer_instance(feed_entry)
 
     assert_instance_of Normalizer::RssNormalizer, normalizer
+  end
+
+  test "generate_unique_name! does nothing when name is present" do
+    feed = build(:feed, name: "existing-name")
+    original_name = feed.name
+
+    feed.generate_unique_name!
+
+    assert_equal original_name, feed.name
+  end
+
+  test "generate_unique_name! generates unique name when name is blank" do
+    user = create(:user)
+    create(:feed, user: user, name: "Untitled 1")
+    create(:feed, user: user, name: "Untitled 2")
+
+    feed = build(:feed, user: user, name: nil)
+    feed.generate_unique_name!
+
+    assert_equal "Untitled 3", feed.name
+  end
+
+  test "loader_instance returns nil when feed_profile is nil" do
+    feed = build(:feed)
+    feed.feed_profile = nil
+
+    assert_nil feed.loader_instance
+  end
+
+  test "processor_instance returns nil when feed_profile is nil" do
+    feed = build(:feed)
+    feed.feed_profile = nil
+
+    assert_nil feed.processor_instance("raw data")
+  end
+
+  test "normalizer_instance returns nil when feed_profile is nil" do
+    feed = build(:feed)
+    feed.feed_profile = nil
+    feed_entry = build(:feed_entry)
+
+    assert_nil feed.normalizer_instance(feed_entry)
   end
 end

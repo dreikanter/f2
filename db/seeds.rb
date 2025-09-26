@@ -4,10 +4,12 @@
 
 # Create a test user for development
 if Rails.env.development?
-  user = User.find_or_create_by!(email_address: "test@example.com") do |user|
+  user = User.find_or_initialize_by(email_address: "test@example.com").tap do |user|
     user.password = "password"
     user.password_confirmation = "password"
   end
+
+  user.save!
 
   # Update existing users to have password_updated_at
   User.where(password_updated_at: nil).update_all(password_updated_at: Time.current)
@@ -19,12 +21,14 @@ if Rails.env.development?
 
   # Create RSS feed profile
   rss_profile = FeedProfile.find_or_initialize_by(name: "rss")
+
   rss_profile.assign_attributes(
     loader: "http",
     processor: "rss",
     normalizer: "rss",
     user: user
   )
+
   rss_profile.save!
   puts "✅ RSS feed profile created"
 
@@ -38,7 +42,7 @@ if Rails.env.development?
         status: :active,
         user: user,
         host: "https://freefeed.net",
-        encrypted_token: "fake_encrypted_token_#{i + 1}_#{SecureRandom.hex(16)}",
+        token: "fake_token_#{i + 1}_#{SecureRandom.hex(16)}",
         last_used_at: rand(1..30).days.ago
       )
     end
@@ -50,7 +54,7 @@ if Rails.env.development?
         status: :inactive,
         user: user,
         host: "https://freefeed.net",
-        encrypted_token: "fake_encrypted_token_#{i + 4}_#{SecureRandom.hex(16)}",
+        token: "fake_token_#{i + 4}_#{SecureRandom.hex(16)}",
         last_used_at: rand(30..90).days.ago
       )
     end
@@ -109,6 +113,7 @@ if Rails.env.development?
 
     feeds_data.each do |feed_data|
       feed = Feed.find_or_initialize_by(name: feed_data[:name], user: user)
+
       feed.assign_attributes(
         url: feed_data[:url],
         description: feed_data[:description],
@@ -118,6 +123,7 @@ if Rails.env.development?
         feed_profile: rss_profile,
         access_token: active_token
       )
+
       feed.save!
 
       # Create or update feed schedule
@@ -128,6 +134,7 @@ if Rails.env.development?
         last_run_at: rand(1..24).hours.ago
       )
     end
+
     puts "✅ Sample feeds created (#{Feed.count} total)"
 
   # Generate posts for active feeds using batch inserts
@@ -140,6 +147,7 @@ if Rails.env.development?
 
       # Generate feed entries first
       feed_entries = []
+
       posts_count.times do |i|
         feed_entries << {
           feed_id: feed.id,

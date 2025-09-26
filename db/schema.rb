@@ -97,7 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_25_082833) do
   create_table "feeds", force: :cascade do |t|
     t.bigint "access_token_id"
     t.datetime "created_at", null: false
-    t.string "cron_expression", null: false
+    t.string "cron_expression"
     t.string "description", default: "", null: false
     t.bigint "feed_profile_id"
     t.datetime "import_after"

@@ -1,0 +1,27 @@
+<%# locals: (feed:) %>
+<% if feed.can_be_previewed? %>
+  <i class="bi bi-check-circle-fill text-success me-2"></i>
+<% else %>
+  <i class="bi bi-circle text-muted me-2"></i>
+<% end %>
+
+<strong class="me-2">Source:</strong>
+
+<% if feed.url.present? %>
+  <a href="<%= feed.url %>" target="_blank" class="text-decoration-none">
+    <%= feed.url %>
+  </a>
+
+  <% if feed.feed_profile %>
+    (<%= feed.feed_profile.name %>)
+  <% end %>
+<% else %>
+  <span class="text-muted">not configured</span>
+<% end %>
+
+<%= link_to edit_feed_path(feed, section: "content-source", format: :turbo_stream),
+    class: "text-decoration-none ms-2",
+    data: { turbo_prefetch: false, turbo_stream: true },
+    title: "Edit" do %>
+  <i class="bi bi-pencil text-secondary"></i>
+<% end %>
