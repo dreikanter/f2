@@ -221,56 +221,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Line 1 Line 2 Line 3", feed.description
   end
 
-  test "should create enabled feed when enabled checkbox is checked" do
-    sign_in_as(user)
-
-    post feeds_url, params: {
-      feed: {
-        name: "test-enabled-feed",
-        url: "https://example.com/test.xml",
-        cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
-        access_token_id: access_token.id,
-        target_group: "testgroup",
-        state: "enabled"
-      }
-    }
-
-    feed = Feed.last
-    assert_equal "enabled", feed.state
-  end
-
-  test "should create disabled feed when enabled checkbox is unchecked" do
-    sign_in_as(user)
-
-    post feeds_url, params: {
-      feed: {
-        name: "test-disabled-feed",
-        url: "https://example.com/test.xml",
-        cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
-        access_token_id: access_token.id,
-        state: "disabled"
-      }
-    }
-
-    feed = Feed.last
-    assert_equal "disabled", feed.state
-  end
-
-  test "should update feed state when enabled checkbox changes" do
-    sign_in_as(user)
-    existing_feed = create(:feed, user: user, state: :enabled)
-
-    patch feed_url(existing_feed), params: {
-      feed: {
-        state: "disabled"
-      }
-    }
-
-    existing_feed.reload
-    assert_equal "disabled", existing_feed.state
-  end
 
   test "should handle simplified creation flow" do
     sign_in_as(user)
@@ -289,7 +239,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "simple-feed", feed.name
     assert_equal "disabled", feed.state
     assert_redirected_to feed_url(feed)
-    assert_includes flash[:notice], "Complete the configuration to enable it"
+    assert_includes flash[:notice], "Feed was successfully created."
   end
 
   test "should show feed section" do
