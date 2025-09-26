@@ -34,7 +34,6 @@ class FeedsController < ApplicationController
 
   def create
     @feed = user_feeds.build(feed_params)
-    @feed.state = :disabled if @feed.state.blank?
 
     if @feed.save
       notice_message = "Feed was successfully created."
