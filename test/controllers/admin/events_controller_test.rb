@@ -77,6 +77,82 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", "Events will appear here as they are created."
   end
 
+  test "should filter events by type" do
+    login_as(admin_user)
+
+    event1 = create(:event, type: "TypeA", message: "Event A")
+    event2 = create(:event, type: "TypeB", message: "Event B")
+    event3 = create(:event, type: "TypeA", message: "Another A")
+
+    get admin_events_path, params: { filter_query: { type: "TypeA" }.to_json }
+
+    assert_response :success
+    assert_select "tbody tr", count: 2 # Should show 2 TypeA events
+    assert_select "td", text: "TypeA", count: 2
+    assert_select "td", text: "TypeB", count: 0
+  end
+
+  test "should filter events by subject_type" do
+    login_as(admin_user)
+    test_user = create(:user, email_address: "test_user_#{rand(10000)}@example.com")
+    feed = create(:feed, user: test_user)
+
+    event1 = create(:event, type: "Event1", subject: test_user)
+    event2 = create(:event, type: "Event2", subject: feed)
+    event3 = create(:event, type: "Event3", subject: test_user)
+
+    get admin_events_path, params: { filter_query: { subject_type: "User" }.to_json }
+
+    assert_response :success
+    assert_select "tbody tr", count: 2 # Should show 2 User events
+    assert_select "a[href*='subject_type']", text: "User", count: 2
+    assert_select "a[href*='subject_type']", text: "Feed", count: 0
+  end
+
+  test "should show reset filter button when filter is active" do
+    login_as(admin_user)
+    create(:event, type: "TestEvent")
+
+    get admin_events_path, params: { filter_query: { type: "TestEvent" }.to_json }
+
+    assert_response :success
+    assert_select "a", text: "Reset Filter"
+  end
+
+  test "should not show reset filter button when no filter is active" do
+    login_as(admin_user)
+    create(:event, type: "TestEvent")
+
+    get admin_events_path
+
+    assert_response :success
+    assert_select "a", text: "Reset Filter", count: 0
+  end
+
+  test "should handle invalid filter_query parameter gracefully" do
+    login_as(admin_user)
+    create(:event, type: "TestEvent")
+
+    get admin_events_path, params: { filter_query: "invalid json" }
+
+    assert_response :success
+    assert_select "tbody tr", count: 1 # Should show all events
+  end
+
+  test "should preserve filter in pagination links" do
+    login_as(admin_user)
+
+    # Create 30 events of the same type
+    30.times do |i|
+      create(:event, type: "FilteredType", message: "Event #{i}")
+    end
+
+    get admin_events_path, params: { filter_query: { type: "FilteredType" }.to_json }
+
+    assert_response :success
+    assert_select ".pagination a[href*='filter_query']", minimum: 1
+  end
+
   private
 
   def login_as(user)
