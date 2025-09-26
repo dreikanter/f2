@@ -1,14 +1,17 @@
 class FeedsController < ApplicationController
   def index
-    @feeds = user_feeds.order(:name)
+    authorize Feed
+    @feeds = policy_scope(Feed).order(:name)
   end
 
   def new
-    @feed = user_feeds.build
+    @feed = Feed.new
+    authorize @feed
   end
 
   def show
     @feed = load_feed
+    authorize @feed
     @section = params[:section]
 
     if @section && request.format.turbo_stream?
@@ -18,6 +21,7 @@ class FeedsController < ApplicationController
 
   def edit
     @feed = load_feed
+    authorize @feed
     @section = params[:section]
 
     if @section && request.format.turbo_stream?
@@ -32,7 +36,9 @@ class FeedsController < ApplicationController
   end
 
   def create
-    @feed = user_feeds.build(feed_params)
+    @feed = Feed.new(feed_params)
+    @feed.user = Current.user
+    authorize @feed
 
     if @feed.save
       notice_message = "Feed was successfully created."
@@ -47,6 +53,7 @@ class FeedsController < ApplicationController
 
   def update
     @feed = load_feed
+    authorize @feed
     @section = params[:section]
 
     if @feed.enabled? && !will_be_complete_after_update?
@@ -84,6 +91,7 @@ class FeedsController < ApplicationController
 
   def destroy
     @feed = load_feed
+    authorize @feed
     @feed.destroy!
     redirect_to feeds_path, notice: "Feed was successfully deleted."
   end
@@ -108,12 +116,8 @@ class FeedsController < ApplicationController
     end
   end
 
-  def user_feeds
-    Current.user.feeds
-  end
-
   def load_feed
-    user_feeds.find(params[:id])
+    policy_scope(Feed).find(params[:id])
   end
 
   def section_params
