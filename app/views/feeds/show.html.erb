@@ -13,8 +13,8 @@
           class: "btn btn-outline-secondary" %>
     <% elsif @feed.can_be_enabled? %>
       <div class="d-flex align-items-center">
-        <i class="bi bi-pause-circle-fill text-warning me-1"></i>
-        <span class="text-warning fw-medium">Ready to Enable</span>
+        <i class="bi bi-pause-circle-fill text-secondary me-1"></i>
+        <span class="text-secondary fw-medium">Ready to Enable</span>
       </div>
       <%= button_to "Enable", feed_status_path(@feed),
           method: :patch,
