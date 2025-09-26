@@ -1,7 +1,5 @@
 <%# locals: (feed:) %>
-<% source_ready = feed.url.present? && feed.feed_profile.present? %>
-
-<% if source_ready %>
+<% if feed.can_be_previewed? %>
   <i class="bi bi-check-circle-fill text-success me-2"></i>
 <% else %>
   <i class="bi bi-circle text-muted me-2"></i>
