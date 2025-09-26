@@ -1,4 +1,5 @@
 <%# locals: (feed:) %>
+
 <div class="card mt-3">
   <div class="card-header">
     <h5 class="card-title mb-0">Edit Scheduling</h5>
@@ -32,7 +33,6 @@
     <%= form.date_field :import_after, class: "form-control" %>
     <div class="form-text">Only import items published after this date (optional)</div>
   </div>
-
 
   <div class="d-flex gap-2">
     <%= form.submit "Save", class: "btn btn-primary" %>

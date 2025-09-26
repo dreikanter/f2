@@ -1,7 +1,6 @@
 <%# locals: (feed:) %>
-<% scheduling_ready = feed.cron_expression.present? %>
 
-<% if scheduling_ready %>
+<% if feed.cron_expression.present? %>
   <i class="bi bi-check-circle-fill text-success me-2"></i>
 <% else %>
   <i class="bi bi-circle text-muted me-2"></i>
