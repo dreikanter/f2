@@ -9,15 +9,16 @@
 
 <strong class="me-2">Reposting to:</strong>
 
-<% if feed.access_token && feed.target_group.present? %>
+<% if reposting_ready %>
   <a href="<%= feed.access_token.host %>/<%= feed.target_group %>" target="_blank" class="text-decoration-none">
     <%= feed.access_token.host %>/<%= feed.target_group %>
   </a>
-  (Access Token: <%= feed.access_token.name %>)
-<% elsif feed.access_token %>
+<% elsif feed.access_token && !feed.access_token.active? %>
+  <span class="text-muted">access token inactive, reposting not configured</span>
+<% elsif feed.access_token && feed.target_group.blank? %>
   <span class="text-muted">access token assigned, target group not configured</span>
 <% else %>
-  <span class="text-muted">No access token assigned</span>
+  <span class="text-muted">access token not assigned</span>
 <% end -%>
 
 <%= link_to edit_feed_path(feed, section: "reposting", format: :turbo_stream),
