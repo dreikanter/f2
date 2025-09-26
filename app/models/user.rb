@@ -25,6 +25,7 @@ class User < ApplicationRecord
     permissions.exists?(name: permission_name)
   end
 
+  # TBD: Use policies
   def admin?
     permission?("admin")
   end
