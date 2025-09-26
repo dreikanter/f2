@@ -1,4 +1,6 @@
 class FeedsController < ApplicationController
+  ADVANCED_FEED_FIELDS = %w[cron_expression access_token_id target_group state description import_after].freeze
+
   def index
     @feeds = user_feeds.order(:name)
   end
@@ -164,13 +166,9 @@ class FeedsController < ApplicationController
   end
 
   def using_simplified_creation?
-    # If only basic fields are provided, use simplified flow
-    provided_params = params[:feed].keys.map(&:to_s)
-    basic_fields = %w[name url feed_profile_id]
-    full_fields = %w[cron_expression access_token_id target_group state description import_after]
-
     # Use simplified flow if no advanced fields are provided
-    (provided_params & full_fields).empty?
+    provided_params = params[:feed].keys.map(&:to_s)
+    (provided_params & ADVANCED_FEED_FIELDS).empty?
   end
 
   def create_with_simplified_flow
