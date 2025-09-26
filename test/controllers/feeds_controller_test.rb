@@ -320,7 +320,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "should clear access_token_id when no active tokens available" do
     sign_in_as(user)
-    # Make access token inactive
     access_token.update!(status: :inactive)
 
     patch feed_url(feed, section: "reposting"), params: {
@@ -330,9 +329,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       }
     }, as: :turbo_stream
 
-    # The controller should clear the access_token_id when no active tokens exist
     assert_response :success
-    # Don't test the exact value since the controller may assign different values
   end
 
   test "should use content_source_form template when content-source section has validation errors" do
@@ -342,14 +339,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       section: "content-source",
       feed: {
         name: "test",
-        url: "invalid-url" # This should cause validation errors
+        url: "invalid-url"
       }
     }, as: :turbo_stream
 
     assert_response :success
-    # Should render the content_source_form partial (check for Edit Source title which is unique to this form)
     assert_includes response.body, "Edit Source"
-    # Should show validation errors
     assert_includes response.body, "must be a valid HTTP or HTTPS URL"
   end
 end
