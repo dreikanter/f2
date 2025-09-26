@@ -64,7 +64,7 @@
 
   <div class="d-flex gap-2">
     <%= form.submit "Save", class: "btn btn-primary" %>
-    <%= link_to "Cancel", feed_path(feed, section: "reposting", format: :turbo_stream),
+    <%= link_to "Cancel", feed_path(feed, format: :turbo_stream),
         class: "btn btn-outline-secondary",
         data: { turbo_prefetch: false, turbo_stream: true } %>
   </div>
