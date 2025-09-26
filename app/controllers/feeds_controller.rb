@@ -116,8 +116,6 @@ class FeedsController < ApplicationController
   end
 
   def new_feed_params
-    return {} unless params[:feed]
-
     params.require(:feed).permit(
       :name,
       :url,
@@ -141,12 +139,10 @@ class FeedsController < ApplicationController
   end
 
   def content_source_params
-    return {} unless params[:feed]
     params.require(:feed).permit(:name, :url, :feed_profile_id)
   end
 
   def reposting_params
-    return {} unless params[:feed]
     permitted_params = params.require(:feed).permit(:access_token_id, :target_group)
 
     # Clear access_token_id if there are no active tokens available
@@ -158,7 +154,6 @@ class FeedsController < ApplicationController
   end
 
   def scheduling_params
-    return {} unless params[:feed]
     params.require(:feed).permit(:cron_expression, :import_after)
   end
 
@@ -169,8 +164,6 @@ class FeedsController < ApplicationController
   end
 
   def using_simplified_creation?
-    return false unless params[:feed]
-
     # If only basic fields are provided, use simplified flow
     provided_params = params[:feed].keys.map(&:to_s)
     basic_fields = %w[name url feed_profile_id]
@@ -210,8 +203,6 @@ class FeedsController < ApplicationController
   end
 
   def feed_params
-    return {} unless params[:feed]
-
     params.require(:feed).permit(
       :name,
       :url,
