@@ -27,7 +27,6 @@ class FeedsController < ApplicationController
         locals: { feed: @feed }
       )
     else
-      # Return blank response if no section param
       render turbo_stream: turbo_stream.update("edit-form-container", "")
     end
   end
@@ -50,7 +49,6 @@ class FeedsController < ApplicationController
     @feed = load_feed
     @section = params[:section]
 
-    # Auto-disable feed if configuration becomes invalid for enabled feeds
     if @feed.enabled? && !will_be_complete_after_update?
       @feed.state = :disabled
     end
@@ -58,15 +56,12 @@ class FeedsController < ApplicationController
     if @feed.update(section_params)
       if @section
         streams = []
-        # Update the section display
         streams << turbo_stream.update(
           "#{@section}-content",
           partial: display_template_name(@section),
           locals: { feed: @feed }
         )
-        # Clear the edit form
         streams << turbo_stream.update("edit-form-container", "")
-        # Update the feed title if content-source was updated
         if @section == "content-source"
           streams << turbo_stream.update("feed-title", @feed.name)
         end
@@ -121,7 +116,6 @@ class FeedsController < ApplicationController
     user_feeds.find(params[:id])
   end
 
-
   def section_params
     return feed_params unless @section
 
@@ -144,7 +138,6 @@ class FeedsController < ApplicationController
   def reposting_params
     permitted_params = params[:feed].permit(:access_token_id, :target_group)
 
-    # Clear access_token_id if there are no active tokens available
     unless Current.user.access_tokens.active.exists?
       permitted_params[:access_token_id] = nil
     end
@@ -161,7 +154,6 @@ class FeedsController < ApplicationController
     updated_feed.assign_attributes(section_params)
     updated_feed.can_be_enabled?
   end
-
 
   def feed_params
     params.require(:feed).permit(
