@@ -1,6 +1,6 @@
 require "test_helper"
 
-class EventsControllerTest < ActionDispatch::IntegrationTest
+class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   def admin_user
     @admin_user ||= begin
       user = create(:user)
@@ -16,14 +16,14 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   test "should redirect non-admin users" do
     login_as(regular_user)
 
-    get events_path
+    get admin_events_path
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
   test "should redirect unauthenticated users" do
-    get events_path
+    get admin_events_path
 
     assert_redirected_to new_session_path
   end
@@ -32,7 +32,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     create(:event, type: "TestEvent", message: "Test message")
 
-    get events_path
+    get admin_events_path
 
     assert_response :success
     assert_select "h1", "Events"
@@ -43,7 +43,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     event = create(:event, type: "TestEvent", message: "Test message")
 
-    get event_path(event)
+    get admin_event_path(event)
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
@@ -58,7 +58,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       create(:event, type: "Event#{i}")
     end
 
-    get events_path
+    get admin_events_path
 
     assert_response :success
     assert_select ".pagination"
@@ -68,7 +68,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   test "should show empty state when no events exist" do
     login_as(admin_user)
 
-    get events_path
+    get admin_events_path
 
     assert_response :success
     assert_select "h1", "Events"

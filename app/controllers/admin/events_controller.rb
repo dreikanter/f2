@@ -1,4 +1,4 @@
-class EventsController < ApplicationController
+class Admin::EventsController < ApplicationController
   PER_PAGE = 25
 
   def index

@@ -19,7 +19,7 @@
         <% @events.each do |event| %>
           <tr>
             <td>
-              <%= link_to event_path(event), class: "text-decoration-none" do %>
+              <%= link_to admin_event_path(event), class: "text-decoration-none" do %>
                 <code><%= event.type %></code>
               <% end %>
             </td>
@@ -58,7 +58,7 @@
       <ul class="pagination justify-content-center">
         <% if @current_page > 1 %>
           <li class="page-item">
-            <%= link_to "Previous", events_path(page: @current_page - 1), class: "page-link" %>
+            <%= link_to "Previous", admin_events_path(page: @current_page - 1), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">
@@ -77,14 +77,14 @@
             </li>
           <% else %>
             <li class="page-item">
-              <%= link_to page, events_path(page: page), class: "page-link" %>
+              <%= link_to page, admin_events_path(page: page), class: "page-link" %>
             </li>
           <% end %>
         <% end %>
 
         <% if @current_page < @total_pages %>
           <li class="page-item">
-            <%= link_to "Next", events_path(page: @current_page + 1), class: "page-link" %>
+            <%= link_to "Next", admin_events_path(page: @current_page + 1), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">

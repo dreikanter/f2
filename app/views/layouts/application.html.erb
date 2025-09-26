@@ -48,7 +48,7 @@
               </li>
               <% if policy(Event).index? %>
                 <li class="nav-item">
-                  <%= link_to "Events", events_path, class: "nav-link #{'active' if current_page?(events_path) || controller_name == 'events'}" %>
+                  <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active' if current_page?(admin_path) || controller_name.start_with?('admin')}" %>
                 </li>
               <% end %>
             </ul>
