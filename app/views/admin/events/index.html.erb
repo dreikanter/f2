@@ -1,6 +1,10 @@
 <% content_for :title, "Events" %>
 
-<%= page_header "Events" %>
+<%= page_header "Events" do %>
+  <% if @filter.present? %>
+    <%= link_to "Reset Filter", admin_events_path, class: "btn btn-outline-secondary btn-sm" %>
+  <% end %>
+<% end %>
 
 <% if @events.any? %>
   <div class="table-responsive">
@@ -19,7 +23,9 @@
         <% @events.each do |event| %>
           <tr>
             <td>
-              <%= link_to admin_event_path(event), class: "text-decoration-none" do %>
+              <%= link_to admin_events_path(filter: { type: event.type }),
+                          class: "text-decoration-none",
+                          title: "Filter by type: #{event.type}" do %>
                 <code><%= event.type %></code>
               <% end %>
             </td>
@@ -36,7 +42,11 @@
             </td>
             <td>
               <% if event.subject %>
-                <span class="text-muted"><%= event.subject_type %></span>
+                <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
+                            class: "text-decoration-none text-muted",
+                            title: "Filter by subject type: #{event.subject_type}" do %>
+                  <%= event.subject_type %>
+                <% end %>
                 <span class="text-primary">#<%= event.subject_id %></span>
               <% else %>
                 <em class="text-muted">None</em>
@@ -58,7 +68,7 @@
       <ul class="pagination justify-content-center">
         <% if @current_page > 1 %>
           <li class="page-item">
-            <%= link_to "Previous", admin_events_path(page: @current_page - 1), class: "page-link" %>
+            <%= link_to "Previous", admin_events_path(page: @current_page - 1, filter: @filter), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">
@@ -77,14 +87,14 @@
             </li>
           <% else %>
             <li class="page-item">
-              <%= link_to page, admin_events_path(page: page), class: "page-link" %>
+              <%= link_to page, admin_events_path(page: page, filter: @filter), class: "page-link" %>
             </li>
           <% end %>
         <% end %>
 
         <% if @current_page < @total_pages %>
           <li class="page-item">
-            <%= link_to "Next", admin_events_path(page: @current_page + 1), class: "page-link" %>
+            <%= link_to "Next", admin_events_path(page: @current_page + 1, filter: @filter), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">

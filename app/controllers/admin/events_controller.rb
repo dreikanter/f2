@@ -7,6 +7,7 @@ class Admin::EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     offset = (page - 1) * PER_PAGE
 
+    @filter = optional_filter
     @events = paginated_events(offset)
     @total_count = events_count
     @current_page = page
@@ -44,6 +45,14 @@ class Admin::EventsController < ApplicationController
   end
 
   def events_scope
-    policy_scope(Event)
+    apply_filters(policy_scope(Event))
+  end
+
+  def apply_filters(scope)
+    optional_filter.blank? ? scope : scope.where(**optional_filter)
+  end
+
+  def optional_filter
+    @optional_filter ||= params.fetch(:filter, {}).permit(:type, :subject_type, :level)
   end
 end
