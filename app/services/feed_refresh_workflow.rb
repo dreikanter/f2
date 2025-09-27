@@ -123,7 +123,6 @@ class FeedRefreshWorkflow
 
     Post.insert_all(posts_data) if posts_data.any?
 
-    # Return persisted post records to maintain order
     new_uids = posts_to_persist.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
 

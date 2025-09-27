@@ -9,14 +9,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   end
 
   def setup
-    # Stub FreeFeed API calls that happen during publishing
     stub_freefeed_api_calls
   end
 
-  private
-
   def stub_freefeed_api_calls
-    # Stub post creation
     stub_request(:post, /.*\/v4\/posts/)
       .to_return(
         status: 201,
@@ -101,14 +97,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     result = workflow.execute
 
-    # Verify workflow completed successfully
     assert_equal 2, result.length, "Should return 2 posts"
 
-    # Verify posts were published successfully
     published_posts = result.select(&:published?)
     assert_equal 2, published_posts.length, "Should have 2 published posts"
 
-    # Verify post attributes (posts are ordered by published_at, so second entry comes first)
+    # Posts are ordered by published_at, so second entry comes first
     first_post = published_posts.first
     assert_equal test_feed, first_post.feed
     assert_not_nil first_post.feed_entry
@@ -117,15 +111,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "published", first_post.status
     assert_not_nil first_post.freefeed_post_id
 
-    # Verify feed entries were created
     assert_equal 2, FeedEntry.where(feed: test_feed).count
     entries = FeedEntry.where(feed: test_feed).order(:created_at)
     assert_equal ["entry-123", "entry-456"], entries.pluck(:uid)
 
-    # Verify posts were persisted to database
     assert_equal 2, Post.where(feed: test_feed, status: :published).count
-
-    # Verify workflow stats were recorded
     assert workflow.stats[:started_at]
     assert workflow.stats[:content_size] > 0
     assert_equal 2, workflow.stats[:total_entries]
