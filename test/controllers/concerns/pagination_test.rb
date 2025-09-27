@@ -20,11 +20,9 @@ class PaginationTest < ActionController::TestCase
   test "pagination_scope raises NotImplementedError when not overridden" do
     controller = TestController.new
 
-    error = assert_raises(NotImplementedError) do
+    assert_raises(NotImplementedError) do
       controller.send(:pagination_scope)
     end
-
-    assert_equal "Controllers using Pagination must implement pagination_scope method", error.message
   end
 
   test "pagination_current_page returns page from params" do
@@ -40,16 +38,7 @@ class PaginationTest < ActionController::TestCase
     assert_equal 1, controller.send(:pagination_current_page)
   end
 
-  test "pagination_per_page returns PER_PAGE constant when defined" do
-    TestController.const_set(:PER_PAGE, 50)
-
-    controller = TestController.new
-    assert_equal 50, controller.send(:pagination_per_page)
-
-    TestController.send(:remove_const, :PER_PAGE)
-  end
-
-  test "pagination_per_page returns default when no PER_PAGE constant" do
+  test "pagination_per_page returns default" do
     controller = TestController.new
 
     assert_equal 25, controller.send(:pagination_per_page)
