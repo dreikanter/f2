@@ -163,4 +163,9 @@ class FeedRefreshWorkflow
     posts
   end
 
+  def record_duration(step_name)
+    duration = step_durations[step_name].to_f
+    stats_key = "#{step_name}_duration".to_sym
+    record_stats(stats_key => duration)
+  end
 end

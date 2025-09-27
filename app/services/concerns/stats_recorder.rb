@@ -9,18 +9,6 @@ module StatsRecorder
     stats.merge!(new_stats)
   end
 
-  def record_duration(step_name)
-    return unless respond_to?(:step_durations)
-
-    duration = step_durations[step_name].to_f
-    stats_key = step_stats_key(step_name)
-    record_stats(stats_key => duration)
-  end
-
-  def step_stats_key(step_name)
-    "#{step_name}_duration".to_sym
-  end
-
   def record_timing_stats(started_at: nil, completed_at: nil)
     record_stats(started_at: started_at) if started_at
     record_stats(completed_at: completed_at) if completed_at
