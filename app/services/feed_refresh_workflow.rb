@@ -100,18 +100,17 @@ class FeedRefreshWorkflow
   end
 
   def persist_posts(posts)
-    posts_to_persist = posts.select { |post| post.enqueued? || post.rejected? }
-    return posts if posts_to_persist.empty?
+    return posts if posts.empty?
     current_time = Time.current
 
-    posts_data = posts_to_persist.map do |post|
+    posts_data = posts.map do |post|
       post.slice(:feed_id, :feed_entry_id, :uid, :content, :source_url, :published_at, :attachment_urls, :comments, :validation_errors, :status)
           .merge(created_at: current_time, updated_at: current_time)
     end
 
     Post.insert_all(posts_data) if posts_data.any?
 
-    new_uids = posts_to_persist.map(&:uid)
+    new_uids = posts.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
 
     record_stats(
