@@ -1,5 +1,6 @@
 class FeedPreviewWorkflow
   include Workflow
+  include StatsRecorder
 
   step :initialize_workflow
   step :load_feed_contents
@@ -7,20 +8,16 @@ class FeedPreviewWorkflow
   step :normalize_entries
   step :finalize_workflow
 
-  attr_reader :feed_preview, :stats
+  attr_reader :feed_preview
 
   def initialize(feed_preview)
     @feed_preview = feed_preview
-    @stats = {}
   end
 
   private
 
   def on_error(error)
-    record_stats(
-      total_duration: total_duration,
-      failed_at_step: current_step
-    )
+    record_error_stats(error, current_step: current_step)
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
@@ -28,7 +25,7 @@ class FeedPreviewWorkflow
   end
 
   def initialize_workflow(_input)
-    record_stats(started_at: Time.current)
+    record_started_at
     feed_preview.update!(status: :processing)
 
     # Create a temporary feed object for workflow processing
@@ -92,7 +89,7 @@ class FeedPreviewWorkflow
   end
 
   def finalize_workflow(posts)
-    record_stats(ready_at: Time.current, total_duration: total_duration)
+    record_completed_at
 
     feed_preview.update!(
       status: :ready,
@@ -100,9 +97,5 @@ class FeedPreviewWorkflow
     )
 
     posts
-  end
-
-  def record_stats(new_stats)
-    @stats.merge!(new_stats)
   end
 end
