@@ -7,7 +7,7 @@ class Admin::EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     offset = (page - 1) * PER_PAGE
 
-    @filter_query = parse_filter_query
+    @filter_query = filter_query
     @events = paginated_events(offset)
     @total_count = events_count
     @current_page = page
@@ -45,35 +45,23 @@ class Admin::EventsController < ApplicationController
   end
 
   def events_scope
-    scope = policy_scope(Event)
-    scope = apply_filters(scope)
-    scope
-  end
-
-  def parse_filter_query
-    return {} unless params[:filter_query].present?
-
-    begin
-      JSON.parse(params[:filter_query])
-    rescue JSON::ParserError
-      {}
-    end
+    apply_filters(policy_scope(Event))
   end
 
   def apply_filters(scope)
-    return scope if @filter_query.blank?
+    filter_query.blank? ? scope : scope.where(**filter_query)
+  end
 
-    @filter_query.each do |attribute, value|
-      case attribute
-      when "type"
-        scope = scope.where(type: value) if value.present?
-      when "subject_type"
-        scope = scope.where(subject_type: value) if value.present?
-      when "level"
-        scope = scope.where(level: value) if value.present?
+  def filter_query
+    @filter_query ||= begin
+      query = params[:filter_query]
+      return {} unless query.present?
+
+      begin
+        JSON.parse(query).slice("type", "subject_type", "level")
+      rescue JSON::ParserError
+        {}
       end
     end
-
-    scope
   end
 end
