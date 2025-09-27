@@ -46,14 +46,12 @@ class FreefeedClient
 
   # Upload attachment
   # @param file_path [String] path to the file to upload
-  # @param filename [String] optional filename override
   # @return [Hash] attachment data with id
-  def upload_attachment(file_path, filename: nil)
-    filename ||= File.basename(file_path)
-    content_type = MiniMime.lookup_by_filename(filename)&.content_type || "application/octet-stream"
+  def upload_attachment(file_path)
+    content_type = MiniMime.lookup_by_filename(file_path)&.content_type || "application/octet-stream"
 
     payload = {
-      file: Faraday::Multipart::FilePart.new(file_path, content_type, filename)
+      file: Faraday::Multipart::FilePart.new(file_path, content_type)
     }
 
     response = post("/v1/attachments", body: payload)
