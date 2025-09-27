@@ -40,8 +40,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
       .with(
         headers: {
           "Authorization" => "Bearer #{@token}",
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 200, body: response_body)
@@ -145,8 +144,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
       .with(
         headers: {
           "Authorization" => "Bearer #{@token}",
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 200, body: response_body)
