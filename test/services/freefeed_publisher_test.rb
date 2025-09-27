@@ -400,4 +400,132 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       service.publish
     end
   end
+
+  test "downloads remote image attachment to memory" do
+    image_data = "\xFF\xD8\xFF\xE0fake_jpeg_data"
+    image_url = "https://example.com/image.jpg"
+
+    post = post_with_content("Post with remote image", attachment_urls: [image_url])
+
+    # Mock image download
+    stub_request(:get, image_url)
+      .to_return(status: 200, body: image_data, headers: { "Content-Type" => "image/jpeg" })
+
+    # Mock attachment upload
+    attachment_response = {
+      "attachments" => {
+        "id" => "attachment_123",
+        "url" => "#{@access_token.host}/attachment_123.jpg",
+        "thumbnailUrl" => "#{@access_token.host}/attachment_123_thumb.jpg",
+        "fileName" => "image.jpg",
+        "fileSize" => image_data.length,
+        "mediaType" => "image/jpeg"
+      }
+    }
+
+    stub_request(:post, "#{@access_token.host}/v1/attachments")
+      .to_return(status: 201, body: attachment_response.to_json)
+
+    # Mock post creation
+    post_response = {
+      "posts" => {
+        "id" => "freefeed_post_123",
+        "body" => "Post with remote image",
+        "createdAt" => "2025-01-01T12:00:00Z",
+        "updatedAt" => "2025-01-01T12:00:00Z",
+        "likes" => 0,
+        "comments" => 0
+      }
+    }
+
+    stub_request(:post, "#{@access_token.host}/v4/posts")
+      .to_return(status: 201, body: post_response.to_json)
+
+    service = FreefeedPublisher.new(post)
+    freefeed_post_id = service.publish
+
+    assert_equal "freefeed_post_123", freefeed_post_id
+    assert_requested :get, image_url
+    assert_requested :post, "#{@access_token.host}/v1/attachments"
+  end
+
+  test "handles image download failure" do
+    image_url = "https://example.com/missing.jpg"
+    post = post_with_content("Post with missing image", attachment_urls: [image_url])
+
+    # Mock failed image download
+    stub_request(:get, image_url)
+      .to_return(status: 404, body: "Not Found")
+
+    service = FreefeedPublisher.new(post)
+
+    assert_raises(FreefeedPublisher::PublishError, /Failed to download attachment from #{Regexp.escape(image_url)}/) do
+      service.publish
+    end
+  end
+
+  test "handles local file attachment" do
+    # Create a temporary file
+    temp_file = Tempfile.new(["test_image", ".jpg"])
+    temp_file.binmode
+    image_data = "\xFF\xD8\xFF\xE0fake_jpeg_data"
+    temp_file.write(image_data)
+    temp_file.close
+
+    post = post_with_content("Post with local file", attachment_urls: [temp_file.path])
+
+    # Mock attachment upload
+    attachment_response = {
+      "attachments" => {
+        "id" => "attachment_123",
+        "url" => "#{@access_token.host}/attachment_123.jpg",
+        "thumbnailUrl" => "#{@access_token.host}/attachment_123_thumb.jpg",
+        "fileName" => "test_image.jpg",
+        "fileSize" => image_data.length,
+        "mediaType" => "image/jpeg"
+      }
+    }
+
+    stub_request(:post, "#{@access_token.host}/v1/attachments")
+      .to_return(status: 201, body: attachment_response.to_json)
+
+    # Mock post creation
+    post_response = {
+      "posts" => {
+        "id" => "freefeed_post_123",
+        "body" => "Post with local file",
+        "createdAt" => "2025-01-01T12:00:00Z",
+        "updatedAt" => "2025-01-01T12:00:00Z",
+        "likes" => 0,
+        "comments" => 0
+      }
+    }
+
+    stub_request(:post, "#{@access_token.host}/v4/posts")
+      .to_return(status: 201, body: post_response.to_json)
+
+    service = FreefeedPublisher.new(post)
+    freefeed_post_id = service.publish
+
+    assert_equal "freefeed_post_123", freefeed_post_id
+    assert_requested :post, "#{@access_token.host}/v1/attachments"
+
+    # Cleanup
+    temp_file.unlink
+  end
+
+  test "handles HTTP client errors during download" do
+    image_url = "https://example.com/timeout.jpg"
+    post = post_with_content("Post with timeout image", attachment_urls: [image_url])
+
+    # Mock HTTP client error
+    stub_request(:get, image_url)
+      .to_raise(HttpClient::TimeoutError.new("Request timed out"))
+
+    service = FreefeedPublisher.new(post)
+
+    assert_raises(FreefeedPublisher::PublishError, /Failed to download attachment from #{Regexp.escape(image_url)}: Request timed out/) do
+      service.publish
+    end
+  end
 end
