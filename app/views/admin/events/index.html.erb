@@ -63,11 +63,9 @@
     </table>
   </div>
 
-  <%= render "shared/pagination",
-             pagination_label: "Events",
-             pagination_path: ->(page:) { admin_events_path(page: page, filter: @filter) },
-             collection_size: @events.size,
-             collection_name: "events" %>
+  <%= pagination_for @events,
+                     collection_name: "events",
+                     path_helper: ->(page) { admin_events_path(page: page, filter: @filter) } %>
 <% else %>
   <div class="card">
     <div class="card-body text-center py-5 text-muted">

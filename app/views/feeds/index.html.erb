@@ -43,11 +43,9 @@
         </table>
       </div>
 
-      <%= render "shared/pagination",
-                 pagination_label: "Feeds",
-                 pagination_path: ->(page:) { feeds_path(page: page) },
-                 collection_size: @feeds.size,
-                 collection_name: "feeds" %>
+      <%= pagination_for @feeds,
+                         collection_name: "feeds",
+                         path_helper: ->(page) { feeds_path(page: page) } %>
     <% else %>
       <div class="text-center py-5">
         <p>No feeds yet</p>
