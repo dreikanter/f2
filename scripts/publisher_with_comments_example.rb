@@ -4,6 +4,7 @@ puts 'Testing FreefeedPublisher with comments...'
 user = User.first || FactoryBot.create(:user)
 
 token_value = ENV['FREEFEED_STAGING_TOKEN']
+
 unless token_value
   puts 'Error: FREEFEED_STAGING_TOKEN environment variable is required'
   exit 1
@@ -16,9 +17,10 @@ access_token = AccessToken.build_with_token(
   host: 'https://candy.freefeed.net',
   status: :active
 )
-access_token.save!
 
+access_token.save!
 feed_profile = FeedProfile.first || FactoryBot.create(:feed_profile)
+
 feed = Feed.create!(
   user: user,
   access_token: access_token,
@@ -61,6 +63,7 @@ post = Post.create!(
 puts 'Created test data with comments:'
 puts '  Post: ' + post.content[0..50] + '...'
 puts '  Comments: ' + post.comments.length.to_s + ' comments'
+
 post.comments.each_with_index do |comment, i|
   puts "    #{i + 1}. #{comment[0..50]}#{'...' if comment.length > 50}"
 end
@@ -75,7 +78,6 @@ begin
   puts '  FreeFeed Post ID: ' + freefeed_post_id
   puts '  Post URL: ' + access_token.host + '/posts/' + freefeed_post_id
   puts '  Local Post Status: ' + post.reload.status
-
 rescue => e
   puts 'Error: ' + e.message
   puts 'Class: ' + e.class.name

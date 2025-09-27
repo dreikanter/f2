@@ -87,9 +87,11 @@ module HttpClient
         config.request :multipart
         config.options.timeout = options[:timeout]
         config.options.open_timeout = options[:timeout]
+
         if options[:follow_redirects]
           config.response :follow_redirects, limit: options[:max_redirects]
         end
+
         config.adapter Faraday.default_adapter
       end
     end

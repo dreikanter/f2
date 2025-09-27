@@ -16,8 +16,8 @@ access_token = AccessToken.build_with_token(
   host: 'https://candy.freefeed.net',
   status: :active
 )
-access_token.save!
 
+access_token.save!
 feed_profile = FeedProfile.first || FactoryBot.create(:feed_profile)
 
 feed = Feed.create!(
@@ -70,7 +70,6 @@ begin
   puts '  Post URL: ' + access_token.host + '/posts/' + freefeed_post_id
   puts '  Local Post Status: ' + post.reload.status
   puts '  Local Post FreeFeed ID: ' + post.freefeed_post_id.to_s
-
 rescue => e
   puts 'Error: ' + e.message
   puts 'Class: ' + e.class.name

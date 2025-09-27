@@ -74,11 +74,13 @@ class FreefeedClient
         feeds: feeds
       }
     }
+
     payload[:post][:attachments] = attachment_ids if attachment_ids.any?
 
     response = post("/v4/posts",
                    body: payload.to_json,
                    headers: { "Content-Type" => "application/json" })
+
     parse_post_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to create post: #{e.message}"
@@ -99,6 +101,7 @@ class FreefeedClient
     response = post("/v4/comments",
                    body: payload.to_json,
                    headers: { "Content-Type" => "application/json" })
+
     parse_comment_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to create comment: #{e.message}"
@@ -109,14 +112,12 @@ class FreefeedClient
   def get(path, options: {})
     url = "#{@host}#{path}"
     response = @http_client.get(url, headers: auth_headers, options: options)
-
     handle_response(response)
   end
 
   def post(path, body: nil, headers: {})
     url = "#{@host}#{path}"
     response = @http_client.post(url, body: body, headers: headers.merge(auth_headers))
-
     handle_response(response)
   end
 
