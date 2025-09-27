@@ -1,18 +1,11 @@
 class Admin::EventsController < ApplicationController
-  PER_PAGE = 25
+  include Pagination
 
   def index
     authorize Event
 
-    page = (params[:page] || 1).to_i
-    offset = (page - 1) * PER_PAGE
-
     @filter = optional_filter
-    @events = paginated_events(offset)
-    @total_count = events_count
-    @current_page = page
-    @total_pages = (@total_count.to_f / PER_PAGE).ceil
-    @per_page = PER_PAGE
+    @events = paginate_scope.includes(:user, :subject)
   end
 
   def show
@@ -24,16 +17,8 @@ class Admin::EventsController < ApplicationController
 
   private
 
-  def paginated_events(offset)
-    events_scope
-      .includes(:user, :subject)
-      .order(created_at: :desc)
-      .limit(PER_PAGE)
-      .offset(offset)
-  end
-
-  def events_count
-    events_scope.count
+  def pagination_scope
+    events_scope.order(created_at: :desc)
   end
 
   def previous_event(event)

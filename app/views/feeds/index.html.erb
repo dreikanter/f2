@@ -42,6 +42,10 @@
           </tbody>
         </table>
       </div>
+
+      <%= pagination_for @feeds,
+                         collection_name: "feeds",
+                         path_helper: ->(page) { feeds_path(page: page) } %>
     <% else %>
       <div class="text-center py-5">
         <p>No feeds yet</p>
