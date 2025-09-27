@@ -25,7 +25,7 @@ class FeedPreviewWorkflow
   end
 
   def initialize_workflow(_input)
-    record_timing_stats(started_at: Time.current)
+    record_started_at
     feed_preview.update!(status: :processing)
 
     # Create a temporary feed object for workflow processing
@@ -89,7 +89,7 @@ class FeedPreviewWorkflow
   end
 
   def finalize_workflow(posts)
-    record_timing_stats(completed_at: Time.current)
+    record_completed_at
 
     feed_preview.update!(
       status: :ready,

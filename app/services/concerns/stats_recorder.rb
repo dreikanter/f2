@@ -9,17 +9,22 @@ module StatsRecorder
     stats.merge!(new_stats)
   end
 
-  def record_timing_stats(started_at: nil, completed_at: nil)
-    record_stats(started_at: started_at) if started_at
-    record_stats(completed_at: completed_at) if completed_at
+  def record_started_at(time = Time.current)
+    record_stats(started_at: time)
+  end
 
-    if started_at && completed_at
-      total_duration = completed_at - started_at
-      record_stats(total_duration: total_duration)
-    elsif completed_at && stats[:started_at]
-      total_duration = completed_at - stats[:started_at]
-      record_stats(total_duration: total_duration)
-    end
+  def record_completed_at(time = Time.current)
+    record_stats(completed_at: time)
+    calculate_total_duration if stats[:started_at]
+  end
+
+  private
+
+  def calculate_total_duration
+    return unless stats[:started_at] && stats[:completed_at]
+
+    total_duration = stats[:completed_at] - stats[:started_at]
+    record_stats(total_duration: total_duration)
   end
 
   def record_error_stats(error, current_step: nil)

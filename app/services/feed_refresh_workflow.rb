@@ -36,7 +36,7 @@ class FeedRefreshWorkflow
   end
 
   def initialize_workflow(*)
-    record_timing_stats(started_at: Time.current)
+    record_started_at
   end
 
   def load_feed_contents(*)
@@ -151,7 +151,7 @@ class FeedRefreshWorkflow
     failed_posts_count = posts.count(&:failed?)
     rejected_posts_count = posts.count(&:rejected?)
 
-    record_timing_stats(completed_at: Time.current)
+    record_completed_at
 
     FeedRefreshEvent.create_stats(feed: feed, stats: stats)
 
