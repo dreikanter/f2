@@ -7,25 +7,32 @@ module Pagination
 
   private
 
-  attr_reader :pagination_total_count, :pagination_current_page, :pagination_total_pages
-
   def paginate_scope(scope = nil)
     scope ||= pagination_scope
-    page = (params[:page] || 1).to_i
-    offset = pagination_offset(page)
-
-    @pagination_total_count = scope.count
-    @pagination_current_page = page
-    @pagination_total_pages = (@pagination_total_count.to_f / pagination_per_page).ceil
-
-    scope.limit(pagination_per_page).offset(offset)
+    scope.limit(pagination_per_page).offset(pagination_offset)
   end
 
-  def pagination_offset(page)
+  def pagination_offset(page = pagination_current_page)
     (page - 1) * pagination_per_page
   end
 
+  def pagination_current_page
+    @pagination_current_page ||= (params[:page] || 1).to_i
+  end
+
+  def pagination_total_count
+    @pagination_total_count ||= pagination_scope.count
+  end
+
+  def pagination_total_pages
+    @pagination_total_pages ||= (pagination_total_count.to_f / pagination_per_page).ceil
+  end
+
   def pagination_per_page
+    self.class.const_defined?(:PER_PAGE) ? self.class::PER_PAGE : default_per_page
+  end
+
+  def default_per_page
     25
   end
 
