@@ -24,6 +24,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :persist_entries,
       :normalize_entries,
       :persist_posts,
+      :publish_posts,
       :finalize_workflow
     ]
 
