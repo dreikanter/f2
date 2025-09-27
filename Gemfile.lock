@@ -472,6 +472,7 @@ DEPENDENCIES
   fugit (~> 1.11)
   importmap-rails
   kamal
+  mini_mime (~> 1.1)
   minitest-rails
   mission_control-jobs (~> 1.1)
   pg (~> 1.6)
