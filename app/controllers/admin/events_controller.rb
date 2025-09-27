@@ -1,8 +1,6 @@
 class Admin::EventsController < ApplicationController
   include Pagination
 
-  PER_PAGE = 25
-
   def index
     authorize Event
 
