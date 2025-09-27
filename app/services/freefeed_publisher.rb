@@ -22,10 +22,11 @@ class FreefeedPublisher
 
     attachment_ids = upload_attachments
     freefeed_post = create_freefeed_post(attachment_ids)
-    create_comments(freefeed_post[:id])
+    freefeed_post_id = freefeed_post[:id]
+    create_comments(freefeed_post_id)
 
-    update_post_with_freefeed_id(freefeed_post[:id])
-    freefeed_post[:id]
+    update_post_with_freefeed_id(freefeed_post_id)
+    freefeed_post_id
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
   end
