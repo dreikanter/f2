@@ -37,6 +37,7 @@ class FreefeedPublisher
     raise ValidationError, "Post is required" unless post
     raise ValidationError, "Post feed is required" unless post.feed
     raise ValidationError, "Post feed access token is required" unless post.feed.access_token
+    raise ValidationError, "Post feed access token is inactive" unless post.feed.access_token.active?
     raise ValidationError, "Post feed target group is required" unless post.feed.target_group
     raise ValidationError, "Post content is required" unless post.content.present?
   end

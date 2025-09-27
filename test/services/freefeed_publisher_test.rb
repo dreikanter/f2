@@ -82,6 +82,17 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post content is required", error.message
   end
 
+  test "raises validation error for inactive access token" do
+    inactive_token = create(:access_token, user: user, status: :inactive)
+    feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token, feed_profile: feed_profile, target_group: "testgroup")
+    post = create(:post, feed: feed_with_inactive_token, feed_entry: feed_entry, content: "Test content")
+
+    error = assert_raises(FreefeedPublisher::ValidationError) do
+      FreefeedPublisher.new(post)
+    end
+    assert_equal "Post feed access token is inactive", error.message
+  end
+
   test "publish creates post without attachments or comments" do
     post = post_with_content("Test post content")
 
