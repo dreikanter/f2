@@ -90,6 +90,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     error = assert_raises(FreefeedPublisher::ValidationError) do
       FreefeedPublisher.new(post)
     end
+
     assert_equal "Post feed access token is inactive", error.message
   end
 

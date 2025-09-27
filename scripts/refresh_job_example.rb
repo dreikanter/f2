@@ -1,6 +1,7 @@
 puts 'Testing FeedRefreshJob with staging data...'
 
 token_value = ENV['FREEFEED_STAGING_TOKEN']
+
 unless token_value
   puts 'Error: FREEFEED_STAGING_TOKEN environment variable is required'
   exit 1
@@ -78,6 +79,7 @@ begin
   end
 
   latest_event = feed.feed_refresh_events.order(:created_at).last
+
   if latest_event
     puts 'Workflow stats:'
     stats = latest_event.stats || {}
@@ -90,7 +92,6 @@ begin
     puts "  Failed posts: #{stats['failed_posts']}" if stats['failed_posts']
     puts "  Rejected posts: #{stats['rejected_posts']}" if stats['rejected_posts']
   end
-
 rescue => e
   puts 'Error: ' + e.message
   puts 'Class: ' + e.class.name
