@@ -84,9 +84,17 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Rails-Client",
-          "Content-Type" => "application/x-www-form-urlencoded"
+          "Content-Type" => "application/json"
         },
-        body: "body=Test+post+content&feeds=testgroup&attachments=attachment123"
+        body: {
+          post: {
+            body: "Test post content",
+            attachments: ["attachment123"]
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
       )
       .to_return(status: 201, body: post_response.to_json)
 
@@ -118,9 +126,16 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Rails-Client",
-          "Content-Type" => "application/x-www-form-urlencoded"
+          "Content-Type" => "application/json"
         },
-        body: "body=Test+post+content&feeds=testgroup"
+        body: {
+          post: {
+            body: "Test post content"
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
       )
       .to_return(status: 201, body: post_response.to_json)
 
@@ -157,9 +172,14 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Rails-Client",
-          "Content-Type" => "application/x-www-form-urlencoded"
+          "Content-Type" => "application/json"
         },
-        body: "body=Test+comment&postId=post123"
+        body: {
+          comment: {
+            body: "Test comment",
+            postId: "post123"
+          }
+        }.to_json
       )
       .to_return(status: 201, body: comment_response.to_json)
 

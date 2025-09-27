@@ -91,9 +91,16 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
           "User-Agent" => "FreeFeed-Rails-Client",
-          "Content-Type" => "application/x-www-form-urlencoded"
+          "Content-Type" => "application/json"
         },
-        body: "body=Test+post+content&feeds=testgroup"
+        body: {
+          post: {
+            body: "Test post content"
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
       )
       .to_return(status: 201, body: post_response.to_json)
 
@@ -142,7 +149,21 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     stub_request(:post, "#{@access_token.host}/v4/posts")
       .with(
-        body: "body=Post+with+image&feeds=testgroup&attachments=attachment123"
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          post: {
+            body: "Post with image",
+            attachments: ["attachment123"]
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
       )
       .to_return(status: 201, body: post_response.to_json)
 
@@ -172,6 +193,22 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     }
 
     stub_request(:post, "#{@access_token.host}/v4/posts")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          post: {
+            body: "Post with comments"
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: post_response.to_json)
 
     # Mock comment creation
@@ -194,11 +231,37 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     }
 
     stub_request(:post, "#{@access_token.host}/v4/comments")
-      .with(body: "body=First+comment&postId=freefeed_post_123")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          comment: {
+            body: "First comment",
+            postId: "freefeed_post_123"
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: comment_response_1.to_json)
 
     stub_request(:post, "#{@access_token.host}/v4/comments")
-      .with(body: "body=Second+comment&postId=freefeed_post_123")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          comment: {
+            body: "Second comment",
+            postId: "freefeed_post_123"
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: comment_response_2.to_json)
 
     service = FreefeedPublisher.new(post)
@@ -223,15 +286,57 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     }
 
     stub_request(:post, "#{@access_token.host}/v4/posts")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          post: {
+            body: "Post with comments"
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: post_response.to_json)
 
     # Only expect non-blank comments to be created
     stub_request(:post, "#{@access_token.host}/v4/comments")
-      .with(body: "body=First+comment&postId=freefeed_post_123")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          comment: {
+            body: "First comment",
+            postId: "freefeed_post_123"
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: { "comments" => { "id" => "comment123" } }.to_json)
 
     stub_request(:post, "#{@access_token.host}/v4/comments")
-      .with(body: "body=Second+comment&postId=freefeed_post_123")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Accept" => "application/json",
+          "User-Agent" => "FreeFeed-Rails-Client",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          comment: {
+            body: "Second comment",
+            postId: "freefeed_post_123"
+          }
+        }.to_json
+      )
       .to_return(status: 201, body: { "comments" => { "id" => "comment456" } }.to_json)
 
     service = FreefeedPublisher.new(post)
