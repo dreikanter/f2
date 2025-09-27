@@ -21,15 +21,11 @@ module Pagination
     scope.limit(pagination_per_page).offset(offset)
   end
 
-  def pagination_offset(page = pagination_current_page)
+  def pagination_offset(page)
     (page - 1) * pagination_per_page
   end
 
   def pagination_per_page
-    self.class.const_defined?(:PER_PAGE) ? self.class::PER_PAGE : default_per_page
-  end
-
-  def default_per_page
     25
   end
 
