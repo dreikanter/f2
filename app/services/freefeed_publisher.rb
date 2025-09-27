@@ -12,7 +12,7 @@ class FreefeedPublisher
     @post = post
     validate_post!
     @client = build_client
-    @http_client = HttpClient::FaradayAdapter.new
+    @http_client = HttpClient.build
   end
 
   # Publish the post to FreeFeed

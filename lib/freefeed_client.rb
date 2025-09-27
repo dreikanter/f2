@@ -23,7 +23,7 @@ class FreefeedClient
   def initialize(host:, token:, http_client: nil, options: {})
     @host = host.chomp("/")
     @token = token
-    @http_client = http_client || HttpClient::FaradayAdapter.new(DEFAULT_OPTIONS.merge(options))
+    @http_client = http_client || HttpClient.build(DEFAULT_OPTIONS.merge(options))
   end
 
   # Validate token and get current user info
