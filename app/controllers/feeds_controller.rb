@@ -1,7 +1,9 @@
 class FeedsController < ApplicationController
+  include Pagination
+
   def index
     authorize Feed
-    @feeds = policy_scope(Feed).order(:name)
+    @feeds = paginate_scope
   end
 
   def new
@@ -97,6 +99,10 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def pagination_scope
+    policy_scope(Feed).order(:name)
+  end
 
   def form_template_name(section)
     case section
