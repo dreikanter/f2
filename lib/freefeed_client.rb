@@ -44,10 +44,10 @@ class FreefeedClient
     raise Error, "Failed to fetch managed groups: #{e.message}"
   end
 
-  # Upload attachment
+  # Create attachment
   # @param file_path [String] path to the file to upload
   # @return [Hash] attachment data with id
-  def upload_attachment(file_path)
+  def create_attachment(file_path)
     content_type = MiniMime.lookup_by_filename(file_path)&.content_type || "application/octet-stream"
 
     payload = {

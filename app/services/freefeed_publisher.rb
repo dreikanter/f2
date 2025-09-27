@@ -58,7 +58,7 @@ class FreefeedPublisher
     post.attachment_urls.map do |url|
       # For now, we assume attachment_urls are local file paths
       # In the future, this might need to download remote URLs first
-      attachment = client.upload_attachment(url)
+      attachment = client.create_attachment(url)
       attachment[:id]
     end
   rescue => e
