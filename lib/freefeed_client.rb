@@ -136,6 +136,14 @@ class FreefeedClient
     handle_response(response)
   end
 
+  def auth_headers
+    {
+      "Authorization" => "Bearer #{@token}",
+      "Accept" => "application/json",
+      "User-Agent" => USER_AGENT
+    }
+  end
+
   def handle_response(response)
     case response.status
     when 200, 201
@@ -190,14 +198,6 @@ class FreefeedClient
     end
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
-  end
-
-  def auth_headers
-    {
-      "Authorization" => "Bearer #{@token}",
-      "Accept" => "application/json",
-      "User-Agent" => USER_AGENT
-    }
   end
 
   def parse_attachment_response(body)
