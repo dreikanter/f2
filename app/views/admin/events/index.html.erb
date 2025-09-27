@@ -68,7 +68,7 @@
       <ul class="pagination justify-content-center">
         <% if @current_page > 1 %>
           <li class="page-item">
-            <%= link_to "Previous", admin_events_path(page: @current_page - 1, filter_query: params[:filter_query]), class: "page-link" %>
+            <%= link_to "Previous", admin_events_path(page: @current_page - 1, filter_query: @filter_query), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">
@@ -87,14 +87,14 @@
             </li>
           <% else %>
             <li class="page-item">
-              <%= link_to page, admin_events_path(page: page, filter_query: params[:filter_query]), class: "page-link" %>
+              <%= link_to page, admin_events_path(page: page, filter_query: @filter_query), class: "page-link" %>
             </li>
           <% end %>
         <% end %>
 
         <% if @current_page < @total_pages %>
           <li class="page-item">
-            <%= link_to "Next", admin_events_path(page: @current_page + 1, filter_query: params[:filter_query]), class: "page-link" %>
+            <%= link_to "Next", admin_events_path(page: @current_page + 1, filter_query: @filter_query), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">

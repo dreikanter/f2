@@ -84,7 +84,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     event2 = create(:event, type: "TypeB", message: "Event B")
     event3 = create(:event, type: "TypeA", message: "Another A")
 
-    get admin_events_path, params: { filter_query: { type: "TypeA" }.to_json }
+    get admin_events_path, params: { filter_query: { type: "TypeA" } }
 
     assert_response :success
     assert_select "tbody tr", count: 2 # Should show 2 TypeA events
@@ -101,7 +101,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     event2 = create(:event, type: "Event2", subject: feed)
     event3 = create(:event, type: "Event3", subject: test_user)
 
-    get admin_events_path, params: { filter_query: { subject_type: "User" }.to_json }
+    get admin_events_path, params: { filter_query: { subject_type: "User" } }
 
     assert_response :success
     assert_select "tbody tr", count: 2 # Should show 2 User events
@@ -113,7 +113,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     create(:event, type: "TestEvent")
 
-    get admin_events_path, params: { filter_query: { type: "TestEvent" }.to_json }
+    get admin_events_path, params: { filter_query: { type: "TestEvent" } }
 
     assert_response :success
     assert_select "a", text: "Reset Filter"
@@ -133,7 +133,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     create(:event, type: "TestEvent")
 
-    get admin_events_path, params: { filter_query: "invalid json" }
+    get admin_events_path, params: { filter_query: { invalid_field: "value" } }
 
     assert_response :success
     assert_select "tbody tr", count: 1 # Should show all events
@@ -147,7 +147,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       create(:event, type: "FilteredType", message: "Event #{i}")
     end
 
-    get admin_events_path, params: { filter_query: { type: "FilteredType" }.to_json }
+    get admin_events_path, params: { filter_query: { type: "FilteredType" } }
 
     assert_response :success
     assert_select ".pagination a[href*='filter_query']", minimum: 1
