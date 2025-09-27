@@ -1,3 +1,5 @@
+require "mini_mime"
+
 # FreeFeed API Client
 #
 # Minimal client for FreeFeed API focused on specific application needs.
@@ -41,14 +43,83 @@ class FreefeedClient
     raise Error, "Failed to fetch managed groups: #{e.message}"
   end
 
+  # Upload attachment
+  # @param file_path [String] path to the file to upload
+  # @param filename [String] optional filename override
+  # @return [Hash] attachment data with id
+  def upload_attachment(file_path, filename: nil)
+    filename ||= File.basename(file_path)
+
+    boundary = "----FormBoundary#{SecureRandom.hex(16)}"
+    body = build_multipart_body(file_path, filename, boundary)
+
+    headers = {
+      "Content-Type" => "multipart/form-data; boundary=#{boundary}"
+    }
+
+    response = post("/v1/attachments", body: body, headers: headers)
+    parse_attachment_response(response.body)
+  rescue HttpClient::Error => e
+    raise Error, "Failed to upload attachment: #{e.message}"
+  end
+
+  # Create post
+  # @param body [String] post content
+  # @param feeds [Array<String>] array of feed usernames/ids to post to
+  # @param attachment_ids [Array<String>] array of attachment IDs
+  # @return [Hash] post data with id
+  def create_post(body:, feeds: [], attachment_ids: [])
+    payload = {
+      body: body,
+      feeds: feeds.join(",")
+    }
+    payload[:attachments] = attachment_ids.join(",") if attachment_ids.any?
+
+    response = post("/v4/posts",
+                   body: URI.encode_www_form(payload),
+                   headers: { "Content-Type" => "application/x-www-form-urlencoded" })
+    parse_post_response(response.body)
+  rescue HttpClient::Error => e
+    raise Error, "Failed to create post: #{e.message}"
+  end
+
+  # Create comment
+  # @param post_id [String] ID of the post to comment on
+  # @param body [String] comment content
+  # @return [Hash] comment data with id
+  def create_comment(post_id:, body:)
+    payload = {
+      body: body,
+      postId: post_id
+    }
+
+    response = post("/v4/comments",
+                   body: URI.encode_www_form(payload),
+                   headers: { "Content-Type" => "application/x-www-form-urlencoded" })
+    parse_comment_response(response.body)
+  rescue HttpClient::Error => e
+    raise Error, "Failed to create comment: #{e.message}"
+  end
+
   private
 
   def get(path, options: {})
     url = "#{@host}#{path}"
-    response = @http_client.get(url, headers: headers, options: options)
+    response = @http_client.get(url, headers: auth_headers, options: options)
 
+    handle_response(response)
+  end
+
+  def post(path, body: nil, headers: {})
+    url = "#{@host}#{path}"
+    response = @http_client.post(url, body: body, headers: headers.merge(auth_headers))
+
+    handle_response(response)
+  end
+
+  def handle_response(response)
     case response.status
-    when 200
+    when 200, 201
       response
     when 401, 403
       raise UnauthorizedError, "Invalid or expired token"
@@ -97,11 +168,83 @@ class FreefeedClient
     raise Error, "Invalid JSON response: #{e.message}"
   end
 
-  def headers
+  def auth_headers
     {
       "Authorization" => "Bearer #{@token}",
       "Accept" => "application/json",
       "User-Agent" => USER_AGENT
     }
+  end
+
+  def build_multipart_body(file_path, filename, boundary)
+    file_content = File.binread(file_path)
+    content_type = MiniMime.lookup_by_filename(filename)&.content_type || "application/octet-stream"
+
+    body = ""
+    body << "--#{boundary}\r\n"
+    body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n"
+    body << "Content-Type: #{content_type}\r\n"
+    body << "\r\n"
+    body << file_content
+    body << "\r\n--#{boundary}--\r\n"
+    body
+  end
+
+  def parse_attachment_response(body)
+    data = JSON.parse(body)
+    attachment = data.dig("attachments")
+
+    unless attachment && attachment["id"]
+      raise Error, "Invalid attachment response format"
+    end
+
+    {
+      id: attachment["id"],
+      url: attachment["url"],
+      thumbnail_url: attachment["thumbnailUrl"],
+      filename: attachment["fileName"],
+      file_size: attachment["fileSize"],
+      media_type: attachment["mediaType"]
+    }
+  rescue JSON::ParserError => e
+    raise Error, "Invalid JSON response: #{e.message}"
+  end
+
+  def parse_post_response(body)
+    data = JSON.parse(body)
+    post = data.dig("posts")
+
+    unless post && post["id"]
+      raise Error, "Invalid post response format"
+    end
+
+    {
+      id: post["id"],
+      body: post["body"],
+      created_at: post["createdAt"],
+      updated_at: post["updatedAt"],
+      likes: post["likes"],
+      comments: post["comments"]
+    }
+  rescue JSON::ParserError => e
+    raise Error, "Invalid JSON response: #{e.message}"
+  end
+
+  def parse_comment_response(body)
+    data = JSON.parse(body)
+    comment = data.dig("comments")
+
+    unless comment && comment["id"]
+      raise Error, "Invalid comment response format"
+    end
+
+    {
+      id: comment["id"],
+      body: comment["body"],
+      created_at: comment["createdAt"],
+      updated_at: comment["updatedAt"]
+    }
+  rescue JSON::ParserError => e
+    raise Error, "Invalid JSON response: #{e.message}"
   end
 end
