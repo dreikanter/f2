@@ -105,20 +105,8 @@ class FeedRefreshWorkflow
     current_time = Time.current
 
     posts_data = posts_to_persist.map do |post|
-      {
-        feed_id: post.feed_id,
-        feed_entry_id: post.feed_entry_id,
-        uid: post.uid,
-        content: post.content,
-        source_url: post.source_url,
-        published_at: post.published_at,
-        attachment_urls: post.attachment_urls || [],
-        comments: post.comments || [],
-        validation_errors: post.validation_errors || [],
-        status: post.status,
-        created_at: current_time,
-        updated_at: current_time
-      }
+      post.slice(:feed_id, :feed_entry_id, :uid, :content, :source_url, :published_at, :attachment_urls, :comments, :validation_errors, :status)
+          .merge(created_at: current_time, updated_at: current_time)
     end
 
     Post.insert_all(posts_data) if posts_data.any?
