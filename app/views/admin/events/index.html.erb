@@ -63,12 +63,12 @@
     </table>
   </div>
 
-  <% if @total_pages > 1 %>
+  <% if pagination_total_pages > 1 %>
     <nav aria-label="Events pagination" class="mt-4">
       <ul class="pagination justify-content-center">
-        <% if @current_page > 1 %>
+        <% if pagination_current_page > 1 %>
           <li class="page-item">
-            <%= link_to "Previous", admin_events_path(page: @current_page - 1, filter: @filter), class: "page-link" %>
+            <%= link_to "Previous", admin_events_path(page: pagination_current_page - 1, filter: @filter), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">
@@ -76,12 +76,12 @@
           </li>
         <% end %>
 
-        <% page_start = [@current_page - 2, 1].max %>
-        <% page_end = [page_start + 4, @total_pages].min %>
+        <% page_start = [pagination_current_page - 2, 1].max %>
+        <% page_end = [page_start + 4, pagination_total_pages].min %>
         <% page_start = [page_end - 4, 1].max if page_end - page_start < 4 %>
 
         <% (page_start..page_end).each do |page| %>
-          <% if page == @current_page %>
+          <% if page == pagination_current_page %>
             <li class="page-item active">
               <span class="page-link"><%= page %></span>
             </li>
@@ -92,9 +92,9 @@
           <% end %>
         <% end %>
 
-        <% if @current_page < @total_pages %>
+        <% if pagination_current_page < pagination_total_pages %>
           <li class="page-item">
-            <%= link_to "Next", admin_events_path(page: @current_page + 1, filter: @filter), class: "page-link" %>
+            <%= link_to "Next", admin_events_path(page: pagination_current_page + 1, filter: @filter), class: "page-link" %>
           </li>
         <% else %>
           <li class="page-item disabled">
@@ -104,7 +104,7 @@
       </ul>
 
       <div class="text-center text-muted">
-        Showing <%= @events.size %> of <%= @total_count %> events
+        Showing <%= @events.size %> of <%= pagination_total_count %> events
       </div>
     </nav>
   <% end %>
