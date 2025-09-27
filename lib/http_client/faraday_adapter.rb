@@ -1,5 +1,6 @@
 require "faraday"
 require "faraday/follow_redirects"
+require "faraday/multipart"
 require "net/http"
 require_relative "../http_client"
 
@@ -83,6 +84,7 @@ module HttpClient
 
     def build_connection(options)
       Faraday.new do |config|
+        config.request :multipart
         config.options.timeout = options[:timeout]
         config.options.open_timeout = options[:timeout]
         if options[:follow_redirects]
