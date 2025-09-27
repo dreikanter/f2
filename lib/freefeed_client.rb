@@ -1,4 +1,5 @@
 require "mini_mime"
+require "faraday/multipart"
 
 # FreeFeed API Client
 #
@@ -49,15 +50,13 @@ class FreefeedClient
   # @return [Hash] attachment data with id
   def upload_attachment(file_path, filename: nil)
     filename ||= File.basename(file_path)
+    content_type = MiniMime.lookup_by_filename(filename)&.content_type || "application/octet-stream"
 
-    boundary = "----FormBoundary#{SecureRandom.hex(16)}"
-    body = build_multipart_body(file_path, filename, boundary)
-
-    headers = {
-      "Content-Type" => "multipart/form-data; boundary=#{boundary}"
+    payload = {
+      file: Faraday::Multipart::FilePart.new(file_path, content_type, filename)
     }
 
-    response = post("/v1/attachments", body: body, headers: headers)
+    response = post("/v1/attachments", body: payload)
     parse_attachment_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to upload attachment: #{e.message}"
@@ -176,19 +175,6 @@ class FreefeedClient
     }
   end
 
-  def build_multipart_body(file_path, filename, boundary)
-    file_content = File.binread(file_path)
-    content_type = MiniMime.lookup_by_filename(filename)&.content_type || "application/octet-stream"
-
-    body = ""
-    body << "--#{boundary}\r\n"
-    body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n"
-    body << "Content-Type: #{content_type}\r\n"
-    body << "\r\n"
-    body << file_content
-    body << "\r\n--#{boundary}--\r\n"
-    body
-  end
 
   def parse_attachment_response(body)
     data = JSON.parse(body)
