@@ -1,5 +1,6 @@
 class FeedRefreshWorkflow
   include Workflow
+  include StatsRecorder
 
   step :initialize_workflow
   step :load_feed_contents
@@ -11,11 +12,11 @@ class FeedRefreshWorkflow
   step :publish_posts
   step :finalize_workflow
 
-  attr_reader :feed, :stats
+  attr_reader :feed
 
   def initialize(feed)
     @feed = feed
-    @stats = {}
+    initialize_stats
   end
 
   private
@@ -25,10 +26,7 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
-    record_stats(
-      total_duration: total_duration,
-      failed_at_step: current_step
-    )
+    record_error_stats(error, current_step: current_step)
 
     FeedRefreshEvent.create_error(
       feed: feed,
@@ -39,7 +37,7 @@ class FeedRefreshWorkflow
   end
 
   def initialize_workflow(*)
-    record_stats(started_at: Time.current)
+    record_timing_stats(started_at: Time.current)
   end
 
   def load_feed_contents(*)
@@ -154,10 +152,7 @@ class FeedRefreshWorkflow
     failed_posts_count = posts.count(&:failed?)
     rejected_posts_count = posts.count(&:rejected?)
 
-    record_stats(
-      completed_at: Time.current,
-      total_duration: total_duration
-    )
+    record_timing_stats(completed_at: Time.current)
 
     FeedRefreshEvent.create_stats(feed: feed, stats: stats)
 
@@ -169,17 +164,4 @@ class FeedRefreshWorkflow
     posts
   end
 
-  def record_duration(step_name)
-    duration = step_durations[step_name].to_f
-    stats_key = step_stats_key(step_name)
-    record_stats(stats_key => duration)
-  end
-
-  def step_stats_key(step_name)
-    "#{step_name}_duration".to_sym
-  end
-
-  def record_stats(new_stats = {})
-    stats.merge!(new_stats)
-  end
 end
