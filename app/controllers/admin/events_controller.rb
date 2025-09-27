@@ -7,7 +7,7 @@ class Admin::EventsController < ApplicationController
     authorize Event
 
     @filter = optional_filter
-    @events = paginate_scope.includes(:user, :subject).order(created_at: :desc)
+    @events = paginate_scope.includes(:user, :subject)
   end
 
   def show
@@ -20,7 +20,7 @@ class Admin::EventsController < ApplicationController
   private
 
   def pagination_scope
-    events_scope
+    events_scope.order(created_at: :desc)
   end
 
   def previous_event(event)
