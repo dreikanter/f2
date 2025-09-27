@@ -19,6 +19,7 @@ access_token = AccessToken.build_with_token(
 access_token.save!
 
 feed_profile = FeedProfile.first || FactoryBot.create(:feed_profile)
+
 feed = Feed.create!(
   user: user,
   access_token: access_token,

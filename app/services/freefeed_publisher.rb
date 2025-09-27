@@ -11,6 +11,7 @@ class FreefeedPublisher
 
   def initialize(post)
     @post = post
+    @downloaded_files = []
     validate_post!
     @client = build_client
   end
@@ -29,6 +30,8 @@ class FreefeedPublisher
     freefeed_post_id
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
+  ensure
+    cleanup_downloaded_files
   end
 
   private
@@ -56,9 +59,8 @@ class FreefeedPublisher
     return [] if post.attachment_urls.blank?
 
     post.attachment_urls.map do |url|
-      # For now, we assume attachment_urls are local file paths
-      # In the future, this might need to download remote URLs first
-      attachment = client.create_attachment(url)
+      file_path = download_attachment_if_needed(url)
+      attachment = client.create_attachment(file_path)
       attachment[:id]
     end
   rescue => e
@@ -94,5 +96,45 @@ class FreefeedPublisher
     post.update!(freefeed_post_id: freefeed_post_id, status: :published)
   rescue => e
     raise PublishError, "Failed to update post status: #{e.message}"
+  end
+
+  def download_attachment_if_needed(url)
+    # If it's already a local file path, return as-is
+    return url if File.exist?(url)
+
+    # Download external URL to temporary file
+    require 'net/http'
+    require 'uri'
+
+    uri = URI(url)
+    response = Net::HTTP.get_response(uri)
+
+    # Follow redirects
+    if response.is_a?(Net::HTTPRedirection)
+      uri = URI(response['location'])
+      response = Net::HTTP.get_response(uri)
+    end
+
+    unless response.is_a?(Net::HTTPSuccess)
+      raise PublishError, "Failed to download attachment from #{url}: HTTP #{response.code}"
+    end
+
+    # Create temporary file
+    extension = File.extname(uri.path).presence || '.jpg'
+    temp_file = Rails.root.join('tmp', "attachment_#{SecureRandom.hex(8)}#{extension}")
+    File.binwrite(temp_file, response.body)
+
+    # Track downloaded file for cleanup
+    @downloaded_files << temp_file.to_s
+    temp_file.to_s
+  rescue => e
+    raise PublishError, "Failed to download attachment from #{url}: #{e.message}"
+  end
+
+  def cleanup_downloaded_files
+    @downloaded_files.each do |file_path|
+      File.delete(file_path) if File.exist?(file_path)
+    end
+    @downloaded_files.clear
   end
 end
