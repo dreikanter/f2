@@ -1,18 +1,30 @@
 require "test_helper"
 
 class FreefeedPublisherTest < ActiveSupport::TestCase
-  def setup
-    @user = create(:user)
-    @access_token = create(:access_token, user: @user, status: :active)
-    @feed_profile = create(:feed_profile)
-    @feed = create(:feed, user: @user, access_token: @access_token, feed_profile: @feed_profile, target_group: "testgroup")
-    @feed_entry = create(:feed_entry, feed: @feed)
+  def user
+    @user ||= create(:user)
+  end
+
+  def access_token
+    @access_token ||= create(:access_token, user: user, status: :active)
+  end
+
+  def feed_profile
+    @feed_profile ||= create(:feed_profile)
+  end
+
+  def feed
+    @feed ||= create(:feed, user: user, access_token: access_token, feed_profile: feed_profile, target_group: "testgroup")
+  end
+
+  def feed_entry
+    @feed_entry ||= create(:feed_entry, feed: feed)
   end
 
   def post_with_content(content, **attributes)
     create(:post, {
-      feed: @feed,
-      feed_entry: @feed_entry,
+      feed: feed,
+      feed_entry: feed_entry,
       content: content,
       attachment_urls: [],
       comments: []
@@ -42,8 +54,8 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "raises validation error for feed without access token" do
-    feed = create(:feed, :without_access_token, user: @user, feed_profile: @feed_profile, state: :disabled)
-    post = create(:post, feed: feed, feed_entry: @feed_entry)
+    feed = create(:feed, :without_access_token, user: user, feed_profile: feed_profile, state: :disabled)
+    post = create(:post, feed: feed, feed_entry: feed_entry)
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
       FreefeedPublisher.new(post)
@@ -52,8 +64,8 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "raises validation error for feed without target group" do
-    feed = create(:feed, user: @user, access_token: @access_token, feed_profile: @feed_profile, target_group: nil, state: :disabled)
-    post = create(:post, feed: feed, feed_entry: @feed_entry)
+    feed = create(:feed, user: user, access_token: access_token, feed_profile: feed_profile, target_group: nil, state: :disabled)
+    post = create(:post, feed: feed, feed_entry: feed_entry)
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
       FreefeedPublisher.new(post)
@@ -85,10 +97,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v4/posts")
+    stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -131,7 +143,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v1/attachments")
+    stub_request(:post, "#{access_token.host}/v1/attachments")
       .to_return(status: 201, body: attachment_response.to_json)
 
     # Mock post creation
@@ -146,10 +158,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v4/posts")
+    stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -190,10 +202,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v4/posts")
+    stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -227,10 +239,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v4/comments")
+    stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -243,10 +255,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       )
       .to_return(status: 201, body: comment_response_1.to_json)
 
-    stub_request(:post, "#{@access_token.host}/v4/comments")
+    stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -280,10 +292,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v4/posts")
+    stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -299,10 +311,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       .to_return(status: 201, body: post_response.to_json)
 
     # Only expect non-blank comments to be created
-    stub_request(:post, "#{@access_token.host}/v4/comments")
+    stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -315,10 +327,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
       )
       .to_return(status: 201, body: { "comments" => { "id" => "comment123" } }.to_json)
 
-    stub_request(:post, "#{@access_token.host}/v4/comments")
+    stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{@access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.token_value}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -335,7 +347,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     service.publish
 
     # Verify only 2 comment requests were made (not 4)
-    assert_requested(:post, "#{@access_token.host}/v4/comments", times: 2)
+    assert_requested(:post, "#{access_token.host}/v4/comments", times: 2)
   end
 
   test "publish returns existing freefeed_post_id if already published" do
@@ -346,7 +358,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     assert_equal "existing_id", result
     # Should not make any API calls
-    assert_not_requested(:post, "#{@access_token.host}/v4/posts")
+    assert_not_requested(:post, "#{access_token.host}/v4/posts")
   end
 
   test "publish handles FreeFeed API errors gracefully" do
@@ -415,15 +427,15 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     attachment_response = {
       "attachments" => {
         "id" => "attachment_123",
-        "url" => "#{@access_token.host}/attachment_123.jpg",
-        "thumbnailUrl" => "#{@access_token.host}/attachment_123_thumb.jpg",
+        "url" => "#{access_token.host}/attachment_123.jpg",
+        "thumbnailUrl" => "#{access_token.host}/attachment_123_thumb.jpg",
         "fileName" => "image.jpg",
         "fileSize" => image_data.length,
         "mediaType" => "image/jpeg"
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v1/attachments")
+    stub_request(:post, "#{access_token.host}/v1/attachments")
       .to_return(status: 201, body: attachment_response.to_json)
 
     # Mock post creation
@@ -446,7 +458,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     assert_equal "freefeed_post_123", freefeed_post_id
     assert_requested :get, image_url
-    assert_requested :post, "#{@access_token.host}/v1/attachments"
+    assert_requested :post, "#{access_token.host}/v1/attachments"
   end
 
   test "handles image download failure" do
@@ -478,15 +490,15 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     attachment_response = {
       "attachments" => {
         "id" => "attachment_123",
-        "url" => "#{@access_token.host}/attachment_123.jpg",
-        "thumbnailUrl" => "#{@access_token.host}/attachment_123_thumb.jpg",
+        "url" => "#{access_token.host}/attachment_123.jpg",
+        "thumbnailUrl" => "#{access_token.host}/attachment_123_thumb.jpg",
         "fileName" => "test_image.jpg",
         "fileSize" => image_data.length,
         "mediaType" => "image/jpeg"
       }
     }
 
-    stub_request(:post, "#{@access_token.host}/v1/attachments")
+    stub_request(:post, "#{access_token.host}/v1/attachments")
       .to_return(status: 201, body: attachment_response.to_json)
 
     # Mock post creation
@@ -508,7 +520,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     freefeed_post_id = service.publish
 
     assert_equal "freefeed_post_123", freefeed_post_id
-    assert_requested :post, "#{@access_token.host}/v1/attachments"
+    assert_requested :post, "#{access_token.host}/v1/attachments"
 
     # Cleanup
     temp_file.unlink
