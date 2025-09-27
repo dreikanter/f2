@@ -195,7 +195,6 @@ class FreefeedClient
     }
   end
 
-
   def parse_attachment_response(body)
     data = JSON.parse(body)
     attachment = data.dig("attachments")

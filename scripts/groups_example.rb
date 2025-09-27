@@ -1,6 +1,7 @@
 puts 'Testing managed groups access...'
 
 token_value = ENV['FREEFEED_STAGING_TOKEN']
+
 unless token_value
   puts 'Error: FREEFEED_STAGING_TOKEN environment variable is required'
   exit 1
