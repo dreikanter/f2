@@ -23,7 +23,7 @@
         <% @events.each do |event| %>
           <tr>
             <td>
-              <%= link_to admin_events_path(filter_query: { type: event.type }.to_json),
+              <%= link_to admin_events_path(filter_query: { type: event.type }),
                           class: "text-decoration-none",
                           title: "Filter by type: #{event.type}" do %>
                 <code><%= event.type %></code>
@@ -42,7 +42,7 @@
             </td>
             <td>
               <% if event.subject %>
-                <%= link_to admin_events_path(filter_query: { subject_type: event.subject_type }.to_json),
+                <%= link_to admin_events_path(filter_query: { subject_type: event.subject_type }),
                             class: "text-decoration-none text-muted",
                             title: "Filter by subject type: #{event.subject_type}" do %>
                   <%= event.subject_type %>
