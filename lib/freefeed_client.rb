@@ -67,14 +67,18 @@ class FreefeedClient
   # @return [Hash] post data with id
   def create_post(body:, feeds: [], attachment_ids: [])
     payload = {
-      body: body,
-      feeds: feeds.join(",")
+      post: {
+        body: body
+      },
+      meta: {
+        feeds: feeds
+      }
     }
-    payload[:attachments] = attachment_ids.join(",") if attachment_ids.any?
+    payload[:post][:attachments] = attachment_ids if attachment_ids.any?
 
     response = post("/v4/posts",
-                   body: URI.encode_www_form(payload),
-                   headers: { "Content-Type" => "application/x-www-form-urlencoded" })
+                   body: payload.to_json,
+                   headers: { "Content-Type" => "application/json" })
     parse_post_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to create post: #{e.message}"
@@ -86,13 +90,15 @@ class FreefeedClient
   # @return [Hash] comment data with id
   def create_comment(post_id:, body:)
     payload = {
-      body: body,
-      postId: post_id
+      comment: {
+        body: body,
+        postId: post_id
+      }
     }
 
     response = post("/v4/comments",
-                   body: URI.encode_www_form(payload),
-                   headers: { "Content-Type" => "application/x-www-form-urlencoded" })
+                   body: payload.to_json,
+                   headers: { "Content-Type" => "application/json" })
     parse_comment_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to create comment: #{e.message}"
@@ -207,8 +213,8 @@ class FreefeedClient
       body: post["body"],
       created_at: post["createdAt"],
       updated_at: post["updatedAt"],
-      likes: post["likes"],
-      comments: post["comments"]
+      likes: post["likes"] || [],
+      comments: post["comments"] || []
     }
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
