@@ -1,7 +1,6 @@
-# FreeFeed Publisher
-#
 # Publishes posts to FreeFeed using the Post record data.
 # Handles attachment uploads, post creation, and comment creation.
+#
 class FreefeedPublisher
   class Error < StandardError; end
   class ValidationError < Error; end
