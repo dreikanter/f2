@@ -25,6 +25,11 @@ module HttpClient
   class TimeoutError < Error; end
   class TooManyRedirectsError < Error; end
 
+  # TBD: Parameterize the client adapter, so instead of
+  #   HttpClient::FaradayAdapter.new the consumer will call something like
+  #   HttpClient.build. There should be no direct reference to the
+  #   implementation, since it's irrelevant.
+
   class Base
     def get(url, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #get"

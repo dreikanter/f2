@@ -8,6 +8,27 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  def setup
+    stub_freefeed_api_calls
+  end
+
+  def stub_freefeed_api_calls
+    stub_request(:post, /.*\/v4\/posts/)
+      .to_return(
+        status: 201,
+        body: {
+          posts: {
+            id: "freefeed_post_#{SecureRandom.hex(8)}",
+            body: "Test post",
+            createdAt: Time.current.iso8601,
+            updatedAt: Time.current.iso8601,
+            likes: [],
+            comments: []
+          }
+        }.to_json
+      )
+  end
+
   test "initializes workflow with feed and stats" do
     workflow = FeedRefreshWorkflow.new(feed)
 
@@ -24,6 +45,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :persist_entries,
       :normalize_entries,
       :persist_posts,
+      :publish_posts,
       :finalize_workflow
     ]
 
@@ -75,30 +97,25 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     result = workflow.execute
 
-    # Verify workflow completed successfully
     assert_equal 2, result.length, "Should return 2 posts"
 
-    # Verify posts were created properly
-    posts = result.select(&:enqueued?)
-    assert_equal 2, posts.length, "Should have 2 enqueued posts"
+    published_posts = result.select(&:published?)
+    assert_equal 2, published_posts.length, "Should have 2 published posts"
 
-    # Verify post attributes
-    first_post = posts.first
+    # Posts are ordered by published_at, so second entry comes first
+    first_post = published_posts.first
     assert_equal test_feed, first_post.feed
     assert_not_nil first_post.feed_entry
-    assert_match(/test entry description/, first_post.content)
-    assert_equal "https://example.com/entry-123", first_post.source_url
-    assert_equal "enqueued", first_post.status
+    assert_match(/Another test entry/, first_post.content)
+    assert_equal "https://example.com/entry-456", first_post.source_url
+    assert_equal "published", first_post.status
+    assert_not_nil first_post.freefeed_post_id
 
-    # Verify feed entries were created
     assert_equal 2, FeedEntry.where(feed: test_feed).count
     entries = FeedEntry.where(feed: test_feed).order(:created_at)
     assert_equal ["entry-123", "entry-456"], entries.pluck(:uid)
 
-    # Verify posts were persisted to database
     assert_equal 2, Post.where(feed: test_feed, status: :published).count
-
-    # Verify workflow stats were recorded
     assert workflow.stats[:started_at]
     assert workflow.stats[:content_size] > 0
     assert_equal 2, workflow.stats[:total_entries]

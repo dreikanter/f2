@@ -8,6 +8,7 @@ class FeedRefreshWorkflow
   step :persist_entries
   step :normalize_entries
   step :persist_posts
+  step :publish_posts
   step :finalize_workflow
 
   attr_reader :feed, :stats
@@ -99,44 +100,71 @@ class FeedRefreshWorkflow
   end
 
   def persist_posts(posts)
-    enqueued_posts = posts.select(&:enqueued?)
-    return posts if enqueued_posts.empty?
+    return posts if posts.empty?
     current_time = Time.current
 
-    posts_data = enqueued_posts.map do |post|
-      {
-        feed_id: post.feed_id,
-        feed_entry_id: post.feed_entry_id,
-        uid: post.uid,
-        content: post.content,
-        source_url: post.source_url,
-        published_at: post.published_at,
-        attachment_urls: post.attachment_urls || [],
-        comments: post.comments || [],
-        validation_errors: post.validation_errors || [],
-        status: :published,
-        created_at: current_time,
-        updated_at: current_time
-      }
+    posts_data = posts.map do |post|
+      post.slice(:feed_id, :feed_entry_id, :uid, :content, :source_url, :published_at, :attachment_urls, :comments, :validation_errors, :status)
+          .merge(created_at: current_time, updated_at: current_time)
     end
 
     Post.insert_all(posts_data) if posts_data.any?
-    posts
+
+    new_uids = posts.map(&:uid)
+    persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
+
+    record_stats(
+      new_posts: persisted_posts.where(status: :enqueued).count,
+      rejected_posts: persisted_posts.where(status: :rejected).count
+    )
+
+    persisted_posts
+  end
+
+  def publish_posts(persisted_posts)
+    enqueued_posts = persisted_posts.select(&:enqueued?).sort_by(&:published_at)
+    return persisted_posts if enqueued_posts.empty?
+
+    published_count = 0
+    failed_count = 0
+
+    enqueued_posts.each do |post|
+      begin
+        publisher = FreefeedPublisher.new(post)
+        freefeed_post_id = publisher.publish
+        post.update!(status: :published, freefeed_post_id: freefeed_post_id)
+        published_count += 1
+      rescue => e
+        post.update!(status: :failed)
+        failed_count += 1
+        Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
+      end
+    end
+
+    record_stats(
+      published_posts: published_count,
+      failed_posts: failed_count
+    )
+
+    persisted_posts
   end
 
   def finalize_workflow(posts)
-    enqueued_posts_count = posts.count(&:enqueued?)
+    published_posts_count = posts.count(&:published?)
+    failed_posts_count = posts.count(&:failed?)
     rejected_posts_count = posts.count(&:rejected?)
 
     record_stats(
-      new_posts: enqueued_posts_count,
-      rejected_posts: rejected_posts_count,
       completed_at: Time.current,
       total_duration: total_duration
     )
 
     FeedRefreshEvent.create_stats(feed: feed, stats: stats)
-    Rails.logger.info "Feed refresh completed for feed #{feed.id}, processed #{posts.count} posts"
+
+    Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
+                      "#{published_posts_count} published, " \
+                      "#{failed_posts_count} failed, " \
+                      "#{rejected_posts_count} rejected"
 
     posts
   end

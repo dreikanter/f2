@@ -136,6 +136,14 @@ class FreefeedClient
     handle_response(response)
   end
 
+  def auth_headers
+    {
+      "Authorization" => "Bearer #{@token}",
+      "Accept" => "application/json",
+      "User-Agent" => USER_AGENT
+    }
+  end
+
   def handle_response(response)
     case response.status
     when 200, 201
@@ -148,6 +156,11 @@ class FreefeedClient
       raise Error, "HTTP #{response.status}: #{response.body}"
     end
   end
+
+  # TBD: Consider simplifying response processing. Probably keep the keys
+  #   as is, just coerce some of the values when it makes sense. Also consider
+  #   unifying draft implementation of the response processing methods
+  #   since they are basically identical.
 
   def parse_whoami_response(body)
     data = JSON.parse(body)
@@ -185,14 +198,6 @@ class FreefeedClient
     end
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
-  end
-
-  def auth_headers
-    {
-      "Authorization" => "Bearer #{@token}",
-      "Accept" => "application/json",
-      "User-Agent" => USER_AGENT
-    }
   end
 
   def parse_attachment_response(body)
