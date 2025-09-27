@@ -90,7 +90,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -152,7 +151,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -197,7 +195,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -235,7 +232,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -252,7 +248,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -290,7 +285,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -310,7 +304,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -327,7 +320,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@access_token.token_value}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {

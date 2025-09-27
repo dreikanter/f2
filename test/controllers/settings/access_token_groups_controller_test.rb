@@ -33,8 +33,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
       .with(
         headers: {
           "Authorization" => "Bearer #{access_token.token_value}",
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 200, body: response_body)
@@ -108,8 +107,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
       .with(
         headers: {
           "Authorization" => "Bearer #{access_token.token_value}",
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 200, body: response_body)

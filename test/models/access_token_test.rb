@@ -223,8 +223,7 @@ class AccessTokenTest < ActiveSupport::TestCase
       .with(
         headers: {
           "Authorization" => "Bearer #{access_token.token_value}",
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 401, body: "")

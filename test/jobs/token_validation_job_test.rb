@@ -51,8 +51,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(status: 200, body: "invalid json", headers: { "Content-Type" => "application/json" })
@@ -73,8 +72,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(
@@ -117,8 +115,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(
@@ -193,8 +190,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(
@@ -215,8 +211,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
-          "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client"
+          "Accept" => "application/json"
         }
       )
       .to_return(

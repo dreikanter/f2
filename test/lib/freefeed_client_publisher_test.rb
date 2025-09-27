@@ -28,7 +28,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => /multipart\/form-data/
         }
       )
@@ -83,7 +82,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -125,7 +123,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
@@ -171,7 +168,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
         headers: {
           "Authorization" => "Bearer #{@token}",
           "Accept" => "application/json",
-          "User-Agent" => "FreeFeed-Rails-Client",
           "Content-Type" => "application/json"
         },
         body: {
