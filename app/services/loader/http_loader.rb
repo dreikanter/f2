@@ -22,7 +22,7 @@ module Loader
 
     def default_http_client
       max_redirects = options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
-      HttpClient::FaradayAdapter.new(max_redirects: max_redirects)
+      HttpClient.build(max_redirects: max_redirects)
     end
   end
 end

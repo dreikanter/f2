@@ -11,11 +11,11 @@ class FreefeedClientTest < ActiveSupport::TestCase
   test "initializes with required parameters" do
     client = FreefeedClient.new(host: @host, token: @token)
     assert_equal "https://freefeed.net", client.host
-    assert_instance_of HttpClient::FaradayAdapter, client.http_client
+    assert_kind_of HttpClient::Base, client.http_client
   end
 
   test "initializes with custom http_client" do
-    custom_client = HttpClient::FaradayAdapter.new(timeout: 60)
+    custom_client = HttpClient.build(timeout: 60)
     client = FreefeedClient.new(host: @host, token: @token, http_client: custom_client)
     assert_equal custom_client, client.http_client
   end

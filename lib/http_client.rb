@@ -5,6 +5,9 @@
 # HTTParty, etc.) without changing application code, and ensures consistent error
 # handling across the app.
 #
+require_relative "http_client/base"
+require_relative "http_client/faraday_adapter"
+
 module HttpClient
   class Response
     attr_reader :status, :body, :headers
@@ -25,26 +28,12 @@ module HttpClient
   class TimeoutError < Error; end
   class TooManyRedirectsError < Error; end
 
-  # TBD: Parameterize the client adapter, so instead of
-  #   HttpClient::FaradayAdapter.new the consumer will call something like
-  #   HttpClient.build. There should be no direct reference to the
-  #   implementation, since it's irrelevant.
+  def self.build(options = {})
+    adapter_class = options.delete(:adapter) || default_adapter_class
+    adapter_class.new(options)
+  end
 
-  class Base
-    def get(url, headers: {}, options: {})
-      raise NotImplementedError, "Subclasses must implement #get"
-    end
-
-    def post(url, body: nil, headers: {}, options: {})
-      raise NotImplementedError, "Subclasses must implement #post"
-    end
-
-    def put(url, body: nil, headers: {}, options: {})
-      raise NotImplementedError, "Subclasses must implement #put"
-    end
-
-    def delete(url, headers: {}, options: {})
-      raise NotImplementedError, "Subclasses must implement #delete"
-    end
+  def self.default_adapter_class
+    FaradayAdapter
   end
 end
