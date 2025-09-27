@@ -12,7 +12,6 @@ class FeedPreviewWorkflow
 
   def initialize(feed_preview)
     @feed_preview = feed_preview
-    initialize_stats
   end
 
   private

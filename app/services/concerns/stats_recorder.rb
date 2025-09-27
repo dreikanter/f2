@@ -1,12 +1,8 @@
 module StatsRecorder
   extend ActiveSupport::Concern
 
-  included do
-    attr_reader :stats
-  end
-
-  def initialize_stats
-    @stats = {}
+  def stats
+    @stats ||= {}
   end
 
   def record_stats(new_stats = {})

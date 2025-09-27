@@ -16,7 +16,6 @@ class FeedRefreshWorkflow
 
   def initialize(feed)
     @feed = feed
-    initialize_stats
   end
 
   private
