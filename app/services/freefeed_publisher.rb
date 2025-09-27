@@ -11,9 +11,9 @@ class FreefeedPublisher
 
   def initialize(post)
     @post = post
-    @downloaded_files = []
     validate_post!
     @client = build_client
+    @http_client = HttpClient::FaradayAdapter.new
   end
 
   # Publish the post to FreeFeed
@@ -30,8 +30,6 @@ class FreefeedPublisher
     freefeed_post_id
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
-  ensure
-    cleanup_downloaded_files
   end
 
   private
@@ -59,8 +57,8 @@ class FreefeedPublisher
     return [] if post.attachment_urls.blank?
 
     post.attachment_urls.map do |url|
-      file_path = download_attachment_if_needed(url)
-      attachment = client.create_attachment(file_path)
+      io, content_type = download_attachment_to_memory(url)
+      attachment = client.create_attachment_from_io(io, content_type)
       attachment[:id]
     end
   rescue => e
@@ -98,43 +96,36 @@ class FreefeedPublisher
     raise PublishError, "Failed to update post status: #{e.message}"
   end
 
-  def download_attachment_if_needed(url)
-    # If it's already a local file path, return as-is
-    return url if File.exist?(url)
+  def download_attachment_to_memory(url)
+    # If it's already a local file path, read it to memory
+    if File.exist?(url)
+      content = File.binread(url)
+      content_type = MiniMime.lookup_by_filename(url)&.content_type || "application/octet-stream"
+      io = StringIO.new(content)
+      io.set_encoding(Encoding::BINARY)
+      return [io, content_type]
+    end
 
-    # Download external URL to temporary file
-    require 'net/http'
-    require 'uri'
+    # Download external URL to memory
+    response = @http_client.get(url)
 
+    unless response.success?
+      raise PublishError, "Failed to download attachment from #{url}: HTTP #{response.status}"
+    end
+
+    # Detect content type from URL or default to image
     uri = URI(url)
-    response = Net::HTTP.get_response(uri)
+    content_type = MiniMime.lookup_by_filename(uri.path)&.content_type || "image/jpeg"
 
-    # Follow redirects
-    if response.is_a?(Net::HTTPRedirection)
-      uri = URI(response['location'])
-      response = Net::HTTP.get_response(uri)
-    end
+    # Create StringIO from response body
+    io = StringIO.new(response.body)
+    io.set_encoding(Encoding::BINARY)
+    io.rewind
 
-    unless response.is_a?(Net::HTTPSuccess)
-      raise PublishError, "Failed to download attachment from #{url}: HTTP #{response.code}"
-    end
-
-    # Create temporary file
-    extension = File.extname(uri.path).presence || '.jpg'
-    temp_file = Rails.root.join('tmp', "attachment_#{SecureRandom.hex(8)}#{extension}")
-    File.binwrite(temp_file, response.body)
-
-    # Track downloaded file for cleanup
-    @downloaded_files << temp_file.to_s
-    temp_file.to_s
+    [io, content_type]
+  rescue HttpClient::Error => e
+    raise PublishError, "Failed to download attachment from #{url}: #{e.message}"
   rescue => e
     raise PublishError, "Failed to download attachment from #{url}: #{e.message}"
-  end
-
-  def cleanup_downloaded_files
-    @downloaded_files.each do |file_path|
-      File.delete(file_path) if File.exist?(file_path)
-    end
-    @downloaded_files.clear
   end
 end

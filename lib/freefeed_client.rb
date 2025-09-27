@@ -60,6 +60,21 @@ class FreefeedClient
     raise Error, "Failed to upload attachment: #{e.message}"
   end
 
+  # Create attachment from IO object
+  # @param io [IO] IO object containing the file data
+  # @param content_type [String] MIME type of the file
+  # @return [Hash] attachment data with id
+  def create_attachment_from_io(io, content_type)
+    payload = {
+      file: Faraday::Multipart::FilePart.new(io, content_type)
+    }
+
+    response = post("/v1/attachments", body: payload)
+    parse_attachment_response(response.body)
+  rescue HttpClient::Error => e
+    raise Error, "Failed to upload attachment: #{e.message}"
+  end
+
   # Create post
   # @param body [String] post content
   # @param feeds [Array<String>] array of feed usernames/ids to post to
