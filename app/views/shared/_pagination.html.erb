@@ -1,0 +1,45 @@
+<% if pagination_total_pages > 1 %>
+  <nav aria-label="<%= pagination_label %> pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+      <% if pagination_current_page > 1 %>
+        <li class="page-item">
+          <%= link_to "Previous", pagination_path.call(page: pagination_current_page - 1), class: "page-link" %>
+        </li>
+      <% else %>
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+      <% end %>
+
+      <% page_start = [pagination_current_page - 2, 1].max %>
+      <% page_end = [page_start + 4, pagination_total_pages].min %>
+      <% page_start = [page_end - 4, 1].max if page_end - page_start < 4 %>
+
+      <% (page_start..page_end).each do |page| %>
+        <% if page == pagination_current_page %>
+          <li class="page-item active">
+            <span class="page-link"><%= page %></span>
+          </li>
+        <% else %>
+          <li class="page-item">
+            <%= link_to page, pagination_path.call(page: page), class: "page-link" %>
+          </li>
+        <% end %>
+      <% end %>
+
+      <% if pagination_current_page < pagination_total_pages %>
+        <li class="page-item">
+          <%= link_to "Next", pagination_path.call(page: pagination_current_page + 1), class: "page-link" %>
+        </li>
+      <% else %>
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="text-center text-muted">
+      Showing <%= collection_size %> of <%= pagination_total_count %> <%= collection_name %>
+    </div>
+  </nav>
+<% end %>
