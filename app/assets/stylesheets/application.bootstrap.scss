@@ -14,29 +14,31 @@
 
 // Posts table styling
 .posts-table {
+  table-layout: fixed;
   width: 100%;
 
   .content-column {
-    width: 50%;
+    width: 45%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .feed-column {
-    width: 25%;
+    width: 20%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .narrow-column {
+    width: 5%;
     white-space: nowrap;
   }
 
   .source-column,
   .freefeed-column {
-    width: 1px;
+    width: 7%;
     white-space: nowrap;
   }
 }
