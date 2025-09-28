@@ -18,27 +18,27 @@
   width: 100%;
 
   .content-column {
-    width: 45%;
+    width: auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .feed-column {
-    width: 20%;
+    width: 150px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .narrow-column {
-    width: 5%;
+    width: 60px;
     white-space: nowrap;
   }
 
   .source-column,
   .freefeed-column {
-    width: 7%;
+    width: 80px;
     white-space: nowrap;
   }
 }
