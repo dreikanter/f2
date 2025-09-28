@@ -42,3 +42,4 @@ bun.lockb
 /.claude
 .env
 !.env.sample
+.zed
