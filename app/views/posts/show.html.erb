@@ -15,7 +15,7 @@
       <div class="list-group-item">
         <strong>Content:</strong>
         <div class="mt-2">
-          <div class="p-3 border rounded bg-light">
+          <div class="mb-2 p-3 border rounded bg-light">
             <%= simple_format(@post.content) %>
           </div>
         </div>
@@ -36,7 +36,7 @@
           <strong>Attachments (<%= @post.attachment_urls.length %>):</strong>
           <% @post.attachment_urls.each do |url| %>
             <%= link_to url, target: "_blank", rel: "noopener", class: "text-decoration-none ms-2" do %>
-              <i class="bi bi-paperclip"></i>
+              <i class="bi bi-file-earmark-image"></i>
             <% end %>
           <% end %>
         </div>
