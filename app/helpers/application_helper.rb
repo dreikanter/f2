@@ -38,4 +38,21 @@ module ApplicationHelper
     # Truncate to limit HTML size and improve performance
     truncate(content.strip, length: length)
   end
+
+  def post_status_icon(status)
+    case status.to_s
+    when "draft"
+      content_tag(:i, nil, class: "bi bi-file-earmark text-muted")
+    when "enqueued"
+      content_tag(:i, nil, class: "bi bi-clock text-warning")
+    when "rejected"
+      content_tag(:i, nil, class: "bi bi-x-circle text-danger")
+    when "published"
+      content_tag(:i, nil, class: "bi bi-check-circle text-success")
+    when "failed"
+      content_tag(:i, nil, class: "bi bi-exclamation-triangle text-danger")
+    else
+      content_tag(:span, status.capitalize, class: "text-muted")
+    end
+  end
 end

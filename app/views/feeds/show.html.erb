@@ -106,7 +106,7 @@
             <th class="published-column text-center"><i class="bi bi-calendar3"></i></th>
             <th class="count-column text-center"><i class="bi bi-paperclip"></i></th>
             <th class="count-column text-center"><i class="bi bi-chat-dots"></i></th>
-            <th class="status-column">Status</th>
+            <th class="status-column text-center"><i class="bi bi-info-circle"></i></th>
             <th class="source-column">Source</th>
             <th class="freefeed-column">FreeFeed</th>
           </tr>
@@ -138,8 +138,8 @@
                   <span class="text-muted">0</span>
                 <% end %>
               </td>
-              <td>
-                <%= post.status.capitalize %>
+              <td class="text-center">
+                <%= post_status_icon(post.status) %>
               </td>
               <td class="source-column">
                 <% if post.source_url.present? %>
