@@ -10,8 +10,8 @@
         <th class="count-column text-center"><i class="bi bi-paperclip"></i></th>
         <th class="count-column text-center"><i class="bi bi-chat-dots"></i></th>
         <th class="status-column text-center"><i class="bi bi-info-circle"></i></th>
-        <th class="freefeed-column">FreeFeed</th>
         <th class="source-column">Source</th>
+        <th class="freefeed-column">FreeFeed</th>
       </tr>
     </thead>
     <tbody>
@@ -51,9 +51,9 @@
           <td class="text-center">
             <%= post_status_icon(post.status) %>
           </td>
-          <td class="freefeed-column">
-            <% if post.freefeed_post_id.present? %>
-              <%= link_to "Repost", "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
+          <td class="source-column">
+            <% if post.source_url.present? %>
+              <%= link_to "Source", post.source_url,
                           target: "_blank",
                           rel: "noopener",
                           class: "text-decoration-none" %>
@@ -61,9 +61,9 @@
               <span class="text-light">—</span>
             <% end %>
           </td>
-          <td class="source-column">
-            <% if post.source_url.present? %>
-              <%= link_to "Source", post.source_url,
+          <td class="freefeed-column">
+            <% if post.freefeed_post_id.present? %>
+              <%= link_to "Repost", "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
                           target: "_blank",
                           rel: "noopener",
                           class: "text-decoration-none" %>
