@@ -61,4 +61,40 @@ class ApplicationHelperTest < ActionView::TestCase
     content_with_whitespace = "  Content with spaces  "
     assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
   end
+
+  test "post_status_icon returns draft icon for draft status" do
+    result = post_status_icon("draft")
+    expected = '<i class="bi bi-file-earmark text-muted" title="Draft"></i>'
+    assert_equal expected, result
+  end
+
+  test "post_status_icon returns enqueued icon for enqueued status" do
+    result = post_status_icon("enqueued")
+    expected = '<i class="bi bi-clock text-warning" title="Enqueued"></i>'
+    assert_equal expected, result
+  end
+
+  test "post_status_icon returns rejected icon for rejected status" do
+    result = post_status_icon("rejected")
+    expected = '<i class="bi bi-x-circle text-danger" title="Rejected"></i>'
+    assert_equal expected, result
+  end
+
+  test "post_status_icon returns published icon for published status" do
+    result = post_status_icon("published")
+    expected = '<i class="bi bi-check-circle-fill text-success" title="Published"></i>'
+    assert_equal expected, result
+  end
+
+  test "post_status_icon returns failed icon for failed status" do
+    result = post_status_icon("failed")
+    expected = '<i class="bi bi-exclamation-triangle text-danger" title="Failed"></i>'
+    assert_equal expected, result
+  end
+
+  test "post_status_icon returns capitalized text for unknown status" do
+    result = post_status_icon("unknown")
+    expected = '<span class="text-muted">Unknown</span>'
+    assert_equal expected, result
+  end
 end
