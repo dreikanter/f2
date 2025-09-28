@@ -23,7 +23,7 @@
 
       <div class="list-group-item">
         <strong>Published:</strong>
-        <%= long_time_format(@post.published_at) if @post.published_at %>
+        <%= long_time_tag(@post.published_at) if @post.published_at %>
       </div>
 
       <div class="list-group-item">
@@ -104,8 +104,8 @@
               <small class="text-muted">Feed Entry ID:</small> <code><%= @post.feed_entry_id %></code>
             </div>
             <div class="col-md-6">
-              <small class="text-muted">Created:</small> <%= long_time_format(@post.created_at) %><br>
-              <small class="text-muted">Updated:</small> <%= long_time_format(@post.updated_at) %><br>
+              <small class="text-muted">Created:</small> <%= long_time_tag(@post.created_at) %><br>
+              <small class="text-muted">Updated:</small> <%= long_time_tag(@post.updated_at) %><br>
               <% if @post.freefeed_post_id.present? %>
                 <small class="text-muted">FreeFeed Post ID:</small> <code><%= @post.freefeed_post_id %></code>
               <% end %>

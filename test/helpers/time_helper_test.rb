@@ -65,4 +65,19 @@ class TimeHelperTest < ActionView::TestCase
       assert_includes result, "about 1 hour ago"
     end
   end
+
+  test "long_time_tag returns nil for nil input" do
+    assert_nil long_time_tag(nil)
+  end
+
+  test "long_time_tag generates HTML time element" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+    travel_to Time.zone.parse("2025-01-15 16:45:30") do
+      result = long_time_tag(time)
+      assert_includes result, "<time"
+      assert_includes result, 'datetime="2025-01-15T15:45:30Z"'
+      assert_includes result, 'title="about 1 hour ago"'
+      assert_includes result, "15 Jan 2025, 15:45"
+    end
+  end
 end

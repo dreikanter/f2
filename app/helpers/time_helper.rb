@@ -29,8 +29,22 @@ module TimeHelper
   def time_ago_tag(time)
     return nil unless time
 
-    content_tag(:time, "#{time_ago_in_words(time, include_seconds: true)} ago",
-                datetime: time.rfc3339,
-                title: long_time_format(time))
+    content_tag(
+      :time,
+      "#{time_ago_in_words(time)} ago",
+      datetime: time.rfc3339,
+      title: long_time_format(time)
+    )
+  end
+
+  def long_time_tag(time)
+    return nil unless time
+
+    content_tag(
+      :time,
+      long_time_format(time),
+      datetime: time.rfc3339,
+      title: "#{time_ago_in_words(time)} ago"
+    )
   end
 end
