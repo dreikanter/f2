@@ -23,7 +23,7 @@
 
       <div class="list-group-item">
         <strong>Published At:</strong>
-        <%= @post.published_at.strftime("%B %d, %Y at %H:%M") if @post.published_at %>
+        <%= long_time_format(@post.published_at) if @post.published_at %>
       </div>
 
       <div class="list-group-item">
@@ -37,10 +37,10 @@
           <div class="mt-2">
             <% @post.attachment_urls.each_with_index do |url, index| %>
               <div class="mb-2">
-                <%= link_to "Attachment #{index + 1}", url,
+                <%= link_to url, url,
                             target: "_blank",
-                            rel: "noopener" %>
-                <small class="text-muted ms-2"><%= url %></small>
+                            rel: "noopener",
+                            class: "text-decoration-none" %>
               </div>
             <% end %>
           </div>
@@ -51,9 +51,8 @@
         <div class="list-group-item">
           <strong>Comments (<%= @post.comments.length %>):</strong>
           <div class="mt-2">
-            <% @post.comments.each_with_index do |comment, index| %>
+            <% @post.comments.each do |comment| %>
               <div class="border-start border-3 border-secondary ps-3 mb-3">
-                <div class="small text-muted mb-1">Comment <%= index + 1 %></div>
                 <div><%= simple_format(comment) %></div>
               </div>
             <% end %>
@@ -112,8 +111,8 @@
               <small class="text-muted">Feed Entry ID:</small> <code><%= @post.feed_entry_id %></code>
             </div>
             <div class="col-md-6">
-              <small class="text-muted">Created:</small> <%= @post.created_at.strftime("%B %d, %Y at %H:%M") %><br>
-              <small class="text-muted">Updated:</small> <%= @post.updated_at.strftime("%B %d, %Y at %H:%M") %><br>
+              <small class="text-muted">Created:</small> <%= long_time_format(@post.created_at) %><br>
+              <small class="text-muted">Updated:</small> <%= long_time_format(@post.updated_at) %><br>
               <% if @post.freefeed_post_id.present? %>
                 <small class="text-muted">FreeFeed Post ID:</small> <code><%= @post.freefeed_post_id %></code>
               <% end %>
