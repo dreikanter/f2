@@ -23,28 +23,7 @@ module TimeHelper
   def time_ago(time)
     return nil unless time
 
-    diff = Time.current - time
-
-    case diff
-    when 0..59
-      seconds = diff.to_i
-      seconds == 1 ? "1 second ago" : "#{seconds} seconds ago"
-    when 60..3599
-      minutes = (diff / 60).to_i
-      minutes == 1 ? "1 minute ago" : "#{minutes} minutes ago"
-    when 3600..86399
-      hours = (diff / 3600).to_i
-      hours == 1 ? "1 hour ago" : "#{hours} hours ago"
-    when 86400..2591999
-      days = (diff / 86400).to_i
-      days == 1 ? "1 day ago" : "#{days} days ago"
-    when 2592000..31535999
-      months = (diff / 2592000).to_i
-      months == 1 ? "1 month ago" : "#{months} months ago"
-    else
-      years = (diff / 31536000).to_i
-      years == 1 ? "1 year ago" : "#{years} years ago"
-    end
+    time_ago_in_words(time, include_seconds: true)
   end
 
   def long_time_format(time)
