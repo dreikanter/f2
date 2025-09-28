@@ -62,24 +62,22 @@
 
       <div class="list-group-item">
         <strong>External Links:</strong>
-        <div class="mt-2">
-          <% if @post.freefeed_post_id.present? %>
-            <%= link_to "View on FreeFeed", "#{@post.feed.access_token.host}/#{@post.feed.target_group}/#{@post.freefeed_post_id}",
-                        target: "_blank",
-                        rel: "noopener" %>
-          <% end %>
-          <% if @post.freefeed_post_id.present? && @post.source_url.present? %>
-            <span class="text-muted"> | </span>
-          <% end %>
-          <% if @post.source_url.present? %>
-            <%= link_to "View Original Source", @post.source_url,
-                        target: "_blank",
-                        rel: "noopener" %>
-          <% end %>
-          <% unless @post.freefeed_post_id.present? || @post.source_url.present? %>
-            <em class="text-muted">No external links available</em>
-          <% end %>
-        </div>
+        <% if @post.freefeed_post_id.present? %>
+          <%= link_to "View on FreeFeed", "#{@post.feed.access_token.host}/#{@post.feed.target_group}/#{@post.freefeed_post_id}",
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% end %>
+        <% if @post.freefeed_post_id.present? && @post.source_url.present? %>
+          <span class="text-muted"> | </span>
+        <% end %>
+        <% if @post.source_url.present? %>
+          <%= link_to "View Original Source", @post.source_url,
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% end %>
+        <% unless @post.freefeed_post_id.present? || @post.source_url.present? %>
+          <em class="text-muted">No external links available</em>
+        <% end %>
       </div>
 
       <% if @post.validation_errors.present? %>
