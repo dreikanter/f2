@@ -94,23 +94,23 @@
   <h3 class="mb-3">Recent Posts</h3>
   <% if @recent_posts.any? %>
     <div class="table-responsive">
-      <table class="table table-hover table-bordered">
+      <table class="table table-hover table-bordered posts-table">
         <thead>
           <tr>
-            <th>Content</th>
-            <th>Published</th>
-            <th>Attachments</th>
-            <th>Comments</th>
-            <th>Status</th>
-            <th>Links</th>
+            <th class="content-column">Content</th>
+            <th class="published-column">Published</th>
+            <th class="count-column">Attachments</th>
+            <th class="count-column">Comments</th>
+            <th class="status-column">Status</th>
+            <th class="links-column">Links</th>
           </tr>
         </thead>
         <tbody>
           <% @recent_posts.each do |post| %>
             <tr>
-              <td>
+              <td class="content-column">
                 <%= link_to post, class: "text-decoration-none" do %>
-                  <%= truncate(post.content, length: 100) %>
+                  <%= post_content_preview(post.content) %>
                 <% end %>
               </td>
               <td>

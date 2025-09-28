@@ -12,3 +12,40 @@
   }
 }
 
+// Posts table styling
+.posts-table {
+  table-layout: fixed;
+
+  .content-column {
+    width: 40%;
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .feed-column {
+    width: 15%;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .published-column {
+    width: 10%;
+  }
+
+  .count-column {
+    width: 8%;
+  }
+
+  .status-column {
+    width: 10%;
+  }
+
+  .links-column {
+    width: 17%;
+  }
+}
+

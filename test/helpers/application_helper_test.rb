@@ -68,4 +68,30 @@ class ApplicationHelperTest < ActionView::TestCase
     time = 2.years.ago
     assert_equal "2y", short_time_ago(time)
   end
+
+  test "post_content_preview returns empty string for nil content" do
+    assert_equal "", post_content_preview(nil)
+  end
+
+  test "post_content_preview returns empty string for blank content" do
+    assert_equal "", post_content_preview("")
+    assert_equal "", post_content_preview("   ")
+  end
+
+  test "post_content_preview truncates long content" do
+    long_content = "a" * 200
+    result = post_content_preview(long_content)
+    assert result.length < 200
+    assert result.end_with?("...")
+  end
+
+  test "post_content_preview returns content as-is when short" do
+    short_content = "Short content"
+    assert_equal short_content, post_content_preview(short_content)
+  end
+
+  test "post_content_preview strips whitespace" do
+    content_with_whitespace = "  Content with spaces  "
+    assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
+  end
 end

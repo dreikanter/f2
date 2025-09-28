@@ -31,4 +31,11 @@ module ApplicationHelper
       "#{(diff / 31536000).to_i}y"
     end
   end
+
+  def post_content_preview(content, length = 120)
+    return "" unless content.present?
+
+    # Truncate to limit HTML size and improve performance
+    truncate(content.strip, length: length)
+  end
 end
