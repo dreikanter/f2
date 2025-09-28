@@ -1,6 +1,8 @@
 class FeedsController < ApplicationController
   include Pagination
 
+  MAX_RECENT_POSTS = 10
+
   def index
     authorize Feed
     @feeds = paginate_scope
@@ -15,7 +17,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @section = params[:section]
-    @recent_posts = @feed.posts.includes(:feed_entry).order(published_at: :desc).limit(10)
+    @recent_posts = recent_posts(@feed)
 
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update("edit-form-container", "")
@@ -100,6 +102,14 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def recent_posts(feed)
+    feed
+      .posts
+      .includes(:feed_entry)
+      .order(published_at: :desc)
+      .limit(MAX_RECENT_POSTS)
+  end
 
   def pagination_scope
     policy_scope(Feed).includes(:feed_entries, :posts).order(:name)
