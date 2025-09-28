@@ -9,9 +9,9 @@
             <tr>
               <th class="content-column">Content</th>
               <th class="feed-column">Feed</th>
-              <th class="published-column"><i class="bi bi-calendar3"></i></th>
-              <th class="count-column"><i class="bi bi-paperclip"></i></th>
-              <th class="count-column"><i class="bi bi-chat-dots"></i></th>
+              <th class="published-column text-center"><i class="bi bi-calendar3"></i></th>
+              <th class="count-column text-center"><i class="bi bi-paperclip"></i></th>
+              <th class="count-column text-center"><i class="bi bi-chat-dots"></i></th>
               <th class="status-column">Status</th>
               <th class="source-column">Source</th>
               <th class="freefeed-column">FreeFeed</th>
@@ -30,7 +30,7 @@
                     <%= post.feed.name %>
                   <% end %>
                 </td>
-                <td>
+                <td class="text-center">
                   <small class="text-muted">
                     <%= short_time_ago(post.published_at) if post.published_at %>
                   </small>
