@@ -30,9 +30,7 @@
             </td>
           <% end %>
           <td class="narrow-column text-center">
-            <small class="text-muted">
-              <%= short_time_ago(post.published_at) if post.published_at %>
-            </small>
+            <%= short_time_ago(post.published_at) if post.published_at %>
           </td>
           <td class="narrow-column text-center">
             <% if post.attachment_urls.present? %>
@@ -57,8 +55,6 @@
                           target: "_blank",
                           rel: "noopener",
                           class: "text-decoration-none" %>
-            <% else %>
-              <span class="text-light">—</span>
             <% end %>
           </td>
           <td class="narrow-column freefeed-column">
@@ -67,8 +63,6 @@
                           target: "_blank",
                           rel: "noopener",
                           class: "text-decoration-none" %>
-            <% else %>
-              <span class="text-light">—</span>
             <% end %>
           </td>
         </tr>
