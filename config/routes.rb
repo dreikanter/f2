@@ -19,6 +19,8 @@ Rails.application.routes.draw do
     resource :status, only: :update, controller: "feed_statuses"
   end
 
+  resources :posts, only: [:index, :show]
+
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
 
   resource :admin, only: :show
