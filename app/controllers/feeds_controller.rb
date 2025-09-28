@@ -89,6 +89,7 @@ class FeedsController < ApplicationController
           locals: { feed: @feed }
         )
       else
+        @recent_posts = recent_posts(@feed)
         render :show, status: :unprocessable_content
       end
     end

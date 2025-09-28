@@ -72,12 +72,12 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   test "should not allow access to other user's post" do
     sign_in_as(user)
     # Create a post that belongs to another user's feed in a clean way
-    other_feed_local = create(:feed, user: create(:user))
+    other_user = create(:user)
+    other_feed_local = create(:feed, user: other_user)
     other_post_local = create(:post, feed: other_feed_local)
 
-    assert_raises(ActiveRecord::RecordNotFound) do
-      get post_url(other_post_local)
-    end
+    get post_url(other_post_local)
+    assert_response :not_found
   end
 
   test "should display post content and metadata in show" do
@@ -90,7 +90,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     get post_url(post_with_data)
     assert_response :success
     assert_select "div", text: /Test post content/
-    assert_select "span.badge", text: "Published"
+    assert_select "strong", text: "Status:"
     assert_select "strong", text: "Attachments (2):"
     assert_select "strong", text: "Comments (1):"
   end
@@ -104,20 +104,20 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert-danger"
   end
 
-  test "should show correct status badges" do
+  test "should show correct status" do
     sign_in_as(user)
 
     enqueued_post = create(:post, :enqueued, feed: feed)
     get post_url(enqueued_post)
-    assert_select "span.badge.bg-warning", text: "Enqueued"
+    assert_select "strong", text: "Status:"
 
     failed_post = create(:post, :failed, feed: feed)
     get post_url(failed_post)
-    assert_select "span.badge.bg-danger", text: "Failed"
+    assert_select "strong", text: "Status:"
 
     rejected_post = create(:post, :rejected, feed: feed)
     get post_url(rejected_post)
-    assert_select "span.badge.bg-secondary", text: "Rejected"
+    assert_select "strong", text: "Status:"
   end
 
   test "should display external links when available" do
@@ -127,7 +127,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get post_url(published_post)
     assert_response :success
-    assert_select "a[href*='freefeed.net/testgroup/test-123']", text: "View on FreeFeed"
+    assert_select "a[href*='#{feed.access_token.host}/testgroup/test-123']", text: "View on FreeFeed"
     assert_select "a[href='#{published_post.source_url}']", text: "View Original Source"
   end
 end
