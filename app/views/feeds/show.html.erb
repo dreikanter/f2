@@ -72,7 +72,7 @@
         <strong>Last Refresh:</strong>
         <% if @feed.last_refreshed_at %>
           <%= @feed.last_refreshed_at.strftime("%B %d, %Y at %H:%M") %>
-          <small class="text-muted">(<%= time_ago_in_words(@feed.last_refreshed_at) %> ago)</small>
+          <small class="text-muted">(<%= short_time_ago(@feed.last_refreshed_at) %>)</small>
         <% else %>
           <em class="text-muted">Never refreshed</em>
         <% end %>
@@ -81,7 +81,7 @@
         <strong>Most Recent Post:</strong>
         <% if @feed.most_recent_post_date %>
           <%= @feed.most_recent_post_date.strftime("%B %d, %Y at %H:%M") %>
-          <small class="text-muted">(<%= time_ago_in_words(@feed.most_recent_post_date) %> ago)</small>
+          <small class="text-muted">(<%= short_time_ago(@feed.most_recent_post_date) %>)</small>
         <% else %>
           <em class="text-muted">No posts imported</em>
         <% end %>
@@ -120,51 +120,35 @@
               </td>
               <td class="text-center">
                 <% if post.attachment_urls.present? %>
-                  <span class="badge bg-info">
-                    <%= post.attachment_urls.length %>
-                  </span>
+                  <%= post.attachment_urls.length %>
                 <% else %>
                   <span class="text-muted">—</span>
                 <% end %>
               </td>
               <td class="text-center">
                 <% if post.comments.present? %>
-                  <span class="badge bg-secondary">
-                    <%= post.comments.length %>
-                  </span>
+                  <%= post.comments.length %>
                 <% else %>
                   <span class="text-muted">—</span>
                 <% end %>
               </td>
               <td>
-                <% case post.status %>
-                <% when "published" %>
-                  <span class="badge bg-success">Published</span>
-                <% when "failed" %>
-                  <span class="badge bg-danger">Failed</span>
-                <% when "enqueued" %>
-                  <span class="badge bg-warning">Enqueued</span>
-                <% when "rejected" %>
-                  <span class="badge bg-secondary">Rejected</span>
-                <% else %>
-                  <span class="badge bg-light text-dark"><%= post.status.capitalize %></span>
-                <% end %>
+                <%= post.status.capitalize %>
               </td>
               <td>
-                <div class="d-flex gap-1 flex-wrap">
-                  <% if post.freefeed_post_id.present? %>
-                    <%= link_to "FreeFeed", "https://freefeed.net/#{@feed.target_group}/#{post.freefeed_post_id}",
-                                class: "btn btn-sm btn-outline-primary",
-                                target: "_blank",
-                                rel: "noopener" %>
-                  <% end %>
-                  <% if post.source_url.present? %>
-                    <%= link_to "Source", post.source_url,
-                                class: "btn btn-sm btn-outline-secondary",
-                                target: "_blank",
-                                rel: "noopener" %>
-                  <% end %>
-                </div>
+                <% if post.freefeed_post_id.present? %>
+                  <%= link_to "FreeFeed", "https://freefeed.net/#{@feed.target_group}/#{post.freefeed_post_id}",
+                              target: "_blank",
+                              rel: "noopener" %>
+                <% end %>
+                <% if post.freefeed_post_id.present? && post.source_url.present? %>
+                  <span class="text-muted">|</span>
+                <% end %>
+                <% if post.source_url.present? %>
+                  <%= link_to "Source", post.source_url,
+                              target: "_blank",
+                              rel: "noopener" %>
+                <% end %>
               </td>
             </tr>
           <% end %>

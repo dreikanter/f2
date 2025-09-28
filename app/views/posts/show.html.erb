@@ -28,18 +28,7 @@
 
       <div class="list-group-item">
         <strong>Status:</strong>
-        <% case @post.status %>
-        <% when "published" %>
-          <span class="badge bg-success">Published</span>
-        <% when "failed" %>
-          <span class="badge bg-danger">Failed</span>
-        <% when "enqueued" %>
-          <span class="badge bg-warning">Enqueued</span>
-        <% when "rejected" %>
-          <span class="badge bg-secondary">Rejected</span>
-        <% else %>
-          <span class="badge bg-light text-dark"><%= @post.status.capitalize %></span>
-        <% end %>
+        <%= @post.status.capitalize %>
       </div>
 
       <% if @post.attachment_urls.present? %>
@@ -49,7 +38,6 @@
             <% @post.attachment_urls.each_with_index do |url, index| %>
               <div class="mb-2">
                 <%= link_to "Attachment #{index + 1}", url,
-                            class: "btn btn-sm btn-outline-info",
                             target: "_blank",
                             rel: "noopener" %>
                 <small class="text-muted ms-2"><%= url %></small>
@@ -78,13 +66,14 @@
         <div class="mt-2">
           <% if @post.freefeed_post_id.present? %>
             <%= link_to "View on FreeFeed", "https://freefeed.net/#{@post.feed.target_group}/#{@post.freefeed_post_id}",
-                        class: "btn btn-outline-primary me-2",
                         target: "_blank",
                         rel: "noopener" %>
           <% end %>
+          <% if @post.freefeed_post_id.present? && @post.source_url.present? %>
+            <span class="text-muted"> | </span>
+          <% end %>
           <% if @post.source_url.present? %>
             <%= link_to "View Original Source", @post.source_url,
-                        class: "btn btn-outline-secondary",
                         target: "_blank",
                         rel: "noopener" %>
           <% end %>

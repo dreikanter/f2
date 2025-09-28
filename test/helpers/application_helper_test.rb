@@ -34,4 +34,38 @@ class ApplicationHelperTest < ActionView::TestCase
 
     assert_equal expected, result
   end
+
+  test "short_time_ago returns nil for nil input" do
+    assert_nil short_time_ago(nil)
+  end
+
+  test "short_time_ago returns seconds for recent time" do
+    time = 30.seconds.ago
+    assert_equal "30s", short_time_ago(time)
+  end
+
+  test "short_time_ago returns minutes for time within hour" do
+    time = 15.minutes.ago
+    assert_equal "15m", short_time_ago(time)
+  end
+
+  test "short_time_ago returns hours for time within day" do
+    time = 5.hours.ago
+    assert_equal "5h", short_time_ago(time)
+  end
+
+  test "short_time_ago returns days for time within month" do
+    time = 10.days.ago
+    assert_equal "10d", short_time_ago(time)
+  end
+
+  test "short_time_ago returns months for time within year" do
+    time = 3.months.ago
+    assert_equal "3mo", short_time_ago(time)
+  end
+
+  test "short_time_ago returns years for old time" do
+    time = 2.years.ago
+    assert_equal "2y", short_time_ago(time)
+  end
 end
