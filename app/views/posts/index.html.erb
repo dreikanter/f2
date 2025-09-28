@@ -54,7 +54,7 @@
                 </td>
                 <td class="source-column">
                   <% if post.source_url.present? %>
-                    <%= link_to "Src", post.source_url,
+                    <%= link_to "Source", post.source_url,
                                 target: "_blank",
                                 rel: "noopener",
                                 title: "View original source" %>
@@ -64,7 +64,7 @@
                 </td>
                 <td class="freefeed-column">
                   <% if post.freefeed_post_id.present? %>
-                    <%= link_to "FF", "https://freefeed.net/#{post.feed.target_group}/#{post.freefeed_post_id}",
+                    <%= link_to "Repost", "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
                                 target: "_blank",
                                 rel: "noopener",
                                 title: "View on FreeFeed" %>
