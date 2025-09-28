@@ -114,7 +114,6 @@ class Feed < ApplicationRecord
     posts.maximum(:published_at)
   end
 
-
   private
 
   def auto_disable_without_active_token
