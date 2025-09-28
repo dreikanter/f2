@@ -15,6 +15,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @section = params[:section]
+    @recent_posts = @feed.posts.includes(:feed_entry).order(published_at: :desc).limit(10)
 
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update("edit-form-container", "")
