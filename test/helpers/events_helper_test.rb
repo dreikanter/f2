@@ -63,8 +63,4 @@ class EventsHelperTest < ActionView::TestCase
     assert_includes error_badge, "bg-danger"
   end
 
-  test "compact_time_ago delegates to short_time_ago" do
-    time = 30.seconds.ago
-    assert_equal short_time_ago(time), compact_time_ago(time)
-  end
 end

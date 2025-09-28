@@ -59,7 +59,7 @@
         <%= @event.created_at.strftime("%B %d, %Y at %I:%M %p %Z") %>
         <br>
         <small class="text-muted">
-          <%= compact_time_ago(@event.created_at) %>
+          <%= short_time_ago(@event.created_at) %>
         </small>
       </dd>
 
@@ -68,7 +68,7 @@
         <%= @event.updated_at.strftime("%B %d, %Y at %I:%M %p %Z") %>
         <br>
         <small class="text-muted">
-          <%= compact_time_ago(@event.updated_at) %>
+          <%= short_time_ago(@event.updated_at) %>
         </small>
       </dd>
 
@@ -81,7 +81,7 @@
             <span class="badge bg-danger">Expired</span>
           <% else %>
             <small class="text-muted">
-              Expires in <%= compact_time_ago(@event.expires_at) %>
+              Expires in <%= short_time_ago(@event.expires_at) %>
             </small>
           <% end %>
         </dd>

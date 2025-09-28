@@ -16,7 +16,4 @@ module EventsHelper
     content_tag(:span, level.humanize, class: badge[:class])
   end
 
-  def compact_time_ago(time)
-    short_time_ago(time)
-  end
 end
