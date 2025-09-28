@@ -39,14 +39,14 @@
                   <% if post.attachment_urls.present? %>
                     <%= post.attachment_urls.length %>
                   <% else %>
-                    <span class="text-muted">—</span>
+                    <span class="text-muted">0</span>
                   <% end %>
                 </td>
                 <td class="text-center">
                   <% if post.comments.present? %>
                     <%= post.comments.length %>
                   <% else %>
-                    <span class="text-muted">—</span>
+                    <span class="text-muted">0</span>
                   <% end %>
                 </td>
                 <td>
@@ -59,7 +59,7 @@
                                 rel: "noopener",
                                 title: "View original source" %>
                   <% else %>
-                    <span class="text-muted">—</span>
+                    <span class="text-light">—</span>
                   <% end %>
                 </td>
                 <td class="freefeed-column">
@@ -69,7 +69,7 @@
                                 rel: "noopener",
                                 title: "View on FreeFeed" %>
                   <% else %>
-                    <span class="text-muted">—</span>
+                    <span class="text-light">—</span>
                   <% end %>
                 </td>
               </tr>
