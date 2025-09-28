@@ -115,7 +115,7 @@
               </td>
               <td>
                 <small class="text-muted">
-                  <%= post.published_at.strftime("%m/%d %H:%M") if post.published_at %>
+                  <%= short_time_ago(post.published_at) if post.published_at %>
                 </small>
               </td>
               <td class="text-center">
