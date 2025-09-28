@@ -57,13 +57,17 @@ class TimeHelperTest < ActiveSupport::TestCase
   end
 
   test "long_time_format returns formatted time string" do
-    time = Time.zone.parse("2025-01-15 15:45:30")
-    assert_equal "15 Jan 2025, 15:45", long_time_format(time)
+    travel_to Time.zone.parse("2025-01-15 15:45:30") do
+      time = Time.zone.parse("2025-01-15 15:45:30")
+      assert_equal "15 Jan 2025, 15:45", long_time_format(time)
+    end
   end
 
   test "long_time_format handles single digit day" do
-    time = Time.zone.parse("2025-01-01 09:30:00")
-    assert_equal "1 Jan 2025, 09:30", long_time_format(time)
+    travel_to Time.zone.parse("2025-01-01 09:30:00") do
+      time = Time.zone.parse("2025-01-01 09:30:00")
+      assert_equal "1 Jan 2025, 09:30", long_time_format(time)
+    end
   end
 
   test "time_ago_tag returns nil for nil input" do
