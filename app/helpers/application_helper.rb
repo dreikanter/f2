@@ -42,15 +42,15 @@ module ApplicationHelper
   def post_status_icon(status)
     case status.to_s
     when "draft"
-      content_tag(:i, nil, class: "bi bi-file-earmark text-muted")
+      content_tag(:i, nil, class: "bi bi-file-earmark text-muted", title: "Draft")
     when "enqueued"
-      content_tag(:i, nil, class: "bi bi-clock text-warning")
+      content_tag(:i, nil, class: "bi bi-clock text-warning", title: "Enqueued")
     when "rejected"
-      content_tag(:i, nil, class: "bi bi-x-circle text-danger")
+      content_tag(:i, nil, class: "bi bi-x-circle text-danger", title: "Rejected")
     when "published"
-      content_tag(:i, nil, class: "bi bi-check-circle text-success")
+      content_tag(:i, nil, class: "bi bi-check-circle-fill text-success", title: "Published")
     when "failed"
-      content_tag(:i, nil, class: "bi bi-exclamation-triangle text-danger")
+      content_tag(:i, nil, class: "bi bi-exclamation-triangle text-danger", title: "Failed")
     else
       content_tag(:span, status.capitalize, class: "text-muted")
     end
