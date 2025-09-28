@@ -18,6 +18,7 @@
       <thead>
         <tr>
           <th>Name</th>
+          <th>Instance</th>
           <th>Status</th>
           <th>Created</th>
           <th>Last Used</th>
@@ -29,6 +30,9 @@
           <tr>
             <td>
               <%= access_token.name %>
+            </td>
+            <td>
+              <span class="text-muted"><%= URI.parse(access_token.host).host %></span>
             </td>
             <td>
               <%= render "shared/access_token_status", access_token: access_token %>

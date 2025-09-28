@@ -12,6 +12,8 @@
               <th>Name</th>
               <th>Status</th>
               <th>Target Group</th>
+              <th>Last Refresh</th>
+              <th>Recent Post</th>
             </tr>
           </thead>
           <tbody>
@@ -33,6 +35,24 @@
                 <td>
                   <% if feed.target_group.present? %>
                     <%= feed.target_group %>
+                  <% else %>
+                    <em class="text-muted">None</em>
+                  <% end %>
+                </td>
+                <td>
+                  <% if feed.last_refreshed_at %>
+                    <small class="text-muted">
+                      <%= short_time_ago(feed.last_refreshed_at) %>
+                    </small>
+                  <% else %>
+                    <em class="text-muted">Never</em>
+                  <% end %>
+                </td>
+                <td>
+                  <% if feed.most_recent_post_date %>
+                    <small class="text-muted">
+                      <%= short_time_ago(feed.most_recent_post_date) %>
+                    </small>
                   <% else %>
                     <em class="text-muted">None</em>
                   <% end %>

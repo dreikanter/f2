@@ -1,6 +1,8 @@
 class FeedsController < ApplicationController
   include Pagination
 
+  MAX_RECENT_POSTS = 10
+
   def index
     authorize Feed
     @feeds = paginate_scope
@@ -15,6 +17,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @section = params[:section]
+    @recent_posts = recent_posts(@feed)
 
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update("edit-form-container", "")
@@ -53,6 +56,7 @@ class FeedsController < ApplicationController
     end
   end
 
+  # TBD: Make section a rquired parameter and simplify this logic; refactor
   def update
     @feed = load_feed
     authorize @feed
@@ -86,6 +90,7 @@ class FeedsController < ApplicationController
           locals: { feed: @feed }
         )
       else
+        @recent_posts = recent_posts(@feed)
         render :show, status: :unprocessable_content
       end
     end
@@ -100,8 +105,16 @@ class FeedsController < ApplicationController
 
   private
 
+  def recent_posts(feed)
+    feed
+      .posts
+      .includes(:feed_entry)
+      .order(published_at: :desc)
+      .limit(MAX_RECENT_POSTS)
+  end
+
   def pagination_scope
-    policy_scope(Feed).order(:name)
+    policy_scope(Feed).includes(:feed_entries, :posts).order(:name)
   end
 
   def form_template_name(section)

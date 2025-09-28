@@ -367,4 +367,63 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.normalizer_instance(feed_entry)
   end
+
+  test "posts_per_day returns empty hash when no posts exist" do
+    feed = create(:feed)
+    start_date = Date.current
+    end_date = Date.current
+
+    result = feed.posts_per_day(start_date, end_date)
+
+    assert_equal({}, result)
+  end
+
+  test "posts_per_day returns correct counts for posts within date range" do
+    feed = create(:feed)
+
+    travel_to Date.current.beginning_of_day do
+      create(:post, feed: feed, published_at: Date.current.beginning_of_day + 2.hours)
+      create(:post, feed: feed, published_at: Date.current.beginning_of_day + 4.hours)
+      create(:post, feed: feed, published_at: 1.day.from_now.beginning_of_day + 1.hour)
+      create(:post, feed: feed, published_at: 2.days.from_now.beginning_of_day + 3.hours)
+
+      # Post outside the range
+      create(:post, feed: feed, published_at: 5.days.from_now.beginning_of_day)
+
+      result = feed.posts_per_day(Date.current, 2.days.from_now)
+
+      assert_equal 3, result.keys.length
+      assert_equal 2, result[Date.current]
+      assert_equal 1, result[1.day.from_now.to_date]
+      assert_equal 1, result[2.days.from_now.to_date]
+      assert_nil result[5.days.from_now.to_date]
+    end
+  end
+
+  test "posts_per_day excludes posts from other feeds" do
+    feed1 = create(:feed)
+    feed2 = create(:feed)
+
+    travel_to Date.current.beginning_of_day do
+      create(:post, feed: feed1, published_at: Date.current.beginning_of_day + 1.hour)
+      create(:post, feed: feed2, published_at: Date.current.beginning_of_day + 2.hours)
+
+      result = feed1.posts_per_day(Date.current, Date.current)
+
+      assert_equal 1, result[Date.current]
+    end
+  end
+
+  test "posts_per_day handles posts at day boundaries correctly" do
+    feed = create(:feed)
+
+    travel_to Date.current.beginning_of_day do
+      create(:post, feed: feed, published_at: Date.current.beginning_of_day)
+      create(:post, feed: feed, published_at: Date.current.end_of_day)
+
+      result = feed.posts_per_day(Date.current, Date.current)
+
+      assert_equal 2, result[Date.current]
+    end
+  end
 end

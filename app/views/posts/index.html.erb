@@ -1,0 +1,19 @@
+<div class="row">
+  <div class="col-12">
+    <%= page_header "Posts" %>
+
+    <% if @posts.any? %>
+      <%= render "shared/posts_table", posts: @posts %>
+
+      <%= pagination_for @posts,
+                         collection_name: "posts",
+                         path_helper: ->(page) { posts_path(page: page) } %>
+    <% else %>
+      <div class="text-center py-5">
+        <p>No posts yet</p>
+        <p class="text-muted">Posts will appear here when feeds are imported.</p>
+        <%= link_to "View Feeds", feeds_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

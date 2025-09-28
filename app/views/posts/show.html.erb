@@ -1,0 +1,118 @@
+<% content_for :title, "Post Details" %>
+
+<%= page_header "Post Details" do %>
+  <%= link_to "Back to Posts", posts_path, class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="row">
+  <div class="col-12">
+    <div class="list-group">
+      <div class="list-group-item">
+        <strong>Feed:</strong>
+        <%= link_to @post.feed.name, @post.feed, class: "text-decoration-none" %>
+      </div>
+
+      <div class="list-group-item">
+        <strong>Content:</strong>
+        <div class="mt-2">
+          <div class="mb-2 p-3 border rounded bg-light">
+            <%= simple_format(@post.content) %>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-group-item">
+        <strong>Published:</strong>
+        <%= long_time_tag(@post.published_at) if @post.published_at %>
+      </div>
+
+      <div class="list-group-item">
+        <strong>Status:</strong>
+        <%= @post.status.capitalize %>
+      </div>
+
+      <% if @post.attachment_urls.present? %>
+        <div class="list-group-item">
+          <strong>Attachments (<%= @post.attachment_urls.length %>):</strong>
+          <% @post.attachment_urls.each do |url| %>
+            <%= link_to url, target: "_blank", rel: "noopener", class: "text-decoration-none ms-2" do %>
+              <i class="bi bi-file-earmark-image"></i>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @post.comments.present? %>
+        <div class="list-group-item">
+          <strong>Comments (<%= @post.comments.length %>):</strong>
+          <div class="mt-2">
+            <% @post.comments.each do |comment| %>
+              <div class="border-start border-3 border-secondary ps-3 mb-3">
+                <div><%= simple_format(comment) %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="list-group-item">
+        <strong>External Links:</strong>
+        <% if @post.freefeed_post_id.present? %>
+          <%= link_to "View on FreeFeed", "#{@post.feed.access_token.host}/#{@post.feed.target_group}/#{@post.freefeed_post_id}",
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% end %>
+        <% if @post.freefeed_post_id.present? && @post.source_url.present? %>
+          <span class="text-muted"> | </span>
+        <% end %>
+        <% if @post.source_url.present? %>
+          <%= link_to "View Original Source", @post.source_url,
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% end %>
+        <% unless @post.freefeed_post_id.present? || @post.source_url.present? %>
+          <em class="text-muted">No external links available</em>
+        <% end %>
+      </div>
+
+      <% if @post.validation_errors.present? %>
+        <div class="list-group-item">
+          <strong>Validation Errors:</strong>
+          <div class="mt-2">
+            <div class="alert alert-danger">
+              <% if @post.validation_errors.is_a?(Array) %>
+                <ul class="mb-0">
+                  <% @post.validation_errors.each do |error| %>
+                    <li><%= error %></li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <%= @post.validation_errors %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="list-group-item">
+        <strong>Technical Details:</strong>
+        <div class="mt-2">
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">Post ID:</small> <code><%= @post.id %></code><br>
+              <small class="text-muted">UID:</small> <code><%= @post.uid %></code><br>
+              <small class="text-muted">Feed Entry ID:</small> <code><%= @post.feed_entry_id %></code>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">Created:</small> <%= long_time_tag(@post.created_at) %><br>
+              <small class="text-muted">Updated:</small> <%= long_time_tag(@post.updated_at) %><br>
+              <% if @post.freefeed_post_id.present? %>
+                <small class="text-muted">FreeFeed Post ID:</small> <code><%= @post.freefeed_post_id %></code>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

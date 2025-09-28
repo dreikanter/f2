@@ -68,3 +68,43 @@
 </div>
 
 <div id="edit-form-container"></div>
+
+<div class="mt-4">
+  <h3 class="mb-3">Stats</h3>
+  <div class="list-group">
+    <div class="list-group-item">
+      <div class="row">
+        <div class="col-md-6">
+          <strong>Last Refresh:</strong>
+          <% if @feed.last_refreshed_at %>
+            <%= time_ago_tag(@feed.last_refreshed_at) %>
+          <% else %>
+            <em class="text-muted">Never refreshed</em>
+          <% end %>
+        </div>
+        <div class="col-md-6">
+          <strong>Most Recent Post:</strong>
+          <% if @feed.most_recent_post_date %>
+            <%= time_ago_tag(@feed.most_recent_post_date) %>
+          <% else %>
+            <em class="text-muted">No posts imported</em>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4">
+  <h3 class="mb-3">Recent Posts</h3>
+  <% if @recent_posts.any? %>
+    <%= render "shared/posts_table", posts: @recent_posts, hide_feed_column: true %>
+    <div class="text-center mt-3">
+      <%= link_to "View All Posts", posts_path, class: "btn btn-outline-primary" %>
+    </div>
+  <% else %>
+    <div class="text-center py-4">
+      <p class="text-muted">No posts imported yet from this feed.</p>
+    </div>
+  <% end %>
+</div>
