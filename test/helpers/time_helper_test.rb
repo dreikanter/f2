@@ -59,10 +59,10 @@ class TimeHelperTest < ActionView::TestCase
     time = Time.zone.parse("2025-01-15 15:45:30")
     travel_to Time.zone.parse("2025-01-15 16:45:30") do
       result = time_ago_tag(time)
-      assert_includes result, '<time'
+      assert_includes result, "<time"
       assert_includes result, 'datetime="2025-01-15T15:45:30Z"'
       assert_includes result, 'title="15 Jan 2025, 15:45"'
-      assert_includes result, 'about 1 hour ago'
+      assert_includes result, "about 1 hour ago"
     end
   end
 end

@@ -15,5 +15,4 @@ module EventsHelper
     badge = LEVEL_BADGES.fetch(level.to_s, LEVEL_BADGES["debug"])
     content_tag(:span, level.humanize, class: badge[:class])
   end
-
 end

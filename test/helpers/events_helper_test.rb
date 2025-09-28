@@ -62,5 +62,4 @@ class EventsHelperTest < ActionView::TestCase
     assert_includes error_badge, "Error"
     assert_includes error_badge, "bg-danger"
   end
-
 end
