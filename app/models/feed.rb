@@ -92,6 +92,28 @@ class Feed < ApplicationRecord
     normalizer_class&.new(feed_entry)
   end
 
+  # Returns the number of posts per day for the specified date range
+  # @param start_date [Date] start date of the range
+  # @param end_date [Date] end date of the range (inclusive)
+  # @return [Hash] hash with dates as keys and post counts as values
+  def posts_per_day(start_date, end_date)
+    posts.where(published_at: start_date.beginning_of_day..end_date.end_of_day)
+         .group("DATE(published_at)")
+         .count
+  end
+
+  # Returns the date when the feed was last refreshed
+  # @return [Time, nil] last refresh time or nil if never refreshed
+  def last_refreshed_at
+    feed_entries.maximum(:created_at)
+  end
+
+  # Returns the date of the most recent imported post
+  # @return [Time, nil] most recent post date or nil if no posts
+  def most_recent_post_date
+    posts.maximum(:published_at)
+  end
+
 
   private
 
