@@ -29,29 +29,29 @@
               <% end %>
             </td>
           <% end %>
-          <td class="text-center">
+          <td class="narrow-column text-center">
             <small class="text-muted">
               <%= short_time_ago(post.published_at) if post.published_at %>
             </small>
           </td>
-          <td class="text-center">
+          <td class="narrow-column text-center">
             <% if post.attachment_urls.present? %>
               <%= post.attachment_urls.length %>
             <% else %>
               <span class="text-muted">0</span>
             <% end %>
           </td>
-          <td class="text-center">
+          <td class="narrow-column text-center">
             <% if post.comments.present? %>
               <%= post.comments.length %>
             <% else %>
               <span class="text-muted">0</span>
             <% end %>
           </td>
-          <td class="text-center">
+          <td class="narrow-column text-center">
             <%= post_status_icon(post.status) %>
           </td>
-          <td class="source-column">
+          <td class="narrow-column source-column">
             <% if post.source_url.present? %>
               <%= link_to "Source", post.source_url,
                           target: "_blank",
@@ -61,7 +61,7 @@
               <span class="text-light">—</span>
             <% end %>
           </td>
-          <td class="freefeed-column">
+          <td class="narrow-column freefeed-column">
             <% if post.freefeed_post_id.present? %>
               <%= link_to "Repost", "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
                           target: "_blank",
