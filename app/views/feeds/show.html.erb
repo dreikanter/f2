@@ -75,7 +75,7 @@
         <div class="col-md-6">
           <strong>Last Refresh:</strong>
           <% if @feed.last_refreshed_at %>
-            <%= @feed.last_refreshed_at.strftime("%B %d, %Y at %H:%M") %>
+            <%= long_time_format(@feed.last_refreshed_at) %>
             <small class="text-muted">(<%= short_time_ago(@feed.last_refreshed_at) %>)</small>
           <% else %>
             <em class="text-muted">Never refreshed</em>
@@ -84,7 +84,7 @@
         <div class="col-md-6">
           <strong>Most Recent Post:</strong>
           <% if @feed.most_recent_post_date %>
-            <%= @feed.most_recent_post_date.strftime("%B %d, %Y at %H:%M") %>
+            <%= long_time_format(@feed.most_recent_post_date) %>
             <small class="text-muted">(<%= short_time_ago(@feed.most_recent_post_date) %>)</small>
           <% else %>
             <em class="text-muted">No posts imported</em>

@@ -94,4 +94,18 @@ class ApplicationHelperTest < ActionView::TestCase
     content_with_whitespace = "  Content with spaces  "
     assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
   end
+
+  test "long_time_format returns nil for nil input" do
+    assert_nil long_time_format(nil)
+  end
+
+  test "long_time_format returns formatted time string" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+    assert_equal "15 Jan 2025, 15:45", long_time_format(time)
+  end
+
+  test "long_time_format handles single digit day" do
+    time = Time.zone.parse("2025-01-01 09:30:00")
+    assert_equal "1 Jan 2025, 09:30", long_time_format(time)
+  end
 end

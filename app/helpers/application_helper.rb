@@ -32,6 +32,12 @@ module ApplicationHelper
     end
   end
 
+  def long_time_format(time)
+    return nil unless time
+
+    time.strftime("%-d %b %Y, %H:%M")
+  end
+
   def post_content_preview(content, length = 120)
     return "" unless content.present?
 
