@@ -56,6 +56,7 @@ class FeedsController < ApplicationController
     end
   end
 
+  # TBD: Make section a rquired parameter and simplify this logic; refactor
   def update
     @feed = load_feed
     authorize @feed
