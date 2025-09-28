@@ -102,7 +102,8 @@
             <th class="count-column">Attachments</th>
             <th class="count-column">Comments</th>
             <th class="status-column">Status</th>
-            <th class="links-column">Links</th>
+            <th class="freefeed-column">FreeFeed</th>
+            <th class="source-column">Source</th>
           </tr>
         </thead>
         <tbody>
@@ -135,19 +136,24 @@
               <td>
                 <%= post.status.capitalize %>
               </td>
-              <td>
+              <td class="freefeed-column">
                 <% if post.freefeed_post_id.present? %>
-                  <%= link_to "FreeFeed", "https://freefeed.net/#{@feed.target_group}/#{post.freefeed_post_id}",
+                  <%= link_to "FF", "https://freefeed.net/#{@feed.target_group}/#{post.freefeed_post_id}",
                               target: "_blank",
-                              rel: "noopener" %>
+                              rel: "noopener",
+                              title: "View on FreeFeed" %>
+                <% else %>
+                  <span class="text-muted">—</span>
                 <% end %>
-                <% if post.freefeed_post_id.present? && post.source_url.present? %>
-                  <span class="text-muted">|</span>
-                <% end %>
+              </td>
+              <td class="source-column">
                 <% if post.source_url.present? %>
-                  <%= link_to "Source", post.source_url,
+                  <%= link_to "Src", post.source_url,
                               target: "_blank",
-                              rel: "noopener" %>
+                              rel: "noopener",
+                              title: "View original source" %>
+                <% else %>
+                  <span class="text-muted">—</span>
                 <% end %>
               </td>
             </tr>
