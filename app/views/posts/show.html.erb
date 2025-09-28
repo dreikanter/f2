@@ -34,16 +34,11 @@
       <% if @post.attachment_urls.present? %>
         <div class="list-group-item">
           <strong>Attachments (<%= @post.attachment_urls.length %>):</strong>
-          <div class="mt-2">
-            <% @post.attachment_urls.each_with_index do |url, index| %>
-              <div class="mb-2">
-                <%= link_to url, url,
-                            target: "_blank",
-                            rel: "noopener",
-                            class: "text-decoration-none" %>
-              </div>
+          <% @post.attachment_urls.each do |url| %>
+            <%= link_to url, target: "_blank", rel: "noopener", class: "text-decoration-none ms-2" do %>
+              <i class="bi bi-paperclip"></i>
             <% end %>
-          </div>
+          <% end %>
         </div>
       <% end %>
 
