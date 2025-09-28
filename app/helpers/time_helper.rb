@@ -20,12 +20,6 @@ module TimeHelper
     end
   end
 
-  def time_ago(time)
-    return nil unless time
-
-    time_ago_in_words(time, include_seconds: true)
-  end
-
   def long_time_format(time)
     return nil unless time
 
@@ -35,7 +29,7 @@ module TimeHelper
   def time_ago_tag(time)
     return nil unless time
 
-    content_tag(:time, time_ago(time),
+    content_tag(:time, time_ago_in_words(time, include_seconds: true),
                 datetime: time.rfc3339,
                 title: long_time_format(time))
   end

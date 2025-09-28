@@ -37,16 +37,6 @@ class TimeHelperTest < ActionView::TestCase
     assert_equal "2y", short_time_ago(time)
   end
 
-  test "time_ago returns nil for nil input" do
-    assert_nil time_ago(nil)
-  end
-
-  test "time_ago delegates to time_ago_in_words" do
-    time = 1.hour.ago
-    expected = time_ago_in_words(time, include_seconds: true)
-    assert_equal expected, time_ago(time)
-  end
-
   test "long_time_format returns nil for nil input" do
     assert_nil long_time_format(nil)
   end
