@@ -1,0 +1,102 @@
+<div class="row">
+  <div class="col-12">
+    <%= page_header "Posts" %>
+
+    <% if @posts.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+          <thead>
+            <tr>
+              <th>Content</th>
+              <th>Feed</th>
+              <th>Published</th>
+              <th>Attachments</th>
+              <th>Comments</th>
+              <th>Status</th>
+              <th>Links</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @posts.each do |post| %>
+              <tr>
+                <td>
+                  <%= link_to post, class: "text-decoration-none" do %>
+                    <%= truncate(post.content, length: 100) %>
+                  <% end %>
+                </td>
+                <td>
+                  <%= link_to post.feed, class: "text-decoration-none" do %>
+                    <%= post.feed.name %>
+                  <% end %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= post.published_at.strftime("%m/%d %H:%M") if post.published_at %>
+                  </small>
+                </td>
+                <td class="text-center">
+                  <% if post.attachment_urls.present? %>
+                    <span class="badge bg-info">
+                      <%= post.attachment_urls.length %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <td class="text-center">
+                  <% if post.comments.present? %>
+                    <span class="badge bg-secondary">
+                      <%= post.comments.length %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% case post.status %>
+                  <% when "published" %>
+                    <span class="badge bg-success">Published</span>
+                  <% when "failed" %>
+                    <span class="badge bg-danger">Failed</span>
+                  <% when "enqueued" %>
+                    <span class="badge bg-warning">Enqueued</span>
+                  <% when "rejected" %>
+                    <span class="badge bg-secondary">Rejected</span>
+                  <% else %>
+                    <span class="badge bg-light text-dark"><%= post.status.capitalize %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <% if post.freefeed_post_id.present? %>
+                      <%= link_to "FreeFeed", "https://freefeed.net/#{post.feed.target_group}/#{post.freefeed_post_id}",
+                                  class: "btn btn-sm btn-outline-primary",
+                                  target: "_blank",
+                                  rel: "noopener" %>
+                    <% end %>
+                    <% if post.source_url.present? %>
+                      <%= link_to "Source", post.source_url,
+                                  class: "btn btn-sm btn-outline-secondary",
+                                  target: "_blank",
+                                  rel: "noopener" %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%= pagination_for @posts,
+                         collection_name: "posts",
+                         path_helper: ->(page) { posts_path(page: page) } %>
+    <% else %>
+      <div class="text-center py-5">
+        <p>No posts yet</p>
+        <p class="text-muted">Posts will appear here when feeds are imported.</p>
+        <%= link_to "View Feeds", feeds_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
