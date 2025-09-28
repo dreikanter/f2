@@ -102,7 +102,7 @@ class FeedsController < ApplicationController
   private
 
   def pagination_scope
-    policy_scope(Feed).order(:name)
+    policy_scope(Feed).includes(:feed_entries, :posts).order(:name)
   end
 
   def form_template_name(section)

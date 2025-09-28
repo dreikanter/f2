@@ -65,6 +65,29 @@
       <%= render "scheduling_display", feed: @feed %>
     </div>
   </div>
+
+  <div class="list-group-item">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Last Refresh:</strong>
+        <% if @feed.last_refreshed_at %>
+          <%= @feed.last_refreshed_at.strftime("%B %d, %Y at %H:%M") %>
+          <small class="text-muted">(<%= time_ago_in_words(@feed.last_refreshed_at) %> ago)</small>
+        <% else %>
+          <em class="text-muted">Never refreshed</em>
+        <% end %>
+      </div>
+      <div class="col-md-6">
+        <strong>Most Recent Post:</strong>
+        <% if @feed.most_recent_post_date %>
+          <%= @feed.most_recent_post_date.strftime("%B %d, %Y at %H:%M") %>
+          <small class="text-muted">(<%= time_ago_in_words(@feed.most_recent_post_date) %> ago)</small>
+        <% else %>
+          <em class="text-muted">No posts imported</em>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="mt-4">
