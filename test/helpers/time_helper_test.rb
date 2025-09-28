@@ -60,10 +60,8 @@ class TimeHelperTest < ActiveSupport::TestCase
   test "time_ago_tag generates HTML time element" do
     time = Time.zone.parse("2025-01-15 15:45:30")
     result = time_ago_tag(time)
-    assert_match /<time/, result
-    assert_match /datetime="2025-01-15T15:45:30Z"/, result
-    assert_match /title="15 Jan 2025, 15:45"/, result
-    assert_match /ago<\/time>/, result
+    expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">about 10 years ago</time>'
+    assert_equal expected, result
   end
 
   test "long_time_tag returns nil for nil input" do
@@ -73,9 +71,7 @@ class TimeHelperTest < ActiveSupport::TestCase
   test "long_time_tag generates HTML time element" do
     time = Time.zone.parse("2025-01-15 15:45:30")
     result = long_time_tag(time)
-    assert_match /<time/, result
-    assert_match /datetime="2025-01-15T15:45:30Z"/, result
-    assert_match /title=".*ago"/, result
-    assert_match />15 Jan 2025, 15:45<\/time>/, result
+    expected = '<time datetime="2025-01-15T15:45:30Z" title="about 10 years ago">15 Jan 2025, 15:45</time>'
+    assert_equal expected, result
   end
 end
