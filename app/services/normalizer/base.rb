@@ -45,7 +45,7 @@ module Normalizer
     end
 
     def validate_post(post)
-      errors = super
+      errors = []
       errors << "no_content_or_images" if missing_content_and_images?(post)
       errors
     end
