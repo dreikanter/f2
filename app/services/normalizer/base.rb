@@ -17,7 +17,6 @@ module Normalizer
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
-      post.published_at = normalize_published_at(post.published_at)
       # TBD: Consider renamint this field
       post.validation_errors = validate_post(post)
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
@@ -37,7 +36,7 @@ module Normalizer
         feed: feed_entry.feed,
         feed_entry: feed_entry,
         uid: feed_entry.uid,
-        published_at: feed_entry.published_at,
+        published_at: normalize_published_at(feed_entry.published_at),
         status: :draft,
         validation_errors: [],
         **content_attributes
