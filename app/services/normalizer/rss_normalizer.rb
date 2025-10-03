@@ -85,13 +85,13 @@ module Normalizer
       return content if content.length <= Post::MAX_CONTENT_LENGTH
 
       # Use Rails truncate helper with word boundary preservation
-      ActionController::Base.helpers.truncate(content, length: Post::MAX_CONTENT_LENGTH, separator: ' ')
+      ActionController::Base.helpers.truncate(content, length: Post::MAX_CONTENT_LENGTH, separator: " ")
     end
 
     def truncate_comment(comment)
       return comment if comment.length <= Post::MAX_COMMENT_LENGTH
 
-      ActionController::Base.helpers.truncate(comment, length: Post::MAX_COMMENT_LENGTH, separator: ' ')
+      ActionController::Base.helpers.truncate(comment, length: Post::MAX_COMMENT_LENGTH, separator: " ")
     end
   end
 end
