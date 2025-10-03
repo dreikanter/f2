@@ -97,7 +97,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.attachment_urls, "https://example.com/content2.png"
   end
 
-  test "should reject post with blank content" do
+  test "should accept post with blank content" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -107,8 +107,9 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_content"
+    assert_equal "", post.content
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
   end
 
   test "should reject post with invalid source_url" do

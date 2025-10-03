@@ -33,10 +33,6 @@ module Normalizer
       errors
     end
 
-    def content_blank?(post)
-      false
-    end
-
     def missing_content_and_images?(post)
       post.content.blank? && post.attachment_urls.empty?
     end

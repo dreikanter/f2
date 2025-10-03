@@ -18,17 +18,10 @@ module Normalizer
     def validate_post(post)
       errors = []
 
-      errors << "blank_content" if content_blank?(post)
       errors << "invalid_source_url" if source_url_invalid?(post)
       errors << "future_date" if published_in_future?(post)
-      errors << "content_too_long" if content_too_long?(post)
-      errors << "comment_too_long" if comment_too_long?(post)
 
       errors
-    end
-
-    def content_blank?(post)
-      post.content.blank?
     end
 
     def source_url_invalid?(post)
@@ -39,14 +32,6 @@ module Normalizer
       post.published_at > Time.current
     end
 
-    def content_too_long?(post)
-      post.content.length > Post::MAX_CONTENT_LENGTH
-    end
-
-    def comment_too_long?(post)
-      post.comments.any? { |c| c.length > Post::MAX_COMMENT_LENGTH }
-    end
-
     def extract_source_url(raw_data)
       raw_data.dig("link") || raw_data.dig("url") || ""
     end
@@ -54,7 +39,9 @@ module Normalizer
     def extract_content(raw_data)
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       result = clean_html(content)
-      result.empty? ? "" : result
+      return "" if result.empty?
+
+      truncate_content(result)
     end
 
     def extract_attachment_urls(raw_data)
@@ -69,7 +56,8 @@ module Normalizer
     end
 
     def extract_comments(raw_data)
-      []
+      comments = []
+      comments.map { |comment| truncate_comment(comment) }
     end
 
     def clean_html(text)
@@ -91,6 +79,19 @@ module Normalizer
       %w[http https].include?(uri.scheme)
     rescue URI::InvalidURIError
       false
+    end
+
+    def truncate_content(content)
+      return content if content.length <= Post::MAX_CONTENT_LENGTH
+
+      # Use Rails truncate helper with word boundary preservation
+      ActionController::Base.helpers.truncate(content, length: Post::MAX_CONTENT_LENGTH, separator: ' ')
+    end
+
+    def truncate_comment(comment)
+      return comment if comment.length <= Post::MAX_COMMENT_LENGTH
+
+      ActionController::Base.helpers.truncate(comment, length: Post::MAX_COMMENT_LENGTH, separator: ' ')
     end
   end
 end
