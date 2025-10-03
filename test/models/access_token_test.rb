@@ -97,15 +97,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal token_value, token.token
   end
 
-  test "validates user tokens limit" do
-    user = create(:user)
-    AccessToken::MAX_TOKENS_PER_USER.times { create(:access_token, user: user) }
-    new_token = build(:access_token, user: user)
-
-    assert_not new_token.valid?
-    assert_includes new_token.errors[:user], "cannot have more than #{AccessToken::MAX_TOKENS_PER_USER} access tokens"
-  end
-
   test "can update status to active with owner" do
     token = create(:access_token)
     assert token.pending?

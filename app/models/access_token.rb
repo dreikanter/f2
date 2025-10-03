@@ -1,13 +1,10 @@
 class AccessToken < ApplicationRecord
-  MAX_TOKENS_PER_USER = 20
-
   belongs_to :user
   has_many :feeds
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
   validates :host, presence: true, format: { with: /\Ahttps?:\/\/[^\s]+\z/, message: "must be a valid HTTP(S) URL" }
-  validate :user_tokens_limit
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
@@ -48,13 +45,6 @@ class AccessToken < ApplicationRecord
   end
 
   private
-
-  def user_tokens_limit
-    return unless user&.persisted?
-    return unless user.access_tokens.where.not(id: id).count >= MAX_TOKENS_PER_USER
-
-    errors.add(:user, "cannot have more than #{MAX_TOKENS_PER_USER} access tokens")
-  end
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
