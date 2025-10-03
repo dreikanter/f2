@@ -3,12 +3,6 @@ module Normalizer
   class RssNormalizer < Base
     private
 
-    def build_post
-      post = super
-      post.published_at = normalize_published_at(post.published_at)
-      post
-    end
-
     # Extracts RSS-specific content attributes
     # @param raw_data [Hash] RSS feed item data
     # @return [Hash] content attributes hash
@@ -19,11 +13,6 @@ module Normalizer
         attachment_urls: extract_attachment_urls(raw_data),
         comments: extract_comments(raw_data)
       }
-    end
-
-    def normalize_published_at(published_at)
-      return Time.current if published_at > Time.current
-      published_at
     end
 
     def extract_source_url(raw_data)
