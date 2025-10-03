@@ -18,13 +18,33 @@ module Normalizer
     def validate_post(post)
       errors = []
 
-      errors << "blank_content" if post.content.blank?
-      errors << "invalid_source_url" if post.source_url.blank? || !valid_url?(post.source_url)
-      errors << "future_date" if post.published_at > Time.current
-      errors << "content_too_long" if post.content.length > Post::MAX_CONTENT_LENGTH
-      errors << "comment_too_long" if post.comments.any? { |c| c.length > Post::MAX_COMMENT_LENGTH }
+      errors << "blank_content" if content_blank?(post)
+      errors << "invalid_source_url" if source_url_invalid?(post)
+      errors << "future_date" if published_in_future?(post)
+      errors << "content_too_long" if content_too_long?(post)
+      errors << "comment_too_long" if comment_too_long?(post)
 
       errors
+    end
+
+    def content_blank?(post)
+      post.content.blank?
+    end
+
+    def source_url_invalid?(post)
+      post.source_url.blank? || !valid_url?(post.source_url)
+    end
+
+    def published_in_future?(post)
+      post.published_at > Time.current
+    end
+
+    def content_too_long?(post)
+      post.content.length > Post::MAX_CONTENT_LENGTH
+    end
+
+    def comment_too_long?(post)
+      post.comments.any? { |c| c.length > Post::MAX_COMMENT_LENGTH }
     end
 
     def extract_source_url(raw_data)

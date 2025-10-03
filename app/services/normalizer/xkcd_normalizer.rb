@@ -26,5 +26,19 @@ module Normalizer
 
       (image_urls + summary_images + content_images).uniq
     end
+
+    def validate_post(post)
+      errors = super(post)
+      errors << "no_content_or_images" if missing_content_and_images?(post)
+      errors
+    end
+
+    def content_blank?(post)
+      false
+    end
+
+    def missing_content_and_images?(post)
+      post.content.blank? && post.attachment_urls.empty?
+    end
   end
 end
