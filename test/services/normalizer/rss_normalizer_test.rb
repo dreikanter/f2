@@ -97,7 +97,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.attachment_urls, "https://example.com/content2.png"
   end
 
-  test "should accept post with blank content" do
+  test "should reject post with blank content and no images" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -108,8 +108,8 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "", post.content
-    assert_equal "enqueued", post.status
-    assert_equal [], post.validation_errors
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "no_content_or_images"
   end
 
   test "should normalize blank source URL to empty string" do
@@ -136,7 +136,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert post.published_at <= Time.current
   end
 
-  test "should handle normalization of multiple issues" do
+  test "should handle normalization with blank content and future date" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -150,8 +150,8 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "enqueued", post.status
-    assert_equal [], post.validation_errors
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "no_content_or_images"
     assert_equal "", post.source_url
     # Future date should be normalized to current date, not rejected
     assert_equal Time.current.to_date, post.published_at.to_date
