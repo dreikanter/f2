@@ -77,6 +77,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       { "type" => "image/png", "url" => "https://example.com/image2.png" },
       { "type" => "audio/mp3", "url" => "https://example.com/audio.mp3" }
     ]
+
     feed_entry = feed_entry_with_raw_data("enclosures" => enclosures)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
@@ -138,6 +139,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "link" => "",
       "url" => ""
     )
+
     feed_entry.update(published_at: 1.hour.from_now)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
