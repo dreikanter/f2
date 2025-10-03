@@ -69,7 +69,7 @@ end
 
 gem "amazing_print", "~> 1.8"
 gem "dotenv", "~> 3.1"
-gem "faraday", "~> 2.0"
+gem "faraday", "~> 2.14"
 gem "faraday-follow_redirects", "~> 0.4"
 gem "faraday-multipart", "~> 1.1"
 gem "feedjira", "~> 4.0"
