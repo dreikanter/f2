@@ -78,3 +78,5 @@ gem "mini_mime", "~> 1.1"
 gem "pundit", "~> 2.5"
 
 gem "with_advisory_lock", "~> 7.0.1"
+
+gem "amazing_print", "~> 1.8"
