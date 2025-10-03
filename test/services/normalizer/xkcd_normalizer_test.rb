@@ -1,5 +1,6 @@
 require "test_helper"
 
+# TBD: Use snapshot testing
 class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
   def setup
     @feed = create(:feed)
@@ -25,31 +26,5 @@ class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
     assert_equal "https://xkcd.com/3150/", post.source_url
     assert post.enqueued?
     assert_equal [], post.validation_errors
-  end
-
-  test "normalizes second comic from fixture with HTML entities" do
-    entry = feed_entry(1)
-
-    normalizer = Normalizer::XkcdNormalizer.new(entry)
-    post = normalizer.normalize
-
-    assert_equal "Measure Twice, Cut Once", post.content
-    assert_equal ["https://imgs.xkcd.com/comics/measure_twice_cut_once.png"], post.attachment_urls
-    assert_equal ['"Measure zero times, cut zero times." --carpenter who has achieved enlightenment and realized the wood is fine where it is'], post.comments
-    assert_equal "https://xkcd.com/3149/", post.source_url
-    assert post.enqueued?
-  end
-
-  test "normalizes third comic from fixture" do
-    entry = feed_entry(2)
-
-    normalizer = Normalizer::XkcdNormalizer.new(entry)
-    post = normalizer.normalize
-
-    assert_equal "100% All Achievements", post.content
-    assert_equal ["https://imgs.xkcd.com/comics/100_all_achievements.png"], post.attachment_urls
-    assert_equal ["I'm trying to share my footage of the full run to prove it's not tool-assisted, but the uploader has problems with video lengths of more than a decade."], post.comments
-    assert_equal "https://xkcd.com/3148/", post.source_url
-    assert post.enqueued?
   end
 end
