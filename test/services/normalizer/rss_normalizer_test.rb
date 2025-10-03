@@ -136,7 +136,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert post.published_at <= Time.current
   end
 
-  test "should handle normalization with blank content and future date" do
+  test "should reject post with blank content and blank URLs" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -145,16 +145,12 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "url" => ""
     )
 
-    feed_entry.update(published_at: 1.hour.from_now)
-
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "no_content_or_images"
     assert_equal "", post.source_url
-    # Future date should be normalized to current date, not rejected
-    assert_equal Time.current.to_date, post.published_at.to_date
   end
 
   test "should normalize invalid URL schemes to empty string" do
