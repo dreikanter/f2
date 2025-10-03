@@ -1,5 +1,11 @@
+# Base class for feed entry normalizers
+#
+# Normalizer should normalize the feed entry content to make it compatible with
+# publication on Freefeed. If normalization is not possible, normalizer should
+# reject the post with a list of validation errors. The Post record can always
+# be persisted regardless of whether normalization is performed.
+#
 module Normalizer
-  # Base class for feed entry normalizers
   class Base
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
@@ -7,11 +13,6 @@ module Normalizer
     end
 
     # Normalizes feed entry into a Post with validation
-    #
-    # Normalizer should normalize the feed entry content to make it compatible with
-    # publication on Freefeed. If normalization is not possible, normalizer should
-    # reject the post with a list of validation errors. The Post record can always
-    # be persisted regardless of whether normalization is performed.
     #
     # @return [Post] post with status set based on validation
     def normalize
