@@ -7,6 +7,12 @@ module Normalizer
     end
 
     # Normalizes feed entry into a Post with validation
+    #
+    # Normalizer should normalize the feed entry content to make it compatible with
+    # publication on Freefeed. If normalization is not possible, normalizer should
+    # reject the post with a list of validation errors. The Post record can always
+    # be persisted regardless of whether normalization is performed.
+    #
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
