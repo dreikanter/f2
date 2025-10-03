@@ -16,7 +16,7 @@ class ComponentOptionsHelperTest < ActionView::TestCase
   end
 
   test "normalizer_options returns normalizer options" do
-    expected = [["RSS", "rss"]]
+    expected = [["RSS", "rss"], ["XKCD", "xkcd"]]
     result = normalizer_options
 
     assert_equal expected, result

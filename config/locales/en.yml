@@ -38,6 +38,7 @@ en:
   
   normalizers:
     rss: "RSS"
+    xkcd: "XKCD"
 
   feed_profiles:
     rss: "RSS Feed Profile"
