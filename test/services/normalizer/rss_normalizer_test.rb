@@ -153,18 +153,26 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "", post.source_url
   end
 
-  test "should normalize invalid URL schemes to empty string" do
-    feed_entry = feed_entry_with_raw_data("link" => "ftp://example.com/file")
+  test "should preserve non-HTTP URL schemes" do
+    test_urls = [
+      "ftp://example.com/file",
+      "mailto:test@example.com",
+      "file:///path/to/file",
+      "tel:+1234567890"
+    ]
 
-    normalizer = Normalizer::RssNormalizer.new(feed_entry)
-    post = normalizer.normalize
+    test_urls.each do |url|
+      feed_entry = feed_entry_with_raw_data("link" => url)
+      normalizer = Normalizer::RssNormalizer.new(feed_entry)
+      post = normalizer.normalize
 
-    assert_equal "enqueued", post.status
-    assert_equal [], post.validation_errors
-    assert_equal "", post.source_url
+      assert_equal "enqueued", post.status
+      assert_equal [], post.validation_errors
+      assert_equal url, post.source_url
+    end
   end
 
-  test "should normalize malformed URLs to empty string" do
+  test "should preserve simple relative URLs" do
     feed_entry = feed_entry_with_raw_data("link" => "not-a-url")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
@@ -172,7 +180,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "enqueued", post.status
     assert_equal [], post.validation_errors
-    assert_equal "", post.source_url
+    assert_equal "not-a-url", post.source_url
   end
 
   test "should normalize URLs that trigger URI::InvalidURIError to empty string" do

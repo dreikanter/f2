@@ -34,10 +34,11 @@ module Normalizer
     def normalize_source_url(url)
       return "" if url.blank?
 
-      # Try to parse and validate the URL
-      return url if valid_url?(url)
-
-      # If invalid, return empty string as fallback
+      # Keep original URL if it's a valid URI, regardless of scheme
+      URI.parse(url)
+      url
+    rescue URI::InvalidURIError
+      # Only normalize to empty string if truly malformed
       ""
     end
 
@@ -77,13 +78,6 @@ module Normalizer
 
       doc = Nokogiri::HTML::DocumentFragment.parse(content)
       doc.css("img").map { |img| img["src"] }.compact
-    end
-
-    def valid_url?(url)
-      uri = URI.parse(url)
-      %w[http https].include?(uri.scheme)
-    rescue URI::InvalidURIError
-      false
     end
 
     def truncate_content(content)
