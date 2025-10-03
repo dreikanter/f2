@@ -45,12 +45,12 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_not_nil raw_data["author"]
   end
 
-  test "should return empty array for invalid RSS" do
+  test "should raise error for invalid RSS" do
     processor = Processor::RssProcessor.new(feed, "invalid rss content")
 
-    entries = processor.process
-
-    assert_equal [], entries
+    assert_raises(Feedjira::NoParserAvailable) do
+      processor.process
+    end
   end
 
   test "should return empty array for RSS without entries" do

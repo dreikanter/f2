@@ -14,8 +14,6 @@ module Processor
           raw_data: entry_to_hash(entry)
         )
       end
-    rescue Feedjira::NoParserAvailable
-      []
     end
 
     private
