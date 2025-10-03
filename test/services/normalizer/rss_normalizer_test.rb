@@ -77,6 +77,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       { "type" => "image/png", "url" => "https://example.com/image2.png" },
       { "type" => "audio/mp3", "url" => "https://example.com/audio.mp3" }
     ]
+
     feed_entry = feed_entry_with_raw_data("enclosures" => enclosures)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
@@ -96,7 +97,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.attachment_urls, "https://example.com/content2.png"
   end
 
-  test "should reject post with blank content" do
+  test "should reject post with blank content and no images" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -106,31 +107,36 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
+    assert_equal "", post.content
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_content"
+    assert_includes post.validation_errors, "no_content_or_images"
   end
 
-  test "should reject post with invalid source_url" do
+  test "should normalize blank source URL to empty string" do
     feed_entry = feed_entry_with_raw_data("link" => "", "url" => "")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_source_url"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert_equal "", post.source_url
   end
 
-  test "should reject post with future date" do
-    feed_entry = create(:feed_entry, published_at: 1.hour.from_now)
+  test "should normalize future publication date to current date" do
+    future_time = 1.hour.from_now
+    feed_entry = create(:feed_entry, published_at: future_time)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "future_date"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert_equal Time.current.to_date, post.published_at.to_date
+    assert post.published_at <= Time.current
   end
 
-  test "should handle multiple validation errors" do
+  test "should reject post with blank content and blank URLs" do
     feed_entry = feed_entry_with_raw_data(
       "title" => "",
       "content" => "",
@@ -138,38 +144,46 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       "link" => "",
       "url" => ""
     )
-    feed_entry.update(published_at: 1.hour.from_now)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_content"
-    assert_includes post.validation_errors, "invalid_source_url"
-    assert_includes post.validation_errors, "future_date"
+    assert_includes post.validation_errors, "no_content_or_images"
+    assert_equal "", post.source_url
   end
 
-  test "should handle invalid URL schemes" do
-    feed_entry = feed_entry_with_raw_data("link" => "ftp://example.com/file")
+  test "should preserve non-HTTP URL schemes" do
+    test_urls = [
+      "ftp://example.com/file",
+      "mailto:test@example.com",
+      "file:///path/to/file",
+      "tel:+1234567890"
+    ]
 
-    normalizer = Normalizer::RssNormalizer.new(feed_entry)
-    post = normalizer.normalize
+    test_urls.each do |url|
+      feed_entry = feed_entry_with_raw_data("link" => url)
+      normalizer = Normalizer::RssNormalizer.new(feed_entry)
+      post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_source_url"
+      assert_equal "enqueued", post.status
+      assert_equal [], post.validation_errors
+      assert_equal url, post.source_url
+    end
   end
 
-  test "should handle malformed URLs" do
+  test "should preserve simple relative URLs" do
     feed_entry = feed_entry_with_raw_data("link" => "not-a-url")
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "invalid_source_url"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert_equal "not-a-url", post.source_url
   end
 
-  test "should handle URLs that trigger URI::InvalidURIError" do
+  test "should normalize URLs that trigger URI::InvalidURIError to empty string" do
     # URLs with invalid characters that cause URI.parse to raise URI::InvalidURIError
     invalid_urls = [
       "http://example.com/path with spaces",
@@ -183,20 +197,23 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
       normalizer = Normalizer::RssNormalizer.new(feed_entry)
       post = normalizer.normalize
 
-      assert_equal "rejected", post.status
-      assert_includes post.validation_errors, "invalid_source_url"
+      assert_equal "enqueued", post.status
+      assert_equal [], post.validation_errors
+      assert_equal "", post.source_url
     end
   end
 
-  test "should reject post with content too long" do
-    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
+  test "should truncate content that is too long" do
+    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 100)
     feed_entry = feed_entry_with_raw_data("summary" => long_content)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "content_too_long"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert post.content.length <= Post::MAX_CONTENT_LENGTH
+    assert post.content.ends_with?("...")
   end
 
   test "should accept post with content at maximum length" do

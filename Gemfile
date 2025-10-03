@@ -67,14 +67,14 @@ group :development do
   gem "web-console"
 end
 
-gem "fugit", "~> 1.11"
+gem "amazing_print", "~> 1.8"
 gem "dotenv", "~> 3.1"
-gem "mission_control-jobs", "~> 1.1"
 gem "faraday", "~> 2.0"
 gem "faraday-follow_redirects", "~> 0.3"
 gem "faraday-multipart", "~> 1.1"
 gem "feedjira", "~> 4.0"
+gem "fugit", "~> 1.11"
 gem "mini_mime", "~> 1.1"
+gem "mission_control-jobs", "~> 1.1"
 gem "pundit", "~> 2.5"
-
 gem "with_advisory_lock", "~> 7.0.1"

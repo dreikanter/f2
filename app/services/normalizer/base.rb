@@ -1,5 +1,11 @@
+# Base class for feed entry normalizers
+#
+# Normalizer should normalize the feed entry content to make it compatible with
+# publication on Freefeed. If normalization is not possible, normalizer should
+# reject the post with a list of validation errors. The Post record can always
+# be persisted regardless of whether normalization is performed.
+#
 module Normalizer
-  # Base class for feed entry normalizers
   class Base
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
@@ -7,9 +13,11 @@ module Normalizer
     end
 
     # Normalizes feed entry into a Post with validation
+    #
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
+      # TBD: Consider renaming this field
       post.validation_errors = validate_post(post)
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
@@ -28,7 +36,7 @@ module Normalizer
         feed: feed_entry.feed,
         feed_entry: feed_entry,
         uid: feed_entry.uid,
-        published_at: feed_entry.published_at,
+        published_at: normalize_published_at(feed_entry.published_at),
         status: :draft,
         validation_errors: [],
         **content_attributes
@@ -43,12 +51,19 @@ module Normalizer
       raise NotImplementedError, "Subclasses must implement #extract_content_attributes method"
     end
 
-    # Validates post data
-    # @param post [Post] the post to validate
-    # @return [Array<String>] validation error codes
-    # @abstract Subclasses must implement this method
     def validate_post(post)
-      raise NotImplementedError, "Subclasses must implement #validate_post method"
+      errors = []
+      errors << "no_content_or_images" if missing_content_and_images?(post)
+      errors
+    end
+
+    def normalize_published_at(published_at)
+      return Time.current if published_at > Time.current
+      published_at
+    end
+
+    def missing_content_and_images?(post)
+      post.content.blank? && post.attachment_urls.empty?
     end
   end
 end
