@@ -8,6 +8,7 @@ class Feed < ApplicationRecord
   belongs_to :access_token, optional: true
   belongs_to :feed_profile, optional: true
   has_one :feed_schedule, dependent: :destroy
+  has_many :events, as: :subject, dependent: :destroy
 
   delegate :loader, :processor, :normalizer, :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
   has_many :feed_entries, dependent: :destroy
