@@ -27,5 +27,19 @@ module Normalizer
         super(raw_data)
       end
     end
+
+    # Override to extract image URLs from summary field for XKCD comics
+    # @param raw_data [Hash] RSS feed item data
+    # @return [Array<String>] array of image URLs
+    def extract_attachment_urls(raw_data)
+      enclosures = raw_data.dig("enclosures") || []
+      image_urls = enclosures.filter_map { |e| e["url"] if e["type"]&.start_with?("image/") }
+
+      # Extract images from summary field (where XKCD stores comic images)
+      summary_images = extract_images_from_content(raw_data.dig("summary") || "")
+      content_images = extract_images_from_content(raw_data.dig("content") || "")
+
+      (image_urls + summary_images + content_images).uniq
+    end
   end
 end
