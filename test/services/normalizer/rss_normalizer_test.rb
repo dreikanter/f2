@@ -122,14 +122,17 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "invalid_source_url"
   end
 
-  test "should reject post with future date" do
-    feed_entry = create(:feed_entry, published_at: 1.hour.from_now)
+  test "should normalize future publication date to current date" do
+    future_time = 1.hour.from_now
+    feed_entry = create(:feed_entry, published_at: future_time)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "future_date"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert_equal Time.current.to_date, post.published_at.to_date
+    assert post.published_at <= Time.current
   end
 
   test "should handle multiple validation errors" do
@@ -147,9 +150,9 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "blank_content"
     assert_includes post.validation_errors, "invalid_source_url"
-    assert_includes post.validation_errors, "future_date"
+    # Future date should be normalized to current date, not rejected
+    assert_equal Time.current.to_date, post.published_at.to_date
   end
 
   test "should handle invalid URL schemes" do
@@ -191,15 +194,17 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     end
   end
 
-  test "should reject post with content too long" do
-    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
+  test "should truncate content that is too long" do
+    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 100)
     feed_entry = feed_entry_with_raw_data("summary" => long_content)
 
     normalizer = Normalizer::RssNormalizer.new(feed_entry)
     post = normalizer.normalize
 
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "content_too_long"
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
+    assert post.content.length <= Post::MAX_CONTENT_LENGTH
+    assert post.content.ends_with?("...")
   end
 
   test "should accept post with content at maximum length" do
