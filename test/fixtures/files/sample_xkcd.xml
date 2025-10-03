@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>xkcd.com</title>
+    <link>https://xkcd.com/</link>
+    <description>xkcd.com: A webcomic of romance and math humor.</description>
+    <language>en</language>
+
+    <item>
+      <title>Ping</title>
+      <link>https://xkcd.com/3150/</link>
+      <description>&lt;img src="https://imgs.xkcd.com/comics/ping.png" title="Progress on getting shipwrecked sailors to adopt ICMPv6 has been slow." alt="Progress on getting shipwrecked sailors to adopt ICMPv6 has been slow." /&gt;</description>
+      <pubDate>Fri, 03 Oct 2025 04:00:00 -0000</pubDate>
+      <guid>https://xkcd.com/3150/</guid>
+    </item>
+
+    <item>
+      <title>Measure Twice, Cut Once</title>
+      <link>https://xkcd.com/3149/</link>
+      <description>&lt;img src="https://imgs.xkcd.com/comics/measure_twice_cut_once.png" title="&amp;quot;Measure zero times, cut zero times.&amp;quot; --carpenter who has achieved enlightenment and realized the wood is fine where it is" alt="&amp;quot;Measure zero times, cut zero times.&amp;quot; --carpenter who has achieved enlightenment and realized the wood is fine where it is" /&gt;</description>
+      <pubDate>Wed, 01 Oct 2025 04:00:00 -0000</pubDate>
+      <guid>https://xkcd.com/3149/</guid>
+    </item>
+
+    <item>
+      <title>100% All Achievements</title>
+      <link>https://xkcd.com/3148/</link>
+      <description>&lt;img src="https://imgs.xkcd.com/comics/100_all_achievements.png" title="I'm trying to share my footage of the full run to prove it's not tool-assisted, but the uploader has problems with video lengths of more than a decade." alt="I'm trying to share my footage of the full run to prove it's not tool-assisted, but the uploader has problems with video lengths of more than a decade." /&gt;</description>
+      <pubDate>Mon, 29 Sep 2025 04:00:00 -0000</pubDate>
+      <guid>https://xkcd.com/3148/</guid>
+    </item>
+  </channel>
+</rss>

@@ -29,12 +29,14 @@ module Processor
         id: entry.id,
         title: entry.title,
         url: entry.url,
+        link: entry.url,
         summary: entry.summary,
         content: entry.content,
         published: entry.published&.rfc3339,
         updated: entry.updated&.rfc3339,
         author: entry.author,
-        categories: entry.categories
+        categories: entry.categories,
+        enclosures: entry.try(:enclosures) || []
       }
     end
   end

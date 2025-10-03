@@ -24,7 +24,8 @@ module Normalizer
       summary_images = extract_images_from_content(raw_data.dig("summary") || "")
       content_images = extract_images_from_content(raw_data.dig("content") || "")
 
-      (image_urls + summary_images + content_images).uniq
+      all_images = (image_urls + summary_images + content_images).uniq
+      all_images.empty? ? [] : [all_images.first]
     end
   end
 end
