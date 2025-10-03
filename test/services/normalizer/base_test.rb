@@ -18,13 +18,12 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     end
   end
 
-  test "should raise NotImplementedError for validate_post method" do
+  test "should return empty array for validate_post method" do
     feed_entry = create(:feed_entry)
     normalizer = Normalizer::Base.new(feed_entry)
     post = build(:post)
 
-    assert_raises(NotImplementedError) do
-      normalizer.send(:validate_post, post)
-    end
+    result = normalizer.send(:validate_post, post)
+    assert_equal [], result
   end
 end

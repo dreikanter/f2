@@ -21,10 +21,6 @@ module Normalizer
       }
     end
 
-    def validate_post(post)
-      []
-    end
-
     def normalize_published_at(published_at)
       return Time.current if published_at > Time.current
       published_at

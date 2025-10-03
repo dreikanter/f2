@@ -44,12 +44,14 @@ module Normalizer
       raise NotImplementedError, "Subclasses must implement #extract_content_attributes method"
     end
 
-    # Validates post data
-    # @param post [Post] the post to validate
-    # @return [Array<String>] validation error codes
-    # @abstract Subclasses must implement this method
     def validate_post(post)
-      raise NotImplementedError, "Subclasses must implement #validate_post method"
+      errors = super
+      errors << "no_content_or_images" if missing_content_and_images?(post)
+      errors
+    end
+
+    def missing_content_and_images?(post)
+      post.content.blank? && post.attachment_urls.empty?
     end
   end
 end
