@@ -11,7 +11,7 @@ module Normalizer
         source_url: extract_source_url(raw_data),
         content: extract_content(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data)
+        comments: []
       }
     end
 
@@ -50,11 +50,6 @@ module Normalizer
       (image_urls + content_images).uniq
     end
 
-    def extract_comments(raw_data)
-      comments = []
-      comments.map { |comment| truncate_comment(comment) }
-    end
-
     def clean_html(text)
       return "" if text.blank?
 
@@ -75,10 +70,5 @@ module Normalizer
       content.truncate(Post::MAX_CONTENT_LENGTH, separator: " ")
     end
 
-    def truncate_comment(comment)
-      return comment if comment.length <= Post::MAX_COMMENT_LENGTH
-
-      comment.truncate(Post::MAX_COMMENT_LENGTH, separator: " ")
-    end
   end
 end
