@@ -440,7 +440,7 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    with_advisory_lock (7.0.1)
+    with_advisory_lock (7.0.2)
       activerecord (>= 7.2)
       zeitwerk (>= 2.7)
     yard (0.9.37)
@@ -500,7 +500,7 @@ DEPENDENCIES
   tzinfo-data
   web-console
   webmock
-  with_advisory_lock (~> 7.0.1)
+  with_advisory_lock (~> 7.0.2)
 
 BUNDLED WITH
    2.5.16
