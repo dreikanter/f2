@@ -22,15 +22,7 @@ module Normalizer
     end
 
     def validate_post(post)
-      errors = []
-
-      errors << "invalid_source_url" if source_url_invalid?(post)
-
-      errors
-    end
-
-    def source_url_invalid?(post)
-      post.source_url.blank? || !valid_url?(post.source_url)
+      []
     end
 
     def normalize_published_at(published_at)
@@ -39,7 +31,18 @@ module Normalizer
     end
 
     def extract_source_url(raw_data)
-      raw_data.dig("link") || raw_data.dig("url") || ""
+      url = raw_data.dig("link") || raw_data.dig("url") || ""
+      normalize_source_url(url)
+    end
+
+    def normalize_source_url(url)
+      return "" if url.blank?
+
+      # Try to parse and validate the URL
+      return url if valid_url?(url)
+
+      # If invalid, return empty string as fallback
+      ""
     end
 
     def extract_content(raw_data)
