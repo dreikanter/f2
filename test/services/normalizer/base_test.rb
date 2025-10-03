@@ -8,5 +8,4 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
       Normalizer::Base.new(feed_entry)
     end
   end
-
 end

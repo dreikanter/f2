@@ -69,6 +69,5 @@ module Normalizer
 
       content.truncate(Post::MAX_CONTENT_LENGTH, separator: " ")
     end
-
   end
 end

@@ -17,7 +17,7 @@ module Normalizer
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
-      # TBD: Consider renamint this field
+      # TBD: Consider renaming this field
       post.validation_errors = validate_post(post)
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
