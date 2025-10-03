@@ -11,7 +11,7 @@ module Normalizer
         source_url: extract_source_url(raw_data),
         content: extract_content(raw_data),
         attachment_urls: extract_attachment_urls(raw_data),
-        comments: []
+        comments: extract_comments(raw_data)
       }
     end
 
@@ -68,6 +68,10 @@ module Normalizer
       return content if content.length <= Post::MAX_CONTENT_LENGTH
 
       content.truncate(Post::MAX_CONTENT_LENGTH, separator: " ")
+    end
+
+    def extract_comments(raw_data)
+      []
     end
   end
 end
