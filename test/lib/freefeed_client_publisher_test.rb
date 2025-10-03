@@ -8,9 +8,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
   end
 
   test "create_attachment creates attachment successfully" do
-    file_path = Rails.root.join("test", "fixtures", "files", "test_image.jpg")
-    FileUtils.mkdir_p(File.dirname(file_path))
-    File.write(file_path, "fake image content")
+    file_path = file_fixture("test_image.jpg")
 
     attachment_response = {
       "attachments" => {
@@ -38,8 +36,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "attachment123", result[:id]
     assert_equal "https://freefeed.net/attachments/attachment123.jpg", result[:url]
     assert_equal "test_image.jpg", result[:filename]
-  ensure
-    File.delete(file_path) if File.exist?(file_path)
   end
 
   test "create_attachment handles file not found" do
@@ -51,9 +47,7 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
   end
 
   test "create_attachment handles API error" do
-    file_path = Rails.root.join("test", "fixtures", "files", "test_image.jpg")
-    FileUtils.mkdir_p(File.dirname(file_path))
-    File.write(file_path, "fake image content")
+    file_path = file_fixture("test_image.jpg")
 
     stub_request(:post, "#{@host}/v1/attachments")
       .to_return(status: 400, body: "Bad Request")
@@ -61,8 +55,6 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_raises(FreefeedClient::Error, "Failed to upload attachment: HTTP 400: Bad Request") do
       @client.create_attachment(file_path.to_s)
     end
-  ensure
-    File.delete(file_path) if File.exist?(file_path)
   end
 
   test "create_post creates post successfully" do

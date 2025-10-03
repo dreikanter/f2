@@ -136,11 +136,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "publish creates post with attachments" do
-    # Create temporary test file
-    file_path = Rails.root.join("test", "fixtures", "files", "test_image.jpg")
-    FileUtils.mkdir_p(File.dirname(file_path))
-    File.write(file_path, "fake image content")
-
+    file_path = file_fixture("test_image.jpg")
     post = post_with_content("Post with image", attachment_urls: [file_path.to_s])
 
     # Mock attachment upload
@@ -195,8 +191,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "freefeed_post_123", freefeed_post_id
     assert_equal "freefeed_post_123", post.reload.freefeed_post_id
     assert_equal "published", post.status
-  ensure
-    File.delete(file_path) if File.exist?(file_path)
   end
 
   test "publish creates post with comments" do

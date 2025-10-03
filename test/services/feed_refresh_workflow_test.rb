@@ -220,22 +220,23 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: invalid_rss, status: 200)
 
-    # RSS processor returns empty array for invalid RSS, so workflow should complete
-    result = workflow.execute
+    # RSS processor raises error for invalid RSS, workflow should handle it
+    assert_raises(Feedjira::NoParserAvailable) do
+      workflow.execute
+    end
 
-    # Should complete with no posts due to invalid RSS
-    assert_equal 0, result.length
+    # Verify no entries or posts were created
     assert_equal 0, FeedEntry.where(feed: test_feed).count
     assert_equal 0, Post.where(feed: test_feed).count
 
-    # Verify stats show no entries processed
-    assert workflow.stats[:started_at]
-    assert_equal 0, workflow.stats[:total_entries]
-    assert workflow.stats[:completed_at]
+    # Verify error event was created
+    error_events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    assert_equal 1, error_events.count
 
-    # Should still create event
-    events = Event.where(subject: test_feed, type: "feed_refresh_stats")
-    assert_equal 1, events.count
+    error_event = error_events.first
+    assert_equal "error", error_event.level
+    assert_match(/Feed refresh failed at process_feed_contents/, error_event.message)
+    assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
   test "handles normalization errors gracefully" do
