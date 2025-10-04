@@ -11,7 +11,6 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
 
   test "should parse RSS feed and create FeedEntry objects" do
     processor = Processor::RssProcessor.new(feed, sample_rss_content)
-
     entries = processor.process
 
     assert_equal 3, entries.length
@@ -19,16 +18,12 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert entries.all? { |entry| entry.feed == feed }
     assert entries.all? { |entry| entry.status == "pending" }
     assert entries.all? { |entry| entry.valid? }
-  end
 
-  test "should store raw entry data as JSON" do
-    processor = Processor::RssProcessor.new(feed, sample_rss_content)
-    entries = processor.process
+    entries_snapshot = entries.map do |entry|
+      entry.as_json(only: %i[uid status published_at raw_data])
+    end
 
-    first_entry = entries.first
-    raw_data = first_entry.raw_data
-
-    assert_matches_snapshot(raw_data, snapshot: "feeds/rss/raw_data.json")
+    assert_matches_snapshot(entries_snapshot, snapshot: "feeds/rss/entries.json")
   end
 
   test "should raise error for invalid RSS" do
