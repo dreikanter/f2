@@ -1,7 +1,7 @@
 {
   "attachment_urls": [],
   "comments": [],
-  "content": "This is the first article content with some HTML tags.",
+  "content": "This is the first article content with some HTML tags. - https://example.com/first-article",
   "published_at": "2024-09-12T09:00:00.000Z",
   "source_url": "https://example.com/first-article",
   "status": "enqueued",

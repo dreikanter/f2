@@ -3,6 +3,10 @@ class Post < ApplicationRecord
   MAX_CONTENT_LENGTH = 3000 # graphemes
   MAX_COMMENT_LENGTH = 3000 # characters
 
+  # Servers and browsers use higher length limit for URLs, but something longer
+  # than 2Kb is most probably an anomaly
+  MAX_URL_LENGTH = 2048 # characters
+
   NORMALIZED_ATTRIBUTES = %i[
     attachment_urls
     comments
@@ -24,6 +28,7 @@ class Post < ApplicationRecord
   validates :content, length: { maximum: MAX_CONTENT_LENGTH }
 
   validate :validate_comments_length
+  validate :validate_enqueued_status
 
   enum :status, {
     draft: 0,
@@ -47,5 +52,12 @@ class Post < ApplicationRecord
 
       errors.add(:comments, "Comment #{index + 1} exceeds maximum length of #{MAX_COMMENT_LENGTH} characters")
     end
+  end
+
+  def validate_enqueued_status
+    return unless enqueued?
+    return if validation_errors.blank?
+
+    errors.add(:status, "cannot be enqueued when validation_errors is not empty")
   end
 end
