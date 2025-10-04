@@ -26,7 +26,7 @@ module Normalizer
     end
 
     def content_images(raw_data)
-      extract_images_from_content(raw_data.dig("content") || "")
+      extract_images(raw_data.dig("content") || "")
     end
 
     def normalize_source_url(url)

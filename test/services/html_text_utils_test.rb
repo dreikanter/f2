@@ -20,21 +20,21 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     assert_equal "", subject.strip_html("")
   end
 
-  test "extract_images_from_content should extract image sources" do
+  test "extract_images should extract image sources" do
     html = '<p><img src="https://example.com/1.jpg"><img src="https://example.com/2.png"></p>'
-    result = subject.extract_images_from_content(html)
+    result = subject.extract_images(html)
     assert_equal ["https://example.com/1.jpg", "https://example.com/2.png"], result
   end
 
-  test "extract_images_from_content should skip images without src" do
+  test "extract_images should skip images without src" do
     html = '<p><img alt="test"><img src="https://example.com/image.jpg"></p>'
-    result = subject.extract_images_from_content(html)
+    result = subject.extract_images(html)
     assert_equal ["https://example.com/image.jpg"], result
   end
 
-  test "extract_images_from_content should return empty array for blank input" do
-    assert_equal [], subject.extract_images_from_content(nil)
-    assert_equal [], subject.extract_images_from_content("")
+  test "extract_images should return empty array for blank input" do
+    assert_equal [], subject.extract_images(nil)
+    assert_equal [], subject.extract_images("")
   end
 
   test "truncate_text should truncate long text" do

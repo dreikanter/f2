@@ -6,7 +6,7 @@ module HtmlTextUtils
     doc.text.strip.gsub(/\s+/, " ")
   end
 
-  def extract_images_from_content(text)
+  def extract_images(text)
     return [] if text.blank?
 
     doc = Nokogiri::HTML::DocumentFragment.parse(text)
