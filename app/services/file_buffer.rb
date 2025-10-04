@@ -44,7 +44,7 @@ class FileBuffer
     io = StringIO.new(content)
     io.set_encoding(Encoding::BINARY)
     content_type = local_file_content_type(path)
-    [io , content_type]
+    [io, content_type]
   end
 
   def url_to_io(url)
