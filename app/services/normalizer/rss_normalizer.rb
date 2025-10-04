@@ -13,7 +13,7 @@ module Normalizer
       result = strip_html(content)
       return "" if result.empty?
 
-      truncate_content(result)
+      truncate_text(result)
     end
 
     def extract_attachment_urls(raw_data)

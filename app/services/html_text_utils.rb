@@ -6,16 +6,16 @@ module HtmlTextUtils
     doc.text.strip.gsub(/\s+/, " ")
   end
 
-  def extract_images_from_content(content)
-    return [] if content.blank?
+  def extract_images_from_content(text)
+    return [] if text.blank?
 
-    doc = Nokogiri::HTML::DocumentFragment.parse(content)
-    doc.css("img").map { |img| img["src"] }.compact
+    doc = Nokogiri::HTML::DocumentFragment.parse(text)
+    doc.css("img").map { |image| image["src"] }.compact
   end
 
-  def truncate_content(content, max_length: Post::MAX_CONTENT_LENGTH)
-    return content if content.length <= max_length
+  def truncate_text(text, max_length: Post::MAX_CONTENT_LENGTH)
+    return text if text.length <= max_length
 
-    content.truncate(max_length, separator: " ")
+    text.truncate(max_length, separator: " ")
   end
 end
