@@ -6,8 +6,7 @@ class FileBufferTest < ActiveSupport::TestCase
   end
 
   test "should load local file and return StringIO with content type" do
-    buffer = FileBuffer.new(test_file_path)
-    io, content_type = buffer.load
+    io, content_type = FileBuffer.new.load(test_file_path)
 
     assert_instance_of StringIO, io
     assert_equal "application/xml", content_type
@@ -17,9 +16,7 @@ class FileBufferTest < ActiveSupport::TestCase
 
   test "should detect content type for local image file" do
     image_path = file_fixture("test_image.jpg").to_s
-
-    buffer = FileBuffer.new(image_path)
-    io, content_type = buffer.load
+    io, content_type = FileBuffer.new.load(image_path)
 
     assert_equal "image/jpeg", content_type
   end
@@ -32,8 +29,7 @@ class FileBufferTest < ActiveSupport::TestCase
     http_client = Minitest::Mock.new
     http_client.expect(:get, response, [url])
 
-    buffer = FileBuffer.new(url, http_client: http_client)
-    io, content_type = buffer.load
+    io, content_type = FileBuffer.new(http_client: http_client).load(url)
 
     assert_instance_of StringIO, io
     assert_equal "image/jpeg", content_type
@@ -50,8 +46,7 @@ class FileBufferTest < ActiveSupport::TestCase
     http_client = Minitest::Mock.new
     http_client.expect(:get, response, [url])
 
-    buffer = FileBuffer.new(url, http_client: http_client)
-    io, content_type = buffer.load
+    io, content_type = FileBuffer.new(http_client: http_client).load(url)
 
     # Marcel detects PNG from content (even though filename says .jpg)
     assert_equal "image/png", content_type
@@ -65,10 +60,8 @@ class FileBufferTest < ActiveSupport::TestCase
     http_client = Minitest::Mock.new
     http_client.expect(:get, response, [url])
 
-    buffer = FileBuffer.new(url, http_client: http_client)
-
     assert_raises(FileBuffer::Error) do
-      buffer.load
+      FileBuffer.new(http_client: http_client).load(url)
     end
 
     http_client.verify
@@ -82,10 +75,8 @@ class FileBufferTest < ActiveSupport::TestCase
       raise StandardError, "Unexpected error"
     end
 
-    buffer = FileBuffer.new(url, http_client: http_client)
-
     assert_raises(FileBuffer::Error) do
-      buffer.load
+      FileBuffer.new(http_client: http_client).load(url)
     end
   end
 end

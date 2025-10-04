@@ -7,18 +7,15 @@
 #   io, content_type = FileBuffer.new("/path/to/file.png").load
 #
 class FileBuffer
-  require "marcel"
+  DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
   class Error < StandardError; end
-
-  attr_reader :url
 
   # Initialize a new FileBuffer
   #
   # @param url [String] URL or local file path to load
   # @param http_client [HttpClient, nil] optional HTTP client for testing
-  def initialize(url, http_client: nil)
-    @url = url
+  def initialize(http_client: nil)
     @http_client = http_client
   end
 
@@ -26,11 +23,11 @@ class FileBuffer
   #
   # @return [Array<StringIO, String>] tuple of [StringIO with binary content, content_type]
   # @raise [FileBuffer::Error] if the file cannot be loaded
-  def load
+  def load(url)
     if File.exist?(url)
-      local_file_to_io
+      load_local_file(url)
     else
-      url_to_io
+      url_to_io(url)
     end
   rescue => e
     raise Error, "Failed to download attachment from #{url}: #{e.message}"
@@ -42,15 +39,15 @@ class FileBuffer
     @http_client ||= HttpClient.build
   end
 
-  def local_file_to_io
-    content = File.binread(url)
-    content_type = local_file_content_type
+  def load_local_file(path)
+    content = File.binread(path)
     io = StringIO.new(content)
     io.set_encoding(Encoding::BINARY)
-    [io, content_type]
+    content_type = local_file_content_type(path)
+    [io , content_type]
   end
 
-  def url_to_io
+  def url_to_io(url)
     response = http_client.get(url)
 
     unless response.success?
@@ -59,21 +56,20 @@ class FileBuffer
 
     io = StringIO.new(response.body)
     io.set_encoding(Encoding::BINARY)
-    io.rewind
 
-    content_type = url_content_type(response.body)
+    content_type = url_content_type(url, response.body)
 
     [io, content_type]
   end
 
-  def local_file_content_type
-    Marcel::MimeType.for(name: url) || "application/octet-stream"
+  def local_file_content_type(path)
+    Marcel::MimeType.for(name: path) || DEFAULT_CONTENT_TYPE
   end
 
-  def url_content_type(body)
+  def url_content_type(url, body)
     uri = URI(url)
     type = Marcel::MimeType.for(name: uri.path)
-    return type if type && type != "application/octet-stream"
+    return type if type && type != DEFAULT_CONTENT_TYPE
 
     Marcel::MimeType.for(StringIO.new(body), name: uri.path)
   end
