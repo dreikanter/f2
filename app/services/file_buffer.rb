@@ -9,7 +9,7 @@
 class FileBuffer
   class Error < StandardError; end
 
-  attr_reader :url, :http_client
+  attr_reader :url
 
   # Initialize a new FileBuffer
   #
@@ -38,6 +38,10 @@ class FileBuffer
 
   private
 
+  def http_client
+    @http_client ||= HttpClient.build
+  end
+
   def local_file_to_io
     content = File.binread(url)
     content_type = local_file_content_type
@@ -47,8 +51,7 @@ class FileBuffer
   end
 
   def url_to_io
-    client = http_client || HttpClient.build
-    response = client.get(url)
+    response = http_client.get(url)
 
     unless response.success?
       raise Error, "Failed to download attachment from #{url}: HTTP #{response.status}"
