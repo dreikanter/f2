@@ -11,6 +11,10 @@ module Normalizer
       @text_content ||= extract_content
     end
 
+    def original_url
+      @original_url ||= raw_data.dig("link") || raw_data.dig("url") || ""
+    end
+
     def validate_content
       errors = super
       errors << "url_too_long" if url_too_long?
@@ -18,14 +22,15 @@ module Normalizer
     end
 
     def url_too_long?
-      return false if source_url.blank?
+      return false if original_url.blank?
 
-      source_url.length > Post::MAX_URL_LENGTH
+      original_url.length > Post::MAX_URL_LENGTH
     end
 
     def extract_source_url
-      url = raw_data.dig("link") || raw_data.dig("url") || ""
-      normalize_source_url(url)
+      return "" if url_too_long?
+
+      normalize_source_url(original_url)
     end
 
     def extract_content
