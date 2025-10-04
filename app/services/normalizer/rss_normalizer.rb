@@ -20,14 +20,13 @@ module Normalizer
       normalize_source_url(url)
     end
 
+    # Keep original URL if it's a valid URI
     def normalize_source_url(url)
       return "" if url.blank?
 
-      # Keep original URL if it's a valid URI, regardless of scheme
       URI.parse(url)
       url
     rescue URI::InvalidURIError
-      # Only normalize to empty string if truly malformed
       ""
     end
 
