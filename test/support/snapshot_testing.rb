@@ -4,14 +4,14 @@ module SnapshotTesting
 
     if ENV["UPDATE_SNAPSHOTS"]
       FileUtils.mkdir_p(File.dirname(full_path))
-      File.write(full_path, actual_content)
+      File.write(full_path, actual_content + "\n")
       skip "Generated snapshot: #{snapshot}"
       return
     end
 
     if File.exist?(full_path)
       expected = File.read(full_path)
-      assert_equal expected, actual_content, "Snapshot mismatch for #{snapshot}\nRun with UPDATE_SNAPSHOTS=1 to update snapshots"
+      assert_equal expected, actual_content + "\n", "Snapshot mismatch for #{snapshot}\nRun with UPDATE_SNAPSHOTS=1 to update snapshots"
     else
       flunk "missing snapshot; run with UPDATE_SNAPSHOTS=1 to regenerate"
     end
