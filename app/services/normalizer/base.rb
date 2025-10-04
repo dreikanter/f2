@@ -66,11 +66,11 @@ module Normalizer
     end
 
     def extract_attachment_urls(raw_data)
-      raise NotImplementedError, "Subclasses must implement #extract_attachment_urls"
+      []
     end
 
     def extract_comments(raw_data)
-      raise NotImplementedError, "Subclasses must implement #extract_comments"
+      []
     end
 
     def validate_post(post)

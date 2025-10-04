@@ -29,10 +29,6 @@ module Normalizer
       extract_images_from_content(raw_data.dig("content") || "")
     end
 
-    def extract_comments(raw_data)
-      []
-    end
-
     def normalize_source_url(url)
       return "" if url.blank?
 
