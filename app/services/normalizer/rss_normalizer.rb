@@ -3,18 +3,6 @@ module Normalizer
   class RssNormalizer < Base
     private
 
-    # Extracts RSS-specific content attributes
-    # @param raw_data [Hash] RSS feed item data
-    # @return [Hash] content attributes hash
-    def extract_content_attributes(raw_data)
-      {
-        source_url: extract_source_url(raw_data),
-        content: extract_content(raw_data),
-        attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data)
-      }
-    end
-
     def extract_source_url(raw_data)
       url = raw_data.dig("link") || raw_data.dig("url") || ""
       normalize_source_url(url)

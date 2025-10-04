@@ -45,10 +45,30 @@ module Normalizer
 
     # Extracts content-specific attributes from raw data
     # @param raw_data [Hash] the raw feed entry data
-    # @return [Hash] content attributes (link, text, attachment_urls, comments)
-    # @abstract Subclasses must implement this method
+    # @return [Hash] content attributes (source_url, content, attachment_urls, comments)
     def extract_content_attributes(raw_data)
-      raise NotImplementedError, "Subclasses must implement #extract_content_attributes method"
+      {
+        source_url: extract_source_url(raw_data),
+        content: extract_content(raw_data),
+        attachment_urls: extract_attachment_urls(raw_data),
+        comments: extract_comments(raw_data)
+      }
+    end
+
+    def extract_source_url(raw_data)
+      raise NotImplementedError, "Subclasses must implement #extract_source_url"
+    end
+
+    def extract_content(raw_data)
+      raise NotImplementedError, "Subclasses must implement #extract_content"
+    end
+
+    def extract_attachment_urls(raw_data)
+      raise NotImplementedError, "Subclasses must implement #extract_attachment_urls"
+    end
+
+    def extract_comments(raw_data)
+      raise NotImplementedError, "Subclasses must implement #extract_comments"
     end
 
     def validate_post(post)
