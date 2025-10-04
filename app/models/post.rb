@@ -3,15 +3,15 @@ class Post < ApplicationRecord
   MAX_CONTENT_LENGTH = 3000 # graphemes
   MAX_COMMENT_LENGTH = 3000 # characters
 
-  NORMALIZED_ATTRIBUTES = [
-    :uid,
-    :published_at,
-    :source_url,
-    :content,
-    :attachment_urls,
-    :comments,
-    :status,
-    :validation_errors
+  NORMALIZED_ATTRIBUTES = %i[
+    attachment_urls
+    comments
+    content
+    published_at
+    source_url
+    status
+    uid
+    validation_errors
   ].freeze
 
   belongs_to :feed
