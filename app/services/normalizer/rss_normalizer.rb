@@ -17,15 +17,15 @@ module Normalizer
     end
 
     def extract_attachment_urls(raw_data)
-      (image_urls + content_images).uniq
+      (image_urls(raw_data) + content_images(raw_data)).uniq
     end
 
-    def image_urls
+    def image_urls(raw_data)
       enclosures = raw_data.dig("enclosures") || []
       enclosures.filter_map { |e| e["url"] if e["type"]&.start_with?("image/") }
     end
 
-    def content_images
+    def content_images(raw_data)
       extract_images_from_content(raw_data.dig("content") || "")
     end
 
