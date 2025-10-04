@@ -11,16 +11,16 @@ module Normalizer
       @text_content ||= extract_content
     end
 
-    def validate_post(post)
+    def validate_content
       errors = super
-      errors << "url_too_long" if url_too_long?(post)
+      errors << "url_too_long" if url_too_long?
       errors
     end
 
-    def url_too_long?(post)
-      return false if post.source_url.blank?
+    def url_too_long?
+      return false if source_url.blank?
 
-      post.source_url.length > Post::MAX_URL_LENGTH
+      source_url.length > Post::MAX_URL_LENGTH
     end
 
     def extract_source_url

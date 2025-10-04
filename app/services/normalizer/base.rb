@@ -20,7 +20,7 @@ module Normalizer
     def normalize
       post = build_post
       # TBD: Consider renaming this field
-      post.validation_errors = validate_post(post)
+      post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
     end
@@ -91,9 +91,9 @@ module Normalizer
       []
     end
 
-    def validate_post(post)
+    def validate_content
       errors = []
-      errors << "no_content_or_images" if missing_content_and_images?(post)
+      errors << "no_content_or_images" if missing_content_and_images?
       errors
     end
 
@@ -102,8 +102,8 @@ module Normalizer
       published_at
     end
 
-    def missing_content_and_images?(post)
-      post.content.blank? && post.attachment_urls.empty?
+    def missing_content_and_images?
+      content.blank? && attachment_urls.empty?
     end
   end
 end
