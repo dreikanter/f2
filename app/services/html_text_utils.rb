@@ -28,7 +28,9 @@ module HtmlTextUtils
     url_length = url.length
     min_required_length = separator_length + url_length
 
-    return nil if min_required_length > max_length
+    if min_required_length > max_length
+      return truncate_text(text, max_length: max_length)
+    end
 
     max_text_length = max_length - min_required_length
     truncated_text = truncate_text(text, max_length: max_text_length)

@@ -75,9 +75,9 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_equal "", post.content
+    assert_equal "Test content", post.content
+    assert post.content.length <= Post::MAX_CONTENT_LENGTH
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "url_too_long"
-    assert_includes post.validation_errors, "no_content_or_images"
   end
 end

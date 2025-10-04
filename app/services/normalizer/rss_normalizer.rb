@@ -8,11 +8,9 @@ module Normalizer
       text_content = extract_content(raw_data)
       content = post_content_with_url(text_content, source_url)
 
-      @url_too_long = content.nil?
-
       {
         source_url: source_url,
-        content: content || "",
+        content: content,
         attachment_urls: extract_attachment_urls(raw_data),
         comments: extract_comments(raw_data)
       }
@@ -20,8 +18,18 @@ module Normalizer
 
     def validate_post(post)
       errors = super
-      errors << "url_too_long" if @url_too_long
+      errors << "url_too_long" if url_too_long?(post)
       errors
+    end
+
+    def url_too_long?(post)
+      return false if post.source_url.blank?
+
+      separator_length = HtmlTextUtils::CONTENT_URL_SEPARATOR.length
+      url_length = post.source_url.length
+      min_required_length = separator_length + url_length
+
+      min_required_length > Post::MAX_CONTENT_LENGTH
     end
 
     def extract_source_url(raw_data)
