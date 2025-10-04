@@ -1,6 +1,6 @@
 module SnapshotTesting
   def assert_matches_snapshot(actual_data, snapshot:)
-    full_path = Rails.root.join("test/fixtures", snapshot)
+    full_path = Rails.root.join("test/fixtures/files", snapshot)
     actual_json = JSON.pretty_generate(actual_data)
 
     if ENV["UPDATE_SNAPSHOTS"]

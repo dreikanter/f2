@@ -12,7 +12,7 @@ module FixtureFeedEntries
   end
 
   def processor
-    feed_xml = File.read(Rails.root.join("test/fixtures", fixture_dir, "feed.xml"))
+    feed_xml = file_fixture("#{fixture_dir}/feed.xml").read
     processor_class.new(feed, feed_xml)
   end
 
