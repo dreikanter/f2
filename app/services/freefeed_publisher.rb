@@ -56,7 +56,7 @@ class FreefeedPublisher
     return [] if post.attachment_urls.blank?
 
     post.attachment_urls.map do |url|
-      io, content_type = FileBuffer.new(url).load
+      io, content_type = FileBuffer.new.load(url)
       attachment = client.create_attachment_from_io(io, content_type: content_type)
       attachment[:id]
     end

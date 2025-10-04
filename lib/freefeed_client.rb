@@ -1,6 +1,3 @@
-require "marcel"
-require "faraday/multipart"
-
 # FreeFeed API Client
 #
 # Minimal client for FreeFeed API focused on specific application needs.
