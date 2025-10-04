@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://imgs.xkcd.com/comics/ping.png"
+  ],
+  "comments": [
+    "Progress on getting shipwrecked sailors to adopt ICMPv6 has been slow."
+  ],
+  "content": "Ping",
+  "published_at": "2025-10-03T04:00:00.000Z",
+  "source_url": "https://xkcd.com/3150/",
+  "status": "enqueued",
+  "uid": "https://xkcd.com/3150/",
+  "validation_errors": []
+}

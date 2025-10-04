@@ -3,8 +3,8 @@ require "test_helper"
 class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
 
-  def fixture_file_name
-    "sample_rss.xml"
+  def fixture_dir
+    "feeds/rss"
   end
 
   def processor_class
@@ -17,26 +17,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_instance_of Post, post
-    assert_equal entry.feed, post.feed
-    assert_equal entry, post.feed_entry
-    assert_equal entry.uid, post.uid
-    assert_equal entry.published_at, post.published_at
-    assert_equal "https://example.com/first-article", post.source_url
-    assert_equal "This is the first article content with some HTML tags.", post.content
-    assert_equal [], post.attachment_urls
-    assert_equal [], post.comments
-    assert_equal "enqueued", post.status
-    assert_equal [], post.validation_errors
-  end
-
-  test "should extract content from title when description is missing" do
-    entry = feed_entry(2)
-
-    normalizer = Normalizer::RssNormalizer.new(entry)
-    post = normalizer.normalize
-
-    assert_equal "Article Without Content", post.content
+    assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
   test "should reject post with blank content and no images" do

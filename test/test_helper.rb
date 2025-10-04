@@ -14,12 +14,14 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require "minitest/mock"
+require "super_diff"
 
 Dir[Rails.root.join("test/support/**/*.rb")].each { |f| require f }
 
 module ActiveSupport
   class TestCase
     include FactoryBot::Syntax::Methods
+    include SnapshotTesting
 
     # Run tests in parallel with specified workers
     # Disable parallel testing when SimpleCov is running to get accurate coverage

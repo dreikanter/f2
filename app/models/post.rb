@@ -3,6 +3,17 @@ class Post < ApplicationRecord
   MAX_CONTENT_LENGTH = 3000 # graphemes
   MAX_COMMENT_LENGTH = 3000 # characters
 
+  NORMALIZED_ATTRIBUTES = %i[
+    attachment_urls
+    comments
+    content
+    published_at
+    source_url
+    status
+    uid
+    validation_errors
+  ].freeze
+
   belongs_to :feed
   belongs_to :feed_entry
 
@@ -21,6 +32,10 @@ class Post < ApplicationRecord
     published: 3,
     failed: 4
   }
+
+  def normalized_attributes
+    as_json(only: NORMALIZED_ATTRIBUTES)
+  end
 
   private
 

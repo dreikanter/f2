@@ -167,4 +167,29 @@ class PostTest < ActiveSupport::TestCase
     post = build(:post, comments: ["valid", nil, 123, "also valid"])
     assert post.valid?
   end
+
+  test "normalized_attributes should include only normalized fields" do
+    post = build(:post,
+      uid: "test-uid",
+      content: "test content",
+      source_url: "https://example.com",
+      attachment_urls: ["https://example.com/image.jpg"],
+      comments: ["test comment"],
+      status: :enqueued,
+      validation_errors: []
+    )
+
+    expected = {
+      "uid" => "test-uid",
+      "published_at" => post.published_at.as_json,
+      "source_url" => "https://example.com",
+      "content" => "test content",
+      "attachment_urls" => ["https://example.com/image.jpg"],
+      "comments" => ["test comment"],
+      "status" => "enqueued",
+      "validation_errors" => []
+    }
+
+    assert_equal expected, post.normalized_attributes
+  end
 end
