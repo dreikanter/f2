@@ -3,16 +3,16 @@ module Normalizer
   class RssNormalizer < Base
     private
 
-    def extract_post_attributes(raw_data)
-      source_url = extract_source_url(raw_data)
-      text_content = extract_content(raw_data)
+    def extract_post_attributes
+      source_url = extract_source_url
+      text_content = extract_content
       content = post_content_with_url(text_content, source_url)
 
       {
         source_url: source_url,
         content: content,
-        attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data)
+        attachment_urls: extract_attachment_urls,
+        comments: extract_comments
       }
     end
 
@@ -28,26 +28,26 @@ module Normalizer
       post.source_url.length > Post::MAX_URL_LENGTH
     end
 
-    def extract_source_url(raw_data)
+    def extract_source_url
       url = raw_data.dig("link") || raw_data.dig("url") || ""
       normalize_source_url(url)
     end
 
-    def extract_content(raw_data)
+    def extract_content
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       strip_html(content)
     end
 
-    def extract_attachment_urls(raw_data)
-      (image_urls(raw_data) + content_images(raw_data)).uniq
+    def extract_attachment_urls
+      (image_urls + content_images).uniq
     end
 
-    def image_urls(raw_data)
+    def image_urls
       enclosures = raw_data.dig("enclosures") || []
       enclosures.filter_map { |e| e["url"] if e["type"]&.start_with?("image/") }
     end
 
-    def content_images(raw_data)
+    def content_images
       extract_images(raw_data.dig("content") || "")
     end
 
