@@ -87,14 +87,5 @@ module Normalizer
     def missing_content_and_images?(post)
       post.content.blank? && post.attachment_urls.empty?
     end
-
-    def normalize_source_url(url)
-      return "" if url.blank?
-
-      URI.parse(url)
-      url
-    rescue URI::InvalidURIError
-      ""
-    end
   end
 end
