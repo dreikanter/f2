@@ -28,10 +28,7 @@ module Normalizer
     private
 
     attr_reader :feed_entry
-
-    def raw_data
-      feed_entry.raw_data
-    end
+    delegate :raw_data, to: :feed_entry
 
     # Builds Post from feed entry data
     # @return [Post] new post instance
