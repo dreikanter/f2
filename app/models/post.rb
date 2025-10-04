@@ -2,6 +2,9 @@ class Post < ApplicationRecord
   # Freefeed Server length limits
   MAX_CONTENT_LENGTH = 3000 # graphemes
   MAX_COMMENT_LENGTH = 3000 # characters
+
+  # Servers and browsers use higher length limit for URLs, but something longer
+  # than 2Kb is most probably an anomaly
   MAX_URL_LENGTH = 2048 # characters
 
   NORMALIZED_ATTRIBUTES = %i[
