@@ -1,0 +1,10 @@
+{
+  "uid": "https://example.com/first-article",
+  "published_at": "2024-09-12T09:00:00Z",
+  "source_url": "https://example.com/first-article",
+  "content": "This is the first article content with some HTML tags.",
+  "attachment_urls": [],
+  "comments": [],
+  "status": "enqueued",
+  "validation_errors": []
+}
