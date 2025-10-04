@@ -70,7 +70,7 @@ module Normalizer
       feed_entry.raw_data
     end
 
-    def clean_html(text)
+    def strip_html(text)
       return "" if text.blank?
 
       doc = Nokogiri::HTML::DocumentFragment.parse(text)
