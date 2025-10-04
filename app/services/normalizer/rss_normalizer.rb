@@ -25,11 +25,7 @@ module Normalizer
     def url_too_long?(post)
       return false if post.source_url.blank?
 
-      separator_length = HtmlTextUtils::CONTENT_URL_SEPARATOR.length
-      url_length = post.source_url.length
-      min_required_length = separator_length + url_length
-
-      min_required_length > Post::MAX_CONTENT_LENGTH
+      post.source_url.length > Post::MAX_URL_LENGTH
     end
 
     def extract_source_url(raw_data)

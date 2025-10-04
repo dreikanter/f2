@@ -66,7 +66,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   end
 
   test "should reject post when URL is too long" do
-    very_long_url = "https://example.com/" + ("a" * Post::MAX_CONTENT_LENGTH)
+    very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
     entry = create(:feed_entry, raw_data: {
       "summary" => "Test content",
       "link" => very_long_url

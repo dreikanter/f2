@@ -21,16 +21,16 @@ module HtmlTextUtils
     text.truncate(max_length, separator: " ")
   end
 
-  def post_content_with_url(text, url, max_length: Post::MAX_CONTENT_LENGTH)
+  def post_content_with_url(text, url, max_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)
     return text if url.blank?
+
+    if url.length > max_url_length
+      return truncate_text(text, max_length: max_length)
+    end
 
     separator_length = CONTENT_URL_SEPARATOR.length
     url_length = url.length
     min_required_length = separator_length + url_length
-
-    if min_required_length > max_length
-      return truncate_text(text, max_length: max_length)
-    end
 
     max_text_length = max_length - min_required_length
     truncated_text = truncate_text(text, max_length: max_text_length)
