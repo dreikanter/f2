@@ -2,19 +2,17 @@ require "test_helper"
 
 # TBD: Use snapshot testing
 class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
-  def setup
-    @feed = create(:feed)
-    @processor = Processor::RssProcessor.new(@feed, file_fixture("sample_xkcd.xml").read)
-    @feed_entries = @processor.process
+  include FixtureFeedEntries
+
+  def fixture_file_name
+    "sample_xkcd.xml"
   end
 
-  def feed_entry(index)
-    entry = @feed_entries[index]
-    entry.save!
-    entry
+  def processor_class
+    Processor::RssProcessor
   end
 
-  test "normalizes first comic from fixture (Ping)" do
+  test "sholuld match the expected normalization result" do
     entry = feed_entry(0)
 
     normalizer = Normalizer::XkcdNormalizer.new(entry)

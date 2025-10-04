@@ -15,6 +15,8 @@ require "rails/test_help"
 require "webmock/minitest"
 require "minitest/mock"
 
+Dir[Rails.root.join("test/support/**/*.rb")].each { |f| require f }
+
 module ActiveSupport
   class TestCase
     include FactoryBot::Syntax::Methods
