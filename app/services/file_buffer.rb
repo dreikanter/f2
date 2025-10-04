@@ -7,6 +7,8 @@
 #   io, content_type = FileBuffer.new("/path/to/file.png").load
 #
 class FileBuffer
+  require "marcel"
+
   class Error < StandardError; end
 
   attr_reader :url
@@ -61,15 +63,22 @@ class FileBuffer
     io.set_encoding(Encoding::BINARY)
     io.rewind
 
-    [io, url_content_type]
+    content_type = url_content_type(response.body)
+
+    [io, content_type]
   end
 
   def local_file_content_type
-    MiniMime.lookup_by_filename(url)&.content_type || "application/octet-stream"
+    Marcel::MimeType.for(name: url) || "application/octet-stream"
   end
 
-  def url_content_type
+  def url_content_type(body)
     uri = URI(url)
-    MiniMime.lookup_by_filename(uri.path)&.content_type || "image/jpeg"
+    # First try to detect from URL path
+    type = Marcel::MimeType.for(name: uri.path)
+    return type if type && type != "application/octet-stream"
+
+    # Fallback to content-based detection
+    Marcel::MimeType.for(StringIO.new(body), name: uri.path)
   end
 end

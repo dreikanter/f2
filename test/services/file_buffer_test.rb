@@ -42,7 +42,7 @@ class FileBufferTest < ActiveSupport::TestCase
     http_client.verify
   end
 
-  test "should use image/jpeg as fallback for URLs without file extension" do
+  test "should detect content type from file content when URL has no extension" do
     url = "https://example.com/unknown"
     response_body = file_fixture("test_image.jpg").binread
     response = Struct.new(:success?, :body).new(true, response_body)
@@ -53,7 +53,8 @@ class FileBufferTest < ActiveSupport::TestCase
     buffer = FileBuffer.new(url, http_client: http_client)
     io, content_type = buffer.load
 
-    assert_equal "image/jpeg", content_type
+    # Marcel detects PNG from content (even though filename says .jpg)
+    assert_equal "image/png", content_type
     http_client.verify
   end
 
