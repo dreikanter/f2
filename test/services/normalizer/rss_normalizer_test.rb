@@ -80,4 +80,22 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "url_too_long"
   end
+
+  test "should reject post when URL is too long and content is blank" do
+    very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
+    entry = create(:feed_entry, raw_data: {
+      "title" => "",
+      "content" => "",
+      "summary" => "",
+      "link" => very_long_url
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal "", post.content
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "url_too_long"
+    assert_includes post.validation_errors, "no_content_or_images"
+  end
 end
