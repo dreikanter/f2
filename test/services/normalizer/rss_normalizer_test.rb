@@ -20,7 +20,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
-  test "should reject post with blank content and no images" do
+  test "should accept post with URL even when text content is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "",
       "content" => "",
@@ -31,9 +31,9 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_equal "", post.content
-    assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "no_content_or_images"
+    assert_equal " - https://example.com/blank", post.content
+    assert_equal "enqueued", post.status
+    assert_equal [], post.validation_errors
   end
 
   test "should normalize future publication date to current date" do
@@ -62,6 +62,22 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "enqueued", post.status
     assert_equal [], post.validation_errors
     assert post.content.length <= Post::MAX_CONTENT_LENGTH
-    assert post.content.ends_with?("...")
+    assert post.content.ends_with?("https://example.com/long")
+  end
+
+  test "should reject post when URL is too long" do
+    very_long_url = "https://example.com/" + ("a" * Post::MAX_CONTENT_LENGTH)
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Test content",
+      "link" => very_long_url
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal "", post.content
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "url_too_long"
+    assert_includes post.validation_errors, "no_content_or_images"
   end
 end

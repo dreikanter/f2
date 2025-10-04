@@ -3,6 +3,27 @@ module Normalizer
   class RssNormalizer < Base
     private
 
+    def extract_post_attributes(raw_data)
+      source_url = extract_source_url(raw_data)
+      text_content = extract_content(raw_data)
+      content = post_content_with_url(text_content, source_url)
+
+      @url_too_long = content.nil?
+
+      {
+        source_url: source_url,
+        content: content || "",
+        attachment_urls: extract_attachment_urls(raw_data),
+        comments: extract_comments(raw_data)
+      }
+    end
+
+    def validate_post(post)
+      errors = super
+      errors << "url_too_long" if @url_too_long
+      errors
+    end
+
     def extract_source_url(raw_data)
       url = raw_data.dig("link") || raw_data.dig("url") || ""
       normalize_source_url(url)
@@ -10,10 +31,7 @@ module Normalizer
 
     def extract_content(raw_data)
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
-      result = strip_html(content)
-      return "" if result.empty?
-
-      truncate_text(result)
+      strip_html(content)
     end
 
     def extract_attachment_urls(raw_data)

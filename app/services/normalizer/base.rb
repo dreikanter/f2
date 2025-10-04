@@ -9,8 +9,6 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
-    CONTENT_URL_SEPARATOR = " - "
-
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
       @feed_entry = feed_entry
@@ -88,24 +86,6 @@ module Normalizer
 
     def missing_content_and_images?(post)
       post.content.blank? && post.attachment_urls.empty?
-    end
-
-    def join_content_with_url(text, url)
-      return { content: text, error: nil } if url.blank?
-
-      separator_length = CONTENT_URL_SEPARATOR.length
-      url_length = url.length
-      min_required_length = separator_length + url_length
-
-      if min_required_length > Post::MAX_CONTENT_LENGTH
-        return { content: nil, error: "url_too_long" }
-      end
-
-      max_text_length = Post::MAX_CONTENT_LENGTH - min_required_length
-      truncated_text = truncate_text(text, max_length: max_text_length)
-      content = "#{truncated_text}#{CONTENT_URL_SEPARATOR}#{url}"
-
-      { content: content, error: nil }
     end
   end
 end
