@@ -192,4 +192,23 @@ class PostTest < ActiveSupport::TestCase
 
     assert_equal expected, post.normalized_attributes
   end
+
+  test "should not allow enqueued status with validation errors" do
+    post = build(:post, feed: feed, feed_entry: feed_entry, status: :enqueued, validation_errors: ["url_too_long"])
+
+    assert_not post.valid?
+    assert_includes post.errors[:status], "cannot be enqueued when validation_errors is not empty"
+  end
+
+  test "should allow enqueued status with empty validation errors" do
+    post = build(:post, feed: feed, feed_entry: feed_entry, status: :enqueued, validation_errors: [])
+
+    assert post.valid?
+  end
+
+  test "should allow rejected status with validation errors" do
+    post = build(:post, feed: feed, feed_entry: feed_entry, status: :rejected, validation_errors: ["url_too_long"])
+
+    assert post.valid?
+  end
 end
