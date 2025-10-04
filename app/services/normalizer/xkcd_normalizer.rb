@@ -2,12 +2,12 @@ module Normalizer
   class XkcdNormalizer < RssNormalizer
     private
 
-    def extract_content(raw_data)
+    def normalize_content
       title = raw_data.dig("title") || ""
       title.strip
     end
 
-    def extract_comments(raw_data)
+    def normalize_comments
       summary = raw_data.dig("summary") || ""
       return [] if summary.blank?
 
@@ -18,7 +18,7 @@ module Normalizer
       alt_text.present? ? [alt_text.strip] : []
     end
 
-    def extract_attachment_urls(raw_data)
+    def normalize_attachment_urls
       summary = raw_data.dig("summary") || ""
       return [] if summary.blank?
 

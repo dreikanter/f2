@@ -3,55 +3,55 @@ module Normalizer
   class RssNormalizer < Base
     private
 
-    def extract_post_attributes(raw_data)
-      source_url = extract_source_url(raw_data)
-      text_content = extract_content(raw_data)
-      content = post_content_with_url(text_content, source_url)
-
-      {
-        source_url: source_url,
-        content: content,
-        attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data)
-      }
+    def content
+      @content ||= post_content_with_url(text_content, source_url)
     end
 
-    def validate_post(post)
+    def text_content
+      @text_content ||= normalize_content
+    end
+
+    def original_url
+      @original_url ||= raw_data.dig("link") || raw_data.dig("url") || ""
+    end
+
+    def validate_content
       errors = super
-      errors << "url_too_long" if url_too_long?(post)
+      errors << "url_too_long" if url_too_long?
       errors
     end
 
-    def url_too_long?(post)
-      return false if post.source_url.blank?
+    def url_too_long?
+      return false if original_url.blank?
 
-      post.source_url.length > Post::MAX_URL_LENGTH
+      original_url.length > Post::MAX_URL_LENGTH
     end
 
-    def extract_source_url(raw_data)
-      url = raw_data.dig("link") || raw_data.dig("url") || ""
-      normalize_source_url(url)
+    def normalize_source_url
+      return "" if url_too_long?
+
+      validate_url(original_url)
     end
 
-    def extract_content(raw_data)
+    def normalize_content
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       strip_html(content)
     end
 
-    def extract_attachment_urls(raw_data)
-      (image_urls(raw_data) + content_images(raw_data)).uniq
+    def normalize_attachment_urls
+      (image_urls + content_images).uniq
     end
 
-    def image_urls(raw_data)
+    def image_urls
       enclosures = raw_data.dig("enclosures") || []
       enclosures.filter_map { |e| e["url"] if e["type"]&.start_with?("image/") }
     end
 
-    def content_images(raw_data)
+    def content_images
       extract_images(raw_data.dig("content") || "")
     end
 
-    def normalize_source_url(url)
+    def validate_url(url)
       return "" if url.blank?
 
       URI.parse(url)

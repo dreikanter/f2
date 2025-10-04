@@ -20,7 +20,7 @@ module Normalizer
     def normalize
       post = build_post
       # TBD: Consider renaming this field
-      post.validation_errors = validate_post(post)
+      post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
     end
@@ -28,53 +28,70 @@ module Normalizer
     private
 
     attr_reader :feed_entry
+    delegate :raw_data, to: :feed_entry
 
     # Builds Post from feed entry data
     # @return [Post] new post instance
     def build_post
-      post_attributes = extract_post_attributes(feed_entry.raw_data)
+      Post.new(**extract_post_attributes.merge(default_post_attributes))
+    end
 
-      Post.new(
+    def default_post_attributes
+      {
         feed: feed_entry.feed,
         feed_entry: feed_entry,
         uid: feed_entry.uid,
         published_at: normalize_published_at(feed_entry.published_at),
-        status: :draft,
-        **post_attributes
-      )
-    end
-
-    # Extracts post attributes from raw data
-    # @param raw_data [Hash] the raw feed entry data
-    # @return [Hash] post attributes (source_url, content, attachment_urls, comments)
-    def extract_post_attributes(raw_data)
-      {
-        source_url: extract_source_url(raw_data),
-        content: extract_content(raw_data),
-        attachment_urls: extract_attachment_urls(raw_data),
-        comments: extract_comments(raw_data)
+        status: :draft
       }
     end
 
-    def extract_source_url(raw_data)
-      raise NotImplementedError, "Subclasses must implement #extract_source_url"
+    # Extracts post attributes from raw data
+    # @return [Hash] post attributes (source_url, content, attachment_urls, comments)
+    def extract_post_attributes
+      {
+        source_url: source_url,
+        content: content,
+        attachment_urls: attachment_urls,
+        comments: comments
+      }
     end
 
-    def extract_content(raw_data)
-      raise NotImplementedError, "Subclasses must implement #extract_content"
+    def source_url
+      @source_url ||= normalize_source_url
     end
 
-    def extract_attachment_urls(raw_data)
+    def content
+      @content ||= normalize_content
+    end
+
+    def attachment_urls
+      @attachment_urls ||= normalize_attachment_urls
+    end
+
+    def comments
+      @comments ||= normalize_comments
+    end
+
+    def normalize_source_url
+      raise NotImplementedError, "Subclasses must implement #normalize_source_url"
+    end
+
+    def normalize_content
+      raise NotImplementedError, "Subclasses must implement #normalize_content"
+    end
+
+    def normalize_attachment_urls
       []
     end
 
-    def extract_comments(raw_data)
+    def normalize_comments
       []
     end
 
-    def validate_post(post)
+    def validate_content
       errors = []
-      errors << "no_content_or_images" if missing_content_and_images?(post)
+      errors << "no_content_or_images" if missing_content_and_images?
       errors
     end
 
@@ -83,8 +100,8 @@ module Normalizer
       published_at
     end
 
-    def missing_content_and_images?(post)
-      post.content.blank? && post.attachment_urls.empty?
+    def missing_content_and_images?
+      content.blank? && attachment_urls.empty?
     end
   end
 end
