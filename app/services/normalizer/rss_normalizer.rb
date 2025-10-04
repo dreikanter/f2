@@ -20,16 +20,6 @@ module Normalizer
       normalize_source_url(url)
     end
 
-    # Keep original URL if it's a valid URI
-    def normalize_source_url(url)
-      return "" if url.blank?
-
-      URI.parse(url)
-      url
-    rescue URI::InvalidURIError
-      ""
-    end
-
     def extract_content(raw_data)
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       result = clean_html(content)
@@ -49,26 +39,6 @@ module Normalizer
 
     def content_images
       extract_images_from_content(raw_data.dig("content") || "")
-    end
-
-    def clean_html(text)
-      return "" if text.blank?
-
-      doc = Nokogiri::HTML::DocumentFragment.parse(text)
-      doc.text.strip.gsub(/\s+/, " ")
-    end
-
-    def extract_images_from_content(content)
-      return [] if content.blank?
-
-      doc = Nokogiri::HTML::DocumentFragment.parse(content)
-      doc.css("img").map { |img| img["src"] }.compact
-    end
-
-    def truncate_content(content)
-      return content if content.length <= Post::MAX_CONTENT_LENGTH
-
-      content.truncate(Post::MAX_CONTENT_LENGTH, separator: " ")
     end
 
     def extract_comments(raw_data)

@@ -65,5 +65,38 @@ module Normalizer
     def missing_content_and_images?(post)
       post.content.blank? && post.attachment_urls.empty?
     end
+
+    def raw_data
+      feed_entry.raw_data
+    end
+
+    def clean_html(text)
+      return "" if text.blank?
+
+      doc = Nokogiri::HTML::DocumentFragment.parse(text)
+      doc.text.strip.gsub(/\s+/, " ")
+    end
+
+    def extract_images_from_content(content)
+      return [] if content.blank?
+
+      doc = Nokogiri::HTML::DocumentFragment.parse(content)
+      doc.css("img").map { |img| img["src"] }.compact
+    end
+
+    def truncate_content(content)
+      return content if content.length <= Post::MAX_CONTENT_LENGTH
+
+      content.truncate(Post::MAX_CONTENT_LENGTH, separator: " ")
+    end
+
+    def normalize_source_url(url)
+      return "" if url.blank?
+
+      URI.parse(url)
+      url
+    rescue URI::InvalidURIError
+      ""
+    end
   end
 end
