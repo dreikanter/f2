@@ -24,15 +24,12 @@ module HtmlTextUtils
   def post_content_with_url(content, url, max_content_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)
     return content if url.blank?
 
+    # Do not include URL to the post content if the URL is too long
     if url.length > max_url_length
       return truncate_text(content, max_length: max_content_length)
     end
 
-    separator_length = CONTENT_URL_SEPARATOR.length
-    url_length = url.length
-    min_required_length = separator_length + url_length
-
-    max_text_length = max_content_length - min_required_length
+    max_text_length = max_content_length - CONTENT_URL_SEPARATOR.length - url.length
     truncated_text = truncate_text(content, max_length: max_text_length)
     "#{truncated_text}#{CONTENT_URL_SEPARATOR}#{url}"
   end
