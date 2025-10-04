@@ -39,14 +39,16 @@ module Normalizer
     end
 
     def extract_attachment_urls(raw_data)
-      enclosures = raw_data.dig("enclosures") || []
-      image_urls = enclosures.select { |e| e["type"]&.start_with?("image/") }
-                             .map { |e| e["url"] }
-                             .compact
-
-      content_images = extract_images_from_content(raw_data.dig("content") || "")
-
       (image_urls + content_images).uniq
+    end
+
+    def image_urls
+      enclosures = raw_data.dig("enclosures") || []
+      enclosures.filter_map { |e| e["url"] if e["type"]&.start_with?("image/") }
+    end
+
+    def content_images
+      extract_images_from_content(raw_data.dig("content") || "")
     end
 
     def clean_html(text)
