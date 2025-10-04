@@ -1,6 +1,6 @@
 module FixtureFeedEntries
-  def fixture_file_name
-    raise NotImplementedError, "#{self.class} must implement #fixture_file_name"
+  def fixture_dir
+    raise NotImplementedError, "#{self.class} must implement #fixture_dir"
   end
 
   def processor_class
@@ -12,7 +12,8 @@ module FixtureFeedEntries
   end
 
   def processor
-    processor_class.new(feed, file_fixture(fixture_file_name).read)
+    feed_xml = File.read(Rails.root.join("test/fixtures", fixture_dir, "feed.xml"))
+    processor_class.new(feed, feed_xml)
   end
 
   def feed_entries
