@@ -1,15 +1,6 @@
 require "test_helper"
 
 class Processor::BaseTest < ActiveSupport::TestCase
-  test "should initialize without errors" do
-    feed = create(:feed)
-    data = "test data"
-
-    assert_nothing_raised do
-      Processor::Base.new(feed, data)
-    end
-  end
-
   test "should raise NotImplementedError for process method" do
     feed = create(:feed)
     processor = Processor::Base.new(feed, "test data")

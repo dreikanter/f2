@@ -11,38 +11,19 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
 
   test "should parse RSS feed and create FeedEntry objects" do
     processor = Processor::RssProcessor.new(feed, sample_rss_content)
-
     entries = processor.process
 
     assert_equal 3, entries.length
     assert entries.all? { |entry| entry.is_a?(FeedEntry) }
     assert entries.all? { |entry| entry.feed == feed }
     assert entries.all? { |entry| entry.status == "pending" }
-  end
+    assert entries.all? { |entry| entry.valid? }
 
-  test "should extract uid from guid or url" do
-    processor = Processor::RssProcessor.new(feed, sample_rss_content)
-    entries = processor.process
+    entries_snapshot = entries.map do |entry|
+      entry.as_json(only: %i[uid status published_at raw_data])
+    end
 
-    # First entry should use URL as uid (guid matches url)
-    assert_equal "https://example.com/first-article", entries[0].uid
-
-    # Third entry should use the guid as uid
-    assert_equal "no-content-123", entries[2].uid
-  end
-
-  test "should store raw entry data as JSON" do
-    processor = Processor::RssProcessor.new(feed, sample_rss_content)
-    entries = processor.process
-
-    first_entry = entries.first
-    raw_data = first_entry.raw_data
-
-    assert raw_data.is_a?(Hash)
-    assert_equal "First Article", raw_data["title"]
-    assert_equal "https://example.com/first-article", raw_data["url"]
-    assert_not_nil raw_data["published"]
-    assert_not_nil raw_data["author"]
+    assert_matches_snapshot(entries_snapshot, snapshot: "feeds/rss/entries.json")
   end
 
   test "should raise error for invalid RSS" do
@@ -68,26 +49,6 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     entries = processor.process
 
     assert_equal [], entries
-  end
-
-  test "integration: should work with HTTP loader output" do
-    loader_output = {
-      status: :success,
-      data: sample_rss_content,
-      content_type: "application/rss+xml"
-    }
-
-    processor = Processor::RssProcessor.new(feed, loader_output[:data])
-    entries = processor.process
-
-    assert_equal 3, entries.length
-
-    entries.each do |entry|
-      assert_equal feed, entry.feed
-    end
-
-    valid_entries = entries.select(&:valid?)
-    assert valid_entries.length >= 1
   end
 
   test "should handle entries without id or url" do

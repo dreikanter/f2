@@ -1,0 +1,61 @@
+[
+  {
+    "uid": "https://example.com/first-article",
+    "status": "pending",
+    "published_at": "2024-09-12T09:00:00.000Z",
+    "raw_data": {
+      "id": "https://example.com/first-article",
+      "title": "First Article",
+      "url": "https://example.com/first-article",
+      "link": "https://example.com/first-article",
+      "summary": "This is the first article content with some HTML <b>tags</b>.",
+      "content": null,
+      "published": "2024-09-12T09:00:00Z",
+      "updated": null,
+      "author": "john@example.com (John Doe)",
+      "categories": [
+        "Technology"
+      ],
+      "enclosures": []
+    }
+  },
+  {
+    "uid": "https://example.com/second-article",
+    "status": "pending",
+    "published_at": "2024-09-11T15:30:00.000Z",
+    "raw_data": {
+      "id": "https://example.com/second-article",
+      "title": "Second Article",
+      "url": "https://example.com/second-article",
+      "link": "https://example.com/second-article",
+      "summary": "This is the second article with different content.",
+      "content": null,
+      "published": "2024-09-11T15:30:00Z",
+      "updated": null,
+      "author": "jane@example.com (Jane Smith)",
+      "categories": [
+        "News",
+        "Technology"
+      ],
+      "enclosures": []
+    }
+  },
+  {
+    "uid": "no-content-123",
+    "status": "pending",
+    "published_at": "2024-09-10T12:00:00.000Z",
+    "raw_data": {
+      "id": "no-content-123",
+      "title": "Article Without Content",
+      "url": "https://example.com/no-content",
+      "link": "https://example.com/no-content",
+      "summary": null,
+      "content": null,
+      "published": "2024-09-10T12:00:00Z",
+      "updated": null,
+      "author": null,
+      "categories": [],
+      "enclosures": []
+    }
+  }
+]
