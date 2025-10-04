@@ -1,16 +1,13 @@
 require "test_helper"
 
 class FileBufferTest < ActiveSupport::TestCase
-  def test_file_path
-    @test_file_path ||= file_fixture("feeds/rss/feed.xml").to_s
-  end
-
   test "should load local file and return StringIO with content type" do
-    io, content_type = FileBuffer.new.load(test_file_path)
+    file = file_fixture("feeds/rss/feed.xml")
+    io, content_type = FileBuffer.new.load(file.to_s)
 
     assert_instance_of StringIO, io
     assert_equal "application/xml", content_type
-    assert io.string.include?("<?xml")
+    assert_equal file.read, io.string
     assert_equal Encoding::BINARY, io.string.encoding
   end
 
