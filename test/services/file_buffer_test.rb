@@ -24,59 +24,45 @@ class FileBufferTest < ActiveSupport::TestCase
   test "should download from URL and return StringIO with content type" do
     url = "https://example.com/image.jpg"
     response_body = file_fixture("test_image.jpg").binread
-    response = Struct.new(:success?, :body).new(true, response_body)
 
-    http_client = Minitest::Mock.new
-    http_client.expect(:get, response, [url])
+    stub_request(:get, url).to_return(status: 200, body: response_body)
 
-    io, content_type = FileBuffer.new(http_client: http_client).load(url)
+    io, content_type = FileBuffer.new.load(url)
 
     assert_instance_of StringIO, io
     assert_equal "image/jpeg", content_type
     assert_equal response_body, io.string
     assert_equal Encoding::BINARY, io.string.encoding
-    http_client.verify
   end
 
   test "should detect content type from file content when URL has no extension" do
     url = "https://example.com/unknown"
     response_body = file_fixture("test_image.jpg").binread
-    response = Struct.new(:success?, :body).new(true, response_body)
 
-    http_client = Minitest::Mock.new
-    http_client.expect(:get, response, [url])
+    stub_request(:get, url).to_return(status: 200, body: response_body)
 
-    io, content_type = FileBuffer.new(http_client: http_client).load(url)
+    io, content_type = FileBuffer.new.load(url)
 
-    # Marcel detects PNG from content (even though filename says .jpg)
     assert_equal "image/png", content_type
-    http_client.verify
   end
 
   test "should raise error when HTTP request fails" do
     url = "https://example.com/image.jpg"
-    response = Struct.new(:success?, :status).new(false, 404)
 
-    http_client = Minitest::Mock.new
-    http_client.expect(:get, response, [url])
+    stub_request(:get, url).to_return(status: 404)
 
     assert_raises(FileBuffer::Error) do
-      FileBuffer.new(http_client: http_client).load(url)
+      FileBuffer.new.load(url)
     end
-
-    http_client.verify
   end
 
   test "should raise error for other exceptions" do
     url = "https://example.com/image.jpg"
-    http_client = Minitest::Mock.new
 
-    http_client.expect(:get, [url]) do
-      raise StandardError, "Unexpected error"
-    end
+    stub_request(:get, url).to_raise(StandardError.new("Unexpected error"))
 
     assert_raises(FileBuffer::Error) do
-      FileBuffer.new(http_client: http_client).load(url)
+      FileBuffer.new.load(url)
     end
   end
 end
