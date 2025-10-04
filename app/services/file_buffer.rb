@@ -32,8 +32,6 @@ class FileBuffer
     else
       url_to_io
     end
-  rescue HttpClient::Error => e
-    raise Error, "Failed to download attachment from #{url}: #{e.message}"
   rescue => e
     raise Error, "Failed to download attachment from #{url}: #{e.message}"
   end
@@ -74,11 +72,9 @@ class FileBuffer
 
   def url_content_type(body)
     uri = URI(url)
-    # First try to detect from URL path
     type = Marcel::MimeType.for(name: uri.path)
     return type if type && type != "application/octet-stream"
 
-    # Fallback to content-based detection
     Marcel::MimeType.for(StringIO.new(body), name: uri.path)
   end
 end
