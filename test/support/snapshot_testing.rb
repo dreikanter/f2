@@ -17,8 +17,4 @@ module SnapshotTesting
       flunk "missing snapshot; run with UPDATE_SNAPSHOTS=1 to regenerate"
     end
   end
-
-  def normalized_attributes(post)
-    post.as_json(except: [:id, :created_at, :updated_at, :feed_id, :feed_entry_id, :freefeed_post_id])
-  end
 end

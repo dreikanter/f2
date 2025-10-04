@@ -17,7 +17,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_matches_snapshot(normalized_attributes(post), snapshot: "#{fixture_dir}/normalized.json")
+    assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
   test "should reject post with blank content and no images" do
