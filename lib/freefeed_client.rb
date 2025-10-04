@@ -1,6 +1,3 @@
-require "mini_mime"
-require "faraday/multipart"
-
 # FreeFeed API Client
 #
 # Minimal client for FreeFeed API focused on specific application needs.
@@ -46,9 +43,10 @@ class FreefeedClient
 
   # Create attachment
   # @param file_path [String] path to the file to upload
+  # @param content_type [String, nil] optional MIME type of the file
   # @return [Hash] attachment data with id
-  def create_attachment(file_path)
-    content_type = MiniMime.lookup_by_filename(file_path)&.content_type || "application/octet-stream"
+  def create_attachment(file_path, content_type: nil)
+    content_type ||= Marcel::MimeType.for(name: file_path) || "application/octet-stream"
 
     payload = {
       file: Faraday::Multipart::FilePart.new(file_path, content_type)
@@ -62,9 +60,11 @@ class FreefeedClient
 
   # Create attachment from IO object
   # @param io [IO] IO object containing the file data
-  # @param content_type [String] MIME type of the file
+  # @param content_type [String, nil] optional MIME type of the file
   # @return [Hash] attachment data with id
-  def create_attachment_from_io(io, content_type)
+  def create_attachment_from_io(io, content_type: nil)
+    content_type ||= Marcel::MimeType.for(io) || "application/octet-stream"
+
     payload = {
       file: Faraday::Multipart::FilePart.new(io, content_type)
     }
