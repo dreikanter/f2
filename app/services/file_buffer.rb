@@ -66,6 +66,7 @@ class FileBuffer
     Marcel::MimeType.for(name: path) || DEFAULT_CONTENT_TYPE
   end
 
+  # Attempt to detect content typoe from file name. Fallback to content parsing.
   def url_content_type(url, body)
     uri = URI(url)
     type = Marcel::MimeType.for(name: uri.path)
