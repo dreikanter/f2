@@ -17,7 +17,6 @@ class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::XkcdNormalizer.new(entry)
     post = normalizer.normalize
 
-    snapshot = JSON.pretty_generate(serialize_post(post))
-    assert_matches_snapshot(snapshot, snapshot: "#{fixture_dir}/normalized.json")
+    assert_matches_snapshot(normalized_attributes(post), snapshot: "#{fixture_dir}/normalized.json")
   end
 end
