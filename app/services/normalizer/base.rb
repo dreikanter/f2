@@ -33,15 +33,17 @@ module Normalizer
     # Builds Post from feed entry data
     # @return [Post] new post instance
     def build_post
-      post_attributes = extract_post_attributes.merge(
+      Post.new(**extract_post_attributes.merge(default_post_attributes))
+    end
+
+    def default_post_attributes
+      {
         feed: feed_entry.feed,
         feed_entry: feed_entry,
         uid: feed_entry.uid,
         published_at: normalize_published_at(feed_entry.published_at),
         status: :draft
-      )
-
-      Post.new(**post_attributes)
+      }
     end
 
     # Extracts post attributes from raw data
