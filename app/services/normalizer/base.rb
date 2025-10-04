@@ -40,7 +40,6 @@ module Normalizer
         uid: feed_entry.uid,
         published_at: normalize_published_at(feed_entry.published_at),
         status: :draft,
-        validation_errors: [],
         **post_attributes
       )
     end
