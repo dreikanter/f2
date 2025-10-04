@@ -60,6 +60,7 @@ group :test do
   gem "simplecov-cobertura", require: false
   gem "minitest-rails"
   gem "webmock"
+  gem "super_diff"
 end
 
 group :development do
