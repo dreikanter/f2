@@ -31,7 +31,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::RssNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_equal " - https://example.com/blank", post.content
+    assert_equal "https://example.com/blank", post.content
     assert_equal "enqueued", post.status
     assert_equal [], post.validation_errors
   end

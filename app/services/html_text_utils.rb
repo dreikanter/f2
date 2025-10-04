@@ -29,6 +29,10 @@ module HtmlTextUtils
       return truncate_text(content, max_length: max_content_length)
     end
 
+    # If content is blank, just return the URL
+    return url if content.blank?
+
+    # Both content and URL are present, join with separator
     max_text_length = max_content_length - CONTENT_URL_SEPARATOR.length - url.length
     truncated_text = truncate_text(content, max_length: max_text_length)
     "#{truncated_text}#{CONTENT_URL_SEPARATOR}#{url}"
