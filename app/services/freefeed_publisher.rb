@@ -57,7 +57,7 @@ class FreefeedPublisher
 
     post.attachment_urls.map do |url|
       io, content_type = FileBuffer.new(url).load
-      attachment = client.create_attachment_from_io(io, content_type)
+      attachment = client.create_attachment_from_io(io, content_type: content_type)
       attachment[:id]
     end
   rescue FileBuffer::Error => e
