@@ -12,7 +12,6 @@ class FreefeedPublisher
     @post = post
     validate_post!
     @client = build_client
-    @http_client = HttpClient.build
   end
 
   # Publish the post to FreeFeed
@@ -57,10 +56,12 @@ class FreefeedPublisher
     return [] if post.attachment_urls.blank?
 
     post.attachment_urls.map do |url|
-      io, content_type = download_attachment_to_memory(url)
+      io, content_type = FileBuffer.new(url).load
       attachment = client.create_attachment_from_io(io, content_type)
       attachment[:id]
     end
+  rescue FileBuffer::Error => e
+    raise PublishError, "Failed to upload attachments: #{e.message}"
   rescue => e
     raise PublishError, "Failed to upload attachments: #{e.message}"
   end
@@ -94,38 +95,5 @@ class FreefeedPublisher
     post.update!(freefeed_post_id: freefeed_post_id, status: :published)
   rescue => e
     raise PublishError, "Failed to update post status: #{e.message}"
-  end
-
-  def download_attachment_to_memory(url)
-    # If it's already a local file path, read it to memory
-    if File.exist?(url)
-      content = File.binread(url)
-      content_type = MiniMime.lookup_by_filename(url)&.content_type || "application/octet-stream"
-      io = StringIO.new(content)
-      io.set_encoding(Encoding::BINARY)
-      return [io, content_type]
-    end
-
-    # Download external URL to memory
-    response = @http_client.get(url)
-
-    unless response.success?
-      raise PublishError, "Failed to download attachment from #{url}: HTTP #{response.status}"
-    end
-
-    # Detect content type from URL or default to image
-    uri = URI(url)
-    content_type = MiniMime.lookup_by_filename(uri.path)&.content_type || "image/jpeg"
-
-    # Create StringIO from response body
-    io = StringIO.new(response.body)
-    io.set_encoding(Encoding::BINARY)
-    io.rewind
-
-    [io, content_type]
-  rescue HttpClient::Error => e
-    raise PublishError, "Failed to download attachment from #{url}: #{e.message}"
-  rescue => e
-    raise PublishError, "Failed to download attachment from #{url}: #{e.message}"
   end
 end
