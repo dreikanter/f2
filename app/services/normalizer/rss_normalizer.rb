@@ -8,7 +8,7 @@ module Normalizer
     end
 
     def text_content
-      @text_content ||= extract_content
+      @text_content ||= normalize_content
     end
 
     def original_url
@@ -27,18 +27,18 @@ module Normalizer
       original_url.length > Post::MAX_URL_LENGTH
     end
 
-    def extract_source_url
+    def normalize_source_url
       return "" if url_too_long?
 
-      normalize_source_url(original_url)
+      validate_url(original_url)
     end
 
-    def extract_content
+    def normalize_content
       content = raw_data.dig("summary") || raw_data.dig("content") || raw_data.dig("description") || raw_data.dig("title") || ""
       strip_html(content)
     end
 
-    def extract_attachment_urls
+    def normalize_attachment_urls
       (image_urls + content_images).uniq
     end
 
@@ -51,7 +51,7 @@ module Normalizer
       extract_images(raw_data.dig("content") || "")
     end
 
-    def normalize_source_url(url)
+    def validate_url(url)
       return "" if url.blank?
 
       URI.parse(url)

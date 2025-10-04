@@ -60,34 +60,34 @@ module Normalizer
     end
 
     def source_url
-      @source_url ||= extract_source_url
+      @source_url ||= normalize_source_url
     end
 
     def content
-      @content ||= extract_content
+      @content ||= normalize_content
     end
 
     def attachment_urls
-      @attachment_urls ||= extract_attachment_urls
+      @attachment_urls ||= normalize_attachment_urls
     end
 
     def comments
-      @comments ||= extract_comments
+      @comments ||= normalize_comments
     end
 
-    def extract_source_url
-      raise NotImplementedError, "Subclasses must implement #extract_source_url"
+    def normalize_source_url
+      raise NotImplementedError, "Subclasses must implement #normalize_source_url"
     end
 
-    def extract_content
-      raise NotImplementedError, "Subclasses must implement #extract_content"
+    def normalize_content
+      raise NotImplementedError, "Subclasses must implement #normalize_content"
     end
 
-    def extract_attachment_urls
+    def normalize_attachment_urls
       []
     end
 
-    def extract_comments
+    def normalize_comments
       []
     end
 
