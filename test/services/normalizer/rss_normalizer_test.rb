@@ -4,7 +4,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
 
   def fixture_dir
-    "normalizers/rss"
+    "feeds/rss"
   end
 
   def processor_class

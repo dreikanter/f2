@@ -4,7 +4,7 @@ class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
   include FixtureFeedEntries
 
   def fixture_dir
-    "normalizers/xkcd"
+    "feeds/xkcd"
   end
 
   def processor_class
