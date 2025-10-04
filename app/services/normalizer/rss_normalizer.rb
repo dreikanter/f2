@@ -3,17 +3,12 @@ module Normalizer
   class RssNormalizer < Base
     private
 
-    def extract_post_attributes
-      source_url = extract_source_url
-      text_content = extract_content
-      content = post_content_with_url(text_content, source_url)
+    def content
+      @content ||= post_content_with_url(text_content, source_url)
+    end
 
-      {
-        source_url: source_url,
-        content: content,
-        attachment_urls: extract_attachment_urls,
-        comments: extract_comments
-      }
+    def text_content
+      @text_content ||= extract_content
     end
 
     def validate_post(post)

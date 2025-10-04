@@ -52,11 +52,27 @@ module Normalizer
     # @return [Hash] post attributes (source_url, content, attachment_urls, comments)
     def extract_post_attributes
       {
-        source_url: extract_source_url,
-        content: extract_content,
-        attachment_urls: extract_attachment_urls,
-        comments: extract_comments
+        source_url: source_url,
+        content: content,
+        attachment_urls: attachment_urls,
+        comments: comments
       }
+    end
+
+    def source_url
+      @source_url ||= extract_source_url
+    end
+
+    def content
+      @content ||= extract_content
+    end
+
+    def attachment_urls
+      @attachment_urls ||= extract_attachment_urls
+    end
+
+    def comments
+      @comments ||= extract_comments
     end
 
     def extract_source_url
