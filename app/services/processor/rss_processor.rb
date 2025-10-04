@@ -11,7 +11,7 @@ module Processor
           uid: extract_uid(entry),
           published_at: entry.published,
           status: :pending,
-          raw_data: entry_to_hash(entry)
+          raw_data: sanitize_feedjira_entry(entry)
         )
       end
     end
@@ -22,7 +22,7 @@ module Processor
       entry.id || entry.url
     end
 
-    def entry_to_hash(entry)
+    def sanitize_feedjira_entry(entry)
       {
         id: entry.id,
         title: entry.title,
