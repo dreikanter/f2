@@ -32,7 +32,7 @@ module Normalizer
     # Builds Post from feed entry data
     # @return [Post] new post instance
     def build_post
-      content_attributes = extract_content_attributes(feed_entry.raw_data)
+      post_attributes = extract_post_attributes(feed_entry.raw_data)
 
       Post.new(
         feed: feed_entry.feed,
@@ -41,14 +41,14 @@ module Normalizer
         published_at: normalize_published_at(feed_entry.published_at),
         status: :draft,
         validation_errors: [],
-        **content_attributes
+        **post_attributes
       )
     end
 
-    # Extracts content-specific attributes from raw data
+    # Extracts post attributes from raw data
     # @param raw_data [Hash] the raw feed entry data
-    # @return [Hash] content attributes (source_url, content, attachment_urls, comments)
-    def extract_content_attributes(raw_data)
+    # @return [Hash] post attributes (source_url, content, attachment_urls, comments)
+    def extract_post_attributes(raw_data)
       {
         source_url: extract_source_url(raw_data),
         content: extract_content(raw_data),
