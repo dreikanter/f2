@@ -2,22 +2,14 @@ require "test_helper"
 
 # TBD: Use snapshot testing
 class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
-  def feed
-    @feed ||= create(:feed)
+  include FixtureFeedEntries
+
+  def fixture_file_name
+    "sample_xkcd.xml"
   end
 
-  def processor
-    Processor::RssProcessor.new(feed, file_fixture("sample_xkcd.xml").read)
-  end
-
-  def feed_entries
-    @feed_entries ||= processor.process
-  end
-
-  def feed_entry(index)
-    entry = feed_entries[index]
-    entry.save!
-    entry
+  def processor_class
+    Processor::RssProcessor
   end
 
   test "sholuld match the expected normalization result" do

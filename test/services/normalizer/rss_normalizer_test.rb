@@ -1,22 +1,14 @@
 require "test_helper"
 
 class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
-  def feed
-    @feed ||= create(:feed)
+  include FixtureFeedEntries
+
+  def fixture_file_name
+    "sample_rss.xml"
   end
 
-  def processor
-    Processor::RssProcessor.new(feed, file_fixture("sample_rss.xml").read)
-  end
-
-  def feed_entries
-    @feed_entries ||= processor.process
-  end
-
-  def feed_entry(index)
-    entry = feed_entries[index]
-    entry.save!
-    entry
+  def processor_class
+    Processor::RssProcessor
   end
 
   test "should create valid post from feed entry" do
