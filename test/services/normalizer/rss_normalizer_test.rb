@@ -50,7 +50,8 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
   end
 
   test "should truncate content that is too long" do
-    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 100)
+    long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
+
     entry = create(:feed_entry, raw_data: {
       "summary" => long_content,
       "link" => "https://example.com/long"
@@ -67,6 +68,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
   test "should reject post when URL is too long" do
     very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
+
     entry = create(:feed_entry, raw_data: {
       "summary" => "Test content",
       "link" => very_long_url
@@ -83,6 +85,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
 
   test "should reject post when URL is too long and content is blank" do
     very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
+
     entry = create(:feed_entry, raw_data: {
       "title" => "",
       "content" => "",
