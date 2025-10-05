@@ -66,17 +66,15 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
-                    <%= link_to "Validate", settings_access_token_validation_path(access_token),
-                                class: "dropdown-item",
-                                data: { turbo_method: :post } %>
+                    <%= link_to "Validate", settings_access_token_validation_path(access_token), class: "dropdown-item", data: { turbo_method: :post } %>
                   </li>
                   <li>
-                    <%= link_to "Replace", edit_settings_access_token_path(access_token),
-                                class: "dropdown-item" %>
+                    <%= link_to "Replace", edit_settings_access_token_path(access_token), class: "dropdown-item" %>
                   </li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
-                    <%= link_to "Delete", settings_access_token_path(access_token),
+                    <%= link_to "Delete",
+                                settings_access_token_path(access_token),
                                 class: "dropdown-item text-danger",
                                 data: {
                                   turbo_method: :delete,
