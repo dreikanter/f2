@@ -15,7 +15,7 @@ class PostsController < ApplicationController
     @post = load_post
     authorize @post
 
-    @post.update!(status: :withdrawn)
+    @post.withdrawn!
     PostWithdrawalJob.perform_later(@post.id)
 
     Event.create!(
