@@ -12,6 +12,14 @@ class Admin::PurgesController < ApplicationController
 
     GroupPurgeJob.perform_later(access_token.id, target_group)
 
+    Event.create!(
+      type: "GroupPurgeStarted",
+      user: Current.user,
+      subject: access_token,
+      level: :info,
+      metadata: { target_group: target_group }
+    )
+
     redirect_to new_admin_purge_path, notice: "Group withdrawal started for #{target_group}"
   end
 
