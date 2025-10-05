@@ -41,18 +41,14 @@
                 </td>
                 <td>
                   <% if feed.last_refreshed_at %>
-                    <small class="text-muted">
-                      <%= short_time_ago(feed.last_refreshed_at) %>
-                    </small>
+                    <%= short_time_ago(feed.last_refreshed_at) %>
                   <% else %>
                     <em class="text-muted">Never</em>
                   <% end %>
                 </td>
                 <td>
                   <% if feed.most_recent_post_date %>
-                    <small class="text-muted">
-                      <%= short_time_ago(feed.most_recent_post_date) %>
-                    </small>
+                    <%= short_time_ago(feed.most_recent_post_date) %>
                   <% else %>
                     <em class="text-muted">None</em>
                   <% end %>
