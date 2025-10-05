@@ -1,0 +1,26 @@
+<% content_for :title, "Confirm Purge" %>
+
+<%= page_header "Confirm Purge" do %>
+  <%= link_to "Cancel", feed_path(@feed), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Purge All Posts for <%= @feed.name %></h5>
+    <p class="text-muted">
+      This will remove all published posts for this feed from the FreeFeed group <strong><%= @feed.target_group %></strong>.
+      Posts will be marked as withdrawn but remain visible in the application.
+    </p>
+
+    <%= form_with url: feed_purge_path(@feed), method: :post, local: true do |form| %>
+      <div class="d-flex gap-2">
+        <%= link_to "Cancel", feed_path(@feed), class: "btn btn-outline-secondary" %>
+        <%= form.submit "Purge All Posts",
+                       class: "btn btn-danger",
+                       data: {
+                         turbo_confirm: "Are you sure you want to purge all posts from #{@feed.target_group}? This will remove them from FreeFeed but they will remain in the app."
+                       } %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -79,6 +79,16 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.destroy?
   end
 
+  test "should allow purge access to feed owner" do
+    policy = policy_for_user(user, feed)
+    assert policy.purge?
+  end
+
+  test "should deny purge access to other users" do
+    policy = policy_for_user(user, other_feed)
+    assert_not policy.purge?
+  end
+
   test "should handle nil user gracefully" do
     policy = FeedPolicy.new(nil, feed)
 
@@ -87,6 +97,7 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.create?
     assert_not policy.update?
     assert_not policy.destroy?
+    assert_not policy.purge?
   end
 
   test "scope should return only owned feeds for regular users" do

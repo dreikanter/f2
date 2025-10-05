@@ -1,7 +1,8 @@
+<%# TBD: Consider generalizing this component (and groups controller) %>
 <%= turbo_stream.replace "groups-select" do %>
   <div id="groups-select">
-    <select name="<%= @scope %>[target_group]"
-            id="<%= @scope %>_target_group"
+    <select name="feed[target_group]"
+            id="feed_target_group"
             class="form-select"
             data-groups-target="select">
       <option value="">Choose target group...</option>

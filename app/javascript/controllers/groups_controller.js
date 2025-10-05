@@ -5,8 +5,7 @@ export default class extends Controller {
   static values = {
     loadingText: String,
     defaultText: String,
-    endpoint: String,
-    scope: String
+    endpoint: String
   }
 
   connect() {
@@ -35,10 +34,6 @@ export default class extends Controller {
 
     if (currentValue) {
       params.append('selected_group', currentValue)
-    }
-
-    if (this.hasScopeValue) {
-      params.append('scope', this.scopeValue)
     }
 
     if (params.toString()) {
