@@ -20,8 +20,8 @@
           <th>Name</th>
           <th>Instance</th>
           <th>Status</th>
-          <th style="width: 1%; white-space: nowrap;">Created</th>
-          <th style="width: 1%; white-space: nowrap;">Last Used</th>
+          <th class="text-center" style="width: 1%; white-space: nowrap;">Created</th>
+          <th class="text-center" style="width: 1%; white-space: nowrap;">Last Used</th>
           <th class="text-end">Actions</th>
         </tr>
       </thead>
@@ -37,12 +37,12 @@
             <td>
               <%= render "shared/access_token_status", access_token: access_token %>
             </td>
-            <td>
+            <td class="text-center">
               <span class="text-muted">
                 <%= short_time_ago(access_token.created_at) %>
               </span>
             </td>
-            <td>
+            <td class="text-center">
               <% if access_token.last_used_at %>
                 <span class="text-muted">
                   <%= short_time_ago(access_token.last_used_at) %>
