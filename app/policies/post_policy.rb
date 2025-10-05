@@ -8,7 +8,7 @@ class PostPolicy < ApplicationPolicy
   end
 
   def destroy?
-    (owner? || user&.admin?) && record.published?
+    (owner? || admin?) && record.published?
   end
 
   private

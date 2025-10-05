@@ -1,5 +1,5 @@
 class PurgePolicy < ApplicationPolicy
   def create?
-    user&.admin?
+    admin?
   end
 end
