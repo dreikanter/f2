@@ -35,7 +35,8 @@ class Post < ApplicationRecord
     enqueued: 1,
     rejected: 2,
     published: 3,
-    failed: 4
+    failed: 4,
+    withdrawn: 5
   }
 
   def normalized_attributes

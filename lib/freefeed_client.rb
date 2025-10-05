@@ -122,6 +122,16 @@ class FreefeedClient
     raise Error, "Failed to create comment: #{e.message}"
   end
 
+  # Delete post
+  # @param post_id [String] ID of the post to delete
+  # @return [Boolean] true if deletion was successful
+  def delete_post(post_id)
+    delete("/v4/posts/#{post_id}")
+    true
+  rescue HttpClient::Error => e
+    raise Error, "Failed to delete post: #{e.message}"
+  end
+
   private
 
   def get(path, options: {})
@@ -133,6 +143,12 @@ class FreefeedClient
   def post(path, body: nil, headers: {})
     url = "#{@host}#{path}"
     response = @http_client.post(url, body: body, headers: headers.merge(auth_headers))
+    handle_response(response)
+  end
+
+  def delete(path)
+    url = "#{@host}#{path}"
+    response = @http_client.delete(url, headers: auth_headers)
     handle_response(response)
   end
 

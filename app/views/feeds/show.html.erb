@@ -108,3 +108,22 @@
     </div>
   <% end %>
 </div>
+
+<% if @feed.target_group.present? %>
+  <div class="mt-4">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">Danger Zone</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="mb-1">Purge All Posts</h6>
+            <p class="text-muted mb-0">Remove all published posts for this feed from FreeFeed group <strong><%= @feed.target_group %></strong></p>
+          </div>
+          <%= link_to "Purge Feed", feed_purge_path(@feed), class: "btn btn-outline-danger" %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

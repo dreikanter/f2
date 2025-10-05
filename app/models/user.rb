@@ -25,6 +25,10 @@ class User < ApplicationRecord
     permissions.exists?(name: permission_name)
   end
 
+  def admin?
+    permission?("admin")
+  end
+
   private
 
   def set_password_updated_at

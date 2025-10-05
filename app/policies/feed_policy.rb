@@ -19,6 +19,10 @@ class FeedPolicy < ApplicationPolicy
     owner?
   end
 
+  def purge?
+    owner?
+  end
+
   private
 
   def owner?

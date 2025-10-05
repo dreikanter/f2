@@ -1,3 +1,4 @@
+<%# TBD: Consider generalizing this component (and groups controller) %>
 <%= turbo_stream.replace "groups-select" do %>
   <div id="groups-select">
     <select name="feed[target_group]"
@@ -12,7 +13,7 @@
       <% end %>
     </select>
     <div class="form-text" data-groups-target="helpText">
-      Select the Freefeed group where posts will be published
+      Select the Freefeed group
     </div>
     <div class="invalid-feedback">Select a target group.</div>
   </div>

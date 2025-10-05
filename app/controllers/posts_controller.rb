@@ -11,6 +11,23 @@ class PostsController < ApplicationController
     authorize @post
   end
 
+  def destroy
+    @post = load_post
+    authorize @post
+
+    @post.withdrawn!
+    PostWithdrawalJob.perform_later(@post.id)
+
+    Event.create!(
+      type: "PostWithdrawn",
+      user: Current.user,
+      subject: @post,
+      level: :info
+    )
+
+    redirect_to posts_path, notice: "Post withdrawal initiated. It remains visible in the app."
+  end
+
   private
 
   def pagination_scope

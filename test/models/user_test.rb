@@ -96,4 +96,23 @@ class UserTest < ActiveSupport::TestCase
       user.destroy!
     end
   end
+
+  test "admin? returns true when user has admin permission" do
+    user = create(:user)
+    create(:permission, user: user, name: "admin")
+
+    assert user.admin?
+  end
+
+  test "admin? returns false when user has no admin permission" do
+    user = create(:user)
+
+    assert_not user.admin?
+  end
+
+  test "admin? returns false when user has no permissions" do
+    user = create(:user)
+
+    assert_not user.admin?
+  end
 end

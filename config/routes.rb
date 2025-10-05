@@ -19,9 +19,10 @@ Rails.application.routes.draw do
 
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
+    resource :purge, only: [:show, :create], controller: "feeds/purges"
   end
 
-  resources :posts, only: [:index, :show]
+  resources :posts, only: [:index, :show, :destroy]
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
 

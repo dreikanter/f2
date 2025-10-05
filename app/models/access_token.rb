@@ -44,6 +44,10 @@ class AccessToken < ApplicationRecord
     touch(:last_used_at)
   end
 
+  def build_client
+    FreefeedClient.new(host: host, token: token_value)
+  end
+
   private
 
   def disable_associated_feeds
