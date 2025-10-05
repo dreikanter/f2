@@ -130,4 +130,49 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href*='#{feed.access_token.host}/testgroup/test-123']", text: "View on FreeFeed"
     assert_select "a[href='#{published_post.source_url}']", text: "View Original Source"
   end
+
+  test "destroy withdraws post and creates event" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
+
+    assert_enqueued_with(job: PostWithdrawalJob) do
+      assert_difference("Event.count", 1) do
+        delete post_url(published_post)
+      end
+    end
+
+    assert_redirected_to posts_path
+    assert_equal "withdrawn", published_post.reload.status
+
+    event = Event.last
+    assert_equal "PostWithdrawn", event.type
+    assert_equal user, event.user
+    assert_equal published_post, event.subject
+    assert_equal "info", event.level
+  end
+
+  test "destroy requires authentication" do
+    published_post = create(:post, :published, feed: feed)
+
+    delete post_url(published_post)
+    assert_redirected_to new_session_path
+  end
+
+  test "destroy requires ownership" do
+    sign_in_as(user)
+    other_user = create(:user)
+    other_feed = create(:feed, user: other_user)
+    other_post = create(:post, :published, feed: other_feed)
+
+    delete post_url(other_post)
+    assert_response :not_found
+  end
+
+  test "destroy requires published status" do
+    sign_in_as(user)
+    draft_post = create(:post, :draft, feed: feed)
+
+    delete post_url(draft_post)
+    assert_response :forbidden
+  end
 end
