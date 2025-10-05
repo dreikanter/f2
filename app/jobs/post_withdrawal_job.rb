@@ -3,8 +3,7 @@ class PostWithdrawalJob < ApplicationJob
 
   def perform(post_id)
     post = Post.find(post_id)
-    access_token = post.feed.access_token
-    client = FreefeedClient.new(host: access_token.host, token: access_token.token_value)
+    client = post.feed.access_token.build_client
 
     client.delete_post(post.freefeed_post_id)
   rescue FreefeedClient::Error => e

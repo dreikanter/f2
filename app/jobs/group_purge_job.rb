@@ -5,7 +5,7 @@ class GroupPurgeJob < ApplicationJob
     access_token = AccessToken.find_by(id: access_token_id)
     return unless access_token
 
-    client = FreefeedClient.new(host: access_token.host, token: access_token.token_value)
+    client = access_token.build_client
 
     # Find all posts for the specified group with non-blank freefeed_post_id
     posts = Post.joins(:feed)
