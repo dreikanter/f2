@@ -14,9 +14,9 @@ class GroupPurgeJob < ApplicationJob
     posts.find_each do |post|
       begin
         client.delete_post(post.freefeed_post_id)
-        post.update!(status: :deleted)
+        post.update!(status: :withdrawn)
       rescue FreefeedClient::Error => e
-        Rails.logger.error("Failed to delete post #{post.id}: #{e.message}")
+        Rails.logger.error("Failed to withdraw post #{post.id}: #{e.message}")
         # Continue with next post even if one fails
       end
     end
