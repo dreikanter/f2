@@ -256,4 +256,50 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal false, group[:is_private]  # Default when field is missing
     assert_equal false, group[:is_restricted]  # Default when field is missing
   end
+
+  # delete_post method tests
+  test "delete_post returns true on success" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 200)
+
+    result = @client.delete_post(post_id)
+    assert_equal true, result
+  end
+
+  test "delete_post raises UnauthorizedError on 401" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 401)
+
+    assert_raises(FreefeedClient::UnauthorizedError) do
+      @client.delete_post(post_id)
+    end
+  end
+
+  test "delete_post raises NotFoundError on 404" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 404)
+
+    assert_raises(FreefeedClient::NotFoundError) do
+      @client.delete_post(post_id)
+    end
+  end
+
+  test "delete_post raises Error on HTTP client errors" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_raise(HttpClient::ConnectionError.new("Connection failed"))
+
+    error = assert_raises(FreefeedClient::Error) do
+      @client.delete_post(post_id)
+    end
+    assert_includes error.message, "Failed to delete post"
+    assert_includes error.message, "Connection failed"
+  end
 end
