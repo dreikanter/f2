@@ -20,10 +20,10 @@ class PostsController < ApplicationController
 
     begin
       client.delete_post(@post.freefeed_post_id)
-      @post.update!(status: :deleted)
-      redirect_to posts_path, notice: "Post unpublished successfully. It remains visible in the app."
+      @post.update!(status: :withdrawn)
+      redirect_to posts_path, notice: "Post withdrawn successfully. It remains visible in the app."
     rescue FreefeedClient::Error => e
-      redirect_to post_path(@post), alert: "Failed to unpublish post: #{e.message}"
+      redirect_to post_path(@post), alert: "Failed to withdraw post: #{e.message}"
     end
   end
 
