@@ -21,7 +21,7 @@ class FeedRefreshEventTest < ActiveSupport::TestCase
 
     event = FeedRefreshEvent.create_stats(feed: feed, stats: stats)
 
-    assert_equal "feed_refresh_stats", event.type
+    assert_equal "FeedRefreshStats", event.type
     assert_equal "info", event.level
     assert_equal feed, event.subject
     assert_equal feed.user, event.user
@@ -41,7 +41,7 @@ class FeedRefreshEventTest < ActiveSupport::TestCase
   test "create_stats works with empty stats" do
     event = FeedRefreshEvent.create_stats(feed: feed)
 
-    assert_equal "feed_refresh_stats", event.type
+    assert_equal "FeedRefreshStats", event.type
     assert_equal({}, event.metadata["stats"])
   end
 
@@ -58,7 +58,7 @@ class FeedRefreshEventTest < ActiveSupport::TestCase
       stats: stats
     )
 
-    assert_equal "feed_refresh_error", event.type
+    assert_equal "FeedRefreshError", event.type
     assert_equal "error", event.level
     assert_equal feed, event.subject
     assert_equal feed.user, event.user
