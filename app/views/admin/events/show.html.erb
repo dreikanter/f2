@@ -88,6 +88,6 @@
 <% if @event.metadata.present? && @event.metadata != {} %>
   <div class="mt-4">
     <h3 class="mb-3">Metadata</h3>
-    <pre class="font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><%= highlight_json(@event.metadata).html_safe %></pre>
+    <pre class="font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><%= highlight_json(@event.metadata) %></pre>
   </div>
 <% end %>

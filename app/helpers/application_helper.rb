@@ -34,6 +34,7 @@ module ApplicationHelper
     json_string = JSON.pretty_generate(json_hash)
     formatter = Rouge::Formatters::HTML.new(wrap: false)
     lexer = Rouge::Lexers::JSON.new
-    "<div class=\"highlight\">#{formatter.format(lexer.lex(json_string))}</div>"
+    highlighted_code = formatter.format(lexer.lex(json_string))
+    content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 end
