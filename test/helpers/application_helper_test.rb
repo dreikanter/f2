@@ -70,7 +70,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "post_status_icon returns enqueued icon for enqueued status" do
     result = post_status_icon("enqueued")
-    expected = '<i class="bi bi-clock text-warning" title="Enqueued"></i>'
+    expected = '<i class="bi bi-clock text-secondary" title="Enqueued"></i>'
     assert_equal expected, result
   end
 

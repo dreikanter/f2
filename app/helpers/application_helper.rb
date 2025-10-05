@@ -16,7 +16,7 @@ module ApplicationHelper
     when "draft"
       content_tag(:i, nil, class: "bi bi-file-earmark text-muted", title: "Draft")
     when "enqueued"
-      content_tag(:i, nil, class: "bi bi-clock text-warning", title: "Enqueued")
+      content_tag(:i, nil, class: "bi bi-clock text-secondary", title: "Enqueued")
     when "rejected"
       content_tag(:i, nil, class: "bi bi-x-circle text-danger", title: "Rejected")
     when "published"
