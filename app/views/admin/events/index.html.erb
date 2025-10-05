@@ -23,7 +23,7 @@
         <% @events.each do |event| %>
           <tr>
             <td class="text-center" style="width: 1%;">
-              <%= link_to admin_event_path(event), class: "text-decoration-none text-muted", title: event.created_at.rfc3339 do %>
+              <%= link_to admin_event_path(event), class: "text-muted", title: event.created_at.rfc3339 do %>
                 <%= short_time_ago(event.created_at) %>
               <% end %>
             </td>
@@ -48,12 +48,12 @@
             <td>
               <% if event.subject %>
                 <% if event.subject_type == "Feed" %>
-                  <%= link_to event.subject_type, feed_path(event.subject), class: "text-decoration-none text-muted" %>
+                  <%= link_to event.subject_type, feed_path(event.subject), class: "text-muted" %>
                 <% elsif event.subject_type == "Post" %>
-                  <%= link_to event.subject_type, post_path(event.subject), class: "text-decoration-none text-muted" %>
+                  <%= link_to event.subject_type, post_path(event.subject), class: "text-muted" %>
                 <% else %>
                   <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
-                              class: "text-decoration-none text-muted",
+                              class: "text-muted",
                               title: "Filter by subject type: #{event.subject_type}" do %>
                     <%= event.subject_type %>
                   <% end %>
