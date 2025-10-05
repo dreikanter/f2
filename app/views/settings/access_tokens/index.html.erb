@@ -19,6 +19,7 @@
         <tr>
           <th>Name</th>
           <th>Instance</th>
+          <th>User</th>
           <th>Status</th>
           <th class="text-center" style="width: 1%; white-space: nowrap;">Created</th>
           <th class="text-center" style="width: 1%; white-space: nowrap;">Last Used</th>
@@ -33,6 +34,11 @@
             </td>
             <td>
               <span class="text-muted"><%= URI.parse(access_token.host).host %></span>
+            </td>
+            <td id="<%= dom_id(access_token, :user) %>">
+              <% if access_token.owner.present? %>
+                <span class="text-muted"><%= access_token.owner %></span>
+              <% end %>
             </td>
             <td>
               <%= render "shared/access_token_status", access_token: access_token %>
