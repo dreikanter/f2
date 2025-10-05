@@ -18,9 +18,6 @@
 <% elsif access_token.active? %>
   <div id="<%= dom_id(access_token, :status) %>">
     <span class="text-success">✅ Active</span>
-    <% if access_token.owner.present? %>
-      <span class="text-muted">(<%= access_token.owner %>)</span>
-    <% end %>
   </div>
 <% elsif access_token.inactive? %>
   <div id="<%= dom_id(access_token, :status) %>">

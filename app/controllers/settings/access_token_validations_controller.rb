@@ -19,11 +19,18 @@ class Settings::AccessTokenValidationsController < ApplicationController
   private
 
   def build_turbo_stream_update(locals)
-    turbo_stream.update(
-      dom_id(@access_token, :status),
-      partial: "shared/access_token_status",
-      locals: locals
-    )
+    [
+      turbo_stream.update(
+        dom_id(@access_token, :status),
+        partial: "shared/access_token_status",
+        locals: locals
+      ),
+      turbo_stream.update(
+        dom_id(@access_token, :user),
+        partial: "shared/access_token_user",
+        locals: locals
+      )
+    ]
   end
 
   def access_tokens

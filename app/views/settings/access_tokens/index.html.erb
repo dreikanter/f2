@@ -1,7 +1,7 @@
 <%= page_header "Access Tokens" do %>
   <div class="d-flex align-items-center">
-    <%= link_to "New Token", new_settings_access_token_path, class: "btn btn-primary me-3" %>
-    <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary" %>
+    <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary me-3" %>
+    <%= link_to "New Token", new_settings_access_token_path, class: "btn btn-primary" %>
   </div>
 <% end %>
 
@@ -14,55 +14,75 @@
 
 <% if @access_tokens.any? %>
   <div class="table-responsive">
-    <table class="table table-hover table-bordered">
+    <table class="table table-hover table-bordered" style="white-space: nowrap;">
       <thead>
         <tr>
           <th>Name</th>
           <th>Instance</th>
+          <th>User</th>
           <th>Status</th>
-          <th>Created</th>
-          <th>Last Used</th>
-          <th class="text-end">Actions</th>
+          <th class="text-center" style="width: 1%;">Created</th>
+          <th class="text-center" style="width: 1%;">Last Used</th>
+          <th style="width: 1%;"></th>
         </tr>
       </thead>
       <tbody>
         <% @access_tokens.each do |access_token| %>
           <tr>
-            <td>
+            <td style="overflow: hidden; text-overflow: ellipsis;">
               <%= access_token.name %>
             </td>
             <td>
               <span class="text-muted"><%= URI.parse(access_token.host).host %></span>
             </td>
+            <td id="<%= dom_id(access_token, :user) %>">
+              <% if access_token.owner.present? %>
+                <span class="text-muted"><%= access_token.owner %></span>
+              <% end %>
+            </td>
             <td>
               <%= render "shared/access_token_status", access_token: access_token %>
             </td>
-            <td>
+            <td class="text-center">
               <span class="text-muted">
-                <%= time_ago_in_words(access_token.created_at) %> ago
+                <%= short_time_ago(access_token.created_at) %>
               </span>
             </td>
-            <td>
+            <td class="text-center">
               <% if access_token.last_used_at %>
                 <span class="text-muted">
-                  <%= time_ago_in_words(access_token.last_used_at) %> ago
+                  <%= short_time_ago(access_token.last_used_at) %>
                 </span>
               <% else %>
                 <span class="text-muted">Never</span>
               <% end %>
             </td>
-            <td class="text-end">
-              <%= link_to "Validate", settings_access_token_validation_path(access_token),
-                          class: "text-decoration-none me-3",
-                          data: { turbo_method: :post } %>
-              <%= link_to "Replace", edit_settings_access_token_path(access_token),
-                          class: "text-decoration-none me-3" %>
-              <%= link_to "Delete", settings_access_token_path(access_token),
-                          class: "text-danger text-decoration-none",
-                          data: {
-                            turbo_method: :delete,
-                            turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
-                          } %>
+            <td class="text-center">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                  </svg>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <%= link_to "Validate", settings_access_token_validation_path(access_token), class: "dropdown-item", data: { turbo_method: :post } %>
+                  </li>
+                  <li>
+                    <%= link_to "Replace", edit_settings_access_token_path(access_token), class: "dropdown-item" %>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <%= link_to "Delete",
+                                settings_access_token_path(access_token),
+                                class: "dropdown-item text-danger",
+                                data: {
+                                  turbo_method: :delete,
+                                  turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
+                                } %>
+                  </li>
+                </ul>
+              </div>
             </td>
           </tr>
         <% end %>
