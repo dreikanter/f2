@@ -21,8 +21,15 @@ class PurgePolicyTest < ActiveSupport::TestCase
     refute PurgePolicy.new(nil, :purge).create?
   end
 
-  test "new? delegates to create?" do
+  test "new? allows admin users" do
     assert PurgePolicy.new(admin_user, :purge).new?
+  end
+
+  test "new? denies regular users" do
     refute PurgePolicy.new(regular_user, :purge).new?
+  end
+
+  test "new? denies unauthenticated users" do
+    refute PurgePolicy.new(nil, :purge).new?
   end
 end
