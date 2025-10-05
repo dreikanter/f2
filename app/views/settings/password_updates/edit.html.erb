@@ -8,17 +8,17 @@
   <div class="col-6">
     <%= form_with model: @user, url: settings_password_update_path, method: :patch, local: true do |form| %>
       <div class="mb-3">
-        <%= form.label :current_password, "Current password:", class: "form-label" %>
+        <%= form.label :current_password, "Current password:", class: "form-label fw-bold" %>
         <%= form.password_field :current_password, class: "form-control", required: true %>
       </div>
 
       <div class="mb-3">
-        <%= form.label :password, "New password:", class: "form-label" %>
+        <%= form.label :password, "New password:", class: "form-label fw-bold" %>
         <%= form.password_field :password, class: "form-control", required: true %>
       </div>
 
       <div class="mb-3">
-        <%= form.label :password_confirmation, "Confirm new password:", class: "form-label" %>
+        <%= form.label :password_confirmation, "Confirm new password:", class: "form-label fw-bold" %>
         <%= form.password_field :password_confirmation, class: "form-control", required: true %>
       </div>
 

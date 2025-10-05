@@ -25,10 +25,10 @@
                           class: "form-control #{'is-invalid' if access_token.errors[:token].any?}",
                           placeholder: token_placeholder,
                           value: token_value %>
-      <div class="form-text">Get your token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">Freefeed settings</a></div>
+      <div class="form-text">Get a token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">Freefeed settings</a></div>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-4">
       <%= form.label :host, "Freefeed Instance", class: "form-label fw-bold" %>
       <div class="mb-2">
         <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
@@ -61,9 +61,9 @@
       <div class="form-text">Select the Freefeed instance where your token was created</div>
     </div>
 
-    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-      <%= link_to "Cancel", settings_access_tokens_path, class: "btn btn-outline-secondary" %>
+    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
       <%= form.submit submit_text, class: "btn btn-primary" %>
+      <%= link_to "Cancel", settings_access_tokens_path, class: "btn btn-outline-secondary" %>
     </div>
   <% end %>
 </div>

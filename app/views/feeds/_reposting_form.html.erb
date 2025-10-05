@@ -22,7 +22,7 @@
   <% end %>
 
   <div class="mb-3">
-    <%= form.label :access_token_id, "Access Token", class: "form-label" %>
+    <%= form.label :access_token_id, "Access Token", class: "form-label fw-bold" %>
     <% if has_active_tokens? %>
       <%= form.select :access_token_id, options_for_select(access_token_options, feed.access_token_id),
                       { prompt: "Choose access token..." },
@@ -47,7 +47,7 @@
   </div>
 
   <div class="mb-3">
-    <%= form.label :target_group, "Target Group", class: "form-label" %>
+    <%= form.label :target_group, "Target Group", class: "form-label fw-bold" %>
     <div id="groups-select">
       <select name="feed[target_group]"
               id="feed_target_group"

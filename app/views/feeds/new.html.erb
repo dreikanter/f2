@@ -1,14 +1,6 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title h3 mb-0">Create New Feed</h1>
-        </div>
-        <div class="card-body">
-          <%= render 'new_form', feed: @feed %>
-        </div>
-      </div>
-    </div>
+<div class="row">
+  <div class="col-12">
+    <%= page_header "Create New Feed" %>
+    <%= render 'new_form', feed: @feed %>
   </div>
 </div>
