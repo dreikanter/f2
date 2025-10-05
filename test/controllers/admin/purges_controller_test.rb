@@ -46,6 +46,7 @@ class Admin::PurgesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to new_admin_purge_path
+    assert_equal "Group withdrawal started for testgroup", flash[:notice]
 
     event = Event.last
     assert_equal "GroupPurgeStarted", event.type

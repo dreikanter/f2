@@ -142,6 +142,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to posts_path
+    assert_equal "Post withdrawal initiated. It remains visible in the app.", flash[:notice]
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last
