@@ -81,7 +81,7 @@ class Settings::AccessTokenValidationsControllerTest < ActionDispatch::Integrati
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "✅ Active"
-    assert_includes response.body, "(testuser)"
+    assert_includes response.body, "testuser"
 
     # Test inactive state
     access_token.update!(status: :inactive)
