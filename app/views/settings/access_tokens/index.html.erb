@@ -22,7 +22,7 @@
           <th>Status</th>
           <th class="text-center" style="width: 1%; white-space: nowrap;">Created</th>
           <th class="text-center" style="width: 1%; white-space: nowrap;">Last Used</th>
-          <th class="text-end">Actions</th>
+          <th style="width: 1%;"></th>
         </tr>
       </thead>
       <tbody>
@@ -51,18 +51,34 @@
                 <span class="text-muted">Never</span>
               <% end %>
             </td>
-            <td class="text-end">
-              <%= link_to "Validate", settings_access_token_validation_path(access_token),
-                          class: "text-decoration-none me-3",
-                          data: { turbo_method: :post } %>
-              <%= link_to "Replace", edit_settings_access_token_path(access_token),
-                          class: "text-decoration-none me-3" %>
-              <%= link_to "Delete", settings_access_token_path(access_token),
-                          class: "text-danger text-decoration-none",
-                          data: {
-                            turbo_method: :delete,
-                            turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
-                          } %>
+            <td class="text-center">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                  </svg>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <%= link_to "Validate", settings_access_token_validation_path(access_token),
+                                class: "dropdown-item",
+                                data: { turbo_method: :post } %>
+                  </li>
+                  <li>
+                    <%= link_to "Replace", edit_settings_access_token_path(access_token),
+                                class: "dropdown-item" %>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <%= link_to "Delete", settings_access_token_path(access_token),
+                                class: "dropdown-item text-danger",
+                                data: {
+                                  turbo_method: :delete,
+                                  turbo_confirm: "Are you sure you want to delete '#{access_token.name}'? This action cannot be undone."
+                                } %>
+                  </li>
+                </ul>
+              </div>
             </td>
           </tr>
         <% end %>
