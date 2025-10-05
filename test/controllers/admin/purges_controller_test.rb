@@ -2,9 +2,7 @@ require "test_helper"
 
 class Admin::PurgesControllerTest < ActionDispatch::IntegrationTest
   def admin_user
-    @admin_user ||= create(:user).tap do |u|
-      create(:permission, user: u, name: "admin")
-    end
+    @admin_user ||= create(:user, :admin)
   end
 
   def regular_user

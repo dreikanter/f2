@@ -72,8 +72,7 @@ class PostPolicyTest < ActiveSupport::TestCase
   end
 
   test "destroy? allows admin for published post" do
-    admin_user = create(:user)
-    create(:permission, user: admin_user, name: "admin")
+    admin_user = create(:user, :admin)
     published_post = create(:post, :published, feed: other_feed)
 
     assert PostPolicy.new(admin_user, published_post).destroy?
