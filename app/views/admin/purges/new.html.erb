@@ -1,0 +1,41 @@
+<% content_for :title, "Purge Group Posts" %>
+
+<%= page_header "Purge Group Posts" do %>
+  <%= link_to "Back to Admin", admin_events_path, class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="card">
+  <div class="card-body">
+    <p class="text-muted">
+      This tool removes all published posts from a specific group on FreeFeed. Posts will be marked as deleted but remain visible in the application.
+    </p>
+
+    <%= form_with model: [:admin, :purge], url: admin_purges_path, local: true do |form| %>
+      <div class="mb-3">
+        <%= form.label :access_token_id, "Access Token", class: "form-label" %>
+        <%= form.select :access_token_id,
+                        options_from_collection_for_select(@access_tokens, :id, :name),
+                        { prompt: "Select an access token" },
+                        class: "form-select",
+                        required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :target_group, "Target Group", class: "form-label" %>
+        <%= form.text_field :target_group,
+                           class: "form-control",
+                           placeholder: "e.g., mygroup",
+                           required: true %>
+        <div class="form-text">Enter the group username (without @ symbol)</div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <%= form.submit "Purge Group Posts",
+                       class: "btn btn-danger",
+                       data: {
+                         turbo_confirm: "Are you sure you want to purge all posts from this group? This will remove them from FreeFeed but they will remain in the app."
+                       } %>
+      </div>
+    <% end %>
+  </div>
+</div>

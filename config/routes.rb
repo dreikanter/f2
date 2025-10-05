@@ -21,13 +21,14 @@ Rails.application.routes.draw do
     resource :status, only: :update, controller: "feed_statuses"
   end
 
-  resources :posts, only: [:index, :show]
+  resources :posts, only: [:index, :show, :destroy]
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
 
   namespace :admin do
     resources :feed_profiles
     resources :events, only: [:index, :show]
+    resources :purges, only: [:new, :create]
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
