@@ -3,7 +3,7 @@ class GroupPurgeJob < ApplicationJob
 
   def perform(access_token_id, target_group)
     access_token = AccessToken.find_by(id: access_token_id)
-    return unless access_token
+    return unless access_token&.active?
 
     client = access_token.build_client
 
