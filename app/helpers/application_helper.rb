@@ -29,6 +29,8 @@ module ApplicationHelper
       content_tag(:i, nil, class: "bi bi-check-circle-fill text-success", title: "Published")
     when "failed"
       content_tag(:i, nil, class: "bi bi-exclamation-triangle text-danger", title: "Failed")
+    when "withdrawn"
+      content_tag(:i, nil, class: "bi bi-arrow-counterclockwise text-secondary", title: "Withdrawn")
     else
       content_tag(:span, status.capitalize, class: "text-muted")
     end
