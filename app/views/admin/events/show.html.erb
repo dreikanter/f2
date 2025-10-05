@@ -88,10 +88,6 @@
 <% if @event.metadata.present? && @event.metadata != {} %>
   <div class="mt-4">
     <h3 class="mb-3">Metadata</h3>
-    <div class="list-group">
-      <div class="list-group-item">
-        <pre class="event-metadata font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><code><%= JSON.pretty_generate(@event.metadata) %></code></pre>
-      </div>
-    </div>
+    <pre class="font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><%= highlight_json(@event.metadata) %></pre>
   </div>
 <% end %>

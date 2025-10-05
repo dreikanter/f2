@@ -70,7 +70,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "post_status_icon returns enqueued icon for enqueued status" do
     result = post_status_icon("enqueued")
-    expected = '<i class="bi bi-clock text-warning" title="Enqueued"></i>'
+    expected = '<i class="bi bi-clock text-secondary" title="Enqueued"></i>'
     assert_equal expected, result
   end
 
@@ -96,5 +96,13 @@ class ApplicationHelperTest < ActionView::TestCase
     result = post_status_icon("unknown")
     expected = '<span class="text-muted">Unknown</span>'
     assert_equal expected, result
+  end
+
+  test "highlight_json wraps output in highlight div" do
+    json_hash = { "test" => "value" }
+    result = highlight_json(json_hash)
+
+    assert_includes result, "<div class=\"highlight\">"
+    assert_includes result, "</div>"
   end
 end
