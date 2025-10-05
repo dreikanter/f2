@@ -1,16 +1,17 @@
 class GroupPurgeJob < ApplicationJob
   queue_as :default
 
-  def perform(access_token_id, target_group)
-    access_token = AccessToken.find_by(id: access_token_id)
+  def perform(feed_id)
+    feed = Feed.find_by(id: feed_id)
+    return unless feed
+
+    access_token = feed.access_token
     return unless access_token&.active?
 
     client = access_token.build_client
 
-    # Find all posts for the specified group with non-blank freefeed_post_id
-    posts = Post.joins(:feed)
-                .where(feeds: { access_token_id: access_token_id, target_group: target_group })
-                .where.not(freefeed_post_id: [nil, ""])
+    # Find all posts for the feed with non-blank freefeed_post_id
+    posts = feed.posts.where.not(freefeed_post_id: [nil, ""])
 
     posts.find_each do |post|
       begin
