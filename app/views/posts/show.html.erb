@@ -102,31 +102,42 @@
         </div>
       <% end %>
 
-      <div class="list-group-item">
-        <span class="text-muted">Post ID:</span> <code><%= @post.id %></code>
-      </div>
+    </div>
 
-      <div class="list-group-item">
-        <span class="text-muted">UID:</span> <code><%= @post.uid %></code>
-      </div>
+    <div class="mt-3">
+      <a data-bs-toggle="collapse" href="#technicalDetails" role="button" aria-expanded="false" aria-controls="technicalDetails" class="text-muted">
+        More...
+      </a>
+    </div>
 
-      <div class="list-group-item">
-        <span class="text-muted">Feed Entry ID:</span> <code><%= @post.feed_entry_id %></code>
-      </div>
-
-      <div class="list-group-item">
-        <span class="text-muted">Created:</span> <%= long_time_tag(@post.created_at) %>
-      </div>
-
-      <div class="list-group-item">
-        <span class="text-muted">Updated:</span> <%= long_time_tag(@post.updated_at) %>
-      </div>
-
-      <% if @post.freefeed_post_id.present? %>
+    <div class="collapse mt-3" id="technicalDetails">
+      <div class="list-group">
         <div class="list-group-item">
-          <span class="text-muted">FreeFeed Post ID:</span> <code><%= @post.freefeed_post_id %></code>
+          <strong>Post ID:</strong> <code><%= @post.id %></code>
         </div>
-      <% end %>
+
+        <div class="list-group-item">
+          <strong>UID:</strong> <code><%= @post.uid %></code>
+        </div>
+
+        <div class="list-group-item">
+          <strong>Feed Entry ID:</strong> <code><%= @post.feed_entry_id %></code>
+        </div>
+
+        <% if @post.freefeed_post_id.present? %>
+          <div class="list-group-item">
+            <strong>FreeFeed Post ID:</strong> <code><%= @post.freefeed_post_id %></code>
+          </div>
+        <% end %>
+
+        <div class="list-group-item">
+          <strong>Created:</strong> <%= long_time_tag(@post.created_at) %>
+        </div>
+
+        <div class="list-group-item">
+          <strong>Updated:</strong> <%= long_time_tag(@post.updated_at) %>
+        </div>
+      </div>
     </div>
   </div>
 </div>
