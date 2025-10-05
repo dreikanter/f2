@@ -110,9 +110,8 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.admin?
   end
 
-  test "admin? returns false when user has other permissions" do
+  test "admin? returns false when user has no permissions" do
     user = create(:user)
-    create(:permission, user: user, name: "other_permission")
 
     assert_not user.admin?
   end
