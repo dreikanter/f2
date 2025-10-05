@@ -4,6 +4,7 @@ class PostsController < ApplicationController
   def index
     authorize Post
     @posts = paginate_scope
+    @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end
 
   def show
@@ -31,7 +32,9 @@ class PostsController < ApplicationController
   private
 
   def pagination_scope
-    policy_scope(Post).includes(:feed).order(published_at: :desc)
+    scope = policy_scope(Post).includes(:feed).order(published_at: :desc)
+    scope = scope.where(feed_id: params[:feed_id]) if params[:feed_id].present?
+    scope
   end
 
   def load_post

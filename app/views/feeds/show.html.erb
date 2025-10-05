@@ -99,8 +99,8 @@
   <h3 class="mb-3">Recent Posts</h3>
   <% if @recent_posts.any? %>
     <%= render "shared/posts_table", posts: @recent_posts, hide_feed_column: true %>
-    <div class="text-center mt-3">
-      <%= link_to "View All Posts", posts_path, class: "btn btn-outline-primary" %>
+    <div class="mt-2">
+      <%= link_to "View All Posts", posts_path(feed_id: @feed.id), class: "btn btn-sm btn-outline-primary" %>
     </div>
   <% else %>
     <div class="text-center py-4">
@@ -111,10 +111,8 @@
 
 <% if @feed.target_group.present? %>
   <div class="mt-4">
+    <h3 class="mb-3">Danger Zone</h3>
     <div class="card border-danger">
-      <div class="card-header bg-danger text-white">
-        <h5 class="card-title mb-0">Danger Zone</h5>
-      </div>
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
           <div>

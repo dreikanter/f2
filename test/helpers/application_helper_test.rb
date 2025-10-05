@@ -5,7 +5,7 @@ class ApplicationHelperTest < ActionView::TestCase
     result = page_header("Test Title")
 
     expected = <<~HTML.strip
-      <div class="mb-4"><h1>Test Title</h1></div>
+      <div class="d-flex justify-content-between align-items-center mb-4"><h1>Test Title</h1></div>
     HTML
 
     assert_equal expected, result
