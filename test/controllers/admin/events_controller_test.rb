@@ -47,7 +47,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
-    assert_select "dd", "TestEvent"
+    assert_select "code", "TestEvent"
   end
 
   test "should paginate events" do

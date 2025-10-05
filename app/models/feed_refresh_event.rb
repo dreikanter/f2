@@ -6,7 +6,7 @@ class FeedRefreshEvent
   # @return [Event] created event record
   def self.create_stats(feed:, stats: {})
     Event.create!(
-      type: "feed_refresh_stats",
+      type: "FeedRefreshStats",
       level: :info,
       subject: feed,
       user: feed.user,
@@ -23,7 +23,7 @@ class FeedRefreshEvent
   # @return [Event] created event record
   def self.create_error(feed:, error:, stage:, stats: {})
     Event.create!(
-      type: "feed_refresh_error",
+      type: "FeedRefreshError",
       level: :error,
       subject: feed,
       user: feed.user,
