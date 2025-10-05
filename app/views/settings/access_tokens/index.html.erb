@@ -28,7 +28,7 @@
       <tbody>
         <% @access_tokens.each do |access_token| %>
           <tr>
-            <td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
               <%= access_token.name %>
             </td>
             <td>
