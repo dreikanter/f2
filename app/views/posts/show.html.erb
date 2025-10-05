@@ -103,24 +103,30 @@
       <% end %>
 
       <div class="list-group-item">
-        <strong>Technical Details:</strong>
-        <div class="mt-2">
-          <div class="row">
-            <div class="col-md-6">
-              <small class="text-muted">Post ID:</small> <code><%= @post.id %></code><br>
-              <small class="text-muted">UID:</small> <code><%= @post.uid %></code><br>
-              <small class="text-muted">Feed Entry ID:</small> <code><%= @post.feed_entry_id %></code>
-            </div>
-            <div class="col-md-6">
-              <small class="text-muted">Created:</small> <%= long_time_tag(@post.created_at) %><br>
-              <small class="text-muted">Updated:</small> <%= long_time_tag(@post.updated_at) %><br>
-              <% if @post.freefeed_post_id.present? %>
-                <small class="text-muted">FreeFeed Post ID:</small> <code><%= @post.freefeed_post_id %></code>
-              <% end %>
-            </div>
-          </div>
-        </div>
+        <span class="text-muted">Post ID:</span> <code><%= @post.id %></code>
       </div>
+
+      <div class="list-group-item">
+        <span class="text-muted">UID:</span> <code><%= @post.uid %></code>
+      </div>
+
+      <div class="list-group-item">
+        <span class="text-muted">Feed Entry ID:</span> <code><%= @post.feed_entry_id %></code>
+      </div>
+
+      <div class="list-group-item">
+        <span class="text-muted">Created:</span> <%= long_time_tag(@post.created_at) %>
+      </div>
+
+      <div class="list-group-item">
+        <span class="text-muted">Updated:</span> <%= long_time_tag(@post.updated_at) %>
+      </div>
+
+      <% if @post.freefeed_post_id.present? %>
+        <div class="list-group-item">
+          <span class="text-muted">FreeFeed Post ID:</span> <code><%= @post.freefeed_post_id %></code>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>
