@@ -9,6 +9,9 @@
       This will remove all published posts for this feed from the FreeFeed group <strong><%= @feed.target_group %></strong>.
       Posts will be marked as withdrawn but remain visible in the application.
     </p>
+    <div class="alert alert-warning">
+      <strong>Warning:</strong> This operation cannot be reversed. Deleted posts cannot be restored on FreeFeed.
+    </div>
 
     <%= form_with url: feed_purge_path(@feed), method: :post, local: true do |form| %>
       <div class="d-flex gap-2">
