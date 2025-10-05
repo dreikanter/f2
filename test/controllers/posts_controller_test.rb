@@ -173,6 +173,6 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     draft_post = create(:post, :draft, feed: feed)
 
     delete post_url(draft_post)
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 end

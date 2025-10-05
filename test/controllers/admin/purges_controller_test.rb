@@ -18,7 +18,7 @@ class Admin::PurgesControllerTest < ActionDispatch::IntegrationTest
   test "new requires admin permission" do
     sign_in_as(regular_user)
     get new_admin_purge_path
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 
   test "new shows form for admin" do
@@ -33,7 +33,7 @@ class Admin::PurgesControllerTest < ActionDispatch::IntegrationTest
   test "create requires admin permission" do
     sign_in_as(regular_user)
     post admin_purges_path, params: { purge: { access_token_id: access_token.id, target_group: "testgroup" } }
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 
   test "create schedules job and creates event" do

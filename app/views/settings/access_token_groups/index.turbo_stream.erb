@@ -1,7 +1,7 @@
 <%= turbo_stream.replace "groups-select" do %>
   <div id="groups-select">
-    <select name="feed[target_group]"
-            id="feed_target_group"
+    <select name="<%= @scope %>[target_group]"
+            id="<%= @scope %>_target_group"
             class="form-select"
             data-groups-target="select">
       <option value="">Choose target group...</option>
@@ -12,7 +12,7 @@
       <% end %>
     </select>
     <div class="form-text" data-groups-target="helpText">
-      Select the Freefeed group where posts will be published
+      <%= @help_text %>
     </div>
     <div class="invalid-feedback">Select a target group.</div>
   </div>

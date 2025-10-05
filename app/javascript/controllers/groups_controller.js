@@ -1,17 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["select", "helpText"]
+  static targets = ["select", "helpText", "tokenSelect"]
   static values = {
     loadingText: String,
     defaultText: String,
-    endpoint: String
+    endpoint: String,
+    scope: String
   }
 
   connect() {
-    const tokenSelect = this.element.querySelector('select[name="feed[access_token_id]"]')
-    if (tokenSelect?.value && !tokenSelect.disabled) {
-      this.loadGroups(tokenSelect.value)
+    if (this.hasTokenSelectTarget && this.tokenSelectTarget.value && !this.tokenSelectTarget.disabled) {
+      this.loadGroups(this.tokenSelectTarget.value)
     }
   }
 
@@ -26,13 +26,27 @@ export default class extends Controller {
     }
 
     // Store the current selected value to restore it after loading
-    const currentValue = this.selectTarget.value
+    const currentValue = this.hasSelectTarget ? this.selectTarget.value : null
 
     this.showLoadingState()
 
     let url = this.endpointValue.replace(':access_token_id', tokenId)
+    const params = new URLSearchParams()
+
     if (currentValue) {
-      url += `?selected_group=${encodeURIComponent(currentValue)}`
+      params.append('selected_group', currentValue)
+    }
+
+    if (this.hasScopeValue) {
+      params.append('scope', this.scopeValue)
+    }
+
+    if (this.hasDefaultTextValue) {
+      params.append('help_text', this.defaultTextValue)
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`
     }
 
     try {
@@ -57,28 +71,42 @@ export default class extends Controller {
   }
 
   showEmptyState() {
+    if (!this.hasSelectTarget) return
+
     this.selectTarget.disabled = true
     this.selectTarget.innerHTML = '<option value="">Choose target group...</option>'
-    this.helpTextTarget.textContent = this.defaultTextValue
-    this.helpTextTarget.classList.remove('text-muted')
+    if (this.hasHelpTextTarget) {
+      this.helpTextTarget.textContent = this.defaultTextValue
+      this.helpTextTarget.classList.remove('text-muted')
+    }
   }
 
   showLoadingState() {
+    if (!this.hasSelectTarget) return
+
     this.selectTarget.disabled = true
     this.selectTarget.innerHTML = '<option value="">Loading...</option>'
-    this.helpTextTarget.textContent = this.loadingTextValue
-    this.helpTextTarget.classList.add('text-muted')
+    if (this.hasHelpTextTarget) {
+      this.helpTextTarget.textContent = this.loadingTextValue
+      this.helpTextTarget.classList.add('text-muted')
+    }
   }
 
   showDefaultState() {
+    if (!this.hasHelpTextTarget) return
+
     this.helpTextTarget.textContent = this.defaultTextValue
     this.helpTextTarget.classList.remove('text-muted')
   }
 
   showErrorState() {
+    if (!this.hasSelectTarget) return
+
     this.selectTarget.disabled = true
     this.selectTarget.innerHTML = '<option value="">Error loading groups</option>'
-    this.helpTextTarget.textContent = "Unable to load groups. Please try again."
-    this.helpTextTarget.classList.add('text-muted')
+    if (this.hasHelpTextTarget) {
+      this.helpTextTarget.textContent = "Unable to load groups. Please try again."
+      this.helpTextTarget.classList.add('text-muted')
+    }
   }
 }
