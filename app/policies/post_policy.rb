@@ -7,6 +7,10 @@ class PostPolicy < ApplicationPolicy
     owner?
   end
 
+  def destroy?
+    owner? && record.published?
+  end
+
   private
 
   def owner?
