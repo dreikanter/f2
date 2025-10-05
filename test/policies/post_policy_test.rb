@@ -60,4 +60,32 @@ class PostPolicyTest < ActiveSupport::TestCase
     resolved_posts = PostPolicy::Scope.new(nil, Post).resolve
     assert_equal 0, resolved_posts.count
   end
+
+  test "destroy? allows owner for published post" do
+    published_post = create(:post, :published, feed: feed)
+    assert PostPolicy.new(user, published_post).destroy?
+  end
+
+  test "destroy? denies owner for non-published post" do
+    draft_post = create(:post, :draft, feed: feed)
+    refute PostPolicy.new(user, draft_post).destroy?
+  end
+
+  test "destroy? allows admin for published post" do
+    admin_user = create(:user)
+    create(:permission, user: admin_user, name: "admin")
+    published_post = create(:post, :published, feed: other_feed)
+
+    assert PostPolicy.new(admin_user, published_post).destroy?
+  end
+
+  test "destroy? denies non-admin non-owner for published post" do
+    published_post = create(:post, :published, feed: other_feed)
+    refute PostPolicy.new(user, published_post).destroy?
+  end
+
+  test "destroy? denies unauthenticated users" do
+    published_post = create(:post, :published, feed: feed)
+    refute PostPolicy.new(nil, published_post).destroy?
+  end
 end
