@@ -6,7 +6,7 @@
   <div class="card-body">
     <div data-controller="groups"
          data-groups-loading-text-value="Loading..."
-         data-groups-default-text-value="Select the Freefeed group where posts will be published"
+         data-groups-default-text-value="Select the Freefeed group"
          data-groups-endpoint-value="<%= settings_access_token_groups_path(':access_token_id') %>"
          data-groups-scope-value="feed">
       <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
@@ -58,7 +58,7 @@
         <option value="<%= feed.target_group %>"><%= feed.target_group.present? ? feed.target_group : "Choose target group..." %></option>
       </select>
       <div class="form-text" data-groups-target="helpText">
-        Select the Freefeed group where posts will be published
+        Select the Freefeed group
       </div>
       <div class="invalid-feedback">Select a target group.</div>
     </div>

@@ -3,8 +3,9 @@ class Settings::AccessTokenGroupsController < ApplicationController
     @access_token = Current.user.access_tokens.find(params[:access_token_id])
     @managed_groups = load_managed_groups
     @selected_group = params[:selected_group]
+
+    # TBD: Decouple this controller from settings, make it reusable in admin panel
     @scope = params[:scope] || "feed"
-    @help_text = params[:help_text] || "Select the Freefeed group where posts will be published"
   end
 
   rescue_from FreefeedClient::Error, with: :handle_freefeed_error

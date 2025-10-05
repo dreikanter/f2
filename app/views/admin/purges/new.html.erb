@@ -12,7 +12,7 @@
 
     <div data-controller="groups"
          data-groups-loading-text-value="Loading..."
-         data-groups-default-text-value="Select the Freefeed group to purge"
+         data-groups-default-text-value="Select the Freefeed group"
          data-groups-endpoint-value="<%= settings_access_token_groups_path(':access_token_id') %>"
          data-groups-scope-value="purge">
       <%= form_with url: admin_purges_path, scope: :purge, local: true do |form| %>
@@ -37,7 +37,7 @@
               <option value="">Choose target group...</option>
             </select>
             <div class="form-text" data-groups-target="helpText">
-              Select the Freefeed group to purge
+              Select the Freefeed group
             </div>
             <div class="invalid-feedback">Select a target group.</div>
           </div>

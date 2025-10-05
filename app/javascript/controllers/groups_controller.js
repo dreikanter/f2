@@ -41,10 +41,6 @@ export default class extends Controller {
       params.append('scope', this.scopeValue)
     }
 
-    if (this.hasDefaultTextValue) {
-      params.append('help_text', this.defaultTextValue)
-    }
-
     if (params.toString()) {
       url += `?${params.toString()}`
     }
