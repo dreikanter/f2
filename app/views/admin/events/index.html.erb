@@ -8,29 +8,34 @@
 
 <% if @events.any? %>
   <div class="table-responsive">
-    <table class="table table-hover table-bordered">
+    <table class="table table-hover table-bordered text-nowrap">
       <thead>
         <tr>
+          <th style="width: 1%;" class="text-center"><i class="bi bi-calendar-event"></i></th>
+          <th style="width: 1%;" class="text-center"><i class="bi bi-exclamation-circle"></i></th>
           <th>Type</th>
-          <th class="text-center">Lvl</th>
           <th>Message</th>
           <th>User</th>
           <th>Subject</th>
-          <th class="text-center"><i class="bi bi-calendar-event"></i></th>
         </tr>
       </thead>
       <tbody>
         <% @events.each do |event| %>
           <tr>
+            <td class="text-center" style="width: 1%;">
+              <%= link_to admin_event_path(event), class: "text-decoration-none text-muted", title: event.created_at.rfc3339 do %>
+                <%= short_time_ago(event.created_at) %>
+              <% end %>
+            </td>
+            <td class="text-center" style="width: 1%;">
+              <%= level_badge(event.level) %>
+            </td>
             <td>
               <%= link_to admin_events_path(filter: { type: event.type }),
                           class: "text-decoration-none",
                           title: "Filter by type: #{event.type}" do %>
                 <code><%= event.type %></code>
               <% end %>
-            </td>
-            <td class="text-center">
-              <%= level_badge(event.level) %>
             </td>
             <td>
               <div class="text-truncate" style="max-width: 300px;">
@@ -42,20 +47,21 @@
             </td>
             <td>
               <% if event.subject %>
-                <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
-                            class: "text-decoration-none text-muted",
-                            title: "Filter by subject type: #{event.subject_type}" do %>
-                  <%= event.subject_type %>
+                <% if event.subject_type == "Feed" %>
+                  <%= link_to event.subject_type, feed_path(event.subject), class: "text-decoration-none text-muted" %>
+                <% elsif event.subject_type == "Post" %>
+                  <%= link_to event.subject_type, post_path(event.subject), class: "text-decoration-none text-muted" %>
+                <% else %>
+                  <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
+                              class: "text-decoration-none text-muted",
+                              title: "Filter by subject type: #{event.subject_type}" do %>
+                    <%= event.subject_type %>
+                  <% end %>
                 <% end %>
-                <span class="text-primary">#<%= event.subject_id %></span>
+                <span class="text-muted">#<%= event.subject_id %></span>
               <% else %>
                 <em class="text-muted">None</em>
               <% end %>
-            </td>
-            <td class="text-center">
-              <span class="text-muted" title="<%= event.created_at.rfc3339 %>">
-                <%= short_time_ago(event.created_at) %>
-              </span>
             </td>
           </tr>
         <% end %>
