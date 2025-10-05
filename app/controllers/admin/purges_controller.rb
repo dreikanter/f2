@@ -12,7 +12,7 @@ class Admin::PurgesController < ApplicationController
 
     GroupPurgeJob.perform_later(access_token.id, target_group)
 
-    redirect_to new_admin_purge_path, notice: "Group purge started for #{target_group}"
+    redirect_to new_admin_purge_path, notice: "Group withdrawal started for #{target_group}"
   end
 
   private

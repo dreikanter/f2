@@ -4,11 +4,11 @@
   <div class="d-flex align-items-center">
     <%= link_to "Back to Posts", posts_path, class: "btn btn-outline-secondary me-3" %>
     <% if policy(@post).destroy? %>
-      <%= button_to "Unpublish", post_path(@post),
+      <%= button_to "Withdraw", post_path(@post),
                     method: :delete,
                     class: "btn btn-danger",
                     data: {
-                      turbo_confirm: "Unpublish this post? It will be removed from FreeFeed but remain visible here."
+                      turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here."
                     } %>
     <% end %>
   </div>

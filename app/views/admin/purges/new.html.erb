@@ -7,7 +7,7 @@
 <div class="card">
   <div class="card-body">
     <p class="text-muted">
-      This tool removes all published posts from a specific group on FreeFeed. Posts will be marked as deleted but remain visible in the application.
+      This tool removes all published posts from a specific group on FreeFeed. Posts will be marked as withdrawn but remain visible in the application.
     </p>
 
     <%= form_with model: [:admin, :purge], url: admin_purges_path, local: true do |form| %>
@@ -30,10 +30,10 @@
       </div>
 
       <div class="d-flex justify-content-between">
-        <%= form.submit "Purge Group Posts",
+        <%= form.submit "Withdraw Group Posts",
                        class: "btn btn-danger",
                        data: {
-                         turbo_confirm: "Are you sure you want to purge all posts from this group? This will remove them from FreeFeed but they will remain in the app."
+                         turbo_confirm: "Are you sure you want to withdraw all posts from this group? This will remove them from FreeFeed but they will remain in the app."
                        } %>
       </div>
     <% end %>
