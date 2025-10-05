@@ -12,19 +12,19 @@
   <% end %>
 
   <div class="mb-4">
-    <%= form.label :name, "Title", class: "form-label font-weight-bold" %>
+    <%= form.label :name, "Title", class: "form-label fw-bold" %>
     <%= form.text_field :name, class: "form-control", placeholder: "Leave blank for auto-generated title", maxlength: Feed::NAME_MAX_LENGTH %>
     <div class="form-text">Give your feed a name to help you identify it (optional - will be auto-generated if blank)</div>
   </div>
 
   <div class="mb-4">
-    <%= form.label :url, "Feed URL", class: "form-label font-weight-bold" %>
+    <%= form.label :url, "Feed URL", class: "form-label fw-bold" %>
     <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml" %>
     <div class="invalid-feedback">Provide a valid HTTP or HTTPS URL.</div>
   </div>
 
   <div class="mb-4">
-    <%= form.label :feed_profile_id, "Feed Profile", class: "form-label font-weight-bold" %>
+    <%= form.label :feed_profile_id, "Feed Profile", class: "form-label fw-bold" %>
     <%= form.select :feed_profile_id, options_for_select(feed_profile_options, feed.feed_profile_id), { prompt: "Choose feed profile..." }, { class: "form-select", required: true } %>
     <div class="form-text">Select the processing configuration for this feed</div>
     <div class="invalid-feedback">Select a feed profile.</div>
