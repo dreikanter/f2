@@ -29,4 +29,11 @@ module ApplicationHelper
       content_tag(:span, status.capitalize, class: "text-muted")
     end
   end
+
+  def highlight_json(json_hash)
+    json_string = JSON.pretty_generate(json_hash)
+    formatter = Rouge::Formatters::HTML.new(wrap: false)
+    lexer = Rouge::Lexers::JSON.new
+    "<div class=\"highlight\">#{formatter.format(lexer.lex(json_string))}</div>"
+  end
 end
