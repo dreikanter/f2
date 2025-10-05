@@ -18,6 +18,13 @@ class PostsController < ApplicationController
     @post.update!(status: :withdrawn)
     PostWithdrawalJob.perform_later(@post.id)
 
+    Event.create!(
+      type: "PostWithdrawn",
+      user: Current.user,
+      subject: @post,
+      level: :info
+    )
+
     redirect_to posts_path, notice: "Post withdrawal initiated. It remains visible in the app."
   end
 
