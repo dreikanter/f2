@@ -106,9 +106,9 @@ class WorkflowTest < ActiveSupport::TestCase
     result = service.run_simple_workflow
 
     expected_log = [
-      "step_one with {:value=>1}",
-      "step_two with {:value=>2, :step=>:one}",
-      "step_three with {:value=>3, :step=>:two}"
+      "step_one with {value: 1}",
+      "step_two with {value: 2, step: :one}",
+      "step_three with {value: 3, step: :two}"
     ]
     assert_equal expected_log, service.execution_log
 
@@ -122,10 +122,10 @@ class WorkflowTest < ActiveSupport::TestCase
 
     expected_log = [
       "before step_one",
-      "step_one with {:value=>1}",
+      "step_one with {value: 1}",
       "after step_one",
       "before step_two",
-      "step_two with {:value=>2, :step=>:one}",
+      "step_two with {value: 2, step: :one}",
       "after step_two"
     ]
     assert_equal expected_log, service.execution_log

@@ -55,7 +55,7 @@ class FileBuffer
     end
 
     io = StringIO.new(response.body)
-    io.set_encoding(Encoding::BINARY)
+    io.set_encoding("BINARY")
 
     content_type = url_content_type(url, response.body)
 
