@@ -21,15 +21,15 @@
           <th>Instance</th>
           <th>User</th>
           <th>Status</th>
-          <th class="text-center" style="width: 1%; white-space: nowrap;">Created</th>
-          <th class="text-center" style="width: 1%; white-space: nowrap;">Last Used</th>
+          <th class="text-center" style="width: 1%;">Created</th>
+          <th class="text-center" style="width: 1%;">Last Used</th>
           <th style="width: 1%;"></th>
         </tr>
       </thead>
       <tbody>
         <% @access_tokens.each do |access_token| %>
           <tr>
-            <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <td style="overflow: hidden; text-overflow: ellipsis;">
               <%= access_token.name %>
             </td>
             <td>
