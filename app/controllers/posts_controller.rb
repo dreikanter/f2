@@ -15,16 +15,10 @@ class PostsController < ApplicationController
     @post = load_post
     authorize @post
 
-    access_token = @post.feed.access_token
-    client = FreefeedClient.new(host: access_token.host, token: access_token.token_value)
+    @post.update!(status: :withdrawn)
+    PostWithdrawalJob.perform_later(@post.id)
 
-    begin
-      client.delete_post(@post.freefeed_post_id)
-      @post.update!(status: :withdrawn)
-      redirect_to posts_path, notice: "Post withdrawn successfully. It remains visible in the app."
-    rescue FreefeedClient::Error => e
-      redirect_to post_path(@post), alert: "Failed to withdraw post: #{e.message}"
-    end
+    redirect_to posts_path, notice: "Post withdrawal initiated. It remains visible in the app."
   end
 
   private
