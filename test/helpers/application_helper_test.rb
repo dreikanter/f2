@@ -97,4 +97,39 @@ class ApplicationHelperTest < ActionView::TestCase
     expected = '<span class="text-muted">Unknown</span>'
     assert_equal expected, result
   end
+
+  test "highlight_json wraps output in highlight div" do
+    json_hash = { "test" => "value" }
+    result = highlight_json(json_hash)
+
+    assert_includes result, '<div class="highlight">'
+    assert_includes result, '</div>'
+  end
+
+  test "highlight_json generates syntax highlighting spans" do
+    json_hash = { "key" => "value", "number" => 123 }
+    result = highlight_json(json_hash)
+
+    # Should contain Rouge syntax highlighting spans
+    assert_includes result, '<span class='
+    assert_includes result, '"key"'
+    assert_includes result, '"value"'
+    assert_includes result, '123'
+  end
+
+  test "highlight_json handles empty hash" do
+    result = highlight_json({})
+
+    assert_includes result, '<div class="highlight">'
+    assert_includes result, '{}'
+  end
+
+  test "highlight_json handles nested structures" do
+    json_hash = { "outer" => { "inner" => "value" } }
+    result = highlight_json(json_hash)
+
+    assert_includes result, '"outer"'
+    assert_includes result, '"inner"'
+    assert_includes result, '"value"'
+  end
 end
