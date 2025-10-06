@@ -3,7 +3,7 @@
   <div class="d-flex gap-2 align-items-center">
     <% if @feed.enabled? %>
       <div class="d-flex align-items-center me-2">
-        <i class="bi bi-play-circle-fill text-success me-1"></i>
+        <%= icon("play-circle-fill", css_class: "text-success me-1") %>
         <span class="text-success fw-medium">Enabled</span>
       </div>
       <%= button_to "Disable", feed_status_path(@feed),
@@ -13,7 +13,7 @@
           class: "btn btn-outline-secondary" %>
     <% elsif @feed.can_be_enabled? %>
       <div class="d-flex align-items-center">
-        <i class="bi bi-pause-circle-fill text-secondary me-1"></i>
+        <%= icon("pause-circle-fill", css_class: "text-secondary me-1") %>
         <span class="text-secondary fw-medium">Ready to Enable</span>
       </div>
       <%= button_to "Enable", feed_status_path(@feed),
@@ -22,12 +22,12 @@
           class: "btn btn-success" %>
     <% elsif @feed.disabled? && !@feed.can_be_enabled? %>
       <div class="d-flex align-items-center me-2">
-        <i class="bi bi-gear-fill text-secondary me-1"></i>
+        <%= icon("gear-fill", css_class: "text-secondary me-1") %>
         <span class="text-secondary fw-medium">Configuration Needed</span>
       </div>
     <% else %>
       <div class="d-flex align-items-center me-2">
-        <i class="bi bi-pause-circle-fill text-muted me-1"></i>
+        <%= icon("pause-circle-fill", css_class: "text-muted me-1") %>
         <span class="text-muted fw-medium">Disabled</span>
       </div>
     <% end %>

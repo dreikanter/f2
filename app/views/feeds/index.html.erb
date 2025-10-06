@@ -26,9 +26,9 @@
                 </td>
                 <td>
                   <% if feed.enabled? %>
-                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    <%= icon("check-circle-fill", css_class: "text-success me-1") %>
                   <% else %>
-                    <i class="bi bi-x-circle text-muted me-1"></i>
+                    <%= icon("x-circle", css_class: "text-muted me-1") %>
                   <% end %>
                   <%= feed.state.capitalize %>
                 </td>
