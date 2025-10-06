@@ -94,7 +94,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should filter events by subject_type" do
     login_as(admin_user)
-    test_user = create(:user, email_address: "test_user_#{rand(10000)}@example.com")
+    test_user = create(:user, email_address: "test_user_#{SecureRandom.uuid}@example.com")
     feed = create(:feed, user: test_user)
 
     event1 = create(:event, type: "Event1", subject: test_user)
@@ -104,7 +104,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { subject_type: "User" } }
 
     assert_response :success
-    assert_select "tbody tr", count: 2 # Should show 2 User events
+    assert_select "tbody tr", count: 2
     assert_select "a[href*='subject_type']", text: "User", count: 2
     assert_select "a[href*='subject_type']", text: "Feed", count: 0
   end
