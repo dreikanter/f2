@@ -31,7 +31,6 @@ Rails.application.routes.draw do
       resource :email_update, only: [:edit, :update]
       resource :password_reset, only: [:show, :create]
     end
-    resources :feed_profiles
     resources :events, only: [:index, :show]
   end
 
