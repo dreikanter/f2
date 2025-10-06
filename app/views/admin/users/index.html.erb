@@ -22,19 +22,18 @@
               <% end %>
             </td>
             <td class="text-center">
-              <%= user.feeds.count %>
+              <%= user.feeds_count %>
             </td>
             <td class="text-center">
-              <%= user.access_tokens.count %>
+              <%= user.access_tokens_count %>
             </td>
             <td class="text-center">
-              <%= Post.joins(:feed).where(feeds: { user_id: user.id }).count %>
+              <%= user.posts_count %>
             </td>
             <td class="text-center">
-              <% last_session = user.sessions.order(updated_at: :desc).first %>
-              <% if last_session %>
-                <time class="text-muted" datetime="<%= last_session.updated_at.iso8601 %>" title="<%= last_session.updated_at.to_fs(:long) %>">
-                  <%= short_time_ago(last_session.updated_at) %>
+              <% if user.last_seen_at %>
+                <time class="text-muted" datetime="<%= user.last_seen_at.iso8601 %>" title="<%= user.last_seen_at.to_fs(:long) %>">
+                  <%= short_time_ago(user.last_seen_at) %>
                 </time>
               <% else %>
                 <span class="text-muted">Never</span>
