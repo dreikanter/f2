@@ -5,6 +5,7 @@ class Admin::PasswordResetsController < ApplicationController
   end
 
   def create
+    user = load_user
     authorize user, :update?
     PasswordsMailer.reset(user).deliver_later
     redirect_to admin_user_path(user), notice: "Password reset email sent to #{user.email_address}."
