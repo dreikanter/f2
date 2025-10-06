@@ -1,0 +1,17 @@
+<%= page_header "Reset Password for #{@user.email_address}" %>
+
+<div class="alert alert-info mb-4">
+  <strong>How this works:</strong> This will send a password reset email to the user's current email address.
+  The user will receive a link to set a new password. This does not change the password directly—the user must complete the reset process by clicking the link.
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with url: admin_user_password_reset_path(@user), method: :post do |form| %>
+      <div class="d-flex gap-2">
+        <%= form.submit "Send Password Reset Email", class: "btn btn-primary", data: { turbo_confirm: "Send password reset email to #{@user.email_address}?" } %>
+        <%= link_to "Cancel", admin_user_path(@user), class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

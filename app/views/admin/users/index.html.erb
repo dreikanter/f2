@@ -1,0 +1,56 @@
+<%= page_header "Users" %>
+
+<% if @users.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th class="text-center">Feeds</th>
+          <th class="text-center">Tokens</th>
+          <th class="text-center">Posts</th>
+          <th class="text-center">Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <%= link_to user.email_address, admin_user_path(user) %>
+              <% if user.admin? %>
+                <span class="text-muted">(admin)</span>
+              <% end %>
+            </td>
+            <td class="text-center">
+              <%= user.feeds_count %>
+            </td>
+            <td class="text-center">
+              <%= user.access_tokens_count %>
+            </td>
+            <td class="text-center">
+              <%= user.posts_count %>
+            </td>
+            <td class="text-center">
+              <% if user.last_seen_at %>
+                <time class="text-muted" datetime="<%= user.last_seen_at.iso8601 %>" title="<%= user.last_seen_at.to_fs(:long) %>">
+                  <%= short_time_ago(user.last_seen_at) %>
+                </time>
+              <% else %>
+                <span class="text-muted">Never</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= pagination_for @users,
+                     collection_name: "users",
+                     path_helper: ->(page) { admin_users_path(page: page) } %>
+<% else %>
+  <div class="text-center py-5">
+    <p class="text-muted">No users found</p>
+  </div>
+<% end %>
+

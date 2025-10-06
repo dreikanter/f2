@@ -1,4 +1,8 @@
 class UserPolicy < ApplicationPolicy
+  def index?
+    admin?
+  end
+
   def show?
     self_or_admin?
   end
