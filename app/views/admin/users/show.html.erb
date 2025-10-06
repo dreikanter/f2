@@ -1,4 +1,6 @@
-<%= page_header @user.email_address %>
+<%= page_header @user.email_address do %>
+  <%= link_to "Back to Users", admin_users_path, class: "btn btn-outline-secondary" %>
+<% end %>
 
 <div class="list-group">
   <div class="list-group-item">
