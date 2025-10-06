@@ -3,6 +3,7 @@ module Authentication
 
   included do
     before_action :require_authentication
+    before_action :update_session_activity
     helper_method :authenticated?
   end
 
@@ -49,5 +50,12 @@ module Authentication
   def terminate_session
     Current.session.destroy
     cookies.delete(:session_id)
+  end
+
+  def update_session_activity
+    return unless Current.session
+    return if Current.session.updated_at > 10.minutes.ago
+
+    Current.session.touch
   end
 end
