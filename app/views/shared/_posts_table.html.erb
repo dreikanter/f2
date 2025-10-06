@@ -6,10 +6,10 @@
         <% unless local_assigns[:hide_feed_column] %>
           <th class="feed-column">Feed</th>
         <% end %>
-        <th class="published-column text-center" title="Published date"><i class="bi bi-calendar3"></i></th>
-        <th class="count-column text-center" title="Attachments"><i class="bi bi-paperclip"></i></th>
-        <th class="count-column text-center" title="Comments"><i class="bi bi-chat-dots"></i></th>
-        <th class="status-column text-center" title="Status"><i class="bi bi-info-circle"></i></th>
+        <th class="published-column text-center" title="Published date"><%= icon("calendar3") %></th>
+        <th class="count-column text-center" title="Attachments"><%= icon("paperclip") %></th>
+        <th class="count-column text-center" title="Comments"><%= icon("chat-dots") %></th>
+        <th class="status-column text-center" title="Status"><%= icon("info-circle") %></th>
         <th style="width: 1%;" class="text-center"></th>
       </tr>
     </thead>
@@ -51,13 +51,13 @@
           <td style="width: 1%;" class="text-center">
             <div class="dropdown">
               <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-three-dots-vertical"></i>
+                <%= icon("three-dots-vertical") %>
               </button>
               <ul class="dropdown-menu dropdown-menu-end">
                 <% if post.source_url.present? %>
                   <li>
                     <%= link_to post.source_url, target: "_blank", rel: "noopener", class: "dropdown-item" do %>
-                      <i class="bi bi-box-arrow-up-right me-2"></i>Source Post
+                      <%= icon("box-arrow-up-right", css_class: "me-2") %>Source Post
                     <% end %>
                   </li>
                 <% end %>
@@ -67,7 +67,7 @@
                                 target: "_blank",
                                 rel: "noopener",
                                 class: "dropdown-item" do %>
-                      <i class="bi bi-box-arrow-up-right me-2"></i>FreeFeed Post
+                      <%= icon("box-arrow-up-right", css_class: "me-2") %>FreeFeed Post
                     <% end %>
                   </li>
                 <% end %>
@@ -80,7 +80,7 @@
                                   method: :delete,
                                   class: "dropdown-item text-danger",
                                   form: { data: { turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." } } do %>
-                      <i class="bi bi-trash me-2"></i>Withdraw
+                      <%= icon("trash", css_class: "me-2") %>Withdraw
                     <% end %>
                   </li>
                 <% end %>
