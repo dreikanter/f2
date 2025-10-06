@@ -62,6 +62,26 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
   end
 
+  test "icon returns basic icon without classes" do
+    result = icon("star")
+    assert_equal '<i class="bi bi-star"></i>', result
+  end
+
+  test "icon returns icon with css class" do
+    result = icon("star", css_class: "text-warning")
+    assert_equal '<i class="bi bi-star text-warning"></i>', result
+  end
+
+  test "icon returns icon with title" do
+    result = icon("star", title: "Favorite")
+    assert_equal '<i class="bi bi-star" title="Favorite"></i>', result
+  end
+
+  test "icon returns icon with css class and title" do
+    result = icon("check-circle", css_class: "text-success me-2", title: "Complete")
+    assert_equal '<i class="bi bi-check-circle text-success me-2" title="Complete"></i>', result
+  end
+
   test "post_status_icon returns draft icon for draft status" do
     result = post_status_icon("draft")
     expected = '<i class="bi bi-file-earmark text-muted" title="Draft"></i>'
