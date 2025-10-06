@@ -112,6 +112,12 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal expected, result
   end
 
+  test "post_status_icon returns withdrawn icon for withdrawn status" do
+    result = post_status_icon("withdrawn")
+    expected = '<i class="bi bi-trash text-secondary" title="Withdrawn"></i>'
+    assert_equal expected, result
+  end
+
   test "post_status_icon returns capitalized text for unknown status" do
     result = post_status_icon("unknown")
     expected = '<span class="text-muted">Unknown</span>'
