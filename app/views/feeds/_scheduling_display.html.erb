@@ -1,9 +1,9 @@
 <%# locals: (feed:) %>
 
 <% if feed.cron_expression.present? %>
-  <i class="bi bi-check-circle-fill text-success me-2"></i>
+  <%= icon("check-circle-fill", css_class: "text-success me-2") %>
 <% else %>
-  <i class="bi bi-circle text-muted me-2"></i>
+  <%= icon("circle", css_class: "text-muted me-2") %>
 <% end -%>
 
 <% if feed.cron_expression.present? %>
@@ -25,6 +25,6 @@
     class: "text-decoration-none ms-2",
     data: { turbo_prefetch: false, turbo_stream: true },
     title: "Edit" do %>
-  <i class="bi bi-pencil text-secondary"></i>
+  <%= icon("pencil", css_class: "text-secondary") %>
 <% end %>
 

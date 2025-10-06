@@ -44,7 +44,7 @@
           <strong>Attachments (<%= @post.attachment_urls.length %>):</strong>
           <% @post.attachment_urls.each do |url| %>
             <%= link_to url, target: "_blank", rel: "noopener", class: "text-decoration-none ms-2" do %>
-              <i class="bi bi-file-earmark-image"></i>
+              <%= icon("file-earmark-image") %>
             <% end %>
           <% end %>
         </div>

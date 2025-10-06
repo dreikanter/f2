@@ -17,11 +17,11 @@
   </div>
 <% elsif access_token.active? %>
   <div id="<%= dom_id(access_token, :status) %>">
-    <span class="text-success"><i class="bi bi-check-circle-fill"></i> Active</span>
+    <span class="text-success"><%= icon("check-circle-fill") %> Active</span>
   </div>
 <% elsif access_token.inactive? %>
   <div id="<%= dom_id(access_token, :status) %>">
-    <span class="text-muted"><i class="bi bi-x-circle"></i> Inactive</span>
+    <span class="text-muted"><%= icon("x-circle") %> Inactive</span>
     <% if error %>
       <br><small class="text-muted"><%= error %></small>
     <% end %>
