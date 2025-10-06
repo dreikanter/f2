@@ -12,9 +12,7 @@ module ApplicationHelper
   end
 
   def icon(name, css_class: nil, title: nil)
-    classes = ["bi", "bi-#{name}"]
-    classes << css_class if css_class.present?
-    content_tag(:i, nil, class: classes.join(" "), title: title)
+    content_tag(:i, nil, class: class_names("bi", "bi-#{name}", css_class), title: title)
   end
 
   def post_status_icon(status)
