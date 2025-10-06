@@ -9,12 +9,12 @@
   <div class="card-body">
     <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
       <div class="mb-3">
-        <%= form.label :email_address, "Current Email", class: "form-label" %>
+        <%= form.label :email_address, "Current Email", class: "form-label fw-bold" %>
         <%= form.text_field :email_address, value: @user.email_address, disabled: true, class: "form-control" %>
       </div>
 
       <div class="mb-3">
-        <%= form.label :email_address, "New Email", class: "form-label" %>
+        <%= form.label :email_address, "New Email", class: "form-label fw-bold" %>
         <%= form.email_field :email_address, value: "", class: "form-control", required: true, autofocus: true %>
       </div>
 
