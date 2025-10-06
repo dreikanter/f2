@@ -16,24 +16,24 @@
 
   <div class="list-group-item">
     <strong>Created:</strong>
-    <span title="<%= @user.created_at.to_fs(:long) %>">
+    <time datetime="<%= @user.created_at.iso8601 %>" title="<%= @user.created_at.to_fs(:long) %>">
       <%= @user.created_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.created_at) %>)
-    </span>
+    </time>
   </div>
 
   <div class="list-group-item">
     <strong>Updated:</strong>
-    <span title="<%= @user.updated_at.to_fs(:long) %>">
+    <time datetime="<%= @user.updated_at.iso8601 %>" title="<%= @user.updated_at.to_fs(:long) %>">
       <%= @user.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
-    </span>
+    </time>
   </div>
 
   <div class="list-group-item">
     <strong>Password Updated:</strong>
     <% if @user.password_updated_at.present? %>
-      <span title="<%= @user.password_updated_at.to_fs(:long) %>">
+      <time datetime="<%= @user.password_updated_at.iso8601 %>" title="<%= @user.password_updated_at.to_fs(:long) %>">
         <%= @user.password_updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.password_updated_at) %>)
-      </span>
+      </time>
     <% else %>
       <span class="text-muted">Never</span>
     <% end %>
@@ -43,9 +43,9 @@
     <strong>Last Seen:</strong>
     <% last_session = @user.sessions.order(updated_at: :desc).first %>
     <% if last_session %>
-      <span title="<%= last_session.updated_at.to_fs(:long) %>">
+      <time datetime="<%= last_session.updated_at.iso8601 %>" title="<%= last_session.updated_at.to_fs(:long) %>">
         <%= last_session.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(last_session.updated_at) %>)
-      </span>
+      </time>
     <% else %>
       <span class="text-muted">Never</span>
     <% end %>
@@ -77,9 +77,9 @@
     <strong>Most Recent Post:</strong>
     <% most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first %>
     <% if most_recent_post %>
-      <span title="<%= most_recent_post.published_at.to_fs(:long) %>">
+      <time datetime="<%= most_recent_post.published_at.iso8601 %>" title="<%= most_recent_post.published_at.to_fs(:long) %>">
         <%= most_recent_post.published_at.to_date.to_fs(:long) %> (<%= short_time_ago(most_recent_post.published_at) %>)
-      </span>
+      </time>
     <% else %>
       <span class="text-muted">No posts yet</span>
     <% end %>
@@ -105,14 +105,14 @@
             <td><%= session.ip_address %></td>
             <td class="text-truncate" style="max-width: 300px;"><%= session.user_agent %></td>
             <td class="text-center">
-              <span class="text-muted">
+              <time class="text-muted" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
                 <%= short_time_ago(session.created_at) %>
-              </span>
+              </time>
             </td>
             <td class="text-center">
-              <span class="text-muted">
+              <time class="text-muted" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
                 <%= short_time_ago(session.updated_at) %>
-              </span>
+              </time>
             </td>
           </tr>
         <% end %>

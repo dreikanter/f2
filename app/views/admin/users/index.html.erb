@@ -32,9 +32,13 @@
             </td>
             <td class="text-center">
               <% last_session = user.sessions.order(updated_at: :desc).first %>
-              <span class="text-muted">
-                <%= last_session ? short_time_ago(last_session.updated_at) : "Never" %>
-              </span>
+              <% if last_session %>
+                <time class="text-muted" datetime="<%= last_session.updated_at.iso8601 %>" title="<%= last_session.updated_at.to_fs(:long) %>">
+                  <%= short_time_ago(last_session.updated_at) %>
+                </time>
+              <% else %>
+                <span class="text-muted">Never</span>
+              <% end %>
             </td>
           </tr>
         <% end %>
