@@ -6,11 +6,11 @@
   </div>
 
   <div class="list-group-item">
-    <strong>Administrator:</strong>
-    <% if @user.admin? %>
-      <i class="bi bi-check-circle-fill text-success"></i> Yes
+    <strong>Permissions:</strong>
+    <% if @user.permissions.any? %>
+      <%= @user.permissions.pluck(:name).join(", ") %>
     <% else %>
-      <span class="text-muted">No</span>
+      <span class="text-muted">None</span>
     <% end %>
   </div>
 
@@ -20,6 +20,15 @@
 
   <div class="list-group-item">
     <strong>Updated:</strong> <%= @user.updated_at.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
+  </div>
+
+  <div class="list-group-item">
+    <strong>Password Updated:</strong>
+    <% if @user.password_updated_at.present? %>
+      <%= @user.password_updated_at.to_fs(:long) %> (<%= short_time_ago(@user.password_updated_at) %>)
+    <% else %>
+      <span class="text-muted">Never</span>
+    <% end %>
   </div>
 </div>
 
@@ -37,15 +46,60 @@
     <strong>Access Tokens:</strong>
     <%= @user.access_tokens.count %> total
     (<%= @user.access_tokens.where(status: "active").count %> active,
-    <%= @user.access_tokens.where(status: "inactive").count %> inactive,
-    <%= @user.access_tokens.where(status: "pending").count %> pending,
-    <%= @user.access_tokens.where(status: "validating").count %> validating)
+    <%= @user.access_tokens.where.not(status: "active").count %> not active)
   </div>
 
   <div class="list-group-item">
     <strong>Posts:</strong> <%= Post.joins(:feed).where(feeds: { user_id: @user.id }).count %>
   </div>
+
+  <div class="list-group-item">
+    <strong>Most Recent Post:</strong>
+    <% most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first %>
+    <% if most_recent_post %>
+      <%= most_recent_post.published_at.to_fs(:long) %> (<%= short_time_ago(most_recent_post.published_at) %>)
+    <% else %>
+      <span class="text-muted">No posts yet</span>
+    <% end %>
+  </div>
 </div>
+
+<h3 class="mt-4 mb-3">Active Sessions</h3>
+
+<% if @user.sessions.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>IP Address</th>
+          <th>User Agent</th>
+          <th class="text-center" title="Created"><i class="bi bi-calendar3"></i></th>
+          <th class="text-center" title="Last Active"><i class="bi bi-clock"></i></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @user.sessions.order(updated_at: :desc).each do |session| %>
+          <tr>
+            <td><%= session.ip_address %></td>
+            <td class="text-truncate" style="max-width: 300px;"><%= session.user_agent %></td>
+            <td class="text-center">
+              <span class="text-muted">
+                <%= short_time_ago(session.created_at) %>
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="text-muted">
+                <%= short_time_ago(session.updated_at) %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="text-muted">No active sessions</p>
+<% end %>
 
 <h3 class="mt-4 mb-3">Actions</h3>
 
