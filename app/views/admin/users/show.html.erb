@@ -15,17 +15,25 @@
   </div>
 
   <div class="list-group-item">
-    <strong>Created:</strong> <%= @user.created_at.to_fs(:long) %> (<%= short_time_ago(@user.created_at) %>)
+    <strong>Created:</strong>
+    <span title="<%= @user.created_at.to_fs(:long) %>">
+      <%= @user.created_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.created_at) %>)
+    </span>
   </div>
 
   <div class="list-group-item">
-    <strong>Updated:</strong> <%= @user.updated_at.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
+    <strong>Updated:</strong>
+    <span title="<%= @user.updated_at.to_fs(:long) %>">
+      <%= @user.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
+    </span>
   </div>
 
   <div class="list-group-item">
     <strong>Password Updated:</strong>
     <% if @user.password_updated_at.present? %>
-      <%= @user.password_updated_at.to_fs(:long) %> (<%= short_time_ago(@user.password_updated_at) %>)
+      <span title="<%= @user.password_updated_at.to_fs(:long) %>">
+        <%= @user.password_updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.password_updated_at) %>)
+      </span>
     <% else %>
       <span class="text-muted">Never</span>
     <% end %>
@@ -57,7 +65,9 @@
     <strong>Most Recent Post:</strong>
     <% most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first %>
     <% if most_recent_post %>
-      <%= most_recent_post.published_at.to_fs(:long) %> (<%= short_time_ago(most_recent_post.published_at) %>)
+      <span title="<%= most_recent_post.published_at.to_fs(:long) %>">
+        <%= most_recent_post.published_at.to_date.to_fs(:long) %> (<%= short_time_ago(most_recent_post.published_at) %>)
+      </span>
     <% else %>
       <span class="text-muted">No posts yet</span>
     <% end %>
