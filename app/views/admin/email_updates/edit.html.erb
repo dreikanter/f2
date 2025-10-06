@@ -11,7 +11,13 @@
       <div class="mb-3">
         <%= form.label :email_address, "New Email", class: "form-label" %>
         <%= form.email_field :email_address, value: "", class: "form-control", required: true, autofocus: true %>
-        <div class="form-text">The email address will be changed immediately without confirmation.</div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <%= check_box_tag :require_confirmation, "1", false, class: "form-check-input" %>
+          <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "form-check-label" %>
+        </div>
       </div>
 
       <div class="d-flex gap-2">
