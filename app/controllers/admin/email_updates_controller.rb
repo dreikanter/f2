@@ -38,4 +38,8 @@ class Admin::EmailUpdatesController < ApplicationController
   def new_email
     @new_email ||= params.dig(:user, :email_address)
   end
+
+  def require_confirmation?
+    params[:require_confirmation] == "1"
+  end
 end

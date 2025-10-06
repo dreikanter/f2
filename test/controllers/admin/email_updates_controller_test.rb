@@ -26,17 +26,31 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Change Email for test@example.com"
+    assert_select "input[type='checkbox'][name='require_confirmation']"
   end
 
-  test "should update email for user" do
+  test "should update email for user without confirmation" do
     login_as(admin_user)
     user = create(:user, email_address: "old@example.com")
 
-    patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" } }
+    patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" }, require_confirmation: "0" }
 
     assert_redirected_to admin_user_path(user)
     assert_equal "Email address updated successfully.", flash[:notice]
     assert_equal "new@example.com", user.reload.email_address
+  end
+
+  test "should send confirmation email when checkbox is checked" do
+    login_as(admin_user)
+    user = create(:user, email_address: "old@example.com")
+
+    assert_enqueued_emails 1 do
+      patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" }, require_confirmation: "1" }
+    end
+
+    assert_redirected_to admin_user_path(user)
+    assert_equal "Confirmation email sent to new@example.com. User must confirm before change takes effect.", flash[:notice]
+    assert_equal "old@example.com", user.reload.email_address
   end
 
   test "should reject blank email" do

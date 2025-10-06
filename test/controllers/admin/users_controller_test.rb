@@ -85,17 +85,37 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "strong", text: "Posts:"
   end
 
-  test "should show admin indicator on user details" do
+  test "should show permissions on user details" do
     login_as(admin_user)
     regular = create(:user)
 
     get admin_user_path(admin_user)
     assert_response :success
-    assert_select "i.bi-check-circle-fill"
+    assert_select "strong", text: "Permissions:"
 
     get admin_user_path(regular)
     assert_response :success
-    assert_select "span.text-muted", text: "No"
+    assert_select "strong", text: "Permissions:"
+  end
+
+  test "should show password updated timestamp" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "strong", text: "Password Updated:"
+  end
+
+  test "should show active sessions" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "h3", text: "Active Sessions"
   end
 
   test "should show email change link" do
@@ -108,14 +128,14 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_admin_user_email_update_path(user)}']", text: "Change Email"
   end
 
-  test "should show password reset button" do
+  test "should show password reset link" do
     login_as(admin_user)
     user = create(:user)
 
     get admin_user_path(user)
 
     assert_response :success
-    assert_select "form[action='#{admin_user_password_reset_path(user)}']"
+    assert_select "a[href='#{admin_user_password_reset_path(user)}']", text: "Reset Password"
   end
 
   private

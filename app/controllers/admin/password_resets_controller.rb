@@ -1,4 +1,9 @@
 class Admin::PasswordResetsController < ApplicationController
+  def show
+    @user = user
+    authorize @user, :update?
+  end
+
   def create
     authorize user, :update?
     PasswordsMailer.reset(user).deliver_later

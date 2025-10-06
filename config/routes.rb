@@ -29,7 +29,7 @@ Rails.application.routes.draw do
   namespace :admin do
     resources :users, only: [:index, :show] do
       resource :email_update, only: [:edit, :update]
-      resource :password_reset, only: [:create]
+      resource :password_reset, only: [:show, :create]
     end
     resources :feed_profiles
     resources :events, only: [:index, :show]
