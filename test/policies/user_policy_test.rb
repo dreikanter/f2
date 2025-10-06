@@ -21,6 +21,16 @@ class UserPolicyTest < ActiveSupport::TestCase
     UserPolicy::Scope.new(current_user, User.all)
   end
 
+  test "should deny index access to regular users" do
+    policy = UserPolicy.new(user, User)
+    assert_not policy.index?
+  end
+
+  test "should allow index access to admin users" do
+    policy = UserPolicy.new(admin_user, User)
+    assert policy.index?
+  end
+
   test "should allow show access to self" do
     policy = policy_for_user(user, user)
     assert policy.show?
