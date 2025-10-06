@@ -14,7 +14,7 @@ class FeedProfilePolicyTest < ActiveSupport::TestCase
   end
 
   def feed_profile
-    @feed_profile ||= create(:feed_profile, user: user)
+    @feed_profile ||= create(:feed_profile)
   end
 
   def policy_for_user(user)
@@ -96,8 +96,8 @@ class FeedProfilePolicyTest < ActiveSupport::TestCase
   end
 
   test "scope should return no records for non-admin users" do
-    create(:feed_profile, user: user, name: "test-profile-1")
-    create(:feed_profile, user: user, name: "test-profile-2")
+    create(:feed_profile, name: "test-profile-1")
+    create(:feed_profile, name: "test-profile-2")
 
     scope = scope_for_user(user)
     result = scope.resolve
@@ -106,8 +106,8 @@ class FeedProfilePolicyTest < ActiveSupport::TestCase
   end
 
   test "scope should return all records for admin users" do
-    profile1 = create(:feed_profile, user: user, name: "test-profile-1")
-    profile2 = create(:feed_profile, user: user, name: "test-profile-2")
+    profile1 = create(:feed_profile, name: "test-profile-1")
+    profile2 = create(:feed_profile, name: "test-profile-2")
 
     scope = scope_for_user(admin_user)
     result = scope.resolve
@@ -127,7 +127,7 @@ class FeedProfilePolicyTest < ActiveSupport::TestCase
   end
 
   test "scope should handle nil user gracefully" do
-    create(:feed_profile, user: user, name: "test-profile")
+    create(:feed_profile, name: "test-profile")
 
     scope = FeedProfilePolicy::Scope.new(nil, FeedProfile.all)
     result = scope.resolve

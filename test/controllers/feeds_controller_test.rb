@@ -14,7 +14,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def feed_profile
-    @feed_profile ||= create(:feed_profile, user: user)
+    @feed_profile ||= create(:feed_profile)
   end
 
   def other_feed

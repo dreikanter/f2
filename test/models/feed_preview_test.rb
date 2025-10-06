@@ -6,7 +6,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   def feed_profile
-    @feed_profile ||= create(:feed_profile, user: user)
+    @feed_profile ||= create(:feed_profile)
   end
 
   def feed_preview
@@ -58,7 +58,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "should allow same url with different feed_profile" do
-    profile2 = create(:feed_profile, user: user, name: "profile2")
+    profile2 = create(:feed_profile, name: "profile2")
     existing = create(:feed_preview, url: "http://example.com/feed.xml", user: user, feed_profile: feed_profile)
     different_profile = build(:feed_preview, url: "http://example.com/feed.xml", user: user, feed_profile: profile2)
 
@@ -114,7 +114,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
 
   test "should have recent scope" do
     old_preview = create(:feed_preview, user: user, feed_profile: feed_profile, created_at: 2.days.ago)
-    new_preview = create(:feed_preview, user: user, feed_profile: create(:feed_profile, user: user, name: "profile2"), created_at: 1.day.ago)
+    new_preview = create(:feed_preview, user: user, feed_profile: create(:feed_profile, name: "profile2"), created_at: 1.day.ago)
 
     recent = FeedPreview.recent
     assert_equal [new_preview, old_preview], recent.to_a
@@ -122,7 +122,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
 
   test "should have for_cache_key scope" do
     url = "http://example.com/feed.xml"
-    profile2 = create(:feed_profile, user: user, name: "profile2")
+    profile2 = create(:feed_profile, name: "profile2")
     matching = create(:feed_preview, url: url, feed_profile: feed_profile, user: user)
     non_matching = create(:feed_preview, url: "http://other.com/feed.xml", feed_profile: profile2, user: user)
 
