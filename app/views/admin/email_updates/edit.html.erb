@@ -1,5 +1,10 @@
 <%= page_header "Change Email for #{@user.email_address}" %>
 
+<div class="alert alert-info mb-4">
+  <strong>How this works:</strong> You can either change the email immediately or send a confirmation email to the new address.
+  If confirmation is required, the user must click the link in the email before the change takes effect.
+</div>
+
 <div class="card">
   <div class="card-body">
     <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
