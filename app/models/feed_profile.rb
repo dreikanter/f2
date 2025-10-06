@@ -1,5 +1,4 @@
 class FeedProfile < ApplicationRecord
-  belongs_to :user
   has_many :feeds, dependent: :nullify
   has_many :feed_previews, dependent: :destroy
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_09_28_200322) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_06_224951) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,9 +80,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_28_200322) do
     t.string "normalizer", null: false
     t.string "processor", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["name"], name: "index_feed_profiles_on_name", unique: true
-    t.index ["user_id"], name: "index_feed_profiles_on_user_id"
   end
 
   create_table "feed_schedules", force: :cascade do |t|
@@ -294,7 +292,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_09_28_200322) do
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_previews", "feed_profiles"
   add_foreign_key "feed_previews", "users"
-  add_foreign_key "feed_profiles", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "feed_profiles"
