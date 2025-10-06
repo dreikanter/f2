@@ -6,10 +6,9 @@
       <thead>
         <tr>
           <th>Email</th>
-          <th class="text-center" title="Administrator"><i class="bi bi-shield-check"></i></th>
-          <th class="text-center" title="Feeds"><i class="bi bi-rss"></i></th>
-          <th class="text-center" title="Access Tokens"><i class="bi bi-key"></i></th>
-          <th class="text-center" title="Posts"><i class="bi bi-file-text"></i></th>
+          <th class="text-center">Feeds</th>
+          <th class="text-center">Tokens</th>
+          <th class="text-center">Posts</th>
           <th class="text-center" title="Created"><i class="bi bi-calendar3"></i></th>
         </tr>
       </thead>
@@ -18,10 +17,8 @@
           <tr>
             <td>
               <%= link_to user.email_address, admin_user_path(user) %>
-            </td>
-            <td class="text-center">
               <% if user.admin? %>
-                <i class="bi bi-check-circle-fill text-success"></i>
+                <span class="text-muted">(admin)</span>
               <% end %>
             </td>
             <td class="text-center">
