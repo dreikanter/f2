@@ -1,0 +1,55 @@
+<%= page_header "Users" %>
+
+<% if @users.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th class="text-center" title="Administrator"><i class="bi bi-shield-check"></i></th>
+          <th class="text-center" title="Feeds"><i class="bi bi-rss"></i></th>
+          <th class="text-center" title="Access Tokens"><i class="bi bi-key"></i></th>
+          <th class="text-center" title="Posts"><i class="bi bi-file-text"></i></th>
+          <th class="text-center" title="Created"><i class="bi bi-calendar3"></i></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <%= link_to user.email_address, admin_user_path(user) %>
+            </td>
+            <td class="text-center">
+              <% if user.admin? %>
+                <i class="bi bi-check-circle-fill text-success"></i>
+              <% end %>
+            </td>
+            <td class="text-center">
+              <%= user.feeds.count %>
+            </td>
+            <td class="text-center">
+              <%= user.access_tokens.count %>
+            </td>
+            <td class="text-center">
+              <%= Post.joins(:feed).where(feeds: { user_id: user.id }).count %>
+            </td>
+            <td class="text-center">
+              <span class="text-muted">
+                <%= short_time_ago(user.created_at) %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= pagination_for @users,
+                     collection_name: "users",
+                     path_helper: ->(page) { admin_users_path(page: page) } %>
+<% else %>
+  <div class="text-center py-5">
+    <p class="text-muted">No users found</p>
+  </div>
+<% end %>
+

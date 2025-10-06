@@ -1,0 +1,58 @@
+<%= page_header @user.email_address %>
+
+<div class="list-group">
+  <div class="list-group-item">
+    <strong>Email:</strong> <%= @user.email_address %>
+  </div>
+
+  <div class="list-group-item">
+    <strong>Administrator:</strong>
+    <% if @user.admin? %>
+      <i class="bi bi-check-circle-fill text-success"></i> Yes
+    <% else %>
+      <span class="text-muted">No</span>
+    <% end %>
+  </div>
+
+  <div class="list-group-item">
+    <strong>Created:</strong> <%= @user.created_at.to_fs(:long) %> (<%= short_time_ago(@user.created_at) %>)
+  </div>
+
+  <div class="list-group-item">
+    <strong>Updated:</strong> <%= @user.updated_at.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
+  </div>
+</div>
+
+<h3 class="mt-4 mb-3">Statistics</h3>
+
+<div class="list-group">
+  <div class="list-group-item">
+    <strong>Feeds:</strong>
+    <%= @user.feeds.count %> total
+    (<%= @user.feeds.enabled.count %> enabled,
+    <%= @user.feeds.disabled.count %> disabled)
+  </div>
+
+  <div class="list-group-item">
+    <strong>Access Tokens:</strong>
+    <%= @user.access_tokens.count %> total
+    (<%= @user.access_tokens.where(status: "active").count %> active,
+    <%= @user.access_tokens.where(status: "inactive").count %> inactive,
+    <%= @user.access_tokens.where(status: "pending").count %> pending,
+    <%= @user.access_tokens.where(status: "validating").count %> validating)
+  </div>
+
+  <div class="list-group-item">
+    <strong>Posts:</strong> <%= Post.joins(:feed).where(feeds: { user_id: @user.id }).count %>
+  </div>
+</div>
+
+<h3 class="mt-4 mb-3">Actions</h3>
+
+<div class="d-flex gap-2">
+  <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "btn btn-outline-primary" %>
+  <%= button_to "Reset Password", admin_user_password_reset_path(@user),
+                method: :post,
+                class: "btn btn-outline-secondary",
+                form: { data: { turbo_confirm: "Send password reset email to #{@user.email_address}?" } } %>
+</div>
