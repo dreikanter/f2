@@ -26,7 +26,7 @@
       </div>
 
       <div class="d-flex gap-2">
-        <%= form.submit "Update Email", class: "btn btn-primary" %>
+        <%= form.submit "Update Email", class: "btn btn-primary", data: { turbo_confirm: "Update email for this user?" } %>
         <%= link_to "Cancel", admin_user_path(@user), class: "btn btn-outline-secondary" %>
       </div>
     <% end %>
