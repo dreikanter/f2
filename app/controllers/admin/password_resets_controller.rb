@@ -1,6 +1,6 @@
 class Admin::PasswordResetsController < ApplicationController
   def show
-    @user = user
+    @user = load_user
     authorize @user, :update?
   end
 
@@ -12,7 +12,7 @@ class Admin::PasswordResetsController < ApplicationController
 
   private
 
-  def user
-    @user ||= User.find(params[:user_id])
+  def load_user
+    User.find(params[:user_id])
   end
 end
