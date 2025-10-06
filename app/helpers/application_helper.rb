@@ -11,20 +11,26 @@ module ApplicationHelper
     truncate(content.strip, length: length)
   end
 
+  def icon(name, css_class: nil, title: nil)
+    classes = ["bi", "bi-#{name}"]
+    classes << css_class if css_class.present?
+    content_tag(:i, nil, class: classes.join(" "), title: title)
+  end
+
   def post_status_icon(status)
     case status.to_s
     when "draft"
-      content_tag(:i, nil, class: "bi bi-file-earmark text-muted", title: "Draft")
+      icon("file-earmark", css_class: "text-muted", title: "Draft")
     when "enqueued"
-      content_tag(:i, nil, class: "bi bi-clock text-secondary", title: "Enqueued")
+      icon("clock", css_class: "text-secondary", title: "Enqueued")
     when "rejected"
-      content_tag(:i, nil, class: "bi bi-x-circle text-danger", title: "Rejected")
+      icon("x-circle", css_class: "text-danger", title: "Rejected")
     when "published"
-      content_tag(:i, nil, class: "bi bi-check-circle-fill text-success", title: "Published")
+      icon("check-circle-fill", css_class: "text-success", title: "Published")
     when "failed"
-      content_tag(:i, nil, class: "bi bi-exclamation-triangle text-danger", title: "Failed")
+      icon("exclamation-triangle", css_class: "text-danger", title: "Failed")
     when "withdrawn"
-      content_tag(:i, nil, class: "bi bi-trash text-secondary", title: "Withdrawn")
+      icon("trash", css_class: "text-secondary", title: "Withdrawn")
     else
       content_tag(:span, status.capitalize, class: "text-muted")
     end
