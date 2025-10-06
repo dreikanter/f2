@@ -38,6 +38,18 @@
       <span class="text-muted">Never</span>
     <% end %>
   </div>
+
+  <div class="list-group-item">
+    <strong>Last Seen:</strong>
+    <% last_session = @user.sessions.order(updated_at: :desc).first %>
+    <% if last_session %>
+      <span title="<%= last_session.updated_at.to_fs(:long) %>">
+        <%= last_session.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(last_session.updated_at) %>)
+      </span>
+    <% else %>
+      <span class="text-muted">Never</span>
+    <% end %>
+  </div>
 </div>
 
 <h3 class="mt-4 mb-3">Statistics</h3>
@@ -83,8 +95,8 @@
         <tr>
           <th>IP Address</th>
           <th>User Agent</th>
-          <th class="text-center" title="Created"><i class="bi bi-calendar3"></i></th>
-          <th class="text-center" title="Last Active"><i class="bi bi-clock"></i></th>
+          <th class="text-center">Created</th>
+          <th class="text-center">Last Seen</th>
         </tr>
       </thead>
       <tbody>

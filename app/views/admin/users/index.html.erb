@@ -9,7 +9,7 @@
           <th class="text-center">Feeds</th>
           <th class="text-center">Tokens</th>
           <th class="text-center">Posts</th>
-          <th class="text-center" title="Created"><i class="bi bi-calendar3"></i></th>
+          <th class="text-center">Last Seen</th>
         </tr>
       </thead>
       <tbody>
@@ -31,8 +31,9 @@
               <%= Post.joins(:feed).where(feeds: { user_id: user.id }).count %>
             </td>
             <td class="text-center">
+              <% last_session = user.sessions.order(updated_at: :desc).first %>
               <span class="text-muted">
-                <%= short_time_ago(user.created_at) %>
+                <%= last_session ? short_time_ago(last_session.updated_at) : "Never" %>
               </span>
             </td>
           </tr>

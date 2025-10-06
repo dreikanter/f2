@@ -138,6 +138,26 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{admin_user_password_reset_path(user)}']", text: "Reset Password"
   end
 
+  test "should show last seen timestamp" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "strong", text: "Last Seen:"
+  end
+
+  test "should show last seen in users index" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_users_path
+
+    assert_response :success
+    assert_select "th", text: "Last Seen"
+  end
+
   private
 
   def login_as(user)
