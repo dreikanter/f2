@@ -5,6 +5,7 @@ class SessionsController < ApplicationController
   def create
     if user = User.authenticate_by(params.permit(:email_address, :password))
       if user.suspended?
+        user.sessions.destroy_all
         redirect_to new_session_path, alert: "Your account has been suspended."
       else
         start_new_session_for user
