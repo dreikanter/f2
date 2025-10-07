@@ -28,6 +28,20 @@ class User < ApplicationRecord
     permission?("admin")
   end
 
+  def suspended?
+    suspended_at.present?
+  end
+
+  def suspend!
+    update!(suspended_at: Time.current)
+    sessions.destroy_all
+    feeds.enabled.update_all(state: :disabled)
+  end
+
+  def unsuspend!
+    update!(suspended_at: nil)
+  end
+
   private
 
   def set_password_updated_at
