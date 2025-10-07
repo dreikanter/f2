@@ -134,10 +134,10 @@
 
 <h3 class="mt-4 mb-3">Danger Zone</h3>
 
-<div class="card border-danger">
-  <div class="card-body">
-    <% if @user.suspended? %>
-      <h5 class="card-title text-danger">User Suspended</h5>
+<% if @user.suspended? %>
+  <div class="card border-secondary">
+    <div class="card-body">
+      <h5 class="card-title text-secondary">User Suspended</h5>
       <p class="card-text">
         This user was suspended on
         <time datetime="<%= @user.suspended_at.iso8601 %>" title="<%= @user.suspended_at.to_fs(:long) %>">
@@ -145,14 +145,18 @@
         </time>.
         They cannot sign in or perform any actions.
       </p>
-      <%= button_to "Unsuspend User", admin_user_suspension_path(@user), method: :delete, class: "btn btn-warning", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
-    <% else %>
+      <%= button_to "Unsuspend User", admin_user_suspension_path(@user), method: :delete, class: "btn btn-outline-secondary", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
+    </div>
+  </div>
+<% else %>
+  <div class="card border-danger">
+    <div class="card-body">
       <h5 class="card-title text-danger">Suspend User</h5>
       <p class="card-text">
         Suspending this user will immediately terminate all their active sessions and disable all their feeds.
         They will not be able to sign in until unsuspended.
       </p>
       <%= button_to "Suspend User", admin_user_suspension_path(@user), method: :post, class: "btn btn-danger", data: { turbo_confirm: "Are you sure you want to suspend this user? All active sessions will be terminated and feeds will be disabled." } %>
-    <% end %>
+    </div>
   </div>
-</div>
+<% end %>
