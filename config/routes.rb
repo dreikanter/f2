@@ -30,6 +30,7 @@ Rails.application.routes.draw do
     resources :users, only: [:index, :show] do
       resource :email_update, only: [:edit, :update]
       resource :password_reset, only: [:show, :create]
+      resource :suspension, only: [:create, :destroy]
     end
     resources :events, only: [:index, :show]
   end
