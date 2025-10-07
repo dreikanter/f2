@@ -19,6 +19,14 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  def suspend?
+    admin?
+  end
+
+  def unsuspend?
+    admin?
+  end
+
   private
 
   def self_or_admin?
