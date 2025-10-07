@@ -2,9 +2,7 @@ require "test_helper"
 
 class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
   def admin_user
-    @admin_user ||= create(:user).tap do |user|
-      user.permissions.create!(name: "admin")
-    end
+    @admin_user ||= create(:user, :admin)
   end
 
   def target_user
