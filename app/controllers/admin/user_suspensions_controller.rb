@@ -1,14 +1,14 @@
 class Admin::UserSuspensionsController < ApplicationController
   def create
+    authorize User, :suspend?
     user = find_user
-    authorize user, :suspend?
     suspend_user_and_record_event(user)
     redirect_to admin_user_path(user), notice: "User has been suspended."
   end
 
   def destroy
+    authorize User, :unsuspend?
     user = find_user
-    authorize user, :unsuspend?
     unsuspend_user_and_record_event(user)
     redirect_to admin_user_path(user), notice: "User has been unsuspended."
   end
