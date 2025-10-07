@@ -49,4 +49,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     # Should redirect back to the originally requested page
     assert_redirected_to feeds_path
   end
+
+  test "should not create session for suspended user" do
+    user = create(:user)
+    user.suspend!
+
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+
+    assert_redirected_to new_session_path
+    assert_equal "Your account has been suspended.", flash[:alert]
+  end
 end
