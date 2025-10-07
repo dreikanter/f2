@@ -11,7 +11,19 @@ class UserPolicy < ApplicationPolicy
     self_or_admin?
   end
 
+  def create?
+    admin?
+  end
+
   def destroy?
+    admin?
+  end
+
+  def suspend?
+    admin?
+  end
+
+  def unsuspend?
     admin?
   end
 

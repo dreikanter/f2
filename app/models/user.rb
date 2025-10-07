@@ -28,6 +28,18 @@ class User < ApplicationRecord
     permission?("admin")
   end
 
+  def suspended?
+    suspended_at.present?
+  end
+
+  def suspend!
+    update!(suspended_at: Time.current)
+  end
+
+  def unsuspend!
+    update!(suspended_at: nil)
+  end
+
   private
 
   def set_password_updated_at
