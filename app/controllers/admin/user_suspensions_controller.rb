@@ -22,7 +22,7 @@ class Admin::UserSuspensionsController < ApplicationController
   def suspend_user_and_record_event(user)
     User.transaction do
       user.suspend!
-      terminate_all_sessions(user)
+      user.sessions.destroy_all
       deactivated_feed_ids = deactivate_all_feeds(user)
       record_suspension_event(user, deactivated_feed_ids)
     end
@@ -33,10 +33,6 @@ class Admin::UserSuspensionsController < ApplicationController
       user.unsuspend!
       record_unsuspension_event(user)
     end
-  end
-
-  def terminate_all_sessions(user)
-    user.sessions.destroy_all
   end
 
   def deactivate_all_feeds(user)
