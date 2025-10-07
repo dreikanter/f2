@@ -34,8 +34,6 @@ class User < ApplicationRecord
 
   def suspend!
     update!(suspended_at: Time.current)
-    sessions.destroy_all
-    feeds.enabled.update_all(state: :disabled)
   end
 
   def unsuspend!

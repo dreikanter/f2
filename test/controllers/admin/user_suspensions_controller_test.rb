@@ -47,8 +47,8 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy unsuspends user and redirects" do
     sign_in_as admin_user
-    target_user.suspend!
-    assert target_user.suspended?
+    post admin_user_suspension_path(target_user)
+    assert target_user.reload.suspended?
 
     delete admin_user_suspension_path(target_user)
 
@@ -61,7 +61,8 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
-    target_user.suspend!
+
+    post admin_user_suspension_path(target_user)
 
     delete admin_user_suspension_path(target_user)
 
@@ -86,5 +87,38 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
+  end
+
+  test "create records UserSuspended event with deactivated feed IDs" do
+    sign_in_as admin_user
+    feed1 = create(:feed, :enabled, user: target_user)
+    feed2 = create(:feed, :enabled, user: target_user)
+    feed3 = create(:feed, :disabled, user: target_user)
+
+    assert_difference "Event.count", 1 do
+      post admin_user_suspension_path(target_user)
+    end
+
+    event = Event.last
+    assert_equal "UserSuspended", event.type
+    assert_equal admin_user, event.user
+    assert_equal target_user, event.subject
+    assert_equal "warning", event.level
+    assert_equal [feed1.id, feed2.id].sort, event.metadata["deactivated_feed_ids"].sort
+  end
+
+  test "destroy records UserUnsuspended event" do
+    sign_in_as admin_user
+    post admin_user_suspension_path(target_user)
+
+    assert_difference "Event.count", 1 do
+      delete admin_user_suspension_path(target_user)
+    end
+
+    event = Event.last
+    assert_equal "UserUnsuspended", event.type
+    assert_equal admin_user, event.user
+    assert_equal target_user, event.subject
+    assert_equal "info", event.level
   end
 end
