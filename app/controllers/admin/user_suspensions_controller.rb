@@ -1,20 +1,22 @@
 class Admin::UserSuspensionsController < ApplicationController
   def create
-    user = find_and_authorize_user
+    authorize User
+    user = find_user
     suspend_user_and_record_event(user)
     redirect_to admin_user_path(user), notice: "User has been suspended."
   end
 
   def destroy
-    user = find_and_authorize_user
+    authorize User
+    user = find_user
     unsuspend_user_and_record_event(user)
     redirect_to admin_user_path(user), notice: "User has been unsuspended."
   end
 
   private
 
-  def find_and_authorize_user
-    User.find(params[:user_id]).tap { |user| authorize user }
+  def find_user
+    User.find(params[:user_id])
   end
 
   def suspend_user_and_record_event(user)
