@@ -3,6 +3,7 @@ module Authentication
 
   included do
     before_action :require_authentication
+    before_action :terminate_suspended_user_session
     before_action :update_session_activity
     helper_method :authenticated?
   end
@@ -57,5 +58,13 @@ module Authentication
     return if Current.session.updated_at > 10.minutes.ago
 
     Current.session.touch
+  end
+
+  def terminate_suspended_user_session
+    return unless Current.session
+    return unless Current.session.user.suspended?
+
+    terminate_session
+    redirect_to new_session_path, alert: "Your account has been suspended."
   end
 end
