@@ -9,7 +9,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     @target_user ||= create(:user)
   end
 
-  test "#create suspends user and redirects" do
+  test "#create should suspend user and redirect" do
     sign_in_as admin_user
     assert_not target_user.suspended?
 
@@ -20,7 +20,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert target_user.reload.suspended?
   end
 
-  test "#create terminates all user sessions" do
+  test "#create should terminate all user sessions" do
     sign_in_as admin_user
     session1 = target_user.sessions.create!(user_agent: "Browser 1", ip_address: "1.1.1.1")
     session2 = target_user.sessions.create!(user_agent: "Browser 2", ip_address: "2.2.2.2")
@@ -30,7 +30,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, target_user.reload.sessions.count
   end
 
-  test "#create disables all enabled feeds" do
+  test "#create should disable all enabled feeds" do
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
@@ -41,7 +41,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed2.reload.state
   end
 
-  test "#destroy unsuspends user and redirects" do
+  test "#destroy should unsuspend user and redirect" do
     sign_in_as admin_user
     target_user.suspend!
 
@@ -52,7 +52,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_not target_user.reload.suspended?
   end
 
-  test "#destroy does not re-enable feeds" do
+  test "#destroy should not re-enable feeds" do
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
@@ -65,7 +65,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed2.reload.state
   end
 
-  test "requires admin permission for create" do
+  test "#create should require admin permission" do
     sign_in_as create(:user)
 
     post admin_user_suspension_path(target_user)
@@ -74,7 +74,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
-  test "requires admin permission for destroy" do
+  test "#destroy should require admin permission" do
     sign_in_as create(:user)
     target_user.suspend!
 
@@ -84,7 +84,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
-  test "#create records UserSuspended event with deactivated feed IDs" do
+  test "#create should record UserSuspended event with deactivated feed IDs" do
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
@@ -102,7 +102,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [feed1.id, feed2.id].sort, event.metadata["deactivated_feed_ids"].sort
   end
 
-  test "#destroy records UserUnsuspended event" do
+  test "#destroy should record UserUnsuspended event" do
     sign_in_as admin_user
     post admin_user_suspension_path(target_user)
 
