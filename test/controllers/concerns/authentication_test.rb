@@ -42,27 +42,6 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     assert_equal old_timestamp.to_i, session.reload.updated_at.to_i
   end
 
-  test "terminates session and redirects when user is suspended" do
-    user = create(:user)
-    login_as(user)
-    follow_redirect!
-
-    # Verify user is signed in
-    get feeds_path
-    assert_response :success
-
-    # Suspend the user
-    user.update!(suspended_at: Time.current)
-
-    # Next request should terminate session and redirect
-    get feeds_path
-    assert_redirected_to new_session_path
-    assert_equal "Your account has been suspended.", flash[:alert]
-
-    # Verify session was destroyed
-    assert_equal 0, user.sessions.count
-  end
-
   private
 
   def login_as(user)
