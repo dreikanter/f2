@@ -3,16 +3,9 @@ class Admin::AvailableInvitesController < ApplicationController
     user = User.find(params[:user_id])
     authorize user
 
-    if user.update(available_invites_params)
-      redirect_to admin_user_path(user), notice: "Available invites updated successfully."
-    else
-      redirect_to admin_user_path(user), alert: "Failed to update available invites."
-    end
-  end
+    available_invites = params.require(:user).fetch(:available_invites)
+    user.update_column(:available_invites, available_invites)
 
-  private
-
-  def available_invites_params
-    params.require(:user).permit(:available_invites)
+    redirect_to admin_user_path(user), notice: "Available invites updated successfully."
   end
 end
