@@ -6,13 +6,13 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication" do
-    get root_path
+    get dashboard_path
     assert_redirected_to new_session_path
   end
 
   test "shows dashboard when authenticated" do
     sign_in_as user
-    get root_path
+    get dashboard_path
     assert_response :success
     assert_select "h1", "Dashboard"
   end
