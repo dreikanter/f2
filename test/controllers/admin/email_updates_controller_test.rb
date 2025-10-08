@@ -89,6 +89,6 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   private
 
   def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
+    post session_path, params: { email_address: user.email_address, password: "password1234567890" }
   end
 end

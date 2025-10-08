@@ -22,7 +22,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     user = create(:user)
 
     # Create session by signing in
-    post session_url, params: { email_address: user.email_address, password: "password123" }
+    post session_url, params: { email_address: user.email_address, password: "password1234567890" }
     follow_redirect!
 
     # Verify we have a session by checking we can access protected resource
@@ -44,7 +44,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     # Sign in
     user = create(:user)
-    post session_url, params: { email_address: user.email_address, password: "password123" }
+    post session_url, params: { email_address: user.email_address, password: "password1234567890" }
 
     # Should redirect back to the originally requested page
     assert_redirected_to feeds_path
@@ -54,7 +54,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     user = create(:user)
     user.suspend!
 
-    post session_url, params: { email_address: user.email_address, password: "password123" }
+    post session_url, params: { email_address: user.email_address, password: "password1234567890" }
 
     assert_redirected_to new_session_path
     assert_equal "Your account has been suspended.", flash[:alert]
