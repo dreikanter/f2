@@ -35,13 +35,13 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     token = user.generate_token_for(:password_reset)
 
     put password_url(token), params: {
-      password: "newpassword",
-      password_confirmation: "newpassword"
+      password: "newpassword1234",
+      password_confirmation: "newpassword1234"
     }
 
     assert_redirected_to new_session_path
     user.reload
-    assert user.authenticate("newpassword")
+    assert user.authenticate("newpassword1234")
   end
 
   test "should not update password with mismatched confirmation" do

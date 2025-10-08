@@ -5,8 +5,12 @@ class User < ApplicationRecord
   has_many :feed_previews, dependent: :destroy
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
+  has_many :created_invites, class_name: "Invite", foreign_key: :created_by_user_id, dependent: :destroy
+  has_many :received_invites, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
 
   validates :email_address, presence: true, uniqueness: true
+  validates :name, presence: true
+  validates :password, length: { minimum: 10 }, allow_nil: true
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   before_create :set_password_updated_at
