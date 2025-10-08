@@ -9,7 +9,6 @@ class User < ApplicationRecord
   has_one :received_invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
 
   validates :email_address, presence: true, uniqueness: true
-  validates :name, presence: true
   validates :password, length: { minimum: 10 }, allow_nil: true
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
