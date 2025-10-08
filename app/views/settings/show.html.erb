@@ -37,10 +37,18 @@
 
       <div class="list-group-item">
         <strong>Invites:</strong>
-        <%= pluralize(@user.available_invites, 'available') %>,
-        <%= pluralize(@user.created_invites.count, 'created') %>,
-        <%= pluralize(@user.created_invites.where.not(invited_user_id: nil).count, 'used') %>
-        <%= link_to "Manage", invites_path, class: "text-decoration-none ms-2" %>
+        <% created_count = @user.created_invites.count %>
+        <% used_count = @user.created_invites.where.not(invited_user_id: nil).count %>
+        <% if @user.available_invites == 0 && created_count == 0 && used_count == 0 %>
+          <%= pluralize(@user.available_invites, 'available') %>
+        <% else %>
+          <%= pluralize(@user.available_invites, 'available') %>,
+          <%= pluralize(created_count, 'created') %>,
+          <%= pluralize(used_count, 'used') %>
+        <% end %>
+        <% if @user.available_invites > 0 || created_count > 0 %>
+          <%= link_to "Invite someone", invites_path, class: "text-decoration-none ms-2" %>
+        <% end %>
       </div>
     </div>
   </div>
