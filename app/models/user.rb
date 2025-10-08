@@ -6,7 +6,7 @@ class User < ApplicationRecord
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
   has_many :created_invites, class_name: "Invite", foreign_key: :created_by_user_id, dependent: :destroy
-  has_many :received_invites, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
+  has_one :received_invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
 
   validates :email_address, presence: true, uniqueness: true
   validates :name, presence: true
