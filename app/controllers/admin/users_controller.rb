@@ -11,6 +11,17 @@ class Admin::UsersController < ApplicationController
     authorize @user
   end
 
+  def update_available_invites
+    @user = User.find(params[:id])
+    authorize @user
+
+    if @user.update(available_invites: params[:available_invites])
+      redirect_to admin_user_path(@user), notice: "Available invites updated successfully."
+    else
+      redirect_to admin_user_path(@user), alert: "Failed to update available invites."
+    end
+  end
+
   private
 
   def pagination_scope
