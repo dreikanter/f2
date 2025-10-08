@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   end
 
   resources :email_confirmations, only: :show, param: :token
-  resource :status, only: :show, controller: "statuses", as: :dashboard
+  resource :status, only: :show, controller: "statuses"
   resource :session
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]

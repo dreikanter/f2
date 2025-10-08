@@ -14,13 +14,13 @@ class RegistrationsController < ApplicationController
       return
     end
 
-    return redirect_to dashboard_path if authenticated?
+    return redirect_to status_path if authenticated?
 
     @user = User.new
   end
 
   def create
-    return redirect_to dashboard_path if authenticated?
+    return redirect_to status_path if authenticated?
     return redirect_to root_path unless params[:code].present?
 
     @invite = Invite.find_by(id: params[:code])
