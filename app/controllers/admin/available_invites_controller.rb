@@ -4,10 +4,7 @@ class Admin::AvailableInvitesController < ApplicationController
     authorize user
 
     if user.update(available_invites: params[:available_invites])
-      respond_to do |format|
-        format.html { redirect_to admin_user_path(user), notice: "Available invites updated successfully." }
-        format.turbo_stream
-      end
+      redirect_to admin_user_path(user), notice: "Available invites updated successfully."
     else
       redirect_to admin_user_path(user), alert: "Failed to update available invites."
     end
