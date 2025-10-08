@@ -8,7 +8,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   def sign_in_user
     params = {
       email_address: user.email_address,
-      password: "password1234567890"
+      password: "password123"
     }
 
     post session_url, params: params

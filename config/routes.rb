@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   end
 
   resources :email_confirmations, only: :show, param: :token
-  get "status" => "dashboards#show", as: :dashboard
+  resource :status, only: :show, controller: "dashboards", as: :dashboard
   resource :session
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]
@@ -41,5 +41,5 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
-  root "home#index"
+  root "landing#index"
 end

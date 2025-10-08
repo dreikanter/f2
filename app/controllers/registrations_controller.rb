@@ -3,34 +3,29 @@ class RegistrationsController < ApplicationController
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_path(code: params[:code]), alert: "Try again later." }
 
   def new
-    redirect_to root_path and return unless params[:code].present?
+    return redirect_to root_path unless params[:code].present?
 
     @invite = Invite.find_by(id: params[:code])
 
-    if @invite.nil?
-      redirect_to root_path and return
-    end
+    return redirect_to root_path if @invite.nil?
 
     if @invite.used?
       @used_invite = true
       return
     end
 
-    if authenticated?
-      redirect_to dashboard_path and return
-    end
+    return redirect_to dashboard_path if authenticated?
 
     @user = User.new
   end
 
   def create
-    redirect_to root_path and return unless params[:code].present?
+    return redirect_to dashboard_path if authenticated?
+    return redirect_to root_path unless params[:code].present?
 
     @invite = Invite.find_by(id: params[:code])
 
-    if @invite.nil? || @invite.used?
-      redirect_to root_path and return
-    end
+    return redirect_to root_path if @invite.nil? || @invite.used?
 
     @user = User.new(user_params)
 

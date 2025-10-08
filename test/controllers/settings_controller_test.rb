@@ -6,7 +6,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def sign_in_user
-    post session_url, params: { email_address: user.email_address, password: "password1234567890" }
+    post session_url, params: { email_address: user.email_address, password: "password123" }
   end
 
   test "should show settings when authenticated" do
