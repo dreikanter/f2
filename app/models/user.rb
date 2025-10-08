@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: true
   validates :password, length: { minimum: 10 }, allow_nil: true
+  validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   before_create :set_password_updated_at
