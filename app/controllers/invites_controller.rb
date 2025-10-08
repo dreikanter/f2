@@ -29,19 +29,22 @@ class InvitesController < ApplicationController
 
   def render_invite_updates
     invites = policy_scope(Invite).includes(:invited_user).order(created_at: :desc)
-    unused_count = invites.where(invited_user_id: nil).count
 
     render turbo_stream: [
       turbo_stream.update("invites-table", partial: "invites/table", locals: { invites: invites }),
-      turbo_stream.update("invite-stats", partial: "invites/stats", locals: {
-        available_invites_count: Current.user.available_invites,
-        created_invites_count: invites.count,
-        invited_users_count: invites.where.not(invited_user_id: nil).count,
-        unused_invites_count: unused_count
-      }),
+      turbo_stream.update("invite-stats", partial: "invites/stats", locals: invite_stats(invites)),
       turbo_stream.update("create-invite-button", partial: "invites/create_button", locals: {
         can_create: policy(Invite).create?
       })
     ]
+  end
+
+  def invite_stats(invites)
+    {
+      available_invites_count: Current.user.available_invites,
+      created_invites_count: invites.count,
+      invited_users_count: invites.where.not(invited_user_id: nil).count,
+      unused_invites_count: invites.where(invited_user_id: nil).count
+    }
   end
 end
