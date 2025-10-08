@@ -68,7 +68,7 @@ group :development do
   gem "web-console"
 end
 
-gem "amazing_print", "~> 1.8"
+gem "amazing_print", "~> 2.0"
 gem "dotenv", "~> 3.1"
 gem "faraday", "~> 2.14"
 gem "faraday-follow_redirects", "~> 0.4"
