@@ -9,19 +9,12 @@ class InvitesController < ApplicationController
   end
 
   def create
-    invite = nil
-
     Invite.transaction do
       authorize Invite
-      invite = Current.user.created_invites.create!
+      Current.user.created_invites.create!
     end
 
-    respond_to do |format|
-      format.turbo_stream { render_invite_updates }
-      format.html { redirect_to invites_path, notice: "Invite created successfully." }
-    end
-  rescue ActiveRecord::RecordInvalid
-    redirect_to invites_path, alert: "Failed to create invite."
+    render_invite_updates
   end
 
   def destroy
@@ -29,12 +22,7 @@ class InvitesController < ApplicationController
     authorize invite
     invite.destroy!
 
-    respond_to do |format|
-      format.turbo_stream { render_invite_updates }
-      format.html { redirect_to invites_path, notice: "Invite deleted successfully." }
-    end
-  rescue ActiveRecord::RecordNotDestroyed
-    redirect_to invites_path, alert: "Failed to delete invite."
+    render_invite_updates
   end
 
   private
