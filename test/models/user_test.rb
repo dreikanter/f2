@@ -21,7 +21,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "should authenticate with correct password" do
     user = create(:user)
-    assert user.authenticate("password1234567890")
+    assert user.authenticate("password123")
   end
 
   test "should not authenticate with wrong password" do
@@ -31,7 +31,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "should authenticate by email and password" do
     user = create(:user)
-    authenticated_user = User.authenticate_by(email_address: user.email_address, password: "password1234567890")
+    authenticated_user = User.authenticate_by(email_address: user.email_address, password: "password123")
     assert_equal user, authenticated_user
   end
 
