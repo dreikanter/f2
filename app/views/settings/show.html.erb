@@ -47,7 +47,11 @@
           <%= pluralize(used_count, 'used') %>
         <% end %>
         <% if @user.available_invites > 0 || created_count > 0 %>
-          <%= link_to "Invite someone", invites_path, class: "text-decoration-none ms-2" %>
+          <% if @user.available_invites > 0 %>
+            <%= link_to "Invite someone", invites_path, class: "text-decoration-none ms-2" %>
+          <% else %>
+            <%= link_to "See your invites", invites_path, class: "text-decoration-none ms-2" %>
+          <% end %>
         <% end %>
       </div>
     </div>
