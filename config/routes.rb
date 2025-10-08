@@ -34,7 +34,7 @@ Rails.application.routes.draw do
       resource :email_update, only: [:edit, :update]
       resource :password_reset, only: [:show, :create]
       resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
-      patch :available_invites, action: :update_available_invites
+      resource :available_invites, only: :update, controller: "available_invites"
     end
     resources :events, only: [:index, :show]
   end

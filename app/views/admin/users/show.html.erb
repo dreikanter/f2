@@ -98,7 +98,7 @@
         <%= @user.available_invites %>
       </div>
       <div>
-        <%= form_with url: admin_user_available_invites_path(@user), method: :patch, class: "d-flex gap-2 align-items-center" do |form| %>
+        <%= form_with url: admin_user_available_invites_path(@user), method: :patch, class: "d-flex gap-2 align-items-center", data: { turbo_frame: "_top" } do |form| %>
           <%= form.number_field :available_invites, value: @user.available_invites, class: "form-control form-control-sm", style: "width: 100px;" %>
           <%= form.submit "Update", class: "btn btn-sm btn-primary" %>
         <% end %>
