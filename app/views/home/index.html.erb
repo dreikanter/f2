@@ -1,0 +1,13 @@
+<% content_for :title, "Welcome" %>
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8 text-center">
+    <h1 class="display-4 mb-4">Welcome to Feeder</h1>
+    <p class="lead mb-4">A feed aggregation service for your content needs.</p>
+
+    <div class="d-flex gap-3 justify-content-center">
+      <%= link_to "Sign In", new_session_path, class: "btn btn-primary btn-lg" %>
+      <%= link_to "Register", new_registration_path, class: "btn btn-outline-secondary btn-lg" %>
+    </div>
+  </div>
+</div>

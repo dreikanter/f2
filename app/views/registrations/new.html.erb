@@ -1,0 +1,62 @@
+<% content_for :title, "Register" %>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="mb-4">Create Your Account</h1>
+
+    <% if @used_invite %>
+      <div class="alert alert-warning">
+        This invitation link has already been used.
+      </div>
+      <%= link_to "Back to Home", root_path, class: "btn btn-secondary" %>
+    <% else %>
+      <div class="alert alert-info mb-4">
+        <strong><%= @invite.created_by_user.name %></strong> has invited you to join Feeder!
+      </div>
+
+      <%= form_with model: @user, url: registrations_path(code: params[:code]), method: :post, local: true do |form| %>
+        <% if @user.errors.any? %>
+          <div class="alert alert-danger">
+            <h5>Please fix the following errors:</h5>
+            <ul class="mb-0">
+              <% @user.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="mb-3">
+          <%= form.label :name, class: "form-label" %>
+          <%= form.text_field :name, class: "form-control", autofocus: true, required: true %>
+          <div class="form-text">You can change this anytime</div>
+        </div>
+
+        <div class="mb-3">
+          <%= form.label :email_address, "Email", class: "form-label" %>
+          <%= form.email_field :email_address, class: "form-control", required: true %>
+          <div class="form-text">For password recovery only – we don't have a mailing list, no worries</div>
+        </div>
+
+        <div class="mb-3">
+          <%= form.label :password, class: "form-label" %>
+          <%= form.password_field :password, class: "form-control", required: true %>
+          <div class="form-text">Minimum 10 characters</div>
+        </div>
+
+        <div class="mb-3">
+          <%= form.label :password_confirmation, class: "form-label" %>
+          <%= form.password_field :password_confirmation, class: "form-control", required: true %>
+        </div>
+
+        <div class="d-grid">
+          <%= form.submit "Create Account", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+
+      <div class="mt-3 text-center">
+        <%= link_to "Sign In", new_session_path, class: "text-decoration-none" %>
+      </div>
+    <% end %>
+  </div>
+</div>

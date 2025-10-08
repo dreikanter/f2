@@ -1,0 +1,44 @@
+<% if invites.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead>
+        <tr>
+          <th>Created</th>
+          <th>Invited User / Invitation Link</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% invites.each do |invite| %>
+          <tr>
+            <td><%= short_time_ago(invite.created_at) %></td>
+            <td>
+              <% if invite.invited_user %>
+                <%= invite.invited_user.name %>
+              <% else %>
+                <div class="d-flex align-items-center gap-2">
+                  <code class="flex-grow-1"><%= new_registration_url(code: invite.id) %></code>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="clipboard#copy" title="Copy to clipboard">
+                    <%= icon("clipboard") %>
+                  </button>
+                </div>
+              <% end %>
+            </td>
+            <td>
+              <% if !invite.invited_user && policy(invite).destroy? %>
+                <%= button_to invites_path(invite), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Are you sure?" } } do %>
+                  <%= icon("trash") %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <p>No invites yet</p>
+    <p class="text-muted">Create an invite to share with someone you want to join.</p>
+  </div>
+<% end %>

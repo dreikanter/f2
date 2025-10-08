@@ -1,0 +1,17 @@
+<div class="row">
+  <div class="col-12">
+    <%= page_header "Invites" do %>
+      <div id="create-invite-button">
+        <%= render "create_button", can_create: policy(Invite).create? %>
+      </div>
+    <% end %>
+
+    <div id="invite-stats" class="mb-3">
+      <%= render "stats", available_invites_count: @available_invites_count, created_invites_count: @created_invites_count, invited_users_count: @invited_users_count, unused_invites_count: @unused_invites_count %>
+    </div>
+
+    <div id="invites-table">
+      <%= render "table", invites: @invites %>
+    </div>
+  </div>
+</div>
