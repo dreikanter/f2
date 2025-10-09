@@ -26,7 +26,7 @@
             </td>
             <td>
               <% if !invite.invited_user && policy(invite).destroy? %>
-                <%= button_to invites_path(invite), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Are you sure?" } } do %>
+                <%= button_to invite_path(invite), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Are you sure?" } } do %>
                   <%= icon("trash") %>
                 <% end %>
               <% end %>
