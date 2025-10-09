@@ -23,7 +23,7 @@
             <td>
               <div class="d-flex align-items-center gap-2">
                 <code><%= invite.id %></code>
-                <button type="button" class="btn btn-sm btn-link text-muted p-0" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="clipboard#copy" title="Copy invitation link to clipboard">
+                <button type="button" class="btn btn-sm btn-link text-muted p-0" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="click->clipboard#copy" title="Copy invitation link to clipboard">
                   <%= icon("clipboard") %>
                 </button>
               </div>
