@@ -32,7 +32,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "should show used invite message when invite is already used" do
     get registration_url(code: used_invite.id)
     assert_response :success
-    assert_select ".alert-warning", /already been used/
+    assert_select "p", /already been used/
   end
 
   test "should redirect to dashboard if already authenticated" do
