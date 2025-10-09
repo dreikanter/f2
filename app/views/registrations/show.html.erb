@@ -2,14 +2,12 @@
 
 <div class="row justify-content-center">
   <div class="col-md-6">
-    <h1 class="mb-4">Create Your Account</h1>
-
     <% if @used_invite %>
-      <div class="alert alert-warning">
-        This invitation link has already been used.
-      </div>
-      <%= link_to "Back to Home", root_path, class: "btn btn-secondary" %>
+      <p>This invitation link has already been used.</p>
+      <p>But here are some <a href="https://duckduckgo.com/?q=cat+pictures&ia=images&iax=images">cat pictures</a>.</p>
     <% else %>
+      <h1 class="mb-4">Create Your Account</h1>
+
       <div class="alert alert-info mb-4">
         <strong><%= @invite.created_by_user.name.presence || "Somebody" %></strong> has invited you to join Feeder!
       </div>
