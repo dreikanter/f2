@@ -7,7 +7,7 @@ class InvitesController < ApplicationController
 
   def create
     authorize Invite
-    create_invite_if_possible
+    @new_invite = create_invite_if_possible
     render_invite_updates
   end
 
@@ -22,17 +22,19 @@ class InvitesController < ApplicationController
   private
 
   def create_invite_if_possible
+    new_invite = nil
     Invite.transaction do
       created_invites_count = created_invites.count
-      created_invites.create! if available_invites_count > created_invites_count
+      new_invite = created_invites.create! if available_invites_count > created_invites_count
     end
+    new_invite
   end
 
   def render_invite_updates
     invites = ordered_invites
 
     render turbo_stream: [
-      turbo_stream.update("invites-table", partial: "invites/table", locals: { invites: invites }),
+      turbo_stream.update("invites-table", partial: "invites/table", locals: { invites: invites, new_invite_id: @new_invite&.id }),
       turbo_stream.update("invite-stats", partial: "invites/stats", locals: invite_stats),
       turbo_stream.update("create-invite-button", partial: "invites/create_button", locals: {
         can_create: policy(Invite).create?

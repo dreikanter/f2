@@ -46,3 +46,17 @@
     white-space: nowrap;
   }
 }
+
+// Highlight flash animation for new items
+@keyframes highlight-flash {
+  0% {
+    background-color: rgba(25, 135, 84, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.highlight-new {
+  animation: highlight-flash 2s ease-out;
+}

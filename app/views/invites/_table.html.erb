@@ -3,23 +3,15 @@
     <table class="table table-hover table-bordered">
       <thead>
         <tr>
-          <th>Created</th>
-          <th>Invited User</th>
           <th>Invitation Code</th>
+          <th>Invited User</th>
+          <th style="width: 1%;" class="text-nowrap">Created</th>
           <th style="width: 1%;" class="text-center"></th>
         </tr>
       </thead>
       <tbody>
         <% invites.each do |invite| %>
-          <tr>
-            <td><%= short_time_ago(invite.created_at) %></td>
-            <td>
-              <% if invite.invited_user %>
-                <%= invite.invited_user.name %>
-              <% else %>
-                <em class="text-muted">Not used yet</em>
-              <% end %>
-            </td>
+          <tr id="<%= dom_id(invite) %>" class="<%= 'highlight-new' if local_assigns[:new_invite_id] == invite.id %>">
             <td>
               <div class="d-flex align-items-center gap-2">
                 <code><%= invite.id %></code>
@@ -28,6 +20,14 @@
                 </button>
               </div>
             </td>
+            <td>
+              <% if invite.invited_user %>
+                <%= invite.invited_user.name %>
+              <% else %>
+                <em class="text-muted">Not used yet</em>
+              <% end %>
+            </td>
+            <td class="text-nowrap"><%= short_time_ago(invite.created_at) %></td>
             <td style="width: 1%;" class="text-center">
               <% if !invite.invited_user && policy(invite).destroy? %>
                 <%= button_to invite_path(invite),
