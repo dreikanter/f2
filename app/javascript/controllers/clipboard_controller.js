@@ -9,15 +9,20 @@ export default class extends Controller {
     event.preventDefault()
 
     navigator.clipboard.writeText(this.textValue).then(() => {
-      const originalText = event.currentTarget.innerHTML
-      event.currentTarget.innerHTML = '✓ Copied!'
-      event.currentTarget.classList.add('btn-success')
-      event.currentTarget.classList.remove('btn-outline-secondary')
+      const button = event.currentTarget
+      const originalHTML = button.innerHTML
+      const originalTitle = button.title
+
+      button.innerHTML = '✓'
+      button.title = 'Copied!'
+      button.classList.add('text-success')
+      button.classList.remove('text-muted')
 
       setTimeout(() => {
-        event.currentTarget.innerHTML = originalText
-        event.currentTarget.classList.remove('btn-success')
-        event.currentTarget.classList.add('btn-outline-secondary')
+        button.innerHTML = originalHTML
+        button.title = originalTitle
+        button.classList.remove('text-success')
+        button.classList.add('text-muted')
       }, 2000)
     }).catch(err => {
       console.error('Failed to copy text: ', err)
