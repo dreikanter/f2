@@ -5,7 +5,7 @@ class RegistrationsController < ApplicationController
   def show
     return redirect_to root_path unless params[:code].present?
 
-    @invite = Invite.find_by(id: params[:code])
+    @invite = Invite.includes(:created_by_user).find_by(id: params[:code])
 
     return redirect_to root_path if @invite.nil?
 

@@ -60,6 +60,6 @@ class InvitesController < ApplicationController
   end
 
   def ordered_invites
-    policy_scope(Invite).includes(:invited_user).order(created_at: :desc)
+    policy_scope(Invite).includes(:invited_user, :created_by_user).order(created_at: :desc)
   end
 end
