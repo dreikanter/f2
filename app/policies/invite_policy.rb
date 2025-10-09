@@ -4,7 +4,9 @@ class InvitePolicy < ApplicationPolicy
   end
 
   def create?
-    user.present? && user.available_invites > user.created_invites.where(invited_user_id: nil).count
+    return false unless user.present?
+
+    user.available_invites > user.created_invites.count
   end
 
   def destroy?
