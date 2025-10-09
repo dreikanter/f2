@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 65c74a97146060f727a070ec93a456a677f75ed7
+  revision: f4aef1529b704f7b616331d5267a45983fd3e1f0
   branch: main
   specs:
     actioncable (8.1.0.beta1)
@@ -183,7 +183,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jaro_winkler (1.6.1)
-    json (2.15.0)
+    json (2.15.1)
     kamal (2.7.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
