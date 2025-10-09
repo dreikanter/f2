@@ -17,8 +17,7 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]
-  get "register" => "registrations#new", as: :new_registration
-  post "register" => "registrations#create", as: :registrations
+  resource :registration, only: [:show, :create], path: "register"
 
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
