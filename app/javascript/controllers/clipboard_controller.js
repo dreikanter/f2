@@ -8,11 +8,11 @@ export default class extends Controller {
   copy(event) {
     event.preventDefault()
 
-    navigator.clipboard.writeText(this.textValue).then(() => {
-      const button = event.currentTarget
-      const originalHTML = button.innerHTML
-      const originalTitle = button.title
+    const button = event.currentTarget
+    const originalHTML = button.innerHTML
+    const originalTitle = button.title
 
+    navigator.clipboard.writeText(this.textValue).then(() => {
       button.innerHTML = '✓'
       button.title = 'Copied!'
       button.classList.add('text-success')
