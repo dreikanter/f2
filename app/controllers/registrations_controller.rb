@@ -1,8 +1,8 @@
 class RegistrationsController < ApplicationController
   allow_unauthenticated_access
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_path(code: params[:code]), alert: "Try again later." }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to registration_path(code: params[:code]), alert: "Try again later." }
 
-  def new
+  def show
     return redirect_to root_path unless params[:code].present?
 
     @invite = Invite.find_by(id: params[:code])
@@ -34,7 +34,7 @@ class RegistrationsController < ApplicationController
       start_new_session_for @user
       redirect_to after_authentication_url, notice: "Welcome! Your account has been created."
     else
-      render :new, status: :unprocessable_entity
+      render :show, status: :unprocessable_entity
     end
   end
 

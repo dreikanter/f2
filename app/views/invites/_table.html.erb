@@ -14,8 +14,8 @@
           <tr id="<%= dom_id(invite) %>" class="<%= 'highlight-new' if local_assigns[:new_invite_id] == invite.id %>">
             <td>
               <div class="d-flex align-items-center gap-2">
-                <code><%= new_registration_url(code: invite.id) %></code>
-                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none p-0" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="click->clipboard#copy" title="Copy invitation link to clipboard">
+                <code><%= registration_url(code: invite.id) %></code>
+                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none p-0" data-controller="clipboard" data-clipboard-text-value="<%= registration_url(code: invite.id) %>" data-action="click->clipboard#copy" title="Copy invitation link to clipboard">
                   <%= icon("clipboard") %>
                 </button>
               </div>

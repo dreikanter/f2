@@ -14,7 +14,7 @@
         <strong><%= @invite.created_by_user.name %></strong> has invited you to join Feeder!
       </div>
 
-      <%= form_with model: @user, url: registrations_path(code: params[:code]), method: :post, local: true do |form| %>
+      <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
         <% if @user.errors.any? %>
           <div class="alert alert-danger">
             <h5>Please fix the following errors:</h5>
