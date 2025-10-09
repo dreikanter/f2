@@ -1,19 +1,19 @@
 require "test_helper"
 
-class DashboardsControllerTest < ActionDispatch::IntegrationTest
+class StatusesControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
 
   test "requires authentication" do
-    get root_path
+    get status_path
     assert_redirected_to new_session_path
   end
 
-  test "shows dashboard when authenticated" do
+  test "shows status when authenticated" do
     sign_in_as user
-    get root_path
+    get status_path
     assert_response :success
-    assert_select "h1", "Dashboard"
+    assert_select "h1", "Status"
   end
 end

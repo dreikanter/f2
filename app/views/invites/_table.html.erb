@@ -1,0 +1,50 @@
+<% if invites.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead>
+        <tr>
+          <th>Invitation Code</th>
+          <th>Invited User</th>
+          <th style="width: 1%;" class="text-nowrap">Created</th>
+          <th style="width: 1%;" class="text-center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% invites.each do |invite| %>
+          <tr id="<%= dom_id(invite) %>" class="<%= 'highlight-new' if local_assigns[:new_invite_id] == invite.id %>">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <code><%= registration_url(code: invite.id) %></code>
+                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none p-0" data-controller="clipboard" data-clipboard-text-value="<%= registration_url(code: invite.id) %>" data-action="click->clipboard#copy" title="Copy invitation link to clipboard">
+                  <%= icon("clipboard") %>
+                </button>
+              </div>
+            </td>
+            <td>
+              <% if invite.invited_user %>
+                <%= invite.invited_user.name %>
+              <% else %>
+                <em class="text-muted">Not used yet</em>
+              <% end %>
+            </td>
+            <td class="text-nowrap"><%= short_time_ago(invite.created_at) %></td>
+            <td style="width: 1%;" class="text-center">
+              <% if !invite.invited_user && policy(invite).destroy? %>
+                <%= button_to invite_path(invite),
+                              method: :delete,
+                              class: "btn btn-sm btn-link text-muted p-0",
+                              form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
+                  <%= icon("trash") %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <p>No invites yet</p>
+  </div>
+<% end %>

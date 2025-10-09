@@ -41,7 +41,7 @@
             <%# Navigation links %>
             <ul class="navbar-nav me-auto">
               <li class="nav-item">
-                <%= link_to "Dashboard", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
+                <%= link_to "Status", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
               </li>
               <li class="nav-item">
                 <%= link_to "Feeds", feeds_path, class: "nav-link #{'active' if current_page?(feeds_path) || controller_name == 'feeds'}" %>

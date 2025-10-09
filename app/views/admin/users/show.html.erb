@@ -88,6 +88,60 @@
   </div>
 </div>
 
+<h3 class="mt-4 mb-3">Invitations</h3>
+
+<div class="list-group mb-3">
+  <div class="list-group-item">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Available Invites:</strong>
+        <%= @user.available_invites %>
+      </div>
+      <div>
+        <%= form_with model: @user, url: admin_user_available_invites_path(@user), method: :patch, class: "d-flex gap-2 align-items-center", data: { turbo_frame: "_top" } do |form| %>
+          <%= form.number_field :available_invites, min: 0, class: "form-control form-control-sm", style: "width: 100px;" %>
+          <%= form.submit "Update", class: "btn btn-sm btn-primary" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="list-group">
+  <div class="list-group-item">
+    <strong>Created Invites:</strong> <%= @user.created_invites.count %>
+  </div>
+
+  <div class="list-group-item">
+    <strong>Invited Users:</strong> <%= @user.created_invites.where.not(invited_user_id: nil).count %>
+  </div>
+</div>
+
+<% invited_users = @user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc) %>
+<% if invited_users.any? %>
+  <h4 class="mt-3 mb-3">Users Invited by <%= @user.name %></h4>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Invited</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% invited_users.each do |invite| %>
+          <tr>
+            <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "text-decoration-none" %></td>
+            <td><%= invite.invited_user.email_address %></td>
+            <td><%= short_time_ago(invite.created_at) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
 <h3 class="mt-4 mb-3">Active Sessions</h3>
 
 <% if @user.sessions.any? %>

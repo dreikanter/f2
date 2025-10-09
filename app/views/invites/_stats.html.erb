@@ -1,0 +1,4 @@
+<% remaining = [0, available_invites_count - created_invites_count].max %>
+<div class="alert alert-<%= remaining > 0 ? 'info' : 'secondary' %>">
+  <strong>Available invites:</strong> <%= remaining %>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_07_192103) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -108,6 +108,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_07_192103) do
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["feed_profile_id"], name: "index_feeds_on_feed_profile_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
+  end
+
+  create_table "invites", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "created_by_user_id", null: false
+    t.bigint "invited_user_id"
+    t.datetime "updated_at", null: false
+    t.index ["created_by_user_id"], name: "index_invites_on_created_by_user_id"
+    t.index ["invited_user_id"], name: "index_invites_on_invited_user_id"
   end
 
   create_table "permissions", force: :cascade do |t|
@@ -279,8 +288,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_07_192103) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.integer "available_invites", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.string "name", default: "", null: false
     t.string "password_digest", null: false
     t.datetime "password_updated_at", precision: nil, null: false
     t.datetime "suspended_at"
@@ -297,6 +308,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_07_192103) do
   add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "feed_profiles"
   add_foreign_key "feeds", "users"
+  add_foreign_key "invites", "users", column: "created_by_user_id"
+  add_foreign_key "invites", "users", column: "invited_user_id"
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
   add_foreign_key "posts", "feeds"

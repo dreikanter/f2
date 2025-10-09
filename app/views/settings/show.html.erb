@@ -34,6 +34,22 @@
           <%= link_to "Add a token", new_settings_access_token_path, class: "text-decoration-none ms-2" %>
         <% end %>
       </div>
+
+      <div class="list-group-item">
+        <strong>Invites:</strong>
+        <% created_count = @user.created_invites.count %>
+        <% used_count = @user.created_invites.where.not(invited_user_id: nil).count %>
+        <%= @user.available_invites %> available<% if created_count > 0 %>,
+        <%= created_count %> created<% end %><% if used_count > 0 %>,
+        <%= used_count %> used<% end %>
+        <% if @user.available_invites > 0 || created_count > 0 %>
+          <% if @user.available_invites > 0 %>
+            <%= link_to "Invite someone", invites_path, class: "text-decoration-none ms-2" %>
+          <% else %>
+            <%= link_to "See your invites", invites_path, class: "text-decoration-none ms-2" %>
+          <% end %>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>
