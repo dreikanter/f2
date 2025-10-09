@@ -30,21 +30,12 @@
             </td>
             <td style="width: 1%;" class="text-center">
               <% if !invite.invited_user && policy(invite).destroy? %>
-                <div class="dropdown">
-                  <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <%= icon("three-dots-vertical") %>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                      <%= button_to invite_path(invite),
-                                    method: :delete,
-                                    class: "dropdown-item text-danger",
-                                    form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
-                        <%= icon("trash", css_class: "me-2") %>Delete
-                      <% end %>
-                    </li>
-                  </ul>
-                </div>
+                <%= button_to invite_path(invite),
+                              method: :delete,
+                              class: "btn btn-sm btn-link text-muted p-0",
+                              form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
+                  <%= icon("trash") %>
+                <% end %>
               <% end %>
             </td>
           </tr>
