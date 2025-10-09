@@ -6,12 +6,20 @@
       </div>
     <% end %>
 
-    <div id="invite-stats" class="mb-3">
-      <%= render "stats", available_invites_count: @available_invites_count, created_invites_count: @created_invites_count, invited_users_count: @invited_users_count, unused_invites_count: @unused_invites_count %>
+    <div id="invite-stats" class="mb-4">
+      <%= render "stats", **@invite_stats %>
     </div>
 
-    <div id="invites-table">
+    <div id="invites-table" class="mb-2">
       <%= render "table", invites: @invites %>
     </div>
+
+    <% if @invite_stats[:invited_users_count] %>
+      <div class="list-group">
+        <div class="list-group-item">
+          <strong>Invited users:</strong> <%= @invite_stats[:invited_users_count] %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
