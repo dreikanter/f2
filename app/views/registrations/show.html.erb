@@ -11,7 +11,7 @@
       <%= link_to "Back to Home", root_path, class: "btn btn-secondary" %>
     <% else %>
       <div class="alert alert-info mb-4">
-        <strong><%= @invite.created_by_user.name %></strong> has invited you to join Feeder!
+        <strong><%= @invite.created_by_user.name.presence || "Somebody" %></strong> has invited you to join Feeder!
       </div>
 
       <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
