@@ -4,8 +4,9 @@
       <thead>
         <tr>
           <th>Created</th>
-          <th>Invited User / Invitation Link</th>
-          <th>Actions</th>
+          <th>Invited User</th>
+          <th>Invitation Code</th>
+          <th style="width: 1%;" class="text-center"></th>
         </tr>
       </thead>
       <tbody>
@@ -16,19 +17,34 @@
               <% if invite.invited_user %>
                 <%= invite.invited_user.name %>
               <% else %>
-                <div class="d-flex align-items-center gap-2">
-                  <code class="flex-grow-1"><%= new_registration_url(code: invite.id) %></code>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="clipboard#copy" title="Copy to clipboard">
-                    <%= icon("clipboard") %>
-                  </button>
-                </div>
+                <em class="text-muted">Not used yet</em>
               <% end %>
             </td>
             <td>
+              <div class="d-flex align-items-center gap-2">
+                <code class="flex-grow-1"><%= invite.id %></code>
+                <button type="button" class="btn btn-sm btn-link text-muted p-0" data-controller="clipboard" data-clipboard-text-value="<%= new_registration_url(code: invite.id) %>" data-action="clipboard#copy" title="Copy invitation link to clipboard">
+                  <%= icon("clipboard") %>
+                </button>
+              </div>
+            </td>
+            <td style="width: 1%;" class="text-center">
               <% if !invite.invited_user && policy(invite).destroy? %>
-                <%= button_to invite_path(invite), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Are you sure?" } } do %>
-                  <%= icon("trash") %>
-                <% end %>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <%= icon("three-dots-vertical") %>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <%= button_to invite_path(invite),
+                                    method: :delete,
+                                    class: "dropdown-item text-danger",
+                                    form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
+                        <%= icon("trash", css_class: "me-2") %>Delete
+                      <% end %>
+                    </li>
+                  </ul>
+                </div>
               <% end %>
             </td>
           </tr>
