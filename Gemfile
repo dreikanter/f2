@@ -81,3 +81,5 @@ gem "mission_control-jobs", "~> 1.1"
 gem "pundit", "~> 2.5"
 gem "rouge", "~> 4.6", ">= 4.6.1"
 gem "with_advisory_lock", "~> 7.0.2"
+
+gem "postmark-rails", "~> 0.22.1"
