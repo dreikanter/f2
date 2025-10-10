@@ -17,7 +17,8 @@ class Settings::AccessTokenGroupsController < ApplicationController
   end
 
   def load_managed_groups
-    freefeed_client.managed_groups
+    groups = freefeed_client.managed_groups
+    groups.sort_by { |group| group[:username] }
   end
 
   def handle_freefeed_error(exception)

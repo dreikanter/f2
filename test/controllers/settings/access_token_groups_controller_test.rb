@@ -133,4 +133,84 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
     assert_includes response.body, "turbo-stream"
     assert_includes response.body, "groups-select"
   end
+
+  test "should sort groups alphabetically by screen name" do
+    sign_in_as(user)
+
+    response_body = [
+      {
+        "id" => "group3",
+        "username" => "zebra_group",
+        "screenName" => "Zebra Group",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group1",
+        "username" => "alpha_group",
+        "screenName" => "Alpha Group",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group2",
+        "username" => "middle_group",
+        "screenName" => "Middle Group",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      }
+    ].to_json
+
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: response_body)
+
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+
+    # Extract option values in order
+    options = response.body.scan(/<option value="([^"]+)"[^>]*>([^<]+)<\/option>/)
+                          .reject { |value, _| value.empty? } # Skip the prompt option
+
+    # Check that groups are sorted alphabetically
+    assert_equal ["alpha_group", "middle_group", "zebra_group"], options.map(&:first)
+    assert_includes options[0][1], "Alpha Group"
+    assert_includes options[1][1], "Middle Group"
+    assert_includes options[2][1], "Zebra Group"
+  end
+
+  test "should sort groups by username when screen name is missing" do
+    sign_in_as(user)
+
+    response_body = [
+      {
+        "id" => "group2",
+        "username" => "zoo",
+        "screenName" => "",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group1",
+        "username" => "apple",
+        "screenName" => "",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      }
+    ].to_json
+
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: response_body)
+
+    get settings_access_token_groups_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+
+    # Extract option values in order
+    options = response.body.scan(/<option value="([^"]+)"[^>]*>([^<]+)<\/option>/)
+                          .reject { |value, _| value.empty? }
+
+    # Check that groups are sorted alphabetically by username
+    assert_equal ["apple", "zoo"], options.map(&:first)
+  end
 end
