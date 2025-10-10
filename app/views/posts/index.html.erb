@@ -7,7 +7,7 @@
 
       <%= pagination_for @posts,
                          collection_name: "posts",
-                         path_helper: ->(page) { posts_path(page: page) } %>
+                         path_helper: ->(page) { posts_path(page: page, feed_id: params[:feed_id]) } %>
     <% else %>
       <div class="text-center py-5">
         <p>No posts yet</p>
