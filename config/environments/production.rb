@@ -67,6 +67,6 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: ENV.fetch("HOST") }
 
-  config.action_mailer.delivery_method = :postmark
-  config.action_mailer.postmark_settings = { :api_token => Rails.application.credentials.dig(:postmark, :api_token) }
+  # See resend initializer for configuration
+  config.action_mailer.delivery_method = :resend
 end
