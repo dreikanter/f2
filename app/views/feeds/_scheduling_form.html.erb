@@ -1,6 +1,6 @@
 <%# locals: (feed:) %>
 
-<div class="card mt-3">
+<div class="card mt-3" data-controller="form-collapse">
   <div class="card-header">
     <h5 class="card-title mb-0">Edit Scheduling</h5>
   </div>
@@ -36,9 +36,7 @@
 
   <div class="d-flex gap-2">
     <%= form.submit "Save", class: "btn btn-primary" %>
-    <%= link_to "Cancel", feed_path(feed, format: :turbo_stream),
-        class: "btn btn-outline-secondary",
-        data: { turbo_prefetch: false, turbo_stream: true } %>
+    <button type="button" class="btn btn-outline-secondary" data-action="click->form-collapse#cancel">Cancel</button>
   </div>
     <% end %>
   </div>
