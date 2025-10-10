@@ -12,14 +12,13 @@ class FeedPreview < ApplicationRecord
   }
 
   validates :url, presence: true
-  validate :url_must_be_valid
-
-  validates :feed_profile, presence: true
   validates :url, uniqueness: { scope: :feed_profile_id }
+  validates :feed_profile, presence: true
+
+  validate :url_must_be_valid
 
   normalizes :url, with: ->(url) { url.to_s.strip }
 
-  scope :recent, -> { order(created_at: :desc) }
   scope :for_cache_key, ->(url, feed_profile_id) { where(url: url, feed_profile_id: feed_profile_id) }
 
   def posts_data

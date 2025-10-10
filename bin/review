@@ -1,0 +1,177 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "yaml"
+require "open3"
+require "optparse"
+require "set"
+
+TRACK = "REVIEW.yml"
+
+def sh(*args)
+  out, err, st = Open3.capture3(*args)
+  raise "[cmd failed] #{args.join(' ')}\n#{err}" unless st.success?
+  out.strip
+end
+
+def tracked_files
+  # All versioned files at HEAD
+  sh("git", "ls-files", "-z").split("\x00")
+end
+
+def head_blob(path)
+  sh("git", "rev-parse", "HEAD:#{path}")
+rescue
+  nil
+end
+
+def load_state
+  File.exist?(TRACK) ? (YAML.safe_load(File.read(TRACK)) || {}) : {}
+end
+
+def save_state!(state)
+  File.write(TRACK, YAML.dump(state))
+end
+
+def default_state
+  {"version" => 1, "reviewed" => {}}
+end
+
+def status(state, verbose: false)
+  reviewed = state["reviewed"] || {}
+  files = tracked_files
+  tbr, ok, missing = [], [], []
+
+  files.each do |p|
+    hb = head_blob(p)
+    if hb.nil?
+      missing << p
+    elsif reviewed[p] == hb
+      ok << p
+    else
+      tbr << p
+    end
+  end
+
+  puts "TBR: #{tbr.size} | Reviewed(up-to-date): #{ok.size} | Missing@HEAD: #{missing.size}"
+  if verbose && !tbr.empty?
+    puts "\nTo-Be-Reviewed:"
+    tbr.sort.each { |p| puts "  #{p}" }
+  end
+end
+
+def cmd_init
+  st = default_state
+  save_state!(st)
+  puts "Initialized #{TRACK}."
+end
+
+def cmd_mark(paths)
+  st = load_state
+  st = default_state if st.empty?
+  st["reviewed"] ||= {}
+  paths.each do |p|
+    hb = head_blob(p)
+    if hb.nil?
+      warn "Skip (no HEAD blob): #{p}"
+      next
+    end
+    st["reviewed"][p] = hb
+  end
+  save_state!(st)
+  puts "Marked reviewed at current HEAD for #{paths.size} file(s)."
+end
+
+def cmd_mark_changed_since(paths, ref)
+  st = load_state
+  st = default_state if st.empty?
+  st["reviewed"] ||= {}
+
+  changed = if paths.empty?
+    ref ||= "HEAD"
+    sh("git", "diff", "--name-only", "#{ref}...HEAD").split("\n")
+  else
+    paths
+  end
+
+  changed.each do |p|
+    hb = head_blob(p)
+    next unless hb
+    st["reviewed"][p] = hb
+  end
+  save_state!(st)
+  puts "Marked reviewed for #{changed.size} changed file(s)."
+end
+
+def cmd_sync(prune: true)
+  st = load_state
+  st = default_state if st.empty?
+  rev = st["reviewed"] || {}
+  files = tracked_files.to_set
+
+  if prune
+    before = rev.size
+    rev.keys.each do |p|
+      hb = head_blob(p)
+      rev.delete(p) if hb.nil? || !files.include?(p) # deleted/untracked/renamed
+    end
+    puts "Pruned #{before - rev.size} stale entr(ies)." if before != rev.size
+  end
+
+  save_state!(st)
+  puts "Sync complete."
+end
+
+def main
+  cmd = ARGV.shift
+  case cmd
+  when "init"
+    cmd_init
+  when "status"
+    verbose = false
+    OptionParser.new { |o| o.on("-v", "--verbose") { verbose = true } }.parse!(ARGV)
+    status(load_state, verbose: verbose)
+  when "mark"
+    paths = ARGV
+    if paths.empty?
+      puts "Usage: review.rb mark <path...>"; exit 1
+    end
+    cmd_mark(paths)
+  when "mark-changed"
+    since = nil
+    OptionParser.new { |o| o.on("--since REF") { |v| since = v } }.parse!(ARGV)
+    cmd_mark_changed_since(ARGV, since)
+  when "sync"
+    prune = true
+    OptionParser.new { |o| o.on("--no-prune") { prune = false } }.parse!(ARGV)
+    cmd_sync(prune: prune)
+  else
+    puts <<~USAGE
+      Usage:
+        review.rb init
+        review.rb status [-v]
+        review.rb mark <path ...>
+        review.rb mark-changed [--since <REF>] [paths ...]
+        review.rb sync [--no-prune]
+
+      Typical flow:
+        ./tools/review.rb init
+        git add REVIEW.yml && git commit -m "review: seed"
+
+        # After committing fixes:
+        ./tools/review.rb mark app/models/team_task.rb
+        git add REVIEW.yml && git commit -m "review: mark team_task.rb"
+
+        # After merging/pulling:
+        git pull
+        ./tools/review.rb sync
+        git add REVIEW.yml && git commit -m "review: prune stale" || true
+
+        # Progress:
+        ./tools/review.rb status -v
+    USAGE
+    exit 1
+  end
+end
+
+main

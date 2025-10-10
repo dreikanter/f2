@@ -1,0 +1,12 @@
+---
+version: 1
+reviewed:
+  app/models/user.rb: 5a66895050ae43f14c1c94d3b23d37a33fe98c1d
+  test/models/user_test.rb: 750ddd54b771652c7856863be64a07d52b341e2a
+  app/models/session.rb: cf376fb280f274daf3d14c86adc1cb2ac13c0149
+  app/models/application_record.rb: b63caeb8a5c4a21feec3ea870c4e4a52b89a8fa5
+  app/models/current.rb: 2bef56dadab9d4d33c9de892802d7f1382daebf5
+  app/models/event.rb: a4e337fadbd3de33a6b6c7ced941d42b9268d507
+  app/models/feed_entry.rb: ee5491497e5466d8cd3ce6bf78ac700e354f1340
+  app/models/feed_preview.rb: 51b6b5a47431b6bb92815ce8ffbaab3383b4dd27
+  test/models/feed_preview_test.rb: 776a82e3956626aa1587bea62b9e92f8149025d6
