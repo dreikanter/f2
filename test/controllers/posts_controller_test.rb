@@ -145,7 +145,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
     assert_includes response.body, "turbo-stream"
     assert_includes response.body, dom_id(published_post)
-    assert_includes response.body, "Post withdrawal initiated"
+    assert_includes response.body, "The post will be withdrawn from FreeFeed"
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last
