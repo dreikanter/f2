@@ -31,8 +31,12 @@ class Settings::AccessTokensController < ApplicationController
     @access_token = find_access_token
     authorize @access_token
 
-    if @access_token.update(access_token_params.merge(encrypted_token: access_token_params[:token]))
-      @access_token.validate_token_async
+    update_params = access_token_params
+    token = update_params.delete(:token)
+    update_params[:encrypted_token] = token if token.present?
+
+    if @access_token.update(update_params)
+      @access_token.validate_token_async if token.present?
       redirect_to settings_access_tokens_path, notice: "Access token '#{@access_token.name}' has been updated successfully."
     else
       render :edit, status: :unprocessable_content
