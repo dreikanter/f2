@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Replace Token</h1>
+  <h1>Edit Token</h1>
   <%= link_to "← Back to Access Tokens", settings_access_tokens_path, class: "btn btn-outline-secondary" %>
 </div>
 
@@ -14,8 +14,8 @@
     <%= render "form",
                access_token: @access_token,
                token_label: "New Freefeed Access Token",
-               token_placeholder: "Paste your new Freefeed access token here",
+               token_placeholder: "Leave empty to keep current token",
                token_value: "",
-               submit_text: "Replace Token" %>
+               submit_text: "Update Token" %>
   </div>
 </div>

@@ -130,7 +130,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     get edit_settings_access_token_path(access_token)
     assert_response :success
-    assert_select "h1", "Replace Token"
+    assert_select "h1", "Edit Token"
     assert_select "form[action=?]", settings_access_token_path(access_token)
     assert_select "input[name=?][value='']", "access_token[token]" # Token field should be empty
     assert_select "input[name=?][value=?]", "access_token[name]", access_token.name
@@ -163,8 +163,47 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       access_token: { name: "", token: "new_token_123" }
     }
     assert_response :unprocessable_content
-    assert_select "h1", "Replace Token"
+    assert_select "h1", "Edit Token"
     assert_select ".alert-danger"
+  end
+
+  test "updates only name without changing token" do
+    sign_in_as user
+    original_token = access_token.token_value
+
+    assert_no_enqueued_jobs(only: TokenValidationJob) do
+      patch settings_access_token_path(access_token), params: {
+        access_token: { name: "New Name", token: "", host: access_token.host }
+      }
+    end
+
+    assert_redirected_to settings_access_tokens_path
+    assert_match /updated successfully/, flash[:notice]
+
+    access_token.reload
+    assert_equal "New Name", access_token.name
+    assert_equal original_token, access_token.token_value
+  end
+
+  test "updates only host without changing token" do
+    sign_in_as user
+    original_token = access_token.token_value
+    original_name = access_token.name
+    new_host = AccessToken::FREEFEED_HOSTS["staging"]
+
+    assert_no_enqueued_jobs(only: TokenValidationJob) do
+      patch settings_access_token_path(access_token), params: {
+        access_token: { name: original_name, token: "", host: new_host }
+      }
+    end
+
+    assert_redirected_to settings_access_tokens_path
+    assert_match /updated successfully/, flash[:notice]
+
+    access_token.reload
+    assert_equal original_name, access_token.name
+    assert_equal new_host, access_token.host
+    assert_equal original_token, access_token.token_value
   end
 
   test "cannot edit other user's token" do

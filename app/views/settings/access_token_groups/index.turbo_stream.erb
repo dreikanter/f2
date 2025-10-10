@@ -7,13 +7,14 @@
             data-groups-target="select">
       <option value="">Choose target group...</option>
       <% @managed_groups.each do |group| %>
-        <% display_name = group[:screen_name].present? ? "#{group[:screen_name]} (#{group[:username]})" : group[:username] %>
+        <% display_name = group[:screen_name].present? ? "#{group[:username]} (#{group[:screen_name]})" : group[:username] %>
         <% display_name += " 🔒" if group[:is_private] %>
         <option value="<%= group[:username] %>" <%= 'selected' if @selected_group == group[:username] %>><%= display_name %></option>
       <% end %>
     </select>
     <div class="form-text" data-groups-target="helpText">
       Select the Freefeed group
+      <a href="#" data-action="click->groups#refreshGroups" class="ms-2">Refresh</a>
     </div>
     <div class="invalid-feedback">Select a target group.</div>
   </div>
