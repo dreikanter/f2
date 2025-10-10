@@ -66,4 +66,7 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.action_mailer.default_url_options = { host: ENV.fetch("HOST") }
+
+  config.action_mailer.delivery_method = :postmark
+  config.action_mailer.postmark_settings = { :api_token => Rails.application.credentials.dig(:postmark, :api_token) }
 end
