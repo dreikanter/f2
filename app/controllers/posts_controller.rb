@@ -26,7 +26,10 @@ class PostsController < ApplicationController
       level: :info
     )
 
-    redirect_to posts_path, notice: "Post withdrawal initiated. It remains visible in the app."
+    respond_to do |format|
+      format.html { redirect_to posts_path, notice: "Post withdrawal initiated. It remains visible in the app." }
+      format.turbo_stream
+    end
   end
 
   private

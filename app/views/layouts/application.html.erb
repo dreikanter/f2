@@ -70,13 +70,15 @@
     <% end %>
 
     <main class="container-md py-4">
-      <% if notice %>
-        <%= render "shared/flash_alert", alert_type: "success", message: notice %>
-      <% end %>
+      <div id="flash-messages">
+        <% if notice %>
+          <%= render "shared/flash_alert", alert_type: "success", message: notice %>
+        <% end %>
 
-      <% if alert %>
-        <%= render "shared/flash_alert", alert_type: "danger", message: alert %>
-      <% end %>
+        <% if alert %>
+          <%= render "shared/flash_alert", alert_type: "danger", message: alert %>
+        <% end %>
+      </div>
 
       <%= yield %>
     </main>
