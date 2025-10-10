@@ -1,0 +1,10 @@
+<%= turbo_stream.replace dom_id(@post) do %>
+  <%= render "shared/post_row", post: @post %>
+<% end %>
+
+<%= turbo_stream.prepend "flash-messages" do %>
+  <div class="alert alert-info alert-dismissible fade show" role="alert">
+    Post withdrawal initiated. It remains visible in the app.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>

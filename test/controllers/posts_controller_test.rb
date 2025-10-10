@@ -137,12 +137,15 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_with(job: PostWithdrawalJob) do
       assert_difference("Event.count", 1) do
-        delete post_url(published_post)
+        delete post_url(published_post), headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
     end
 
-    assert_redirected_to posts_path
-    assert_equal "Post withdrawal initiated. It remains visible in the app.", flash[:notice]
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_includes response.body, "turbo-stream"
+    assert_includes response.body, dom_id(published_post)
+    assert_includes response.body, "Post withdrawal initiated"
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last

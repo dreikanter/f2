@@ -1,0 +1,74 @@
+<%# locals: (post:, hide_feed_column: false) %>
+<tr id="<%= dom_id(post) %>">
+  <td class="content-column">
+    <%= link_to post, class: "text-decoration-none" do %>
+      <%= post_content_preview(post.content) %>
+    <% end %>
+  </td>
+  <% unless hide_feed_column %>
+    <td class="feed-column">
+      <%= link_to post.feed, class: "text-decoration-none" do %>
+        <%= post.feed.name %>
+      <% end %>
+    </td>
+  <% end %>
+  <td class="narrow-column text-center">
+    <%= short_time_ago(post.published_at) if post.published_at %>
+  </td>
+  <td class="narrow-column text-center">
+    <% if post.attachment_urls.present? %>
+      <%= post.attachment_urls.length %>
+    <% else %>
+      <span class="text-muted">0</span>
+    <% end %>
+  </td>
+  <td class="narrow-column text-center">
+    <% if post.comments.present? %>
+      <%= post.comments.length %>
+    <% else %>
+      <span class="text-muted">0</span>
+    <% end %>
+  </td>
+  <td class="narrow-column text-center">
+    <%= post_status_icon(post.status) %>
+  </td>
+  <td style="width: 1%;" class="text-center">
+    <div class="dropdown">
+      <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <%= icon("three-dots-vertical") %>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <% if post.source_url.present? %>
+          <li>
+            <%= link_to post.source_url, target: "_blank", rel: "noopener", class: "dropdown-item" do %>
+              <%= icon("box-arrow-up-right", css_class: "me-2") %>Source Post
+            <% end %>
+          </li>
+        <% end %>
+        <% if post.freefeed_post_id.present? %>
+          <li>
+            <%= link_to "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
+                        target: "_blank",
+                        rel: "noopener",
+                        class: "dropdown-item" do %>
+              <%= icon("box-arrow-up-right", css_class: "me-2") %>FreeFeed Post
+            <% end %>
+          </li>
+        <% end %>
+        <% if policy(post).destroy? %>
+          <% if post.source_url.present? || post.freefeed_post_id.present? %>
+            <li><hr class="dropdown-divider"></li>
+          <% end %>
+          <li>
+            <%= button_to post_path(post),
+                          method: :delete,
+                          class: "dropdown-item text-danger",
+                          form: { data: { turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." } } do %>
+              <%= icon("trash", css_class: "me-2") %>Withdraw
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </td>
+</tr>
