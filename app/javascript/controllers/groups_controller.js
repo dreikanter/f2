@@ -18,7 +18,15 @@ export default class extends Controller {
     this.loadGroups(event.target.value)
   }
 
-  async loadGroups(tokenId) {
+  refreshGroups(event) {
+    event.preventDefault()
+    const tokenId = this.hasTokenSelectTarget ? this.tokenSelectTarget.value : null
+    if (tokenId) {
+      this.loadGroups(tokenId, true)
+    }
+  }
+
+  async loadGroups(tokenId, forceRefresh = false) {
     if (!tokenId) {
       this.showEmptyState()
       return
@@ -34,6 +42,10 @@ export default class extends Controller {
 
     if (currentValue) {
       params.append('selected_group', currentValue)
+    }
+
+    if (forceRefresh) {
+      params.append('refresh', 'true')
     }
 
     if (params.toString()) {
