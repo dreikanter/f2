@@ -1,5 +1,5 @@
 <%# locals: (feed:) %>
-<div class="card mt-3" data-controller="form-collapse">
+<div class="card mt-3" data-controller="form-collapse autofocus">
   <div class="card-header">
     <h5 class="card-title mb-0">Edit Source</h5>
   </div>
@@ -19,7 +19,7 @@
 
   <div class="mb-3">
     <%= form.label :name, "Title", class: "form-label fw-bold" %>
-    <%= form.text_field :name, class: "form-control", placeholder: "Feed title for identification", maxlength: Feed::NAME_MAX_LENGTH %>
+    <%= form.text_field :name, class: "form-control", placeholder: "Feed title for identification", maxlength: Feed::NAME_MAX_LENGTH, autofocus: true %>
     <div class="form-text">Give your feed a descriptive name</div>
   </div>
 
