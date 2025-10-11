@@ -24,3 +24,7 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+
+## Environment variables
+
+- `MAILER_FROM` - default sender email address.

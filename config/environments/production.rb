@@ -66,4 +66,7 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.action_mailer.default_url_options = { host: ENV.fetch("HOST") }
+
+  # See resend initializer for configuration
+  config.action_mailer.delivery_method = :resend
 end

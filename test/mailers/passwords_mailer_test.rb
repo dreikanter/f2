@@ -11,7 +11,7 @@ class PasswordsMailerTest < ActionMailer::TestCase
 
     assert_equal "Reset your password", mail.subject
     assert_equal [user.email_address], mail.to
-    assert_equal ["from@example.com"], mail.from
+    assert_equal ["noreply@frf.im"], mail.from
     assert_match "password reset", mail.body.encoded.downcase
   end
 end
