@@ -109,4 +109,87 @@ class UserTest < ActiveSupport::TestCase
 
     assert_not user.admin?
   end
+
+  test "#total_feeds_count returns count of all user's feeds" do
+    user = create(:user)
+    create(:feed, user: user)
+    create(:feed, user: user)
+    other_user = create(:user)
+    create(:feed, user: other_user)
+
+    assert_equal 2, user.total_feeds_count
+  end
+
+  test "#total_imported_posts_count returns count of all posts across user's feeds" do
+    user = create(:user)
+    feed1 = create(:feed, user: user)
+    feed2 = create(:feed, user: user)
+    entry1 = create(:feed_entry, feed: feed1)
+    entry2 = create(:feed_entry, feed: feed2)
+    entry3 = create(:feed_entry, feed: feed1)
+    create(:post, feed: feed1, feed_entry: entry1)
+    create(:post, feed: feed2, feed_entry: entry2)
+    create(:post, feed: feed1, feed_entry: entry3)
+
+    other_user = create(:user)
+    other_feed = create(:feed, user: other_user)
+    other_entry = create(:feed_entry, feed: other_feed)
+    create(:post, feed: other_feed, feed_entry: other_entry)
+
+    assert_equal 3, user.total_imported_posts_count
+  end
+
+  test "#total_published_posts_count returns count of only published posts" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    entry1 = create(:feed_entry, feed: feed)
+    entry2 = create(:feed_entry, feed: feed)
+    entry3 = create(:feed_entry, feed: feed)
+    create(:post, feed: feed, feed_entry: entry1, status: :published)
+    create(:post, feed: feed, feed_entry: entry2, status: :published)
+    create(:post, feed: feed, feed_entry: entry3, status: :draft)
+
+    assert_equal 2, user.total_published_posts_count
+  end
+
+  test "#most_recent_post_published_at returns timestamp of most recent published post" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    entry1 = create(:feed_entry, feed: feed)
+    entry2 = create(:feed_entry, feed: feed)
+    entry3 = create(:feed_entry, feed: feed)
+    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 3.days.ago)
+    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago)
+    create(:post, feed: feed, feed_entry: entry3, status: :draft, published_at: Time.current)
+
+    assert_in_delta 1.day.ago.to_i, user.most_recent_post_published_at.to_i, 1
+  end
+
+  test "#most_recent_post_published_at returns nil when no published posts" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    entry = create(:feed_entry, feed: feed)
+    create(:post, feed: feed, feed_entry: entry, status: :draft)
+
+    assert_nil user.most_recent_post_published_at
+  end
+
+  test "#average_posts_per_day_last_week calculates average correctly" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    entry1 = create(:feed_entry, feed: feed)
+    entry2 = create(:feed_entry, feed: feed)
+    entry3 = create(:feed_entry, feed: feed)
+    create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
+    create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
+    create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
+
+    assert_equal 0.3, user.average_posts_per_day_last_week
+  end
+
+  test "#average_posts_per_day_last_week returns 0.0 when no posts" do
+    user = create(:user)
+
+    assert_equal 0.0, user.average_posts_per_day_last_week
+  end
 end
