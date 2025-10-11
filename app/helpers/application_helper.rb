@@ -42,7 +42,9 @@ module ApplicationHelper
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 
-  def sortable_header(column:, title:, current_sort:, current_direction:, path_params: {})
+  def sortable_header(column:, title:, path_params: {})
+    current_sort = params[:sort] || controller.default_sort_column
+    current_direction = params[:direction] || controller.default_sort_direction
     direction = current_sort == column ? current_direction : nil
 
     next_direction = if current_sort == column

@@ -8,8 +8,6 @@
             <%= sortable_header(
               column: "feed",
               title: "Feed",
-              current_sort: params[:sort] || controller.default_sort_column,
-              current_direction: params[:direction] || controller.default_sort_direction,
               path_params: { feed_id: params[:feed_id] }
             ) %>
           </th>
@@ -18,8 +16,6 @@
           <%= sortable_header(
             column: "published",
             title: icon("calendar3"),
-            current_sort: params[:sort] || controller.default_sort_column,
-            current_direction: params[:direction] || controller.default_sort_direction,
             path_params: { feed_id: params[:feed_id] }
           ) %>
         </th>
@@ -27,8 +23,6 @@
           <%= sortable_header(
             column: "attachments",
             title: icon("paperclip"),
-            current_sort: params[:sort] || controller.default_sort_column,
-            current_direction: params[:direction] || controller.default_sort_direction,
             path_params: { feed_id: params[:feed_id] }
           ) %>
         </th>
@@ -36,8 +30,6 @@
           <%= sortable_header(
             column: "comments",
             title: icon("chat-dots"),
-            current_sort: params[:sort] || controller.default_sort_column,
-            current_direction: params[:direction] || controller.default_sort_direction,
             path_params: { feed_id: params[:feed_id] }
           ) %>
         </th>
@@ -45,8 +37,6 @@
           <%= sortable_header(
             column: "status",
             title: icon("info-circle"),
-            current_sort: params[:sort] || controller.default_sort_column,
-            current_direction: params[:direction] || controller.default_sort_direction,
             path_params: { feed_id: params[:feed_id] }
           ) %>
         </th>

@@ -10,49 +10,19 @@
           <thead>
             <tr>
               <th>
-                <%= sortable_header(
-                  column: "name",
-                  title: "Name",
-                  current_sort: params[:sort] || controller.default_sort_column,
-                  current_direction: params[:direction] || controller.default_sort_direction,
-                  path_params: {}
-                ) %>
+                <%= sortable_header(column: "name", title: "Name") %>
               </th>
               <th>
-                <%= sortable_header(
-                  column: "status",
-                  title: "Status",
-                  current_sort: params[:sort] || controller.default_sort_column,
-                  current_direction: params[:direction] || controller.default_sort_direction,
-                  path_params: {}
-                ) %>
+                <%= sortable_header(column: "status", title: "Status") %>
               </th>
               <th>
-                <%= sortable_header(
-                  column: "target_group",
-                  title: "Target Group",
-                  current_sort: params[:sort] || controller.default_sort_column,
-                  current_direction: params[:direction] || controller.default_sort_direction,
-                  path_params: {}
-                ) %>
+                <%= sortable_header(column: "target_group", title: "Target Group") %>
               </th>
               <th>
-                <%= sortable_header(
-                  column: "last_refresh",
-                  title: "Last Refresh",
-                  current_sort: params[:sort] || controller.default_sort_column,
-                  current_direction: params[:direction] || controller.default_sort_direction,
-                  path_params: {}
-                ) %>
+                <%= sortable_header(column: "last_refresh", title: "Last Refresh") %>
               </th>
               <th>
-                <%= sortable_header(
-                  column: "recent_post",
-                  title: "Recent Post",
-                  current_sort: params[:sort] || controller.default_sort_column,
-                  current_direction: params[:direction] || controller.default_sort_direction,
-                  path_params: {}
-                ) %>
+                <%= sortable_header(column: "recent_post", title: "Recent Post") %>
               </th>
             </tr>
           </thead>
