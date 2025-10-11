@@ -298,9 +298,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
   test "pagination should preserve sort parameters" do
     sign_in_as(user)
-    26.times { |i| create(:post, feed: feed, content: "Post #{i}") }
+    3.times { |i| create(:post, feed: feed, content: "Post #{i}") }
 
-    get posts_url(sort: "feed", direction: "asc")
+    get posts_url(sort: "feed", direction: "asc", per_page: 2)
     assert_response :success
     assert_select ".pagination a[href*='sort=feed']"
     assert_select ".pagination a[href*='direction=asc']"
