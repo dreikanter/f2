@@ -63,19 +63,19 @@ class Feed < ApplicationRecord
   end
 
   # Resolves and returns the loader class for this feed
-  # @return [Class, nil] the loader class
+  # @return [Class] the loader class
   def loader_class
     FeedProfile.loader_class_for(feed_profile_key)
   end
 
   # Resolves and returns the processor class for this feed
-  # @return [Class, nil] the processor class
+  # @return [Class] the processor class
   def processor_class
     FeedProfile.processor_class_for(feed_profile_key)
   end
 
   # Resolves and returns the normalizer class for this feed
-  # @return [Class, nil] the normalizer class
+  # @return [Class] the normalizer class
   def normalizer_class
     FeedProfile.normalizer_class_for(feed_profile_key)
   end

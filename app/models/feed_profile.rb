@@ -21,28 +21,22 @@ class FeedProfile
 
   # Resolves and returns the loader class for a given profile key
   # @param key [String] the profile key
-  # @return [Class, nil] the loader class or nil if key is invalid
+  # @return [Class] the loader class
   def self.loader_class_for(key)
-    config = PROFILES[key]
-    return nil unless config
-    ClassResolver.resolve("Loader", config[:loader])
+    ClassResolver.resolve("Loader", PROFILES.dig(key, :loader))
   end
 
   # Resolves and returns the processor class for a given profile key
   # @param key [String] the profile key
-  # @return [Class, nil] the processor class or nil if key is invalid
+  # @return [Class] the processor class
   def self.processor_class_for(key)
-    config = PROFILES[key]
-    return nil unless config
-    ClassResolver.resolve("Processor", config[:processor])
+    ClassResolver.resolve("Processor", PROFILES.dig(key, :processor))
   end
 
   # Resolves and returns the normalizer class for a given profile key
   # @param key [String] the profile key
-  # @return [Class, nil] the normalizer class or nil if key is invalid
+  # @return [Class] the normalizer class
   def self.normalizer_class_for(key)
-    config = PROFILES[key]
-    return nil unless config
-    ClassResolver.resolve("Normalizer", config[:normalizer])
+    ClassResolver.resolve("Normalizer", PROFILES.dig(key, :normalizer))
   end
 end
