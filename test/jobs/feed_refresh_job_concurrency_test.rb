@@ -2,16 +2,12 @@ require "test_helper"
 
 class FeedRefreshJobConcurrencyTest < ActiveJob::TestCase
   def feed
-    @feed ||= begin
-      profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
-      create(:feed, feed_profile: profile)
-    end
+    @feed ||= create(:feed, feed_profile_key: "rss")
   end
 
   test "allows concurrent processing of different feeds" do
-    profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
-    feed1 = create(:feed, feed_profile: profile)
-    feed2 = create(:feed, feed_profile: profile)
+    feed1 = create(:feed, feed_profile_key: "rss")
+    feed2 = create(:feed, feed_profile_key: "rss")
 
     execution_tracker = {}
 

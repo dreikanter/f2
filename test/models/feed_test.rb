@@ -44,10 +44,10 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.errors.of_kind?(:cron_expression, :blank)
   end
 
-  test "should require feed_profile" do
+  test "should require feed_profile_key" do
     feed = build(:feed, :without_feed_profile)
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:feed_profile, :blank)
+    assert feed.errors.of_kind?(:feed_profile_key, :blank)
   end
 
   test "should have disabled state by default" do
@@ -225,30 +225,26 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has no feed_profile" do
-    feed = build(:feed)
-    feed.feed_profile = nil
+  test "can_be_enabled? returns false when feed has no feed_profile_key" do
+    feed = build(:feed, :without_feed_profile)
 
     assert_not feed.can_be_enabled?
   end
 
   test "processor_class resolves correct processor class" do
-    profile = create(:feed_profile, processor: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Processor::RssProcessor, feed.processor_class
   end
 
   test "normalizer_class resolves correct normalizer class" do
-    profile = create(:feed_profile, normalizer: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Normalizer::RssNormalizer, feed.normalizer_class
   end
 
   test "processor_instance creates processor with feed and raw data" do
-    profile = create(:feed_profile, processor: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
     raw_data = "<rss><item><title>Test</title></item></rss>"
 
     processor = feed.processor_instance(raw_data)
@@ -257,35 +253,12 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "normalizer_instance creates normalizer with feed entry" do
-    profile = create(:feed_profile, normalizer: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
     feed_entry = create(:feed_entry, feed: feed)
 
     normalizer = feed.normalizer_instance(feed_entry)
 
     assert_instance_of Normalizer::RssNormalizer, normalizer
-  end
-
-  test "loader_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-
-    assert_nil feed.loader_instance
-  end
-
-  test "processor_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-
-    assert_nil feed.processor_instance("raw data")
-  end
-
-  test "normalizer_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-    feed_entry = build(:feed_entry)
-
-    assert_nil feed.normalizer_instance(feed_entry)
   end
 
   test "posts_per_day returns empty hash when no posts exist" do

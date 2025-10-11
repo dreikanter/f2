@@ -5,12 +5,8 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def feed_preview
-    @feed_preview ||= create(:feed_preview, user: user, feed_profile: feed_profile, status: :pending)
+    @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss", status: :pending)
   end
 
   def workflow

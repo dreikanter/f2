@@ -2,10 +2,7 @@ require "test_helper"
 
 class FeedRefreshEventTest < ActiveSupport::TestCase
   def feed
-    @feed ||= begin
-      profile = create(:feed_profile, loader: "http", processor: "rss", normalizer: "rss")
-      create(:feed, feed_profile: profile)
-    end
+    @feed ||= create(:feed, feed_profile_key: "rss")
   end
 
   test "create_stats creates event with proper attributes" do
