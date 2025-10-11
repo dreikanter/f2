@@ -62,4 +62,16 @@ class FeedProfileTest < ActiveSupport::TestCase
   test "normalizer_class_for raises ArgumentError for nil key" do
     assert_raises(ArgumentError) { FeedProfile.normalizer_class_for(nil) }
   end
+
+  test "loader_class_for returns Loader::HttpLoader for rss profile" do
+    assert_equal Loader::HttpLoader, FeedProfile.loader_class_for("rss")
+  end
+
+  test "processor_class_for returns Processor::RssProcessor for rss profile" do
+    assert_equal Processor::RssProcessor, FeedProfile.processor_class_for("rss")
+  end
+
+  test "normalizer_class_for returns Normalizer::RssNormalizer for rss profile" do
+    assert_equal Normalizer::RssNormalizer, FeedProfile.normalizer_class_for("rss")
+  end
 end
