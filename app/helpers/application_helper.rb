@@ -51,11 +51,8 @@ module ApplicationHelper
       controller.default_sort_direction
     end
 
-    css_class = ["sortable"]
-    css_class << "sorted-#{direction}" if direction
-
     link_to title, path_params.merge(sort: column, direction: next_direction),
-            class: css_class.join(" "),
+            class: class_names("sortable", "sorted-#{direction}": direction.present?),
             data: { turbo_action: "replace" }
   end
 end
