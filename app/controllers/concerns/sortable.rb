@@ -28,7 +28,10 @@ module Sortable
   end
 
   def sort_order
-    Arel.sql("#{sortable_columns_config[sort_column]} #{sort_direction}")
+    column_sql = sortable_columns_config[sort_column]
+    arel_column = Arel.sql(column_sql)
+
+    sort_direction == "asc" ? arel_column.asc : arel_column.desc
   end
 
   def next_sort_direction(column)
