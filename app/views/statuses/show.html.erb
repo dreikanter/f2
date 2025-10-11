@@ -10,29 +10,31 @@
         <%= number_with_delimiter(@user.total_feeds_count) %>
       </div>
 
-      <div class="list-group-item">
-        <strong>Total imported posts:</strong>
-        <%= number_with_delimiter(@user.total_imported_posts_count) %>
-      </div>
+      <% if @user.total_imported_posts_count > 0 %>
+        <div class="list-group-item">
+          <strong>Total imported posts:</strong>
+          <%= number_with_delimiter(@user.total_imported_posts_count) %>
+        </div>
 
-      <div class="list-group-item">
-        <strong>Total published posts:</strong>
-        <%= number_with_delimiter(@user.total_published_posts_count) %>
-      </div>
+        <div class="list-group-item">
+          <strong>Total published posts:</strong>
+          <%= number_with_delimiter(@user.total_published_posts_count) %>
+        </div>
+      <% end %>
 
-      <div class="list-group-item">
-        <strong>Most recent post publication:</strong>
-        <% if @user.most_recent_post_published_at %>
+      <% if @user.most_recent_post_published_at %>
+        <div class="list-group-item">
+          <strong>Most recent post publication:</strong>
           <%= time_ago_in_words(@user.most_recent_post_published_at) %> ago
-        <% else %>
-          never
-        <% end %>
-      </div>
+        </div>
+      <% end %>
 
-      <div class="list-group-item">
-        <strong>Average posts per day (last week):</strong>
-        <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
-      </div>
+      <% if @user.total_imported_posts_count > 0 %>
+        <div class="list-group-item">
+          <strong>Average posts per day (last week):</strong>
+          <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

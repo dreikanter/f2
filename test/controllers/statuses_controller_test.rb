@@ -66,12 +66,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".list-group-item", /Most recent post publication:\s+1 day ago/
   end
 
-  test "displays never when no published posts" do
+  test "hides most recent post publication when no published posts" do
     sign_in_as user
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Most recent post publication:\s+never/
+    assert_select ".list-group-item", { text: /Most recent post publication/, count: 0 }
   end
 
   test "displays average posts per day for last week" do
@@ -85,5 +85,24 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select ".list-group-item", /Average posts per day \(last week\):\s+0\.3/
+  end
+
+  test "hides average posts per day when no posts" do
+    sign_in_as user
+
+    get status_path
+    assert_response :success
+    assert_select ".list-group-item", { text: /Average posts per day/, count: 0 }
+  end
+
+  test "hides post statistics when no posts" do
+    sign_in_as user
+
+    get status_path
+    assert_response :success
+    assert_select ".list-group-item", { text: /Total imported posts/, count: 0 }
+    assert_select ".list-group-item", { text: /Total published posts/, count: 0 }
+    assert_select ".list-group-item", { text: /Most recent post publication/, count: 0 }
+    assert_select ".list-group-item", { text: /Average posts per day/, count: 0 }
   end
 end
