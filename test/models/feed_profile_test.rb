@@ -63,14 +63,4 @@ class FeedProfileTest < ActiveSupport::TestCase
     profile = FeedProfile.new("invalid")
     assert_nil profile.normalizer_class
   end
-
-  test "display_name returns translated name" do
-    profile = FeedProfile.new("rss")
-    assert_equal "RSS Feed", profile.display_name
-  end
-
-  test "display_name returns translated name for xkcd" do
-    profile = FeedProfile.new("xkcd")
-    assert_equal "XKCD Comics", profile.display_name
-  end
 end

@@ -23,8 +23,7 @@ module ComponentOptionsHelper
 
   def feed_profile_options
     FeedProfile.all.map do |key|
-      profile = FeedProfile.new(key)
-      [profile.display_name, key]
+      [t("feed_profiles.#{key}"), key]
     end
   end
 

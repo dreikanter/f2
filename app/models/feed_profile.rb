@@ -67,10 +67,4 @@ class FeedProfile
     return nil unless valid?
     ClassResolver.resolve("Normalizer", @config[:normalizer])
   end
-
-  # Returns the display name for this profile
-  # @return [String] the translated display name
-  def display_name
-    I18n.t("feed_profiles.#{key}", default: key.titleize)
-  end
 end
