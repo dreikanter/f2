@@ -4,7 +4,15 @@
 
 <div class="row">
   <div class="col-12">
-    <div class="list-group">
+    <% if @user.total_feeds_count == 0 %>
+      <div class="alert alert-info">
+        <p class="mb-2">You haven't created any feeds yet.</p>
+        <p class="mb-0">
+          <%= link_to "Add your first feed", new_feed_path, class: "btn btn-primary btn-sm" %>
+        </p>
+      </div>
+    <% else %>
+      <div class="list-group">
       <div class="list-group-item">
         <strong>Total feeds:</strong>
         <%= number_with_delimiter(@user.total_feeds_count) %>
@@ -35,6 +43,7 @@
           <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
         </div>
       <% end %>
-    </div>
+      </div>
+    <% end %>
   </div>
 </div>

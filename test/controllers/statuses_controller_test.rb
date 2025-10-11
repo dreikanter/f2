@@ -105,4 +105,24 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".list-group-item", { text: /Most recent post publication/, count: 0 }
     assert_select ".list-group-item", { text: /Average posts per day/, count: 0 }
   end
+
+  test "displays empty state when no feeds" do
+    sign_in_as user
+
+    get status_path
+    assert_response :success
+    assert_select ".alert-info", /You haven't created any feeds yet/
+    assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
+    assert_select ".list-group", count: 0
+  end
+
+  test "displays statistics when feeds exist" do
+    sign_in_as user
+    create(:feed, user: user)
+
+    get status_path
+    assert_response :success
+    assert_select ".list-group-item", /Total feeds:\s+1/
+    assert_select ".alert-info", count: 0
+  end
 end
