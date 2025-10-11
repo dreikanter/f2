@@ -64,26 +64,18 @@ class FeedPreviewsController < ApplicationController
   private
 
   def create_and_enqueue_preview(url:, feed_profile_key:)
-    feed_preview = FeedPreview.for_cache_key(url, feed_profile_key)
-                              .where(user: Current.user)
-                              .first
+    feed_preview = FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).first
+    return feed_preview if feed_preview && !feed_preview.failed?
 
-    if feed_preview
-      # Reprocess if failed, otherwise return existing
-      if feed_preview.failed?
-        feed_preview.update!(status: :pending)
-        FeedPreviewJob.perform_later(feed_preview.id)
-      end
-    else
-      feed_preview = FeedPreview.create!(
-        url: url,
-        feed_profile_key: feed_profile_key,
-        user_id: Current.user.id,
-        status: :pending
-      )
+    feed_preview ||= FeedPreview.create!(
+      url: url,
+      feed_profile_key: feed_profile_key,
+      user_id: Current.user.id,
+      status: :pending
+    )
 
-      FeedPreviewJob.perform_later(feed_preview.id)
-    end
+    feed_preview.update!(status: :pending) if feed_preview.failed?
+    FeedPreviewJob.perform_later(feed_preview.id)
 
     feed_preview
   end
