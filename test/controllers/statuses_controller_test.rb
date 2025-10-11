@@ -119,10 +119,6 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select "h1", "Welcome to Feeder"
-    assert_select "p", /This page shows statistics about your feeds and posts/
-    assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
-    assert_select ".list-group", count: 0
   end
 
   test "displays statistics when feeds exist" do

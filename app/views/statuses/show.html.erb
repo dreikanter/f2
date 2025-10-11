@@ -6,13 +6,27 @@
   <div class="row">
     <div class="col-12">
       <p>
-        This page shows statistics about your feeds and posts.
+        Feeder helps you automatically share content from your favorite sources to Freefeed.
       </p>
       <p>
-        Get started by adding your first feed to track and repost content to Freefeed.
+        <strong>Getting started is easy:</strong>
       </p>
+      <ol class="mb-4">
+        <li class="mb-2">
+          First, grab a Freefeed access token from your account settings
+        </li>
+        <li class="mb-2">
+          Add it here so Feeder can post on your behalf
+        </li>
+        <li class="mb-2">
+          Then create your first feed — tell Feeder which content you want to share
+        </li>
+        <li>
+          Sit back and let Feeder automatically post new items to your Freefeed timeline
+        </li>
+      </ol>
       <p>
-        <%= link_to "Add your first feed", new_feed_path, class: "btn btn-primary" %>
+        <%= link_to "Add Freefeed token", settings_access_tokens_path, class: "btn btn-primary me-2" %>
       </p>
     </div>
   </div>
