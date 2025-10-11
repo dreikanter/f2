@@ -12,4 +12,6 @@ reviewed:
   test/models/feed_preview_test.rb: 776a82e3956626aa1587bea62b9e92f8149025d6
   app/controllers/statuses_controller.rb: 6d820378569806e41e3d19c873bef94da049512a
   app/views/layouts/application.html.erb: 490bc86b4a627f190485b141415f7ded881eba9a
-  app/models/feed_profile.rb: 51c202ef1977c3d4c9e4954c3287fa1e3b9bbf21
+  app/models/feed_profile.rb: 3603d5567066dd203b9b202459dc8b3acd02000d
+  app/helpers/component_options_helper.rb: caf9e81109ca8a6178e5982a7c7e7e037531f587
+  app/controllers/feed_previews_controller.rb: 0d64168f04d8a1f82d3a96d3354fa0583dcdb9d5
