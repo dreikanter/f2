@@ -41,4 +41,20 @@ module ApplicationHelper
     highlighted_code = formatter.format(lexer.lex(json_string))
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
+
+  def sortable_header(column:, title:, current_sort:, current_direction:, path_params: {})
+    direction = current_sort == column ? current_direction : nil
+    next_direction = if current_sort == column
+      current_direction == "asc" ? "desc" : "asc"
+    else
+      controller.default_sort_direction
+    end
+
+    css_class = ["sortable"]
+    css_class << "sorted-#{direction}" if direction
+
+    link_to title, path_params.merge(sort: column, direction: next_direction),
+            class: css_class.join(" "),
+            data: { turbo_action: "replace" }
+  end
 end

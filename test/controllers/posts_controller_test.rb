@@ -179,4 +179,130 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     delete post_url(draft_post)
     assert_redirected_to root_path
   end
+
+  test "should sort posts by feed name ascending" do
+    sign_in_as(user)
+    feed_a = create(:feed, user: user, name: "A Feed")
+    feed_z = create(:feed, user: user, name: "Z Feed")
+    create(:post, feed: feed_z, content: "Post Z")
+    create(:post, feed: feed_a, content: "Post A")
+
+    get posts_url(sort: "feed", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_a = response_body.index("Post A")
+    pos_z = response_body.index("Post Z")
+    assert pos_a < pos_z, "Expected Post A to appear before Post Z"
+  end
+
+  test "should sort posts by feed name descending" do
+    sign_in_as(user)
+    feed_a = create(:feed, user: user, name: "A Feed")
+    feed_z = create(:feed, user: user, name: "Z Feed")
+    create(:post, feed: feed_z, content: "Post Z")
+    create(:post, feed: feed_a, content: "Post A")
+
+    get posts_url(sort: "feed", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_a = response_body.index("Post A")
+    pos_z = response_body.index("Post Z")
+    assert pos_z < pos_a, "Expected Post Z to appear before Post A"
+  end
+
+  test "should sort posts by published date ascending" do
+    sign_in_as(user)
+    old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
+    new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
+
+    get posts_url(sort: "published", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_old = response_body.index("Old post")
+    pos_new = response_body.index("New post")
+    assert pos_old < pos_new, "Expected old post to appear before new post"
+  end
+
+  test "should sort posts by published date descending" do
+    sign_in_as(user)
+    old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
+    new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
+
+    get posts_url(sort: "published", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_old = response_body.index("Old post")
+    pos_new = response_body.index("New post")
+    assert pos_new < pos_old, "Expected new post to appear before old post"
+  end
+
+  test "should sort posts by status" do
+    sign_in_as(user)
+    draft_post = create(:post, :draft, feed: feed, content: "Draft post")
+    published_post = create(:post, :published, feed: feed, content: "Published post")
+
+    get posts_url(sort: "status", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_draft = response_body.index("Draft post")
+    pos_published = response_body.index("Published post")
+    assert pos_draft < pos_published, "Expected draft post to appear before published post"
+  end
+
+  test "should sort posts by attachments count" do
+    sign_in_as(user)
+    post_with_attachments = create(:post, :with_attachments, feed: feed, content: "Post with attachments")
+    post_without_attachments = create(:post, feed: feed, content: "Post without attachments")
+
+    get posts_url(sort: "attachments", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_with = response_body.index("Post with attachments")
+    pos_without = response_body.index("Post without attachments")
+    assert pos_with < pos_without, "Expected post with attachments to appear first"
+  end
+
+  test "should sort posts by comments count" do
+    sign_in_as(user)
+    post_with_comments = create(:post, :with_comments, feed: feed, content: "Post with comments")
+    post_without_comments = create(:post, feed: feed, content: "Post without comments")
+
+    get posts_url(sort: "comments", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_with = response_body.index("Post with comments")
+    pos_without = response_body.index("Post without comments")
+    assert pos_with < pos_without, "Expected post with comments to appear first"
+  end
+
+  test "should use default sort when no sort parameter provided" do
+    sign_in_as(user)
+    old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
+    new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
+
+    get posts_url
+    assert_response :success
+
+    response_body = response.body
+    pos_old = response_body.index("Old post")
+    pos_new = response_body.index("New post")
+    assert pos_new < pos_old, "Expected new post to appear before old post (default sort)"
+  end
+
+  test "pagination should preserve sort parameters" do
+    sign_in_as(user)
+    26.times { |i| create(:post, feed: feed, content: "Post #{i}") }
+
+    get posts_url(sort: "feed", direction: "asc")
+    assert_response :success
+    assert_select ".pagination a[href*='sort=feed']"
+    assert_select ".pagination a[href*='direction=asc']"
+  end
 end

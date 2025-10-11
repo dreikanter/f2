@@ -1,5 +1,14 @@
 class PostsController < ApplicationController
   include Pagination
+  include Sortable
+
+  sortable_by({
+    "feed" => "feeds.name",
+    "published" => "posts.published_at",
+    "status" => "posts.status",
+    "attachments" => "COALESCE(array_length(posts.attachment_urls, 1), 0)",
+    "comments" => "COALESCE(array_length(posts.comments, 1), 0)"
+  }, default_column: :published, default_direction: :desc)
 
   def index
     authorize Post
@@ -35,7 +44,7 @@ class PostsController < ApplicationController
   private
 
   def pagination_scope
-    scope = policy_scope(Post).includes(:feed).order(published_at: :desc)
+    scope = policy_scope(Post).preload(feed: :access_token).order(sort_order)
     scope = scope.where(feed_id: params[:feed_id]) if params[:feed_id].present?
     scope
   end
