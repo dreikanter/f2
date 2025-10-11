@@ -46,6 +46,6 @@ class Settings::EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_confirmation_sent
-    redirect_to settings_path, notice: "Email confirmation sent to #{new_email}. Please check your email."
+    redirect_to settings_path, notice: "Email confirmation sent to <b>#{new_email}</b>."
   end
 end

@@ -1,6 +1,6 @@
 <%# locals: (feed:) %>
 
-<div class="card mt-3" data-controller="form-collapse">
+<div class="card mt-3" data-controller="form-collapse autofocus">
   <div class="card-header">
     <h5 class="card-title mb-0">Edit Scheduling</h5>
   </div>
@@ -23,7 +23,7 @@
     <%= form.select :cron_expression,
         options_for_select(cron_expression_options, feed.cron_expression),
         { prompt: "Choose schedule..." },
-        { class: "form-select", required: true } %>
+        { class: "form-select", required: true, autofocus: true } %>
     <div class="form-text">Select how often the feed should be refreshed</div>
     <div class="invalid-feedback">Select a schedule.</div>
   </div>

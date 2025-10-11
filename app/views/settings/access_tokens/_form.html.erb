@@ -15,7 +15,8 @@
       <%= form.label :name, class: "form-label fw-bold" %>
       <%= form.text_field :name,
                           class: "form-control #{'is-invalid' if access_token.errors[:name].any?}",
-                          placeholder: "e.g., New Token (2)" %>
+                          placeholder: "e.g., New Token (2)",
+                          autofocus: true %>
       <div class="form-text">Choose a descriptive name to identify this token</div>
     </div>
 
