@@ -62,31 +62,22 @@ class Feed < ApplicationRecord
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
 
-  # Returns the profile configuration hash
-  # @return [Hash, nil] configuration with loader, processor, normalizer keys
-  def profile_config
-    @profile_config ||= FeedProfile.for(feed_profile_key)
-  end
-
   # Resolves and returns the loader class for this feed
   # @return [Class, nil] the loader class
   def loader_class
-    return nil unless profile_config
-    ClassResolver.resolve("Loader", profile_config[:loader])
+    FeedProfile.loader_class_for(feed_profile_key)
   end
 
   # Resolves and returns the processor class for this feed
   # @return [Class, nil] the processor class
   def processor_class
-    return nil unless profile_config
-    ClassResolver.resolve("Processor", profile_config[:processor])
+    FeedProfile.processor_class_for(feed_profile_key)
   end
 
   # Resolves and returns the normalizer class for this feed
   # @return [Class, nil] the normalizer class
   def normalizer_class
-    return nil unless profile_config
-    ClassResolver.resolve("Normalizer", profile_config[:normalizer])
+    FeedProfile.normalizer_class_for(feed_profile_key)
   end
 
   def can_be_enabled?

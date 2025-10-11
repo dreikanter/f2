@@ -17,32 +17,40 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test "all PROFILES have resolvable loader classes" do
     FeedProfile::PROFILES.each do |key, config|
-      profile = FeedProfile.new(key)
-      assert profile.loader_class.present?, "Profile '#{key}' should have a resolvable loader class"
-      assert profile.loader_class < Loader::Base, "Profile '#{key}' loader should inherit from Loader::Base"
+      loader_class = FeedProfile.loader_class_for(key)
+      assert loader_class.present?, "Profile '#{key}' should have a resolvable loader class"
+      assert loader_class < Loader::Base, "Profile '#{key}' loader should inherit from Loader::Base"
     end
   end
 
   test "all PROFILES have resolvable processor classes" do
     FeedProfile::PROFILES.each do |key, config|
-      profile = FeedProfile.new(key)
-      assert profile.processor_class.present?, "Profile '#{key}' should have a resolvable processor class"
-      assert profile.processor_class < Processor::Base, "Profile '#{key}' processor should inherit from Processor::Base"
+      processor_class = FeedProfile.processor_class_for(key)
+      assert processor_class.present?, "Profile '#{key}' should have a resolvable processor class"
+      assert processor_class < Processor::Base, "Profile '#{key}' processor should inherit from Processor::Base"
     end
   end
 
   test "all PROFILES have resolvable normalizer classes" do
     FeedProfile::PROFILES.each do |key, config|
-      profile = FeedProfile.new(key)
-      assert profile.normalizer_class.present?, "Profile '#{key}' should have a resolvable normalizer class"
-      assert profile.normalizer_class < Normalizer::Base, "Profile '#{key}' normalizer should inherit from Normalizer::Base"
+      normalizer_class = FeedProfile.normalizer_class_for(key)
+      assert normalizer_class.present?, "Profile '#{key}' should have a resolvable normalizer class"
+      assert normalizer_class < Normalizer::Base, "Profile '#{key}' normalizer should inherit from Normalizer::Base"
     end
   end
 
-  test "initialize raises ArgumentError for invalid profile key" do
-    error = assert_raises(ArgumentError) do
-      FeedProfile.new("invalid")
-    end
-    assert_equal "Unknown feed profile: invalid", error.message
+  test "loader_class_for returns nil for invalid key" do
+    assert_nil FeedProfile.loader_class_for("invalid")
+    assert_nil FeedProfile.loader_class_for(nil)
+  end
+
+  test "processor_class_for returns nil for invalid key" do
+    assert_nil FeedProfile.processor_class_for("invalid")
+    assert_nil FeedProfile.processor_class_for(nil)
+  end
+
+  test "normalizer_class_for returns nil for invalid key" do
+    assert_nil FeedProfile.normalizer_class_for("invalid")
+    assert_nil FeedProfile.normalizer_class_for(nil)
   end
 end
