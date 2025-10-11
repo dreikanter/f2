@@ -54,6 +54,7 @@ class FeedPreviewsController < ApplicationController
       url: existing_preview.url,
       feed_profile_key: existing_preview.feed_profile_key
     )
+
     redirect_to feed_preview_path(feed_preview)
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Preview not found."
@@ -64,19 +65,32 @@ class FeedPreviewsController < ApplicationController
   private
 
   def create_and_enqueue_preview(url:, feed_profile_key:)
-    feed_preview = FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).first
-    return feed_preview if feed_preview && !feed_preview.failed?
+    existing_preview = FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).first
 
-    feed_preview ||= FeedPreview.create!(
+    unless existing_preview
+      preview = create_new_preview(url, feed_profile_key)
+      enqueue_preview_job(preview)
+      return preview
+    end
+
+    if existing_preview.failed?
+      existing_preview.update!(status: :pending)
+      enqueue_preview_job(existing_preview)
+    end
+
+    existing_preview
+  end
+
+  def create_new_preview(url, feed_profile_key)
+    FeedPreview.create!(
       url: url,
       feed_profile_key: feed_profile_key,
       user_id: Current.user.id,
       status: :pending
     )
+  end
 
-    feed_preview.update!(status: :pending) if feed_preview.failed?
-    FeedPreviewJob.perform_later(feed_preview.id)
-
-    feed_preview
+  def enqueue_preview_job(preview)
+    FeedPreviewJob.perform_later(preview.id)
   end
 end
