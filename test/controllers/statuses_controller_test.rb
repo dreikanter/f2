@@ -111,7 +111,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".alert-info", /You haven't created any feeds yet/
+    assert_select ".alert h5", "Welcome to Feeder"
+    assert_select ".alert", /This page shows statistics about your feeds and posts/
     assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
     assert_select ".list-group", count: 0
   end
@@ -123,6 +124,6 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select ".list-group-item", /Total feeds:\s+1/
-    assert_select ".alert-info", count: 0
+    assert_select ".alert h5", { text: "Welcome to Feeder", count: 0 }
   end
 end
