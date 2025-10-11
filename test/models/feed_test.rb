@@ -192,66 +192,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "enabled", reloaded_feed.state
   end
 
-  test "should auto-disable feed when trying to enable without access token" do
-    feed = build(:feed, :without_access_token, state: :enabled)
-
-    assert feed.valid?
-    assert_equal "disabled", feed.state
-  end
-
-  test "should allow disabled feeds without access token" do
-    user = create(:user)
-    feed = build(:feed, :without_access_token, state: :disabled, user: user)
-    assert feed.valid?
-  end
-
-  test "should allow updating existing feed to disabled with nil access token" do
-    feed = create(:feed)
-    assert feed.update!(state: :disabled, access_token: nil)
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should auto-disable enabled feed when updated without active token" do
-    feed = create(:feed, state: :enabled)
-
-    feed.update!(access_token: nil)
-
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should auto-disable enabled feed when updated with inactive token" do
-    inactive_token = create(:access_token, :inactive)
-    feed = create(:feed, state: :enabled)
-
-    feed.update!(access_token: inactive_token)
-
-    assert_equal "disabled", feed.state
-    assert_equal inactive_token, feed.access_token
-  end
-
-  test "should not auto-disable disabled feed when saved without active token" do
-    feed = create(:feed, state: :disabled)
-
-    feed.access_token = nil
-    feed.save!
-
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should not auto-disable enabled feed when saved with active token" do
-    active_token = create(:access_token, :active)
-    feed = create(:feed, state: :enabled)
-
-    feed.access_token = active_token
-    feed.save!
-
-    assert_equal "enabled", feed.state
-    assert_equal active_token, feed.access_token
-  end
-
   test "can_be_enabled? returns true when feed has active access token and target group" do
     access_token = create(:access_token, :active)
     feed = create(:feed, access_token: access_token, target_group: "test_group")

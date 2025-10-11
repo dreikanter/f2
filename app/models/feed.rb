@@ -55,9 +55,6 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  before_validation :auto_disable_without_active_token
-  before_validation :auto_disable_with_invalid_profile
-
   def feed_profile_present?
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end
@@ -131,20 +128,6 @@ class Feed < ApplicationRecord
   end
 
   private
-
-  def auto_disable_without_active_token
-    return unless enabled?
-    return if can_be_enabled?
-
-    self.state = :disabled
-  end
-
-  def auto_disable_with_invalid_profile
-    return unless enabled?
-    return if feed_profile_present?
-
-    self.state = :disabled
-  end
 
   def cron_expression_is_valid
     return if cron_expression.blank?
