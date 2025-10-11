@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :feed_preview do
     association :user
-    association :feed_profile
+    feed_profile_key { "rss" }
     sequence(:url) { |n| "https://example#{n}.com/feed.xml" }
     status { :pending }
     data { nil }

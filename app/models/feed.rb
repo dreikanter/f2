@@ -6,11 +6,10 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
-  belongs_to :feed_profile, optional: true
-  has_one :feed_schedule, dependent: :destroy
-  has_many :events, as: :subject, dependent: :destroy
 
-  delegate :loader, :processor, :normalizer, :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
+  has_one :feed_schedule, dependent: :destroy
+
+  has_many :events, as: :subject, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
@@ -29,7 +28,8 @@ class Feed < ApplicationRecord
             }
 
   validates :cron_expression, presence: true, if: :enabled?
-  validates :feed_profile, presence: true
+  validates :feed_profile_key, presence: true
+  validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
   normalizes :name, with: ->(name) { name.to_s.strip }
   normalizes :url, with: ->(url) { url.to_s.strip }
@@ -55,42 +55,54 @@ class Feed < ApplicationRecord
       .where(state: :enabled)
   }
 
-  before_validation :auto_disable_without_active_token
+  def feed_profile_present?
+    feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
+  end
+
+  # Resolves and returns the loader class for this feed
+  # @return [Class] the loader class
+  def loader_class
+    FeedProfile.loader_class_for(feed_profile_key)
+  end
+
+  # Resolves and returns the processor class for this feed
+  # @return [Class] the processor class
+  def processor_class
+    FeedProfile.processor_class_for(feed_profile_key)
+  end
+
+  # Resolves and returns the normalizer class for this feed
+  # @return [Class] the normalizer class
+  def normalizer_class
+    FeedProfile.normalizer_class_for(feed_profile_key)
+  end
 
   def can_be_enabled?
-    access_token&.active? && target_group.present? && feed_profile.present? && cron_expression.present?
+    access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
   def can_be_previewed?
-    url.present? && feed_profile.present?
-  end
-
-  def generate_unique_name!
-    return if name.present?
-
-    base_name = "Untitled"
-    counter = user.feeds.where("name LIKE ?", "#{base_name}%").count + 1
-    self.name = "#{base_name} #{counter}"
+    url.present? && feed_profile_present?
   end
 
   # Creates and returns a loader instance for this feed
   # @return [Loader::Base] loader instance
   def loader_instance
-    loader_class&.new(self)
+    loader_class.new(self)
   end
 
   # Creates and returns a processor instance for this feed
   # @param raw_data [String] raw feed data to process
   # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
-    processor_class&.new(self, raw_data)
+    processor_class.new(self, raw_data)
   end
 
   # Creates and returns a normalizer instance for the given feed entry
   # @param feed_entry [FeedEntry] the feed entry to normalize
   # @return [Normalizer::Base] normalizer instance
   def normalizer_instance(feed_entry)
-    normalizer_class&.new(feed_entry)
+    normalizer_class.new(feed_entry)
   end
 
   # Returns the number of posts per day for the specified date range
@@ -116,13 +128,6 @@ class Feed < ApplicationRecord
   end
 
   private
-
-  def auto_disable_without_active_token
-    return unless enabled?
-    return if can_be_enabled?
-
-    self.state = :disabled
-  end
 
   def cron_expression_is_valid
     return if cron_expression.blank?

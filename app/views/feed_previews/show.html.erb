@@ -10,7 +10,7 @@
   <a href="<%= @feed_preview.url %>" target="_blank" class="text-decoration-none">
     <%= @feed_preview.url %>
   </a>
-  (<%= @feed_preview.feed_profile.name %>)
+  (<%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %>)
 </div>
 
 <div id="preview-status">

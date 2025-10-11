@@ -5,12 +5,8 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     @user ||= create(:user)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def feed_preview
-    @feed_preview ||= create(:feed_preview, user: user, feed_profile: feed_profile)
+    @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss")
   end
 
   test "should be queued on default queue" do
@@ -40,7 +36,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
   test "should execute workflow when preview exists" do
     # Create a preview with a valid URL and stub the network request
-    valid_preview = create(:feed_preview, user: user, feed_profile: feed_profile, url: "http://example.com/feed.xml")
+    valid_preview = create(:feed_preview, user: user, feed_profile_key: "rss", url: "http://example.com/feed.xml")
 
     # Stub the HTTP request to avoid actual network calls with proper RSS format
     rss_content = <<~XML
@@ -78,7 +74,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     # Create a preview with URL that will pass validation but fail in processing
     failing_preview = create(:feed_preview,
                             user: user,
-                            feed_profile: feed_profile,
+                            feed_profile_key: "rss",
                             url: "http://example.com/will-fail.xml",
                             status: :processing)
 
@@ -112,7 +108,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
     # Create a preview that will cause the workflow to fail
     failing_preview = create(:feed_preview,
                             user: user,
-                            feed_profile: feed_profile,
+                            feed_profile_key: "rss",
                             url: "http://example.com/error.xml")
 
     # Stub the request to cause an error

@@ -24,8 +24,8 @@
   </div>
 
   <div class="mb-4">
-    <%= form.label :feed_profile_id, "Feed Profile", class: "form-label fw-bold" %>
-    <%= form.select :feed_profile_id, options_for_select(feed_profile_options, feed.feed_profile_id), { prompt: "Choose feed profile..." }, { class: "form-select", required: true } %>
+    <%= form.label :feed_profile_key, "Feed Profile", class: "form-label fw-bold" %>
+    <%= form.select :feed_profile_key, options_for_select(feed_profile_options, feed.feed_profile_key), { prompt: "Choose feed profile..." }, { class: "form-select", required: true } %>
     <div class="form-text">Select the processing configuration for this feed</div>
     <div class="invalid-feedback">Select a feed profile.</div>
   </div>

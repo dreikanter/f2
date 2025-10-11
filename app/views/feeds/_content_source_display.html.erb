@@ -12,8 +12,8 @@
     <%= feed.url %>
   </a>
 
-  <% if feed.feed_profile %>
-    (<%= feed.feed_profile.name %>)
+  <% if feed.feed_profile_key.present? %>
+    (<%= t("feed_profiles.#{feed.feed_profile_key}") %>)
   <% end %>
 <% else %>
   <span class="text-muted">not configured</span>

@@ -1,40 +1,42 @@
-class FeedProfile < ApplicationRecord
-  has_many :feeds, dependent: :nullify
-  has_many :feed_previews, dependent: :destroy
+# Feed profile configuration that defines how feeds are processed.
+#
+class FeedProfile
+  PROFILES = {
+    "rss" => { loader: "http", processor: "rss", normalizer: "rss" },
+    "xkcd" => { loader: "http", processor: "rss", normalizer: "xkcd" }
+  }.freeze
 
-  validates :name, presence: true, uniqueness: true,
-            length: { maximum: 100 },
-            format: { with: /\A[a-z\d\-_]+\z/, message: "must contain only lowercase letters, numbers, hyphens, and underscores" }
+  # Returns all available profile keys
+  # @return [Array<String>] list of profile keys
+  def self.all
+    PROFILES.keys
+  end
 
-  validates :loader, presence: true
-  validates :processor, presence: true
-  validates :normalizer, presence: true
+  # Checks if a profile key exists
+  # @param key [String] the profile key to check
+  # @return [Boolean] true if the profile exists
+  def self.exists?(key)
+    PROFILES.key?(key)
+  end
 
-  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
-
-  before_destroy :deactivate_related_feeds
-
-  # Resolves and returns the loader class for this profile
+  # Resolves and returns the loader class for a given profile key
+  # @param key [String] the profile key
   # @return [Class] the loader class
-  def loader_class
-    ClassResolver.resolve("Loader", loader)
+  def self.loader_class_for(key)
+    ClassResolver.resolve("Loader", PROFILES.dig(key, :loader))
   end
 
-  # Resolves and returns the processor class for this profile
+  # Resolves and returns the processor class for a given profile key
+  # @param key [String] the profile key
   # @return [Class] the processor class
-  def processor_class
-    ClassResolver.resolve("Processor", processor)
+  def self.processor_class_for(key)
+    ClassResolver.resolve("Processor", PROFILES.dig(key, :processor))
   end
 
-  # Resolves and returns the normalizer class for this profile
+  # Resolves and returns the normalizer class for a given profile key
+  # @param key [String] the profile key
   # @return [Class] the normalizer class
-  def normalizer_class
-    ClassResolver.resolve("Normalizer", normalizer)
-  end
-
-  private
-
-  def deactivate_related_feeds
-    feeds.enabled.update_all(state: :disabled)
+  def self.normalizer_class_for(key)
+    ClassResolver.resolve("Normalizer", PROFILES.dig(key, :normalizer))
   end
 end

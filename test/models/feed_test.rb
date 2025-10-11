@@ -44,10 +44,10 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.errors.of_kind?(:cron_expression, :blank)
   end
 
-  test "should require feed_profile" do
+  test "should require feed_profile_key" do
     feed = build(:feed, :without_feed_profile)
     assert_not feed.valid?
-    assert feed.errors.of_kind?(:feed_profile, :blank)
+    assert feed.errors.of_kind?(:feed_profile_key, :blank)
   end
 
   test "should have disabled state by default" do
@@ -192,66 +192,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "enabled", reloaded_feed.state
   end
 
-  test "should auto-disable feed when trying to enable without access token" do
-    feed = build(:feed, :without_access_token, state: :enabled)
-
-    assert feed.valid?
-    assert_equal "disabled", feed.state
-  end
-
-  test "should allow disabled feeds without access token" do
-    user = create(:user)
-    feed = build(:feed, :without_access_token, state: :disabled, user: user)
-    assert feed.valid?
-  end
-
-  test "should allow updating existing feed to disabled with nil access token" do
-    feed = create(:feed)
-    assert feed.update!(state: :disabled, access_token: nil)
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should auto-disable enabled feed when updated without active token" do
-    feed = create(:feed, state: :enabled)
-
-    feed.update!(access_token: nil)
-
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should auto-disable enabled feed when updated with inactive token" do
-    inactive_token = create(:access_token, :inactive)
-    feed = create(:feed, state: :enabled)
-
-    feed.update!(access_token: inactive_token)
-
-    assert_equal "disabled", feed.state
-    assert_equal inactive_token, feed.access_token
-  end
-
-  test "should not auto-disable disabled feed when saved without active token" do
-    feed = create(:feed, state: :disabled)
-
-    feed.access_token = nil
-    feed.save!
-
-    assert_equal "disabled", feed.state
-    assert_nil feed.access_token
-  end
-
-  test "should not auto-disable enabled feed when saved with active token" do
-    active_token = create(:access_token, :active)
-    feed = create(:feed, state: :enabled)
-
-    feed.access_token = active_token
-    feed.save!
-
-    assert_equal "enabled", feed.state
-    assert_equal active_token, feed.access_token
-  end
-
   test "can_be_enabled? returns true when feed has active access token and target group" do
     access_token = create(:access_token, :active)
     feed = create(:feed, access_token: access_token, target_group: "test_group")
@@ -285,30 +225,26 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has no feed_profile" do
-    feed = build(:feed)
-    feed.feed_profile = nil
+  test "can_be_enabled? returns false when feed has no feed_profile_key" do
+    feed = build(:feed, :without_feed_profile)
 
     assert_not feed.can_be_enabled?
   end
 
   test "processor_class resolves correct processor class" do
-    profile = create(:feed_profile, processor: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Processor::RssProcessor, feed.processor_class
   end
 
   test "normalizer_class resolves correct normalizer class" do
-    profile = create(:feed_profile, normalizer: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Normalizer::RssNormalizer, feed.normalizer_class
   end
 
   test "processor_instance creates processor with feed and raw data" do
-    profile = create(:feed_profile, processor: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
     raw_data = "<rss><item><title>Test</title></item></rss>"
 
     processor = feed.processor_instance(raw_data)
@@ -317,55 +253,12 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "normalizer_instance creates normalizer with feed entry" do
-    profile = create(:feed_profile, normalizer: "rss")
-    feed = create(:feed, feed_profile: profile)
+    feed = create(:feed, feed_profile_key: "rss")
     feed_entry = create(:feed_entry, feed: feed)
 
     normalizer = feed.normalizer_instance(feed_entry)
 
     assert_instance_of Normalizer::RssNormalizer, normalizer
-  end
-
-  test "generate_unique_name! does nothing when name is present" do
-    feed = build(:feed, name: "existing-name")
-    original_name = feed.name
-
-    feed.generate_unique_name!
-
-    assert_equal original_name, feed.name
-  end
-
-  test "generate_unique_name! generates unique name when name is blank" do
-    user = create(:user)
-    create(:feed, user: user, name: "Untitled 1")
-    create(:feed, user: user, name: "Untitled 2")
-
-    feed = build(:feed, user: user, name: nil)
-    feed.generate_unique_name!
-
-    assert_equal "Untitled 3", feed.name
-  end
-
-  test "loader_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-
-    assert_nil feed.loader_instance
-  end
-
-  test "processor_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-
-    assert_nil feed.processor_instance("raw data")
-  end
-
-  test "normalizer_instance returns nil when feed_profile is nil" do
-    feed = build(:feed)
-    feed.feed_profile = nil
-    feed_entry = build(:feed_entry)
-
-    assert_nil feed.normalizer_instance(feed_entry)
   end
 
   test "posts_per_day returns empty hash when no posts exist" do

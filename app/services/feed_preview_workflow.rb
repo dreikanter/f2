@@ -31,7 +31,7 @@ class FeedPreviewWorkflow
     # Create a temporary feed object for workflow processing
     Feed.new(
       url: feed_preview.url,
-      feed_profile: feed_preview.feed_profile,
+      feed_profile_key: feed_preview.feed_profile_key,
       user: feed_preview.user
     )
   end

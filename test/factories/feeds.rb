@@ -13,8 +13,8 @@ FactoryBot.define do
       if feed.user && feed.access_token.nil?
         feed.access_token = create(:access_token, :active, user: feed.user)
       end
-      if feed.feed_profile.nil?
-        feed.feed_profile = create(:feed_profile)
+      if feed.feed_profile_key.nil?
+        feed.feed_profile_key = "rss"
       end
     end
 
@@ -39,7 +39,7 @@ FactoryBot.define do
     end
 
     trait :without_feed_profile do
-      after(:build) { |feed| feed.feed_profile = nil }
+      after(:build) { |feed| feed.feed_profile_key = nil }
     end
   end
 end

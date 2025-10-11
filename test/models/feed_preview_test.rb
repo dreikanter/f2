@@ -5,36 +5,32 @@ class FeedPreviewTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def feed_preview
-    @feed_preview ||= create(:feed_preview, user: user, feed_profile: feed_profile)
+    @feed_preview ||= create(:feed_preview, user: user)
   end
 
   test "should belong to user" do
     assert_equal user, feed_preview.user
   end
 
-  test "should belong to feed_profile" do
-    assert_equal feed_profile, feed_preview.feed_profile
+  test "should have feed_profile_key" do
+    assert_equal "rss", feed_preview.feed_profile_key
   end
 
   test "should validate presence of url" do
-    preview = build(:feed_preview, url: nil, user: user, feed_profile: feed_profile)
+    preview = build(:feed_preview, url: nil, user: user)
     assert_not preview.valid?
     assert_includes preview.errors[:url], "can't be blank"
   end
 
-  test "should validate presence of feed_profile" do
-    preview = build(:feed_preview, feed_profile: nil, user: user)
+  test "should validate presence of feed_profile_key" do
+    preview = build(:feed_preview, feed_profile_key: nil, user: user)
     assert_not preview.valid?
-    assert_includes preview.errors[:feed_profile], "can't be blank"
+    assert_includes preview.errors[:feed_profile_key], "can't be blank"
   end
 
   test "should validate url format" do
-    preview = build(:feed_preview, url: "invalid-url", user: user, feed_profile: feed_profile)
+    preview = build(:feed_preview, url: "invalid-url", user: user)
     assert_not preview.valid?
     assert_includes preview.errors[:url], "must be a valid HTTP or HTTPS URL"
   end
@@ -43,8 +39,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = build(
       :feed_preview,
       url: "http://example.com/feed.xml",
-      user: user,
-      feed_profile: feed_profile
+      user: user
     )
 
     assert preview.valid?
@@ -54,44 +49,39 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = build(
       :feed_preview,
       url: "https://example.com/feed.xml",
-      user: user,
-      feed_profile: feed_profile
+      user: user
     )
 
     assert preview.valid?
   end
 
-  test "should validate uniqueness of url scoped to feed_profile" do
+  test "should validate uniqueness of url scoped to feed_profile_key" do
     existing = create(:feed_preview,
       url: "http://example.com/feed.xml",
-      user: user,
-      feed_profile: feed_profile
+      user: user
     )
 
     duplicate = build(:feed_preview,
       url: "http://example.com/feed.xml",
-      user: user,
-      feed_profile: feed_profile
+      user: user
     )
 
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:url], "has already been taken"
   end
 
-  test "should allow same url with different feed_profile" do
-    profile2 = create(:feed_profile, name: "profile2")
-
+  test "should allow same url with different feed_profile_key" do
     existing = create(
       :feed_preview,
       url: "http://example.com/feed.xml",
-      user: user,
-      feed_profile: feed_profile
+      feed_profile_key: "rss",
+      user: user
     )
 
     different_profile = build(:feed_preview,
       url: "http://example.com/feed.xml",
-      user: user,
-      feed_profile: profile2
+      feed_profile_key: "xkcd",
+      user: user
     )
 
     assert different_profile.valid?
@@ -101,15 +91,14 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = create(
       :feed_preview,
       url: "  http://example.com/feed.xml  ",
-      user: user,
-      feed_profile: feed_profile
+      user: user
     )
 
     assert_equal "http://example.com/feed.xml", preview.url
   end
 
   test "should have status enum" do
-    preview = create(:feed_preview, user: user, feed_profile: feed_profile)
+    preview = create(:feed_preview, user: user)
 
     assert preview.pending?
 
@@ -124,7 +113,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "posts_data should return empty array when data is nil" do
-    preview = create(:feed_preview, user: user, feed_profile: feed_profile, data: nil)
+    preview = create(:feed_preview, user: user, data: nil)
     assert_equal [], preview.posts_data
   end
 
@@ -132,7 +121,6 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = create(
       :feed_preview,
       user: user,
-      feed_profile: feed_profile,
       status: :pending,
       data: { "posts" => [{ "title" => "Test" }] }
     )
@@ -146,7 +134,6 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = create(
       :feed_preview,
       user: user,
-      feed_profile: feed_profile,
       status: :ready,
       data: { "posts" => posts }
     )
@@ -160,7 +147,6 @@ class FeedPreviewTest < ActiveSupport::TestCase
     preview = create(
       :feed_preview,
       user: user,
-      feed_profile: feed_profile,
       status: :ready,
       data: { "posts" => posts }
     )
@@ -169,23 +155,22 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test "posts_count should return 0 when no posts" do
-    preview = create(:feed_preview, user: user, feed_profile: feed_profile, data: nil)
+    preview = create(:feed_preview, user: user, data: nil)
     assert_equal 0, preview.posts_count
   end
 
   test "should have for_cache_key scope" do
     url = "http://example.com/feed.xml"
-    profile2 = create(:feed_profile, name: "profile2")
-    matching = create(:feed_preview, url: url, feed_profile: feed_profile, user: user)
+    matching = create(:feed_preview, url: url, feed_profile_key: "rss", user: user)
 
     non_matching = create(
       :feed_preview,
       url: "http://other.com/feed.xml",
-      feed_profile: profile2,
+      feed_profile_key: "xkcd",
       user: user
     )
 
-    result = FeedPreview.for_cache_key(url, feed_profile.id)
+    result = FeedPreview.for_cache_key(url, "rss")
     assert_includes result, matching
     assert_not_includes result, non_matching
   end
