@@ -30,16 +30,6 @@
 en:
   hello: "Hello world"
 
-  loaders:
-    http: "HTTP"
-
-  processors:
-    rss: "RSS/XML"
-
-  normalizers:
-    rss: "RSS"
-    xkcd: "XKCD"
-
   feed_profiles:
     rss: "RSS Feed"
     xkcd: "XKCD Comics"

@@ -1,16 +1,4 @@
 module ComponentOptionsHelper
-  def loader_options
-    available_options(Loader::AVAILABLE_OPTIONS, "loaders")
-  end
-
-  def processor_options
-    available_options(Processor::AVAILABLE_OPTIONS, "processors")
-  end
-
-  def normalizer_options
-    available_options(Normalizer::AVAILABLE_OPTIONS, "normalizers")
-  end
-
   def access_token_options
     Current.user.access_tokens.active.map do |token|
       ["#{token.name} (#{token.host})", token.id]
@@ -63,14 +51,6 @@ module ComponentOptionsHelper
       nil # No additional details needed for common patterns
     else
       cron_expression # Show the raw cron for custom patterns
-    end
-  end
-
-  private
-
-  def available_options(keys, i18n_prefix)
-    keys.map do |key|
-      [t("#{i18n_prefix}.#{key}"), key]
     end
   end
 end
