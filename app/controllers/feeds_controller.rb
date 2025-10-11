@@ -41,7 +41,7 @@ class FeedsController < ApplicationController
     if @section && request.format.turbo_stream?
       render turbo_stream: turbo_stream.update(
         "edit-form-container",
-        partial: form_template_name(@section),
+        partial: form_template_name,
         locals: { feed: @feed }
       )
     else
@@ -68,33 +68,24 @@ class FeedsController < ApplicationController
   end
 
   def update
-    @feed = load_feed
-    authorize @feed
-    @section = params.require(:section)
+    feed = load_feed
+    authorize feed
 
-    @feed.state = :disabled if @feed.enabled? && !will_be_complete_after_update?
+    feed.state = :disabled if feed.enabled? && !will_be_complete_after_update?(feed)
 
-    if @feed.update(section_params)
+    if feed.update(section_params)
       streams = [
-        turbo_stream.update(
-          "#{@section}-content",
-          partial: display_template_name(@section),
-          locals: { feed: @feed }
-        ),
+        turbo_stream.update("#{section}-content", partial: display_template_name, locals: { feed: feed }),
         turbo_stream.update("edit-form-container", "")
       ]
 
-      if @section == "content-source"
-        streams << turbo_stream.update("feed-title", @feed.name)
+      if section == "content-source"
+        streams << turbo_stream.update("feed-title", feed.name)
       end
 
       render turbo_stream: streams
     else
-      render turbo_stream: turbo_stream.update(
-        "edit-form-container",
-        partial: form_template_name(@section),
-        locals: { feed: @feed }
-      )
+      render turbo_stream: turbo_stream.update("edit-form-container", partial: form_template_name, locals: { feed: feed })
     end
   end
 
@@ -119,32 +110,24 @@ class FeedsController < ApplicationController
     policy_scope(Feed).order(sort_order)
   end
 
-  def form_template_name(section)
-    case section
-    when "content-source"
-      "content_source_form"
-    else
-      "#{section}_form"
-    end
+  def form_template_name
+    section == "content-source" ? "content_source_form" : "#{section}_form"
   end
 
-  def display_template_name(section)
-    case section
-    when "content-source"
-      "content_source_display"
-    else
-      "#{section}_display"
-    end
+  def display_template_name
+    section == "content-source" ? "content_source_display" : "#{section}_display"
   end
 
   def load_feed
     policy_scope(Feed).find(params[:id])
   end
 
-  def section_params
-    return feed_params unless @section
+  def section
+    params.require(:section)
+  end
 
-    case @section
+  def section_params
+    case section
     when "content-source"
       content_source_params
     when "reposting"
@@ -174,8 +157,8 @@ class FeedsController < ApplicationController
     params[:feed].permit(:cron_expression, :import_after)
   end
 
-  def will_be_complete_after_update?
-    updated_feed = @feed.dup
+  def will_be_complete_after_update?(feed)
+    updated_feed = feed.dup
     updated_feed.assign_attributes(section_params)
     updated_feed.can_be_enabled?
   end
