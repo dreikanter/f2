@@ -23,7 +23,7 @@
     <%= form.select :cron_expression,
         options_for_select(cron_expression_options, feed.cron_expression),
         { prompt: "Choose schedule..." },
-        { class: "form-select", required: true } %>
+        { class: "form-select", required: true, autofocus: true } %>
     <div class="form-text">Select how often the feed should be refreshed</div>
     <div class="invalid-feedback">Select a schedule.</div>
   </div>

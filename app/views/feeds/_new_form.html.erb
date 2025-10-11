@@ -19,7 +19,7 @@
 
   <div class="mb-4">
     <%= form.label :url, "Feed URL", class: "form-label fw-bold" %>
-    <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml" %>
+    <%= form.url_field :url, class: "form-control", required: true, placeholder: "https://example.com/feed.xml", autofocus: true %>
     <div class="invalid-feedback">Provide a valid HTTP or HTTPS URL.</div>
   </div>
 
