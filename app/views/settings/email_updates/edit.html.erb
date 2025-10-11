@@ -8,8 +8,8 @@
   <div class="col-6">
     <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
       <div class="mb-3">
-        <%# TBD: Use readonly field with a label %>
-        <p><span class="fw-bold">Current email:</span><span class="mx-2"><%= @user.email_address %></span></p>
+        <%= form.label :current_email, "Current email:", class: "form-label fw-bold" %>
+        <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "form-control" %>
       </div>
 
       <div class="mb-3">
