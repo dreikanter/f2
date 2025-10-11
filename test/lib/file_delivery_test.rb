@@ -5,6 +5,11 @@ class FileDeliveryTest < ActiveSupport::TestCase
     @delivery = FileDelivery.new({})
     @sent_emails_dir = Rails.root.join("tmp", "sent_emails")
     FileUtils.rm_rf(@sent_emails_dir)
+    FileUtils.mkdir_p(@sent_emails_dir)
+  end
+
+  teardown do
+    FileUtils.rm_rf(@sent_emails_dir) if @sent_emails_dir
   end
 
   test "delivers email and saves to file" do

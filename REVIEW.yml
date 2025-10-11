@@ -1,7 +1,7 @@
 ---
 version: 1
 reviewed:
-  app/models/user.rb: 5a66895050ae43f14c1c94d3b23d37a33fe98c1d
+  app/models/user.rb: 895c50596cc3514cd10edbc7e2bbe8a9e4e891a4
   test/models/user_test.rb: 750ddd54b771652c7856863be64a07d52b341e2a
   app/models/session.rb: cf376fb280f274daf3d14c86adc1cb2ac13c0149
   app/models/application_record.rb: b63caeb8a5c4a21feec3ea870c4e4a52b89a8fa5
@@ -10,3 +10,5 @@ reviewed:
   app/models/feed_entry.rb: ee5491497e5466d8cd3ce6bf78ac700e354f1340
   app/models/feed_preview.rb: 51b6b5a47431b6bb92815ce8ffbaab3383b4dd27
   test/models/feed_preview_test.rb: 776a82e3956626aa1587bea62b9e92f8149025d6
+  app/controllers/statuses_controller.rb: 6d820378569806e41e3d19c873bef94da049512a
+  app/views/layouts/application.html.erb: 490bc86b4a627f190485b141415f7ded881eba9a

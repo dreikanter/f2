@@ -47,7 +47,48 @@ class User < ApplicationRecord
     update!(suspended_at: nil)
   end
 
+  # Returns the count of all feeds created by this user
+  # @return [Integer] total number of feeds
+  def total_feeds_count
+    feeds.count
+  end
+
+  # Returns the count of all imported posts across all user's feeds
+  # @return [Integer] total number of imported posts
+  def total_imported_posts_count
+    imported_posts.count
+  end
+
+  # Returns the count of published posts across all user's feeds
+  # @return [Integer] total number of published posts
+  def total_published_posts_count
+    published_posts.count
+  end
+
+  # Returns the timestamp of the most recently published post across all user's feeds
+  # @return [Time, nil] most recent publication timestamp or nil if no published posts
+  def most_recent_post_published_at
+    published_posts.maximum(:published_at)
+  end
+
+  # Returns the average number of posts per day for the last week across all user's feeds
+  # @return [Float] average posts per day (0.0 if no posts)
+  def average_posts_per_day_last_week
+    start_date = 1.week.ago.beginning_of_day
+    end_date = Time.current.end_of_day
+    count = imported_posts.where(published_at: start_date..end_date).count
+    (count / 7.0).round(1)
+  end
+
   private
+
+  def published_posts
+    imported_posts.where(posts: { status: :published })
+  end
+
+  def imported_posts
+    Post.joins(:feed).where(feeds: { user_id: id })
+  end
 
   def set_password_updated_at
     self.password_updated_at = Time.current
