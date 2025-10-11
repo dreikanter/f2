@@ -3,7 +3,7 @@ class PostsController < ApplicationController
   include Sortable
 
   sortable_by({
-    "feed" => "feeds.name",
+    "feed" => "LOWER(feeds.name)",
     "published" => "posts.published_at",
     "status" => "posts.status",
     "attachments" => "COALESCE(array_length(posts.attachment_urls, 1), 0)",
