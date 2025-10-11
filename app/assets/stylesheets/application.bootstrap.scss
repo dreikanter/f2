@@ -13,6 +13,27 @@
   }
 }
 
+// Sortable table headers
+.sortable {
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+
+  &:hover {
+    color: inherit;
+  }
+
+  &.sorted-asc::after {
+    content: " ▲";
+    font-size: 0.8em;
+  }
+
+  &.sorted-desc::after {
+    content: " ▼";
+    font-size: 0.8em;
+  }
+}
+
 // Posts table styling
 .posts-table {
   width: 100%;

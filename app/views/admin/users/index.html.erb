@@ -5,11 +5,24 @@
     <table class="table table-hover table-bordered text-nowrap">
       <thead>
         <tr>
-          <th>Email</th>
-          <th class="text-center">Feeds</th>
-          <th class="text-center">Tokens</th>
-          <th class="text-center">Posts</th>
-          <th class="text-center">Last Seen</th>
+          <th>
+            <%= sortable_header(column: "email", title: "Email") %>
+          </th>
+          <th>
+            <%= sortable_header(column: "name", title: "Name") %>
+          </th>
+          <th class="text-center">
+            <%= sortable_header(column: "feeds", title: "Feeds") %>
+          </th>
+          <th class="text-center">
+            <%= sortable_header(column: "tokens", title: "Tokens") %>
+          </th>
+          <th class="text-center">
+            <%= sortable_header(column: "posts", title: "Posts") %>
+          </th>
+          <th class="text-center">
+            <%= sortable_header(column: "last_seen", title: "Last Seen") %>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -20,6 +33,9 @@
               <% if user.admin? %>
                 <span class="text-muted">(admin)</span>
               <% end %>
+            </td>
+            <td>
+              <%= user.name %>
             </td>
             <td class="text-center">
               <%= user.feeds_count %>
@@ -47,7 +63,7 @@
 
   <%= pagination_for @users,
                      collection_name: "users",
-                     path_helper: ->(page) { admin_users_path(page: page) } %>
+                     path_helper: ->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
 <% else %>
   <div class="text-center py-5">
     <p class="text-muted">No users found</p>

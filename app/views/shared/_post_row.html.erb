@@ -45,7 +45,7 @@
             <% end %>
           </li>
         <% end %>
-        <% if post.freefeed_post_id.present? %>
+        <% if post.freefeed_post_id.present? && post.feed.access_token.present? %>
           <li>
             <%= link_to "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}",
                         target: "_blank",

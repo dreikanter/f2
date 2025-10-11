@@ -9,11 +9,21 @@
         <table class="table table-hover table-bordered">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Target Group</th>
-              <th>Last Refresh</th>
-              <th>Recent Post</th>
+              <th>
+                <%= sortable_header(column: "name", title: "Name") %>
+              </th>
+              <th>
+                <%= sortable_header(column: "status", title: "Status") %>
+              </th>
+              <th>
+                <%= sortable_header(column: "target_group", title: "Target Group") %>
+              </th>
+              <th>
+                <%= sortable_header(column: "last_refresh", title: "Last Refresh") %>
+              </th>
+              <th>
+                <%= sortable_header(column: "recent_post", title: "Recent Post") %>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -61,7 +71,7 @@
 
       <%= pagination_for @feeds,
                          collection_name: "feeds",
-                         path_helper: ->(page) { feeds_path(page: page) } %>
+                         path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
     <% else %>
       <div class="text-center py-5">
         <p>No feeds yet</p>

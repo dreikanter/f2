@@ -4,12 +4,42 @@
       <tr>
         <th class="content-column">Content</th>
         <% unless local_assigns[:hide_feed_column] %>
-          <th class="feed-column">Feed</th>
+          <th class="feed-column">
+            <%= sortable_header(
+              column: "feed",
+              title: "Feed",
+              path_params: { feed_id: params[:feed_id] }
+            ) %>
+          </th>
         <% end %>
-        <th class="published-column text-center" title="Published date"><%= icon("calendar3") %></th>
-        <th class="count-column text-center" title="Attachments"><%= icon("paperclip") %></th>
-        <th class="count-column text-center" title="Comments"><%= icon("chat-dots") %></th>
-        <th class="status-column text-center" title="Status"><%= icon("info-circle") %></th>
+        <th class="published-column text-center">
+          <%= sortable_header(
+            column: "published",
+            title: icon("calendar3"),
+            path_params: { feed_id: params[:feed_id] }
+          ) %>
+        </th>
+        <th class="count-column text-center">
+          <%= sortable_header(
+            column: "attachments",
+            title: icon("paperclip"),
+            path_params: { feed_id: params[:feed_id] }
+          ) %>
+        </th>
+        <th class="count-column text-center">
+          <%= sortable_header(
+            column: "comments",
+            title: icon("chat-dots"),
+            path_params: { feed_id: params[:feed_id] }
+          ) %>
+        </th>
+        <th class="status-column text-center">
+          <%= sortable_header(
+            column: "status",
+            title: icon("info-circle"),
+            path_params: { feed_id: params[:feed_id] }
+          ) %>
+        </th>
         <th style="width: 1%;" class="text-center"></th>
       </tr>
     </thead>

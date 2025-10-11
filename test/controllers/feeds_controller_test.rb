@@ -347,4 +347,70 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Edit Source"
     assert_includes response.body, "must be a valid HTTP or HTTPS URL"
   end
+
+  test "should sort feeds by name ascending" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "Z Feed")
+    create(:feed, user: user, name: "A Feed")
+
+    get feeds_url(sort: "name", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_a = response_body.index("A Feed")
+    pos_z = response_body.index("Z Feed")
+    assert pos_a < pos_z, "Expected A Feed to appear before Z Feed"
+  end
+
+  test "should sort feeds by name descending" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "A Feed")
+    create(:feed, user: user, name: "Z Feed")
+
+    get feeds_url(sort: "name", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_a = response_body.index("A Feed")
+    pos_z = response_body.index("Z Feed")
+    assert pos_z < pos_a, "Expected Z Feed to appear before A Feed"
+  end
+
+  test "should sort feeds by status" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, :enabled, user: user, name: "Enabled Feed")
+    disabled_feed = create(:feed, user: user, name: "Disabled Feed", state: :disabled)
+
+    get feeds_url(sort: "status", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_disabled = response_body.index("Disabled Feed")
+    pos_enabled = response_body.index("Enabled Feed")
+    assert pos_disabled < pos_enabled, "Expected disabled feed to appear before enabled feed"
+  end
+
+  test "should use default sort when no sort parameter provided" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "Z Feed")
+    create(:feed, user: user, name: "A Feed")
+
+    get feeds_url
+    assert_response :success
+
+    response_body = response.body
+    pos_a = response_body.index("A Feed")
+    pos_z = response_body.index("Z Feed")
+    assert pos_a < pos_z, "Expected A Feed to appear before Z Feed (default sort)"
+  end
+
+  test "pagination should preserve sort parameters" do
+    sign_in_as(user)
+    3.times { |i| create(:feed, user: user, name: "Feed #{i}") }
+
+    get feeds_url(sort: "name", direction: "desc", per_page: 2)
+    assert_response :success
+    assert_select ".pagination a[href*='sort=name']"
+    assert_select ".pagination a[href*='direction=desc']"
+  end
 end
