@@ -102,34 +102,32 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   test "should update own feed" do
     sign_in_as(user)
 
-    patch feed_url(feed), params: {
+    patch feed_url(feed, section: "content-source"), params: {
       feed: {
-        name: "updated-feed",
-        description: "Updated description"
+        name: "updated-feed"
       }
-    }
+    }, as: :turbo_stream
 
-    assert_redirected_to feed_url(feed)
+    assert_response :success
 
     feed.reload
     assert_equal "updated-feed", feed.name
-    assert_equal "Updated description", feed.description
   end
 
   test "should not update feed with invalid data" do
     sign_in_as(user)
 
-    patch feed_url(feed), params: {
+    patch feed_url(feed, section: "content-source"), params: {
       feed: {
-        name: "Invalid Name",
         url: "not-a-url"
       }
-    }
+    }, as: :turbo_stream
 
-    assert_response :unprocessable_content
+    assert_response :success
+    assert_includes response.body, "edit-form-container"
 
     feed.reload
-    assert_not_equal "Invalid Name", feed.name
+    assert_equal "https://example.com/feed.xml", feed.url
   end
 
   test "should not update other user's feed" do
@@ -304,11 +302,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     enabled_feed = create(:feed, user: user, state: :enabled)
 
-    patch feed_url(enabled_feed), params: {
+    patch feed_url(enabled_feed, section: "reposting"), params: {
       feed: {
         access_token_id: nil
       }
-    }
+    }, as: :turbo_stream
+
+    assert_response :success
 
     enabled_feed.reload
     assert_equal "disabled", enabled_feed.state

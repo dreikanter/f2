@@ -56,52 +56,45 @@ class FeedsController < ApplicationController
 
     if @feed.save
       notice_message = "Feed was successfully created."
+
       if @feed.access_token&.active?
         notice_message += " You can now enable it to start processing items."
       end
+
       redirect_to @feed, notice: notice_message
     else
       render :new, status: :unprocessable_content
     end
   end
 
-  # TBD: Make section a rquired parameter and simplify this logic; refactor
   def update
     @feed = load_feed
     authorize @feed
-    @section = params[:section]
+    @section = params.require(:section)
 
-    if @feed.enabled? && !will_be_complete_after_update?
-      @feed.state = :disabled
-    end
+    @feed.state = :disabled if @feed.enabled? && !will_be_complete_after_update?
 
     if @feed.update(section_params)
-      if @section
-        streams = []
-        streams << turbo_stream.update(
+      streams = [
+        turbo_stream.update(
           "#{@section}-content",
           partial: display_template_name(@section),
           locals: { feed: @feed }
-        )
-        streams << turbo_stream.update("edit-form-container", "")
-        if @section == "content-source"
-          streams << turbo_stream.update("feed-title", @feed.name)
-        end
-        render turbo_stream: streams
-      else
-        redirect_to @feed, notice: "Feed was successfully updated."
+        ),
+        turbo_stream.update("edit-form-container", "")
+      ]
+
+      if @section == "content-source"
+        streams << turbo_stream.update("feed-title", @feed.name)
       end
+
+      render turbo_stream: streams
     else
-      if @section
-        render turbo_stream: turbo_stream.update(
-          "edit-form-container",
-          partial: form_template_name(@section),
-          locals: { feed: @feed }
-        )
-      else
-        @recent_posts = recent_posts(@feed)
-        render :show, status: :unprocessable_content
-      end
+      render turbo_stream: turbo_stream.update(
+        "edit-form-container",
+        partial: form_template_name(@section),
+        locals: { feed: @feed }
+      )
     end
   end
 
