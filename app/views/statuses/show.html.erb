@@ -7,17 +7,17 @@
     <div class="list-group">
       <div class="list-group-item">
         <strong>Total feeds:</strong>
-        <%= @user.total_feeds_count %>
+        <%= number_with_delimiter(@user.total_feeds_count) %>
       </div>
 
       <div class="list-group-item">
         <strong>Total imported posts:</strong>
-        <%= @user.total_imported_posts_count %>
+        <%= number_with_delimiter(@user.total_imported_posts_count) %>
       </div>
 
       <div class="list-group-item">
         <strong>Total published posts:</strong>
-        <%= @user.total_published_posts_count %>
+        <%= number_with_delimiter(@user.total_published_posts_count) %>
       </div>
 
       <div class="list-group-item">
@@ -31,7 +31,7 @@
 
       <div class="list-group-item">
         <strong>Average posts per day (last week):</strong>
-        <%= @user.average_posts_per_day_last_week %>
+        <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
       </div>
     </div>
   </div>
