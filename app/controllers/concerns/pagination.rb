@@ -29,7 +29,7 @@ module Pagination
   end
 
   def pagination_per_page
-    25
+    params[:per_page]&.to_i || 25
   end
 
   # Override this method in the including controller to provide the scope to paginate
