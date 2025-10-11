@@ -326,26 +326,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_instance_of Normalizer::RssNormalizer, normalizer
   end
 
-  test "generate_unique_name! does nothing when name is present" do
-    feed = build(:feed, name: "existing-name")
-    original_name = feed.name
-
-    feed.generate_unique_name!
-
-    assert_equal original_name, feed.name
-  end
-
-  test "generate_unique_name! generates unique name when name is blank" do
-    user = create(:user)
-    create(:feed, user: user, name: "Untitled 1")
-    create(:feed, user: user, name: "Untitled 2")
-
-    feed = build(:feed, user: user, name: nil)
-    feed.generate_unique_name!
-
-    assert_equal "Untitled 3", feed.name
-  end
-
   test "loader_instance returns nil when feed_profile is nil" do
     feed = build(:feed)
     feed.feed_profile = nil

@@ -88,14 +88,6 @@ class Feed < ApplicationRecord
     url.present? && feed_profile_present?
   end
 
-  def generate_unique_name!
-    return if name.present?
-
-    base_name = "Untitled"
-    counter = user.feeds.where("name LIKE ?", "#{base_name}%").count + 1
-    self.name = "#{base_name} #{counter}"
-  end
-
   # Creates and returns a loader instance for this feed
   # @return [Loader::Base] loader instance
   def loader_instance
