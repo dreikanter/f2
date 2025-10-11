@@ -39,28 +39,10 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "valid? returns true for valid profile key" do
-    profile = FeedProfile.new("rss")
-    assert profile.valid?
-  end
-
-  test "valid? returns false for invalid profile key" do
-    profile = FeedProfile.new("invalid")
-    assert_not profile.valid?
-  end
-
-  test "loader_class returns nil for invalid profile" do
-    profile = FeedProfile.new("invalid")
-    assert_nil profile.loader_class
-  end
-
-  test "processor_class returns nil for invalid profile" do
-    profile = FeedProfile.new("invalid")
-    assert_nil profile.processor_class
-  end
-
-  test "normalizer_class returns nil for invalid profile" do
-    profile = FeedProfile.new("invalid")
-    assert_nil profile.normalizer_class
+  test "initialize raises ArgumentError for invalid profile key" do
+    error = assert_raises(ArgumentError) do
+      FeedProfile.new("invalid")
+    end
+    assert_equal "Unknown feed profile: invalid", error.message
   end
 end
