@@ -1,5 +1,5 @@
-# Feed profile configuration that defines how feeds are processed
-# Each profile specifies a loader, processor, and normalizer combination
+# Feed profile configuration that defines how feeds are processed.
+#
 class FeedProfile
   PROFILES = {
     "rss" => { loader: "http", processor: "rss", normalizer: "rss" },
