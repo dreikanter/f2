@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_11_181753) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,26 +61,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
   create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "data"
-    t.bigint "feed_profile_id", null: false
+    t.string "feed_profile_key"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.bigint "user_id", null: false
     t.index ["created_at"], name: "index_feed_previews_on_created_at"
-    t.index ["feed_profile_id"], name: "index_feed_previews_on_feed_profile_id"
     t.index ["status"], name: "index_feed_previews_on_status"
-    t.index ["url", "feed_profile_id"], name: "index_feed_previews_on_url_and_profile", unique: true
     t.index ["user_id"], name: "index_feed_previews_on_user_id"
-  end
-
-  create_table "feed_profiles", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "loader", null: false
-    t.string "name", null: false
-    t.string "normalizer", null: false
-    t.string "processor", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_feed_profiles_on_name", unique: true
   end
 
   create_table "feed_schedules", force: :cascade do |t|
@@ -97,7 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
     t.datetime "created_at", null: false
     t.string "cron_expression"
     t.string "description", default: "", null: false
-    t.bigint "feed_profile_id"
+    t.string "feed_profile_key"
     t.datetime "import_after"
     t.string "name", null: false
     t.integer "state", default: 0, null: false
@@ -106,7 +94,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
     t.string "url", null: false
     t.bigint "user_id", null: false
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
-    t.index ["feed_profile_id"], name: "index_feeds_on_feed_profile_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
@@ -302,11 +289,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_08_144308) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
-  add_foreign_key "feed_previews", "feed_profiles"
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
-  add_foreign_key "feeds", "feed_profiles"
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id"

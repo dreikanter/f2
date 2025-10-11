@@ -5,18 +5,14 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def feed_preview
-    @feed_preview ||= create(:feed_preview, user: user, feed_profile: feed_profile)
+    @feed_preview ||= create(:feed_preview, user: user)
   end
 
   test "should require authentication for create" do
     post feed_previews_url, params: {
       url: "http://example.com/feed.xml",
-      feed_profile_name: feed_profile.name
+      feed_profile_key: "rss"
     }
     assert_redirected_to new_session_path
   end
@@ -27,24 +23,24 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_difference("FeedPreview.count", 1) do
       post feed_previews_url, params: {
         url: "http://example.com/feed.xml",
-        feed_profile_name: feed_profile.name
+        feed_profile_key: "rss"
       }
     end
 
     preview = FeedPreview.last
     assert_equal "http://example.com/feed.xml", preview.url
-    assert_equal feed_profile, preview.feed_profile
+    assert_equal "rss", preview.feed_profile_key
     assert_equal user, preview.user
     assert_redirected_to feed_preview_path(preview)
   end
 
-  test "should handle invalid feed profile name" do
+  test "should handle invalid feed profile key" do
     sign_in_as(user)
 
     assert_no_difference("FeedPreview.count") do
       post feed_previews_url, params: {
         url: "http://example.com/feed.xml",
-        feed_profile_name: "nonexistent"
+        feed_profile_key: "nonexistent"
       }
     end
 
@@ -75,7 +71,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update feed preview" do
     sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user, feed_profile: feed_profile, url: "http://old.com/feed.xml")
+    existing_preview = create(:feed_preview, user: user, url: "http://old.com/feed.xml")
 
     assert_difference("FeedPreview.count", 0) do # Should replace, not create new
       patch feed_preview_url(existing_preview), params: {}
@@ -105,7 +101,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("FeedPreview.count") do
       post feed_previews_url, params: {
         url: "not-a-valid-url-format",
-        feed_profile_name: feed_profile.name
+        feed_profile_key: "rss"
       }
     end
 
@@ -115,7 +111,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render turbo stream for completed preview status" do
     sign_in_as(user)
-    completed_preview = create(:feed_preview, user: user, feed_profile: feed_profile, status: :ready)
+    completed_preview = create(:feed_preview, user: user, status: :ready)
 
     get feed_preview_url(completed_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -124,7 +120,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render turbo stream for failed preview status" do
     sign_in_as(user)
-    failed_preview = create(:feed_preview, user: user, feed_profile: feed_profile, status: :failed)
+    failed_preview = create(:feed_preview, user: user, status: :failed)
 
     get feed_preview_url(failed_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -133,7 +129,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render turbo stream for processing preview status" do
     sign_in_as(user)
-    processing_preview = create(:feed_preview, user: user, feed_profile: feed_profile, status: :processing)
+    processing_preview = create(:feed_preview, user: user, status: :processing)
 
     get feed_preview_url(processing_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -142,7 +138,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render turbo stream for pending preview status" do
     sign_in_as(user)
-    pending_preview = create(:feed_preview, user: user, feed_profile: feed_profile, status: :pending)
+    pending_preview = create(:feed_preview, user: user, status: :pending)
 
     get feed_preview_url(pending_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
@@ -151,7 +147,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should handle update action successfully" do
     sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user, feed_profile: feed_profile)
+    existing_preview = create(:feed_preview, user: user)
 
     # The update action should complete successfully
     patch feed_preview_url(existing_preview), params: {}
@@ -162,7 +158,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create and enqueue preview successfully" do
     sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user, feed_profile: feed_profile, url: "http://old.com/feed.xml")
+    existing_preview = create(:feed_preview, user: user, url: "http://old.com/feed.xml")
 
     # The update action should delete existing previews and create a new one
     assert_difference("FeedPreview.count", 0) do # Net change should be 0 (delete 1, create 1)

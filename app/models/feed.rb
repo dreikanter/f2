@@ -6,11 +6,10 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
-  belongs_to :feed_profile, optional: true
   has_one :feed_schedule, dependent: :destroy
   has_many :events, as: :subject, dependent: :destroy
 
-  delegate :loader, :processor, :normalizer, :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
+  delegate :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
@@ -29,7 +28,8 @@ class Feed < ApplicationRecord
             }
 
   validates :cron_expression, presence: true, if: :enabled?
-  validates :feed_profile, presence: true
+  validates :feed_profile_key, presence: true
+  validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
   normalizes :name, with: ->(name) { name.to_s.strip }
   normalizes :url, with: ->(url) { url.to_s.strip }
@@ -56,6 +56,15 @@ class Feed < ApplicationRecord
   }
 
   before_validation :auto_disable_without_active_token
+  before_validation :auto_disable_with_invalid_profile
+
+  # Returns a FeedProfile instance for this feed
+  # @return [FeedProfile, nil] the feed profile instance
+  def feed_profile
+    return nil if feed_profile_key.blank?
+    return nil unless FeedProfile.exists?(feed_profile_key)
+    FeedProfile.new(feed_profile_key)
+  end
 
   def can_be_enabled?
     access_token&.active? && target_group.present? && feed_profile.present? && cron_expression.present?
@@ -120,6 +129,13 @@ class Feed < ApplicationRecord
   def auto_disable_without_active_token
     return unless enabled?
     return if can_be_enabled?
+
+    self.state = :disabled
+  end
+
+  def auto_disable_with_invalid_profile
+    return unless enabled?
+    return if feed_profile.present?
 
     self.state = :disabled
   end

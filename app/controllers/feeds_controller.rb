@@ -164,7 +164,7 @@ class FeedsController < ApplicationController
   end
 
   def content_source_params
-    params[:feed].permit(:name, :url, :feed_profile_id)
+    params[:feed].permit(:name, :url, :feed_profile_key)
   end
 
   def reposting_params
@@ -192,7 +192,7 @@ class FeedsController < ApplicationController
       :name,
       :url,
       :cron_expression,
-      :feed_profile_id,
+      :feed_profile_key,
       :import_after,
       :description,
       :access_token_id,

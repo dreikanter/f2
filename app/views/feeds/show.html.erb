@@ -34,7 +34,7 @@
 
     <% if @feed.can_be_previewed? %>
       <%= button_to "Preview", feed_previews_path,
-          params: { url: @feed.url, feed_profile_name: @feed.feed_profile.name },
+          params: { url: @feed.url, feed_profile_key: @feed.feed_profile_key },
           method: :post,
           class: "btn btn-outline-secondary",
           data: { turbo: false } %>

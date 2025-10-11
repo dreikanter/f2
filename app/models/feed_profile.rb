@@ -1,40 +1,76 @@
-class FeedProfile < ApplicationRecord
-  has_many :feeds, dependent: :nullify
-  has_many :feed_previews, dependent: :destroy
+# Feed profile configuration that defines how feeds are processed
+# Each profile specifies a loader, processor, and normalizer combination
+class FeedProfile
+  PROFILES = {
+    "rss" => { loader: "http", processor: "rss", normalizer: "rss" },
+    "xkcd" => { loader: "http", processor: "rss", normalizer: "xkcd" }
+  }.freeze
 
-  validates :name, presence: true, uniqueness: true,
-            length: { maximum: 100 },
-            format: { with: /\A[a-z\d\-_]+\z/, message: "must contain only lowercase letters, numbers, hyphens, and underscores" }
+  attr_reader :key
 
-  validates :loader, presence: true
-  validates :processor, presence: true
-  validates :normalizer, presence: true
+  # @param key [String] the profile key (e.g., "rss", "xkcd")
+  def initialize(key)
+    @key = key
+    @config = PROFILES[key]
+  end
 
-  normalizes :name, with: ->(name) { name.to_s.strip.downcase }
+  # Returns all available profile keys
+  # @return [Array<String>] list of profile keys
+  def self.all
+    PROFILES.keys
+  end
 
-  before_destroy :deactivate_related_feeds
+  # Checks if a profile key exists
+  # @param key [String] the profile key to check
+  # @return [Boolean] true if the profile exists
+  def self.exists?(key)
+    PROFILES.key?(key)
+  end
+
+  # Returns the configuration for a given feed
+  # @param feed [Feed] the feed to get configuration for
+  # @return [Hash] configuration with resolved classes
+  def self.for(feed)
+    return nil if feed.feed_profile_key.blank?
+
+    profile = new(feed.feed_profile_key)
+    {
+      loader_class: profile.loader_class,
+      processor_class: profile.processor_class,
+      normalizer_class: profile.normalizer_class
+    }
+  end
+
+  # Returns true if the profile is valid (exists in PROFILES)
+  # @return [Boolean]
+  def valid?
+    @config.present?
+  end
 
   # Resolves and returns the loader class for this profile
   # @return [Class] the loader class
   def loader_class
-    ClassResolver.resolve("Loader", loader)
+    return nil unless valid?
+    ClassResolver.resolve("Loader", @config[:loader])
   end
 
   # Resolves and returns the processor class for this profile
   # @return [Class] the processor class
   def processor_class
-    ClassResolver.resolve("Processor", processor)
+    return nil unless valid?
+    ClassResolver.resolve("Processor", @config[:processor])
   end
 
   # Resolves and returns the normalizer class for this profile
   # @return [Class] the normalizer class
   def normalizer_class
-    ClassResolver.resolve("Normalizer", normalizer)
+    return nil unless valid?
+    ClassResolver.resolve("Normalizer", @config[:normalizer])
   end
 
-  private
-
-  def deactivate_related_feeds
-    feeds.enabled.update_all(state: :disabled)
+  # Returns the display name for this profile
+  # @return [String] the translated display name
+  def display_name
+    I18n.t("feed_profiles.#{key}", default: key.titleize)
   end
 end

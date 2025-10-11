@@ -9,11 +9,13 @@ class FeedPreviewsController < ApplicationController
   }.freeze
 
   def create
-    feed_profile = FeedProfile.find_by!(name: params[:feed_profile_name])
-    feed_preview = create_and_enqueue_preview(url: params[:url], feed_profile: feed_profile)
+    feed_profile_key = params[:feed_profile_key]
+    unless FeedProfile.exists?(feed_profile_key)
+      redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
+      return
+    end
+    feed_preview = create_and_enqueue_preview(url: params[:url], feed_profile_key: feed_profile_key)
     redirect_to feed_preview_path(feed_preview)
-  rescue ActiveRecord::RecordNotFound
-    redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
   rescue ActiveRecord::RecordInvalid
     redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
   end
@@ -48,7 +50,7 @@ class FeedPreviewsController < ApplicationController
 
     feed_preview = create_and_enqueue_preview(
       url: existing_preview.url,
-      feed_profile: existing_preview.feed_profile
+      feed_profile_key: existing_preview.feed_profile_key
     )
     redirect_to feed_preview_path(feed_preview)
   rescue ActiveRecord::RecordNotFound
@@ -59,17 +61,17 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  def create_and_enqueue_preview(url:, feed_profile:)
+  def create_and_enqueue_preview(url:, feed_profile_key:)
     feed_preview = nil
 
     FeedPreview.transaction do
       # Delete any existing preview for this URL and feed profile
-      FeedPreview.where(url: url, feed_profile: feed_profile, user: Current.user).destroy_all
+      FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).destroy_all
 
       # Create a new preview and start processing
       feed_preview = FeedPreview.create!(
         url: url,
-        feed_profile: feed_profile,
+        feed_profile_key: feed_profile_key,
         user_id: Current.user.id,
         status: :pending
       )

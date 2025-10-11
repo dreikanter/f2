@@ -13,10 +13,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @feed ||= create(:feed, user: user)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def other_feed
     @other_feed ||= create(:feed, user: create(:user))
   end
@@ -47,7 +43,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
           name: "test-feed",
           url: "https://example.com/test.xml",
           cron_expression: "0 * * * *",
-          feed_profile_id: feed_profile.id,
+          feed_profile_key: "rss",
           description: "Test description",
           access_token_id: access_token.id
         }
@@ -70,7 +66,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
           name: "Invalid Name With Spaces",
           url: "not-a-url",
           cron_expression: "",
-          feed_profile_id: ""
+          feed_profile_key: ""
         }
       }
     end
@@ -171,7 +167,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "Test-Feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
+        feed_profile_key: "rss",
         access_token_id: access_token.id
       }
     }
@@ -190,7 +186,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-feed",
         url: "  https://example.com/test.xml  ",
         cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
+        feed_profile_key: "rss",
         access_token_id: access_token.id
       }
     }
@@ -209,7 +205,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         name: "test-feed",
         url: "https://example.com/test.xml",
         cron_expression: "0 * * * *",
-        feed_profile_id: feed_profile.id,
+        feed_profile_key: "rss",
         description: "Line 1\nLine 2\r\nLine 3",
         access_token_id: access_token.id
       }
@@ -230,7 +226,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
         feed: {
           name: "simple-feed",
           url: "https://example.com/test.xml",
-          feed_profile_id: feed_profile.id
+          feed_profile_key: "rss"
         }
       }
     end

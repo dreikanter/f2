@@ -41,4 +41,5 @@ en:
     xkcd: "XKCD"
 
   feed_profiles:
-    rss: "RSS Feed Profile"
+    rss: "RSS Feed"
+    xkcd: "XKCD Comics"
