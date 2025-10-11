@@ -1,5 +1,15 @@
 class Admin::UsersController < ApplicationController
   include Pagination
+  include Sortable
+
+  sortable_by({
+    "email" => "LOWER(users.email_address)",
+    "name" => "LOWER(users.name)",
+    "feeds" => "COUNT(DISTINCT feeds.id)",
+    "tokens" => "COUNT(DISTINCT access_tokens.id)",
+    "posts" => "COUNT(DISTINCT posts.id)",
+    "last_seen" => "MAX(sessions.updated_at)"
+  }, default_column: :email, default_direction: :desc)
 
   def index
     authorize User
@@ -23,7 +33,7 @@ class Admin::UsersController < ApplicationController
                COUNT(DISTINCT access_tokens.id) AS access_tokens_count,
                COUNT(DISTINCT posts.id) AS posts_count,
                MAX(sessions.updated_at) AS last_seen_at")
-      .order(created_at: :desc)
+      .order(sort_order)
   end
 
   def pagination_total_count
