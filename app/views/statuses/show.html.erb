@@ -5,12 +5,10 @@
 <div class="row">
   <div class="col-12">
     <% if @user.total_feeds_count == 0 %>
-      <div class="alert alert-info">
-        <p class="mb-2">You haven't created any feeds yet.</p>
-        <p class="mb-0">
-          <%= link_to "Add your first feed", new_feed_path, class: "btn btn-primary btn-sm" %>
-        </p>
-      </div>
+      <p class="mb-3">No active feeds yet.</p>
+      <p>
+        <%= link_to "Add your first feed", new_feed_path, class: "btn btn-primary btn-sm" %>
+      </p>
     <% else %>
       <div class="list-group">
       <div class="list-group-item">
