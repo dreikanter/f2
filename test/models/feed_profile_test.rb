@@ -39,18 +39,27 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "loader_class_for returns nil for invalid key" do
-    assert_nil FeedProfile.loader_class_for("invalid")
-    assert_nil FeedProfile.loader_class_for(nil)
+  test "loader_class_for raises ArgumentError for invalid key" do
+    assert_raises(ArgumentError) { FeedProfile.loader_class_for("invalid") }
   end
 
-  test "processor_class_for returns nil for invalid key" do
-    assert_nil FeedProfile.processor_class_for("invalid")
-    assert_nil FeedProfile.processor_class_for(nil)
+  test "loader_class_for raises ArgumentError for nil key" do
+    assert_raises(ArgumentError) { FeedProfile.loader_class_for(nil) }
   end
 
-  test "normalizer_class_for returns nil for invalid key" do
-    assert_nil FeedProfile.normalizer_class_for("invalid")
-    assert_nil FeedProfile.normalizer_class_for(nil)
+  test "processor_class_for raises ArgumentError for invalid key" do
+    assert_raises(ArgumentError) { FeedProfile.processor_class_for("invalid") }
+  end
+
+  test "processor_class_for raises ArgumentError for nil key" do
+    assert_raises(ArgumentError) { FeedProfile.processor_class_for(nil) }
+  end
+
+  test "normalizer_class_for raises ArgumentError for invalid key" do
+    assert_raises(ArgumentError) { FeedProfile.normalizer_class_for("invalid") }
+  end
+
+  test "normalizer_class_for raises ArgumentError for nil key" do
+    assert_raises(ArgumentError) { FeedProfile.normalizer_class_for(nil) }
   end
 end
