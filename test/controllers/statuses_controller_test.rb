@@ -10,8 +10,16 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "shows status when authenticated" do
+  test "shows status when authenticated with no feeds" do
     sign_in_as user
+    get status_path
+    assert_response :success
+    assert_select "h1", "Welcome to Feeder"
+  end
+
+  test "shows status when authenticated with feeds" do
+    sign_in_as user
+    create(:feed, user: user)
     get status_path
     assert_response :success
     assert_select "h1", "Status"
@@ -111,8 +119,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".alert h5", "Welcome to Feeder"
-    assert_select ".alert", /This page shows statistics about your feeds and posts/
+    assert_select "h1", "Welcome to Feeder"
+    assert_select "p", /This page shows statistics about your feeds and posts/
     assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
     assert_select ".list-group", count: 0
   end
@@ -124,6 +132,6 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select ".list-group-item", /Total feeds:\s+1/
-    assert_select ".alert h5", { text: "Welcome to Feeder", count: 0 }
+    assert_select "h1", "Status"
   end
 end

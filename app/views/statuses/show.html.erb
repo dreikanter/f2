@@ -1,50 +1,58 @@
 <% content_for :title, "Status" %>
 
-<%= page_header "Status" %>
+<% if @user.total_feeds_count == 0 %>
+  <%= page_header "Welcome to Feeder" %>
 
-<div class="row">
-  <div class="col-12">
-    <% if @user.total_feeds_count == 0 %>
-      <div class="alert alert-light border">
-        <h5 class="alert-heading">Welcome to Feeder</h5>
-        <p class="mb-3">
-          This page shows statistics about your feeds and posts. Get started by adding your first feed to track and publish content automatically.
-        </p>
+  <div class="row">
+    <div class="col-12">
+      <p>
+        This page shows statistics about your feeds and posts.
+      </p>
+      <p>
+        Get started by adding your first feed to track and repost content to Freefeed.
+      </p>
+      <p>
         <%= link_to "Add your first feed", new_feed_path, class: "btn btn-primary" %>
-      </div>
-    <% else %>
-      <div class="list-group">
-      <div class="list-group-item">
-        <strong>Total feeds:</strong>
-        <%= number_with_delimiter(@user.total_feeds_count) %>
-      </div>
-
-      <% if @user.total_imported_posts_count > 0 %>
-        <div class="list-group-item">
-          <strong>Total imported posts:</strong>
-          <%= number_with_delimiter(@user.total_imported_posts_count) %>
-        </div>
-
-        <div class="list-group-item">
-          <strong>Total published posts:</strong>
-          <%= number_with_delimiter(@user.total_published_posts_count) %>
-        </div>
-      <% end %>
-
-      <% if @user.most_recent_post_published_at %>
-        <div class="list-group-item">
-          <strong>Most recent post publication:</strong>
-          <%= time_ago_in_words(@user.most_recent_post_published_at) %> ago
-        </div>
-      <% end %>
-
-      <% if @user.total_imported_posts_count > 0 %>
-        <div class="list-group-item">
-          <strong>Average posts per day (last week):</strong>
-          <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
-        </div>
-      <% end %>
-      </div>
-    <% end %>
+      </p>
+    </div>
   </div>
-</div>
+<% else %>
+  <%= page_header "Status" %>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="list-group">
+        <div class="list-group-item">
+          <strong>Total feeds:</strong>
+          <%= number_with_delimiter(@user.total_feeds_count) %>
+        </div>
+
+        <% if @user.total_imported_posts_count > 0 %>
+          <div class="list-group-item">
+            <strong>Total imported posts:</strong>
+            <%= number_with_delimiter(@user.total_imported_posts_count) %>
+          </div>
+
+          <div class="list-group-item">
+            <strong>Total published posts:</strong>
+            <%= number_with_delimiter(@user.total_published_posts_count) %>
+          </div>
+        <% end %>
+
+        <% if @user.most_recent_post_published_at %>
+          <div class="list-group-item">
+            <strong>Most recent post publication:</strong>
+            <%= time_ago_in_words(@user.most_recent_post_published_at) %> ago
+          </div>
+        <% end %>
+
+        <% if @user.total_imported_posts_count > 0 %>
+          <div class="list-group-item">
+            <strong>Average posts per day (last week):</strong>
+            <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
