@@ -1,7 +1,16 @@
 class FeedsController < ApplicationController
   include Pagination
+  include Sortable
 
   MAX_RECENT_POSTS = 10
+
+  sortable_by({
+    "name" => "LOWER(feeds.name)",
+    "status" => "feeds.state",
+    "target_group" => "LOWER(feeds.target_group)",
+    "last_refresh" => "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
+    "recent_post" => "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
+  }, default_column: :name, default_direction: :asc)
 
   def index
     authorize Feed
@@ -114,7 +123,7 @@ class FeedsController < ApplicationController
   end
 
   def pagination_scope
-    policy_scope(Feed).includes(:feed_entries, :posts).order(:name)
+    policy_scope(Feed).order(sort_order)
   end
 
   def form_template_name(section)
