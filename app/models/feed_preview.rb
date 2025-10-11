@@ -21,14 +21,6 @@ class FeedPreview < ApplicationRecord
 
   scope :for_cache_key, ->(url, feed_profile_key) { where(url: url, feed_profile_key: feed_profile_key) }
 
-  # Returns a FeedProfile instance for this preview
-  # @return [FeedProfile, nil] the feed profile instance
-  def feed_profile
-    return nil if feed_profile_key.blank?
-    return nil unless FeedProfile.exists?(feed_profile_key)
-    FeedProfile.new(feed_profile_key)
-  end
-
   def posts_data
     (data.present? && ready? && data["posts"]) || []
   end

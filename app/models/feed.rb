@@ -6,10 +6,10 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
-  has_one :feed_schedule, dependent: :destroy
-  has_many :events, as: :subject, dependent: :destroy
 
-  delegate :loader_class, :processor_class, :normalizer_class, to: :feed_profile, allow_nil: true
+  has_one :feed_schedule, dependent: :destroy
+
+  has_many :events, as: :subject, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
   has_many :posts, dependent: :destroy
 
@@ -58,20 +58,43 @@ class Feed < ApplicationRecord
   before_validation :auto_disable_without_active_token
   before_validation :auto_disable_with_invalid_profile
 
-  # Returns a FeedProfile instance for this feed
-  # @return [FeedProfile, nil] the feed profile instance
-  def feed_profile
-    return nil if feed_profile_key.blank?
-    return nil unless FeedProfile.exists?(feed_profile_key)
-    FeedProfile.new(feed_profile_key)
+  def feed_profile_present?
+    feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
+  end
+
+  # Returns the profile configuration hash
+  # @return [Hash, nil] configuration with loader, processor, normalizer keys
+  def profile_config
+    @profile_config ||= FeedProfile.for(feed_profile_key)
+  end
+
+  # Resolves and returns the loader class for this feed
+  # @return [Class, nil] the loader class
+  def loader_class
+    return nil unless profile_config
+    ClassResolver.resolve("Loader", profile_config[:loader])
+  end
+
+  # Resolves and returns the processor class for this feed
+  # @return [Class, nil] the processor class
+  def processor_class
+    return nil unless profile_config
+    ClassResolver.resolve("Processor", profile_config[:processor])
+  end
+
+  # Resolves and returns the normalizer class for this feed
+  # @return [Class, nil] the normalizer class
+  def normalizer_class
+    return nil unless profile_config
+    ClassResolver.resolve("Normalizer", profile_config[:normalizer])
   end
 
   def can_be_enabled?
-    access_token&.active? && target_group.present? && feed_profile.present? && cron_expression.present?
+    access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
   def can_be_previewed?
-    url.present? && feed_profile.present?
+    url.present? && feed_profile_present?
   end
 
   def generate_unique_name!
@@ -135,7 +158,7 @@ class Feed < ApplicationRecord
 
   def auto_disable_with_invalid_profile
     return unless enabled?
-    return if feed_profile.present?
+    return if feed_profile_present?
 
     self.state = :disabled
   end

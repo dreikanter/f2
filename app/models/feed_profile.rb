@@ -28,18 +28,11 @@ class FeedProfile
     PROFILES.key?(key)
   end
 
-  # Returns the configuration for a given feed
-  # @param feed [Feed] the feed to get configuration for
-  # @return [Hash, nil] configuration with resolved classes, or nil if feed_profile_key is blank
-  def self.for(feed)
-    return nil if feed.feed_profile_key.blank?
-
-    profile = new(feed.feed_profile_key)
-    {
-      loader_class: profile.loader_class,
-      processor_class: profile.processor_class,
-      normalizer_class: profile.normalizer_class
-    }
+  # Returns the configuration hash for a given key
+  # @param key [String] the profile key
+  # @return [Hash, nil] configuration hash with loader, processor, normalizer keys
+  def self.for(key)
+    PROFILES[key]
   end
 
   # Resolves and returns the loader class for this profile
