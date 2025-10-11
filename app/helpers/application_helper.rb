@@ -44,6 +44,7 @@ module ApplicationHelper
 
   def sortable_header(column:, title:, current_sort:, current_direction:, path_params: {})
     direction = current_sort == column ? current_direction : nil
+
     next_direction = if current_sort == column
       current_direction == "asc" ? "desc" : "asc"
     else

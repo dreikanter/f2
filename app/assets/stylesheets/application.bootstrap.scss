@@ -17,12 +17,9 @@
 .sortable {
   text-decoration: none;
   color: inherit;
-  cursor: pointer;
-  user-select: none;
   white-space: nowrap;
 
   &:hover {
-    text-decoration: none;
     color: inherit;
   }
 
