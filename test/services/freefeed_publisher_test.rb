@@ -9,12 +9,8 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     @access_token ||= create(:access_token, user: user, status: :active)
   end
 
-  def feed_profile
-    @feed_profile ||= create(:feed_profile)
-  end
-
   def feed
-    @feed ||= create(:feed, user: user, access_token: access_token, feed_profile: feed_profile, target_group: "testgroup")
+    @feed ||= create(:feed, user: user, access_token: access_token, feed_profile_key: "rss", target_group: "testgroup")
   end
 
   def feed_entry
@@ -54,7 +50,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "raises validation error for feed without access token" do
-    feed = create(:feed, :without_access_token, user: user, feed_profile: feed_profile, state: :disabled)
+    feed = create(:feed, :without_access_token, user: user, feed_profile_key: "rss", state: :disabled)
     post = create(:post, feed: feed, feed_entry: feed_entry)
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
@@ -64,7 +60,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
   end
 
   test "raises validation error for feed without target group" do
-    feed = create(:feed, user: user, access_token: access_token, feed_profile: feed_profile, target_group: nil, state: :disabled)
+    feed = create(:feed, user: user, access_token: access_token, feed_profile_key: "rss", target_group: nil, state: :disabled)
     post = create(:post, feed: feed, feed_entry: feed_entry)
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
@@ -84,7 +80,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
   test "raises validation error for inactive access token" do
     inactive_token = create(:access_token, user: user, status: :inactive)
-    feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token, feed_profile: feed_profile, target_group: "testgroup")
+    feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token, feed_profile_key: "rss", target_group: "testgroup")
     post = create(:post, feed: feed_with_inactive_token, feed_entry: feed_entry, content: "Test content")
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
