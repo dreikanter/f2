@@ -2,14 +2,17 @@ require "test_helper"
 
 class FileDeliveryTest < ActiveSupport::TestCase
   setup do
-    @delivery = FileDelivery.new({})
-    @sent_emails_dir = Rails.root.join("tmp", "sent_emails")
-    FileUtils.rm_rf(@sent_emails_dir)
-    FileUtils.mkdir_p(@sent_emails_dir)
-  end
+    @written_files = {}
+    @created_directories = []
 
-  teardown do
-    FileUtils.rm_rf(@sent_emails_dir) if @sent_emails_dir
+    mkdir_p = ->(dir) { @created_directories << dir.to_s }
+    write_file = ->(filepath, &block) {
+      fake_file = StringIO.new
+      block.call(fake_file)
+      @written_files[filepath.to_s] = fake_file.string
+    }
+
+    @delivery = FileDelivery.new(mkdir_p: mkdir_p, write_file: write_file)
   end
 
   test "delivers email and saves to file" do
@@ -22,10 +25,10 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    files = Dir.glob(@sent_emails_dir.join("*.txt"))
-    assert_equal 1, files.size
+    assert_equal 1, @written_files.size
+    filepath, content = @written_files.first
 
-    content = File.read(files.first)
+    assert_match(/Test_Subject\.txt$/, filepath)
     assert_includes content, "From: sender@example.com"
     assert_includes content, "To: recipient@example.com"
     assert_includes content, "Subject: Test Subject"
@@ -50,9 +53,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    files = Dir.glob(@sent_emails_dir.join("*.txt"))
-    content = File.read(files.first)
-
+    filepath, content = @written_files.first
     assert_includes content, "--- TEXT PART ---"
     assert_includes content, "Text version"
     assert_includes content, "--- HTML PART ---"
@@ -69,15 +70,11 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    files = Dir.glob(@sent_emails_dir.join("*.txt"))
-    assert_equal 1, files.size
-    assert_match(/Test_With_Special_Characters_.txt$/, files.first)
+    filepath = @written_files.keys.first
+    assert_match(/Test_With_Special_Characters_\.txt$/, filepath)
   end
 
   test "creates directory if it does not exist" do
-    FileUtils.rm_rf(@sent_emails_dir)
-    refute File.directory?(@sent_emails_dir)
-
     mail = Mail.new do
       from "sender@example.com"
       to "recipient@example.com"
@@ -87,6 +84,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    assert File.directory?(@sent_emails_dir)
+    assert_equal 1, @created_directories.size
+    assert_match(/tmp\/sent_emails$/, @created_directories.first)
   end
 end

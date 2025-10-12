@@ -1,17 +1,21 @@
 class FileDelivery
+  attr_reader :mkdir_p, :write_file
+
   def initialize(settings)
     @settings = settings
+    @mkdir_p = settings[:mkdir_p] || ->(dir) { FileUtils.mkdir_p(dir) }
+    @write_file = settings[:write_file] || ->(path, &block) { File.open(path, "w", &block) }
   end
 
   def deliver!(mail)
     dir = Rails.root.join("tmp", "sent_emails")
-    FileUtils.mkdir_p(dir)
+    mkdir_p.call(dir)
 
     timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
     filename = "#{timestamp}_#{sanitize_filename(mail.subject || "no_subject")}.txt"
     filepath = dir.join(filename)
 
-    File.open(filepath, "w") do |f|
+    write_file.call(filepath) do |f|
       f.puts "From: #{mail.from&.join(", ")}"
       f.puts "To: #{mail.to&.join(", ")}"
       f.puts "Subject: #{mail.subject}"
