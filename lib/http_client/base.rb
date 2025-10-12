@@ -1,5 +1,11 @@
 module HttpClient
   class Base
+    attr_reader :options
+
+    def initialize(options = {})
+      @options = options.freeze
+    end
+
     def get(url, headers: {}, options: {})
       raise NotImplementedError, "Subclasses must implement #get"
     end

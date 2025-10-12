@@ -232,17 +232,17 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
   test "constructor sets default timeout" do
     custom_client = HttpClient::FaradayAdapter.new(timeout: 10)
-    assert_equal 10, custom_client.default_options[:timeout]
+    assert_equal 10, custom_client.options[:timeout]
   end
 
   test "constructor sets default follow_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(follow_redirects: false)
-    assert_equal false, custom_client.default_options[:follow_redirects]
+    assert_equal false, custom_client.options[:follow_redirects]
   end
 
   test "constructor sets default max_redirects" do
     custom_client = HttpClient::FaradayAdapter.new(max_redirects: 10)
-    assert_equal 10, custom_client.default_options[:max_redirects]
+    assert_equal 10, custom_client.options[:max_redirects]
   end
 
   test "uses constructor defaults when no per-request overrides" do
