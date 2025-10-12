@@ -30,7 +30,7 @@ module HttpClient
 
   def self.build(options = {})
     adapter_class = options.delete(:adapter) || default_adapter_class
-    adapter_class.new(options)
+    adapter_class.new(**options)
   end
 
   def self.default_adapter_class
