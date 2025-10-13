@@ -2,8 +2,8 @@
 #
 class FeedProfile
   PROFILES = {
-    "rss" => { loader: "http", processor: "rss", normalizer: "rss" },
-    "xkcd" => { loader: "http", processor: "rss", normalizer: "xkcd" }
+    "rss" => { loader: "http", processor: "rss", normalizer: "rss", title_extractor: "rss" },
+    "xkcd" => { loader: "http", processor: "rss", normalizer: "xkcd", title_extractor: "rss" }
   }.freeze
 
   # Returns all available profile keys
@@ -38,5 +38,12 @@ class FeedProfile
   # @return [Class] the normalizer class
   def self.normalizer_class_for(key)
     ClassResolver.resolve("Normalizer", PROFILES.dig(key, :normalizer))
+  end
+
+  # Resolves and returns the title extractor class for a given profile key
+  # @param key [String] the profile key
+  # @return [Class] the title extractor class
+  def self.title_extractor_class_for(key)
+    ClassResolver.resolve("TitleExtractor", PROFILES.dig(key, :title_extractor))
   end
 end

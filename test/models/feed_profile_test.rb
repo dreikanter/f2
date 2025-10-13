@@ -74,4 +74,28 @@ class FeedProfileTest < ActiveSupport::TestCase
   test "normalizer_class_for returns Normalizer::RssNormalizer for rss profile" do
     assert_equal Normalizer::RssNormalizer, FeedProfile.normalizer_class_for("rss")
   end
+
+  test "all PROFILES have resolvable title extractor classes" do
+    FeedProfile::PROFILES.each do |key, config|
+      title_extractor_class = FeedProfile.title_extractor_class_for(key)
+      assert title_extractor_class.present?, "Profile '#{key}' should have a resolvable title extractor class"
+      assert title_extractor_class < TitleExtractor::Base, "Profile '#{key}' title extractor should inherit from TitleExtractor::Base"
+    end
+  end
+
+  test "title_extractor_class_for raises ArgumentError for invalid key" do
+    assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for("invalid") }
+  end
+
+  test "title_extractor_class_for raises ArgumentError for nil key" do
+    assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for(nil) }
+  end
+
+  test "title_extractor_class_for returns TitleExtractor::RssTitleExtractor for rss profile" do
+    assert_equal TitleExtractor::RssTitleExtractor, FeedProfile.title_extractor_class_for("rss")
+  end
+
+  test "title_extractor_class_for returns TitleExtractor::RssTitleExtractor for xkcd profile" do
+    assert_equal TitleExtractor::RssTitleExtractor, FeedProfile.title_extractor_class_for("xkcd")
+  end
 end
