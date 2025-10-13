@@ -72,20 +72,22 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_equal 0, @cache.size
   end
 
-  test "default cache key includes method and URL" do
-    client = cached_client
-    cache_key = client.send(:generate_cache_key, :get, "https://example.com/test", {}, {})
-
-    assert_match(/^http_client:[a-f0-9]{64}$/, cache_key)
-  end
-
-  test "different URLs produce different cache keys" do
+  test "different URLs produce different cache entries" do
     client = cached_client
 
-    key1 = client.send(:generate_cache_key, :get, "https://example.com/page1", {}, {})
-    key2 = client.send(:generate_cache_key, :get, "https://example.com/page2", {}, {})
+    stub_request(:get, "https://example.com/page1")
+      .to_return(status: 200, body: "Page 1")
+      .times(1)
 
-    assert_not_equal key1, key2
+    stub_request(:get, "https://example.com/page2")
+      .to_return(status: 200, body: "Page 2")
+      .times(1)
+
+    client.get("https://example.com/page1")
+    client.get("https://example.com/page2")
+
+    # Both URLs should be cached separately
+    assert_equal 2, @cache.size
   end
 
   test "uses custom cache_expires_in" do

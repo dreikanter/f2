@@ -23,16 +23,16 @@ module HttpClient
       response
     end
 
-    def post(url, body: nil, headers: {}, options: {})
-      adapter.post(url, body: body, headers: headers, options: options)
+    def post(url, **)
+      adapter.post(url, **)
     end
 
-    def put(url, body: nil, headers: {}, options: {})
-      adapter.put(url, body: body, headers: headers, options: options)
+    def put(url, **)
+      adapter.put(url, **)
     end
 
-    def delete(url, headers: {}, options: {})
-      adapter.delete(url, headers: headers, options: options)
+    def delete(url, **)
+      adapter.delete(url, **)
     end
 
     private
