@@ -38,7 +38,8 @@ module HttpClient
     private
 
     def cache_key(method, url, headers, request_options)
-      "http_client:#{Digest::SHA256.hexdigest("#{method}:#{url}")}"
+      key_data = "#{method}:#{url}:#{headers.sort.to_h}:#{request_options.sort.to_h}"
+      "http_client:#{Digest::SHA256.hexdigest(key_data)}"
     end
 
     def read_from_cache(key)
