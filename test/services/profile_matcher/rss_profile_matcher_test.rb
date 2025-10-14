@@ -15,6 +15,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
         </channel>
       </rss>
     XML
+
     assert matcher(body).match?
   end
 
@@ -25,6 +26,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
         <title>Test Feed</title>
       </feed>
     XML
+
     assert matcher(body).match?
   end
 
@@ -37,6 +39,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
         </channel>
       </rdf:RDF>
     XML
+
     assert matcher(body).match?
   end
 

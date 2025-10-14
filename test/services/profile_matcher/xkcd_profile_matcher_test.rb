@@ -2,7 +2,7 @@ require "test_helper"
 
 class ProfileMatcher::XkcdProfileMatcherTest < ActiveSupport::TestCase
   def response
-    @response ||= HttpClient::Response.new(status: 200, body: "test body")
+    @response ||= HttpClient::Response.new(status: 200, body: "ignore")
   end
 
   def matcher(url)
