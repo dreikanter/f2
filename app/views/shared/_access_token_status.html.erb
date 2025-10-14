@@ -6,21 +6,21 @@
 -%>
 
 <% if access_token.pending? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>">
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" aria-busy="true">
     <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
     New
   </div>
 <% elsif access_token.validating? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-endpoint-value="<%= settings_access_token_validation_path(access_token) %>" data-debug-id="<%= access_token.id %>">
+  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-endpoint-value="<%= settings_access_token_validation_path(access_token) %>" data-debug-id="<%= access_token.id %>" aria-busy="true">
     <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
     ⏳ Validating...
   </div>
 <% elsif access_token.active? %>
-  <div id="<%= dom_id(access_token, :status) %>">
+  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false">
     <span class="text-success"><%= icon("check-circle-fill") %> Active</span>
   </div>
 <% elsif access_token.inactive? %>
-  <div id="<%= dom_id(access_token, :status) %>">
+  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false">
     <span class="text-muted"><%= icon("x-circle") %> Inactive</span>
     <% if error %>
       <br><small class="text-muted"><%= error %></small>

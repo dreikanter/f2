@@ -23,6 +23,7 @@ export default class extends Controller {
 
       if (pollCount > maxPolls) {
         console.warn('Polling stopped after maximum attempts');
+        this.element.setAttribute('aria-busy', 'false');
         clearInterval(this.interval);
         return;
       }
@@ -37,6 +38,7 @@ export default class extends Controller {
         if (response.ok) {
           return response.text();
         } else {
+          this.element.setAttribute('aria-busy', 'false');
           clearInterval(this.interval);
           return null;
         }
@@ -53,6 +55,7 @@ export default class extends Controller {
       })
       .catch(error => {
         console.error('Polling error:', error);
+        this.element.setAttribute('aria-busy', 'false');
         clearInterval(this.interval);
       });
     }, this.intervalValue);

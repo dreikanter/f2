@@ -13,7 +13,7 @@
   (<%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %>)
 </div>
 
-<div id="preview-status">
+<div id="preview-status" aria-busy="<%= @feed_preview.pending? || @feed_preview.processing? %>">
   <% if @feed_preview.ready? %>
     <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
   <% elsif @feed_preview.pending? || @feed_preview.processing? %>
