@@ -2,7 +2,10 @@
 #
 class FeedProfileDetector
   # Profile keys in order from most specific to most generic
-  DETECTION_ORDER = %w[xkcd rss].freeze
+  DETECTION_ORDER = %w[
+    ProfileMatcher::XkcdProfileMatcher
+    ProfileMatcher::RssProfileMatcher
+  ].freeze
 
   attr_reader :url, :response
 
@@ -16,18 +19,11 @@ class FeedProfileDetector
   # Detects the appropriate profile for the feed
   # @return [String, nil] the profile key or nil if no match found
   def detect
-    DETECTION_ORDER.each do |profile_key|
-      matcher_class = matcher_class_for(profile_key)
-      matcher = matcher_class.new(url, response)
+    DETECTION_ORDER.each do |matcher_class|
+      matcher = matcher_class.constantize.new(url, response)
       return profile_key if matcher.match?
     end
 
     nil
-  end
-
-  private
-
-  def matcher_class_for(profile_key)
-    ClassResolver.resolve("ProfileMatcher", profile_key)
   end
 end
