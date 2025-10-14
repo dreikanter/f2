@@ -67,62 +67,59 @@
 
 <div id="edit-form-container"></div>
 
-<div class="mt-4">
-  <h3 class="mb-3">Stats</h3>
-  <div class="list-group">
-    <div class="list-group-item">
-      <div class="row">
-        <div class="col-md-6">
-          <strong>Last Refresh:</strong>
-          <% if @feed.last_refreshed_at %>
-            <%= time_ago_tag(@feed.last_refreshed_at) %>
-          <% else %>
-            <em class="text-muted">Never refreshed</em>
-          <% end %>
-        </div>
-        <div class="col-md-6">
-          <strong>Most Recent Post:</strong>
-          <% if @feed.most_recent_post_date %>
-            <%= time_ago_tag(@feed.most_recent_post_date) %>
-          <% else %>
-            <em class="text-muted">No posts imported</em>
-          <% end %>
-        </div>
+<%= page_section_header "Stats" %>
+
+<div class="list-group">
+  <div class="list-group-item">
+    <div class="row">
+      <div class="col-md-6">
+        <strong>Last Refresh:</strong>
+        <% if @feed.last_refreshed_at %>
+          <%= time_ago_tag(@feed.last_refreshed_at) %>
+        <% else %>
+          <em class="text-muted">Never refreshed</em>
+        <% end %>
+      </div>
+      <div class="col-md-6">
+        <strong>Most Recent Post:</strong>
+        <% if @feed.most_recent_post_date %>
+          <%= time_ago_tag(@feed.most_recent_post_date) %>
+        <% else %>
+          <em class="text-muted">No posts imported</em>
+        <% end %>
       </div>
     </div>
   </div>
 </div>
 
-<div class="mt-4">
-  <h3 class="mb-3">Recent Posts</h3>
-  <% if @recent_posts.any? %>
-    <%= render "shared/posts_table", posts: @recent_posts, hide_feed_column: true %>
-    <div class="mt-2">
-      <%= link_to "View All Posts", posts_path(feed_id: @feed.id), class: "btn btn-sm btn-outline-primary" %>
-    </div>
-  <% else %>
-    <div class="text-center py-4">
-      <p class="text-muted">No posts imported yet from this feed.</p>
-    </div>
-  <% end %>
-</div>
+<%= page_section_header "Recent Posts" %>
 
-<div class="mt-4">
-  <h3 class="mb-3">Danger Zone</h3>
-  <% if @feed.target_group.present? %>
-    <div class="card">
-      <div class="card-body">
-        <h5 class="mb-2">Remove All Published Posts</h5>
-        <p class="text-muted mb-3">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>. Feed configuration remains intact.</p>
-        <%= link_to "Purge feed", feed_purge_path(@feed), class: "btn btn-outline-danger" %>
-      </div>
+<% if @recent_posts.any? %>
+  <%= render "shared/posts_table", posts: @recent_posts, hide_feed_column: true %>
+  <div class="mt-2">
+    <%= link_to "View All Posts", posts_path(feed_id: @feed.id), class: "btn btn-sm btn-outline-primary" %>
+  </div>
+<% else %>
+  <div class="text-center py-4">
+    <p class="text-muted">No posts imported yet from this feed.</p>
+  </div>
+<% end %>
+
+<%= page_section_header "Danger Zone" %>
+
+<% if @feed.target_group.present? %>
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Remove All Published Posts</h5>
+      <p class="card-text">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>. Feed configuration remains intact.</p>
+      <%= link_to "Purge feed", feed_purge_path(@feed), class: "btn btn-outline-danger" %>
     </div>
-  <% end %>
-    <div class="card mt-3">
-      <div class="card-body">
-        <h5 class="mb-2">Permanently Delete Feed</h5>
-        <p class="text-muted mb-3">Removes feed configuration and all associated posts from database.</p>
-        <%= link_to "Delete feed", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
-    </div>
+  </div>
+<% end %>
+  <div class="card mt-3">
+    <div class="card-body">
+      <h5 class="card-title">Permanently Delete Feed</h5>
+      <p class="card-text">Removes feed configuration and all associated posts from database.</p>
+      <%= link_to "Delete feed", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
   </div>
 </div>

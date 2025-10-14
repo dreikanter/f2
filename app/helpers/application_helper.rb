@@ -1,8 +1,12 @@
 module ApplicationHelper
-  def page_header(title, &block)
-    content_tag :div, class: "d-flex justify-content-between align-items-center mb-4" do
+  def page_header(title, class: nil, &block)
+    content_tag :div, class: class_names("d-flex justify-content-between align-items-center mb-4", binding.local_variable_get(:class)) do
       content_tag(:h1, title) + (capture(&block) if block_given?)
     end
+  end
+
+  def page_section_header(title, class: nil)
+    content_tag(:h2, title, class: class_names("mt-5 mb-4", binding.local_variable_get(:class)))
   end
 
   def post_content_preview(content, length = 120)
