@@ -189,28 +189,25 @@
 <h3 class="mt-4 mb-3">Danger Zone</h3>
 
 <% if @user.suspended? %>
-  <div class="card border-secondary">
+  <div class="card">
     <div class="card-body">
-      <h5 class="card-title text-secondary">User Suspended</h5>
-      <p class="card-text">
-        This user was suspended on
+      <h5 class="mb-2">Restore User Access</h5>
+      <p class="text-muted mb-3">
+        User suspended on
         <time datetime="<%= @user.suspended_at.iso8601 %>" title="<%= @user.suspended_at.to_fs(:long) %>">
-          <%= @user.suspended_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.suspended_at) %>)
+          <%= @user.suspended_at.to_date.to_fs(:long) %>
         </time>.
-        They cannot sign in or perform any actions.
+        Restores ability to sign in and access feeds.
       </p>
-      <%= button_to "Unsuspend User", admin_user_suspension_path(@user), method: :delete, class: "btn btn-outline-secondary", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
+      <%= button_to "Unsuspend user", admin_user_suspension_path(@user), method: :delete, class: "btn btn-outline-secondary", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
     </div>
   </div>
 <% else %>
-  <div class="card border-danger">
+  <div class="card">
     <div class="card-body">
-      <h5 class="card-title text-danger">Suspend User</h5>
-      <p class="card-text">
-        Suspending this user will immediately terminate all their active sessions and disable all their feeds.
-        They will not be able to sign in until unsuspended.
-      </p>
-      <%= button_to "Suspend User", admin_user_suspension_path(@user), method: :post, class: "btn btn-danger", data: { turbo_confirm: "Are you sure you want to suspend this user? All active sessions will be terminated and feeds will be disabled." } %>
+      <h5 class="mb-2">Suspend User Account</h5>
+      <p class="text-muted mb-3">Terminates all active sessions, disables all feeds, and prevents sign in.</p>
+      <%= button_to "Suspend user", admin_user_suspension_path(@user), method: :post, class: "btn btn-outline-danger", data: { turbo_confirm: "Are you sure you want to suspend this user? All active sessions will be terminated and feeds will be disabled." } %>
     </div>
   </div>
 <% end %>

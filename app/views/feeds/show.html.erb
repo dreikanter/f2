@@ -109,25 +109,20 @@
 
 <div class="mt-4">
   <h3 class="mb-3">Danger Zone</h3>
-  <div class="card border-danger">
-    <div class="card-body">
-      <% if @feed.target_group.present? %>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <h6 class="mb-1">Purge All Posts</h6>
-            <p class="text-muted mb-0">Remove all published posts for this feed from FreeFeed group <strong><%= @feed.target_group %></strong></p>
-          </div>
-          <%= link_to "Purge Feed", feed_purge_path(@feed), class: "btn btn-outline-danger" %>
-        </div>
-        <hr class="border-danger">
-      <% end %>
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h6 class="mb-1">Delete Feed</h6>
-          <p class="text-muted mb-0">Permanently delete this feed and all its posts</p>
-        </div>
-        <%= link_to "Delete", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
+  <% if @feed.target_group.present? %>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-2">Remove All Published Posts</h5>
+        <p class="text-muted mb-3">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>. Feed configuration remains intact.</p>
+        <%= link_to "Purge feed", feed_purge_path(@feed), class: "btn btn-outline-danger" %>
       </div>
+    </div>
+  <% end %>
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5 class="mb-2">Permanently Delete Feed</h5>
+        <p class="text-muted mb-3">Removes feed configuration and all associated posts from database.</p>
+        <%= link_to "Delete feed", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed?" }, class: "btn btn-outline-danger" %>
     </div>
   </div>
 </div>
