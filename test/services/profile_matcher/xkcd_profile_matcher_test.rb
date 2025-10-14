@@ -30,7 +30,9 @@ class ProfileMatcher::XkcdProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher(nil).match?
   end
 
-  test "should handle invalid URLs" do
-    assert_not matcher("not a url").match?
+  test "should raise error for invalid URLs" do
+    assert_raises(URI::InvalidURIError) do
+      matcher("not a url").match?
+    end
   end
 end

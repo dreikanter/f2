@@ -64,17 +64,18 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     XML
 
     actual = detector("https://example.com/rss.rdf", rdf_body).detect
-    assert_equal "ProfileMatcher::RssProfileMatcher", actual
+    assert_equal ProfileMatcher::RssProfileMatcher, actual
   end
 
-  test "should handle invalid URLs gracefully" do
-    actual = detector("not a url", rss_feed_body).detect
-    assert_equal ProfileMatcher::RssProfileMatcher, actual
+  test "should raise error for invalid URLs" do
+    assert_raises(URI::InvalidURIError) do
+      detector("not a url", rss_feed_body).detect
+    end
   end
 
   test "should detect profiles in correct order (specific before generic)" do
     xkcd_url = "https://xkcd.com/rss.xml"
     result = detector(xkcd_url, rss_feed_body).detect
-    assert_equal "ProfileMatcher::XkcdProfileMatcher", result
+    assert_equal ProfileMatcher::XkcdProfileMatcher, result
   end
 end

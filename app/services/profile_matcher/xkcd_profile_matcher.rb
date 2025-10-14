@@ -7,8 +7,6 @@ module ProfileMatcher
 
       uri = URI.parse(url)
       uri.host&.end_with?(XKCD_DOMAIN)
-    rescue URI::InvalidURIError
-      false
     end
   end
 end
