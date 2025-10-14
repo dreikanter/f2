@@ -67,3 +67,9 @@
     white-space: nowrap;
   }
 }
+
+// aria-busy styling for loading states
+[aria-busy="true"] {
+  opacity: 0.8;
+  pointer-events: none;
+}
