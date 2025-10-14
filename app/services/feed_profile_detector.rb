@@ -1,7 +1,7 @@
 # Service for detecting the appropriate feed profile based on URL and content
 #
 class FeedProfileDetector
-  # Profile keys in order from most specific to most generic
+  # Matcher classes in order from most specific to most generic
   DETECTION_ORDER = %w[
     ProfileMatcher::XkcdProfileMatcher
     ProfileMatcher::RssProfileMatcher
@@ -17,11 +17,12 @@ class FeedProfileDetector
   end
 
   # Detects the appropriate profile for the feed
-  # @return [String, nil] the profile key or nil if no match found
+  # @return [String, nil] the matcher class name or nil if no match found
   def detect
-    DETECTION_ORDER.each do |matcher_class|
-      matcher = matcher_class.constantize.new(url, response)
-      return profile_key if matcher.match?
+    DETECTION_ORDER.each do |matcher_class_name|
+      matcher_class = matcher_class_name.constantize
+      matcher = matcher_class.new(url, response)
+      return matcher_class if matcher.match?
     end
 
     nil
