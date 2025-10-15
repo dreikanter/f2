@@ -60,7 +60,7 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should set session flag on sign in when onboarding exists" do
-    user_with_onboarding = User.create!(email_address: "new@example.com", password: "password123")
+    user_with_onboarding = create(:user, :with_onboarding)
     post session_url, params: { email_address: user_with_onboarding.email_address, password: "password123" }
     assert session[:onboarding]
   end

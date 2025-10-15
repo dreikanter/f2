@@ -18,7 +18,6 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
-  after_create :create_onboarding!
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 
   generates_token_for :password_reset, expires_in: 15.minutes do
