@@ -26,47 +26,49 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <% if Current.user %>
-      <%# Navigation bar %>
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-          <%= link_to "F2", root_path, class: "navbar-brand fw-bold" %>
+  <body class="<%= content_for(:body_class) %>">
+    <% unless content_for?(:skip_navigation) %>
+      <% if Current.user %>
+        <%# Navigation bar %>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <div class="container-fluid">
+            <%= link_to "F2", root_path, class: "navbar-brand fw-bold" %>
 
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
 
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <%# Navigation links %>
-            <ul class="navbar-nav me-auto">
-              <li class="nav-item">
-                <%= link_to "Status", status_path, class: "nav-link #{'active text-decoration-underline' if current_page?(status_path)}" %>
-              </li>
-              <li class="nav-item">
-                <%= link_to "Feeds", feeds_path, class: "nav-link #{'active text-decoration-underline' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
-              </li>
-              <li class="nav-item">
-                <%= link_to "Posts", posts_path, class: "nav-link #{'active text-decoration-underline' if current_page?(posts_path) || controller_name == 'posts'}" %>
-              </li>
-              <% if policy(Event).index? %>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <%# Navigation links %>
+              <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                  <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active text-decoration-underline' if current_page?(admin_path) || controller_name.start_with?('admin')}" %>
+                  <%= link_to "Status", status_path, class: "nav-link #{'active text-decoration-underline' if current_page?(status_path)}" %>
                 </li>
-              <% end %>
-            </ul>
-
-            <%# Dropdown menu %>
-            <ul class="navbar-nav">
-              <li class="nav-item">
-                <%= link_to settings_path, class: "nav-link" do %>
-                  <%= icon("gear") %>
+                <li class="nav-item">
+                  <%= link_to "Feeds", feeds_path, class: "nav-link #{'active text-decoration-underline' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
+                </li>
+                <li class="nav-item">
+                  <%= link_to "Posts", posts_path, class: "nav-link #{'active text-decoration-underline' if current_page?(posts_path) || controller_name == 'posts'}" %>
+                </li>
+                <% if policy(Event).index? %>
+                  <li class="nav-item">
+                    <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active text-decoration-underline' if current_page?(admin_path) || controller_name.start_with?('admin')}" %>
+                  </li>
                 <% end %>
-              </li>
-            </ul>
+              </ul>
+
+              <%# Dropdown menu %>
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <%= link_to settings_path, class: "nav-link" do %>
+                    <%= icon("gear") %>
+                  <% end %>
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      <% end %>
     <% end %>
 
     <main class="container-md py-4">

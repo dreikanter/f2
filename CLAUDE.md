@@ -63,6 +63,43 @@ Controllers:
 
 - Eliminate blank action methods.
 
+## UI Text Writing
+
+When writing user-facing text in views, keep it approachable and practical:
+
+- **Tone:** Friendly but not overly familiar. Avoid stiff, formal language but also avoid being too casual or cutesy.
+- **Clarity:** Be brief and easily digestible. Don't overwhelm users with terminology or long explanations.
+- **Voice:** Write like you're explaining something to a person, not documenting it in a reference manual.
+- **Goal:** Make the interface feel chill and non-boring, but still respectful and clear.
+
+Examples:
+
+```erb
+<!-- Bad: Too formal -->
+<p>You have successfully completed the onboarding process and may repeat it at any time.</p>
+
+<!-- Bad: Too technical -->
+<p>The onboarding wizard has been finalized. Re-initialization is available via the button below.</p>
+
+<!-- Good: Approachable and clear -->
+<p>Want a quick refresher? Run through the setup steps again to get familiar with how everything works.</p>
+```
+
+```erb
+<!-- Bad: Too casual -->
+<p>Hey there! Wanna do that onboarding thing again? Hit this button!</p>
+
+<!-- Good: Friendly but professional -->
+<p>Need to walk through the setup again? No problem.</p>
+```
+
+When writing instructions or explanations:
+- Focus on what the user needs to do and why it matters to them
+- Break complex concepts into simple, digestible pieces
+- Use active voice and direct language
+- Avoid unnecessary jargon unless it's standard terminology users should learn
+- **Don't expose UI implementation details:** Avoid terms like "wizard", "form", "dialog", "modal", "interface", "screen", etc. Instead, focus on what the user is doing or what's happening.
+
 ## Development Guidelines
 
 - Ruby version is defined in `.ruby-version`.

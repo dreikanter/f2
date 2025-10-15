@@ -1,7 +1,7 @@
 ---
 version: 1
 reviewed:
-  app/models/user.rb: 895c50596cc3514cd10edbc7e2bbe8a9e4e891a4
+  app/models/user.rb: 8469c37550623f78168cc18099cc79ecdd92e5fe
   test/models/user_test.rb: 750ddd54b771652c7856863be64a07d52b341e2a
   app/models/session.rb: cf376fb280f274daf3d14c86adc1cb2ac13c0149
   app/models/application_record.rb: b63caeb8a5c4a21feec3ea870c4e4a52b89a8fa5
@@ -11,7 +11,7 @@ reviewed:
   app/models/feed_preview.rb: 51b6b5a47431b6bb92815ce8ffbaab3383b4dd27
   test/models/feed_preview_test.rb: 776a82e3956626aa1587bea62b9e92f8149025d6
   app/controllers/statuses_controller.rb: 6d820378569806e41e3d19c873bef94da049512a
-  app/views/layouts/application.html.erb: 490bc86b4a627f190485b141415f7ded881eba9a
+  app/views/layouts/application.html.erb: 301d7cc7c468929a3886afdd0b241d4fb50d8759
   app/models/feed_profile.rb: 9468e97dc77353c9927ad183fee0065dc3fbc2f5
   app/helpers/component_options_helper.rb: caf9e81109ca8a6178e5982a7c7e7e037531f587
   app/controllers/feed_previews_controller.rb: 0d64168f04d8a1f82d3a96d3354fa0583dcdb9d5
@@ -20,3 +20,16 @@ reviewed:
   app/services/profile_matcher/rss_profile_matcher.rb: c2787500c2b05c0ecd1555e0c992ecea0ab8d371
   test/services/profile_matcher/xkcd_profile_matcher_test.rb: aceeaee123344c4f579ab6624ef852def17d781c
   test/services/profile_matcher/rss_profile_matcher_test.rb: d086a134dd73ee7bf6c0fd7b5bfa9d2dd012e8c1
+  app/controllers/concerns/user_onboarding.rb: 0b6e9d77f5699aca3e2ce02d202d91e482b4bb9c
+  app/models/onboarding.rb: 5882fe03cbb230b2fed2985ec0fa108ebe9abb31
+  app/views/onboardings/show.html.erb: e2daac654b014c9b09e369477df7c77164e5bafa
+  app/views/settings/show.html.erb: 45919f70c85193df4e0f0d3b63cb567b57f59679
+  config/routes.rb: 36b0845db794e5be290928c2b4060f12fc1b3719
+  db/migrate/20251015190852_create_onboardings.rb: 5a7453159a08e4ae6d8fb06a62c3c5125c16fbf9
+  db/schema.rb: 1129a810b750d0843ead1202d4072b54b0ebc63a
+  test/factories/onboardings.rb: fc0be997250b4b40ce4c0e5c635e8649252d7ab6
+  test/factories/users.rb: '01488a78b7bea982fd3d8cfdbf1eb6e1df054880'
+  app/controllers/application_controller.rb: 76adf3204e7328e0ffcd6e0699fc4eb06adee89c
+  app/controllers/onboardings_controller.rb: 2ba25f7230a4ca4348fef3ef29cbf6968828566c
+  test/models/onboarding_test.rb: 1c8b19dda088a6d1e503a10dcc281090b1953230
+  test/controllers/onboardings_controller_test.rb: 60df0e94918a1d854c9e96cb0bda9ef25fbdecb6

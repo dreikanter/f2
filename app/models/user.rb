@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   has_one :invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
   has_one :invited_by_user, through: :invite, source: :created_by_user
+  has_one :onboarding, dependent: :destroy
 
   validates :email_address, presence: true, uniqueness: true
   validates :password, length: { minimum: 10 }, allow_nil: true

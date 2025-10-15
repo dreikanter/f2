@@ -25,6 +25,7 @@ class SessionsController < ApplicationController
       redirect_to new_session_path, alert: "Your account has been suspended."
     else
       start_new_session_for user
+      session[:onboarding] = true if user.onboarding.present?
       redirect_to after_authentication_url
     end
   end

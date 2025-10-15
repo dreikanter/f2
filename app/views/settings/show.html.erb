@@ -23,7 +23,9 @@
           <%= @user.permissions.map { |permission| permission.name.humanize }.join(", ") %>
         </div>
       <% end %>
+    </div>
 
+    <div class="list-group mt-4">
       <div class="list-group-item">
         <strong>Tokens:</strong>
         <% if @access_tokens.any? %>
@@ -34,7 +36,9 @@
           <%= link_to "Add a token", new_settings_access_token_path, class: "text-decoration-none ms-2" %>
         <% end %>
       </div>
+    </div>
 
+    <div class="list-group mt-4">
       <div class="list-group-item">
         <strong>Invites:</strong>
         <% created_count = @user.created_invites.count %>
@@ -51,5 +55,15 @@
         <% end %>
       </div>
     </div>
+
+    <% unless @user.onboarding %>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5 class="card-title">Onboarding tour</h5>
+          <p class="card-text">Want a quick refresher? Run through the setup steps again to get familiar with how everything works.</p>
+          <%= button_to "Repeat onboarding", onboarding_path, method: :post, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>

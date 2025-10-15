@@ -26,6 +26,7 @@ class RegistrationsController < ApplicationController
 
     if @user.save
       @invite.update!(invited_user: @user)
+      @user.create_onboarding!
       start_new_session_for @user
       redirect_to after_authentication_url, notice: "Welcome! Your account has been created."
     else
