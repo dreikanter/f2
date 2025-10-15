@@ -26,7 +26,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body<%= content_for?(:body_class) ? " class=\"#{content_for(:body_class)}\"".html_safe : "" %>>
+  <body class="<%= content_for(:body_class) %>">
     <% unless content_for?(:skip_navigation) %>
       <% if Current.user %>
         <%# Navigation bar %>
