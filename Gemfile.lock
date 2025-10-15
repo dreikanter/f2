@@ -327,7 +327,7 @@ GEM
     regexp_parser (2.11.3)
     reline (0.6.2)
       io-console (~> 0.5)
-    resend (0.25.0)
+    resend (0.26.0)
       httparty (>= 0.21.0)
     reverse_markdown (3.0.0)
       nokogiri
@@ -507,7 +507,7 @@ DEPENDENCIES
   puma (>= 5.0)
   pundit (~> 2.5)
   rails!
-  resend (~> 0.25.0)
+  resend (~> 0.26.0)
   rouge (~> 4.6, >= 4.6.1)
   rubocop-rails-omakase
   ruby-lsp
