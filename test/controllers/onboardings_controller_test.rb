@@ -5,10 +5,6 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     @user ||= create(:user, :with_onboarding)
   end
 
-  def sign_in_as(user)
-    post session_url, params: { email_address: user.email_address, password: "password123" }
-  end
-
   test "should show onboarding page when authenticated and onboarding exists" do
     sign_in_as(user)
     get onboarding_url

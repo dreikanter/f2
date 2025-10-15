@@ -6,7 +6,7 @@ class OnboardingTest < ActiveSupport::TestCase
     onboarding_id = user.onboarding.id
 
     user.destroy
-    assert_nil Onboarding.find_by(id: onboarding_id)
+    assert_not Onboarding.exists?(onboarding_id)
   end
 
   test "should enforce one onboarding per user" do
