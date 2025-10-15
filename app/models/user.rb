@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   has_one :invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
   has_one :invited_by_user, through: :invite, source: :created_by_user
+  has_one :onboarding, dependent: :destroy
 
   validates :email_address, presence: true, uniqueness: true
   validates :password, length: { minimum: 10 }, allow_nil: true
@@ -17,6 +18,7 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
+  after_create :create_onboarding!
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 
   generates_token_for :password_reset, expires_in: 15.minutes do
