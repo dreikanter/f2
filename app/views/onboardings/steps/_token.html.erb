@@ -1,0 +1,67 @@
+<% content_for :title, "Connect to FreeFeed" %>
+
+<h2 class="mb-4">Connect to FreeFeed</h2>
+
+<p class="mb-4">
+  To post content to FreeFeed, you'll need an API token from your account.
+</p>
+
+<div class="mb-4">
+  <label for="freefeed_instance" class="form-label">FreeFeed Instance</label>
+  <select class="form-select" id="freefeed_instance" name="freefeed_instance">
+    <option value="production" selected>FreeFeed (freefeed.net)</option>
+    <option value="beta">FreeFeed Beta (beta.freefeed.net)</option>
+    <option value="staging">FreeFeed Staging (candy.freefeed.net)</option>
+  </select>
+  <div class="form-text">
+    Choose the FreeFeed instance where your account is located.
+  </div>
+</div>
+
+<div class="mb-4">
+  <label for="api_token" class="form-label">API Token</label>
+  <input type="password" class="form-control" id="api_token" name="api_token" placeholder="Paste your token here">
+  <div class="form-text">
+    You can generate a token in your FreeFeed settings under "App Tokens".
+  </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+  <h6 class="alert-heading">How to get your token:</h6>
+  <ol class="mb-0 ps-3">
+    <li>Go to your FreeFeed settings</li>
+    <li>Navigate to the "App Tokens" section</li>
+    <li>Create a new token with posting permissions</li>
+    <li>Copy the token and paste it above</li>
+  </ol>
+</div>
+
+<div id="token-validation-status" class="d-none">
+  <div class="card bg-light mb-4">
+    <div class="card-body">
+      <h6 class="card-title mb-3">Token Validated</h6>
+      <div class="row">
+        <div class="col-md-2">
+          <div class="bg-secondary rounded" style="width: 64px; height: 64px;">
+            <!-- Placeholder for user avatar -->
+          </div>
+        </div>
+        <div class="col-md-10">
+          <p class="mb-1"><strong id="user-name">Username</strong></p>
+          <p class="text-muted mb-3">@<span id="user-handle">handle</span></p>
+
+          <h6 class="mb-2">Available Groups:</h6>
+          <ul id="available-groups" class="list-unstyled mb-0">
+            <li class="mb-1">• group-example-1</li>
+            <li class="mb-1">• group-example-2</li>
+            <li class="mb-1">• group-example-3</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="text-muted small">
+  Your token will be stored securely and encrypted in the database.
+</p>

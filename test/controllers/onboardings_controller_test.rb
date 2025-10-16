@@ -71,4 +71,35 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     get onboarding_url
     assert_redirected_to new_session_path
   end
+
+  test "should advance to next step on update" do
+    sign_in_as(user)
+    assert_equal "intro", user.onboarding.current_step
+
+    patch onboarding_url
+    assert_redirected_to onboarding_path
+
+    user.onboarding.reload
+    assert_equal "token", user.onboarding.current_step
+  end
+
+  test "should complete onboarding on last step update" do
+    sign_in_as(user)
+    user.onboarding.update!(current_step: :outro)
+
+    patch onboarding_url
+    assert_redirected_to status_path
+    assert_equal "Setup complete. Your feed is ready to go.", flash[:notice]
+
+    assert_nil user.reload.onboarding
+    assert_not session[:onboarding]
+  end
+
+  test "should redirect to status when updating without onboarding" do
+    user_without_onboarding = create(:user)
+    sign_in_as(user_without_onboarding)
+
+    patch onboarding_url
+    assert_redirected_to status_path
+  end
 end

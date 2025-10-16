@@ -56,14 +56,12 @@
       </div>
     </div>
 
-    <% unless @user.onboarding %>
-      <div class="card mt-4">
-        <div class="card-body">
-          <h5 class="card-title">Onboarding tour</h5>
-          <p class="card-text">Want a quick refresher? Run through the setup steps again to get familiar with how everything works.</p>
-          <%= button_to "Repeat onboarding", onboarding_path, method: :post, class: "btn btn-outline-secondary" %>
-        </div>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Onboarding tour</h5>
+        <p class="card-text">Want a quick refresher? Run through the setup steps again to get familiar with how everything works.</p>
+        <%= button_to "Repeat onboarding", onboarding_path, method: :post, class: "btn btn-outline-secondary" %>
       </div>
-    <% end %>
+    </div>
   </div>
 </div>

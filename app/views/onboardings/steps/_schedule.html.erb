@@ -1,0 +1,76 @@
+<% content_for :title, "Set Update Schedule" %>
+
+<h2 class="mb-4">Set Update Schedule</h2>
+
+<p class="mb-4">
+  Choose how often Feeder should check for new content.
+</p>
+
+<div class="mb-4">
+  <label class="form-label">Update Frequency</label>
+
+  <div class="list-group">
+    <label class="list-group-item">
+      <input class="form-check-input me-3" type="radio" name="schedule_preset" value="hourly" checked>
+      <div>
+        <div class="fw-semibold">Every hour</div>
+        <small class="text-muted">Good for frequently updated feeds</small>
+      </div>
+    </label>
+
+    <label class="list-group-item">
+      <input class="form-check-input me-3" type="radio" name="schedule_preset" value="every_3_hours">
+      <div>
+        <div class="fw-semibold">Every 3 hours</div>
+        <small class="text-muted">Balanced approach for most feeds</small>
+      </div>
+    </label>
+
+    <label class="list-group-item">
+      <input class="form-check-input me-3" type="radio" name="schedule_preset" value="every_6_hours">
+      <div>
+        <div class="fw-semibold">Every 6 hours</div>
+        <small class="text-muted">For feeds that update a few times daily</small>
+      </div>
+    </label>
+
+    <label class="list-group-item">
+      <input class="form-check-input me-3" type="radio" name="schedule_preset" value="daily">
+      <div>
+        <div class="fw-semibold">Once a day (9 AM)</div>
+        <small class="text-muted">For daily digests or slow-moving feeds</small>
+      </div>
+    </label>
+
+    <label class="list-group-item">
+      <input class="form-check-input me-3" type="radio" name="schedule_preset" value="custom">
+      <div>
+        <div class="fw-semibold">Custom schedule</div>
+        <small class="text-muted">Define your own cron expression</small>
+      </div>
+    </label>
+  </div>
+</div>
+
+<div id="custom-schedule" class="d-none mb-4">
+  <label for="cron_expression" class="form-label">Cron Expression</label>
+  <input type="text" class="form-control font-monospace" id="cron_expression" name="cron_expression" placeholder="0 */3 * * *">
+  <div class="form-text">
+    Enter a valid cron expression. Use <a href="https://crontab.guru" target="_blank" rel="noopener">crontab.guru</a> for help.
+  </div>
+</div>
+
+<div class="mb-4">
+  <label for="target_group" class="form-label">Target Group</label>
+  <input type="text" class="form-control" id="target_group" name="target_group" placeholder="group-name" pattern="[a-z0-9_-]+" maxlength="80">
+  <div class="form-text">
+    The FreeFeed group where posts will be published. Use lowercase letters, numbers, underscores, and dashes only.
+  </div>
+</div>
+
+<div class="alert alert-warning" role="alert">
+  <strong>Make sure you have posting permissions</strong>
+  <p class="mb-0 mt-2">
+    Verify that the group you specify allows your account to post. You can check this in your FreeFeed group settings.
+  </p>
+</div>
