@@ -4,18 +4,11 @@ class Onboarding < ApplicationRecord
   enum :current_step, { intro: 0, token: 1, feed: 2, schedule: 3, outro: 4 }
 
   def next_step
-    return nil if finalization?
-
-    steps = ordered_steps
-    current_index = steps.index(current_step)
-    return nil if current_index.nil? || current_index >= steps.length - 1
-
-    steps[current_index + 1]
+    step_keys[current_step_index + 1]
   end
 
-  def step_number
-    current_index = ordered_steps.index(current_step)
-    current_index ? current_index + 1 : nil
+  def current_step_number
+    current_step_index ? current_step_index + 1 : nil
   end
 
   def total_steps
@@ -32,7 +25,11 @@ class Onboarding < ApplicationRecord
 
   private
 
-  def ordered_steps
-    self.class.current_steps.keys.map(&:to_s)
+  def step_keys
+    @step_keys ||= self.class.current_steps.keys
+  end
+
+  def current_step_index
+    step_keys.index(current_step.to_s)
   end
 end
