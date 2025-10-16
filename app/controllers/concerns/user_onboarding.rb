@@ -17,7 +17,6 @@ module UserOnboarding
 
   def redirect_to_onboarding
     return unless session[:onboarding]
-    return if controller_name == "onboardings"
 
     redirect_to onboarding_path
   end
