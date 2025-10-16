@@ -6,6 +6,8 @@ module UserOnboarding
   end
 
   class_methods do
+    # Onboarding has a priority over any other controller actions,
+    # unless it is explicitly disabled with this skip.
     def skip_onboarding_redirect(**options)
       skip_before_action :redirect_to_onboarding, **options
     end
