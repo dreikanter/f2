@@ -1,7 +1,7 @@
 class Onboarding < ApplicationRecord
   belongs_to :user
 
-  enum :current_step, { introduction: 0, token: 1, feed: 2, schedule: 3, finalization: 4 }
+  enum :current_step, { intro: 0, token: 1, feed: 2, schedule: 3, outro: 4 }
 
   def next_step
     return nil if finalization?
@@ -23,11 +23,11 @@ class Onboarding < ApplicationRecord
   end
 
   def first_step?
-    introduction?
+    intro?
   end
 
   def last_step?
-    finalization?
+    outro?
   end
 
   private
