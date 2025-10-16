@@ -15,13 +15,13 @@ class OnboardingsController < ApplicationController
   end
 
   def update
-    @onboarding = Current.user.onboarding
-    return redirect_to redirect_path_after_onboarding unless @onboarding
+    onboarding = Current.user.onboarding
+    return redirect_to redirect_path_after_onboarding unless onboarding
 
-    if @onboarding.last_step?
+    if onboarding.last_step?
       complete_onboarding
     else
-      @onboarding.update!(current_step: @onboarding.next_step)
+      onboarding.update!(current_step: onboarding.next_step)
       redirect_to onboarding_path
     end
   end
