@@ -1,0 +1,64 @@
+<% content_for :title, "Add a Feed" %>
+
+<h2 class="mb-4">Add a Feed</h2>
+
+<p class="mb-4">
+  Enter the URL of the RSS or Atom feed you want to monitor.
+</p>
+
+<div class="mb-4">
+  <label for="feed_url" class="form-label">Feed URL</label>
+  <input type="url" class="form-control" id="feed_url" name="feed_url" placeholder="https://example.com/feed.xml">
+  <div class="form-text">
+    Enter the full URL of an RSS or Atom feed.
+  </div>
+</div>
+
+<div id="feed-detection-status" class="d-none">
+  <div class="card bg-light mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <h6 class="card-title mb-0">Feed Detected</h6>
+        <span class="badge bg-success">Valid Feed</span>
+      </div>
+
+      <div class="mb-3">
+        <label for="feed_profile" class="form-label">Feed Type</label>
+        <select class="form-select" id="feed_profile" name="feed_profile">
+          <option value="rss" selected>RSS/Atom Feed</option>
+          <option value="xkcd">XKCD Comic</option>
+          <option value="other">Other</option>
+        </select>
+        <div class="form-text">
+          The detected feed type. Change if needed.
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="feed_name" class="form-label">Feed Name</label>
+        <input type="text" class="form-control" id="feed_name" name="feed_name" value="Example Feed" maxlength="40">
+        <div class="form-text">
+          A friendly name for this feed. You can change it if you like.
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="feed_description" class="form-label">Description (optional)</label>
+        <input type="text" class="form-control" id="feed_description" name="feed_description" placeholder="Add a description" maxlength="100">
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="preview-feed">
+          Preview in Browser
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+  <strong>Not sure where to find a feed URL?</strong>
+  <p class="mb-0 mt-2">
+    Most blogs and news sites have RSS feeds. Look for an RSS icon or link labeled "Feed", "RSS", or "Atom". You can also try adding "/feed" or "/rss" to the end of a website URL.
+  </p>
+</div>
