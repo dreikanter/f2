@@ -7,7 +7,9 @@ class OnboardingsController < ApplicationController
   end
 
   def create
-    Onboarding.find_or_create_by!(user: Current.user)
+    onboarding = Onboarding.find_or_initialize_by(user: Current.user)
+    onboarding.current_step = :intro
+    onboarding.save!
     session[:onboarding] = true
     redirect_to onboarding_path
   end
