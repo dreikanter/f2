@@ -38,6 +38,8 @@ class OnboardingsController < ApplicationController
     when "2" then :feed
     when "3" then :outro
     else
+      return :intro unless @onboarding
+
       if @onboarding.token_setup?
         :intro
       elsif @onboarding.feed_setup?
