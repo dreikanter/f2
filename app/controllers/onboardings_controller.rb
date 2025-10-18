@@ -15,6 +15,7 @@ class OnboardingsController < ApplicationController
   private
 
   def current_step
+    # TBD: Drop test parameter
     case params[:step]
     when "1" then :intro
     when "2" then :feed
