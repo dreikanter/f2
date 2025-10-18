@@ -3,16 +3,22 @@ class OnboardingsController < ApplicationController
 
   def show
     @onboarding = Current.user.onboarding
+    return complete_onboarding unless @onboarding
+
     @current_step = current_step
   end
 
   def destroy
     Current.user.onboarding&.destroy
-    session[:onboarding] = false
-    redirect_to status_path
+    complete_onboarding
   end
 
   private
+
+  def complete_onboarding
+    session[:onboarding] = false
+    redirect_to status_path
+  end
 
   def current_step
     # TBD: Drop test parameter
