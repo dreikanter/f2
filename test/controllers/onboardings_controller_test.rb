@@ -21,11 +21,14 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
 
   test "should clear session flag when onboarding does not exist" do
     user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-    session[:onboarding] = true
 
-    get onboarding_url
-    assert_equal false, session[:onboarding]
+    open_session do |s|
+      s.sign_in_as(user_without_onboarding)
+      s.session[:onboarding] = true
+
+      s.get onboarding_url
+      assert_equal false, s.session[:onboarding]
+    end
   end
 
   test "should destroy onboarding" do
@@ -38,11 +41,13 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should clear session flag when destroying onboarding" do
-    sign_in_as(user)
-    session[:onboarding] = true
+    open_session do |s|
+      s.sign_in_as(user)
+      s.session[:onboarding] = true
 
-    delete onboarding_url
-    assert_equal false, session[:onboarding]
+      s.delete onboarding_url
+      assert_equal false, s.session[:onboarding]
+    end
   end
 
   test "should handle destroy when onboarding does not exist" do
