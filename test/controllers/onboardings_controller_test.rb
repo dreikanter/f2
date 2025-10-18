@@ -58,9 +58,55 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "should require authentication to create onboarding" do
+    post onboarding_url
+    assert_redirected_to new_session_path
+  end
+
   test "should require authentication to destroy onboarding" do
     delete onboarding_url
     assert_redirected_to new_session_path
+  end
+
+  test "should create onboarding when it does not exist" do
+    user_without_onboarding = create(:user)
+    sign_in_as(user_without_onboarding)
+
+    assert_nil user_without_onboarding.onboarding
+
+    post onboarding_url
+    assert_not_nil user_without_onboarding.reload.onboarding
+    assert_redirected_to onboarding_path
+  end
+
+  test "should set session flag when creating onboarding" do
+    user_without_onboarding = create(:user)
+    sign_in_as(user_without_onboarding)
+
+    post onboarding_url
+    assert_equal true, session[:onboarding]
+  end
+
+  test "should find existing onboarding instead of creating duplicate" do
+    sign_in_as(user)
+    existing_onboarding_id = user.onboarding.id
+
+    post onboarding_url
+    assert_equal existing_onboarding_id, user.reload.onboarding.id
+  end
+
+  test "should reset access_token and feed when restarting onboarding" do
+    user_with_both = create(:user)
+    access_token = create(:access_token, user: user_with_both)
+    feed = create(:feed, user: user_with_both)
+    onboarding = create(:onboarding, user: user_with_both, access_token: access_token, feed: feed)
+    sign_in_as(user_with_both)
+
+    post onboarding_url
+    onboarding.reload
+
+    assert_nil onboarding.access_token_id
+    assert_nil onboarding.feed_id
   end
 
   test "should show intro step when no access_token" do
