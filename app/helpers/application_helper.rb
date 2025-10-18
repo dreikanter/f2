@@ -61,4 +61,11 @@ module ApplicationHelper
             class: class_names("sortable", "sorted-#{direction}": direction.present?),
             data: { turbo_action: "replace" }
   end
+
+  def onboarding_buttons(prev_caption: "Back", next_caption: "Continue", prev_path: nil, next_path: nil)
+    content_tag :div, class: "d-flex justify-content-end gap-3 mt-5" do
+      button_to prev_caption, prev_path, method: :delete, class: "btn btn-outline-secondary"
+      button_to next_caption, next_path, method: :patch, class: "btn btn-primary"
+    end
+  end
 end

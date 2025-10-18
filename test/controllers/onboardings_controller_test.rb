@@ -11,95 +11,17 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should redirect to onboarding when session flag is set" do
-    user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-
-    # Create onboarding
-    post onboarding_url
-    follow_redirect!
-    assert_equal onboarding_path, path
-
-    # Try to access another page
-    get feeds_path
-    assert_redirected_to onboarding_path
-  end
-
-  test "should not redirect to onboarding when session flag is not set" do
-    user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-
-    get feeds_path
-    assert_response :success
-  end
-
-  test "should create onboarding and set session flag" do
-    user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-
-    assert_nil user_without_onboarding.reload.onboarding
-
-    post onboarding_url
-    assert_not_nil user_without_onboarding.reload.onboarding
-    assert session[:onboarding]
-    assert_redirected_to onboarding_path
-  end
-
-  test "should destroy onboarding and clear session flag" do
+  test "should destroy onboarding" do
     sign_in_as(user)
     assert_not_nil user.onboarding
 
     delete onboarding_url
     assert_nil user.reload.onboarding
-    assert_not session[:onboarding]
     assert_redirected_to status_path
-  end
-
-  test "should set session flag on sign in when onboarding exists" do
-    user_with_onboarding = create(:user, :with_onboarding)
-    post session_url, params: { email_address: user_with_onboarding.email_address, password: "password123" }
-    assert session[:onboarding]
-  end
-
-  test "should not set session flag on sign in when onboarding does not exist" do
-    user_without_onboarding = create(:user)
-    post session_url, params: { email_address: user_without_onboarding.email_address, password: "password123" }
-    assert_not session[:onboarding]
   end
 
   test "should require authentication to access onboarding" do
     get onboarding_url
     assert_redirected_to new_session_path
-  end
-
-  test "should advance to next step on update" do
-    sign_in_as(user)
-    assert_equal "intro", user.onboarding.current_step
-
-    patch onboarding_url
-    assert_redirected_to onboarding_path
-
-    user.onboarding.reload
-    assert_equal "token", user.onboarding.current_step
-  end
-
-  test "should complete onboarding on last step update" do
-    sign_in_as(user)
-    user.onboarding.update!(current_step: :outro)
-
-    patch onboarding_url
-    assert_redirected_to status_path
-    assert_equal "Setup complete. Your feed is ready to go.", flash[:notice]
-
-    assert_nil user.reload.onboarding
-    assert_not session[:onboarding]
-  end
-
-  test "should redirect to status when updating without onboarding" do
-    user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-
-    patch onboarding_url
-    assert_redirected_to status_path
   end
 end

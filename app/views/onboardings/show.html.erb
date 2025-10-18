@@ -5,21 +5,13 @@
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body p-5">
-        <div class="mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <small class="text-muted">Step <%= @onboarding.current_step_number %> of <%= @onboarding.total_steps %></small>
-          </div>
-        </div>
-
-        <%= render "onboardings/steps/#{@onboarding.current_step}" %>
-
-        <div class="d-flex justify-content-end gap-3 mt-5">
-          <%= button_to "Skip setup", onboarding_path, method: :delete, class: "btn btn-outline-secondary" %>
-          <%= button_to @onboarding.last_step? ? "Complete" : "Continue",
-                        onboarding_path,
-                        method: :patch,
-                        class: "btn btn-primary" %>
-        </div>
+        <% if @onboarding.token_setup? %>
+          <%= render "steps/intro" %>
+        <% elsif @onboarding.feed_setup? %>
+          <%= render "steps/feed" %>
+        <% else %>
+          <%= render "steps/outro" %>
+        <% end %>
       </div>
     </div>
   </div>
