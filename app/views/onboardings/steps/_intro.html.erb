@@ -7,20 +7,14 @@
 </p>
 
 <p class="mb-4">
-  To get things running, you'll need to:
-</p>
-
-<ul class="mb-4">
-  <li>Connect your FreeFeed account with an API token</li>
-  <li>Add a feed to monitor</li>
-  <li>Pick which FreeFeed groups to post to</li>
-  <li>Choose how often to check for new content</li>
-</ul>
-
-<p class="mb-4">
-  No need to remember, we'll walk you through.
+  Getting started is straightforward. First, connect your FreeFeed account with an API token. Then add a feed to monitor. That's it.
 </p>
 
 <p class="mb-4">
-  But if you'd rather explore on your own, skip setup and configure everything manually. You can always come back later.
+  Ready to add your first token?
 </p>
+
+<div class="d-flex gap-3">
+  <%= link_to "Add token", new_settings_access_token_path, class: "btn btn-primary" %>
+  <%= button_to "Skip setup", onboarding_path, method: :delete, form: { data: { turbo_confirm: "Skip the guided setup?" } }, class: "btn btn-light text-muted" %>
+</div>

@@ -3,47 +3,50 @@ class OnboardingsController < ApplicationController
 
   def show
     @onboarding = Current.user.onboarding
-    redirect_to redirect_path_after_onboarding unless @onboarding
+    return complete_onboarding unless @onboarding
+
+    @current_step = current_step
   end
 
   def create
-    onboarding = Onboarding.find_or_initialize_by(user: Current.user)
-    onboarding.current_step = :intro
-    onboarding.save!
-    session[:onboarding] = true
+    restart_onboarding
     redirect_to onboarding_path
   end
 
-  def update
-    onboarding = Current.user.onboarding
-    return redirect_to redirect_path_after_onboarding unless onboarding
-
-    if onboarding.last_step?
-      complete_onboarding
-    else
-      onboarding.update!(current_step: onboarding.next_step)
-      redirect_to onboarding_path
-    end
-  end
-
   def destroy
-    clear_onboarding
-    redirect_to redirect_path_after_onboarding
+    Current.user.onboarding&.destroy
+    complete_onboarding
   end
 
   private
 
-  def clear_onboarding
-    Current.user.onboarding&.destroy
-    session[:onboarding] = false
+  def restart_onboarding
+    onboarding = Onboarding.find_or_create_by(user: Current.user)
+    onboarding.update!(access_token: nil, feed: nil)
+    session[:onboarding] = true
   end
 
   def complete_onboarding
-    clear_onboarding
-    redirect_to redirect_path_after_onboarding, notice: "Setup complete. Your feed is ready to go."
+    session[:onboarding] = false
+    redirect_to status_path
   end
 
-  def redirect_path_after_onboarding
-    status_path
+  def current_step
+    # TBD: Drop test parameter
+    case params[:step]
+    when "1" then :intro
+    when "2" then :feed
+    when "3" then :outro
+    else
+      return :intro unless @onboarding
+
+      if @onboarding.token_setup?
+        :intro
+      elsif @onboarding.feed_setup?
+        :feed
+      else
+        :outro
+      end
+    end
   end
 end

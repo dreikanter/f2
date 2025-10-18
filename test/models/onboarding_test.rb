@@ -21,65 +21,109 @@ class OnboardingTest < ActiveSupport::TestCase
     end
   end
 
-  test "next_step returns next step in sequence" do
-    onboarding.update!(current_step: :intro)
-    assert_equal "token", onboarding.next_step
+  test "can be created without access_token or feed" do
+    user = create(:user)
+    onboarding = Onboarding.create!(user: user)
 
-    onboarding.update!(current_step: :token)
-    assert_equal "feed", onboarding.next_step
-
-    onboarding.update!(current_step: :feed)
-    assert_equal "schedule", onboarding.next_step
-
-    onboarding.update!(current_step: :schedule)
-    assert_equal "outro", onboarding.next_step
+    assert_nil onboarding.access_token
+    assert_nil onboarding.feed
   end
 
-  test "next_step returns nil on last step" do
-    onboarding.update!(current_step: :outro)
-    assert_nil onboarding.next_step
+  test "can be associated with access_token" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token)
+
+    assert_equal access_token, onboarding.access_token
   end
 
-  test "current_step_number returns correct position" do
-    onboarding.update!(current_step: :intro)
-    assert_equal 1, onboarding.current_step_number
+  test "can be associated with feed" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    onboarding = Onboarding.create!(user: user, feed: feed)
 
-    onboarding.update!(current_step: :token)
-    assert_equal 2, onboarding.current_step_number
-
-    onboarding.update!(current_step: :feed)
-    assert_equal 3, onboarding.current_step_number
-
-    onboarding.update!(current_step: :schedule)
-    assert_equal 4, onboarding.current_step_number
-
-    onboarding.update!(current_step: :outro)
-    assert_equal 5, onboarding.current_step_number
+    assert_equal feed, onboarding.feed
   end
 
-  test "total_steps returns correct count" do
-    assert_equal 5, onboarding.total_steps
+  test "can be associated with both access_token and feed" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    feed = create(:feed, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token, feed: feed)
+
+    assert_equal access_token, onboarding.access_token
+    assert_equal feed, onboarding.feed
   end
 
-  test "first_step? returns true only for intro step" do
-    onboarding.update!(current_step: :intro)
-    assert onboarding.first_step?
+  test "token_setup? returns true when no access_token" do
+    user = create(:user)
+    onboarding = Onboarding.create!(user: user)
 
-    onboarding.update!(current_step: :token)
-    assert_not onboarding.first_step?
-
-    onboarding.update!(current_step: :outro)
-    assert_not onboarding.first_step?
+    assert onboarding.token_setup?
   end
 
-  test "last_step? returns true only for outro step" do
-    onboarding.update!(current_step: :intro)
-    assert_not onboarding.last_step?
+  test "token_setup? returns false when access_token exists" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token)
 
-    onboarding.update!(current_step: :schedule)
-    assert_not onboarding.last_step?
+    assert_not onboarding.token_setup?
+  end
 
-    onboarding.update!(current_step: :outro)
-    assert onboarding.last_step?
+  test "feed_setup? returns false when no access_token" do
+    user = create(:user)
+    onboarding = Onboarding.create!(user: user)
+
+    assert_not onboarding.feed_setup?
+  end
+
+  test "feed_setup? returns true when access_token exists but no feed" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token)
+
+    assert onboarding.feed_setup?
+  end
+
+  test "feed_setup? returns false when both access_token and feed exist" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    feed = create(:feed, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token, feed: feed)
+
+    assert_not onboarding.feed_setup?
+  end
+
+  test "token_setup? uses access_token_id directly" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token)
+
+    # Manually set access_token_id to nil without loading association
+    onboarding.update_column(:access_token_id, nil)
+    assert onboarding.token_setup?
+  end
+
+  test "feed_setup? uses access_token_id and feed_id directly" do
+    user = create(:user)
+    access_token = create(:access_token, user: user)
+    onboarding = Onboarding.create!(user: user, access_token: access_token)
+
+    # Manually set feed_id to nil without loading association
+    onboarding.update_column(:feed_id, nil)
+    assert onboarding.feed_setup?
+  end
+
+  test "belongs_to user" do
+    user = create(:user)
+    onboarding = Onboarding.create!(user: user)
+
+    assert_equal user, onboarding.user
+  end
+
+  test "requires user" do
+    assert_raises ActiveRecord::RecordInvalid do
+      Onboarding.create!(user: nil)
+    end
   end
 end

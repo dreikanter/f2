@@ -11,60 +11,51 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should redirect to onboarding when session flag is set" do
+  test "should redirect to status when onboarding does not exist" do
     user_without_onboarding = create(:user)
     sign_in_as(user_without_onboarding)
 
-    # Create onboarding
-    post onboarding_url
-    follow_redirect!
-    assert_equal onboarding_path, path
-
-    # Try to access another page
-    get feeds_path
-    assert_redirected_to onboarding_path
+    get onboarding_url
+    assert_redirected_to status_path
   end
 
-  test "should not redirect to onboarding when session flag is not set" do
+  test "should clear session flag when onboarding does not exist" do
     user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
 
-    get feeds_path
-    assert_response :success
+    open_session do |s|
+      s.sign_in_as(user_without_onboarding)
+      s.session[:onboarding] = true
+
+      s.get onboarding_url
+      assert_equal false, s.session[:onboarding]
+    end
   end
 
-  test "should create onboarding and set session flag" do
-    user_without_onboarding = create(:user)
-    sign_in_as(user_without_onboarding)
-
-    assert_nil user_without_onboarding.reload.onboarding
-
-    post onboarding_url
-    assert_not_nil user_without_onboarding.reload.onboarding
-    assert session[:onboarding]
-    assert_redirected_to onboarding_path
-  end
-
-  test "should destroy onboarding and clear session flag" do
+  test "should destroy onboarding" do
     sign_in_as(user)
     assert_not_nil user.onboarding
 
     delete onboarding_url
     assert_nil user.reload.onboarding
-    assert_not session[:onboarding]
     assert_redirected_to status_path
   end
 
-  test "should set session flag on sign in when onboarding exists" do
-    user_with_onboarding = create(:user, :with_onboarding)
-    post session_url, params: { email_address: user_with_onboarding.email_address, password: "password123" }
-    assert session[:onboarding]
+  test "should clear session flag when destroying onboarding" do
+    open_session do |s|
+      s.sign_in_as(user)
+      s.session[:onboarding] = true
+
+      s.delete onboarding_url
+      assert_equal false, s.session[:onboarding]
+    end
   end
 
-  test "should not set session flag on sign in when onboarding does not exist" do
+  test "should handle destroy when onboarding does not exist" do
     user_without_onboarding = create(:user)
-    post session_url, params: { email_address: user_without_onboarding.email_address, password: "password123" }
-    assert_not session[:onboarding]
+    sign_in_as(user_without_onboarding)
+
+    delete onboarding_url
+    assert_redirected_to status_path
   end
 
   test "should require authentication to access onboarding" do
@@ -72,34 +63,110 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should advance to next step on update" do
-    sign_in_as(user)
-    assert_equal "intro", user.onboarding.current_step
-
-    patch onboarding_url
-    assert_redirected_to onboarding_path
-
-    user.onboarding.reload
-    assert_equal "token", user.onboarding.current_step
+  test "should require authentication to create onboarding" do
+    post onboarding_url
+    assert_redirected_to new_session_path
   end
 
-  test "should complete onboarding on last step update" do
-    sign_in_as(user)
-    user.onboarding.update!(current_step: :outro)
-
-    patch onboarding_url
-    assert_redirected_to status_path
-    assert_equal "Setup complete. Your feed is ready to go.", flash[:notice]
-
-    assert_nil user.reload.onboarding
-    assert_not session[:onboarding]
+  test "should require authentication to destroy onboarding" do
+    delete onboarding_url
+    assert_redirected_to new_session_path
   end
 
-  test "should redirect to status when updating without onboarding" do
+  test "should create onboarding when it does not exist" do
     user_without_onboarding = create(:user)
     sign_in_as(user_without_onboarding)
 
-    patch onboarding_url
-    assert_redirected_to status_path
+    assert_nil user_without_onboarding.onboarding
+
+    post onboarding_url
+    assert_not_nil user_without_onboarding.reload.onboarding
+    assert_redirected_to onboarding_path
+  end
+
+  test "should set session flag when creating onboarding" do
+    user_without_onboarding = create(:user)
+    sign_in_as(user_without_onboarding)
+
+    post onboarding_url
+    assert_equal true, session[:onboarding]
+  end
+
+  test "should find existing onboarding instead of creating duplicate" do
+    sign_in_as(user)
+    existing_onboarding_id = user.onboarding.id
+
+    post onboarding_url
+    assert_equal existing_onboarding_id, user.reload.onboarding.id
+  end
+
+  test "should reset access_token and feed when restarting onboarding" do
+    user_with_both = create(:user)
+    access_token = create(:access_token, user: user_with_both)
+    feed = create(:feed, user: user_with_both)
+    onboarding = create(:onboarding, user: user_with_both, access_token: access_token, feed: feed)
+    sign_in_as(user_with_both)
+
+    post onboarding_url
+    onboarding.reload
+
+    assert_nil onboarding.access_token_id
+    assert_nil onboarding.feed_id
+  end
+
+  test "should show intro step when no access_token" do
+    sign_in_as(user)
+    get onboarding_url
+    assert_response :success
+    assert_select "h1", "Welcome to Feeder"
+  end
+
+  test "should show feed step when access_token exists but no feed" do
+    user_with_token = create(:user)
+    access_token = create(:access_token, user: user_with_token)
+    onboarding = create(:onboarding, user: user_with_token, access_token: access_token)
+    sign_in_as(user_with_token)
+
+    get onboarding_url
+    assert_response :success
+    assert_select "h1", "Token added"
+  end
+
+  test "should show outro step when both access_token and feed exist" do
+    user_with_both = create(:user)
+    access_token = create(:access_token, user: user_with_both)
+    feed = create(:feed, user: user_with_both)
+    onboarding = create(:onboarding, user: user_with_both, access_token: access_token, feed: feed)
+    sign_in_as(user_with_both)
+
+    get onboarding_url
+    assert_response :success
+    assert_select "h1", "You're all set"
+  end
+
+  test "should override step with step parameter 1" do
+    user_with_both = create(:user)
+    access_token = create(:access_token, user: user_with_both)
+    feed = create(:feed, user: user_with_both)
+    onboarding = create(:onboarding, user: user_with_both, access_token: access_token, feed: feed)
+    sign_in_as(user_with_both)
+
+    get onboarding_url(step: 1)
+    assert_response :success
+    assert_select "h1", "Welcome to Feeder"
+  end
+
+  test "should override step with step parameter 2" do
+    sign_in_as(user)
+    get onboarding_url(step: 2)
+    assert_response :success
+    assert_select "h1", "Token added"
+  end
+
+  test "should override step with step parameter 3" do
+    sign_in_as(user)
+    get onboarding_url(step: 3)
+    assert_response :success
+    assert_select "h1", "You're all set"
   end
 end

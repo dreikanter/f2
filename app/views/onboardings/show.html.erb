@@ -5,22 +5,25 @@
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body p-5">
-        <div class="mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <small class="text-muted">Step <%= @onboarding.current_step_number %> of <%= @onboarding.total_steps %></small>
-          </div>
-        </div>
-
-        <%= render "onboardings/steps/#{@onboarding.current_step}" %>
-
-        <div class="d-flex justify-content-end gap-3 mt-5">
-          <%= button_to "Skip setup", onboarding_path, method: :delete, class: "btn btn-outline-secondary" %>
-          <%= button_to @onboarding.last_step? ? "Complete" : "Continue",
-                        onboarding_path,
-                        method: :patch,
-                        class: "btn btn-primary" %>
-        </div>
+        <% if @current_step == :intro %>
+          <%= render "onboardings/steps/intro" %>
+        <% elsif @current_step == :feed %>
+          <%= render "onboardings/steps/feed" %>
+        <% else %>
+          <%= render "onboardings/steps/outro" %>
+        <% end %>
       </div>
     </div>
   </div>
 </div>
+
+<% if Rails.env.development? %>
+  <%# TBD: Drop this %>
+  <div class="mt-4 pt-4">
+    <div class="d-flex justify-content-center gap-2">
+      <%= link_to "1", onboarding_path(step: 1), class: "badge bg-secondary text-decoration-none" %>
+      <%= link_to "2", onboarding_path(step: 2), class: "badge bg-secondary text-decoration-none" %>
+      <%= link_to "3", onboarding_path(step: 3), class: "badge bg-secondary text-decoration-none" %>
+    </div>
+  </div>
+<% end %>
