@@ -1,7 +1,15 @@
-<% content_for :title, "Review and Enable" %>
+<% content_for :title, "All Set" %>
 
-<h2 class="mb-4">Review and Enable</h2>
+<h1 class="card-title mb-4">You're all set</h1>
+
+<p class="lead mb-4">
+  Perfect. You've added a token and a feed. Everything's ready to go.
+</p>
 
 <p class="mb-4">
-  TBD
+  Feeder will start checking your feed for new content and posting it to your FreeFeed groups according to the schedule you set. You can add more feeds, adjust settings, or change schedules anytime.
 </p>
+
+<div class="d-flex gap-3">
+  <%= button_to "Finish setup", onboarding_path, method: :delete, class: "btn btn-primary" %>
+</div>

@@ -5,14 +5,25 @@
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body p-5">
-        <% if @onboarding.token_setup? %>
-          <%= render "steps/intro" %>
-        <% elsif @onboarding.feed_setup? %>
-          <%= render "steps/feed" %>
+        <% if @current_step == :intro %>
+          <%= render "onboardings/steps/intro" %>
+        <% elsif @current_step == :feed %>
+          <%= render "onboardings/steps/feed" %>
         <% else %>
-          <%= render "steps/outro" %>
+          <%= render "onboardings/steps/outro" %>
         <% end %>
       </div>
     </div>
   </div>
 </div>
+
+<% if Rails.env.development? %>
+  <%# TBD: Drop this %>
+  <div class="mt-4 pt-4">
+    <div class="d-flex justify-content-center gap-2">
+      <%= link_to "1", onboarding_path(step: 1), class: "badge bg-secondary text-decoration-none" %>
+      <%= link_to "2", onboarding_path(step: 2), class: "badge bg-secondary text-decoration-none" %>
+      <%= link_to "3", onboarding_path(step: 3), class: "badge bg-secondary text-decoration-none" %>
+    </div>
+  </div>
+<% end %>
