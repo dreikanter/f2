@@ -1,8 +1,4 @@
 class DiskUsageService
-  def self.call
-    new.call
-  end
-
   def call
     {
       free_space: free_space,
