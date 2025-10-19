@@ -15,8 +15,13 @@ module ApplicationHelper
     truncate(content.strip, length: length)
   end
 
-  def icon(name, css_class: nil, title: nil)
-    content_tag(:i, nil, class: class_names("bi", "bi-#{name}", css_class), title: title)
+  def icon(name, css_class: nil, title: nil, aria_hidden: nil, aria_label: nil)
+    options = { class: class_names("bi", "bi-#{name}", css_class) }
+    options[:title] = title if title.present?
+    options["aria-hidden"] = aria_hidden.to_s if aria_hidden.present?
+    options["aria-label"] = aria_label if aria_label.present?
+
+    content_tag(:i, nil, options)
   end
 
   def post_status_icon(status)
