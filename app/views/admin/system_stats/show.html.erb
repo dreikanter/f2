@@ -25,7 +25,7 @@
       <tbody>
         <% @disk_usage[:table_usage].each do |row| %>
           <tr>
-            <td><%= row["table_name"] %></td>
+            <td><code><%= row["table_name"] %></code></td>
             <td><%= row["total_size"] %></td>
           </tr>
         <% end %>
@@ -52,11 +52,11 @@
       <tbody>
         <% @disk_usage[:vacuum_stats].each do |row| %>
           <tr>
-            <td><%= row["relname"] %></td>
+            <td><code><%= row["relname"] %></code></td>
             <td class="text-end"><%= number_with_delimiter(row["n_live_tup"]) %></td>
             <td class="text-end"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
-            <td><%= row["last_vacuum"] %></td>
-            <td><%= row["last_autovacuum"] %></td>
+            <td><%= short_time_ago_tag(row["last_vacuum"]) %></td>
+            <td><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
             <td class="text-end"><%= row["vacuum_count"] %></td>
             <td class="text-end"><%= row["autovacuum_count"] %></td>
           </tr>
@@ -79,7 +79,7 @@
       <tbody>
         <% @disk_usage[:autovacuum_settings].each do |row| %>
           <tr>
-            <td><%= row["name"] %></td>
+            <td><code><%= row["name"] %></code></td>
             <td><%= row["setting"] %></td>
           </tr>
         <% end %>
