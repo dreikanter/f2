@@ -3,13 +3,17 @@
 
 <div class="mb-4">
   <h3 class="h5 mb-3">Disk Usage</h3>
-  <dl class="row mb-0">
-    <dt class="col-sm-3">Free Space</dt>
-    <dd class="col-sm-9"><%= @disk_usage[:free_space] %></dd>
+  <div class="list-group">
+    <div class="list-group-item">
+      <strong>Free Space:</strong>
+      <%= @disk_usage[:free_space] %>
+    </div>
 
-    <dt class="col-sm-3">Postgres Usage</dt>
-    <dd class="col-sm-9"><%= number_to_human_size(@disk_usage[:postgres_usage]) %></dd>
-  </dl>
+    <div class="list-group-item">
+      <strong>Postgres Usage:</strong>
+      <%= number_to_human_size(@disk_usage[:postgres_usage]) %>
+    </div>
+  </div>
 </div>
 
 <div class="mb-4">
