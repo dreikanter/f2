@@ -52,7 +52,8 @@ class Onboarding::AccessTokensController < ApplicationController
     owner = params.require(:owner)
 
     # Generate unique token name
-    base_name = "#{owner} at #{host.sub('https://', '')}"
+    domain_name = URI.parse(host).host
+    base_name = "#{owner} at #{domain_name}"
     token_name = generate_unique_name(base_name)
 
     # Create the access token
@@ -78,6 +79,7 @@ class Onboarding::AccessTokensController < ApplicationController
     render_error(token_value, host, "An unexpected error occurred while saving the token", owner: owner)
   end
 
+  # TBD: Refactor that
   def generate_unique_name(base_name)
     return base_name unless Current.user.access_tokens.exists?(name: base_name)
 
