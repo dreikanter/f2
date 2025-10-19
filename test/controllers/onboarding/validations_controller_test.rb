@@ -44,21 +44,21 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
     test "should handle missing token parameter" do
       sign_in_as(user)
 
-      assert_raises(ActionController::ParameterMissing) do
-        post onboarding_validation_path, params: {
-          host: AccessToken::FREEFEED_HOSTS["production"][:url]
-        }
-      end
+      post onboarding_validation_path, params: {
+        host: AccessToken::FREEFEED_HOSTS["production"][:url]
+      }
+
+      assert_response :bad_request
     end
 
     test "should handle missing host parameter" do
       sign_in_as(user)
 
-      assert_raises(ActionController::ParameterMissing) do
-        post onboarding_validation_path, params: {
-          token: "valid_token"
-        }
-      end
+      post onboarding_validation_path, params: {
+        token: "valid_token"
+      }
+
+      assert_response :bad_request
     end
 
     test "should require authentication" do

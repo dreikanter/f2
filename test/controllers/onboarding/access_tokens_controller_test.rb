@@ -64,34 +64,34 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     test "should handle missing token parameter" do
       sign_in_as(user)
 
-      assert_raises(ActionController::ParameterMissing) do
-        post onboarding_access_token_path, params: {
-          host: AccessToken::FREEFEED_HOSTS["production"][:url],
-          owner: "testuser"
-        }
-      end
+      post onboarding_access_token_path, params: {
+        host: AccessToken::FREEFEED_HOSTS["production"][:url],
+        owner: "testuser"
+      }
+
+      assert_response :bad_request
     end
 
     test "should handle missing host parameter" do
       sign_in_as(user)
 
-      assert_raises(ActionController::ParameterMissing) do
-        post onboarding_access_token_path, params: {
-          token: "valid_token_123",
-          owner: "testuser"
-        }
-      end
+      post onboarding_access_token_path, params: {
+        token: "valid_token_123",
+        owner: "testuser"
+      }
+
+      assert_response :bad_request
     end
 
     test "should handle missing owner parameter" do
       sign_in_as(user)
 
-      assert_raises(ActionController::ParameterMissing) do
-        post onboarding_access_token_path, params: {
-          token: "valid_token_123",
-          host: AccessToken::FREEFEED_HOSTS["production"][:url]
-        }
-      end
+      post onboarding_access_token_path, params: {
+        token: "valid_token_123",
+        host: AccessToken::FREEFEED_HOSTS["production"][:url]
+      }
+
+      assert_response :bad_request
     end
 
     test "should require authentication" do
