@@ -6,7 +6,7 @@
   <div class="card-body">
     <div data-controller="groups"
          data-groups-loading-text-value="Loading..."
-         data-groups-default-text-value="Select the Freefeed group"
+         data-groups-default-text-value="Select the FreeFeed group"
          data-groups-endpoint-value="<%= settings_access_token_groups_path(':access_token_id') %>">
       <%= form_with model: feed, class: "needs-validation", novalidate: true do |form| %>
   <%= hidden_field_tag :section, "reposting" %>
@@ -29,7 +29,7 @@
                       { class: "form-select",
                         autofocus: true,
                         data: { action: "change->groups#refresh", groups_target: "tokenSelect" } } %>
-      <div class="form-text">Select the Freefeed access token to use for posting</div>
+      <div class="form-text">Select the FreeFeed access token to use for posting</div>
     <% else %>
       <select name="feed[access_token_id]" class="form-select" disabled>
         <option>No active access tokens available</option>
@@ -58,7 +58,7 @@
         <option value="<%= feed.target_group %>"><%= feed.target_group.present? ? feed.target_group : "Choose target group..." %></option>
       </select>
       <div class="form-text" data-groups-target="helpText">
-        Select the Freefeed group
+        Select the FreeFeed group
       </div>
       <div class="invalid-feedback">Select a target group.</div>
     </div>

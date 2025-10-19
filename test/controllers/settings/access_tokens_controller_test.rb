@@ -26,7 +26,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get settings_access_tokens_path
     assert_response :success
     assert_select "h5", "No access tokens yet"
-    assert_select "p", text: /Add Freefeed API access token/
+    assert_select "p", text: /Add FreeFeed API access token/
   end
 
   test "displays existing tokens" do

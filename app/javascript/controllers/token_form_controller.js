@@ -60,7 +60,7 @@ export default class extends Controller {
     
     if (this.hasHelpTextTarget) {
       this.helpTextTarget.href = tokenUrl
-      this.helpTextTarget.textContent = "Freefeed settings"
+      this.helpTextTarget.textContent = "FreeFeed settings"
     }
   }
 

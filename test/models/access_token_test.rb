@@ -85,7 +85,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert AccessToken.new.pending?
   end
 
-  test "stores user-provided Freefeed token" do
+  test "stores user-provided FreeFeed token" do
     token_value = "TOKEN"
 
     token = create(

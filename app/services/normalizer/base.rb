@@ -1,7 +1,7 @@
 # Base class for feed entry normalizers
 #
 # Normalizer should normalize the feed entry content to make it compatible with
-# publication on Freefeed. If normalization is not possible, normalizer should
+# publication on FreeFeed. If normalization is not possible, normalizer should
 # reject the post with a list of validation errors. The Post record can always
 # be persisted regardless of whether normalization is performed.
 #
