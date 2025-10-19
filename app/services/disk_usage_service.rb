@@ -28,14 +28,16 @@ class DiskUsageService
   def table_usage
     execute_query(<<-SQL
       SELECT
-        table_name,
-        pg_size_pretty(pg_total_relation_size(quote_ident(table_name))) AS total_size
+        relname AS table_name,
+        pg_size_pretty(pg_total_relation_size(pg_class.oid)) AS total_size
       FROM
-        information_schema.tables
+        pg_class
+        JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
       WHERE
-        table_schema = 'public'
+        pg_namespace.nspname = 'public'
+        AND pg_class.relkind = 'r'
       ORDER BY
-        pg_total_relation_size(quote_ident(table_name)) DESC;
+        pg_total_relation_size(pg_class.oid) DESC;
     SQL
     ).to_a
   end
