@@ -26,40 +26,39 @@
                           class: "form-control #{'is-invalid' if access_token.errors[:token].any?}",
                           placeholder: token_placeholder,
                           value: token_value %>
-      <div class="form-text">Get a token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">Freefeed settings</a></div>
+      <div class="form-text">Get a token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">FreeFeed settings</a></div>
     </div>
 
     <div class="mb-4">
-      <%= form.label :host, "Freefeed Instance", class: "form-label fw-bold" %>
+      <%= form.label :host, "FreeFeed Instance", class: "form-label fw-bold" %>
       <div class="mb-2">
-        <% AccessToken::FREEFEED_HOSTS.each do |key, url| %>
+        <% AccessToken::FREEFEED_HOSTS.each do |key, config| %>
           <div class="form-check mb-2">
-            <%= form.radio_button :host, url,
+            <%= form.radio_button :host, config[:url],
                                   id: "host_#{key}",
                                   class: "form-check-input host-radio",
-                                  checked: (access_token.host == url || (key == "production" && access_token.host.blank?)),
+                                  checked: (access_token.host == config[:url] || (key == :production && access_token.host.blank?)),
                                   data: { action: "change->token-form#hostChanged" } %>
-            <%= form.label "host_#{key}", key.humanize, class: "form-check-label", for: "host_#{key}" %>
-            <label for="host_<%= key %>" class="text-muted ms-1" style="cursor: pointer;">(<%= url %>)</label>
+            <%= form.label "host_#{key}", config[:display_name], class: "form-check-label", for: "host_#{key}" %>
           </div>
         <% end %>
         <div class="form-check mb-2">
           <%= form.radio_button :host, "custom",
                                 id: "host_custom",
                                 class: "form-check-input host-radio",
-                                checked: !AccessToken::FREEFEED_HOSTS.values.include?(access_token.host) && access_token.host.present?,
+                                checked: !AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) && access_token.host.present?,
                                 data: { action: "change->token-form#hostChanged" } %>
           <%= form.label :host_custom, "Custom", class: "form-check-label", for: "host_custom" %>
         </div>
       </div>
-      <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.include?(access_token.host) || access_token.host.blank? %>" data-token-form-target="customField">
+      <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) || access_token.host.blank? %>" data-token-form-target="customField">
         <%= form.text_field :host,
                             class: "form-control #{'is-invalid' if access_token.errors[:host].any?}",
                             placeholder: "https://your-freefeed-instance.com",
                             id: "custom_host_input",
                             data: { token_form_target: "customInput", action: "input->token-form#customInputChanged" } %>
       </div>
-      <div class="form-text">Select the Freefeed instance where your token was created</div>
+      <div class="form-text">Select the FreeFeed instance where your token was created</div>
     </div>
 
     <div class="d-grid gap-2 d-md-flex justify-content-md-start">

@@ -1,32 +1,34 @@
 <% content_for :title, "Status" %>
 
-<% if @user.total_feeds_count == 0 %>
+<% has_active_tokens = @user.access_tokens.active.exists? %>
+<% has_feeds = @user.total_feeds_count > 0 %>
+
+<% if !has_active_tokens %>
   <%= page_header "Welcome to Feeder" %>
 
   <div class="row">
     <div class="col-12">
       <p>
-        Feeder helps you automatically share content from your favorite sources to Freefeed.
+        Feeder helps you automatically share content from your favorite sources to FreeFeed.
       </p>
       <p>
-        <strong>Getting started:</strong>
+        To get started, you'll need to add a FreeFeed access token so Feeder can post on your behalf.
       </p>
-      <ol class="mb-4">
-        <li class="mb-2">
-          First, grab a Freefeed access token from your account settings
-        </li>
-        <li class="mb-2">
-          Add it here so Feeder can post on your behalf
-        </li>
-        <li class="mb-2">
-          Then create your first feed — tell Feeder which content you want to share
-        </li>
-        <li>
-          Sit back and let Feeder automatically post new items to your Freefeed timeline
-        </li>
-      </ol>
       <p>
-        <%= link_to "Add Freefeed token", settings_access_tokens_path, class: "btn btn-primary me-2" %>
+        <%= link_to "Add FreeFeed token", settings_access_tokens_path, class: "btn btn-primary" %>
+      </p>
+    </div>
+  </div>
+<% elsif !has_feeds %>
+  <%= page_header "Welcome to Feeder" %>
+
+  <div class="row">
+    <div class="col-12">
+      <p>
+        Great! You've added a FreeFeed access token. Now you can create your first feed.
+      </p>
+      <p>
+        <%= link_to "Create feed", new_feed_path, class: "btn btn-primary" %>
       </p>
     </div>
   </div>

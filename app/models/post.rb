@@ -1,5 +1,5 @@
 class Post < ApplicationRecord
-  # Freefeed Server length limits
+  # FreeFeed Server length limits
   MAX_CONTENT_LENGTH = 3000 # graphemes
   MAX_COMMENT_LENGTH = 3000 # characters
 

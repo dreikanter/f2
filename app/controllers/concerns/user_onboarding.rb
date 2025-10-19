@@ -18,6 +18,6 @@ module UserOnboarding
   def redirect_to_onboarding
     return unless session[:onboarding]
 
-    redirect_to onboarding_path
+    redirect_to onboarding_intro_path
   end
 end

@@ -1,0 +1,40 @@
+<%
+  host ||= AccessToken::FREEFEED_HOSTS[:production][:url]
+  token ||= ""
+  host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host } || AccessToken::FREEFEED_HOSTS[:production]
+  validation_error ||= nil
+%>
+
+<%= form_with url: onboarding_validation_path, method: :post, data: { controller: "token-host" } do |form| %>
+  <div class="mb-3">
+    <%= form.label :host, "FreeFeed Instance", class: "form-label fw-bold" %>
+    <%= form.select :host,
+      options_for_select(AccessToken.host_options_for_select, host),
+      {},
+      class: "form-select",
+      data: {
+        token_host_target: "hostSelect",
+        action: "change->token-host#updateLink",
+        token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json
+      } %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :token, "API Token", class: "form-label fw-bold" %>
+    <%= form.text_field :token, value: token, class: "form-control", autofocus: true, required: true %>
+    <div class="form-text" data-token-host-target="helpText">
+      Don't have a token? You may create a new one at <%= link_to host_config[:domain], host_config[:token_url], target: "_blank", data: { token_host_target: "link" } %>.
+    </div>
+  </div>
+
+  <% if validation_error.present? %>
+    <div class="alert alert-danger" role="alert">
+      <%= validation_error %>
+    </div>
+  <% end %>
+
+  <div class="d-flex gap-3">
+    <%= link_to "Back", onboarding_intro_path, class: "btn btn-light" %>
+    <%= form.submit "Validate", class: "btn btn-primary" %>
+  </div>
+<% end %>

@@ -2,20 +2,17 @@ class OnboardingsController < ApplicationController
   skip_onboarding_redirect
 
   def show
-    @onboarding = Current.user.onboarding
-    return complete_onboarding unless @onboarding
-
-    @current_step = current_step
+    redirect_to onboarding_intro_path
   end
 
   def create
     restart_onboarding
-    redirect_to onboarding_path
+    redirect_to onboarding_intro_path
   end
 
   def destroy
-    Current.user.onboarding&.destroy
-    complete_onboarding
+    skip_onboarding
+    redirect_to status_path
   end
 
   private
@@ -26,27 +23,8 @@ class OnboardingsController < ApplicationController
     session[:onboarding] = true
   end
 
-  def complete_onboarding
+  def skip_onboarding
+    Current.user.onboarding&.destroy
     session[:onboarding] = false
-    redirect_to status_path
-  end
-
-  def current_step
-    # TBD: Drop test parameter
-    case params[:step]
-    when "1" then :intro
-    when "2" then :feed
-    when "3" then :outro
-    else
-      return :intro unless @onboarding
-
-      if @onboarding.token_setup?
-        :intro
-      elsif @onboarding.feed_setup?
-        :feed
-      else
-        :outro
-      end
-    end
   end
 end

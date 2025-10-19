@@ -134,7 +134,7 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?
   end
 
-  test "should validate content length within Freefeed limits" do
+  test "should validate content length within FreeFeed limits" do
     post = build(:post, content: "a" * Post::MAX_CONTENT_LENGTH)
     assert post.valid?
 
@@ -143,7 +143,7 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:content], "is too long (maximum is #{Post::MAX_CONTENT_LENGTH} characters)"
   end
 
-  test "should validate comments length within Freefeed limits" do
+  test "should validate comments length within FreeFeed limits" do
     valid_comment = "a" * Post::MAX_COMMENT_LENGTH
     post = build(:post, comments: [valid_comment])
     assert post.valid?

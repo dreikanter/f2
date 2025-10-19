@@ -85,7 +85,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert AccessToken.new.pending?
   end
 
-  test "stores user-provided Freefeed token" do
+  test "stores user-provided FreeFeed token" do
     token_value = "TOKEN"
 
     token = create(
@@ -169,9 +169,9 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "FREEFEED_HOSTS contains expected standard hosts" do
-    assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS["production"]
-    assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS["staging"]
-    assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS["beta"]
+    assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS[:production][:url]
+    assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS[:staging][:url]
+    assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS[:beta][:url]
   end
 
   test "destroying access token disables and nullifies associated feeds in single query" do
