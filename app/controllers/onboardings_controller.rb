@@ -7,8 +7,8 @@ class OnboardingsController < ApplicationController
   end
 
   def destroy
-    Current.user.onboarding&.destroy
-    complete_onboarding
+    skip_onboarding
+    redirect_to status_path
   end
 
   private
@@ -19,8 +19,8 @@ class OnboardingsController < ApplicationController
     session[:onboarding] = true
   end
 
-  def complete_onboarding
+  def skip_onboarding
+    Current.user.onboarding&.destroy
     session[:onboarding] = false
-    redirect_to status_path
   end
 end
