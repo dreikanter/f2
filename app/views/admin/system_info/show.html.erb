@@ -1,0 +1,74 @@
+<% content_for :title, "System Info" %>
+<%= page_header "System Info" %>
+
+<div class="row">
+  <div class="col-12">
+    <h2>Disk Usage</h2>
+    <p><strong>Free Space:</strong> <%= @disk_usage[:free_space] %></p>
+    <p><strong>Postgres Usage:</strong> <%= number_to_human_size(@disk_usage[:postgres_usage]) %></p>
+
+    <h3>Postgres Table Usage</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:table_usage].each do |row| %>
+          <tr>
+            <td><%= row["table_name"] %></td>
+            <td><%= row["total_size"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <h2>Vacuum Stats</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Live Tuples</th>
+          <th>Dead Tuples</th>
+          <th>Last Vacuum</th>
+          <th>Last Autovacuum</th>
+          <th>Vacuum Count</th>
+          <th>Autovacuum Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:vacuum_stats].each do |row| %>
+          <tr>
+            <td><%= row["relname"] %></td>
+            <td><%= row["n_live_tup"] %></td>
+            <td><%= row["n_dead_tup"] %></td>
+            <td><%= row["last_vacuum"] %></td>
+            <td><%= row["last_autovacuum"] %></td>
+            <td><%= row["vacuum_count"] %></td>
+            <td><%= row["autovacuum_count"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <h2>Autovacuum Settings</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Setting</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:autovacuum_settings].each do |row| %>
+          <tr>
+            <td><%= row["name"] %></td>
+            <td><%= row["setting"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
