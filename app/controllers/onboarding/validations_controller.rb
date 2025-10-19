@@ -5,7 +5,7 @@ class Onboarding::ValidationsController < Onboarding::BaseController
 
     client = FreefeedClient.new(host: host, token: token)
     user_info = client.whoami
-    managed_groups = client.managed_groups
+    managed_groups = client.managed_groups.sort_by { |g| g[:username].downcase }
 
     render turbo_stream: turbo_stream.replace(
       "token-form-container",
