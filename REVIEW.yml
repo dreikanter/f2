@@ -46,3 +46,4 @@ reviewed:
   app/views/onboarding/feeds/show.html.erb: ef841f73c86c1517f85521aa70aaf0b41a643cfc
   test/controllers/onboarding/access_token_validations_controller_test.rb: 8120d0d50c8b624100e711265df81b1560cfd695
   test/controllers/onboarding/access_tokens_controller_test.rb: 7c3fba894ca329bf58615e2a599f6724517a19f3
+  app/controllers/admin/system_stats_controller.rb: 3f2b555ee67ed88fe00169b0c8d87fb4fd844bac
