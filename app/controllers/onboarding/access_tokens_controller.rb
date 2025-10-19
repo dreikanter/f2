@@ -11,9 +11,6 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
   private
 
   def validate_token
-    token = params.require(:token)
-    host = params.require(:host)
-
     client = FreefeedClient.new(host: host, token: token)
     user_info = client.whoami
     managed_groups = client.managed_groups
@@ -30,13 +27,13 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
       }
     )
   rescue FreefeedClient::UnauthorizedError
-    render_error(token, host, "Invalid token or insufficient permissions")
+    render_validation_error("Invalid token or insufficient permissions")
   rescue FreefeedClient::Error => e
-    render_error(token, host, "Failed to validate token: #{e.message}")
+    render_validation_error("Failed to validate token: #{e.message}")
   rescue StandardError => e
     Rails.logger.error("Token validation error: #{e.message}")
     Rails.logger.error(e.backtrace.join("\n"))
-    render_error(token, host, "An unexpected error occurred during validation")
+    render_validation_error("An unexpected error occurred during validation")
   end
 
   def save_token
@@ -44,18 +41,18 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
       name: unique_name,
       host: host,
       owner: owner,
-      token: token_value,
+      token: token,
       status: :active
     )
 
     Current.user.onboarding.update!(access_token: access_token)
     redirect_to onboarding_feed_path, status: :see_other
   rescue ActiveRecord::RecordInvalid => e
-    render_error(token_value, host, "Failed to save token: #{e.message}", owner: owner)
+    render_save_error("Failed to save token: #{e.message}")
   rescue StandardError => e
     Rails.logger.error("Token creation error: #{e.message}")
     Rails.logger.error(e.backtrace.join("\n"))
-    render_error(token_value, host, "An unexpected error occurred while saving the token", owner: owner)
+    render_save_error("An unexpected error occurred while saving the token")
   end
 
   def unique_name
@@ -79,15 +76,7 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     end
   end
 
-  def render_error(token, host, message, owner: nil)
-    if owner.present?
-      render_save_error(token, host, message, owner)
-    else
-      render_validation_error(token, host, message)
-    end
-  end
-
-  def render_validation_error(token, host, message)
+  def render_validation_error(message)
     render turbo_stream: turbo_stream.replace(
       "token-form-container",
       partial: "form",
@@ -99,7 +88,7 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     ), status: :unprocessable_entity
   end
 
-  def render_save_error(token, host, message, owner)
+  def render_save_error(message)
     render turbo_stream: turbo_stream.replace(
       "token-form-container",
       partial: "token_details",
@@ -113,8 +102,8 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     ), status: :unprocessable_entity
   end
 
-  def token_value
-    @token_value ||= params.require(:token)
+  def token
+    @token ||= params.require(:token)
   end
 
   def host
