@@ -14,12 +14,16 @@ Rails.application.routes.draw do
 
   resources :email_confirmations, only: :show, param: :token
   resource :status, only: :show, controller: "statuses"
+
   resource :onboarding, only: [:create, :destroy] do
-    resource :intro, only: :show, controller: "onboarding/intro"
-    resource :access_token, only: [:show, :create], controller: "onboarding/access_tokens"
-    resource :feed, only: :show, controller: "onboarding/feeds"
-    resource :outro, only: :show, controller: "onboarding/outro"
+    scope module: :onboarding do
+      resource :intro, only: :show
+      resource :access_token, only: [:show, :create]
+      resource :feed, only: :show
+      resource :outro, only: :show
+    end
   end
+
   resource :session
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]
