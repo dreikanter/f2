@@ -9,18 +9,18 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       sign_in_as(user)
 
       assert_difference "AccessToken.count", 1 do
-        post onboarding_access_tokens_path, params: {
+        post onboarding_access_token_path, params: {
           token: "valid_token_123",
-          host: AccessToken::FREEFEED_HOSTS["production"],
+          host: AccessToken::FREEFEED_HOSTS["production"][:url],
           owner: "testuser"
         }
       end
 
-      assert_redirected_to onboarding_intro_path
+      assert_redirected_to onboarding_feed_path
 
       access_token = user.access_tokens.last
       assert_equal "testuser at freefeed.net", access_token.name
-      assert_equal AccessToken::FREEFEED_HOSTS["production"], access_token.host
+      assert_equal AccessToken::FREEFEED_HOSTS["production"][:url], access_token.host
       assert_equal "testuser", access_token.owner
       assert_equal "active", access_token.status
 
@@ -34,9 +34,9 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       # Create existing token with the same base name
       create(:access_token, user: user, name: "testuser at freefeed.net")
 
-      post onboarding_access_tokens_path, params: {
+      post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"],
+        host: AccessToken::FREEFEED_HOSTS["production"][:url],
         owner: "testuser"
       }
 
@@ -51,9 +51,9 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       create(:access_token, user: user, name: "testuser at freefeed.net")
       create(:access_token, user: user, name: "testuser at freefeed.net (2)")
 
-      post onboarding_access_tokens_path, params: {
+      post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"],
+        host: AccessToken::FREEFEED_HOSTS["production"][:url],
         owner: "testuser"
       }
 
@@ -64,49 +64,40 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     test "should handle missing token parameter" do
       sign_in_as(user)
 
-      assert_no_difference "AccessToken.count" do
-        post onboarding_access_tokens_path, params: {
-          host: AccessToken::FREEFEED_HOSTS["production"],
+      assert_raises(ActionController::ParameterMissing) do
+        post onboarding_access_token_path, params: {
+          host: AccessToken::FREEFEED_HOSTS["production"][:url],
           owner: "testuser"
         }
       end
-
-      assert_response :unprocessable_entity
-      assert_match "Token, host, and owner are required", response.body
     end
 
     test "should handle missing host parameter" do
       sign_in_as(user)
 
-      assert_no_difference "AccessToken.count" do
-        post onboarding_access_tokens_path, params: {
+      assert_raises(ActionController::ParameterMissing) do
+        post onboarding_access_token_path, params: {
           token: "valid_token_123",
           owner: "testuser"
         }
       end
-
-      assert_response :unprocessable_entity
-      assert_match "Token, host, and owner are required", response.body
     end
 
     test "should handle missing owner parameter" do
       sign_in_as(user)
 
-      assert_no_difference "AccessToken.count" do
-        post onboarding_access_tokens_path, params: {
+      assert_raises(ActionController::ParameterMissing) do
+        post onboarding_access_token_path, params: {
           token: "valid_token_123",
-          host: AccessToken::FREEFEED_HOSTS["production"]
+          host: AccessToken::FREEFEED_HOSTS["production"][:url]
         }
       end
-
-      assert_response :unprocessable_entity
-      assert_match "Token, host, and owner are required", response.body
     end
 
     test "should require authentication" do
-      post onboarding_access_tokens_path, params: {
+      post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"],
+        host: AccessToken::FREEFEED_HOSTS["production"][:url],
         owner: "testuser"
       }
 
