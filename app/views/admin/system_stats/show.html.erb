@@ -1,0 +1,93 @@
+<% content_for :title, "System Stats" %>
+<%= page_header "System Stats" %>
+
+<div class="mb-4">
+  <h3 class="h5 mb-3">Disk Usage</h3>
+  <div class="list-group">
+    <div class="list-group-item">
+      <strong>Free Space:</strong>
+      <%= number_to_human_size(@disk_usage[:free_space]) %>
+    </div>
+
+    <div class="list-group-item">
+      <strong>Postgres Usage:</strong>
+      <%= number_to_human_size(@disk_usage[:postgres_usage]) %>
+    </div>
+  </div>
+</div>
+
+<div class="mb-4">
+  <h3 class="h5 mb-3">Postgres Table Usage</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:table_usage].each do |row| %>
+          <tr>
+            <td><code><%= row["table_name"] %></code></td>
+            <td><%= row["total_size"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mb-4">
+  <h3 class="h5 mb-3">Vacuum Stats</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th class="text-end">Live Tuples</th>
+          <th class="text-end">Dead Tuples</th>
+          <th>Last Vacuum</th>
+          <th>Last Autovacuum</th>
+          <th class="text-end">Vacuum Count</th>
+          <th class="text-end">Autovacuum Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:vacuum_stats].each do |row| %>
+          <tr>
+            <td><code><%= row["relname"] %></code></td>
+            <td class="text-end"><%= number_with_delimiter(row["n_live_tup"]) %></td>
+            <td class="text-end"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
+            <td><%= short_time_ago_tag(row["last_vacuum"]) %></td>
+            <td><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
+            <td class="text-end"><%= row["vacuum_count"] %></td>
+            <td class="text-end"><%= row["autovacuum_count"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mb-4">
+  <h3 class="h5 mb-3">Autovacuum Settings</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Setting</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @disk_usage[:autovacuum_settings].each do |row| %>
+          <tr>
+            <td><code><%= row["name"] %></code></td>
+            <td><%= row["setting"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

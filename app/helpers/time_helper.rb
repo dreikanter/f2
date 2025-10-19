@@ -47,4 +47,15 @@ module TimeHelper
       title: "#{time_ago_in_words(time)} ago"
     )
   end
+
+  def short_time_ago_tag(time)
+    return nil unless time
+
+    content_tag(
+      :time,
+      short_time_ago(time),
+      datetime: time.rfc3339,
+      title: long_time_format(time)
+    )
+  end
 end
