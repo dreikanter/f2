@@ -16,7 +16,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
         }
       end
 
-      assert_redirected_to onboarding_path
+      assert_redirected_to onboarding_intro_path
 
       access_token = user.access_tokens.last
       assert_equal "testuser at freefeed.net", access_token.name
