@@ -97,4 +97,18 @@ class TimeHelperTest < ActiveSupport::TestCase
       assert_equal expected, result
     end
   end
+
+  test "short_time_ago_tag returns nil for nil input" do
+    assert_nil short_time_ago_tag(nil)
+  end
+
+  test "short_time_ago_tag generates HTML time element with short format" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+
+    travel_to Time.zone.parse("2025-01-15 17:45:30") do
+      result = short_time_ago_tag(time)
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">2h</time>'
+      assert_equal expected, result
+    end
+  end
 end
