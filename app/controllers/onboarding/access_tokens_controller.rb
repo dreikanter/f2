@@ -1,10 +1,4 @@
 class Onboarding::AccessTokensController < Onboarding::BaseController
-  def show
-    super
-    @host = AccessToken::FREEFEED_HOSTS["production"]
-    @token = ""
-  end
-
   def create
     case params.require(:subcommand)
     when "validate"
