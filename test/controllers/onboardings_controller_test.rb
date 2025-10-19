@@ -121,6 +121,13 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Welcome to Feeder"
   end
 
+  test "should show token step when show_token param is present" do
+    sign_in_as(user)
+    get onboarding_url(show_token: true)
+    assert_response :success
+    assert_select "h1", "Connect Your FreeFeed Account"
+  end
+
   test "should show feed step when access_token exists but no feed" do
     user_with_token = create(:user)
     access_token = create(:access_token, user: user_with_token)
@@ -160,12 +167,19 @@ class OnboardingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get onboarding_url(step: 2)
     assert_response :success
-    assert_select "h1", "Token added"
+    assert_select "h1", "Connect Your FreeFeed Account"
   end
 
   test "should override step with step parameter 3" do
     sign_in_as(user)
     get onboarding_url(step: 3)
+    assert_response :success
+    assert_select "h1", "Token added"
+  end
+
+  test "should override step with step parameter 4" do
+    sign_in_as(user)
+    get onboarding_url(step: 4)
     assert_response :success
     assert_select "h1", "You're all set"
   end

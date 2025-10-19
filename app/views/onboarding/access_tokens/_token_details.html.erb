@@ -1,0 +1,62 @@
+<%
+  host ||= AccessToken::FREEFEED_HOSTS["production"]
+  token ||= ""
+  user_info ||= {}
+  managed_groups ||= []
+%>
+
+<%= form_with url: onboarding_access_token_path, method: :post, data: { turbo_frame: "_top" } do |form| %>
+  <%= form.hidden_field :subcommand, value: "save" %>
+  <%= form.hidden_field :host, value: host %>
+  <%= form.hidden_field :token, value: token %>
+
+  <div class="mb-3">
+    <%= form.label :host, "FreeFeed Instance", class: "form-label" %>
+    <%= form.select :host,
+      options_for_select([
+        ["freefeed.net (main)", AccessToken::FREEFEED_HOSTS["production"]],
+        ["candy.freefeed.net (staging)", AccessToken::FREEFEED_HOSTS["staging"]],
+        ["beta.freefeed.net (beta)", AccessToken::FREEFEED_HOSTS["beta"]]
+      ], host),
+      {},
+      class: "form-select",
+      disabled: true %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :token, "API Token", class: "form-label" %>
+    <%= form.text_field :token, value: token, class: "form-control", disabled: true %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :owner, "Posting As", class: "form-label fw-bold" %>
+    <%= form.text_field :owner, value: user_info[:username], class: "form-control", disabled: true %>
+    <div class="form-text">Posts will be created by this user</div>
+  </div>
+
+  <% if managed_groups.any? %>
+    <div class="mb-3">
+      <label class="form-label fw-bold">Groups Available for Posting</label>
+      <ul class="list-unstyled">
+        <% managed_groups.each do |group| %>
+          <li class="mb-1">
+            <%= link_to "@#{group[:username]}", "#{host}/#{group[:username]}", target: "_blank", class: "text-decoration-none" %>
+            <%= " (#{group[:screen_name]})" if group[:screen_name].present? && group[:screen_name] != group[:username] %>
+            <%= " (private)" if group[:is_private] %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if validation_error.present? %>
+    <div class="alert alert-danger" role="alert">
+      <%= validation_error %>
+    </div>
+  <% end %>
+
+  <div class="d-flex gap-3">
+    <%= form.submit "Save and continue", class: "btn btn-primary" %>
+    <%= link_to "Back", onboarding_intro_path, class: "btn btn-light" %>
+  </div>
+<% end %>
