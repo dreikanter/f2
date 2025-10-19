@@ -8,12 +8,8 @@
 <%= form_with url: onboarding_validation_path, method: :post, data: { controller: "token-host" } do |form| %>
   <div class="mb-3">
     <%= form.label :host, "FreeFeed Instance", class: "form-label fw-bold" %>
-    <%
-      # When there's a validation error, don't pre-select any option to preserve user's dropdown selection
-      select_options = validation_error.present? ? AccessToken.host_options_for_select : options_for_select(AccessToken.host_options_for_select, host)
-    %>
     <%= form.select :host,
-      select_options,
+      options_for_select(AccessToken.host_options_for_select, host),
       {},
       class: "form-select",
       data: {
