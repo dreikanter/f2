@@ -94,29 +94,35 @@ class Onboarding::AccessTokensController < ApplicationController
 
   def render_error(token, host, message, owner: nil)
     if owner.present?
-      # Error during save - show token details with error
-      render turbo_stream: turbo_stream.replace(
-        "token-form-container",
-        partial: "token_details",
-        locals: {
-          host: host,
-          token: token,
-          user_info: { username: owner },
-          managed_groups: [],
-          validation_error: message
-        }
-      ), status: :unprocessable_entity
+      render_save_error(token, host, message, owner)
     else
-      # Error during validation - show validation form with error
-      render turbo_stream: turbo_stream.replace(
-        "token-form-container",
-        partial: "form",
-        locals: {
-          host: host,
-          token: token,
-          validation_error: message
-        }
-      ), status: :unprocessable_entity
+      render_validation_error(token, host, message)
     end
+  end
+
+  def render_validation_error(token, host, message)
+    render turbo_stream: turbo_stream.replace(
+      "token-form-container",
+      partial: "form",
+      locals: {
+        host: host,
+        token: token,
+        validation_error: message
+      }
+    ), status: :unprocessable_entity
+  end
+
+  def render_save_error(token, host, message, owner)
+    render turbo_stream: turbo_stream.replace(
+      "token-form-container",
+      partial: "token_details",
+      locals: {
+        host: host,
+        token: token,
+        user_info: { username: owner },
+        managed_groups: [],
+        validation_error: message
+      }
+    ), status: :unprocessable_entity
   end
 end
