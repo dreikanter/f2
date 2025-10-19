@@ -1,47 +1,5 @@
 class Onboarding::AccessTokensController < Onboarding::BaseController
   def create
-    case params.require(:subcommand)
-    when "validate"
-      validate_token
-    when "save"
-      save_token
-    else
-      raise ArgumentError, "unsupported subcommand"
-    end
-  end
-
-  private
-
-  def validate_token
-    @token = params.require(:token)
-    @host = params.require(:host)
-
-    client = FreefeedClient.new(host: host, token: token)
-    user_info = client.whoami
-    managed_groups = client.managed_groups
-
-    render turbo_stream: turbo_stream.replace(
-      "token-form-container",
-      partial: "token_details",
-      locals: {
-        host: host,
-        token: token,
-        user_info: user_info,
-        managed_groups: managed_groups,
-        validation_error: nil
-      }
-    )
-  rescue FreefeedClient::UnauthorizedError
-    render_validation_error("Invalid token or insufficient permissions")
-  rescue FreefeedClient::Error => e
-    render_validation_error("Failed to validate token: #{e.message}")
-  rescue StandardError => e
-    Rails.logger.error("Token validation error: #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
-    render_validation_error("An unexpected error occurred during validation")
-  end
-
-  def save_token
     @token = params.require(:token)
     @host = params.require(:host)
     @owner = params.require(:owner)
@@ -64,6 +22,8 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     render_save_error("An unexpected error occurred while saving the token")
   end
 
+  private
+
   def unique_name
     @unique_name ||= begin
       host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host }
@@ -84,18 +44,6 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
 
       index += 1
     end
-  end
-
-  def render_validation_error(message)
-    render turbo_stream: turbo_stream.replace(
-      "token-form-container",
-      partial: "form",
-      locals: {
-        host: host,
-        token: token,
-        validation_error: message
-      }
-    ), status: :unprocessable_entity
   end
 
   def render_save_error(message)

@@ -5,8 +5,7 @@
   validation_error ||= nil
 %>
 
-<%= form_with url: onboarding_access_token_path, method: :post, data: { controller: "token-host", turbo_frame: "_top" } do |form| %>
-  <%= form.hidden_field :subcommand, value: "validate" %>
+<%= form_with url: onboarding_validation_path, method: :post, data: { controller: "token-host", turbo_frame: "_top" } do |form| %>
   <div class="mb-3">
     <%= form.label :host, "FreeFeed Instance", class: "form-label" %>
     <%= form.select :host,

@@ -19,6 +19,7 @@ Rails.application.routes.draw do
     scope module: :onboarding do
       resource :intro, only: :show
       resource :access_token, only: [:show, :create]
+      resource :validation, only: :create
       resource :feed, only: :show
       resource :outro, only: :show
     end
