@@ -37,10 +37,10 @@
       <ul class="list-unstyled">
         <% managed_groups.each do |group| %>
           <li class="mb-1">
-            <%= link_to "@#{group[:username]}", "#{host}/#{group[:username]}", target: "_blank", class: "text-decoration-none" %>
+            <%= link_to "@#{group[:username]}", "#{host}/#{group[:username]}", target: "_blank", rel: "noopener noreferrer", class: "text-decoration-none" %>
             <%= " (#{group[:screen_name]})" if group[:screen_name].present? && group[:screen_name] != group[:username] %>
             <% if group[:is_private] %>
-              <%= icon("lock", css_class: "text-muted ms-1") %>
+              <%= icon("lock", css_class: "text-muted ms-1", aria_hidden: true) %>
             <% end %>
           </li>
         <% end %>
