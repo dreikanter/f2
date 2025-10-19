@@ -2,6 +2,7 @@
   host ||= AccessToken::FREEFEED_HOSTS["production"][:url]
   token ||= ""
   host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host } || AccessToken::FREEFEED_HOSTS["production"]
+  validation_error ||= nil
 %>
 
 <%= form_with url: onboarding_access_token_path, method: :post, data: { controller: "token-host", turbo_frame: "_top" } do |form| %>
