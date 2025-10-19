@@ -5,6 +5,8 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
       validate_token
     when "save"
       save_token
+    else
+      raise ArgumentError, "unsupported subcommand"
     end
   end
 
