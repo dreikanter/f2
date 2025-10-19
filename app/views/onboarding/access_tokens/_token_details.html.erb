@@ -5,7 +5,7 @@
   managed_groups ||= []
 %>
 
-<%= form_with url: onboarding_access_token_path, method: :post, data: { turbo_frame: "_top" } do |form| %>
+<%= form_with url: onboarding_access_token_path, method: :post do |form| %>
   <%= form.hidden_field :host, value: host %>
   <%= form.hidden_field :token, value: token %>
   <%= form.hidden_field :owner, value: user_info[:username] %>
