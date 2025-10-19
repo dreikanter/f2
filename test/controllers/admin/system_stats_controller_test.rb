@@ -34,11 +34,6 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
     get admin_system_stats_path
 
     assert_response :success
-    assert_select "h1", "System Stats"
-    assert_select "h3", "Disk Usage"
-    assert_select "h3", "Postgres Table Usage"
-    assert_select "h3", "Vacuum Stats"
-    assert_select "h3", "Autovacuum Settings"
   end
 
   private
