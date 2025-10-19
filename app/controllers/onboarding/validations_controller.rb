@@ -7,7 +7,7 @@ class Onboarding::ValidationsController < Onboarding::BaseController
     user_info = client.whoami
     managed_groups = client.managed_groups.sort_by { |g| g[:username].downcase }
 
-    render turbo_stream: turbo_stream.replace(
+    render turbo_stream: turbo_stream.update(
       "token-form-container",
       partial: "onboarding/access_tokens/token_details",
       locals: {
@@ -32,7 +32,7 @@ class Onboarding::ValidationsController < Onboarding::BaseController
 
   def render_validation_error(message)
     response.headers["Cache-Control"] = "no-cache, no-store"
-    render turbo_stream: turbo_stream.replace(
+    render turbo_stream: turbo_stream.update(
       "token-form-container",
       partial: "onboarding/access_tokens/form",
       locals: {
