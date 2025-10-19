@@ -3,6 +3,7 @@
   token ||= ""
   user_info ||= {}
   managed_groups ||= []
+  validation_error ||= nil
 %>
 
 <%= form_with url: onboarding_access_token_path, method: :post do |form| %>
