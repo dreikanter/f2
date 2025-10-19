@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = ["hostSelect", "link"]
 
   static values = {
-    tokenUrl: String
+    hosts: Object
   }
 
   connect() {
@@ -12,10 +12,12 @@ export default class extends Controller {
   }
 
   updateLink() {
-    const host = this.hostSelectTarget.value
-    const url = this.tokenUrlValue.replace("{host}", host)
+    const selectedUrl = this.hostSelectTarget.value
+    const hostConfig = Object.values(this.hostsValue).find(h => h.url === selectedUrl)
 
-    this.linkTarget.href = url
-    this.linkTarget.textContent = host.replace("https://", "")
+    if (hostConfig) {
+      this.linkTarget.href = hostConfig.token_url
+      this.linkTarget.textContent = hostConfig.domain
+    }
   }
 }

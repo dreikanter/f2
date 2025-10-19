@@ -1,5 +1,5 @@
 <%
-  host ||= AccessToken::FREEFEED_HOSTS["production"]
+  host ||= AccessToken::FREEFEED_HOSTS["production"][:url]
   token ||= ""
   user_info ||= {}
   managed_groups ||= []
@@ -13,11 +13,7 @@
   <div class="mb-3">
     <%= form.label :host, "FreeFeed Instance", class: "form-label" %>
     <%= form.select :host,
-      options_for_select([
-        ["freefeed.net (main)", AccessToken::FREEFEED_HOSTS["production"]],
-        ["candy.freefeed.net (staging)", AccessToken::FREEFEED_HOSTS["staging"]],
-        ["beta.freefeed.net (beta)", AccessToken::FREEFEED_HOSTS["beta"]]
-      ], host),
+      options_for_select(AccessToken.host_options_for_select, host),
       {},
       class: "form-select",
       disabled: true %>
