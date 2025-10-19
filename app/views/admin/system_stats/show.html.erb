@@ -1,14 +1,21 @@
 <% content_for :title, "System Stats" %>
-<%= page_header "Show System Stats" %>
+<%= page_header "System Stats" %>
 
-<div class="row">
-  <div class="col-12">
-    <h2>Disk Usage</h2>
-    <p><strong>Free Space:</strong> <%= @disk_usage[:free_space] %></p>
-    <p><strong>Postgres Usage:</strong> <%= number_to_human_size(@disk_usage[:postgres_usage]) %></p>
+<div class="mb-4">
+  <h3 class="h5 mb-3">Disk Usage</h3>
+  <dl class="row mb-0">
+    <dt class="col-sm-3">Free Space</dt>
+    <dd class="col-sm-9"><%= @disk_usage[:free_space] %></dd>
 
-    <h3>Postgres Table Usage</h3>
-    <table class="table">
+    <dt class="col-sm-3">Postgres Usage</dt>
+    <dd class="col-sm-9"><%= number_to_human_size(@disk_usage[:postgres_usage]) %></dd>
+  </dl>
+</div>
+
+<div class="mb-4">
+  <h3 class="h5 mb-3">Postgres Table Usage</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
       <thead>
         <tr>
           <th>Table</th>
@@ -24,37 +31,45 @@
         <% end %>
       </tbody>
     </table>
+  </div>
+</div>
 
-    <h2>Vacuum Stats</h2>
-    <table class="table">
+<div class="mb-4">
+  <h3 class="h5 mb-3">Vacuum Stats</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
       <thead>
         <tr>
           <th>Table</th>
-          <th>Live Tuples</th>
-          <th>Dead Tuples</th>
+          <th class="text-end">Live Tuples</th>
+          <th class="text-end">Dead Tuples</th>
           <th>Last Vacuum</th>
           <th>Last Autovacuum</th>
-          <th>Vacuum Count</th>
-          <th>Autovacuum Count</th>
+          <th class="text-end">Vacuum Count</th>
+          <th class="text-end">Autovacuum Count</th>
         </tr>
       </thead>
       <tbody>
         <% @disk_usage[:vacuum_stats].each do |row| %>
           <tr>
             <td><%= row["relname"] %></td>
-            <td><%= row["n_live_tup"] %></td>
-            <td><%= row["n_dead_tup"] %></td>
+            <td class="text-end"><%= number_with_delimiter(row["n_live_tup"]) %></td>
+            <td class="text-end"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
             <td><%= row["last_vacuum"] %></td>
             <td><%= row["last_autovacuum"] %></td>
-            <td><%= row["vacuum_count"] %></td>
-            <td><%= row["autovacuum_count"] %></td>
+            <td class="text-end"><%= row["vacuum_count"] %></td>
+            <td class="text-end"><%= row["autovacuum_count"] %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
+  </div>
+</div>
 
-    <h2>Autovacuum Settings</h2>
-    <table class="table">
+<div class="mb-4">
+  <h3 class="h5 mb-3">Autovacuum Settings</h3>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered text-nowrap">
       <thead>
         <tr>
           <th>Name</th>
