@@ -1,6 +1,10 @@
 class OnboardingsController < ApplicationController
   skip_onboarding_redirect
 
+  def show
+    redirect_to onboarding_intro_path
+  end
+
   def create
     restart_onboarding
     redirect_to onboarding_intro_path

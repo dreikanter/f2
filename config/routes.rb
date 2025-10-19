@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   resources :email_confirmations, only: :show, param: :token
   resource :status, only: :show, controller: "statuses"
 
-  resource :onboarding, only: [:create, :destroy] do
+  resource :onboarding, only: [:show, :create, :destroy] do
     scope module: :onboarding do
       resource :intro, only: :show
       resource :access_token, only: [:show, :create]
