@@ -52,8 +52,7 @@
   <% end %>
 
   <div class="d-flex gap-3">
-    <%= link_to "Back", onboarding_intro_path, class: "btn btn-light" %>
-    <%= form.submit "Save and continue", class: "btn btn-primary" %>
-    <%= link_to "Use different token", onboarding_access_token_path, class: "btn btn-outline-secondary", data: { turbo_action: "replace" } %>
+    <%= link_to "Back", onboarding_access_token_path, class: "btn btn-light" %>
+    <%= form.submit "Save token and continue", class: "btn btn-primary" %>
   </div>
 <% end %>
