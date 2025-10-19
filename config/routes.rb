@@ -47,7 +47,7 @@ Rails.application.routes.draw do
       resource :available_invites, only: :update, controller: "available_invites"
     end
     resources :events, only: [:index, :show]
-    resource :system_info, only: :show
+    resource :system_stats, only: :show
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
