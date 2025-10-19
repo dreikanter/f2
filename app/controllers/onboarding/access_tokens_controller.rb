@@ -59,7 +59,8 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
 
   def unique_name
     @unique_name ||= begin
-      domain_name = URI.parse(host).host
+      host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host }
+      domain_name = host_config[:domain]
       base_name = "#{owner} at #{domain_name}"
       generate_unique_name(base_name)
     end
