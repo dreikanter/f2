@@ -40,29 +40,15 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
   end
 
   def save_token
-    token_value = params.require(:token)
-    host = params.require(:host)
-    owner = params.require(:owner)
-
-    # Generate unique token name
-    domain_name = URI.parse(host).host
-    base_name = "#{owner} at #{domain_name}"
-    token_name = generate_unique_name(base_name)
-
-    # Create the access token
     access_token = Current.user.access_tokens.create!(
-      name: token_name,
+      name: unique_name,
       host: host,
       owner: owner,
       token: token_value,
       status: :active
     )
 
-    # Update onboarding to associate with this token
-    onboarding = Current.user.onboarding
-    onboarding.update!(access_token: access_token)
-
-    # Redirect to feed setup step
+    Current.user.onboarding.update!(access_token: access_token)
     redirect_to onboarding_feed_path, status: :see_other
   rescue ActiveRecord::RecordInvalid => e
     render_error(token_value, host, "Failed to save token: #{e.message}", owner: owner)
@@ -70,6 +56,14 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     Rails.logger.error("Token creation error: #{e.message}")
     Rails.logger.error(e.backtrace.join("\n"))
     render_error(token_value, host, "An unexpected error occurred while saving the token", owner: owner)
+  end
+
+  def unique_name
+    @unique_name ||= begin
+      domain_name = URI.parse(host).host
+      base_name = "#{owner} at #{domain_name}"
+      generate_unique_name(base_name)
+    end
   end
 
   # TBD: Refactor that
@@ -117,5 +111,17 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
         validation_error: message
       }
     ), status: :unprocessable_entity
+  end
+
+  def token_value
+    @token_value ||= params.require(:token)
+  end
+
+  def host
+    @host ||= params.require(:host)
+  end
+
+  def owner
+    @owner ||= params.require(:owner)
   end
 end
