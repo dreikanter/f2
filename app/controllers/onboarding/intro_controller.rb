@@ -1,8 +1,2 @@
-class Onboarding::IntroController < ApplicationController
-  skip_onboarding_redirect
-
-  def show
-    @onboarding = Current.user.onboarding
-    redirect_to status_path unless @onboarding
-  end
+class Onboarding::IntroController < Onboarding::BaseController
 end

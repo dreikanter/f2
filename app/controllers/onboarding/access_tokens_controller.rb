@@ -1,7 +1,6 @@
-class Onboarding::AccessTokensController < ApplicationController
-  skip_onboarding_redirect
-
+class Onboarding::AccessTokensController < Onboarding::BaseController
   def show
+    super
     @host = AccessToken::FREEFEED_HOSTS["production"]
     @token = ""
   end

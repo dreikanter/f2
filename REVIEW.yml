@@ -33,3 +33,6 @@ reviewed:
   app/controllers/onboardings_controller.rb: 2ba25f7230a4ca4348fef3ef29cbf6968828566c
   test/models/onboarding_test.rb: 1c8b19dda088a6d1e503a10dcc281090b1953230
   test/controllers/onboardings_controller_test.rb: 60df0e94918a1d854c9e96cb0bda9ef25fbdecb6
+  app/controllers/onboarding/feeds_controller.rb: c19ec2421afe6a8caee7483ed98d1b89e1e10f00
+  app/controllers/onboarding/intro_controller.rb: 84013cdee1c490a2f42bc8fdef359031fdc85014
+  app/controllers/onboarding/outro_controller.rb: 71f2f4c9a7a6284ef0c9275097e154296be3e983

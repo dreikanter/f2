@@ -1,3 +1,2 @@
-class Onboarding::FeedsController < ApplicationController
-  skip_onboarding_redirect
+class Onboarding::FeedsController < Onboarding::BaseController
 end
