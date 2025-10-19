@@ -31,7 +31,6 @@ class Onboarding::ValidationsController < Onboarding::BaseController
   private
 
   def render_validation_error(message)
-    response.headers["Cache-Control"] = "no-cache, no-store"
     render turbo_stream: turbo_stream.update(
       "token-form-container",
       partial: "onboarding/access_tokens/form",
