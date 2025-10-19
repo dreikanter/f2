@@ -1,3 +1,5 @@
+require "open3"
+
 class DiskUsageService
   def call
     {
@@ -12,7 +14,11 @@ class DiskUsageService
   private
 
   def free_space
-    `df -h /`.split("\n")[1].split[3]
+    out, status = Open3.capture2("df -Pk /") # POSIX format, KB units
+    raise "df command failed with status #{status.exitstatus}" unless status.success?
+
+    avail_kb = out.lines[1].split[3].to_i
+    avail_kb * 1024
   end
 
   def postgres_usage

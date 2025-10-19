@@ -6,7 +6,7 @@
   <div class="list-group">
     <div class="list-group-item">
       <strong>Free Space:</strong>
-      <%= @disk_usage[:free_space] %>
+      <%= number_to_human_size(@disk_usage[:free_space]) %>
     </div>
 
     <div class="list-group-item">

@@ -12,11 +12,11 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     assert result.key?(:autovacuum_settings)
   end
 
-  test "should return free space as string" do
+  test "should return free space as integer" do
     result = DiskUsageService.new.call
 
-    assert_instance_of String, result[:free_space]
-    assert_not result[:free_space].empty?
+    assert_instance_of Integer, result[:free_space]
+    assert result[:free_space] >= 0
   end
 
   test "should return postgres usage as integer" do
