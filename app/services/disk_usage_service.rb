@@ -16,11 +16,11 @@ class DiskUsageService
   end
 
   def postgres_usage
-    ActiveRecord::Base.connection.execute("SELECT pg_database_size(current_database())").first["pg_database_size"]
+    execute_query("SELECT pg_database_size(current_database())").first["pg_database_size"]
   end
 
   def table_usage
-    ActiveRecord::Base.connection.execute(<<-SQL
+    execute_query(<<-SQL
       SELECT
         table_name,
         pg_size_pretty(pg_total_relation_size(quote_ident(table_name))) AS total_size
@@ -35,7 +35,7 @@ class DiskUsageService
   end
 
   def vacuum_stats
-    ActiveRecord::Base.connection.execute(<<-SQL
+    execute_query(<<-SQL
       SELECT
         relname,
         n_live_tup,
@@ -53,6 +53,10 @@ class DiskUsageService
   end
 
   def autovacuum_settings
-    ActiveRecord::Base.connection.execute("SELECT name, setting FROM pg_settings WHERE name LIKE 'autovacuum%';").to_a
+    execute_query("SELECT name, setting FROM pg_settings WHERE name LIKE 'autovacuum%';").to_a
+  end
+
+  def execute_query(sql)
+    ActiveRecord::Base.connection.execute(sql)
   end
 end
