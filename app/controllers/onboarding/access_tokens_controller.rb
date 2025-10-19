@@ -13,6 +13,9 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
   private
 
   def validate_token
+    @token = params.require(:token)
+    @host = params.require(:host)
+
     client = FreefeedClient.new(host: host, token: token)
     user_info = client.whoami
     managed_groups = client.managed_groups
@@ -39,6 +42,10 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
   end
 
   def save_token
+    @token = params.require(:token)
+    @host = params.require(:host)
+    @owner = params.require(:owner)
+
     access_token = Current.user.access_tokens.create!(
       name: unique_name,
       host: host,
@@ -106,14 +113,14 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
   end
 
   def token
-    @token ||= params.require(:token)
+    @token
   end
 
   def host
-    @host ||= params.require(:host)
+    @host
   end
 
   def owner
-    @owner ||= params.require(:owner)
+    @owner
   end
 end
