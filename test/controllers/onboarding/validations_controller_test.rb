@@ -18,7 +18,7 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
       FreefeedClient.stub :new, mock_client do
         post onboarding_validation_path, params: {
           token: "valid_token",
-          host: AccessToken::FREEFEED_HOSTS["production"][:url]
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
         }
       end
 
@@ -33,7 +33,7 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
       FreefeedClient.stub :new, ->(*) { raise FreefeedClient::UnauthorizedError, "Invalid token" } do
         post onboarding_validation_path, params: {
           token: "invalid_token",
-          host: AccessToken::FREEFEED_HOSTS["production"][:url]
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
         }
       end
 
@@ -45,10 +45,10 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
       sign_in_as(user)
 
       post onboarding_validation_path, params: {
-        host: AccessToken::FREEFEED_HOSTS["production"][:url]
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
       }
 
-      assert_response :bad_request
+      assert_response :unprocessable_entity
     end
 
     test "should handle missing host parameter" do
@@ -58,13 +58,13 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
         token: "valid_token"
       }
 
-      assert_response :bad_request
+      assert_response :unprocessable_entity
     end
 
     test "should require authentication" do
       post onboarding_validation_path, params: {
         token: "valid_token",
-        host: AccessToken::FREEFEED_HOSTS["production"][:url]
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
       }
 
       assert_redirected_to new_session_path
@@ -76,7 +76,7 @@ class Onboarding::ValidationsControllerTest < ActionDispatch::IntegrationTest
       FreefeedClient.stub :new, ->(*) { raise FreefeedClient::Error, "API error" } do
         post onboarding_validation_path, params: {
           token: "valid_token",
-          host: AccessToken::FREEFEED_HOSTS["production"][:url]
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
         }
       end
 

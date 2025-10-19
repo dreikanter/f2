@@ -1,7 +1,7 @@
 <%
-  host ||= AccessToken::FREEFEED_HOSTS["production"][:url]
+  host ||= AccessToken::FREEFEED_HOSTS[:production][:url]
   token ||= ""
-  host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host } || AccessToken::FREEFEED_HOSTS["production"]
+  host_config = AccessToken::FREEFEED_HOSTS.values.find { |h| h[:url] == host } || AccessToken::FREEFEED_HOSTS[:production]
   validation_error ||= nil
 %>
 

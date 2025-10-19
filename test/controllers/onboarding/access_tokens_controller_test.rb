@@ -11,7 +11,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       assert_difference "AccessToken.count", 1 do
         post onboarding_access_token_path, params: {
           token: "valid_token_123",
-          host: AccessToken::FREEFEED_HOSTS["production"][:url],
+          host: AccessToken::FREEFEED_HOSTS[:production][:url],
           owner: "testuser"
         }
       end
@@ -20,7 +20,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
       access_token = user.access_tokens.last
       assert_equal "testuser at freefeed.net", access_token.name
-      assert_equal AccessToken::FREEFEED_HOSTS["production"][:url], access_token.host
+      assert_equal AccessToken::FREEFEED_HOSTS[:production][:url], access_token.host
       assert_equal "testuser", access_token.owner
       assert_equal "active", access_token.status
 
@@ -36,7 +36,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
       post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"][:url],
+        host: AccessToken::FREEFEED_HOSTS[:production][:url],
         owner: "testuser"
       }
 
@@ -53,7 +53,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
       post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"][:url],
+        host: AccessToken::FREEFEED_HOSTS[:production][:url],
         owner: "testuser"
       }
 
@@ -65,11 +65,11 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       sign_in_as(user)
 
       post onboarding_access_token_path, params: {
-        host: AccessToken::FREEFEED_HOSTS["production"][:url],
+        host: AccessToken::FREEFEED_HOSTS[:production][:url],
         owner: "testuser"
       }
 
-      assert_response :bad_request
+      assert_response :unprocessable_entity
     end
 
     test "should handle missing host parameter" do
@@ -80,7 +80,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
         owner: "testuser"
       }
 
-      assert_response :bad_request
+      assert_response :unprocessable_entity
     end
 
     test "should handle missing owner parameter" do
@@ -88,16 +88,16 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
       post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"][:url]
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
       }
 
-      assert_response :bad_request
+      assert_response :unprocessable_entity
     end
 
     test "should require authentication" do
       post onboarding_access_token_path, params: {
         token: "valid_token_123",
-        host: AccessToken::FREEFEED_HOSTS["production"][:url],
+        host: AccessToken::FREEFEED_HOSTS[:production][:url],
         owner: "testuser"
       }
 

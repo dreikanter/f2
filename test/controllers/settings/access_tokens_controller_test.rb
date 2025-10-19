@@ -189,7 +189,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     original_token = access_token.token_value
     original_name = access_token.name
-    new_host = AccessToken::FREEFEED_HOSTS["staging"][:url]
+    new_host = AccessToken::FREEFEED_HOSTS[:staging][:url]
 
     assert_no_enqueued_jobs(only: TokenValidationJob) do
       patch settings_access_token_path(access_token), params: {

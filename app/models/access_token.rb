@@ -15,19 +15,19 @@ class AccessToken < ApplicationRecord
   attr_accessor :token
 
   FREEFEED_HOSTS = {
-    "production" => {
+    production: {
       url: "https://freefeed.net",
       display_name: "freefeed.net (main)",
       domain: "freefeed.net",
       token_url: "https://freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
     },
-    "staging" => {
+    staging: {
       url: "https://candy.freefeed.net",
       display_name: "candy.freefeed.net (staging)",
       domain: "candy.freefeed.net",
       token_url: "https://candy.freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
     },
-    "beta" => {
+    beta: {
       url: "https://beta.freefeed.net",
       display_name: "beta.freefeed.net (beta)",
       domain: "beta.freefeed.net",
@@ -43,7 +43,7 @@ class AccessToken < ApplicationRecord
     defaults = {
       status: :pending,
       encrypted_token: attributes[:token],
-      host: FREEFEED_HOSTS["production"][:url]
+      host: FREEFEED_HOSTS[:production][:url]
     }
 
     new(defaults.merge(attributes))

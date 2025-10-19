@@ -169,9 +169,9 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "FREEFEED_HOSTS contains expected standard hosts" do
-    assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS["production"][:url]
-    assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS["staging"][:url]
-    assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS["beta"][:url]
+    assert_equal "https://freefeed.net", AccessToken::FREEFEED_HOSTS[:production][:url]
+    assert_equal "https://candy.freefeed.net", AccessToken::FREEFEED_HOSTS[:staging][:url]
+    assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS[:beta][:url]
   end
 
   test "destroying access token disables and nullifies associated feeds in single query" do

@@ -24,15 +24,25 @@ reviewed:
   app/models/onboarding.rb: 5882fe03cbb230b2fed2985ec0fa108ebe9abb31
   app/views/onboardings/show.html.erb: e2daac654b014c9b09e369477df7c77164e5bafa
   app/views/settings/show.html.erb: 45919f70c85193df4e0f0d3b63cb567b57f59679
-  config/routes.rb: 36b0845db794e5be290928c2b4060f12fc1b3719
+  config/routes.rb: e8cf5ed43f27666b5d2d4c8bf9dca7d74a363cbd
   db/migrate/20251015190852_create_onboardings.rb: 5a7453159a08e4ae6d8fb06a62c3c5125c16fbf9
   db/schema.rb: 1129a810b750d0843ead1202d4072b54b0ebc63a
   test/factories/onboardings.rb: fc0be997250b4b40ce4c0e5c635e8649252d7ab6
   test/factories/users.rb: '01488a78b7bea982fd3d8cfdbf1eb6e1df054880'
   app/controllers/application_controller.rb: 76adf3204e7328e0ffcd6e0699fc4eb06adee89c
-  app/controllers/onboardings_controller.rb: 2ba25f7230a4ca4348fef3ef29cbf6968828566c
+  app/controllers/onboardings_controller.rb: be8c79e48db27d7a7ca695d1fccb4a2c685e0f3a
   test/models/onboarding_test.rb: 1c8b19dda088a6d1e503a10dcc281090b1953230
-  test/controllers/onboardings_controller_test.rb: 60df0e94918a1d854c9e96cb0bda9ef25fbdecb6
-  app/controllers/onboarding/feeds_controller.rb: c19ec2421afe6a8caee7483ed98d1b89e1e10f00
-  app/controllers/onboarding/intro_controller.rb: 84013cdee1c490a2f42bc8fdef359031fdc85014
-  app/controllers/onboarding/outro_controller.rb: 71f2f4c9a7a6284ef0c9275097e154296be3e983
+  test/controllers/onboardings_controller_test.rb: 16c9f25a755d6a12c026bd2423b2f30c46a147a8
+  app/controllers/onboarding/feeds_controller.rb: 17b81b686eebb680445200ff270ce9168e0abc52
+  app/controllers/onboarding/intro_controller.rb: c8d39417f501d7f8dec5b09d6b135dd718f98355
+  app/controllers/onboarding/outro_controller.rb: b7076aba6fdd0853cb8d388f2286192288bfb459
+  app/controllers/onboarding/base_controller.rb: 645649e20a26e92a49e27cc88af1373b854f3ee7
+  app/controllers/onboarding/access_tokens_controller.rb: 4e98f8183828f538cd1b6772723f112832f8403e
+  app/javascript/controllers/token_host_controller.js: 9074777ea7521025323f9af3f78544490dffb915
+  app/models/access_token.rb: b3596a724686cacbd40d5f9ca234e4e4efc0dbb2
+  app/views/onboarding/access_tokens/_form.html.erb: 41865131aafb5a81cda1799552935659ed7d22c0
+  app/views/onboarding/access_tokens/_token_details.html.erb: cf6ba2993ef794f2ef3332e41a77dc5199a35b4c
+  app/views/onboarding/access_tokens/show.html.erb: 69f6e7c442b5781718af07a2f645bc048b288f36
+  app/views/onboarding/feeds/show.html.erb: ef841f73c86c1517f85521aa70aaf0b41a643cfc
+  test/controllers/onboarding/access_token_validations_controller_test.rb: 8120d0d50c8b624100e711265df81b1560cfd695
+  test/controllers/onboarding/access_tokens_controller_test.rb: 7c3fba894ca329bf58615e2a599f6724517a19f3
