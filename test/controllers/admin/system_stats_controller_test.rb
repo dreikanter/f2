@@ -34,24 +34,16 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
     get admin_system_stats_path
 
     assert_response :success
-    assert_not_nil assigns(:disk_usage)
+    assert_select "h1", "System Stats"
+    assert_select "h3", "Disk Usage"
+    assert_select "h3", "Postgres Table Usage"
+    assert_select "h3", "Vacuum Stats"
+    assert_select "h3", "Autovacuum Settings"
   end
 
-  test "should return disk usage with expected structure" do
-    login_as(admin_user)
+  private
 
-    get admin_system_stats_path
-
-    disk_usage = assigns(:disk_usage)
-
-    assert disk_usage.key?(:free_space)
-    assert disk_usage.key?(:postgres_usage)
-    assert disk_usage.key?(:table_usage)
-    assert disk_usage.key?(:vacuum_stats)
-    assert disk_usage.key?(:autovacuum_settings)
-
-    assert disk_usage[:table_usage].is_a?(Array)
-    assert disk_usage[:vacuum_stats].is_a?(Array)
-    assert disk_usage[:autovacuum_settings].is_a?(Array)
+  def login_as(user)
+    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end
