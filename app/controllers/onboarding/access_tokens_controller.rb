@@ -4,13 +4,16 @@ class Onboarding::AccessTokensController < Onboarding::BaseController
     @host = params.require(:host)
     @owner = params.require(:owner)
 
-    access_token = Current.user.access_tokens.create!(
+    access_token = AccessToken.build_with_token(
+      user: Current.user,
       name: unique_name,
       host: host,
       owner: owner,
       token: token,
       status: :active
     )
+
+    access_token.save!
 
     Current.user.onboarding.update!(access_token: access_token)
     redirect_to onboarding_feed_path, status: :see_other

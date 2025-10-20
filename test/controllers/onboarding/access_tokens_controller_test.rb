@@ -23,6 +23,7 @@ class Onboarding::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       assert_equal AccessToken::FREEFEED_HOSTS[:production][:url], access_token.host
       assert_equal "testuser", access_token.owner
       assert_equal "active", access_token.status
+      assert_equal "valid_token_123", access_token.token_value
 
       user.onboarding.reload
       assert_equal access_token.id, user.onboarding.access_token_id
