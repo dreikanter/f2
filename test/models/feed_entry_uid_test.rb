@@ -6,7 +6,13 @@ class FeedEntryUidTest < ActiveSupport::TestCase
   end
 
   test "should be valid with all required attributes" do
-    feed_entry_uid = build(:feed_entry_uid, feed: feed, uid: "test-uid-123", imported_at: Time.current)
+    feed_entry_uid = build(
+      :feed_entry_uid,
+      feed: feed,
+      uid: "test-uid-123",
+      imported_at: Time.current
+    )
+
     assert feed_entry_uid.valid?
   end
 
