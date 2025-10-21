@@ -129,8 +129,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "handles duplicate entries correctly on subsequent runs" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
-    # Create existing entry
+    # Create existing entry and mark it as imported
     create(:feed_entry, feed: test_feed, uid: "existing-entry-123")
+    create(:feed_entry_uid, feed: test_feed, uid: "existing-entry-123")
 
     sample_rss = <<~RSS
       <?xml version="1.0" encoding="UTF-8"?>
@@ -166,6 +167,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     # Should have 2 feed entries total (1 existing + 1 new)
     assert_equal 2, FeedEntry.where(feed: test_feed).count
+
+    # Should have 2 feed entry UIDs total (1 existing + 1 new)
+    assert_equal 2, FeedEntryUid.where(feed: test_feed).count
 
     # Should only create 1 new post
     assert_equal 1, Post.where(feed: test_feed).count

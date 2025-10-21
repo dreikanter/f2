@@ -59,7 +59,7 @@ class FeedRefreshWorkflow
     return [] if processed_entries.empty?
 
     uids = processed_entries.map(&:uid)
-    existing_uids = feed.feed_entries.where(uid: uids).pluck(:uid).to_set
+    existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
     processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
   end
 
@@ -67,24 +67,41 @@ class FeedRefreshWorkflow
     return [] if new_entries.empty?
     current_time = Time.current
 
-    entries_data = new_entries.map do |entry|
-      {
-        feed_id: feed.id,
-        uid: entry.uid,
-        published_at: entry.published_at,
-        raw_data: entry.raw_data,
-        status: :pending,
-        created_at: current_time,
-        updated_at: current_time
-      }
+    entries_data = new_entries.map { entry_data(_1, current_time) }
+    entry_uids_data = new_entries.map { feed_entry_uid_data(_1, current_time) }
+
+    ActiveRecord::Base.transaction do
+      FeedEntry.insert_all(entries_data)
+      FeedEntryUid.insert_all(entry_uids_data, unique_by: [:feed_id, :uid])
     end
 
-    FeedEntry.insert_all(entries_data)
     new_uids = new_entries.map(&:uid)
     persisted_entries = feed.feed_entries.where(uid: new_uids)
 
     record_stats(new_entries: persisted_entries.size)
     persisted_entries
+  end
+
+  def entry_data(feed_entry, current_time)
+    {
+      feed_id: feed.id,
+      uid: feed_entry.uid,
+      published_at: feed_entry.published_at,
+      raw_data: feed_entry.raw_data,
+      status: :pending,
+      created_at: current_time,
+      updated_at: current_time
+    }
+  end
+
+  def feed_entry_uid_data(feed_entry, current_time)
+    {
+      feed_id: feed.id,
+      uid: feed_entry.uid,
+      imported_at: current_time,
+      created_at: current_time,
+      updated_at: current_time
+    }
   end
 
   def normalize_entries(persisted_feed_entries)
