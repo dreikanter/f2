@@ -318,8 +318,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id"
-  add_foreign_key "onboardings", "access_tokens"
-  add_foreign_key "onboardings", "feeds"
+  add_foreign_key "onboardings", "access_tokens", on_delete: :nullify
+  add_foreign_key "onboardings", "feeds", on_delete: :nullify
   add_foreign_key "onboardings", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
