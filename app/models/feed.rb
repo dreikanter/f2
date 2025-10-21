@@ -11,6 +11,7 @@ class Feed < ApplicationRecord
 
   has_many :events, as: :subject, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
+  has_many :feed_metrics, dependent: :destroy
   has_many :posts, dependent: :destroy
 
   enum :state, { disabled: 0, enabled: 1 }, default: :disabled
@@ -125,6 +126,30 @@ class Feed < ApplicationRecord
   # @return [Time, nil] most recent post date or nil if no posts
   def most_recent_post_date
     posts.maximum(:published_at)
+  end
+
+  # Returns metrics for a date range, filling gaps with zeros using generate_series
+  # @param start_date [Date] start date of the range
+  # @param end_date [Date] end date of the range (inclusive)
+  # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
+  # @return [Array<Hash>] array of hashes with :date and metric value
+  def metrics_for_date_range(start_date, end_date, metric: :posts_count)
+    sql = <<-SQL.squish
+      SELECT
+        d.date::date,
+        COALESCE(fm.#{metric}, 0) as #{metric}
+      FROM generate_series(
+        DATE '#{start_date}',
+        DATE '#{end_date}',
+        '1 day'::interval
+      ) AS d(date)
+      LEFT JOIN feed_metrics fm
+        ON fm.date = d.date::date
+        AND fm.feed_id = #{id}
+      ORDER BY d.date
+    SQL
+
+    ActiveRecord::Base.connection.exec_query(sql).to_a
   end
 
   private
