@@ -353,4 +353,162 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     events = Event.where(subject: test_feed, type: "FeedRefreshStats")
     assert_equal 1, events.count
   end
+
+  test "records feed metrics when posts are imported" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <item>
+            <guid>entry-1</guid>
+            <title>Entry 1</title>
+            <description>Test entry</description>
+            <link>https://example.com/entry-1</link>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>entry-2</guid>
+            <title>Entry 2</title>
+            <description>Another entry</description>
+            <link>https://example.com/entry-2</link>
+            <pubDate>#{2.hours.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
+
+    freeze_time do
+      workflow = FeedRefreshWorkflow.new(test_feed)
+      workflow.execute
+
+      metric = FeedMetric.find_by(feed: test_feed, date: Date.current)
+      assert_not_nil metric
+      assert_equal 2, metric.posts_count
+      assert_equal 0, metric.invalid_posts_count
+    end
+  end
+
+  test "records feed metrics with invalid posts" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    # Create RSS with one valid and one invalid entry (missing link)
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <item>
+            <guid>valid-entry</guid>
+            <title>Valid Entry</title>
+            <description>This is valid</description>
+            <link>https://example.com/valid</link>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>invalid-entry</guid>
+            <title>Invalid Entry</title>
+            <description>Missing link</description>
+            <pubDate>#{2.hours.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
+
+    freeze_time do
+      workflow = FeedRefreshWorkflow.new(test_feed)
+      workflow.execute
+
+      metric = FeedMetric.find_by(feed: test_feed, date: Date.current)
+      assert_not_nil metric
+      assert_equal 1, metric.posts_count
+      assert_equal 1, metric.invalid_posts_count
+    end
+  end
+
+  test "does not record feed metrics when no posts are imported" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    empty_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Empty Feed</title>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    freeze_time do
+      workflow = FeedRefreshWorkflow.new(test_feed)
+      workflow.execute
+
+      metric = FeedMetric.find_by(feed: test_feed, date: Date.current)
+      assert_nil metric, "Should not create metric record for empty feed"
+    end
+  end
+
+  test "aggregates feed metrics for multiple refreshes on same day" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    first_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <item>
+            <guid>entry-1</guid>
+            <title>Entry 1</title>
+            <description>Test entry</description>
+            <link>https://example.com/entry-1</link>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    second_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <item>
+            <guid>entry-1</guid>
+            <title>Entry 1</title>
+            <description>Test entry</description>
+            <link>https://example.com/entry-1</link>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>entry-2</guid>
+            <title>Entry 2</title>
+            <description>Another entry</description>
+            <link>https://example.com/entry-2</link>
+            <pubDate>#{2.hours.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    freeze_time do
+      # First refresh with 1 post
+      WebMock.stub_request(:get, test_feed.url).to_return(body: first_rss, status: 200)
+      workflow1 = FeedRefreshWorkflow.new(test_feed)
+      workflow1.execute
+
+      metric = FeedMetric.find_by(feed: test_feed, date: Date.current)
+      assert_equal 1, metric.posts_count
+
+      # Second refresh with 1 new post (entry-2)
+      WebMock.stub_request(:get, test_feed.url).to_return(body: second_rss, status: 200)
+      workflow2 = FeedRefreshWorkflow.new(test_feed)
+      workflow2.execute
+
+      metric.reload
+      assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
+    end
+  end
 end
