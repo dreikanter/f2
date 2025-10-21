@@ -311,7 +311,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
-  add_foreign_key "feed_entry_uids", "feeds"
+  add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
