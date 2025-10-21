@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_18_214504) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_18_214504) do
     t.datetime "updated_at", null: false
     t.index ["feed_id", "uid"], name: "index_feed_entries_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
+  end
+
+  create_table "feed_entry_uids", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "feed_id", null: false
+    t.datetime "imported_at", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_id", "uid"], name: "index_feed_entry_uids_on_feed_id_and_uid", unique: true
+    t.index ["feed_id"], name: "index_feed_entry_uids_on_feed_id"
+    t.index ["imported_at"], name: "index_feed_entry_uids_on_imported_at"
   end
 
   create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -300,14 +311,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_18_214504) do
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
+  add_foreign_key "feed_entry_uids", "feeds"
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id"
-  add_foreign_key "onboardings", "access_tokens", on_delete: :nullify
-  add_foreign_key "onboardings", "feeds", on_delete: :nullify
+  add_foreign_key "onboardings", "access_tokens"
+  add_foreign_key "onboardings", "feeds"
   add_foreign_key "onboardings", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
