@@ -59,7 +59,7 @@ class FeedRefreshWorkflow
     return [] if processed_entries.empty?
 
     uids = processed_entries.map(&:uid)
-    existing_uids = feed.feed_entries.where(uid: uids).pluck(:uid).to_set
+    existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
     processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
   end
 
@@ -79,7 +79,21 @@ class FeedRefreshWorkflow
       }
     end
 
+    # Persist entries for normalization and post creation
     FeedEntry.insert_all(entries_data)
+
+    # Persist UIDs to feed_entry_uids for duplicate detection
+    uid_data = new_entries.map do |entry|
+      {
+        feed_id: feed.id,
+        uid: entry.uid,
+        imported_at: current_time,
+        created_at: current_time,
+        updated_at: current_time
+      }
+    end
+    FeedEntryUid.insert_all(uid_data, unique_by: [:feed_id, :uid])
+
     new_uids = new_entries.map(&:uid)
     persisted_entries = feed.feed_entries.where(uid: new_uids)
 
