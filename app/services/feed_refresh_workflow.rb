@@ -68,10 +68,12 @@ class FeedRefreshWorkflow
     current_time = Time.current
 
     entries_data = new_entries.map { entry_data(_1, current_time) }
-    FeedEntry.insert_all(entries_data)
-
     entry_uids_data = new_entries.map { feed_entry_uid_data(_1, current_time) }
-    FeedEntryUid.insert_all(entry_uids_data, unique_by: [:feed_id, :uid])
+
+    ActiveRecord::Base.transaction do
+      FeedEntry.insert_all(entries_data)
+      FeedEntryUid.insert_all(entry_uids_data, unique_by: [:feed_id, :uid])
+    end
 
     new_uids = new_entries.map(&:uid)
     persisted_entries = feed.feed_entries.where(uid: new_uids)
