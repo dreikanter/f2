@@ -1,7 +1,7 @@
 class CreateFeedMetrics < ActiveRecord::Migration[8.1]
   def change
     create_table :feed_metrics do |t|
-      t.references :feed, null: false, foreign_key: true, index: false
+      t.references :feed, null: false, foreign_key: { on_delete: :cascade }, index: false
       t.date :date, null: false
 
       t.integer :posts_count, default: 0, null: false
