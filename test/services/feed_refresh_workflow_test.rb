@@ -354,7 +354,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, events.count
   end
 
-  test "records feed metrics when posts are imported" do
+  test "#records should create feed metrics when posts are imported" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     sample_rss = <<~RSS
@@ -392,7 +392,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "records feed metrics with invalid posts" do
+  test "#records should create feed metrics with invalid posts" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # Create RSS with one valid and one invalid entry (missing link)
