@@ -319,4 +319,63 @@ class FeedTest < ActiveSupport::TestCase
       assert_equal 2, result[Date.current]
     end
   end
+
+  test "metrics_for_date_range returns metrics with gaps filled" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 5)
+    create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
+
+    result = feed.metrics_for_date_range(3.days.ago.to_date, Date.current)
+
+    assert_equal 4, result.length
+    assert_equal 5, result[0]["posts_count"]
+    assert_equal 0, result[1]["posts_count"]
+    assert_equal 3, result[2]["posts_count"]
+    assert_equal 0, result[3]["posts_count"]
+  end
+
+  test "metrics_for_date_range accepts valid metric parameter" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5, invalid_posts_count: 2)
+
+    result = feed.metrics_for_date_range(Date.current, Date.current, metric: :invalid_posts_count)
+
+    assert_equal 1, result.length
+    assert_equal 2, result[0]["invalid_posts_count"]
+  end
+
+  test "metrics_for_date_range raises error for invalid metric" do
+    feed = create(:feed)
+
+    error = assert_raises(ArgumentError) do
+      feed.metrics_for_date_range(Date.current, Date.current, metric: "malicious_column")
+    end
+
+    assert_match(/Invalid metric/, error.message)
+  end
+
+  test "metrics_for_date_range prevents SQL injection via metric parameter" do
+    feed = create(:feed)
+
+    error = assert_raises(ArgumentError) do
+      feed.metrics_for_date_range(
+        Date.current,
+        Date.current,
+        metric: "posts_count; DROP TABLE feed_metrics--"
+      )
+    end
+
+    assert_match(/Invalid metric/, error.message)
+  end
+
+  test "metrics_for_date_range safely handles date parameters" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    # These should not cause SQL injection even with quotes
+    result = feed.metrics_for_date_range(Date.current, Date.current)
+
+    assert_equal 1, result.length
+    assert_equal 5, result[0]["posts_count"]
+  end
 end
