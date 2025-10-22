@@ -80,7 +80,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "due scope should include feeds without schedule" do
+  test "#due should include feeds without schedule" do
     freeze_time do
       feed = create(:feed, state: :enabled)
 
@@ -88,7 +88,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "due scope should include feeds with past next_run_at" do
+  test "#due should include feeds with past next_run_at" do
     freeze_time do
       feed = create(:feed, state: :enabled)
       create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
@@ -97,7 +97,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "due scope should exclude feeds with future next_run_at" do
+  test "#due should exclude feeds with future next_run_at" do
     freeze_time do
       feed = create(:feed)
       create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)
@@ -192,58 +192,58 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "enabled", reloaded_feed.state
   end
 
-  test "can_be_enabled? returns true when feed has active access token and target group" do
+  test "#can_be_enabled? returns true when feed has active access token and target group" do
     access_token = create(:access_token, :active)
     feed = create(:feed, access_token: access_token, target_group: "test_group")
 
     assert feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has no access token" do
+  test "#can_be_enabled? returns false when feed has no access token" do
     feed = create(:feed, :without_access_token)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has inactive access token" do
+  test "#can_be_enabled? returns false when feed has inactive access token" do
     access_token = create(:access_token, :inactive)
     feed = create(:feed, access_token: access_token, target_group: "test_group")
 
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has no target group" do
+  test "#can_be_enabled? returns false when feed has no target group" do
     access_token = create(:access_token, :active)
     feed = create(:feed, access_token: access_token, target_group: nil)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has neither access token nor target group" do
+  test "#can_be_enabled? returns false when feed has neither access token nor target group" do
     feed = create(:feed, :without_access_token)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "can_be_enabled? returns false when feed has no feed_profile_key" do
+  test "#can_be_enabled? returns false when feed has no feed_profile_key" do
     feed = build(:feed, :without_feed_profile)
 
     assert_not feed.can_be_enabled?
   end
 
-  test "processor_class resolves correct processor class" do
+  test "#processor_class resolves correct processor class" do
     feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Processor::RssProcessor, feed.processor_class
   end
 
-  test "normalizer_class resolves correct normalizer class" do
+  test "#normalizer_class resolves correct normalizer class" do
     feed = create(:feed, feed_profile_key: "rss")
 
     assert_equal Normalizer::RssNormalizer, feed.normalizer_class
   end
 
-  test "processor_instance creates processor with feed and raw data" do
+  test "#processor_instance creates processor with feed and raw data" do
     feed = create(:feed, feed_profile_key: "rss")
     raw_data = "<rss><item><title>Test</title></item></rss>"
 
@@ -252,7 +252,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_instance_of Processor::RssProcessor, processor
   end
 
-  test "normalizer_instance creates normalizer with feed entry" do
+  test "#normalizer_instance creates normalizer with feed entry" do
     feed = create(:feed, feed_profile_key: "rss")
     feed_entry = create(:feed_entry, feed: feed)
 
@@ -261,7 +261,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_instance_of Normalizer::RssNormalizer, normalizer
   end
 
-  test "posts_per_day returns empty hash when no posts exist" do
+  test "#posts_per_day returns empty hash when no posts exist" do
     feed = create(:feed)
     start_date = Date.current
     end_date = Date.current
@@ -271,7 +271,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal({}, result)
   end
 
-  test "posts_per_day returns correct counts for posts within date range" do
+  test "#posts_per_day returns correct counts for posts within date range" do
     feed = create(:feed)
 
     travel_to Date.current.beginning_of_day do
@@ -293,7 +293,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "posts_per_day excludes posts from other feeds" do
+  test "#posts_per_day excludes posts from other feeds" do
     feed1 = create(:feed)
     feed2 = create(:feed)
 
@@ -307,7 +307,7 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "posts_per_day handles posts at day boundaries correctly" do
+  test "#posts_per_day handles posts at day boundaries correctly" do
     feed = create(:feed)
 
     travel_to Date.current.beginning_of_day do
@@ -318,5 +318,60 @@ class FeedTest < ActiveSupport::TestCase
 
       assert_equal 2, result[Date.current]
     end
+  end
+
+  test "#metrics_for_date_range returns metrics with gaps filled" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 5)
+    create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
+
+    result = feed.metrics_for_date_range(3.days.ago.to_date, Date.current)
+
+    assert_equal 4, result.length
+    assert_equal 5, result[0]["posts_count"]
+    assert_equal 0, result[1]["posts_count"]
+    assert_equal 3, result[2]["posts_count"]
+    assert_equal 0, result[3]["posts_count"]
+  end
+
+  test "#metrics_for_date_range accepts valid metric parameter" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5, invalid_posts_count: 2)
+
+    result = feed.metrics_for_date_range(Date.current, Date.current, metric: :invalid_posts_count)
+
+    assert_equal 1, result.length
+    assert_equal 2, result[0]["invalid_posts_count"]
+  end
+
+  test "#metrics_for_date_range raises error for invalid metric" do
+    feed = create(:feed)
+
+    error = assert_raises(ArgumentError) do
+      feed.metrics_for_date_range(Date.current, Date.current, metric: "malicious_column")
+    end
+  end
+
+  test "#metrics_for_date_range prevents SQL injection via metric parameter" do
+    feed = create(:feed)
+
+    error = assert_raises(ArgumentError) do
+      feed.metrics_for_date_range(
+        Date.current,
+        Date.current,
+        metric: "posts_count; DROP TABLE feed_metrics--"
+      )
+    end
+  end
+
+  test "#metrics_for_date_range safely handles date parameters" do
+    feed = create(:feed)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    # These should not cause SQL injection even with quotes
+    result = feed.metrics_for_date_range(Date.current, Date.current)
+
+    assert_equal 1, result.length
+    assert_equal 5, result[0]["posts_count"]
   end
 end

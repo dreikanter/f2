@@ -172,6 +172,15 @@ class FeedRefreshWorkflow
 
     FeedRefreshEvent.create_stats(feed: feed, stats: stats)
 
+    # Record daily metrics (sparse data - only if there's activity)
+    posts_count = posts.count { |p| p.enqueued? || p.published? }
+    FeedMetric.record(
+      feed: feed,
+      date: Date.current,
+      posts_count: posts_count,
+      invalid_posts_count: rejected_posts_count
+    )
+
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
                       "#{published_posts_count} published, " \
                       "#{failed_posts_count} failed, " \

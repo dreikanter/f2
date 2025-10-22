@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_21_201900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
     t.index ["feed_id", "uid"], name: "index_feed_entry_uids_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_feed_entry_uids_on_feed_id"
     t.index ["imported_at"], name: "index_feed_entry_uids_on_imported_at"
+  end
+
+  create_table "feed_metrics", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.bigint "feed_id", null: false
+    t.integer "invalid_posts_count", default: 0, null: false
+    t.integer "posts_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["date"], name: "index_feed_metrics_on_date"
+    t.index ["feed_id", "date"], name: "index_feed_metrics_on_feed_id_and_date", unique: true
   end
 
   create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -312,6 +323,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_21_171801) do
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
+  add_foreign_key "feed_metrics", "feeds", on_delete: :cascade
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
