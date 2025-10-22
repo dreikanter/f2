@@ -139,15 +139,12 @@ class Feed < ApplicationRecord
   # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
   # @return [Array<Hash>] array of hashes with :date and metric value
   def metrics_for_date_range(start_date, end_date, metric: :posts_count)
-    unless SUPPORTED_METRICS.include?(metric_sym)
-      raise ArgumentError, "Unsupported metric: #{metric}"
-    end
+    raise ArgumentError, "Unsupported metric: #{metric}" unless SUPPORTED_METRICS.include?(metric)
 
-    # Safe to interpolate metric after validation; use parameterized query for user inputs
     sql = <<-SQL.squish
       SELECT
         d.date::date,
-        COALESCE(fm.#{metric_sym}, 0) as #{metric_sym}
+        COALESCE(fm.#{metric}, 0) as #{metric}
       FROM generate_series(
         $1::date,
         $2::date,
