@@ -150,45 +150,4 @@ class FeedMetricTest < ActiveSupport::TestCase
       )
     end
   end
-
-  test "#increment_metric should create new record and increments" do
-    assert_difference "FeedMetric.count", 1 do
-      FeedMetric.increment_metric(
-        feed: feed,
-        date: Date.current,
-        metric: :posts_count,
-        by: 3
-      )
-    end
-
-    metric = FeedMetric.find_by(feed: feed, date: Date.current)
-    assert_equal 3, metric.posts_count
-  end
-
-  test "#increment_metric should increment existing record" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
-
-    assert_no_difference "FeedMetric.count" do
-      FeedMetric.increment_metric(
-        feed: feed,
-        date: Date.current,
-        metric: :posts_count,
-        by: 2
-      )
-    end
-
-    metric = FeedMetric.find_by(feed: feed, date: Date.current)
-    assert_equal 7, metric.posts_count
-  end
-
-  test "#increment_metric should default to incrementing by 1" do
-    FeedMetric.increment_metric(
-      feed: feed,
-      date: Date.current,
-      metric: :invalid_posts_count
-    )
-
-    metric = FeedMetric.find_by(feed: feed, date: Date.current)
-    assert_equal 1, metric.invalid_posts_count
-  end
 end

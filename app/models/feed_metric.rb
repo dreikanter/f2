@@ -34,14 +34,4 @@ class FeedMetric < ApplicationRecord
       unique_by: [:feed_id, :date]
     )
   end
-
-  # Increment a specific metric for a date
-  # @param feed [Feed] the feed to record metrics for
-  # @param date [Date] the date to increment metrics for
-  # @param metric [Symbol] the metric to increment (:posts_count or :invalid_posts_count)
-  # @param by [Integer] the amount to increment by (default: 1)
-  def self.increment_metric(feed:, date:, metric:, by: 1)
-    record = find_or_initialize_by(feed_id: feed.id, date: date)
-    record.increment!(metric, by)
-  end
 end
