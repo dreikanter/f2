@@ -17,8 +17,18 @@ module Normalizer
 
     def validate_content
       errors = super
+      errors << "missing_url" if source_url.blank? || !valid_http_url?(source_url)
       errors << "url_too_long" if url_too_long?
       errors
+    end
+
+    def valid_http_url?(url)
+      return false if url.blank?
+
+      uri = URI.parse(url)
+      uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+    rescue URI::InvalidURIError
+      false
     end
 
     def url_too_long?
