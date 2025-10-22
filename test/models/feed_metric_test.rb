@@ -5,6 +5,10 @@ class FeedMetricTest < ActiveSupport::TestCase
     @feed ||= create(:feed)
   end
 
+  setup { freeze_time }
+
+  teardown { unfreeze_time }
+
   test "should be valid with all required attributes" do
     metric = build(:feed_metric)
     assert metric.valid?
@@ -57,16 +61,14 @@ class FeedMetricTest < ActiveSupport::TestCase
   end
 
   test "#for_date_range scope returns metrics within range" do
-    freeze_time do
-      metric1 = create(:feed_metric, feed: feed, date: 5.days.ago.to_date, posts_count: 1)
-      metric2 = create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 2)
-      metric3 = create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
-      create(:feed_metric, feed: feed, date: 10.days.ago.to_date, posts_count: 4)
+    metric1 = create(:feed_metric, feed: feed, date: 5.days.ago.to_date, posts_count: 1)
+    metric2 = create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 2)
+    metric3 = create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
+    create(:feed_metric, feed: feed, date: 10.days.ago.to_date, posts_count: 4)
 
-      metrics = FeedMetric.for_date_range(5.days.ago.to_date, 1.day.ago.to_date).order(:date)
+    metrics = FeedMetric.for_date_range(5.days.ago.to_date, 1.day.ago.to_date).order(:date)
 
-      assert_equal [metric1, metric2, metric3], metrics.to_a
-    end
+    assert_equal [metric1, metric2, metric3], metrics.to_a
   end
 
   test "#for_user scope returns metrics for user's feeds only" do
