@@ -56,16 +56,17 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal 0, metric.invalid_posts_count
   end
 
-  test "for_date_range scope returns metrics within range" do
-    create(:feed_metric, feed: feed, date: 5.days.ago.to_date, posts_count: 1)
-    create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 2)
-    create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
-    create(:feed_metric, feed: feed, date: 10.days.ago.to_date, posts_count: 4)
+  test "#for_date_range scope returns metrics within range" do
+    freeze_time do
+      metric1 = create(:feed_metric, feed: feed, date: 5.days.ago.to_date, posts_count: 1)
+      metric2 = create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 2)
+      metric3 = create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
+      create(:feed_metric, feed: feed, date: 10.days.ago.to_date, posts_count: 4)
 
-    metrics = FeedMetric.for_date_range(5.days.ago.to_date, 1.day.ago.to_date)
+      metrics = FeedMetric.for_date_range(5.days.ago.to_date, 1.day.ago.to_date).order(:date)
 
-    assert_equal 3, metrics.count
-    assert_equal [1, 2, 3], metrics.pluck(:posts_count).sort
+      assert_equal [metric1, metric2, metric3], metrics.to_a
+    end
   end
 
   test "#for_user scope returns metrics for user's feeds only" do
