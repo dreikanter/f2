@@ -4,6 +4,11 @@ class Feed < ApplicationRecord
   TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
   TARGET_GROUP_MAX_LENGTH = 80
 
+  SUPPORTED_METRICS = %i[
+    posts_count
+    invalid_posts_count
+  ].freeze
+
   belongs_to :user
   belongs_to :access_token, optional: true
 
@@ -128,17 +133,14 @@ class Feed < ApplicationRecord
     posts.maximum(:published_at)
   end
 
-  # Returns metrics for a date range, filling gaps with zeros using generate_series
+  # Returns metrics for a date range, filling gaps with zeros
   # @param start_date [Date] start date of the range
   # @param end_date [Date] end date of the range (inclusive)
   # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
   # @return [Array<Hash>] array of hashes with :date and metric value
   def metrics_for_date_range(start_date, end_date, metric: :posts_count)
-    # Validate metric against whitelist to prevent SQL injection
-    allowed_metrics = [:posts_count, :invalid_posts_count]
-    metric_sym = metric.to_sym
-    unless allowed_metrics.include?(metric_sym)
-      raise ArgumentError, "Invalid metric: #{metric}. Allowed: #{allowed_metrics.join(', ')}"
+    unless SUPPORTED_METRICS.include?(metric_sym)
+      raise ArgumentError, "Unsupported metric: #{metric}"
     end
 
     # Safe to interpolate metric after validation; use parameterized query for user inputs
