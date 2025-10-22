@@ -1,30 +1,40 @@
-# README
+# Feeder
 
 [![codecov](https://codecov.io/gh/dreikanter/f2/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/dreikanter/f2)
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Rails 8 app for scheduling and publishing RSS/Atom feeds to FreeFeed.
 
-Things you may want to cover:
+## Stack
 
-* Ruby version
+- Rails (edge), PostgreSQL
+- SolidQueue for background jobs (Fugit cron)
+- Turbo, Stimulus, Bootstrap
+- Bcrypt sessions, Kamal deployment
 
-* System dependencies
+## Development
 
-* Configuration
+```bash
+bin/setup
+bin/rails server
+bin/rails test
+bin/rubocop -f github
+```
 
-* Database creation
+Ruby version: see `.ruby-version`
 
-* Database initialization
+## Architecture
 
-* How to run the test suite
+- **Feed refresh workflow**: Load → Process → Filter → Persist → Normalize → Publish
+- **Normalizers**: Transform feed entries to FreeFeed posts (RSS, XKCD)
+- **Validation**: Reject posts with missing content/URLs, track metrics
+- **Sparse metrics**: Only record daily stats when there's activity
 
-* Services (job queues, cache servers, search engines, etc.)
+## Commit Style
 
-* Deployment instructions
+Atomic commits, one logical change each. Subject ≤50 chars, imperative mood. Run tests + RuboCop before committing. Use `git add -p` for precise staging.
 
-* ...
+## Testing
 
-## Environment variables
+Minitest + FactoryBot. Lazy test data initialization preferred. Keep tests green per commit.
 
-- `MAILER_FROM` - default sender email address.
+See [CLAUDE.md](CLAUDE.md) for detailed guidelines.
