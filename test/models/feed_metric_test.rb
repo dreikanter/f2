@@ -68,7 +68,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal [1, 2, 3], metrics.pluck(:posts_count).sort
   end
 
-  test "for_user scope returns metrics for user's feeds only" do
+  test "#for_user scope returns metrics for user's feeds only" do
     user1 = create(:user)
     user2 = create(:user)
     feed1 = create(:feed, user: user1)
@@ -83,7 +83,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal metric1.id, user1_metrics.first.id
   end
 
-  test "record creates new metric when activity exists" do
+  test "#record should create new metric when activity exists" do
     assert_difference "FeedMetric.count", 1 do
       FeedMetric.record(
         feed: feed,
@@ -100,7 +100,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal 2, metric.invalid_posts_count
   end
 
-  test "record does not create metric when no activity" do
+  test "#record should not create metric when no activity" do
     assert_no_difference "FeedMetric.count" do
       FeedMetric.record(
         feed: feed,
@@ -111,7 +111,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
   end
 
-  test "record updates existing metric via upsert" do
+  test "#record should update existing metric via upsert" do
     create(:feed_metric, feed: feed, date: Date.current, posts_count: 3)
 
     assert_no_difference "FeedMetric.count" do
@@ -128,7 +128,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal 5, metric.invalid_posts_count
   end
 
-  test "record creates metric when only posts_count is non-zero" do
+  test "#record should create metric when only posts_count is non-zero" do
     assert_difference "FeedMetric.count", 1 do
       FeedMetric.record(
         feed: feed,
@@ -139,7 +139,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
   end
 
-  test "record creates metric when only invalid_posts_count is non-zero" do
+  test "#record should create metric when only invalid_posts_count is non-zero" do
     assert_difference "FeedMetric.count", 1 do
       FeedMetric.record(
         feed: feed,
@@ -150,7 +150,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     end
   end
 
-  test "increment_metric creates new record and increments" do
+  test "#increment_metric should create new record and increments" do
     assert_difference "FeedMetric.count", 1 do
       FeedMetric.increment_metric(
         feed: feed,
@@ -164,7 +164,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal 3, metric.posts_count
   end
 
-  test "increment_metric increments existing record" do
+  test "#increment_metric should increment existing record" do
     create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
 
     assert_no_difference "FeedMetric.count" do
@@ -180,7 +180,7 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert_equal 7, metric.posts_count
   end
 
-  test "increment_metric defaults to incrementing by 1" do
+  test "#increment_metric should default to incrementing by 1" do
     FeedMetric.increment_metric(
       feed: feed,
       date: Date.current,
