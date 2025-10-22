@@ -134,22 +134,34 @@ class Feed < ApplicationRecord
   # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
   # @return [Array<Hash>] array of hashes with :date and metric value
   def metrics_for_date_range(start_date, end_date, metric: :posts_count)
+    # Validate metric against whitelist to prevent SQL injection
+    allowed_metrics = [:posts_count, :invalid_posts_count]
+    metric_sym = metric.to_sym
+    unless allowed_metrics.include?(metric_sym)
+      raise ArgumentError, "Invalid metric: #{metric}. Allowed: #{allowed_metrics.join(', ')}"
+    end
+
+    # Safe to interpolate metric after validation; use parameterized query for user inputs
     sql = <<-SQL.squish
       SELECT
         d.date::date,
-        COALESCE(fm.#{metric}, 0) as #{metric}
+        COALESCE(fm.#{metric_sym}, 0) as #{metric_sym}
       FROM generate_series(
-        DATE '#{start_date}',
-        DATE '#{end_date}',
+        $1::date,
+        $2::date,
         '1 day'::interval
       ) AS d(date)
       LEFT JOIN feed_metrics fm
         ON fm.date = d.date::date
-        AND fm.feed_id = #{id}
+        AND fm.feed_id = $3
       ORDER BY d.date
     SQL
 
-    ActiveRecord::Base.connection.exec_query(sql).to_a
+    ActiveRecord::Base.connection.exec_query(
+      sql,
+      "SQL",
+      [[nil, start_date], [nil, end_date], [nil, id]]
+    ).to_a
   end
 
   private
