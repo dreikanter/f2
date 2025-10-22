@@ -1,30 +1,36 @@
-# README
+# Feeder
 
 [![codecov](https://codecov.io/gh/dreikanter/f2/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/dreikanter/f2)
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Web application for scheduling and publishing content feeds to FreeFeed.
 
-Things you may want to cover:
+## Stack
 
-* Ruby version
+- Rails (edge), PostgreSQL
+- SolidQueue for background jobs
+- Turbo, Stimulus, Bootstrap
+- Kamal deployment
 
-* System dependencies
+## Development
 
-* Configuration
+```bash
+bin/setup
+bin/rails server
+bin/rails test
+bin/rubocop -f github
+```
 
-* Database creation
+Ruby version: see `.ruby-version`
 
-* Database initialization
+## Architecture
 
-* How to run the test suite
+- **Feed refresh workflow**: Load → Process → Filter → Persist → Normalize → Publish
+- **Normalizers**: Transform feed entries to FreeFeed posts (RSS, XKCD)
+- **Validation**: Reject posts with missing content/URLs, track metrics
+- **Sparse metrics**: Only record daily stats when there's activity
 
-* Services (job queues, cache servers, search engines, etc.)
+## Testing
 
-* Deployment instructions
-
-* ...
-
-## Environment variables
-
-- `MAILER_FROM` - default sender email address.
+```bash
+bin/rails test
+```
