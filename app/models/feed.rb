@@ -159,7 +159,7 @@ class Feed < ApplicationRecord
     ActiveRecord::Base.connection.exec_query(
       sql,
       "SQL",
-      [[nil, start_date], [nil, end_date], [nil, id]]
+      [start_date.to_s, end_date.to_s, id]
     ).to_a
   end
 
