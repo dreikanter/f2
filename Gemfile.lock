@@ -516,7 +516,7 @@ DEPENDENCIES
   solargraph
   solid_cable
   solid_cache
-  solid_queue (~> 1.1)
+  solid_queue (~> 1.2)
   stimulus-rails
   super_diff
   thruster
