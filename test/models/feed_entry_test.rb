@@ -17,7 +17,7 @@ class FeedEntryTest < ActiveSupport::TestCase
   test "should require uid" do
     entry = build(:feed_entry, uid: nil)
     assert_not entry.valid?
-    assert_includes entry.errors[:uid], "can't be blank"
+    assert entry.errors.of_kind?(:uid, :blank)
   end
 
   test "should require uid to be unique within feed scope" do
@@ -25,7 +25,7 @@ class FeedEntryTest < ActiveSupport::TestCase
     entry2 = build(:feed_entry, feed: feed, uid: "duplicate-uid")
 
     assert_not entry2.valid?
-    assert_includes entry2.errors[:uid], "has already been taken"
+    assert entry2.errors.of_kind?(:uid, :taken)
   end
 
   test "should allow same uid across different feeds" do
@@ -75,6 +75,6 @@ class FeedEntryTest < ActiveSupport::TestCase
   test "should handle empty uid" do
     entry = build(:feed_entry, uid: "")
     assert_not entry.valid?
-    assert_includes entry.errors[:uid], "can't be blank"
+    assert entry.errors.of_kind?(:uid, :blank)
   end
 end
