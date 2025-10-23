@@ -1,6 +1,6 @@
 # Feeder
 
-[![codecov](https://codecov.io/gh/dreikanter/f2/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/dreikanter/f2)
+[![codecov](https://codecov.io/gh/dreikanter/f2/graph/badge.svg?token=8OTZNI2092)](https://codecov.io/gh/dreikanter/f2)
 
 Web application for scheduling and publishing content feeds to FreeFeed.
 
