@@ -32,14 +32,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     token = build(:access_token, name: nil)
 
     assert_not token.valid?
-    assert_includes token.errors[:name], "can't be blank"
+    assert token.errors.of_kind?(:name, :blank)
   end
 
   test "validates presence of token on create" do
     token = build(:access_token, :without_token)
 
     assert_not token.valid?
-    assert_includes token.errors[:token], "can't be blank"
+    assert token.errors.of_kind?(:token, :blank)
   end
 
   test "validates uniqueness of name per user" do
@@ -47,7 +47,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     duplicate_token = build(:access_token, name: "Token", user: user)
 
     assert_not duplicate_token.valid?
-    assert_includes duplicate_token.errors[:name], "has already been taken"
+    assert duplicate_token.errors.of_kind?(:name, :taken)
   end
 
   test "allows duplicate names across different users" do
@@ -130,7 +130,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     token = build(:access_token, host: nil)
 
     assert_not token.valid?
-    assert_includes token.errors[:host], "can't be blank"
+    assert token.errors.of_kind?(:host, :blank)
   end
 
   test "validates host format requires HTTP(S) URL" do
@@ -142,7 +142,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     ["ftp://example.com", "example.com", "invalid"].each do |invalid_host|
       token = build(:access_token, host: invalid_host)
       assert_not token.valid?, "#{invalid_host} should be invalid"
-      assert_includes token.errors[:host], "must be a valid HTTP(S) URL"
+      assert token.errors.of_kind?(:host, :invalid)
     end
   end
 

@@ -51,7 +51,7 @@ class EventTest < ActiveSupport::TestCase
     event = Event.new
 
     assert_not event.valid?
-    assert_includes event.errors[:type], "can't be blank"
+    assert event.errors.of_kind?(:type, :blank)
   end
 
   test "should validate level enum" do

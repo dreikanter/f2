@@ -18,7 +18,7 @@ class InviteTest < ActiveSupport::TestCase
   test "should require created_by_user" do
     invite = Invite.new
     assert_not invite.valid?
-    assert_includes invite.errors[:created_by_user], "can't be blank"
+    assert invite.errors.of_kind?(:created_by_user, :blank)
   end
 
   test "used? returns false when invite has no invited_user" do

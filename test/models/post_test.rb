@@ -21,7 +21,7 @@ class PostTest < ActiveSupport::TestCase
   test "should require uid" do
     post = build(:post, uid: nil)
     assert_not post.valid?
-    assert_includes post.errors[:uid], "can't be blank"
+    assert post.errors.of_kind?(:uid, :blank)
   end
 
   test "should require uid to be unique within feed scope" do
@@ -29,7 +29,7 @@ class PostTest < ActiveSupport::TestCase
     post2 = build(:post, feed: feed, uid: "duplicate-uid")
 
     assert_not post2.valid?
-    assert_includes post2.errors[:uid], "has already been taken"
+    assert post2.errors.of_kind?(:uid, :taken)
   end
 
   test "should allow same uid across different feeds" do
@@ -43,13 +43,13 @@ class PostTest < ActiveSupport::TestCase
   test "should require published_at" do
     post = build(:post, published_at: nil)
     assert_not post.valid?
-    assert_includes post.errors[:published_at], "can't be blank"
+    assert post.errors.of_kind?(:published_at, :blank)
   end
 
   test "should require source_url" do
     post = build(:post, source_url: nil)
     assert_not post.valid?
-    assert_includes post.errors[:source_url], "can't be blank"
+    assert post.errors.of_kind?(:source_url, :blank)
   end
 
   test "should allow empty content" do
@@ -140,7 +140,7 @@ class PostTest < ActiveSupport::TestCase
 
     post = build(:post, content: "a" * (Post::MAX_CONTENT_LENGTH + 1))
     assert_not post.valid?
-    assert_includes post.errors[:content], "is too long (maximum is #{Post::MAX_CONTENT_LENGTH} characters)"
+    assert post.errors.of_kind?(:content, :too_long)
   end
 
   test "should validate comments length within FreeFeed limits" do

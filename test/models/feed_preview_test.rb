@@ -20,13 +20,13 @@ class FeedPreviewTest < ActiveSupport::TestCase
   test "should validate presence of url" do
     preview = build(:feed_preview, url: nil, user: user)
     assert_not preview.valid?
-    assert_includes preview.errors[:url], "can't be blank"
+    assert preview.errors.of_kind?(:url, :blank)
   end
 
   test "should validate presence of feed_profile_key" do
     preview = build(:feed_preview, feed_profile_key: nil, user: user)
     assert_not preview.valid?
-    assert_includes preview.errors[:feed_profile_key], "can't be blank"
+    assert preview.errors.of_kind?(:feed_profile_key, :blank)
   end
 
   test "should validate url format" do
@@ -67,7 +67,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     )
 
     assert_not duplicate.valid?
-    assert_includes duplicate.errors[:url], "has already been taken"
+    assert duplicate.errors.of_kind?(:url, :taken)
   end
 
   test "should allow same url with different feed_profile_key" do

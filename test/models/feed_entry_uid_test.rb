@@ -19,13 +19,13 @@ class FeedEntryUidTest < ActiveSupport::TestCase
   test "should require uid" do
     feed_entry_uid = build(:feed_entry_uid, feed: feed, uid: nil)
     assert_not feed_entry_uid.valid?
-    assert_includes feed_entry_uid.errors[:uid], "can't be blank"
+    assert feed_entry_uid.errors.of_kind?(:uid, :blank)
   end
 
   test "should require imported_at" do
     feed_entry_uid = build(:feed_entry_uid, feed: feed, uid: "test-uid", imported_at: nil)
     assert_not feed_entry_uid.valid?
-    assert_includes feed_entry_uid.errors[:imported_at], "can't be blank"
+    assert feed_entry_uid.errors.of_kind?(:imported_at, :blank)
   end
 
   test "should enforce uniqueness of uid scoped to feed" do
@@ -33,7 +33,7 @@ class FeedEntryUidTest < ActiveSupport::TestCase
     duplicate = build(:feed_entry_uid, feed: feed, uid: "duplicate-uid")
 
     assert_not duplicate.valid?
-    assert_includes duplicate.errors[:uid], "has already been taken"
+    assert duplicate.errors.of_kind?(:uid, :taken)
   end
 
   test "should allow same uid for different feeds" do
