@@ -1,6 +1,6 @@
 class AccessTokenPolicy < ApplicationPolicy
   def index?
-    user.present?
+    authenticated?
   end
 
   def show?
@@ -8,7 +8,7 @@ class AccessTokenPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present?
+    authenticated?
   end
 
   def update?
@@ -22,7 +22,7 @@ class AccessTokenPolicy < ApplicationPolicy
   private
 
   def owner_or_admin?
-    user.present? && (user == record.user || admin?)
+    authenticated? && (user == record.user || admin?)
   end
 
   class Scope < ApplicationPolicy::Scope
