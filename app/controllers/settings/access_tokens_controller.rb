@@ -16,6 +16,9 @@ class Settings::AccessTokensController < ApplicationController
 
     if @access_token.save
       @access_token.validate_token_async
+
+      # TBD: Perform validation in the token form to ensure the uasr is adding a valid token
+      # TBD: Only the redirect path should depend on user's state
       if Current.user.onboarding?
         redirect_to status_path, notice: "Access token '#{@access_token.name}' created successfully."
       else
