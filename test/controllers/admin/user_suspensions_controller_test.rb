@@ -19,7 +19,6 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "User has been suspended.", flash[:notice]
     target_user.reload
     assert target_user.suspended?
-    assert_equal "suspended", target_user.state
   end
 
   test "#create should terminate all user sessions" do

@@ -47,9 +47,11 @@ class UserTest < ActiveSupport::TestCase
 
   test "#suspend! should change state to suspended and set suspended_at" do
     user = create(:user)
-    user.suspend!
-    assert_equal "suspended", user.state
-    assert_not_nil user.suspended_at
+    freeze_time do
+      user.suspend!
+      assert user.suspended?
+      assert_equal Time.current, user.suspended_at
+    end
   end
 
   test "#unsuspend! should change state to active and clear suspended_at" do
