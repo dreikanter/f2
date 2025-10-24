@@ -17,7 +17,9 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_user_path(target_user)
     assert_equal "User has been suspended.", flash[:notice]
-    assert target_user.reload.suspended?
+    target_user.reload
+    assert target_user.suspended?
+    assert_equal "suspended", target_user.state
   end
 
   test "#create should terminate all user sessions" do
@@ -49,7 +51,9 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_user_path(target_user)
     assert_equal "User has been unsuspended.", flash[:notice]
-    assert_not target_user.reload.suspended?
+    target_user.reload
+    assert_not target_user.suspended?
+    assert target_user.active?
   end
 
   test "#destroy should not re-enable feeds" do

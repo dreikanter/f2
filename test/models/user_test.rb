@@ -40,6 +40,43 @@ class UserTest < ActiveSupport::TestCase
     assert_nil authenticated_user
   end
 
+  test "should have inactive state by default" do
+    user = create(:user)
+    assert user.inactive?
+  end
+
+  test "#suspend! should change state to suspended and set suspended_at" do
+    user = create(:user)
+    user.suspend!
+    assert_equal "suspended", user.state
+    assert_not_nil user.suspended_at
+  end
+
+  test "#unsuspend! should change state to active and clear suspended_at" do
+    user = create(:user)
+    user.suspend!
+    user.unsuspend!
+    assert user.active?
+    assert_nil user.suspended_at
+  end
+
+  test "#suspended? should return true when state is suspended" do
+    user = create(:user)
+    user.update!(state: :suspended)
+    assert user.suspended?
+  end
+
+  test "#suspended? should return true when suspended_at is present" do
+    user = create(:user)
+    user.update!(suspended_at: Time.current)
+    assert user.suspended?
+  end
+
+  test "#suspended? should return false when neither condition is met" do
+    user = create(:user)
+    assert_not user.suspended?
+  end
+
   test "should have many feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)
