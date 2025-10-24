@@ -12,16 +12,6 @@ Rails.application.routes.draw do
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
 
-  resource :onboarding, only: [:show, :create, :destroy] do
-    scope module: :onboarding do
-      resource :intro, only: :show
-      resource :access_token, only: [:show, :create]
-      resource :validation, only: :create
-      resource :feed, only: :show
-      resource :outro, only: :show
-    end
-  end
-
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
     resource :purge, only: [:show, :create], controller: "feeds/purges"
