@@ -14,6 +14,10 @@ class ApplicationController < ActionController::Base
   end
 
   def user_not_authorized
-    redirect_to root_path, alert: "Access denied. You don't have permission to perform this action."
+    if Current.user&.onboarding?
+      redirect_to status_path
+    else
+      redirect_to root_path, alert: "Access denied. You don't have permission to perform this action."
+    end
   end
 end
