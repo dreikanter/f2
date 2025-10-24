@@ -55,16 +55,14 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "#unsuspend! should change state to active and clear suspended_at" do
-    user = create(:user)
-    user.suspend!
+    user = create(:user, :suspended)
     user.unsuspend!
     assert user.active?
     assert_nil user.suspended_at
   end
 
   test "#suspended? should return true when state is suspended" do
-    user = create(:user)
-    user.update!(state: :suspended)
+    user = create(:user, :suspended)
     assert user.suspended?
   end
 

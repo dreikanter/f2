@@ -51,8 +51,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not create session for suspended user" do
-    user = create(:user)
-    user.suspend!
+    user = create(:user, :suspended)
 
     post session_url, params: { email_address: user.email_address, password: "password123" }
 
