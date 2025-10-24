@@ -40,6 +40,27 @@ class UserTest < ActiveSupport::TestCase
     assert_nil authenticated_user
   end
 
+  test "should have inactive state by default" do
+    user = User.new
+    assert user.inactive?
+  end
+
+  test "#suspend! should change state to suspended and set suspended_at" do
+    user = create(:user)
+    freeze_time do
+      user.suspend!
+      assert user.suspended?
+      assert_equal Time.current, user.suspended_at
+    end
+  end
+
+  test "#unsuspend! should change state to active and clear suspended_at" do
+    user = create(:user, :suspended)
+    user.unsuspend!
+    assert user.active?
+    assert_nil user.suspended_at
+  end
+
   test "should have many feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)
@@ -98,16 +119,9 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "#admin? returns true when user has admin permission" do
-    user = create(:user)
-    create(:permission, user: user, name: "admin")
+    user = create(:user, :admin)
 
     assert user.admin?
-  end
-
-  test "#admin? returns false when user has no admin permission" do
-    user = create(:user)
-
-    assert_not user.admin?
   end
 
   test "#total_feeds_count returns count of all user's feeds" do

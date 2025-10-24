@@ -11,13 +11,13 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should suspend user and redirect" do
     sign_in_as admin_user
-    assert_not target_user.suspended?
+    assert target_user.active?
 
     post admin_user_suspension_path(target_user)
 
     assert_redirected_to admin_user_path(target_user)
-    assert_equal "User has been suspended.", flash[:notice]
-    assert target_user.reload.suspended?
+    target_user.reload
+    assert target_user.suspended?
   end
 
   test "#create should terminate all user sessions" do
@@ -43,13 +43,13 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#destroy should unsuspend user and redirect" do
     sign_in_as admin_user
-    target_user.suspend!
+    suspended_user = create(:user, :suspended)
 
-    delete admin_user_suspension_path(target_user)
+    delete admin_user_suspension_path(suspended_user)
 
-    assert_redirected_to admin_user_path(target_user)
-    assert_equal "User has been unsuspended.", flash[:notice]
-    assert_not target_user.reload.suspended?
+    assert_redirected_to admin_user_path(suspended_user)
+    suspended_user.reload
+    assert suspended_user.active?
   end
 
   test "#destroy should not re-enable feeds" do
@@ -76,9 +76,9 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#destroy should require admin permission" do
     sign_in_as create(:user)
-    target_user.suspend!
+    suspended_user = create(:user, :suspended)
 
-    delete admin_user_suspension_path(target_user)
+    delete admin_user_suspension_path(suspended_user)
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]

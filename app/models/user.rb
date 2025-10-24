@@ -11,6 +11,8 @@ class User < ApplicationRecord
   has_one :invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
   has_one :invited_by_user, through: :invite, source: :created_by_user
 
+  enum :state, { inactive: 0, onboarding: 1, active: 2, suspended: 3 }, default: :inactive
+
   validates :email_address, presence: true, uniqueness: true
   validates :password, length: { minimum: 10 }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
@@ -35,16 +37,12 @@ class User < ApplicationRecord
     permission?("admin")
   end
 
-  def suspended?
-    suspended_at.present?
-  end
-
   def suspend!
-    update!(suspended_at: Time.current)
+    update!(state: :suspended, suspended_at: Time.current)
   end
 
   def unsuspend!
-    update!(suspended_at: nil)
+    update!(state: :active, suspended_at: nil)
   end
 
   # Returns the count of all feeds created by this user
