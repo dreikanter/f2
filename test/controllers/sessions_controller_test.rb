@@ -59,7 +59,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not create session for inactive user" do
-    user = create(:user, state: :inactive)
+    user = create(:user, :inactive)
 
     post session_url, params: { email_address: user.email_address, password: "password123" }
 
@@ -67,7 +67,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should terminate all sessions when inactive user attempts login" do
-    user = create(:user, state: :inactive)
+    user = create(:user, :inactive)
     user.sessions.create!(user_agent: "Browser", ip_address: "1.1.1.1")
 
     assert_equal 1, user.sessions.count

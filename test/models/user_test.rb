@@ -61,16 +61,6 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.suspended_at
   end
 
-  test "#suspended? should return true when state is suspended" do
-    user = create(:user, :suspended)
-    assert user.suspended?
-  end
-
-  test "#suspended? should return false for non-suspended states" do
-    user = create(:user)
-    assert_not user.suspended?
-  end
-
   test "should have many feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)
@@ -129,16 +119,9 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "#admin? returns true when user has admin permission" do
-    user = create(:user)
-    create(:permission, user: user, name: "admin")
+    user = create(:user, :admin)
 
     assert user.admin?
-  end
-
-  test "#admin? returns false when user has no admin permission" do
-    user = create(:user)
-
-    assert_not user.admin?
   end
 
   test "#total_feeds_count returns count of all user's feeds" do

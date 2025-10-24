@@ -15,5 +15,9 @@ FactoryBot.define do
       state { :suspended }
       suspended_at { Time.current }
     end
+
+    trait :inactive do
+      state { :inactive }
+    end
   end
 end
