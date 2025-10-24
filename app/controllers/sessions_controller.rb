@@ -20,7 +20,10 @@ class SessionsController < ApplicationController
   private
 
   def create_session_for(user)
-    if user.suspended?
+    if user.inactive?
+      user.sessions.destroy_all
+      redirect_to new_session_path, alert: "Email confirmation is required. Please check your inbox."
+    elsif user.suspended?
       user.sessions.destroy_all
       redirect_to new_session_path, alert: "Your account has been suspended."
     else
