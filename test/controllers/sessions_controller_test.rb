@@ -59,4 +59,24 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
     assert_equal "Your account has been suspended.", flash[:alert]
   end
+
+  test "should not create session for inactive user" do
+    user = create(:user, state: :inactive)
+
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+
+    assert_redirected_to new_session_path
+    assert_equal "Email confirmation is required. Please check your inbox.", flash[:alert]
+  end
+
+  test "should terminate all sessions when inactive user attempts login" do
+    user = create(:user, state: :inactive)
+    user.sessions.create!(user_agent: "Browser", ip_address: "1.1.1.1")
+
+    assert_equal 1, user.sessions.count
+
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+
+    assert_equal 0, user.reload.sessions.count
+  end
 end

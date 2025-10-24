@@ -41,7 +41,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "should have inactive state by default" do
-    user = create(:user)
+    user = User.new
     assert user.inactive?
   end
 
