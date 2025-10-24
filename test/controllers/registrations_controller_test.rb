@@ -55,7 +55,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    assert_redirected_to root_url
+    assert_redirected_to status_url
 
     invite.reload
     assert_not_nil invite.invited_user
