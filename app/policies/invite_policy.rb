@@ -1,16 +1,16 @@
 class InvitePolicy < ApplicationPolicy
   def index?
-    user.present?
+    authenticated?
   end
 
   def create?
-    return false unless user.present?
+    return false unless authenticated?
 
     user.available_invites > user.created_invites.count
   end
 
   def destroy?
-    return false unless user.present?
+    return false unless authenticated?
     return false if record.used?
 
     user == record.created_by_user || admin?

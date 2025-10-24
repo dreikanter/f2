@@ -55,6 +55,10 @@ class ApplicationPolicy
 
   private
 
+  def authenticated?
+    user.present?
+  end
+
   def admin?
     user&.permissions&.exists?(name: "admin")
   end

@@ -1,6 +1,6 @@
 class PostPolicy < ApplicationPolicy
   def index?
-    user.present?
+    authenticated? && user.active?
   end
 
   def show?
@@ -14,7 +14,7 @@ class PostPolicy < ApplicationPolicy
   private
 
   def owner?
-    user.present? && record.feed.user == user
+    authenticated? && record.feed.user == user
   end
 
   class Scope < ApplicationPolicy::Scope

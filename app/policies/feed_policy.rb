@@ -1,6 +1,6 @@
 class FeedPolicy < ApplicationPolicy
   def index?
-    user.present?
+    authenticated? && user.active?
   end
 
   def show?
@@ -26,7 +26,7 @@ class FeedPolicy < ApplicationPolicy
   private
 
   def owner?
-    user.present? && record.user == user
+    authenticated? && record.user == user
   end
 
   class Scope < ApplicationPolicy::Scope

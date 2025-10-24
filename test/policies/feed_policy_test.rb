@@ -39,6 +39,12 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.index?
   end
 
+  test "should deny index access to onboarding users" do
+    onboarding_user = create(:user, :onboarding)
+    policy = FeedPolicy.new(onboarding_user, feed)
+    assert_not policy.index?
+  end
+
   test "should allow show access to feed owner" do
     policy = policy_for_user(user, feed)
     assert policy.show?
@@ -113,20 +119,5 @@ class FeedPolicyTest < ActiveSupport::TestCase
     result = scope.resolve
 
     assert_equal 0, result.count
-  end
-
-  test "owner? returns true for feed owner" do
-    policy = policy_for_user(user, feed)
-    assert policy.send(:owner?)
-  end
-
-  test "owner? returns false for other users" do
-    policy = policy_for_user(user, other_feed)
-    assert_not policy.send(:owner?)
-  end
-
-  test "owner? returns false for nil user" do
-    policy = FeedPolicy.new(nil, feed)
-    assert_not policy.send(:owner?)
   end
 end

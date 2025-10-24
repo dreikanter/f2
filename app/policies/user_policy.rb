@@ -30,7 +30,7 @@ class UserPolicy < ApplicationPolicy
   private
 
   def self_or_admin?
-    user.present? && (user == record || admin?)
+    authenticated? && (user == record || admin?)
   end
 
   class Scope < ApplicationPolicy::Scope

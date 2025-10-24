@@ -55,13 +55,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     if @feed.save
-      notice_message = "Feed was successfully created."
-
-      if @feed.access_token&.active?
-        notice_message += " You can now enable it to start processing items."
-      end
-
-      redirect_to @feed, notice: notice_message
+      handle_successful_feed_creation
     else
       render :new, status: :unprocessable_content
     end
@@ -174,5 +168,18 @@ class FeedsController < ApplicationController
       :access_token_id,
       :target_group
     )
+  end
+
+  def handle_successful_feed_creation
+    if Current.user.onboarding?
+      Current.user.update!(state: :active)
+      redirect_to status_path, notice: "Feed was successfully created. Your onboarding is complete, and the status page will now display your feeds status."
+    else
+      notice_message = "Feed was successfully created."
+      if @feed.access_token&.active?
+        notice_message += " You can now enable it to start processing items."
+      end
+      redirect_to @feed, notice: notice_message
+    end
   end
 end

@@ -44,16 +44,18 @@
                 <li class="nav-item">
                   <%= link_to "Status", status_path, class: "nav-link #{'active text-decoration-underline' if current_page?(status_path)}" %>
                 </li>
-                <li class="nav-item">
-                  <%= link_to "Feeds", feeds_path, class: "nav-link #{'active text-decoration-underline' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
-                </li>
-                <li class="nav-item">
-                  <%= link_to "Posts", posts_path, class: "nav-link #{'active text-decoration-underline' if current_page?(posts_path) || controller_name == 'posts'}" %>
-                </li>
-                <% if policy(Event).index? %>
+                <% if Current.user.active? %>
                   <li class="nav-item">
-                    <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active text-decoration-underline' if current_page?(admin_path) || controller_name.start_with?('admin')}" %>
+                    <%= link_to "Feeds", feeds_path, class: "nav-link #{'active text-decoration-underline' if current_page?(feeds_path) || controller_name == 'feeds/'}" %>
                   </li>
+                  <li class="nav-item">
+                    <%= link_to "Posts", posts_path, class: "nav-link #{'active text-decoration-underline' if current_page?(posts_path) || controller_name == 'posts/'}" %>
+                  </li>
+                  <% if policy(Event).index? %>
+                    <li class="nav-item">
+                      <%= link_to "Admin Panel", admin_path, class: "nav-link #{'active text-decoration-underline' if current_page?(admin_path) || controller_name.start_with?('admin/')}" %>
+                    </li>
+                  <% end %>
                 <% end %>
               </ul>
 
