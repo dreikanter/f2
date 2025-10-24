@@ -66,13 +66,7 @@ class UserTest < ActiveSupport::TestCase
     assert user.suspended?
   end
 
-  test "#suspended? should return true when suspended_at is present" do
-    user = create(:user)
-    user.update!(suspended_at: Time.current)
-    assert user.suspended?
-  end
-
-  test "#suspended? should return false when neither condition is met" do
+  test "#suspended? should return false for non-suspended states" do
     user = create(:user)
     assert_not user.suspended?
   end

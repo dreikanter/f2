@@ -37,10 +37,6 @@ class User < ApplicationRecord
     permission?("admin")
   end
 
-  def suspended?
-    suspended_at.present? || state == "suspended"
-  end
-
   def suspend!
     update!(state: :suspended, suspended_at: Time.current)
   end
