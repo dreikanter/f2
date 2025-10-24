@@ -16,7 +16,11 @@ class Settings::AccessTokensController < ApplicationController
 
     if @access_token.save
       @access_token.validate_token_async
-      redirect_to settings_access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."
+      if Current.user.onboarding?
+        redirect_to status_path, notice: "Access token '#{@access_token.name}' created successfully."
+      else
+        redirect_to settings_access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."
+      end
     else
       render :new, status: :unprocessable_content
     end
