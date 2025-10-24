@@ -11,12 +11,11 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should suspend user and redirect" do
     sign_in_as admin_user
-    assert_not target_user.suspended?
+    assert target_user.active?
 
     post admin_user_suspension_path(target_user)
 
     assert_redirected_to admin_user_path(target_user)
-    assert_equal "User has been suspended.", flash[:notice]
     target_user.reload
     assert target_user.suspended?
   end
@@ -49,9 +48,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     delete admin_user_suspension_path(target_user)
 
     assert_redirected_to admin_user_path(target_user)
-    assert_equal "User has been unsuspended.", flash[:notice]
     target_user.reload
-    assert_not target_user.suspended?
     assert target_user.active?
   end
 

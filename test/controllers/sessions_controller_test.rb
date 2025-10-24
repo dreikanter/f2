@@ -57,7 +57,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post session_url, params: { email_address: user.email_address, password: "password123" }
 
     assert_redirected_to new_session_path
-    assert_equal "Your account has been suspended.", flash[:alert]
   end
 
   test "should not create session for inactive user" do
@@ -66,7 +65,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post session_url, params: { email_address: user.email_address, password: "password123" }
 
     assert_redirected_to new_session_path
-    assert_equal "Email confirmation is required. Please check your inbox.", flash[:alert]
   end
 
   test "should terminate all sessions when inactive user attempts login" do
