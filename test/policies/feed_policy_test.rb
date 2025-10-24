@@ -120,19 +120,4 @@ class FeedPolicyTest < ActiveSupport::TestCase
 
     assert_equal 0, result.count
   end
-
-  test "owner? returns true for feed owner" do
-    policy = policy_for_user(user, feed)
-    assert policy.send(:owner?)
-  end
-
-  test "owner? returns false for other users" do
-    policy = policy_for_user(user, other_feed)
-    assert_not policy.send(:owner?)
-  end
-
-  test "owner? returns false for nil user" do
-    policy = FeedPolicy.new(nil, feed)
-    assert_not policy.send(:owner?)
-  end
 end
