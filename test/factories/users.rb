@@ -9,11 +9,5 @@ FactoryBot.define do
         create(:permission, user: user, name: "admin")
       end
     end
-
-    trait :with_onboarding do
-      after(:create) do |user|
-        user.create_onboarding! unless user.onboarding
-      end
-    end
   end
 end
