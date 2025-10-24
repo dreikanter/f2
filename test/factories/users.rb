@@ -10,5 +10,10 @@ FactoryBot.define do
         create(:permission, user: user, name: "admin")
       end
     end
+
+    trait :suspended do
+      state { :suspended }
+      suspended_at { Time.current }
+    end
   end
 end
