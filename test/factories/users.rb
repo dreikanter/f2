@@ -19,5 +19,9 @@ FactoryBot.define do
     trait :inactive do
       state { :inactive }
     end
+
+    trait :onboarding do
+      state { :onboarding }
+    end
   end
 end

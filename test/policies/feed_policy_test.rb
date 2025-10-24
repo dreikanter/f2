@@ -39,6 +39,12 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.index?
   end
 
+  test "should deny index access to onboarding users" do
+    onboarding_user = create(:user, :onboarding)
+    policy = FeedPolicy.new(onboarding_user, feed)
+    assert_not policy.index?
+  end
+
   test "should allow show access to feed owner" do
     policy = policy_for_user(user, feed)
     assert policy.show?

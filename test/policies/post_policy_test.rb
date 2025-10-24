@@ -33,6 +33,11 @@ class PostPolicyTest < ActiveSupport::TestCase
     refute PostPolicy.new(nil, Post).index?
   end
 
+  test "index? denies onboarding users" do
+    onboarding_user = create(:user, :onboarding)
+    refute PostPolicy.new(onboarding_user, Post).index?
+  end
+
   test "show? allows owner" do
     assert PostPolicy.new(user, user_post).show?
   end
