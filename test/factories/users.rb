@@ -3,6 +3,7 @@ FactoryBot.define do
     sequence(:email_address) { |n| "user#{n}@example.com" }
     sequence(:name) { |n| "User #{n}" }
     password { "password123" }
+    state { :active }
 
     trait :admin do
       after(:create) do |user|
