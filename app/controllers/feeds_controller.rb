@@ -171,10 +171,7 @@ class FeedsController < ApplicationController
   end
 
   def handle_successful_feed_creation
-    was_onboarding = Current.user.onboarding?
-    is_first_feed = Current.user.total_feeds_count == 1
-
-    if was_onboarding && is_first_feed
+    if Current.user.onboarding?
       Current.user.update!(state: :active)
       redirect_to status_path, notice: "Feed was successfully created. Your onboarding is complete, and the status page will now display your feeds status."
     else
