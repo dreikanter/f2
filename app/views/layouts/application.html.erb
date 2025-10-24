@@ -44,7 +44,7 @@
                 <li class="nav-item">
                   <%= link_to "Status", status_path, class: "nav-link #{'active text-decoration-underline' if current_page?(status_path)}" %>
                 </li>
-                <% unless Current.user.onboarding? %>
+                <% if Current.user.active? %>
                   <li class="nav-item">
                     <%= link_to "Feeds", feeds_path, class: "nav-link #{'active text-decoration-underline' if current_page?(feeds_path) || controller_name == 'feeds'}" %>
                   </li>
