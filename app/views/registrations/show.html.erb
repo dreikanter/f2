@@ -1,13 +1,28 @@
 <% content_for :title, "Register" %>
 
-<% if @invite.used? %>
-  <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-      <p>This invitation link has already been used.</p>
-      <%# TBD: Add more meaningful instructions for the user %>
-      <p>But here are some <a href="https://duckduckgo.com/?q=cat+pictures&ia=images&iax=images">cat pictures</a>.</p>
-    </div>
-  </div>
+<% if @invite.nil? %>
+  <%= render SmallBoxComponent.new(title: "Incorrect Invitation Code") do |c| %>
+    <p>This invitation link is not valid. It may have been deleted or the link was copied incorrectly.</p>
+
+    <p><strong>Already have an account?</strong></p>
+    <p><%= link_to "Sign in", new_session_path %> with your existing credentials.</p>
+
+    <p><strong>Need an invitation?</strong></p>
+    <p>Ask someone who already uses Feeder to send you an invitation link.</p>
+  <% end %>
+<% elsif @invite.used? %>
+  <%= render SmallBoxComponent.new(title: "Invitation Already Used") do |c| %>
+    <p>This invitation link has already been used to create an account.</p>
+
+    <p><strong>Already have an account?</strong></p>
+    <ul>
+      <li>If you forgot your password, you can <%= link_to "reset it here", new_password_path %>.</li>
+      <li>Otherwise, <%= link_to "sign in", new_session_path %> with your existing credentials.</li>
+    </ul>
+
+    <p><strong>Need a new invitation?</strong></p>
+    <p>Contact the person who sent you this link and ask them to send a new invitation.</p>
+  <% end %>
 <% else %>
   <%= render SmallBoxComponent.new(title: "Create Your Account") do |c| %>
     <% c.with_notice do %>
