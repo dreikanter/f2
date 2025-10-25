@@ -26,8 +26,8 @@ class RegistrationsController < ApplicationController
 
     if @user.save
       @invite.update!(invited_user: @user)
-      start_new_session_for @user
-      redirect_to status_path, notice: "Welcome! Your account has been created."
+      ProfileMailer.account_confirmation(@user).deliver_later
+      redirect_to registration_confirmation_pending_path
     else
       render :show, status: :unprocessable_entity
     end
