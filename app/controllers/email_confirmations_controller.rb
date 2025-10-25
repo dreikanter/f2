@@ -20,9 +20,9 @@ class EmailConfirmationsController < ApplicationController
   private
 
   def find_user_by_token
-    # Try email_change token first (for email changes), then email_confirmation (for new accounts)
-    User.find_by_token_for(:email_change, params[:token]) ||
-      User.find_by_token_for!(:email_confirmation, params[:token])
+    # Try change_email_confirmation token first (for email changes), then initial_email_confirmation (for new accounts)
+    User.find_by_token_for(:change_email_confirmation, params[:token]) ||
+      User.find_by_token_for!(:initial_email_confirmation, params[:token])
   end
 
   def new_email(user)
