@@ -3,7 +3,6 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   resource :session
-  resources :email_confirmations, only: :show, param: :token
   resource :status, only: :show, controller: "statuses"
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]
@@ -12,6 +11,7 @@ Rails.application.routes.draw do
   namespace :registration do
     resource :confirmation_pending, only: :show
     resources :confirmations, only: [:new, :create]
+    resources :email_confirmations, only: :show, param: :token
   end
 
   resources :posts, only: [:index, :show, :destroy]
@@ -38,6 +38,7 @@ Rails.application.routes.draw do
   resource :settings, only: :show do
     resource :email_update, only: [:edit, :update], controller: "settings/email_updates"
     resource :password_update, only: [:edit, :update], controller: "settings/password_updates"
+    resources :email_confirmations, only: :show, param: :token, controller: "settings/email_confirmations"
 
     resources :access_tokens, controller: "settings/access_tokens" do
       resource :validation, only: [:show, :create], controller: "settings/access_token_validations"
