@@ -66,7 +66,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "should send confirmation email after registration" do
     invite # Ensure invite is created before the assertion
 
-    assert_enqueued_email_with ProfileMailer, :account_confirmation do
+    assert_difference("ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.count", 1) do
       post registration_url, params: {
         code: invite.id,
         user: {
@@ -77,6 +77,10 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
+
+    job = ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.last
+    assert_equal "ProfileMailer", job[:args][0]
+    assert_equal "account_confirmation", job[:args][1]
   end
 
   test "should not start session after registration" do
