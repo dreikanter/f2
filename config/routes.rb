@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     resource :confirmation_pending, only: :show
     resources :confirmations, only: [:new, :create]
   end
+
   resources :posts, only: [:index, :show, :destroy]
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
