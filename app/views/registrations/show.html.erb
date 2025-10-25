@@ -17,7 +17,7 @@
     <% end %>
 
     <% c.with_footer do %>
-      <%= link_to "Sign In", new_session_path, class: "text-decoration-none" %>
+      <%= link_to "Sign In", new_session_path, class: "text-muted" %>
     <% end %>
 
     <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
