@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_25_102702) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_25_191059) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -300,6 +300,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_25_102702) do
     t.integer "available_invites", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.datetime "email_deactivated_at"
+    t.string "email_deactivation_reason"
     t.string "name", default: "", null: false
     t.string "password_digest", null: false
     t.datetime "password_updated_at", precision: nil, null: false
@@ -308,6 +310,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_25_102702) do
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"
     t.index ["state"], name: "index_users_on_state"
   end
 
