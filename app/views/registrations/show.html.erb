@@ -1,7 +1,7 @@
 <% content_for :title, "Register" %>
 
 <% if @invite.nil? %>
-  <%= render SmallBoxComponent.new(title: "Incorrect invitation code") do |c| %>
+  <%= render SmallBoxComponent.new(title: "Incorrect Invitation Code") do |c| %>
     <p>This invitation link is not valid. It may have been deleted or the link was copied incorrectly.</p>
 
     <p><strong>Already have an account?</strong></p>
@@ -11,7 +11,7 @@
     <p>Ask someone who already uses Feeder to send you an invitation link.</p>
   <% end %>
 <% elsif @invite.used? %>
-  <%= render SmallBoxComponent.new(title: "Invitation already used") do |c| %>
+  <%= render SmallBoxComponent.new(title: "Invitation Already Used") do |c| %>
     <p>This invitation link has already been used to create an account.</p>
 
     <p><strong>Already have an account?</strong></p>
@@ -24,7 +24,7 @@
     <p>Contact the person who sent you this link and ask them to send a new invitation.</p>
   <% end %>
 <% else %>
-  <%= render SmallBoxComponent.new(title: "Create your account") do |c| %>
+  <%= render SmallBoxComponent.new(title: "Create Your Account") do |c| %>
     <% c.with_notice do %>
       <p class="fs-5">
         <%= @invite.created_by_user.name.presence || "Somebody" %> has invited you to join Feeder! 🎉
