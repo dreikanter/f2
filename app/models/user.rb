@@ -74,6 +74,20 @@ class User < ApplicationRecord
     )
   end
 
+  def can_change_email?
+    last_email_change_event.nil? || last_email_change_event.created_at < 24.hours.ago
+  end
+
+  def time_until_email_change_allowed
+    return 0 if can_change_email?
+
+    24.hours - (Time.current - last_email_change_event.created_at)
+  end
+
+  def last_email_change_event
+    @last_email_change_event ||= Event.where(user: self, type: "EmailChangedEvent").order(created_at: :desc).first
+  end
+
   # Returns the count of all feeds created by this user
   # @return [Integer] total number of feeds
   def total_feeds_count

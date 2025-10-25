@@ -11,6 +11,11 @@ class Settings::EmailUpdatesController < ApplicationController
       return
     end
 
+    unless @user.can_change_email?
+      redirect_with_rate_limit
+      return
+    end
+
     if @user.update(unconfirmed_email: new_email)
       ProfileMailer.email_change_confirmation(@user).deliver_later
       redirect_with_confirmation_sent
@@ -39,5 +44,10 @@ class Settings::EmailUpdatesController < ApplicationController
 
   def redirect_with_confirmation_sent
     redirect_to settings_path, notice: "Email confirmation sent to <b>#{@user.unconfirmed_email}</b>."
+  end
+
+  def redirect_with_rate_limit
+    time_remaining = distance_of_time_in_words(@user.time_until_email_change_allowed)
+    redirect_to edit_settings_email_update_path, alert: "You can change your email again in #{time_remaining}."
   end
 end
