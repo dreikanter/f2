@@ -3,11 +3,11 @@ class PasswordsController < ApplicationController
   before_action :find_user_by_token, only: [:edit, :update]
 
   def create
-    if user = User.find_by(email_address: params[:email_address])
+    if user = User.find_by(email_address: params[:email_address], state: :active)
       PasswordsMailer.reset(user).deliver_later
     end
 
-    redirect_to new_session_path, notice: "Password reset instructions sent (if user with that email address exists)."
+    redirect_to new_session_path, notice: "If an active account exists for this email, you'll receive password reset instructions shortly."
   end
 
   def update
