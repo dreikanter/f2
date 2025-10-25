@@ -1,31 +1,23 @@
-<div class="row justify-content-center">
-  <div class="col-8">
-    <div class="card mt-5">
-      <div class="card-body">
-        <h4 class="card-title text-center mb-4">Update Password</h4>
-        
-        <% if flash[:alert] %>
-          <div class="alert alert-danger" role="alert">
-            <%= flash[:alert] %>
-          </div>
-        <% end %>
-
-        <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
-          <div class="mb-3">
-            <%= form.label :password, "New Password", class: "form-label fw-bold" %>
-            <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72, class: "form-control" %>
-          </div>
-          
-          <div class="mb-3">
-            <%= form.label :password_confirmation, "Confirm Password", class: "form-label fw-bold" %>
-            <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72, class: "form-control" %>
-          </div>
-          
-          <div class="d-grid">
-            <%= form.submit "Save Password", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
+<%= render SmallBoxComponent.new(title: "Update Password") do |c| %>
+  <% if flash[:alert] %>
+    <div class="alert alert-danger" role="alert">
+      <%= flash[:alert] %>
     </div>
-  </div>
-</div>
+  <% end %>
+
+  <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
+    <div class="mb-3">
+      <%= form.label :password, "New Password", class: "form-label fw-bold" %>
+      <%= form.password_field :password, required: true, autofocus: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :password_confirmation, "Confirm Password", class: "form-label fw-bold" %>
+      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
+    </div>
+
+    <div class="d-flex gap-2">
+      <%= form.submit "Save Password", class: "btn btn-primary btn-lg" %>
+    </div>
+  <% end %>
+<% end %>

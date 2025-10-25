@@ -8,8 +8,7 @@ class RegistrationsController < ApplicationController
 
     @invite = Invite.includes(:created_by_user).find_by(id: params[:code])
 
-    return redirect_to root_path if @invite.nil?
-    return if @invite.used?
+    return if @invite.nil? || @invite.used?
 
     @user = User.new
   end
