@@ -48,7 +48,7 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resource :resend_webhooks, only: :create, path: "webhooks/resend"
+  resource :resend_webhooks, only: :create, path: "resend"
 
   root "landing#index"
 end
