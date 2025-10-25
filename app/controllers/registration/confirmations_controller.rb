@@ -4,7 +4,7 @@ class Registration::ConfirmationsController < ApplicationController
 
   def create
     ProfileMailer.account_confirmation(user).deliver_later if can_send_confirmation_email?
-    redirect_to registration_confirmation_pending_path, notice: "If an inactive account exists with that email, a confirmation link has been sent."
+    redirect_to registration_confirmation_pending_path, notice: "If an account exists with that email, we will send you a confirmation link."
   end
 
   private

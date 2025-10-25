@@ -16,6 +16,6 @@ class Registration::EmailConfirmationsController < ApplicationController
   end
 
   def activate_user(user)
-    user.update!(state: :active) if user.inactive?
+    user.active! if user.inactive?
   end
 end
