@@ -29,6 +29,10 @@ class User < ApplicationRecord
     email_address
   end
 
+  generates_token_for :email_confirmation, expires_in: 2.hours do
+    email_address
+  end
+
   def permission?(permission_name)
     permissions.exists?(name: permission_name)
   end
