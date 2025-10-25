@@ -3,7 +3,7 @@ class User < ApplicationRecord
   EMAIL_CONFIRMATION_TTL = 24.hours
   PASSWORD_MIN_LENGTH = 10
 
-  has_secure_ ord
+  has_secure_password
 
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
