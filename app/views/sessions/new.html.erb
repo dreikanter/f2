@@ -8,16 +8,16 @@
   <%= form_with url: session_path, local: true do |form| %>
     <div class="mb-3">
       <%= form.label :email_address, "Email Address", class: "form-label fw-bold" %>
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "form-control" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "form-control form-control-lg" %>
     </div>
 
     <div class="mb-4">
       <%= form.label :password, "Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "form-control" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "form-control form-control-lg" %>
     </div>
 
     <div class="d-grid">
-      <%= form.submit "Sign in", class: "btn btn-primary" %>
+      <%= form.submit "Sign in", class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>
 <% end %>

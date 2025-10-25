@@ -8,16 +8,16 @@
   <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
     <div class="mb-3">
       <%= form.label :password, "New Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password, required: true, autofocus: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72, class: "form-control" %>
+      <%= form.password_field :password, required: true, autofocus: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72, class: "form-control form-control-lg" %>
     </div>
 
     <div class="mb-3">
       <%= form.label :password_confirmation, "Confirm Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72, class: "form-control" %>
+      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72, class: "form-control form-control-lg" %>
     </div>
 
     <div class="d-grid">
-      <%= form.submit "Save Password", class: "btn btn-primary" %>
+      <%= form.submit "Save Password", class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>
 <% end %>
