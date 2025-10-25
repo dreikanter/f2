@@ -22,7 +22,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
     get email_confirmation_url(token), params: { new_email: new_email }
 
     assert_redirected_to settings_path
-    assert_equal "Email address successfully updated to #{new_email}.", flash[:notice]
+    assert_equal "Email address successfully updated.", flash[:notice]
     assert_equal new_email, user.reload.email_address
   end
 
