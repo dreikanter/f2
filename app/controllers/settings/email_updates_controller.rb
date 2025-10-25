@@ -1,4 +1,7 @@
 class Settings::EmailUpdatesController < ApplicationController
+  # TBD: Drop this dependency
+  include ActionView::Helpers::DateHelper
+
   def edit
     @user = Current.user
   end
@@ -8,6 +11,11 @@ class Settings::EmailUpdatesController < ApplicationController
 
     unless valid_email_change?
       redirect_with_invalid_email
+      return
+    end
+
+    unless @user.can_change_email?
+      redirect_with_rate_limit
       return
     end
 
@@ -39,5 +47,10 @@ class Settings::EmailUpdatesController < ApplicationController
 
   def redirect_with_confirmation_sent
     redirect_to settings_path, notice: "Email confirmation sent to <b>#{@user.unconfirmed_email}</b>."
+  end
+
+  def redirect_with_rate_limit
+    time_remaining = distance_of_time_in_words(@user.time_until_email_change_allowed)
+    redirect_to edit_settings_email_update_path, alert: "You can change your email again in #{time_remaining}."
   end
 end

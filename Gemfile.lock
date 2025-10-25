@@ -428,6 +428,7 @@ GEM
       attr_extras (>= 6.2.4)
       diff-lcs
       patience_diff
+    svix (1.80.0)
     thor (1.4.0)
     thruster (0.1.16)
     thruster (0.1.16-aarch64-linux)
@@ -522,6 +523,7 @@ DEPENDENCIES
   solid_queue (~> 1.2)
   stimulus-rails
   super_diff
+  svix (~> 1.39)
   thruster
   turbo-rails
   tzinfo-data

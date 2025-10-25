@@ -3,6 +3,18 @@
 <% has_active_tokens = @user.access_tokens.active.exists? %>
 <% has_feeds = @user.total_feeds_count > 0 %>
 
+<% if @user.email_deactivated? %>
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>Your email address is not receiving our emails.</strong>
+    <% if @user.can_change_email? %>
+      <%= link_to "Update your email address", edit_settings_email_update_path, class: "alert-link" %> to continue receiving notifications.
+    <% else %>
+      You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.
+    <% end %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
 <% if !has_active_tokens %>
   <%= page_header "Welcome to Feeder" %>
 

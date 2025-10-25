@@ -33,6 +33,9 @@
               <% if user.admin? %>
                 <span class="text-muted">(admin)</span>
               <% end %>
+              <% if user.email_deactivated? %>
+                <span class="badge bg-warning text-dark">email bounced</span>
+              <% end %>
             </td>
             <td>
               <%= user.name %>

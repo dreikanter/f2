@@ -18,8 +18,17 @@ class Settings::EmailConfirmationsController < ApplicationController
   end
 
   def update_user_email(user)
+    old_email = user.email_address
     target_email = user.unconfirmed_email&.strip&.downcase
-    user.update!(email_address: target_email, unconfirmed_email: nil)
+
+    user.update!(
+      email_address: target_email,
+      unconfirmed_email: nil,
+      email_deactivated_at: nil,
+      email_deactivation_reason: nil
+    )
+
+    EmailChangedEvent.create(user: user, old_email: old_email, new_email: target_email)
   end
 
   def redirect_with_success

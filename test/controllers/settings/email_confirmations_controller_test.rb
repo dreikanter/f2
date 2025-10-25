@@ -51,4 +51,35 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
     assert_redirected_to settings_path
     assert_equal "Email confirmation failed. Please request a new confirmation link.", flash[:alert]
   end
+
+  test "should clear email deactivation on successful confirmation" do
+    sign_in_user
+    user.deactivate_email!(reason: "bounced")
+    user.update!(unconfirmed_email: "new@example.com")
+    token = user.generate_token_for(:change_email_confirmation)
+
+    assert user.email_deactivated?
+
+    get settings_email_confirmation_url(token)
+
+    user.reload
+    assert_not user.email_deactivated?
+    assert_nil user.email_deactivation_reason
+  end
+
+  test "should create EmailChangedEvent on successful confirmation" do
+    sign_in_user
+    old_email = user.email_address
+    user.update!(unconfirmed_email: "new@example.com")
+    token = user.generate_token_for(:change_email_confirmation)
+
+    assert_difference("Event.where(type: 'EmailChangedEvent').count", 1) do
+      get settings_email_confirmation_url(token)
+    end
+
+    event = Event.where(type: "EmailChangedEvent").last
+    assert_equal user, event.user
+    assert_equal old_email, event.metadata["old_email"]
+    assert_equal "new@example.com", event.metadata["new_email"]
+  end
 end

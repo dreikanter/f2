@@ -76,4 +76,25 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 0, user.reload.sessions.count
   end
+
+  test "should show standard message for inactive user without deactivated email" do
+    user = create(:user, :inactive)
+
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+
+    assert_redirected_to new_session_path
+    follow_redirect!
+    assert_select ".alert", text: /Email confirmation is required. Please check your inbox./
+  end
+
+  test "should show deactivated email message for inactive user with deactivated email" do
+    user = create(:user, :inactive)
+    user.deactivate_email!(reason: "bounced")
+
+    post session_url, params: { email_address: user.email_address, password: "password123" }
+
+    assert_redirected_to new_session_path
+    follow_redirect!
+    assert_select ".alert", text: /Your confirmation email could not be delivered. Please update your email address./
+  end
 end

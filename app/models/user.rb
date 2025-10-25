@@ -56,6 +56,38 @@ class User < ApplicationRecord
     update!(state: :active, suspended_at: nil)
   end
 
+  def deactivate_email!(reason:)
+    update!(
+      email_deactivated_at: Time.current,
+      email_deactivation_reason: reason
+    )
+  end
+
+  def email_deactivated?
+    email_deactivated_at.present?
+  end
+
+  def reactivate_email!
+    update!(
+      email_deactivated_at: nil,
+      email_deactivation_reason: nil
+    )
+  end
+
+  def can_change_email?
+    last_email_change_event.nil? || last_email_change_event.created_at < 24.hours.ago
+  end
+
+  def time_until_email_change_allowed
+    return 0 if can_change_email?
+
+    24.hours - (Time.current - last_email_change_event.created_at)
+  end
+
+  def last_email_change_event
+    @last_email_change_event ||= Event.where(user: self, type: "EmailChangedEvent").order(created_at: :desc).first
+  end
+
   # Returns the count of all feeds created by this user
   # @return [Integer] total number of feeds
   def total_feeds_count
