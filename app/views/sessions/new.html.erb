@@ -13,7 +13,7 @@
 
     <div class="mb-4">
       <%= form.label :password, "Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "form-control form-control-lg" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
     </div>
 
     <div class="d-grid">
