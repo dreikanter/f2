@@ -98,7 +98,7 @@ class User < ApplicationRecord
     return false if emails.blank?
 
     scope = User.where.not(id: id)
-    scope.where(email_address: emails).or(scope.where(unconfirmed_email: email)).exists?
+    scope.where(email_address: emails).or(scope.where(unconfirmed_email: emails)).exists?
   end
 
   def published_posts
