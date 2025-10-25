@@ -1,0 +1,40 @@
+require "test_helper"
+
+class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTest
+  test "should show resend confirmation form" do
+    get new_registration_confirmation_url
+    assert_response :success
+    assert_select "h1", "Resend Confirmation Email"
+  end
+
+  test "should send confirmation email for inactive user" do
+    inactive_user = create(:user, state: :inactive)
+
+    assert_enqueued_email_with ProfileMailer, :account_confirmation do
+      post registration_confirmations_url, params: { email_address: inactive_user.email_address }
+    end
+
+    assert_redirected_to registration_confirmation_pending_path
+    assert_equal "Confirmation email sent. Please check your inbox.", flash[:notice]
+  end
+
+  test "should not send confirmation email for active user" do
+    active_user = create(:user, state: :active)
+
+    assert_no_enqueued_emails do
+      post registration_confirmations_url, params: { email_address: active_user.email_address }
+    end
+
+    assert_redirected_to new_registration_confirmation_path
+    assert_equal "No inactive account found with that email address.", flash[:alert]
+  end
+
+  test "should not send confirmation email for nonexistent user" do
+    assert_no_enqueued_emails do
+      post registration_confirmations_url, params: { email_address: "nonexistent@example.com" }
+    end
+
+    assert_redirected_to new_registration_confirmation_path
+    assert_equal "No inactive account found with that email address.", flash[:alert]
+  end
+end
