@@ -16,7 +16,7 @@
       <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
     </div>
 
-    <div class="d-grid">
+    <div class="d-flex gap-2">
       <%= form.submit "Save Password", class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>

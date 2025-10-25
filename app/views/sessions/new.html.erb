@@ -1,4 +1,4 @@
-<%= render SmallBoxComponent.new(title: "Sign In") do |c| %>
+<%= render SmallBoxComponent.new(title: "Sign in") do |c| %>
   <% c.with_footer do %>
     <%= link_to "Forgot password?", new_password_path, class: "text-muted" %>
     <span class="text-muted mx-2">·</span>
@@ -16,7 +16,7 @@
       <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
     </div>
 
-    <div class="d-grid">
+    <div class="d-flex gap-2">
       <%= form.submit "Sign in", class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>

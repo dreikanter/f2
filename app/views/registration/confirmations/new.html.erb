@@ -1,6 +1,6 @@
 <% content_for :title, "Resend Confirmation" %>
 
-<%= render SmallBoxComponent.new(title: "Resend Confirmation") do |c| %>
+<%= render SmallBoxComponent.new(title: "Resend confirmation") do |c| %>
   <% c.with_notice do %>
     <p class="fs-5">Enter your email address and we'll send you a new confirmation link.</p>
   <% end %>
@@ -10,12 +10,12 @@
   <% end %>
 
   <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>
-    <div class="mb-3">
+    <div class="mb-4">
       <%= form.label :email_address, "Email", class: "form-label fw-bold" %>
       <%= form.email_field :email_address, class: "form-control form-control-lg", autofocus: true, required: true %>
     </div>
 
-    <div class="d-grid">
+    <div class="d-flex gap-2">
       <%= form.submit "Send Confirmation Email", class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>
