@@ -16,14 +16,16 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
 
   test "should confirm email change with valid token" do
     sign_in_user
-    token = user.generate_token_for(:email_confirmation)
     new_email = "updated@example.com"
+    user.update!(unconfirmed_email: new_email)
+    token = user.generate_token_for(:email_confirmation)
 
-    get email_confirmation_url(token), params: { new_email: new_email }
+    get email_confirmation_url(token)
 
     assert_redirected_to settings_path
     assert_equal "Email address successfully updated.", flash[:notice]
     assert_equal new_email, user.reload.email_address
+    assert_nil user.unconfirmed_email
   end
 
   test "should reject invalid token" do
@@ -37,9 +39,10 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   test "should reject email change to existing email" do
     create(:user, email_address: "taken@example.com")
     sign_in_user
+    user.update!(unconfirmed_email: "taken@example.com")
     token = user.generate_token_for(:email_confirmation)
 
-    get email_confirmation_url(token), params: { new_email: "taken@example.com" }
+    get email_confirmation_url(token)
 
     assert_redirected_to settings_path
     assert_equal "Email confirmation failed. The email may already be taken.", flash[:alert]
