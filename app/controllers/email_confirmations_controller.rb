@@ -53,7 +53,7 @@ class EmailConfirmationsController < ApplicationController
 
   def redirect_with_email_updated
     redirect_path = authenticated? ? settings_path : new_session_path
-    redirect_to redirect_path, notice: "Email address successfully updated to #{new_email}."
+    redirect_to redirect_path, notice: "Email address successfully updated."
   end
 
   def redirect_with_failure
