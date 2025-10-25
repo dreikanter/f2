@@ -20,7 +20,7 @@ class EmailConfirmationsController < ApplicationController
   private
 
   def find_user_by_token
-    User.find_by_token_for!(:email_change, params[:token])
+    User.find_by_token_for!(:email_confirmation, params[:token])
   end
 
   def new_email
