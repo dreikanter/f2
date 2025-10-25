@@ -1,8 +1,9 @@
 class User < ApplicationRecord
   PASSWORD_RESET_TTL = 15.minutes
   EMAIL_CONFIRMATION_TTL = 24.hours
+  PASSWORD_MIN_LENGTH = 10
 
-  has_secure_password
+  has_secure_ ord
 
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
@@ -17,7 +18,7 @@ class User < ApplicationRecord
   enum :state, { inactive: 0, onboarding: 1, active: 2, suspended: 3 }, default: :inactive
 
   validates :email_address, presence: true
-  validates :password, length: { minimum: 10 }, allow_nil: true
+  validates :password, length: { minimum: PASSWORD_MIN_LENGTH }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
   validate :both_emails_are_globally_unique
 
