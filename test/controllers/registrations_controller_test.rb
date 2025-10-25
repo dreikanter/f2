@@ -18,9 +18,11 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should redirect to root when invalid code provided" do
+  test "should show invalid invitation message when code is invalid" do
     get registration_url(code: "invalid-uuid")
-    assert_redirected_to root_path
+    assert_response :success
+    assert_select "h1", "Incorrect Invitation Code"
+    assert_select "p", /not valid/
   end
 
   test "should show registration form with valid unused invite" do
@@ -32,7 +34,8 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "should show used invite message when invite is already used" do
     get registration_url(code: used_invite.id)
     assert_response :success
-    assert_select "p", /already been used/
+    assert_select "h1", "Invitation Already Used"
+    assert_select "p", /already been used to create an account/
   end
 
   test "should redirect to dashboard if already authenticated" do
