@@ -31,33 +31,18 @@ class ResendWebhooksController < ApplicationController
   private
 
   def verify_signature!
-    svix_id = request.headers["svix-id"]
-    svix_timestamp = request.headers["svix-timestamp"]
-    svix_signature = request.headers["svix-signature"]
-
-    unless svix_id && svix_timestamp && svix_signature
-      head :unauthorized
-      return
-    end
-
+    secret = Rails.application.credentials.resend_signing_secret
     payload = request.raw_post
-    expected_signature = compute_signature(svix_id, svix_timestamp, payload)
+    headers = {
+      "svix-id" => request.headers["svix-id"],
+      "svix-timestamp" => request.headers["svix-timestamp"],
+      "svix-signature" => request.headers["svix-signature"]
+    }
 
-    signatures = svix_signature.split(" ")
-    verified = signatures.any? do |versioned_sig|
-      version, signature = versioned_sig.split(",", 2)
-      next false unless version == "v1"
-
-      ActiveSupport::SecurityUtils.secure_compare(signature, expected_signature)
-    end
-
-    head :unauthorized unless verified
-  end
-
-  def compute_signature(msg_id, timestamp, payload)
-    secret = Rails.application.credentials.dig(:resend, :webhook_secret)
-    to_sign = "#{msg_id}.#{timestamp}.#{payload}"
-    Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, to_sign))
+    wh = Svix::Webhook.new(secret)
+    wh.verify(payload, headers)
+  rescue Svix::WebhookVerificationError
+    head :unauthorized
   end
 
   def handle_bounced(data)
