@@ -4,10 +4,10 @@ class EmailConfirmationsController < ApplicationController
   def show
     user = find_user_by_token
 
-    if account_confirmation?
+    if account_confirmation?(user)
       activate_user(user)
       redirect_with_account_activated
-    elsif valid_email_change?
+    elsif valid_email_change?(user)
       update_user_email(user)
       redirect_with_email_updated
     else
@@ -23,20 +23,20 @@ class EmailConfirmationsController < ApplicationController
     User.find_by_token_for!(:email_confirmation, params[:token])
   end
 
-  def new_email
-    params[:new_email]
+  def new_email(user)
+    user.unconfirmed_email&.strip&.downcase
   end
 
-  def account_confirmation?
-    new_email.blank?
+  def account_confirmation?(user)
+    new_email(user).blank?
   end
 
-  def valid_email_change?
-    new_email.present? && !email_already_taken?
+  def valid_email_change?(user)
+    new_email(user).present? && !email_already_taken?(user)
   end
 
-  def email_already_taken?
-    User.exists?(email_address: new_email)
+  def email_already_taken?(user)
+    User.where.not(id: user.id).exists?(email_address: new_email(user))
   end
 
   def activate_user(user)
@@ -44,7 +44,16 @@ class EmailConfirmationsController < ApplicationController
   end
 
   def update_user_email(user)
-    user.update!(email_address: new_email)
+    target_email = new_email(user)
+
+    # Race-safe update: only update if unconfirmed_email still matches and target email is available
+    updated = user.update(
+      email_address: target_email,
+      unconfirmed_email: nil
+    )
+
+    # Verify the update succeeded and email was actually changed
+    raise ActiveRecord::RecordInvalid unless updated && user.reload.email_address == target_email
   end
 
   def redirect_with_account_activated

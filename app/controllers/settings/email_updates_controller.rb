@@ -14,7 +14,7 @@ class Settings::EmailUpdatesController < ApplicationController
     if email_already_taken?
       redirect_with_duplicate_email
     else
-      send_confirmation_email
+      save_unconfirmed_email_and_send_confirmation
       redirect_with_confirmation_sent
     end
   end
@@ -33,8 +33,9 @@ class Settings::EmailUpdatesController < ApplicationController
     User.exists?(email_address: new_email)
   end
 
-  def send_confirmation_email
-    ProfileMailer.email_change_confirmation(@user, new_email).deliver_later
+  def save_unconfirmed_email_and_send_confirmation
+    @user.update!(unconfirmed_email: new_email)
+    ProfileMailer.email_change_confirmation(@user).deliver_later
   end
 
   def redirect_with_invalid_email
@@ -46,6 +47,6 @@ class Settings::EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_confirmation_sent
-    redirect_to settings_path, notice: "Email confirmation sent to <b>#{new_email}</b>."
+    redirect_to settings_path, notice: "Email confirmation sent to <b>#{@user.unconfirmed_email}</b>."
   end
 end

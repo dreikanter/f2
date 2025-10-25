@@ -18,6 +18,7 @@ class User < ApplicationRecord
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :unconfirmed_email, with: ->(e) { e&.strip&.downcase }
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 
