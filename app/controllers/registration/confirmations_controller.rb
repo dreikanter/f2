@@ -3,19 +3,16 @@ class Registration::ConfirmationsController < ApplicationController
   rate_limit to: 5, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_confirmation_path, alert: "Try again later." }
 
   def create
-    user = User.find_by(email_address: email_params[:email_address])
+    normalized_email = params[:email_address]&.strip&.downcase
 
-    if user&.inactive?
-      ProfileMailer.account_confirmation(user).deliver_later
-      redirect_to registration_confirmation_pending_path, notice: "Confirmation email sent. Please check your inbox."
-    else
-      redirect_to new_registration_confirmation_path, alert: "No inactive account found with that email address."
+    if normalized_email.present?
+      user = User.find_by(email_address: normalized_email)
+
+      if user&.inactive?
+        ProfileMailer.account_confirmation(user).deliver_later
+      end
     end
-  end
 
-  private
-
-  def email_params
-    params.permit(:email_address)
+    redirect_to registration_confirmation_pending_path, notice: "If an inactive account exists with that email, a confirmation link has been sent."
   end
 end
