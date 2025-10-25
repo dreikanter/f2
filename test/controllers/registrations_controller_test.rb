@@ -50,8 +50,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "newuser@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
@@ -72,8 +71,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "newuser@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
@@ -91,8 +89,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       user: {
         name: "New User",
         email_address: "newuser@example.com",
-        password: "password123",
-        password_confirmation: "password123"
+        password: "password123"
       }
     }
 
@@ -106,8 +103,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "newuser@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
@@ -123,8 +119,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "Another User",
           email_address: "another@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
@@ -137,8 +132,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "newuser@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
@@ -154,8 +148,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "invalid",
-          password: "short",
-          password_confirmation: "short"
+          password: "short"
         }
       }
     end
@@ -170,8 +163,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         user: {
           name: "New User",
           email_address: "newuser@example.com",
-          password: "password123",
-          password_confirmation: "password123"
+          password: "password123"
         }
       }
     end
