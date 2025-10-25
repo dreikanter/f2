@@ -14,19 +14,28 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should send email for existing user" do
-    user = create(:user)
+  test "should send email for active user" do
+    user = create(:user, state: :active)
 
     assert_enqueued_with(job: ActionMailer::MailDeliveryJob) do
       post passwords_url, params: { email_address: user.email_address }
     end
 
     assert_redirected_to new_session_path
-    assert_equal "Password reset instructions sent (if user with that email address exists).", flash[:notice]
   end
 
   test "should not send email for non-existent user" do
     post passwords_url, params: { email_address: "nonexistent@example.com" }
+    assert_redirected_to new_session_path
+  end
+
+  test "should not send email for inactive user" do
+    user = create(:user, state: :inactive)
+
+    assert_no_enqueued_emails do
+      post passwords_url, params: { email_address: user.email_address }
+    end
+
     assert_redirected_to new_session_path
   end
 
