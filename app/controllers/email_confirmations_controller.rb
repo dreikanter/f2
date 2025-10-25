@@ -62,6 +62,7 @@ class EmailConfirmationsController < ApplicationController
   end
 
   def redirect_with_invalid_token
-    redirect_to new_session_path, alert: "Email confirmation link is invalid or has expired."
+    redirect_path = authenticated? ? settings_path : new_session_path
+    redirect_to redirect_path, alert: "Email confirmation link is invalid or has expired."
   end
 end
