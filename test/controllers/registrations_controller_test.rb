@@ -26,7 +26,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "should show registration form with valid unused invite" do
     get registration_url(code: invite.id)
     assert_response :success
-    assert_select "h2", "Create Your Account"
+    assert_select "h1", "Create Your Account"
   end
 
   test "should show used invite message when invite is already used" do
