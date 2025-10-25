@@ -54,11 +54,13 @@ class EmailConfirmationsController < ApplicationController
   end
 
   def redirect_with_email_updated
-    redirect_to settings_path, notice: "Email address successfully updated to #{new_email}."
+    redirect_path = authenticated? ? settings_path : new_session_path
+    redirect_to redirect_path, notice: "Email address successfully updated to #{new_email}."
   end
 
   def redirect_with_failure
-    redirect_to settings_path, alert: "Email confirmation failed. The email may already be taken."
+    redirect_path = authenticated? ? settings_path : new_session_path
+    redirect_to redirect_path, alert: "Email confirmation failed. The email may already be taken."
   end
 
   def redirect_with_invalid_token
