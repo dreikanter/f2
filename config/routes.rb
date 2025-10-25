@@ -8,6 +8,11 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resources :invites, only: [:index, :create, :destroy]
   resource :registration, only: [:show, :create], path: "register"
+
+  namespace :registration do
+    resource :confirmation_pending, only: :show
+    resources :confirmations, only: [:new, :create]
+  end
   resources :posts, only: [:index, :show, :destroy]
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
