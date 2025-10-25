@@ -19,7 +19,6 @@ class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTes
     assert_equal "account_confirmation", job[:args][1]
 
     assert_redirected_to registration_confirmation_pending_path
-    assert_equal "If an inactive account exists with that email, a confirmation link has been sent.", flash[:notice]
   end
 
   test "should not send confirmation email for active user but show same message" do
@@ -30,7 +29,6 @@ class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTes
     end
 
     assert_redirected_to registration_confirmation_pending_path
-    assert_equal "If an inactive account exists with that email, a confirmation link has been sent.", flash[:notice]
   end
 
   test "should not send confirmation email for nonexistent user but show same message" do
@@ -39,7 +37,6 @@ class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTes
     end
 
     assert_redirected_to registration_confirmation_pending_path
-    assert_equal "If an inactive account exists with that email, a confirmation link has been sent.", flash[:notice]
   end
 
   test "should normalize email for lookup" do

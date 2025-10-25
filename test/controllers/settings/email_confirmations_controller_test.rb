@@ -36,11 +36,14 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
     assert_equal "Email confirmation link is invalid or has expired.", flash[:alert]
   end
 
-  test "should reject email change to existing email" do
-    create(:user, email_address: "taken@example.com")
+  test "should reject email change to existing email in race condition" do
     sign_in_user
-    user.update!(unconfirmed_email: "taken@example.com")
+    # Set unconfirmed_email bypassing validation to simulate race condition
+    user.update_column(:unconfirmed_email, "race@example.com")
     token = user.generate_token_for(:change_email_confirmation)
+
+    # Another user claims the email before confirmation
+    create(:user, email_address: "race@example.com")
 
     get settings_email_confirmation_url(token)
 
