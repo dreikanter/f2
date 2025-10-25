@@ -56,6 +56,24 @@ class User < ApplicationRecord
     update!(state: :active, suspended_at: nil)
   end
 
+  def deactivate_email!(reason:)
+    update!(
+      email_deactivated_at: Time.current,
+      email_deactivation_reason: reason
+    )
+  end
+
+  def email_deactivated?
+    email_deactivated_at.present?
+  end
+
+  def reactivate_email!
+    update!(
+      email_deactivated_at: nil,
+      email_deactivation_reason: nil
+    )
+  end
+
   # Returns the count of all feeds created by this user
   # @return [Integer] total number of feeds
   def total_feeds_count
