@@ -2,9 +2,6 @@ class Registration::ConfirmationsController < ApplicationController
   allow_unauthenticated_access
   rate_limit to: 5, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_confirmation_path, alert: "Try again later." }
 
-  def new
-  end
-
   def create
     user = User.find_by(email_address: email_params[:email_address])
 
