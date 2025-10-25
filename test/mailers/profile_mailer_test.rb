@@ -7,4 +7,12 @@ class ProfileMailerTest < ActionMailer::TestCase
     assert_equal ["new_email@example.com"], mail.to
     assert_equal ["noreply@frf.im"], mail.from
   end
+
+  test "account_confirmation" do
+    user = build(:user, email_address: "user@example.com")
+    mail = ProfileMailer.account_confirmation(user)
+    assert_equal "Confirm your email address", mail.subject
+    assert_equal ["user@example.com"], mail.to
+    assert_equal ["noreply@frf.im"], mail.from
+  end
 end
