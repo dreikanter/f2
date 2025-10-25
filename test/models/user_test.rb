@@ -16,7 +16,7 @@ class UserTest < ActiveSupport::TestCase
     existing_user = create(:user)
     user = build(:user, email_address: existing_user.email_address)
     assert_not user.valid?
-    assert user.errors[:base]
+    assert_includes user.errors[:base], "email is already taken"
   end
 
   test "should authenticate with correct password" do

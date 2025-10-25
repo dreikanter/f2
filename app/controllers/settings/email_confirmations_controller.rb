@@ -7,7 +7,7 @@ class Settings::EmailConfirmationsController < ApplicationController
     redirect_with_success
   rescue ActiveSupport::MessageVerifier::InvalidSignature
     redirect_with_invalid_token
-  rescue ActiveRecord::RecordInvalid
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
     redirect_with_failure
   end
 
