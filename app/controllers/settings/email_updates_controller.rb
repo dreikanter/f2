@@ -11,11 +11,11 @@ class Settings::EmailUpdatesController < ApplicationController
       return
     end
 
-    if email_already_taken?
-      redirect_with_duplicate_email
-    else
-      send_confirmation_email
+    if @user.update(unconfirmed_email: new_email)
+      ProfileMailer.email_change_confirmation(@user).deliver_later
       redirect_with_confirmation_sent
+    else
+      redirect_with_duplicate_email
     end
   end
 
@@ -29,14 +29,6 @@ class Settings::EmailUpdatesController < ApplicationController
     new_email.present? && new_email != @user.email_address
   end
 
-  def email_already_taken?
-    User.exists?(email_address: new_email)
-  end
-
-  def send_confirmation_email
-    ProfileMailer.email_change_confirmation(@user, new_email).deliver_later
-  end
-
   def redirect_with_invalid_email
     redirect_to edit_settings_email_update_path, alert: "Please enter a valid new email address."
   end
@@ -46,6 +38,6 @@ class Settings::EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_confirmation_sent
-    redirect_to settings_path, notice: "Email confirmation sent to <b>#{new_email}</b>."
+    redirect_to settings_path, notice: "Email confirmation sent to <b>#{@user.unconfirmed_email}</b>."
   end
 end

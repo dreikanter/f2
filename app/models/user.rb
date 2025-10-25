@@ -1,4 +1,7 @@
 class User < ApplicationRecord
+  PASSWORD_RESET_TTL = 15.minutes
+  EMAIL_CONFIRMATION_TTL = 24.hours
+
   has_secure_password
 
   has_many :sessions, dependent: :destroy
@@ -13,20 +16,26 @@ class User < ApplicationRecord
 
   enum :state, { inactive: 0, onboarding: 1, active: 2, suspended: 3 }, default: :inactive
 
-  validates :email_address, presence: true, uniqueness: true
+  validates :email_address, presence: true
   validates :password, length: { minimum: 10 }, allow_nil: true
   validates :available_invites, numericality: { greater_than_or_equal_to: 0 }
+  validate :both_emails_are_globally_unique
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :unconfirmed_email, with: ->(e) { e&.strip&.downcase }
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 
-  generates_token_for :password_reset, expires_in: 15.minutes do
+  generates_token_for :password_reset, expires_in: PASSWORD_RESET_TTL do
     password_salt&.last(10)
   end
 
-  generates_token_for :email_change, expires_in: 15.minutes do
+  generates_token_for :initial_email_confirmation, expires_in: EMAIL_CONFIRMATION_TTL do
     email_address
+  end
+
+  generates_token_for :change_email_confirmation, expires_in: EMAIL_CONFIRMATION_TTL do
+    unconfirmed_email
   end
 
   def permission?(permission_name)
@@ -78,7 +87,23 @@ class User < ApplicationRecord
     (count / 7.0).round(1)
   end
 
+  def update_password!(new_password)
+    update!(password: new_password, password_confirmation: new_password)
+  end
+
   private
+
+  def both_emails_are_globally_unique
+    errors.add(:base, "email is already taken") if other_records_with_same_email?
+  end
+
+  def other_records_with_same_email?
+    emails = [email_address, unconfirmed_email].compact_blank
+    return false if emails.blank?
+
+    scope = User.where.not(id: id)
+    scope.where(email_address: emails).or(scope.where(unconfirmed_email: emails)).exists?
+  end
 
   def published_posts
     imported_posts.where(posts: { status: :published })

@@ -8,7 +8,7 @@ class SessionsController < ApplicationController
     if user
       create_session_for(user)
     else
-      redirect_to new_session_path, alert: "Try another email address or password."
+      redirect_to new_session_path, alert: "Email address or password are not correct."
     end
   end
 

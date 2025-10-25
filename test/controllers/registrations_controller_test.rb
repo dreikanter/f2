@@ -55,11 +55,48 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    assert_redirected_to status_url
+    assert_redirected_to registration_confirmation_pending_url
 
     invite.reload
     assert_not_nil invite.invited_user
     assert_equal "New User", invite.invited_user.name
+    assert invite.invited_user.inactive?
+  end
+
+  test "should send confirmation email after registration" do
+    invite # Ensure invite is created before the assertion
+
+    assert_difference("ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.count", 1) do
+      post registration_url, params: {
+        code: invite.id,
+        user: {
+          name: "New User",
+          email_address: "newuser@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        }
+      }
+    end
+
+    job = ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.last
+    assert_equal "ProfileMailer", job[:args][0]
+    assert_equal "account_confirmation", job[:args][1]
+  end
+
+  test "should not start session after registration" do
+    invite # Ensure invite is created before the assertion
+
+    post registration_url, params: {
+      code: invite.id,
+      user: {
+        name: "New User",
+        email_address: "newuser@example.com",
+        password: "password123",
+        password_confirmation: "password123"
+      }
+    }
+
+    assert_nil session[:user_id]
   end
 
   test "should not create user with invalid invite code in create" do
