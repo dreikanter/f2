@@ -10,7 +10,7 @@ class ProfileMailer < ApplicationMailer
 
   def account_confirmation(user)
     @user = user
-    @token = user.generate_token_for(:email_confirmation)
+    @token = user.generate_token_for(:email_change)
     @confirmation_url = email_confirmation_url(@token)
 
     mail(to: user.email_address, subject: "Confirm your email address")
