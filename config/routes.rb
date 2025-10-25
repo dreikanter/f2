@@ -29,6 +29,7 @@ Rails.application.routes.draw do
       resource :password_reset, only: [:show, :create]
       resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
       resource :available_invites, only: :update, controller: "available_invites"
+      post :reactivate_email, on: :member
     end
 
     resources :events, only: [:index, :show]

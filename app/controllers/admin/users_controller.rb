@@ -21,6 +21,13 @@ class Admin::UsersController < ApplicationController
     authorize @user
   end
 
+  def reactivate_email
+    @user = User.find(params[:id])
+    authorize @user
+    @user.reactivate_email!
+    redirect_to admin_user_path(@user), notice: "Email reactivated successfully."
+  end
+
   private
 
   def pagination_scope
