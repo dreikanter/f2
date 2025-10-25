@@ -4,7 +4,7 @@ class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTes
   test "should show resend confirmation form" do
     get new_registration_confirmation_url
     assert_response :success
-    assert_select "h1", "Resend confirmation"
+    assert_select "h1", "Resend Confirmation"
   end
 
   test "should send confirmation email for inactive user" do
