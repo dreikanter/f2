@@ -11,9 +11,9 @@
 <% else %>
   <%= render SmallBoxComponent.new(title: "Create Your Account") do |c| %>
     <% c.with_notice do %>
-      <div class="alert alert-info">
-        <%= @invite.created_by_user.name.presence || "Somebody" %> has invited you to join Feeder!
-      </div>
+      <p class="fs-5">
+        <%= @invite.created_by_user.name.presence || "Somebody" %> has invited you to join Feeder! 🎉
+      </p>
     <% end %>
 
     <% c.with_footer do %>
