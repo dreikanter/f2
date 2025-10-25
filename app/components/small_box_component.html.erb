@@ -1,21 +1,17 @@
 <div class="row justify-content-center">
-  <div class="<%= @column_classes %>">
-    <div class="card mt-5">
-      <div class="card-body">
-        <h1 class="card-title text-center mb-4"><%= @title %></h1>
+  <div class="col-12 mx-auto" style="max-width: <%= @max_width %>">
+    <h1 class="text-center mb-4"><%= @title %></h1>
 
-        <% if notice %>
-          <%= notice %>
-        <% end %>
+    <% if notice %>
+      <%= notice %>
+    <% end %>
 
-        <%= content %>
+    <%= content %>
 
-        <% if footer %>
-          <div class="text-center mt-3">
-            <%= footer %>
-          </div>
-        <% end %>
+    <% if footer %>
+      <div class="text-center mt-3">
+        <%= footer %>
       </div>
-    </div>
+    <% end %>
   </div>
 </div>

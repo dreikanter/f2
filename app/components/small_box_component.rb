@@ -2,8 +2,8 @@ class SmallBoxComponent < ViewComponent::Base
   renders_one :notice
   renders_one :footer
 
-  def initialize(title:, column_classes: "col-12 col-md-8 col-lg-6")
+  def initialize(title:, max_width: "28rem")
     @title = title
-    @column_classes = column_classes
+    @max_width = max_width
   end
 end
