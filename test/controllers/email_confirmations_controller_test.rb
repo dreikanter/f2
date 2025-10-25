@@ -47,7 +47,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
 
   test "should activate inactive user with valid confirmation token" do
     inactive_user = create(:user, state: :inactive)
-    token = inactive_user.generate_token_for(:email_confirmation)
+    token = inactive_user.generate_token_for(:email_change)
 
     get email_confirmation_url(token)
 
@@ -65,7 +65,7 @@ class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not activate already active user" do
     active_user = create(:user, state: :active)
-    token = active_user.generate_token_for(:email_confirmation)
+    token = active_user.generate_token_for(:email_change)
 
     get email_confirmation_url(token)
 
