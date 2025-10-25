@@ -6,6 +6,17 @@
 
 <div class="row">
   <div class="col-6">
+    <% if @user.email_deactivated? %>
+      <div class="alert alert-danger">
+        <strong>Your email is deactivated.</strong>
+        <% if @user.can_change_email? %>
+          <p class="mb-0">Update your email address below to continue receiving notifications.</p>
+        <% else %>
+          <p class="mb-0">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <% end %>
+      </div>
+    <% end %>
+
     <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
       <div class="mb-3">
         <%= form.label :current_email, "Current email:", class: "form-label fw-bold" %>
