@@ -1,0 +1,21 @@
+<div class="row justify-content-center">
+  <div class="<%= @column_classes %>">
+    <div class="card mt-5">
+      <div class="card-body">
+        <h2 class="card-title text-center mb-4"><%= @title %></h2>
+
+        <% if notice %>
+          <%= notice %>
+        <% end %>
+
+        <%= content %>
+
+        <% if footer %>
+          <div class="text-center mt-3">
+            <%= footer %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

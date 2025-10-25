@@ -1,24 +1,22 @@
 <% content_for :title, "Resend Confirmation" %>
 
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <h1 class="mb-4">Resend Confirmation Email</h1>
-
+<%= render SmallBoxComponent.new(title: "Resend Confirmation Email", column_classes: "col-md-6") do |c| %>
+  <% c.with_notice do %>
     <p>Enter your email address and we'll send you a new confirmation link.</p>
+  <% end %>
 
-    <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>
-      <div class="mb-3">
-        <%= form.label :email_address, "Email", class: "form-label" %>
-        <%= form.email_field :email_address, class: "form-control", autofocus: true, required: true %>
-      </div>
+  <% c.with_footer do %>
+    <%= link_to "Back to Sign In", new_session_path, class: "text-decoration-none" %>
+  <% end %>
 
-      <div class="d-grid">
-        <%= form.submit "Send Confirmation Email", class: "btn btn-primary" %>
-      </div>
-    <% end %>
-
-    <div class="mt-3 text-center">
-      <%= link_to "Back to Sign In", new_session_path, class: "text-decoration-none" %>
+  <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>
+    <div class="mb-3">
+      <%= form.label :email_address, "Email", class: "form-label" %>
+      <%= form.email_field :email_address, class: "form-control", autofocus: true, required: true %>
     </div>
-  </div>
-</div>
+
+    <div class="d-grid">
+      <%= form.submit "Send Confirmation Email", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+<% end %>
