@@ -33,6 +33,10 @@ class User < ApplicationRecord
     email_address
   end
 
+  generates_token_for :email_change, expires_in: EMAIL_CONFIRMATION_TTL do
+    unconfirmed_email
+  end
+
   def permission?(permission_name)
     permissions.exists?(name: permission_name)
   end
