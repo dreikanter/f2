@@ -38,12 +38,13 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
 
   test "should reject email change to existing email in race condition" do
     sign_in_user
+
+    # Another user claims the email first
+    create(:user, email_address: "race@example.com")
+
     # Set unconfirmed_email bypassing validation to simulate race condition
     user.update_column(:unconfirmed_email, "race@example.com")
     token = user.generate_token_for(:change_email_confirmation)
-
-    # Another user claims the email before confirmation
-    create(:user, email_address: "race@example.com")
 
     get settings_email_confirmation_url(token)
 
