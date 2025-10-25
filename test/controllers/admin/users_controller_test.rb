@@ -66,6 +66,35 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", count: 25
   end
 
+  test "should allow admin to reactivate user email" do
+    login_as(admin_user)
+    user = create(:user)
+    user.deactivate_email!(reason: "bounced")
+
+    assert user.email_deactivated?
+
+    post reactivate_email_admin_user_path(user)
+
+    user.reload
+    assert_not user.email_deactivated?
+    assert_nil user.email_deactivation_reason
+    assert_redirected_to admin_user_path(user)
+    follow_redirect!
+    assert_select ".alert", text: /Email reactivated successfully/
+  end
+
+  test "should prevent non-admin from reactivating user email" do
+    login_as(regular_user)
+    user = create(:user)
+    user.deactivate_email!(reason: "bounced")
+
+    post reactivate_email_admin_user_path(user)
+
+    assert_redirected_to root_path
+    user.reload
+    assert user.email_deactivated?
+  end
+
   private
 
   def login_as(user)
