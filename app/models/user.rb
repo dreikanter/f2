@@ -25,11 +25,7 @@ class User < ApplicationRecord
     password_salt&.last(10)
   end
 
-  generates_token_for :email_change, expires_in: 15.minutes do
-    email_address
-  end
-
-  generates_token_for :email_confirmation, expires_in: 2.hours do
+  generates_token_for :email_change, expires_in: 24.hours do
     email_address
   end
 
