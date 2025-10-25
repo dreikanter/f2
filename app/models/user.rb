@@ -87,6 +87,10 @@ class User < ApplicationRecord
     (count / 7.0).round(1)
   end
 
+  def update_password!(new_password)
+    update!(password: new_password, password_confirmation: new_password)
+  end
+
   private
 
   def both_emails_are_globally_unique
