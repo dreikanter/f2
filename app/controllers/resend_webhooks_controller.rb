@@ -65,7 +65,7 @@ class ResendWebhooksController < ApplicationController
     return unless user
 
     user.deactivate_email!(reason: "bounced")
-    create_event("EmailBouncedEvent", user, data)
+    EmailBouncedEvent.create(user: user, data: data)
   end
 
   def handle_complained(data)
@@ -73,7 +73,7 @@ class ResendWebhooksController < ApplicationController
     return unless user
 
     user.deactivate_email!(reason: "complained")
-    create_event("EmailComplainedEvent", user, data)
+    EmailComplainedEvent.create(user: user, data: data)
   end
 
   def handle_failed(data)
@@ -81,32 +81,32 @@ class ResendWebhooksController < ApplicationController
     return unless user
 
     user.deactivate_email!(reason: "failed")
-    create_event("EmailFailedEvent", user, data)
+    EmailFailedEvent.create(user: user, data: data)
   end
 
   def handle_sent(data)
     user = find_user_by_email(data[:to])
-    create_event("EmailSentEvent", user, data)
+    EmailSentEvent.create(user: user, data: data)
   end
 
   def handle_delivered(data)
     user = find_user_by_email(data[:email])
-    create_event("EmailDeliveredEvent", user, data)
+    EmailDeliveredEvent.create(user: user, data: data)
   end
 
   def handle_delayed(data)
     user = find_user_by_email(data[:email])
-    create_event("EmailDelayedEvent", user, data)
+    EmailDelayedEvent.create(user: user, data: data)
   end
 
   def handle_opened(data)
     user = find_user_by_email(data[:email])
-    create_event("EmailOpenedEvent", user, data)
+    EmailOpenedEvent.create(user: user, data: data)
   end
 
   def handle_clicked(data)
     user = find_user_by_email(data[:email])
-    create_event("EmailClickedEvent", user, data)
+    EmailClickedEvent.create(user: user, data: data)
   end
 
   def find_user_by_email(email)
@@ -114,14 +114,5 @@ class ResendWebhooksController < ApplicationController
 
     normalized_email = email.strip.downcase
     User.find_by(email_address: normalized_email)
-  end
-
-  def create_event(event_type, user, data)
-    Event.create!(
-      type: event_type,
-      user: user,
-      subject: user,
-      metadata: data.to_h
-    )
   end
 end
