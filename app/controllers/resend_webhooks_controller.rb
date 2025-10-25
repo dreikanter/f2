@@ -61,58 +61,73 @@ class ResendWebhooksController < ApplicationController
   end
 
   def handle_bounced(data)
-    user = find_user_by_email(data[:email])
+    user, matched_field = find_user_by_email(data[:email])
     return unless user
 
-    user.deactivate_email!(reason: "bounced")
+    handle_email_failure(user, matched_field, "bounced")
     EmailBouncedEvent.create(user: user, data: data)
   end
 
   def handle_complained(data)
-    user = find_user_by_email(data[:email])
+    user, matched_field = find_user_by_email(data[:email])
     return unless user
 
-    user.deactivate_email!(reason: "complained")
+    handle_email_failure(user, matched_field, "complained")
     EmailComplainedEvent.create(user: user, data: data)
   end
 
   def handle_failed(data)
-    user = find_user_by_email(data[:email])
+    user, matched_field = find_user_by_email(data[:email])
     return unless user
 
-    user.deactivate_email!(reason: "failed")
+    handle_email_failure(user, matched_field, "failed")
     EmailFailedEvent.create(user: user, data: data)
   end
 
   def handle_sent(data)
-    user = find_user_by_email(data[:to])
+    user, _matched_field = find_user_by_email(data[:to])
     EmailSentEvent.create(user: user, data: data)
   end
 
   def handle_delivered(data)
-    user = find_user_by_email(data[:email])
+    user, _matched_field = find_user_by_email(data[:email])
     EmailDeliveredEvent.create(user: user, data: data)
   end
 
   def handle_delayed(data)
-    user = find_user_by_email(data[:email])
+    user, _matched_field = find_user_by_email(data[:email])
     EmailDelayedEvent.create(user: user, data: data)
   end
 
   def handle_opened(data)
-    user = find_user_by_email(data[:email])
+    user, _matched_field = find_user_by_email(data[:email])
     EmailOpenedEvent.create(user: user, data: data)
   end
 
   def handle_clicked(data)
-    user = find_user_by_email(data[:email])
+    user, _matched_field = find_user_by_email(data[:email])
     EmailClickedEvent.create(user: user, data: data)
   end
 
   def find_user_by_email(email)
-    return nil if email.blank?
+    return [nil, nil] if email.blank?
 
     normalized_email = email.strip.downcase
-    User.find_by(email_address: normalized_email)
+
+    user = User.find_by(email_address: normalized_email)
+    return [user, :email_address] if user
+
+    user = User.find_by(unconfirmed_email: normalized_email)
+    return [user, :unconfirmed_email] if user
+
+    [nil, nil]
+  end
+
+  def handle_email_failure(user, matched_field, reason)
+    if matched_field == :email_address
+      user.deactivate_email!(reason: reason)
+    elsif matched_field == :unconfirmed_email
+      user.update!(unconfirmed_email: nil)
+    end
   end
 end
