@@ -1,4 +1,7 @@
 class User < ApplicationRecord
+  PASSWORD_RESET_TTL = 15.minutes
+  EMAIL_CONFIRMATION_TTL = 24.hours
+
   has_secure_password
 
   has_many :sessions, dependent: :destroy
@@ -22,11 +25,11 @@ class User < ApplicationRecord
 
   before_save :set_password_updated_at, if: :will_save_change_to_password_digest?
 
-  generates_token_for :password_reset, expires_in: 15.minutes do
+  generates_token_for :password_reset, expires_in: PASSWORD_RESET_TTL do
     password_salt&.last(10)
   end
 
-  generates_token_for :email_confirmation, expires_in: 24.hours do
+  generates_token_for :email_confirmation, expires_in: EMAIL_CONFIRMATION_TTL do
     email_address
   end
 
