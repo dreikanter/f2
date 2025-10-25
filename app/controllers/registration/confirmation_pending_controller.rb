@@ -1,3 +1,0 @@
-class Registration::ConfirmationPendingController < ApplicationController
-  allow_unauthenticated_access
-end
