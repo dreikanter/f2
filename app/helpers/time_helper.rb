@@ -40,9 +40,9 @@ module TimeHelper
 
   def time_ago(past_time)
     current_time = Time.current
-    return nil unless time && past_time < current_time
+    return nil unless past_time && past_time < current_time
 
-    time_distance(current_time - time)
+    time_distance(current_time - past_time)
   end
 
   def long_time_format(time)
