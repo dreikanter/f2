@@ -26,18 +26,22 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    assert_equal 1, @written_files.size
-    filepath, content = @written_files.first
+    assert_equal 2, @written_files.size  # .yml and .txt
 
-    # Filename should contain timestamp and UUID
-    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.txt$/, filepath)
-    assert_includes content, "---"
-    assert_includes content, "message_id:"
-    assert_includes content, "from: sender@example.com"
-    assert_includes content, "to: recipient@example.com"
-    assert_includes content, "subject: Test Subject"
-    assert_includes content, "multipart: false"
-    assert_includes content, "Test Body"
+    # Check metadata file
+    yml_file = @written_files.keys.find { |k| k.end_with?(".yml") }
+    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.yml$/, yml_file)
+    yml_content = @written_files[yml_file]
+    assert_includes yml_content, "message_id:"
+    assert_includes yml_content, "from: sender@example.com"
+    assert_includes yml_content, "to: recipient@example.com"
+    assert_includes yml_content, "subject: Test Subject"
+    assert_includes yml_content, "multipart: false"
+
+    # Check text file
+    txt_file = @written_files.keys.find { |k| k.end_with?(".txt") }
+    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.txt$/, txt_file)
+    assert_equal "Test Body", @written_files[txt_file]
   end
 
   test "handles multipart emails" do
@@ -58,12 +62,20 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     @delivery.deliver!(mail)
 
-    filepath, content = @written_files.first
-    assert_includes content, "multipart: true"
-    assert_includes content, "TEXT:"
-    assert_includes content, "Text version"
-    assert_includes content, "HTML:"
-    assert_includes content, "<p>HTML version</p>"
+    assert_equal 3, @written_files.size  # .yml, .txt, and .html
+
+    # Check metadata
+    yml_content = @written_files.values.find { |c| c.include?("multipart: true") }
+    assert_not_nil yml_content
+    assert_includes yml_content, "multipart: true"
+
+    # Check text file
+    txt_file = @written_files.keys.find { |k| k.end_with?(".txt") }
+    assert_equal "Text version", @written_files[txt_file]
+
+    # Check HTML file
+    html_file = @written_files.keys.find { |k| k.end_with?(".html") }
+    assert_equal "<p>HTML version</p>", @written_files[html_file]
   end
 
   test "creates directory if it does not exist" do

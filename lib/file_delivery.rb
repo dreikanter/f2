@@ -13,35 +13,29 @@ class FileDelivery
 
     timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
     uuid = SecureRandom.uuid
-    filename = "#{timestamp}_#{uuid}.txt"
-    filepath = dir.join(filename)
+    base_name = "#{timestamp}_#{uuid}"
 
-    write_file.call(filepath) do |f|
-      # Write YAML frontmatter
-      frontmatter = {
-        "message_id" => mail.message_id.to_s,
-        "from" => mail.from&.join(", "),
-        "to" => mail.to&.join(", "),
-        "subject" => mail.subject.to_s,
-        "date" => mail.date,
-        "multipart" => mail.multipart?
-      }
-      f.puts frontmatter.to_yaml
-      f.puts "---"
-      f.puts ""
+    # Write metadata file
+    metadata = {
+      "message_id" => mail.message_id.to_s,
+      "from" => mail.from&.join(", "),
+      "to" => mail.to&.join(", "),
+      "subject" => mail.subject.to_s,
+      "date" => mail.date,
+      "multipart" => mail.multipart?
+    }
+    write_file.call(dir.join("#{base_name}.yml")) { |f| f.write(metadata.to_yaml) }
 
-      # Write body
-      if mail.multipart?
-        f.puts "TEXT:"
-        f.puts mail.text_part&.body&.decoded || "(no text part)"
-        f.puts ""
-        f.puts "HTML:"
-        f.puts mail.html_part&.body&.decoded || "(no html part)"
-      else
-        f.puts mail.body.decoded
-      end
+    # Write text version
+    text_content = mail.multipart? ? mail.text_part&.body&.decoded : mail.body.decoded
+    write_file.call(dir.join("#{base_name}.txt")) { |f| f.write(text_content || "") }
+
+    # Write HTML version if multipart
+    if mail.multipart?
+      html_content = mail.html_part&.body&.decoded
+      write_file.call(dir.join("#{base_name}.html")) { |f| f.write(html_content || "") }
     end
 
-    Rails.logger.info "Email saved to #{filepath}"
+    Rails.logger.info "Email saved to #{dir.join(base_name)}.*"
   end
 end

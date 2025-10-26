@@ -6,94 +6,112 @@ class SentEmailsController < ApplicationController
   end
 
   def show
-    filename = "#{params[:id]}.txt"
-    filepath = emails_dir.join(filename)
+    # Validate ID format to prevent path traversal (must be timestamp_uuid)
+    unless params[:id] =~ /\A\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\z/
+      redirect_to sent_emails_path, alert: "Invalid email ID"
+      return
+    end
 
-    unless File.exist?(filepath)
+    base_path = emails_dir.join(params[:id])
+    yml_path = "#{base_path}.yml"
+    txt_path = "#{base_path}.txt"
+    html_path = "#{base_path}.html"
+
+    unless File.exist?(yml_path)
       redirect_to sent_emails_path, alert: "Email not found"
       return
     end
 
-    @email = parse_email_file(filepath)
-    @filename = filename
+    @email = load_email_from_files(yml_path, txt_path, html_path)
+    @filename = params[:id]
   end
 
   def purge
-    FileUtils.rm_rf(emails_dir)
-    FileUtils.mkdir_p(emails_dir)
+    dir = emails_dir  # Validates path before any destructive operation
+    FileUtils.rm_rf(dir)
+    FileUtils.mkdir_p(dir)
     redirect_to sent_emails_path, notice: "All emails purged"
+  rescue => e
+    redirect_to sent_emails_path, alert: "Failed to purge emails: #{e.message}"
   end
 
   private
 
   def emails_dir
-    Rails.root.join("tmp", "sent_emails")
+    # Compute and validate the emails directory path
+    dir = Rails.root.join("tmp", "sent_emails")
+    absolute_dir = dir.expand_path
+
+    # Ensure the path is not blank
+    raise "Email directory path is blank" if absolute_dir.to_s.blank?
+
+    # Ensure the path is not a dangerous root directory
+    dangerous_paths = [
+      Pathname.new("/"),
+      Rails.root,
+      Rails.root.parent
+    ]
+    if dangerous_paths.any? { |dangerous| absolute_dir == dangerous.expand_path }
+      raise "Email directory cannot be a root or parent directory"
+    end
+
+    # Ensure the path is inside Rails.root/tmp
+    allowed_base = Rails.root.join("tmp").expand_path
+    unless absolute_dir.to_s.start_with?(allowed_base.to_s + "/")
+      raise "Email directory must be inside #{allowed_base}"
+    end
+
+    absolute_dir
   end
 
   def load_emails
     return [] unless Dir.exist?(emails_dir)
 
-    Dir.glob(emails_dir.join("*.txt")).map do |filepath|
-      filename = File.basename(filepath)
-      match = filename.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)\.txt$/)
+    Dir.glob(emails_dir.join("*.yml")).map do |yml_path|
+      filename = File.basename(yml_path, ".yml")
+      match = filename.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
 
       next unless match
 
       timestamp_str = match[1]
       timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
 
-      # Parse email file to get subject
-      email = parse_email_file(filepath)
+      # Load metadata
+      begin
+        metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+      rescue Psych::SyntaxError
+        next
+      end
 
       {
-        id: filename.delete_suffix(".txt"),
-        filename: filename,
-        subject: email[:subject],
+        id: filename,
+        subject: metadata["subject"],
         timestamp: timestamp,
-        size: File.size(filepath)
+        size: File.size(yml_path)
       }
     end.compact
   end
 
-  def parse_email_file(filepath)
-    content = File.read(filepath)
+  def load_email_from_files(yml_path, txt_path, html_path)
+    # Load metadata from YAML file
+    metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
 
-    # Parse YAML frontmatter
-    parts = content.split(/^---\s*$/, 3)
+    # Load text content
+    text_content = File.exist?(txt_path) ? File.read(txt_path) : ""
 
-    begin
-      frontmatter = YAML.safe_load(parts[1], permitted_classes: [Time, Date, DateTime], aliases: true) || {}
-    rescue Psych::SyntaxError
-      frontmatter = {}
-    end
+    # Load HTML content if it exists
+    html_content = File.exist?(html_path) ? File.read(html_path) : nil
 
-    body_content = parts[2]&.strip || ""
-
-    email = {
-      message_id: frontmatter["message_id"],
-      from: frontmatter["from"],
-      to: frontmatter["to"],
-      subject: frontmatter["subject"],
-      date: frontmatter["date"],
-      multipart: frontmatter["multipart"] || false,
-      body: "",
-      text_part: nil,
-      html_part: nil
+    {
+      message_id: metadata["message_id"],
+      from: metadata["from"],
+      to: metadata["to"],
+      subject: metadata["subject"],
+      date: metadata["date"],
+      multipart: metadata["multipart"] || false,
+      body: metadata["multipart"] ? "" : text_content,
+      text_part: metadata["multipart"] ? text_content : nil,
+      html_part: html_content
     }
-
-    # Parse body
-    if email[:multipart]
-      if body_content.include?("TEXT:") && body_content.include?("HTML:")
-        text_start = body_content.index("TEXT:")
-        html_start = body_content.index("HTML:")
-
-        email[:text_part] = body_content[text_start + 5...html_start].strip
-        email[:html_part] = body_content[html_start + 5..-1].strip
-      end
-    else
-      email[:body] = body_content
-    end
-
-    email
   end
 end

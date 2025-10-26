@@ -1,6 +1,18 @@
 #!/usr/bin/env ruby
 # Generate random demo emails for testing the email browser
 
+# Load Rails environment
+begin
+  require_relative "../config/environment"
+rescue LoadError => e
+  abort "Failed to load Rails environment: #{e.message}"
+end
+
+# Ensure we're running in development mode only
+unless Rails.env.development?
+  abort "This script can only be run in development mode. Current environment: #{Rails.env}"
+end
+
 # Random subjects and recipients
 subjects = [
   "Welcome to Feeder!",
