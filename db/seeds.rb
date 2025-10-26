@@ -286,35 +286,36 @@ if Rails.env.development?
       time = base_time - days_ago.days - rand(0..23).hours
 
       case template[:type]
-      when "feed_refresh", "feed_refresh_error"
+      when "feed_refresh"
         feed = feeds_array.sample
         next unless feed
 
-        if template[:type] == "feed_refresh"
-          events << {
-            type: template[:type],
-            level: template[:level],
-            subject_type: "Feed",
-            subject_id: feed.id,
-            user_id: feed.user_id,
-            message: "Feed refresh completed for #{feed.name}",
-            metadata: { stats: { new_entries: rand(0..5), new_posts: rand(0..3) } },
-            created_at: time,
-            updated_at: time
-          }
-        else
-          events << {
-            type: template[:type],
-            level: template[:level],
-            subject_type: "Feed",
-            subject_id: feed.id,
-            user_id: feed.user_id,
-            message: "Feed refresh failed at #{['load_feed_contents', 'process_feed_contents', 'publish_posts'].sample}: #{['Connection timeout', 'Invalid XML', 'Rate limit exceeded'].sample}",
-            metadata: { error: { class: "StandardError", message: "Error occurred" } },
-            created_at: time,
-            updated_at: time
-          }
-        end
+        events << {
+          type: template[:type],
+          level: template[:level],
+          subject_type: "Feed",
+          subject_id: feed.id,
+          user_id: feed.user_id,
+          message: "Feed refresh completed for #{feed.name}",
+          metadata: { stats: { new_entries: rand(0..5), new_posts: rand(0..3) } },
+          created_at: time,
+          updated_at: time
+        }
+      when "feed_refresh_error"
+        feed = feeds_array.sample
+        next unless feed
+
+        events << {
+          type: template[:type],
+          level: template[:level],
+          subject_type: "Feed",
+          subject_id: feed.id,
+          user_id: feed.user_id,
+          message: "Feed refresh failed at #{['load_feed_contents', 'process_feed_contents', 'publish_posts'].sample}: #{['Connection timeout', 'Invalid XML', 'Rate limit exceeded'].sample}",
+          metadata: { error: { class: "StandardError", message: "Error occurred" } },
+          created_at: time,
+          updated_at: time
+        }
       else
         # Email events
         events << {
