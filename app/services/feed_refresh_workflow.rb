@@ -26,13 +26,7 @@ class FeedRefreshWorkflow
 
   def on_error(error)
     record_error_stats(error, current_step: current_step)
-
-    FeedRefreshEvent.create_error(
-      feed: feed,
-      error: error,
-      stage: current_step.to_s,
-      stats: stats
-    )
+    create_feed_refresh_error_event(error)
   end
 
   def initialize_workflow(*)
@@ -169,8 +163,7 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
-
-    FeedRefreshEvent.create_stats(feed: feed, stats: stats)
+    create_feed_refresh_stats_event
 
     # Record daily metrics (sparse data - only if there's activity)
     posts_count = posts.count { |p| p.enqueued? || p.published? }
@@ -193,5 +186,35 @@ class FeedRefreshWorkflow
     duration = step_durations[step_name].to_f
     stats_key = "#{step_name}_duration".to_sym
     record_stats(stats_key => duration)
+  end
+
+  def create_feed_refresh_stats_event
+    Event.create!(
+      type: "FeedRefresh",
+      level: :info,
+      subject: feed,
+      user: feed.user,
+      message: "Feed refresh completed for #{feed.name}",
+      metadata: { stats: stats }
+    )
+  end
+
+  def create_feed_refresh_error_event(error)
+    Event.create!(
+      type: "FeedRefreshError",
+      level: :error,
+      subject: feed,
+      user: feed.user,
+      message: "Feed refresh failed at #{current_step}: #{error.message}",
+      metadata: {
+        stats: stats,
+        error: {
+          class: error.class.name,
+          message: error.message,
+          stage: current_step.to_s,
+          backtrace: error.backtrace
+        }
+      }
+    )
   end
 end

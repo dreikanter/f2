@@ -62,12 +62,12 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "bounced", user.email_deactivation_reason
   end
 
-  test "email.bounced should create EmailBouncedEvent" do
-    assert_difference("Event.where(type: 'EmailBouncedEvent').count", 1) do
+  test "email.bounced should create EmailBounced event" do
+    assert_difference("Event.where(type: 'EmailBounced').count", 1) do
       post_webhook valid_webhook_payload(type: "email.bounced", data: { to: [user.email_address] })
     end
 
-    event = Event.where(type: "EmailBouncedEvent").last
+    event = Event.where(type: "EmailBounced").last
     assert_equal user, event.user
     assert_equal user, event.subject
   end
@@ -91,8 +91,8 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "complained", user.email_deactivation_reason
   end
 
-  test "email.complained should create EmailComplainedEvent" do
-    assert_difference("Event.where(type: 'EmailComplainedEvent').count", 1) do
+  test "email.complained should create EmailComplained event" do
+    assert_difference("Event.where(type: 'EmailComplained').count", 1) do
       post_webhook valid_webhook_payload(type: "email.complained", data: { to: [user.email_address] })
     end
   end
@@ -105,38 +105,38 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "failed", user.email_deactivation_reason
   end
 
-  test "email.failed should create EmailFailedEvent" do
-    assert_difference("Event.where(type: 'EmailFailedEvent').count", 1) do
+  test "email.failed should create EmailFailed event" do
+    assert_difference("Event.where(type: 'EmailFailed').count", 1) do
       post_webhook valid_webhook_payload(type: "email.failed", data: { to: [user.email_address] })
     end
   end
 
-  test "email.sent should create EmailSentEvent" do
-    assert_difference("Event.where(type: 'EmailSentEvent').count", 1) do
+  test "email.sent should create EmailSent event" do
+    assert_difference("Event.where(type: 'EmailSent').count", 1) do
       post_webhook valid_webhook_payload(type: "email.sent", data: { to: [user.email_address] })
     end
   end
 
-  test "email.delivered should create EmailDeliveredEvent" do
-    assert_difference("Event.where(type: 'EmailDeliveredEvent').count", 1) do
+  test "email.delivered should create EmailDelivered event" do
+    assert_difference("Event.where(type: 'EmailDelivered').count", 1) do
       post_webhook valid_webhook_payload(type: "email.delivered", data: { to: [user.email_address] })
     end
   end
 
-  test "email.delivery_delayed should create EmailDelayedEvent" do
-    assert_difference("Event.where(type: 'EmailDelayedEvent').count", 1) do
+  test "email.delivery_delayed should create EmailDelayed event" do
+    assert_difference("Event.where(type: 'EmailDelayed').count", 1) do
       post_webhook valid_webhook_payload(type: "email.delivery_delayed", data: { to: [user.email_address] })
     end
   end
 
-  test "email.opened should create EmailOpenedEvent" do
-    assert_difference("Event.where(type: 'EmailOpenedEvent').count", 1) do
+  test "email.opened should create EmailOpened event" do
+    assert_difference("Event.where(type: 'EmailOpened').count", 1) do
       post_webhook valid_webhook_payload(type: "email.opened", data: { to: [user.email_address] })
     end
   end
 
-  test "email.clicked should create EmailClickedEvent" do
-    assert_difference("Event.where(type: 'EmailClickedEvent').count", 1) do
+  test "email.clicked should create EmailClicked event" do
+    assert_difference("Event.where(type: 'EmailClicked').count", 1) do
       post_webhook valid_webhook_payload(type: "email.clicked", data: { to: [user.email_address] })
     end
   end

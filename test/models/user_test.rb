@@ -245,14 +245,28 @@ class UserTest < ActiveSupport::TestCase
   test "#can_change_email? returns true when last email change was more than 24 hours ago" do
     user = create(:user)
     travel_to 25.hours.ago do
-      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+      Event.create!(
+        type: "EmailChanged",
+        level: :info,
+        subject: user,
+        user: user,
+        message: "Email changed from old@example.com to #{user.email_address}",
+        metadata: { old_email: "old@example.com", new_email: user.email_address }
+      )
     end
     assert user.can_change_email?
   end
 
   test "#can_change_email? returns false when last email change was less than 24 hours ago" do
     user = create(:user)
-    EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    Event.create!(
+      type: "EmailChanged",
+      level: :info,
+      subject: user,
+      user: user,
+      message: "Email changed from old@example.com to #{user.email_address}",
+      metadata: { old_email: "old@example.com", new_email: user.email_address }
+    )
     assert_not user.can_change_email?
   end
 
@@ -266,21 +280,42 @@ class UserTest < ActiveSupport::TestCase
     time_elapsed = User::EMAIL_CHANGE_COOLDOWN / 2
 
     travel_to time_elapsed.ago do
-      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+      Event.create!(
+        type: "EmailChanged",
+        level: :info,
+        subject: user,
+        user: user,
+        message: "Email changed from old@example.com to #{user.email_address}",
+        metadata: { old_email: "old@example.com", new_email: user.email_address }
+      )
     end
 
     expected_remaining = User::EMAIL_CHANGE_COOLDOWN - time_elapsed
     assert_equal expected_remaining, user.time_until_email_change_allowed
   end
 
-  test "#last_email_change_event returns most recent EmailChangedEvent" do
+  test "#last_email_change_event returns most recent EmailChanged" do
     user = create(:user)
 
     old_event = travel_to((User::EMAIL_CHANGE_COOLDOWN * 2).ago) do
-      EmailChangedEvent.create(user: user, old_email: "old1@example.com", new_email: "old2@example.com")
+      Event.create!(
+        type: "EmailChanged",
+        level: :info,
+        subject: user,
+        user: user,
+        message: "Email changed from old1@example.com to old2@example.com",
+        metadata: { old_email: "old1@example.com", new_email: "old2@example.com" }
+      )
     end
 
-    recent_event = EmailChangedEvent.create(user: user, old_email: "old2@example.com", new_email: user.email_address)
+    recent_event = Event.create!(
+      type: "EmailChanged",
+      level: :info,
+      subject: user,
+      user: user,
+      message: "Email changed from old2@example.com to #{user.email_address}",
+      metadata: { old_email: "old2@example.com", new_email: user.email_address }
+    )
 
     assert_equal recent_event, user.last_email_change_event
   end

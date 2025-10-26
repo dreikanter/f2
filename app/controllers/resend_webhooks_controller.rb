@@ -3,28 +3,61 @@ class ResendWebhooksController < ApplicationController
   skip_before_action :verify_authenticity_token
   before_action :verify_signature!
 
-  def create
-    event_type = params[:type]
-    event = ResendWebhookEvent.new(params[:data])
+  EMAIL_EVENT_HANDLERS = {
+    "email.bounced" => {
+      action:     :handle_failure,
+      level:      :warning,
+      reason:     "bounced",
+      event_type: "EmailBounced"
+    },
+    "email.complained" => {
+      action:     :handle_failure,
+      level:      :warning,
+      reason:     "complained",
+      event_type: "EmailComplained"
+    },
+    "email.failed" => {
+      action:     :handle_failure,
+      level:      :error,
+      reason:     "failed",
+      event_type: "EmailFailed"
+    },
+    "email.sent" => {
+      action:     :track_only,
+      level:      :info,
+      event_type: "EmailSent"
+    },
+    "email.delivered" => {
+      action:     :track_only,
+      level:      :info,
+      event_type: "EmailDelivered"
+    },
+    "email.delivery_delayed" => {
+      action:     :track_only,
+      level:      :info,
+      event_type: "EmailDelayed"
+    },
+    "email.opened" => {
+      action:     :track_only,
+      level:      :info,
+      event_type: "EmailOpened"
+    },
+    "email.clicked" => {
+      action:     :track_only,
+      level:      :info,
+      event_type: "EmailClicked"
+    }
+  }.freeze
 
-    case event_type
-    when "email.bounced"
-      handle_bounced(event)
-    when "email.complained"
-      handle_complained(event)
-    when "email.failed"
-      handle_failed(event)
-    when "email.sent"
-      handle_sent(event)
-    when "email.delivered"
-      handle_delivered(event)
-    when "email.delivery_delayed"
-      handle_delayed(event)
-    when "email.opened"
-      handle_opened(event)
-    when "email.clicked"
-      handle_clicked(event)
-    end
+  def create
+    handler = EMAIL_EVENT_HANDLERS[params[:type]]
+    return head :ok unless handler
+
+    event = ResendWebhookEvent.new(params[:data])
+    user, matched_field = find_user_by_email(event.recipient_email)
+
+    handle_email_failure(user, matched_field, handler[:reason]) if handler[:action] == :handle_failure && user
+    create_email_event(params[:type], user, event.raw_data, handler[:level], handler[:event_type]) if user
 
     head :ok
   end
@@ -49,53 +82,17 @@ class ResendWebhooksController < ApplicationController
     head :unauthorized
   end
 
-  def handle_bounced(event)
-    user, matched_field = find_user_by_email(event.recipient_email)
-    return unless user
+  def create_email_event(webhook_type, user, data, level, event_type)
+    action = webhook_type.sub("email.", "").tr("_", " ")
 
-    handle_email_failure(user, matched_field, "bounced")
-    EmailBouncedEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_complained(event)
-    user, matched_field = find_user_by_email(event.recipient_email)
-    return unless user
-
-    handle_email_failure(user, matched_field, "complained")
-    EmailComplainedEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_failed(event)
-    user, matched_field = find_user_by_email(event.recipient_email)
-    return unless user
-
-    handle_email_failure(user, matched_field, "failed")
-    EmailFailedEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_sent(event)
-    user, _matched_field = find_user_by_email(event.recipient_email)
-    EmailSentEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_delivered(event)
-    user, _matched_field = find_user_by_email(event.recipient_email)
-    EmailDeliveredEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_delayed(event)
-    user, _matched_field = find_user_by_email(event.recipient_email)
-    EmailDelayedEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_opened(event)
-    user, _matched_field = find_user_by_email(event.recipient_email)
-    EmailOpenedEvent.create(user: user, data: event.raw_data)
-  end
-
-  def handle_clicked(event)
-    user, _matched_field = find_user_by_email(event.recipient_email)
-    EmailClickedEvent.create(user: user, data: event.raw_data)
+    Event.create!(
+      type: event_type,
+      level: level,
+      subject: user,
+      user: user,
+      message: "Email #{action} for #{user.email_address}",
+      metadata: data
+    )
   end
 
   def find_user_by_email(email)
