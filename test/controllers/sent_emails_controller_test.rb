@@ -81,6 +81,17 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "pre", text: /Text version/
   end
 
+  test "should handle subject with special characters" do
+    uuid = SecureRandom.uuid
+    filename = "20250101_120000_123_#{uuid}.txt"
+    id = filename.delete_suffix(".txt")
+    create_test_email(filename, "Important: Reset your password", "Email body")
+
+    get sent_email_path(id: id)
+    assert_response :success
+    assert_select "h4", text: "Important: Reset your password"
+  end
+
   # Note: Routes are only defined in development/test environments
   # via the conditional in config/routes.rb
 
@@ -90,37 +101,25 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     # Determine if multipart based on body content
     multipart = body.is_a?(Hash)
 
+    # Create YAML frontmatter using to_yaml (same as FileDelivery)
+    frontmatter = {
+      "message_id" => "<test_#{SecureRandom.hex(8)}@example.com>",
+      "from" => "sender@example.com",
+      "to" => "recipient@example.com",
+      "subject" => subject,
+      "date" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "multipart" => multipart
+    }
+
+    # Build body content
     if multipart
-      content = <<~EMAIL
-        ---
-        message_id: <test_#{SecureRandom.hex(8)}@example.com>
-        from: sender@example.com
-        to: recipient@example.com
-        subject: #{subject}
-        date: 2025-01-01T12:00:00+00:00
-        multipart: true
-        ---
-
-        TEXT:
-        #{body[:text]}
-
-        HTML:
-        #{body[:html]}
-      EMAIL
+      body_content = "TEXT:\n#{body[:text]}\n\nHTML:\n#{body[:html]}"
     else
-      content = <<~EMAIL
-        ---
-        message_id: <test_#{SecureRandom.hex(8)}@example.com>
-        from: sender@example.com
-        to: recipient@example.com
-        subject: #{subject}
-        date: 2025-01-01T12:00:00+00:00
-        multipart: false
-        ---
-
-        #{body}
-      EMAIL
+      body_content = body
     end
+
+    # Combine frontmatter and body (same format as FileDelivery)
+    content = frontmatter.to_yaml + "---\n\n" + body_content
 
     File.write(emails_dir.join(filename), content)
   end

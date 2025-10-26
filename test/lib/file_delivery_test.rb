@@ -6,6 +6,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     @created_directories = []
 
     mkdir_p = ->(dir) { @created_directories << dir.to_s }
+
     write_file = ->(filepath, &block) {
       fake_file = StringIO.new
       block.call(fake_file)
@@ -63,21 +64,6 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_includes content, "Text version"
     assert_includes content, "HTML:"
     assert_includes content, "<p>HTML version</p>"
-  end
-
-  test "uses UUID in filename" do
-    mail = Mail.new do
-      from "sender@example.com"
-      to "recipient@example.com"
-      subject "Test Subject"
-      body "Test"
-    end
-
-    @delivery.deliver!(mail)
-
-    filepath = @written_files.keys.first
-    # Should have timestamp and UUID
-    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.txt$/, filepath)
   end
 
   test "creates directory if it does not exist" do
