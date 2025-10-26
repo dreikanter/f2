@@ -108,6 +108,39 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h4", text: "Important: Reset your password"
   end
 
+  test "should handle corrupted YAML file" do
+    uuid = SecureRandom.uuid
+    id = "20250101_120000_123_#{uuid}"
+
+    # Write invalid YAML
+    File.write(emails_dir.join("#{id}.yml"), "invalid: yaml: content: [")
+    File.write(emails_dir.join("#{id}.txt"), "Text content")
+
+    get sent_email_path(id: id)
+    assert_redirected_to sent_emails_path
+    assert_equal "Failed to load email", flash[:alert]
+  end
+
+  test "should handle missing text file gracefully" do
+    uuid = SecureRandom.uuid
+    id = "20250101_120000_123_#{uuid}"
+
+    # Write metadata but no text file
+    metadata = {
+      "message_id" => "<test@example.com>",
+      "from" => "sender@example.com",
+      "to" => "recipient@example.com",
+      "subject" => "Test",
+      "date" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "multipart" => false
+    }
+    File.write(emails_dir.join("#{id}.yml"), metadata.to_yaml)
+
+    get sent_email_path(id: id)
+    assert_response :success
+    assert_select "h4", text: "Test"
+  end
+
   # Note: Routes are only defined in development/test environments
   # via the conditional in config/routes.rb
 

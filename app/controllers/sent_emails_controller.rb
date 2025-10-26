@@ -23,6 +23,12 @@ class SentEmailsController < ApplicationController
     end
 
     @email = load_email_from_files(yml_path, txt_path, html_path)
+
+    unless @email
+      redirect_to sent_emails_path, alert: "Failed to load email"
+      return
+    end
+
     @filename = params[:id]
   end
 
@@ -94,13 +100,28 @@ class SentEmailsController < ApplicationController
 
   def load_email_from_files(yml_path, txt_path, html_path)
     # Load metadata from YAML file
-    metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+    begin
+      metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+    rescue Psych::SyntaxError, Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email metadata from #{yml_path}: #{e.message}"
+      return nil
+    end
 
     # Load text content
-    text_content = File.exist?(txt_path) ? File.read(txt_path) : ""
+    begin
+      text_content = File.exist?(txt_path) ? File.read(txt_path) : ""
+    rescue Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email text from #{txt_path}: #{e.message}"
+      text_content = ""
+    end
 
     # Load HTML content if it exists
-    html_content = File.exist?(html_path) ? File.read(html_path) : nil
+    begin
+      html_content = File.exist?(html_path) ? File.read(html_path) : nil
+    rescue Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email HTML from #{html_path}: #{e.message}"
+      html_content = nil
+    end
 
     {
       message_id: metadata["message_id"],
