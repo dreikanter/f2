@@ -1,6 +1,5 @@
 class SentEmailsController < ApplicationController
   allow_unauthenticated_access
-  before_action :ensure_development_mode
 
   def index
     @emails = load_emails.sort_by { |e| e[:timestamp] }.reverse
@@ -26,12 +25,6 @@ class SentEmailsController < ApplicationController
   end
 
   private
-
-  def ensure_development_mode
-    unless Rails.env.development? || Rails.env.test?
-      render plain: "Not available in #{Rails.env} mode", status: :forbidden
-    end
-  end
 
   def emails_dir
     Rails.root.join("tmp", "sent_emails")

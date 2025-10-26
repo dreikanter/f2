@@ -81,8 +81,8 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "pre", text: /Text version/
   end
 
-  # Note: Routes are only defined in development/test environments,
-  # enforced by the conditional in config/routes.rb
+  # Note: Routes are only defined in development/test environments
+  # via the conditional in config/routes.rb
 
   private
 
