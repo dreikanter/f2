@@ -50,6 +50,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "code", "TestEvent"
   end
 
+  # TBD: Reduce the amount of test records by changing page size
   test "should paginate events" do
     login_as(admin_user)
 
@@ -151,6 +152,56 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".pagination a[href*='filter']", minimum: 1
+  end
+
+  test "should filter events by multiple types" do
+    login_as(admin_user)
+
+    event1 = create(:event, type: "TypeA", message: "Event A")
+    event2 = create(:event, type: "TypeB", message: "Event B")
+    event3 = create(:event, type: "TypeC", message: "Event C")
+    event4 = create(:event, type: "TypeA", message: "Another A")
+
+    get admin_events_path, params: { filter: { type: %w[TypeA TypeB] } }
+
+    assert_response :success
+    assert_select "tbody tr", count: 3
+    assert_select "td", text: "TypeA", count: 2
+    assert_select "td", text: "TypeB", count: 1
+    assert_select "td", text: "TypeC", count: 0
+  end
+
+  test "should filter events by user_id" do
+    login_as(admin_user)
+
+    user1 = create(:user)
+    user2 = create(:user)
+
+    event1 = create(:event, type: "Event1", user: user1)
+    event2 = create(:event, type: "Event2", user: user2)
+    event3 = create(:event, type: "Event3", user: user1)
+
+    get admin_events_path, params: { filter: { user_id: user1.id } }
+
+    assert_response :success
+    assert_select "tbody tr", count: 2
+  end
+
+  test "should filter events by user_id and multiple types" do
+    login_as(admin_user)
+
+    user1 = create(:user)
+    user2 = create(:user)
+
+    event1 = create(:event, type: "EmailBouncedEvent", user: user1)
+    event2 = create(:event, type: "EmailFailedEvent", user: user1)
+    event3 = create(:event, type: "EmailBouncedEvent", user: user2)
+    event4 = create(:event, type: "OtherEvent", user: user1)
+
+    get admin_events_path, params: { filter: { user_id: user1.id, type: %w[EmailBouncedEvent EmailFailedEvent] } }
+
+    assert_response :success
+    assert_select "tbody tr", count: 2
   end
 
   private
