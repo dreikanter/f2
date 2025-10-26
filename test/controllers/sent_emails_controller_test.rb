@@ -2,22 +2,20 @@ require "test_helper"
 
 class SentEmailsControllerTest < ActionDispatch::IntegrationTest
   def emails_dir
-    Rails.root.join("tmp", "test_sent_emails")
+    Rails.root.join("tmp", "sent_emails")
   end
 
   setup do
+    # Clean and create emails directory
+    FileUtils.rm_rf(emails_dir)
     FileUtils.mkdir_p(emails_dir)
 
     # Reload routes to include dev routes in test env
     Rails.application.reload_routes!
-
-    # Use test directory via environment variable
-    ENV["DEV_MAILER_DIR"] = "test_sent_emails"
   end
 
   teardown do
     FileUtils.rm_rf(emails_dir)
-    ENV.delete("DEV_MAILER_DIR")
   end
 
   test "should get index with no emails" do

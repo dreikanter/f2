@@ -34,8 +34,7 @@ class SentEmailsController < ApplicationController
   end
 
   def emails_dir
-    dir = ENV["DEV_MAILER_DIR"] || "sent_emails"
-    Rails.root.join("tmp", dir)
+    Rails.root.join("tmp", "sent_emails")
   end
 
   def load_emails
