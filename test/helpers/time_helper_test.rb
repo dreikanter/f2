@@ -2,8 +2,8 @@ require "test_helper"
 
 class TimeHelperTest < ActiveSupport::TestCase
   include TimeHelper
-  include ActionView::Helpers::DateHelper
   include ActionView::Helpers::TagHelper
+  include ActionView::Helpers::TextHelper
   include ActiveSupport::Testing::TimeHelpers
 
   test "short_time_ago returns nil for nil input" do
@@ -79,7 +79,7 @@ class TimeHelperTest < ActiveSupport::TestCase
 
     travel_to Time.zone.parse("2025-01-15 16:45:30") do
       result = time_ago_tag(time)
-      expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">about 1 hour ago</time>'
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">1 hour ago</time>'
       assert_equal expected, result
     end
   end
@@ -93,7 +93,7 @@ class TimeHelperTest < ActiveSupport::TestCase
 
     travel_to Time.zone.parse("2025-01-15 16:45:30") do
       result = long_time_tag(time)
-      expected = '<time datetime="2025-01-15T15:45:30Z" title="about 1 hour ago">15 Jan 2025, 15:45</time>'
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="1 hour ago">15 Jan 2025, 15:45</time>'
       assert_equal expected, result
     end
   end
@@ -109,6 +109,49 @@ class TimeHelperTest < ActiveSupport::TestCase
       result = short_time_ago_tag(time)
       expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">2h</time>'
       assert_equal expected, result
+    end
+  end
+
+  test "time_distance returns nil for nil input" do
+    assert_nil time_distance(nil)
+  end
+
+  test "time_distance returns less than a minute for very short durations" do
+    assert_equal "less than a minute", time_distance(30)
+  end
+
+  test "time_distance returns singular minute" do
+    assert_equal "1 minute", time_distance(90)
+  end
+
+  test "time_distance returns plural minutes" do
+    assert_equal "15 minutes", time_distance(15 * 60)
+  end
+
+  test "time_distance returns singular hour" do
+    assert_equal "1 hour", time_distance(90 * 60)
+  end
+
+  test "time_distance returns plural hours" do
+    assert_equal "11 hours", time_distance(11 * 3600)
+  end
+
+  test "time_distance returns singular day" do
+    assert_equal "1 day", time_distance(36 * 3600)
+  end
+
+  test "time_distance returns plural days" do
+    assert_equal "7 days", time_distance(7 * 86400)
+  end
+
+  test "time_ago returns nil for nil input" do
+    assert_nil time_ago(nil)
+  end
+
+  test "time_ago returns time distance from now" do
+    travel_to Time.zone.parse("2025-01-15 15:45:30") do
+      time = 2.hours.ago
+      assert_equal "2 hours", time_ago(time)
     end
   end
 end
