@@ -59,7 +59,7 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to admin_user_path(user)
-    assert_equal "Cannot send password reset email. User's email is deactivated.", flash[:alert]
+    assert_equal "Cannot send password reset email. Previous emails to this address were bounced by the mail server.", flash[:alert]
   end
 
   private
