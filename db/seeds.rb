@@ -317,14 +317,13 @@ if Rails.env.development?
           updated_at: time
         }
       else
-        # Email events
         events << {
           type: template[:type],
           level: template[:level],
           subject_type: "User",
           subject_id: user.id,
           user_id: user.id,
-          message: "#{template[:type].gsub(/([A-Z])/, ' \1').strip} for #{user.email_address}",
+          message: "Sample #{template[:type]} event",
           metadata: {},
           created_at: time,
           updated_at: time
