@@ -20,6 +20,31 @@ module TimeHelper
     end
   end
 
+  def time_distance(seconds)
+    return nil unless seconds
+
+    minutes = (seconds / 60).round
+    hours = (seconds / 3600).round
+    days = (seconds / 86400).round
+
+    if seconds < 60
+      "less than a minute"
+    elsif seconds < 3600
+      pluralize(minutes, "minute")
+    elsif seconds < 86400
+      pluralize(hours, "hour")
+    else
+      pluralize(days, "day")
+    end
+  end
+
+  def time_ago(time)
+    return nil unless time
+
+    seconds = Time.current - time
+    time_distance(seconds)
+  end
+
   def long_time_format(time)
     return nil unless time
 
@@ -31,7 +56,7 @@ module TimeHelper
 
     content_tag(
       :time,
-      "#{time_ago_in_words(time)} ago",
+      "#{time_ago(time)} ago",
       datetime: time.rfc3339,
       title: long_time_format(time)
     )
@@ -44,7 +69,7 @@ module TimeHelper
       :time,
       long_time_format(time),
       datetime: time.rfc3339,
-      title: "#{time_ago_in_words(time)} ago"
+      title: "#{time_ago(time)} ago"
     )
   end
 

@@ -1,7 +1,4 @@
 class Settings::EmailUpdatesController < ApplicationController
-  # TBD: Drop this dependency
-  include ActionView::Helpers::DateHelper
-
   def edit
     @user = Current.user
   end
