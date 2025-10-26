@@ -172,11 +172,14 @@ class UserTest < ActiveSupport::TestCase
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 3.days.ago)
-    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago)
-    create(:post, feed: feed, feed_entry: entry3, status: :draft, published_at: Time.current)
 
-    assert_in_delta 1.day.ago.to_i, user.most_recent_post_published_at.to_i, 1
+    freeze_time do
+      create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 3.days.ago)
+      create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago)
+      create(:post, feed: feed, feed_entry: entry3, status: :draft, published_at: Time.current)
+
+      assert_in_delta 1.day.ago.to_i, user.most_recent_post_published_at.to_i, 1
+    end
   end
 
   test "#most_recent_post_published_at returns nil when no published posts" do
@@ -194,11 +197,14 @@ class UserTest < ActiveSupport::TestCase
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
-    create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
-    create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
 
-    assert_equal 0.3, user.average_posts_per_day_last_week
+    freeze_time do
+      create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
+      create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
+      create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
+
+      assert_equal 0.3, user.average_posts_per_day_last_week
+    end
   end
 
   test "#average_posts_per_day_last_week returns 0.0 when no posts" do
@@ -250,13 +256,17 @@ class UserTest < ActiveSupport::TestCase
 
   test "#can_change_email? returns false when last email change was less than 24 hours ago" do
     user = create(:user)
-    EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
-    assert_not user.can_change_email?
+    freeze_time do
+      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+      assert_not user.can_change_email?
+    end
   end
 
   test "#time_until_email_change_allowed returns 0 when user can change email" do
     user = create(:user)
-    assert_equal 0, user.time_until_email_change_allowed
+    freeze_time do
+      assert_equal 0, user.time_until_email_change_allowed
+    end
   end
 
   test "#time_until_email_change_allowed returns remaining time when rate limited" do
