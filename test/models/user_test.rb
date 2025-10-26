@@ -271,18 +271,21 @@ class UserTest < ActiveSupport::TestCase
 
   test "#time_until_email_change_allowed returns remaining time when rate limited" do
     user = create(:user)
+
     travel_to 2.hours.ago do
       EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
     end
+
     assert_in_delta 22.hours, user.time_until_email_change_allowed, 1.minute
   end
 
   test "#last_email_change_event returns most recent EmailChangedEvent" do
     user = create(:user)
-    old_event = nil
-    travel_to 2.days.ago do
-      old_event = EmailChangedEvent.create(user: user, old_email: "old1@example.com", new_email: "old2@example.com")
+
+    old_event = travel_to 2.days.ago do
+      EmailChangedEvent.create(user: user, old_email: "old1@example.com", new_email: "old2@example.com")
     end
+
     recent_event = EmailChangedEvent.create(user: user, old_email: "old2@example.com", new_email: user.email_address)
 
     assert_equal recent_event, user.last_email_change_event

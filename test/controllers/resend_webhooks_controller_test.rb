@@ -4,20 +4,6 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   # Generate a valid base64-encoded secret for testing
   WEBHOOK_SECRET = "whsec_#{Base64.strict_encode64('test_secret_key_1234567890')}"
 
-  def setup
-    # Stub the credentials method to return our test secret
-    credentials = Rails.application.credentials
-    credentials.instance_variable_set(:@test_resend_secret, WEBHOOK_SECRET)
-    def credentials.resend_signing_secret
-      @test_resend_secret
-    end
-  end
-
-  def teardown
-    # Reset credentials to use the original method
-    Rails.application.credentials.singleton_class.send(:remove_method, :resend_signing_secret) rescue nil
-  end
-
   def user
     @user ||= create(:user, email_address: "test@example.com")
   end
@@ -31,26 +17,28 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   def post_webhook(payload, headers: {})
-    payload_json = payload.to_json
-    timestamp = Time.now.to_i
-    msg_id = "msg_#{SecureRandom.hex(12)}"
+    Rails.application.credentials.stub(:resend_signing_secret, WEBHOOK_SECRET) do
+      payload_json = payload.to_json
+      timestamp = Time.now.to_i
+      msg_id = "msg_#{SecureRandom.hex(12)}"
 
-    # Use Svix library to sign the payload properly
-    wh = Svix::Webhook.new(WEBHOOK_SECRET)
-    signature = wh.sign(msg_id, timestamp, payload_json)
+      # Use Svix library to sign the payload properly
+      wh = Svix::Webhook.new(WEBHOOK_SECRET)
+      signature = wh.sign(msg_id, timestamp, payload_json)
 
-    webhook_headers = {
-      "svix-id" => msg_id,
-      "svix-timestamp" => timestamp.to_s,
-      "svix-signature" => signature,
-      "Content-Type" => "application/json"
-    }.merge(headers)
+      webhook_headers = {
+        "svix-id" => msg_id,
+        "svix-timestamp" => timestamp.to_s,
+        "svix-signature" => signature,
+        "Content-Type" => "application/json"
+      }.merge(headers)
 
-    post resend_webhooks_url,
-         params: payload,
-         env: { "RAW_POST_DATA" => payload_json },
-         headers: webhook_headers,
-         as: :json
+      post resend_webhooks_url,
+           params: payload,
+           env: { "RAW_POST_DATA" => payload_json },
+           headers: webhook_headers,
+           as: :json
+    end
   end
 
   test "should reject request without valid signature" do
