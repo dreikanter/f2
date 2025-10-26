@@ -146,3 +146,19 @@ def feed
   @feed ||= create(:feed, user: user)
 end
 ```
+
+### Test naming convention
+
+Use the format `test "#method should ..."` for unit tests:
+
+```ruby
+# Bad:
+test "time_ago returns nil for nil input" do
+  # ...
+end
+
+# Good:
+test "#time_ago should return nil for nil input" do
+  # ...
+end
+```

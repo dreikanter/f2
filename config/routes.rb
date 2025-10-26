@@ -29,6 +29,7 @@ Rails.application.routes.draw do
       resource :password_reset, only: [:show, :create]
       resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
       resource :available_invites, only: :update, controller: "available_invites"
+      resource :email_reactivation, only: :create
     end
 
     resources :events, only: [:index, :show]
@@ -47,6 +48,8 @@ Rails.application.routes.draw do
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
+
+  resource :resend_webhooks, only: :create, path: "resend"
 
   root "landing#index"
 end

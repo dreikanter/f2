@@ -45,4 +45,36 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to edit_settings_email_update_path
     assert_equal "Please enter a valid new email address.", flash[:alert]
   end
+
+  test "should allow email change when no recent email change event exists" do
+    sign_in_user
+
+    assert user.can_change_email?
+
+    patch settings_email_update_url, params: { user: { email_address: "new@example.com" } }
+    assert_redirected_to settings_path
+  end
+
+  test "should reject email change when rate limited" do
+    sign_in_user
+    EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+
+    assert_not user.can_change_email?
+
+    patch settings_email_update_url, params: { user: { email_address: "new@example.com" } }
+    assert_redirected_to edit_settings_email_update_path
+    assert_match /You can change your email again in/, flash[:alert]
+  end
+
+  test "should allow email change after rate limit expires" do
+    sign_in_user
+    travel_to 25.hours.ago do
+      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    end
+
+    assert user.can_change_email?
+
+    patch settings_email_update_url, params: { user: { email_address: "new@example.com" } }
+    assert_redirected_to settings_path
+  end
 end

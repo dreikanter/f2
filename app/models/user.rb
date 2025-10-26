@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   PASSWORD_RESET_TTL = 15.minutes
   EMAIL_CONFIRMATION_TTL = 24.hours
+  EMAIL_CHANGE_COOLDOWN = 10.minutes
   PASSWORD_MIN_LENGTH = 10
   PASSWORD_MAX_LENGTH = 72
 
@@ -54,6 +55,38 @@ class User < ApplicationRecord
 
   def unsuspend!
     update!(state: :active, suspended_at: nil)
+  end
+
+  def deactivate_email!(reason:)
+    update!(
+      email_deactivated_at: Time.current,
+      email_deactivation_reason: reason
+    )
+  end
+
+  def email_deactivated?
+    email_deactivated_at.present?
+  end
+
+  def reactivate_email!
+    update!(
+      email_deactivated_at: nil,
+      email_deactivation_reason: nil
+    )
+  end
+
+  def can_change_email?
+    last_email_change_event.nil? || last_email_change_event.created_at < EMAIL_CHANGE_COOLDOWN.ago
+  end
+
+  def time_until_email_change_allowed
+    return 0 if can_change_email?
+
+    EMAIL_CHANGE_COOLDOWN - (Time.current - last_email_change_event.created_at)
+  end
+
+  def last_email_change_event
+    @last_email_change_event ||= Event.where(user: self, type: "EmailChangedEvent").order(created_at: :desc).first
   end
 
   # Returns the count of all feeds created by this user

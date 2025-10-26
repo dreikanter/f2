@@ -4,7 +4,7 @@ class PasswordsController < ApplicationController
 
   def create
     if user = User.find_by(email_address: params[:email_address], state: :active)
-      PasswordsMailer.reset(user).deliver_later
+      PasswordsMailer.reset(user).deliver_later unless user.email_deactivated?
     end
 
     redirect_to new_session_path, notice: "If an active account exists for this email, you'll receive password reset instructions shortly."

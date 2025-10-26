@@ -1,6 +1,10 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
+  setup { freeze_time }
+
+  teardown { travel_back }
+
   test "should be valid with email and password" do
     user = build(:user)
     assert user.valid?
@@ -47,11 +51,9 @@ class UserTest < ActiveSupport::TestCase
 
   test "#suspend! should change state to suspended and set suspended_at" do
     user = create(:user)
-    freeze_time do
-      user.suspend!
-      assert user.suspended?
-      assert_equal Time.current, user.suspended_at
-    end
+    user.suspend!
+    assert user.suspended?
+    assert_equal Time.current, user.suspended_at
   end
 
   test "#unsuspend! should change state to active and clear suspended_at" do
@@ -172,6 +174,7 @@ class UserTest < ActiveSupport::TestCase
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
+
     create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 3.days.ago)
     create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago)
     create(:post, feed: feed, feed_entry: entry3, status: :draft, published_at: Time.current)
@@ -194,6 +197,7 @@ class UserTest < ActiveSupport::TestCase
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
+
     create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
     create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
     create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
@@ -205,5 +209,79 @@ class UserTest < ActiveSupport::TestCase
     user = create(:user)
 
     assert_equal 0.0, user.average_posts_per_day_last_week
+  end
+
+  test "#deactivate_email! should set email_deactivated_at and reason" do
+    user = create(:user)
+    user.deactivate_email!(reason: "bounced")
+    assert_equal Time.current, user.email_deactivated_at
+    assert_equal "bounced", user.email_deactivation_reason
+  end
+
+  test "#email_deactivated? returns true when email_deactivated_at is present" do
+    user = create(:user)
+    user.deactivate_email!(reason: "bounced")
+    assert user.email_deactivated?
+  end
+
+  test "#email_deactivated? returns false when email_deactivated_at is nil" do
+    user = create(:user)
+    assert_not user.email_deactivated?
+  end
+
+  test "#reactivate_email! should clear email_deactivated_at and reason" do
+    user = create(:user)
+    user.deactivate_email!(reason: "bounced")
+    user.reactivate_email!
+    assert_nil user.email_deactivated_at
+    assert_nil user.email_deactivation_reason
+  end
+
+  test "#can_change_email? returns true when no email change events exist" do
+    user = create(:user)
+    assert user.can_change_email?
+  end
+
+  test "#can_change_email? returns true when last email change was more than 24 hours ago" do
+    user = create(:user)
+    travel_to 25.hours.ago do
+      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    end
+    assert user.can_change_email?
+  end
+
+  test "#can_change_email? returns false when last email change was less than 24 hours ago" do
+    user = create(:user)
+    EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    assert_not user.can_change_email?
+  end
+
+  test "#time_until_email_change_allowed returns 0 when user can change email" do
+    user = create(:user)
+    assert_equal 0, user.time_until_email_change_allowed
+  end
+
+  test "#time_until_email_change_allowed returns remaining time when rate limited" do
+    user = create(:user)
+    time_elapsed = User::EMAIL_CHANGE_COOLDOWN / 2
+
+    travel_to time_elapsed.ago do
+      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    end
+
+    expected_remaining = User::EMAIL_CHANGE_COOLDOWN - time_elapsed
+    assert_equal expected_remaining, user.time_until_email_change_allowed
+  end
+
+  test "#last_email_change_event returns most recent EmailChangedEvent" do
+    user = create(:user)
+
+    old_event = travel_to((User::EMAIL_CHANGE_COOLDOWN * 2).ago) do
+      EmailChangedEvent.create(user: user, old_email: "old1@example.com", new_email: "old2@example.com")
+    end
+
+    recent_event = EmailChangedEvent.create(user: user, old_email: "old2@example.com", new_email: user.email_address)
+
+    assert_equal recent_event, user.last_email_change_event
   end
 end

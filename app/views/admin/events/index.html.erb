@@ -31,7 +31,7 @@
               <%= level_badge(event.level) %>
             </td>
             <td>
-              <%= link_to admin_events_path(filter: { type: event.type }),
+              <%= link_to admin_events_path(filter: { type: [event.type] }),
                           class: "text-decoration-none",
                           title: "Filter by type: #{event.type}" do %>
                 <code><%= event.type %></code>

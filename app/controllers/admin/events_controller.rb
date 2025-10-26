@@ -37,7 +37,9 @@ class Admin::EventsController < ApplicationController
     optional_filter.blank? ? scope : scope.where(**optional_filter)
   end
 
+  # TBD: Consider supporting array values for any filtering parameter
+  # TBD: Consider extracting filtering logic into a concern
   def optional_filter
-    @optional_filter ||= params.fetch(:filter, {}).permit(:type, :subject_type, :level)
+    @optional_filter ||= params.fetch(:filter, {}).permit(:user_id, :subject_type, :level, type: [])
   end
 end

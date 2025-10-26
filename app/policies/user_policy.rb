@@ -27,6 +27,10 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  def reactivate_email?
+    admin?
+  end
+
   private
 
   def self_or_admin?

@@ -54,6 +54,33 @@
   </div>
 </div>
 
+<% if @user.email_deactivated? %>
+  <%= page_section_header "Email Status" %>
+
+  <div class="list-group">
+    <div class="list-group-item">
+      <strong>Status:</strong> <span class="badge bg-warning text-dark">Deactivated</span>
+    </div>
+
+    <div class="list-group-item">
+      <strong>Deactivated At:</strong>
+      <time datetime="<%= @user.email_deactivated_at.iso8601 %>" title="<%= @user.email_deactivated_at.to_fs(:long) %>">
+        <%= @user.email_deactivated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.email_deactivated_at) %>)
+      </time>
+    </div>
+
+    <div class="list-group-item">
+      <strong>Reason:</strong> <%= @user.email_deactivation_reason.humanize %>
+    </div>
+
+    <div class="list-group-item">
+      <strong>Actions:</strong>
+      <%= button_to "Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "btn btn-sm btn-primary" %>
+      <%= link_to "View Email Events", admin_events_path(filter: { user_id: @user.id, type: %w[EmailBouncedEvent EmailComplainedEvent EmailFailedEvent EmailSentEvent EmailDeliveredEvent EmailDelayedEvent EmailOpenedEvent EmailClickedEvent EmailChangedEvent] }), class: "btn btn-sm btn-secondary" %>
+    </div>
+  </div>
+<% end %>
+
 <%= page_section_header "Statistics" %>
 
 <div class="list-group">
