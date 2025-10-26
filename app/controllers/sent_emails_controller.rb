@@ -59,19 +59,15 @@ class SentEmailsController < ApplicationController
     content = File.read(filepath)
 
     # Parse YAML frontmatter
-    if content.start_with?("---\n")
-      parts = content.split(/^---\s*$/, 3)
-      begin
-        frontmatter = YAML.safe_load(parts[1], permitted_classes: [Time, Date, DateTime], aliases: true) || {}
-      rescue Psych::SyntaxError => e
-        Rails.logger.error "Failed to parse YAML in #{filepath}: #{e.message}"
-        frontmatter = {}
-      end
-      body_content = parts[2]&.strip || ""
-    else
-      # Fallback for old format (backward compatibility)
-      return parse_legacy_email_file(content)
+    parts = content.split(/^---\s*$/, 3)
+
+    begin
+      frontmatter = YAML.safe_load(parts[1], permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+    rescue Psych::SyntaxError
+      frontmatter = {}
     end
+
+    body_content = parts[2]&.strip || ""
 
     email = {
       message_id: frontmatter["message_id"],
@@ -96,58 +92,6 @@ class SentEmailsController < ApplicationController
       end
     else
       email[:body] = body_content
-    end
-
-    email
-  end
-
-  def parse_legacy_email_file(content)
-    lines = content.lines
-
-    email = {
-      message_id: nil,
-      from: nil,
-      to: nil,
-      subject: nil,
-      date: nil,
-      body: "",
-      text_part: nil,
-      html_part: nil,
-      multipart: false
-    }
-
-    # Parse headers
-    idx = 0
-    while idx < lines.length && lines[idx].strip != ""
-      line = lines[idx]
-      case line
-      when /^From: (.+)/
-        email[:from] = $1.strip
-      when /^To: (.+)/
-        email[:to] = $1.strip
-      when /^Subject: (.+)/
-        email[:subject] = $1.strip
-      when /^Date: (.+)/
-        email[:date] = $1.strip
-      end
-      idx += 1
-    end
-
-    # Skip empty line after headers
-    idx += 1
-
-    # Parse body
-    if content.include?("--- TEXT PART ---")
-      email[:multipart] = true
-      text_start = content.index("--- TEXT PART ---")
-      html_start = content.index("--- HTML PART ---")
-
-      if text_start && html_start
-        email[:text_part] = content[text_start + "--- TEXT PART ---".length...html_start].strip
-        email[:html_part] = content[html_start + "--- HTML PART ---".length..-1].strip
-      end
-    else
-      email[:body] = lines[idx..-1].join
     end
 
     email
