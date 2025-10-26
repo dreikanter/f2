@@ -28,10 +28,14 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_equal 1, @written_files.size
     filepath, content = @written_files.first
 
-    assert_match(/Test_Subject\.txt$/, filepath)
-    assert_includes content, "From: sender@example.com"
-    assert_includes content, "To: recipient@example.com"
-    assert_includes content, "Subject: Test Subject"
+    # Filename should contain timestamp and UUID
+    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.txt$/, filepath)
+    assert_includes content, "---"
+    assert_includes content, "message_id:"
+    assert_includes content, "from: sender@example.com"
+    assert_includes content, "to: recipient@example.com"
+    assert_includes content, "subject: Test Subject"
+    assert_includes content, "multipart: false"
     assert_includes content, "Test Body"
   end
 
@@ -54,24 +58,26 @@ class FileDeliveryTest < ActiveSupport::TestCase
     @delivery.deliver!(mail)
 
     filepath, content = @written_files.first
-    assert_includes content, "--- TEXT PART ---"
+    assert_includes content, "multipart: true"
+    assert_includes content, "TEXT:"
     assert_includes content, "Text version"
-    assert_includes content, "--- HTML PART ---"
+    assert_includes content, "HTML:"
     assert_includes content, "<p>HTML version</p>"
   end
 
-  test "sanitizes filename" do
+  test "uses UUID in filename" do
     mail = Mail.new do
       from "sender@example.com"
       to "recipient@example.com"
-      subject "Test/With:Special*Characters?"
+      subject "Test Subject"
       body "Test"
     end
 
     @delivery.deliver!(mail)
 
     filepath = @written_files.keys.first
-    assert_match(/Test_With_Special_Characters_\.txt$/, filepath)
+    # Should have timestamp and UUID
+    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\.txt$/, filepath)
   end
 
   test "creates directory if it does not exist" do

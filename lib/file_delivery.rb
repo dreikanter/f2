@@ -12,21 +12,30 @@ class FileDelivery
     mkdir_p.call(dir)
 
     timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
-    filename = "#{timestamp}_#{sanitize_filename(mail.subject || "no_subject")}.txt"
+    uuid = SecureRandom.uuid
+    filename = "#{timestamp}_#{uuid}.txt"
     filepath = dir.join(filename)
 
     write_file.call(filepath) do |f|
-      f.puts "From: #{mail.from&.join(", ")}"
-      f.puts "To: #{mail.to&.join(", ")}"
-      f.puts "Subject: #{mail.subject}"
-      f.puts "Date: #{mail.date}"
+      # Write YAML frontmatter
+      frontmatter = {
+        "message_id" => mail.message_id.to_s,
+        "from" => mail.from&.join(", "),
+        "to" => mail.to&.join(", "),
+        "subject" => mail.subject.to_s,
+        "date" => mail.date,
+        "multipart" => mail.multipart?
+      }
+      f.puts frontmatter.to_yaml
+      f.puts "---"
       f.puts ""
 
+      # Write body
       if mail.multipart?
-        f.puts "--- TEXT PART ---"
+        f.puts "TEXT:"
         f.puts mail.text_part&.body&.decoded || "(no text part)"
         f.puts ""
-        f.puts "--- HTML PART ---"
+        f.puts "HTML:"
         f.puts mail.html_part&.body&.decoded || "(no html part)"
       else
         f.puts mail.body.decoded
@@ -34,11 +43,5 @@ class FileDelivery
     end
 
     Rails.logger.info "Email saved to #{filepath}"
-  end
-
-  private
-
-  def sanitize_filename(filename)
-    filename.gsub(/[^0-9A-Za-z.\-]/, "_").slice(0, 50)
   end
 end
