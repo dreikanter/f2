@@ -42,12 +42,12 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject request without valid signature" do
-    post resend_webhooks_url, params: valid_webhook_payload(type: "email.bounced", data: { email: user.email_address })
+    post resend_webhooks_url, params: valid_webhook_payload(type: "email.bounced", data: { to: [user.email_address] })
     assert_response :unauthorized
   end
 
   test "should accept request with valid signature" do
-    post_webhook valid_webhook_payload(type: "email.sent", data: { to: user.email_address })
+    post_webhook valid_webhook_payload(type: "email.sent", data: { to: [user.email_address] })
 
     assert_response :success
   end
@@ -55,7 +55,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   test "email.bounced should deactivate user email for confirmed email" do
     assert_not user.email_deactivated?
 
-    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: user.email_address })
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { to: [user.email_address] })
 
     user.reload
     assert user.email_deactivated?
@@ -64,7 +64,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
 
   test "email.bounced should create EmailBouncedEvent" do
     assert_difference("Event.where(type: 'EmailBouncedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.bounced", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.bounced", data: { to: [user.email_address] })
     end
 
     event = Event.where(type: "EmailBouncedEvent").last
@@ -76,7 +76,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "new@example.com", user_with_unconfirmed_email.unconfirmed_email
     assert_not user_with_unconfirmed_email.email_deactivated?
 
-    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "new@example.com" })
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { to: ["new@example.com"] })
 
     user_with_unconfirmed_email.reload
     assert_nil user_with_unconfirmed_email.unconfirmed_email
@@ -84,7 +84,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.complained should deactivate user email" do
-    post_webhook valid_webhook_payload(type: "email.complained", data: { email: user.email_address })
+    post_webhook valid_webhook_payload(type: "email.complained", data: { to: [user.email_address] })
 
     user.reload
     assert user.email_deactivated?
@@ -93,12 +93,12 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
 
   test "email.complained should create EmailComplainedEvent" do
     assert_difference("Event.where(type: 'EmailComplainedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.complained", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.complained", data: { to: [user.email_address] })
     end
   end
 
   test "email.failed should deactivate user email" do
-    post_webhook valid_webhook_payload(type: "email.failed", data: { email: user.email_address })
+    post_webhook valid_webhook_payload(type: "email.failed", data: { to: [user.email_address] })
 
     user.reload
     assert user.email_deactivated?
@@ -107,43 +107,43 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
 
   test "email.failed should create EmailFailedEvent" do
     assert_difference("Event.where(type: 'EmailFailedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.failed", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.failed", data: { to: [user.email_address] })
     end
   end
 
   test "email.sent should create EmailSentEvent" do
     assert_difference("Event.where(type: 'EmailSentEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.sent", data: { to: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.sent", data: { to: [user.email_address] })
     end
   end
 
   test "email.delivered should create EmailDeliveredEvent" do
     assert_difference("Event.where(type: 'EmailDeliveredEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.delivered", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.delivered", data: { to: [user.email_address] })
     end
   end
 
   test "email.delivery_delayed should create EmailDelayedEvent" do
     assert_difference("Event.where(type: 'EmailDelayedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.delivery_delayed", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.delivery_delayed", data: { to: [user.email_address] })
     end
   end
 
   test "email.opened should create EmailOpenedEvent" do
     assert_difference("Event.where(type: 'EmailOpenedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.opened", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.opened", data: { to: [user.email_address] })
     end
   end
 
   test "email.clicked should create EmailClickedEvent" do
     assert_difference("Event.where(type: 'EmailClickedEvent').count", 1) do
-      post_webhook valid_webhook_payload(type: "email.clicked", data: { email: user.email_address })
+      post_webhook valid_webhook_payload(type: "email.clicked", data: { to: [user.email_address] })
     end
   end
 
   test "should handle webhook for non-existent user gracefully" do
     assert_no_difference("Event.count") do
-      post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "nonexistent@example.com" })
+      post_webhook valid_webhook_payload(type: "email.bounced", data: { to: ["nonexistent@example.com"] })
     end
 
     assert_response :success
@@ -152,7 +152,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   test "should normalize email address when finding user" do
     user.update!(email_address: "test@example.com")
 
-    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "  TEST@EXAMPLE.COM  " })
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { to: ["  TEST@EXAMPLE.COM  "] })
 
     user.reload
     assert user.email_deactivated?
