@@ -67,7 +67,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
       post_webhook valid_webhook_payload(type: "email.bounced", data: { to: [user.email_address] })
     end
 
-    event = Event.where(type: "EmailBounced").last
+    event = Event.where(type: "email_bounced").last
     assert_equal user, event.user
     assert_equal user, event.subject
   end

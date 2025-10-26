@@ -121,7 +121,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:total_duration] >= 0
 
     # Verify stats event was created
-    events = Event.where(subject: test_feed, type: "FeedRefresh")
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     assert_equal 2, events.first.metadata["stats"]["new_posts"]
   end
@@ -350,7 +350,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:new_posts] == 0 || workflow.stats[:new_posts].nil?
 
     # Should still create success event
-    events = Event.where(subject: test_feed, type: "FeedRefresh")
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
   end
 
