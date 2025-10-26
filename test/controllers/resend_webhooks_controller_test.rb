@@ -1,20 +1,21 @@
 require "test_helper"
 
 class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
+  # Generate a valid base64-encoded secret for testing
+  WEBHOOK_SECRET = "whsec_#{Base64.strict_encode64('test_secret_key_1234567890')}"
+
   def setup
-    # Store original method before any stubbing
-    ResendWebhooksController.class_eval do
-      unless method_defined?(:verify_signature_original!)
-        alias_method :verify_signature_original!, :verify_signature!
-      end
+    # Stub the credentials method to return our test secret
+    credentials = Rails.application.credentials
+    credentials.instance_variable_set(:@test_resend_secret, WEBHOOK_SECRET)
+    def credentials.resend_signing_secret
+      @test_resend_secret
     end
   end
 
   def teardown
-    # Restore original method after each test
-    ResendWebhooksController.class_eval do
-      alias_method :verify_signature!, :verify_signature_original!
-    end
+    # Reset credentials to use the original method
+    Rails.application.credentials.singleton_class.send(:remove_method, :resend_signing_secret) rescue nil
   end
 
   def user
@@ -29,13 +30,27 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     { type: type, data: data }
   end
 
-  def stub_signature_verification
-    # Skip signature verification for tests by stubbing the method
-    ResendWebhooksController.class_eval do
-      def verify_signature!
-        # Skip verification in tests
-      end
-    end
+  def post_webhook(payload, headers: {})
+    payload_json = payload.to_json
+    timestamp = Time.now.to_i
+    msg_id = "msg_#{SecureRandom.hex(12)}"
+
+    # Use Svix library to sign the payload properly
+    wh = Svix::Webhook.new(WEBHOOK_SECRET)
+    signature = wh.sign(msg_id, timestamp, payload_json)
+
+    webhook_headers = {
+      "svix-id" => msg_id,
+      "svix-timestamp" => timestamp.to_s,
+      "svix-signature" => signature,
+      "Content-Type" => "application/json"
+    }.merge(headers)
+
+    post resend_webhooks_url,
+         params: payload,
+         env: { "RAW_POST_DATA" => payload_json },
+         headers: webhook_headers,
+         as: :json
   end
 
   test "should reject request without valid signature" do
@@ -44,23 +59,15 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should accept request with valid signature" do
-    stub_signature_verification
-
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.sent", data: { to: user.email_address }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.sent", data: { to: user.email_address })
 
     assert_response :success
   end
 
   test "email.bounced should deactivate user email for confirmed email" do
-    stub_signature_verification
-
     assert_not user.email_deactivated?
 
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.bounced", data: { email: user.email_address }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: user.email_address })
 
     user.reload
     assert user.email_deactivated?
@@ -68,12 +75,8 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.bounced should create EmailBouncedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailBouncedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.bounced", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.bounced", data: { email: user.email_address })
     end
 
     event = Event.where(type: "EmailBouncedEvent").last
@@ -82,14 +85,10 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.bounced should clear unconfirmed_email for unconfirmed email bounce" do
-    stub_signature_verification
-
     assert_equal "new@example.com", user_with_unconfirmed_email.unconfirmed_email
     assert_not user_with_unconfirmed_email.email_deactivated?
 
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.bounced", data: { email: "new@example.com" }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "new@example.com" })
 
     user_with_unconfirmed_email.reload
     assert_nil user_with_unconfirmed_email.unconfirmed_email
@@ -97,11 +96,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.complained should deactivate user email" do
-    stub_signature_verification
-
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.complained", data: { email: user.email_address }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.complained", data: { email: user.email_address })
 
     user.reload
     assert user.email_deactivated?
@@ -109,21 +104,13 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.complained should create EmailComplainedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailComplainedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.complained", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.complained", data: { email: user.email_address })
     end
   end
 
   test "email.failed should deactivate user email" do
-    stub_signature_verification
-
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.failed", data: { email: user.email_address }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.failed", data: { email: user.email_address })
 
     user.reload
     assert user.email_deactivated?
@@ -131,84 +118,53 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "email.failed should create EmailFailedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailFailedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.failed", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.failed", data: { email: user.email_address })
     end
   end
 
   test "email.sent should create EmailSentEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailSentEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.sent", data: { to: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.sent", data: { to: user.email_address })
     end
   end
 
   test "email.delivered should create EmailDeliveredEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailDeliveredEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.delivered", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.delivered", data: { email: user.email_address })
     end
   end
 
   test "email.delivery_delayed should create EmailDelayedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailDelayedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.delivery_delayed", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.delivery_delayed", data: { email: user.email_address })
     end
   end
 
   test "email.opened should create EmailOpenedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailOpenedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.opened", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.opened", data: { email: user.email_address })
     end
   end
 
   test "email.clicked should create EmailClickedEvent" do
-    stub_signature_verification
-
     assert_difference("Event.where(type: 'EmailClickedEvent').count", 1) do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.clicked", data: { email: user.email_address }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.clicked", data: { email: user.email_address })
     end
   end
 
   test "should handle webhook for non-existent user gracefully" do
-    stub_signature_verification
-
     assert_no_difference("Event.count") do
-      post resend_webhooks_url,
-           params: valid_webhook_payload(type: "email.bounced", data: { email: "nonexistent@example.com" }),
-           as: :json
+      post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "nonexistent@example.com" })
     end
 
     assert_response :success
   end
 
   test "should normalize email address when finding user" do
-    stub_signature_verification
     user.update!(email_address: "test@example.com")
 
-    post resend_webhooks_url,
-         params: valid_webhook_payload(type: "email.bounced", data: { email: "  TEST@EXAMPLE.COM  " }),
-         as: :json
+    post_webhook valid_webhook_payload(type: "email.bounced", data: { email: "  TEST@EXAMPLE.COM  " })
 
     user.reload
     assert user.email_deactivated?
