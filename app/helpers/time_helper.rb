@@ -38,11 +38,11 @@ module TimeHelper
     end
   end
 
-  def time_ago(time)
-    return nil unless time
+  def time_ago(past_time)
+    current_time = Time.current
+    return nil unless time && past_time < current_time
 
-    seconds = Time.current - time
-    time_distance(seconds)
+    time_distance(current_time - time)
   end
 
   def long_time_format(time)
