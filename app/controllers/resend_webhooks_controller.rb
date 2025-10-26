@@ -33,15 +33,18 @@ class ResendWebhooksController < ApplicationController
 
   def verify_signature!
     secret = Rails.application.credentials.resend_signing_secret
+    return head :unauthorized if secret.blank?
+
     payload = request.raw_post
+
     headers = {
       "svix-id" => request.headers["svix-id"],
       "svix-timestamp" => request.headers["svix-timestamp"],
       "svix-signature" => request.headers["svix-signature"]
     }
 
-    wh = Svix::Webhook.new(secret)
-    wh.verify(payload, headers)
+    webhook = Svix::Webhook.new(secret)
+    webhook.verify(payload, headers)
   rescue Svix::WebhookVerificationError
     head :unauthorized
   end
