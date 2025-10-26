@@ -59,7 +59,10 @@ class ResendWebhooksController < ApplicationController
 
   def create
     handler = EMAIL_EVENT_HANDLERS[params[:type]]
-    return head :ok unless handler
+    unless handler
+      Rails.logger.info "Received unknown Resend event type: #{params[:type]}"
+      return head :ok
+    end
 
     event = ResendWebhookEvent.new(params[:data])
     user, matched_field = find_user_by_email(event.recipient_email)
@@ -71,6 +74,8 @@ class ResendWebhooksController < ApplicationController
     if user
       event_attributes = handler.slice(:level, :type, :message)
       Event.create!(**event_attributes, subject: user, user: user, metadata: event.raw_data)
+    else
+      Rails.logger.debug "Skipping event #{handler[:type]} for unknown user: #{event.recipient_email}"
     end
 
     head :ok
