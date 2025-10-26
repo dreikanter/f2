@@ -23,9 +23,9 @@ module TimeHelper
   def time_distance(seconds)
     return nil unless seconds
 
-    minutes = (seconds / 60).round
-    hours = (seconds / 3600).round
-    days = (seconds / 86400).round
+    minutes = (seconds / 60).to_i
+    hours = (seconds / 3600).to_i
+    days = (seconds / 86400).to_i
 
     if seconds < 60
       "less than a minute"
