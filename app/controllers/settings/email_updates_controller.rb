@@ -47,7 +47,7 @@ class Settings::EmailUpdatesController < ApplicationController
   end
 
   def redirect_with_rate_limit
-    time_remaining = distance_of_time_in_words(@user.time_until_email_change_allowed)
+    time_remaining = helpers.time_distance(@user.time_until_email_change_allowed)
     redirect_to edit_settings_email_update_path, alert: "You can change your email again in #{time_remaining}."
   end
 end
