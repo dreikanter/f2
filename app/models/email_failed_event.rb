@@ -10,7 +10,7 @@ class EmailFailedEvent
       level: :error,
       subject: user,
       user: user,
-      message: "Email delivery failed for #{user.email_address}",
+      message: user ? "Email delivery failed for #{user.email_address}" : "Email delivery failed",
       metadata: data
     )
   end

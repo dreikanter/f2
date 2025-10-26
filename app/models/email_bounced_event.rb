@@ -10,7 +10,7 @@ class EmailBouncedEvent
       level: :warning,
       subject: user,
       user: user,
-      message: "Email bounced for #{user.email_address}",
+      message: user ? "Email bounced for #{user.email_address}" : "Email bounced",
       metadata: data
     )
   end
