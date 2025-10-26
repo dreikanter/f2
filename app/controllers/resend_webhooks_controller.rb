@@ -69,12 +69,8 @@ class ResendWebhooksController < ApplicationController
     end
 
     if user
-      create_email_event(
-        type: params[:type],
-        user: user,
-        data: event.raw_data,
-        **handler
-      )
+      event_attributes = handler.slice(:level, :type, :message)
+      Event.create!(**event_attributes, subject: user, user: user, metadata: event.raw_data)
     end
 
     head :ok
@@ -98,19 +94,6 @@ class ResendWebhooksController < ApplicationController
     webhook.verify(payload, headers)
   rescue Svix::WebhookVerificationError
     head :unauthorized
-  end
-
-  def create_email_event(type:, user:, data:, event_type:, level:, message:, **)
-    full_message = user ? "#{message} for #{user.email_address}" : type
-
-    Event.create!(
-      type: event_type,
-      level: level,
-      subject: user,
-      user: user,
-      message: full_message,
-      metadata: data
-    )
   end
 
   def find_user_by_email(email)
