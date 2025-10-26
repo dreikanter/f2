@@ -4,33 +4,22 @@
 
 # Create a test user for development
 if Rails.env.development?
+  dev_password = "password123"
+
   user = User.find_or_initialize_by(email_address: "test@example.com").tap do |user|
-    user.password = "password"
-    user.password_confirmation = "password"
+    user.password = dev_password
+    user.password_confirmation = dev_password
   end
 
   user.save!
 
   # Update existing users to have password_updated_at
   User.where(password_updated_at: nil).update_all(password_updated_at: Time.current)
-  puts "✅ Development user created: test@example.com / password"
+  puts "✅ Development user created: #{user.email_address} / #{dev_password}"
 
   # Add admin permission to the first user
   user.permissions.find_or_create_by!(name: "admin")
   puts "✅ Admin permission granted to first user"
-
-  # Create RSS feed profile
-  rss_profile = FeedProfile.find_or_initialize_by(name: "rss")
-
-  rss_profile.assign_attributes(
-    loader: "http",
-    processor: "rss",
-    normalizer: "rss",
-    user: user
-  )
-
-  rss_profile.save!
-  puts "✅ RSS feed profile created"
 
   # Create fake access tokens
   if AccessToken.count == 0
@@ -120,7 +109,7 @@ if Rails.env.development?
         target_group: feed_data[:target_group],
         state: feed_data[:state],
         cron_expression: feed_data[:cron_expression],
-        feed_profile: rss_profile,
+        feed_profile_key: "rss",
         access_token: active_token
       )
 
@@ -142,7 +131,7 @@ if Rails.env.development?
     all_feed_entries = []
     all_posts = []
 
-    Feed.enabled.includes(:feed_profile).find_each do |feed|
+    Feed.enabled.find_each do |feed|
       posts_count = rand(1..10)
 
       # Generate feed entries first
@@ -199,170 +188,151 @@ if Rails.env.development?
 
   # Create sample events for development
   if Event.count < 75
-    # Feed processing events
-    Event.create!(
-      type: "FeedRefresh",
-      level: "info",
-      message: "Feed refreshed successfully",
-      user: user,
-      metadata: {
-        url: "https://example.com/feed.xml",
-        posts_count: 12,
-        duration_ms: 1234
+    events = []
+    base_time = Time.current
+
+    # Email events for the user
+    [
+      { type: "email_sent", level: :info, message: "Email sent to #{user.email_address}", days_ago: 30 },
+      { type: "email_delivered", level: :info, message: "Email delivered to #{user.email_address}", days_ago: 30 },
+      { type: "email_opened", level: :info, message: "Email opened by #{user.email_address}", days_ago: 29 },
+      { type: "email_clicked", level: :info, message: "Email clicked by #{user.email_address}", days_ago: 28 },
+      { type: "email_changed", level: :info, message: "Email changed from old@example.com to #{user.email_address}", days_ago: 60,
+        metadata: { old_email: "old@example.com", new_email: user.email_address } }
+    ].each do |event_data|
+      events << {
+        type: event_data[:type],
+        level: event_data[:level],
+        subject_type: "User",
+        subject_id: user.id,
+        user_id: user.id,
+        message: event_data[:message],
+        metadata: event_data[:metadata] || {},
+        created_at: base_time - event_data[:days_ago].days,
+        updated_at: base_time - event_data[:days_ago].days
       }
-    )
-
-    Event.create!(
-      type: "FeedError",
-      level: "error",
-      message: "Failed to fetch feed: Connection timeout",
-      user: user,
-      metadata: {
-        url: "https://broken-feed.example.com/feed.xml",
-        error_code: "TIMEOUT",
-        retry_count: 3
-      }
-    )
-
-    # User events
-    Event.create!(
-      type: "UserLogin",
-      level: "info",
-      message: "User logged in successfully",
-      user: user,
-      metadata: {
-        ip_address: "192.168.1.100",
-        user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-      }
-    )
-
-    Event.create!(
-      type: "PasswordReset",
-      level: "warning",
-      message: "Password reset requested",
-      user: user,
-      metadata: {
-        ip_address: "203.0.113.195",
-        timestamp: Time.current.rfc3339
-      }
-    )
-
-    # System events
-    Event.create!(
-      type: "SystemMaintenance",
-      level: "info",
-      message: "Scheduled maintenance completed",
-      user: nil,
-      metadata: {
-        maintenance_type: "database_cleanup",
-        records_purged: 1500,
-        duration_minutes: 15
-      }
-    )
-
-    Event.create!(
-      type: "BackgroundJobError",
-      level: "error",
-      message: "Background job failed with timeout",
-      user: nil,
-      metadata: {
-        job_class: "FeedRefreshJob",
-        job_id: "abc123",
-        queue: "default",
-        attempts: 3,
-        error: "execution expired"
-      }
-    )
-
-    # Debug events
-    Event.create!(
-      type: "ApiRequest",
-      level: "debug",
-      message: "External API request completed",
-      user: user,
-      metadata: {
-        endpoint: "/api/v1/feeds/validate",
-        method: "POST",
-        response_time_ms: 245,
-        status_code: 200
-      }
-    )
-
-    Event.create!(
-      type: "CacheHit",
-      level: "debug",
-      message: "Cache hit for feed data",
-      user: nil,
-      metadata: {
-        cache_key: "feed:123:content",
-        ttl_remaining: 1800
-      }
-    )
-
-    # Events with expiration
-    Event.create!(
-      type: "TempDebugFlag",
-      level: "warning",
-      message: "Debug flag enabled temporarily",
-      user: user,
-      expires_at: 1.hour.from_now,
-      metadata: {
-        flag_name: "verbose_logging",
-        enabled_by: user.email_address
-      }
-    )
-
-    Event.create!(
-      type: "SecurityAlert",
-      level: "error",
-      message: "Multiple failed login attempts detected",
-      user: nil,
-      expires_at: 24.hours.from_now,
-      metadata: {
-        ip_address: "198.51.100.42",
-        attempts_count: 8,
-        time_window_minutes: 10
-      }
-    )
-
-    # Generate additional events to reach 75 total for pagination testing
-    current_count = Event.count
-    events_needed = 75 - current_count
-
-    event_types = [
-      "FeedRefresh",
-      "FeedError",
-      "UserLogin",
-      "PasswordReset",
-      "SystemMaintenance",
-      "BackgroundJobError",
-      "ApiRequest",
-      "CacheHit",
-      "SecurityAlert",
-      "DatabaseQuery"
-    ]
-
-    levels = [
-      "debug",
-      "info",
-      "warning",
-      "error"
-    ]
-
-    events_needed.times do |i|
-      Event.create!(
-        type: event_types.sample,
-        level: levels.sample,
-        message: "Generated event #{i + current_count + 1} for pagination testing",
-        user: (i.even? ? user : nil),
-        metadata: {
-          event_number: i + current_count + 1,
-          batch: "pagination_test",
-          generated_at: Time.current.rfc3339
-        }
-      )
     end
 
-    puts "✅ Sample events created (#{Event.count} total)"
+    # Feed refresh events for each feed
+    Feed.limit(3).each do |feed|
+      # Successful refresh
+      events << {
+        type: "feed_refresh",
+        level: :info,
+        subject_type: "Feed",
+        subject_id: feed.id,
+        user_id: feed.user_id,
+        message: "Feed refresh completed for #{feed.name}",
+        metadata: {
+          stats: {
+            started_at: (base_time - 2.hours).iso8601,
+            completed_at: (base_time - 2.hours + 3.seconds).iso8601,
+            total_duration: 3.2,
+            new_entries: rand(3..10),
+            new_posts: rand(1..8)
+          }
+        },
+        created_at: base_time - 2.hours,
+        updated_at: base_time - 2.hours
+      }
+
+      # Add an error event for one feed
+      if feed == Feed.first
+        events << {
+          type: "feed_refresh_error",
+          level: :error,
+          subject_type: "Feed",
+          subject_id: feed.id,
+          user_id: feed.user_id,
+          message: "Feed refresh failed at load_feed_contents: Connection timeout",
+          metadata: {
+            stats: { started_at: (base_time - 5.hours).iso8601 },
+            error: {
+              class: "Net::ReadTimeout",
+              message: "execution expired",
+              stage: "load_feed_contents",
+              backtrace: ["lib/feed_loader.rb:42:in `load'"]
+            }
+          },
+          created_at: base_time - 5.hours,
+          updated_at: base_time - 5.hours
+        }
+      end
+    end
+
+    # Generate varied events to reach 75 total for pagination testing
+    events_needed = 75 - Event.count - events.length
+
+    event_templates = [
+      { type: "feed_refresh", level: :info, weight: 40 },
+      { type: "feed_refresh_error", level: :error, weight: 5 },
+      { type: "email_sent", level: :info, weight: 15 },
+      { type: "email_delivered", level: :info, weight: 15 },
+      { type: "email_opened", level: :info, weight: 10 },
+      { type: "email_clicked", level: :info, weight: 5 },
+      { type: "email_bounced", level: :warning, weight: 3 },
+      { type: "email_failed", level: :error, weight: 2 },
+      { type: "email_delayed", level: :info, weight: 3 },
+      { type: "email_changed", level: :info, weight: 2 }
+    ]
+
+    # Create weighted array for realistic distribution
+    weighted_templates = event_templates.flat_map { |t| [t] * t[:weight] }
+    feeds_array = Feed.all.to_a
+
+    events_needed.times do |i|
+      template = weighted_templates.sample
+      days_ago = rand(1..30)
+      time = base_time - days_ago.days - rand(0..23).hours
+
+      case template[:type]
+      when "feed_refresh", "feed_refresh_error"
+        feed = feeds_array.sample
+        next unless feed
+
+        if template[:type] == "feed_refresh"
+          events << {
+            type: template[:type],
+            level: template[:level],
+            subject_type: "Feed",
+            subject_id: feed.id,
+            user_id: feed.user_id,
+            message: "Feed refresh completed for #{feed.name}",
+            metadata: { stats: { new_entries: rand(0..5), new_posts: rand(0..3) } },
+            created_at: time,
+            updated_at: time
+          }
+        else
+          events << {
+            type: template[:type],
+            level: template[:level],
+            subject_type: "Feed",
+            subject_id: feed.id,
+            user_id: feed.user_id,
+            message: "Feed refresh failed at #{['load_feed_contents', 'process_feed_contents', 'publish_posts'].sample}: #{['Connection timeout', 'Invalid XML', 'Rate limit exceeded'].sample}",
+            metadata: { error: { class: "StandardError", message: "Error occurred" } },
+            created_at: time,
+            updated_at: time
+          }
+        end
+      else
+        # Email events
+        events << {
+          type: template[:type],
+          level: template[:level],
+          subject_type: "User",
+          subject_id: user.id,
+          user_id: user.id,
+          message: "#{template[:type].gsub(/([A-Z])/, ' \1').strip} for #{user.email_address}",
+          metadata: {},
+          created_at: time,
+          updated_at: time
+        }
+      end
+    end
+
+    # Batch insert all events
+    Event.insert_all!(events) if events.any?
+    puts "✅ Sample events created using batch insert (#{Event.count} total)"
   end
 end

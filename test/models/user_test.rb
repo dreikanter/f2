@@ -246,7 +246,7 @@ class UserTest < ActiveSupport::TestCase
     user = create(:user)
     travel_to 25.hours.ago do
       Event.create!(
-        type: "EmailChanged",
+        type: "email_changed",
         level: :info,
         subject: user,
         user: user,
@@ -260,7 +260,7 @@ class UserTest < ActiveSupport::TestCase
   test "#can_change_email? returns false when last email change was less than 24 hours ago" do
     user = create(:user)
     Event.create!(
-      type: "EmailChanged",
+      type: "email_changed",
       level: :info,
       subject: user,
       user: user,
@@ -281,7 +281,7 @@ class UserTest < ActiveSupport::TestCase
 
     travel_to time_elapsed.ago do
       Event.create!(
-        type: "EmailChanged",
+        type: "email_changed",
         level: :info,
         subject: user,
         user: user,
@@ -299,7 +299,7 @@ class UserTest < ActiveSupport::TestCase
 
     old_event = travel_to((User::EMAIL_CHANGE_COOLDOWN * 2).ago) do
       Event.create!(
-        type: "EmailChanged",
+        type: "email_changed",
         level: :info,
         subject: user,
         user: user,
@@ -309,7 +309,7 @@ class UserTest < ActiveSupport::TestCase
     end
 
     recent_event = Event.create!(
-      type: "EmailChanged",
+      type: "email_changed",
       level: :info,
       subject: user,
       user: user,

@@ -190,7 +190,7 @@ class FeedRefreshWorkflow
 
   def create_feed_refresh_stats_event
     Event.create!(
-      type: "FeedRefresh",
+      type: "feed_refresh",
       level: :info,
       subject: feed,
       user: feed.user,
@@ -201,7 +201,7 @@ class FeedRefreshWorkflow
 
   def create_feed_refresh_error_event(error)
     Event.create!(
-      type: "FeedRefreshError",
+      type: "feed_refresh_error",
       level: :error,
       subject: feed,
       user: feed.user,

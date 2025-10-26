@@ -8,51 +8,51 @@ class ResendWebhooksController < ApplicationController
       action:     :handle_failure,
       level:      :warning,
       reason:     "bounced",
-      event_type: "EmailBounced",
+      event_type: "email_bounced",
       message:    "Email bounced"
     },
     "email.complained" => {
       action:     :handle_failure,
       level:      :warning,
       reason:     "complained",
-      event_type: "EmailComplained",
+      event_type: "email_complained",
       message:    "Spam complaint"
     },
     "email.failed" => {
       action:     :handle_failure,
       level:      :error,
       reason:     "failed",
-      event_type: "EmailFailed",
+      event_type: "email_failed",
       message:    "Email failed"
     },
     "email.sent" => {
       action:     :track_only,
       level:      :info,
-      event_type: "EmailSent",
+      event_type: "email_sent",
       message:    "Email sent"
     },
     "email.delivered" => {
       action:     :track_only,
       level:      :info,
-      event_type: "EmailDelivered",
+      event_type: "email_delivered",
       message:    "Email delivered"
     },
     "email.delivery_delayed" => {
       action:     :track_only,
       level:      :info,
-      event_type: "EmailDelayed",
+      event_type: "email_delayed",
       message:    "Email delivery delayed"
     },
     "email.opened" => {
       action:     :track_only,
       level:      :info,
-      event_type: "EmailOpened",
+      event_type: "email_opened",
       message:    "Email opened"
     },
     "email.clicked" => {
       action:     :track_only,
       level:      :info,
-      event_type: "EmailClicked",
+      event_type: "email_clicked",
       message:    "Email clicked"
     }
   }.freeze

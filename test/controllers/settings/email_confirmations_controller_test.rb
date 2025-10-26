@@ -73,11 +73,11 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
     user.update!(unconfirmed_email: "new@example.com")
     token = user.generate_token_for(:change_email_confirmation)
 
-    assert_difference("Event.where(type: 'EmailChanged').count", 1) do
+    assert_difference("Event.where(type: 'email_changed').count", 1) do
       get settings_email_confirmation_url(token)
     end
 
-    event = Event.where(type: "EmailChanged").last
+    event = Event.where(type: "email_changed").last
     assert_equal user, event.user
     assert_equal old_email, event.metadata["old_email"]
     assert_equal "new@example.com", event.metadata["new_email"]

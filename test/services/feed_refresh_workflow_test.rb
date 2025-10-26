@@ -199,7 +199,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
 
     # Verify error event was created
-    events = Event.where(subject: test_feed, type: "FeedRefreshError")
+    events = Event.where(subject: test_feed, type: "feed_refresh_error")
     assert_equal 1, events.count
     error_event = events.first
     assert_equal "error", error_event.level
@@ -227,7 +227,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, Post.where(feed: test_feed).count
 
     # Verify error event was created
-    error_events = Event.where(subject: test_feed, type: "FeedRefreshError")
+    error_events = Event.where(subject: test_feed, type: "feed_refresh_error")
     assert_equal 1, error_events.count
 
     error_event = error_events.first
@@ -273,7 +273,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, FeedEntry.where(feed: test_feed).count
 
     # Verify error event was created
-    events = Event.where(subject: test_feed, type: "FeedRefreshError")
+    events = Event.where(subject: test_feed, type: "feed_refresh_error")
     assert_equal 1, events.count
     error_event = events.first
     assert_match(/Feed refresh failed at normalize_entries/, error_event.message)
@@ -311,7 +311,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal :persist_entries, workflow.stats[:failed_at_step]
 
       # Verify error event was created
-      events = Event.where(subject: test_feed, type: "FeedRefreshError")
+      events = Event.where(subject: test_feed, type: "feed_refresh_error")
       assert_equal 1, events.count
       error_event = events.first
       assert_match(/Feed refresh failed at persist_entries/, error_event.message)

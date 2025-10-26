@@ -86,7 +86,7 @@ class User < ApplicationRecord
   end
 
   def last_email_change_event
-    @last_email_change_event ||= Event.where(user: self, type: "EmailChanged").order(created_at: :desc).first
+    @last_email_change_event ||= Event.where(user: self, type: "email_changed").order(created_at: :desc).first
   end
 
   # Returns the count of all feeds created by this user

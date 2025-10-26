@@ -58,7 +58,7 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   test "should reject email change when rate limited" do
     sign_in_user
     Event.create!(
-      type: "EmailChanged",
+      type: "email_changed",
       level: :info,
       subject: user,
       user: user,
@@ -77,7 +77,7 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     travel_to 25.hours.ago do
       Event.create!(
-        type: "EmailChanged",
+        type: "email_changed",
         level: :info,
         subject: user,
         user: user,

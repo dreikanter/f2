@@ -33,7 +33,7 @@ class Settings::EmailConfirmationsController < ApplicationController
 
   def create_email_changed_event(user, old_email, new_email)
     Event.create!(
-      type: "EmailChanged",
+      type: "email_changed",
       level: :info,
       subject: user,
       user: user,
