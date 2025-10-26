@@ -34,22 +34,12 @@ class Admin::EventsController < ApplicationController
   end
 
   def apply_filters(scope)
-    return scope if optional_filter.blank?
-
-    filter = optional_filter.dup
-
-    # Handle type filter separately to support both single values and arrays
-    if filter.key?(:type)
-      types = filter.delete(:type)
-      scope = scope.where(type: types) if types.present?
-    end
-
-    filter.blank? ? scope : scope.where(**filter)
+    optional_filter.blank? ? scope : scope.where(**optional_filter)
   end
 
   # TBD: Consider supporting array values for any filtering parameter
   # TBD: Consider extracting filtering logic into a concern
   def optional_filter
-    @optional_filter ||= params.fetch(:filter, {}).permit(:user_id, :subject_type, :level, :type, type: [])
+    @optional_filter ||= params.fetch(:filter, {}).permit(:user_id, :subject_type, :level, type: [])
   end
 end
