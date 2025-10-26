@@ -64,8 +64,18 @@ class ResendWebhooksController < ApplicationController
     event = ResendWebhookEvent.new(params[:data])
     user, matched_field = find_user_by_email(event.recipient_email)
 
-    handle_email_failure(user, matched_field, handler[:reason]) if handler[:action] == :handle_failure && user
-    create_email_event(params[:type], user, event.raw_data, handler[:level], handler[:event_type], handler[:message]) if user
+    if handler[:action] == :handle_failure && user
+      handle_email_failure(user, matched_field, handler[:reason])
+    end
+
+    if user
+      create_email_event(
+        type: params[:type],
+        uer: user,
+        data: event.raw_data,
+        **handler
+      )
+    end
 
     head :ok
   end
@@ -90,19 +100,15 @@ class ResendWebhooksController < ApplicationController
     head :unauthorized
   end
 
-  def create_email_event(webhook_type, user, data, level, event_type, base_message)
-    message = if user
-      "#{base_message} for #{user.email_address}"
-    else
-      webhook_type
-    end
+  def create_email_event(type:, user:, data:, event_type:, level:, message:, **)
+    full_message = user ? "#{message} for #{user.email_address}" : type
 
     Event.create!(
       type: event_type,
       level: level,
       subject: user,
       user: user,
-      message: message,
+      message: full_message,
       metadata: data
     )
   end
