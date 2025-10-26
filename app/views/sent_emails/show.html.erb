@@ -5,21 +5,21 @@
 
   <div class="card">
     <div class="card-header">
-      <h4 class="mb-0"><%= @email[:subject] %></h4>
+      <h4 class="mb-0"><%= h @email[:subject] %></h4>
     </div>
     <div class="card-body">
       <dl class="row mb-0">
         <dt class="col-sm-2">Message-ID:</dt>
-        <dd class="col-sm-10"><code><%= @email[:message_id] %></code></dd>
+        <dd class="col-sm-10"><code><%= h @email[:message_id] %></code></dd>
 
         <dt class="col-sm-2">From:</dt>
-        <dd class="col-sm-10"><code><%= @email[:from] %></code></dd>
+        <dd class="col-sm-10"><code><%= h @email[:from] %></code></dd>
 
         <dt class="col-sm-2">To:</dt>
-        <dd class="col-sm-10"><code><%= @email[:to] %></code></dd>
+        <dd class="col-sm-10"><code><%= h @email[:to] %></code></dd>
 
         <dt class="col-sm-2">Date:</dt>
-        <dd class="col-sm-10"><%= @email[:date] %></dd>
+        <dd class="col-sm-10"><%= h @email[:date] %></dd>
       </dl>
     </div>
   </div>
@@ -47,14 +47,14 @@
       <% if @email[:multipart] %>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="text-content" role="tabpanel">
-            <pre class="mb-0"><%= @email[:text_part] %></pre>
+            <pre class="mb-0"><%= h @email[:text_part] %></pre>
           </div>
           <div class="tab-pane fade" id="html-content" role="tabpanel">
             <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" style="width: 100%; min-height: 400px; border: none;"></iframe>
           </div>
         </div>
       <% else %>
-        <pre class="mb-0"><%= @email[:body] %></pre>
+        <pre class="mb-0"><%= h @email[:body] %></pre>
       <% end %>
     </div>
   </div>
