@@ -5,55 +5,55 @@ class ResendWebhooksController < ApplicationController
 
   EMAIL_EVENT_HANDLERS = {
     "email.bounced" => {
-      action:     :handle_failure,
-      level:      :warning,
-      reason:     "bounced",
-      event_type: "email_bounced",
-      message:    "Email bounced"
+      action: :handle_failure,
+      level: :warning,
+      reason: "bounced",
+      type: "email_bounced",
+      message: "Email bounced"
     },
     "email.complained" => {
-      action:     :handle_failure,
-      level:      :warning,
-      reason:     "complained",
-      event_type: "email_complained",
-      message:    "Spam complaint"
+      action: :handle_failure,
+      level: :warning,
+      reason: "complained",
+      type: "email_complained",
+      message: "Spam complaint"
     },
     "email.failed" => {
-      action:     :handle_failure,
-      level:      :error,
-      reason:     "failed",
-      event_type: "email_failed",
-      message:    "Email failed"
+      action: :handle_failure,
+      level: :error,
+      reason: "failed",
+      type: "email_failed",
+      message: "Email failed"
     },
     "email.sent" => {
-      action:     :track_only,
-      level:      :info,
-      event_type: "email_sent",
-      message:    "Email sent"
+      action: :track_only,
+      level: :info,
+      type: "email_sent",
+      message: "Email sent"
     },
     "email.delivered" => {
-      action:     :track_only,
-      level:      :info,
-      event_type: "email_delivered",
-      message:    "Email delivered"
+      action: :track_only,
+      level: :info,
+      type: "email_delivered",
+      message: "Email delivered"
     },
     "email.delivery_delayed" => {
-      action:     :track_only,
-      level:      :info,
-      event_type: "email_delayed",
-      message:    "Email delivery delayed"
+      action: :track_only,
+      level: :info,
+      type: "email_delayed",
+      message: "Email delivery delayed"
     },
     "email.opened" => {
-      action:     :track_only,
-      level:      :info,
-      event_type: "email_opened",
-      message:    "Email opened"
+      action: :track_only,
+      level: :info,
+      type: "email_opened",
+      message: "Email opened"
     },
     "email.clicked" => {
-      action:     :track_only,
-      level:      :info,
-      event_type: "email_clicked",
-      message:    "Email clicked"
+      action: :track_only,
+      level: :info,
+      type: "email_clicked",
+      message: "Email clicked"
     }
   }.freeze
 
