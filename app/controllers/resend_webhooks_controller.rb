@@ -71,7 +71,7 @@ class ResendWebhooksController < ApplicationController
     if user
       create_email_event(
         type: params[:type],
-        uer: user,
+        user: user,
         data: event.raw_data,
         **handler
       )
