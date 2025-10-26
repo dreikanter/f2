@@ -6,75 +6,75 @@ class TimeHelperTest < ActiveSupport::TestCase
   include ActionView::Helpers::TextHelper
   include ActiveSupport::Testing::TimeHelpers
 
-  test "short_time_ago returns nil for nil input" do
+  test "#short_time_ago should return nil for nil input" do
     assert_nil short_time_ago(nil)
   end
 
-  test "short_time_ago returns seconds for recent time" do
+  test "#short_time_ago should return seconds for recent time" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 30.seconds.ago
       assert_equal "30s", short_time_ago(time)
     end
   end
 
-  test "short_time_ago returns minutes for time within hour" do
+  test "#short_time_ago should return minutes for time within hour" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 15.minutes.ago
       assert_equal "15m", short_time_ago(time)
     end
   end
 
-  test "short_time_ago returns hours for time within day" do
+  test "#short_time_ago should return hours for time within day" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 5.hours.ago
       assert_equal "5h", short_time_ago(time)
     end
   end
 
-  test "short_time_ago returns days for time within month" do
+  test "#short_time_ago should return days for time within month" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 10.days.ago
       assert_equal "10d", short_time_ago(time)
     end
   end
 
-  test "short_time_ago returns months for time within year" do
+  test "#short_time_ago should return months for time within year" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 3.months.ago
       assert_equal "3mo", short_time_ago(time)
     end
   end
 
-  test "short_time_ago returns years for old time" do
+  test "#short_time_ago should return years for old time" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 2.years.ago
       assert_equal "2y", short_time_ago(time)
     end
   end
 
-  test "long_time_format returns nil for nil input" do
+  test "#long_time_format should return nil for nil input" do
     assert_nil long_time_format(nil)
   end
 
-  test "long_time_format returns formatted time string" do
+  test "#long_time_format should return formatted time string" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = Time.zone.parse("2025-01-15 15:45:30")
       assert_equal "15 Jan 2025, 15:45", long_time_format(time)
     end
   end
 
-  test "long_time_format handles single digit day" do
+  test "#long_time_format should handle single digit day" do
     travel_to Time.zone.parse("2025-01-01 09:30:00") do
       time = Time.zone.parse("2025-01-01 09:30:00")
       assert_equal "1 Jan 2025, 09:30", long_time_format(time)
     end
   end
 
-  test "time_ago_tag returns nil for nil input" do
+  test "#time_ago_tag should return nil for nil input" do
     assert_nil time_ago_tag(nil)
   end
 
-  test "time_ago_tag generates HTML time element" do
+  test "#time_ago_tag should generate HTML time element" do
     time = Time.zone.parse("2025-01-15 15:45:30")
 
     travel_to Time.zone.parse("2025-01-15 16:45:30") do
@@ -84,11 +84,11 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
-  test "long_time_tag returns nil for nil input" do
+  test "#long_time_tag should return nil for nil input" do
     assert_nil long_time_tag(nil)
   end
 
-  test "long_time_tag generates HTML time element" do
+  test "#long_time_tag should generate HTML time element" do
     time = Time.zone.parse("2025-01-15 15:45:30")
 
     travel_to Time.zone.parse("2025-01-15 16:45:30") do
@@ -98,11 +98,11 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
-  test "short_time_ago_tag returns nil for nil input" do
+  test "#short_time_ago_tag should return nil for nil input" do
     assert_nil short_time_ago_tag(nil)
   end
 
-  test "short_time_ago_tag generates HTML time element with short format" do
+  test "#short_time_ago_tag should generate HTML time element with short format" do
     time = Time.zone.parse("2025-01-15 15:45:30")
 
     travel_to Time.zone.parse("2025-01-15 17:45:30") do
@@ -112,43 +112,43 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
-  test "time_distance returns nil for nil input" do
+  test "#time_distance should return nil for nil input" do
     assert_nil time_distance(nil)
   end
 
-  test "time_distance returns less than a minute for very short durations" do
+  test "#time_distance should return less than a minute for very short durations" do
     assert_equal "less than a minute", time_distance(30)
   end
 
-  test "time_distance returns singular minute" do
+  test "#time_distance should return singular minute" do
     assert_equal "1 minute", time_distance(90)
   end
 
-  test "time_distance returns plural minutes" do
+  test "#time_distance should return plural minutes" do
     assert_equal "15 minutes", time_distance(15 * 60)
   end
 
-  test "time_distance returns singular hour" do
+  test "#time_distance should return singular hour" do
     assert_equal "1 hour", time_distance(90 * 60)
   end
 
-  test "time_distance returns plural hours" do
+  test "#time_distance should return plural hours" do
     assert_equal "11 hours", time_distance(11 * 3600)
   end
 
-  test "time_distance returns singular day" do
+  test "#time_distance should return singular day" do
     assert_equal "1 day", time_distance(36 * 3600)
   end
 
-  test "time_distance returns plural days" do
+  test "#time_distance should return plural days" do
     assert_equal "7 days", time_distance(7 * 86400)
   end
 
-  test "time_ago returns nil for nil input" do
+  test "#time_ago should return nil for nil input" do
     assert_nil time_ago(nil)
   end
 
-  test "time_ago returns time distance from now" do
+  test "#time_ago should return time distance from now" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 2.hours.ago
       assert_equal "2 hours", time_ago(time)
