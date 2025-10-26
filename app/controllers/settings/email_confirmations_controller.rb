@@ -28,7 +28,18 @@ class Settings::EmailConfirmationsController < ApplicationController
       email_deactivation_reason: nil
     )
 
-    EmailChangedEvent.create(user: user, old_email: old_email, new_email: target_email)
+    create_email_changed_event(user, old_email, target_email)
+  end
+
+  def create_email_changed_event(user, old_email, new_email)
+    Event.create!(
+      type: "email_changed",
+      level: :info,
+      subject: user,
+      user: user,
+      message: "Email changed from #{old_email} to #{new_email}",
+      metadata: { old_email: old_email, new_email: new_email }
+    )
   end
 
   def redirect_with_success

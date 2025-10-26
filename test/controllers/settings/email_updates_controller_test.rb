@@ -57,7 +57,14 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should reject email change when rate limited" do
     sign_in_user
-    EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+    Event.create!(
+      type: "email_changed",
+      level: :info,
+      subject: user,
+      user: user,
+      message: "Email changed from old@example.com to #{user.email_address}",
+      metadata: { old_email: "old@example.com", new_email: user.email_address }
+    )
 
     assert_not user.can_change_email?
 
@@ -69,7 +76,14 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   test "should allow email change after rate limit expires" do
     sign_in_user
     travel_to 25.hours.ago do
-      EmailChangedEvent.create(user: user, old_email: "old@example.com", new_email: user.email_address)
+      Event.create!(
+        type: "email_changed",
+        level: :info,
+        subject: user,
+        user: user,
+        message: "Email changed from old@example.com to #{user.email_address}",
+        metadata: { old_email: "old@example.com", new_email: user.email_address }
+      )
     end
 
     assert user.can_change_email?
