@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   PASSWORD_RESET_TTL = 15.minutes
   EMAIL_CONFIRMATION_TTL = 24.hours
+  EMAIL_CHANGE_COOLDOWN = 24.hours
   PASSWORD_MIN_LENGTH = 10
   PASSWORD_MAX_LENGTH = 72
 
@@ -75,13 +76,13 @@ class User < ApplicationRecord
   end
 
   def can_change_email?
-    last_email_change_event.nil? || last_email_change_event.created_at < 24.hours.ago
+    last_email_change_event.nil? || last_email_change_event.created_at < EMAIL_CHANGE_COOLDOWN.ago
   end
 
   def time_until_email_change_allowed
     return 0 if can_change_email?
 
-    24.hours - (Time.current - last_email_change_event.created_at)
+    EMAIL_CHANGE_COOLDOWN - (Time.current - last_email_change_event.created_at)
   end
 
   def last_email_change_event
