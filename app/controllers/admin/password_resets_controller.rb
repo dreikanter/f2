@@ -7,8 +7,13 @@ class Admin::PasswordResetsController < ApplicationController
   def create
     user = load_user
     authorize user, :update?
-    PasswordsMailer.reset(user).deliver_later unless user.email_deactivated?
-    redirect_to admin_user_path(user), notice: "Password reset email sent to #{user.email_address}."
+
+    if user.email_deactivated?
+      redirect_to admin_user_path(user), alert: "Cannot send password reset email. User's email is deactivated."
+    else
+      PasswordsMailer.reset(user).deliver_later
+      redirect_to admin_user_path(user), notice: "Password reset email sent to #{user.email_address}."
+    end
   end
 
   private
