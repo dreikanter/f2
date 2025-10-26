@@ -1,4 +1,14 @@
 Rails.application.routes.draw do
+  if Rails.env.development? || Rails.env.test?
+    scope "/dev" do
+      resources :sent_emails, only: [:index, :show], format: false do
+        collection do
+          delete :purge
+        end
+      end
+    end
+  end
+
   # TBD: Use custom authentication + permission-based access control
   mount MissionControl::Jobs::Engine, at: "/jobs"
 

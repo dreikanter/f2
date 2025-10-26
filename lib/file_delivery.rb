@@ -12,33 +12,30 @@ class FileDelivery
     mkdir_p.call(dir)
 
     timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
-    filename = "#{timestamp}_#{sanitize_filename(mail.subject || "no_subject")}.txt"
-    filepath = dir.join(filename)
+    uuid = SecureRandom.uuid
+    base_name = "#{timestamp}_#{uuid}"
 
-    write_file.call(filepath) do |f|
-      f.puts "From: #{mail.from&.join(", ")}"
-      f.puts "To: #{mail.to&.join(", ")}"
-      f.puts "Subject: #{mail.subject}"
-      f.puts "Date: #{mail.date}"
-      f.puts ""
+    # Write metadata file
+    metadata = {
+      "message_id" => mail.message_id.to_s,
+      "from" => mail.from&.join(", "),
+      "to" => mail.to&.join(", "),
+      "subject" => mail.subject.to_s,
+      "date" => mail.date,
+      "multipart" => mail.multipart?
+    }
+    write_file.call(dir.join("#{base_name}.yml")) { |f| f.write(metadata.to_yaml) }
 
-      if mail.multipart?
-        f.puts "--- TEXT PART ---"
-        f.puts mail.text_part&.body&.decoded || "(no text part)"
-        f.puts ""
-        f.puts "--- HTML PART ---"
-        f.puts mail.html_part&.body&.decoded || "(no html part)"
-      else
-        f.puts mail.body.decoded
-      end
+    # Write text version
+    text_content = mail.multipart? ? mail.text_part&.body&.decoded : mail.body.decoded
+    write_file.call(dir.join("#{base_name}.txt")) { |f| f.write(text_content || "") }
+
+    # Write HTML version if multipart
+    if mail.multipart?
+      html_content = mail.html_part&.body&.decoded
+      write_file.call(dir.join("#{base_name}.html")) { |f| f.write(html_content || "") }
     end
 
-    Rails.logger.info "Email saved to #{filepath}"
-  end
-
-  private
-
-  def sanitize_filename(filename)
-    filename.gsub(/[^0-9A-Za-z.\-]/, "_").slice(0, 50)
+    Rails.logger.info "Email saved to #{dir.join(base_name)}.*"
   end
 end
