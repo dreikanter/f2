@@ -1,6 +1,5 @@
 class TransactionalEmailEventRecorder
   SUPPORTED_MAILERS = %w[ProfileMailer PasswordsMailer].freeze
-  CONTEXT_IVAR = :@_transactional_email_context
 
   EMAIL_EVENT_DEFINITIONS = {
     account_confirmation: {
@@ -17,29 +16,14 @@ class TransactionalEmailEventRecorder
     }
   }.freeze
 
-  def self.attach_context(message:, mailer:, action:, user:)
+  def self.record_for(mailer:, action:, user:, message:)
     return unless supports?(mailer: mailer, action: action)
-
-    message.instance_variable_set(
-      CONTEXT_IVAR,
-      {
-        mailer: mailer.to_s,
-        action: action.to_sym,
-        user: user
-      }
-    )
-  end
-
-  def self.record_from_message(message)
-    context = message.instance_variable_get(CONTEXT_IVAR)
-    return unless context
-
-    message.instance_variable_set(CONTEXT_IVAR, nil)
+    return if message.blank?
 
     record!(
-      mailer: context[:mailer],
-      action: context[:action],
-      user: context[:user],
+      mailer: mailer,
+      action: action,
+      user: user,
       recipient: message.to
     )
   end
@@ -68,11 +52,5 @@ class TransactionalEmailEventRecorder
       action.present? &&
       SUPPORTED_MAILERS.include?(mailer.to_s) &&
       EMAIL_EVENT_DEFINITIONS.key?(action.to_sym)
-  end
-
-  class Observer
-    def delivered_email(message)
-      TransactionalEmailEventRecorder.record_from_message(message)
-    end
   end
 end
