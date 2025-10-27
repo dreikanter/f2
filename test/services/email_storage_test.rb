@@ -1,0 +1,30 @@
+require "test_helper"
+
+class EmailStorageTest < ActiveSupport::TestCase
+  test "#list_emails raises NotImplementedError" do
+    storage = EmailStorage.new
+    assert_raises(NotImplementedError) { storage.list_emails }
+  end
+
+  test "#load_email raises NotImplementedError" do
+    storage = EmailStorage.new
+    assert_raises(NotImplementedError) { storage.load_email("test_id") }
+  end
+
+  test "#save_email raises NotImplementedError" do
+    storage = EmailStorage.new
+    assert_raises(NotImplementedError) do
+      storage.save_email("test_id", metadata: {}, text_content: "test")
+    end
+  end
+
+  test "#email_exists? raises NotImplementedError" do
+    storage = EmailStorage.new
+    assert_raises(NotImplementedError) { storage.email_exists?("test_id") }
+  end
+
+  test "#purge_all raises NotImplementedError" do
+    storage = EmailStorage.new
+    assert_raises(NotImplementedError) { storage.purge_all }
+  end
+end
