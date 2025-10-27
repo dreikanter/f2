@@ -5,9 +5,10 @@ class FileDelivery
   end
 
   def deliver!(mail)
-    timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
+    timestamp = Time.current
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
     uuid = SecureRandom.uuid
-    id = "#{timestamp}_#{uuid}"
+    id = "#{timestamp_str}_#{uuid}"
 
     metadata = {
       "message_id" => mail.message_id.to_s,
@@ -15,6 +16,7 @@ class FileDelivery
       "to" => mail.to&.join(", "),
       "subject" => mail.subject.to_s,
       "date" => mail.date,
+      "timestamp" => timestamp,
       "multipart" => mail.multipart?
     }
 

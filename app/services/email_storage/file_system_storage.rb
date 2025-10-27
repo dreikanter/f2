@@ -10,13 +10,11 @@ module EmailStorage
 
       Dir.glob(base_dir.join("*.yml")).map do |yml_path|
         filename = File.basename(yml_path, ".yml")
-        match = filename.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
+        match = filename.match(/_([0-9a-f\-]+)$/)
 
         next unless match
 
-        timestamp_str = match[1]
-        uuid = match[2]
-        timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
+        uuid = match[1]
 
         begin
           metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
@@ -27,7 +25,7 @@ module EmailStorage
         {
           id: uuid,
           subject: metadata["subject"],
-          timestamp: timestamp,
+          timestamp: metadata["timestamp"],
           size: File.size(yml_path)
         }
       end.compact

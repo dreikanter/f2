@@ -47,6 +47,8 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal uuid2, emails[1][:id]
     assert_equal "First", emails[0][:subject]
     assert_equal "Second", emails[1][:subject]
+    assert_kind_of Time, emails[0][:timestamp]
+    assert_kind_of Time, emails[1][:timestamp]
   end
 
   test "#list_emails skips files with invalid filenames" do
@@ -120,6 +122,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "to" => "recipient@example.com",
       "subject" => "Test",
       "date" => Time.now,
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => false
     }
     File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)
@@ -137,6 +140,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "to" => "recipient@example.com",
       "subject" => "Test",
       "date" => Time.now,
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => false
     }
 
@@ -156,6 +160,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "to" => "recipient@example.com",
       "subject" => "Test",
       "date" => Time.now,
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => true
     }
 
@@ -200,6 +205,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.now,
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => false
     }
     File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)
@@ -213,6 +219,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.now,
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => true
     }
     File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)

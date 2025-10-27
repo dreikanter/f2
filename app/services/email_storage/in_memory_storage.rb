@@ -9,17 +9,15 @@ module EmailStorage
       @mutex.synchronize do
         @emails.values.map do |email|
           full_id = email[:full_id]
-          match = full_id.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
+          match = full_id.match(/_([0-9a-f\-]+)$/)
           next unless match
 
-          timestamp_str = match[1]
-          uuid = match[2]
-          timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
+          uuid = match[1]
 
           {
             id: uuid,
             subject: email[:metadata]["subject"],
-            timestamp: timestamp,
+            timestamp: email[:metadata]["timestamp"],
             size: email[:metadata].to_yaml.bytesize
           }
         end.compact

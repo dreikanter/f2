@@ -117,8 +117,9 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
   def create_test_email(uuid, subject, body)
     multipart = body.is_a?(Hash)
-    timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
-    full_id = "#{timestamp}_#{uuid}"
+    timestamp = Time.current
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
+    full_id = "#{timestamp_str}_#{uuid}"
 
     metadata = {
       "message_id" => "<test_#{SecureRandom.hex(8)}@example.com>",
@@ -126,6 +127,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "timestamp" => timestamp,
       "multipart" => multipart
     }
 
