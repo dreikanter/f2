@@ -1,0 +1,109 @@
+class FileSystemEmailStorage < EmailStorage
+  def initialize(base_dir = nil)
+    @base_dir = base_dir || Rails.root.join("tmp", "sent_emails")
+    validate_directory!
+  end
+
+  def list_emails
+    return [] unless Dir.exist?(@base_dir)
+
+    Dir.glob(@base_dir.join("*.yml")).map do |yml_path|
+      filename = File.basename(yml_path, ".yml")
+      match = filename.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
+
+      next unless match
+
+      timestamp_str = match[1]
+      timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
+
+      begin
+        metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+      rescue Psych::SyntaxError
+        next
+      end
+
+      {
+        id: filename,
+        subject: metadata["subject"],
+        timestamp: timestamp,
+        size: File.size(yml_path)
+      }
+    end.compact
+  end
+
+  def load_email(id)
+    base_path = @base_dir.join(id)
+    yml_path = "#{base_path}.yml"
+    txt_path = "#{base_path}.txt"
+    html_path = "#{base_path}.html"
+
+    return nil unless File.exist?(yml_path)
+
+    begin
+      metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+    rescue Psych::SyntaxError, Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email metadata from #{yml_path}: #{e.message}"
+      return nil
+    end
+
+    begin
+      text_content = File.exist?(txt_path) ? File.read(txt_path) : ""
+    rescue Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email text from #{txt_path}: #{e.message}"
+      text_content = ""
+    end
+
+    begin
+      html_content = File.exist?(html_path) ? File.read(html_path) : nil
+    rescue Errno::ENOENT, IOError => e
+      Rails.logger.error "Failed to load email HTML from #{html_path}: #{e.message}"
+      html_content = nil
+    end
+
+    {
+      message_id: metadata["message_id"],
+      from: metadata["from"],
+      to: metadata["to"],
+      subject: metadata["subject"],
+      date: metadata["date"],
+      multipart: metadata["multipart"] || false,
+      body: metadata["multipart"] ? "" : text_content,
+      text_part: metadata["multipart"] ? text_content : nil,
+      html_part: html_content
+    }
+  end
+
+  def save_email(id, metadata:, text_content:, html_content: nil)
+    FileUtils.mkdir_p(@base_dir)
+
+    base_path = @base_dir.join(id)
+
+    File.write("#{base_path}.yml", metadata.to_yaml)
+    File.write("#{base_path}.txt", text_content)
+    File.write("#{base_path}.html", html_content) if html_content
+  end
+
+  def email_exists?(id)
+    File.exist?(@base_dir.join("#{id}.yml"))
+  end
+
+  def purge_all
+    FileUtils.rm_rf(@base_dir)
+    FileUtils.mkdir_p(@base_dir)
+  end
+
+  private
+
+  def validate_directory!
+    absolute_dir = @base_dir.expand_path
+
+    raise "Email directory path is blank" if absolute_dir.to_s.blank?
+
+    allowed_base = Rails.root.join("tmp").expand_path
+    unless absolute_dir.to_s.start_with?(allowed_base.to_s + "/")
+      raise "Email directory must be inside #{allowed_base}"
+    end
+
+    @base_dir = absolute_dir
+  end
+end

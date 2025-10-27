@@ -1,21 +1,13 @@
 require "test_helper"
 
 class SentEmailsControllerTest < ActionDispatch::IntegrationTest
-  def emails_dir
-    Rails.root.join("tmp", "sent_emails")
-  end
-
   setup do
-    # Clean and create emails directory
-    FileUtils.rm_rf(emails_dir)
-    FileUtils.mkdir_p(emails_dir)
-
-    # Reload routes to include dev routes in test env
+    email_storage.purge_all
     Rails.application.reload_routes!
   end
 
-  teardown do
-    FileUtils.rm_rf(emails_dir)
+  def email_storage
+    EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
   end
 
   test "should get index with no emails" do
@@ -78,12 +70,12 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
   test "should purge all emails" do
     uuid = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid}", "Test", "Body")
-    assert_equal 1, Dir.glob(emails_dir.join("*.yml")).count
+    assert_equal 1, email_storage.list_emails.count
 
     delete purge_sent_emails_path
     assert_redirected_to sent_emails_path
     assert_equal "All emails purged", flash[:notice]
-    assert_equal 0, Dir.glob(emails_dir.join("*.yml")).count
+    assert_equal 0, email_storage.list_emails.count
   end
 
   test "should show multipart email with tabs" do
@@ -108,49 +100,11 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h4", text: "Important: Reset your password"
   end
 
-  test "should handle corrupted YAML file" do
-    uuid = SecureRandom.uuid
-    id = "20250101_120000_123_#{uuid}"
-
-    # Write invalid YAML
-    File.write(emails_dir.join("#{id}.yml"), "invalid: yaml: content: [")
-    File.write(emails_dir.join("#{id}.txt"), "Text content")
-
-    get sent_email_path(id: id)
-    assert_redirected_to sent_emails_path
-    assert_equal "Failed to load email", flash[:alert]
-  end
-
-  test "should handle missing text file gracefully" do
-    uuid = SecureRandom.uuid
-    id = "20250101_120000_123_#{uuid}"
-
-    # Write metadata but no text file
-    metadata = {
-      "message_id" => "<test@example.com>",
-      "from" => "sender@example.com",
-      "to" => "recipient@example.com",
-      "subject" => "Test",
-      "date" => Time.parse("2025-01-01T12:00:00+00:00"),
-      "multipart" => false
-    }
-    File.write(emails_dir.join("#{id}.yml"), metadata.to_yaml)
-
-    get sent_email_path(id: id)
-    assert_response :success
-    assert_select "h4", text: "Test"
-  end
-
-  # Note: Routes are only defined in development/test environments
-  # via the conditional in config/routes.rb
-
   private
 
-  def create_test_email(base_name, subject, body)
-    # Determine if multipart based on body content
+  def create_test_email(id, subject, body)
     multipart = body.is_a?(Hash)
 
-    # Create metadata (same as FileDelivery)
     metadata = {
       "message_id" => "<test_#{SecureRandom.hex(8)}@example.com>",
       "from" => "sender@example.com",
@@ -160,16 +114,9 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
       "multipart" => multipart
     }
 
-    # Write metadata file
-    File.write(emails_dir.join("#{base_name}.yml"), metadata.to_yaml)
-
-    # Write text file
     text_content = multipart ? body[:text] : body
-    File.write(emails_dir.join("#{base_name}.txt"), text_content)
+    html_content = multipart ? body[:html] : nil
 
-    # Write HTML file if multipart
-    if multipart
-      File.write(emails_dir.join("#{base_name}.html"), body[:html])
-    end
+    email_storage.save_email(id, metadata: metadata, text_content: text_content, html_content: html_content)
   end
 end

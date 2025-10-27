@@ -1,21 +1,14 @@
 class FileDelivery
-  attr_reader :mkdir_p, :write_file
-
   def initialize(settings)
     @settings = settings
-    @mkdir_p = settings[:mkdir_p] || ->(dir) { FileUtils.mkdir_p(dir) }
-    @write_file = settings[:write_file] || ->(path, &block) { File.open(path, "w", &block) }
+    @email_storage = settings[:email_storage]
   end
 
   def deliver!(mail)
-    dir = Rails.root.join("tmp", "sent_emails")
-    mkdir_p.call(dir)
-
     timestamp = Time.current.strftime("%Y%m%d_%H%M%S_%L")
     uuid = SecureRandom.uuid
-    base_name = "#{timestamp}_#{uuid}"
+    id = "#{timestamp}_#{uuid}"
 
-    # Write metadata file
     metadata = {
       "message_id" => mail.message_id.to_s,
       "from" => mail.from&.join(", "),
@@ -24,18 +17,23 @@ class FileDelivery
       "date" => mail.date,
       "multipart" => mail.multipart?
     }
-    write_file.call(dir.join("#{base_name}.yml")) { |f| f.write(metadata.to_yaml) }
 
-    # Write text version
     text_content = mail.multipart? ? mail.text_part&.body&.decoded : mail.body.decoded
-    write_file.call(dir.join("#{base_name}.txt")) { |f| f.write(text_content || "") }
+    html_content = mail.multipart? ? mail.html_part&.body&.decoded : nil
 
-    # Write HTML version if multipart
-    if mail.multipart?
-      html_content = mail.html_part&.body&.decoded
-      write_file.call(dir.join("#{base_name}.html")) { |f| f.write(html_content || "") }
-    end
+    email_storage.save_email(
+      id,
+      metadata: metadata,
+      text_content: text_content || "",
+      html_content: html_content
+    )
 
-    Rails.logger.info "Email saved to #{dir.join(base_name)}.*"
+    Rails.logger.info "Email saved with ID: #{id}"
+  end
+
+  private
+
+  def email_storage
+    @email_storage ||= EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
   end
 end
