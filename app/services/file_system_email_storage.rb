@@ -32,7 +32,6 @@ class FileSystemEmailStorage < EmailStorage
   end
 
   def load_email(id)
-    base_path = base_dir.join(id)
     metadata = load_metadata(id)
 
     return nil unless metadata
