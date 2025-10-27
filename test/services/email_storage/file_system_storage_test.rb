@@ -1,8 +1,8 @@
 require "test_helper"
 
-class FileSystemEmailStorageTest < ActiveSupport::TestCase
+class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   def storage
-    @storage ||= FileSystemEmailStorage.new(test_dir)
+    @storage ||= EmailStorage::FileSystemStorage.new(test_dir)
   end
 
   def test_dir
@@ -20,13 +20,13 @@ class FileSystemEmailStorageTest < ActiveSupport::TestCase
 
   test "#initialize validates directory is inside Rails.root/tmp" do
     assert_raises(RuntimeError) do
-      FileSystemEmailStorage.new(Rails.root)
+      EmailStorage::FileSystemStorage.new(Rails.root)
     end
   end
 
   test "#initialize validates directory is not blank" do
     assert_raises(RuntimeError) do
-      FileSystemEmailStorage.new(Pathname.new(""))
+      EmailStorage::FileSystemStorage.new(Pathname.new(""))
     end
   end
 

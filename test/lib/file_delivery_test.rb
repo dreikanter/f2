@@ -2,7 +2,7 @@ require "test_helper"
 
 class FileDeliveryTest < ActiveSupport::TestCase
   def email_storage
-    @email_storage ||= InMemoryEmailStorage.new
+    @email_storage ||= EmailStorage::InMemoryStorage.new
   end
 
   def delivery

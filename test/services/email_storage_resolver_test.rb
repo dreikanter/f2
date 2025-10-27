@@ -5,19 +5,19 @@ class EmailStorageResolverTest < ActiveSupport::TestCase
     EmailStorageResolver.clear_instances
   end
 
-  test ".resolve returns FileSystemEmailStorage for :file_system" do
+  test ".resolve returns EmailStorage::FileSystemStorage for :file_system" do
     storage = EmailStorageResolver.resolve(:file_system)
-    assert_instance_of FileSystemEmailStorage, storage
+    assert_instance_of EmailStorage::FileSystemStorage, storage
   end
 
-  test ".resolve returns InMemoryEmailStorage for :in_memory" do
+  test ".resolve returns EmailStorage::InMemoryStorage for :in_memory" do
     storage = EmailStorageResolver.resolve(:in_memory)
-    assert_instance_of InMemoryEmailStorage, storage
+    assert_instance_of EmailStorage::InMemoryStorage, storage
   end
 
-  test ".resolve returns FileSystemEmailStorage for nil" do
+  test ".resolve returns EmailStorage::FileSystemStorage for nil" do
     storage = EmailStorageResolver.resolve(nil)
-    assert_instance_of FileSystemEmailStorage, storage
+    assert_instance_of EmailStorage::FileSystemStorage, storage
   end
 
   test ".resolve raises ArgumentError for unknown adapter" do

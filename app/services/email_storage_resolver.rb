@@ -9,9 +9,9 @@ module EmailStorageResolver
   def self.create_instance(adapter_name)
     case adapter_name
     when :file_system
-      FileSystemEmailStorage.new
+      EmailStorage::FileSystemStorage.new
     when :in_memory
-      InMemoryEmailStorage.new
+      EmailStorage::InMemoryStorage.new
     else
       raise ArgumentError, "Unknown email storage adapter: #{adapter_name}"
     end
