@@ -111,6 +111,6 @@ class FileSystemEmailStorage < EmailStorage
       raise "Email directory must be inside #{allowed_base}"
     end
 
-    base_dir = absolute_dir
+    @base_dir = absolute_dir
   end
 end
