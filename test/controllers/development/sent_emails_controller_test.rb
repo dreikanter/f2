@@ -99,6 +99,26 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h4", text: "Important: Reset your password"
   end
 
+  test "should handle purge errors gracefully" do
+    email_storage.stub(:purge_all, -> { raise "Purge failed" }) do
+      delete purge_development_sent_emails_path
+      assert_redirected_to development_sent_emails_path
+      assert_equal "Failed to purge emails: Purge failed", flash[:alert]
+    end
+  end
+
+  test "should show email when storage returns nil for load but exists check passes" do
+    uuid = SecureRandom.uuid
+    id = "20250101_120000_123_#{uuid}"
+    create_test_email(id, "Test", "Body")
+
+    email_storage.stub(:load_email, nil) do
+      get development_sent_email_path(id: id)
+      assert_redirected_to development_sent_emails_path
+      assert_equal "Failed to load email", flash[:alert]
+    end
+  end
+
   private
 
   def create_test_email(id, subject, body)
