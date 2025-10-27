@@ -177,7 +177,7 @@ class FileSystemEmailStorageTest < ActiveSupport::TestCase
     refute storage.email_exists?("nonexistent-uuid")
   end
 
-  test "#purge_all deletes all emails" do
+  test "#purge deletes all emails" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid1}", "First")
@@ -185,7 +185,7 @@ class FileSystemEmailStorageTest < ActiveSupport::TestCase
 
     assert_equal 2, storage.list_emails.size
 
-    storage.purge_all
+    storage.purge
 
     assert_equal 0, storage.list_emails.size
     assert Dir.exist?(test_dir)

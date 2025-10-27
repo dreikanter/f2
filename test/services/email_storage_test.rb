@@ -23,8 +23,8 @@ class EmailStorageTest < ActiveSupport::TestCase
     assert_raises(NotImplementedError) { storage.email_exists?("test_id") }
   end
 
-  test "#purge_all raises NotImplementedError" do
+  test "#purge raises NotImplementedError" do
     storage = EmailStorage.new
-    assert_raises(NotImplementedError) { storage.purge_all }
+    assert_raises(NotImplementedError) { storage.purge }
   end
 end

@@ -68,7 +68,7 @@ class InMemoryEmailStorage < EmailStorage
     end
   end
 
-  def purge_all
+  def purge
     @mutex.synchronize do
       @emails.clear
     end

@@ -29,7 +29,7 @@ class Development::SentEmailsController < ApplicationController
   end
 
   def purge
-    email_storage.purge_all
+    email_storage.purge
     redirect_to development_sent_emails_path, notice: "All emails purged"
   rescue => e
     redirect_to development_sent_emails_path, alert: "Failed to purge emails: #{e.message}"

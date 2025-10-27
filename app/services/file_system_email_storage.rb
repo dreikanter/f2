@@ -69,7 +69,7 @@ class FileSystemEmailStorage < EmailStorage
     find_full_id(uuid).present?
   end
 
-  def purge_all
+  def purge
     FileUtils.rm_rf(base_dir)
     FileUtils.mkdir_p(base_dir)
   end

@@ -15,7 +15,7 @@ class EmailStorage
     raise NotImplementedError
   end
 
-  def purge_all
+  def purge
     raise NotImplementedError
   end
 end

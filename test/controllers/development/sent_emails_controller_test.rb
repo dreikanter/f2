@@ -2,7 +2,7 @@ require "test_helper"
 
 class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    email_storage.purge_all
+    email_storage.purge
     Rails.application.reload_routes!
   end
 
@@ -95,7 +95,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle purge errors gracefully" do
-    email_storage.stub(:purge_all, -> { raise "Purge failed" }) do
+    email_storage.stub(:purge, -> { raise "Purge failed" }) do
       delete purge_development_sent_emails_path
       assert_redirected_to development_sent_emails_path
       assert_equal "Failed to purge emails: Purge failed", flash[:alert]
