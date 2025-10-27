@@ -4,7 +4,7 @@ class Registration::EmailConfirmationsController < ApplicationController
   def show
     user = find_user_by_token
     activate_user(user)
-    redirect_to new_session_path, notice: "Your email is now confirmed and the account is activated. Please sign in."
+    redirect_to new_session_path, notice: "Your email is now confirmed. Please sign in to get started."
   rescue ActiveSupport::MessageVerifier::InvalidSignature
     redirect_to new_session_path, alert: "Email confirmation link is invalid or has expired."
   end
@@ -16,6 +16,6 @@ class Registration::EmailConfirmationsController < ApplicationController
   end
 
   def activate_user(user)
-    user.active! if user.inactive?
+    user.onboarding! if user.inactive?
   end
 end

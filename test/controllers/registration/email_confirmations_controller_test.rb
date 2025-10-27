@@ -8,8 +8,8 @@ class Registration::EmailConfirmationsControllerTest < ActionDispatch::Integrati
     get registration_email_confirmation_url(token)
 
     assert_redirected_to new_session_path
-    assert_equal "Your email is now confirmed and the account is activated. Please sign in.", flash[:notice]
-    assert inactive_user.reload.active?
+    assert_equal "Your email is now confirmed. Please sign in to get started.", flash[:notice]
+    assert inactive_user.reload.onboarding?
   end
 
   test "should redirect to login with invalid confirmation token" do
@@ -19,13 +19,13 @@ class Registration::EmailConfirmationsControllerTest < ActionDispatch::Integrati
     assert_equal "Email confirmation link is invalid or has expired.", flash[:alert]
   end
 
-  test "should not activate already active user" do
-    active_user = create(:user, state: :active)
-    token = active_user.generate_token_for(:initial_email_confirmation)
+  test "should not change state of already onboarding user" do
+    onboarding_user = create(:user, state: :onboarding)
+    token = onboarding_user.generate_token_for(:initial_email_confirmation)
 
     get registration_email_confirmation_url(token)
 
     assert_redirected_to new_session_path
-    assert active_user.reload.active?
+    assert onboarding_user.reload.onboarding?
   end
 end
