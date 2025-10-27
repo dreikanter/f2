@@ -9,7 +9,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # TBD: Use custom authentication + permission-based access control
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   resource :session
