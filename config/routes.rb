@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   if Rails.env.development? || Rails.env.test?
-    scope "/dev" do
+    namespace :development do
       resources :sent_emails, only: [:index, :show], format: false do
         collection do
           delete :purge
