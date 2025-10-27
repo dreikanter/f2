@@ -66,12 +66,12 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   test "should purge all emails" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Test", "Body")
-    assert_equal 1, email_storage.list_emails.count
+    assert_equal 1, email_storage.list.count
 
     delete purge_development_sent_emails_path
     assert_redirected_to development_sent_emails_path
     assert_equal "All emails purged", flash[:notice]
-    assert_equal 0, email_storage.list_emails.count
+    assert_equal 0, email_storage.list.count
   end
 
   test "should show multipart email with tabs" do

@@ -5,8 +5,8 @@ module EmailStorage
       @emails = {}
     end
 
-    def list_emails
-      emails = @mutex.synchronize do
+    def list
+      @mutex.synchronize do
         @emails.values.map do |email|
           {
             id: email[:id],
@@ -16,8 +16,6 @@ module EmailStorage
           }
         end
       end
-
-      ordered_list(emails)
     end
 
     def load_email(uuid)

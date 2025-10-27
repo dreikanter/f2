@@ -30,12 +30,12 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     end
   end
 
-  test "#list_emails returns empty array when directory does not exist" do
+  test "#ordered_list returns empty array when directory does not exist" do
     FileUtils.rm_rf(test_dir)
-    assert_equal [], storage.list_emails
+    assert_equal [], storage.ordered_list
   end
 
-  test "#list_emails returns emails sorted by timestamp" do
+  test "#ordered_list returns emails sorted by timestamp" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     time1 = Time.parse("2025-01-01T12:00:00+00:00")
@@ -43,7 +43,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     create_test_email(uuid1, "First", timestamp: time1)
     create_test_email(uuid2, "Second", timestamp: time2)
 
-    emails = storage.list_emails
+    emails = storage.ordered_list
     assert_equal 2, emails.size
     assert_equal uuid2, emails[0][:id]
     assert_equal uuid1, emails[1][:id]
@@ -53,17 +53,17 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal time1, emails[1][:timestamp]
   end
 
-  test "#list_emails skips files with invalid filenames" do
+  test "#ordered_list skips files with invalid filenames" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Valid")
     File.write(test_dir.join("invalid.yml"), "data")
 
-    emails = storage.list_emails
+    emails = storage.ordered_list
     assert_equal 1, emails.size
     assert_equal "Valid", emails.first[:subject]
   end
 
-  test "#list_emails skips files with corrupted YAML" do
+  test "#ordered_list skips files with corrupted YAML" do
     valid_uuid = SecureRandom.uuid
     corrupt_uuid = SecureRandom.uuid
     valid_id = "20250101_120000_123_#{valid_uuid}"
@@ -72,7 +72,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     create_test_email(valid_id, "Valid")
     File.write(test_dir.join("#{corrupt_id}.yml"), "invalid: yaml: [")
 
-    emails = storage.list_emails
+    emails = storage.ordered_list
     assert_equal 1, emails.size
     assert_equal "Valid", emails.first[:subject]
   end
@@ -199,11 +199,11 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     create_test_email("20250101_120000_123_#{uuid1}", "First")
     create_test_email("20250102_120000_456_#{uuid2}", "Second")
 
-    assert_equal 2, storage.list_emails.size
+    assert_equal 2, storage.ordered_list.size
 
     storage.purge
 
-    assert_equal 0, storage.list_emails.size
+    assert_equal 0, storage.ordered_list.size
     assert Dir.exist?(test_dir)
   end
 
