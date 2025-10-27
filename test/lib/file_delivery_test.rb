@@ -23,7 +23,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
     assert_equal 1, emails.size
 
     email = emails.first
-    assert_match(/\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}/, email[:id])
+    assert_match(/\A[0-9a-f-]{36}\z/, email[:id])
     assert_equal "Test Subject", email[:subject]
 
     loaded = email_storage.load_email(email[:id])

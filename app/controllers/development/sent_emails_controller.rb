@@ -6,7 +6,7 @@ class Development::SentEmailsController < ApplicationController
   end
 
   def show
-    unless params[:id] =~ /\A\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\z/
+    unless params[:id] =~ /\A[0-9a-f-]{36}\z/
       redirect_to development_sent_emails_path, alert: "Invalid email ID"
       return
     end
@@ -22,6 +22,8 @@ class Development::SentEmailsController < ApplicationController
       redirect_to development_sent_emails_path, alert: "Failed to load email"
       return
     end
+
+    @uuid = params[:id]
   end
 
   def purge

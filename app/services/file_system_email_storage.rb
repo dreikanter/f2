@@ -14,6 +14,7 @@ class FileSystemEmailStorage < EmailStorage
       next unless match
 
       timestamp_str = match[1]
+      uuid = match[2]
       timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
 
       begin
@@ -23,7 +24,7 @@ class FileSystemEmailStorage < EmailStorage
       end
 
       {
-        id: filename,
+        id: uuid,
         subject: metadata["subject"],
         timestamp: timestamp,
         size: File.size(yml_path)
@@ -31,13 +32,15 @@ class FileSystemEmailStorage < EmailStorage
     end.compact
   end
 
-  def load_email(id)
-    metadata = load_metadata(id)
+  def load_email(uuid)
+    full_id = find_full_id(uuid)
+    return nil unless full_id
 
+    metadata = load_metadata(full_id)
     return nil unless metadata
 
-    text_content = load_text_content(id)
-    html_content = load_html_content(id)
+    text_content = load_text_content(full_id)
+    html_content = load_html_content(full_id)
 
     {
       message_id: metadata["message_id"],
@@ -52,18 +55,18 @@ class FileSystemEmailStorage < EmailStorage
     }
   end
 
-  def save_email(id, metadata:, text_content:, html_content: nil)
+  def save_email(full_id, metadata:, text_content:, html_content: nil)
     FileUtils.mkdir_p(base_dir)
 
-    base_path = base_dir.join(id)
+    base_path = base_dir.join(full_id)
 
     File.write("#{base_path}.yml", metadata.to_yaml)
     File.write("#{base_path}.txt", text_content)
     File.write("#{base_path}.html", html_content) if html_content
   end
 
-  def email_exists?(id)
-    File.exist?(base_dir.join("#{id}.yml"))
+  def email_exists?(uuid)
+    find_full_id(uuid).present?
   end
 
   def purge_all
@@ -74,6 +77,16 @@ class FileSystemEmailStorage < EmailStorage
   private
 
   attr_reader :base_dir
+
+  def find_full_id(uuid)
+    return nil unless Dir.exist?(base_dir)
+
+    pattern = base_dir.join("*_#{uuid}.yml")
+    matches = Dir.glob(pattern)
+    return nil if matches.empty?
+
+    File.basename(matches.first, ".yml")
+  end
 
   def load_metadata(id)
     path = base_dir.join("#{id}.yml")

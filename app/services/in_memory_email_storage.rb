@@ -7,15 +7,16 @@ class InMemoryEmailStorage < EmailStorage
   def list_emails
     @mutex.synchronize do
       @emails.values.map do |email|
-        filename = email[:id]
-        match = filename.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
+        full_id = email[:full_id]
+        match = full_id.match(/^(\d{8}_\d{6}_\d{3})_([0-9a-f\-]+)$/)
         next unless match
 
         timestamp_str = match[1]
+        uuid = match[2]
         timestamp = DateTime.strptime(timestamp_str, "%Y%m%d_%H%M%S_%L")
 
         {
-          id: filename,
+          id: uuid,
           subject: email[:metadata]["subject"],
           timestamp: timestamp,
           size: email[:metadata].to_yaml.bytesize
@@ -24,9 +25,12 @@ class InMemoryEmailStorage < EmailStorage
     end
   end
 
-  def load_email(id)
+  def load_email(uuid)
     @mutex.synchronize do
-      email = @emails[id]
+      full_id = find_full_id(uuid)
+      return nil unless full_id
+
+      email = @emails[full_id]
       return nil unless email
 
       metadata = email[:metadata]
@@ -47,10 +51,10 @@ class InMemoryEmailStorage < EmailStorage
     end
   end
 
-  def save_email(id, metadata:, text_content:, html_content: nil)
+  def save_email(full_id, metadata:, text_content:, html_content: nil)
     @mutex.synchronize do
-      @emails[id] = {
-        id: id,
+      @emails[full_id] = {
+        full_id: full_id,
         metadata: metadata,
         text_content: text_content,
         html_content: html_content
@@ -58,9 +62,9 @@ class InMemoryEmailStorage < EmailStorage
     end
   end
 
-  def email_exists?(id)
+  def email_exists?(uuid)
     @mutex.synchronize do
-      @emails.key?(id)
+      find_full_id(uuid).present?
     end
   end
 
@@ -68,5 +72,11 @@ class InMemoryEmailStorage < EmailStorage
     @mutex.synchronize do
       @emails.clear
     end
+  end
+
+  private
+
+  def find_full_id(uuid)
+    @emails.keys.find { |key| key.end_with?("_#{uuid}") }
   end
 end
