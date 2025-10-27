@@ -1,4 +1,4 @@
-class SentEmailsController < ApplicationController
+class Development::SentEmailsController < ApplicationController
   allow_unauthenticated_access
 
   def index
@@ -6,21 +6,20 @@ class SentEmailsController < ApplicationController
   end
 
   def show
-    # Validate ID format to prevent path traversal (must be timestamp_uuid)
     unless params[:id] =~ /\A\d{8}_\d{6}_\d{3}_[0-9a-f-]{36}\z/
-      redirect_to sent_emails_path, alert: "Invalid email ID"
+      redirect_to development_sent_emails_path, alert: "Invalid email ID"
       return
     end
 
     unless email_storage.email_exists?(params[:id])
-      redirect_to sent_emails_path, alert: "Email not found"
+      redirect_to development_sent_emails_path, alert: "Email not found"
       return
     end
 
     @email = email_storage.load_email(params[:id])
 
     unless @email
-      redirect_to sent_emails_path, alert: "Failed to load email"
+      redirect_to development_sent_emails_path, alert: "Failed to load email"
       return
     end
 
@@ -29,9 +28,9 @@ class SentEmailsController < ApplicationController
 
   def purge
     email_storage.purge_all
-    redirect_to sent_emails_path, notice: "All emails purged"
+    redirect_to development_sent_emails_path, notice: "All emails purged"
   rescue => e
-    redirect_to sent_emails_path, alert: "Failed to purge emails: #{e.message}"
+    redirect_to development_sent_emails_path, alert: "Failed to purge emails: #{e.message}"
   end
 
   private

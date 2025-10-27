@@ -1,6 +1,6 @@
 require "test_helper"
 
-class SentEmailsControllerTest < ActionDispatch::IntegrationTest
+class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   setup do
     email_storage.purge_all
     Rails.application.reload_routes!
@@ -11,19 +11,18 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index with no emails" do
-    get sent_emails_path
+    get development_sent_emails_path
     assert_response :success
     assert_select "div.alert-info", text: /No emails captured yet/
   end
 
   test "should get index with emails" do
-    # Create test email files
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid1}", "Test Subject", "Test email body")
     create_test_email("20250101_130000_456_#{uuid2}", "Another Email", "Another body")
 
-    get sent_emails_path
+    get development_sent_emails_path
     assert_response :success
 
     assert_select "a.list-group-item", count: 2
@@ -36,7 +35,7 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     id = "20250101_120000_123_#{uuid}"
     create_test_email(id, "Test Subject", "Test email body")
 
-    get sent_email_path(id: id)
+    get development_sent_email_path(id: id)
     assert_response :success
     assert_select "h4", text: "Test Subject"
     assert_select "pre", text: /Test email body/
@@ -46,23 +45,23 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     uuid = SecureRandom.uuid
     valid_id = "20250101_120000_123_#{uuid}"
 
-    get sent_email_path(id: valid_id)
-    assert_redirected_to sent_emails_path
+    get development_sent_email_path(id: valid_id)
+    assert_redirected_to development_sent_emails_path
     assert_equal "Email not found", flash[:alert]
   end
 
   test "should reject invalid ID format" do
     invalid_ids = [
       "invalid-format",
-      "20250101_120000_123",  # Missing UUID
+      "20250101_120000_123",
       "not-a-timestamp_#{SecureRandom.uuid}",
       "12345678_123456_123_invalid-uuid-format",
-      "20250101_120000_abc_#{SecureRandom.uuid}"  # Invalid milliseconds
+      "20250101_120000_abc_#{SecureRandom.uuid}"
     ]
 
     invalid_ids.each do |invalid_id|
-      get sent_email_path(id: invalid_id)
-      assert_redirected_to sent_emails_path
+      get development_sent_email_path(id: invalid_id)
+      assert_redirected_to development_sent_emails_path
       assert_equal "Invalid email ID", flash[:alert], "Failed for ID: #{invalid_id}"
     end
   end
@@ -72,8 +71,8 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     create_test_email("20250101_120000_123_#{uuid}", "Test", "Body")
     assert_equal 1, email_storage.list_emails.count
 
-    delete purge_sent_emails_path
-    assert_redirected_to sent_emails_path
+    delete purge_development_sent_emails_path
+    assert_redirected_to development_sent_emails_path
     assert_equal "All emails purged", flash[:notice]
     assert_equal 0, email_storage.list_emails.count
   end
@@ -83,7 +82,7 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     id = "20250101_120000_123_#{uuid}"
     create_test_email(id, "Multipart", { text: "Text version", html: "<p>HTML version</p>" })
 
-    get sent_email_path(id: id)
+    get development_sent_email_path(id: id)
     assert_response :success
     assert_select "button#text-tab", text: "Text"
     assert_select "button#html-tab", text: "HTML"
@@ -95,7 +94,7 @@ class SentEmailsControllerTest < ActionDispatch::IntegrationTest
     id = "20250101_120000_123_#{uuid}"
     create_test_email(id, "Important: Reset your password", "Email body")
 
-    get sent_email_path(id: id)
+    get development_sent_email_path(id: id)
     assert_response :success
     assert_select "h4", text: "Important: Reset your password"
   end
