@@ -8,10 +8,9 @@ module EmailStorage
     def list_emails
       return [] unless Dir.exist?(base_dir)
 
-      Dir.glob(base_dir.join("*.yml")).map do |yml_path|
+      emails = Dir.glob(base_dir.join("*.yml")).map do |yml_path|
         filename = File.basename(yml_path, ".yml")
         match = filename.match(/_([0-9a-f\-]+)$/)
-
         next unless match
 
         uuid = match[1]
@@ -29,17 +28,19 @@ module EmailStorage
           size: File.size(yml_path)
         }
       end.compact
+
+      ordered_list(emails)
     end
 
     def load_email(uuid)
-      full_id = find_full_id(uuid)
-      return nil unless full_id
+      filename = find_filename(uuid)
+      return nil unless filename
 
-      metadata = load_metadata(full_id)
+      metadata = load_metadata(filename)
       return nil unless metadata
 
-      text_content = load_text_content(full_id)
-      html_content = load_html_content(full_id)
+      text_content = load_text_content(filename)
+      html_content = load_html_content(filename)
 
       {
         message_id: metadata["message_id"],
@@ -54,18 +55,22 @@ module EmailStorage
       }
     end
 
-    def save_email(full_id, metadata:, text_content:, html_content: nil)
+    def save_email(metadata:, text_content:, html_content: nil)
       FileUtils.mkdir_p(base_dir)
 
-      base_path = base_dir.join(full_id)
+      uuid = new_id
+      filename = filename_for(uuid, metadata["timestamp"])
+      base_path = base_dir.join(filename)
 
       File.write("#{base_path}.yml", metadata.to_yaml)
       File.write("#{base_path}.txt", text_content)
       File.write("#{base_path}.html", html_content) if html_content
+
+      uuid
     end
 
     def email_exists?(uuid)
-      find_full_id(uuid).present?
+      find_filename(uuid).present?
     end
 
     def purge
@@ -77,7 +82,12 @@ module EmailStorage
 
     attr_reader :base_dir
 
-    def find_full_id(uuid)
+    def filename_for(uuid, timestamp)
+      timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
+      "#{timestamp_str}_#{uuid}"
+    end
+
+    def find_filename(uuid)
       return nil unless Dir.exist?(base_dir)
 
       pattern = base_dir.join("*_#{uuid}.yml")

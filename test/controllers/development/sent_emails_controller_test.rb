@@ -117,9 +117,6 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
   def create_test_email(uuid, subject, body)
     multipart = body.is_a?(Hash)
-    timestamp = Time.current
-    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
-    full_id = "#{timestamp_str}_#{uuid}"
 
     metadata = {
       "message_id" => "<test_#{SecureRandom.hex(8)}@example.com>",
@@ -127,13 +124,19 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.parse("2025-01-01T12:00:00+00:00"),
-      "timestamp" => timestamp,
+      "timestamp" => Time.current,
       "multipart" => multipart
     }
 
     text_content = multipart ? body[:text] : body
     html_content = multipart ? body[:html] : nil
 
-    email_storage.save_email(full_id, metadata: metadata, text_content: text_content, html_content: html_content)
+    # Manually save with specific UUID for testing
+    email_storage.instance_variable_get(:@emails)[uuid] = {
+      id: uuid,
+      metadata: metadata,
+      text_content: text_content,
+      html_content: html_content
+    }
   end
 end

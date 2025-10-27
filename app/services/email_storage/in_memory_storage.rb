@@ -6,30 +6,23 @@ module EmailStorage
     end
 
     def list_emails
-      @mutex.synchronize do
+      emails = @mutex.synchronize do
         @emails.values.map do |email|
-          full_id = email[:full_id]
-          match = full_id.match(/_([0-9a-f\-]+)$/)
-          next unless match
-
-          uuid = match[1]
-
           {
-            id: uuid,
+            id: email[:id],
             subject: email[:metadata]["subject"],
             timestamp: email[:metadata]["timestamp"],
             size: email[:metadata].to_yaml.bytesize
           }
-        end.compact
+        end
       end
+
+      ordered_list(emails)
     end
 
     def load_email(uuid)
       @mutex.synchronize do
-        full_id = find_full_id(uuid)
-        return nil unless full_id
-
-        email = @emails[full_id]
+        email = @emails[uuid]
         return nil unless email
 
         metadata = email[:metadata]
@@ -50,20 +43,22 @@ module EmailStorage
       end
     end
 
-    def save_email(full_id, metadata:, text_content:, html_content: nil)
+    def save_email(metadata:, text_content:, html_content: nil)
+      uuid = new_id
       @mutex.synchronize do
-        @emails[full_id] = {
-          full_id: full_id,
+        @emails[uuid] = {
+          id: uuid,
           metadata: metadata,
           text_content: text_content,
           html_content: html_content
         }
       end
+      uuid
     end
 
     def email_exists?(uuid)
       @mutex.synchronize do
-        find_full_id(uuid).present?
+        @emails.key?(uuid)
       end
     end
 
@@ -71,12 +66,6 @@ module EmailStorage
       @mutex.synchronize do
         @emails.clear
       end
-    end
-
-    private
-
-    def find_full_id(uuid)
-      @emails.keys.find { |key| key.end_with?("_#{uuid}") }
     end
   end
 end

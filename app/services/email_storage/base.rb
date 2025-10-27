@@ -8,7 +8,7 @@ module EmailStorage
       raise NotImplementedError
     end
 
-    def save_email(id, metadata:, text_content:, html_content: nil)
+    def save_email(metadata:, text_content:, html_content: nil)
       raise NotImplementedError
     end
 
@@ -18,6 +18,16 @@ module EmailStorage
 
     def purge
       raise NotImplementedError
+    end
+
+    protected
+
+    def new_id
+      SecureRandom.uuid
+    end
+
+    def ordered_list(emails)
+      emails.sort_by { |e| e[:timestamp] }.reverse
     end
   end
 end

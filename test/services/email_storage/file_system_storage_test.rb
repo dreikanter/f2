@@ -38,22 +38,24 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   test "#list_emails returns emails sorted by timestamp" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
-    create_test_email("20250101_120000_123_#{uuid1}", "First")
-    create_test_email("20250102_120000_456_#{uuid2}", "Second")
+    time1 = Time.parse("2025-01-01T12:00:00+00:00")
+    time2 = Time.parse("2025-01-02T12:00:00+00:00")
+    create_test_email(uuid1, "First", timestamp: time1)
+    create_test_email(uuid2, "Second", timestamp: time2)
 
     emails = storage.list_emails
     assert_equal 2, emails.size
-    assert_equal uuid1, emails[0][:id]
-    assert_equal uuid2, emails[1][:id]
-    assert_equal "First", emails[0][:subject]
-    assert_equal "Second", emails[1][:subject]
-    assert_kind_of Time, emails[0][:timestamp]
-    assert_kind_of Time, emails[1][:timestamp]
+    assert_equal uuid2, emails[0][:id]
+    assert_equal uuid1, emails[1][:id]
+    assert_equal "Second", emails[0][:subject]
+    assert_equal "First", emails[1][:subject]
+    assert_equal time2, emails[0][:timestamp]
+    assert_equal time1, emails[1][:timestamp]
   end
 
   test "#list_emails skips files with invalid filenames" do
     uuid = SecureRandom.uuid
-    create_test_email("20250101_120000_123_#{uuid}", "Valid")
+    create_test_email(uuid, "Valid")
     File.write(test_dir.join("invalid.yml"), "data")
 
     emails = storage.list_emails
@@ -132,8 +134,6 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   end
 
   test "#save_email creates metadata and text files" do
-    uuid = SecureRandom.uuid
-    full_id = "20250101_120000_123_#{uuid}"
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
@@ -144,16 +144,22 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "multipart" => false
     }
 
-    storage.save_email(full_id, metadata: metadata, text_content: "Body")
+    uuid = storage.save_email(metadata: metadata, text_content: "Body")
 
-    assert File.exist?(test_dir.join("#{full_id}.yml"))
-    assert File.exist?(test_dir.join("#{full_id}.txt"))
-    assert_equal "Body", File.read(test_dir.join("#{full_id}.txt"))
+    assert_match(/\A[0-9a-f\-]{36}\z/, uuid)
+
+    files = Dir.glob(test_dir.join("*_#{uuid}.*"))
+    assert_equal 2, files.size
+
+    yml_file = files.find { |f| f.end_with?(".yml") }
+    txt_file = files.find { |f| f.end_with?(".txt") }
+
+    assert yml_file
+    assert txt_file
+    assert_equal "Body", File.read(txt_file)
   end
 
   test "#save_email creates HTML file for multipart" do
-    uuid = SecureRandom.uuid
-    full_id = "20250101_120000_123_#{uuid}"
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
@@ -164,10 +170,15 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "multipart" => true
     }
 
-    storage.save_email(full_id, metadata: metadata, text_content: "Text", html_content: "<p>HTML</p>")
+    uuid = storage.save_email(metadata: metadata, text_content: "Text", html_content: "<p>HTML</p>")
 
-    assert File.exist?(test_dir.join("#{full_id}.html"))
-    assert_equal "<p>HTML</p>", File.read(test_dir.join("#{full_id}.html"))
+    assert_match(/\A[0-9a-f\-]{36}\z/, uuid)
+
+    files = Dir.glob(test_dir.join("*_#{uuid}.*"))
+    html_file = files.find { |f| f.end_with?(".html") }
+
+    assert html_file
+    assert_equal "<p>HTML</p>", File.read(html_file)
   end
 
   test "#email_exists? returns true when email exists" do
@@ -198,32 +209,36 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
 
   private
 
-  def create_test_email(full_id, subject, body = "Body")
+  def create_test_email(uuid, subject, body = "Body", timestamp: Time.parse("2025-01-01T12:00:00+00:00"))
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.now,
-      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "timestamp" => timestamp,
       "multipart" => false
     }
-    File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)
-    File.write(test_dir.join("#{full_id}.txt"), body)
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
+    filename = "#{timestamp_str}_#{uuid}"
+    File.write(test_dir.join("#{filename}.yml"), metadata.to_yaml)
+    File.write(test_dir.join("#{filename}.txt"), body)
   end
 
-  def create_multipart_email(full_id, subject, text, html)
+  def create_multipart_email(uuid, subject, text, html, timestamp: Time.parse("2025-01-01T12:00:00+00:00"))
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
       "to" => "recipient@example.com",
       "subject" => subject,
       "date" => Time.now,
-      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "timestamp" => timestamp,
       "multipart" => true
     }
-    File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)
-    File.write(test_dir.join("#{full_id}.txt"), text)
-    File.write(test_dir.join("#{full_id}.html"), html)
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
+    filename = "#{timestamp_str}_#{uuid}"
+    File.write(test_dir.join("#{filename}.yml"), metadata.to_yaml)
+    File.write(test_dir.join("#{filename}.txt"), text)
+    File.write(test_dir.join("#{filename}.html"), html)
   end
 end

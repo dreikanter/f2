@@ -2,7 +2,7 @@ class Development::SentEmailsController < ApplicationController
   allow_unauthenticated_access
 
   def index
-    @emails = email_storage.list_emails.sort_by { |e| e[:timestamp] }.reverse
+    @emails = email_storage.list_emails
   end
 
   def show

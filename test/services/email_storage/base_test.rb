@@ -14,7 +14,7 @@ class EmailStorage::BaseTest < ActiveSupport::TestCase
   test "#save_email raises NotImplementedError" do
     storage = EmailStorage::Base.new
     assert_raises(NotImplementedError) do
-      storage.save_email("test_id", metadata: {}, text_content: "test")
+      storage.save_email(metadata: {}, text_content: "test")
     end
   end
 
