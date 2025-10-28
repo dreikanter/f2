@@ -14,7 +14,7 @@
     "tailwindcss": "^3.4.18"
   },
   "scripts": {
-    "build:css": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.bootstrap.css --no-source-map --load-path=node_modules --quiet-deps && bunx tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.tailwind.css -c ./tailwind.config.js && cat ./app/assets/builds/application.bootstrap.css ./app/assets/builds/application.tailwind.css > ./app/assets/builds/application.css && postcss ./app/assets/builds/application.css --use=autoprefixer --output=./app/assets/builds/application.css",
+    "build:css": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.bootstrap.css --no-source-map --load-path=node_modules --quiet-deps && ./node_modules/.bin/tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.tailwind.css -c ./tailwind.config.js && cat ./app/assets/builds/application.bootstrap.css ./app/assets/builds/application.tailwind.css > ./app/assets/builds/application.css && postcss ./app/assets/builds/application.css --use=autoprefixer --output=./app/assets/builds/application.css",
     "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./tailwind.config.js --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"bun run build:css\""
   },
   "browserslist": [
