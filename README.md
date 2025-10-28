@@ -23,7 +23,6 @@ bin/rubocop -f github
 ### CSS build pipeline
 
 - `bun run build:css` compiles the Bootstrap Sass bundle, builds Tailwind (with DaisyUI), merges the outputs, and runs Autoprefixer so the browser ships a single `app/assets/builds/application.css`.
-- `bun run build:css:legacy` restores the previous Sass-only build if you need to revert quickly.
 - `yarn watch:css` (used by `Procfile.dev`) watches views, helpers, JavaScript, and stylesheets so Tailwind JIT picks up new class usage during development.
 
 Ruby version: see `.ruby-version`
