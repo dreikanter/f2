@@ -8,57 +8,58 @@ class ResendWebhooksController < ApplicationController
       action: :handle_failure,
       level: :warning,
       reason: "bounced",
-      type: "email_bounced",
+      type: "resend.email.email_bounced",
       message: "Email bounced"
     },
     "email.complained" => {
       action: :handle_failure,
       level: :warning,
       reason: "complained",
-      type: "email_complained",
+      type: "resend.email.email_complained",
       message: "Spam complaint"
     },
     "email.failed" => {
       action: :handle_failure,
       level: :error,
       reason: "failed",
-      type: "email_failed",
+      type: "resend.email.email_failed",
       message: "Email failed"
     },
     "email.sent" => {
       action: :track_only,
       level: :info,
-      type: "email_sent",
+      type: "resend.email.email_sent",
       message: "Email sent"
     },
     "email.delivered" => {
       action: :track_only,
       level: :info,
-      type: "email_delivered",
+      type: "resend.email.email_delivered",
       message: "Email delivered"
     },
     "email.delivery_delayed" => {
       action: :track_only,
       level: :info,
-      type: "email_delayed",
+      type: "resend.email.email_delayed",
       message: "Email delivery delayed"
     },
     "email.opened" => {
       action: :track_only,
       level: :info,
-      type: "email_opened",
+      type: "resend.email.email_opened",
       message: "Email opened"
     },
     "email.clicked" => {
       action: :track_only,
       level: :info,
-      type: "email_clicked",
+      type: "resend.email.email_clicked",
       message: "Email clicked"
     }
   }.freeze
 
   def create
     handler = EMAIL_EVENT_HANDLERS[params[:type]]
+
     unless handler
       Rails.logger.info "Received unknown Resend event type: #{params[:type]}"
       return head :ok

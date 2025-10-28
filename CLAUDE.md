@@ -120,6 +120,11 @@ Changes:
 
 When listing the changes, start from the most important. Generalize. Skip boring details.
 
+## Tooling Notes
+
+- Use `mise exec --` to run Ruby/Bundler commands.
+- The Ruby environment already has required gems installed, so avoid installing or updating gems during tasks.
+
 ## Testing
 
 - Keep tests and code together.
