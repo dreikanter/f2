@@ -1,8 +1,9 @@
 class PasswordsMailer < ApplicationMailer
+  after_action :register_event
+
   def reset(user)
     @user = user
-    mail(subject: "Reset your password", to: user.email_address).tap do |message|
-      record_email_event(action: __method__, user: user, message: message)
-    end
+    set_event_context(user_id: user.id)
+    mail(subject: "Reset your password", to: user.email_address)
   end
 end
