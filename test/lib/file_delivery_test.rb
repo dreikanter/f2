@@ -19,7 +19,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     delivery.deliver!(mail)
 
-    emails = email_storage.list_emails
+    emails = email_storage.list
     assert_equal 1, emails.size
 
     email = emails.first
@@ -52,7 +52,7 @@ class FileDeliveryTest < ActiveSupport::TestCase
 
     delivery.deliver!(mail)
 
-    emails = email_storage.list_emails
+    emails = email_storage.list
     assert_equal 1, emails.size
 
     loaded = email_storage.load_email(emails.first[:id])

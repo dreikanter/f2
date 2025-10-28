@@ -1,9 +1,9 @@
 require "test_helper"
 
 class EmailStorage::BaseTest < ActiveSupport::TestCase
-  test "#list_emails raises NotImplementedError" do
+  test "#list raises NotImplementedError" do
     storage = EmailStorage::Base.new
-    assert_raises(NotImplementedError) { storage.list_emails }
+    assert_raises(NotImplementedError) { storage.list }
   end
 
   test "#load_email raises NotImplementedError" do

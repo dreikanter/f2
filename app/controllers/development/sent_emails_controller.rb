@@ -2,7 +2,7 @@ class Development::SentEmailsController < ApplicationController
   allow_unauthenticated_access
 
   def index
-    @emails = email_storage.list_emails
+    @emails = email_storage.ordered_list
   end
 
   def show

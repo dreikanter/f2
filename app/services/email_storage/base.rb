@@ -1,7 +1,11 @@
 module EmailStorage
   class Base
-    def list_emails
+    def list
       raise NotImplementedError
+    end
+
+    def ordered_list
+      list.sort_by { |e| e[:timestamp] }.reverse
     end
 
     def load_email(id)
@@ -24,10 +28,6 @@ module EmailStorage
 
     def new_id
       SecureRandom.uuid
-    end
-
-    def ordered_list(emails)
-      emails.sort_by { |e| e[:timestamp] }.reverse
     end
   end
 end

@@ -5,10 +5,10 @@ module EmailStorage
       validate_directory!
     end
 
-    def list_emails
+    def list
       return [] unless Dir.exist?(base_dir)
 
-      emails = Dir.glob(base_dir.join("*.yml")).map do |yml_path|
+      Dir.glob(base_dir.join("*.yml")).map do |yml_path|
         filename = File.basename(yml_path, ".yml")
         match = filename.match(/_([0-9a-f\-]+)$/)
         next unless match
@@ -28,8 +28,6 @@ module EmailStorage
           size: File.size(yml_path)
         }
       end.compact
-
-      ordered_list(emails)
     end
 
     def load_email(uuid)
