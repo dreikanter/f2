@@ -40,7 +40,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should accept request with valid signature" do
-    post_webhook({ type: "email.sent", data: { to: [user.email_address] } })
+    post_webhook(type: "email.sent", data: { to: [user.email_address] })
 
     assert_response :success
   end
