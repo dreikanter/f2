@@ -15,4 +15,12 @@ module EventsHelper
     badge = LEVEL_BADGES.fetch(level.to_s, LEVEL_BADGES["debug"])
     content_tag(:span, level.humanize, class: badge[:class])
   end
+
+  def mail_event_types
+    ResendWebhooksController::EMAIL_EVENT_HANDLERS.values.pluck(:type) + %w[
+      mail.profile_mailer.account_confirmation
+      mail.profile_mailer.email_change_confirmation
+      mail.passwords_mailer.reset
+    ]
+  end
 end
