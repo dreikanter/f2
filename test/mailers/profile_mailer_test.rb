@@ -1,7 +1,7 @@
 require "test_helper"
 
 class ProfileMailerTest < ActionMailer::TestCase
-  test "email_change_confirmation" do
+  test "#email_change_confirmation should send an email and register event" do
     user = create(:user)
     new_email = "new_email#{user.id}@example.com"
     user.update!(unconfirmed_email: new_email)
@@ -23,7 +23,7 @@ class ProfileMailerTest < ActionMailer::TestCase
     assert_equal({}, event.metadata["details"])
   end
 
-  test "account_confirmation" do
+  test "#account_confirmation should send an email and register event" do
     user = create(:user)
     message = nil
     assert_difference -> { Event.where(type: "mail.profile_mailer.account_confirmation").count }, 1 do

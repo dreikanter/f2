@@ -5,7 +5,7 @@ class PasswordsMailerTest < ActionMailer::TestCase
     ActionMailer::Base.default_url_options[:host] = "example.com"
   end
 
-  test "should reset" do
+  test "#reset should send password reset and register an event" do
     user = create(:user)
     message = nil
 
