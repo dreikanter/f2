@@ -1,0 +1,12 @@
+{
+  "environment": {
+    "RAILS_ENV": "test",
+    "DATABASE_URL": "postgresql://localhost/f2_test",
+    "RAILS_MAX_THREADS": "5"
+  },
+  "description": "F2 Rails project environment configuration for Claude Code",
+  "notes": [
+    "This configuration sets up the test environment for running tests and rubocop",
+    "Use settings.local.json (git-ignored) for personal overrides"
+  ]
+}

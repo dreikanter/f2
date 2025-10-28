@@ -39,7 +39,8 @@
 /node_modules
 bun.lockb
 /coverage
-/.claude
+# Claude Code: ignore personal overrides but commit shared config
+/.claude/settings.local.json
 .env
 !.env.sample
 .zed
