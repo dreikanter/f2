@@ -8,7 +8,7 @@ Web application for scheduling and publishing content feeds to FreeFeed.
 
 - Rails (edge), PostgreSQL
 - SolidQueue for background jobs
-- Turbo, Stimulus, Bootstrap
+- Turbo, Stimulus, Tailwind CSS + DaisyUI
 - Kamal deployment
 
 ## Development
