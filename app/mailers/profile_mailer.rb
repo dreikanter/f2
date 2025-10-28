@@ -6,7 +6,7 @@ class ProfileMailer < ApplicationMailer
     @confirmation_url = settings_email_confirmation_url(@token)
 
     mail(to: @new_email, subject: "Confirm your new email address").tap do |message|
-      record_transactional_email_event(action: __method__, user: user, message: message)
+      record_email_event(action: __method__, user: user, message: message)
     end
   end
 
@@ -16,7 +16,7 @@ class ProfileMailer < ApplicationMailer
     @confirmation_url = registration_email_confirmation_url(@token)
 
     mail(to: user.email_address, subject: "Confirm your email address").tap do |message|
-      record_transactional_email_event(action: __method__, user: user, message: message)
+      record_email_event(action: __method__, user: user, message: message)
     end
   end
 end

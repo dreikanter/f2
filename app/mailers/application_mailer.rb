@@ -4,7 +4,7 @@ class ApplicationMailer < ActionMailer::Base
 
   private
 
-  def record_transactional_email_event(action:, user:, message:)
+  def record_email_event(action:, user:, message:)
     TransactionalEmailEventRecorder.record_for(
       mailer: self.class.name,
       action: action,
