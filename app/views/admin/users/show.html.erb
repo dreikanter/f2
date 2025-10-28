@@ -76,7 +76,7 @@
     <div class="list-group-item">
       <strong>Actions:</strong>
       <%= button_to "Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "btn btn-sm btn-primary" %>
-      <%= link_to "View Email Events", admin_events_path(filter: { user_id: @user.id, type: %w[email_confirmation_requested email_change_confirmation_requested password_reset_requested email_bounced email_complained email_failed email_sent email_delivered email_delayed email_opened email_clicked email_changed] }), class: "btn btn-sm btn-secondary" %>
+      <%= link_to "View Email Events", admin_events_path(filter: { user_id: @user.id, type: %w[mail.profile_mailer.account_confirmation mail.profile_mailer.email_change_confirmation mail.passwords_mailer.reset] }), class: "btn btn-sm btn-secondary" %>
     </div>
   </div>
 <% end %>
