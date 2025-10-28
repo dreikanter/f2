@@ -17,7 +17,7 @@ class ProfileMailerTest < ActionMailer::TestCase
 
     event = Event.where(type: "mail.profile_mailer.email_change_confirmation", user: user).order(:created_at).last
     assert_equal "info", event.level
-    assert_nil event.subject
+    assert_equal user, event.subject
     assert_equal "profile_mailer", event.metadata["mailer"]
     assert_equal "email_change_confirmation", event.metadata["action"]
     assert_equal({}, event.metadata["details"])
@@ -36,7 +36,7 @@ class ProfileMailerTest < ActionMailer::TestCase
 
     event = Event.where(type: "mail.profile_mailer.account_confirmation", user: user).order(:created_at).last
     assert_equal "info", event.level
-    assert_nil event.subject
+    assert_equal user, event.subject
     assert_equal "profile_mailer", event.metadata["mailer"]
     assert_equal "account_confirmation", event.metadata["action"]
     assert_equal({}, event.metadata["details"])

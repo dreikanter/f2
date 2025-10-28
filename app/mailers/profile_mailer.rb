@@ -6,7 +6,7 @@ class ProfileMailer < ApplicationMailer
     @new_email = user.unconfirmed_email
     @token = user.generate_token_for(:change_email_confirmation)
     @confirmation_url = settings_email_confirmation_url(@token)
-    set_event_context(user_id: user.id)
+    set_event_context(user_id: user.id, subject: user)
 
     mail(to: @new_email, subject: "Confirm your new email address")
   end
@@ -15,7 +15,7 @@ class ProfileMailer < ApplicationMailer
     @user = user
     @token = user.generate_token_for(:initial_email_confirmation)
     @confirmation_url = registration_email_confirmation_url(@token)
-    set_event_context(user_id: user.id)
+    set_event_context(user_id: user.id, subject: user)
 
     mail(to: user.email_address, subject: "Confirm your email address")
   end
