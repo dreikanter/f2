@@ -2,13 +2,19 @@
 
 @import "tailwindcss";
 
+@layer base {
+  html {
+    font-size: 16px;
+  }
+}
+
 @layer components {
   .ff-card {
-    @apply rounded-2xl border border-slate-200 bg-white p-8 shadow-xl;
+    @apply w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm;
   }
 
   .ff-card__title {
-    @apply text-4xl font-normal mb-6 text-slate-900;
+    @apply text-3xl font-normal mb-4 text-slate-900;
   }
 
   .ff-card__body {
@@ -16,7 +22,7 @@
   }
 
   .ff-alert {
-    @apply rounded-xl border px-4 py-3 text-cyan-700;
+    @apply rounded-lg border px-4 py-3 text-cyan-700;
   }
 
   .ff-alert--info {
@@ -36,7 +42,7 @@
   }
 
   .ff-form-input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-xl shadow-sm ring-cyan-500 transition focus:border-cyan-500 focus:outline-none focus:ring-2;
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg shadow-xs ring-cyan-500 transition focus:border-cyan-500 focus:outline-none focus:ring-2;
   }
 
   .ff-form-help {
@@ -48,10 +54,18 @@
   }
 
   .ff-button {
-    @apply inline-flex items-center justify-center rounded-lg bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center rounded-md bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
   }
 
   .ff-card__footer {
     @apply mt-6 flex flex-wrap items-center justify-between gap-3 text-slate-600;
+  }
+
+  .ff-text {
+    @apply text-base text-slate-600;
+  }
+
+  .heavy {
+    @apply font-semibold text-slate-800;
   }
 }
