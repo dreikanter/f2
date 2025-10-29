@@ -1,4 +1,6 @@
-module.exports = {
+import daisyui from "daisyui";
+
+export default {
   content: [
     "./app/helpers/**/*.rb",
     "./app/javascript/**/*.{js,ts,jsx,tsx}",
@@ -7,7 +9,7 @@ module.exports = {
   theme: {
     extend: {}
   },
-  plugins: [require("daisyui")],
+  plugins: [daisyui],
   daisyui: {
     themes: ["light"]
   }

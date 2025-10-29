@@ -1,6 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../../tailwind.config.mjs";
+
+@import "tailwindcss";
 
 @plugin "daisyui";
 
+@layer components {
+  .app-link {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration-line: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .app-link:visited,
+  .app-link:hover,
+  .app-link:focus-visible {
+    color: var(--color-primary);
+  }
+}
