@@ -7,7 +7,7 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 - Rails (edge) + PostgreSQL.
 - Authentication via bcrypt sessions with password reset.
 - Background jobs via SolidQueue using Fugit cron expressions.
-- Frontend: Turbo, Stimulus, Bootstrap CSS
+- Frontend: Turbo, Stimulus
 - Deployment: Kamal
 
 ## Commit Requirements
