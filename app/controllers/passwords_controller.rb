@@ -1,4 +1,6 @@
 class PasswordsController < ApplicationController
+  layout "tailwind"
+
   allow_unauthenticated_access
   before_action :find_user_by_token, only: [:edit, :update]
 
