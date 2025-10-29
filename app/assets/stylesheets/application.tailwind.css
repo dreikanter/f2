@@ -1,6 +1,71 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../../tailwind.config.mjs";
 
-@plugin "daisyui";
+@import "tailwindcss";
 
+@layer base {
+  html {
+    font-size: 16px;
+  }
+}
+
+@layer components {
+  .ff-card {
+    @apply w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm;
+  }
+
+  .ff-card__title {
+    @apply text-3xl font-normal mb-4 text-slate-900;
+  }
+
+  .ff-card__body {
+    @apply space-y-6;
+  }
+
+  .ff-alert {
+    @apply rounded-lg border px-4 py-3 text-cyan-700;
+  }
+
+  .ff-alert--info {
+    @apply border-cyan-100 bg-cyan-50;
+  }
+
+  .ff-alert--error {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .ff-form-group {
+    @apply space-y-2;
+  }
+
+  .ff-form-label {
+    @apply block font-semibold text-slate-800;
+  }
+
+  .ff-form-input {
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg shadow-xs ring-cyan-500 transition focus:border-cyan-500 focus:outline-none focus:ring-2;
+  }
+
+  .ff-form-help {
+    @apply text-slate-500;
+  }
+
+  .ff-link {
+    @apply font-medium text-cyan-600 underline underline-offset-4 transition hover:text-cyan-500;
+  }
+
+  .ff-button {
+    @apply inline-flex items-center justify-center rounded-md bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+  }
+
+  .ff-card__footer {
+    @apply mt-6 flex flex-wrap items-center justify-between gap-3 text-slate-600;
+  }
+
+  .ff-text {
+    @apply text-base text-slate-600;
+  }
+
+  .heavy {
+    @apply font-semibold text-slate-800;
+  }
+}

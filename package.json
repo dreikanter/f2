@@ -6,16 +6,16 @@
     "autoprefixer": "^10.4.21",
     "bootstrap": "^5.3.7",
     "bootstrap-icons": "^1.13.1",
-    "daisyui": "^4.12.14",
+    "@tailwindcss/cli": "^4.1.16",
     "nodemon": "^3.1.10",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.1",
     "sass": "^1.90.0",
-    "tailwindcss": "^3.4.18"
+    "tailwindcss": "^4.1.16"
   },
   "scripts": {
-    "build:css": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.bootstrap.css --no-source-map --load-path=node_modules --quiet-deps && postcss ./app/assets/builds/application.bootstrap.css --use=autoprefixer --output=./app/assets/builds/application.bootstrap.css && ./node_modules/.bin/tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.tailwind.css -c ./tailwind.config.js",
-    "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./tailwind.config.js --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"bun run build:css\""
+    "build:css": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.bootstrap.css --no-source-map --load-path=node_modules --quiet-deps && postcss ./app/assets/builds/application.bootstrap.css --use=autoprefixer --output=./app/assets/builds/application.bootstrap.css && node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.tailwind.css -c ./tailwind.config.mjs",
+    "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./tailwind.config.mjs --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"bun run build:css\""
   },
   "browserslist": [
     "defaults"

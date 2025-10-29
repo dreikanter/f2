@@ -21,20 +21,20 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "should show invalid invitation message when code is invalid" do
     get registration_url(code: "invalid-uuid")
     assert_response :success
-    assert_select "h1", "Incorrect Invitation Code"
-    assert_select "p", /not valid/
+    assert_select "h1", "This invite link doesn't look right"
+    assert_select "p", /couldn't find an invitation with that code/
   end
 
   test "should show registration form with valid unused invite" do
     get registration_url(code: invite.id)
     assert_response :success
-    assert_select "h1", "Create Your Account"
+    assert_select "h1", "Create your account"
   end
 
   test "should show used invite message when invite is already used" do
     get registration_url(code: used_invite.id)
     assert_response :success
-    assert_select "h1", "Invitation Already Used"
+    assert_select "h1", "This invite was already used"
     assert_select "p", /already been used to create an account/
   end
 

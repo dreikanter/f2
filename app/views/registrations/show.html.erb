@@ -1,68 +1,97 @@
 <% content_for :title, "Register" %>
+<% content_for :body_class, "bg-white sm:bg-slate-100" %>
 
-<% if @invite.nil? %>
-  <%= render SmallBoxComponent.new(title: "Incorrect Invitation Code") do |c| %>
-    <p>This invitation link is not valid. It may have been deleted or the link was copied incorrectly.</p>
+<div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4">
+  <% if @invite.nil? %>
+    <div class="ff-card">
+      <div class="ff-card__body">
+        <h1 class="ff-card__title">This invite link doesn't look right</h1>
+        <p class="ff-text">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
 
-    <p><strong>Already have an account?</strong></p>
-    <p><%= link_to "Sign in", new_session_path %> with your existing credentials.</p>
-
-    <p><strong>Need an invitation?</strong></p>
-    <p>Ask someone who already uses Feeder to send you an invitation link.</p>
-  <% end %>
-<% elsif @invite.used? %>
-  <%= render SmallBoxComponent.new(title: "Invitation Already Used") do |c| %>
-    <p>This invitation link has already been used to create an account.</p>
-
-    <p><strong>Already have an account?</strong></p>
-    <ul>
-      <li>If you forgot your password, you can <%= link_to "reset it here", new_password_path %>.</li>
-      <li>Otherwise, <%= link_to "sign in", new_session_path %> with your existing credentials.</li>
-    </ul>
-
-    <p><strong>Need a new invitation?</strong></p>
-    <p>Contact the person who sent you this link and ask them to send a new invitation.</p>
-  <% end %>
-<% else %>
-  <%= render SmallBoxComponent.new(title: "Create Your Account") do |c| %>
-    <% c.with_notice do %>
-      <p class="fs-5">
-        <%= @invite.created_by_user.name.presence || "Somebody" %> has invited you to join Feeder! 🎉
-      </p>
-    <% end %>
-
-    <% c.with_footer do %>
-      <%= link_to "Sign In", new_session_path, class: "text-muted" %>
-    <% end %>
-
-    <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
-      <% if @user.errors.any? %>
-        <div class="alert alert-danger">
-          <%= @user.errors.full_messages.to_sentence.capitalize %>
+        <div class="space-y-2">
+          <p class="ff-text heavy">Already have an account?</p>
+          <p class="ff-text">
+            <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+            with your email and password.
+          </p>
         </div>
-      <% end %>
 
-      <div class="mb-3">
-        <%= form.label :name, class: "form-label fw-bold" %>
-        <%= form.text_field :name, class: "form-control form-control-lg", autofocus: true, required: true %>
-        <div class="form-text">You can change this anytime</div>
+        <div class="space-y-2">
+          <p class="ff-text heavy">Need an invitation?</p>
+          <p class="ff-text">Ask someone who already uses Feeder to send you a new link.</p>
+        </div>
       </div>
+    </div>
+  <% elsif @invite.used? %>
+    <div class="ff-card">
+      <div class="ff-card__body">
+        <h1 class="ff-card__title">This invite was already used</h1>
+        <p class="ff-text">This link has already been used to create an account.</p>
 
-      <div class="mb-3">
-        <%= form.label :email_address, "Email", class: "form-label fw-bold" %>
-        <%= form.email_field :email_address, class: "form-control form-control-lg", required: true %>
-        <div class="form-text">For password recovery only, we don't spam</div>
-      </div>
+        <div class="space-y-4">
+          <p class="ff-text heavy">Already have an account?</p>
+          <ul class="list-disc space-y-1 ps-5 text-slate-600">
+            <li>
+              Forgot your password?
+              <%= link_to "Reset it here", new_password_path, class: "ff-link" %>.
+            </li>
+            <li>
+              Otherwise,
+              <%= link_to "sign in", new_session_path, class: "ff-link" %>
+              with your email and password.
+            </li>
+          </ul>
+        </div>
 
-      <div class="mb-4">
-        <%= form.label :password, class: "form-label fw-bold" %>
-        <%= form.password_field :password, class: "form-control form-control-lg", required: true %>
-        <div class="form-text">Pick a strong one, <%= User::PASSWORD_MIN_LENGTH %> characters minimum</div>
+        <div class="space-y-4">
+          <p class="ff-text heavy">Need a fresh invitation?</p>
+          <p class="ff-text">Ask the person who sent this link to share a new one.</p>
+        </div>
       </div>
+    </div>
+  <% else %>
+    <div class="ff-card">
+      <div class="ff-card__body">
+        <div class="space-y-4">
+          <h1 class="ff-card__title">Create your account</h1>
+          <% if @invite&.created_by_user %>
+            <div class="ff-alert ff-alert--info" role="alert">
+              <span>
+                <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
+              </span>
+            </div>
+          <% end %>
+        </div>
+        <% @user ||= User.new %>
+        <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
+          <div class="space-y-6">
+            <% if @user.errors.any? %>
+              <div class="ff-alert ff-alert--error" role="alert">
+                <span><%= @user.errors.full_messages.to_sentence.capitalize %></span>
+              </div>
+            <% end %>
 
-      <div class="d-flex gap-2">
-        <%= form.submit "Create Account", class: "btn btn-primary btn-lg" %>
+            <div class="ff-form-group">
+              <%= form.label :email_address, "Email", class: "ff-form-label" %>
+              <%= form.email_field :email_address, class: "ff-form-input", required: true %>
+              <p class="ff-form-help">Only used for password resets—we don't send marketing emails.</p>
+            </div>
+
+            <div class="ff-form-group">
+              <%= form.label :password, class: "ff-form-label" %>
+              <%= form.password_field :password, class: "ff-form-input", required: true %>
+              <p class="ff-form-help">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
+            </div>
+          </div>
+          <div class="ff-card__footer">
+            <span>
+              Already use Feeder?
+              <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+            </span>
+            <%= form.submit "Create account", class: "ff-button" %>
+          </div>
+        <% end %>
       </div>
-    <% end %>
+    </div>
   <% end %>
-<% end %>
+</div>
