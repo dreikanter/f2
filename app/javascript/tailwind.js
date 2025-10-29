@@ -3,4 +3,4 @@
 //
 // TBD: After Tailwind migration is over, merge this file to application.js
 //
-import "./application"
+import "application"
