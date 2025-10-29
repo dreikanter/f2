@@ -2,19 +2,56 @@
 
 @import "tailwindcss";
 
-@plugin "daisyui";
-
 @layer components {
-  .app-link {
-    color: var(--color-primary);
-    font-weight: 500;
-    text-decoration-line: underline;
-    text-underline-offset: 0.25em;
+  .ff-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-8 shadow-xl;
   }
 
-  .app-link:visited,
-  .app-link:hover,
-  .app-link:focus-visible {
-    color: var(--color-primary);
+  .ff-card__title {
+    @apply text-4xl font-normal mb-6 text-slate-900;
+  }
+
+  .ff-card__body {
+    @apply space-y-6;
+  }
+
+  .ff-alert {
+    @apply rounded-xl border px-4 py-3 text-cyan-700;
+  }
+
+  .ff-alert--info {
+    @apply border-cyan-100 bg-cyan-50;
+  }
+
+  .ff-alert--error {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .ff-form-group {
+    @apply space-y-2;
+  }
+
+  .ff-form-label {
+    @apply block font-semibold text-slate-800;
+  }
+
+  .ff-form-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-xl shadow-sm ring-cyan-500 transition focus:border-cyan-500 focus:outline-none focus:ring-2;
+  }
+
+  .ff-form-help {
+    @apply text-slate-500;
+  }
+
+  .ff-link {
+    @apply font-medium text-cyan-600 underline underline-offset-4 transition hover:text-cyan-500;
+  }
+
+  .ff-button {
+    @apply inline-flex items-center justify-center rounded-lg bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+  }
+
+  .ff-card__footer {
+    @apply mt-6 flex flex-wrap items-center justify-between gap-3 text-slate-600;
   }
 }

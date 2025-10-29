@@ -1,5 +1,3 @@
-import daisyui from "daisyui";
-
 export default {
   content: [
     "./app/helpers/**/*.rb",
@@ -9,9 +7,5 @@ export default {
   theme: {
     extend: {}
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: ["light"]
-  }
+  plugins: []
 };
-
