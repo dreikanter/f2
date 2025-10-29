@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <%# Tailwind/daisyUI layout used during the Bootstrap migration. %>
+    <%# TBD: When Tailwind migration is over, replace application layout with this one %>
+    <title><%= content_for(:title) || "Feeder" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+    <%= stylesheet_link_tag "application.tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags("tailwind") %>
+  </head>
+
+  <body class="min-h-screen bg-base-200 text-base-content <%= content_for(:body_class) %>">
+    <% unless content_for?(:skip_navigation) %>
+      <% if Current.user %>
+        <%
+          nav_items = [
+            { name: "Status", path: status_path, active: current_page?(status_path) }
+          ]
+
+          if Current.user.active?
+            nav_items << {
+              name: "Feeds",
+              path: feeds_path,
+              active: current_page?(feeds_path) || controller_path.start_with?("feeds")
+            }
+            nav_items << {
+              name: "Posts",
+              path: posts_path,
+              active: current_page?(posts_path) || controller_path.start_with?("posts")
+            }
+
+            if policy(Event).index?
+              nav_items << {
+                name: "Admin Panel",
+                path: admin_path,
+                active: current_page?(admin_path) || controller_path.start_with?("admin")
+              }
+            end
+          end
+        %>
+
+        <nav class="navbar bg-base-100 border-b border-base-300 shadow-sm">
+          <div class="navbar-start gap-2">
+            <div class="dropdown">
+              <button type="button" class="btn btn-ghost lg:hidden" aria-label="Toggle navigation">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 7h16M4 12h16M4 17h16" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <ul class="menu menu-sm dropdown-content mt-3 z-10 p-2 shadow bg-base-100 rounded-box w-56">
+                <% nav_items.each do |item| %>
+                  <li class="<%= "active" if item[:active] %>">
+                    <%= link_to item[:name], item[:path] %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+
+            <%= link_to "F2", root_path, class: "btn btn-ghost text-lg font-semibold" %>
+          </div>
+
+          <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 gap-1">
+              <% nav_items.each do |item| %>
+                <li class="<%= "active" if item[:active] %>">
+                  <%= link_to item[:name], item[:path], class: "rounded-btn px-3 py-2 text-sm font-medium" %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+
+          <div class="navbar-end">
+            <ul class="menu menu-horizontal px-1">
+              <li>
+                <%= link_to settings_path, class: "btn btn-ghost btn-circle", aria: { label: "Settings" } do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M10.5 3.75h3l.433 2.164a1.5 1.5 0 0 0 2.126 1.07l1.961-.98 1.5 2.598-1.528 1.279a1.5 1.5 0 0 0 0 2.33l1.528 1.279-1.5 2.598-1.961-.98a1.5 1.5 0 0 0-2.126 1.07L13.5 20.25h-3l-.433-2.164a1.5 1.5 0 0 0-2.126-1.07l-1.961.98-1.5-2.598 1.528-1.279a1.5 1.5 0 0 0 0-2.33L3.48 8.602l1.5-2.598 1.961.98a1.5 1.5 0 0 0 2.126-1.07z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="12" cy="12" r="2.25" stroke-width="1.5" />
+                  </svg>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      <% end %>
+    <% end %>
+
+    <main class="mx-auto w-full max-w-5xl px-4 py-6 lg:px-6">
+      <div class="space-y-3" id="flash-messages">
+        <% if notice %>
+          <div class="alert alert-success" role="alert">
+            <span><%= sanitize(notice) %></span>
+          </div>
+        <% end %>
+
+        <% if alert %>
+          <div class="alert alert-error" role="alert">
+            <span><%= sanitize(alert) %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>
