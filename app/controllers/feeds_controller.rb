@@ -8,7 +8,7 @@ class FeedsController < ApplicationController
 
   sortable_by({
     "name" => "LOWER(feeds.name)",
-    "status" => "feeds.state",
+    "status" => "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
     "target_group" => "LOWER(feeds.target_group)",
     "last_refresh" => "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
     "recent_post" => "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
