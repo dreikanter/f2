@@ -48,6 +48,8 @@ class FeedHelperTest < ActionView::TestCase
 
     assert_includes result, "bi-check-circle-fill"
     assert_includes result, "text-emerald-500"
+    assert_includes result, 'title="Enabled"'
+    assert_includes result, 'aria-label="Enabled"'
   end
 
   test "#feed_status_icon should render disabled icon" do
@@ -57,6 +59,8 @@ class FeedHelperTest < ActionView::TestCase
 
     assert_includes result, "bi-x-circle"
     assert_includes result, "text-slate-400"
+    assert_includes result, 'title="Disabled"'
+    assert_includes result, 'aria-label="Disabled"'
   end
 
   test "#feed_summary_line should describe active and inactive counts" do

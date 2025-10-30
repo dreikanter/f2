@@ -11,9 +11,15 @@ module FeedHelper
 
   def feed_status_icon(feed)
     if feed.enabled?
-      icon("check-circle-fill", css_class: "text-emerald-500 text-base leading-5", aria_hidden: true)
+      icon("check-circle-fill",
+           css_class: "text-emerald-500 text-base leading-5",
+           title: "Enabled",
+           aria_label: "Enabled")
     else
-      icon("x-circle", css_class: "text-slate-400 text-base leading-5", aria_hidden: true)
+      icon("x-circle",
+           css_class: "text-slate-400 text-base leading-5",
+           title: "Disabled",
+           aria_label: "Disabled")
     end
   end
 

@@ -92,7 +92,6 @@
                         class: "text-base font-semibold text-slate-900 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
             <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
               <% metadata_segments = [] %>
-              <% metadata_segments << feed.state.humanize %>
               <% metadata_segments << "Target: #{feed.target_group.presence || 'None'}" %>
               <% metadata_segments << safe_join(["Last refresh:", feed.last_refreshed_at ? short_time_ago_tag(feed.last_refreshed_at) : "Never"], " ") %>
               <% metadata_segments << safe_join(["Recent post:", feed.most_recent_post_date ? short_time_ago_tag(feed.most_recent_post_date) : "None"], " ") %>
