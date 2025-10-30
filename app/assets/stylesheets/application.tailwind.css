@@ -81,6 +81,22 @@
     @apply font-semibold text-slate-800;
   }
 
+  .ff-focus-ring {
+    @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+
+  .ff-nav-brand {
+    @apply inline-flex items-center text-xl font-semibold text-slate-900;
+  }
+
+  .ff-nav-link {
+    @apply inline-flex items-center rounded-sm px-3 py-2 text-lg transition hover:bg-slate-100 md:px-2 md:py-1 md:hover:bg-transparent md:hover:text-slate-900;
+  }
+
+  .ff-nav-link--active {
+    @apply bg-slate-900 text-white md:bg-transparent md:text-slate-900 md:font-semibold;
+  }
+
   .ff-h1 {
     @apply text-3xl font-normal mb-4 text-slate-900;
   }

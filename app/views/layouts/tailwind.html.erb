@@ -36,7 +36,7 @@
 
         <nav class="bg-slate-50 border-b border-slate-200">
           <div class="flex flex-wrap items-center justify-between mx-auto px-4 py-4">
-            <%= link_to "F2", root_path, class: "text-xl font-semibold text-slate-900" %>
+            <%= link_to "F2", root_path, class: class_names("ff-nav-brand", "ff-focus-ring") %>
 
             <button data-collapse-toggle="primary-navigation" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-sm text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 md:hidden" aria-controls="primary-navigation" aria-expanded="false">
               <span class="sr-only">Toggle navigation</span>
@@ -49,16 +49,18 @@
               <ul class="mt-4 flex flex-col gap-1 rounded-lg border border-slate-200 bg-white p-4 text-lg font-medium text-slate-600 md:mt-0 md:flex-row md:items-center md:space-x-4 md:border-0 md:bg-transparent md:p-0">
                 <% nav_items.each do |item| %>
                   <% link_classes = class_names(
-                    "block rounded-md px-3 py-2 text-lg transition hover:bg-slate-100 md:rounded-none md:px-0 md:py-0 md:hover:bg-transparent md:hover:text-slate-900",
-                    "bg-slate-900 text-white md:bg-transparent md:text-slate-900 md:font-semibold": item[:active]
+                    "ff-nav-link",
+                    { "ff-nav-link--active" => item[:active] },
+                    "ff-focus-ring"
                   ) %>
                   <li>
                     <%= link_to item[:name], item[:path], class: link_classes, aria: (item[:active] ? { current: "page" } : nil) %>
                   </li>
                 <% end %>
                 <% settings_link_classes = class_names(
-                  "block rounded-md px-3 py-2 text-lg transition hover:bg-slate-100 md:rounded-none md:px-0 md:py-0 md:hover:bg-transparent md:hover:text-slate-900",
-                  "bg-slate-900 text-white md:bg-transparent md:text-slate-900 md:font-semibold": current_page?(settings_path)
+                  "ff-nav-link",
+                  { "ff-nav-link--active" => current_page?(settings_path) },
+                  "ff-focus-ring"
                 ) %>
                 <li class="md:ml-auto">
                   <%= link_to "Settings", settings_path, class: settings_link_classes, aria: (current_page?(settings_path) ? { current: "page" } : nil) %>
