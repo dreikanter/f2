@@ -82,8 +82,8 @@
   <% if @feeds.any? %>
     <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <% @feeds.each do |feed| %>
-        <li class="flex items-start gap-3 p-4 sm:gap-4">
-          <span class="flex h-5 w-5 shrink-0 items-center justify-center text-slate-500">
+        <li class="flex items-baseline gap-3 p-4">
+          <span class="inline-flex shrink-0 text-slate-500">
             <%= feed_status_icon(feed) %>
           </span>
           <div class="flex flex-1 flex-col gap-1">
