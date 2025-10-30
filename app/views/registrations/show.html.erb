@@ -1,5 +1,5 @@
 <% content_for :title, "Register" %>
-<% content_for :body_class, "bg-white sm:bg-slate-100" %>
+<% content_for :body_class, "sm:bg-slate-100" %>
 
 <div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
   <% if @invite.nil? %>
@@ -9,7 +9,7 @@
         <p class="ff-text">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
 
         <div class="space-y-2">
-          <p class="ff-text heavy">Already have an account?</p>
+          <p class="ff-text ff-text--heavy">Already have an account?</p>
           <p class="ff-text">
             <%= link_to "Sign in", new_session_path, class: "ff-link" %>
             with your email and password.
@@ -17,7 +17,7 @@
         </div>
 
         <div class="space-y-2">
-          <p class="ff-text heavy">Need an invitation?</p>
+          <p class="ff-text ff-text--heavy">Need an invitation?</p>
           <p class="ff-text">Ask someone who already uses Feeder to send you a new link.</p>
         </div>
       </div>
@@ -29,7 +29,7 @@
         <p class="ff-text">This link has already been used to create an account.</p>
 
         <div class="space-y-4">
-          <p class="ff-text heavy">Already have an account?</p>
+          <p class="ff-text ff-text--heavy">Already have an account?</p>
           <ul class="list-disc space-y-1 ps-5 text-slate-600">
             <li>
               Forgot your password?
@@ -44,7 +44,7 @@
         </div>
 
         <div class="space-y-4">
-          <p class="ff-text heavy">Need a fresh invitation?</p>
+          <p class="ff-text ff-text--heavy">Need a fresh invitation?</p>
           <p class="ff-text">Ask the person who sent this link to share a new one.</p>
         </div>
       </div>

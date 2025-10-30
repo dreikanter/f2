@@ -1,86 +1,76 @@
 <% content_for :title, "Status" %>
+<% content_for :body_class, "bg-white" %>
 
 <% has_active_tokens = @user.access_tokens.active.exists? %>
 <% has_feeds = @user.total_feeds_count > 0 %>
 
-<% if @user.email_deactivated? %>
-  <div class="alert alert-warning alert-dismissible fade show" role="alert">
-    <strong>Your email address is not receiving our emails.</strong>
-    <% if @user.can_change_email? %>
-      <%= link_to "Update your email address", edit_settings_email_update_path, class: "alert-link" %> to continue receiving notifications.
-    <% else %>
-      You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.
-    <% end %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<% end %>
-
-<% if !has_active_tokens %>
-  <%= page_header "Welcome to Feeder" %>
-
-  <div class="row">
-    <div class="col-12">
-      <p>
-        Feeder helps you automatically share content from your favorite sources to FreeFeed.
-      </p>
-      <p>
-        To get started, you'll need to add a FreeFeed access token so Feeder can post on your behalf.
-      </p>
-      <p>
-        <%= link_to "Add FreeFeed token", new_settings_access_token_path, class: "btn btn-primary" %>
-      </p>
+<div class="space-y-8">
+  <% if @user.email_deactivated? %>
+    <div class="ff-alert ff-alert--warning space-y-2" role="alert">
+      <p class="ff-text ff-text--heavy">Your email address is not receiving our emails.</p>
+      <% if @user.can_change_email? %>
+        <p class="ff-text">
+          <%= link_to "Update your email address", edit_settings_email_update_path, class: "ff-link" %>
+          to continue receiving notifications.
+        </p>
+      <% else %>
+        <p class="ff-text">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+      <% end %>
     </div>
-  </div>
-<% elsif !has_feeds %>
-  <%= page_header "Welcome to Feeder" %>
+  <% end %>
 
-  <div class="row">
-    <div class="col-12">
-      <p>
-        Great! You've added a FreeFeed access token. Now you can create your first feed.
-      </p>
-      <p>
-        <%= link_to "Add feed", new_feed_path, class: "btn btn-primary" %>
-      </p>
-    </div>
-  </div>
-<% else %>
-  <%= page_header "Status" %>
-
-  <div class="row">
-    <div class="col-12">
-      <div class="list-group">
-        <div class="list-group-item">
-          <strong>Total feeds:</strong>
-          <%= number_with_delimiter(@user.total_feeds_count) %>
+  <% if !has_active_tokens %>
+    <section class="space-y-4">
+      <h1 class="ff-h1">Welcome to Feeder</h1>
+      <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
+      <p class="ff-text">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
+      <div>
+        <%= link_to "Add FreeFeed token", new_settings_access_token_path, class: "ff-button" %>
+      </div>
+    </section>
+  <% elsif !has_feeds %>
+    <section class="space-y-4">
+      <h1 class="ff-h1">Welcome to Feeder</h1>
+      <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
+      <div>
+        <%= link_to "Add feed", new_feed_path, class: "ff-button" %>
+      </div>
+    </section>
+  <% else %>
+    <section class="space-y-6">
+      <h1 class="ff-h1">Status</h1>
+      <div class="ff-stats">
+        <div class="ff-stats__row">
+          <span class="ff-stats__label">Total feeds:</span>
+          <span class="ff-stats__value"><%= number_with_delimiter(@user.total_feeds_count) %></span>
         </div>
 
         <% if @user.total_imported_posts_count > 0 %>
-          <div class="list-group-item">
-            <strong>Total imported posts:</strong>
-            <%= number_with_delimiter(@user.total_imported_posts_count) %>
+          <div class="ff-stats__row">
+            <span class="ff-stats__label">Total imported posts:</span>
+            <span class="ff-stats__value"><%= number_with_delimiter(@user.total_imported_posts_count) %></span>
           </div>
 
-          <div class="list-group-item">
-            <strong>Total published posts:</strong>
-            <%= number_with_delimiter(@user.total_published_posts_count) %>
+          <div class="ff-stats__row">
+            <span class="ff-stats__label">Total published posts:</span>
+            <span class="ff-stats__value"><%= number_with_delimiter(@user.total_published_posts_count) %></span>
           </div>
         <% end %>
 
         <% if @user.most_recent_post_published_at %>
-          <div class="list-group-item">
-            <strong>Most recent post publication:</strong>
-            <%= time_ago_in_words(@user.most_recent_post_published_at) %> ago
+          <div class="ff-stats__row">
+            <span class="ff-stats__label">Most recent post publication:</span>
+            <span class="ff-stats__value"><%= time_ago_in_words(@user.most_recent_post_published_at) %> ago</span>
           </div>
         <% end %>
 
         <% if @user.total_imported_posts_count > 0 %>
-          <div class="list-group-item">
-            <strong>Average posts per day (last week):</strong>
-            <%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %>
+          <div class="ff-stats__row">
+            <span class="ff-stats__label">Average posts per day (last week):</span>
+            <span class="ff-stats__value"><%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %></span>
           </div>
         <% end %>
       </div>
-    </div>
-  </div>
-<% end %>
+    </section>
+  <% end %>
+</div>

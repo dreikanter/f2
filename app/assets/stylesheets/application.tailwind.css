@@ -33,6 +33,10 @@
     @apply border-red-200 bg-red-50 text-red-700;
   }
 
+  .ff-alert--warning {
+    @apply border-amber-200 bg-amber-50 text-amber-700;
+  }
+
   .ff-form-group {
     @apply space-y-2;
   }
@@ -65,7 +69,35 @@
     @apply text-base text-slate-600;
   }
 
-  .heavy {
+  .ff-text--heavy {
     @apply font-semibold text-slate-800;
+  }
+
+  .ff-h1 {
+    @apply text-3xl font-normal mb-4 text-slate-900;
+  }
+
+  .ff-h2 {
+    @apply text-2xl font-semibold mb-3 text-slate-900;
+  }
+
+  .ff-h3 {
+    @apply text-xl font-semibold mb-2 text-slate-900;
+  }
+
+  .ff-stats {
+    @apply divide-y divide-slate-200;
+  }
+
+  .ff-stats__row {
+    @apply flex flex-wrap items-baseline justify-between gap-4 py-3;
+  }
+
+  .ff-stats__label {
+    @apply font-medium text-slate-600;
+  }
+
+  .ff-stats__value {
+    @apply font-semibold text-slate-900;
   }
 }
