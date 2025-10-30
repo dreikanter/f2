@@ -1,22 +1,31 @@
-<%= render SmallBoxComponent.new(title: "Forgot Password?") do |c| %>
-  <% c.with_footer do %>
-    <%= link_to "Back to sign in", new_session_path, class: "text-muted" %>
-  <% end %>
+<% content_for :title, "Forgot Password?" %>
+<% content_for :body_class, "bg-white sm:bg-slate-100" %>
 
-  <% if flash[:alert] %>
-    <div class="alert alert-danger" role="alert">
-      <%= flash[:alert] %>
-    </div>
-  <% end %>
+<div class="mx-auto w-full max-w-full space-y-6 px-4 sm:max-w-2xl sm:px-0" data-controller="autofocus">
+  <div class="ff-card">
+    <div class="ff-card__body">
+      <h1 class="ff-card__title">Forgot your password?</h1>
+      <p class="ff-text">Enter your email address and we’ll send you a reset link.</p>
 
-  <%= form_with url: passwords_path, local: true do |form| %>
-    <div class="mb-4">
-      <%= form.label :email_address, "Email Address", class: "form-label fw-bold" %>
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "form-control form-control-lg" %>
-    </div>
+      <% if flash[:alert] %>
+        <div class="ff-alert ff-alert--error" role="alert">
+          <span><%= flash[:alert] %></span>
+        </div>
+      <% end %>
 
-    <div class="d-flex gap-2">
-      <%= form.submit "Email reset instructions", class: "btn btn-primary btn-lg" %>
+      <%= form_with url: passwords_path, local: true do |form| %>
+        <div class="space-y-6">
+          <div class="ff-form-group">
+            <%= form.label :email_address, "Email Address", class: "ff-form-label" %>
+            <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "ff-form-input" %>
+          </div>
+        </div>
+
+        <div class="ff-card__footer">
+          <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
+          <%= form.submit "Email reset instructions", class: "ff-button" %>
+        </div>
+      <% end %>
     </div>
-  <% end %>
-<% end %>
+  </div>
+</div>
