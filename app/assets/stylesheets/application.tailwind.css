@@ -73,6 +73,18 @@
     @apply font-semibold text-slate-800;
   }
 
+  .ff-h1 {
+    @apply text-3xl font-normal mb-4 text-slate-900;
+  }
+
+  .ff-h2 {
+    @apply text-2xl font-semibold mb-3 text-slate-900;
+  }
+
+  .ff-h3 {
+    @apply text-xl font-semibold mb-2 text-slate-900;
+  }
+
   .ff-stats {
     @apply divide-y divide-slate-200;
   }
