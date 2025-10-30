@@ -21,7 +21,7 @@
 
   <% if !has_active_tokens %>
     <section class="space-y-4">
-      <h1 class="text-3xl font-semibold text-slate-900">Welcome to Feeder</h1>
+      <h1 class="ff-h1">Welcome to Feeder</h1>
       <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
       <p class="ff-text">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
       <div>
@@ -30,7 +30,7 @@
     </section>
   <% elsif !has_feeds %>
     <section class="space-y-4">
-      <h1 class="text-3xl font-semibold text-slate-900">Welcome to Feeder</h1>
+      <h1 class="ff-h1">Welcome to Feeder</h1>
       <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
       <div>
         <%= link_to "Add feed", new_feed_path, class: "ff-button" %>
@@ -38,7 +38,7 @@
     </section>
   <% else %>
     <section class="space-y-6">
-      <h1 class="text-3xl font-semibold text-slate-900">Status</h1>
+      <h1 class="ff-h1">Status</h1>
       <div class="ff-stats list-group">
         <div class="ff-stats__row list-group-item">
           <span class="ff-stats__label">Total feeds:</span>
