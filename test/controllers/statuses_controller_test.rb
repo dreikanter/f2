@@ -32,7 +32,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Total feeds:\s+2/
+    assert_select ".ff-stats__row", /Total feeds:\s+2/
   end
 
   test "displays total imported posts count" do
@@ -45,7 +45,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Total imported posts:\s+2/
+    assert_select ".ff-stats__row", /Total imported posts:\s+2/
   end
 
   test "displays total published posts count" do
@@ -60,7 +60,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Total published posts:\s+2/
+    assert_select ".ff-stats__row", /Total published posts:\s+2/
   end
 
   test "displays most recent post publication timestamp" do
@@ -71,7 +71,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Most recent post publication:\s+1 day ago/
+    assert_select ".ff-stats__row", /Most recent post publication:\s+1 day ago/
   end
 
   test "hides most recent post publication when no published posts" do
@@ -79,7 +79,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", { text: /Most recent post publication/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Most recent post publication/, count: 0 }
   end
 
   test "displays average posts per day for last week" do
@@ -92,7 +92,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Average posts per day \(last week\):\s+0\.3/
+    assert_select ".ff-stats__row", /Average posts per day \(last week\):\s+0\.3/
   end
 
   test "hides average posts per day when no posts" do
@@ -100,7 +100,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", { text: /Average posts per day/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Average posts per day/, count: 0 }
   end
 
   test "hides post statistics when no posts" do
@@ -108,10 +108,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", { text: /Total imported posts/, count: 0 }
-    assert_select ".list-group-item", { text: /Total published posts/, count: 0 }
-    assert_select ".list-group-item", { text: /Most recent post publication/, count: 0 }
-    assert_select ".list-group-item", { text: /Average posts per day/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Total imported posts/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Total published posts/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Most recent post publication/, count: 0 }
+    assert_select ".ff-stats__row", { text: /Average posts per day/, count: 0 }
   end
 
   test "displays empty state when no feeds" do
@@ -127,7 +127,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select ".list-group-item", /Total feeds:\s+1/
+    assert_select ".ff-stats__row", /Total feeds:\s+1/
     assert_select "h1", "Status"
   end
 end
