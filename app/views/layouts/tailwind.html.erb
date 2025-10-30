@@ -27,7 +27,7 @@
     <%= javascript_importmap_tags("tailwind") %>
   </head>
 
-  <body class="min-h-screen text-slate-900 <%= content_for?(:body_class) ? content_for(:body_class) : 'bg-slate-100' %>">
+  <body class="min-h-screen text-slate-900 <%= content_for?(:body_class) ? content_for(:body_class) : 'bg-white' %>">
     <% unless content_for?(:skip_navigation) %>
       <% if Current.user %>
         <%
