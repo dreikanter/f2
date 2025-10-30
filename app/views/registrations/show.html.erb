@@ -1,7 +1,7 @@
 <% content_for :title, "Register" %>
 <% content_for :body_class, "bg-white sm:bg-slate-100" %>
 
-<div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4">
+<div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
   <% if @invite.nil? %>
     <div class="ff-card">
       <div class="ff-card__body">
@@ -73,7 +73,7 @@
 
             <div class="ff-form-group">
               <%= form.label :email_address, "Email", class: "ff-form-label" %>
-              <%= form.email_field :email_address, class: "ff-form-input", required: true %>
+              <%= form.email_field :email_address, class: "ff-form-input", required: true, autofocus: true %>
               <p class="ff-form-help">Only used for password resets—we don't send marketing emails.</p>
             </div>
 
