@@ -85,6 +85,7 @@ module ApplicationHelper
       path: feeds_path,
       active: current_page?(feeds_path) || controller_path.start_with?("feeds")
     }
+
     items << {
       name: "Posts",
       path: posts_path,
