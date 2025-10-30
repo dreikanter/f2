@@ -15,10 +15,10 @@
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
+    <div class="flex flex-col gap-1">
       <h1 class="ff-h1">Feeds</h1>
       <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
-        <p class="mt-1 hidden text-sm text-slate-600 sm:block"><%= summary_line %></p>
+        <p class="ff-text mt-1 sm:mt-0"><%= summary_line %></p>
       <% end %>
     </div>
     <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
@@ -29,7 +29,7 @@
             type="button"
             data-dropdown-toggle="<%= sort_menu_id %>"
             data-dropdown-placement="bottom-end"
-            class="<%= class_names('ff-button', 'ff-button--secondary', 'gap-2') %>"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
             aria-haspopup="true"
             aria-expanded="false">
             <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
@@ -75,7 +75,7 @@
       <% end %>
       <%= link_to "New Feed",
                   new_feed_path,
-                  class: class_names("ff-button", "w-full sm:w-auto") %>
+                  class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
     </div>
   </div>
 
@@ -90,7 +90,7 @@
             <%= link_to feed.name,
                         feed_path(feed),
                         class: "text-base font-semibold text-slate-900 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+            <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
               <% metadata_segments = [] %>
               <% metadata_segments << feed.state.humanize %>
               <% metadata_segments << "Target: #{feed.target_group.presence || 'None'}" %>
@@ -119,7 +119,7 @@
       <div class="mt-6">
         <%= link_to "Create your first feed",
                     new_feed_path,
-                    class: "ff-button" %>
+                    class: class_names("ff-button", "ff-button--compact") %>
       </div>
     </div>
   <% end %>

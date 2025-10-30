@@ -400,7 +400,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     response_body = response.body
     pos_disabled = response_body.index("Disabled Feed")
     pos_enabled = response_body.index("Enabled Feed")
-    assert pos_disabled < pos_enabled, "Expected disabled feed to appear before enabled feed"
+    assert pos_enabled < pos_disabled, "Expected enabled feed to appear before disabled feed"
   end
 
   test "should use default sort when no sort parameter provided" do
