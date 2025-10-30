@@ -1,83 +1,126 @@
-<div class="row">
-  <div class="col-12">
-    <%= page_header "Feeds" do %>
-      <%= link_to "New Feed", new_feed_path, class: "btn btn-primary" %>
-    <% end %>
+<% content_for :title, "Feeds" %>
 
-    <% if @feeds.any? %>
-      <div class="table-responsive">
-        <table class="table table-hover table-bordered">
-          <thead>
-            <tr>
-              <th>
-                <%= sortable_header(column: "name", title: "Name") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "status", title: "Status") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "target_group", title: "Target Group") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "last_refresh", title: "Last Refresh") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "recent_post", title: "Recent Post") %>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @feeds.each do |feed| %>
-              <tr>
-                <td>
-                  <%= link_to feed, class: "text-decoration-none" do %>
-                    <%= feed.name %>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.enabled? %>
-                    <%= icon("check-circle-fill", css_class: "text-success me-1") %>
-                  <% else %>
-                    <%= icon("x-circle", css_class: "text-muted me-1") %>
-                  <% end %>
-                  <%= feed.state.capitalize %>
-                </td>
-                <td>
-                  <% if feed.target_group.present? %>
-                    <%= feed.target_group %>
-                  <% else %>
-                    <em class="text-muted">None</em>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.last_refreshed_at %>
-                    <%= short_time_ago(feed.last_refreshed_at) %>
-                  <% else %>
-                    <em class="text-muted">Never</em>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.most_recent_post_date %>
-                    <%= short_time_ago(feed.most_recent_post_date) %>
-                  <% else %>
-                    <em class="text-muted">None</em>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
+<% sort_options = {
+  "Name" => "name",
+  "Status" => "status",
+  "Target Group" => "target_group",
+  "Last Refresh" => "last_refresh",
+  "Recent Post" => "recent_post"
+} %>
+<% current_sort = sort_options.values.include?(params[:sort]) ? params[:sort] : controller.default_sort_column %>
+<% current_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : controller.default_sort_direction %>
+<% current_sort_label = sort_options.key(current_sort) || "Name" %>
+<% current_direction_hint = current_direction == "asc" ? "A-Z" : "Z-A" %>
+<% sort_menu_id = "feed-sort-menu" %>
 
-      <%= pagination_for @feeds,
-                         collection_name: "feeds",
-                         path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
-    <% else %>
-      <div class="text-center py-5">
-        <p>No feeds yet</p>
-        <p class="text-muted">Create your first feed to start aggregating content.</p>
-        <%= link_to "Create Feed", new_feed_path, class: "btn btn-primary" %>
-      </div>
-    <% end %>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="ff-h1">Feeds</h1>
+      <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
+        <p class="mt-1 hidden text-sm text-slate-600 sm:block"><%= summary_line %></p>
+      <% end %>
+    </div>
+    <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+      <% if @feeds.any? %>
+        <div class="relative">
+          <button
+            id="<%= "#{sort_menu_id}-button" %>"
+            type="button"
+            data-dropdown-toggle="<%= sort_menu_id %>"
+            data-dropdown-placement="bottom-end"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'gap-2') %>"
+            aria-haspopup="true"
+            aria-expanded="false">
+            <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+            <span>Sort: <%= current_sort_label %> (<%= current_direction_hint %>)</span>
+            <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+          </button>
+          <div
+            id="<%= sort_menu_id %>"
+            class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg"
+            role="menu"
+            aria-labelledby="<%= "#{sort_menu_id}-button" %>">
+            <ul class="py-1 text-sm text-slate-600">
+              <% sort_options.each do |label, column| %>
+                <% active = current_sort == column %>
+                <% next_direction = if active
+                  current_direction == "asc" ? "desc" : "asc"
+                else
+                  controller.default_sort_direction
+                end %>
+                <% direction_hint = active ? current_direction_hint : nil %>
+                <% icon_name = if active
+                  current_direction == "asc" ? "arrow-up-short" : "arrow-down-short"
+                end %>
+                <li>
+                  <%= link_to feeds_path(sort: column, direction: next_direction),
+                              class: class_names(
+                                "flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none",
+                                "font-semibold text-slate-900": active
+                              ) do %>
+                    <span><%= label %></span>
+                    <% if direction_hint %>
+                      <span class="flex items-center gap-1 text-xs uppercase tracking-wide text-slate-500">
+                        <%= direction_hint %>
+                        <%= icon(icon_name, css_class: "text-slate-400", aria_hidden: true) if icon_name %>
+                      </span>
+                    <% end %>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+      <%= link_to "New Feed",
+                  new_feed_path,
+                  class: class_names("ff-button", "w-full sm:w-auto") %>
+    </div>
   </div>
+
+  <% if @feeds.any? %>
+    <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <% @feeds.each do |feed| %>
+        <li class="flex items-start gap-3 p-4 sm:gap-4">
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center text-slate-500">
+            <%= feed_status_icon(feed) %>
+          </span>
+          <div class="flex flex-1 flex-col gap-1">
+            <%= link_to feed.name,
+                        feed_path(feed),
+                        class: "text-base font-semibold text-slate-900 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+              <% metadata_segments = [] %>
+              <% metadata_segments << feed.state.humanize %>
+              <% metadata_segments << "Target: #{feed.target_group.presence || 'None'}" %>
+              <% metadata_segments << safe_join(["Last refresh:", feed.last_refreshed_at ? short_time_ago_tag(feed.last_refreshed_at) : "Never"], " ") %>
+              <% metadata_segments << safe_join(["Recent post:", feed.most_recent_post_date ? short_time_ago_tag(feed.most_recent_post_date) : "None"], " ") %>
+              <% metadata_segments.each_with_index do |segment, segment_index| %>
+                <% if segment_index.positive? %>
+                  <span aria-hidden="true">&bull;</span>
+                <% end %>
+                <span><%= segment %></span>
+              <% end %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+
+    <%= pagination_for @feeds,
+                       collection_name: "feeds",
+                       path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) },
+                       template: "shared/pagination_tailwind" %>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
+      <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
+      <p class="mt-2 text-sm text-slate-600">Create your first feed to start refreshing posts and sharing them with your audience.</p>
+      <div class="mt-6">
+        <%= link_to "Create your first feed",
+                    new_feed_path,
+                    class: "ff-button" %>
+      </div>
+    </div>
+  <% end %>
 </div>

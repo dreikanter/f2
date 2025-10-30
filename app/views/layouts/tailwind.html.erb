@@ -30,32 +30,7 @@
   <body class="min-h-screen text-slate-900 <%= content_for?(:body_class) ? content_for(:body_class) : 'bg-white' %>">
     <% unless content_for?(:skip_navigation) %>
       <% if Current.user %>
-        <%
-          nav_items = [
-            { name: "Status", path: status_path, active: current_page?(status_path) }
-          ]
-
-          if Current.user.active?
-            nav_items << {
-              name: "Feeds",
-              path: feeds_path,
-              active: current_page?(feeds_path) || controller_path.start_with?("feeds")
-            }
-            nav_items << {
-              name: "Posts",
-              path: posts_path,
-              active: current_page?(posts_path) || controller_path.start_with?("posts")
-            }
-
-            if policy(Event).index?
-              nav_items << {
-                name: "Admin Panel",
-                path: admin_path,
-                active: current_page?(admin_path) || controller_path.start_with?("admin")
-              }
-            end
-          end
-        %>
+        <% nav_items = navbar_items %>
 
         <nav class="bg-slate-50 border-b border-slate-200">
           <div class="flex flex-wrap items-center justify-between mx-auto px-4 py-4">

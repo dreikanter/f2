@@ -2,6 +2,8 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
+  layout "tailwind", only: :index
+
   MAX_RECENT_POSTS = 10
 
   sortable_by({
@@ -14,6 +16,9 @@ class FeedsController < ApplicationController
 
   def index
     authorize Feed
+    scope = policy_scope(Feed)
+    @active_feed_count = scope.enabled.count
+    @inactive_feed_count = scope.disabled.count
     @feeds = paginate_scope
   end
 
