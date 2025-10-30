@@ -6,6 +6,7 @@ pin "application"
 # TBD: When the migration is over, drop the legacy pin and merge tailwind.js to application.js
 pin "legacy", to: "legacy.js"
 pin "tailwind", to: "tailwind.js"
+pin "flowbite", to: "https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js", preload: true
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"
