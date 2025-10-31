@@ -8,9 +8,17 @@ module Sortable
   private
 
   def sort_presenter
+    presenter_fields = sortable_field_definitions.map do |definition|
+      {
+        label: definition.fetch(:title),
+        field: definition.fetch(:field).to_s,
+        direction: normalize_direction(definition.fetch(:direction, "desc"))
+      }
+    end
+
     SortPresenter.new(
       controller: self,
-      fields: sortable_field_definitions,
+      fields: presenter_fields,
       path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )
   end
@@ -53,15 +61,18 @@ module Sortable
   end
 
   def sortable_default_field
-    sortable_field_definitions.first.fetch(:field)
+    definition = sortable_field_definitions.first
+    definition ? definition.fetch(:field).to_s : ""
   end
 
   def sortable_field_definitions
-    @sortable_field_definitions ||= sortable_fields.map { |definition| normalize_sortable_field(definition) }
+    @sortable_field_definitions ||= Array(sortable_fields)
   end
 
   def sortable_field_definitions_map
-    @sortable_field_definitions_map ||= sortable_field_definitions.index_by { |definition| definition.fetch(:field) }
+    @sortable_field_definitions_map ||= sortable_field_definitions.each_with_object({}) do |definition, map|
+      map[definition.fetch(:field).to_s] = definition
+    end
   end
 
   def sortable_fields_map
@@ -70,36 +81,15 @@ module Sortable
 
   def default_direction_for(field)
     definition = sortable_field_definitions_map[field.to_s]
-    definition ? definition.fetch(:direction) : "desc"
+    normalize_direction(definition ? definition.fetch(:direction, "desc") : "desc")
   end
 
   def toggle_sort_direction(direction)
     direction == "asc" ? "desc" : "asc"
   end
 
-  def normalize_sortable_field(definition)
-    hash = definition.is_a?(Hash) ? definition : definition.to_h
-    hash = hash.symbolize_keys
-
-    field = hash[:field] || hash[:name]
-    raise ArgumentError, "sortable field definition requires :field" if field.blank?
-
-    label = (hash[:title] || hash[:label])
-    raise ArgumentError, "sortable field definition requires :title" if label.blank?
-
-    order_by = hash[:order_by]
-    raise ArgumentError, "sortable field definition requires :order_by" if order_by.blank?
-
-    direction = (hash[:direction] || "desc").to_s
-    unless %w[asc desc].include?(direction)
-      raise ArgumentError, "sortable field definition :direction must be :asc or :desc"
-    end
-
-    {
-      field: field.to_s,
-      label: label.to_s,
-      order_by: order_by,
-      direction: direction
-    }
+  def normalize_direction(direction)
+    value = direction.to_s
+    %w[asc desc].include?(value) ? value : "desc"
   end
 end
