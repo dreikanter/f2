@@ -7,20 +7,7 @@
   <% body_classes = class_names("min-h-screen", "text-slate-900", content_for?(:body_class) ? content_for(:body_class) : "bg-slate-100") %>
   <body class="<%= body_classes %>">
     <main class="mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
-      <div class="space-y-3" id="flash-messages">
-        <% if notice %>
-          <div class="ff-alert ff-alert--info alert" role="alert">
-            <span><%= sanitize(notice) %></span>
-          </div>
-        <% end %>
-
-        <% if alert %>
-          <div class="ff-alert ff-alert--error alert" role="alert">
-            <span><%= sanitize(alert) %></span>
-          </div>
-        <% end %>
-      </div>
-
+      <%= render "layouts/flash" %>
       <%= yield %>
     </main>
   </body>
