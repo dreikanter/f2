@@ -1,4 +1,5 @@
 require "test_helper"
+require "rack/utils"
 
 class SortPresenterTest < ActiveSupport::TestCase
   class StubController
@@ -25,7 +26,7 @@ class SortPresenterTest < ActiveSupport::TestCase
 
     option = presenter.options.first
     assert option.active?
-    assert_equal "/items?sort=name&direction=desc", option.path
+    assert_equal({ "sort" => "name", "direction" => "desc" }, query_params(option.path))
   end
 
   test "honors provided params and toggles direction" do
@@ -45,7 +46,10 @@ class SortPresenterTest < ActiveSupport::TestCase
     assert_equal "status", active_option.column
     assert_equal "desc", active_option.active_direction
     assert_equal "arrow-down-short", active_option.icon_name
-    assert_equal "/items?extra=1&sort=status&direction=asc", active_option.path
+    assert_equal(
+      { "extra" => "1", "sort" => "status", "direction" => "asc" },
+      query_params(active_option.path)
+    )
   end
 
   test "falls back to defaults for invalid params" do
@@ -60,5 +64,11 @@ class SortPresenterTest < ActiveSupport::TestCase
 
     assert_equal "Name", presenter.current_label
     assert_equal "asc", presenter.current_direction
+  end
+
+  private
+
+  def query_params(path)
+    Rack::Utils.parse_query(path.split("?").last)
   end
 end

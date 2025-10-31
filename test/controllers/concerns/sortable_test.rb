@@ -1,16 +1,33 @@
 require "test_helper"
+require "rack/utils"
 
 class SortableTest < ActionDispatch::IntegrationTest
   class TestController < ApplicationController
     include Sortable
 
-    sortable_by({
-      "name" => "LOWER(items.name)",
-      "created_at" => "items.created_at"
-    }, default_column: :name, default_direction: :asc)
-
     def index
       render plain: "OK"
+    end
+
+    private
+
+    def sortable_columns
+      [
+        { name: :name, title: "Name", order_by: "LOWER(items.name)" },
+        { name: :created_at, title: "Created", order_by: "items.created_at" }
+      ]
+    end
+
+    def sortable_default_direction
+      :asc
+    end
+
+    def sortable_base_params
+      { filter: "all" }
+    end
+
+    def sortable_path(params)
+      "/items?#{params.to_query}"
     end
   end
 
@@ -98,5 +115,32 @@ class SortableTest < ActionDispatch::IntegrationTest
 
     order = @controller.send(:sort_order)
     assert_instance_of Arel::Nodes::Descending, order
+  end
+
+  test "sort_presenter builds presenter with configured path and base params" do
+    presenter = @controller.send(:sort_presenter)
+    option = presenter.options.first
+
+    assert_equal "Name", option.label
+    assert_equal(
+      { "filter" => "all", "sort" => "name", "direction" => "desc" },
+      query_params(option.path)
+    )
+  end
+
+  test "sort_presenter merges extra base params" do
+    presenter = @controller.send(:sort_presenter, { custom: "value" })
+    option = presenter.options.first
+
+    assert_equal(
+      { "filter" => "all", "custom" => "value", "sort" => "name", "direction" => "desc" },
+      query_params(option.path)
+    )
+  end
+
+  private
+
+  def query_params(path)
+    Rack::Utils.parse_query(path.split("?").last)
   end
 end

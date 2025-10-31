@@ -6,33 +6,13 @@ class FeedsController < ApplicationController
 
   MAX_RECENT_POSTS = 10
 
-  sortable_by({
-    "name" => "LOWER(feeds.name)",
-    "status" => "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
-    "target_group" => "LOWER(feeds.target_group)",
-    "last_refresh" => "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
-    "recent_post" => "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
-  }, default_column: :name, default_direction: :asc)
-
   def index
     authorize Feed
     scope = policy_scope(Feed)
     @active_feed_count = scope.enabled.count
     @inactive_feed_count = scope.disabled.count
 
-    @sort_presenter = SortPresenter.new(
-      controller: self,
-      columns: {
-        "Name" => "name",
-        "Status" => "status",
-        "Target Group" => "target_group",
-        "Last Refresh" => "last_refresh",
-        "Recent Post" => "recent_post"
-      },
-      default_column: controller.default_sort_column,
-      default_direction: controller.default_sort_direction,
-      path_builder: ->(params) { feeds_path(params) }
-    )
+    @sort_presenter = sort_presenter
 
     @feeds = paginate_scope
   end
@@ -111,6 +91,28 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def sortable_columns
+    [
+      { name: :name, title: "Name", order_by: "LOWER(feeds.name)" },
+      { name: :status, title: "Status", order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END" },
+      { name: :target_group, title: "Target Group", order_by: "LOWER(feeds.target_group)" },
+      { name: :last_refresh, title: "Last Refresh", order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)" },
+      { name: :recent_post, title: "Recent Post", order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)" }
+    ]
+  end
+
+  def sortable_default_column
+    :name
+  end
+
+  def sortable_default_direction
+    :asc
+  end
+
+  def sortable_path(params)
+    feeds_path(params)
+  end
 
   def recent_posts(feed)
     feed

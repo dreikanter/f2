@@ -4,32 +4,9 @@ class PostsController < ApplicationController
 
   layout "tailwind"
 
-  sortable_by({
-    "feed" => "LOWER(feeds.name)",
-    "published" => "posts.published_at",
-    "status" => "posts.status",
-    "attachments" => "COALESCE(array_length(posts.attachment_urls, 1), 0)",
-    "comments" => "COALESCE(array_length(posts.comments, 1), 0)"
-  }, default_column: :published, default_direction: :desc)
-
   def index
     authorize Post
-    base_params = params.permit(:feed_id).to_h.symbolize_keys
-
-    @sort_presenter = SortPresenter.new(
-      controller: self,
-      columns: {
-        "Published" => "published",
-        "Feed" => "feed",
-        "Status" => "status",
-        "Attachments" => "attachments",
-        "Comments" => "comments"
-      },
-      default_column: controller.default_sort_column,
-      default_direction: controller.default_sort_direction,
-      path_builder: ->(params) { posts_path(params) },
-      base_params: base_params
-    )
+    @sort_presenter = sort_presenter
 
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
@@ -61,6 +38,32 @@ class PostsController < ApplicationController
   end
 
   private
+
+  def sortable_columns
+    [
+      { name: :published, title: "Published", order_by: "posts.published_at" },
+      { name: :feed, title: "Feed", order_by: "LOWER(feeds.name)" },
+      { name: :status, title: "Status", order_by: "posts.status" },
+      { name: :attachments, title: "Attachments", order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)" },
+      { name: :comments, title: "Comments", order_by: "COALESCE(array_length(posts.comments, 1), 0)" }
+    ]
+  end
+
+  def sortable_default_column
+    :published
+  end
+
+  def sortable_default_direction
+    :desc
+  end
+
+  def sortable_base_params
+    params.permit(:feed_id).to_h.symbolize_keys
+  end
+
+  def sortable_path(params)
+    posts_path(params)
+  end
 
   def pagination_scope
     scope = policy_scope(Post).preload(feed: :access_token).order(sort_order)
