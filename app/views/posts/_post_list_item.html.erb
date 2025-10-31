@@ -1,4 +1,4 @@
-<%# locals: (post:) %>
+<%# locals: (post:, show_feed: false) %>
 <li class="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:gap-4">
   <div class="flex items-start gap-3 sm:flex-1">
     <span class="inline-flex shrink-0 text-slate-500">
@@ -10,6 +10,9 @@
       <% end %>
       <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
         <% segments = [] %>
+        <% if local_assigns.fetch(:show_feed, false) && post.feed.present? %>
+          <% segments << safe_join(["Feed:", link_to(post.feed.name, feed_path(post.feed), class: "ff-link")], " ") %>
+        <% end %>
         <% if post.published_at %>
           <% segments << safe_join(["Published", time_ago_tag(post.published_at)], " ") %>
         <% end %>

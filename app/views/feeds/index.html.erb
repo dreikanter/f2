@@ -14,12 +14,12 @@
       <%# Sorting dropdown %>
       <% if @feeds.any? %>
         <div class="relative">
-          <button
-            id="<%= "#{sort_menu_id}-button" %>"
-            type="button"
-            data-dropdown-toggle="<%= sort_menu_id %>"
-            data-dropdown-placement="bottom-end"
-            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+        <button
+          id="<%= "#{sort_menu_id}-button" %>"
+          type="button"
+          data-dropdown-toggle="<%= sort_menu_id %>"
+          data-dropdown-placement="bottom-end"
+          class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
             aria-haspopup="true"
             aria-expanded="false">
             <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
@@ -31,7 +31,7 @@
           </button>
           <div
             id="<%= sort_menu_id %>"
-            class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg"
+            class="ff-dropdown-panel"
             role="menu"
             aria-labelledby="<%= "#{sort_menu_id}-button" %>">
             <ul class="py-1 text-base text-slate-600">
@@ -39,7 +39,7 @@
                 <li>
                   <%= link_to option.path,
                               class: class_names(
-                                "flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none",
+                                "ff-dropdown-item",
                                 "font-semibold text-slate-900": option.active?
                               ) do %>
                     <span><%= option.label %></span>

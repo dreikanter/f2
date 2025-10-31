@@ -2,6 +2,8 @@ class PostsController < ApplicationController
   include Pagination
   include Sortable
 
+  layout "tailwind"
+
   sortable_by({
     "feed" => "LOWER(feeds.name)",
     "published" => "posts.published_at",
@@ -12,6 +14,7 @@ class PostsController < ApplicationController
 
   def index
     authorize Post
+    @sort_presenter = PostSortPresenter.new(controller: self)
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end

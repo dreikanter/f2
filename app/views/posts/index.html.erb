@@ -1,19 +1,70 @@
-<div class="row">
-  <div class="col-12">
-    <%= page_header "Posts" %>
+<% page_title = @feed ? "#{@feed.name} posts" : "Posts" %>
+<% content_for :title, page_title %>
+<% base_pagination_params = params.permit(:feed_id, :sort, :direction).to_unsafe_h.symbolize_keys %>
+
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div class="space-y-1">
+      <h1 class="ff-h1"><%= page_title %></h1>
+      <% if @feed %>
+        <p class="ff-text text-sm text-slate-600">Posts imported from this feed.</p>
+      <% end %>
+    </div>
 
     <% if @posts.any? %>
-      <%= render "shared/posts_table", posts: @posts %>
-
-      <%= pagination_for @posts,
-                         collection_name: "posts",
-                         path_helper: ->(page) { posts_path(page: page, feed_id: params[:feed_id], sort: params[:sort], direction: params[:direction]) } %>
-    <% else %>
-      <div class="text-center py-5">
-        <p>No posts yet</p>
-        <p class="text-muted">Posts will appear here when feeds are imported.</p>
-        <%= link_to "View Feeds", feeds_path, class: "btn btn-primary" %>
+      <div class="relative">
+        <% sort_menu_id = "posts-sort-menu" %>
+        <button
+          id="<%= "#{sort_menu_id}-button" %>"
+          type="button"
+          data-dropdown-toggle="<%= sort_menu_id %>"
+          data-dropdown-placement="bottom-end"
+          class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+          aria-haspopup="true"
+          aria-expanded="false">
+          <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+          <span class="flex items-center gap-2">
+            <span><%= @sort_presenter.current_label %></span>
+            <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+          </span>
+          <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+        </button>
+        <div
+          id="<%= sort_menu_id %>"
+          class="ff-dropdown-panel"
+          role="menu"
+          aria-labelledby="<%= "#{sort_menu_id}-button" %>">
+          <ul class="py-1 text-base text-slate-600">
+            <% @sort_presenter.options.each do |option| %>
+              <li>
+                <%= link_to option.path,
+                            class: class_names(
+                              "ff-dropdown-item",
+                              "font-semibold text-slate-900": option.active?
+                            ) do %>
+                  <span><%= option.label %></span>
+                  <% if option.icon_name.present? %>
+                    <span class="flex items-center text-slate-500">
+                      <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                      <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+                    </span>
+                  <% end %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
       </div>
     <% end %>
   </div>
+
+  <%= render "posts/posts_list",
+             posts: @posts,
+             show_feed: @feed.blank?,
+             empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet." %>
+
+  <%= pagination_for @posts,
+                     collection_name: "posts",
+                     path_helper: ->(page) { posts_path(base_pagination_params.merge(page: page)) },
+                     template: "shared/pagination_tailwind" %>
 </div>
