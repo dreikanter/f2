@@ -19,7 +19,21 @@ class FeedsController < ApplicationController
     scope = policy_scope(Feed)
     @active_feed_count = scope.enabled.count
     @inactive_feed_count = scope.disabled.count
-    @sort_presenter = FeedSortPresenter.new(controller: self)
+
+    @sort_presenter = SortPresenter.new(
+      controller: self,
+      columns: {
+        "Name" => "name",
+        "Status" => "status",
+        "Target Group" => "target_group",
+        "Last Refresh" => "last_refresh",
+        "Recent Post" => "recent_post"
+      },
+      default_column: controller.default_sort_column,
+      default_direction: controller.default_sort_direction,
+      path_builder: ->(params) { feeds_path(params) }
+    )
+
     @feeds = paginate_scope
   end
 

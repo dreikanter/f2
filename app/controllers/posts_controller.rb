@@ -14,7 +14,23 @@ class PostsController < ApplicationController
 
   def index
     authorize Post
-    @sort_presenter = PostSortPresenter.new(controller: self)
+    base_params = params.permit(:feed_id).to_h.symbolize_keys
+
+    @sort_presenter = SortPresenter.new(
+      controller: self,
+      columns: {
+        "Published" => "published",
+        "Feed" => "feed",
+        "Status" => "status",
+        "Attachments" => "attachments",
+        "Comments" => "comments"
+      },
+      default_column: controller.default_sort_column,
+      default_direction: controller.default_sort_direction,
+      path_builder: ->(params) { posts_path(params) },
+      base_params: base_params
+    )
+
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end
