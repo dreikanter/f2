@@ -9,32 +9,7 @@
         <%= post_content_preview(post.content, 80) %>
       <% end %>
       <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-        <% segments = [] %>
-        <% if local_assigns.fetch(:show_feed, false) && post.feed.present? %>
-          <% segments << link_to(post.feed.name, feed_path(post.feed), class: "ff-link") %>
-        <% end %>
-        <% if post.published_at %>
-          <% segments << safe_join(["Published", time_ago_tag(post.published_at)], " ") %>
-        <% end %>
-        <% attachments_count = Array(post.attachment_urls).size %>
-        <% segments << "Attachments: #{attachments_count}" %>
-        <% comments_count = Array(post.comments).size %>
-        <% segments << "Comments: #{comments_count}" %>
-        <% if post.source_url.present? %>
-          <% segments << link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "ff-link") %>
-        <% end %>
-        <% if post.freefeed_post_id.present? && post.feed.access_token.present? && post.feed.target_group.present? %>
-          <% freefeed_url = "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}" %>
-          <% segments << link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link") %>
-        <% end %>
-        <% if policy(post).destroy? %>
-          <% segments << link_to("Withdraw",
-                                 post_path(post),
-                                 data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
-                                 class: class_names("ff-link", "text-red-600 hover:text-red-500")) %>
-        <% end %>
-
-        <% segments.each_with_index do |segment, index| %>
+        <% post_metadata_segments(post, show_feed: local_assigns.fetch(:show_feed, false)).each_with_index do |segment, index| %>
           <% if index.positive? %>
             <span aria-hidden="true" class="text-slate-300">&bull;</span>
           <% end %>
