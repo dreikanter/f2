@@ -25,12 +25,7 @@
             <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
             <span class="flex items-center gap-2">
               <span><%= @sort_presenter.current_label %></span>
-              <% if (icon_name = @sort_presenter.icon_name_for_button).present? %>
-                <span class="flex items-center text-slate-500">
-                  <%= icon(icon_name, css_class: "text-slate-400", aria_hidden: true) %>
-                  <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
-                </span>
-              <% end %>
+              <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
             </span>
             <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
           </button>
