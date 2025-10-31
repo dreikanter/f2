@@ -21,10 +21,11 @@ class FeedSortPresenterTest < ActiveSupport::TestCase
     end
   end
 
-  test "button caption reflects current sort and direction" do
+  test "current label reflects default sort" do
     presenter = FeedSortPresenter.new(controller: StubController.new)
 
-    assert_equal "Name", presenter.button_caption
+    assert_equal "Name", presenter.current_label
+    assert_equal "arrow-up-short", presenter.icon_name_for_button
   end
 
   test "options include information for each sort column" do

@@ -34,10 +34,6 @@ class FeedSortPresenter
     end
   end
 
-  def button_caption
-    current_label
-  end
-
   def icon_name_for_button
     icon_for(current_direction)
   end
