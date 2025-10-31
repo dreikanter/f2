@@ -52,14 +52,17 @@ module ApplicationHelper
   end
 
   def sortable_header(column:, title:, path_params: {})
-    current_sort = params[:sort] || controller.default_sort_column
-    current_direction = params[:direction] || controller.default_sort_direction
+    default_sort_column = controller.respond_to?(:resolved_sortable_default_column, true) ? controller.send(:resolved_sortable_default_column) : nil
+    default_sort_direction = controller.respond_to?(:resolved_sortable_default_direction, true) ? controller.send(:resolved_sortable_default_direction) : "desc"
+
+    current_sort = params[:sort].presence || default_sort_column
+    current_direction = params[:direction].presence || default_sort_direction
     direction = current_sort == column ? current_direction : nil
 
     next_direction = if current_sort == column
       current_direction == "asc" ? "desc" : "asc"
     else
-      controller.default_sort_direction
+      default_sort_direction
     end
 
     link_to title, path_params.merge(sort: column, direction: next_direction),

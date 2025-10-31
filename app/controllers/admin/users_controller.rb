@@ -2,15 +2,6 @@ class Admin::UsersController < ApplicationController
   include Pagination
   include Sortable
 
-  sortable_by({
-    "email" => "LOWER(users.email_address)",
-    "name" => "LOWER(users.name)",
-    "feeds" => "COUNT(DISTINCT feeds.id)",
-    "tokens" => "COUNT(DISTINCT access_tokens.id)",
-    "posts" => "COUNT(DISTINCT posts.id)",
-    "last_seen" => "MAX(sessions.updated_at)"
-  }, default_column: :email, default_direction: :desc)
-
   def index
     authorize User
     @users = paginate_scope
@@ -22,6 +13,53 @@ class Admin::UsersController < ApplicationController
   end
 
   private
+
+  def sortable_columns
+    [
+      {
+        name: :email,
+        title: "Email",
+        order_by: "LOWER(users.email_address)"
+      },
+      {
+        name: :name,
+        title: "Name",
+        order_by: "LOWER(users.name)"
+      },
+      {
+        name: :feeds,
+        title: "Feeds",
+        order_by: "COUNT(DISTINCT feeds.id)"
+      },
+      {
+        name: :tokens,
+        title: "Tokens",
+        order_by: "COUNT(DISTINCT access_tokens.id)"
+      },
+      {
+        name: :posts,
+        title: "Posts",
+        order_by: "COUNT(DISTINCT posts.id)"
+      },
+      {
+        name: :last_seen,
+        title: "Last Seen",
+        order_by: "MAX(sessions.updated_at)"
+      }
+    ]
+  end
+
+  def sortable_default_column
+    :email
+  end
+
+  def sortable_default_direction
+    :desc
+  end
+
+  def sortable_path(sort_params)
+    admin_users_path(request.query_parameters.merge(sort_params))
+  end
 
   def pagination_scope
     base_scope
