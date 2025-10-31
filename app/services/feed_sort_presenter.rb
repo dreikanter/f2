@@ -1,3 +1,4 @@
+# TBD: Generalize after the use cases are clear
 class FeedSortPresenter
   Option = Struct.new(:label, :column, :path, :active, :active_direction, :icon_name, keyword_init: true) do
     def active?
