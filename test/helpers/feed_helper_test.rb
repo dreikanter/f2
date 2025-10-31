@@ -81,4 +81,25 @@ class FeedHelperTest < ActionView::TestCase
   test "#feed_summary_line should return nil for zero counts" do
     assert_nil feed_summary_line(active_count: 0, inactive_count: 0)
   end
+
+  test "#feed_status_summary should describe enabled feed" do
+    feed = build(:feed, :enabled)
+    expected = "This feed is enabled and will continue to import items on its schedule."
+
+    assert_equal expected, feed_status_summary(feed)
+  end
+
+  test "#feed_status_summary should describe ready feed" do
+    feed = build(:feed)
+    expected = "This feed is ready to enable. Turn it on to start importing posts."
+
+    assert_equal expected, feed_status_summary(feed)
+  end
+
+  test "#feed_status_summary should list missing parts" do
+    feed = build(:feed, :without_access_token)
+    expected = "Add active access token and target group to finish setup and enable this feed."
+
+    assert_equal expected, feed_status_summary(feed)
+  end
 end

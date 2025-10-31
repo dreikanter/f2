@@ -2,7 +2,7 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
-  layout "tailwind", only: :index
+  layout "tailwind", only: [:index, :show]
 
   MAX_RECENT_POSTS = 10
 
