@@ -9,6 +9,7 @@ module Sortable
 
   def sort_presenter
     default_column = sortable_default_column
+
     SortPresenter.new(
       controller: self,
       columns: sortable_presenter_columns,
@@ -106,10 +107,16 @@ module Sortable
 
     title = hash[:title] || hash[:label] || name.to_s.titleize
     direction = (hash[:direction] || sortable_default_direction).to_s
+
     unless %w[asc desc].include?(direction)
       raise ArgumentError, "sortable column definition direction must be :asc or :desc"
     end
 
-    { name: name.to_s, order_by: order_by, title: title, direction: direction }
+    {
+      name: name.to_s,
+      order_by: order_by,
+      title: title,
+      direction: direction
+    }
   end
 end
