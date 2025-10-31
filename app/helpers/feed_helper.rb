@@ -24,18 +24,14 @@ module FeedHelper
   end
 
   def feed_status_summary(feed)
-    if feed.enabled?
-      return "This feed is enabled and will continue to import items on its schedule."
-    end
-
-    if feed.can_be_enabled?
-      return "This feed is ready to enable. Turn it on to start importing posts."
-    end
-
     missing_parts = feed_missing_enablement_parts(feed)
 
-    if missing_parts.any?
-      "Add #{missing_parts.to_sentence} to finish setup and enable this feed."
+    if feed.enabled?
+      "This feed is enabled and will continue to import items on its schedule."
+    elsif feed.can_be_enabled?
+      "This feed is ready to enable. Turn it on to start importing posts."
+    elsif missing_parts.any?
+      "This feed is currently disabled. Add #{missing_parts.to_sentence} to finish setup."
     else
       "This feed is currently disabled."
     end
