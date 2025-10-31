@@ -41,11 +41,31 @@ class PostsController < ApplicationController
 
   def sortable_columns
     [
-      { name: :published, title: "Published", order_by: "posts.published_at" },
-      { name: :feed, title: "Feed", order_by: "LOWER(feeds.name)" },
-      { name: :status, title: "Status", order_by: "posts.status" },
-      { name: :attachments, title: "Attachments", order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)" },
-      { name: :comments, title: "Comments", order_by: "COALESCE(array_length(posts.comments, 1), 0)" }
+      {
+        name: :published,
+        title: "Published",
+        order_by: "posts.published_at"
+      },
+      {
+        name: :feed,
+        title: "Feed",
+        order_by: "LOWER(feeds.name)"
+      },
+      {
+        name: :status,
+        title: "Status",
+        order_by: "posts.status"
+      },
+      {
+        name: :attachments,
+        title: "Attachments",
+        order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)"
+      },
+      {
+        name: :comments,
+        title: "Comments",
+        order_by: "COALESCE(array_length(posts.comments, 1), 0)"
+      }
     ]
   end
 
