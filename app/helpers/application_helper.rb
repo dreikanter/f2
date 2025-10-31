@@ -51,7 +51,7 @@ module ApplicationHelper
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 
-  # TBD: Drop this after no references
+  # TBD: Drop this after admin/users page refactoring
   def sortable_header(field:, title:, path_params: {})
     default_sort_field = controller.respond_to?(:sortable_default_field, true) ? controller.send(:sortable_default_field).to_s : nil
 
