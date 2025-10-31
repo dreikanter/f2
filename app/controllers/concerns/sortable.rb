@@ -43,15 +43,6 @@ module Sortable
     sort_direction == "asc" ? arel_field.asc : arel_field.desc
   end
 
-  def next_sort_direction(field)
-    field = field.to_s
-    if sort_field == field
-      toggle_sort_direction(sort_direction)
-    else
-      default_direction_for(field)
-    end
-  end
-
   def sortable_fields
     raise NotImplementedError, "Include Sortable and override #sortable_fields in the controller"
   end
@@ -82,10 +73,6 @@ module Sortable
   def default_direction_for(field)
     definition = sortable_field_definitions_map[field.to_s]
     normalize_direction(definition ? definition.fetch(:direction, "desc") : "desc")
-  end
-
-  def toggle_sort_direction(direction)
-    direction == "asc" ? "desc" : "asc"
   end
 
   def normalize_direction(direction)

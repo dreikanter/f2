@@ -28,39 +28,6 @@ class SortableTest < ActionDispatch::IntegrationTest
     @controller.params = ActionController::Parameters.new
   end
 
-  test "next_sort_direction returns desc when sorting by same field ascending" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "asc"
-
-    assert_equal "desc", @controller.send(:next_sort_direction, "name")
-  end
-
-  test "next_sort_direction returns asc when sorting by same field descending" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
-
-    assert_equal "asc", @controller.send(:next_sort_direction, "name")
-  end
-
-  test "next_sort_direction returns default direction when sorting by different field" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
-
-    assert_equal "asc", @controller.send(:next_sort_direction, "created_at")
-  end
-
-  test "next_sort_direction toggles direction when no sort params but checking default field" do
-    # When no params, sort_field returns default "name" and sort_direction returns default "asc"
-    # So next_sort_direction("name") compares "name" == "name" and toggles "asc" to "desc"
-    assert_equal "desc", @controller.send(:next_sort_direction, "name")
-  end
-
-  test "next_sort_direction returns default direction when no sort params and different field" do
-    # When no params, sort_field returns default "name"
-    # So next_sort_direction("created_at") compares "created_at" == "name" (false) and returns default "asc"
-    assert_equal "asc", @controller.send(:next_sort_direction, "created_at")
-  end
-
   test "sort_field returns valid field from params" do
     @controller.params[:sort] = "name"
 
