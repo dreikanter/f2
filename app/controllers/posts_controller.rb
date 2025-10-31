@@ -38,7 +38,7 @@ class PostsController < ApplicationController
 
   private
 
-  def sortable_columns
+  def sortable_fields
     [
       {
         name: :published,

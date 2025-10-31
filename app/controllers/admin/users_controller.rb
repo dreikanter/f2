@@ -14,7 +14,7 @@ class Admin::UsersController < ApplicationController
 
   private
 
-  def sortable_columns
+  def sortable_fields
     [
       {
         name: :email,

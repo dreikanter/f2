@@ -52,41 +52,41 @@ module ApplicationHelper
   end
 
   # TBD: Drop this after no references
-  def sortable_header(column:, title:, path_params: {})
-    default_sort_column = controller.respond_to?(:sortable_default_column, true) ? controller.send(:sortable_default_column).to_s : nil
+  def sortable_header(field:, title:, path_params: {})
+    default_sort_field = controller.respond_to?(:sortable_default_field, true) ? controller.send(:sortable_default_field).to_s : nil
 
-    current_sort = if controller.respond_to?(:sort_column, true)
-      controller.send(:sort_column)
+    current_sort = if controller.respond_to?(:sort_field, true)
+      controller.send(:sort_field)
     else
-      params[:sort].presence || default_sort_column
+      params[:sort].presence || default_sort_field
     end
 
     current_direction = if controller.respond_to?(:sort_direction, true)
       controller.send(:sort_direction)
     else
       default_direction_for_current = if controller.respond_to?(:default_direction_for, true)
-        controller.send(:default_direction_for, current_sort || default_sort_column)
+        controller.send(:default_direction_for, current_sort || default_sort_field)
       else
         "desc"
       end
       params[:direction].presence || default_direction_for_current
     end
 
-    default_direction_for_column = if controller.respond_to?(:default_direction_for, true)
-      controller.send(:default_direction_for, column)
+    default_direction_for_field = if controller.respond_to?(:default_direction_for, true)
+      controller.send(:default_direction_for, field)
     else
       "desc"
     end
 
-    direction = current_sort == column ? current_direction : nil
+    direction = current_sort == field ? current_direction : nil
 
-    next_direction = if current_sort == column
+    next_direction = if current_sort == field
       current_direction == "asc" ? "desc" : "asc"
     else
-      default_direction_for_column
+      default_direction_for_field
     end
 
-    link_to title, path_params.merge(sort: column, direction: next_direction),
+    link_to title, path_params.merge(sort: field, direction: next_direction),
             class: class_names("sortable", "sorted-#{direction}": direction.present?),
             data: { turbo_action: "replace" }
   end

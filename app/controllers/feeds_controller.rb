@@ -90,7 +90,7 @@ class FeedsController < ApplicationController
 
   private
 
-  def sortable_columns
+  def sortable_fields
     [
       {
         name: :name,

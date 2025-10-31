@@ -1,17 +1,17 @@
 class SortPresenter
-  Option = Struct.new(:label, :column, :path, :active, :active_direction, :icon_name, keyword_init: true) do
+  Option = Struct.new(:label, :field, :path, :active, :active_direction, :icon_name, keyword_init: true) do
     def active?
       active
     end
   end
 
-  def initialize(controller:, columns:, default_column:, default_direction:, path_builder:, column_default_directions: {})
+  def initialize(controller:, fields:, default_field:, default_direction:, path_builder:, field_default_directions: {})
     @controller = controller
-    @columns = columns
-    @default_column = default_column.to_s
+    @fields = fields
+    @default_field = default_field.to_s
     @default_direction = default_direction.to_s
     @path_builder = path_builder
-    @column_default_directions = column_default_directions.transform_keys(&:to_s).transform_values(&:to_s)
+    @field_default_directions = field_default_directions.transform_keys(&:to_s).transform_values(&:to_s)
   end
 
   def options
@@ -35,7 +35,7 @@ class SortPresenter
 
   private
 
-  attr_reader :controller, :columns, :default_column, :default_direction, :path_builder, :column_default_directions
+  attr_reader :controller, :fields, :default_field, :default_direction, :path_builder, :field_default_directions
 
   delegate :params, to: :controller
 
@@ -45,21 +45,21 @@ class SortPresenter
 
   def resolved_sort
     value = params[:sort].presence
-    columns.value?(value) ? value : default_column
+    fields.value?(value) ? value : default_field
   end
 
   def build_options
-    columns.map do |label, column|
-      column = column.to_s
-      active = resolved_sort == column
+    fields.map do |label, field|
+      field = field.to_s
+      active = resolved_sort == field
       active_direction = active ? current_direction : nil
-      default_direction_for_column = column_default_directions.fetch(column, default_direction)
-      next_direction = active ? toggle_direction(current_direction) : default_direction_for_column
+      default_direction_for_field = field_default_directions.fetch(field, default_direction)
+      next_direction = active ? toggle_direction(current_direction) : default_direction_for_field
 
       Option.new(
         label: label,
-        column: column,
-        path: path_builder.call(sort: column, direction: next_direction),
+        field: field,
+        path: path_builder.call(sort: field, direction: next_direction),
         active: active,
         active_direction: active_direction,
         icon_name: active_direction ? icon_for(active_direction) : nil

@@ -6,22 +6,22 @@
       <thead>
         <tr>
           <th>
-            <%= sortable_header(column: "email", title: "Email") %>
+            <%= sortable_header(field: "email", title: "Email") %>
           </th>
           <th>
-            <%= sortable_header(column: "name", title: "Name") %>
+            <%= sortable_header(field: "name", title: "Name") %>
           </th>
           <th class="text-center">
-            <%= sortable_header(column: "feeds", title: "Feeds") %>
+            <%= sortable_header(field: "feeds", title: "Feeds") %>
           </th>
           <th class="text-center">
-            <%= sortable_header(column: "tokens", title: "Tokens") %>
+            <%= sortable_header(field: "tokens", title: "Tokens") %>
           </th>
           <th class="text-center">
-            <%= sortable_header(column: "posts", title: "Posts") %>
+            <%= sortable_header(field: "posts", title: "Posts") %>
           </th>
           <th class="text-center">
-            <%= sortable_header(column: "last_seen", title: "Last Seen") %>
+            <%= sortable_header(field: "last_seen", title: "Last Seen") %>
           </th>
         </tr>
       </thead>
@@ -72,4 +72,3 @@
     <p class="text-muted">No users found</p>
   </div>
 <% end %>
-

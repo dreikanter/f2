@@ -14,8 +14,8 @@ class SortPresenterTest < ActiveSupport::TestCase
     controller = StubController.new
     presenter = SortPresenter.new(
       controller: controller,
-      columns: { "Name" => "name" },
-      default_column: :name,
+      fields: { "Name" => "name" },
+      default_field: :name,
       default_direction: :asc,
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
@@ -31,18 +31,18 @@ class SortPresenterTest < ActiveSupport::TestCase
 
   test "honors provided params and toggles direction" do
     controller = StubController.new(sort: "status", direction: "desc", extra: "1")
-    columns = { "Name" => "name", "Status" => "status" }
+    fields = { "Name" => "name", "Status" => "status" }
 
     presenter = SortPresenter.new(
       controller: controller,
-      columns: columns,
-      default_column: :name,
+      fields: fields,
+      default_field: :name,
       default_direction: :asc,
       path_builder: ->(params) { "/items?#{params.merge(extra: controller.params[:extra]).to_query}" }
     )
 
     active_option = presenter.options.detect(&:active?)
-    assert_equal "status", active_option.column
+    assert_equal "status", active_option.field
     assert_equal "desc", active_option.active_direction
     assert_equal "arrow-down-short", active_option.icon_name
     assert_equal(
@@ -55,8 +55,8 @@ class SortPresenterTest < ActiveSupport::TestCase
     controller = StubController.new(sort: "invalid", direction: "sideways")
     presenter = SortPresenter.new(
       controller: controller,
-      columns: { "Name" => "name" },
-      default_column: :name,
+      fields: { "Name" => "name" },
+      default_field: :name,
       default_direction: :asc,
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
