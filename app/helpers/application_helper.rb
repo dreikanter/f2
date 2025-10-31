@@ -52,8 +52,8 @@ module ApplicationHelper
   end
 
   def sortable_header(column:, title:, path_params: {})
-    default_sort_column = controller.respond_to?(:resolved_sortable_default_column, true) ? controller.send(:resolved_sortable_default_column) : nil
-    default_sort_direction = controller.respond_to?(:resolved_sortable_default_direction, true) ? controller.send(:resolved_sortable_default_direction) : "desc"
+    default_sort_column = controller.respond_to?(:sortable_default_column, true) ? controller.send(:sortable_default_column).to_s : nil
+    default_sort_direction = controller.respond_to?(:sortable_default_direction, true) ? controller.send(:sortable_default_direction).to_s : "desc"
 
     current_sort = params[:sort].presence || default_sort_column
     current_direction = params[:direction].presence || default_sort_direction
