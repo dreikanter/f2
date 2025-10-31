@@ -8,6 +8,8 @@
   }
 }
 
+/* Reusable UI primitives, see [20251031_8549] */
+
 @layer components {
   .ff-card {
     @apply w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm;
@@ -58,7 +60,15 @@
   }
 
   .ff-button {
-    @apply inline-flex items-center justify-center rounded-md bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+  }
+
+  .ff-button--secondary {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+  }
+
+  .ff-button--compact {
+    @apply px-4 py-2 text-base;
   }
 
   .ff-card__footer {
@@ -71,6 +81,22 @@
 
   .ff-text--heavy {
     @apply font-semibold text-slate-800;
+  }
+
+  .ff-focus-ring {
+    @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+
+  .ff-nav-brand {
+    @apply inline-flex items-center text-xl font-semibold text-slate-900;
+  }
+
+  .ff-nav-link {
+    @apply inline-flex items-center rounded-sm px-3 py-2 text-lg transition hover:bg-slate-100 md:px-2 md:py-1 md:hover:bg-transparent md:hover:text-slate-900;
+  }
+
+  .ff-nav-link--active {
+    @apply bg-slate-900 text-white md:bg-transparent md:text-slate-900 md:font-semibold;
   }
 
   .ff-h1 {

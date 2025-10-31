@@ -9,8 +9,8 @@ module PaginationHelper
     (page_start..page_end).each { |page| yield page }
   end
 
-  def pagination_for(collection, collection_name:, path_helper:, **options)
-    render "shared/pagination",
+  def pagination_for(collection, collection_name:, path_helper:, template: "shared/pagination", **options)
+    render template,
            pagination_label: collection_name.humanize,
            pagination_path: path_helper,
            collection_size: collection.size,

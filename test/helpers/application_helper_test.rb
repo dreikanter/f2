@@ -1,6 +1,23 @@
 require "test_helper"
 
 class ApplicationHelperTest < ActionView::TestCase
+  attr_accessor :policy_override
+
+  PolicyStub = Struct.new(:allowed) do
+    def index?
+      allowed
+    end
+  end
+
+  def policy(record)
+    (policy_override || ->(_record) { PolicyStub.new(false) }).call(record)
+  end
+
+  teardown do
+    Current.session = nil
+    self.policy_override = nil
+  end
+
   test "page_header without block renders title with simple layout" do
     result = page_header("Test Title")
 
@@ -156,5 +173,65 @@ class ApplicationHelperTest < ActionView::TestCase
 
     assert_includes result, "<div class=\"highlight\">"
     assert_includes result, "</div>"
+  end
+
+  test "#navbar_items should return empty array when user is missing" do
+    assert_equal [], navbar_items
+  end
+
+  test "#navbar_items should return only status for inactive user" do
+    user = create(:user, :inactive)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(_path, *_args) { false }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "dashboard") do
+        items = navbar_items
+
+        assert_equal 1, items.size
+        assert_equal "Status", items.first[:name]
+        assert_equal status_path, items.first[:path]
+        assert_equal false, items.first[:active]
+      end
+    end
+  end
+
+  test "#navbar_items should include feeds and posts for active user" do
+    user = create(:user)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(path, *_args) { path == feeds_path }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "feeds/index") do
+        items = navbar_items
+
+        assert_equal ["Status", "Feeds", "Posts"], items.map { |item| item[:name] }
+        feeds_item = items.second
+        assert_equal feeds_path, feeds_item[:path]
+        assert_equal true, feeds_item[:active]
+      end
+    end
+  end
+
+  test "#navbar_items should include admin panel when allowed" do
+    user = create(:user)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(path, *_args) { path == admin_path }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "admin/dashboard") do
+        self.policy_override = ->(_record) { PolicyStub.new(true) }
+
+        items = navbar_items
+        admin_item = items.last
+
+        assert_equal "Admin Panel", admin_item[:name]
+        assert_equal admin_path, admin_item[:path]
+        assert_equal true, admin_item[:active]
+      end
+    end
   end
 end

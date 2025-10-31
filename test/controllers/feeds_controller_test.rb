@@ -24,8 +24,25 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "should get index when authenticated" do
     sign_in_as(user)
+    feed
     get feeds_url
     assert_response :success
+    assert_select "button[data-dropdown-toggle='feed-sort-menu']", 1
+    assert_select "#feed-sort-menu a", 5
+    assert_select "ul.divide-y li", minimum: 1
+    assert_select "p", text: "You have 1 inactive feed"
+  end
+
+  test "index should render tailwind pagination controls" do
+    sign_in_as(user)
+    create_list(:feed, 26, user: user)
+
+    get feeds_url
+
+    assert_response :success
+    assert_select "nav[aria-label='Feeds pagination']"
+    assert_select "nav[aria-label='Feeds pagination'] ul[class*='inline-flex']", minimum: 1
+    assert_select "nav[aria-label='Feeds pagination'] span", text: /Showing/
   end
 
   test "should get new when authenticated" do
@@ -383,7 +400,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     response_body = response.body
     pos_disabled = response_body.index("Disabled Feed")
     pos_enabled = response_body.index("Enabled Feed")
-    assert pos_disabled < pos_enabled, "Expected disabled feed to appear before enabled feed"
+    assert pos_enabled < pos_disabled, "Expected enabled feed to appear before disabled feed"
   end
 
   test "should use default sort when no sort parameter provided" do
@@ -406,7 +423,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     get feeds_url(sort: "name", direction: "desc", per_page: 2)
     assert_response :success
-    assert_select ".pagination a[href*='sort=name']"
-    assert_select ".pagination a[href*='direction=desc']"
+    assert_select "nav[aria-label='Feeds pagination'] a[href*='sort=name']"
+    assert_select "nav[aria-label='Feeds pagination'] a[href*='direction=desc']"
   end
 end

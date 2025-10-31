@@ -2,11 +2,13 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
+  layout "tailwind", only: :index
+
   MAX_RECENT_POSTS = 10
 
   sortable_by({
     "name" => "LOWER(feeds.name)",
-    "status" => "feeds.state",
+    "status" => "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
     "target_group" => "LOWER(feeds.target_group)",
     "last_refresh" => "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
     "recent_post" => "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
@@ -14,6 +16,10 @@ class FeedsController < ApplicationController
 
   def index
     authorize Feed
+    scope = policy_scope(Feed)
+    @active_feed_count = scope.enabled.count
+    @inactive_feed_count = scope.disabled.count
+    @sort_presenter = FeedSortPresenter.new(controller: self)
     @feeds = paginate_scope
   end
 

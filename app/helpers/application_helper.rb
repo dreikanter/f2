@@ -66,4 +66,40 @@ module ApplicationHelper
             class: class_names("sortable", "sorted-#{direction}": direction.present?),
             data: { turbo_action: "replace" }
   end
+
+  def navbar_items
+    return [] unless Current.user
+
+    items = [
+      {
+        name: "Status",
+        path: status_path,
+        active: current_page?(status_path)
+      }
+    ]
+
+    return items unless Current.user.active?
+
+    items << {
+      name: "Feeds",
+      path: feeds_path,
+      active: current_page?(feeds_path) || controller_path.start_with?("feeds")
+    }
+
+    items << {
+      name: "Posts",
+      path: posts_path,
+      active: current_page?(posts_path) || controller_path.start_with?("posts")
+    }
+
+    if policy(Event).index?
+      items << {
+        name: "Admin Panel",
+        path: admin_path,
+        active: current_page?(admin_path) || controller_path.start_with?("admin")
+      }
+    end
+
+    items
+  end
 end

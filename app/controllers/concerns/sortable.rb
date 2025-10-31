@@ -8,6 +8,7 @@ module Sortable
   end
 
   class_methods do
+    # TBD: Consider using overridable instance methods for configuration instead
     def sortable_by(columns, default_column:, default_direction: :desc)
       self.sortable_columns_config = columns.stringify_keys
       self.default_sort_column = default_column.to_s

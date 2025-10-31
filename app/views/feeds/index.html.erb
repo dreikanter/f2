@@ -1,83 +1,102 @@
-<div class="row">
-  <div class="col-12">
-    <%= page_header "Feeds" do %>
-      <%= link_to "New Feed", new_feed_path, class: "btn btn-primary" %>
-    <% end %>
+<% content_for :title, "Feeds" %>
 
-    <% if @feeds.any? %>
-      <div class="table-responsive">
-        <table class="table table-hover table-bordered">
-          <thead>
-            <tr>
-              <th>
-                <%= sortable_header(column: "name", title: "Name") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "status", title: "Status") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "target_group", title: "Target Group") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "last_refresh", title: "Last Refresh") %>
-              </th>
-              <th>
-                <%= sortable_header(column: "recent_post", title: "Recent Post") %>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @feeds.each do |feed| %>
-              <tr>
-                <td>
-                  <%= link_to feed, class: "text-decoration-none" do %>
-                    <%= feed.name %>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.enabled? %>
-                    <%= icon("check-circle-fill", css_class: "text-success me-1") %>
-                  <% else %>
-                    <%= icon("x-circle", css_class: "text-muted me-1") %>
-                  <% end %>
-                  <%= feed.state.capitalize %>
-                </td>
-                <td>
-                  <% if feed.target_group.present? %>
-                    <%= feed.target_group %>
-                  <% else %>
-                    <em class="text-muted">None</em>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.last_refreshed_at %>
-                    <%= short_time_ago(feed.last_refreshed_at) %>
-                  <% else %>
-                    <em class="text-muted">Never</em>
-                  <% end %>
-                </td>
-                <td>
-                  <% if feed.most_recent_post_date %>
-                    <%= short_time_ago(feed.most_recent_post_date) %>
-                  <% else %>
-                    <em class="text-muted">None</em>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
+<% sort_menu_id = "feed-sort-menu" %>
 
-      <%= pagination_for @feeds,
-                         collection_name: "feeds",
-                         path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
-    <% else %>
-      <div class="text-center py-5">
-        <p>No feeds yet</p>
-        <p class="text-muted">Create your first feed to start aggregating content.</p>
-        <%= link_to "Create Feed", new_feed_path, class: "btn btn-primary" %>
-      </div>
-    <% end %>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div class="flex flex-col gap-1">
+      <h1 class="ff-h1">Feeds</h1>
+      <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
+        <p class="ff-text mt-1 sm:mt-0"><%= summary_line %></p>
+      <% end %>
+    </div>
+    <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+      <%# Sorting dropdown %>
+      <% if @feeds.any? %>
+        <div class="relative">
+          <button
+            id="<%= "#{sort_menu_id}-button" %>"
+            type="button"
+            data-dropdown-toggle="<%= sort_menu_id %>"
+            data-dropdown-placement="bottom-end"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+            aria-haspopup="true"
+            aria-expanded="false">
+            <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+            <span class="flex items-center gap-2">
+              <span><%= @sort_presenter.current_label %></span>
+              <% if (icon_name = @sort_presenter.icon_name_for_button).present? %>
+                <span class="flex items-center text-slate-500">
+                  <%= icon(icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                  <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+                </span>
+              <% end %>
+            </span>
+            <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+          </button>
+          <div
+            id="<%= sort_menu_id %>"
+            class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg"
+            role="menu"
+            aria-labelledby="<%= "#{sort_menu_id}-button" %>">
+            <ul class="py-1 text-base text-slate-600">
+              <% @sort_presenter.options.each do |option| %>
+                <li>
+                  <%= link_to option.path,
+                              class: class_names(
+                                "flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none",
+                                "font-semibold text-slate-900": option.active?
+                              ) do %>
+                    <span><%= option.label %></span>
+                    <% if option.icon_name.present? %>
+                      <span class="flex items-center text-slate-500">
+                        <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                        <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+                      </span>
+                    <% end %>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+      <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
+    </div>
   </div>
+
+  <% if @feeds.any? %>
+    <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <% @feeds.each do |feed| %>
+        <li class="flex items-baseline gap-3 p-4">
+          <span class="inline-flex shrink-0 text-slate-500">
+            <%= feed_status_icon(feed) %>
+          </span>
+          <div class="flex flex-1 flex-col gap-1">
+            <%= link_to feed.name, feed_path(feed), class: class_names("inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") %>
+            <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
+              <span>Target: <%= feed.target_group.presence || "None" %></span>
+              <span aria-hidden="true" class="text-slate-300">&bull;</span>
+              <span><%= safe_join(["Last refresh:", feed.last_refreshed_at ? short_time_ago_tag(feed.last_refreshed_at) : "Never"], " ") %></span>
+              <span aria-hidden="true" class="text-slate-300">&bull;</span>
+              <span><%= safe_join(["Recent post:", feed.most_recent_post_date ? short_time_ago_tag(feed.most_recent_post_date) : "None"], " ") %></span>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+
+    <%= pagination_for @feeds,
+                       collection_name: "feeds",
+                       path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) },
+                       template: "shared/pagination_tailwind" %>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
+      <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
+      <p class="mt-2 text-sm text-slate-600">Create your first feed to start refreshing posts and sharing them with your audience.</p>
+      <div class="mt-6">
+        <%= link_to "Create your first feed", new_feed_path, class: class_names("ff-button", "ff-button--compact") %>
+      </div>
+    </div>
+  <% end %>
 </div>
