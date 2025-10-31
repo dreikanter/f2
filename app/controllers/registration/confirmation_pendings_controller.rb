@@ -1,5 +1,5 @@
 class Registration::ConfirmationPendingsController < ApplicationController
-  layout "tailwind"
+  layout "modal"
 
   allow_unauthenticated_access
 end
