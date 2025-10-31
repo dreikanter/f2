@@ -7,7 +7,6 @@ class PostsController < ApplicationController
   def index
     authorize Post
     @sort_presenter = sort_presenter
-
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end
