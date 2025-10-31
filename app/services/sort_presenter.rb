@@ -56,17 +56,12 @@ class SortPresenter
       Option.new(
         label: label,
         column: column,
-        path: build_path(column, next_direction),
+        path: path_builder.call(sort: column, direction: next_direction),
         active: active,
         active_direction: active_direction,
         icon_name: active_direction ? icon_for(active_direction) : nil
       )
     end
-  end
-
-  def build_path(column, direction)
-    sortable_params = { sort: column, direction: direction }
-    path_builder.call(sortable_params)
   end
 
   def toggle_direction(direction)
