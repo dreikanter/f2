@@ -44,37 +44,34 @@ class PostsController < ApplicationController
       {
         name: :published,
         title: "Published",
-        order_by: "posts.published_at"
+        order_by: "posts.published_at",
+        direction: :desc
       },
       {
         name: :feed,
         title: "Feed",
-        order_by: "LOWER(feeds.name)"
+        order_by: "LOWER(feeds.name)",
+        direction: :asc
       },
       {
         name: :status,
         title: "Status",
-        order_by: "posts.status"
+        order_by: "posts.status",
+        direction: :asc
       },
       {
         name: :attachments,
         title: "Attachments",
-        order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)"
+        order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)",
+        direction: :desc
       },
       {
         name: :comments,
         title: "Comments",
-        order_by: "COALESCE(array_length(posts.comments, 1), 0)"
+        order_by: "COALESCE(array_length(posts.comments, 1), 0)",
+        direction: :desc
       }
     ]
-  end
-
-  def sortable_default_column
-    :published
-  end
-
-  def sortable_default_direction
-    :desc
   end
 
   def sortable_path(sort_params)

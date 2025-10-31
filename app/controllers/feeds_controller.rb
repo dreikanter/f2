@@ -97,37 +97,34 @@ class FeedsController < ApplicationController
       {
         name: :name,
         title: "Name",
-        order_by: "LOWER(feeds.name)"
+        order_by: "LOWER(feeds.name)",
+        direction: :asc
       },
       {
         name: :status,
         title: "Status",
-        order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END"
+        order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
+        direction: :asc
       },
       {
         name: :target_group,
         title: "Target Group",
-        order_by: "LOWER(feeds.target_group)"
+        order_by: "LOWER(feeds.target_group)",
+        direction: :asc
       },
       {
         name: :last_refresh,
         title: "Last Refresh",
-        order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)"
+        order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
+        direction: :desc
       },
       {
         name: :recent_post,
         title: "Recent Post",
-        order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
+        order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
+        direction: :desc
       }
     ]
-  end
-
-  def sortable_default_column
-    :name
-  end
-
-  def sortable_default_direction
-    :asc
   end
 
   def sortable_path(sort_params)

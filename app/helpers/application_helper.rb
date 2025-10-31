@@ -53,16 +53,36 @@ module ApplicationHelper
 
   def sortable_header(column:, title:, path_params: {})
     default_sort_column = controller.respond_to?(:sortable_default_column, true) ? controller.send(:sortable_default_column).to_s : nil
-    default_sort_direction = controller.respond_to?(:sortable_default_direction, true) ? controller.send(:sortable_default_direction).to_s : "desc"
 
-    current_sort = params[:sort].presence || default_sort_column
-    current_direction = params[:direction].presence || default_sort_direction
+    current_sort = if controller.respond_to?(:sort_column, true)
+      controller.send(:sort_column)
+    else
+      params[:sort].presence || default_sort_column
+    end
+
+    current_direction = if controller.respond_to?(:sort_direction, true)
+      controller.send(:sort_direction)
+    else
+      default_direction_for_current = if controller.respond_to?(:default_direction_for, true)
+        controller.send(:default_direction_for, current_sort || default_sort_column)
+      else
+        "desc"
+      end
+      params[:direction].presence || default_direction_for_current
+    end
+
+    default_direction_for_column = if controller.respond_to?(:default_direction_for, true)
+      controller.send(:default_direction_for, column)
+    else
+      "desc"
+    end
+
     direction = current_sort == column ? current_direction : nil
 
     next_direction = if current_sort == column
       current_direction == "asc" ? "desc" : "asc"
     else
-      default_sort_direction
+      default_direction_for_column
     end
 
     link_to title, path_params.merge(sort: column, direction: next_direction),

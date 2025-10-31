@@ -13,13 +13,9 @@ class SortableTest < ActionDispatch::IntegrationTest
 
     def sortable_columns
       [
-        { name: :name, title: "Name", order_by: "LOWER(items.name)" },
-        { name: :created_at, title: "Created", order_by: "items.created_at" }
+        { name: :name, title: "Name", order_by: "LOWER(items.name)", direction: :asc },
+        { name: :created_at, title: "Created", order_by: "items.created_at", direction: :asc }
       ]
-    end
-
-    def sortable_default_direction
-      :asc
     end
 
     def sortable_path(sort_params)

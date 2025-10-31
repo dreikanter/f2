@@ -5,12 +5,13 @@ class SortPresenter
     end
   end
 
-  def initialize(controller:, columns:, default_column:, default_direction:, path_builder:)
+  def initialize(controller:, columns:, default_column:, default_direction:, path_builder:, column_default_directions: {})
     @controller = controller
     @columns = columns
     @default_column = default_column.to_s
     @default_direction = default_direction.to_s
     @path_builder = path_builder
+    @column_default_directions = column_default_directions.transform_keys(&:to_s).transform_values(&:to_s)
   end
 
   def options
@@ -34,7 +35,7 @@ class SortPresenter
 
   private
 
-  attr_reader :controller, :columns, :default_column, :default_direction, :path_builder
+  attr_reader :controller, :columns, :default_column, :default_direction, :path_builder, :column_default_directions
 
   delegate :params, to: :controller
 
@@ -49,9 +50,11 @@ class SortPresenter
 
   def build_options
     columns.map do |label, column|
+      column = column.to_s
       active = resolved_sort == column
       active_direction = active ? current_direction : nil
-      next_direction = active ? toggle_direction(current_direction) : default_direction
+      default_direction_for_column = column_default_directions.fetch(column, default_direction)
+      next_direction = active ? toggle_direction(current_direction) : default_direction_for_column
 
       Option.new(
         label: label,

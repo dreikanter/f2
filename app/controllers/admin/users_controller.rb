@@ -19,42 +19,40 @@ class Admin::UsersController < ApplicationController
       {
         name: :email,
         title: "Email",
-        order_by: "LOWER(users.email_address)"
+        order_by: "LOWER(users.email_address)",
+        direction: :asc
       },
       {
         name: :name,
         title: "Name",
-        order_by: "LOWER(users.name)"
+        order_by: "LOWER(users.name)",
+        direction: :asc
       },
       {
         name: :feeds,
         title: "Feeds",
-        order_by: "COUNT(DISTINCT feeds.id)"
+        order_by: "COUNT(DISTINCT feeds.id)",
+        direction: :desc
       },
       {
         name: :tokens,
         title: "Tokens",
-        order_by: "COUNT(DISTINCT access_tokens.id)"
+        order_by: "COUNT(DISTINCT access_tokens.id)",
+        direction: :desc
       },
       {
         name: :posts,
         title: "Posts",
-        order_by: "COUNT(DISTINCT posts.id)"
+        order_by: "COUNT(DISTINCT posts.id)",
+        direction: :desc
       },
       {
         name: :last_seen,
         title: "Last Seen",
-        order_by: "MAX(sessions.updated_at)"
+        order_by: "MAX(sessions.updated_at)",
+        direction: :desc
       }
     ]
-  end
-
-  def sortable_default_column
-    :email
-  end
-
-  def sortable_default_direction
-    :desc
   end
 
   def sortable_path(sort_params)

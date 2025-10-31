@@ -8,23 +8,28 @@ module Sortable
   private
 
   def sort_presenter
+    default_column = sortable_default_column
     SortPresenter.new(
       controller: self,
       columns: sortable_presenter_columns,
-      default_column: sortable_default_column.to_s,
-      default_direction: sortable_default_direction.to_s,
-      path_builder: ->(sortable_params) { sortable_path(sortable_params) }
+      default_column: default_column,
+      default_direction: default_direction_for(default_column),
+      path_builder: ->(sortable_params) { sortable_path(sortable_params) },
+      column_default_directions: sortable_column_default_directions
     )
   end
 
   def sort_column
-    column = params[:sort].presence || sortable_default_column.to_s
-    sortable_columns_map.key?(column) ? column : sortable_default_column.to_s
+    column = params[:sort].presence || sortable_default_column
+    column = column.to_s
+    sortable_columns_map.key?(column) ? column : sortable_default_column
   end
 
   def sort_direction
-    direction = params[:direction].presence || sortable_default_direction.to_s
-    %w[asc desc].include?(direction) ? direction : sortable_default_direction.to_s
+    direction = params[:direction].presence
+    return direction if %w[asc desc].include?(direction)
+
+    default_direction_for(sort_column)
   end
 
   def sort_order
@@ -39,7 +44,7 @@ module Sortable
     if sort_column == column
       toggle_sort_direction(sort_direction)
     else
-      sortable_default_direction.to_s
+      default_direction_for(column)
     end
   end
 
@@ -75,6 +80,16 @@ module Sortable
     end
   end
 
+  def sortable_column_default_directions
+    @sortable_column_default_directions ||= sortable_column_definitions.to_h do |definition|
+      [definition.fetch(:name), definition.fetch(:direction)]
+    end
+  end
+
+  def default_direction_for(column)
+    sortable_column_default_directions.fetch(column.to_s, sortable_default_direction.to_s)
+  end
+
   def toggle_sort_direction(direction)
     direction == "asc" ? "desc" : "asc"
   end
@@ -90,7 +105,11 @@ module Sortable
     raise ArgumentError, "sortable column definition requires :order_by" if order_by.blank?
 
     title = hash[:title] || hash[:label] || name.to_s.titleize
+    direction = (hash[:direction] || sortable_default_direction).to_s
+    unless %w[asc desc].include?(direction)
+      raise ArgumentError, "sortable column definition direction must be :asc or :desc"
+    end
 
-    { name: name.to_s, order_by: order_by, title: title }
+    { name: name.to_s, order_by: order_by, title: title, direction: direction }
   end
 end
