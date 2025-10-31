@@ -57,10 +57,6 @@ module Sortable
     sortable_column_definitions.first.fetch(:name)
   end
 
-  def sortable_default_direction
-    :desc
-  end
-
   def sortable_path(_params)
     raise NotImplementedError, "Include Sortable and override #sortable_path(params) in the controller"
   end
@@ -88,7 +84,7 @@ module Sortable
   end
 
   def default_direction_for(column)
-    sortable_column_default_directions.fetch(column.to_s, sortable_default_direction.to_s)
+    sortable_column_default_directions.fetch(column.to_s, "desc")
   end
 
   def toggle_sort_direction(direction)
@@ -106,7 +102,7 @@ module Sortable
     raise ArgumentError, "sortable column definition requires :order_by" if order_by.blank?
 
     title = hash[:title] || hash[:label] || name.to_s.titleize
-    direction = (hash[:direction] || sortable_default_direction).to_s
+    direction = (hash[:direction] || "desc").to_s
 
     unless %w[asc desc].include?(direction)
       raise ArgumentError, "sortable column definition direction must be :asc or :desc"
