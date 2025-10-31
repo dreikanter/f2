@@ -1,4 +1,7 @@
 <%# locals: (post:, show_feed: false, withdraw_allowed: false) %>
+<% show_feed = local_assigns.fetch(:show_feed, false) %>
+<% withdraw_allowed = local_assigns.fetch(:withdraw_allowed, false) %>
+
 <li class="flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:gap-4">
   <div class="flex items-start gap-3 sm:flex-1">
     <span class="inline-flex shrink-0 text-slate-500">
@@ -9,7 +12,7 @@
         <%= post_content_preview(post.content, 80) %>
       <% end %>
       <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-        <% post_metadata_segments(post, show_feed: local_assigns.fetch(:show_feed, false), withdraw_allowed: withdraw_allowed).each_with_index do |segment, index| %>
+        <% post_metadata_segments(post, show_feed: show_feed, withdraw_allowed: withdraw_allowed).each_with_index do |segment, index| %>
           <% if index.positive? %>
             <span aria-hidden="true" class="text-slate-300">&bull;</span>
           <% end %>
