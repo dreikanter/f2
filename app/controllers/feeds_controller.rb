@@ -93,31 +93,31 @@ class FeedsController < ApplicationController
   def sortable_fields
     [
       {
-        name: :name,
+        field: :name,
         title: "Name",
         order_by: "LOWER(feeds.name)",
         direction: :asc
       },
       {
-        name: :status,
+        field: :status,
         title: "Status",
         order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
         direction: :asc
       },
       {
-        name: :target_group,
+        field: :target_group,
         title: "Target Group",
         order_by: "LOWER(feeds.target_group)",
         direction: :asc
       },
       {
-        name: :last_refresh,
+        field: :last_refresh,
         title: "Last Refresh",
         order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
         direction: :desc
       },
       {
-        name: :recent_post,
+        field: :recent_post,
         title: "Recent Post",
         order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
         direction: :desc

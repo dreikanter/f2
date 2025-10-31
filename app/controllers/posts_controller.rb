@@ -41,31 +41,31 @@ class PostsController < ApplicationController
   def sortable_fields
     [
       {
-        name: :published,
+        field: :published,
         title: "Published",
         order_by: "posts.published_at",
         direction: :desc
       },
       {
-        name: :feed,
+        field: :feed,
         title: "Feed",
         order_by: "LOWER(feeds.name)",
         direction: :asc
       },
       {
-        name: :status,
+        field: :status,
         title: "Status",
         order_by: "posts.status",
         direction: :asc
       },
       {
-        name: :attachments,
+        field: :attachments,
         title: "Attachments",
         order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)",
         direction: :desc
       },
       {
-        name: :comments,
+        field: :comments,
         title: "Comments",
         order_by: "COALESCE(array_length(posts.comments, 1), 0)",
         direction: :desc

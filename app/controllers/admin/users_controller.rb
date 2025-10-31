@@ -17,37 +17,37 @@ class Admin::UsersController < ApplicationController
   def sortable_fields
     [
       {
-        name: :email,
+        field: :email,
         title: "Email",
         order_by: "LOWER(users.email_address)",
         direction: :asc
       },
       {
-        name: :name,
+        field: :name,
         title: "Name",
         order_by: "LOWER(users.name)",
         direction: :asc
       },
       {
-        name: :feeds,
+        field: :feeds,
         title: "Feeds",
         order_by: "COUNT(DISTINCT feeds.id)",
         direction: :desc
       },
       {
-        name: :tokens,
+        field: :tokens,
         title: "Tokens",
         order_by: "COUNT(DISTINCT access_tokens.id)",
         direction: :desc
       },
       {
-        name: :posts,
+        field: :posts,
         title: "Posts",
         order_by: "COUNT(DISTINCT posts.id)",
         direction: :desc
       },
       {
-        name: :last_seen,
+        field: :last_seen,
         title: "Last Seen",
         order_by: "MAX(sessions.updated_at)",
         direction: :desc

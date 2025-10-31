@@ -14,9 +14,9 @@ class SortPresenterTest < ActiveSupport::TestCase
     controller = StubController.new
     presenter = SortPresenter.new(
       controller: controller,
-      fields: { "Name" => "name" },
-      default_field: :name,
-      default_direction: :asc,
+      fields: [
+        { label: "Name", field: "name", direction: "asc" }
+      ],
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
 
@@ -31,13 +31,14 @@ class SortPresenterTest < ActiveSupport::TestCase
 
   test "honors provided params and toggles direction" do
     controller = StubController.new(sort: "status", direction: "desc", extra: "1")
-    fields = { "Name" => "name", "Status" => "status" }
+    fields = [
+      { label: "Name", field: "name", direction: "asc" },
+      { label: "Status", field: "status", direction: "desc" }
+    ]
 
     presenter = SortPresenter.new(
       controller: controller,
       fields: fields,
-      default_field: :name,
-      default_direction: :asc,
       path_builder: ->(params) { "/items?#{params.merge(extra: controller.params[:extra]).to_query}" }
     )
 
@@ -55,9 +56,9 @@ class SortPresenterTest < ActiveSupport::TestCase
     controller = StubController.new(sort: "invalid", direction: "sideways")
     presenter = SortPresenter.new(
       controller: controller,
-      fields: { "Name" => "name" },
-      default_field: :name,
-      default_direction: :asc,
+      fields: [
+        { label: "Name", field: "name", direction: "asc" }
+      ],
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
 

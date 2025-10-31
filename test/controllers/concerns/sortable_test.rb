@@ -13,8 +13,8 @@ class SortableTest < ActionDispatch::IntegrationTest
 
     def sortable_fields
       [
-        { name: :name, title: "Name", order_by: "LOWER(items.name)", direction: :asc },
-        { name: :created_at, title: "Created", order_by: "items.created_at", direction: :asc }
+        { field: :name, title: "Name", order_by: "LOWER(items.name)", direction: :asc },
+        { field: :created_at, title: "Created", order_by: "items.created_at", direction: :asc }
       ]
     end
 
