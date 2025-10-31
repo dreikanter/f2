@@ -6,6 +6,7 @@ class FeedSortPresenter
     end
   end
 
+  # TBD: Parameterize
   SORT_OPTIONS = {
     "Name" => "name",
     "Status" => "status",
@@ -16,23 +17,20 @@ class FeedSortPresenter
 
   def initialize(controller:)
     @controller = controller
-    @options = build_options
   end
 
-  attr_reader :options, :controller
-
-  delegate :params, :default_sort_direction, to: :controller
+  def options
+    @options ||= build_options
+  end
 
   def current_label
     current_option.label
   end
 
   def current_direction
-    value = params[:direction]
-
-    case value
+    case direction
     when "asc", "desc"
-      value
+      direction
     else
       default_sort_direction
     end
@@ -44,20 +42,23 @@ class FeedSortPresenter
 
   private
 
+  attr_reader :controller
+
+  delegate :params, :default_sort_direction, to: :controller, private: true
+
   def current_option
-    @options.find(&:active?) || @options.first
+    options.find(&:active?) || options.first
   end
 
   def resolve_sort
-    value = params[:sort]
-    SORT_OPTIONS.value?(value) ? value : controller.default_sort_column
+    SORT_OPTIONS.value?(sort) ? sort : controller.default_sort_column
   end
 
   def build_options
     SORT_OPTIONS.map do |label, column|
       active = resolve_sort == column
       active_direction = active ? current_direction : nil
-      next_direction = active ? toggle_direction(current_direction) : default_sort_direction
+      next_direction = active ? opposite_direction : default_sort_direction
 
       Option.new(
         label: label,
@@ -74,15 +75,19 @@ class FeedSortPresenter
     controller.feeds_path(sort: column, direction: direction)
   end
 
-  def toggle_direction(direction)
-    direction == "asc" ? "desc" : "asc"
-  end
-
-  def direction_hint_for(direction)
-    direction == "asc" ? "A-Z" : "Z-A"
+  def opposite_direction
+    current_direction == "asc" ? "desc" : "asc"
   end
 
   def icon_for(direction)
     direction == "asc" ? "arrow-up-short" : "arrow-down-short"
+  end
+
+  def direction
+    @direction ||= params[:direction]
+  end
+
+  def sort
+    @sort ||= params[:sort]
   end
 end
