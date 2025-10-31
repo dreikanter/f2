@@ -70,7 +70,6 @@ group :development do
   gem "web-console"
 end
 
-gem "amazing_print"
 gem "dotenv"
 gem "faraday"
 gem "faraday-follow_redirects"
