@@ -38,8 +38,7 @@ class SortPresenterTest < ActiveSupport::TestCase
       columns: columns,
       default_column: :name,
       default_direction: :asc,
-      path_builder: ->(params) { "/items?#{params.to_query}" },
-      base_params: { extra: controller.params[:extra] }
+      path_builder: ->(params) { "/items?#{params.merge(extra: controller.params[:extra]).to_query}" }
     )
 
     active_option = presenter.options.detect(&:active?)

@@ -7,14 +7,14 @@ module Sortable
 
   private
 
-  def sort_presenter(extra_base_params = {})
+  def sort_presenter(extra_query_params = {})
+    extra_query_params = extra_query_params.to_h
     SortPresenter.new(
       controller: self,
       columns: sortable_presenter_columns,
       default_column: resolved_sortable_default_column,
       default_direction: resolved_sortable_default_direction,
-      path_builder: ->(params) { sortable_path(params) },
-      base_params: merged_sortable_base_params(extra_base_params)
+      path_builder: ->(sortable_params) { sortable_path(sortable_params.merge(extra_query_params)) }
     )
   end
 
@@ -56,10 +56,6 @@ module Sortable
     :desc
   end
 
-  def sortable_base_params
-    {}
-  end
-
   def sortable_path(_params)
     raise NotImplementedError, "Include Sortable and override #sortable_path(params) in the controller"
   end
@@ -92,10 +88,6 @@ module Sortable
 
   def resolved_sortable_default_direction
     @resolved_sortable_default_direction ||= sortable_default_direction.to_s
-  end
-
-  def merged_sortable_base_params(extra_base_params)
-    sortable_base_params.merge(extra_base_params)
   end
 
   def toggle_sort_direction(direction)

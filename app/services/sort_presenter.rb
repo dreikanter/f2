@@ -5,13 +5,12 @@ class SortPresenter
     end
   end
 
-  def initialize(controller:, columns:, default_column:, default_direction:, path_builder:, base_params: {})
+  def initialize(controller:, columns:, default_column:, default_direction:, path_builder:)
     @controller = controller
     @columns = columns
     @default_column = default_column.to_s
     @default_direction = default_direction.to_s
     @path_builder = path_builder
-    @base_params = base_params.symbolize_keys
   end
 
   def options
@@ -35,7 +34,7 @@ class SortPresenter
 
   private
 
-  attr_reader :controller, :columns, :default_column, :default_direction, :path_builder, :base_params
+  attr_reader :controller, :columns, :default_column, :default_direction, :path_builder
 
   delegate :params, to: :controller
 
@@ -66,7 +65,8 @@ class SortPresenter
   end
 
   def build_path(column, direction)
-    path_builder.call(base_params.merge(sort: column, direction: direction))
+    sortable_params = { sort: column, direction: direction }
+    path_builder.call(sortable_params)
   end
 
   def toggle_direction(direction)

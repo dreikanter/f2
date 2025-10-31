@@ -22,12 +22,8 @@ class SortableTest < ActionDispatch::IntegrationTest
       :asc
     end
 
-    def sortable_base_params
-      { filter: "all" }
-    end
-
-    def sortable_path(params)
-      "/items?#{params.to_query}"
+    def sortable_path(sort_params)
+      "/items?#{sort_params.merge(filter: "all").to_query}"
     end
   end
 

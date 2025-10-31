@@ -130,8 +130,8 @@ class FeedsController < ApplicationController
     :asc
   end
 
-  def sortable_path(params)
-    feeds_path(params)
+  def sortable_path(sort_params)
+    feeds_path(sort_params)
   end
 
   def recent_posts(feed)

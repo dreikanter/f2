@@ -77,12 +77,8 @@ class PostsController < ApplicationController
     :desc
   end
 
-  def sortable_base_params
-    params.permit(:feed_id).to_h.symbolize_keys
-  end
-
-  def sortable_path(params)
-    posts_path(params)
+  def sortable_path(sort_params)
+    posts_path(sort_params.merge(params.permit(:feed_id).to_h))
   end
 
   def pagination_scope
