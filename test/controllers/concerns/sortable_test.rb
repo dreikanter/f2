@@ -124,16 +124,6 @@ class SortableTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "sort_presenter merges extra base params" do
-    presenter = @controller.send(:sort_presenter, { custom: "value" })
-    option = presenter.options.first
-
-    assert_equal(
-      { "filter" => "all", "custom" => "value", "sort" => "name", "direction" => "desc" },
-      query_params(option.path)
-    )
-  end
-
   private
 
   def query_params(path)

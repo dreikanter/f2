@@ -7,14 +7,13 @@ module Sortable
 
   private
 
-  def sort_presenter(extra_query_params = {})
-    extra_query_params = extra_query_params.to_h
+  def sort_presenter
     SortPresenter.new(
       controller: self,
       columns: sortable_presenter_columns,
       default_column: resolved_sortable_default_column,
       default_direction: resolved_sortable_default_direction,
-      path_builder: ->(sortable_params) { sortable_path(sortable_params.merge(extra_query_params)) }
+      path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )
   end
 
