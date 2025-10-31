@@ -101,13 +101,13 @@
     <div class="space-y-4 text-slate-600">
       <% if @feed.target_group.present? %>
         <div class="space-y-1">
-          <p><%= link_to "Purge feed content...", feed_purge_path(@feed), class: "ff-link" %></p>
+          <p><%= link_to "Purge feed content...", feed_purge_path(@feed), class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
           <p class="ff-text text-slate-600">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>.</p>
         </div>
       <% end %>
       <div class="space-y-1">
         <%# TBD: Add a confirmation page here %>
-        <p><%= link_to "Delete feed...", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed? This cannot be undone." }, class: "ff-link" %></p>
+        <p><%= link_to "Delete feed...", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed? This cannot be undone." }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
         <p class="ff-text text-slate-600">Disable and permanently remove the feed configuration from Feeder.</p>
       </div>
     </div>
