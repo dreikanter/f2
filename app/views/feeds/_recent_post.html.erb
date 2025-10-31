@@ -5,8 +5,7 @@
       <%= post_status_icon(post.status) %>
     </span>
     <div class="flex flex-1 flex-col gap-1">
-      <%= link_to post_path(post),
-                  class: class_names("inline-flex items-start text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") do %>
+      <%= link_to post_path(post), class: class_names("inline-flex items-start text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") do %>
         <%= post_content_preview(post.content, 80) %>
       <% end %>
       <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
