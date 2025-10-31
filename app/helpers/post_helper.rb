@@ -1,5 +1,5 @@
 module PostHelper
-  def post_metadata_segments(post, show_feed: false)
+  def post_metadata_segments(post, show_feed: false, withdraw_allowed: false)
     segments = []
 
     if show_feed && post.feed.present?
@@ -25,7 +25,7 @@ module PostHelper
       segments << link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
     end
 
-    if policy(post).destroy?
+    if withdraw_allowed
       segments << link_to("Withdraw",
                           post_path(post),
                           data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
