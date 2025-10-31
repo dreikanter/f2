@@ -28,9 +28,13 @@ class FeedSortPresenter
   end
 
   def current_direction
-    @current_direction ||= begin
-      value = params[:direction]
-      %w[asc desc].include?(value) ? value : default_sort_direction
+    value = params[:direction]
+
+    case value
+    when "asc", "desc"
+      value
+    else
+      default_sort_direction
     end
   end
 
