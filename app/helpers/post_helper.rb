@@ -20,9 +20,14 @@ module PostHelper
       segments << link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "ff-link")
     end
 
-    if post.freefeed_post_id.present? && post.feed.access_token.present? && post.feed.target_group.present?
-      freefeed_url = "#{post.feed.access_token.host}/#{post.feed.target_group}/#{post.freefeed_post_id}"
-      segments << link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
+    if post.freefeed_post_id.present?
+      feed = post.feed
+      access_token = feed&.access_token
+
+      if feed.present? && access_token.present? && feed.target_group.present?
+        freefeed_url = "#{access_token.host}/#{feed.target_group}/#{post.freefeed_post_id}"
+        segments << link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
+      end
     end
 
     if withdraw_allowed
