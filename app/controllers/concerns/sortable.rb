@@ -10,7 +10,7 @@ module Sortable
   def sort_presenter
     SortPresenter.new(
       controller: self,
-      fields: sortable_presenter_fields,
+      fields: sortable_field_definitions,
       path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )
   end
@@ -66,10 +66,6 @@ module Sortable
 
   def sortable_fields_map
     @sortable_fields_map ||= sortable_field_definitions_map.transform_values { |definition| definition.fetch(:order_by) }
-  end
-
-  def sortable_presenter_fields
-    @sortable_presenter_fields ||= sortable_field_definitions
   end
 
   def default_direction_for(field)
