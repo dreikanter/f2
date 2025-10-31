@@ -98,8 +98,19 @@ class FeedHelperTest < ActionView::TestCase
 
   test "#feed_status_summary should list missing parts" do
     feed = build(:feed, :without_access_token)
-    expected = "Add active access token and target group to finish setup and enable this feed."
+    expected = "This feed is currently disabled. Add active access token and target group to finish setup."
 
     assert_equal expected, feed_status_summary(feed)
+  end
+
+  test "#feed_status_summary should handle disabled feed without missing parts" do
+    feed = build(:feed, :disabled)
+    feed.define_singleton_method(:can_be_enabled?) { false }
+
+    expected = "This feed is currently disabled."
+
+    self.stub(:feed_missing_enablement_parts, ->(_feed) { [] }) do
+      assert_equal expected, feed_status_summary(feed)
+    end
   end
 end
