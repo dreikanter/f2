@@ -1,16 +1,5 @@
 <% content_for :title, "Feeds" %>
 
-<% sort_options = {
-  "Name" => "name",
-  "Status" => "status",
-  "Target Group" => "target_group",
-  "Last Refresh" => "last_refresh",
-  "Recent Post" => "recent_post"
-} %>
-<% current_sort = sort_options.values.include?(params[:sort]) ? params[:sort] : controller.default_sort_column %>
-<% current_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : controller.default_sort_direction %>
-<% current_sort_label = sort_options.key(current_sort) || "Name" %>
-<% current_direction_hint = current_direction == "asc" ? "A-Z" : "Z-A" %>
 <% sort_menu_id = "feed-sort-menu" %>
 
 <div class="space-y-8">
@@ -33,7 +22,15 @@
             aria-haspopup="true"
             aria-expanded="false">
             <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
-            <span><%= current_sort_label %> (<%= current_direction_hint %>)</span>
+            <span class="flex items-center gap-2">
+              <span><%= @sort_presenter.current_label %></span>
+              <% if (icon_name = @sort_presenter.icon_name_for_button).present? %>
+                <span class="flex items-center text-slate-500">
+                  <%= icon(icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                  <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+                </span>
+              <% end %>
+            </span>
             <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
           </button>
           <div
@@ -41,29 +38,19 @@
             class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg"
             role="menu"
             aria-labelledby="<%= "#{sort_menu_id}-button" %>">
-            <ul class="py-1 text-sm text-slate-600">
-              <% sort_options.each do |label, column| %>
-                <% active = current_sort == column %>
-                <% next_direction = if active
-                  current_direction == "asc" ? "desc" : "asc"
-                else
-                  controller.default_sort_direction
-                end %>
-                <% direction_hint = active ? current_direction_hint : nil %>
-                <% icon_name = if active
-                  current_direction == "asc" ? "arrow-up-short" : "arrow-down-short"
-                end %>
+            <ul class="py-1 text-base text-slate-600">
+              <% @sort_presenter.options.each do |option| %>
                 <li>
-                  <%= link_to feeds_path(sort: column, direction: next_direction),
+                  <%= link_to option.path,
                               class: class_names(
                                 "flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none",
-                                "font-semibold text-slate-900": active
+                                "font-semibold text-slate-900": option.active?
                               ) do %>
-                    <span><%= label %></span>
-                    <% if direction_hint %>
-                      <span class="flex items-center gap-1 text-xs uppercase tracking-wide text-slate-500">
-                        <%= direction_hint %>
-                        <%= icon(icon_name, css_class: "text-slate-400", aria_hidden: true) if icon_name %>
+                    <span><%= option.label %></span>
+                    <% if option.icon_name.present? %>
+                      <span class="flex items-center text-slate-500">
+                        <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                        <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
                       </span>
                     <% end %>
                   <% end %>
@@ -73,9 +60,7 @@
           </div>
         </div>
       <% end %>
-      <%= link_to "New Feed",
-                  new_feed_path,
-                  class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
+      <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
     </div>
   </div>
 
@@ -87,9 +72,7 @@
             <%= feed_status_icon(feed) %>
           </span>
           <div class="flex flex-1 flex-col gap-1">
-            <%= link_to feed.name,
-                        feed_path(feed),
-                        class: class_names("inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") %>
+            <%= link_to feed.name, feed_path(feed), class: class_names("inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") %>
             <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
               <span>Target: <%= feed.target_group.presence || "None" %></span>
               <span aria-hidden="true" class="text-slate-300">&bull;</span>
@@ -111,9 +94,7 @@
       <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
       <p class="mt-2 text-sm text-slate-600">Create your first feed to start refreshing posts and sharing them with your audience.</p>
       <div class="mt-6">
-        <%= link_to "Create your first feed",
-                    new_feed_path,
-                    class: class_names("ff-button", "ff-button--compact") %>
+        <%= link_to "Create your first feed", new_feed_path, class: class_names("ff-button", "ff-button--compact") %>
       </div>
     </div>
   <% end %>
