@@ -1,4 +1,5 @@
 module PostHelper
+  # TBD: Refactor after metadata/list item description pattern stabilizes
   def post_metadata_segments(post, show_feed: false, withdraw_allowed: false)
     [
       post_metadata_feed_link_segment(post, show_feed),

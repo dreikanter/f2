@@ -51,6 +51,7 @@ module ApplicationHelper
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 
+  # TBD: Drop this after no references
   def sortable_header(column:, title:, path_params: {})
     default_sort_column = controller.respond_to?(:sortable_default_column, true) ? controller.send(:sortable_default_column).to_s : nil
 
