@@ -1,0 +1,13 @@
+<div class="space-y-3" id="flash-messages">
+  <% if notice %>
+    <div class="ff-alert ff-alert--info alert" role="alert">
+      <span><%= sanitize(notice) %></span>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="ff-alert ff-alert--error alert" role="alert">
+      <span><%= sanitize(alert) %></span>
+    </div>
+  <% end %>
+</div>
