@@ -14,7 +14,7 @@ class StatusStatsComponentTest < ViewComponent::TestCase
       )
     )
 
-    item = result.css('[data-key="status-stats.total_feeds"]').first
+    item = result.css('[data-key="stats.total_feeds"]').first
     assert_not_nil item
     assert_equal "Total feeds", item.at_css(".ff-list-group__title").text
     assert_equal "3", item.at_css(".ff-list-group__trailing-text").text
@@ -32,21 +32,21 @@ class StatusStatsComponentTest < ViewComponent::TestCase
         )
       )
 
-      imported = result.css('[data-key="status-stats.total_imported_posts"]').first
+      imported = result.css('[data-key="stats.total_imported_posts"]').first
       assert_not_nil imported
-      assert_equal "5", result.css('[data-key="status-stats.total_imported_posts.value"]').first.text
+      assert_equal "5", result.css('[data-key="stats.total_imported_posts.value"]').first.text
 
-      published = result.css('[data-key="status-stats.total_published_posts"]').first
+      published = result.css('[data-key="stats.total_published_posts"]').first
       assert_not_nil published
-      assert_equal "4", result.css('[data-key="status-stats.total_published_posts.value"]').first.text
+      assert_equal "4", result.css('[data-key="stats.total_published_posts.value"]').first.text
 
-      recent = result.css('[data-key="status-stats.most_recent_post_publication"]').first
+      recent = result.css('[data-key="stats.most_recent_post_publication"]').first
       assert_not_nil recent
-      assert_match(/ago/, result.css('[data-key="status-stats.most_recent_post_publication.value"]').first.text)
+      assert_match(/ago/, result.css('[data-key="stats.most_recent_post_publication.value"]').first.text)
 
-      average = result.css('[data-key="status-stats.average_posts_per_day"]').first
+      average = result.css('[data-key="stats.average_posts_per_day"]').first
       assert_not_nil average
-      assert_equal "1.5", result.css('[data-key="status-stats.average_posts_per_day.value"]').first.text
+      assert_equal "1.5", result.css('[data-key="stats.average_posts_per_day.value"]').first.text
     end
   end
 end

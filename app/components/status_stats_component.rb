@@ -45,6 +45,6 @@ class StatusStatsComponent < ViewComponent::Base
   end
 
   def stat_item(key_suffix, label, value)
-    ListGroupComponent::StatItemComponent.new(label: label, value: value, key: "status-stats.#{key_suffix}")
+    ListGroupComponent::StatItemComponent.new(label: label, value: value, key: "stats.#{key_suffix}")
   end
 end
