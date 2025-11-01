@@ -44,8 +44,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url
     assert_response :success
-    assert_select "td", text: /User's post/
-    assert_select "td", { text: /Other user's post/, count: 0 }
+    assert_select "li", text: /User's post/
+    assert_no_match(/Other user's post/, response.body)
   end
 
   test "should paginate posts in index" do
@@ -54,7 +54,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url
     assert_response :success
-    assert_select ".pagination"
+    assert_select "nav[aria-label='Posts pagination']"
   end
 
   test "should redirect to login when accessing show without authentication" do
@@ -302,7 +302,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url(sort: "feed", direction: "asc", per_page: 2)
     assert_response :success
-    assert_select ".pagination a[href*='sort=feed']"
-    assert_select ".pagination a[href*='direction=asc']"
+    assert_select "nav[aria-label='Posts pagination'] a[href*='sort=feed']"
+    assert_select "nav[aria-label='Posts pagination'] a[href*='direction=asc']"
   end
 end

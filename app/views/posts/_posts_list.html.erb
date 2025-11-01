@@ -1,0 +1,10 @@
+<%# locals: (posts:, show_feed: false, empty_text: "No posts yet.") %>
+<% if posts.any? %>
+  <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <% posts.each do |post| %>
+      <%= render "posts/post_list_item", post: post, show_feed: show_feed, withdraw_allowed: policy(post).destroy? %>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="ff-text text-slate-500"><%= empty_text %></p>
+<% end %>

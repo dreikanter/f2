@@ -85,15 +85,7 @@
       <% end %>
     </div>
 
-    <% if @recent_posts.any? %>
-      <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <% @recent_posts.each do |post| %>
-          <%= render "feeds/recent_post", post: post %>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="ff-text text-slate-500">No posts imported yet from this feed.</p>
-    <% end %>
+    <%= render "posts/posts_list", posts: @recent_posts, show_feed: false, empty_text: "No posts imported yet from this feed." %>
   </section>
 
   <section class="space-y-3">

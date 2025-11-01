@@ -51,22 +51,6 @@ module ApplicationHelper
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 
-  def sortable_header(column:, title:, path_params: {})
-    current_sort = params[:sort] || controller.default_sort_column
-    current_direction = params[:direction] || controller.default_sort_direction
-    direction = current_sort == column ? current_direction : nil
-
-    next_direction = if current_sort == column
-      current_direction == "asc" ? "desc" : "asc"
-    else
-      controller.default_sort_direction
-    end
-
-    link_to title, path_params.merge(sort: column, direction: next_direction),
-            class: class_names("sortable", "sorted-#{direction}": direction.present?),
-            data: { turbo_action: "replace" }
-  end
-
   def navbar_items
     return [] unless Current.user
 

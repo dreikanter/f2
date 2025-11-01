@@ -2,16 +2,39 @@ class PostsController < ApplicationController
   include Pagination
   include Sortable
 
-  sortable_by({
-    "feed" => "LOWER(feeds.name)",
-    "published" => "posts.published_at",
-    "status" => "posts.status",
-    "attachments" => "COALESCE(array_length(posts.attachment_urls, 1), 0)",
-    "comments" => "COALESCE(array_length(posts.comments, 1), 0)"
-  }, default_column: :published, default_direction: :desc)
+  layout "tailwind"
+
+  SORTABLE_FIELDS = {
+    published: {
+      title: "Published",
+      order_by: "posts.published_at",
+      direction: :desc
+    },
+    feed: {
+      title: "Feed",
+      order_by: "LOWER(feeds.name)",
+      direction: :asc
+    },
+    status: {
+      title: "Status",
+      order_by: "posts.status",
+      direction: :asc
+    },
+    attachments: {
+      title: "Attachments",
+      order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)",
+      direction: :desc
+    },
+    comments: {
+      title: "Comments",
+      order_by: "COALESCE(array_length(posts.comments, 1), 0)",
+      direction: :desc
+    }
+  }.freeze
 
   def index
     authorize Post
+    @sortable_presenter = sortable_presenter
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end
@@ -43,8 +66,16 @@ class PostsController < ApplicationController
 
   private
 
+  def sortable_fields
+    SORTABLE_FIELDS
+  end
+
+  def sortable_path(sort_params)
+    posts_path(sort_params.merge(params.permit(:feed_id).to_h))
+  end
+
   def pagination_scope
-    scope = policy_scope(Post).preload(feed: :access_token).order(sort_order)
+    scope = policy_scope(Post).preload(feed: :access_token).order(sortable_order)
     scope = scope.where(feed_id: params[:feed_id]) if params[:feed_id].present?
     scope
   end

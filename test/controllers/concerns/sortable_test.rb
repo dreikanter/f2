@@ -1,102 +1,166 @@
 require "test_helper"
 
-class SortableTest < ActionDispatch::IntegrationTest
-  class TestController < ApplicationController
+module SortableTestControllers
+  class DemoController < ActionController::Base
     include Sortable
 
-    sortable_by({
-      "name" => "LOWER(items.name)",
-      "created_at" => "items.created_at"
-    }, default_column: :name, default_direction: :asc)
-
     def index
-      render plain: "OK"
+      @presenter = sortable_presenter
+      render json: presenter_payload(@presenter)
+    end
+
+    private
+
+    def sortable_fields
+      {
+        name: {
+          title: "Name",
+          order_by: "LOWER(items.name)",
+          direction: :asc
+        },
+        created_at: {
+          title: "Created",
+          order_by: "items.created_at",
+          direction: :desc
+        }
+      }
+    end
+
+    def sortable_path(sort_params)
+      query = sort_params.to_query
+      "/sortable_test_demo_index#{query.present? ? "?#{query}" : ""}"
+    end
+
+    def presenter_payload(presenter)
+      {
+        current_title: presenter.current_title,
+        current_direction: presenter.current_direction,
+        options: presenter.options.map do |option|
+          {
+            field: option.field,
+            title: option.title,
+            active: option.active?,
+            active_direction: option.active_direction
+          }
+        end
+      }
     end
   end
 
-  setup do
-    @controller = TestController.new
-    @controller.params = ActionController::Parameters.new
+  class MissingOrderByController < ActionController::Base
+    include Sortable
+
+    def index
+      sortable_order
+      head :ok
+    end
+
+    private
+
+    def sortable_fields
+      {
+        name: {
+          title: "Name",
+          direction: :asc
+        }
+      }
+    end
+
+    def sortable_path(sort_params)
+      query = sort_params.to_query
+      "/sortable_test_missing_order_by#{query.present? ? "?#{query}" : ""}"
+    end
+  end
+end
+
+class SortableTest < ActionDispatch::IntegrationTest
+  test "#sortable_presenter should use defaults when no params provided" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index"
+
+      response_data = response.parsed_body
+      assert_equal "Name", response_data["current_title"]
+      assert_equal "asc", response_data["current_direction"]
+
+      option = response_data["options"].detect { |item| item["active"] }
+      assert_equal "name", option["field"]
+      assert_equal "asc", option["active_direction"]
+    end
   end
 
-  test "next_sort_direction returns desc when sorting by same column ascending" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "asc"
+  test "#sortable_presenter should respect sort params" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "desc" }
 
-    assert_equal "desc", @controller.send(:next_sort_direction, "name")
+      response_data = response.parsed_body
+
+      assert_equal "Created", response_data["current_title"]
+      assert_equal "desc", response_data["current_direction"]
+
+      active_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "created_at", active_option["field"]
+      assert_equal "desc", active_option["active_direction"]
+
+      name_option = response_data["options"].detect { |item| item["field"] == "name" }
+
+      assert_not name_option["active"]
+    end
   end
 
-  test "next_sort_direction returns asc when sorting by same column descending" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
+  test "#sortable_presenter should fall back on invalid direction" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "sideways" }
 
-    assert_equal "asc", @controller.send(:next_sort_direction, "name")
+      response_data = response.parsed_body
+
+      assert_equal "Created", response_data["current_title"]
+      assert_equal "desc", response_data["current_direction"]
+
+      active_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "created_at", active_option["field"]
+      assert_equal "desc", active_option["active_direction"]
+    end
   end
 
-  test "next_sort_direction returns default direction when sorting by different column" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
+  test "#sortable_presenter should ignore unknown field names" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index", params: { sort: "unknown", direction: "asc" }
 
-    assert_equal "asc", @controller.send(:next_sort_direction, "created_at")
+      response_data = response.parsed_body
+
+      assert_equal "Name", response_data["current_title"]
+      assert_equal "asc", response_data["current_direction"]
+
+      default_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "name", default_option["field"]
+      assert_equal "asc", default_option["active_direction"]
+    end
   end
 
-  test "next_sort_direction toggles direction when no sort params but checking default column" do
-    # When no params, sort_column returns default "name" and sort_direction returns default "asc"
-    # So next_sort_direction("name") compares "name" == "name" and toggles "asc" to "desc"
-    assert_equal "desc", @controller.send(:next_sort_direction, "name")
+  test "#sortable_order should raise when field is missing order_by configuration" do
+    error = assert_raises ArgumentError do
+      with_sortable_routes do
+        get "/sortable_test_missing_order_by"
+      end
+    end
+
+    assert_match(/name/, error.message)
+    assert_match(/:order_by/, error.message)
   end
 
-  test "next_sort_direction returns default direction when no sort params and different column" do
-    # When no params, sort_column returns default "name"
-    # So next_sort_direction("created_at") compares "created_at" == "name" (false) and returns default "asc"
-    assert_equal "asc", @controller.send(:next_sort_direction, "created_at")
-  end
+  private
 
-  test "sort_column returns valid column from params" do
-    @controller.params[:sort] = "name"
+  def with_sortable_routes
+    with_routing do |set|
+      set.draw do
+        get "/sortable_test_demo_index", to: "sortable_test_controllers/demo#index"
+        get "/sortable_test_missing_order_by", to: "sortable_test_controllers/missing_order_by#index"
+      end
 
-    assert_equal "name", @controller.send(:sort_column)
-  end
-
-  test "sort_column returns default when invalid column in params" do
-    @controller.params[:sort] = "invalid_column"
-
-    assert_equal "name", @controller.send(:sort_column)
-  end
-
-  test "sort_column returns default when no params" do
-    assert_equal "name", @controller.send(:sort_column)
-  end
-
-  test "sort_direction returns valid direction from params" do
-    @controller.params[:direction] = "desc"
-
-    assert_equal "desc", @controller.send(:sort_direction)
-  end
-
-  test "sort_direction returns default when invalid direction in params" do
-    @controller.params[:direction] = "invalid"
-
-    assert_equal "asc", @controller.send(:sort_direction)
-  end
-
-  test "sort_direction returns default when no params" do
-    assert_equal "asc", @controller.send(:sort_direction)
-  end
-
-  test "sort_order returns Arel ascending node" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "asc"
-
-    order = @controller.send(:sort_order)
-    assert_instance_of Arel::Nodes::Ascending, order
-  end
-
-  test "sort_order returns Arel descending node" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
-
-    order = @controller.send(:sort_order)
-    assert_instance_of Arel::Nodes::Descending, order
+      yield
+    end
   end
 end

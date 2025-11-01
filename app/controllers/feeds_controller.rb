@@ -6,20 +6,40 @@ class FeedsController < ApplicationController
 
   MAX_RECENT_POSTS = 10
 
-  sortable_by({
-    "name" => "LOWER(feeds.name)",
-    "status" => "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
-    "target_group" => "LOWER(feeds.target_group)",
-    "last_refresh" => "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
-    "recent_post" => "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)"
-  }, default_column: :name, default_direction: :asc)
+  SORTABLE_FIELDS = {
+    name: {
+      title: "Name",
+      order_by: "LOWER(feeds.name)",
+      direction: :asc
+    },
+    status: {
+      title: "Status",
+      order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
+      direction: :asc
+    },
+    target_group: {
+      title: "Target Group",
+      order_by: "LOWER(feeds.target_group)",
+      direction: :asc
+    },
+    last_refresh: {
+      title: "Last Refresh",
+      order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
+      direction: :desc
+    },
+    recent_post: {
+      title: "Recent Post",
+      order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
+      direction: :desc
+    }
+  }.freeze
 
   def index
     authorize Feed
     scope = policy_scope(Feed)
     @active_feed_count = scope.enabled.count
     @inactive_feed_count = scope.disabled.count
-    @sort_presenter = FeedSortPresenter.new(controller: self)
+    @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
   end
 
@@ -98,6 +118,14 @@ class FeedsController < ApplicationController
 
   private
 
+  def sortable_fields
+    SORTABLE_FIELDS
+  end
+
+  def sortable_path(sort_params)
+    feeds_path(sort_params)
+  end
+
   def recent_posts(feed)
     feed
       .posts
@@ -107,7 +135,7 @@ class FeedsController < ApplicationController
   end
 
   def pagination_scope
-    policy_scope(Feed).order(sort_order)
+    policy_scope(Feed).order(sortable_order)
   end
 
   def form_template_name

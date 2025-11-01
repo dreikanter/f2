@@ -16,7 +16,8 @@ require "webmock/minitest"
 require "minitest/mock"
 require "super_diff"
 
-Dir[Rails.root.join("test/support/**/*.rb")].each { |f| require f }
+# Load support modules in deterministic order
+Dir[Rails.root.join("test/support/**/*.rb")].sort.each { |f| require f }
 
 module ActiveSupport
   class TestCase
