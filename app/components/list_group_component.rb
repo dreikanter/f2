@@ -1,26 +1,18 @@
 class ListGroupComponent < ViewComponent::Base
+  DEFAULT_LIST_CLASSES = "ff-list-group divide-y divide-slate-200"
+
   attr_reader :items
 
-  def initialize(list_classes: nil, divided: true)
-    @list_classes = list_classes
-    @divided = divided
+  def initialize
     @items = []
   end
 
   def call
     return if @items.empty?
 
-    content_tag :ul, class: list_classes do
+    content_tag :ul, class: DEFAULT_LIST_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
-  end
-
-  def list_classes
-    class_names(
-      "ff-list-group",
-      { "divide-y divide-slate-200": @divided },
-      @list_classes
-    )
   end
 
   def with_item(component)
@@ -29,12 +21,8 @@ class ListGroupComponent < ViewComponent::Base
   end
   alias_method :add_item, :with_item
 
-  def items
-    @items
-  end
-
   def items?
-    @items.any?
+    items.any?
   end
 
   def stat_item(label:, value:)
