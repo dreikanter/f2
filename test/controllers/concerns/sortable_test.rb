@@ -13,8 +13,16 @@ class SortableTest < ActionDispatch::IntegrationTest
 
     def sortable_fields
       {
-        name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc },
-        created_at: { title: "Created", order_by: "items.created_at", direction: :asc }
+        name: {
+          title: "Name",
+          order_by: "LOWER(items.name)",
+          direction: :asc
+        },
+        created_at: {
+          title: "Created",
+          order_by: "items.created_at",
+          direction: :asc
+        }
       }
     end
 
@@ -81,10 +89,14 @@ class SortableTest < ActionDispatch::IntegrationTest
     option = presenter.options.first
 
     assert_equal "Name", option.title
-    assert_equal(
-      { "filter" => "all", "sort" => "name", "direction" => "desc" },
-      query_params(option.path)
-    )
+
+    expected = {
+      "filter" => "all",
+      "sort" => "name",
+      "direction" => "desc"
+    }
+
+    assert_equal expected, query_params(option.path)
   end
 
   private
