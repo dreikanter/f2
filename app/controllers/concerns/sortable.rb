@@ -7,6 +7,10 @@ module Sortable
 
   private
 
+  # Builds the presenter that encapsulates available sort fields configuration
+  # and current options.
+  #
+  # @return [SortablePresenter]
   def sortable_presenter
     SortablePresenter.new(
       params: params,
@@ -15,6 +19,10 @@ module Sortable
     )
   end
 
+  # Resolves the requested sort field, falling back to the default when the
+  # param is missing or invalid.
+  #
+  # @return [String]
   def sortable_field
     field = params[:sort]
 
@@ -25,10 +33,17 @@ module Sortable
     end
   end
 
+  # The default sort field configured by the controller, which is the first one
+  # in the sortable_fields hash.
+  #
+  # @return [String]
   def sortable_default_field
     sortable_fields.keys.first.to_s
   end
 
+  # Resolves the sort direction, sanitising unexpected values.
+  #
+  # @return [String] either "asc" or "desc"
   def sortable_direction
     direction = params[:direction]
 
@@ -40,21 +55,38 @@ module Sortable
     end
   end
 
+  # The configured default direction for a specific field.
+  #
+  # @param field [String, Symbol]
+  # @return [String] either "asc" or "desc"
   def default_direction_for(field)
     config = sortable_fields[field.to_sym]
     config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
+  # The Arel expression representing the current order clause. Intended
+  # for use in the "index" action that outputs the ordered records.
+  #
+  # @return [Arel::Nodes::Ordering]
   def sortable_order
     field_sql = sortable_fields.dig(sortable_field.to_sym, :order_by)
     arel_field = Arel.sql(field_sql)
     sortable_direction == "asc" ? arel_field.asc : arel_field.desc
   end
 
+  # Returns the configuration hash describing available sort fields.
+  # Controllers including this concern must override this method.
+  #
+  # @return [Hash{Symbol=>Hash}]
   def sortable_fields
     raise NotImplementedError, "Include Sortable and override #sortable_fields in the controller"
   end
 
+  # Builds the path for a specific sort configuration.
+  # Controllers including this concern must override this method.
+  #
+  # @param params [Hash] additional query params to apply to the generated path
+  # @return [String]
   def sortable_path(_params)
     raise NotImplementedError, "Include Sortable and override #sortable_path(params) in the controller"
   end
