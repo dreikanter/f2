@@ -81,6 +81,6 @@ class PostsController < ApplicationController
   end
 
   def load_post
-    policy_scope(Post).find(params[:id])
+    policy_scope(Post).preload(feed: :access_token).find(params[:id])
   end
 end
