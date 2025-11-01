@@ -82,7 +82,7 @@
       <% end %>
     </div>
 
-    <%= render "posts/posts_list", posts: @recent_posts, show_feed: false, empty_text: "No posts imported yet from this feed." %>
+    <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, empty_text: "No posts imported yet from this feed.") %>
   </section>
 
   <section class="space-y-3">

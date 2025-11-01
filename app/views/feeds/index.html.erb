@@ -61,20 +61,7 @@
   </div>
 
   <% if @feeds.any? %>
-    <% component = ListGroupComponent.new %>
-    <% @feeds.each do |feed| %>
-      <% component.with_item(ListGroupComponent::FeedItemComponent.new(
-        icon: feed_status_icon(feed),
-        title: feed.name,
-        title_url: feed_path(feed),
-        metadata_segments: [
-          "Target: #{feed.target_group.presence || 'None'}",
-          safe_join(["Last refresh:", feed.last_refreshed_at ? short_time_ago_tag(feed.last_refreshed_at) : "Never"], " "),
-          safe_join(["Recent post:", feed.most_recent_post_date ? short_time_ago_tag(feed.most_recent_post_date) : "None"], " ")
-        ]
-      )) %>
-    <% end %>
-    <%= render(component) %>
+    <%= render FeedsListComponent.new(feeds: @feeds) %>
 
     <%= pagination_for @feeds,
                        collection_name: "feeds",
