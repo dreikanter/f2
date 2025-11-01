@@ -27,7 +27,6 @@
   <%= render PostDetailsComponent.new(post: @post) %>
 
   <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-    <h2 class="text-base font-semibold text-slate-900 mb-3">Content</h2>
     <div class="text-slate-900">
       <%= simple_format(@post.content) %>
     </div>
