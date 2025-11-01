@@ -1,5 +1,5 @@
 class ListGroupComponent::StatItemComponent < ViewComponent::Base
-  DEFAULT_ITEM_CLASS = "flex items-start gap-4 p-4"
+  DEFAULT_ITEM_CLASS = "flex items-baseline justify-between gap-4 p-4"
   LABEL_CLASSES = "text-base font-semibold text-slate-900"
   VALUE_CLASSES = "text-base font-semibold text-slate-900"
 

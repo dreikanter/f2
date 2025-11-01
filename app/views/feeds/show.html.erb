@@ -50,31 +50,7 @@
 
   <section class="space-y-4">
     <h2 class="ff-h2">Stats</h2>
-    <div class="ff-stats">
-      <div class="ff-stats__row">
-        <span class="ff-stats__label">Last refresh:</span>
-        <span class="ff-stats__value">
-          <%= @feed.last_refreshed_at ? time_ago_tag(@feed.last_refreshed_at) : content_tag(:span, "Never", class: "text-slate-500") %>
-        </span>
-      </div>
-
-      <div class="ff-stats__row">
-        <span class="ff-stats__label">Most recent post:</span>
-        <span class="ff-stats__value">
-          <%= @feed.most_recent_post_date ? time_ago_tag(@feed.most_recent_post_date) : content_tag(:span, "No posts imported", class: "text-slate-500") %>
-        </span>
-      </div>
-
-      <div class="ff-stats__row">
-        <span class="ff-stats__label">Imported posts:</span>
-        <span class="ff-stats__value"><%= number_with_delimiter(@feed.posts.count) %></span>
-      </div>
-
-      <div class="ff-stats__row">
-        <span class="ff-stats__label">Published posts:</span>
-        <span class="ff-stats__value"><%= number_with_delimiter(@feed.posts.published.count) %></span>
-      </div>
-    </div>
+    <%= render FeedStatsComponent.new(feed: @feed) %>
   </section>
 
   <section class="space-y-4">
@@ -85,7 +61,7 @@
       <% end %>
     </div>
 
-    <%= render "posts/posts_list", posts: @recent_posts, show_feed: false, empty_text: "No posts imported yet from this feed." %>
+    <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, empty_text: "No posts imported yet from this feed.") %>
   </section>
 
   <section class="space-y-3">

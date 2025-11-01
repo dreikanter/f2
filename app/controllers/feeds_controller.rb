@@ -130,12 +130,13 @@ class FeedsController < ApplicationController
     feed
       .posts
       .includes(:feed_entry)
+      .preload(feed: :access_token)
       .order(published_at: :desc)
       .limit(MAX_RECENT_POSTS)
   end
 
   def pagination_scope
-    policy_scope(Feed).order(sortable_order)
+    policy_scope(Feed).includes(:feed_entries, :posts).order(sortable_order)
   end
 
   def form_template_name

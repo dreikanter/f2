@@ -58,10 +58,10 @@
     <% end %>
   </div>
 
-  <%= render "posts/posts_list",
+  <%= render PostsListComponent.new(
              posts: @posts,
              show_feed: @feed.blank?,
-             empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet." %>
+             empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
 
   <%= pagination_for @posts,
                      collection_name: "posts",

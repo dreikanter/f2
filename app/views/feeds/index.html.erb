@@ -61,25 +61,7 @@
   </div>
 
   <% if @feeds.any? %>
-    <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <% @feeds.each do |feed| %>
-        <li class="flex items-baseline gap-3 p-4">
-          <span class="inline-flex shrink-0 text-slate-500">
-            <%= feed_status_icon(feed) %>
-          </span>
-          <div class="flex flex-1 flex-col gap-1">
-            <%= link_to feed.name, feed_path(feed), class: class_names("inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700", "ff-focus-ring") %>
-            <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
-              <span>Target: <%= feed.target_group.presence || "None" %></span>
-              <span aria-hidden="true" class="text-slate-300">&bull;</span>
-              <span><%= safe_join(["Last refresh:", feed.last_refreshed_at ? short_time_ago_tag(feed.last_refreshed_at) : "Never"], " ") %></span>
-              <span aria-hidden="true" class="text-slate-300">&bull;</span>
-              <span><%= safe_join(["Recent post:", feed.most_recent_post_date ? short_time_ago_tag(feed.most_recent_post_date) : "None"], " ") %></span>
-            </div>
-          </div>
-        </li>
-      <% end %>
-    </ul>
+    <%= render FeedsListComponent.new(feeds: @feeds) %>
 
     <%= pagination_for @feeds,
                        collection_name: "feeds",
