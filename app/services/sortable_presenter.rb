@@ -56,10 +56,6 @@ class SortablePresenter
     end
   end
 
-  def icon_name_for_button
-    icon_for(current_direction)
-  end
-
   private
 
   attr_reader :params, :fields, :path_builder
