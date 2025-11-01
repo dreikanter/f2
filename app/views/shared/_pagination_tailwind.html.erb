@@ -6,40 +6,40 @@
 
     <ul class="inline-flex items-center -space-x-px rounded-lg border border-slate-200 bg-white text-sm shadow-sm">
       <% if pagination_current_page > 1 %>
-        <li>
+        <li class="relative focus-within:z-10">
           <%= link_to "Previous",
                       pagination_path.call(pagination_current_page - 1),
-                      class: "flex h-9 items-center rounded-l-lg px-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:z-10 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
+                      class: "flex h-9 items-center rounded-l-lg px-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
         </li>
       <% else %>
-        <li>
+        <li class="relative">
           <span class="flex h-9 items-center rounded-l-lg px-3 font-medium text-slate-300">Previous</span>
         </li>
       <% end %>
 
       <% each_page(pagination_current_page, pagination_total_pages) do |page| %>
         <% if page == pagination_current_page %>
-          <li>
+          <li class="relative">
             <span class="flex h-9 items-center border-x border-slate-200 bg-slate-100 px-3 font-semibold text-slate-900"><%= page %></span>
           </li>
         <% else %>
-          <li>
+          <li class="relative focus-within:z-10">
             <%= link_to page,
                         pagination_path.call(page),
-                        class: "flex h-9 items-center border-x border-slate-200 bg-white px-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:z-10 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2",
+                        class: "flex h-9 items-center border-x border-slate-200 bg-white px-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2",
                         aria: { label: "Go to page #{page}" } %>
           </li>
         <% end %>
       <% end %>
 
       <% if pagination_current_page < pagination_total_pages %>
-        <li>
+        <li class="relative focus-within:z-10">
           <%= link_to "Next",
                       pagination_path.call(pagination_current_page + 1),
-                      class: "flex h-9 items-center rounded-r-lg px-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:z-10 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
+                      class: "flex h-9 items-center rounded-r-lg px-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2" %>
         </li>
       <% else %>
-        <li>
+        <li class="relative">
           <span class="flex h-9 items-center rounded-r-lg px-3 font-medium text-slate-300">Next</span>
         </li>
       <% end %>
