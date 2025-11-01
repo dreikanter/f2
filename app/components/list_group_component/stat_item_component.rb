@@ -1,5 +1,7 @@
 class ListGroupComponent::StatItemComponent < ViewComponent::Base
-  def initialize(label:, value:, padding_class:)
+  DEFAULT_PADDING_CLASS = "p-4"
+
+  def initialize(label:, value:, padding_class: DEFAULT_PADDING_CLASS)
     @label = label
     @value = value
     @padding_class = padding_class

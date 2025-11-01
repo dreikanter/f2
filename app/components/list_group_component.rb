@@ -1,17 +1,8 @@
 class ListGroupComponent < ViewComponent::Base
-  PADDING_CLASSES = {
-    sm: "px-3 py-3",
-    md: "p-4",
-    lg: "px-5 py-5"
-  }.freeze
+  attr_reader :items
 
-  DEFAULT_PADDING = :md
-
-  attr_reader :padding
-
-  def initialize(list_classes: nil, padding: DEFAULT_PADDING, divided: true)
+  def initialize(list_classes: nil, divided: true)
     @list_classes = list_classes
-    @padding = padding
     @divided = divided
     @items = []
   end
@@ -32,14 +23,6 @@ class ListGroupComponent < ViewComponent::Base
     )
   end
 
-  def item_padding_class
-    PADDING_CLASSES.fetch(padding.to_sym, PADDING_CLASSES[DEFAULT_PADDING])
-  end
-
-  def item_classes
-    class_names("ff-list-group__item", item_padding_class)
-  end
-
   def with_item(component)
     @items << component
     component
@@ -55,6 +38,6 @@ class ListGroupComponent < ViewComponent::Base
   end
 
   def stat_item(label:, value:)
-    with_item StatItemComponent.new(label: label, value: value, padding_class: item_padding_class)
+    with_item StatItemComponent.new(label: label, value: value)
   end
 end

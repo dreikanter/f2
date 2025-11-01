@@ -14,7 +14,7 @@ class ListGroupComponentTest < ViewComponent::TestCase
 
   test "#render should allow custom body and trailing slots" do
     component = ListGroupComponent.new
-    component.with_item StubItemComponent.new(body_text: "Custom body", value: "Trailing slot", padding_class: component.item_padding_class)
+    component.with_item StubItemComponent.new(body_text: "Custom body", value: "Trailing slot", padding_class: "p-4")
     result = render_inline(component)
 
     assert_includes result.css(".ff-list-group__body").map { |node| node.text.strip }, "Custom body"
