@@ -1,12 +1,8 @@
 require "test_helper"
 
 class FeedsControllerSortableTest < ActiveSupport::TestCase
-  def controller
-    @controller ||= FeedsController.new
-  end
-
-  test "sortable_fields configuration is well formed" do
-    fields = controller.send(:sortable_fields)
+  test "sortable_fields should be well formed" do
+    fields = FeedsController::SORTABLE_FIELDS
 
     assert_kind_of Hash, fields
     assert fields.keys.any?, "Expected sortable_fields to contain entries"
