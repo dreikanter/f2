@@ -23,7 +23,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
 
-    assert_equal "Name", presenter.current_label
+    assert_equal "Name", presenter.current_title
     assert_equal "asc", presenter.current_direction
 
     option = presenter.options.first
@@ -56,7 +56,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
 
-    assert_equal "Name", presenter.current_label
+    assert_equal "Name", presenter.current_title
     assert_equal "asc", presenter.current_direction
   end
 

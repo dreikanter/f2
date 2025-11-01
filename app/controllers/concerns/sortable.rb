@@ -46,10 +46,8 @@ module Sortable
   end
 
   def sortable_order
-    config = sortable_fields[sortable_field.to_sym] || sortable_fields[sortable_field]
-    field_sql = config.fetch(:order_by)
+    field_sql = sortable_fields.dig(sortable_field.to_sym, :order_by)
     arel_field = Arel.sql(field_sql)
-
     sortable_direction == "asc" ? arel_field.asc : arel_field.desc
   end
 

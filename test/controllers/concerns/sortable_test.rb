@@ -80,7 +80,7 @@ class SortableTest < ActionDispatch::IntegrationTest
     presenter = @controller.send(:sortable_presenter)
     option = presenter.options.first
 
-    assert_equal "Name", option.label
+    assert_equal "Name", option.title
     assert_equal(
       { "filter" => "all", "sort" => "name", "direction" => "desc" },
       query_params(option.path)

@@ -1,5 +1,5 @@
 class SortablePresenter
-  Option = Struct.new(:label, :field, :path, :active, :active_direction, :icon_name, keyword_init: true) do
+  Option = Struct.new(:title, :field, :path, :active, :active_direction, :icon_name, keyword_init: true) do
     def active?
       active
     end
@@ -15,8 +15,8 @@ class SortablePresenter
     @options ||= build_options
   end
 
-  def current_label
-    current_option&.label
+  def current_title
+    current_option&.title
   end
 
   def current_direction
@@ -48,14 +48,14 @@ class SortablePresenter
   def build_options
     fields.map do |field, config|
       key = field.to_s
-      label = config.fetch(:title).to_s
+      title = config.fetch(:title).to_s
       default_direction = normalize_direction(config.fetch(:direction, :desc))
       active = resolved_sort == key
       active_direction = active ? current_direction : nil
       next_direction = active ? toggle_direction(current_direction) : default_direction
 
       Option.new(
-        label: label,
+        title: title,
         field: key,
         path: path_builder.call(sort: key, direction: next_direction),
         active: active,

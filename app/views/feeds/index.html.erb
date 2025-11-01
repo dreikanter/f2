@@ -24,7 +24,7 @@
             aria-expanded="false">
             <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
             <span class="flex items-center gap-2">
-              <span><%= @sort_presenter.current_label %></span>
+              <span><%= @sort_presenter.current_title %></span>
               <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
             </span>
             <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
@@ -42,7 +42,7 @@
                                 "ff-dropdown-item",
                                 "font-semibold text-slate-900": option.active?
                               ) do %>
-                    <span><%= option.label %></span>
+                    <span><%= option.title %></span>
                     <% if option.icon_name.present? %>
                       <span class="flex items-center text-slate-500">
                         <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
