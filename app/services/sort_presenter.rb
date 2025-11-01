@@ -7,7 +7,7 @@ class SortPresenter
 
   def initialize(controller:, fields:, path_builder:)
     @controller = controller
-    @fields = normalize_fields(fields)
+    @fields = fields
     @path_builder = path_builder
   end
 
@@ -42,21 +42,22 @@ class SortPresenter
 
   def resolved_sort
     value = params[:sort].presence
-    fields_by_key.key?(value) ? value : default_field
+    field_config_for(value) ? value : default_field
   end
 
   def build_options
-    fields.map do |field|
-      name = field[:field]
-      active = resolved_sort == name
+    fields.map do |field, config|
+      key = field.to_s
+      label = config.fetch(:title).to_s
+      default_direction = normalize_direction(config.fetch(:direction, :desc))
+      active = resolved_sort == key
       active_direction = active ? current_direction : nil
-      default_direction = field[:direction]
       next_direction = active ? toggle_direction(current_direction) : default_direction
 
       Option.new(
-        label: field[:label],
-        field: name,
-        path: path_builder.call(sort: name, direction: next_direction),
+        label: label,
+        field: key,
+        path: path_builder.call(sort: key, direction: next_direction),
         active: active,
         active_direction: active_direction,
         icon_name: active_direction ? icon_for(active_direction) : nil
@@ -65,18 +66,12 @@ class SortPresenter
   end
 
   def default_direction_for(field_value)
-    field = fields_by_key[field_value]
-    field ? field[:direction] : "desc"
+    config = field_config_for(field_value)
+    normalize_direction(config ? config.fetch(:direction, :desc) : :desc)
   end
 
   def default_field
-    @default_field ||= fields.first ? fields.first[:field] : ""
-  end
-
-  def fields_by_key
-    @fields_by_key ||= fields.each_with_object({}) do |field, map|
-      map[field[:field]] = field
-    end
+    @default_field ||= fields.keys.first ? fields.keys.first.to_s : ""
   end
 
   def toggle_direction(direction)
@@ -87,24 +82,14 @@ class SortPresenter
     direction == "asc" ? "arrow-up-short" : "arrow-down-short"
   end
 
-  def normalize_fields(fields)
-    Array(fields).map do |field|
-      field = field.respond_to?(:symbolize_keys) ? field.symbolize_keys : field.to_h.symbolize_keys
-
-      label = field.fetch(:label).to_s
-      name = field.fetch(:field).to_s
-      direction = normalize_direction(field.fetch(:direction, "desc"))
-
-      {
-        label: label,
-        field: name,
-        direction: direction
-      }
-    end
+  def normalize_direction(direction)
+    value = direction.to_s
+    %w[asc desc].include?(value) ? value : "desc"
   end
 
-  def normalize_direction(direction)
-    direction = direction.to_s
-    %w[asc desc].include?(direction) ? direction : "desc"
+  def field_config_for(field)
+    return nil if field.blank?
+
+    fields[field.to_sym] || fields[field.to_s]
   end
 end
