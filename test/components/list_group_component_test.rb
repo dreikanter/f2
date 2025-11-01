@@ -7,7 +7,8 @@ class ListGroupComponentTest < ViewComponent::TestCase
     component.with_item(ListGroupComponent::StatItemComponent.new(label: "Example item", value: "42", key: "stats.example"))
     result = render_inline(component)
 
-    assert result.css(".ff-list-group").any?
+    list = result.at_css("ul")
+    assert_not_nil list
     item = result.css('[data-key="stats.example"]').first
     assert_not_nil item
     assert_equal "Example item", result.css('[data-key="stats.example.label"]').first.text
@@ -29,15 +30,14 @@ class ListGroupComponentTest < ViewComponent::TestCase
     def initialize(body_text:, value:, key:)
       @body_text = body_text
       @value = value
-      @padding_class = "p-4"
       @key = key
     end
 
     def call
-      content_tag :li, class: class_names("ff-list-group__item", @padding_class), data: { key: @key } do
+      content_tag :li, data: { key: @key } do
         safe_join([
-          content_tag(:span, @body_text, class: "ff-list-group__title", data: { key: "#{@key}.label" }),
-          content_tag(:span, @value, class: "ff-list-group__trailing-text", data: { key: "#{@key}.value" })
+          content_tag(:span, @body_text, data: { key: "#{@key}.label" }),
+          content_tag(:span, @value, data: { key: "#{@key}.value" })
         ])
       end
     end

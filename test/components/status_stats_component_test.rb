@@ -16,8 +16,8 @@ class StatusStatsComponentTest < ViewComponent::TestCase
 
     item = result.css('[data-key="stats.total_feeds"]').first
     assert_not_nil item
-    assert_equal "Total feeds", item.at_css(".ff-list-group__title").text
-    assert_equal "3", item.at_css(".ff-list-group__trailing-text").text
+    assert_equal "Total feeds", result.css('[data-key="stats.total_feeds.label"]').first.text
+    assert_equal "3", result.css('[data-key="stats.total_feeds.value"]').first.text
   end
 
   test "#render should include optional metrics when available" do
