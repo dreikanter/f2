@@ -5,8 +5,8 @@ class SortablePresenter
     end
   end
 
-  def initialize(controller:, fields:, path_builder:)
-    @controller = controller
+  def initialize(params:, fields:, path_builder:)
+    @params = params
     @fields = fields
     @path_builder = path_builder
   end
@@ -32,9 +32,7 @@ class SortablePresenter
 
   private
 
-  attr_reader :controller, :fields, :path_builder
-
-  delegate :params, to: :controller
+  attr_reader :params, :fields, :path_builder
 
   def current_option
     options.find(&:active?) || options.first
