@@ -26,7 +26,7 @@ module Sortable
   def sortable_field
     field = params[:sort]
 
-    if field.present? && sortable_fields.key?(field.to_sym)
+    if field.present? && sortable_fields.key?(field.to_s.to_sym)
       field
     else
       sortable_default_field
