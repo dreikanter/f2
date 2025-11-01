@@ -40,8 +40,12 @@ class PostDetailsComponent < ViewComponent::Base
   def add_attachments_item(component)
     attachments_html = safe_join(
       @post.attachment_urls.map do |url|
+        filename = extract_filename(url)
         helpers.link_to(url, target: "_blank", rel: "noopener", class: "ff-link inline-flex items-center") do
-          helpers.icon("file-earmark-image", aria_hidden: true)
+          safe_join([
+            helpers.icon("file-earmark-image", aria_hidden: true),
+            content_tag(:span, filename, class: "sr-only")
+          ])
         end
       end,
       " "
@@ -52,6 +56,14 @@ class PostDetailsComponent < ViewComponent::Base
       value: attachments_html,
       key: "post.attachments"
     ))
+  end
+
+  def extract_filename(url)
+    uri = URI.parse(url)
+    filename = File.basename(uri.path)
+    filename.presence || "Attachment"
+  rescue URI::InvalidURIError
+    "Attachment"
   end
 
   def add_comments_item(component)

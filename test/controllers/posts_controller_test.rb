@@ -95,6 +95,16 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='post.comments']"
   end
 
+  test "#show should include accessible labels for attachment links" do
+    sign_in_as(user)
+    post_with_attachments = create(:post, :published, :with_attachments, feed: feed)
+
+    get post_url(post_with_attachments)
+    assert_response :success
+    assert_select "[data-key='post.attachments'] a[href*='image1.jpg'] span.sr-only", text: "image1.jpg"
+    assert_select "[data-key='post.attachments'] a[href*='image2.png'] span.sr-only", text: "image2.png"
+  end
+
   test "#show should display validation errors when present" do
     sign_in_as(user)
     post_with_errors = create(:post, :rejected, feed: feed)
