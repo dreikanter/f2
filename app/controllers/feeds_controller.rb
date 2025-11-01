@@ -11,7 +11,7 @@ class FeedsController < ApplicationController
     scope = policy_scope(Feed)
     @active_feed_count = scope.enabled.count
     @inactive_feed_count = scope.disabled.count
-    @sort_presenter = sortable_presenter
+    @sortable_presenter = sortable_presenter
     @feeds = paginate_scope
   end
 

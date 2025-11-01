@@ -24,8 +24,8 @@
           aria-expanded="false">
           <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
           <span class="flex items-center gap-2">
-            <span><%= @sort_presenter.current_title %></span>
-            <span class="sr-only"><%= @sort_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+            <span><%= @sortable_presenter.current_title %></span>
+            <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
           </span>
           <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
         </button>
@@ -35,7 +35,7 @@
           role="menu"
           aria-labelledby="<%= "#{sort_menu_id}-button" %>">
           <ul class="py-1 text-base text-slate-600">
-            <% @sort_presenter.options.each do |option| %>
+            <% @sortable_presenter.options.each do |option| %>
               <li>
                 <%= link_to option.path,
                             class: class_names(
