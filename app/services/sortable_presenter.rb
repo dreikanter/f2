@@ -23,7 +23,7 @@ class SortablePresenter
   def current_direction
     @current_direction ||= begin
       value = params[:direction].presence
-      %w[asc desc].include?(value) ? value : default_direction_for(resolved_sort)
+      %w[asc desc].include?(value) ? value : default_direction_for(current_sort_field)
     end
   end
 
@@ -39,8 +39,8 @@ class SortablePresenter
     options.find(&:active?) || options.first
   end
 
-  def resolved_sort
-    value = params[:sort].presence
+  def current_sort_field
+    value = params[:sort]
     field_config_for(value) ? value : default_field
   end
 
@@ -49,7 +49,7 @@ class SortablePresenter
       key = field.to_s
       title = config.fetch(:title).to_s
       default_direction = normalize_direction(config.fetch(:direction, :desc))
-      active = resolved_sort == key
+      active = current_sort_field == key
       active_direction = active ? current_direction : nil
       next_direction = active ? toggle_direction(current_direction) : default_direction
 
