@@ -127,28 +127,12 @@
     @apply flex items-start gap-4;
   }
 
-  .ff-list-group__leading {
-    @apply mt-1 inline-flex shrink-0 text-slate-500;
-  }
-
   .ff-list-group__body {
     @apply flex-1 space-y-1;
   }
 
   .ff-list-group__title {
     @apply text-base font-semibold text-slate-900;
-  }
-
-  .ff-list-group__title--link {
-    @apply inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700;
-  }
-
-  .ff-list-group__description {
-    @apply text-sm text-slate-600;
-  }
-
-  .ff-list-group__trailing {
-    @apply ml-auto flex shrink-0 items-center gap-3 text-sm font-medium text-slate-600;
   }
 
   .ff-list-group__trailing-text {
