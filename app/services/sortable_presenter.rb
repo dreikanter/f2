@@ -19,6 +19,7 @@ class SortablePresenter
     current_option&.title
   end
 
+  # @return [String] "asc" or "desc"
   def current_direction
     @current_direction ||= begin
       value = params[:direction].presence
