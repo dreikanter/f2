@@ -19,10 +19,8 @@ class ListGroupComponent < ViewComponent::Base
     @items << component
     component
   end
-  alias_method :add_item, :with_item
 
   def items?
     items.any?
   end
-
 end
