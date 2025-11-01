@@ -1,9 +1,8 @@
 require "test_helper"
 
 module SortableTestControllers
-  class DemoController < ApplicationController
+  class DemoController < ActionController::Base
     include Sortable
-    skip_before_action :require_authentication
 
     def index
       @presenter = sortable_presenter
