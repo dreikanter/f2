@@ -78,14 +78,13 @@ class SortablePresenter
   def build_options
     fields.map do |field, config|
       key = field.to_s
-      title = config.fetch(:title).to_s
       default_direction = config.fetch(:direction, :desc)
       active = current_sort_field == key
       active_direction = active ? current_direction : nil
       next_direction = active ? toggle_direction(current_direction) : default_direction
 
       Option.new(
-        title: title,
+        title: config.fetch(:title).to_s,
         field: key,
         path: path_builder.call(sort: key, direction: next_direction),
         active: active,
