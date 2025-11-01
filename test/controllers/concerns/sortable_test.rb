@@ -46,6 +46,31 @@ module SortableTestControllers
       }
     end
   end
+
+  class MissingOrderByController < ActionController::Base
+    include Sortable
+
+    def index
+      sortable_order
+      head :ok
+    end
+
+    private
+
+    def sortable_fields
+      {
+        name: {
+          title: "Name",
+          direction: :asc
+        }
+      }
+    end
+
+    def sortable_path(sort_params)
+      query = sort_params.to_query
+      "/sortable_test_missing_order_by#{query.present? ? "?#{query}" : ""}"
+    end
+  end
 end
 
 class SortableTest < ActionDispatch::IntegrationTest
@@ -115,12 +140,24 @@ class SortableTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#sortable_order should raise when field is missing order_by configuration" do
+    error = assert_raises ArgumentError do
+      with_sortable_routes do
+        get "/sortable_test_missing_order_by"
+      end
+    end
+
+    assert_match(/name/, error.message)
+    assert_match(/:order_by/, error.message)
+  end
+
   private
 
   def with_sortable_routes
     with_routing do |set|
       set.draw do
         get "/sortable_test_demo_index", to: "sortable_test_controllers/demo#index"
+        get "/sortable_test_missing_order_by", to: "sortable_test_controllers/missing_order_by#index"
       end
 
       yield
