@@ -4,6 +4,34 @@ class PostsController < ApplicationController
 
   layout "tailwind"
 
+  SORTABLE_FIELDS = {
+    published: {
+      title: "Published",
+      order_by: "posts.published_at",
+      direction: :desc
+    },
+    feed: {
+      title: "Feed",
+      order_by: "LOWER(feeds.name)",
+      direction: :asc
+    },
+    status: {
+      title: "Status",
+      order_by: "posts.status",
+      direction: :asc
+    },
+    attachments: {
+      title: "Attachments",
+      order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)",
+      direction: :desc
+    },
+    comments: {
+      title: "Comments",
+      order_by: "COALESCE(array_length(posts.comments, 1), 0)",
+      direction: :desc
+    }
+  }.freeze
+
   def index
     authorize Post
     @sortable_presenter = sortable_presenter
@@ -39,33 +67,7 @@ class PostsController < ApplicationController
   private
 
   def sortable_fields
-    {
-      published: {
-        title: "Published",
-        order_by: "posts.published_at",
-        direction: :desc
-      },
-      feed: {
-        title: "Feed",
-        order_by: "LOWER(feeds.name)",
-        direction: :asc
-      },
-      status: {
-        title: "Status",
-        order_by: "posts.status",
-        direction: :asc
-      },
-      attachments: {
-        title: "Attachments",
-        order_by: "COALESCE(array_length(posts.attachment_urls, 1), 0)",
-        direction: :desc
-      },
-      comments: {
-        title: "Comments",
-        order_by: "COALESCE(array_length(posts.comments, 1), 0)",
-        direction: :desc
-      }
-    }
+    SORTABLE_FIELDS
   end
 
   def sortable_path(sort_params)

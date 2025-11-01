@@ -2,6 +2,40 @@ class Admin::UsersController < ApplicationController
   include Pagination
   include Sortable
 
+  SORTABLE_FIELDS = {
+    email: {
+      title: "Email",
+      order_by: "LOWER(users.email_address)",
+      direction: :asc
+    },
+    name: {
+      title: "Name",
+      order_by: "LOWER(users.name)",
+      direction: :asc
+    },
+    feeds: {
+      title: "Feeds",
+      order_by: "COUNT(DISTINCT feeds.id)",
+      direction: :desc
+    },
+    tokens: {
+      title: "Tokens",
+      order_by: "COUNT(DISTINCT access_tokens.id)",
+      direction: :desc
+    },
+    posts: {
+      title: "Posts",
+      order_by: "COUNT(DISTINCT posts.id)",
+      direction: :desc
+    },
+    last_seen: {
+      title: "Last Seen",
+      order_by: "MAX(sessions.updated_at)",
+      direction: :desc
+    }
+  }.freeze
+
+
   def index
     authorize User
     @users = paginate_scope
@@ -15,38 +49,7 @@ class Admin::UsersController < ApplicationController
   private
 
   def sortable_fields
-    {
-      email: {
-        title: "Email",
-        order_by: "LOWER(users.email_address)",
-        direction: :asc
-      },
-      name: {
-        title: "Name",
-        order_by: "LOWER(users.name)",
-        direction: :asc
-      },
-      feeds: {
-        title: "Feeds",
-        order_by: "COUNT(DISTINCT feeds.id)",
-        direction: :desc
-      },
-      tokens: {
-        title: "Tokens",
-        order_by: "COUNT(DISTINCT access_tokens.id)",
-        direction: :desc
-      },
-      posts: {
-        title: "Posts",
-        order_by: "COUNT(DISTINCT posts.id)",
-        direction: :desc
-      },
-      last_seen: {
-        title: "Last Seen",
-        order_by: "MAX(sessions.updated_at)",
-        direction: :desc
-      }
-    }
+    SORTABLE_FIELDS
   end
 
   def sortable_path(sort_params)
