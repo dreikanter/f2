@@ -66,7 +66,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get post_url(user_post)
     assert_response :success
-    assert_select "h1", "Post Details"
+    assert_select "h1", text: /Post \d+/
   end
 
   test "#show should reject access to other user's post" do
@@ -90,7 +90,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     get post_url(post_with_data)
     assert_response :success
     assert_select "div", text: /Test post content/
-    assert_select "[data-key='post.status']"
+    assert_select "[data-key='post.status_badge']", text: "Published"
     assert_select "[data-key='post.attachments']"
     assert_select "[data-key='post.comments']"
   end
@@ -109,15 +109,15 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     enqueued_post = create(:post, :enqueued, feed: feed)
     get post_url(enqueued_post)
-    assert_select "[data-key='post.status']"
+    assert_select "[data-key='post.status_badge']", text: "Enqueued"
 
     failed_post = create(:post, :failed, feed: feed)
     get post_url(failed_post)
-    assert_select "[data-key='post.status']"
+    assert_select "[data-key='post.status_badge']", text: "Failed"
 
     rejected_post = create(:post, :rejected, feed: feed)
     get post_url(rejected_post)
-    assert_select "[data-key='post.status']"
+    assert_select "[data-key='post.status_badge']", text: "Rejected"
   end
 
   test "#show should display external links when available" do
