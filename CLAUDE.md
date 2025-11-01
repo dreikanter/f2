@@ -167,3 +167,10 @@ test "#time_ago should return nil for nil input" do
   # ...
 end
 ```
+
+### Testing hooks (data attributes)
+
+- Prefer `data-key` attributes for DOM selectors in tests; they clarify intent and avoid coupling to styling classes.
+- Example in a component: `tag.li class: "…", data: { key: "stats.total_feeds" }`.
+- In tests, query via `css_select('[data-key="stats.total_feeds"]')`.
+- Keep keys short, namespaced (`component.element`) for readability.

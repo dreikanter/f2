@@ -39,38 +39,13 @@
   <% else %>
     <section class="space-y-6">
       <h1 class="ff-h1">Status</h1>
-      <div class="ff-stats">
-        <div class="ff-stats__row">
-          <span class="ff-stats__label">Total feeds:</span>
-          <span class="ff-stats__value"><%= number_with_delimiter(@user.total_feeds_count) %></span>
-        </div>
-
-        <% if @user.total_imported_posts_count > 0 %>
-          <div class="ff-stats__row">
-            <span class="ff-stats__label">Total imported posts:</span>
-            <span class="ff-stats__value"><%= number_with_delimiter(@user.total_imported_posts_count) %></span>
-          </div>
-
-          <div class="ff-stats__row">
-            <span class="ff-stats__label">Total published posts:</span>
-            <span class="ff-stats__value"><%= number_with_delimiter(@user.total_published_posts_count) %></span>
-          </div>
-        <% end %>
-
-        <% if @user.most_recent_post_published_at %>
-          <div class="ff-stats__row">
-            <span class="ff-stats__label">Most recent post publication:</span>
-            <span class="ff-stats__value"><%= time_ago_in_words(@user.most_recent_post_published_at) %> ago</span>
-          </div>
-        <% end %>
-
-        <% if @user.total_imported_posts_count > 0 %>
-          <div class="ff-stats__row">
-            <span class="ff-stats__label">Average posts per day (last week):</span>
-            <span class="ff-stats__value"><%= number_with_precision(@user.average_posts_per_day_last_week, precision: 1) %></span>
-          </div>
-        <% end %>
-      </div>
+      <%= render StatusStatsComponent.new(
+        total_feeds_count: @user.total_feeds_count,
+        total_imported_posts_count: @user.total_imported_posts_count,
+        total_published_posts_count: @user.total_published_posts_count,
+        most_recent_post_published_at: @user.most_recent_post_published_at,
+        average_posts_per_day_last_week: @user.average_posts_per_day_last_week
+      ) %>
     </section>
   <% end %>
 </div>
