@@ -4,7 +4,7 @@ require "view_component/test_case"
 class ListGroupComponentTest < ViewComponent::TestCase
   test "#render should display titles and trailing text" do
     component = ListGroupComponent.new
-    component.stat_item(label: "Example item", value: "42")
+    component.with_item(ListGroupComponent::StatItemComponent.new(label: "Example item", value: "42"))
     result = render_inline(component)
 
     assert result.css(".ff-list-group").any?

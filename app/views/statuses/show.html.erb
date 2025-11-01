@@ -39,23 +39,13 @@
   <% else %>
     <section class="space-y-6">
       <h1 class="ff-h1">Status</h1>
-      <% stats_list = ListGroupComponent.new %>
-      <% stats_list.stat_item(label: "Total feeds", value: number_with_delimiter(@user.total_feeds_count)) %>
-
-      <% if @user.total_imported_posts_count > 0 %>
-        <% stats_list.stat_item(label: "Total imported posts", value: number_with_delimiter(@user.total_imported_posts_count)) %>
-        <% stats_list.stat_item(label: "Total published posts", value: number_with_delimiter(@user.total_published_posts_count)) %>
-      <% end %>
-
-      <% if (recent_publication = @user.most_recent_post_published_at) %>
-        <% stats_list.stat_item(label: "Most recent post publication", value: "#{time_ago_in_words(recent_publication)} ago") %>
-      <% end %>
-
-      <% if @user.total_imported_posts_count > 0 %>
-        <% stats_list.stat_item(label: "Average posts per day (last week)", value: number_with_precision(@user.average_posts_per_day_last_week, precision: 1)) %>
-      <% end %>
-
-      <%= render stats_list %>
+      <%= render StatusStatsComponent.new(
+        total_feeds_count: @user.total_feeds_count,
+        total_imported_posts_count: @user.total_imported_posts_count,
+        total_published_posts_count: @user.total_published_posts_count,
+        most_recent_post_published_at: @user.most_recent_post_published_at,
+        average_posts_per_day_last_week: @user.average_posts_per_day_last_week
+      ) %>
     </section>
   <% end %>
 </div>
