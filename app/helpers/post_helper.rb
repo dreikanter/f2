@@ -29,11 +29,15 @@ module PostHelper
 
   def post_metadata_attachments_segment(post)
     attachments_count = Array(post.attachment_urls).size
+    return if attachments_count.zero?
+
     "Attachments: #{attachments_count}"
   end
 
   def post_metadata_comments_segment(post)
     comments_count = Array(post.comments).size
+    return if comments_count.zero?
+
     "Comments: #{comments_count}"
   end
 
