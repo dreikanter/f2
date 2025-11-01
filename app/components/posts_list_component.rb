@@ -17,6 +17,7 @@ class PostsListComponent < ViewComponent::Base
 
   def render_list
     component = ListGroupComponent.new
+
     @posts.each do |post|
       component.with_item(ListGroupComponent::PostItemComponent.new(
         icon: helpers.post_status_icon(post.status),
@@ -25,6 +26,7 @@ class PostsListComponent < ViewComponent::Base
         metadata_segments: metadata_segments_for(post)
       ))
     end
+
     render(component)
   end
 

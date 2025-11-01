@@ -46,6 +46,7 @@ class ListGroupComponent::FeedItemComponent < ViewComponent::Base
         parts << content_tag(:span, segment)
         parts
       end
+
       safe_join(segments)
     end
   end

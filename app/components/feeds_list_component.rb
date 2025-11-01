@@ -5,6 +5,7 @@ class FeedsListComponent < ViewComponent::Base
 
   def call
     component = ListGroupComponent.new
+
     @feeds.each do |feed|
       component.with_item(ListGroupComponent::FeedItemComponent.new(
         icon: helpers.feed_status_icon(feed),
@@ -13,6 +14,7 @@ class FeedsListComponent < ViewComponent::Base
         metadata_segments: metadata_segments_for(feed)
       ))
     end
+
     render(component)
   end
 
