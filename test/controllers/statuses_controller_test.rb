@@ -32,9 +32,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    total_item = css_select('[data-key="status-stats.total_feeds"]').first
-    assert_not_nil total_item
-    assert_equal "2", total_item.at_css(".ff-list-group__trailing-text").text.strip
+    assert_not_nil css_select('[data-key="status-stats.total_feeds"]').first
+    assert_equal "2", css_select('[data-key="status-stats.total_feeds.value"]').first.text.strip
   end
 
   test "#show should display total imported posts count" do
@@ -47,9 +46,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    imported_item = css_select('[data-key="status-stats.total_imported_posts"]').first
-    assert_not_nil imported_item
-    assert_equal "2", imported_item.at_css(".ff-list-group__trailing-text").text.strip
+    assert_not_nil css_select('[data-key="status-stats.total_imported_posts"]').first
+    assert_equal "2", css_select('[data-key="status-stats.total_imported_posts.value"]').first.text.strip
   end
 
   test "#show should display total published posts count" do
@@ -64,9 +62,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    published_item = css_select('[data-key="status-stats.total_published_posts"]').first
-    assert_not_nil published_item
-    assert_equal "2", published_item.at_css(".ff-list-group__trailing-text").text.strip
+    assert_not_nil css_select('[data-key="status-stats.total_published_posts"]').first
+    assert_equal "2", css_select('[data-key="status-stats.total_published_posts.value"]').first.text.strip
   end
 
   test "#show should display most recent post publication timestamp" do
@@ -77,9 +74,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    recent_item = css_select('[data-key="status-stats.most_recent_post_publication"]').first
-    assert_not_nil recent_item
-    assert_match(/1 day ago/, recent_item.at_css(".ff-list-group__trailing-text").text)
+    assert_not_nil css_select('[data-key="status-stats.most_recent_post_publication"]').first
+    assert_match(/1 day ago/, css_select('[data-key="status-stats.most_recent_post_publication.value"]').first.text)
   end
 
   test "#show should hide most recent post publication when no published posts" do
@@ -100,9 +96,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    average_item = css_select('[data-key="status-stats.average_posts_per_day"]').first
-    assert_not_nil average_item
-    assert_equal "0.3", average_item.at_css(".ff-list-group__trailing-text").text.strip
+    assert_not_nil css_select('[data-key="status-stats.average_posts_per_day"]').first
+    assert_equal "0.3", css_select('[data-key="status-stats.average_posts_per_day.value"]').first.text.strip
   end
 
   test "#show should hide average posts per day when no posts" do
@@ -137,9 +132,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    total_item = css_select('[data-key="status-stats.total_feeds"]').first
-    assert_not_nil total_item
-    assert_equal "1", total_item.at_css(".ff-list-group__trailing-text").text.strip
+    assert_not_nil css_select('[data-key="status-stats.total_feeds"]').first
+    assert_equal "1", css_select('[data-key="status-stats.total_feeds.value"]').first.text.strip
     assert_select "h1", "Status"
   end
 end

@@ -32,24 +32,21 @@ class StatusStatsComponentTest < ViewComponent::TestCase
         )
       )
 
-      titles = result.css(".ff-list-group__title").map(&:text)
-      assert_includes titles, "Total feeds"
-
       imported = result.css('[data-key="status-stats.total_imported_posts"]').first
       assert_not_nil imported
-      assert_equal "5", imported.at_css(".ff-list-group__trailing-text").text
+      assert_equal "5", result.css('[data-key="status-stats.total_imported_posts.value"]').first.text
 
       published = result.css('[data-key="status-stats.total_published_posts"]').first
       assert_not_nil published
-      assert_equal "4", published.at_css(".ff-list-group__trailing-text").text
+      assert_equal "4", result.css('[data-key="status-stats.total_published_posts.value"]').first.text
 
       recent = result.css('[data-key="status-stats.most_recent_post_publication"]').first
       assert_not_nil recent
-      assert_match(/ago/, recent.at_css(".ff-list-group__trailing-text").text)
+      assert_match(/ago/, result.css('[data-key="status-stats.most_recent_post_publication.value"]').first.text)
 
       average = result.css('[data-key="status-stats.average_posts_per_day"]').first
       assert_not_nil average
-      assert_equal "1.5", average.at_css(".ff-list-group__trailing-text").text
+      assert_equal "1.5", result.css('[data-key="status-stats.average_posts_per_day.value"]').first.text
     end
   end
 end
