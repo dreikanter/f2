@@ -17,7 +17,7 @@ class SortablePresenter
   #   @return [String, nil] current direction when active
   # @!attribute icon_name
   #   @return [String, nil] icon identifier matching the active direction
-  Option = Struct.new(:title, :field, :path, :active, :active_direction, :icon_name, keyword_init: true) do
+  Option = Struct.new(:title, :field, :path, :active, :active_direction, :icon_name) do
     def active?
       active
     end
