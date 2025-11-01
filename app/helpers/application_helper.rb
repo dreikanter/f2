@@ -51,46 +51,6 @@ module ApplicationHelper
     content_tag(:div, highlighted_code.html_safe, class: "highlight")
   end
 
-  # TBD: Drop this after admin/users page refactoring
-  def sortable_header(field:, title:, path_params: {})
-    default_sort_field = controller.respond_to?(:sortable_default_field, true) ? controller.send(:sortable_default_field).to_s : nil
-
-    current_sort = if controller.respond_to?(:sortable_field, true)
-      controller.send(:sortable_field)
-    else
-      params[:sort].presence || default_sort_field
-    end
-
-    current_direction = if controller.respond_to?(:sortable_direction, true)
-      controller.send(:sortable_direction)
-    else
-      default_direction_for_current = if controller.respond_to?(:default_direction_for, true)
-        controller.send(:default_direction_for, current_sort || default_sort_field)
-      else
-        "desc"
-      end
-      params[:direction].presence || default_direction_for_current
-    end
-
-    default_direction_for_field = if controller.respond_to?(:default_direction_for, true)
-      controller.send(:default_direction_for, field)
-    else
-      "desc"
-    end
-
-    direction = current_sort == field ? current_direction : nil
-
-    next_direction = if current_sort == field
-      current_direction == "asc" ? "desc" : "asc"
-    else
-      default_direction_for_field
-    end
-
-    link_to title, path_params.merge(sort: field, direction: next_direction),
-            class: class_names("sortable", "sorted-#{direction}": direction.present?),
-            data: { turbo_action: "replace" }
-  end
-
   def navbar_items
     return [] unless Current.user
 
