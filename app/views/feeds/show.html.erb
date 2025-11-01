@@ -50,28 +50,7 @@
 
   <section class="space-y-4">
     <h2 class="ff-h2">Stats</h2>
-    <% component = ListGroupComponent.new %>
-    <% component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Last refresh:",
-      value: @feed.last_refreshed_at ? time_ago_tag(@feed.last_refreshed_at) : content_tag(:span, "Never", class: "text-slate-500"),
-      key: "stats.last_refresh"
-    )) %>
-    <% component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Most recent post:",
-      value: @feed.most_recent_post_date ? time_ago_tag(@feed.most_recent_post_date) : content_tag(:span, "No posts imported", class: "text-slate-500"),
-      key: "stats.most_recent_post"
-    )) %>
-    <% component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Imported posts:",
-      value: number_with_delimiter(@feed.posts.count),
-      key: "stats.imported_posts"
-    )) %>
-    <% component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Published posts:",
-      value: number_with_delimiter(@feed.posts.published.count),
-      key: "stats.published_posts"
-    )) %>
-    <%= render(component) %>
+    <%= render FeedStatsComponent.new(feed: @feed) %>
   </section>
 
   <section class="space-y-4">
