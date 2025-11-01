@@ -79,7 +79,7 @@ class SortablePresenter
     fields.map do |field, config|
       key = field.to_s
       title = config.fetch(:title).to_s
-      default_direction = normalize_direction(config.fetch(:direction, :desc))
+      default_direction = config.fetch(:direction, :desc)
       active = current_sort_field == key
       active_direction = active ? current_direction : nil
       next_direction = active ? toggle_direction(current_direction) : default_direction
@@ -117,15 +117,6 @@ class SortablePresenter
   # @return [String]
   def icon_for(direction)
     direction == "asc" ? "arrow-up-short" : "arrow-down-short"
-  end
-
-  # Normalises arbitrary direction values to "asc" / "desc".
-  #
-  # @param direction [String, Symbol]
-  # @return [String]
-  def normalize_direction(direction)
-    value = direction.to_s
-    %w[asc desc].include?(value) ? value : "desc"
   end
 
   # Looks up the configuration hash for a given field.
