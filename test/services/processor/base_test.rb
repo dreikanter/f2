@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Processor::BaseTest < ActiveSupport::TestCase
-  test "should raise NotImplementedError for process method" do
+  test "#process should raise NotImplementedError" do
     feed = create(:feed)
     processor = Processor::Base.new(feed, "test data")
 

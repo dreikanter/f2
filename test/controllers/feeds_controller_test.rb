@@ -17,12 +17,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     @other_feed ||= create(:feed, user: create(:user))
   end
 
-  test "should redirect to login when not authenticated" do
+  test "#index should redirect to login when not authenticated" do
     get feeds_url
     assert_redirected_to new_session_path
   end
 
-  test "should get index when authenticated" do
+  test "#index should render feed list for authenticated user" do
     sign_in_as(user)
     feed
     get feeds_url
@@ -33,7 +33,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "You have 1 inactive feed"
   end
 
-  test "index should render tailwind pagination controls" do
+  test "#index should render tailwind pagination controls" do
     sign_in_as(user)
     create_list(:feed, 26, user: user)
 
@@ -45,13 +45,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav[aria-label='Feeds pagination'] span", text: /Showing/
   end
 
-  test "should get new when authenticated" do
+  test "#new should render when authenticated" do
     sign_in_as(user)
     get new_feed_url
     assert_response :success
   end
 
-  test "should create feed when authenticated" do
+  test "#create should create feed when authenticated" do
     sign_in_as(user)
 
     assert_difference("Feed.count", 1) do
@@ -74,7 +74,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_url(feed)
   end
 
-  test "should not create feed with invalid data" do
+  test "#create should reject invalid data" do
     sign_in_as(user)
 
     assert_no_difference("Feed.count") do
@@ -91,32 +91,32 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
-  test "should show own feed" do
+  test "#show should render feed owned by user" do
     sign_in_as(user)
     get feed_url(feed)
     assert_response :success
     assert_includes response.body, feed.name
   end
 
-  test "should not show other user's feed" do
+  test "#show should return not found for other user's feed" do
     sign_in_as(user)
     get feed_url(other_feed)
     assert_response :not_found
   end
 
-  test "should get edit for own feed" do
+  test "#edit should render for own feed" do
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
   end
 
-  test "should not get edit for other user's feed" do
+  test "#edit should return not found for other user's feed" do
     sign_in_as(user)
     get edit_feed_url(other_feed)
     assert_response :not_found
   end
 
-  test "should update own feed" do
+  test "#update should modify own feed" do
     sign_in_as(user)
 
     patch feed_url(feed, section: "content-source"), params: {
@@ -131,7 +131,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "updated-feed", feed.name
   end
 
-  test "should not update feed with invalid data" do
+  test "#update should reject invalid data" do
     sign_in_as(user)
 
     patch feed_url(feed, section: "content-source"), params: {
@@ -147,7 +147,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://example.com/feed.xml", feed.url
   end
 
-  test "should not update other user's feed" do
+  test "#update should not modify other user's feed" do
     sign_in_as(user)
 
     patch feed_url(other_feed), params: {
@@ -157,7 +157,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "should destroy own feed" do
+  test "#destroy should remove own feed" do
     sign_in_as(user)
     feed = create(:feed, user: user)
 
@@ -168,13 +168,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feeds_url
   end
 
-  test "should not destroy other user's feed" do
+  test "#destroy should not remove other user's feed" do
     sign_in_as(user)
     delete feed_url(other_feed)
     assert_response :not_found
   end
 
-  test "should preserve name case" do
+  test "#create should preserve name case" do
     sign_in_as(user)
 
     post feeds_url, params: {
@@ -193,7 +193,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Test-Feed", feed.name
   end
 
-  test "should strip and normalize URLs" do
+  test "#create should strip and normalize URLs" do
     sign_in_as(user)
 
     post feeds_url, params: {
@@ -212,7 +212,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://example.com/test.xml", feed.url
   end
 
-  test "should normalize description by removing line breaks" do
+  test "#create should normalize description by removing line breaks" do
     sign_in_as(user)
 
     post feeds_url, params: {
@@ -233,7 +233,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
 
-  test "should handle simplified creation flow" do
+  test "#create should handle simplified creation flow" do
     sign_in_as(user)
 
     assert_difference("Feed.count", 1) do
@@ -253,21 +253,21 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_includes flash[:notice], "Feed was successfully created."
   end
 
-  test "should show feed section" do
+  test "#show should render feed section" do
     sign_in_as(user)
     get feed_url(feed, section: "reposting"), as: :turbo_stream
     assert_response :success
     assert_match(/turbo-stream/, response.content_type)
   end
 
-  test "should get edit with section" do
+  test "#edit should render with section" do
     sign_in_as(user)
     get edit_feed_url(feed, section: "reposting"), as: :turbo_stream
     assert_response :success
     assert_match(/turbo-stream/, response.content_type)
   end
 
-  test "should update feed with section" do
+  test "#update should persist changes for section" do
     sign_in_as(user)
 
     patch feed_url(feed, section: "reposting"), params: {
@@ -285,7 +285,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "testgroup", feed.target_group
   end
 
-  test "should update feed title when content-source section updated" do
+  test "#update should refresh feed title when content-source section updates" do
     sign_in_as(user)
 
     patch feed_url(feed, section: "content-source"), params: {
@@ -302,7 +302,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "updated-name", feed.name
   end
 
-  test "should handle update failure with section" do
+  test "#update should handle failure with section" do
     sign_in_as(user)
 
     patch feed_url(feed, section: "reposting"), params: {
@@ -315,7 +315,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "edit-form-container"
   end
 
-  test "should auto-disable enabled feed when configuration becomes invalid" do
+  test "#update should auto-disable enabled feed when configuration becomes invalid" do
     sign_in_as(user)
     enabled_feed = create(:feed, user: user, state: :enabled)
 
@@ -331,7 +331,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", enabled_feed.state
   end
 
-  test "should clear access_token_id when no active tokens available" do
+  test "#update should clear access_token_id when no active tokens available" do
     sign_in_as(user)
     access_token.update!(status: :inactive)
 
@@ -345,7 +345,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should use content_source_form template when content-source section has validation errors" do
+  test "#update should render content_source_form template when content-source section has validation errors" do
     sign_in_as(user)
 
     patch feed_url(feed), params: {
@@ -361,7 +361,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "must be a valid HTTP or HTTPS URL"
   end
 
-  test "should sort feeds by name ascending" do
+  test "#index should sort feeds by name ascending" do
     sign_in_as(user)
     create(:feed, user: user, name: "Z Feed")
     create(:feed, user: user, name: "A Feed")
@@ -375,7 +375,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert pos_a < pos_z, "Expected A Feed to appear before Z Feed"
   end
 
-  test "should sort feeds by name descending" do
+  test "#index should sort feeds by name descending" do
     sign_in_as(user)
     create(:feed, user: user, name: "A Feed")
     create(:feed, user: user, name: "Z Feed")
@@ -389,7 +389,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert pos_z < pos_a, "Expected Z Feed to appear before A Feed"
   end
 
-  test "should sort feeds by status" do
+  test "#index should sort feeds by status" do
     sign_in_as(user)
     enabled_feed = create(:feed, :enabled, user: user, name: "Enabled Feed")
     disabled_feed = create(:feed, user: user, name: "Disabled Feed", state: :disabled)
@@ -403,7 +403,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert pos_enabled < pos_disabled, "Expected enabled feed to appear before disabled feed"
   end
 
-  test "should use default sort when no sort parameter provided" do
+  test "#index should use default sort when no sort parameter provided" do
     sign_in_as(user)
     create(:feed, user: user, name: "Z Feed")
     create(:feed, user: user, name: "A Feed")
@@ -417,7 +417,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert pos_a < pos_z, "Expected A Feed to appear before Z Feed (default sort)"
   end
 
-  test "pagination should preserve sort parameters" do
+  test "#pagination should preserve sort parameters" do
     sign_in_as(user)
     3.times { |i| create(:feed, user: user, name: "Feed #{i}") }
 

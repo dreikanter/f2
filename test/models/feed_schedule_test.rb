@@ -12,7 +12,7 @@ class FeedScheduleTest < ActiveSupport::TestCase
     assert schedule.errors.of_kind?(:feed, :blank)
   end
 
-  test "calculate_next_run_at should parse cron expression" do
+  test "#calculate_next_run_at should parse cron expression" do
     feed = build(:feed, cron_expression: "0 */6 * * *")
     schedule = build(:feed_schedule, feed: feed)
 
@@ -23,7 +23,7 @@ class FeedScheduleTest < ActiveSupport::TestCase
     end
   end
 
-  test "calculate_next_run_at should handle daily cron" do
+  test "#calculate_next_run_at should handle daily cron" do
     feed = build(:feed, cron_expression: "0 9 * * *")
     schedule = build(:feed_schedule, feed: feed)
 
@@ -33,7 +33,7 @@ class FeedScheduleTest < ActiveSupport::TestCase
     end
   end
 
-  test "calculate_next_run_at should handle hourly cron" do
+  test "#calculate_next_run_at should handle hourly cron" do
     feed = build(:feed, cron_expression: "0 * * * *")
     schedule = build(:feed_schedule, feed: feed)
 

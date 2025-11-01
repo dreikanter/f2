@@ -9,12 +9,12 @@ class ProfileMatcher::BaseTest < ActiveSupport::TestCase
     @matcher ||= ProfileMatcher::Base.new("https://example.com", response)
   end
 
-  test "should initialize with url and response" do
+  test "#initialize should set url and response" do
     assert_equal "https://example.com", matcher.url
     assert_equal response, matcher.response
   end
 
-  test "match? should raise NotImplementedError" do
+  test "#match? should raise NotImplementedError" do
     error = assert_raises(NotImplementedError) do
       matcher.match?
     end

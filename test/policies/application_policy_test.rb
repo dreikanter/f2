@@ -17,39 +17,39 @@ class ApplicationPolicyTest < ActiveSupport::TestCase
     @sample_record ||= create(:user)
   end
 
-  test "initializes with user and record" do
+  test "#initialize should set user and record" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_equal admin_user, policy.user
     assert_equal sample_record, policy.record
   end
 
-  test "initializes with nil user" do
+  test "#initialize should allow nil user" do
     policy = ApplicationPolicy.new(nil, sample_record)
 
     assert_nil policy.user
     assert_equal sample_record, policy.record
   end
 
-  test "index? returns false by default" do
+  test "#index? should return false by default" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_not policy.index?
   end
 
-  test "show? returns false by default" do
+  test "#show? should return false by default" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_not policy.show?
   end
 
-  test "create? returns false by default" do
+  test "#create? should return false by default" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_not policy.create?
   end
 
-  test "new? delegates to create?" do
+  test "#new? should delegate to #create?" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     # Mock create? to return true
@@ -61,13 +61,13 @@ class ApplicationPolicyTest < ActiveSupport::TestCase
     assert_not policy.new?
   end
 
-  test "update? returns false by default" do
+  test "#update? should return false by default" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_not policy.update?
   end
 
-  test "edit? delegates to update?" do
+  test "#edit? should delegate to #update?" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     # Mock update? to return true
@@ -79,31 +79,31 @@ class ApplicationPolicyTest < ActiveSupport::TestCase
     assert_not policy.edit?
   end
 
-  test "destroy? returns false by default" do
+  test "#destroy? should return false by default" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert_not policy.destroy?
   end
 
-  test "admin? returns true for admin users" do
+  test "#admin? should return true for admin users" do
     policy = ApplicationPolicy.new(admin_user, sample_record)
 
     assert policy.send(:admin?)
   end
 
-  test "admin? returns false for regular users" do
+  test "#admin? should return false for regular users" do
     policy = ApplicationPolicy.new(regular_user, sample_record)
 
     assert_not policy.send(:admin?)
   end
 
-  test "admin? returns false for nil user" do
+  test "#admin? should return false for nil user" do
     policy = ApplicationPolicy.new(nil, sample_record)
 
     assert_not policy.send(:admin?)
   end
 
-  test "admin? returns false when user has no permissions" do
+  test "#admin? should return false when user lacks permissions" do
     user_without_permissions = create(:user)
     policy = ApplicationPolicy.new(user_without_permissions, sample_record)
 

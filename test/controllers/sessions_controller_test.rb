@@ -1,24 +1,24 @@
 require "test_helper"
 
 class SessionsControllerTest < ActionDispatch::IntegrationTest
-  test "should get new" do
+  test "#new should render successfully" do
     get new_session_url
     assert_response :success
   end
 
-  test "should create session with valid credentials" do
+  test "#create should authenticate with valid credentials" do
     user = users(:one)
 
     post session_url, params: { email_address: user.email_address, password: "password" }
     assert_redirected_to root_url
   end
 
-  test "should not create session with invalid credentials" do
+  test "#create should reject invalid credentials" do
     post session_url, params: { email_address: "wrong@example.com", password: "wrong" }
     assert_redirected_to new_session_path
   end
 
-  test "should destroy session" do
+  test "#destroy should clear session" do
     user = create(:user)
 
     # Create session by signing in
@@ -37,7 +37,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should redirect to requested page after authentication" do
+  test "#create should redirect to requested page after authentication" do
     # Try to access protected page without authentication
     get feeds_path
     assert_redirected_to new_session_path
@@ -50,7 +50,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feeds_path
   end
 
-  test "should not create session for suspended user" do
+  test "#create should reject suspended user" do
     user = create(:user, :suspended)
 
     post session_url, params: { email_address: user.email_address, password: "password123" }
@@ -58,7 +58,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should not create session for inactive user" do
+  test "#create should reject inactive user" do
     user = create(:user, :inactive)
 
     post session_url, params: { email_address: user.email_address, password: "password123" }
@@ -66,7 +66,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should terminate all sessions when inactive user attempts login" do
+  test "#create should terminate sessions when inactive user attempts login" do
     user = create(:user, :inactive)
     user.sessions.create!(user_agent: "Browser", ip_address: "1.1.1.1")
 
@@ -77,7 +77,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, user.reload.sessions.count
   end
 
-  test "should show standard message for inactive user without deactivated email" do
+  test "#create should show standard message for inactive user without deactivated email" do
     user = create(:user, :inactive)
 
     post session_url, params: { email_address: user.email_address, password: "password123" }
@@ -87,7 +87,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert", text: /Email confirmation is required. Please check your inbox./
   end
 
-  test "should show deactivated email message for inactive user with deactivated email" do
+  test "#create should show deactivated email message for inactive user with deactivated email" do
     user = create(:user, :inactive)
     user.deactivate_email!(reason: "bounced")
 

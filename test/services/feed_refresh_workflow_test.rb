@@ -26,14 +26,14 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       )
   end
 
-  test "initializes workflow with feed and stats" do
+  test "#initialize should set feed and stats" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     assert_equal feed, workflow.feed
     assert_equal({}, workflow.stats)
   end
 
-  test "workflow has correct step sequence defined" do
+  test ".workflow_steps should list expected sequence" do
     expected_steps = [
       :initialize_workflow,
       :load_feed_contents,
@@ -49,7 +49,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal expected_steps, FeedRefreshWorkflow.workflow_steps
   end
 
-  test "provides access to timing information" do
+  test "#step_durations should expose timing information" do
     workflow = FeedRefreshWorkflow.new(feed)
 
     assert_equal({}, workflow.step_durations)
@@ -57,7 +57,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_nil workflow.current_step
   end
 
-  test "executes complete workflow with real RSS data and creates valid posts" do
+  test "#execute should process real RSS data and create posts" do
     # Create feed with proper configuration
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
@@ -126,7 +126,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 2, events.first.metadata["stats"]["new_posts"]
   end
 
-  test "handles duplicate entries correctly on subsequent runs" do
+  test "#execute should skip duplicate entries on subsequent runs" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # Create existing entry and mark it as imported
@@ -180,7 +180,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, workflow.stats[:new_posts]
   end
 
-  test "handles HTTP loading errors gracefully" do
+  test "#execute should handle HTTP loading errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
@@ -207,7 +207,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "StandardError", error_event.metadata["error"]["class"]
   end
 
-  test "handles RSS processing errors gracefully" do
+  test "#execute should handle RSS processing errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
@@ -236,7 +236,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
-  test "handles normalization errors gracefully" do
+  test "#execute should handle normalization errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
@@ -279,7 +279,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_match(/Feed refresh failed at normalize_entries/, error_event.message)
   end
 
-  test "handles database errors during entry persistence" do
+  test "#execute should handle database errors during entry persistence" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
@@ -319,7 +319,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles empty feed content gracefully" do
+  test "#execute should handle empty feed content gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
@@ -392,7 +392,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "#records should create feed metrics with invalid posts" do
+  test "#execute should create feed metrics with invalid posts" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # Create RSS with one valid and one invalid entry (missing link)
@@ -430,7 +430,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "does not record feed metrics when no posts are imported" do
+  test "#execute should skip metrics when no posts are imported" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     empty_rss = <<~RSS
@@ -453,7 +453,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "aggregates feed metrics for multiple refreshes on same day" do
+  test "#execute should aggregate feed metrics for multiple refreshes on same day" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     first_rss = <<~RSS

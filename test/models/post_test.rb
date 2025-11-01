@@ -168,7 +168,7 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?
   end
 
-  test "normalized_attributes should include only normalized fields" do
+  test "#normalized_attributes should include only normalized fields" do
     post = build(:post,
       uid: "test-uid",
       content: "test content",

@@ -112,12 +112,12 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert preview.failed?
   end
 
-  test "posts_data should return empty array when data is nil" do
+  test "#posts_data should return empty array when data is nil" do
     preview = create(:feed_preview, user: user, data: nil)
     assert_equal [], preview.posts_data
   end
 
-  test "posts_data should return empty array when not ready" do
+  test "#posts_data should return empty array when not ready" do
     preview = create(
       :feed_preview,
       user: user,
@@ -128,7 +128,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal [], preview.posts_data
   end
 
-  test "posts_data should return posts when ready and data present" do
+  test "#posts_data should return posts when ready and data present" do
     posts = [{ "title" => "Test Post" }]
 
     preview = create(
@@ -141,7 +141,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal posts, preview.posts_data
   end
 
-  test "posts_count should return size of posts_data" do
+  test "#posts_count should return size of posts_data" do
     posts = [{ "title" => "Test Post 1" }, { "title" => "Test Post 2" }]
 
     preview = create(
@@ -154,7 +154,7 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 2, preview.posts_count
   end
 
-  test "posts_count should return 0 when no posts" do
+  test "#posts_count should return 0 when no posts" do
     preview = create(:feed_preview, user: user, data: nil)
     assert_equal 0, preview.posts_count
   end

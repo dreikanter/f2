@@ -85,7 +85,7 @@ class PostPolicyTest < ActiveSupport::TestCase
     assert_not PostPolicy.new(nil, published_post).destroy?
   end
 
-  test "Scope should return empty for unauthenticated users" do
+  test "#Scope should return empty for unauthenticated users" do
     create(:post, feed: feed)
     resolved_posts = PostPolicy::Scope.new(nil, Post).resolve
     assert_equal 0, resolved_posts.count

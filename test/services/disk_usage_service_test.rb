@@ -1,7 +1,7 @@
 require "test_helper"
 
 class DiskUsageServiceTest < ActiveSupport::TestCase
-  test "should return hash with all expected keys" do
+  test "#call should return hash with all expected keys" do
     result = DiskUsageService.new.call
 
     assert_instance_of Hash, result
@@ -12,21 +12,21 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     assert result.key?(:autovacuum_settings)
   end
 
-  test "should return free space as integer" do
+  test "#call should return free space as integer" do
     result = DiskUsageService.new.call
 
     assert_instance_of Integer, result[:free_space]
     assert result[:free_space] >= 0
   end
 
-  test "should return postgres usage as integer" do
+  test "#call should return postgres usage as integer" do
     result = DiskUsageService.new.call
 
     assert_instance_of Integer, result[:postgres_usage]
     assert result[:postgres_usage] >= 0
   end
 
-  test "should return table usage as array" do
+  test "#call should return table usage as array" do
     result = DiskUsageService.new.call
 
     assert_instance_of Array, result[:table_usage]
@@ -39,7 +39,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return vacuum stats as array" do
+  test "#call should return vacuum stats as array" do
     result = DiskUsageService.new.call
 
     assert_instance_of Array, result[:vacuum_stats]
@@ -53,7 +53,7 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return autovacuum settings as array" do
+  test "#call should return autovacuum settings as array" do
     result = DiskUsageService.new.call
 
     assert_instance_of Array, result[:autovacuum_settings]

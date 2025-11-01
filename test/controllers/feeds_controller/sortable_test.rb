@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FeedsControllerSortableTest < ActiveSupport::TestCase
-  test "sortable_fields should be well formed" do
+  test "#sortable_fields should be well formed" do
     fields = FeedsController::SORTABLE_FIELDS
 
     assert_kind_of Hash, fields

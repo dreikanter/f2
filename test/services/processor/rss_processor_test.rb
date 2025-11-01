@@ -9,7 +9,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     @sample_rss_content ||= file_fixture("feeds/rss/feed.xml").read
   end
 
-  test "should parse RSS feed and create FeedEntry objects" do
+  test "#process should parse RSS feed and create FeedEntry objects" do
     processor = Processor::RssProcessor.new(feed, sample_rss_content)
     entries = processor.process
 
@@ -26,7 +26,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_matches_snapshot(entries_snapshot, snapshot: "feeds/rss/entries.json")
   end
 
-  test "should raise error for invalid RSS" do
+  test "#process should raise error for invalid RSS" do
     processor = Processor::RssProcessor.new(feed, "invalid rss content")
 
     assert_raises(Feedjira::NoParserAvailable) do
@@ -34,7 +34,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return empty array for RSS without entries" do
+  test "#process should return empty array for RSS without entries" do
     empty_rss = <<~RSS
       <?xml version="1.0" encoding="UTF-8"?>
       <rss version="2.0">
@@ -51,7 +51,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_equal [], entries
   end
 
-  test "should handle entries without id or url" do
+  test "#process should handle entries without id or url" do
     minimal_rss = <<~RSS
       <?xml version="1.0" encoding="UTF-8"?>
       <rss version="2.0">

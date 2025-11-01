@@ -9,7 +9,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     @feed ||= create(:feed, user: user)
   end
 
-  test "should enable feed when conditions are met" do
+  test "#update should enable feed when conditions are met" do
     sign_in_as(user)
 
     patch feed_status_path(feed), params: { status: "enabled" }
@@ -22,7 +22,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", feed.state
   end
 
-  test "should disable feed" do
+  test "#update should disable feed" do
     sign_in_as(user)
     feed.update!(state: :enabled)
 
@@ -36,7 +36,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
-  test "should not enable feed when access token is missing" do
+  test "#update should not enable feed when access token is missing" do
     sign_in_as(user)
     feed_without_token = create(:feed, :without_access_token, user: user)
 
@@ -50,7 +50,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed_without_token.state
   end
 
-  test "should not enable feed when access token is inactive" do
+  test "#update should not enable feed when access token is inactive" do
     sign_in_as(user)
     inactive_token = create(:access_token, :inactive, user: user)
     feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token)
@@ -65,7 +65,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed_with_inactive_token.state
   end
 
-  test "should handle invalid status parameter" do
+  test "#update should handle invalid status parameter" do
     sign_in_as(user)
 
     patch feed_status_path(feed), params: { status: "invalid" }
@@ -75,12 +75,12 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Invalid status parameter"
   end
 
-  test "should redirect to login when not authenticated" do
+  test "#update should redirect to login when not authenticated" do
     patch feed_status_path(feed), params: { status: "enabled" }
     assert_redirected_to new_session_url
   end
 
-  test "should not allow access to other user's feeds" do
+  test "#update should not allow access to other user's feeds" do
     sign_in_as(user)
     other_user = create(:user)
     other_feed = create(:feed, user: other_user)
@@ -91,7 +91,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Feed not found"
   end
 
-  test "should handle concurrent modifications with optimistic locking" do
+  test "#update should handle concurrent modifications with optimistic locking" do
     sign_in_as(user)
 
     # Simulate concurrent modification by updating the feed in a separate transaction
@@ -108,7 +108,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Feed was successfully enabled"
   end
 
-  test "should use database transaction for atomic updates" do
+  test "#update should use database transaction for atomic updates" do
     sign_in_as(user)
 
     # Test that a validation error during update doesn't change the state
@@ -125,7 +125,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
-  test "should handle StaleObjectError gracefully" do
+  test "#update should handle StaleObjectError gracefully" do
     sign_in_as(user)
 
     # Mock the controller's enable method to raise StaleObjectError

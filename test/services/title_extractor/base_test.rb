@@ -9,12 +9,12 @@ class TitleExtractor::BaseTest < ActiveSupport::TestCase
     @extractor ||= TitleExtractor::Base.new("https://example.com", response)
   end
 
-  test "should initialize with url and response" do
+  test "#initialize should set url and response" do
     assert_equal "https://example.com", extractor.url
     assert_equal response, extractor.response
   end
 
-  test "title should raise NotImplementedError" do
+  test "#title should raise NotImplementedError" do
     error = assert_raises(NotImplementedError) do
       extractor.title
     end

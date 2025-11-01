@@ -25,19 +25,19 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     @other_user_post ||= create(:post, feed: other_feed)
   end
 
-  test "should redirect to login when not authenticated" do
+  test "#index should redirect to login when not authenticated" do
     get posts_url
     assert_redirected_to new_session_path
   end
 
-  test "should get index when authenticated" do
+  test "#index should render when authenticated" do
     sign_in_as(user)
     get posts_url
     assert_response :success
     assert_select "h1", "Posts"
   end
 
-  test "should show only user's posts in index" do
+  test "#index should show only user's posts" do
     sign_in_as(user)
     create(:post, feed: feed, content: "User's post")
     create(:post, feed: other_feed, content: "Other user's post")
@@ -48,7 +48,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Other user's post/, response.body)
   end
 
-  test "should paginate posts in index" do
+  test "#index should paginate posts" do
     sign_in_as(user)
     26.times { |i| create(:post, feed: feed, content: "Post #{i}") }
 
@@ -57,19 +57,19 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav[aria-label='Posts pagination']"
   end
 
-  test "should redirect to login when accessing show without authentication" do
+  test "#show should redirect to login when not authenticated" do
     get post_url(user_post)
     assert_redirected_to new_session_path
   end
 
-  test "should get show when authenticated and owns post" do
+  test "#show should render for owned post" do
     sign_in_as(user)
     get post_url(user_post)
     assert_response :success
     assert_select "h1", "Post Details"
   end
 
-  test "should not allow access to other user's post" do
+  test "#show should reject access to other user's post" do
     sign_in_as(user)
     # Create a post that belongs to another user's feed in a clean way
     other_user = create(:user)
@@ -80,7 +80,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "should display post content and metadata in show" do
+  test "#show should display post content and metadata" do
     sign_in_as(user)
     post_with_data = create(:post, :published, :with_attachments, :with_comments,
                            feed: feed,
@@ -95,7 +95,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "strong", text: "Comments (1):"
   end
 
-  test "should display validation errors when present" do
+  test "#show should display validation errors when present" do
     sign_in_as(user)
     post_with_errors = create(:post, :rejected, feed: feed)
 
@@ -104,7 +104,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert-danger"
   end
 
-  test "should show correct status" do
+  test "#show should display correct status" do
     sign_in_as(user)
 
     enqueued_post = create(:post, :enqueued, feed: feed)
@@ -120,7 +120,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "strong", text: "Status:"
   end
 
-  test "should display external links when available" do
+  test "#show should display external links when available" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
     feed.update(target_group: "testgroup")
@@ -131,7 +131,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{published_post.source_url}']", text: "View Original Source"
   end
 
-  test "destroy withdraws post and creates event" do
+  test "#destroy should withdraw post and create event" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
@@ -155,14 +155,14 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "info", event.level
   end
 
-  test "destroy requires authentication" do
+  test "#destroy should require authentication" do
     published_post = create(:post, :published, feed: feed)
 
     delete post_url(published_post)
     assert_redirected_to new_session_path
   end
 
-  test "destroy requires ownership" do
+  test "#destroy should require ownership" do
     sign_in_as(user)
     other_user = create(:user)
     other_feed = create(:feed, user: other_user)
@@ -172,7 +172,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "destroy requires published status" do
+  test "#destroy should require published status" do
     sign_in_as(user)
     draft_post = create(:post, :draft, feed: feed)
 
@@ -180,7 +180,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should sort posts by feed name ascending" do
+  test "#index should sort posts by feed name ascending" do
     sign_in_as(user)
     feed_a = create(:feed, user: user, name: "A Feed")
     feed_z = create(:feed, user: user, name: "Z Feed")
@@ -196,7 +196,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_a < pos_z, "Expected Post A to appear before Post Z"
   end
 
-  test "should sort posts by feed name descending" do
+  test "#index should sort posts by feed name descending" do
     sign_in_as(user)
     feed_a = create(:feed, user: user, name: "A Feed")
     feed_z = create(:feed, user: user, name: "Z Feed")
@@ -212,7 +212,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_z < pos_a, "Expected Post Z to appear before Post A"
   end
 
-  test "should sort posts by published date ascending" do
+  test "#index should sort posts by published date ascending" do
     sign_in_as(user)
     old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
     new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
@@ -226,7 +226,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_old < pos_new, "Expected old post to appear before new post"
   end
 
-  test "should sort posts by published date descending" do
+  test "#index should sort posts by published date descending" do
     sign_in_as(user)
     old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
     new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
@@ -240,7 +240,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_new < pos_old, "Expected new post to appear before old post"
   end
 
-  test "should sort posts by status" do
+  test "#index should sort posts by status" do
     sign_in_as(user)
     draft_post = create(:post, :draft, feed: feed, content: "Draft post")
     published_post = create(:post, :published, feed: feed, content: "Published post")
@@ -254,7 +254,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_draft < pos_published, "Expected draft post to appear before published post"
   end
 
-  test "should sort posts by attachments count" do
+  test "#index should sort posts by attachments count" do
     sign_in_as(user)
     post_with_attachments = create(:post, :with_attachments, feed: feed, content: "Post with attachments")
     post_without_attachments = create(:post, feed: feed, content: "Post without attachments")
@@ -268,7 +268,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_with < pos_without, "Expected post with attachments to appear first"
   end
 
-  test "should sort posts by comments count" do
+  test "#index should sort posts by comments count" do
     sign_in_as(user)
     post_with_comments = create(:post, :with_comments, feed: feed, content: "Post with comments")
     post_without_comments = create(:post, feed: feed, content: "Post without comments")
@@ -282,7 +282,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_with < pos_without, "Expected post with comments to appear first"
   end
 
-  test "should use default sort when no sort parameter provided" do
+  test "#index should use default sort when no sort parameter provided" do
     sign_in_as(user)
     old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
     new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
@@ -296,7 +296,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_new < pos_old, "Expected new post to appear before old post (default sort)"
   end
 
-  test "pagination should preserve sort parameters" do
+  test "#pagination should preserve sort parameters" do
     sign_in_as(user)
     3.times { |i| create(:post, feed: feed, content: "Post #{i}") }
 

@@ -27,7 +27,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     }.merge(attributes))
   end
 
-  test "initializes successfully with valid post" do
+  test "#initialize should set post and client" do
     post = post_with_content("Test content")
     service = FreefeedPublisher.new(post)
 
@@ -35,13 +35,13 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_instance_of FreefeedClient, service.client
   end
 
-  test "raises validation error for missing post" do
+  test "#initialize should raise when post is missing" do
     assert_raises(FreefeedPublisher::ValidationError, "Post is required") do
       FreefeedPublisher.new(nil)
     end
   end
 
-  test "raises validation error for post without feed" do
+  test "#initialize should raise when post has no feed" do
     post = build(:post, feed: nil)
 
     assert_raises(FreefeedPublisher::ValidationError, "Post feed is required") do
@@ -49,7 +49,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "raises validation error for feed without access token" do
+  test "#initialize should raise when feed lacks access token" do
     feed = create(:feed, :without_access_token, user: user, feed_profile_key: "rss", state: :disabled)
     post = create(:post, feed: feed, feed_entry: feed_entry)
 
@@ -59,7 +59,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed access token is required", error.message
   end
 
-  test "raises validation error for feed without target group" do
+  test "#initialize should raise when feed lacks target group" do
     feed = create(:feed, user: user, access_token: access_token, feed_profile_key: "rss", target_group: nil, state: :disabled)
     post = create(:post, feed: feed, feed_entry: feed_entry)
 
@@ -69,7 +69,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed target group is required", error.message
   end
 
-  test "raises validation error for post without content" do
+  test "#initialize should raise when post lacks content" do
     post = post_with_content("")
 
     error = assert_raises(FreefeedPublisher::ValidationError) do
@@ -78,7 +78,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post content is required", error.message
   end
 
-  test "raises validation error for inactive access token" do
+  test "#initialize should raise when access token inactive" do
     inactive_token = create(:access_token, user: user, status: :inactive)
     feed_with_inactive_token = create(:feed, user: user, access_token: inactive_token, feed_profile_key: "rss", target_group: "testgroup")
     post = create(:post, feed: feed_with_inactive_token, feed_entry: feed_entry, content: "Test content")
@@ -90,7 +90,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed access token is inactive", error.message
   end
 
-  test "publish creates post without attachments or comments" do
+  test "#publish should create post without attachments or comments" do
     post = post_with_content("Test post content")
 
     # Mock FreeFeed API responses
@@ -131,7 +131,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "published", post.status
   end
 
-  test "publish creates post with attachments" do
+  test "#publish should upload attachments before publishing" do
     file_path = file_fixture("test_image.jpg")
     post = post_with_content("Post with image", attachment_urls: [file_path.to_s])
 
@@ -189,7 +189,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "published", post.status
   end
 
-  test "publish creates post with comments" do
+  test "#publish should create comments after publishing post" do
     post = post_with_content("Post with comments", comments: ["First comment", "Second comment"])
 
     # Mock post creation
@@ -279,7 +279,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "freefeed_post_123", freefeed_post_id
   end
 
-  test "publish skips blank comments" do
+  test "#publish should skip blank comments" do
     post = post_with_content("Post with comments", comments: ["First comment", "", "   ", "Second comment"])
 
     # Mock post creation
@@ -352,7 +352,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_requested(:post, "#{access_token.host}/v4/comments", times: 2)
   end
 
-  test "publish returns existing freefeed_post_id if already published" do
+  test "#publish should return existing freefeed_post_id when already published" do
     post = post_with_content("Already published", freefeed_post_id: "existing_id")
 
     service = FreefeedPublisher.new(post)
@@ -363,7 +363,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_not_requested(:post, "#{access_token.host}/v4/posts")
   end
 
-  test "publish handles FreeFeed API errors gracefully" do
+  test "#publish should raise error when FreeFeed API fails" do
     post = post_with_content("Test content")
 
     stub_request(:post, "#{@access_token.host}/v4/posts")
@@ -376,7 +376,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "publish handles attachment upload errors" do
+  test "#publish should raise error when attachment upload fails" do
     post = post_with_content("Post with image", attachment_urls: ["/nonexistent/file.jpg"])
 
     service = FreefeedPublisher.new(post)
@@ -386,7 +386,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "publish handles comment creation errors" do
+  test "#publish should raise error when comment creation fails" do
     post = post_with_content("Post with comments", comments: ["Test comment"])
 
     # Mock successful post creation
@@ -415,7 +415,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "downloads remote image attachment to memory" do
+  test "#publish should download remote image attachment to memory" do
     image_data = "\xFF\xD8\xFF\xE0fake_jpeg_data"
     image_url = "https://example.com/image.jpg"
 
@@ -463,7 +463,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_requested :post, "#{access_token.host}/v1/attachments"
   end
 
-  test "handles image download failure" do
+  test "#publish should handle image download failure" do
     image_url = "https://example.com/missing.jpg"
     post = post_with_content("Post with missing image", attachment_urls: [image_url])
 
@@ -478,7 +478,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
-  test "handles local file attachment" do
+  test "#publish should handle local file attachment" do
     # Create a temporary file
     temp_file = Tempfile.new(["test_image", ".jpg"])
     temp_file.binmode
@@ -528,7 +528,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     temp_file.unlink
   end
 
-  test "handles HTTP client errors during download" do
+  test "#publish should handle HTTP client errors during download" do
     image_url = "https://example.com/timeout.jpg"
     post = post_with_content("Post with timeout image", attachment_urls: [image_url])
 
