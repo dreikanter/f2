@@ -10,13 +10,9 @@ class SortablePresenterTest < ActiveSupport::TestCase
     end
   end
 
-  def new_presenter(controller_params: {}, fields:, path_builder:)
-    controller = StubController.new(controller_params)
-    SortablePresenter.new(controller: controller, fields: fields, path_builder: path_builder)
-  end
-
   test "uses defaults when params are missing" do
-    presenter = new_presenter(
+    presenter = SortablePresenter.new(
+      params: {},
       fields: {
         name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc }
       },
@@ -32,8 +28,8 @@ class SortablePresenterTest < ActiveSupport::TestCase
   end
 
   test "honors provided params and toggles direction" do
-    presenter = new_presenter(
-      controller_params: { sort: "status", direction: "desc", extra: "1" },
+    presenter = SortablePresenter.new(
+      params: { sort: "status", direction: "desc", extra: "1" },
       fields: {
         name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc },
         status: { title: "Status", order_by: "status", direction: :desc }
@@ -48,8 +44,8 @@ class SortablePresenterTest < ActiveSupport::TestCase
   end
 
   test "falls back to defaults for invalid params" do
-    presenter = new_presenter(
-      controller_params: { sort: "invalid", direction: "sideways" },
+    presenter = SortablePresenter.new(
+      params: { sort: "invalid", direction: "sideways" },
       fields: {
         name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc }
       },

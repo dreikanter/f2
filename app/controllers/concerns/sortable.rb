@@ -9,7 +9,7 @@ module Sortable
 
   def sortable_presenter
     SortablePresenter.new(
-      controller: self,
+      params: params,
       fields: sortable_fields,
       path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )
