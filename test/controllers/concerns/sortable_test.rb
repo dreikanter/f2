@@ -99,6 +99,22 @@ class SortableTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#sortable_presenter should ignore unknown field names" do
+    with_sortable_routes do
+      get "/sortable_test_demo_index", params: { sort: "unknown", direction: "asc" }
+
+      response_data = response.parsed_body
+
+      assert_equal "Name", response_data["current_title"]
+      assert_equal "asc", response_data["current_direction"]
+
+      default_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "name", default_option["field"]
+      assert_equal "asc", default_option["active_direction"]
+    end
+  end
+
   private
 
   def with_sortable_routes
