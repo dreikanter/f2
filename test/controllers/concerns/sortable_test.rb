@@ -6,25 +6,7 @@ module SortableTestControllers
 
     def index
       @presenter = sortable_presenter
-
-      render inline: <<~HTML, locals: { presenter: @presenter }
-        <div id="current-title"><%= presenter.current_title %></div>
-        <div id="current-direction"><%= presenter.current_direction %></div>
-        <ul id="sort-options">
-          <% presenter.options.each do |option| %>
-            <li>
-              <a
-                href="<%= option.path %>"
-                data-field="<%= option.field %>"
-                data-active="<%= option.active %>"
-                data-active-direction="<%= option.active_direction %>"
-              >
-                <%= option.title %>
-              </a>
-            </li>
-          <% end %>
-        </ul>
-      HTML
+      render json: presenter_payload(@presenter)
     end
 
     private
@@ -45,7 +27,23 @@ module SortableTestControllers
     end
 
     def sortable_path(sort_params)
-      "/sortable_test_demo_index?#{sort_params.to_query}"
+      query = sort_params.to_query
+      "/sortable_test_demo_index#{query.present? ? "?#{query}" : ""}"
+    end
+
+    def presenter_payload(presenter)
+      {
+        current_title: presenter.current_title,
+        current_direction: presenter.current_direction,
+        options: presenter.options.map do |option|
+          {
+            field: option.field,
+            title: option.title,
+            active: option.active?,
+            active_direction: option.active_direction
+          }
+        end
+      }
     end
   end
 end
@@ -53,35 +51,51 @@ end
 class SortableTest < ActionDispatch::IntegrationTest
   test "#sortable_presenter should use defaults when no params provided" do
     with_sortable_routes do
-      get sortable_test_demo_index_path
+      get "/sortable_test_demo_index"
 
-      assert_response :success
-      assert_select "#current-title", "Name"
-      assert_select "#current-direction", "asc"
-      assert_select "#sort-options a[data-field='name'][data-active='true'][data-active-direction='asc']"
+      response_data = response.parsed_body
+      assert_equal "Name", response_data["current_title"]
+      assert_equal "asc", response_data["current_direction"]
+
+      option = response_data["options"].detect { |item| item["active"] }
+      assert_equal "name", option["field"]
+      assert_equal "asc", option["active_direction"]
     end
   end
 
   test "#sortable_presenter should respect sort params" do
     with_sortable_routes do
-      get sortable_test_demo_index_path(sort: "created_at", direction: "desc")
+      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "desc" }
 
-      assert_response :success
-      assert_select "#current-title", "Created"
-      assert_select "#current-direction", "desc"
-      assert_select "#sort-options a[data-field='created_at'][data-active='true'][data-active-direction='desc']"
-      assert_select "#sort-options a[data-field='name'][data-active='false']"
+      response_data = response.parsed_body
+
+      assert_equal "Created", response_data["current_title"]
+      assert_equal "desc", response_data["current_direction"]
+
+      active_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "created_at", active_option["field"]
+      assert_equal "desc", active_option["active_direction"]
+
+      name_option = response_data["options"].detect { |item| item["field"] == "name" }
+
+      assert_not name_option["active"]
     end
   end
 
   test "#sortable_presenter should fall back on invalid direction" do
     with_sortable_routes do
-      get sortable_test_demo_index_path(sort: "created_at", direction: "sideways")
+      get "/sortable_test_demo_index", params: { sort: "created_at", direction: "sideways" }
 
-      assert_response :success
-      assert_select "#current-title", "Created"
-      assert_select "#current-direction", "desc"
-      assert_select "#sort-options a[data-field='created_at'][data-active='true'][data-active-direction='desc']"
+      response_data = response.parsed_body
+
+      assert_equal "Created", response_data["current_title"]
+      assert_equal "desc", response_data["current_direction"]
+
+      active_option = response_data["options"].detect { |item| item["active"] }
+
+      assert_equal "created_at", active_option["field"]
+      assert_equal "desc", active_option["active_direction"]
     end
   end
 
@@ -90,7 +104,7 @@ class SortableTest < ActionDispatch::IntegrationTest
   def with_sortable_routes
     with_routing do |set|
       set.draw do
-        get "/sortable_test_demo_index", to: "sortable_test_controllers/demo#index", as: :sortable_test_demo_index
+        get "/sortable_test_demo_index", to: "sortable_test_controllers/demo#index"
       end
 
       yield
