@@ -32,7 +32,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    total_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Total feeds" }
+    total_item = css_select('[data-key="status-stats.total_feeds"]').first
     assert_not_nil total_item
     assert_equal "2", total_item.at_css(".ff-list-group__trailing-text").text.strip
   end
@@ -47,7 +47,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    imported_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Total imported posts" }
+    imported_item = css_select('[data-key="status-stats.total_imported_posts"]').first
     assert_not_nil imported_item
     assert_equal "2", imported_item.at_css(".ff-list-group__trailing-text").text.strip
   end
@@ -64,7 +64,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    published_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Total published posts" }
+    published_item = css_select('[data-key="status-stats.total_published_posts"]').first
     assert_not_nil published_item
     assert_equal "2", published_item.at_css(".ff-list-group__trailing-text").text.strip
   end
@@ -77,7 +77,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    recent_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Most recent post publication" }
+    recent_item = css_select('[data-key="status-stats.most_recent_post_publication"]').first
     assert_not_nil recent_item
     assert_match(/1 day ago/, recent_item.at_css(".ff-list-group__trailing-text").text)
   end
@@ -87,7 +87,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    refute_includes stats_titles, "Most recent post publication"
+    assert css_select('[data-key="status-stats.most_recent_post_publication"]').empty?
   end
 
   test "#show should display average posts per day for last week" do
@@ -100,7 +100,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    average_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Average posts per day (last week)" }
+    average_item = css_select('[data-key="status-stats.average_posts_per_day"]').first
     assert_not_nil average_item
     assert_equal "0.3", average_item.at_css(".ff-list-group__trailing-text").text.strip
   end
@@ -110,7 +110,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    refute_includes stats_titles, "Average posts per day (last week)"
+    assert css_select('[data-key="status-stats.average_posts_per_day"]').empty?
   end
 
   test "#show should hide post statistics when no posts" do
@@ -118,11 +118,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    titles = stats_titles
-    refute_includes titles, "Total imported posts"
-    refute_includes titles, "Total published posts"
-    refute_includes titles, "Most recent post publication"
-    refute_includes titles, "Average posts per day (last week)"
+    assert css_select('[data-key="status-stats.total_imported_posts"]').empty?
+    assert css_select('[data-key="status-stats.total_published_posts"]').empty?
+    assert css_select('[data-key="status-stats.most_recent_post_publication"]').empty?
+    assert css_select('[data-key="status-stats.average_posts_per_day"]').empty?
   end
 
   test "#show should render empty state when no feeds" do
@@ -138,15 +137,9 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    total_item = css_select(".ff-list-group__item").find { |item| item.at_css(".ff-list-group__title")&.text&.strip == "Total feeds" }
+    total_item = css_select('[data-key="status-stats.total_feeds"]').first
     assert_not_nil total_item
     assert_equal "1", total_item.at_css(".ff-list-group__trailing-text").text.strip
     assert_select "h1", "Status"
-  end
-
-  private
-
-  def stats_titles
-    css_select(".ff-list-group__item .ff-list-group__title").map { |node| node.text.strip }
   end
 end

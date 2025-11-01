@@ -14,8 +14,10 @@ class StatusStatsComponentTest < ViewComponent::TestCase
       )
     )
 
-    assert_includes result.css(".ff-list-group__title").map(&:text), "Total feeds"
-    assert_includes result.css(".ff-list-group__trailing-text").map(&:text), "3"
+    item = result.css('[data-key="status-stats.total_feeds"]').first
+    assert_not_nil item
+    assert_equal "Total feeds", item.at_css(".ff-list-group__title").text
+    assert_equal "3", item.at_css(".ff-list-group__trailing-text").text
   end
 
   test "#render should include optional metrics when available" do
@@ -31,18 +33,23 @@ class StatusStatsComponentTest < ViewComponent::TestCase
       )
 
       titles = result.css(".ff-list-group__title").map(&:text)
-      values = result.css(".ff-list-group__trailing-text").map(&:text)
+      assert_includes titles, "Total feeds"
 
-      assert_includes titles, "Total imported posts"
-      assert_includes values, "5"
-      assert_includes titles, "Total published posts"
-      assert_includes values, "4"
-      recent_index = titles.index("Most recent post publication")
-      assert recent_index, "Expected Most recent post publication title"
-      assert_includes values[recent_index], "ago"
-      average_index = titles.index("Average posts per day (last week)")
-      assert average_index
-      assert_equal "1.5", values[average_index]
+      imported = result.css('[data-key="status-stats.total_imported_posts"]').first
+      assert_not_nil imported
+      assert_equal "5", imported.at_css(".ff-list-group__trailing-text").text
+
+      published = result.css('[data-key="status-stats.total_published_posts"]').first
+      assert_not_nil published
+      assert_equal "4", published.at_css(".ff-list-group__trailing-text").text
+
+      recent = result.css('[data-key="status-stats.most_recent_post_publication"]').first
+      assert_not_nil recent
+      assert_match(/ago/, recent.at_css(".ff-list-group__trailing-text").text)
+
+      average = result.css('[data-key="status-stats.average_posts_per_day"]').first
+      assert_not_nil average
+      assert_equal "1.5", average.at_css(".ff-list-group__trailing-text").text
     end
   end
 end
