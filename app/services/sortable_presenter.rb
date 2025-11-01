@@ -89,6 +89,6 @@ class SortablePresenter
   def field_config_for(field)
     return nil if field.blank?
 
-    fields[field.to_sym] || fields[field.to_s]
+    fields[field.to_sym]
   end
 end
