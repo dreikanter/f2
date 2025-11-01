@@ -28,7 +28,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     assert session.reload.updated_at > 1.minute.ago
   end
 
-  test "#update_session_activity should not not touch recent session" do
+  test "#update_session_activity should not touch recent session" do
     user = create(:user)
     login_as(user)
     session = user.sessions.last
