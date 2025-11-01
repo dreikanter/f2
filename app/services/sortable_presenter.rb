@@ -64,9 +64,9 @@ class SortablePresenter
     end
   end
 
-  def default_direction_for(field_value)
-    config = field_config_for(field_value)
-    normalize_direction(config ? config.fetch(:direction, :desc) : :desc)
+  def default_direction_for(field)
+    config = field_config_for(field)
+    config ? config.fetch(:direction, "desc") : "desc"
   end
 
   def default_field
