@@ -118,20 +118,4 @@
   .ff-h3 {
     @apply text-xl font-semibold mb-2 text-slate-900;
   }
-
-  .ff-stats {
-    @apply divide-y divide-slate-200;
-  }
-
-  .ff-stats__row {
-    @apply flex flex-wrap items-baseline justify-between gap-4 py-3;
-  }
-
-  .ff-stats__label {
-    @apply font-medium text-slate-600;
-  }
-
-  .ff-stats__value {
-    @apply font-semibold text-slate-900;
-  }
 }
