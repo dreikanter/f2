@@ -63,7 +63,7 @@
   <% if @feeds.any? %>
     <% component = ListGroupComponent.new %>
     <% @feeds.each do |feed| %>
-      <% component.with_item(ListGroupComponent::ItemComponent.new(
+      <% component.with_item(ListGroupComponent::FeedItemComponent.new(
         icon: feed_status_icon(feed),
         title: feed.name,
         title_url: feed_path(feed),
