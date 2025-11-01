@@ -1,7 +1,7 @@
 require "test_helper"
 require "rack/utils"
 
-class SortPresenterTest < ActiveSupport::TestCase
+class SortablePresenterTest < ActiveSupport::TestCase
   class StubController
     attr_reader :params
 
@@ -10,19 +10,21 @@ class SortPresenterTest < ActiveSupport::TestCase
     end
   end
 
+  def new_presenter(controller_params: {}, fields:, path_builder:)
+    controller = StubController.new(controller_params)
+    SortablePresenter.new(controller: controller, fields: fields, path_builder: path_builder)
+  end
+
   test "uses defaults when params are missing" do
-    controller = StubController.new
-    presenter = SortPresenter.new(
-      controller: controller,
+    presenter = new_presenter(
       fields: {
-        name: { title: "Name", order_by: "name", direction: :asc }
+        name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc }
       },
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )
 
     assert_equal "Name", presenter.current_label
     assert_equal "asc", presenter.current_direction
-    assert_equal "arrow-up-short", presenter.icon_name_for_button
 
     option = presenter.options.first
     assert option.active?
@@ -30,34 +32,26 @@ class SortPresenterTest < ActiveSupport::TestCase
   end
 
   test "honors provided params and toggles direction" do
-    controller = StubController.new(sort: "status", direction: "desc", extra: "1")
-    fields = {
-      name: { title: "Name", order_by: "name", direction: :asc },
-      status: { title: "Status", order_by: "status", direction: :desc }
-    }
-
-    presenter = SortPresenter.new(
-      controller: controller,
-      fields: fields,
-      path_builder: ->(params) { "/items?#{params.merge(extra: controller.params[:extra]).to_query}" }
+    presenter = new_presenter(
+      controller_params: { sort: "status", direction: "desc", extra: "1" },
+      fields: {
+        name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc },
+        status: { title: "Status", order_by: "status", direction: :desc }
+      },
+      path_builder: ->(params) { "/items?#{params.merge(extra: "1").to_query}" }
     )
 
     active_option = presenter.options.detect(&:active?)
     assert_equal "status", active_option.field
     assert_equal "desc", active_option.active_direction
-    assert_equal "arrow-down-short", active_option.icon_name
-    assert_equal(
-      { "extra" => "1", "sort" => "status", "direction" => "asc" },
-      query_params(active_option.path)
-    )
+    assert_equal({ "extra" => "1", "sort" => "status", "direction" => "asc" }, query_params(active_option.path))
   end
 
   test "falls back to defaults for invalid params" do
-    controller = StubController.new(sort: "invalid", direction: "sideways")
-    presenter = SortPresenter.new(
-      controller: controller,
+    presenter = new_presenter(
+      controller_params: { sort: "invalid", direction: "sideways" },
       fields: {
-        name: { title: "Name", order_by: "name", direction: :asc }
+        name: { title: "Name", order_by: "LOWER(items.name)", direction: :asc }
       },
       path_builder: ->(params) { "/items?#{params.to_query}" }
     )

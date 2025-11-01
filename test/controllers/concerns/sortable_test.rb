@@ -28,56 +28,56 @@ class SortableTest < ActionDispatch::IntegrationTest
     @controller.params = ActionController::Parameters.new
   end
 
-  test "sort_field returns valid field from params" do
+  test "sortable_field returns valid field from params" do
     @controller.params[:sort] = "name"
 
-    assert_equal "name", @controller.send(:sort_field)
+    assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sort_field returns default when invalid field in params" do
+  test "sortable_field returns default when invalid field in params" do
     @controller.params[:sort] = "invalid_field"
 
-    assert_equal "name", @controller.send(:sort_field)
+    assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sort_field returns default when no params" do
-    assert_equal "name", @controller.send(:sort_field)
+  test "sortable_field returns default when no params" do
+    assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sort_direction returns valid direction from params" do
+  test "sortable_direction returns valid direction from params" do
     @controller.params[:direction] = "desc"
 
-    assert_equal "desc", @controller.send(:sort_direction)
+    assert_equal "desc", @controller.send(:sortable_direction)
   end
 
-  test "sort_direction returns default when invalid direction in params" do
+  test "sortable_direction returns default when invalid direction in params" do
     @controller.params[:direction] = "invalid"
 
-    assert_equal "asc", @controller.send(:sort_direction)
+    assert_equal "asc", @controller.send(:sortable_direction)
   end
 
-  test "sort_direction returns default when no params" do
-    assert_equal "asc", @controller.send(:sort_direction)
+  test "sortable_direction returns default when no params" do
+    assert_equal "asc", @controller.send(:sortable_direction)
   end
 
-  test "sort_order returns Arel ascending node" do
+  test "sortable_order returns Arel ascending node" do
     @controller.params[:sort] = "name"
     @controller.params[:direction] = "asc"
 
-    order = @controller.send(:sort_order)
+    order = @controller.send(:sortable_order)
     assert_instance_of Arel::Nodes::Ascending, order
   end
 
-  test "sort_order returns Arel descending node" do
+  test "sortable_order returns Arel descending node" do
     @controller.params[:sort] = "name"
     @controller.params[:direction] = "desc"
 
-    order = @controller.send(:sort_order)
+    order = @controller.send(:sortable_order)
     assert_instance_of Arel::Nodes::Descending, order
   end
 
-  test "sort_presenter builds presenter with configured path and base params" do
-    presenter = @controller.send(:sort_presenter)
+  test "sortable_presenter builds presenter with configured path and base params" do
+    presenter = @controller.send(:sortable_presenter)
     option = presenter.options.first
 
     assert_equal "Name", option.label

@@ -55,14 +55,14 @@ module ApplicationHelper
   def sortable_header(field:, title:, path_params: {})
     default_sort_field = controller.respond_to?(:sortable_default_field, true) ? controller.send(:sortable_default_field).to_s : nil
 
-    current_sort = if controller.respond_to?(:sort_field, true)
-      controller.send(:sort_field)
+    current_sort = if controller.respond_to?(:sortable_field, true)
+      controller.send(:sortable_field)
     else
       params[:sort].presence || default_sort_field
     end
 
-    current_direction = if controller.respond_to?(:sort_direction, true)
-      controller.send(:sort_direction)
+    current_direction = if controller.respond_to?(:sortable_direction, true)
+      controller.send(:sortable_direction)
     else
       default_direction_for_current = if controller.respond_to?(:default_direction_for, true)
         controller.send(:default_direction_for, current_sort || default_sort_field)

@@ -2,20 +2,20 @@ module Sortable
   extend ActiveSupport::Concern
 
   included do
-    helper_method :sort_presenter if respond_to?(:helper_method)
+    helper_method :sortable_presenter if respond_to?(:helper_method)
   end
 
   private
 
-  def sort_presenter
-    SortPresenter.new(
+  def sortable_presenter
+    SortablePresenter.new(
       controller: self,
       fields: sortable_fields,
       path_builder: ->(sortable_params) { sortable_path(sortable_params) }
     )
   end
 
-  def sort_field
+  def sortable_field
     field = params[:sort]
 
     if field.present? && sortable_fields.key?(field.to_sym)
@@ -29,14 +29,14 @@ module Sortable
     sortable_fields.keys.first.to_s
   end
 
-  def sort_direction
+  def sortable_direction
     direction = params[:direction]
 
     case direction
     when "asc", "desc"
       direction
     else
-      default_direction_for(sort_field)
+      default_direction_for(sortable_field)
     end
   end
 
@@ -45,12 +45,12 @@ module Sortable
     config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
-  def sort_order
-    config = sortable_fields[sort_field.to_sym] || sortable_fields[sort_field]
+  def sortable_order
+    config = sortable_fields[sortable_field.to_sym] || sortable_fields[sortable_field]
     field_sql = config.fetch(:order_by)
     arel_field = Arel.sql(field_sql)
 
-    sort_direction == "asc" ? arel_field.asc : arel_field.desc
+    sortable_direction == "asc" ? arel_field.asc : arel_field.desc
   end
 
   def sortable_fields

@@ -63,7 +63,7 @@ class Admin::UsersController < ApplicationController
                COUNT(DISTINCT access_tokens.id) AS access_tokens_count,
                COUNT(DISTINCT posts.id) AS posts_count,
                MAX(sessions.updated_at) AS last_seen_at")
-      .order(sort_order)
+      .order(sortable_order)
   end
 
   def pagination_total_count

@@ -6,7 +6,7 @@ class PostsController < ApplicationController
 
   def index
     authorize Post
-    @sort_presenter = sort_presenter
+    @sort_presenter = sortable_presenter
     @posts = paginate_scope
     @feed = Feed.find(params[:feed_id]) if params[:feed_id].present?
   end
@@ -73,7 +73,7 @@ class PostsController < ApplicationController
   end
 
   def pagination_scope
-    scope = policy_scope(Post).preload(feed: :access_token).order(sort_order)
+    scope = policy_scope(Post).preload(feed: :access_token).order(sortable_order)
     scope = scope.where(feed_id: params[:feed_id]) if params[:feed_id].present?
     scope
   end

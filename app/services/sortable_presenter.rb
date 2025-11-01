@@ -1,4 +1,4 @@
-class SortPresenter
+class SortablePresenter
   Option = Struct.new(:label, :field, :path, :active, :active_direction, :icon_name, keyword_init: true) do
     def active?
       active
