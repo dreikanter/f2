@@ -1,4 +1,19 @@
 module PostHelper
+  def post_status_badge_classes(status)
+    case status.to_s
+    when "enqueued"
+      "bg-blue-100 text-blue-800"
+    when "published"
+      "bg-green-100 text-green-800"
+    when "failed"
+      "bg-red-100 text-red-800"
+    when "rejected"
+      "bg-orange-100 text-orange-800"
+    else
+      "bg-slate-100 text-slate-800"
+    end
+  end
+
   # TBD: Refactor after metadata/list item description pattern stabilizes
   def post_metadata_segments(post, show_feed: false, withdraw_allowed: false)
     [

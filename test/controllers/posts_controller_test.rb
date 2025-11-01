@@ -127,8 +127,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get post_url(published_post)
     assert_response :success
-    assert_select "a[href*='#{feed.access_token.host}/testgroup/test-123']", text: "View on FreeFeed"
-    assert_select "a[href='#{published_post.source_url}']", text: "View Original Source"
+    assert_select "[data-key='post.source_url']"
+    assert_select "a[href='#{published_post.source_url}']"
+    assert_select "[data-key='post.freefeed_post_id']"
   end
 
   test "#destroy should withdraw post and create event" do
