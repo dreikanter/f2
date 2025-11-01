@@ -11,7 +11,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     Processor::RssProcessor
   end
 
-  test "should create valid post from feed entry" do
+  test "#normalize should create valid post from feed entry" do
     entry = feed_entry(0)
 
     normalizer = Normalizer::RssNormalizer.new(entry)
@@ -20,7 +20,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
-  test "should accept post with URL even when text content is blank" do
+  test "#normalize should accept post with URL even when text content is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "",
       "content" => "",
@@ -36,7 +36,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal [], post.validation_errors
   end
 
-  test "should normalize future publication date to current date" do
+  test "#normalize should normalize future publication date to current date" do
     future_time = 1.hour.from_now
     entry = create(:feed_entry, published_at: future_time)
 
@@ -49,7 +49,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert post.published_at <= Time.current
   end
 
-  test "should truncate content that is too long" do
+  test "#normalize should truncate content that is too long" do
     long_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
 
     entry = create(:feed_entry, raw_data: {
@@ -66,7 +66,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert post.content.ends_with?("https://example.com/long")
   end
 
-  test "should reject post when URL is too long" do
+  test "#normalize should reject post when URL is too long" do
     very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
 
     entry = create(:feed_entry, raw_data: {
@@ -84,7 +84,7 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "url_too_long"
   end
 
-  test "should reject post when URL is too long and content is blank" do
+  test "#normalize should reject post when URL is too long and content is blank" do
     very_long_url = "https://example.com/" + ("a" * Post::MAX_URL_LENGTH)
 
     entry = create(:feed_entry, raw_data: {

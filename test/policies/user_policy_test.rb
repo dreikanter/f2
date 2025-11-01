@@ -84,7 +84,7 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_not policy.destroy?
   end
 
-  test "scope should return only self for regular users" do
+  test "#scope should return only self for regular users" do
     scope = scope_for_user(user)
     result = scope.resolve
 
@@ -93,7 +93,7 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_not_includes result, other_user
   end
 
-  test "scope should return all users for admin users" do
+  test "#scope should return all users for admin users" do
     scope = scope_for_user(admin_user)
     result = scope.resolve
 
@@ -102,7 +102,7 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_includes result, admin_user
   end
 
-  test "scope should return no users for nil user" do
+  test "#scope should return no users for nil user" do
     scope = UserPolicy::Scope.new(nil, User.all)
     result = scope.resolve
 

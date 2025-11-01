@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Loader::BaseTest < ActiveSupport::TestCase
-  test "should initialize without errors" do
+  test "#initialize should run without errors" do
     feed = create(:feed)
 
     assert_nothing_raised do
@@ -9,7 +9,7 @@ class Loader::BaseTest < ActiveSupport::TestCase
     end
   end
 
-  test "should initialize with options" do
+  test "#initialize should accept options hash" do
     feed = create(:feed)
     options = { key: "value" }
 
@@ -18,7 +18,7 @@ class Loader::BaseTest < ActiveSupport::TestCase
     end
   end
 
-  test "should raise NotImplementedError for load method" do
+  test "#load should raise NotImplementedError" do
     feed = create(:feed)
     loader = Loader::Base.new(feed)
 

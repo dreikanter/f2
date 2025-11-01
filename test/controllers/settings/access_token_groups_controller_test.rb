@@ -17,7 +17,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
     Rails.cache = original_cache
   end
 
-  test "index should find access token and fetch managed groups" do
+  test "#index should find access token and fetch managed groups" do
     sign_in_as(user)
 
     response_body = [
@@ -56,7 +56,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
     assert_includes response.body, "🔒"
   end
 
-  test "index should handle FreefeedClient::Error and render error partial" do
+  test "#index should handle FreefeedClient::Error and render error partial" do
     sign_in_as(user)
 
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
@@ -69,7 +69,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
     assert_includes response.body, "Failed to load groups:"
   end
 
-  test "index should handle network errors" do
+  test "#index should handle network errors" do
     sign_in_as(user)
 
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
@@ -97,7 +97,7 @@ class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTes
     assert_response :not_found
   end
 
-  test "managed_groups should be called and cached" do
+  test "#managed_groups should be called and cached" do
     sign_in_as(user)
 
     with_caching do

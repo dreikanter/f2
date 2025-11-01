@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FileBufferTest < ActiveSupport::TestCase
-  test "should load local file and return StringIO with content type" do
+  test "#load should read local file and return StringIO with content type" do
     file = file_fixture("feeds/rss/feed.xml")
     io, content_type = FileBuffer.new.load(file.to_s)
 
@@ -11,14 +11,14 @@ class FileBufferTest < ActiveSupport::TestCase
     assert_equal Encoding::BINARY, io.string.encoding
   end
 
-  test "should detect content type for local image file" do
+  test "#load should detect content type for local image file" do
     image_path = file_fixture("test_image.jpg").to_s
     io, content_type = FileBuffer.new.load(image_path)
 
     assert_equal "image/jpeg", content_type
   end
 
-  test "should download from URL and return StringIO with content type" do
+  test "#load should download from URL and return StringIO with content type" do
     url = "https://example.com/image.jpg"
     response_body = file_fixture("test_image.jpg").binread
 
@@ -32,7 +32,7 @@ class FileBufferTest < ActiveSupport::TestCase
     assert_equal Encoding::BINARY, io.string.encoding
   end
 
-  test "should detect content type from file content when URL has no extension" do
+  test "#load should detect content type from file content when URL has no extension" do
     url = "https://example.com/unknown"
     response_body = file_fixture("test_image.jpg").binread
 
@@ -43,7 +43,7 @@ class FileBufferTest < ActiveSupport::TestCase
     assert_equal "image/png", content_type
   end
 
-  test "should raise error when HTTP request fails" do
+  test "#load should raise error when HTTP request fails" do
     url = "https://example.com/image.jpg"
 
     stub_request(:get, url).to_return(status: 404)
@@ -53,7 +53,7 @@ class FileBufferTest < ActiveSupport::TestCase
     end
   end
 
-  test "should raise error for other exceptions" do
+  test "#load should raise error for other exceptions" do
     url = "https://example.com/image.jpg"
 
     stub_request(:get, url).to_raise(StandardError.new("Unexpected error"))

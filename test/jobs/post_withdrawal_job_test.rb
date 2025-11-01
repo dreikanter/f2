@@ -13,7 +13,7 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     @post ||= create(:post, feed: feed, freefeed_post_id: "test_post_123", status: :withdrawn)
   end
 
-  test "deletes post from FreeFeed" do
+  test ".perform_now should delete post from FreeFeed" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 200)
 
@@ -22,7 +22,7 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     assert_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
   end
 
-  test "handles FreeFeed API errors gracefully" do
+  test ".perform_now should handle FreeFeed API errors gracefully" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 500, body: "Internal Server Error")
 
@@ -31,13 +31,13 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     end
   end
 
-  test "handles post not found gracefully" do
+  test ".perform_now should handle missing post gracefully" do
     assert_nothing_raised do
       PostWithdrawalJob.perform_now(999999)
     end
   end
 
-  test "handles authorization errors gracefully" do
+  test ".perform_now should handle authorization errors gracefully" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 401, body: "Unauthorized")
 

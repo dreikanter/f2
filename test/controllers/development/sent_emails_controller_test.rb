@@ -10,13 +10,13 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
   end
 
-  test "should get index with no emails" do
+  test "#index should get with no emails" do
     get development_sent_emails_path
     assert_response :success
     assert_select "div.alert-info", text: /No emails captured yet/
   end
 
-  test "should get index with emails" do
+  test "#index should get with emails" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     create_test_email(uuid1, "Test Subject", "Test email body")
@@ -30,7 +30,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h5", text: "Another Email"
   end
 
-  test "should show email" do
+  test "#show should show email" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Test Subject", "Test email body")
 
@@ -40,7 +40,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "pre", text: /Test email body/
   end
 
-  test "should redirect when email not found" do
+  test "#show should redirect when email not found" do
     uuid = SecureRandom.uuid
 
     get development_sent_email_path(id: uuid)
@@ -48,7 +48,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Email not found", flash[:alert]
   end
 
-  test "should reject invalid ID format" do
+  test "#show should reject invalid ID format" do
     invalid_ids = [
       "invalid-format",
       "not-a-uuid",
@@ -63,7 +63,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should purge all emails" do
+  test "#purge should purge all emails" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Test", "Body")
     assert_equal 1, email_storage.list.count
@@ -74,7 +74,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, email_storage.list.count
   end
 
-  test "should show multipart email with tabs" do
+  test "#show should show multipart email with tabs" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Multipart", { text: "Text version", html: "<p>HTML version</p>" })
 
@@ -85,7 +85,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "pre", text: /Text version/
   end
 
-  test "should handle subject with special characters" do
+  test "#show should handle subject with special characters" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Important: Reset your password", "Email body")
 
@@ -94,7 +94,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h4", text: "Important: Reset your password"
   end
 
-  test "should handle purge errors gracefully" do
+  test "#purge should handle purge errors gracefully" do
     email_storage.stub(:purge, -> { raise "Purge failed" }) do
       delete purge_development_sent_emails_path
       assert_redirected_to development_sent_emails_path
@@ -102,7 +102,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should show email when storage returns nil for load but exists check passes" do
+  test "#show should show email when storage returns nil for load but exists check passes" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Test", "Body")
 

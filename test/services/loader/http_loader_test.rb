@@ -5,7 +5,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     @feed ||= create(:feed, url: "https://example.com/feed.xml")
   end
 
-  test "should load feed successfully" do
+  test "#load should retrieve feed content" do
     mock_client = MockHttpClient.new(
       response: HttpClient::Response.new(
         status: 200,
@@ -21,7 +21,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     assert_equal feed.url, mock_client.last_request_url
   end
 
-  test "should handle HTTP errors" do
+  test "#load should handle HTTP errors" do
     mock_client = MockHttpClient.new(
       response: HttpClient::Response.new(status: 404, body: "Not Found")
     )
@@ -35,7 +35,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     assert_equal "HTTP 404", error.message
   end
 
-  test "should handle connection errors" do
+  test "#load should handle connection errors" do
     mock_client = MockHttpClient.new(error: HttpClient::ConnectionError.new("Connection refused"))
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
@@ -47,7 +47,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     assert_equal "Connection refused", error.message
   end
 
-  test "should handle timeout errors" do
+  test "#load should handle timeout errors" do
     mock_client = MockHttpClient.new(error: HttpClient::TimeoutError.new("Request timed out"))
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
@@ -59,7 +59,7 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     assert_equal "Request timed out", error.message
   end
 
-  test "should handle too many redirects error" do
+  test "#load should handle too many redirects error" do
     mock_client = MockHttpClient.new(error: HttpClient::TooManyRedirectsError.new("Too many redirects"))
 
     loader = Loader::HttpLoader.new(feed, { http_client: mock_client })
@@ -71,14 +71,14 @@ class Loader::HttpLoaderTest < ActiveSupport::TestCase
     assert_equal "Too many redirects", error.message
   end
 
-  test "should use default max redirects of 3" do
+  test "#http_client should use default max redirects of 3" do
     loader = Loader::HttpLoader.new(feed)
 
     # Check that it creates a FaradayAdapter with max_redirects: 3
     assert_instance_of HttpClient::FaradayAdapter, loader.send(:http_client)
   end
 
-  test "should accept custom max redirects" do
+  test "#http_client should accept custom max redirects" do
     loader = Loader::HttpLoader.new(feed, { max_redirects: 5 })
 
     # Check that it creates a FaradayAdapter (we can't easily test the internal options)

@@ -104,7 +104,7 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.destroy?
   end
 
-  test "scope should return only owned tokens for regular users" do
+  test "#scope should return only owned tokens for regular users" do
     scope = scope_for_user(user)
     result = scope.resolve
 
@@ -112,7 +112,7 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not_includes result, other_access_token
   end
 
-  test "scope should return all tokens for admin users" do
+  test "#scope should return all tokens for admin users" do
     scope = scope_for_user(admin_user)
     result = scope.resolve
 
@@ -120,7 +120,7 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_includes result, other_access_token
   end
 
-  test "scope should return no tokens for nil user" do
+  test "#scope should return no tokens for nil user" do
     scope = AccessTokenPolicy::Scope.new(nil, AccessToken.all)
     result = scope.resolve
 

@@ -11,7 +11,7 @@ class Normalizer::XkcdNormalizerTest < ActiveSupport::TestCase
     Processor::RssProcessor
   end
 
-  test "sholuld match the expected normalization result" do
+  test "#normalize should match the expected normalization result" do
     entry = feed_entry(0)
 
     normalizer = Normalizer::XkcdNormalizer.new(entry)

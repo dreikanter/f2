@@ -1,7 +1,7 @@
 require "test_helper"
 
 class ApplicationCable::ConnectionTest < ActionCable::Connection::TestCase
-  test "connects with valid session" do
+  test "#connect should accept valid session" do
     user = create(:user)
     session = user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
 
@@ -12,7 +12,7 @@ class ApplicationCable::ConnectionTest < ActionCable::Connection::TestCase
     assert_equal user, connection.current_user
   end
 
-  test "rejects connection without valid session" do
+  test "#connect should reject without valid session" do
     assert_reject_connection { connect }
   end
 end

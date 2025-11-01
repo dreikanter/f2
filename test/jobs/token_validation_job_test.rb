@@ -9,7 +9,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     @access_token ||= create(:access_token, user: user)
   end
 
-  test "marks token as active when validation succeeds" do
+  test ".perform_now should mark token as active when validation succeeds" do
     stub_successful_freefeed_response
 
     assert access_token.pending?
@@ -21,7 +21,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert_equal "testuser", access_token.owner
   end
 
-  test "marks token as inactive when validation fails" do
+  test ".perform_now should mark token as inactive when validation fails" do
     stub_failed_freefeed_response
 
     assert access_token.pending?
@@ -32,7 +32,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "marks token as inactive when HTTP error occurs" do
+  test ".perform_now should mark token as inactive when HTTP error occurs" do
     # Mock HTTP error
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_raise(StandardError.new("Connection failed"))
@@ -45,7 +45,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "marks token as inactive when JSON parsing fails" do
+  test ".perform_now should mark token as inactive when JSON parsing fails" do
     # Mock response with invalid JSON
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .with(
@@ -64,7 +64,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "validates token using the token's host" do
+  test ".perform_now should validate token using the token's host" do
     # Create token with custom host
     custom_token = create(:access_token, user: user, host: "https://custom.freefeed.com")
 
@@ -87,7 +87,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert custom_token.active?
   end
 
-  test "broadcasts status update on successful validation" do
+  test ".perform_now should broadcast status update on successful validation" do
     stub_successful_freefeed_response
 
     assert_nothing_raised do
@@ -98,7 +98,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.active?
   end
 
-  test "broadcasts status update on failed validation" do
+  test ".perform_now should broadcast status update on failed validation" do
     stub_failed_freefeed_response
 
     assert_nothing_raised do
@@ -109,7 +109,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "marks token as inactive when response format is invalid" do
+  test ".perform_now should mark token as inactive when response format is invalid" do
     # Mock response with missing username field
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .with(
@@ -132,7 +132,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "handles general exceptions in validation and broadcasts error" do
+  test ".perform_now should handle general exceptions in validation and broadcast errors" do
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_timeout
 
@@ -144,7 +144,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test "can be performed asynchronously via perform_later" do
+  test ".perform_later should enqueue asynchronously" do
     stub_successful_freefeed_response
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
@@ -152,7 +152,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     end
   end
 
-  test "job can be resumed after failure" do
+  test ".perform_now should resume after failure" do
     # First attempt fails with timeout
     stub_request(:get, "https://freefeed.test/v4/users/whoami")
       .to_timeout.times(1)

@@ -6,7 +6,7 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     TitleExtractor::RssTitleExtractor.new("https://example.com/feed.xml", response)
   end
 
-  test "should extract title from RSS 2.0 feed" do
+  test "#title should extract title from RSS 2.0 feed" do
     body = <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
@@ -19,7 +19,7 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     assert_equal "My RSS Feed", extractor(body).title
   end
 
-  test "should strip whitespace from title" do
+  test "#title should strip whitespace from title" do
     body = <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
@@ -33,16 +33,16 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     assert_equal "Padded Title", extractor(body).title
   end
 
-  test "should return nil for blank response body" do
+  test "#title should return nil for blank response body" do
     assert_nil extractor("").title
     assert_nil extractor(nil).title
   end
 
-  test "should return nil for invalid XML" do
+  test "#title should return nil for invalid XML" do
     assert_nil extractor("not valid xml").title
   end
 
-  test "should return nil for XML without title" do
+  test "#title should return nil for XML without title" do
     body = <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
@@ -54,7 +54,7 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     assert_nil extractor(body).title
   end
 
-  test "should return nil for non-feed XML" do
+  test "#title should return nil for non-feed XML" do
     body = <<~XML
       <?xml version="1.0"?>
       <document>

@@ -1,56 +1,56 @@
 require "test_helper"
 
 class PaginationHelperTest < ActionView::TestCase
-  test "each_page yields correct page range for beginning pages" do
+  test "#each_page should yield correct page range for beginning pages" do
     pages = []
     each_page(1, 10) { |page| pages << page }
 
     assert_equal [1, 2, 3, 4, 5], pages
   end
 
-  test "each_page yields correct page range for middle pages" do
+  test "#each_page should yield correct page range for middle pages" do
     pages = []
     each_page(5, 10) { |page| pages << page }
 
     assert_equal [3, 4, 5, 6, 7], pages
   end
 
-  test "each_page yields correct page range for end pages" do
+  test "#each_page should yield correct page range for end pages" do
     pages = []
     each_page(10, 10) { |page| pages << page }
 
     assert_equal [6, 7, 8, 9, 10], pages
   end
 
-  test "each_page handles small total page counts" do
+  test "#each_page should handle small total page counts" do
     pages = []
     each_page(2, 3) { |page| pages << page }
 
     assert_equal [1, 2, 3], pages
   end
 
-  test "each_page handles single page" do
+  test "#each_page should handle single page" do
     pages = []
     each_page(1, 1) { |page| pages << page }
 
     assert_equal [1], pages
   end
 
-  test "each_page returns enumerator when no block given" do
+  test "#each_page should return enumerator when no block given" do
     result = each_page(5, 10)
 
     assert_instance_of Enumerator, result
     assert_equal [3, 4, 5, 6, 7], result.to_a
   end
 
-  test "each_page respects custom window size" do
+  test "#each_page should respect custom window size" do
     pages = []
     each_page(5, 20, window: 3) { |page| pages << page }
 
     assert_equal [2, 3, 4, 5, 6, 7, 8], pages
   end
 
-  test "pagination_for calls render with correct parameters" do
+  test "#pagination_for should call render with correct parameters" do
     collection = [1, 2, 3]
     path_helper = ->(page) { "/test?page=#{page}" }
 
@@ -73,7 +73,7 @@ class PaginationHelperTest < ActionView::TestCase
     end
   end
 
-  test "pagination_for humanizes collection name for label" do
+  test "#pagination_for should humanize collection name for label" do
     collection = [1, 2, 3]
     path_helper = ->(page) { "/test?page=#{page}" }
 
@@ -91,7 +91,7 @@ class PaginationHelperTest < ActionView::TestCase
     end
   end
 
-  test "pagination_for passes through additional options" do
+  test "#pagination_for should pass through additional options" do
     collection = [1, 2, 3]
     path_helper = ->(page) { "/test?page=#{page}" }
 

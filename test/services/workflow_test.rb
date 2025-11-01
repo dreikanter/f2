@@ -100,7 +100,7 @@ class WorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "executes workflow steps in sequence with data flow" do
+  test "#execute should run steps in sequence with data flow" do
     service = TestWorkflow.new
 
     result = service.run_simple_workflow
@@ -115,7 +115,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal({ value: 9, step: :three, final: true }, result)
   end
 
-  test "executes before and after callbacks" do
+  test "#execute should run before and after callbacks" do
     service = TestWorkflowWithCallbacks.new
 
     result = service.run_workflow_with_callbacks
@@ -136,7 +136,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert service.step_timings[:step_one][:completed_at]
   end
 
-  test "handles workflow without initial input" do
+  test "#execute should handle workflows without initial input" do
     service = TestWorkflowWithoutInput.new
 
     result = service.run_workflow_without_initial_input
@@ -145,7 +145,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal({ created_value: 42 }, result)
   end
 
-  test "propagates exceptions with clean backtrace" do
+  test "#execute should propagate exceptions with clean backtrace" do
     service = TestWorkflow.new
 
     def service.step_one(input)
@@ -161,7 +161,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal ["step_one called"], service.execution_log
   end
 
-  test "workflow with no steps returns initial input" do
+  test "#execute should return initial input when no steps defined" do
     empty_service_class = Class.new do
       include Workflow
     end
@@ -172,13 +172,13 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal("INITIAL", result)
   end
 
-  test "class-level step definitions are accessible" do
+  test ".workflow_steps should list configured steps" do
     assert_equal [:step_one, :step_two, :step_three], TestWorkflow.workflow_steps
     assert_equal [:step_one, :step_two], TestWorkflowWithCallbacks.workflow_steps
     assert_equal [:step_without_input], TestWorkflowWithoutInput.workflow_steps
   end
 
-  test "tracks step durations automatically" do
+  test "#step_durations should track durations automatically" do
     service = TestWorkflowWithCallbacks.new
 
     service.execute({ value: 1 })
@@ -193,7 +193,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert durations[:step_two] >= 0
   end
 
-  test "current step is accessible in callbacks" do
+  test "#current_step should be accessible in callbacks" do
     service = TestWorkflowWithCallbacks.new
 
     def service.before_step(input)
@@ -215,7 +215,7 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_equal :step_two, service.current_step
   end
 
-  test "tracks total workflow duration" do
+  test "#total_duration should aggregate step timings" do
     service = TestWorkflowWithCallbacks.new
 
     service.execute({ value: 1 })

@@ -6,7 +6,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::RssProfileMatcher.new("https://example.com/feed.xml", response)
   end
 
-  test "should match RSS 2.0 feeds" do
+  test "#match? should match RSS 2.0 feeds" do
     body = <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
@@ -19,7 +19,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
     assert matcher(body).match?
   end
 
-  test "should match Atom feeds" do
+  test "#match? should match Atom feeds" do
     body = <<~XML
       <?xml version="1.0"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -30,7 +30,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
     assert matcher(body).match?
   end
 
-  test "should match RSS 1.0 (RDF) feeds" do
+  test "#match? should match RSS 1.0 (RDF) feeds" do
     body = <<~XML
       <?xml version="1.0"?>
       <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -43,16 +43,16 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
     assert matcher(body).match?
   end
 
-  test "should not match non-RSS content" do
+  test "#match? should not match non-RSS content" do
     assert_not matcher("<html><body>Not a feed</body></html>").match?
   end
 
-  test "should handle blank response body" do
+  test "#match? should handle blank response body" do
     assert_not matcher("").match?
     assert_not matcher(nil).match?
   end
 
-  test "should be case insensitive" do
+  test "#match? should be case insensitive" do
     assert matcher("<RSS version='2.0'><channel></channel></RSS>").match?
     assert matcher("<FEED></FEED>").match?
   end

@@ -9,7 +9,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, access_token: access_token, target_group: "testgroup")
   end
 
-  test "withdraws all posts with freefeed_post_id from feed" do
+  test ".perform_now should withdraw all posts with freefeed_post_id from feed" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
     post3 = create(:post, feed: feed, freefeed_post_id: nil, status: :withdrawn)
@@ -24,7 +24,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_nil post3.reload.freefeed_post_id
   end
 
-  test "continues on error and logs failure" do
+  test ".perform_now should continue on error and log failure" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
 
@@ -37,13 +37,13 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_nil post2.reload.freefeed_post_id
   end
 
-  test "exits gracefully if feed not found" do
+  test ".perform_now should exit gracefully if feed not found" do
     assert_nothing_raised do
       GroupPurgeJob.perform_now(999999)
     end
   end
 
-  test "only processes posts for specified feed" do
+  test ".perform_now should process posts for specified feed only" do
     other_feed = create(:feed, access_token: access_token, target_group: "othergroup")
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: other_feed, freefeed_post_id: "post2", status: :withdrawn)

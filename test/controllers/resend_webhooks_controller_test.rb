@@ -34,18 +34,18 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should reject request without valid signature" do
+  test "#create should reject request without valid signature" do
     post resend_webhooks_url, params: { type: "email.bounced", data: { to: [user.email_address] } }
     assert_response :unauthorized
   end
 
-  test "should accept request with valid signature" do
+  test "#create should accept request with valid signature" do
     post_webhook(type: "email.sent", data: { to: [user.email_address] })
 
     assert_response :success
   end
 
-  test "email.bounced should deactivate user email for confirmed email" do
+  test "#create should deactivate user email for email.bounced" do
     assert_not user.email_deactivated?
 
     post_webhook(type: "email.bounced", data: { to: [user.email_address] })
@@ -56,7 +56,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "bounced", user.email_deactivation_reason
   end
 
-  test "email.bounced should create EmailBounced event" do
+  test "#create should record event for email.bounced" do
     assert_difference -> { Event.where(type: "resend.email.email_bounced").count }, 1 do
       post_webhook(type: "email.bounced", data: { to: [user.email_address] })
     end
@@ -67,7 +67,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal user, event.subject
   end
 
-  test "email.bounced should clear unconfirmed_email for unconfirmed email bounce" do
+  test "#create should clear unconfirmed email for email.bounced" do
     user_with_unconfirmed_email = create(
       :user,
       email_address: "old@example.com",
@@ -85,7 +85,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_not user_with_unconfirmed_email.email_deactivated?
   end
 
-  test "email.complained should deactivate user email" do
+  test "#create should deactivate user email for email.complained" do
     post_webhook(type: "email.complained", data: { to: [user.email_address] })
 
     user.reload
@@ -93,13 +93,13 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "complained", user.email_deactivation_reason
   end
 
-  test "email.complained should create EmailComplained event" do
+  test "#create should record event for email.complained" do
     assert_difference -> { Event.where(type: "resend.email.email_complained").count }, 1 do
       post_webhook(type: "email.complained", data: { to: [user.email_address] })
     end
   end
 
-  test "email.failed should deactivate user email" do
+  test "#create should deactivate user email for email.failed" do
     post_webhook(type: "email.failed", data: { to: [user.email_address] })
 
     user.reload
@@ -107,43 +107,43 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "failed", user.email_deactivation_reason
   end
 
-  test "email.failed should create EmailFailed event" do
+  test "#create should record event for email.failed" do
     assert_difference -> { Event.where(type: "resend.email.email_failed").count }, 1 do
       post_webhook(type: "email.failed", data: { to: [user.email_address] })
     end
   end
 
-  test "email.sent should create EmailSent event" do
+  test "#create should record event for email.sent" do
     assert_difference -> { Event.where(type: "resend.email.email_sent").count }, 1 do
       post_webhook(type: "email.sent", data: { to: [user.email_address] })
     end
   end
 
-  test "email.delivered should create EmailDelivered event" do
+  test "#create should record event for email.delivered" do
     assert_difference -> { Event.where(type: "resend.email.email_delivered").count }, 1 do
       post_webhook(type: "email.delivered", data: { to: [user.email_address] })
     end
   end
 
-  test "email.delivery_delayed should create EmailDelayed event" do
+  test "#create should record event for email.delivery_delayed" do
     assert_difference -> { Event.where(type: "resend.email.email_delayed").count }, 1 do
       post_webhook(type: "email.delivery_delayed", data: { to: [user.email_address] })
     end
   end
 
-  test "email.opened should create EmailOpened event" do
+  test "#create should record event for email.opened" do
     assert_difference -> { Event.where(type: "resend.email.email_opened").count }, 1 do
       post_webhook(type: "email.opened", data: { to: [user.email_address] })
     end
   end
 
-  test "email.clicked should create EmailClicked event" do
+  test "#create should record event for email.clicked" do
     assert_difference -> { Event.where(type: "resend.email.email_clicked").count }, 1 do
       post_webhook(type: "email.clicked", data: { to: [user.email_address] })
     end
   end
 
-  test "should handle webhook for non-existent user gracefully" do
+  test "#create should handle webhook for non-existent user gracefully" do
     assert_no_difference("Event.count") do
       post_webhook(type: "email.bounced", data: { to: ["nonexistent@example.com"] })
     end
@@ -151,7 +151,7 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should normalize email address when finding user" do
+  test "#create should normalize email address when finding user" do
     user.update!(email_address: "test@example.com")
 
     post_webhook(type: "email.bounced", data: { to: ["  TEST@EXAMPLE.COM  "] })

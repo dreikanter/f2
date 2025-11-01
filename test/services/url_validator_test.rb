@@ -1,7 +1,7 @@
 require "test_helper"
 
 class UrlValidatorTest < ActiveSupport::TestCase
-  test "should return true for valid http and https urls" do
+  test ".valid? should return true for valid http and https urls" do
     valid_urls = [
       "http://example.com",
       "https://example.com",
@@ -20,7 +20,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return false for invalid schemes" do
+  test ".valid? should return false for invalid schemes" do
     invalid_urls = [
       "ftp://example.com",
       "file:///path/to/file",
@@ -34,7 +34,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return false for malformed urls" do
+  test ".valid? should return false for malformed urls" do
     invalid_urls = [
       "not-a-url",
       "://example.com",
@@ -46,7 +46,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should return false for nil, empty, or blank urls" do
+  test ".valid? should return false for nil, empty, or blank urls" do
     invalid_urls = [nil, "", "   "]
 
     invalid_urls.each do |url|
@@ -54,12 +54,12 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should handle urls with spaces by stripping them" do
+  test ".valid? should handle urls with spaces by stripping them" do
     assert UrlValidator.valid?("  http://example.com  ")
     assert UrlValidator.valid?(" https://example.com ")
   end
 
-  test "should handle URI::InvalidURIError gracefully" do
+  test ".valid? should handle URI::InvalidURIError gracefully" do
     # These URLs cause URI::InvalidURIError
     invalid_urls = [
       "http://[invalid",
@@ -71,7 +71,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should accept urls with international domain names" do
+  test ".valid? should accept urls with international domain names" do
     # These may or may not be valid depending on URI implementation,
     # but should not raise errors
     international_urls = [
@@ -86,7 +86,7 @@ class UrlValidatorTest < ActiveSupport::TestCase
     end
   end
 
-  test "should handle urls with fragments and complex queries" do
+  test ".valid? should handle urls with fragments and complex queries" do
     complex_urls = [
       "http://example.com/path?param1=value1&param2=value2",
       "https://example.com/path#fragment",

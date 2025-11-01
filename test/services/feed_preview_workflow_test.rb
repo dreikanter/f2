@@ -13,12 +13,12 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     @workflow ||= FeedPreviewWorkflow.new(feed_preview)
   end
 
-  test "should initialize with feed_preview" do
+  test "#initialize should assign feed_preview" do
     assert_equal feed_preview, workflow.feed_preview
     assert_equal({}, workflow.stats)
   end
 
-  test "should initialize workflow successfully" do
+  test "#initialize should produce executable workflow" do
     # Basic test to verify the workflow can be created and has the right attributes
     workflow = FeedPreviewWorkflow.new(feed_preview)
     assert_equal feed_preview, workflow.feed_preview
@@ -26,20 +26,20 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_respond_to workflow, :execute
   end
 
-  test "should include Workflow module" do
+  test ".included should mix in Workflow module" do
     assert_includes FeedPreviewWorkflow.included_modules, Workflow
   end
 
-  test "should have defined steps" do
+  test "#execute should be defined as workflow step" do
     # Verify the workflow has the expected steps defined
     assert_respond_to workflow, :execute
   end
 
-  test "should have PREVIEW_POSTS_LIMIT constant available" do
+  test ".const_get should expose PREVIEW_POSTS_LIMIT constant" do
     assert_equal 10, FeedPreview::PREVIEW_POSTS_LIMIT
   end
 
-  test "should have error handling capabilities" do
+  test "#execute should support error handling helpers" do
     # Test that the workflow has error handling methods available
     workflow_instance = FeedPreviewWorkflow.new(feed_preview)
 
@@ -51,7 +51,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal feed_preview, workflow_instance.feed_preview
   end
 
-  test "should merge stats correctly" do
+  test "#record_stats should merge stats correctly" do
     workflow_instance = FeedPreviewWorkflow.new(feed_preview)
 
     # Test that stats start empty
@@ -62,7 +62,7 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_respond_to workflow_instance, :stats
   end
 
-  test "should call record_stats method" do
+  test "#record_stats should store provided values" do
     # Test the private record_stats method functionality
     workflow_instance = FeedPreviewWorkflow.new(feed_preview)
 

@@ -1,7 +1,7 @@
 require "test_helper"
 
 class EventsHelperTest < ActionView::TestCase
-  test "level_badge returns single character badge with correct styling" do
+  test "#level_badge should return single character badge with correct styling" do
     badge = level_badge("info")
 
     assert_includes badge, "I"
@@ -10,7 +10,7 @@ class EventsHelperTest < ActionView::TestCase
     assert_includes badge, 'title="Info"'
   end
 
-  test "level_badge handles all level types" do
+  test "#level_badge should handle all level types" do
     debug_badge = level_badge("debug")
     info_badge = level_badge("info")
     warning_badge = level_badge("warning")
@@ -29,14 +29,14 @@ class EventsHelperTest < ActionView::TestCase
     assert_includes error_badge, "bg-danger"
   end
 
-  test "level_badge falls back to debug for unknown level" do
+  test "#level_badge should fall back to debug for unknown level" do
     badge = level_badge("unknown")
 
     assert_includes badge, "D"
     assert_includes badge, "bg-secondary"
   end
 
-  test "level_badge_full returns full word badge with correct styling" do
+  test "#level_badge_full should return full word badge with correct styling" do
     badge = level_badge_full("info")
 
     assert_includes badge, "Info"
@@ -44,7 +44,7 @@ class EventsHelperTest < ActionView::TestCase
     refute_includes badge, "font-monospace"
   end
 
-  test "level_badge_full handles all level types" do
+  test "#level_badge_full should handle all level types" do
     debug_badge = level_badge_full("debug")
     info_badge = level_badge_full("info")
     warning_badge = level_badge_full("warning")

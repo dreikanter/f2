@@ -13,38 +13,38 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     @used_invite ||= create(:invite, created_by_user: inviter, invited_user: create(:user))
   end
 
-  test "should redirect to root when no code provided" do
+  test "#show should redirect to root when no code provided" do
     get registration_url
     assert_redirected_to root_path
   end
 
-  test "should show invalid invitation message when code is invalid" do
+  test "#show should show invalid invitation message when code is invalid" do
     get registration_url(code: "invalid-uuid")
     assert_response :success
     assert_select "h1", "This invite link doesn't look right"
     assert_select "p", /couldn't find an invitation with that code/
   end
 
-  test "should show registration form with valid unused invite" do
+  test "#show should render registration form with valid unused invite" do
     get registration_url(code: invite.id)
     assert_response :success
     assert_select "h1", "Create your account"
   end
 
-  test "should show used invite message when invite is already used" do
+  test "#show should show used invite message when invite is already used" do
     get registration_url(code: used_invite.id)
     assert_response :success
     assert_select "h1", "This invite was already used"
     assert_select "p", /already been used to create an account/
   end
 
-  test "should redirect to dashboard if already authenticated" do
+  test "#show should redirect to dashboard if already authenticated" do
     sign_in_as inviter
     get registration_url(code: invite.id)
     assert_redirected_to status_path
   end
 
-  test "should create user with valid invite" do
+  test "#create should create user with valid invite" do
     invite # Ensure invite is created before the assertion
 
     assert_difference("User.count", 1) do
@@ -65,7 +65,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert invite.invited_user.inactive?
   end
 
-  test "should send confirmation email after registration" do
+  test "#create should send confirmation email after registration" do
     invite # Ensure invite is created before the assertion
 
     assert_difference("ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.count", 1) do
@@ -84,7 +84,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "account_confirmation", job[:args][1]
   end
 
-  test "should not start session after registration" do
+  test "#create should not start session after registration" do
     invite # Ensure invite is created before the assertion
 
     post registration_url, params: {
@@ -99,7 +99,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_nil session[:user_id]
   end
 
-  test "should not create user with invalid invite code in create" do
+  test "#create should reject invalid invite code" do
     assert_no_difference("User.count") do
       post registration_url, params: {
         code: "invalid-uuid",
@@ -113,7 +113,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should not create user with used invite" do
+  test "#create should reject used invite" do
     used_invite # Ensure used_invite is created before the assertion
 
     assert_no_difference("User.count") do
@@ -129,7 +129,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should not create user without code parameter in create" do
+  test "#create should reject missing code parameter" do
     assert_no_difference("User.count") do
       post registration_url, params: {
         user: {
@@ -142,7 +142,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "should show errors when user data is invalid" do
+  test "#create should show errors when user data is invalid" do
     invite # Ensure invite is created before the assertion
 
     assert_no_difference("User.count") do
@@ -158,7 +158,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "should redirect to dashboard if authenticated during create" do
+  test "#create should redirect to dashboard if authenticated" do
     sign_in_as inviter
     assert_no_difference("User.count") do
       post registration_url, params: {

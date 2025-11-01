@@ -5,7 +5,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
 
   teardown { unfreeze_time }
 
-  test "schedules enabled feeds that are due" do
+  test ".perform_now should schedule enabled feeds that are due" do
     feed = create(:feed, :enabled)
     schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
@@ -18,7 +18,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     assert schedule.next_run_at > Time.current
   end
 
-  test "skips disabled feeds" do
+  test ".perform_now should skip disabled feeds" do
     feed = create(:feed, :disabled)
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
@@ -27,7 +27,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
-  test "skips feeds not yet due" do
+  test ".perform_now should skip feeds not yet due" do
     feed = create(:feed, :enabled)
     create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)
 
@@ -36,7 +36,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
-  test "handles concurrent updates with optimistic locking" do
+  test ".perform_now should handle concurrent updates with optimistic locking" do
     feed = create(:feed, :enabled)
     schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
@@ -48,7 +48,7 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
-  test "creates schedule for feeds without one" do
+  test ".perform_now should create schedule for feeds without one" do
     feed = create(:feed, :enabled)
 
     assert_enqueued_with(job: FeedRefreshJob, args: [feed.id]) do

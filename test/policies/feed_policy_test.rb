@@ -106,7 +106,7 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.purge?
   end
 
-  test "scope should return only owned feeds for regular users" do
+  test "#scope should return only owned feeds for regular users" do
     scope = scope_for_user(user)
     result = scope.resolve
 
@@ -114,7 +114,7 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not_includes result, other_feed
   end
 
-  test "scope should return no feeds for nil user" do
+  test "#scope should return no feeds for nil user" do
     scope = FeedPolicy::Scope.new(nil, Feed.all)
     result = scope.resolve
 
