@@ -46,6 +46,8 @@ class SortablePresenter
     current_option&.title
   end
 
+  # Currently selected or default sorting direction.
+  #
   # @return [String] "asc" or "desc"
   def current_direction
     @current_direction ||= begin
@@ -62,7 +64,9 @@ class SortablePresenter
 
   attr_reader :params, :fields, :path_builder
 
-  # @return [Option, nil] option corresponding to the current sort selection
+  # Option hash corresponding to the current sort selection.
+  #
+  # @return [Option, nil]
   def current_option
     options.find(&:active?) || options.first
   end
