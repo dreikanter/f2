@@ -36,39 +36,39 @@ class SortableTest < ActionDispatch::IntegrationTest
     @controller.params = ActionController::Parameters.new
   end
 
-  test "sortable_field returns valid field from params" do
+  test "#sortable_field should return field from params" do
     @controller.params[:sort] = "name"
 
     assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sortable_field returns default when invalid field in params" do
+  test "#sortable_field should fall back when field param invalid" do
     @controller.params[:sort] = "invalid_field"
 
     assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sortable_field returns default when no params" do
+  test "#sortable_field should fall back when field param missing" do
     assert_equal "name", @controller.send(:sortable_field)
   end
 
-  test "sortable_direction returns valid direction from params" do
+  test "#sortable_direction should return direction from params" do
     @controller.params[:direction] = "desc"
 
     assert_equal "desc", @controller.send(:sortable_direction)
   end
 
-  test "sortable_direction returns default when invalid direction in params" do
+  test "#sortable_direction should fall back when direction invalid" do
     @controller.params[:direction] = "invalid"
 
     assert_equal "asc", @controller.send(:sortable_direction)
   end
 
-  test "sortable_direction returns default when no params" do
+  test "#sortable_direction should fall back when direction missing" do
     assert_equal "asc", @controller.send(:sortable_direction)
   end
 
-  test "sortable_order returns Arel ascending node" do
+  test "#sortable_order should return ascending node" do
     @controller.params[:sort] = "name"
     @controller.params[:direction] = "asc"
 
@@ -76,7 +76,7 @@ class SortableTest < ActionDispatch::IntegrationTest
     assert_instance_of Arel::Nodes::Ascending, order
   end
 
-  test "sortable_order returns Arel descending node" do
+  test "#sortable_order should return descending node" do
     @controller.params[:sort] = "name"
     @controller.params[:direction] = "desc"
 
@@ -84,7 +84,7 @@ class SortableTest < ActionDispatch::IntegrationTest
     assert_instance_of Arel::Nodes::Descending, order
   end
 
-  test "sortable_presenter builds presenter with configured path and base params" do
+  test "#sortable_presenter should build presenter with configured path" do
     presenter = @controller.send(:sortable_presenter)
     option = presenter.options.first
 

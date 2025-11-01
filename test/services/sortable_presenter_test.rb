@@ -10,7 +10,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
     end
   end
 
-  test "uses defaults when params are missing" do
+  test "#options should use defaults when params are missing" do
     presenter = SortablePresenter.new(
       params: {},
       fields: {
@@ -31,7 +31,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
     assert_equal({ "sort" => "name", "direction" => "desc" }, query_params(option.path))
   end
 
-  test "honors provided params and toggles direction" do
+  test "#options should honor provided params and toggle direction" do
     presenter = SortablePresenter.new(
       params: { sort: "status", direction: "desc", extra: "1" },
       fields: {
@@ -63,7 +63,7 @@ class SortablePresenterTest < ActiveSupport::TestCase
     assert_equal(expected, query_params(active_option.path))
   end
 
-  test "falls back to defaults for invalid params" do
+  test "#current_direction should fall back to defaults for invalid params" do
     presenter = SortablePresenter.new(
       params: { sort: "invalid", direction: "sideways" },
       fields: {

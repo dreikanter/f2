@@ -1,7 +1,7 @@
 require "test_helper"
 
 class AdminUsersControllerSortableTest < ActiveSupport::TestCase
-  test "sortable_fields should be well formed" do
+  test "#sortable_fields should be well formed" do
     fields = Admin::UsersController::SORTABLE_FIELDS
 
     assert_kind_of Hash, fields
