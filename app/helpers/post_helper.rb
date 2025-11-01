@@ -1,16 +1,16 @@
 module PostHelper
-  def post_status_badge_classes(status)
+  def post_status_badge_color(status)
     case status.to_s
     when "enqueued"
-      "bg-blue-100 text-blue-800"
+      :blue
     when "published"
-      "bg-green-100 text-green-800"
+      :green
     when "failed"
-      "bg-red-100 text-red-800"
+      :red
     when "rejected"
-      "bg-orange-100 text-orange-800"
+      :orange
     else
-      "bg-slate-100 text-slate-800"
+      :gray
     end
   end
 

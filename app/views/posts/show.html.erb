@@ -4,9 +4,11 @@
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h1 class="ff-h1">Post <%= @post.id %></h1>
-      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <%= post_status_badge_classes(@post.status) %>" data-key="post.status_badge">
-        <%= @post.status.capitalize %>
-      </span>
+      <%= render BadgeComponent.new(
+        text: @post.status.capitalize,
+        color: post_status_badge_color(@post.status),
+        key: "post.status_badge"
+      ) %>
     </div>
     <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
       <%= link_to "Back to Posts", posts_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
