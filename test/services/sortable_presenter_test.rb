@@ -2,14 +2,6 @@ require "test_helper"
 require "rack/utils"
 
 class SortablePresenterTest < ActiveSupport::TestCase
-  class StubController
-    attr_reader :params
-
-    def initialize(params = {})
-      @params = ActionController::Parameters.new(params)
-    end
-  end
-
   test "#options should use defaults when params are missing" do
     presenter = SortablePresenter.new(
       params: {},
