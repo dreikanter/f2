@@ -1,5 +1,7 @@
 class ListGroupComponent::StatItemComponent < ViewComponent::Base
-  DEFAULT_ITEM_CLASS = "ff-list-group__item p-4"
+  DEFAULT_ITEM_CLASS = "flex items-start gap-4 p-4"
+  LABEL_CLASSES = "text-base font-semibold text-slate-900"
+  VALUE_CLASSES = "text-base font-semibold text-slate-900"
 
   def initialize(label:, value:, key: nil)
     @label = label
@@ -16,11 +18,11 @@ class ListGroupComponent::StatItemComponent < ViewComponent::Base
   private
 
   def label_span
-    content_tag(:span, @label, class: "ff-list-group__title", data: label_data)
+    content_tag(:span, @label, class: LABEL_CLASSES, data: label_data)
   end
 
   def value_span
-    content_tag(:span, @value, class: "ff-list-group__trailing-text", data: value_data)
+    content_tag(:span, @value, class: VALUE_CLASSES, data: value_data)
   end
 
   def label_data
