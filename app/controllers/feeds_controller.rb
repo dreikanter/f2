@@ -4,7 +4,7 @@ class FeedsController < ApplicationController
 
   layout "tailwind", only: [:index, :show]
 
-  MAX_RECENT_POSTS = 10
+  MAX_RECENT_POSTS = 5
 
   SORTABLE_FIELDS = {
     name: {

@@ -1,4 +1,19 @@
 module PostHelper
+  def post_status_badge_color(status)
+    case status.to_s
+    when "enqueued"
+      :blue
+    when "published"
+      :green
+    when "failed"
+      :red
+    when "rejected"
+      :orange
+    else
+      :gray
+    end
+  end
+
   # TBD: Refactor after metadata/list item description pattern stabilizes
   def post_metadata_segments(post, show_feed: false, withdraw_allowed: false)
     [
