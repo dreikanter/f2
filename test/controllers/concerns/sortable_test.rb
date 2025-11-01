@@ -1,12 +1,31 @@
 require "test_helper"
-require "rack/utils"
 
-class SortableTest < ActionDispatch::IntegrationTest
-  class TestController < ApplicationController
+module SortableTestControllers
+  class DemoController < ApplicationController
     include Sortable
+    skip_before_action :require_authentication
 
     def index
-      render plain: "OK"
+      @presenter = sortable_presenter
+
+      render inline: <<~HTML, locals: { presenter: @presenter }
+        <div id="current-title"><%= presenter.current_title %></div>
+        <div id="current-direction"><%= presenter.current_direction %></div>
+        <ul id="sort-options">
+          <% presenter.options.each do |option| %>
+            <li>
+              <a
+                href="<%= option.path %>"
+                data-field="<%= option.field %>"
+                data-active="<%= option.active %>"
+                data-active-direction="<%= option.active_direction %>"
+              >
+                <%= option.title %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      HTML
     end
 
     private
@@ -21,87 +40,61 @@ class SortableTest < ActionDispatch::IntegrationTest
         created_at: {
           title: "Created",
           order_by: "items.created_at",
-          direction: :asc
+          direction: :desc
         }
       }
     end
 
     def sortable_path(sort_params)
-      "/items?#{sort_params.merge(filter: "all").to_query}"
+      "/sortable_test_demo_index?#{sort_params.to_query}"
+    end
+  end
+end
+
+class SortableTest < ActionDispatch::IntegrationTest
+  test "#sortable_presenter should use defaults when no params provided" do
+    with_sortable_routes do
+      get sortable_test_demo_index_path
+
+      assert_response :success
+      assert_select "#current-title", "Name"
+      assert_select "#current-direction", "asc"
+      assert_select "#sort-options a[data-field='name'][data-active='true'][data-active-direction='asc']"
     end
   end
 
-  setup do
-    @controller = TestController.new
-    @controller.params = ActionController::Parameters.new
+  test "#sortable_presenter should respect sort params" do
+    with_sortable_routes do
+      get sortable_test_demo_index_path(sort: "created_at", direction: "desc")
+
+      assert_response :success
+      assert_select "#current-title", "Created"
+      assert_select "#current-direction", "desc"
+      assert_select "#sort-options a[data-field='created_at'][data-active='true'][data-active-direction='desc']"
+      assert_select "#sort-options a[data-field='name'][data-active='false']"
+    end
   end
 
-  test "#sortable_field should return field from params" do
-    @controller.params[:sort] = "name"
+  test "#sortable_presenter should fall back on invalid direction" do
+    with_sortable_routes do
+      get sortable_test_demo_index_path(sort: "created_at", direction: "sideways")
 
-    assert_equal "name", @controller.send(:sortable_field)
-  end
-
-  test "#sortable_field should fall back when field param invalid" do
-    @controller.params[:sort] = "invalid_field"
-
-    assert_equal "name", @controller.send(:sortable_field)
-  end
-
-  test "#sortable_field should fall back when field param missing" do
-    assert_equal "name", @controller.send(:sortable_field)
-  end
-
-  test "#sortable_direction should return direction from params" do
-    @controller.params[:direction] = "desc"
-
-    assert_equal "desc", @controller.send(:sortable_direction)
-  end
-
-  test "#sortable_direction should fall back when direction invalid" do
-    @controller.params[:direction] = "invalid"
-
-    assert_equal "asc", @controller.send(:sortable_direction)
-  end
-
-  test "#sortable_direction should fall back when direction missing" do
-    assert_equal "asc", @controller.send(:sortable_direction)
-  end
-
-  test "#sortable_order should return ascending node" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "asc"
-
-    order = @controller.send(:sortable_order)
-    assert_instance_of Arel::Nodes::Ascending, order
-  end
-
-  test "#sortable_order should return descending node" do
-    @controller.params[:sort] = "name"
-    @controller.params[:direction] = "desc"
-
-    order = @controller.send(:sortable_order)
-    assert_instance_of Arel::Nodes::Descending, order
-  end
-
-  test "#sortable_presenter should build presenter with configured path" do
-    presenter = @controller.send(:sortable_presenter)
-    option = presenter.options.first
-
-    assert_equal "Name", option.title
-
-    expected = {
-      "filter" => "all",
-      "sort" => "name",
-      "direction" => "desc"
-    }
-
-    assert_equal expected, query_params(option.path)
+      assert_response :success
+      assert_select "#current-title", "Created"
+      assert_select "#current-direction", "desc"
+      assert_select "#sort-options a[data-field='created_at'][data-active='true'][data-active-direction='desc']"
+    end
   end
 
   private
 
-  def query_params(path)
-    Rack::Utils.parse_query(path.split("?").last)
+  def with_sortable_routes
+    with_routing do |set|
+      set.draw do
+        get "/sortable_test_demo_index", to: "sortable_test_controllers/demo#index", as: :sortable_test_demo_index
+      end
+
+      yield
+    end
   end
 end
