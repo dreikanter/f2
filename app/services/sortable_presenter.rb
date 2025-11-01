@@ -66,7 +66,7 @@ class SortablePresenter
 
   def default_direction_for(field)
     config = field_config_for(field)
-    config ? config.fetch(:direction, "desc") : "desc"
+    config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
   def default_field
