@@ -25,7 +25,4 @@ class ListGroupComponent < ViewComponent::Base
     items.any?
   end
 
-  def stat_item(label:, value:)
-    with_item StatItemComponent.new(label: label, value: value)
-  end
 end
