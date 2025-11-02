@@ -13,7 +13,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   test "#index should get with no emails" do
     get development_sent_emails_path
     assert_response :success
-    assert_select "div.alert-info", text: /No emails captured yet/
+    assert_select '[data-key="development.emails.empty"]', text: /No emails captured yet/
   end
 
   test "#index should get with emails" do
@@ -25,9 +25,9 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     get development_sent_emails_path
     assert_response :success
 
-    assert_select "a.list-group-item", count: 2
-    assert_select "h5", text: "Test Subject"
-    assert_select "h5", text: "Another Email"
+    assert_select '[data-key="development.emails.list.item"]', count: 2
+    assert_select '[data-key="development.emails.subject"]', text: "Test Subject"
+    assert_select '[data-key="development.emails.subject"]', text: "Another Email"
   end
 
   test "#show should show email" do
@@ -36,8 +36,8 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
     get development_sent_email_path(id: uuid)
     assert_response :success
-    assert_select "h4", text: "Test Subject"
-    assert_select "pre", text: /Test email body/
+    assert_select '[data-key="development.emails.subject"]', text: "Test Subject"
+    assert_select '[data-key="development.emails.body"]', text: /Test email body/
   end
 
   test "#show should redirect when email not found" do
@@ -80,9 +80,9 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
     get development_sent_email_path(id: uuid)
     assert_response :success
-    assert_select "button#text-tab", text: "Text"
-    assert_select "button#html-tab", text: "HTML"
-    assert_select "pre", text: /Text version/
+    assert_select '[data-key="development.emails.tab.text"]', text: "Text"
+    assert_select '[data-key="development.emails.tab.html"]', text: "HTML"
+    assert_select '[data-key="development.emails.text-part"]', text: /Text version/
   end
 
   test "#show should handle subject with special characters" do
@@ -91,7 +91,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
     get development_sent_email_path(id: uuid)
     assert_response :success
-    assert_select "h4", text: "Important: Reset your password"
+    assert_select '[data-key="development.emails.subject"]', text: "Important: Reset your password"
   end
 
   test "#purge should handle purge errors gracefully" do
