@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
+  setup { clear_enqueued_jobs }
+
   def user
     @user ||= create(:user)
   end
@@ -109,62 +113,33 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
   end
 
-  test "#show should render turbo stream for ready preview status" do
+  test "#show should render turbo stream for all preview statuses" do
     sign_in_as(user)
-    completed_preview = create(:feed_preview, user: user, status: :ready)
 
-    get feed_preview_url(completed_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    assert_includes response.body, "turbo-stream"
-  end
+    %i[ready failed processing pending].each do |status|
+      preview = create(:feed_preview, user: user, status: status)
 
-  test "#show should render turbo stream for failed preview status" do
-    sign_in_as(user)
-    failed_preview = create(:feed_preview, user: user, status: :failed)
-
-    get feed_preview_url(failed_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    assert_includes response.body, "turbo-stream"
-  end
-
-  test "#show should render turbo stream for processing preview status" do
-    sign_in_as(user)
-    processing_preview = create(:feed_preview, user: user, status: :processing)
-
-    get feed_preview_url(processing_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    assert_includes response.body, "turbo-stream"
-  end
-
-  test "#show should render turbo stream for pending preview status" do
-    sign_in_as(user)
-    pending_preview = create(:feed_preview, user: user, status: :pending)
-
-    get feed_preview_url(pending_preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    assert_includes response.body, "turbo-stream"
+      get feed_preview_url(preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      assert_response :success
+      assert_includes response.body, "turbo-stream", "expected turbo stream response for #{status}"
+      assert_includes response.body, 'target="preview-status"', "expected preview-status update for #{status}"
+      assert_includes response.body, 'action="update"', "expected update action for #{status}"
+    end
   end
 
   test "#update should complete successfully" do
     sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user)
+    existing_preview = create(:feed_preview, user: user, status: :ready, data: { "posts" => [] }, url: "http://old.com/feed.xml")
 
-    # The update action should complete successfully
-    patch feed_preview_url(existing_preview), params: {}
-
-    assert_response :redirect
-    assert_redirected_to feed_preview_path(FeedPreview.last)
-  end
-
-  test "#update should create and enqueue preview successfully" do
-    sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user, url: "http://old.com/feed.xml")
-
-    # The update action should delete existing previews and create a new one
-    assert_difference("FeedPreview.count", 0) do # Net change should be 0 (delete 1, create 1)
-      patch feed_preview_url(existing_preview), params: {}
+    assert_no_changes -> { FeedPreview.count } do
+      assert_enqueued_with(job: FeedPreviewJob, args: [existing_preview.id]) do
+        patch feed_preview_url(existing_preview), params: {}
+      end
     end
 
-    assert_redirected_to feed_preview_path(FeedPreview.last)
+    existing_preview.reload
+    assert existing_preview.pending?
+    assert_nil existing_preview.data
+    assert_redirected_to feed_preview_path(existing_preview)
   end
 end

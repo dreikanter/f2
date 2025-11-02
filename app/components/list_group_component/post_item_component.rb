@@ -16,7 +16,7 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
   end
 
   def call
-    content_tag :li, class: DEFAULT_ITEM_CLASS, data: { key: @key } do
+    content_tag :li, class: DEFAULT_ITEM_CLASS, data: data_attributes do
       content_tag(:div, class: CONTENT_WRAPPER_CLASSES) do
         safe_join([icon_span, inner_wrapper])
       end
@@ -31,7 +31,7 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
 
   def inner_wrapper
     content_tag(:div, class: INNER_WRAPPER_CLASSES) do
-      safe_join([title_link, metadata_div])
+      safe_join([title_link, metadata_div].compact)
     end
   end
 
@@ -52,5 +52,11 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
 
       safe_join(segments)
     end
+  end
+
+  def data_attributes
+    return {} unless @key
+
+    { key: @key }
   end
 end

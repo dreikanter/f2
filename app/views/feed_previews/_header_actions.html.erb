@@ -1,9 +1,11 @@
-<div class="d-flex gap-2">
+<div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
   <% unless feed_preview.processing? %>
     <%= button_to "Refresh Preview", feed_preview_path(feed_preview),
         method: :patch,
-        class: "btn btn-outline-secondary",
-        data: { turbo: false } %>
+        class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+        data: { turbo: false },
+        form: { class: "inline-block" } %>
   <% end %>
-  <%= link_to "Back to Feeds", feeds_path, class: "btn btn-outline-secondary" %>
+  <%= link_to "Back to Feeds", feeds_path,
+      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
 </div>

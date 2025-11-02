@@ -44,6 +44,19 @@ class UserTest < ActiveSupport::TestCase
     assert_nil authenticated_user
   end
 
+  test "#password_reset token should expire" do
+    user = create(:user)
+    token = user.generate_token_for(:password_reset)
+
+    travel(User::PASSWORD_RESET_TTL - 1.second) do
+      assert_equal user, User.find_by_password_reset_token(token)
+    end
+
+    travel(User::PASSWORD_RESET_TTL + 1.second) do
+      assert_nil User.find_by_password_reset_token(token)
+    end
+  end
+
   test "should have inactive state by default" do
     user = User.new
     assert user.inactive?
