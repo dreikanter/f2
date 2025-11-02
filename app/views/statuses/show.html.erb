@@ -1,5 +1,4 @@
 <% content_for :title, "Status" %>
-<% content_for :body_class, "bg-white" %>
 
 <% has_active_tokens = @user.access_tokens.active.exists? %>
 <% has_feeds = @user.total_feeds_count > 0 %>
