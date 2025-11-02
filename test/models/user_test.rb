@@ -319,4 +319,43 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal recent_event, user.last_email_change_event
   end
+
+  test "#active_tokens_count returns count of active access tokens" do
+    user = create(:user)
+    create(:access_token, user: user, status: :active)
+    create(:access_token, user: user, status: :active)
+    create(:access_token, user: user, status: :inactive)
+
+    assert_equal 2, user.active_tokens_count
+  end
+
+  test "#inactive_tokens_count returns count of inactive access tokens" do
+    user = create(:user)
+    create(:access_token, user: user, status: :active)
+    create(:access_token, user: user, status: :inactive)
+    create(:access_token, user: user, status: :inactive)
+
+    assert_equal 2, user.inactive_tokens_count
+  end
+
+  test "#created_invites_count returns count of created invites" do
+    user = create(:user)
+    create(:invite, created_by_user: user)
+    create(:invite, created_by_user: user)
+    other_user = create(:user)
+    create(:invite, created_by_user: other_user)
+
+    assert_equal 2, user.created_invites_count
+  end
+
+  test "#used_invites_count returns count of invites with invited users" do
+    user = create(:user)
+    invited_user1 = create(:user)
+    invited_user2 = create(:user)
+    create(:invite, created_by_user: user, invited_user: invited_user1)
+    create(:invite, created_by_user: user, invited_user: invited_user2)
+    create(:invite, created_by_user: user, invited_user: nil)
+
+    assert_equal 2, user.used_invites_count
+  end
 end
