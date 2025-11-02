@@ -1,4 +1,6 @@
 class Settings::PasswordUpdatesController < ApplicationController
+  layout "tailwind"
+
   def edit
     @user = Current.user
   end

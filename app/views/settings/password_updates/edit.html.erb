@@ -1,31 +1,38 @@
 <% content_for :title, "Change Password" %>
 
-<%= page_header "Change Password" do %>
-  <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary" %>
-<% end %>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Change Password</h1>
+    <%= link_to "Back to Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+  </div>
 
-<div class="row">
-  <div class="col-6">
-    <%= form_with model: @user, url: settings_password_update_path, method: :patch, local: true do |form| %>
-      <div class="mb-3">
-        <%= form.label :current_password, "Current password:", class: "form-label fw-bold" %>
-        <%= form.password_field :current_password, class: "form-control", required: true, autofocus: true %>
-      </div>
+  <div class="max-w-2xl">
+    <div class="ff-card">
+      <div class="ff-card__body">
+        <%= form_with model: @user, url: settings_password_update_path, method: :patch, local: true do |form| %>
+          <div class="space-y-6">
+            <div class="ff-form-group">
+              <%= form.label :current_password, "Current password", class: "ff-form-label" %>
+              <%= form.password_field :current_password, class: "ff-form-input", required: true, autofocus: true, autocomplete: "current-password" %>
+            </div>
 
-      <div class="mb-3">
-        <%= form.label :password, "New password:", class: "form-label fw-bold" %>
-        <%= form.password_field :password, class: "form-control", required: true %>
-      </div>
+            <div class="ff-form-group">
+              <%= form.label :password, "New password", class: "ff-form-label" %>
+              <%= form.password_field :password, class: "ff-form-input", required: true, autocomplete: "new-password" %>
+            </div>
 
-      <div class="mb-3">
-        <%= form.label :password_confirmation, "Confirm new password:", class: "form-label fw-bold" %>
-        <%= form.password_field :password_confirmation, class: "form-control", required: true %>
-      </div>
+            <div class="ff-form-group">
+              <%= form.label :password_confirmation, "Confirm new password", class: "ff-form-label" %>
+              <%= form.password_field :password_confirmation, class: "ff-form-input", required: true, autocomplete: "new-password" %>
+            </div>
+          </div>
 
-      <div class="mt-4">
-        <%= form.submit "Change Password", class: "btn btn-primary me-2" %>
-        <%= link_to "Cancel", settings_path, class: "btn btn-outline-secondary" %>
+          <div class="ff-card__footer">
+            <%= form.submit "Change Password", class: "ff-button" %>
+            <%= link_to "Cancel", settings_path, class: class_names("ff-button", "ff-button--secondary") %>
+          </div>
+        <% end %>
       </div>
-    <% end %>
+    </div>
   </div>
 </div>
