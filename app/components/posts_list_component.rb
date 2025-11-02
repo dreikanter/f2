@@ -5,16 +5,6 @@ class PostsListComponent < ViewComponent::Base
     @empty_text = empty_text
   end
 
-  def call
-    if @posts.any?
-      render_list
-    else
-      render_empty_state
-    end
-  end
-
-  private
-
   def render_list
     component = ListGroupComponent.new
 
@@ -23,16 +13,19 @@ class PostsListComponent < ViewComponent::Base
         icon: helpers.post_status_icon(post.status),
         title: helpers.post_content_preview(post.content, 80),
         title_url: helpers.post_path(post),
-        metadata_segments: metadata_segments_for(post)
+        metadata_segments: metadata_segments_for(post),
+        key: helpers.dom_id(post)
       ))
     end
 
-    render(component)
+    component
   end
 
   def render_empty_state
     content_tag(:p, @empty_text, class: "ff-text text-slate-500")
   end
+
+  private
 
   def metadata_segments_for(post)
     withdraw_allowed = helpers.policy(post).destroy?
@@ -58,7 +51,7 @@ class PostsListComponent < ViewComponent::Base
   def published_segment(post)
     return unless post.published_at
 
-    safe_join(["Published", helpers.time_ago_tag(post.published_at)], " ")
+    helpers.safe_join(["Published", helpers.time_ago_tag(post.published_at)], " ")
   end
 
   def attachments_segment(post)
