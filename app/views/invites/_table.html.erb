@@ -1,40 +1,50 @@
 <% if invites.any? %>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered">
+  <div class="ff-table-container">
+    <table class="ff-table">
       <thead>
         <tr>
-          <th>Invitation Code</th>
-          <th>Invited User</th>
-          <th style="width: 1%;" class="text-nowrap">Created</th>
-          <th style="width: 1%;" class="text-center"></th>
+          <th scope="col">Invitation Link</th>
+          <th scope="col">Invited User</th>
+          <th scope="col" class="text-center">Created</th>
+          <th scope="col" class="text-right"></th>
         </tr>
       </thead>
       <tbody>
         <% invites.each do |invite| %>
-          <tr id="<%= dom_id(invite) %>" class="<%= 'highlight-new' if local_assigns[:new_invite_id] == invite.id %>">
+          <tr id="<%= dom_id(invite) %>" class="<%= class_names({ 'bg-emerald-50': local_assigns[:new_invite_id] == invite.id }) %>">
             <td>
-              <div class="d-flex align-items-center gap-2">
-                <code class="<%= 'text-muted' if invite.invited_user %>"><%= registration_url(code: invite.id) %></code>
-                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none p-0" data-controller="clipboard" data-clipboard-text-value="<%= registration_url(code: invite.id) %>" data-action="click->clipboard#copy" title="Copy invitation link to clipboard">
-                  <%= icon("clipboard") %>
+              <div class="flex items-center gap-3">
+                <code class="<%= class_names('font-mono text-sm max-w-[16rem] truncate', 'text-slate-400': invite.invited_user.present?) %>">
+                  <%= registration_url(code: invite.id) %>
+                </code>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  data-controller="clipboard"
+                  data-clipboard-text-value="<%= registration_url(code: invite.id) %>"
+                  data-action="click->clipboard#copy"
+                  title="Copy invitation link to clipboard">
+                  <%= icon("clipboard", css_class: "h-4 w-4", aria_hidden: true) %>
+                  <span class="sr-only">Copy invitation link</span>
                 </button>
               </div>
             </td>
-            <td>
+            <td class="text-sm text-slate-600">
               <% if invite.invited_user %>
                 <%= invite.invited_user.name %>
               <% else %>
-                <em class="text-muted">Not used yet</em>
+                <span class="italic text-slate-400">Not used yet</span>
               <% end %>
             </td>
-            <td class="text-nowrap"><%= short_time_ago(invite.created_at) %></td>
-            <td style="width: 1%;" class="text-center">
+            <td class="text-center text-sm text-slate-500"><%= short_time_ago(invite.created_at) %></td>
+            <td class="text-right">
               <% if !invite.invited_user && policy(invite).destroy? %>
                 <%= button_to invite_path(invite),
                               method: :delete,
-                              class: "btn btn-sm btn-link text-muted p-0",
+                              class: "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500",
                               form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
-                  <%= icon("trash") %>
+                  <%= icon("trash", css_class: "h-4 w-4", aria_hidden: true) %>
+                  <span class="sr-only">Delete invite</span>
                 <% end %>
               <% end %>
             </td>
@@ -44,7 +54,9 @@
     </table>
   </div>
 <% else %>
-  <div class="text-center py-5">
-    <p>No invites yet</p>
+  <div class="ff-card">
+    <div class="ff-card__body text-center">
+      <p class="ff-text">No invites yet</p>
+    </div>
   </div>
 <% end %>
