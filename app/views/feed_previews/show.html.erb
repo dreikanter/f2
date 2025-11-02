@@ -1,38 +1,22 @@
 <% content_for :title, "Feed Preview" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h1 class="ff-h1">Feed Preview</h1>
+      <p class="ff-text mt-2">
+        Feed URL: <a href="<%= @feed_preview.url %>" target="_blank" rel="noopener" class="ff-link break-all"><%= @feed_preview.url %></a>
+      </p>
+      <p class="ff-text">
+        Feed profile: <span class="text-slate-600"><%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %></span>
+      </p>
     </div>
-    <div
-      id="header-actions"
-      class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+    <div id="header-actions" class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
       <%= render "feed_previews/header_actions", feed_preview: @feed_preview %>
     </div>
   </div>
 
-  <div class="space-y-2">
-    <p class="ff-text">
-      <span class="font-semibold text-slate-600">Feed URL:</span>
-      <a
-        href="<%= @feed_preview.url %>"
-        target="_blank"
-        rel="noopener"
-        class="ff-link break-all">
-        <%= @feed_preview.url %>
-      </a>
-    </p>
-    <p class="ff-text">
-      <span class="font-semibold text-slate-600">Feed profile:</span>
-      <span class="text-slate-600"><%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %></span>
-    </p>
-  </div>
-
-  <div
-    id="preview-status"
-    class="space-y-4"
-    aria-busy="<%= @feed_preview.pending? || @feed_preview.processing? %>">
+  <div id="preview-status" class="space-y-4" aria-busy="<%= @feed_preview.pending? || @feed_preview.processing? %>">
     <% if @feed_preview.ready? %>
       <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
     <% elsif @feed_preview.pending? || @feed_preview.processing? %>
