@@ -1,86 +1,75 @@
 <% if feed_preview.posts_data.any? %>
-  <div class="ff-alert ff-alert--info" role="alert">
-    <p class="ff-text">Showing <%= feed_preview.posts_count %> most recent <%= "post".pluralize(feed_preview.posts_count) %>.</p>
-  </div>
+  <p class="ff-text text-slate-600">Showing <%= feed_preview.posts_count %> most recent <%= "post".pluralize(feed_preview.posts_count) %>.</p>
 
-  <div class="space-y-4">
-    <% feed_preview.posts_data.each_with_index do |post_data, index| %>
-      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Post <%= index + 1 %></h2>
-        </div>
-        <div class="space-y-4 px-5 py-4 text-sm text-slate-700">
-          <% if post_data["uid"].present? %>
-            <div class="space-y-1">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">UID</p>
-              <p class="break-all text-sm text-slate-700"><%= post_data["uid"] %></p>
-            </div>
-          <% end %>
-
-          <% if post_data["published_at"].present? %>
-            <div class="space-y-1">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Published</p>
-              <p><%= Time.parse(post_data["published_at"]).to_fs(:long) rescue post_data["published_at"] %></p>
-            </div>
-          <% end %>
-
-          <% if post_data["source_url"].present? %>
-            <div class="space-y-1">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Source</p>
-              <a
-                href="<%= post_data["source_url"] %>"
-                target="_blank"
-                rel="noopener"
-                class="ff-link break-all">
-                <%= post_data["source_url"] %>
-              </a>
-            </div>
-          <% end %>
-
-          <div class="space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Content</p>
-            <div class="rounded-lg bg-slate-50 px-4 py-3 text-slate-700">
-              <%= simple_format(post_data["content"]) %>
-            </div>
-          </div>
-
-          <% if post_data["attachments"].present? && post_data["attachments"].any? %>
-            <div class="space-y-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
-              <ul class="list-disc space-y-2 pl-4 text-sm text-slate-600">
-                <% post_data["attachments"].each do |attachment| %>
-                  <li>
-                    <% if attachment.is_a?(Hash) && attachment["url"] %>
-                      <a
-                        href="<%= attachment["url"] %>"
-                        target="_blank"
-                        rel="noopener"
-                        class="ff-link break-all">
-                        <%= attachment["url"] %>
-                      </a>
-                      <% if attachment["type"] %>
-                        <span class="ml-2 text-xs text-slate-500">(<%= attachment["type"] %>)</span>
-                      <% end %>
-                    <% elsif attachment.present? %>
-                      <a
-                        href="<%= attachment %>"
-                        target="_blank"
-                        rel="noopener"
-                        class="ff-link break-all">
-                        <%= attachment %>
-                      </a>
-                    <% end %>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-        </div>
-      </div>
+  <% list = ListGroupComponent.new %>
+  <% feed_preview.posts_data.each_with_index do |post_data, index| %>
+    <% attachments = Array(post_data["attachments"]).compact_blank %>
+    <% metadata_segments = [] %>
+    <% if post_data["uid"].present? %>
+      <% metadata_segments << "UID #{post_data["uid"]}" %>
     <% end %>
-  </div>
+    <% if post_data["published_at"].present? %>
+      <% published_at = Time.zone.parse(post_data["published_at"]) rescue nil %>
+      <% if published_at %>
+        <% metadata_segments << "Published #{time_ago_in_words(published_at)} ago" %>
+      <% end %>
+    <% end %>
+    <% if post_data["source_url"].present? %>
+      <% metadata_segments << link_to("Source", post_data["source_url"], target: "_blank", rel: "noopener", class: "ff-link") %>
+    <% end %>
+    <% if attachments.any? %>
+      <% metadata_segments << "Attachments: #{attachments.size}" %>
+    <% end %>
+
+    <% title_preview = truncate(strip_tags(post_data["content"].to_s), length: 80, omission: "...") %>
+    <% title = title_preview.presence || "Post #{index + 1}" %>
+
+    <% body = capture do %>
+      <% if post_data["content"].present? %>
+        <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <%= simple_format(post_data["content"]) %>
+        </div>
+      <% end %>
+
+      <% if attachments.any? %>
+        <div class="space-y-2 text-sm text-slate-600">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
+          <ul class="list-disc space-y-2 pl-4">
+            <% attachments.each do |attachment| %>
+              <li>
+                <% url = attachment.is_a?(Hash) ? attachment["url"] : attachment %>
+                <% type = attachment.is_a?(Hash) ? attachment["type"] : nil %>
+                <% if url.present? %>
+                  <a
+                    href="<%= url %>"
+                    target="_blank"
+                    rel="noopener"
+                    class="ff-link break-all">
+                    <%= url %>
+                  </a>
+                  <% if type.present? %>
+                    <span class="ml-2 text-xs text-slate-500">(<%= type %>)</span>
+                  <% end %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
+    <% body = body.presence %>
+
+    <% list.with_item(ListGroupComponent::PostItemComponent.new(
+      icon: icon("file-text"),
+      title: title,
+      title_url: post_data["source_url"].presence,
+      metadata_segments: metadata_segments,
+      body: body,
+      key: "feed_preview.post_#{index + 1}"
+    )) %>
+  <% end %>
+
+  <%= render(list) %>
 <% else %>
-  <div class="ff-alert ff-alert--info" role="alert">
-    <p class="ff-text">No posts found in this feed.</p>
-  </div>
+  <p class="ff-text text-slate-600">No posts found in this feed.</p>
 <% end %>

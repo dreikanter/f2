@@ -7,11 +7,12 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
   METADATA_CLASSES = "ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500"
   BULLET_CLASSES = "text-slate-300"
 
-  def initialize(icon:, title:, title_url:, metadata_segments: [], key: nil)
+  def initialize(icon:, title:, title_url:, metadata_segments: [], body: nil, key: nil)
     @icon = icon
     @title = title
     @title_url = title_url
     @metadata_segments = metadata_segments
+    @body = body
     @key = key
   end
 
@@ -31,7 +32,7 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
 
   def inner_wrapper
     content_tag(:div, class: INNER_WRAPPER_CLASSES) do
-      safe_join([title_link, metadata_div])
+      safe_join([title_link, metadata_div, body_content].compact)
     end
   end
 
@@ -52,5 +53,11 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
 
       safe_join(segments)
     end
+  end
+
+  def body_content
+    return if @body.blank?
+
+    @body
   end
 end

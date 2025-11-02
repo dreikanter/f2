@@ -12,9 +12,9 @@
     </div>
   </div>
 
-  <div class="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Feed URL</p>
-    <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+  <div class="space-y-2">
+    <p class="ff-text">
+      <span class="font-semibold text-slate-600">Feed URL:</span>
       <a
         href="<%= @feed_preview.url %>"
         target="_blank"
@@ -22,10 +22,11 @@
         class="ff-link break-all">
         <%= @feed_preview.url %>
       </a>
-      <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-        <%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %>
-      </span>
-    </div>
+    </p>
+    <p class="ff-text">
+      <span class="font-semibold text-slate-600">Feed profile:</span>
+      <span class="text-slate-600"><%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %></span>
+    </p>
   </div>
 
   <div

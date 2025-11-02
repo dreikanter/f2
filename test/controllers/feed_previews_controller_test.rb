@@ -56,6 +56,8 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get feed_preview_url(feed_preview)
     assert_response :success
+    assert_includes response.body, "Feed URL:"
+    assert_includes response.body, "Feed profile:"
   end
 
   test "#show should handle missing preview" do

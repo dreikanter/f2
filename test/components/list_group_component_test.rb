@@ -26,6 +26,24 @@ class ListGroupComponentTest < ViewComponent::TestCase
     assert_equal "Trailing slot", result.css('[data-key="stats.custom.value"]').first.text.strip
   end
 
+  test "post item component should render provided body" do
+    component = ListGroupComponent.new
+    body_html = "<p class=\"body-text\">Body content</p>".html_safe
+    component.with_item(ListGroupComponent::PostItemComponent.new(
+      icon: "icon",
+      title: "Example title",
+      title_url: nil,
+      metadata_segments: [],
+      body: body_html,
+      key: "posts.preview"
+    ))
+
+    result = render_inline(component)
+
+    assert_includes result.text, "Example title"
+    assert_equal "Body content", result.css(".body-text").first.text
+  end
+
   class StubItemComponent < ViewComponent::Base
     def initialize(body_text:, value:, key:)
       @body_text = body_text
