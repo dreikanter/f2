@@ -1,37 +1,44 @@
 <% content_for :title, "Change Email Address" %>
 
-<%= page_header "Change Email Address" do %>
-  <%= link_to "Back to Settings", settings_path, class: "btn btn-outline-secondary" %>
-<% end %>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Change Email Address</h1>
+    <%= link_to "Back to Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+  </div>
 
-<div class="row">
-  <div class="col-6">
-    <% if @user.email_deactivated? %>
-      <div class="alert alert-danger">
-        <strong>Your email is deactivated.</strong>
-        <% if @user.can_change_email? %>
-          <p class="mb-0">Update your email address below to continue receiving notifications.</p>
-        <% else %>
-          <p class="mb-0">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+  <% if @user.email_deactivated? %>
+    <div class="ff-alert ff-alert--danger max-w-2xl space-y-2" role="alert">
+      <p class="ff-text ff-text--heavy">Your email is deactivated.</p>
+      <% if @user.can_change_email? %>
+        <p class="ff-text">Update your email address below to continue receiving notifications.</p>
+      <% else %>
+        <p class="ff-text">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="max-w-2xl">
+    <div class="ff-card">
+      <div class="ff-card__body">
+        <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
+          <div class="space-y-6">
+            <div class="ff-form-group">
+              <%= form.label :current_email, "Current email", class: "ff-form-label" %>
+              <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "ff-form-input" %>
+            </div>
+
+            <div class="ff-form-group">
+              <%= form.label :email_address, "New email", class: "ff-form-label" %>
+              <%= form.email_field :email_address, value: "", class: "ff-form-input", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+            </div>
+          </div>
+
+          <div class="ff-card__footer">
+            <%= form.submit "Update Email", class: "ff-button" %>
+            <%= link_to "Cancel", settings_path, class: class_names("ff-button", "ff-button--secondary") %>
+          </div>
         <% end %>
       </div>
-    <% end %>
-
-    <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
-      <div class="mb-3">
-        <%= form.label :current_email, "Current email:", class: "form-label fw-bold" %>
-        <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "form-control" %>
-      </div>
-
-      <div class="mb-3">
-        <%= form.label :email_address, "New email:", class: "form-label fw-bold" %>
-        <%= form.email_field :email_address, value: "", class: "form-control", placeholder: "Enter new email address", autofocus: true %>
-      </div>
-
-      <div class="mt-4">
-        <%= form.submit "Update Email", class: "btn btn-primary me-2" %>
-        <%= link_to "Cancel", settings_path, class: "btn btn-outline-secondary" %>
-      </div>
-    <% end %>
+    </div>
   </div>
 </div>
