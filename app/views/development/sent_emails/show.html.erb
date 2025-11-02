@@ -8,29 +8,7 @@
                 class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
 
-  <% email_details = ListGroupComponent.new.tap do |list|
-       list.with_item(ListGroupComponent::StatItemComponent.new(
-         label: "Message ID",
-         value: content_tag(:code, @email[:message_id], class: "text-xs break-all")
-       ))
-
-       list.with_item(ListGroupComponent::StatItemComponent.new(
-         label: "From",
-         value: content_tag(:code, @email[:from], class: "text-xs break-words")
-       ))
-
-       list.with_item(ListGroupComponent::StatItemComponent.new(
-         label: "To",
-         value: content_tag(:code, @email[:to], class: "text-xs break-words")
-       ))
-
-       list.with_item(ListGroupComponent::StatItemComponent.new(
-         label: "Date",
-         value: content_tag(:span, @email[:date], class: "text-sm text-slate-700")
-       ))
-     end %>
-
-  <%= render(email_details) %>
+  <%= render SentEmailDetailsComponent.new(email: @email) %>
 
   <% if @email[:multipart] %>
     <div data-controller="email-viewer" class="space-y-4">

@@ -21,11 +21,11 @@ export default class extends Controller {
     this.textPanelTarget.classList.add("hidden")
   }
 
-  activateTab(activeButton, inactiveButton) {
-    activeButton.classList.add("text-cyan-600", "border-cyan-600")
-    activeButton.classList.remove("text-slate-500", "border-transparent")
+  activateTab(active, inactive) {
+    active.classList.add("text-cyan-600", "border-cyan-600")
+    active.classList.remove("text-slate-500", "border-transparent")
 
-    inactiveButton.classList.remove("text-cyan-600", "border-cyan-600")
-    inactiveButton.classList.add("text-slate-500", "border-transparent")
+    inactive.classList.remove("text-cyan-600", "border-cyan-600")
+    inactive.classList.add("text-slate-500", "border-transparent")
   }
 }
