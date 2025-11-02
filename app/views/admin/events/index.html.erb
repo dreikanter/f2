@@ -4,7 +4,22 @@
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1">Events</h1>
+    <div>
+      <h1 class="ff-h1">Events</h1>
+      <% if @filter.present? %>
+        <p class="mt-1 text-sm text-slate-500" data-key="admin.events.filter-summary">
+          <% filter_parts = [] %>
+          <% @filter.to_h.each do |key, value| %>
+            <% if value.is_a?(Array) %>
+              <% filter_parts << "#{key}: #{value.join(', ')}" %>
+            <% else %>
+              <% filter_parts << "#{key}: #{value}" %>
+            <% end %>
+          <% end %>
+          Filtering by <%= filter_parts.join(" • ") %>.
+        </p>
+      <% end %>
+    </div>
     <div class="flex gap-2">
       <% if @filter.present? %>
         <%= link_to "Reset Filter", admin_events_path, class: "ff-button ff-button--secondary ff-button--compact" %>
