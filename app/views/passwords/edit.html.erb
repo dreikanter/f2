@@ -35,9 +35,9 @@
         </div>
       </div>
 
-      <div class="ff-card__footer">
+      <div class="ff-card__footer flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Save password", class: "ff-button w-full sm:w-auto" %>
         <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
-        <%= form.submit "Save password", class: "ff-button" %>
       </div>
     <% end %>
   </div>

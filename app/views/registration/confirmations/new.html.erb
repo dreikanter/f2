@@ -1,4 +1,5 @@
 <% content_for :title, "Resend Confirmation" %>
+
 <div class="ff-card">
   <div class="ff-card__body">
     <h1 class="ff-card__title">Resend Confirmation</h1>
@@ -12,9 +13,9 @@
         </div>
       </div>
 
-      <div class="ff-card__footer">
+      <div class="ff-card__footer flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Send confirmation email", class: "ff-button w-full sm:w-auto" %>
         <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
-        <%= form.submit "Send confirmation email", class: "ff-button" %>
       </div>
     <% end %>
   </div>

@@ -17,13 +17,13 @@
         </div>
       </div>
 
-      <div class="ff-card__footer">
+      <div class="ff-card__footer flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Sign in", class: "ff-button w-full sm:w-auto" %>
         <div class="flex flex-wrap items-center gap-2 text-slate-500">
           <%= link_to "Forgot password?", new_password_path, class: "ff-link" %>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true" class="hidden sm:inline">·</span>
           <%= link_to "Resend confirmation", new_registration_confirmation_path, class: "ff-link" %>
         </div>
-        <%= form.submit "Sign in", class: "ff-button" %>
       </div>
     <% end %>
   </div>
