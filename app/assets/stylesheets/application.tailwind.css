@@ -146,4 +146,12 @@
   .ff-table td {
     @apply px-6 py-4 whitespace-nowrap;
   }
+
+  .ff-table--dense th {
+    @apply px-4 py-2;
+  }
+
+  .ff-table--dense td {
+    @apply px-4 py-2;
+  }
 }
