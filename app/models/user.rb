@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  PASSWORD_RESET_TTL = 15.minutes
+  PASSWORD_RESET_TTL = 1.hour
   EMAIL_CONFIRMATION_TTL = 24.hours
   EMAIL_CHANGE_COOLDOWN = 10.minutes
   PASSWORD_MIN_LENGTH = 10
