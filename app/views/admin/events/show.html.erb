@@ -1,93 +1,128 @@
 <% content_for :title, "Event ##{@event.id}" %>
 
-<%= page_header "Event ##{@event.id}" do %>
-  <div class="d-flex gap-2">
-    <% if @previous_event %>
-      <%= link_to "← Previous", admin_event_path(@previous_event), class: "btn btn-outline-secondary" %>
-    <% else %>
-      <span class="btn btn-outline-secondary disabled">← Previous</span>
-    <% end %>
+<%
+  event_info = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Type",
+      value: tag.code(@event.type, class: "text-sm")
+    ))
 
-    <% if @next_event %>
-      <%= link_to "Next →", admin_event_path(@next_event), class: "btn btn-outline-secondary" %>
-    <% else %>
-      <span class="btn btn-outline-secondary disabled">Next →</span>
-    <% end %>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Level",
+      value: @event.level.capitalize
+    ))
 
-    <%= link_to "Back to Events", admin_events_path, class: "btn btn-outline-primary" %>
-  </div>
-<% end %>
+    user_value = if @event.user
+      @event.user.email_address
+    else
+      tag.em("System", class: "text-slate-500")
+    end
 
-<% if @event.message.present? %>
-  <div class="alert alert-<%= @event.level == 'error' ? 'danger' : @event.level == 'warning' ? 'warning' : 'info' %> mb-4">
-    <%= simple_format(@event.message, class: "mb-0") %>
-  </div>
-<% end %>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "User",
+      value: user_value
+    ))
 
-<div class="list-group">
-  <div class="list-group-item">
-    <strong>Type:</strong>
-    <code><%= @event.type %></code>
-  </div>
+    subject_value = if @event.subject
+      safe_join([
+        if @event.subject_type == "Feed"
+          link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link")
+        elsif @event.subject_type == "Post"
+          link_to(@event.subject_type, post_path(@event.subject), class: "ff-link")
+        else
+          @event.subject_type
+        end,
+        " ",
+        tag.span("##{@event.subject_id}", class: "text-slate-500")
+      ])
+    else
+      tag.em("None", class: "text-slate-500")
+    end
 
-  <div class="list-group-item">
-    <strong>Level:</strong>
-    <%= @event.level.capitalize %>
-  </div>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Subject",
+      value: subject_value
+    ))
 
-  <div class="list-group-item">
-    <strong>User:</strong>
-    <% if @event.user %>
-      <%= @event.user.email_address %>
-    <% else %>
-      <em class="text-muted">System</em>
-    <% end %>
-  </div>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Created",
+      value: safe_join([
+        long_time_tag(@event.created_at),
+        " ",
+        tag.span("(#{short_time_ago(@event.created_at)})", class: "text-slate-500")
+      ])
+    ))
 
-  <div class="list-group-item">
-    <strong>Subject:</strong>
-    <% if @event.subject %>
-      <% if @event.subject_type == "Feed" %>
-        <%= link_to @event.subject_type, feed_path(@event.subject) %>
-      <% elsif @event.subject_type == "Post" %>
-        <%= link_to @event.subject_type, post_path(@event.subject) %>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Updated",
+      value: safe_join([
+        long_time_tag(@event.updated_at),
+        " ",
+        tag.span("(#{short_time_ago(@event.updated_at)})", class: "text-slate-500")
+      ])
+    ))
+
+    if @event.expires_at
+      expires_value = safe_join([
+        long_time_tag(@event.expires_at),
+        " ",
+        if @event.expired?
+          tag.span("Expired", class: "inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20")
+        else
+          tag.span("(in #{short_time_ago(@event.expires_at)})", class: "text-slate-500")
+        end
+      ])
+
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Expires",
+        value: expires_value
+      ))
+    end
+  end
+%>
+
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Event #<%= @event.id %></h1>
+    <div class="flex gap-2">
+      <% if @previous_event %>
+        <%= link_to "← Previous", admin_event_path(@previous_event), class: "ff-button ff-button--secondary ff-button--compact" %>
       <% else %>
-        <%= @event.subject_type %>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">← Previous</span>
       <% end %>
-      <span class="text-muted">#<%= @event.subject_id %></span>
-    <% else %>
-      <em class="text-muted">None</em>
-    <% end %>
-  </div>
 
-  <div class="list-group-item">
-    <strong>Created:</strong>
-    <%= long_time_tag(@event.created_at) %>
-    <span class="text-muted">(<%= short_time_ago(@event.created_at) %>)</span>
-  </div>
-
-  <div class="list-group-item">
-    <strong>Updated:</strong>
-    <%= long_time_tag(@event.updated_at) %>
-    <span class="text-muted">(<%= short_time_ago(@event.updated_at) %>)</span>
-  </div>
-
-  <% if @event.expires_at %>
-    <div class="list-group-item">
-      <strong>Expires:</strong>
-      <%= long_time_tag(@event.expires_at) %>
-      <% if @event.expired? %>
-        <span class="badge bg-danger">Expired</span>
+      <% if @next_event %>
+        <%= link_to "Next →", admin_event_path(@next_event), class: "ff-button ff-button--secondary ff-button--compact" %>
       <% else %>
-        <span class="text-muted">(in <%= short_time_ago(@event.expires_at) %>)</span>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">Next →</span>
       <% end %>
+
+      <%= link_to "Back to Events", admin_events_path, class: "ff-button ff-button--secondary ff-button--compact" %>
+    </div>
+  </div>
+
+  <% if @event.message.present? %>
+    <%
+      alert_class = case @event.level
+                    when "error"
+                      "ff-alert ff-alert--error"
+                    when "warning"
+                      "ff-alert ff-alert--warning"
+                    else
+                      "ff-alert ff-alert--info"
+                    end
+    %>
+    <div class="<%= alert_class %>">
+      <%= simple_format(@event.message, class: "mb-0") %>
     </div>
   <% end %>
-</div>
 
-<% if @event.metadata.present? && @event.metadata != {} %>
-  <div class="mt-4">
-    <h3 class="mb-3">Metadata</h3>
-    <pre class="font-monospace small bg-light border rounded p-3 mb-0 overflow-auto"><%= highlight_json(@event.metadata) %></pre>
-  </div>
-<% end %>
+  <%= render(event_info) %>
+
+  <% if @event.metadata.present? && @event.metadata != {} %>
+    <section class="space-y-4">
+      <h2 class="ff-h2">Metadata</h2>
+      <pre class="overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-sm"><%= highlight_json(@event.metadata) %></pre>
+    </section>
+  <% end %>
+</div>

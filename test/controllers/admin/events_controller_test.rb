@@ -74,7 +74,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Events"
     assert_select "table", count: 0 # No table should be rendered
-    assert_select "h4", "No events found"
+    assert_select "h2", "No events found"
     assert_select "p", "Events will appear here as they are created."
   end
 
