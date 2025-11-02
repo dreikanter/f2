@@ -16,13 +16,4 @@
   <div id="invites-table">
     <%= render "table", invites: @invites %>
   </div>
-
-  <% if @invite_stats[:invited_users_count] %>
-    <div class="ff-card">
-      <div class="ff-card__body">
-        <span class="ff-text text-sm font-semibold text-slate-700">Invited users:</span>
-        <span class="ff-text text-sm text-slate-600"><%= @invite_stats[:invited_users_count] %></span>
-      </div>
-    </div>
-  <% end %>
 </div>
