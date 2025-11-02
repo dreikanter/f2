@@ -37,7 +37,7 @@
         </ul>
       </div>
       <div class="rounded-lg border border-slate-200 bg-slate-50 p-4" data-email-viewer-target="textPanel">
-        <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
+        <pre class="mb-0 whitespace-pre-wrap overflow-auto text-sm text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
       </div>
       <div class="hidden rounded-lg border border-slate-200 bg-white" data-email-viewer-target="htmlPanel">
         <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" class="h-[400px] w-full rounded-lg"></iframe>
