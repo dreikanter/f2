@@ -108,7 +108,7 @@
   }
 
   .ff-h1 {
-    @apply text-3xl font-normal mb-4 text-slate-900;
+    @apply text-4xl font-semibold mb-4 text-slate-900;
   }
 
   .ff-h2 {
