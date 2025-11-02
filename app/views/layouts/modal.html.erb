@@ -3,11 +3,10 @@
   <head>
     <%= render "layouts/head" %>
   </head>
+  <body class="min-h-screen bg-white text-slate-900 sm:bg-slate-100">
+    <%= render "layouts/flash" %>
 
-  <% body_classes = class_names("min-h-screen", "text-slate-900", content_for?(:body_class) ? content_for(:body_class) : "bg-slate-100") %>
-  <body class="<%= body_classes %>">
-    <main class="mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
-      <%= render "layouts/flash" %>
+    <main class="mx-auto w-full max-w-2xl px-4 py-12 sm:px-0" data-controller="autofocus">
       <%= yield %>
     </main>
   </body>
