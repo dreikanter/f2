@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
+  setup { clear_enqueued_jobs }
+
   def user
     @user ||= create(:user)
   end
@@ -118,17 +122,24 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
       get feed_preview_url(preview), headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "turbo-stream", "expected turbo stream response for #{status}"
+      assert_includes response.body, 'target="preview-status"', "expected preview-status update for #{status}"
+      assert_includes response.body, 'action="update"', "expected update action for #{status}"
     end
   end
 
   test "#update should complete successfully" do
     sign_in_as(user)
-    existing_preview = create(:feed_preview, user: user, url: "http://old.com/feed.xml")
+    existing_preview = create(:feed_preview, user: user, status: :ready, data: { "posts" => [] }, url: "http://old.com/feed.xml")
 
-    assert_difference("FeedPreview.count", 0) do
-      patch feed_preview_url(existing_preview), params: {}
+    assert_no_changes -> { FeedPreview.count } do
+      assert_enqueued_with(job: FeedPreviewJob, args: [existing_preview.id]) do
+        patch feed_preview_url(existing_preview), params: {}
+      end
     end
 
-    assert_redirected_to feed_preview_path(FeedPreview.last)
+    existing_preview.reload
+    assert existing_preview.pending?
+    assert_nil existing_preview.data
+    assert_redirected_to feed_preview_path(existing_preview)
   end
 end

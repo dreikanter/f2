@@ -33,12 +33,12 @@ class FeedPreviewsController < ApplicationController
 
         # Update the status section
         if partial_name = STATUS_PARTIALS[@feed_preview.status]
-          streams << turbo_stream.replace("preview-status",
-            partial: "feed_previews/#{partial_name}", locals: { feed_preview: @feed_preview })
+        streams << turbo_stream.update("preview-status",
+          partial: "feed_previews/#{partial_name}", locals: { feed_preview: @feed_preview })
         end
 
         # Update the header actions to show/hide refresh button
-        streams << turbo_stream.replace("header-actions",
+        streams << turbo_stream.update("header-actions",
           partial: "feed_previews/header_actions", locals: { feed_preview: @feed_preview })
 
         render turbo_stream: streams
@@ -53,7 +53,8 @@ class FeedPreviewsController < ApplicationController
 
     feed_preview = create_and_enqueue_preview(
       url: existing_preview.url,
-      feed_profile_key: existing_preview.feed_profile_key
+      feed_profile_key: existing_preview.feed_profile_key,
+      force_refresh: true
     )
 
     redirect_to feed_preview_path(feed_preview)
