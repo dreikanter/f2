@@ -1,59 +1,103 @@
 <% content_for :title, "Settings" %>
 
-<%= page_header "Settings" do %>
-  <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "btn btn-outline-secondary" %>
-<% end %>
+<%
+  account_list = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Email",
+      value: tag.span(class: "flex items-center gap-2") {
+        safe_join([
+          @user.email_address,
+          link_to("Change", edit_settings_email_update_path, class: "ff-link text-sm")
+        ])
+      },
+      key: "settings.email"
+    ))
 
-<div class="row">
-  <div class="col-12">
-    <div class="list-group">
-      <div class="list-group-item">
-        <strong>Email:</strong> <%= @user.email_address %>
-        <%= link_to "Change", edit_settings_email_update_path, class: "text-decoration-none ms-2" %>
-      </div>
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Password",
+      value: tag.span(class: "flex items-center gap-2") {
+        safe_join([
+          "Last updated #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
+          link_to("Change", edit_settings_password_update_path, class: "ff-link text-sm")
+        ])
+      },
+      key: "settings.password"
+    ))
 
-      <div class="list-group-item">
-        <strong>Password:</strong> last updated <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago
-        <%= link_to "Change", edit_settings_password_update_path, class: "text-decoration-none ms-2" %>
-      </div>
+    if @user.permissions.any?
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Permissions",
+        value: @user.permissions.map { |permission| permission.name.humanize }.join(", "),
+        key: "settings.permissions"
+      ))
+    end
+  end
+%>
 
-      <% if @user.permissions.any? %>
-        <div class="list-group-item">
-          <strong>Permissions:</strong>
-          <%= @user.permissions.map { |permission| permission.name.humanize }.join(", ") %>
-        </div>
-      <% end %>
-    </div>
-
-    <div class="list-group mt-4">
-      <div class="list-group-item">
-        <strong>Tokens:</strong>
-        <% if @access_tokens.any? %>
-          <%= pluralize(@access_tokens.active.count, 'active') %><% if @access_tokens.inactive.any? %>, <%= pluralize(@access_tokens.inactive.count, 'inactive') %><% end %>
-          <%= link_to "Manage", settings_access_tokens_path, class: "text-decoration-none ms-2" %>
-        <% else %>
-          none configured
-          <%= link_to "Add a token", new_settings_access_token_path, class: "text-decoration-none ms-2" %>
-        <% end %>
-      </div>
-    </div>
-
-    <div class="list-group mt-4">
-      <div class="list-group-item">
-        <strong>Invites:</strong>
-        <% created_count = @user.created_invites.count %>
-        <% used_count = @user.created_invites.where.not(invited_user_id: nil).count %>
-        <%= @user.available_invites %> available<% if created_count > 0 %>,
-        <%= created_count %> created<% end %><% if used_count > 0 %>,
-        <%= used_count %> used<% end %>
-        <% if @user.available_invites > 0 || created_count > 0 %>
-          <% if @user.available_invites > 0 %>
-            <%= link_to "Invite someone", invites_path, class: "text-decoration-none ms-2" %>
-          <% else %>
-            <%= link_to "See your invites", invites_path, class: "text-decoration-none ms-2" %>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Settings</h1>
+    <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Your Account</h2>
+    <%= render(account_list) %>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">FreeFeed Application Tokens</h2>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-2">
+        <p class="ff-text text-slate-600">
+          Tokens allow Feeder to post content to FreeFeed on your behalf.
+        </p>
+        <% if @access_tokens.any? %>
+          <p class="ff-text text-slate-600">
+            You have <%= pluralize(@user.active_tokens_count, 'active token') %><% if @user.inactive_tokens_count > 0 %> and <%= pluralize(@user.inactive_tokens_count, 'inactive token') %><% end %>.
+          </p>
+        <% else %>
+          <p class="ff-text text-slate-600">
+            You don't have any FreeFeed tokens configured yet.
+          </p>
+        <% end %>
+      </div>
+      <div class="shrink-0">
+        <% if @access_tokens.any? %>
+          <%= link_to "Manage", settings_access_tokens_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% else %>
+          <%= link_to "Add Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Feeder Invites</h2>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-2">
+        <% if @user.available_invites > 0 %>
+          <p class="ff-text text-slate-600">
+            You can invite up to <%= pluralize(@user.available_invites, 'person', 'people') %> to Feeder.
+          </p>
+        <% else %>
+          <p class="ff-text text-slate-600">
+            You don't have available invites at the moment.
+          </p>
+        <% end %>
+        <% if @user.used_invites_count > 0 %>
+          <p class="ff-text text-slate-600">
+            You already invited <%= pluralize(@user.used_invites_count, 'person', 'people') %> to Feeder.
+          </p>
+        <% end %>
+      </div>
+      <div class="shrink-0">
+        <% if @user.available_invites > 0 %>
+          <%= link_to "Invite Someone", invites_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% elsif @user.created_invites_count > 0 %>
+          <%= link_to "View Invites", invites_path, class: class_names("ff-button", "ff-button--compact", "ff-button--secondary") %>
+        <% end %>
+      </div>
+    </div>
+  </section>
 </div>

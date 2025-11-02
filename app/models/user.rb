@@ -126,6 +126,30 @@ class User < ApplicationRecord
     update!(password: new_password, password_confirmation: new_password)
   end
 
+  # Returns the count of active access tokens for this user
+  # @return [Integer] number of active tokens
+  def active_tokens_count
+    access_tokens.active.count
+  end
+
+  # Returns the count of inactive access tokens for this user
+  # @return [Integer] number of inactive tokens
+  def inactive_tokens_count
+    access_tokens.inactive.count
+  end
+
+  # Returns the count of invites created by this user
+  # @return [Integer] number of created invites
+  def created_invites_count
+    created_invites.count
+  end
+
+  # Returns the count of invites that have been used (i.e., have an invited user)
+  # @return [Integer] number of used invites
+  def used_invites_count
+    created_invites.where.not(invited_user_id: nil).count
+  end
+
   private
 
   def both_emails_are_globally_unique
