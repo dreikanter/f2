@@ -51,11 +51,11 @@
       value: password_updated_value
     ))
 
-    last_seen_value = if @last_session
+    last_seen_value = if @stats.last_session
       tag.time(
-        "#{@last_session.updated_at.to_date.to_fs(:long)} (#{short_time_ago(@last_session.updated_at)})",
-        datetime: @last_session.updated_at.iso8601,
-        title: @last_session.updated_at.to_fs(:long)
+        "#{@stats.last_session.updated_at.to_date.to_fs(:long)} (#{short_time_ago(@stats.last_session.updated_at)})",
+        datetime: @stats.last_session.updated_at.iso8601,
+        title: @stats.last_session.updated_at.to_fs(:long)
       )
     else
       tag.span("Never", class: "text-slate-500")
@@ -101,24 +101,24 @@
   stats_list = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Feeds",
-      value: "#{@feeds_count} total (#{@feeds_enabled_count} enabled, #{@feeds_disabled_count} disabled)"
+      value: "#{@stats.feeds_count} total (#{@stats.feeds_enabled_count} enabled, #{@stats.feeds_disabled_count} disabled)"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Access Tokens",
-      value: "#{@access_tokens_count} total (#{@active_access_tokens_count} active, #{@inactive_access_tokens_count} not active)"
+      value: "#{@stats.access_tokens_count} total (#{@stats.active_access_tokens_count} active, #{@stats.inactive_access_tokens_count} not active)"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Posts",
-      value: @posts_count
+      value: @stats.posts_count
     ))
 
-    most_recent_post_value = if @most_recent_post
+    most_recent_post_value = if @stats.most_recent_post
       tag.time(
-        "#{@most_recent_post.published_at.to_date.to_fs(:long)} (#{short_time_ago(@most_recent_post.published_at)})",
-        datetime: @most_recent_post.published_at.iso8601,
-        title: @most_recent_post.published_at.to_fs(:long)
+        "#{@stats.most_recent_post.published_at.to_date.to_fs(:long)} (#{short_time_ago(@stats.most_recent_post.published_at)})",
+        datetime: @stats.most_recent_post.published_at.iso8601,
+        title: @stats.most_recent_post.published_at.to_fs(:long)
       )
     else
       tag.span("No posts yet", class: "text-slate-500")
@@ -144,12 +144,12 @@
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Created Invites",
-      value: @created_invites_count
+      value: @stats.created_invites_count
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Invited Users",
-      value: @invited_users_count
+      value: @stats.invited_users_count
     ))
   end
 %>
@@ -179,7 +179,7 @@
     <%= render(invitations_list) %>
   </section>
 
-  <% if @invited_users.any? %>
+  <% if @stats.invited_users.any? %>
     <section class="space-y-4">
       <h3 class="ff-h3">Users Invited by <%= @user.name %></h3>
       <div class="ff-table-container">
@@ -192,7 +192,7 @@
             </tr>
           </thead>
           <tbody>
-            <% @invited_users.each do |invite| %>
+            <% @stats.invited_users.each do |invite| %>
               <tr>
                 <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "ff-link" %></td>
                 <td><%= invite.invited_user.email_address %></td>
@@ -208,7 +208,7 @@
   <section class="space-y-4">
     <h2 class="ff-h2">Active Sessions</h2>
 
-    <% if @sessions.any? %>
+    <% if @stats.sessions.any? %>
       <div class="ff-table-container">
         <table class="ff-table">
           <thead>
@@ -220,7 +220,7 @@
             </tr>
           </thead>
           <tbody>
-            <% @sessions.each do |session| %>
+            <% @stats.sessions.each do |session| %>
               <tr>
                 <td><%= session.ip_address %></td>
                 <td class="max-w-md truncate"><%= session.user_agent %></td>
