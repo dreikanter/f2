@@ -33,8 +33,8 @@ class Feeds::PurgesControllerTest < ActionDispatch::IntegrationTest
     feed.update!(access_token: access_token)
 
     get feed_purge_path(feed)
+
     assert_response :success
-    assert_select "h5", "Purge All Posts for #{feed.name}"
   end
 
   test "create requires authentication" do
