@@ -36,7 +36,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select "td", "TestEvent"
+    assert_select "code", "TestEvent"
   end
 
   test "should allow admin users to view event details" do
@@ -63,6 +63,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "table.ff-table.ff-table--dense"
+    assert_select ".ff-event-level", text: "INFO", minimum: 1
     assert_select 'nav[aria-label="Events pagination"]' do
       assert_select "span.text-sm", text: /Showing 25 of 30 events/
       assert_select "ul.inline-flex.items-center"
@@ -122,9 +123,9 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "tbody tr", count: 3
-    assert_select "td", text: "TypeA", count: 2
-    assert_select "td", text: "TypeB", count: 1
-    assert_select "td", text: "TypeC", count: 0
+    assert_select "code", text: "TypeA", count: 2
+    assert_select "code", text: "TypeB", count: 1
+    assert_select "code", text: "TypeC", count: 0
   end
 
   test "should filter events by user_id" do
