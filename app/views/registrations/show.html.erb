@@ -55,11 +55,9 @@
         <div class="space-y-4">
           <h1 class="ff-card__title">Create your account</h1>
           <% if @invite&.created_by_user %>
-            <div class="ff-alert ff-alert--info" role="alert">
-              <span>
-                <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
-              </span>
-            </div>
+            <p class="ff-text">
+              <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
+            </p>
           <% end %>
         </div>
         <% @user ||= User.new %>

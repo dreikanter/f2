@@ -1,4 +1,5 @@
 class Feeds::PurgesController < ApplicationController
+  layout "tailwind"
   def show
     @feed = Current.user.feeds.find(params[:feed_id])
     authorize @feed, :purge?

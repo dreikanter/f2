@@ -1,27 +1,33 @@
 <% content_for :title, "Confirm Purge" %>
 
-<%= page_header "Confirm Purge" %>
-
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">Purge All Posts for <%= @feed.name %></h5>
-    <p class="text-muted">
-      This will remove all published posts for this feed from the FreeFeed group <strong><%= @feed.target_group %></strong>.
-      Posts will be marked as withdrawn but remain visible in the application.
+<div class="space-y-8">
+  <div class="space-y-2">
+    <h1 class="ff-h1">Confirm Purge</h1>
+    <p class="ff-text text-sm text-slate-600">
+      Remove every post created from this feed on FreeFeed. Posts stay in Feeder so you can review them later.
     </p>
-    <div class="alert alert-warning">
-      <strong>Warning:</strong> This operation cannot be reversed. Deleted posts cannot be restored on FreeFeed.
+  </div>
+
+  <div class="ff-alert ff-alert--warning">
+    <p class="font-semibold">Heads up: this can’t be undone.</p>
+    <p class="mt-1">
+      Every published post in <span class="font-semibold"><%= @feed.target_group %></span> will be withdrawn on FreeFeed. They’ll remain visible in Feeder but can’t be restored publicly.
+    </p>
+  </div>
+
+  <%= form_with url: feed_purge_path(@feed), method: :post, local: true, class: "space-y-6" do |form| %>
+    <div class="space-y-1">
+      <p class="text-sm text-slate-500">Feed</p>
+      <p class="text-base font-semibold text-slate-900"><%= @feed.name %></p>
     </div>
 
-    <%= form_with url: feed_purge_path(@feed), method: :post, local: true do |form| %>
-      <div class="d-flex gap-2">
-        <%= form.submit "Purge All Posts",
-                       class: "btn btn-danger",
-                       data: {
-                         turbo_confirm: "Are you sure you want to purge all posts from #{@feed.target_group}? This will remove them from FreeFeed but they will remain in the app."
-                       } %>
-        <%= link_to "Cancel", feed_path(@feed), class: "btn btn-outline-secondary" %>
-      </div>
-    <% end %>
-  </div>
+    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <%= link_to "Cancel", feed_path(@feed), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <%= form.submit "Purge all posts",
+                      class: class_names("ff-button", "ff-button--danger", "ff-button--compact"),
+                      data: {
+                        turbo_confirm: "Permanently withdraw every post from #{@feed.target_group}? They’ll stay in Feeder but disappear from FreeFeed."
+                      } %>
+    </div>
+  <% end %>
 </div>
