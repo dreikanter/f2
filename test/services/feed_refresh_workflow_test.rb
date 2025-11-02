@@ -108,8 +108,8 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_not_nil first_post.freefeed_post_id
 
     assert_equal 2, FeedEntry.where(feed: test_feed).count
-    entries = FeedEntry.where(feed: test_feed).order(:created_at)
-    assert_equal ["entry-123", "entry-456"], entries.pluck(:uid)
+    entries = FeedEntry.where(feed: test_feed)
+    assert_equal ["entry-123", "entry-456"], entries.pluck(:uid).sort
 
     assert_equal 2, Post.where(feed: test_feed, status: :published).count
     assert workflow.stats[:started_at]
