@@ -62,7 +62,11 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select ".pagination"
+    assert_select 'nav[aria-label="Events pagination"]' do
+      assert_select "span.text-sm", text: /Showing 25 of 30 events/
+      assert_select "ul.inline-flex.items-center"
+      assert_select "a", text: "Next"
+    end
     assert_select "tbody tr", count: 25 # Should show 25 event rows per page
   end
 

@@ -1,4 +1,6 @@
 <% content_for :title, "Events" %>
+<% base_pagination_params = {} %>
+<% base_pagination_params[:filter] = @filter.to_h if @filter.present? %>
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -89,7 +91,8 @@
 
     <%= pagination_for @events,
                        collection_name: "events",
-                       path_helper: ->(page) { admin_events_path(page: page, filter: @filter) } %>
+                       path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
+                       template: "shared/pagination_tailwind" %>
   <% else %>
     <div class="ff-card">
       <div class="ff-card__body text-center py-12">
