@@ -1,5 +1,4 @@
 class Settings::PasswordUpdatesController < ApplicationController
-
   def edit
     @user = Current.user
   end

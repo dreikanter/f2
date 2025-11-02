@@ -1,5 +1,4 @@
 class Admin::EventsController < ApplicationController
-
   include Pagination
 
   def index

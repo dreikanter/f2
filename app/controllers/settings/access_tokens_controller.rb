@@ -1,5 +1,4 @@
 class Settings::AccessTokensController < ApplicationController
-
   def index
     authorize AccessToken
     @access_tokens = policy_scope(AccessToken).order(created_at: :desc)

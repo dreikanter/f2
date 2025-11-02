@@ -1,5 +1,4 @@
 class Admin::PasswordResetsController < ApplicationController
-
   def show
     @user = load_user
     authorize @user, :update?

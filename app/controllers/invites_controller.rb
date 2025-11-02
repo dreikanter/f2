@@ -1,5 +1,4 @@
 class InvitesController < ApplicationController
-
   def index
     authorize Invite
     @invites = ordered_invites

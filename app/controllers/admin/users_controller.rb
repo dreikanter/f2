@@ -1,5 +1,4 @@
 class Admin::UsersController < ApplicationController
-
   include Pagination
   include Sortable
 
