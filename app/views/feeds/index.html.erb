@@ -4,7 +4,7 @@
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div class="flex flex-col gap-1">
+    <div>
       <h1 class="ff-h1">Feeds</h1>
       <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
         <p class="ff-text mt-1 sm:mt-0"><%= summary_line %></p>
@@ -14,20 +14,20 @@
       <%# Sorting dropdown %>
       <% if @feeds.any? %>
         <div class="relative">
-        <button
-          id="<%= "#{sort_menu_id}-button" %>"
-          type="button"
-          data-dropdown-toggle="<%= sort_menu_id %>"
-          data-dropdown-placement="bottom-end"
-          class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+          <button
+            id="<%= "#{sort_menu_id}-button" %>"
+            type="button"
+            data-dropdown-toggle="<%= sort_menu_id %>"
+            data-dropdown-placement="bottom-end"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
             aria-haspopup="true"
             aria-expanded="false">
-            <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
-            <span class="flex items-center gap-2">
-              <span><%= @sortable_presenter.current_title %></span>
-              <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
-            </span>
-            <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+              <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+              <span class="flex items-center gap-2">
+                <span><%= @sortable_presenter.current_title %></span>
+                <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+              </span>
+              <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
           </button>
           <div
             id="<%= sort_menu_id %>"

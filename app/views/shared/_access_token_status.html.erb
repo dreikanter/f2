@@ -6,24 +6,39 @@
 -%>
 
 <% if access_token.pending? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" aria-busy="true">
-    <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
-    New
+  <div
+    id="<%= dom_id(access_token, :status) %>"
+    data-status="<%= access_token.status %>"
+    aria-busy="true"
+    class="inline-flex items-center gap-2 text-sm text-slate-500">
+    <%= icon("loader-2", css_class: "h-4 w-4 animate-spin text-slate-400", aria_hidden: true) %>
+    <span>New</span>
   </div>
 <% elsif access_token.validating? %>
-  <div id="<%= dom_id(access_token, :status) %>" data-status="<%= access_token.status %>" data-controller="polling" data-polling-endpoint-value="<%= settings_access_token_validation_path(access_token) %>" data-debug-id="<%= access_token.id %>" aria-busy="true">
-    <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
-    ⏳ Validating...
+  <div
+    id="<%= dom_id(access_token, :status) %>"
+    data-status="<%= access_token.status %>"
+    data-controller="polling"
+    data-polling-endpoint-value="<%= settings_access_token_validation_path(access_token) %>"
+    data-debug-id="<%= access_token.id %>"
+    aria-busy="true"
+    class="inline-flex items-center gap-2 text-sm text-slate-500">
+    <%= icon("loader-2", css_class: "h-4 w-4 animate-spin text-slate-400", aria_hidden: true) %>
+    <span>Validating…</span>
   </div>
 <% elsif access_token.active? %>
-  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false">
-    <span class="text-success"><%= icon("check-circle-fill") %> Active</span>
+  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false" class="inline-flex items-center gap-2 text-sm text-emerald-600">
+    <%= icon("check-circle", css_class: "h-4 w-4", aria_hidden: true) %>
+    <span>Active</span>
   </div>
 <% elsif access_token.inactive? %>
-  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false">
-    <span class="text-muted"><%= icon("x-circle") %> Inactive</span>
+  <div id="<%= dom_id(access_token, :status) %>" aria-busy="false" class="inline-flex flex-col text-sm text-slate-500">
+    <span class="inline-flex items-center gap-2">
+      <%= icon("x-circle", css_class: "h-4 w-4 text-slate-400", aria_hidden: true) %>
+      <span>Inactive</span>
+    </span>
     <% if error %>
-      <br><small class="text-muted"><%= error %></small>
+      <span class="mt-1 text-xs text-slate-400"><%= error %></span>
     <% end %>
   </div>
 <% end %>
