@@ -1,0 +1,19 @@
+class CardComponent < ViewComponent::Base
+  DEFAULT_BASE_CLASSES = "rounded-xl border border-slate-200 px-4 py-3 shadow-sm"
+
+  def initialize(**html_options)
+    @html_options = html_options
+  end
+
+  def call
+    content_tag :div, content, merged_options
+  end
+
+  private
+
+  def merged_options
+    options = @html_options.deep_dup
+    options[:class] = helpers.class_names(DEFAULT_BASE_CLASSES, options[:class])
+    options
+  end
+end
