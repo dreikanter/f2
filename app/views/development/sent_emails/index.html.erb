@@ -1,8 +1,8 @@
-<% content_for :title, "Development Emails" %>
+<% content_for :title, "Sent Emails" %>
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1" data-key="development.emails.heading">Development Emails</h1>
+    <h1 class="ff-h1" data-key="development.emails.heading">Sent Emails</h1>
     <% if @emails.any? %>
       <%= button_to "Purge All",
                     purge_development_sent_emails_path,
