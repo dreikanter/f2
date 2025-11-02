@@ -14,26 +14,28 @@
   <div class="ff-card">
     <div class="ff-card__body">
       <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
-        <div class="ff-form-group">
-          <%= form.label :email_address, "Current Email", class: "ff-form-label" %>
-          <%= form.text_field :email_address, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-50 text-slate-500 cursor-not-allowed" %>
-        </div>
-
-        <div class="ff-form-group">
-          <%= form.label :email_address, "New Email", class: "ff-form-label" %>
-          <%= form.email_field :email_address, value: "", class: "ff-form-input", required: true, autofocus: true %>
-        </div>
-
-        <div class="ff-form-group">
-          <div class="flex items-start gap-3">
-            <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
-            <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>
+        <div class="space-y-6">
+          <div class="ff-form-group">
+            <%= form.label :email_address, "Current Email", class: "ff-form-label" %>
+            <%= form.text_field :email_address, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-200 text-slate-500 cursor-not-allowed" %>
           </div>
-        </div>
 
-        <div class="flex flex-wrap gap-2">
-          <%= form.submit "Update Email", class: "ff-button ff-button--compact", data: { turbo_confirm: "Update email for this user?" } %>
-          <%= link_to "Cancel", admin_user_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
+          <div class="ff-form-group">
+            <%= form.label :email_address, "New Email", class: "ff-form-label" %>
+            <%= form.email_field :email_address, value: "", class: "ff-form-input", required: true, autofocus: true %>
+          </div>
+
+          <div class="ff-form-group">
+            <div class="flex items-start gap-3">
+              <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+              <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <%= form.submit "Update Email", class: "ff-button ff-button--compact", data: { turbo_confirm: "Update email for this user?" } %>
+            <%= link_to "Cancel", admin_user_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
+          </div>
         </div>
       <% end %>
     </div>
