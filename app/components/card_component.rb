@@ -12,8 +12,6 @@ class CardComponent < ViewComponent::Base
   private
 
   def merged_options
-    options = @html_options.deep_dup
-    options[:class] = helpers.class_names(DEFAULT_BASE_CLASSES, options[:class])
-    options
+    @html_options.merge(class: helpers.class_names(DEFAULT_BASE_CLASSES, options[:class]))
   end
 end
