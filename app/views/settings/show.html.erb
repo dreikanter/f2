@@ -36,8 +36,8 @@
   tokens_value = if @access_tokens.any?
     active_count = @access_tokens.active.count
     inactive_count = @access_tokens.inactive.count
-    parts = [pluralize(active_count, 'active')]
-    parts << pluralize(inactive_count, 'inactive') if inactive_count > 0
+    parts = ["#{active_count} active"]
+    parts << "#{inactive_count} inactive" if inactive_count > 0
     tag.span(class: "flex items-center gap-2") {
       safe_join([
         parts.join(", "),
@@ -95,17 +95,17 @@
   </div>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Account</h2>
+    <h2 class="ff-h2">Your Account</h2>
     <%= render(account_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Tokens</h2>
+    <h2 class="ff-h2">Freefeed Application Tokens</h2>
     <%= render(tokens_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Invites</h2>
+    <h2 class="ff-h2">Feeder Invites</h2>
     <%= render(invites_list) %>
   </section>
 </div>
