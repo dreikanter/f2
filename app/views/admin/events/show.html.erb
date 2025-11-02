@@ -4,7 +4,7 @@
   event_info = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Type",
-      value: tag.code(@event.type, class: "text-sm")
+      value: tag.code(@event.type, class: "text-sm", data: { key: "admin.events.type" })
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
@@ -26,11 +26,11 @@
     subject_value = if @event.subject
       safe_join([
         if @event.subject_type == "Feed"
-          link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link")
+          link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
         elsif @event.subject_type == "Post"
-          link_to(@event.subject_type, post_path(@event.subject), class: "ff-link")
+          link_to(@event.subject_type, post_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
         elsif @event.subject_type == "User"
-          link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link")
+          link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
         else
           @event.subject_type
         end,

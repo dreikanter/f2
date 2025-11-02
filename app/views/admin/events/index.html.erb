@@ -15,7 +15,7 @@
 
   <% if @events.any? %>
     <div class="ff-table-container">
-      <table class="ff-table ff-table--dense">
+      <table class="ff-table ff-table--dense" data-key="admin.events.table">
         <thead>
           <tr>
             <th scope="col" class="text-center"><%= icon("calendar-event") %></th>
@@ -35,11 +35,11 @@
               <td class="align-top">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center gap-2">
-                    <span class="ff-event-level text-xs font-semibold uppercase tracking-wide text-slate-500"><%= (event.level.to_s.presence || "debug").upcase %></span>
+                    <span class="ff-event-level text-xs font-semibold uppercase tracking-wide text-slate-500" data-key="admin.events.level"><%= (event.level.to_s.presence || "debug").upcase %></span>
                     <%= link_to admin_events_path(filter: { type: [event.type] }),
                                 class: "ff-link font-semibold",
                                 title: "Filter by type: #{event.type}" do %>
-                      <code class="text-sm"><%= event.type %></code>
+                      <code class="text-sm" data-key="admin.events.type"><%= event.type %></code>
                     <% end %>
                   </div>
                   <div class="max-w-sm text-sm text-slate-600">
@@ -76,10 +76,12 @@
       </table>
     </div>
 
-    <%= pagination_for @events,
-                       collection_name: "events",
-                       path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
-                       template: "shared/pagination_tailwind" %>
+    <div data-key="admin.events.pagination">
+      <%= pagination_for @events,
+                         collection_name: "events",
+                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
+                         template: "shared/pagination_tailwind" %>
+    </div>
   <% else %>
     <div class="ff-card">
       <div class="ff-card__body text-center py-12">

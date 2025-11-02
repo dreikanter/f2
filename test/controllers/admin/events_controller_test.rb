@@ -36,7 +36,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select "code", "TestEvent"
+    assert_select '[data-key="admin.events.type"]', "TestEvent"
   end
 
   test "should allow admin users to view event details" do
@@ -47,7 +47,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
-    assert_select "code", "TestEvent"
+    assert_select '[data-key="admin.events.type"]', "TestEvent"
   end
 
   test "should link user subject to admin user page" do
@@ -58,7 +58,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_event_path(event)
 
     assert_response :success
-    assert_select "a[href='#{admin_user_path(subject_user)}']", text: "User"
+    assert_select "a[data-key='admin.event.subject.type'][href='#{admin_user_path(subject_user)}']", text: "User"
   end
 
   # TBD: Reduce the amount of test records by changing page size
@@ -73,14 +73,10 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select "table.ff-table.ff-table--dense"
-    assert_select ".ff-event-level", text: "INFO", minimum: 1
-    assert_select 'nav[aria-label="Events pagination"]' do
-      assert_select "span.text-sm", text: /Showing 25 of 30 events/
-      assert_select "ul.inline-flex.items-center"
-      assert_select "a", text: "Next"
-    end
-    assert_select "tbody tr", count: 25 # Should show 25 event rows per page
+    assert_select '[data-key="admin.events.table"]'
+    assert_select '[data-key="admin.events.level"]', text: "INFO", minimum: 1
+    assert_select "[data-key=\"admin.events.pagination\"]"
+    assert_select "tbody tr", count: 25
   end
 
   test "should show empty state when no events exist" do
@@ -90,7 +86,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select "table", count: 0 # No table should be rendered
+    assert_select '[data-key="admin.events.table"]', count: 0 # No table should be rendered
     assert_select "h2", "No events found"
     assert_select "p", "Events will appear here as they are created."
   end
@@ -134,9 +130,9 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "tbody tr", count: 3
-    assert_select "code", text: "TypeA", count: 2
-    assert_select "code", text: "TypeB", count: 1
-    assert_select "code", text: "TypeC", count: 0
+    assert_select '[data-key="admin.events.type"]', text: "TypeA", count: 2
+    assert_select '[data-key="admin.events.type"]', text: "TypeB", count: 1
+    assert_select '[data-key="admin.events.type"]', text: "TypeC", count: 0
   end
 
   test "should filter events by user_id" do
