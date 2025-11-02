@@ -1,4 +1,5 @@
 class FeedPreviewsController < ApplicationController
+  layout "tailwind"
   before_action :require_authentication
 
   STATUS_PARTIALS = {

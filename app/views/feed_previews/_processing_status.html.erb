@@ -1,13 +1,13 @@
-<div class="alert alert-light d-flex align-items-center" role="alert"
-     data-controller="polling"
-     data-polling-endpoint-value="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>"
-     data-polling-stop-condition-value="spinner-border">
-  <div class="spinner-border spinner-border-sm me-3" role="status">
-    <span class="visually-hidden">Loading...</span>
-  </div>
-  <div>
-    <%= icon("hourglass-split", css_class: "me-2") %>
-    <strong>Generating Preview...</strong>
-    — Processing feed content and generating preview. This usually takes a few seconds.
+<div
+  class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600 shadow-sm"
+  role="status"
+  data-controller="polling"
+  data-polling-endpoint-value="<%= feed_preview_path(feed_preview, format: :turbo_stream) %>"
+  data-polling-stop-condition-value="data-feed-preview-spinner"
+  data-feed-preview-spinner="true">
+  <%= icon("loader-2", css_class: "h-5 w-5 flex-shrink-0 animate-spin text-sky-500", aria_hidden: true) %>
+  <div class="space-y-1">
+    <p class="font-semibold text-slate-900">Generating preview…</p>
+    <p>This usually takes a few seconds while we fetch and format this feed.</p>
   </div>
 </div>

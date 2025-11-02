@@ -1,71 +1,86 @@
 <% if feed_preview.posts_data.any? %>
-  <div class="alert alert-info" role="alert">
-    Showing <%= feed_preview.posts_count %> most recent <%= "post".pluralize(feed_preview.posts_count) %>.
+  <div class="ff-alert ff-alert--info" role="alert">
+    <p class="ff-text">Showing <%= feed_preview.posts_count %> most recent <%= "post".pluralize(feed_preview.posts_count) %>.</p>
   </div>
 
-  <% feed_preview.posts_data.each_with_index do |post_data, index| %>
-    <div class="card mb-3">
-      <div class="card-header">
-        <h6 class="card-title mb-0">Post <%= index + 1 %></h6>
-      </div>
-      <div class="card-body">
-        <% if post_data['uid'].present? %>
-          <div class="mb-2">
-            <strong>UID:</strong> <%= post_data['uid'] %>
-          </div>
-        <% end %>
-
-        <% if post_data['published_at'].present? %>
-          <div class="mb-2">
-            <strong>Published:</strong>
-            <%= Time.parse(post_data['published_at']).to_fs(:long) rescue post_data['published_at'] %>
-          </div>
-        <% end %>
-
-        <% if post_data['source_url'].present? %>
-          <div class="mb-2">
-            <strong>Source:</strong>
-            <a href="<%= post_data['source_url'] %>" target="_blank" class="text-decoration-none">
-              <%= post_data['source_url'] %>
-            </a>
-          </div>
-        <% end %>
-
-        <div class="mb-2">
-          <strong>Content:</strong>
-          <div class="mt-1">
-            <%= simple_format(post_data['content']) %>
-          </div>
+  <div class="space-y-4">
+    <% feed_preview.posts_data.each_with_index do |post_data, index| %>
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Post <%= index + 1 %></h2>
         </div>
+        <div class="space-y-4 px-5 py-4 text-sm text-slate-700">
+          <% if post_data["uid"].present? %>
+            <div class="space-y-1">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">UID</p>
+              <p class="break-all text-sm text-slate-700"><%= post_data["uid"] %></p>
+            </div>
+          <% end %>
 
-        <% if post_data['attachments'].present? && post_data['attachments'].any? %>
-          <div class="mb-0">
-            <strong>Attachments:</strong>
-            <ul class="list-unstyled ms-3">
-              <% post_data['attachments'].each do |attachment| %>
-                <li>
-                  <% if attachment.is_a?(Hash) && attachment['url'] %>
-                    <a href="<%= attachment['url'] %>" target="_blank" class="text-decoration-none">
-                      <%= attachment['url'] %>
-                    </a>
-                    <% if attachment['type'] %>
-                      <small class="text-muted">(<%= attachment['type'] %>)</small>
-                    <% end %>
-                  <% elsif attachment.present? %>
-                    <a href="<%= attachment %>" target="_blank" class="text-decoration-none">
-                      <%= attachment %>
-                    </a>
-                  <% end %>
-                </li>
-              <% end %>
-            </ul>
+          <% if post_data["published_at"].present? %>
+            <div class="space-y-1">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Published</p>
+              <p><%= Time.parse(post_data["published_at"]).to_fs(:long) rescue post_data["published_at"] %></p>
+            </div>
+          <% end %>
+
+          <% if post_data["source_url"].present? %>
+            <div class="space-y-1">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Source</p>
+              <a
+                href="<%= post_data["source_url"] %>"
+                target="_blank"
+                rel="noopener"
+                class="ff-link break-all">
+                <%= post_data["source_url"] %>
+              </a>
+            </div>
+          <% end %>
+
+          <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Content</p>
+            <div class="rounded-lg bg-slate-50 px-4 py-3 text-slate-700">
+              <%= simple_format(post_data["content"]) %>
+            </div>
           </div>
-        <% end %>
+
+          <% if post_data["attachments"].present? && post_data["attachments"].any? %>
+            <div class="space-y-2">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
+              <ul class="list-disc space-y-2 pl-4 text-sm text-slate-600">
+                <% post_data["attachments"].each do |attachment| %>
+                  <li>
+                    <% if attachment.is_a?(Hash) && attachment["url"] %>
+                      <a
+                        href="<%= attachment["url"] %>"
+                        target="_blank"
+                        rel="noopener"
+                        class="ff-link break-all">
+                        <%= attachment["url"] %>
+                      </a>
+                      <% if attachment["type"] %>
+                        <span class="ml-2 text-xs text-slate-500">(<%= attachment["type"] %>)</span>
+                      <% end %>
+                    <% elsif attachment.present? %>
+                      <a
+                        href="<%= attachment %>"
+                        target="_blank"
+                        rel="noopener"
+                        class="ff-link break-all">
+                        <%= attachment %>
+                      </a>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 <% else %>
-  <div class="alert alert-light" role="alert">
-    No posts found in this feed.
+  <div class="ff-alert ff-alert--info" role="alert">
+    <p class="ff-text">No posts found in this feed.</p>
   </div>
 <% end %>
