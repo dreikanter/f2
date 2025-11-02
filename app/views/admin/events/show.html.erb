@@ -1,86 +1,5 @@
 <% content_for :title, "Event ##{@event.id}" %>
 
-<%
-  event_info = ListGroupComponent.new.tap do |list|
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Type",
-      value: tag.code(@event.type, class: "text-sm", data: { key: "admin.events.type" })
-    ))
-
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Level",
-      value: @event.level.capitalize
-    ))
-
-    user_value = if @event.user
-      @event.user.email_address
-    else
-      tag.em("System", class: "text-slate-500")
-    end
-
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "User",
-      value: user_value
-    ))
-
-    subject_link = if @event.subject_type == "Feed" && @event.subject.present?
-      link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-    elsif @event.subject_type == "Post" && @event.subject.present?
-      link_to(@event.subject_type, post_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-    elsif @event.subject_type == "User" && @event.subject.present?
-      link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-    elsif @event.subject_type.present?
-      link_to(@event.subject_type, admin_events_path(filter: { subject_type: @event.subject_type }), class: "ff-link", data: { key: "admin.event.subject.type" })
-    end
-
-    subject_value = safe_join([
-      subject_link || @event.subject_type || tag.em("None", class: "text-slate-500"),
-      " ",
-      tag.span("##{@event.subject_id}", class: "text-slate-500")
-    ])
-
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Subject",
-      value: subject_value
-    ))
-
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Created",
-      value: safe_join([
-        long_time_tag(@event.created_at),
-        " ",
-        tag.span("(#{short_time_ago(@event.created_at)})", class: "text-slate-500")
-      ])
-    ))
-
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Updated",
-      value: safe_join([
-        long_time_tag(@event.updated_at),
-        " ",
-        tag.span("(#{short_time_ago(@event.updated_at)})", class: "text-slate-500")
-      ])
-    ))
-
-    if @event.expires_at
-      expires_value = safe_join([
-        long_time_tag(@event.expires_at),
-        " ",
-        if @event.expired?
-          tag.span("Expired", class: "inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20")
-        else
-          tag.span("(in #{short_time_ago(@event.expires_at)})", class: "text-slate-500")
-        end
-      ])
-
-      list.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Expires",
-        value: expires_value
-      ))
-    end
-  end
-%>
-
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <h1 class="ff-h1">Event #<%= @event.id %></h1>
@@ -117,7 +36,7 @@
     </div>
   <% end %>
 
-  <%= render(event_info) %>
+  <%= render(EventDetailsComponent.new(event: @event)) %>
 
   <% if @event.metadata.present? && @event.metadata != {} %>
     <section class="space-y-4">
