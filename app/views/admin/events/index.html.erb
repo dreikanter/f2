@@ -1,82 +1,129 @@
 <% content_for :title, "Events" %>
+<% base_pagination_params = {} %>
+<% base_pagination_params[:filter] = @filter.to_h if @filter.present? %>
 
-<%= page_header "Events" do %>
-  <% if @filter.present? %>
-    <%= link_to "Reset Filter", admin_events_path, class: "btn btn-outline-secondary btn-sm" %>
-  <% end %>
-<% end %>
-
-<% if @events.any? %>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th style="width: 1%;" class="text-center"><%= icon("calendar-event") %></th>
-          <th style="width: 1%;" class="text-center"><%= icon("exclamation-circle") %></th>
-          <th>Type</th>
-          <th>Message</th>
-          <th>User</th>
-          <th>Subject</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @events.each do |event| %>
-          <tr>
-            <td class="text-center" style="width: 1%;">
-              <%= link_to admin_event_path(event), class: "text-muted", title: event.created_at.rfc3339 do %>
-                <%= short_time_ago(event.created_at) %>
-              <% end %>
-            </td>
-            <td class="text-center" style="width: 1%;">
-              <%= level_badge(event.level) %>
-            </td>
-            <td>
-              <%= link_to admin_events_path(filter: { type: [event.type] }),
-                          class: "text-decoration-none",
-                          title: "Filter by type: #{event.type}" do %>
-                <code><%= event.type %></code>
-              <% end %>
-            </td>
-            <td>
-              <div class="text-truncate" style="max-width: 300px;">
-                <%= event.message.present? ? event.message : content_tag(:em, "No message", class: "text-muted") %>
-              </div>
-            </td>
-            <td>
-              <%= event.user&.email_address || content_tag(:em, "System", class: "text-muted") %>
-            </td>
-            <td>
-              <% if event.subject %>
-                <% if event.subject_type == "Feed" %>
-                  <%= link_to event.subject_type, feed_path(event.subject), class: "text-muted" %>
-                <% elsif event.subject_type == "Post" %>
-                  <%= link_to event.subject_type, post_path(event.subject), class: "text-muted" %>
-                <% else %>
-                  <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
-                              class: "text-muted",
-                              title: "Filter by subject type: #{event.subject_type}" do %>
-                    <%= event.subject_type %>
-                  <% end %>
-                <% end %>
-                <span class="text-muted">#<%= event.subject_id %></span>
-              <% else %>
-                <em class="text-muted">None</em>
-              <% end %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-
-  <%= pagination_for @events,
-                     collection_name: "events",
-                     path_helper: ->(page) { admin_events_path(page: page, filter: @filter) } %>
-<% else %>
-  <div class="card">
-    <div class="card-body text-center py-5 text-muted">
-      <h4>No events found</h4>
-      <p>Events will appear here as they are created.</p>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="ff-h1">Events</h1>
+      <% if @filter.present? %>
+        <p class="mt-1 text-sm text-slate-500" data-key="admin.events.filter-summary">
+          <% filter_parts = [] %>
+          <% @filter.to_h.each do |key, value| %>
+            <% if value.is_a?(Array) %>
+              <% filter_parts << "#{key}: #{value.join(', ')}" %>
+            <% else %>
+              <% filter_parts << "#{key}: #{value}" %>
+            <% end %>
+          <% end %>
+          Filtering by <%= filter_parts.join(" • ") %>.
+        </p>
+      <% end %>
+    </div>
+    <div class="flex gap-2">
+      <% if @filter.present? %>
+        <%= link_to "Reset Filter", admin_events_path, class: "ff-button ff-button--secondary ff-button--compact" %>
+      <% end %>
+      <%= link_to "Back to Admin", admin_path, class: "ff-button ff-button--secondary ff-button--compact" %>
     </div>
   </div>
-<% end %>
+
+  <% if @events.any? %>
+    <div class="ff-table-container">
+      <table class="ff-table ff-table--dense" data-key="admin.events.table">
+        <thead>
+          <tr>
+            <th scope="col">Event</th>
+            <th scope="col">User</th>
+            <th scope="col">Subject</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @events.each do |event| %>
+            <tr>
+              <td class="align-top">
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2">
+                    <%= link_to admin_event_path(event),
+                                class: "text-xs font-medium tracking-wide hover:text-slate-700",
+                                title: event.created_at.rfc3339,
+                                data: { key: "admin.events.timestamp" } do %>
+                      <%= short_time_ago(event.created_at) %>
+                    <% end %>
+                    <%
+                      level_key = (event.level.to_s.presence || "debug").downcase
+                      level_badge_classes = {
+                        "debug" => "bg-slate-200 text-slate-600",
+                        "info" => "bg-blue-100 text-blue-700",
+                        "warning" => "bg-amber-100 text-amber-700",
+                        "error" => "bg-red-100 text-red-700"
+                      }
+                      badge_class = level_badge_classes.fetch(level_key, "bg-slate-200 text-slate-600")
+                    %>
+                    <span class="ff-event-level <%= badge_class %>" data-key="admin.events.level"><%= level_key.upcase %></span>
+                    <%= link_to admin_events_path(filter: { type: [event.type] }), class: "font-semibold", title: "Filter by type: #{event.type}" do %>
+                      <code class="text-sm" data-key="admin.events.type"><%= event.type %></code>
+                    <% end %>
+                  </div>
+                  <div class="max-w-sm text-sm text-slate-600">
+                    <div class="truncate">
+                      <%= event.message.present? ? event.message : content_tag(:em, "No message", class: "text-slate-500") %>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <% if event.user_id.present? %>
+                  <%= link_to "User ##{event.user_id}",
+                              admin_events_path(filter: { user_id: event.user_id }),
+                              class: "text-slate-600 hover:text-slate-800",
+                              title: "Filter by user id: #{event.user_id}",
+                              data: { key: "admin.events.user" } %>
+                <% else %>
+                  <em class="text-slate-500" data-key="admin.events.user">System</em>
+                <% end %>
+              </td>
+              <td>
+                <%
+                  subject_link = if event.subject_type == "Feed" && event.subject.present?
+                    link_to event.subject_type, feed_path(event.subject), class: "text-slate-600"
+                  elsif event.subject_type == "Post" && event.subject.present?
+                    link_to event.subject_type, post_path(event.subject), class: "text-slate-600"
+                  elsif event.subject_type.present?
+                    link_to admin_events_path(filter: { subject_type: event.subject_type }),
+                            class: "text-slate-600 hover:text-slate-800",
+                            title: "Filter by subject type: #{event.subject_type}" do
+                      event.subject_type
+                    end
+                  end
+                %>
+                <% if subject_link %>
+                  <%= subject_link %>
+                  <% if event.subject_id.present? %>
+                    <span class="text-slate-500">#<%= event.subject_id %></span>
+                  <% end %>
+                <% else %>
+                  <em class="text-slate-500">None</em>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div data-key="admin.events.pagination">
+      <%= pagination_for @events,
+                         collection_name: "events",
+                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
+                         template: "shared/pagination_tailwind" %>
+    </div>
+  <% else %>
+    <div class="ff-card">
+      <div class="ff-card__body text-center py-12">
+        <h2 class="ff-h2">No events found</h2>
+        <p class="ff-text">Events will appear here as they are created.</p>
+      </div>
+    </div>
+  <% end %>
+</div>

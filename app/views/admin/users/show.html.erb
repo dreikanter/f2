@@ -223,7 +223,9 @@
             <% @stats.sessions.each do |session| %>
               <tr>
                 <td><%= session.ip_address %></td>
-                <td class="max-w-md truncate"><%= session.user_agent %></td>
+                <td class="max-w-md">
+                  <div class="truncate"><%= session.user_agent %></div>
+                </td>
                 <td class="text-center">
                   <time class="text-slate-500" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
                     <%= short_time_ago(session.created_at) %>

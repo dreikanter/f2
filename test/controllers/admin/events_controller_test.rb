@@ -30,24 +30,38 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should allow admin users to view events index" do
     login_as(admin_user)
-    create(:event, type: "TestEvent", message: "Test message")
+    user = create(:user)
+    create(:event, type: "TestEvent", message: "Test message", user: user)
 
     get admin_events_path
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select "td", "TestEvent"
+    assert_select '[data-key="admin.events.type"]', "TestEvent"
+    assert_select 'a[data-key="admin.events.user"]', "User ##{user.id}"
   end
 
   test "should allow admin users to view event details" do
     login_as(admin_user)
-    event = create(:event, type: "TestEvent", message: "Test message")
+    event = create(:event, type: "TestEvent", message: "Test message", user: create(:user))
 
     get admin_event_path(event)
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
-    assert_select "code", "TestEvent"
+    assert_select '[data-key="admin.events.type"]', "TestEvent"
+    assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
+  end
+
+  test "should link user subject to admin user page" do
+    login_as(admin_user)
+    subject_user = create(:user)
+    event = create(:event, subject: subject_user)
+
+    get admin_event_path(event)
+
+    assert_response :success
+    assert_select "a[data-key='admin.event.subject.type'][href='#{admin_user_path(subject_user)}']", text: "User"
   end
 
   # TBD: Reduce the amount of test records by changing page size
@@ -62,8 +76,12 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select ".pagination"
-    assert_select "tbody tr", count: 25 # Should show 25 event rows per page
+    assert_select '[data-key="admin.events.table"]'
+    assert_select '[data-key="admin.events.user"]', minimum: 1
+    assert_select '[data-key="admin.events.timestamp"]', minimum: 1
+    assert_select '[data-key="admin.events.level"]', text: "INFO", minimum: 1
+    assert_select "[data-key=\"admin.events.pagination\"]"
+    assert_select "tbody tr", count: 25
   end
 
   test "should show empty state when no events exist" do
@@ -73,9 +91,23 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select "table", count: 0 # No table should be rendered
-    assert_select "h4", "No events found"
+    assert_select '[data-key="admin.events.table"]', count: 0 # No table should be rendered
+    assert_select "h2", "No events found"
     assert_select "p", "Events will appear here as they are created."
+  end
+
+  test "should show recorded subject when subject missing" do
+    login_as(admin_user)
+    event = create(:event, type: "MissingSubjectEvent", subject: nil)
+    event.update!(subject_type: "Post", subject_id: 42)
+
+    get admin_events_path
+
+    assert_response :success
+    assert_select '[data-key="admin.events.table"]' do
+      assert_select "a[href*='filter%5Bsubject_type%5D=Post']", text: "Post"
+      assert_select "span.text-slate-500", text: "#42"
+    end
   end
 
   test "should filter events by subject_type" do
@@ -117,9 +149,9 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "tbody tr", count: 3
-    assert_select "td", text: "TypeA", count: 2
-    assert_select "td", text: "TypeB", count: 1
-    assert_select "td", text: "TypeC", count: 0
+    assert_select '[data-key="admin.events.type"]', text: "TypeA", count: 2
+    assert_select '[data-key="admin.events.type"]', text: "TypeB", count: 1
+    assert_select '[data-key="admin.events.type"]', text: "TypeC", count: 0
   end
 
   test "should filter events by user_id" do
