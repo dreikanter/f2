@@ -50,6 +50,17 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "code", "TestEvent"
   end
 
+  test "should link user subject to admin user page" do
+    login_as(admin_user)
+    subject_user = create(:user)
+    event = create(:event, subject: subject_user)
+
+    get admin_event_path(event)
+
+    assert_response :success
+    assert_select "a[href='#{admin_user_path(subject_user)}']", text: "User"
+  end
+
   # TBD: Reduce the amount of test records by changing page size
   test "should paginate events" do
     login_as(admin_user)

@@ -19,7 +19,6 @@
         <thead>
           <tr>
             <th scope="col" class="text-center"><%= icon("calendar-event") %></th>
-            <th scope="col" class="text-center"><%= icon("exclamation-circle") %></th>
             <th scope="col">Event</th>
             <th scope="col">User</th>
             <th scope="col">Subject</th>
@@ -33,25 +32,10 @@
                   <%= short_time_ago(event.created_at) %>
                 <% end %>
               </td>
-              <td class="text-center">
-                <%
-                  level_colors = {
-                    "debug" => "bg-slate-500",
-                    "info" => "bg-blue-500",
-                    "warning" => "bg-amber-500",
-                    "error" => "bg-red-500"
-                  }
-                  level_chars = { "debug" => "D", "info" => "I", "warning" => "W", "error" => "E" }
-                  color = level_colors.fetch(event.level.to_s, "bg-slate-500")
-                  char = level_chars.fetch(event.level.to_s, "D")
-                %>
-                <span class="inline-flex h-6 w-6 items-center justify-center rounded text-xs font-bold text-white <%= color %>" title="<%= event.level.humanize %>">
-                  <%= char %>
-                </span>
-              </td>
               <td class="align-top">
                 <div class="flex flex-col gap-1">
-                  <div>
+                  <div class="flex items-center gap-2">
+                    <span class="ff-event-level text-xs font-semibold uppercase tracking-wide text-slate-500"><%= (event.level.to_s.presence || "debug").upcase %></span>
                     <%= link_to admin_events_path(filter: { type: [event.type] }),
                                 class: "ff-link font-semibold",
                                 title: "Filter by type: #{event.type}" do %>

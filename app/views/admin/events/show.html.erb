@@ -29,6 +29,8 @@
           link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link")
         elsif @event.subject_type == "Post"
           link_to(@event.subject_type, post_path(@event.subject), class: "ff-link")
+        elsif @event.subject_type == "User"
+          link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link")
         else
           @event.subject_type
         end,
