@@ -1,17 +1,24 @@
-<%= page_header "Reset Password for #{@user.email_address}" %>
+<% content_for :title, "Reset Password" %>
 
-<div class="alert alert-info mb-4">
-  <strong>How this works:</strong> This will send a password reset email to the user's current email address.
-  The user will receive a link to set a new password. This does not change the password directly—the user must complete the reset process by clicking the link.
-</div>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Reset Password for <%= @user.email_address %></h1>
+    <%= link_to "Back to User", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+  </div>
 
-<div class="card">
-  <div class="card-body">
-    <%= form_with url: admin_user_password_reset_path(@user), method: :post do |form| %>
-      <div class="d-flex gap-2">
-        <%= form.submit "Send Password Reset Email", class: "btn btn-primary", data: { turbo_confirm: "Send password reset email to #{@user.email_address}?" } %>
-        <%= link_to "Cancel", admin_user_path(@user), class: "btn btn-outline-secondary" %>
-      </div>
-    <% end %>
+  <div class="ff-alert ff-alert--info">
+    <strong>How this works:</strong> This will send a password reset email to the user's current email address.
+    The user will receive a link to set a new password. This does not change the password directly—the user must complete the reset process by clicking the link.
+  </div>
+
+  <div class="ff-card">
+    <div class="ff-card__body">
+      <%= form_with url: admin_user_password_reset_path(@user), method: :post do |form| %>
+        <div class="flex flex-wrap gap-2">
+          <%= form.submit "Send Password Reset Email", class: "ff-button ff-button--compact", data: { turbo_confirm: "Send password reset email to #{@user.email_address}?" } %>
+          <%= link_to "Cancel", admin_user_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>

@@ -1,4 +1,6 @@
 class Admin::EmailUpdatesController < ApplicationController
+  layout "tailwind"
+
   def edit
     @user = User.find(params[:user_id])
     authorize @user, :update?
