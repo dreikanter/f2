@@ -8,52 +8,66 @@
                 class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
 
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <dl class="grid grid-cols-1 gap-4 text-sm text-slate-600 sm:grid-cols-4">
-        <div class="space-y-1">
-          <dt class="font-semibold uppercase tracking-wide text-slate-500">Message-ID</dt>
-          <dd class="sm:col-span-3 w-full break-all rounded bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700"><%= h @email[:message_id] %></dd>
-        </div>
+  <% email_details = ListGroupComponent.new.tap do |list|
+       list.with_item(ListGroupComponent::StatItemComponent.new(
+         label: "Message ID",
+         value: content_tag(:code, @email[:message_id], class: "text-xs break-all")
+       ))
 
-        <div class="space-y-1">
-          <dt class="font-semibold uppercase tracking-wide text-slate-500">From</dt>
-          <dd class="sm:col-span-3 w-full break-words rounded bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700"><%= h @email[:from] %></dd>
-        </div>
+       list.with_item(ListGroupComponent::StatItemComponent.new(
+         label: "From",
+         value: content_tag(:code, @email[:from], class: "text-xs break-words")
+       ))
 
-        <div class="space-y-1">
-          <dt class="font-semibold uppercase tracking-wide text-slate-500">To</dt>
-          <dd class="sm:col-span-3 w-full break-words rounded bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700"><%= h @email[:to] %></dd>
-        </div>
+       list.with_item(ListGroupComponent::StatItemComponent.new(
+         label: "To",
+         value: content_tag(:code, @email[:to], class: "text-xs break-words")
+       ))
 
-        <div class="space-y-1">
-          <dt class="font-semibold uppercase tracking-wide text-slate-500">Date</dt>
-          <dd class="sm:col-span-3 text-slate-700"><%= h @email[:date] %></dd>
-        </div>
-      </dl>
+       list.with_item(ListGroupComponent::StatItemComponent.new(
+         label: "Date",
+         value: content_tag(:span, @email[:date], class: "text-sm text-slate-700")
+       ))
+     end %>
+
+  <%= render(email_details) %>
+
+  <% if @email[:multipart] %>
+    <div data-controller="email-viewer" class="space-y-4">
+      <div class="border-b border-slate-200">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <li class="mr-2" role="presentation">
+            <button
+              type="button"
+              class="inline-block rounded-t-lg border-b-2 px-4 py-2 text-cyan-600 border-cyan-600"
+              data-action="email-viewer#showText"
+              data-email-viewer-target="textTab"
+              data-key="development.emails.tab.text">
+              Text
+            </button>
+          </li>
+          <li class="mr-2" role="presentation">
+            <button
+              type="button"
+              class="inline-block rounded-t-lg border-b-2 border-transparent px-4 py-2 text-slate-500 hover:text-slate-600"
+              data-action="email-viewer#showHtml"
+              data-email-viewer-target="htmlTab"
+              data-key="development.emails.tab.html">
+              HTML
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="rounded-lg border border-slate-200 bg-slate-50 p-4" data-email-viewer-target="textPanel">
+        <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
+      </div>
+      <div class="hidden rounded-lg border border-slate-200 bg-white" data-email-viewer-target="htmlPanel">
+        <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" class="h-[400px] w-full rounded-lg"></iframe>
+      </div>
     </div>
-  </div>
-
-  <div class="ff-card">
-    <div class="ff-card__body space-y-6">
-      <% if @email[:multipart] %>
-        <div data-controller="email-viewer" class="space-y-6">
-          <div class="flex flex-wrap gap-2">
-            <button type="button" data-action="email-viewer#showText" class="ff-button ff-button--compact" data-email-viewer-target="textButton" data-key="development.emails.tab.text">Text</button>
-            <button type="button" data-action="email-viewer#showHtml" class="ff-button ff-button--secondary ff-button--compact" data-email-viewer-target="htmlButton" data-key="development.emails.tab.html">HTML</button>
-          </div>
-          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4" data-email-viewer-target="textPanel">
-            <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
-          </div>
-          <div class="hidden rounded-lg border border-slate-200 bg-white" data-email-viewer-target="htmlPanel">
-            <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" class="h-[400px] w-full rounded-lg"></iframe>
-          </div>
-        </div>
-      <% else %>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.body"><%= h @email[:body] %></pre>
-        </div>
-      <% end %>
+  <% else %>
+    <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.body"><%= h @email[:body] %></pre>
     </div>
-  </div>
+  <% end %>
 </div>
