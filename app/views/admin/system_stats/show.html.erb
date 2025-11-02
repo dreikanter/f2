@@ -1,7 +1,6 @@
 <% content_for :title, "System Stats" %>
 
 <%
-  # Extract values from service
   postgres_size = @disk_usage[:postgres_usage]
   free_size = @disk_usage[:free_space]
   other_used_size = @disk_usage[:other_used_space]
@@ -10,7 +9,6 @@
   other_used_percentage = @disk_usage[:other_used_percentage]
   free_percentage = @disk_usage[:free_percentage]
 
-  # Build list components
   table_usage_list = ListGroupComponent.new.tap do |list|
     @disk_usage[:table_usage].each do |row|
       list.with_item(ListGroupComponent::StatItemComponent.new(
