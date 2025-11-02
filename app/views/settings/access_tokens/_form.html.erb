@@ -7,7 +7,7 @@
   <%= form_with model: [:settings, access_token], local: true do |form| %>
     <div class="ff-card__body">
       <% if access_token.errors.any? %>
-        <div class="ff-alert ff-alert--error">
+        <div class="ff-alert ff-alert--error" data-key="settings.access_tokens.form.errors">
           <p class="font-semibold mb-2">Please fix the following:</p>
           <ul class="list-disc list-inside space-y-1 text-sm">
             <% access_token.errors.full_messages.each do |message| %>

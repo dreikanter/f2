@@ -34,7 +34,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     access_token
     get settings_access_tokens_path
     assert_response :success
-    assert_select "table.ff-table"
+    assert_select '[data-key="settings.access_tokens.table"]'
     assert_select "td", access_token.name
   end
 
@@ -64,7 +64,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     post settings_access_tokens_path, params: { access_token: { name: "", token: "freefeed_token_123" } }
     assert_response :unprocessable_content
-    assert_select ".ff-alert--error"
+    assert_select '[data-key="settings.access_tokens.form.errors"]'
     assert_select "h1", "Create New Token"
   end
 
@@ -72,7 +72,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     post settings_access_tokens_path, params: { access_token: { name: "Test Token", token: "" } }
     assert_response :unprocessable_content
-    assert_select ".ff-alert--error"
+    assert_select '[data-key="settings.access_tokens.form.errors"]'
     assert_select "h1", "Create New Token"
   end
 
@@ -164,7 +164,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     }
     assert_response :unprocessable_content
     assert_select "h1", "Edit Token"
-    assert_select ".ff-alert--error"
+    assert_select '[data-key="settings.access_tokens.form.errors"]'
   end
 
   test "updates only name without changing token" do
