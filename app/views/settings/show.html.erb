@@ -38,29 +38,6 @@
 
   created_count = @user.created_invites.count
   used_count = @user.created_invites.where.not(invited_user_id: nil).count
-  invites_parts = ["#{@user.available_invites} available"]
-  invites_parts << "#{created_count} created" if created_count > 0
-  invites_parts << "#{used_count} used" if used_count > 0
-
-  invites_value = if @user.available_invites > 0 || created_count > 0
-    link_text = @user.available_invites > 0 ? "Invite someone" : "See your invites"
-    tag.span(class: "flex items-center gap-2") {
-      safe_join([
-        invites_parts.join(", "),
-        link_to(link_text, invites_path, class: "ff-link text-sm")
-      ])
-    }
-  else
-    invites_parts.join(", ")
-  end
-
-  invites_list = ListGroupComponent.new.tap do |list|
-    list.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Invites",
-      value: invites_value,
-      key: "settings.invites"
-    ))
-  end
 %>
 
 <div class="space-y-8">
@@ -103,6 +80,32 @@
 
   <section class="space-y-4">
     <h2 class="ff-h2">Feeder Invites</h2>
-    <%= render(invites_list) %>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-2">
+        <p class="ff-text text-slate-600">
+          Invites let you add new users to Feeder.
+        </p>
+        <% if @user.available_invites > 0 %>
+          <p class="ff-text text-slate-600">
+            You have <%= pluralize(@user.available_invites, 'invite') %> available<% if created_count > 0 %>, <%= pluralize(created_count, 'created') %><% end %><% if used_count > 0 %>, and <%= pluralize(used_count, 'used') %><% end %>.
+          </p>
+        <% elsif created_count > 0 %>
+          <p class="ff-text text-slate-600">
+            You have <%= pluralize(created_count, 'invite') %> created<% if used_count > 0 %>, <%= pluralize(used_count, 'used') %><% end %>.
+          </p>
+        <% else %>
+          <p class="ff-text text-slate-600">
+            You don't have any invites available right now.
+          </p>
+        <% end %>
+      </div>
+      <div class="shrink-0">
+        <% if @user.available_invites > 0 %>
+          <%= link_to "Invite Someone", invites_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% elsif created_count > 0 %>
+          <%= link_to "View Invites", invites_path, class: class_names("ff-button", "ff-button--compact", "ff-button--secondary") %>
+        <% end %>
+      </div>
+    </div>
   </section>
 </div>
