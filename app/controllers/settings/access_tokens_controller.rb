@@ -1,4 +1,6 @@
 class Settings::AccessTokensController < ApplicationController
+  layout "tailwind"
+
   def index
     authorize AccessToken
     @access_tokens = policy_scope(AccessToken).order(created_at: :desc)

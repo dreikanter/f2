@@ -1,4 +1,6 @@
 class InvitesController < ApplicationController
+  layout "tailwind"
+
   def index
     authorize Invite
     @invites = ordered_invites
@@ -35,7 +37,7 @@ class InvitesController < ApplicationController
 
     render turbo_stream: [
       turbo_stream.update("invites-table", partial: "invites/table", locals: { invites: invites, new_invite_id: @new_invite&.id }),
-      turbo_stream.update("invite-stats", partial: "invites/stats", locals: invite_stats),
+      turbo_stream.update("invite-stats", partial: "invites/summary", locals: invite_stats),
       turbo_stream.update("create-invite-button", partial: "invites/create_button", locals: {
         can_create: policy(Invite).create?
       })
@@ -44,8 +46,7 @@ class InvitesController < ApplicationController
 
   def invite_stats
     {
-      available_invites_count: available_invites_count,
-      created_invites_count: created_invites.count,
+      remaining_invites_count: [0, available_invites_count - created_invites.count].max,
       invited_users_count: created_invites.where.not(invited_user_id: nil).count,
       unused_invites_count: created_invites.where(invited_user_id: nil).count
     }

@@ -1,69 +1,90 @@
 <%# locals: (access_token:, token_label:, token_placeholder:, token_value:, submit_text:) %>
-<div data-controller="token-form"  data-token-form-freefeed-hosts-value='<%= AccessToken::FREEFEED_HOSTS.to_json %>' data-token-form-default-help-url-value="https://freefeed.net">
+<div
+  class="ff-card"
+  data-controller="token-form"
+  data-token-form-freefeed-hosts-value='<%= AccessToken::FREEFEED_HOSTS.to_json %>'
+  data-token-form-default-help-url-value="https://freefeed.net">
   <%= form_with model: [:settings, access_token], local: true do |form| %>
-    <% if access_token.errors.any? %>
-      <div class="alert alert-danger">
-        <ul class="mb-0">
-          <% access_token.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-
-    <div class="mb-3">
-      <%= form.label :name, class: "form-label fw-bold" %>
-      <%= form.text_field :name,
-                          class: "form-control #{'is-invalid' if access_token.errors[:name].any?}",
-                          placeholder: "e.g., New Token (2)",
-                          autofocus: true %>
-      <div class="form-text">Choose a descriptive name to identify this token</div>
-    </div>
-
-    <div class="mb-3">
-      <%= form.label :token, token_label, class: "form-label fw-bold" %>
-      <%= form.text_field :token,
-                          class: "form-control #{'is-invalid' if access_token.errors[:token].any?}",
-                          placeholder: token_placeholder,
-                          value: token_value %>
-      <div class="form-text">Get a token from your <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups" target="_blank" data-token-form-target="helpText">FreeFeed settings</a></div>
-    </div>
-
-    <div class="mb-4">
-      <%= form.label :host, "FreeFeed Instance", class: "form-label fw-bold" %>
-      <div class="mb-2">
-        <% AccessToken::FREEFEED_HOSTS.each do |key, config| %>
-          <div class="form-check mb-2">
-            <%= form.radio_button :host, config[:url],
-                                  id: "host_#{key}",
-                                  class: "form-check-input host-radio",
-                                  checked: (access_token.host == config[:url] || (key == :production && access_token.host.blank?)),
-                                  data: { action: "change->token-form#hostChanged" } %>
-            <%= form.label "host_#{key}", config[:display_name], class: "form-check-label", for: "host_#{key}" %>
-          </div>
-        <% end %>
-        <div class="form-check mb-2">
-          <%= form.radio_button :host, "custom",
-                                id: "host_custom",
-                                class: "form-check-input host-radio",
-                                checked: !AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) && access_token.host.present?,
-                                data: { action: "change->token-form#hostChanged" } %>
-          <%= form.label :host_custom, "Custom", class: "form-check-label", for: "host_custom" %>
+    <div class="ff-card__body">
+      <% if access_token.errors.any? %>
+        <div class="ff-alert ff-alert--error" data-key="settings.access_tokens.form.errors">
+          <p class="font-semibold mb-2">Please fix the following:</p>
+          <ul class="list-disc list-inside space-y-1 text-sm">
+            <% access_token.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
         </div>
+      <% end %>
+
+      <div class="ff-form-group">
+        <%= form.label :name, class: "ff-form-label" %>
+        <%= form.text_field :name,
+                            class: class_names("ff-form-input", "border-red-500 focus:ring-red-500": access_token.errors[:name].any?),
+                            placeholder: "e.g., New Token (2)",
+                            autofocus: true %>
+        <p class="ff-form-help text-sm">Choose a descriptive name to identify this token.</p>
       </div>
-      <div id="custom-host-field" style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) || access_token.host.blank? %>" data-token-form-target="customField">
-        <%= form.text_field :host,
-                            class: "form-control #{'is-invalid' if access_token.errors[:host].any?}",
-                            placeholder: "https://your-freefeed-instance.com",
-                            id: "custom_host_input",
-                            data: { token_form_target: "customInput", action: "input->token-form#customInputChanged" } %>
+
+      <div class="ff-form-group">
+        <%= form.label :token, token_label, class: "ff-form-label" %>
+        <%= form.text_field :token,
+                            class: class_names("ff-form-input", "border-red-500 focus:ring-red-500": access_token.errors[:token].any?),
+                            placeholder: token_placeholder,
+                            value: token_value %>
+        <p class="ff-form-help text-sm">
+          Grab a token from your
+          <a href="https://freefeed.net/settings/app-tokens/create?title=Feeder%20App&scopes=manage-posts,manage-groups"
+             target="_blank"
+             class="ff-link"
+             data-token-form-target="helpText">FreeFeed settings</a>.
+        </p>
       </div>
-      <div class="form-text">Select the FreeFeed instance where your token was created</div>
+
+      <div class="ff-form-group">
+        <span class="ff-form-label">FreeFeed instance</span>
+        <div class="space-y-3 text-sm text-slate-700">
+          <% AccessToken::FREEFEED_HOSTS.each do |key, config| %>
+            <label for="host_<%= key %>" class="flex items-center gap-3">
+              <%= form.radio_button :host,
+                                    config[:url],
+                                    id: "host_#{key}",
+                                    class: "h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500",
+                                    checked: (access_token.host == config[:url] || (key == :production && access_token.host.blank?)),
+                                    data: { action: "change->token-form#hostChanged" } %>
+              <span><%= config[:display_name] %></span>
+            </label>
+          <% end %>
+          <label for="host_custom" class="flex items-center gap-3">
+            <%= form.radio_button :host,
+                                  "custom",
+                                  id: "host_custom",
+                                  class: "h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500",
+                                  checked: !AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) && access_token.host.present?,
+                                  data: { action: "change->token-form#hostChanged" } %>
+            <span>Custom</span>
+          </label>
+        </div>
+        <div
+          id="custom-host-field"
+          class="mt-3"
+          style="<%= 'display: none;' if AccessToken::FREEFEED_HOSTS.values.map { |c| c[:url] }.include?(access_token.host) || access_token.host.blank? %>"
+          data-token-form-target="customField">
+          <%= form.text_field :host,
+                              class: class_names("ff-form-input", "border-red-500 focus:ring-red-500": access_token.errors[:host].any?),
+                              placeholder: "https://your-freefeed-instance.com",
+                              id: "custom_host_input",
+                              data: { token_form_target: "customInput", action: "input->token-form#customInputChanged" } %>
+        </div>
+        <p class="ff-form-help text-sm">Select where the token was created. Choose “Custom” for self-hosted FreeFeed instances.</p>
+      </div>
     </div>
 
-    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-      <%= form.submit submit_text, class: "btn btn-primary" %>
-      <%= link_to "Cancel", settings_access_tokens_path, class: "btn btn-outline-secondary" %>
+    <div class="ff-card__footer">
+      <div class="flex flex-wrap gap-2">
+        <%= form.submit submit_text, class: "ff-button ff-button--compact" %>
+        <%= link_to "Cancel", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      </div>
     </div>
   <% end %>
 </div>

@@ -1,1 +1,6 @@
-<%= button_to "Invite a user", invites_path, method: :post, class: "btn btn-primary", disabled: !can_create, form: { data: { turbo_frame: "_top" } } %>
+<%= button_to "Invite a user",
+              invites_path,
+              method: :post,
+              class: class_names("ff-button", "ff-button--compact", "opacity-60 cursor-not-allowed": !can_create),
+              disabled: !can_create,
+              form: { data: { turbo_frame: "_top" } } %>
