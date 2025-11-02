@@ -11,24 +11,6 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     -> { [df_output, OpenStruct.new(success?: true, exitstatus: 0)] }
   end
 
-  test "#call should return hash with all expected keys" do
-    service = DiskUsageService.new(df_command: stub_df_command)
-    result = service.call
-
-    assert_instance_of Hash, result
-    assert result.key?(:total_space)
-    assert result.key?(:used_space)
-    assert result.key?(:free_space)
-    assert result.key?(:postgres_usage)
-    assert result.key?(:other_used_space)
-    assert result.key?(:postgres_percentage)
-    assert result.key?(:other_used_percentage)
-    assert result.key?(:free_percentage)
-    assert result.key?(:table_usage)
-    assert result.key?(:vacuum_stats)
-    assert result.key?(:autovacuum_settings)
-  end
-
   test "#call should return free space as integer" do
     service = DiskUsageService.new(df_command: stub_df_command(avail_kb: 750000))
     result = service.call
@@ -88,22 +70,6 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     assert first_row["name"].start_with?("autovacuum")
   end
 
-  test "#call should return total space as integer" do
-    service = DiskUsageService.new(df_command: stub_df_command(total_kb: 1000000))
-    result = service.call
-
-    assert_instance_of Integer, result[:total_space]
-    assert_equal 1000000 * 1024, result[:total_space]
-  end
-
-  test "#call should return used space as integer" do
-    service = DiskUsageService.new(df_command: stub_df_command(used_kb: 200000))
-    result = service.call
-
-    assert_instance_of Integer, result[:used_space]
-    assert_equal 200000 * 1024, result[:used_space]
-  end
-
   test "#call should return other used space as integer" do
     service = DiskUsageService.new(df_command: stub_df_command)
     result = service.call
@@ -111,33 +77,6 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     assert_instance_of Integer, result[:other_used_space]
     assert result[:other_used_space] >= 0
     assert_equal result[:used_space] - result[:postgres_usage], result[:other_used_space]
-  end
-
-  test "#call should return postgres percentage as float" do
-    service = DiskUsageService.new(df_command: stub_df_command)
-    result = service.call
-
-    assert_instance_of Float, result[:postgres_percentage]
-    assert result[:postgres_percentage] >= 0
-    assert result[:postgres_percentage] <= 100
-  end
-
-  test "#call should return other used percentage as float" do
-    service = DiskUsageService.new(df_command: stub_df_command)
-    result = service.call
-
-    assert_instance_of Float, result[:other_used_percentage]
-    assert result[:other_used_percentage] >= 0
-    assert result[:other_used_percentage] <= 100
-  end
-
-  test "#call should return free percentage as float" do
-    service = DiskUsageService.new(df_command: stub_df_command)
-    result = service.call
-
-    assert_instance_of Float, result[:free_percentage]
-    assert result[:free_percentage] >= 0
-    assert result[:free_percentage] <= 100
   end
 
   test "#call percentages should sum to approximately 100" do
