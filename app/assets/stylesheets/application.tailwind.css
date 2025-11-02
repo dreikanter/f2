@@ -24,19 +24,19 @@
   }
 
   .ff-alert {
-    @apply rounded-lg border px-4 py-3 text-cyan-700;
+    @apply rounded-lg border px-4 py-3 text-cyan-800;
   }
 
   .ff-alert--info {
-    @apply border-cyan-100 bg-cyan-50;
+    @apply border-cyan-100 bg-cyan-100;
   }
 
   .ff-alert--error {
-    @apply border-red-200 bg-red-50 text-red-700;
+    @apply border-red-200 bg-red-100 text-red-800;
   }
 
   .ff-alert--warning {
-    @apply border-amber-200 bg-amber-50 text-amber-700;
+    @apply border-amber-200 bg-amber-100 text-amber-800;
   }
 
   .ff-form-group {
