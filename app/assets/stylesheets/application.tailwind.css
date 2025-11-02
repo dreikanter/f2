@@ -154,4 +154,8 @@
   .ff-table--dense td {
     @apply px-4 py-2;
   }
+
+  .ff-event-level {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+  }
 }
