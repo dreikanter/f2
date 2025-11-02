@@ -34,10 +34,13 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def add_user_item(component)
-    user_value = if @event.user
-      @event.user.email_address
+    user_value = if @event.user_id.present?
+      helpers.link_to("User ##{@event.user_id}",
+                      helpers.admin_events_path(filter: { user_id: @event.user_id }),
+                      class: "ff-link",
+                      data: { key: "admin.event.user" })
     else
-      helpers.tag.em("System", class: "text-slate-500")
+      helpers.tag.em("System", class: "text-slate-500", data: { key: "admin.event.user" })
     end
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
@@ -47,11 +50,14 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def add_subject_item(component)
-    subject_value = helpers.safe_join([
-      subject_link || subject_fallback,
-      " ",
-      helpers.tag.span("##{@event.subject_id}", class: "text-slate-500")
-    ])
+    parts = [subject_link || subject_fallback]
+
+    if @event.subject_id.present?
+      parts << " "
+      parts << helpers.tag.span("##{@event.subject_id}", class: "text-slate-500")
+    end
+
+    subject_value = helpers.safe_join(parts)
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Subject",

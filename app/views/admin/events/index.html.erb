@@ -58,7 +58,15 @@
                 </div>
               </td>
               <td>
-                <%= event.user&.email_address || content_tag(:em, "System", class: "text-slate-500") %>
+                <% if event.user_id.present? %>
+                  <%= link_to "User ##{event.user_id}",
+                              admin_events_path(filter: { user_id: event.user_id }),
+                              class: "text-slate-600 hover:text-slate-800",
+                              title: "Filter by user id: #{event.user_id}",
+                              data: { key: "admin.events.user" } %>
+                <% else %>
+                  <em class="text-slate-500" data-key="admin.events.user">System</em>
+                <% end %>
               </td>
               <td>
                 <%

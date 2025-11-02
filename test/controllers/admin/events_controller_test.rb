@@ -30,24 +30,27 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should allow admin users to view events index" do
     login_as(admin_user)
-    create(:event, type: "TestEvent", message: "Test message")
+    user = create(:user)
+    create(:event, type: "TestEvent", message: "Test message", user: user)
 
     get admin_events_path
 
     assert_response :success
     assert_select "h1", "Events"
     assert_select '[data-key="admin.events.type"]', "TestEvent"
+    assert_select 'a[data-key="admin.events.user"]', "User ##{user.id}"
   end
 
   test "should allow admin users to view event details" do
     login_as(admin_user)
-    event = create(:event, type: "TestEvent", message: "Test message")
+    event = create(:event, type: "TestEvent", message: "Test message", user: create(:user))
 
     get admin_event_path(event)
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
     assert_select '[data-key="admin.events.type"]', "TestEvent"
+    assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
   end
 
   test "should link user subject to admin user page" do
@@ -74,6 +77,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="admin.events.table"]'
+    assert_select '[data-key="admin.events.user"]', minimum: 1
     assert_select '[data-key="admin.events.timestamp"]', minimum: 1
     assert_select '[data-key="admin.events.level"]', text: "INFO", minimum: 1
     assert_select "[data-key=\"admin.events.pagination\"]"
