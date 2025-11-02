@@ -1,240 +1,282 @@
-<%= page_header @user.email_address do %>
-  <%= link_to "Back to Users", admin_users_path, class: "btn btn-outline-secondary" %>
-<% end %>
+<% content_for :title, @user.email_address %>
 
-<div class="list-group">
-  <div class="list-group-item">
-    <strong>Email:</strong> <%= @user.email_address %>
+<%
+  user_info = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Email",
+      value: @user.email_address
+    ))
+
+    permissions_value = if @user.permissions.any?
+      @user.permissions.pluck(:name).join(", ")
+    else
+      tag.span("None", class: "text-slate-500")
+    end
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Permissions",
+      value: permissions_value
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Created",
+      value: tag.time(
+        "#{@user.created_at.to_date.to_fs(:long)} (#{short_time_ago(@user.created_at)})",
+        datetime: @user.created_at.iso8601,
+        title: @user.created_at.to_fs(:long)
+      )
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Updated",
+      value: tag.time(
+        "#{@user.updated_at.to_date.to_fs(:long)} (#{short_time_ago(@user.updated_at)})",
+        datetime: @user.updated_at.iso8601,
+        title: @user.updated_at.to_fs(:long)
+      )
+    ))
+
+    password_updated_value = if @user.password_updated_at.present?
+      tag.time(
+        "#{@user.password_updated_at.to_date.to_fs(:long)} (#{short_time_ago(@user.password_updated_at)})",
+        datetime: @user.password_updated_at.iso8601,
+        title: @user.password_updated_at.to_fs(:long)
+      )
+    else
+      tag.span("Never", class: "text-slate-500")
+    end
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Password Updated",
+      value: password_updated_value
+    ))
+
+    last_seen_value = if @stats.last_session
+      tag.time(
+        "#{@stats.last_session.updated_at.to_date.to_fs(:long)} (#{short_time_ago(@stats.last_session.updated_at)})",
+        datetime: @stats.last_session.updated_at.iso8601,
+        title: @stats.last_session.updated_at.to_fs(:long)
+      )
+    else
+      tag.span("Never", class: "text-slate-500")
+    end
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Last Seen",
+      value: last_seen_value
+    ))
+  end
+
+  email_status_list = if @user.email_deactivated?
+    ListGroupComponent.new.tap do |list|
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Status",
+        value: tag.span("Deactivated", class: "inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20")
+      ))
+
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Deactivated At",
+        value: tag.time(
+          "#{@user.email_deactivated_at.to_date.to_fs(:long)} (#{short_time_ago(@user.email_deactivated_at)})",
+          datetime: @user.email_deactivated_at.iso8601,
+          title: @user.email_deactivated_at.to_fs(:long)
+        )
+      ))
+
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Reason",
+        value: @user.email_deactivation_reason.humanize
+      ))
+
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Actions",
+        value: safe_join([
+          button_to("Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "ff-button ff-button--compact"),
+          link_to("View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "ff-button ff-button--secondary ff-button--compact")
+        ], " ")
+      ))
+    end
+  end
+
+  stats_list = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Feeds",
+      value: "#{@stats.feeds_count} total (#{@stats.feeds_enabled_count} enabled, #{@stats.feeds_disabled_count} disabled)"
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Access Tokens",
+      value: "#{@stats.access_tokens_count} total (#{@stats.active_access_tokens_count} active, #{@stats.inactive_access_tokens_count} not active)"
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Posts",
+      value: @stats.posts_count
+    ))
+
+    most_recent_post_value = if @stats.most_recent_post
+      tag.time(
+        "#{@stats.most_recent_post.published_at.to_date.to_fs(:long)} (#{short_time_ago(@stats.most_recent_post.published_at)})",
+        datetime: @stats.most_recent_post.published_at.iso8601,
+        title: @stats.most_recent_post.published_at.to_fs(:long)
+      )
+    else
+      tag.span("No posts yet", class: "text-slate-500")
+    end
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Most Recent Post",
+      value: most_recent_post_value
+    ))
+  end
+
+  invitations_list = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Available Invites",
+      value: form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, class: "flex gap-2 items-center", data: { turbo_frame: "_top" }) do |form|
+        safe_join([
+          tag.span(@user.available_invites, class: "font-semibold"),
+          form.number_field(:available_invites, min: 0, class: "rounded-md border border-slate-300 px-2 py-1 text-sm w-20"),
+          form.submit("Update", class: "ff-button ff-button--compact text-sm px-3 py-1")
+        ], " ")
+      end
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Created Invites",
+      value: @stats.created_invites_count
+    ))
+
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Invited Users",
+      value: @stats.invited_users_count
+    ))
+  end
+%>
+
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1"><%= @user.email_address %></h1>
+    <%= link_to "Back to Users", admin_users_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
 
-  <div class="list-group-item">
-    <strong>Permissions:</strong>
-    <% if @user.permissions.any? %>
-      <%= @user.permissions.pluck(:name).join(", ") %>
-    <% else %>
-      <span class="text-muted">None</span>
-    <% end %>
-  </div>
+  <%= render(user_info) %>
 
-  <div class="list-group-item">
-    <strong>Created:</strong>
-    <time datetime="<%= @user.created_at.iso8601 %>" title="<%= @user.created_at.to_fs(:long) %>">
-      <%= @user.created_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.created_at) %>)
-    </time>
-  </div>
+  <% if @user.email_deactivated? %>
+    <section class="space-y-4">
+      <h2 class="ff-h2">Email Status</h2>
+      <%= render(email_status_list) %>
+    </section>
+  <% end %>
 
-  <div class="list-group-item">
-    <strong>Updated:</strong>
-    <time datetime="<%= @user.updated_at.iso8601 %>" title="<%= @user.updated_at.to_fs(:long) %>">
-      <%= @user.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.updated_at) %>)
-    </time>
-  </div>
+  <section class="space-y-4">
+    <h2 class="ff-h2">Statistics</h2>
+    <%= render(stats_list) %>
+  </section>
 
-  <div class="list-group-item">
-    <strong>Password Updated:</strong>
-    <% if @user.password_updated_at.present? %>
-      <time datetime="<%= @user.password_updated_at.iso8601 %>" title="<%= @user.password_updated_at.to_fs(:long) %>">
-        <%= @user.password_updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.password_updated_at) %>)
-      </time>
-    <% else %>
-      <span class="text-muted">Never</span>
-    <% end %>
-  </div>
+  <section class="space-y-4">
+    <h2 class="ff-h2">Invitations</h2>
+    <%= render(invitations_list) %>
+  </section>
 
-  <div class="list-group-item">
-    <strong>Last Seen:</strong>
-    <% last_session = @user.sessions.order(updated_at: :desc).first %>
-    <% if last_session %>
-      <time datetime="<%= last_session.updated_at.iso8601 %>" title="<%= last_session.updated_at.to_fs(:long) %>">
-        <%= last_session.updated_at.to_date.to_fs(:long) %> (<%= short_time_ago(last_session.updated_at) %>)
-      </time>
-    <% else %>
-      <span class="text-muted">Never</span>
-    <% end %>
-  </div>
-</div>
-
-<% if @user.email_deactivated? %>
-  <%= page_section_header "Email Status" %>
-
-  <div class="list-group">
-    <div class="list-group-item">
-      <strong>Status:</strong> <span class="badge bg-warning text-dark">Deactivated</span>
-    </div>
-
-    <div class="list-group-item">
-      <strong>Deactivated At:</strong>
-      <time datetime="<%= @user.email_deactivated_at.iso8601 %>" title="<%= @user.email_deactivated_at.to_fs(:long) %>">
-        <%= @user.email_deactivated_at.to_date.to_fs(:long) %> (<%= short_time_ago(@user.email_deactivated_at) %>)
-      </time>
-    </div>
-
-    <div class="list-group-item">
-      <strong>Reason:</strong> <%= @user.email_deactivation_reason.humanize %>
-    </div>
-
-    <div class="list-group-item">
-      <strong>Actions:</strong>
-      <%= button_to "Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "btn btn-sm btn-primary" %>
-      <%= link_to "View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "btn btn-sm btn-secondary" %>
-    </div>
-  </div>
-<% end %>
-
-<%= page_section_header "Statistics" %>
-
-<div class="list-group">
-  <div class="list-group-item">
-    <strong>Feeds:</strong>
-    <%= @user.feeds.count %> total
-    (<%= @user.feeds.enabled.count %> enabled,
-    <%= @user.feeds.disabled.count %> disabled)
-  </div>
-
-  <div class="list-group-item">
-    <strong>Access Tokens:</strong>
-    <%= @user.access_tokens.count %> total
-    (<%= @user.access_tokens.where(status: "active").count %> active,
-    <%= @user.access_tokens.where.not(status: "active").count %> not active)
-  </div>
-
-  <div class="list-group-item">
-    <strong>Posts:</strong> <%= Post.joins(:feed).where(feeds: { user_id: @user.id }).count %>
-  </div>
-
-  <div class="list-group-item">
-    <strong>Most Recent Post:</strong>
-    <% most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first %>
-    <% if most_recent_post %>
-      <time datetime="<%= most_recent_post.published_at.iso8601 %>" title="<%= most_recent_post.published_at.to_fs(:long) %>">
-        <%= most_recent_post.published_at.to_date.to_fs(:long) %> (<%= short_time_ago(most_recent_post.published_at) %>)
-      </time>
-    <% else %>
-      <span class="text-muted">No posts yet</span>
-    <% end %>
-  </div>
-</div>
-
-<%= page_section_header "Invitations" %>
-
-<div class="list-group mb-3">
-  <div class="list-group-item">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <strong>Available Invites:</strong>
-        <%= @user.available_invites %>
+  <% if @stats.invited_users.any? %>
+    <section class="space-y-4">
+      <h3 class="ff-h3">Users Invited by <%= @user.name %></h3>
+      <div class="ff-table-container">
+        <table class="ff-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Invited</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @stats.invited_users.each do |invite| %>
+              <tr>
+                <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "ff-link" %></td>
+                <td><%= invite.invited_user.email_address %></td>
+                <td><%= short_time_ago(invite.created_at) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
-      <div>
-        <%= form_with model: @user, url: admin_user_available_invites_path(@user), method: :patch, class: "d-flex gap-2 align-items-center", data: { turbo_frame: "_top" } do |form| %>
-          <%= form.number_field :available_invites, min: 0, class: "form-control form-control-sm", style: "width: 100px;" %>
-          <%= form.submit "Update", class: "btn btn-sm btn-primary" %>
-        <% end %>
+    </section>
+  <% end %>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Active Sessions</h2>
+
+    <% if @stats.sessions.any? %>
+      <div class="ff-table-container">
+        <table class="ff-table">
+          <thead>
+            <tr>
+              <th scope="col">IP Address</th>
+              <th scope="col">User Agent</th>
+              <th scope="col" class="text-center">Created</th>
+              <th scope="col" class="text-center">Last Seen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @stats.sessions.each do |session| %>
+              <tr>
+                <td><%= session.ip_address %></td>
+                <td class="max-w-md truncate"><%= session.user_agent %></td>
+                <td class="text-center">
+                  <time class="text-slate-500" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
+                    <%= short_time_ago(session.created_at) %>
+                  </time>
+                </td>
+                <td class="text-center">
+                  <time class="text-slate-500" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
+                    <%= short_time_ago(session.updated_at) %>
+                  </time>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
+    <% else %>
+      <p class="text-slate-500">No active sessions</p>
+    <% end %>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Actions</h2>
+    <div class="flex gap-2">
+      <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
+      <%= link_to "Reset Password", admin_user_password_reset_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
     </div>
-  </div>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Danger Zone</h2>
+
+    <% if @user.suspended? %>
+      <div class="ff-card">
+        <div class="ff-card__body">
+          <h3 class="ff-h3">Restore User Access</h3>
+          <p class="ff-text mb-4">
+            User suspended on
+            <time datetime="<%= @user.suspended_at.iso8601 %>" title="<%= @user.suspended_at.to_fs(:long) %>">
+              <%= @user.suspended_at.to_date.to_fs(:long) %>
+            </time>.
+            Restores ability to sign in and access feeds.
+          </p>
+          <%= button_to "Unsuspend user", admin_user_suspension_path(@user), method: :delete, class: "ff-button ff-button--secondary ff-button--compact", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
+        </div>
+      </div>
+    <% else %>
+      <div class="ff-card">
+        <div class="ff-card__body">
+          <h3 class="ff-h3">Suspend User Account</h3>
+          <p class="ff-text mb-4">Terminates all active sessions, disables all feeds, and prevents sign in.</p>
+          <%= button_to "Suspend user", admin_user_suspension_path(@user), method: :post, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-300 bg-white px-4 py-2 text-base font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1", data: { turbo_confirm: "Are you sure you want to suspend this user? All active sessions will be terminated and feeds will be disabled." } %>
+        </div>
+      </div>
+    <% end %>
+  </section>
 </div>
-
-<div class="list-group">
-  <div class="list-group-item">
-    <strong>Created Invites:</strong> <%= @user.created_invites.count %>
-  </div>
-
-  <div class="list-group-item">
-    <strong>Invited Users:</strong> <%= @user.created_invites.where.not(invited_user_id: nil).count %>
-  </div>
-</div>
-
-<% invited_users = @user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc) %>
-<% if invited_users.any? %>
-  <h4 class="mt-3 mb-3">Users Invited by <%= @user.name %></h4>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Invited</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% invited_users.each do |invite| %>
-          <tr>
-            <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "text-decoration-none" %></td>
-            <td><%= invite.invited_user.email_address %></td>
-            <td><%= short_time_ago(invite.created_at) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% end %>
-
-<%= page_section_header "Active Sessions" %>
-
-<% if @user.sessions.any? %>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th>IP Address</th>
-          <th>User Agent</th>
-          <th class="text-center">Created</th>
-          <th class="text-center">Last Seen</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @user.sessions.order(updated_at: :desc).each do |session| %>
-          <tr>
-            <td><%= session.ip_address %></td>
-            <td class="text-truncate" style="max-width: 300px;"><%= session.user_agent %></td>
-            <td class="text-center">
-              <time class="text-muted" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
-                <%= short_time_ago(session.created_at) %>
-              </time>
-            </td>
-            <td class="text-center">
-              <time class="text-muted" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
-                <%= short_time_ago(session.updated_at) %>
-              </time>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% else %>
-  <p class="text-muted">No active sessions</p>
-<% end %>
-
-<%= page_section_header "Actions" %>
-
-<div class="d-flex gap-2">
-  <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "btn btn-outline-secondary" %>
-  <%= link_to "Reset Password", admin_user_password_reset_path(@user), class: "btn btn-outline-secondary" %>
-</div>
-
-<%= page_section_header "Danger Zone" %>
-
-<% if @user.suspended? %>
-  <div class="card">
-    <div class="card-body">
-      <h5 class="card-title">Restore User Access</h5>
-      <p class="card-text">
-        User suspended on
-        <time datetime="<%= @user.suspended_at.iso8601 %>" title="<%= @user.suspended_at.to_fs(:long) %>">
-          <%= @user.suspended_at.to_date.to_fs(:long) %>
-        </time>.
-        Restores ability to sign in and access feeds.
-      </p>
-      <%= button_to "Unsuspend user", admin_user_suspension_path(@user), method: :delete, class: "btn btn-outline-secondary", data: { turbo_confirm: "Are you sure you want to unsuspend this user?" } %>
-    </div>
-  </div>
-<% else %>
-  <div class="card">
-    <div class="card-body">
-      <h5 class="card-title">Suspend User Account</h5>
-      <p class="card-text">Terminates all active sessions, disables all feeds, and prevents sign in.</p>
-      <%= button_to "Suspend user", admin_user_suspension_path(@user), method: :post, class: "btn btn-outline-danger", data: { turbo_confirm: "Are you sure you want to suspend this user? All active sessions will be terminated and feeds will be disabled." } %>
-    </div>
-  </div>
-<% end %>

@@ -1,74 +1,61 @@
-<%= page_header "Users" %>
+<% content_for :title, "Users" %>
 
-<% if @users.any? %>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th>
-            Email
-          </th>
-          <th>
-            Name
-          </th>
-          <th class="text-center">
-            Feeds
-          </th>
-          <th class="text-center">
-            Tokens
-          </th>
-          <th class="text-center">
-            Posts
-          </th>
-          <th class="text-center">
-            Last Seen
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @users.each do |user| %>
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">Users</h1>
+    <%= link_to "Back to Admin", admin_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+  </div>
+
+  <% if @users.any? %>
+    <div class="ff-table-container">
+      <table class="ff-table">
+        <thead>
           <tr>
-            <td>
-              <%= link_to user.email_address, admin_user_path(user) %>
-              <% if user.admin? %>
-                <span class="text-muted">(admin)</span>
-              <% end %>
-              <% if user.email_deactivated? %>
-                <span class="badge bg-warning text-dark">email bounced</span>
-              <% end %>
-            </td>
-            <td>
-              <%= user.name %>
-            </td>
-            <td class="text-center">
-              <%= user.feeds_count %>
-            </td>
-            <td class="text-center">
-              <%= user.access_tokens_count %>
-            </td>
-            <td class="text-center">
-              <%= user.posts_count %>
-            </td>
-            <td class="text-center">
-              <% if user.last_seen_at %>
-                <time class="text-muted" datetime="<%= user.last_seen_at.iso8601 %>" title="<%= user.last_seen_at.to_fs(:long) %>">
-                  <%= short_time_ago(user.last_seen_at) %>
-                </time>
-              <% else %>
-                <span class="text-muted">Never</span>
-              <% end %>
-            </td>
+            <th scope="col">Email</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="text-center">Feeds</th>
+            <th scope="col" class="text-center">Tokens</th>
+            <th scope="col" class="text-center">Posts</th>
+            <th scope="col" class="text-center">Last Seen</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <tr>
+              <td>
+                <%= link_to user.email_address, admin_user_path(user), class: "ff-link" %>
+                <% if user.admin? %>
+                  <span class="text-slate-500">(admin)</span>
+                <% end %>
+                <% if user.email_deactivated? %>
+                  <span class="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">email bounced</span>
+                <% end %>
+              </td>
+              <td><%= user.name %></td>
+              <td class="text-center"><%= user.feeds_count %></td>
+              <td class="text-center"><%= user.access_tokens_count %></td>
+              <td class="text-center"><%= user.posts_count %></td>
+              <td class="text-center">
+                <% if user.last_seen_at %>
+                  <time class="text-slate-500" datetime="<%= user.last_seen_at.iso8601 %>" title="<%= user.last_seen_at.to_fs(:long) %>">
+                    <%= short_time_ago(user.last_seen_at) %>
+                  </time>
+                <% else %>
+                  <span class="text-slate-500">Never</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
-  <%= pagination_for @users,
-                     collection_name: "users",
-                     path_helper: ->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
-<% else %>
-  <div class="text-center py-5">
-    <p class="text-muted">No users found</p>
-  </div>
-<% end %>
+    <%= pagination_for @users,
+                       collection_name: "users",
+                       path_helper: ->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) } %>
+  <% else %>
+    <div class="flex flex-col items-center justify-center py-12">
+      <p class="text-slate-500">No users found</p>
+    </div>
+  <% end %>
+</div>

@@ -1,4 +1,6 @@
 class Admin::UsersController < ApplicationController
+  layout "tailwind"
+
   include Pagination
   include Sortable
 
@@ -42,8 +44,9 @@ class Admin::UsersController < ApplicationController
   end
 
   def show
-    @user = User.find(params[:id])
+    @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites).find(params[:id])
     authorize @user
+    @stats = UserStats.new(@user)
   end
 
   private
