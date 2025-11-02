@@ -16,7 +16,7 @@
   }
 
   .ff-card__title {
-    @apply text-3xl font-normal mb-4 text-slate-900;
+    @apply text-4xl font-semibold mb-4 text-slate-900;
   }
 
   .ff-card__body {
