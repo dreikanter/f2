@@ -1,33 +1,30 @@
 <% content_for :title, "Sign In" %>
-<% content_for :body_class, "sm:bg-slate-100" %>
 
-<div class="mx-auto w-full max-w-full space-y-6 px-4 sm:max-w-2xl sm:px-0" data-controller="autofocus">
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <h1 class="ff-card__title">Sign in to Feeder</h1>
+<div class="ff-card">
+  <div class="ff-card__body">
+    <h1 class="ff-card__title">Sign in to Feeder</h1>
 
-      <%= form_with url: session_path, local: true do |form| %>
-        <div class="space-y-6">
-          <div class="ff-form-group">
-            <%= form.label :email_address, "Email", class: "ff-form-label" %>
-            <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "ff-form-input" %>
-          </div>
-
-          <div class="ff-form-group">
-            <%= form.label :password, "Password", class: "ff-form-label" %>
-            <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: "ff-form-input" %>
-          </div>
+    <%= form_with url: session_path, local: true do |form| %>
+      <div class="space-y-6">
+        <div class="ff-form-group">
+          <%= form.label :email_address, "Email", class: "ff-form-label" %>
+          <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "ff-form-input" %>
         </div>
 
-        <div class="ff-card__footer">
-          <div class="flex flex-wrap items-center gap-2 text-slate-500">
-            <%= link_to "Forgot password?", new_password_path, class: "ff-link" %>
-            <span aria-hidden="true">·</span>
-            <%= link_to "Resend confirmation", new_registration_confirmation_path, class: "ff-link" %>
-          </div>
-          <%= form.submit "Sign in", class: "ff-button" %>
+        <div class="ff-form-group">
+          <%= form.label :password, "Password", class: "ff-form-label" %>
+          <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: User::PASSWORD_MAX_LENGTH, class: "ff-form-input" %>
         </div>
-      <% end %>
-    </div>
+      </div>
+
+      <div class="ff-card__footer flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Sign in", class: "ff-button w-full sm:w-auto" %>
+        <div class="flex flex-wrap items-center gap-2 text-slate-500">
+          <%= link_to "Forgot password?", new_password_path, class: "ff-link" %>
+          <span aria-hidden="true" class="hidden sm:inline">·</span>
+          <%= link_to "Resend confirmation", new_registration_confirmation_path, class: "ff-link" %>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>

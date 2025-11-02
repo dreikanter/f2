@@ -1,23 +1,44 @@
-<%= render SmallBoxComponent.new(title: "Update Password") do |c| %>
-  <% if flash[:alert] %>
-    <div class="alert alert-danger" role="alert">
-      <%= flash[:alert] %>
-    </div>
-  <% end %>
+<% content_for :title, "Update Password" %>
 
-  <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
-    <div class="mb-3">
-      <%= form.label :password, "New Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password, required: true, autofocus: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
-    </div>
+<div class="ff-card">
+  <div class="ff-card__body">
+    <h1 class="ff-card__title">Choose a new password</h1>
+    <p class="ff-text text-sm text-slate-600">Enter and confirm a new password to finish resetting your account.</p>
 
-    <div class="mb-3">
-      <%= form.label :password_confirmation, "Confirm Password", class: "form-label fw-bold" %>
-      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: User::PASSWORD_MAX_LENGTH, class: "form-control form-control-lg" %>
-    </div>
+    <% if flash[:alert] %>
+      <div class="ff-alert ff-alert--error" role="alert">
+        <span><%= flash[:alert] %></span>
+      </div>
+    <% end %>
 
-    <div class="d-flex gap-2">
-      <%= form.submit "Save Password", class: "btn btn-primary btn-lg" %>
-    </div>
-  <% end %>
-<% end %>
+    <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
+      <div class="space-y-6">
+        <div class="ff-form-group">
+          <%= form.label :password, "New password", class: "ff-form-label" %>
+          <%= form.password_field :password,
+                                  required: true,
+                                  autofocus: true,
+                                  autocomplete: "new-password",
+                                  placeholder: "Enter a new password",
+                                  maxlength: User::PASSWORD_MAX_LENGTH,
+                                  class: "ff-form-input" %>
+        </div>
+
+        <div class="ff-form-group">
+          <%= form.label :password_confirmation, "Confirm password", class: "ff-form-label" %>
+          <%= form.password_field :password_confirmation,
+                                  required: true,
+                                  autocomplete: "new-password",
+                                  placeholder: "Repeat the new password",
+                                  maxlength: User::PASSWORD_MAX_LENGTH,
+                                  class: "ff-form-input" %>
+        </div>
+      </div>
+
+      <div class="ff-card__footer flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Save password", class: "ff-button w-full sm:w-auto" %>
+        <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
+      </div>
+    <% end %>
+  </div>
+</div>

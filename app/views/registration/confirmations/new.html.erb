@@ -1,25 +1,22 @@
 <% content_for :title, "Resend Confirmation" %>
-<% content_for :body_class, "sm:bg-slate-100" %>
 
-<div class="mx-auto w-full max-w-full space-y-6 px-4 sm:max-w-2xl sm:px-0" data-controller="autofocus">
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <h1 class="ff-card__title">Resend Confirmation</h1>
-      <p class="ff-text">Enter your email and we'll send you a new confirmation link.</p>
+<div class="ff-card">
+  <div class="ff-card__body">
+    <h1 class="ff-card__title">Resend Confirmation</h1>
+    <p class="ff-text">Enter your email and we'll send you a new confirmation link.</p>
 
-      <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>
-        <div class="space-y-6">
-          <div class="ff-form-group">
-            <%= form.label :email_address, "Email", class: "ff-form-label" %>
-            <%= form.email_field :email_address, class: "ff-form-input", autofocus: true, required: true %>
-          </div>
+    <%= form_with url: registration_confirmations_path, method: :post, local: true do |form| %>
+      <div class="space-y-6">
+        <div class="ff-form-group">
+          <%= form.label :email_address, "Email", class: "ff-form-label" %>
+          <%= form.email_field :email_address, class: "ff-form-input", autofocus: true, required: true %>
         </div>
+      </div>
 
-        <div class="ff-card__footer">
-          <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
-          <%= form.submit "Send confirmation email", class: "ff-button" %>
-        </div>
-      <% end %>
-    </div>
+      <div class="ff-card__footer flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Send confirmation email", class: "ff-button w-full sm:w-auto" %>
+        <%= link_to "Back to sign in", new_session_path, class: "ff-link" %>
+      </div>
+    <% end %>
   </div>
 </div>
