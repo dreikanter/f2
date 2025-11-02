@@ -3,8 +3,14 @@ require "open3"
 class DiskUsageService
   def call
     {
+      total_space: total_space,
+      used_space: used_space,
       free_space: free_space,
       postgres_usage: postgres_usage,
+      other_used_space: other_used_space,
+      postgres_percentage: postgres_percentage,
+      other_used_percentage: other_used_percentage,
+      free_percentage: free_percentage,
       table_usage: table_usage,
       vacuum_stats: vacuum_stats,
       autovacuum_settings: autovacuum_settings
@@ -13,16 +19,62 @@ class DiskUsageService
 
   private
 
-  def free_space
-    out, status = Open3.capture2("df -Pk /") # POSIX format, KB units
-    raise "df command failed with status #{status.exitstatus}" unless status.success?
+  def disk_stats
+    @disk_stats ||= begin
+      out, status = Open3.capture2("df -Pk /") # POSIX format, KB units
+      raise "df command failed with status #{status.exitstatus}" unless status.success?
 
-    avail_kb = out.lines[1].split[3].to_i
-    avail_kb * 1024
+      parts = out.lines[1].split
+      {
+        total_kb: parts[1].to_i,
+        used_kb: parts[2].to_i,
+        avail_kb: parts[3].to_i
+      }
+    end
+  end
+
+  def total_space
+    disk_stats[:total_kb] * 1024
+  end
+
+  def used_space
+    disk_stats[:used_kb] * 1024
+  end
+
+  def free_space
+    disk_stats[:avail_kb] * 1024
   end
 
   def postgres_usage
     execute_query("SELECT pg_database_size(current_database())").first["pg_database_size"]
+  end
+
+  def other_used_space
+    used_space - postgres_usage
+  end
+
+  def accountable_space
+    # Use used + available as the base for percentage calculations
+    # This excludes filesystem reserved space
+    used_space + free_space
+  end
+
+  def postgres_percentage
+    return 0.0 if accountable_space.zero?
+
+    (postgres_usage.to_f / accountable_space * 100).round(1)
+  end
+
+  def other_used_percentage
+    return 0.0 if accountable_space.zero?
+
+    (other_used_space.to_f / accountable_space * 100).round(1)
+  end
+
+  def free_percentage
+    return 0.0 if accountable_space.zero?
+
+    (free_space.to_f / accountable_space * 100).round(1)
   end
 
   def table_usage

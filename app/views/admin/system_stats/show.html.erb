@@ -1,93 +1,113 @@
 <% content_for :title, "System Stats" %>
-<%= page_header "System Stats" %>
 
-<div class="mb-4">
-  <h3 class="h5 mb-3">Disk Usage</h3>
-  <div class="list-group">
-    <div class="list-group-item">
-      <strong>Free Space:</strong>
-      <%= number_to_human_size(@disk_usage[:free_space]) %>
+<%
+  # Extract values from service
+  postgres_size = @disk_usage[:postgres_usage]
+  free_size = @disk_usage[:free_space]
+  other_used_size = @disk_usage[:other_used_space]
+
+  postgres_percentage = @disk_usage[:postgres_percentage]
+  other_used_percentage = @disk_usage[:other_used_percentage]
+  free_percentage = @disk_usage[:free_percentage]
+
+  # Build list components
+  table_usage_list = ListGroupComponent.new.tap do |list|
+    @disk_usage[:table_usage].each do |row|
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: tag.code(row["table_name"]),
+        value: row["total_size"]
+      ))
+    end
+  end
+
+  autovacuum_settings_list = ListGroupComponent.new.tap do |list|
+    @disk_usage[:autovacuum_settings].each do |row|
+      list.with_item(ListGroupComponent::StatItemComponent.new(
+        label: tag.code(row["name"]),
+        value: row["setting"]
+      ))
+    end
+  end
+%>
+
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1">System Stats</h1>
+    <%= link_to "Back to Admin", admin_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+  </div>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Disk Usage</h2>
+
+    <%# Visual disk usage bar %>
+    <div class="space-y-3">
+      <div class="flex h-8 w-full overflow-hidden rounded-lg border border-slate-300">
+        <% if other_used_percentage > 0 %>
+          <div class="bg-slate-400" style="width: <%= other_used_percentage %>%" title="Other Used Space"></div>
+        <% end %>
+        <div class="bg-blue-500" style="width: <%= postgres_percentage %>%" title="Postgres DB"></div>
+        <div class="bg-slate-100" style="width: <%= free_percentage %>%" title="Free Space"></div>
+      </div>
+
+      <%# Legend %>
+      <div class="flex flex-wrap gap-4 text-sm">
+        <% if other_used_percentage > 0 %>
+          <div class="flex items-center gap-2">
+            <div class="h-3 w-3 rounded-sm bg-slate-400"></div>
+            <span class="text-slate-600">Other Used Space (<%= other_used_percentage %>%, <%= number_to_human_size(other_used_size) %>)</span>
+          </div>
+        <% end %>
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-sm bg-blue-500"></div>
+          <span class="text-slate-600">Postgres DB (<%= postgres_percentage %>%, <%= number_to_human_size(postgres_size) %>)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-sm bg-slate-100 border border-slate-300"></div>
+          <span class="text-slate-600">Free Space (<%= free_percentage %>%, <%= number_to_human_size(free_size) %>)</span>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <div class="list-group-item">
-      <strong>Postgres Usage:</strong>
-      <%= number_to_human_size(@disk_usage[:postgres_usage]) %>
+  <section class="space-y-4">
+    <h2 class="ff-h2">Postgres Table Usage</h2>
+    <%= render(table_usage_list) %>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Vacuum Stats</h2>
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+      <table class="w-full text-left text-sm text-slate-700">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+          <tr>
+            <th scope="col" class="px-6 py-3">Table</th>
+            <th scope="col" class="px-6 py-3 text-right">Live Tuples</th>
+            <th scope="col" class="px-6 py-3 text-right">Dead Tuples</th>
+            <th scope="col" class="px-6 py-3">Last Vacuum</th>
+            <th scope="col" class="px-6 py-3">Last Autovacuum</th>
+            <th scope="col" class="px-6 py-3 text-right">Vacuum Count</th>
+            <th scope="col" class="px-6 py-3 text-right">Autovacuum Count</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 bg-white">
+          <% @disk_usage[:vacuum_stats].each do |row| %>
+            <tr class="hover:bg-slate-50">
+              <td class="whitespace-nowrap px-6 py-4 font-mono text-sm"><%= row["relname"] %></td>
+              <td class="px-6 py-4 text-right"><%= number_with_delimiter(row["n_live_tup"]) %></td>
+              <td class="px-6 py-4 text-right"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
+              <td class="px-6 py-4"><%= short_time_ago_tag(row["last_vacuum"]) %></td>
+              <td class="px-6 py-4"><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
+              <td class="px-6 py-4 text-right"><%= row["vacuum_count"] %></td>
+              <td class="px-6 py-4 text-right"><%= row["autovacuum_count"] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     </div>
-  </div>
-</div>
+  </section>
 
-<div class="mb-4">
-  <h3 class="h5 mb-3">Postgres Table Usage</h3>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th>Table</th>
-          <th>Size</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @disk_usage[:table_usage].each do |row| %>
-          <tr>
-            <td><code><%= row["table_name"] %></code></td>
-            <td><%= row["total_size"] %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="mb-4">
-  <h3 class="h5 mb-3">Vacuum Stats</h3>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th>Table</th>
-          <th class="text-end">Live Tuples</th>
-          <th class="text-end">Dead Tuples</th>
-          <th>Last Vacuum</th>
-          <th>Last Autovacuum</th>
-          <th class="text-end">Vacuum Count</th>
-          <th class="text-end">Autovacuum Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @disk_usage[:vacuum_stats].each do |row| %>
-          <tr>
-            <td><code><%= row["relname"] %></code></td>
-            <td class="text-end"><%= number_with_delimiter(row["n_live_tup"]) %></td>
-            <td class="text-end"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
-            <td><%= short_time_ago_tag(row["last_vacuum"]) %></td>
-            <td><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
-            <td class="text-end"><%= row["vacuum_count"] %></td>
-            <td class="text-end"><%= row["autovacuum_count"] %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="mb-4">
-  <h3 class="h5 mb-3">Autovacuum Settings</h3>
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered text-nowrap">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Setting</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @disk_usage[:autovacuum_settings].each do |row| %>
-          <tr>
-            <td><code><%= row["name"] %></code></td>
-            <td><%= row["setting"] %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+  <section class="space-y-4">
+    <h2 class="ff-h2">Autovacuum Settings</h2>
+    <%= render(autovacuum_settings_list) %>
+  </section>
 </div>

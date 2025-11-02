@@ -1,62 +1,50 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Admin Panel</h1>
+<% content_for :title, "Admin Panel" %>
+
+<div class="space-y-8">
+  <h1 class="ff-h1">Admin Panel</h1>
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="ff-card">
+      <div class="ff-card__body space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("people") %>
+          <span>Users</span>
+        </h2>
+        <p class="ff-text text-slate-600">Manage user accounts and permissions</p>
+        <%= link_to "View Users", admin_users_path, class: "ff-button ff-button--compact" %>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">
-                <%= icon("people", css_class: "me-2") %>
-                Users
-              </h5>
-              <p class="card-text">Manage user accounts and permissions</p>
-              <%= link_to "View Users", admin_users_path, class: "btn btn-primary" %>
-            </div>
-          </div>
-        </div>
+    <div class="ff-card">
+      <div class="ff-card__body space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("calendar-event") %>
+          <span>System Events</span>
+        </h2>
+        <p class="ff-text text-slate-600">View system events, logs, and activity</p>
+        <%= link_to "View Events", admin_events_path, class: "ff-button ff-button--compact" %>
+      </div>
+    </div>
 
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">
-                <%= icon("calendar-event", css_class: "me-2") %>
-                System Events
-              </h5>
-              <p class="card-text">View system events, logs, and activity</p>
-              <%= link_to "View Events", admin_events_path, class: "btn btn-primary" %>
-            </div>
-          </div>
-        </div>
+    <div class="ff-card">
+      <div class="ff-card__body space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("hdd") %>
+          <span>System Info</span>
+        </h2>
+        <p class="ff-text text-slate-600">View disk usage and other system information</p>
+        <%= link_to "View System Info", admin_system_stats_path, class: "ff-button ff-button--compact" %>
+      </div>
+    </div>
 
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">
-                <%= icon("hdd", css_class: "me-2") %>
-                System Info
-              </h5>
-              <p class="card-text">View disk usage and other system information</p>
-              <%= link_to "View System Info", admin_system_stats_path, class: "btn btn-primary" %>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">
-                <%= icon("stack", css_class: "me-2") %>
-                Background Jobs
-              </h5>
-              <p class="card-text">Monitor and manage background job queues</p>
-              <%= link_to "View Jobs", "/jobs", class: "btn btn-primary" %>
-            </div>
-          </div>
-        </div>
+    <div class="ff-card">
+      <div class="ff-card__body space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("stack") %>
+          <span>Background Jobs</span>
+        </h2>
+        <p class="ff-text text-slate-600">Monitor and manage background job queues</p>
+        <%= link_to "View Jobs", "/jobs", class: "ff-button ff-button--compact" %>
       </div>
     </div>
   </div>
