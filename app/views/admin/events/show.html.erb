@@ -23,23 +23,21 @@
       value: user_value
     ))
 
-    subject_value = if @event.subject
-      safe_join([
-        if @event.subject_type == "Feed"
-          link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-        elsif @event.subject_type == "Post"
-          link_to(@event.subject_type, post_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-        elsif @event.subject_type == "User"
-          link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-        else
-          @event.subject_type
-        end,
-        " ",
-        tag.span("##{@event.subject_id}", class: "text-slate-500")
-      ])
-    else
-      tag.em("None", class: "text-slate-500")
+    subject_link = if @event.subject_type == "Feed" && @event.subject.present?
+      link_to(@event.subject_type, feed_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
+    elsif @event.subject_type == "Post" && @event.subject.present?
+      link_to(@event.subject_type, post_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
+    elsif @event.subject_type == "User" && @event.subject.present?
+      link_to(@event.subject_type, admin_user_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
+    elsif @event.subject_type.present?
+      link_to(@event.subject_type, admin_events_path(filter: { subject_type: @event.subject_type }), class: "ff-link", data: { key: "admin.event.subject.type" })
     end
+
+    subject_value = safe_join([
+      subject_link || @event.subject_type || tag.em("None", class: "text-slate-500"),
+      " ",
+      tag.span("##{@event.subject_id}", class: "text-slate-500")
+    ])
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Subject",
