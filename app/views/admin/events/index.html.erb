@@ -61,19 +61,24 @@
                 <%= event.user&.email_address || content_tag(:em, "System", class: "text-slate-500") %>
               </td>
               <td>
-                <% if event.subject %>
-                  <% if event.subject_type == "Feed" %>
-                    <%= link_to event.subject_type, feed_path(event.subject), class: "text-slate-600" %>
-                  <% elsif event.subject_type == "Post" %>
-                    <%= link_to event.subject_type, post_path(event.subject), class: "text-slate-600" %>
-                  <% else %>
-                    <%= link_to admin_events_path(filter: { subject_type: event.subject_type }),
-                                class: "text-slate-600 hover:text-slate-800",
-                                title: "Filter by subject type: #{event.subject_type}" do %>
-                      <%= event.subject_type %>
-                    <% end %>
+                <%
+                  subject_link = if event.subject_type == "Feed" && event.subject.present?
+                    link_to event.subject_type, feed_path(event.subject), class: "text-slate-600"
+                  elsif event.subject_type == "Post" && event.subject.present?
+                    link_to event.subject_type, post_path(event.subject), class: "text-slate-600"
+                  elsif event.subject_type.present?
+                    link_to admin_events_path(filter: { subject_type: event.subject_type }),
+                            class: "text-slate-600 hover:text-slate-800",
+                            title: "Filter by subject type: #{event.subject_type}" do
+                      event.subject_type
+                    end
+                  end
+                %>
+                <% if subject_link %>
+                  <%= subject_link %>
+                  <% if event.subject_id.present? %>
+                    <span class="text-slate-500">#<%= event.subject_id %></span>
                   <% end %>
-                  <span class="text-slate-500">#<%= event.subject_id %></span>
                 <% else %>
                   <em class="text-slate-500">None</em>
                 <% end %>

@@ -92,6 +92,20 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", "Events will appear here as they are created."
   end
 
+  test "should show recorded subject when subject missing" do
+    login_as(admin_user)
+    event = create(:event, type: "MissingSubjectEvent", subject: nil)
+    event.update!(subject_type: "Post", subject_id: 42)
+
+    get admin_events_path
+
+    assert_response :success
+    assert_select '[data-key="admin.events.table"]' do
+      assert_select "a[href*='filter%5Bsubject_type%5D=Post']", text: "Post"
+      assert_select "span.text-slate-500", text: "#42"
+    end
+  end
+
   test "should filter events by subject_type" do
     login_as(admin_user)
     test_user = create(:user, email_address: "test_user_#{SecureRandom.uuid}@example.com")
