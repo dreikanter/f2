@@ -32,12 +32,6 @@
       ))
     end
   end
-
-  active_count = @access_tokens.active.count
-  inactive_count = @access_tokens.inactive.count
-
-  created_count = @user.created_invites.count
-  used_count = @user.created_invites.where.not(invited_user_id: nil).count
 %>
 
 <div class="space-y-8">
@@ -60,7 +54,7 @@
         </p>
         <% if @access_tokens.any? %>
           <p class="ff-text text-slate-600">
-            You have <%= pluralize(active_count, 'active token') %><% if inactive_count > 0 %> and <%= pluralize(inactive_count, 'inactive token') %><% end %>.
+            You have <%= pluralize(@user.active_tokens_count, 'active token') %><% if @user.inactive_tokens_count > 0 %> and <%= pluralize(@user.inactive_tokens_count, 'inactive token') %><% end %>.
           </p>
         <% else %>
           <p class="ff-text text-slate-600">
@@ -70,7 +64,7 @@
       </div>
       <div class="shrink-0">
         <% if @access_tokens.any? %>
-          <%= link_to "Manage", settings_access_tokens_path, class: class_names("ff-button", "ff-button--compact", "ff-button--secondary") %>
+          <%= link_to "Manage", settings_access_tokens_path, class: class_names("ff-button", "ff-button--compact") %>
         <% else %>
           <%= link_to "Add Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
         <% end %>
@@ -82,27 +76,25 @@
     <h2 class="ff-h2">Feeder Invites</h2>
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="space-y-2">
-        <p class="ff-text text-slate-600">
-          Invites let you add new users to Feeder.
-        </p>
         <% if @user.available_invites > 0 %>
           <p class="ff-text text-slate-600">
-            You have <%= pluralize(@user.available_invites, 'invite') %> available<% if created_count > 0 %>, <%= pluralize(created_count, 'created') %><% end %><% if used_count > 0 %>, and <%= pluralize(used_count, 'used') %><% end %>.
-          </p>
-        <% elsif created_count > 0 %>
-          <p class="ff-text text-slate-600">
-            You have <%= pluralize(created_count, 'invite') %> created<% if used_count > 0 %>, <%= pluralize(used_count, 'used') %><% end %>.
+            You can invite up to <%= pluralize(@user.available_invites, 'person', 'people') %> to Feeder.
           </p>
         <% else %>
           <p class="ff-text text-slate-600">
-            You don't have any invites available right now.
+            You don't have available invites at the moment.
+          </p>
+        <% end %>
+        <% if @user.used_invites_count > 0 %>
+          <p class="ff-text text-slate-600">
+            You already invited <%= pluralize(@user.used_invites_count, 'person', 'people') %> to Feeder.
           </p>
         <% end %>
       </div>
       <div class="shrink-0">
         <% if @user.available_invites > 0 %>
           <%= link_to "Invite Someone", invites_path, class: class_names("ff-button", "ff-button--compact") %>
-        <% elsif created_count > 0 %>
+        <% elsif @user.created_invites_count > 0 %>
           <%= link_to "View Invites", invites_path, class: class_names("ff-button", "ff-button--compact", "ff-button--secondary") %>
         <% end %>
       </div>
