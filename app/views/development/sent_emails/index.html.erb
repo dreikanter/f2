@@ -17,21 +17,23 @@
       No emails captured yet. Emails sent in development mode will appear here.
     </div>
   <% else %>
-    <div class="space-y-3">
-      <% @emails.each do |email| %>
-        <%= link_to development_sent_email_path(id: email[:id]), class: "block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-cyan-300 hover:shadow-md", data: { key: "development.emails.list.item" } do %>
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div class="space-y-1">
-              <p class="text-base font-semibold text-slate-900" data-key="development.emails.subject"><%= email[:subject] %></p>
-              <p class="text-sm text-slate-500">
-                <%= email[:timestamp].strftime("%b %d, %Y at %H:%M:%S") %>
-                · <%= number_to_human_size(email[:size]) %>
-              </p>
-            </div>
-            <span class="text-sm text-slate-400" data-key="development.emails.ago"><%= time_ago_in_words(email[:timestamp]) %> ago</span>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
+    <% list = ListGroupComponent.new %>
+    <% @emails.each do |email| %>
+      <% subject = email[:subject].presence || "(no subject)" %>
+      <% list.with_item(
+           ListGroupComponent::FeedItemComponent.new(
+             icon: icon("envelope"),
+             title: subject,
+             title_url: development_sent_email_path(id: email[:id]),
+             metadata_segments: [
+               email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
+               number_to_human_size(email[:size]),
+               "#{time_ago_in_words(email[:timestamp])} ago"
+             ],
+             key: "development.emails.list.item"
+           )
+         ) %>
+    <% end %>
+    <%= render(list) %>
   <% end %>
 </div>

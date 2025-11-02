@@ -26,8 +26,8 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select '[data-key="development.emails.list.item"]', count: 2
-    assert_select '[data-key="development.emails.subject"]', text: "Test Subject"
-    assert_select '[data-key="development.emails.subject"]', text: "Another Email"
+    assert_select '[data-key="development.emails.list.item"] a', text: "Test Subject"
+    assert_select '[data-key="development.emails.list.item"] a', text: "Another Email"
   end
 
   test "#show should show email" do
