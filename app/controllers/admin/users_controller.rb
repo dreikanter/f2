@@ -44,8 +44,31 @@ class Admin::UsersController < ApplicationController
   end
 
   def show
-    @user = User.find(params[:id])
+    @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites).find(params[:id])
     authorize @user
+
+    # Session data
+    @sessions = @user.sessions.order(updated_at: :desc).to_a
+    @last_session = @sessions.first
+
+    # Feeds statistics
+    @feeds_count = @user.feeds.size
+    @feeds_enabled_count = @user.feeds.count { |f| f.status == "enabled" }
+    @feeds_disabled_count = @user.feeds.count { |f| f.status == "disabled" }
+
+    # Access tokens statistics
+    @access_tokens_count = @user.access_tokens.size
+    @active_access_tokens_count = @user.access_tokens.count { |t| t.status == "active" }
+    @inactive_access_tokens_count = @access_tokens_count - @active_access_tokens_count
+
+    # Posts statistics
+    @posts_count = Post.joins(:feed).where(feeds: { user_id: @user.id }).count
+    @most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first
+
+    # Invitations statistics
+    @created_invites_count = @user.created_invites.size
+    @invited_users_count = @user.created_invites.count { |i| i.invited_user_id.present? }
+    @invited_users = @user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc).to_a
   end
 
   private

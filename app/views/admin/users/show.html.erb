@@ -51,12 +51,11 @@
       value: password_updated_value
     ))
 
-    last_session = @user.sessions.order(updated_at: :desc).first
-    last_seen_value = if last_session
+    last_seen_value = if @last_session
       tag.time(
-        "#{last_session.updated_at.to_date.to_fs(:long)} (#{short_time_ago(last_session.updated_at)})",
-        datetime: last_session.updated_at.iso8601,
-        title: last_session.updated_at.to_fs(:long)
+        "#{@last_session.updated_at.to_date.to_fs(:long)} (#{short_time_ago(@last_session.updated_at)})",
+        datetime: @last_session.updated_at.iso8601,
+        title: @last_session.updated_at.to_fs(:long)
       )
     else
       tag.span("Never", class: "text-slate-500")
@@ -102,25 +101,24 @@
   stats_list = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Feeds",
-      value: "#{@user.feeds.count} total (#{@user.feeds.enabled.count} enabled, #{@user.feeds.disabled.count} disabled)"
+      value: "#{@feeds_count} total (#{@feeds_enabled_count} enabled, #{@feeds_disabled_count} disabled)"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Access Tokens",
-      value: "#{@user.access_tokens.count} total (#{@user.access_tokens.where(status: "active").count} active, #{@user.access_tokens.where.not(status: "active").count} not active)"
+      value: "#{@access_tokens_count} total (#{@active_access_tokens_count} active, #{@inactive_access_tokens_count} not active)"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Posts",
-      value: Post.joins(:feed).where(feeds: { user_id: @user.id }).count
+      value: @posts_count
     ))
 
-    most_recent_post = Post.joins(:feed).where(feeds: { user_id: @user.id }).order(published_at: :desc).first
-    most_recent_post_value = if most_recent_post
+    most_recent_post_value = if @most_recent_post
       tag.time(
-        "#{most_recent_post.published_at.to_date.to_fs(:long)} (#{short_time_ago(most_recent_post.published_at)})",
-        datetime: most_recent_post.published_at.iso8601,
-        title: most_recent_post.published_at.to_fs(:long)
+        "#{@most_recent_post.published_at.to_date.to_fs(:long)} (#{short_time_ago(@most_recent_post.published_at)})",
+        datetime: @most_recent_post.published_at.iso8601,
+        title: @most_recent_post.published_at.to_fs(:long)
       )
     else
       tag.span("No posts yet", class: "text-slate-500")
@@ -146,12 +144,12 @@
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Created Invites",
-      value: @user.created_invites.count
+      value: @created_invites_count
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Invited Users",
-      value: @user.created_invites.where.not(invited_user_id: nil).count
+      value: @invited_users_count
     ))
   end
 %>
@@ -181,8 +179,7 @@
     <%= render(invitations_list) %>
   </section>
 
-  <% invited_users = @user.created_invites.includes(:invited_user).where.not(invited_user_id: nil).order(created_at: :desc) %>
-  <% if invited_users.any? %>
+  <% if @invited_users.any? %>
     <section class="space-y-4">
       <h3 class="ff-h3">Users Invited by <%= @user.name %></h3>
       <div class="ff-table-container">
@@ -195,7 +192,7 @@
             </tr>
           </thead>
           <tbody>
-            <% invited_users.each do |invite| %>
+            <% @invited_users.each do |invite| %>
               <tr>
                 <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "ff-link" %></td>
                 <td><%= invite.invited_user.email_address %></td>
@@ -211,7 +208,7 @@
   <section class="space-y-4">
     <h2 class="ff-h2">Active Sessions</h2>
 
-    <% if @user.sessions.any? %>
+    <% if @sessions.any? %>
       <div class="ff-table-container">
         <table class="ff-table">
           <thead>
@@ -223,7 +220,7 @@
             </tr>
           </thead>
           <tbody>
-            <% @user.sessions.order(updated_at: :desc).each do |session| %>
+            <% @sessions.each do |session| %>
               <tr>
                 <td><%= session.ip_address %></td>
                 <td class="max-w-md truncate"><%= session.user_agent %></td>
