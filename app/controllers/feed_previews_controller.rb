@@ -66,13 +66,19 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  def create_and_enqueue_preview(url:, feed_profile_key:)
+  def create_and_enqueue_preview(url:, feed_profile_key:, force_refresh: false)
     existing_preview = FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).first
 
     unless existing_preview
       preview = create_new_preview(url, feed_profile_key)
       enqueue_preview_job(preview)
       return preview
+    end
+
+    if force_refresh
+      existing_preview.update!(status: :pending, data: nil)
+      enqueue_preview_job(existing_preview)
+      return existing_preview
     end
 
     if existing_preview.failed?
