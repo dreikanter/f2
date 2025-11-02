@@ -1,5 +1,4 @@
 class Admin::SystemStatsController < ApplicationController
-  layout "tailwind"
 
   def show
     authorize :admin, :show?

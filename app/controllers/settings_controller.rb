@@ -1,5 +1,4 @@
 class SettingsController < ApplicationController
-  layout "tailwind"
 
   def show
     @user = Current.user

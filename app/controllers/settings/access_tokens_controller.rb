@@ -1,5 +1,4 @@
 class Settings::AccessTokensController < ApplicationController
-  layout "tailwind"
 
   def index
     authorize AccessToken

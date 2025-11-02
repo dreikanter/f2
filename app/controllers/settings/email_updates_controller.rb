@@ -1,5 +1,4 @@
 class Settings::EmailUpdatesController < ApplicationController
-  layout "tailwind"
 
   def edit
     @user = Current.user
