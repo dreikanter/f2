@@ -90,7 +90,7 @@
         <tbody>
           <% @disk_usage[:vacuum_stats].each do |row| %>
             <tr>
-              <td class="whitespace-nowrap font-mono text-sm"><%= row["relname"] %></td>
+              <td class="font-mono text-sm"><%= row["relname"] %></td>
               <td class="text-right"><%= number_with_delimiter(row["n_live_tup"]) %></td>
               <td class="text-right"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
               <td><%= short_time_ago_tag(row["last_vacuum"]) %></td>

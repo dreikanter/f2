@@ -27,7 +27,7 @@
         <tbody>
           <% @events.each do |event| %>
             <tr>
-              <td class="text-center whitespace-nowrap">
+              <td class="text-center">
                 <%= link_to admin_event_path(event), class: "text-slate-500 hover:text-slate-700", title: event.created_at.rfc3339 do %>
                   <%= short_time_ago(event.created_at) %>
                 <% end %>
@@ -55,8 +55,8 @@
                   <code class="text-sm"><%= event.type %></code>
                 <% end %>
               </td>
-              <td>
-                <div class="max-w-sm truncate">
+              <td class="max-w-sm">
+                <div class="truncate">
                   <%= event.message.present? ? event.message : content_tag(:em, "No message", class: "text-slate-500") %>
                 </div>
               </td>
