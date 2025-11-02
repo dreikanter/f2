@@ -76,7 +76,7 @@
   }
 
   .ff-card__footer {
-    @apply mt-6 flex flex-wrap items-center justify-between gap-3 text-slate-600;
+    @apply mt-6 flex flex-wrap items-center justify-between gap-4 text-slate-600;
   }
 
   .ff-text {

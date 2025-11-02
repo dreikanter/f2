@@ -81,12 +81,12 @@
               <p class="ff-form-help">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
             </div>
           </div>
-          <div class="ff-card__footer">
-            <span>
+          <div class="ff-card__footer flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <%= form.submit "Create account", class: "ff-button w-full sm:w-auto" %>
+            <span class="text-slate-600">
               Already use Feeder?
               <%= link_to "Sign in", new_session_path, class: "ff-link" %>
             </span>
-            <%= form.submit "Create account", class: "ff-button" %>
           </div>
         <% end %>
       </div>
