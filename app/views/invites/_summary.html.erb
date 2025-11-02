@@ -1,0 +1,6 @@
+<%# locals: (available_invites_count:, created_invites_count:, invited_users_count:, unused_invites_count:) %>
+<% remaining = [0, available_invites_count - created_invites_count].max %>
+<p class="ff-text">
+  You can send <strong><%= remaining %></strong> more invites.
+  <%= pluralize(invited_users_count, "user") %> has joined so far.
+</p>

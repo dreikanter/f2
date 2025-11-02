@@ -37,7 +37,7 @@ class InvitesController < ApplicationController
 
     render turbo_stream: [
       turbo_stream.update("invites-table", partial: "invites/table", locals: { invites: invites, new_invite_id: @new_invite&.id }),
-      turbo_stream.update("invite-stats", partial: "invites/stats", locals: invite_stats),
+      turbo_stream.update("invite-stats", partial: "invites/summary", locals: invite_stats),
       turbo_stream.update("create-invite-button", partial: "invites/create_button", locals: {
         can_create: policy(Invite).create?
       })

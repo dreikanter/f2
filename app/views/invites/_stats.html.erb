@@ -1,5 +1,0 @@
-<% remaining = [0, available_invites_count - created_invites_count].max %>
-<div class="<%= class_names('ff-alert', remaining.positive? ? 'ff-alert--info' : 'ff-alert--warning') %>">
-  <span class="font-semibold">Available invites:</span>
-  <span class="ml-1"><%= remaining %></span>
-</div>

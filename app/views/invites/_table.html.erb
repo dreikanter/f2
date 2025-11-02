@@ -14,7 +14,7 @@
           <tr id="<%= dom_id(invite) %>" class="<%= class_names({ 'bg-emerald-50': local_assigns[:new_invite_id] == invite.id }) %>">
             <td>
               <div class="flex items-center gap-3">
-                <code class="<%= class_names('font-mono text-sm', 'text-slate-400': invite.invited_user.present?) %>">
+                <code class="<%= class_names('font-mono text-sm max-w-[16rem] truncate', 'text-slate-400': invite.invited_user.present?) %>">
                   <%= registration_url(code: invite.id) %>
                 </code>
                 <button

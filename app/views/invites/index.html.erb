@@ -2,14 +2,15 @@
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1">Invites</h1>
+    <div>
+      <h1 class="ff-h1">Invites</h1>
+      <div id="invite-stats">
+        <%= render "summary", **@invite_stats %>
+      </div>
+    </div>
     <div id="create-invite-button">
       <%= render "create_button", can_create: policy(Invite).create? %>
     </div>
-  </div>
-
-  <div id="invite-stats">
-    <%= render "stats", **@invite_stats %>
   </div>
 
   <div id="invites-table">
