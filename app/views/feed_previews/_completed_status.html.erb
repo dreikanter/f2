@@ -10,7 +10,12 @@
       <% metadata_segments << "UID #{post_data["uid"]}" %>
     <% end %>
     <% if post_data["published_at"].present? %>
-      <% published_at = Time.zone.parse(post_data["published_at"]) rescue nil %>
+      <% published_at = begin
+           Time.zone.parse(post_data["published_at"])
+         rescue => error
+           logger.warn("Feed preview post published_at parse error for #{post_data["published_at"].inspect}: #{error.message}")
+           nil
+         end %>
       <% if published_at %>
         <% metadata_segments << "Published #{time_ago_in_words(published_at)} ago" %>
       <% end %>
