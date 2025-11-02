@@ -1,6 +1,10 @@
 require "open3"
 
 class DiskUsageService
+  def initialize(df_command: method(:execute_df_command))
+    @df_command = df_command
+  end
+
   def call
     {
       total_space: total_space,
@@ -21,7 +25,7 @@ class DiskUsageService
 
   def disk_stats
     @disk_stats ||= begin
-      out, status = Open3.capture2("df -Pk /") # POSIX format, KB units
+      out, status = @df_command.call
       raise "df command failed with status #{status.exitstatus}" unless status.success?
 
       parts = out.lines[1].split
@@ -31,6 +35,10 @@ class DiskUsageService
         avail_kb: parts[3].to_i
       }
     end
+  end
+
+  def execute_df_command
+    Open3.capture2("df -Pk /") # POSIX format, KB units
   end
 
   def total_space
