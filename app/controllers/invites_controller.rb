@@ -46,8 +46,7 @@ class InvitesController < ApplicationController
 
   def invite_stats
     {
-      available_invites_count: available_invites_count,
-      created_invites_count: created_invites.count,
+      remaining_invites_count: [0, available_invites_count - created_invites.count].max,
       invited_users_count: created_invites.where.not(invited_user_id: nil).count,
       unused_invites_count: created_invites.where(invited_user_id: nil).count
     }
