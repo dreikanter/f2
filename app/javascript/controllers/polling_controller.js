@@ -37,8 +37,7 @@ export default class extends Controller {
         if (response.ok) {
           return response.text();
         } else {
-          this.element.setAttribute('aria-busy', 'false');
-          clearInterval(this.interval);
+          this.stopPolling();
           return null;
         }
       })
