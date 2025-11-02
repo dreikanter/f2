@@ -1,4 +1,5 @@
 class Development::SentEmailsController < ApplicationController
+  layout "tailwind"
   allow_unauthenticated_access
 
   def index

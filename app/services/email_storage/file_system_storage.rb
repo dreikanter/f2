@@ -1,5 +1,15 @@
+require "active_support/time"
+
 module EmailStorage
   class FileSystemStorage < Base
+    YAML_PERMITTED_CLASSES = [
+      Time,
+      Date,
+      DateTime,
+      ActiveSupport::TimeWithZone,
+      ActiveSupport::TimeZone
+    ].freeze
+
     def initialize(base_dir = nil)
       @base_dir = base_dir || Rails.root.join("tmp", "sent_emails")
       validate_directory!
@@ -16,7 +26,7 @@ module EmailStorage
         uuid = match[1]
 
         begin
-          metadata = YAML.safe_load_file(yml_path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+          metadata = YAML.safe_load_file(yml_path, permitted_classes: YAML_PERMITTED_CLASSES, aliases: true) || {}
         rescue Psych::SyntaxError
           next
         end
@@ -98,7 +108,7 @@ module EmailStorage
     def load_metadata(id)
       path = base_dir.join("#{id}.yml")
       return unless File.exist?(path)
-      YAML.safe_load_file(path, permitted_classes: [Time, Date, DateTime], aliases: true) || {}
+      YAML.safe_load_file(path, permitted_classes: YAML_PERMITTED_CLASSES, aliases: true) || {}
     rescue Psych::SyntaxError, Errno::ENOENT, IOError => e
       Rails.logger.error "Failed to load email metadata from #{path}: #{e.message}"
       nil

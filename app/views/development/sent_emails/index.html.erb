@@ -1,30 +1,39 @@
-<div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Development Emails</h1>
+<% content_for :title, "Sent Emails" %>
+
+<div class="space-y-8">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <h1 class="ff-h1" data-key="development.emails.heading">Sent Emails</h1>
     <% if @emails.any? %>
-      <%= button_to "Purge All", purge_development_sent_emails_path, method: :delete, class: "btn btn-outline-danger btn-sm",
-          data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
+      <%= button_to "Purge All",
+                    purge_development_sent_emails_path,
+                    method: :delete,
+                    class: class_names("ff-button", "ff-button--secondary", "ff-button--compact", "text-red-600 hover:text-red-700"),
+                    data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
     <% end %>
   </div>
 
   <% if @emails.empty? %>
-    <div class="alert alert-info">
+    <div class="ff-alert ff-alert--info" data-key="development.emails.empty">
       No emails captured yet. Emails sent in development mode will appear here.
     </div>
   <% else %>
-    <div class="list-group">
-      <% @emails.each do |email| %>
-        <%= link_to development_sent_email_path(id: email[:id]), class: "list-group-item list-group-item-action" do %>
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1"><%= email[:subject] %></h5>
-            <small class="text-muted"><%= time_ago_in_words(email[:timestamp]) %> ago</small>
-          </div>
-          <small class="text-muted">
-            <%= email[:timestamp].strftime("%b %d, %Y at %H:%M:%S") %> ·
-            <%= number_to_human_size(email[:size]) %>
-          </small>
-        <% end %>
-      <% end %>
-    </div>
+    <% list = ListGroupComponent.new %>
+    <% @emails.each do |email| %>
+      <% subject = email[:subject].presence || "(no subject)" %>
+      <% list.with_item(
+           ListGroupComponent::FeedItemComponent.new(
+             icon: icon("envelope"),
+             title: subject,
+             title_url: development_sent_email_path(id: email[:id]),
+             metadata_segments: [
+               email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
+               number_to_human_size(email[:size]),
+               "#{time_ago_in_words(email[:timestamp])} ago"
+             ],
+             key: "development.emails.list.item"
+           )
+         ) %>
+    <% end %>
+    <%= render(list) %>
   <% end %>
 </div>

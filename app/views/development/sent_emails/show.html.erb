@@ -1,61 +1,51 @@
-<div class="container my-4">
-  <div class="mb-4">
-    <%= link_to "← Back to all emails", development_sent_emails_path, class: "btn btn-sm btn-outline-secondary" %>
+<% content_for :title, h(@email[:subject]) %>
+
+<div class="space-y-8">
+  <div class="flex items-center justify-between">
+    <h1 class="ff-h1 text-3xl" data-key="development.emails.subject"><%= h @email[:subject] %></h1>
+    <%= link_to "Back to all emails",
+                development_sent_emails_path,
+                class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
 
-  <div class="card">
-    <div class="card-header">
-      <h4 class="mb-0"><%= h @email[:subject] %></h4>
-    </div>
-    <div class="card-body">
-      <dl class="row mb-0">
-        <dt class="col-sm-2">Message-ID:</dt>
-        <dd class="col-sm-10"><code><%= h @email[:message_id] %></code></dd>
+  <%= render SentEmailDetailsComponent.new(email: @email) %>
 
-        <dt class="col-sm-2">From:</dt>
-        <dd class="col-sm-10"><code><%= h @email[:from] %></code></dd>
-
-        <dt class="col-sm-2">To:</dt>
-        <dd class="col-sm-10"><code><%= h @email[:to] %></code></dd>
-
-        <dt class="col-sm-2">Date:</dt>
-        <dd class="col-sm-10"><%= h @email[:date] %></dd>
-      </dl>
-    </div>
-  </div>
-
-  <div class="card mt-3">
-    <div class="card-header">
-      <% if @email[:multipart] %>
-        <ul class="nav nav-tabs card-header-tabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab">
+  <% if @email[:multipart] %>
+    <div data-controller="email-viewer" class="space-y-4">
+      <div class="border-b border-slate-200">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+          <li class="mr-2" role="presentation">
+            <button
+              type="button"
+              class="inline-block rounded-t-lg border-b-2 px-4 py-2 text-cyan-600 border-cyan-600"
+              data-action="email-viewer#showText"
+              data-email-viewer-target="textTab"
+              data-key="development.emails.tab.text">
               Text
             </button>
           </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-content" type="button" role="tab">
+          <li class="mr-2" role="presentation">
+            <button
+              type="button"
+              class="inline-block rounded-t-lg border-b-2 border-transparent px-4 py-2 text-slate-500 hover:text-slate-600"
+              data-action="email-viewer#showHtml"
+              data-email-viewer-target="htmlTab"
+              data-key="development.emails.tab.html">
               HTML
             </button>
           </li>
         </ul>
-      <% else %>
-        Body
-      <% end %>
+      </div>
+      <div class="rounded-lg border border-slate-200 bg-slate-50 p-4" data-email-viewer-target="textPanel">
+        <pre class="mb-0 whitespace-pre-wrap overflow-auto text-sm text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
+      </div>
+      <div class="hidden rounded-lg border border-slate-200 bg-white" data-email-viewer-target="htmlPanel">
+        <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" class="h-[400px] w-full rounded-lg"></iframe>
+      </div>
     </div>
-    <div class="card-body">
-      <% if @email[:multipart] %>
-        <div class="tab-content">
-          <div class="tab-pane fade show active" id="text-content" role="tabpanel">
-            <pre class="mb-0"><%= h @email[:text_part] %></pre>
-          </div>
-          <div class="tab-pane fade" id="html-content" role="tabpanel">
-            <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" style="width: 100%; min-height: 400px; border: none;"></iframe>
-          </div>
-        </div>
-      <% else %>
-        <pre class="mb-0"><%= h @email[:body] %></pre>
-      <% end %>
+  <% else %>
+    <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.body"><%= h @email[:body] %></pre>
     </div>
-  </div>
+  <% end %>
 </div>
