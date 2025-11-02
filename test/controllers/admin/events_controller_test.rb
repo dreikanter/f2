@@ -74,6 +74,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="admin.events.table"]'
+    assert_select '[data-key="admin.events.timestamp"]', minimum: 1
     assert_select '[data-key="admin.events.level"]', text: "INFO", minimum: 1
     assert_select "[data-key=\"admin.events.pagination\"]"
     assert_select "tbody tr", count: 25
