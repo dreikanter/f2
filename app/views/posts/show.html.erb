@@ -1,18 +1,19 @@
 <% content_for :title, "Post #{@post.id}" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
-      <h1 class="ff-h1">Post <%= @post.id %></h1>
+  <%= render PageHeaderComponent.new(title: "Post #{@post.id}") do |header| %>
+    <% header.with_context_paragraph do %>
       <%= render BadgeComponent.new(
         text: @post.status.capitalize,
         color: post_status_badge_color(@post.status),
         key: "post.status_badge"
       ) %>
-    </div>
-    <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+    <% end %>
+    <% header.with_action_button do %>
       <%= link_to "Back to Posts", posts_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-      <% if policy(@post).destroy? %>
+    <% end %>
+    <% if policy(@post).destroy? %>
+      <% header.with_action_button do %>
         <%= button_to "Withdraw", post_path(@post),
                       method: :delete,
                       class: class_names("ff-button", "ff-button--compact", "bg-red-600 hover:bg-red-500"),
@@ -21,8 +22,8 @@
                       },
                       form: { class: "inline-block" } %>
       <% end %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <%= render PostDetailsComponent.new(post: @post) %>
 

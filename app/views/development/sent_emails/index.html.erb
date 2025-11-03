@@ -1,16 +1,17 @@
 <% content_for :title, "Sent Emails" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1" data-key="development.emails.heading">Sent Emails</h1>
+  <%= render PageHeaderComponent.new(title: "Sent Emails") do |header| %>
     <% if @emails.any? %>
-      <%= button_to "Purge All",
-                    purge_development_sent_emails_path,
-                    method: :delete,
-                    class: class_names("ff-button", "ff-button--secondary", "ff-button--compact", "text-red-600 hover:text-red-700"),
-                    data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
+      <% header.with_action_button do %>
+        <%= button_to "Purge All",
+                      purge_development_sent_emails_path,
+                      method: :delete,
+                      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact", "text-red-600 hover:text-red-700"),
+                      data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
+      <% end %>
     <% end %>
-  </div>
+  <% end %>
 
   <% if @emails.empty? %>
     <div class="ff-alert ff-alert--info" data-key="development.emails.empty">
