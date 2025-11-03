@@ -1,22 +1,21 @@
 <% content_for :title, "Access Tokens" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
-      <h1 class="ff-h1">Access Tokens</h1>
-      <p class="ff-text mt-4">Manage your FreeFeed API tokens used for reposting content.</p>
-      <% if @access_tokens.inactive.exists? %>
-        <p class="ff-text mt-4">
-          <strong class="font-semibold">Heads up:</strong>
-          Inactive tokens automatically disable associated feeds. Replace inactive tokens to re-enable your feeds.
-        </p>
+  <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
+    <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
+    <% if @access_tokens.inactive.exists? %>
+      <% header.with_context_paragraph do %>
+        <strong class="font-semibold">Heads up:</strong>
+        Inactive tokens automatically disable associated feeds. Replace inactive tokens to re-enable your feeds.
       <% end %>
-    </div>
-    <div class="flex flex-wrap gap-2">
+    <% end %>
+    <% header.with_action_button do %>
       <%= link_to "Back to Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <% end %>
+    <% header.with_action_button do %>
       <%= link_to "New Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <% if @access_tokens.any? %>
     <div class="ff-table-container">
