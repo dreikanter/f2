@@ -4,10 +4,8 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Feeds") do |header| %>
-    <% header.with_context do %>
-      <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
-        <p class="ff-text mt-1 sm:mt-0"><%= summary_line %></p>
-      <% end %>
+    <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
+      <% header.with_context_paragraph(summary_line) %>
     <% end %>
     <% header.with_actions do %>
       <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
