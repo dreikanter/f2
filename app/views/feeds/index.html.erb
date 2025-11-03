@@ -7,55 +7,55 @@
     <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
       <% header.with_context_paragraph(summary_line) %>
     <% end %>
-    <% header.with_actions do %>
-      <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-        <%# Sorting dropdown %>
-        <% if @feeds.any? %>
-          <div class="relative">
-            <button
-              id="<%= "#{sort_menu_id}-button" %>"
-              type="button"
-              data-dropdown-toggle="<%= sort_menu_id %>"
-              data-dropdown-placement="bottom-end"
-              class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
-              aria-haspopup="true"
-              aria-expanded="false">
-                <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
-                <span class="flex items-center gap-2">
-                  <span><%= @sortable_presenter.current_title %></span>
-                  <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
-                </span>
-                <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
-            </button>
-            <div
-              id="<%= sort_menu_id %>"
-              class="ff-dropdown-panel"
-              role="menu"
-              aria-labelledby="<%= "#{sort_menu_id}-button" %>">
-              <ul class="py-1 text-base text-slate-600">
-                <% @sortable_presenter.options.each do |option| %>
-                  <li>
-                    <%= link_to option.path,
-                                class: class_names(
-                                  "ff-dropdown-item",
-                                  "font-semibold text-slate-900": option.active?
-                                ) do %>
-                      <span><%= option.title %></span>
-                      <% if option.icon_name.present? %>
-                        <span class="flex items-center text-slate-500">
-                          <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
-                          <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
-                        </span>
-                      <% end %>
+    <%# Sorting dropdown %>
+    <% if @feeds.any? %>
+      <% header.with_action_button do %>
+        <div class="relative">
+          <button
+            id="<%= "#{sort_menu_id}-button" %>"
+            type="button"
+            data-dropdown-toggle="<%= sort_menu_id %>"
+            data-dropdown-placement="bottom-end"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+            aria-haspopup="true"
+            aria-expanded="false">
+              <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+              <span class="flex items-center gap-2">
+                <span><%= @sortable_presenter.current_title %></span>
+                <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+              </span>
+              <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+          </button>
+          <div
+            id="<%= sort_menu_id %>"
+            class="ff-dropdown-panel"
+            role="menu"
+            aria-labelledby="<%= "#{sort_menu_id}-button" %>">
+            <ul class="py-1 text-base text-slate-600">
+              <% @sortable_presenter.options.each do |option| %>
+                <li>
+                  <%= link_to option.path,
+                              class: class_names(
+                                "ff-dropdown-item",
+                                "font-semibold text-slate-900": option.active?
+                              ) do %>
+                    <span><%= option.title %></span>
+                    <% if option.icon_name.present? %>
+                      <span class="flex items-center text-slate-500">
+                        <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                        <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+                      </span>
                     <% end %>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
           </div>
-        <% end %>
-        <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
-      </div>
+        </div>
+      <% end %>
+    <% end %>
+    <% header.with_action_button do %>
+      <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
     <% end %>
   <% end %>
 
