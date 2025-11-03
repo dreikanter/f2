@@ -1,21 +1,12 @@
 <% content_for :title, @feed.name %>
 
 <div class="space-y-10">
-  <header class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-    <div class="space-y-2">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex shrink-0 text-slate-500">
-          <%= feed_status_icon(@feed) %>
-        </span>
-        <h1 id="feed-title" class="ff-h1 mb-0 text-slate-900"><%= @feed.name %></h1>
-      </div>
-      <% if (status_summary = feed_status_summary(@feed)).present? %>
-        <p class="ff-text text-slate-600"><%= status_summary %></p>
-      <% end %>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3">
-      <% if @feed.enabled? %>
+  <%= render PageHeaderComponent.new(title: @feed.name) do |header| %>
+    <% if (status_summary = feed_status_summary(@feed)).present? %>
+      <% header.with_context_paragraph(status_summary) %>
+    <% end %>
+    <% if @feed.enabled? %>
+      <% header.with_action_button do %>
         <%= button_to "Disable",
                       feed_status_path(@feed),
                       method: :patch,
@@ -23,30 +14,37 @@
                       data: { turbo_confirm: "Disable this feed?" },
                       class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
                       form: { class: "inline-block" } %>
-      <% elsif @feed.can_be_enabled? %>
+      <% end %>
+    <% elsif @feed.can_be_enabled? %>
+      <% header.with_action_button do %>
         <%= button_to "Enable",
                       feed_status_path(@feed),
                       method: :patch,
                       params: { status: "enabled" },
                       class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
                       form: { class: "inline-block" } %>
-      <% else %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
         <span class="ff-button ff-button--secondary ff-button--compact cursor-not-allowed opacity-60" title="Complete setup to enable this feed">Enable</span>
       <% end %>
-
-      <% if @feed.can_be_previewed? %>
+    <% end %>
+    <% if @feed.can_be_previewed? %>
+      <% header.with_action_button do %>
         <%= button_to "Preview",
                       feed_previews_path,
                       params: { url: @feed.url, feed_profile_key: @feed.feed_profile_key },
                       method: :post,
                       class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
                       data: { turbo: false },
-                      form: { class: "inline-block" } %>
-      <% else %>
+                          form: { class: "inline-block" } %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
         <span class="ff-button ff-button--secondary ff-button--compact cursor-not-allowed opacity-60" title="Preview requires feed URL and profile">Preview</span>
       <% end %>
-    </div>
-  </header>
+    <% end %>
+  <% end %>
 
   <section class="space-y-4">
     <h2 class="ff-h2">Stats</h2>
