@@ -1,6 +1,4 @@
 class InvitesController < ApplicationController
-  layout "tailwind"
-
   def index
     authorize Invite
     @invites = ordered_invites

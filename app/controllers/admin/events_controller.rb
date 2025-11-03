@@ -1,6 +1,4 @@
 class Admin::EventsController < ApplicationController
-  layout "tailwind"
-
   include Pagination
 
   def index

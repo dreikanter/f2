@@ -1,6 +1,4 @@
 class Admin::PasswordResetsController < ApplicationController
-  layout "tailwind"
-
   def show
     @user = load_user
     authorize @user, :update?

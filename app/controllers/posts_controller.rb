@@ -2,8 +2,6 @@ class PostsController < ApplicationController
   include Pagination
   include Sortable
 
-  layout "tailwind"
-
   SORTABLE_FIELDS = {
     published: {
       title: "Published",

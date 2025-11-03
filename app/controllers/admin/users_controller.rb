@@ -1,6 +1,4 @@
 class Admin::UsersController < ApplicationController
-  layout "tailwind"
-
   include Pagination
   include Sortable
 
