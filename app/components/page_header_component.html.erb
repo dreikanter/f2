@@ -7,7 +7,11 @@
       <% end %>
     <% end %>
   </div>
-  <% if actions? %>
-    <%= actions %>
+  <% if action_buttons? %>
+    <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+      <% action_buttons.each do |button| %>
+        <%= button %>
+      <% end %>
+    </div>
   <% end %>
 </header>
