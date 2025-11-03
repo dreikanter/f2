@@ -1,8 +1,10 @@
 <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
   <div>
     <h1 class="ff-h1"><%= @title %></h1>
-    <% if context? %>
-      <%= context %>
+    <% if context_paragraphs? %>
+      <% context_paragraphs.each do |paragraph| %>
+        <p class="ff-text mt-1 sm:mt-0"><%= paragraph %></p>
+      <% end %>
     <% end %>
   </div>
   <% if actions? %>

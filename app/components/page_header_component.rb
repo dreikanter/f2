@@ -1,5 +1,7 @@
 class PageHeaderComponent < ViewComponent::Base
-  renders_one :context
+  renders_many :context_paragraphs, ->(content = nil, &block) do
+    content || block.call
+  end
   renders_one :actions
 
   def initialize(title:)
