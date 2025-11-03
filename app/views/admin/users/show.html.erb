@@ -1,6 +1,7 @@
 <% content_for :title, @user.email_address %>
 
 <%
+  # TBD: Extract higher-level components
   user_info = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Email",

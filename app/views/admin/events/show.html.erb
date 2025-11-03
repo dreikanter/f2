@@ -1,24 +1,29 @@
 <% content_for :title, "Event ##{@event.id}" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1">Event #<%= @event.id %></h1>
-    <div class="flex gap-2">
-      <% if @previous_event %>
+  <%= render PageHeaderComponent.new(title: "Event ##{@event.id}") do |header| %>
+    <% if @previous_event %>
+      <% header.with_action_button do %>
         <%= link_to "← Previous", admin_event_path(@previous_event), class: "ff-button ff-button--secondary ff-button--compact" %>
-      <% else %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
         <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">← Previous</span>
       <% end %>
-
-      <% if @next_event %>
+    <% end %>
+    <% if @next_event %>
+      <% header.with_action_button do %>
         <%= link_to "Next →", admin_event_path(@next_event), class: "ff-button ff-button--secondary ff-button--compact" %>
-      <% else %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
         <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">Next →</span>
       <% end %>
-
+    <% end %>
+    <% header.with_action_button do %>
       <%= link_to "Back to Events", admin_events_path, class: "ff-button ff-button--secondary ff-button--compact" %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <% if @event.message.present? %>
     <%

@@ -3,16 +3,13 @@
 <% sort_menu_id = "feed-sort-menu" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div>
-      <h1 class="ff-h1">Feeds</h1>
-      <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
-        <p class="ff-text mt-1 sm:mt-0"><%= summary_line %></p>
-      <% end %>
-    </div>
-    <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-      <%# Sorting dropdown %>
-      <% if @feeds.any? %>
+  <%= render PageHeaderComponent.new(title: "Feeds") do |header| %>
+    <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
+      <% header.with_context_paragraph(summary_line) %>
+    <% end %>
+    <%# Sorting dropdown %>
+    <% if @feeds.any? %>
+      <% header.with_action_button do %>
         <div class="relative">
           <button
             id="<%= "#{sort_menu_id}-button" %>"
@@ -56,9 +53,11 @@
           </div>
         </div>
       <% end %>
+    <% end %>
+    <% header.with_action_button do %>
       <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 
   <% if @feeds.any? %>
     <%= render FeedsListComponent.new(feeds: @feeds) %>

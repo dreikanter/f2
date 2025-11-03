@@ -1,10 +1,11 @@
 <% content_for :title, "Reset Password" %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1">Reset Password for <%= @user.email_address %></h1>
-    <%= link_to "Back to User", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-  </div>
+  <%= render PageHeaderComponent.new(title: "Reset Password for #{@user.email_address}") do |header| %>
+    <% header.with_action_button do %>
+      <%= link_to "Back to User", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <% end %>
+  <% end %>
 
   <div class="ff-alert ff-alert--info">
     <strong>How this works:</strong> This will send a password reset email to the user's current email address.

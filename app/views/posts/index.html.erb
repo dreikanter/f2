@@ -3,60 +3,58 @@
 <% base_pagination_params = params.permit(:feed_id, :sort, :direction).to_unsafe_h.symbolize_keys %>
 
 <div class="space-y-8">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div class="space-y-1">
-      <h1 class="ff-h1"><%= page_title %></h1>
-      <% if @feed %>
-        <p class="ff-text text-sm text-slate-600">Posts imported from this feed.</p>
-      <% end %>
-    </div>
-
-    <% if @posts.any? %>
-      <div class="relative">
-        <% sort_menu_id = "posts-sort-menu" %>
-        <button
-          id="<%= "#{sort_menu_id}-button" %>"
-          type="button"
-          data-dropdown-toggle="<%= sort_menu_id %>"
-          data-dropdown-placement="bottom-end"
-          class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
-          aria-haspopup="true"
-          aria-expanded="false">
-          <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
-          <span class="flex items-center gap-2">
-            <span><%= @sortable_presenter.current_title %></span>
-            <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
-          </span>
-          <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
-        </button>
-        <div
-          id="<%= sort_menu_id %>"
-          class="ff-dropdown-panel"
-          role="menu"
-          aria-labelledby="<%= "#{sort_menu_id}-button" %>">
-          <ul class="py-1 text-base text-slate-600">
-            <% @sortable_presenter.options.each do |option| %>
-              <li>
-                <%= link_to option.path,
-                            class: class_names(
-                              "ff-dropdown-item",
-                              "font-semibold text-slate-900": option.active?
-                            ) do %>
-                  <span><%= option.title %></span>
-                  <% if option.icon_name.present? %>
-                    <span class="flex items-center text-slate-500">
-                      <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
-                      <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
-                    </span>
-                  <% end %>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-      </div>
+  <%= render PageHeaderComponent.new(title: page_title) do |header| %>
+    <% if @feed %>
+      <% header.with_context_paragraph("Posts imported from this feed.") %>
     <% end %>
-  </div>
+    <% if @posts.any? %>
+      <% header.with_action_button do %>
+        <div class="relative">
+          <% sort_menu_id = "posts-sort-menu" %>
+          <button
+            id="<%= "#{sort_menu_id}-button" %>"
+            type="button"
+            data-dropdown-toggle="<%= sort_menu_id %>"
+            data-dropdown-placement="bottom-end"
+            class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
+            aria-haspopup="true"
+            aria-expanded="false">
+            <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+            <span class="flex items-center gap-2">
+              <span><%= @sortable_presenter.current_title %></span>
+              <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
+            </span>
+            <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+          </button>
+          <div
+            id="<%= sort_menu_id %>"
+            class="ff-dropdown-panel"
+            role="menu"
+            aria-labelledby="<%= "#{sort_menu_id}-button" %>">
+            <ul class="py-1 text-base text-slate-600">
+              <% @sortable_presenter.options.each do |option| %>
+                <li>
+                  <%= link_to option.path,
+                              class: class_names(
+                                "ff-dropdown-item",
+                                "font-semibold text-slate-900": option.active?
+                              ) do %>
+                    <span><%= option.title %></span>
+                    <% if option.icon_name.present? %>
+                      <span class="flex items-center text-slate-500">
+                        <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                        <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+                      </span>
+                    <% end %>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <%= render PostsListComponent.new(
              posts: @posts,
