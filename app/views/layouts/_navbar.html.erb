@@ -43,7 +43,7 @@
 
     <div class="hidden w-full md:block md:w-auto md:order-1" id="primary-navigation">
       <%# Desktop: horizontal nav links %>
-      <ul class="mt-4 flex flex-col gap-3 font-medium text-slate-600 md:mt-0 md:flex-row md:items-center md:space-x-4 md:gap-0">
+      <ul class="hidden font-medium text-slate-600 md:flex md:flex-row md:items-center md:space-x-4">
         <% navbar_items.each_with_index do |item, index| %>
           <%
             # Desktop classes
@@ -65,7 +65,7 @@
               }
             )
           %>
-          <li class="<%= 'md:contents' if index == 0 %>">
+          <li>
             <%= link_to item[:name], item[:path],
                 class: class_names(desktop_link_classes, "md:block hidden"),
                 aria: (item[:active] ? { current: "page" } : nil) %>

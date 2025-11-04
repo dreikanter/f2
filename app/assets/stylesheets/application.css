@@ -24,11 +24,11 @@
   }
 
   .ff-alert {
-    @apply rounded-lg border px-4 py-3 text-cyan-800;
+    @apply rounded-lg border px-4 py-3 text-sky-800;
   }
 
   .ff-alert--info {
-    @apply border-cyan-100 bg-cyan-100;
+    @apply border-sky-100 bg-sky-100;
   }
 
   .ff-alert--error {
@@ -48,7 +48,7 @@
   }
 
   .ff-form-input {
-    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg shadow-xs ring-cyan-500 transition focus:border-cyan-500 focus:outline-none focus:ring-2;
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2;
   }
 
   .ff-form-help {
@@ -56,15 +56,15 @@
   }
 
   .ff-link {
-    @apply font-medium text-cyan-600 underline underline-offset-4 transition hover:text-cyan-500;
+    @apply font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500;
   }
 
   .ff-button {
-    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1;
   }
 
   .ff-button--secondary {
-    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1;
   }
 
   .ff-button--danger {
@@ -88,7 +88,7 @@
   }
 
   .ff-focus-ring {
-    @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+    @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
 
   .ff-nav-brand {
@@ -96,11 +96,11 @@
   }
 
   .ff-nav-link {
-    @apply inline-flex items-center rounded-sm px-3 py-2 transition hover:bg-slate-100 md:px-2 md:py-1 md:hover:bg-transparent md:hover:text-slate-900;
+    @apply inline-flex items-center rounded-sm px-3 py-2 transition md:px-2 md:py-1;
   }
 
   .ff-nav-link--active {
-    @apply bg-slate-900 text-white md:bg-transparent md:text-slate-900 md:font-semibold;
+    @apply bg-slate-900 text-white md:bg-slate-100 md:text-slate-600 md:ring-2 md:ring-slate-600;
   }
 
   .ff-dropdown-panel {
