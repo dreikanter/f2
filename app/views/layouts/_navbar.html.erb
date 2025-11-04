@@ -2,34 +2,135 @@
   <div class="flex flex-wrap items-center justify-between mx-auto px-4 py-4">
     <%= link_to "F2", root_path, class: class_names("ff-nav-brand", "ff-focus-ring") %>
 
-    <button data-collapse-toggle="primary-navigation" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-sm text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 md:hidden" aria-controls="primary-navigation" aria-expanded="false">
-      <span class="sr-only">Toggle navigation</span>
-      <svg class="h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15" />
-      </svg>
-    </button>
+    <div class="flex items-center gap-3 md:order-2">
+      <%# User menu button (desktop) %>
+      <button type="button" class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-white text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-slate-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom-end">
+        <span class="sr-only">Open user menu</span>
+        <%= Current.user.email_address[0].upcase %>
+      </button>
 
-    <div class="hidden w-full md:block md:w-auto" id="primary-navigation">
-      <ul class="mt-4 flex flex-col gap-1 rounded-lg border border-slate-200 bg-white p-4 font-medium text-slate-600 md:mt-0 md:flex-row md:items-center md:space-x-4 md:border-0 md:bg-transparent md:p-0">
-        <% navbar_items.each do |item| %>
-          <% link_classes = class_names(
-            "ff-nav-link",
-            { "ff-nav-link--active" => item[:active] },
-            "ff-focus-ring"
-          ) %>
+      <%# User dropdown menu (desktop) %>
+      <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-slate-100 rounded-lg shadow-sm border border-slate-200" id="user-dropdown">
+        <div class="px-4 py-3">
+          <span class="block text-sm text-slate-900 font-medium"><%= Current.user.email_address %></span>
+        </div>
+        <ul class="py-2" aria-labelledby="user-menu-button">
           <li>
-            <%= link_to item[:name], item[:path], class: link_classes, aria: (item[:active] ? { current: "page" } : nil) %>
+            <%= link_to "Settings", settings_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
+          </li>
+          <li>
+            <%= link_to "Tokens", settings_access_tokens_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
+          </li>
+          <li>
+            <%= link_to "Invites", invites_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
+          </li>
+        </ul>
+        <ul class="py-2">
+          <li>
+            <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
+          </li>
+        </ul>
+      </div>
+
+      <%# Mobile menu toggle %>
+      <button data-collapse-toggle="primary-navigation" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-sm text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 md:hidden" aria-controls="primary-navigation" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <svg class="h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="hidden w-full md:block md:w-auto md:order-1" id="primary-navigation">
+      <%# Desktop: horizontal nav links %>
+      <ul class="mt-4 flex flex-col gap-3 font-medium text-slate-600 md:mt-0 md:flex-row md:items-center md:space-x-4 md:gap-0">
+        <% navbar_items.each_with_index do |item, index| %>
+          <%
+            # Desktop classes
+            desktop_link_classes = class_names(
+              "ff-nav-link",
+              { "ff-nav-link--active" => item[:active] },
+              "ff-focus-ring"
+            )
+
+            # Mobile list group classes
+            mobile_link_classes = class_names(
+              "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900",
+              {
+                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => item[:active],
+                "text-slate-700" => !item[:active],
+                "rounded-t-lg" => index == 0,
+                "rounded-b-lg" => index == navbar_items.length - 1,
+                "border-b border-slate-200" => index < navbar_items.length - 1
+              }
+            )
+          %>
+          <li class="<%= 'md:contents' if index == 0 %>">
+            <%= link_to item[:name], item[:path],
+                class: class_names(desktop_link_classes, "md:block hidden"),
+                aria: (item[:active] ? { current: "page" } : nil) %>
           </li>
         <% end %>
-        <% settings_link_classes = class_names(
-          "ff-nav-link",
-          { "ff-nav-link--active" => current_page?(settings_path) },
-          "ff-focus-ring"
-        ) %>
-        <li class="md:ml-auto">
-          <%= link_to "Settings", settings_path, class: settings_link_classes, aria: (current_page?(settings_path) ? { current: "page" } : nil) %>
-        </li>
       </ul>
+
+      <%# Mobile: List group 1 - Main nav items %>
+      <div class="mt-4 rounded-lg border border-slate-200 bg-white md:hidden">
+        <% navbar_items.each_with_index do |item, index| %>
+          <%
+            mobile_link_classes = class_names(
+              "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900",
+              {
+                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => item[:active],
+                "text-slate-700" => !item[:active],
+                "rounded-t-lg" => index == 0,
+                "rounded-b-lg" => index == navbar_items.length - 1,
+                "border-b border-slate-200" => index < navbar_items.length - 1
+              }
+            )
+          %>
+          <%= link_to item[:name], item[:path],
+              class: mobile_link_classes,
+              aria: (item[:active] ? { current: "page" } : nil) %>
+        <% end %>
+      </div>
+
+      <%# Mobile: List group 2 - User menu items %>
+      <div class="mt-3 rounded-lg border border-slate-200 bg-white md:hidden">
+        <%= link_to "Settings", settings_path,
+            class: class_names(
+              "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 rounded-t-lg border-b border-slate-200",
+              {
+                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(settings_path),
+                "text-slate-700" => !current_page?(settings_path)
+              }
+            ),
+            aria: (current_page?(settings_path) ? { current: "page" } : nil) %>
+        <%= link_to "Tokens", settings_access_tokens_path,
+            class: class_names(
+              "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 border-b border-slate-200",
+              {
+                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(settings_access_tokens_path),
+                "text-slate-700" => !current_page?(settings_access_tokens_path)
+              }
+            ),
+            aria: (current_page?(settings_access_tokens_path) ? { current: "page" } : nil) %>
+        <%= link_to "Invites", invites_path,
+            class: class_names(
+              "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 rounded-b-lg",
+              {
+                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(invites_path),
+                "text-slate-700" => !current_page?(invites_path)
+              }
+            ),
+            aria: (current_page?(invites_path) ? { current: "page" } : nil) %>
+      </div>
+
+      <%# Mobile: List group 3 - Sign Out %>
+      <div class="mt-3 rounded-lg border border-slate-200 bg-white md:hidden">
+        <%= link_to "Sign Out", session_path,
+            data: { turbo_method: :delete },
+            class: "block w-full px-4 py-2 text-slate-700 rounded-lg cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900" %>
+      </div>
     </div>
   </div>
 </nav>
