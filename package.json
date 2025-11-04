@@ -8,7 +8,7 @@
     "flowbite": "^3.1.2"
   },
   "scripts": {
-    "build:css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.tailwind.css -c ./tailwind.config.mjs",
+    "build:css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css -c ./tailwind.config.mjs",
     "watch:css": "nodemon --watch ./app/assets/stylesheets/ --watch ./app/javascript/ --watch ./app/views/ --watch ./app/helpers/ --watch ./app/components/ --watch ./tailwind.config.mjs --ext css,scss,js,ts,tsx,jsx,erb,rb --exec \"bun run build:css\""
   },
   "browserslist": [
