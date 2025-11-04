@@ -125,6 +125,63 @@ When listing the changes, start from the most important. Generalize. Skip boring
 - Use `mise exec --` to run Ruby/Bundler commands.
 - The Ruby environment already has required gems installed, so avoid installing or updating gems during tasks.
 
+## Cloud Environment Setup (Claude Code Web Only)
+
+**Note:** This section is specific to Claude Code running in the cloud environment. Local development does not require these steps.
+
+When starting a new Claude Code cloud session, the environment needs to be initialized before running tests. Ruby 3.3.6 is pre-installed, but PostgreSQL and gems need setup.
+
+### One-time setup per session:
+
+```bash
+# 1. Install gem dependencies
+bundle install
+
+# 2. Configure and start PostgreSQL
+# Disable SSL (cloud environment doesn't need it)
+echo "ssl = off" >> /etc/postgresql/16/main/postgresql.conf
+
+# Allow local connections without password
+sed -i 's/local   all             all                                     peer/local   all             all                                     trust/' /etc/postgresql/16/main/pg_hba.conf
+
+# Fix ownership
+chown -R postgres:postgres /etc/postgresql/16/main /var/lib/postgresql/16/main /var/run/postgresql
+
+# Start PostgreSQL
+su - postgres -c "/usr/lib/postgresql/16/bin/pg_ctl start -D /var/lib/postgresql/16/main -l /tmp/postgres.log -o '-c config_file=/etc/postgresql/16/main/postgresql.conf'"
+
+# Wait for PostgreSQL to start
+sleep 2
+
+# Create root database user
+su - postgres -c "createuser -s root"
+
+# 3. Create and setup test database
+bin/rails db:setup RAILS_ENV=test
+```
+
+### Verify setup:
+
+```bash
+# Check PostgreSQL is running
+pg_isready
+# Expected: /var/run/postgresql:5432 - accepting connections
+
+# Check Ruby and Bundler
+ruby --version && bundle --version
+# Expected: ruby 3.3.6 and Bundler 2.7.2
+
+# Run tests
+bin/rails test
+```
+
+### Known issues:
+
+- PostgreSQL may need SSL disabled due to certificate permissions in the cloud environment
+- Running tests will update `yarn.lock` - commit these changes if they occur
+- RuboCop will error on `.js` files - only check `.rb` files: `bin/rubocop -f github app/**/*.rb`
+- Two pre-existing test failures in `WorkflowTest` (hash syntax display differences in Ruby 3.3) - these are not related to your changes
+
 ## Testing
 
 - Keep tests and code together.
