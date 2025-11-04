@@ -17,26 +17,6 @@ class Feeds::PurgesControllerTest < ActionDispatch::IntegrationTest
     @access_token ||= create(:access_token, :active, user: user)
   end
 
-  test "show requires authentication" do
-    get feed_purge_path(feed)
-    assert_redirected_to new_session_path
-  end
-
-  test "show requires ownership" do
-    sign_in_as(other_user)
-    get feed_purge_path(feed)
-    assert_response :not_found
-  end
-
-  test "show displays confirmation page" do
-    sign_in_as(user)
-    feed.update!(access_token: access_token)
-
-    get feed_purge_path(feed)
-
-    assert_response :success
-  end
-
   test "create requires authentication" do
     post feed_purge_path(feed)
     assert_redirected_to new_session_path

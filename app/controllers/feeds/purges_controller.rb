@@ -1,9 +1,4 @@
 class Feeds::PurgesController < ApplicationController
-  def show
-    @feed = Current.user.feeds.find(params[:feed_id])
-    authorize @feed, :purge?
-  end
-
   def create
     feed = Current.user.feeds.find(params[:feed_id])
     authorize feed, :purge?
