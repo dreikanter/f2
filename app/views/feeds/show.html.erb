@@ -70,27 +70,31 @@
           <p><%= link_to "Purge feed content...", "#", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
           <p class="ff-text text-slate-600">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>.</p>
         </div>
-        <%= render ConfirmationModalComponent.new(
-          title: "Confirm Purge",
-          explanation: "Every published post in #{@feed.target_group} will be withdrawn on FreeFeed. They'll remain visible in Feeder but can't be restored publicly.",
-          confirm_text: "Purge all posts",
-          confirm_url: feed_purge_path(@feed),
-          method: :post,
-          modal_id: "purge-modal-#{@feed.id}"
-        ) %>
       <% end %>
       <div class="space-y-1">
         <p><%= link_to "Delete feed...", "#", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
         <p class="ff-text text-slate-600">Disable and permanently remove the feed configuration from Feeder.</p>
       </div>
-      <%= render ConfirmationModalComponent.new(
-        title: "Delete Feed",
-        explanation: "This feed will be permanently removed from Feeder. All configuration and history will be lost.",
-        confirm_text: "Delete feed",
-        confirm_url: feed_path(@feed),
-        method: :delete,
-        modal_id: "delete-feed-modal-#{@feed.id}"
-      ) %>
     </div>
   </section>
 </div>
+
+<% if @feed.target_group.present? %>
+  <%= render ConfirmationModalComponent.new(
+    title: "Confirm Purge",
+    explanation: "Every published post in #{@feed.target_group} will be withdrawn on FreeFeed. They'll remain visible in Feeder but can't be restored publicly.",
+    confirm_text: "Purge all posts",
+    confirm_url: feed_purge_path(@feed),
+    method: :post,
+    modal_id: "purge-modal-#{@feed.id}"
+  ) %>
+<% end %>
+
+<%= render ConfirmationModalComponent.new(
+  title: "Delete Feed",
+  explanation: "This feed will be permanently removed from Feeder. All configuration and history will be lost.",
+  confirm_text: "Delete feed",
+  confirm_url: feed_path(@feed),
+  method: :delete,
+  modal_id: "delete-feed-modal-#{@feed.id}"
+) %>

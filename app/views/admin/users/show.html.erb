@@ -290,7 +290,7 @@
       </div>
       <%= render ConfirmationModalComponent.new(
         title: "Suspend User",
-        explanation: "All active sessions for #{@user.email_address} will be terminated, all feeds will be disabled, and the user will be unable to sign in.",
+        explanation: "All active sessions for #{@user.email_address} will be terminated, all feeds will be disabled, and the user will be unable to sign in. You can unsuspend this user later to restore access.",
         confirm_text: "Suspend user",
         confirm_url: admin_user_suspension_path(@user),
         method: :post,
