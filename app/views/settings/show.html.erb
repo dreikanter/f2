@@ -4,7 +4,7 @@
   account_list = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Email",
-      value: tag.span(class: "flex items-center gap-2") {
+      value: tag.span(class: "flex items-center gap-4") {
         safe_join([
           @user.email_address,
           link_to("Change", edit_settings_email_update_path, class: "ff-link text-sm")
@@ -15,7 +15,7 @@
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Password",
-      value: tag.span(class: "flex items-center gap-2") {
+      value: tag.span(class: "flex items-center gap-4") {
         safe_join([
           "Last updated #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
           link_to("Change", edit_settings_password_update_path, class: "ff-link text-sm")
