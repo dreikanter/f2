@@ -35,11 +35,7 @@
 %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Settings") do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Sign Out", session_path, data: { turbo_method: :delete }, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: "Settings") %>
 
   <section class="space-y-4">
     <h2 class="ff-h2">Your Account</h2>
