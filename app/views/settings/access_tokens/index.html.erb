@@ -66,7 +66,7 @@
                   <%= link_to "Delete",
                               "#",
                               class: class_names("ff-link", "text-red-600", "hover:text-red-500"),
-                              data: { action: "click->confirmation-modal#show" } %>
+                              data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal-#{access_token.id}", action: "click->modal-trigger#open" } %>
                 </div>
               </td>
             </tr>

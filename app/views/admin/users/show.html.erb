@@ -269,7 +269,7 @@
             </time>.
             Restores ability to sign in and access feeds.
           </p>
-          <%= link_to "Unsuspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { action: "click->confirmation-modal#show" } %>
+          <%= link_to "Unsuspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
         </div>
       </div>
       <%= render ConfirmationModalComponent.new(
@@ -285,7 +285,7 @@
         <div class="ff-card__body">
           <h3 class="ff-h3">Suspend User Account</h3>
           <p class="ff-text mb-4">Terminates all active sessions, disables all feeds, and prevents sign in.</p>
-          <%= link_to "Suspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-300 bg-white px-4 py-2 text-base font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1", data: { action: "click->confirmation-modal#show" } %>
+          <%= link_to "Suspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-300 bg-white px-4 py-2 text-base font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
         </div>
       </div>
       <%= render ConfirmationModalComponent.new(
