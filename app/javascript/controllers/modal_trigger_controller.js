@@ -9,13 +9,9 @@ export default class extends Controller {
     event.preventDefault()
     const modal = document.getElementById(this.modalIdValue)
     if (modal) {
-      // Show the modal
-      modal.classList.remove('hidden')
-      modal.classList.add('flex')
-      modal.setAttribute('aria-hidden', 'false')
-      document.body.style.overflow = 'hidden'
-      // Move focus to modal for keyboard/screen reader accessibility
-      modal.focus()
+      // Dispatch custom event to trigger the modal's show method
+      // This allows the modal controller to handle all focus management
+      modal.dispatchEvent(new CustomEvent('modal:show', { bubbles: false }))
     }
   }
 }

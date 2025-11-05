@@ -16,29 +16,38 @@ export default class extends Controller {
     // Store reference to previously focused element when modal opens
     this.previouslyFocusedElement = null
 
-    // Observe when modal becomes visible to save focus
-    this.observer = new MutationObserver(() => {
-      if (!this.element.classList.contains('hidden')) {
-        this.previouslyFocusedElement = document.activeElement
-      }
-    })
-    this.observer.observe(this.element, { attributes: true, attributeFilter: ['class'] })
+    // Listen for custom show event from trigger
+    this.element.addEventListener('modal:show', this.show.bind(this))
   }
 
   disconnect() {
     document.removeEventListener('keydown', this.escapeHandler)
     document.removeEventListener('keydown', this.focusTrapHandler)
-    if (this.observer) {
-      this.observer.disconnect()
-    }
   }
 
   show(event) {
-    event.preventDefault()
+    if (event) {
+      event.preventDefault()
+    }
+
+    // Save the currently focused element before showing modal
+    this.previouslyFocusedElement = document.activeElement
+
+    // Show the modal
     this.element.classList.remove('hidden')
     this.element.classList.add('flex')
     this.element.setAttribute('aria-hidden', 'false')
     document.body.style.overflow = 'hidden'
+
+    // Focus the modal container or its first focusable element
+    const firstFocusable = this.element.querySelector(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    if (firstFocusable) {
+      firstFocusable.focus()
+    } else {
+      this.element.focus()
+    }
   }
 
   close(event) {
