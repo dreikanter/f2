@@ -5,8 +5,11 @@ module PostHelper
     # Trim leading and trailing whitespace
     trimmed = content.strip
 
+    # Normalize CRLF to LF (browsers submit \r\n, but we split on \n)
+    normalized = trimmed.gsub(/\r\n/, "\n")
+
     # Split by 2+ line breaks to create paragraphs
-    paragraphs = trimmed.split(/\n{2,}/)
+    paragraphs = normalized.split(/\n{2,}/)
 
     # Process each paragraph
     formatted_paragraphs = paragraphs.map do |para|
