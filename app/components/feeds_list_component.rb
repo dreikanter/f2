@@ -22,9 +22,17 @@ class FeedsListComponent < ViewComponent::Base
 
   def metadata_segments_for(feed)
     [
-      "Target: #{feed.target_group.presence || 'None'}",
-      safe_join(["Last refresh:", feed.last_refreshed_at ? helpers.short_time_ago_tag(feed.last_refreshed_at) : "Never"], " "),
-      safe_join(["Recent post:", feed.most_recent_post_date ? helpers.short_time_ago_tag(feed.most_recent_post_date) : "None"], " ")
+      target_segment(feed),
+      safe_join(["Refreshed:", feed.last_refreshed_at ? content_tag(:span, "#{helpers.short_time_ago(feed.last_refreshed_at)} ago", title: helpers.long_time_format(feed.last_refreshed_at)) : "Never"], " "),
+      safe_join(["Publication:", feed.most_recent_post_date ? content_tag(:span, "#{helpers.short_time_ago(feed.most_recent_post_date)} ago", title: helpers.long_time_format(feed.most_recent_post_date)) : "None"], " ")
     ]
+  end
+
+  def target_segment(feed)
+    target = feed.target_group.presence || "None"
+    return "Target: #{target}" if target == "None" || !feed.access_token
+
+    url = "#{feed.access_token.host}/#{feed.target_group}"
+    safe_join(["Target:", helpers.link_to(target, url, target: "_blank", rel: "noopener", class: "ff-link")], " ")
   end
 end
