@@ -7,6 +7,9 @@
     <% if @feed %>
       <% header.with_context_paragraph("Posts imported from this feed.") %>
     <% end %>
+    <% if pagination_total_count > 0 %>
+      <% header.with_context_paragraph("Showing #{@posts.size} of #{pagination_total_count} posts") %>
+    <% end %>
     <% if @posts.any? %>
       <% header.with_action_button do %>
         <div class="relative">

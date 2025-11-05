@@ -7,6 +7,9 @@
     <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
       <% header.with_context_paragraph(summary_line) %>
     <% end %>
+    <% if pagination_total_count > 0 %>
+      <% header.with_context_paragraph("Showing #{@feeds.size} of #{pagination_total_count} feeds") %>
+    <% end %>
     <%# Sorting dropdown %>
     <% if @feeds.any? %>
       <% header.with_action_button do %>
