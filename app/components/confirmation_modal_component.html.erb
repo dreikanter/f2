@@ -32,8 +32,8 @@
       </div>
       <!-- Modal footer -->
       <div class="flex items-center p-4 md:p-5 gap-3">
-        <%= button_to @confirm_text,
-                      @confirm_url,
+        <%= button_to @action,
+                      @url,
                       method: @method,
                       class: "ff-button ff-button--danger ff-button--compact",
                       data: { action: "confirmation-modal#confirm" } %>
