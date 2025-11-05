@@ -24,6 +24,7 @@ Rails.application.routes.draw do
   end
 
   resources :posts, only: [:index, :show, :destroy]
+  resources :feed_entries, only: :show
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
 
