@@ -136,4 +136,76 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "1", css_select('[data-key="stats.total_feeds.value"]').first.text.strip
     assert_select "h1", "Status"
   end
+
+  test "#show should display recent user events" do
+    sign_in_as user
+    create(:feed, user: user)
+    event1 = Event.create!(type: "feed_refresh", level: :info, message: "Feed refresh completed", user: user)
+    event2 = Event.create!(type: "PostWithdrawn", level: :info, message: "Post withdrawn", user: user)
+
+    get status_path
+    assert_response :success
+    assert_select "h2", "Recent Activity"
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % event1.id).first
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % event2.id).first
+  end
+
+  test "#show should hide recent events section when no events" do
+    sign_in_as user
+    create(:feed, user: user)
+
+    get status_path
+    assert_response :success
+    assert_select "h2", { text: "Recent Activity", count: 0 }
+  end
+
+  test "#show should only display user's own events" do
+    other_user = create(:user)
+    sign_in_as user
+    create(:feed, user: user)
+    user_event = Event.create!(type: "feed_refresh", level: :info, message: "User's event", user: user)
+    other_event = Event.create!(type: "feed_refresh", level: :info, message: "Other's event", user: other_user)
+
+    get status_path
+    assert_response :success
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % user_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % other_event.id).empty?
+  end
+
+  test "#show should exclude debug level events" do
+    sign_in_as user
+    create(:feed, user: user)
+    info_event = Event.create!(type: "info_event", level: :info, message: "Info event", user: user)
+    debug_event = Event.create!(type: "debug_event", level: :debug, message: "Debug event", user: user)
+
+    get status_path
+    assert_response :success
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % info_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % debug_event.id).empty?
+  end
+
+  test "#show should exclude expired events" do
+    sign_in_as user
+    create(:feed, user: user)
+    active_event = Event.create!(type: "active_event", level: :info, message: "Active event", user: user)
+    expired_event = Event.create!(type: "expired_event", level: :info, message: "Expired event", user: user, expires_at: 1.hour.ago)
+
+    get status_path
+    assert_response :success
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % active_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % expired_event.id).empty?
+  end
+
+  test "#show should limit to 10 recent events" do
+    sign_in_as user
+    create(:feed, user: user)
+    15.times do |i|
+      Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user, created_at: i.minutes.ago)
+    end
+
+    get status_path
+    assert_response :success
+    events_in_page = css_select('[data-key^="recent_events."]')
+    assert_equal 10, events_in_page.size
+  end
 end
