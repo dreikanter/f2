@@ -22,7 +22,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_feed_item(component)
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Feed:",
+      label: "Feed",
       value: helpers.link_to(@post.feed.name, @post.feed, class: "ff-link"),
       key: "post.feed"
     ))
@@ -31,7 +31,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_published_item(component)
     value = @post.published_at ? helpers.long_time_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Published:",
+      label: "Published",
       value: value,
       key: "post.published"
     ))
@@ -52,7 +52,7 @@ class PostDetailsComponent < ViewComponent::Base
     )
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Attachments (#{@post.attachment_urls.length}):",
+      label: "Attachments (#{@post.attachment_urls.length})",
       value: attachments_html,
       key: "post.attachments"
     ))
@@ -74,7 +74,7 @@ class PostDetailsComponent < ViewComponent::Base
     )
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Comments (#{@post.comments.length}):",
+      label: "Comments (#{@post.comments.length})",
       value: comments_html,
       key: "post.comments"
     ))
@@ -88,7 +88,7 @@ class PostDetailsComponent < ViewComponent::Base
     end
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Source URL:",
+      label: "Source URL",
       value: value,
       key: "post.source_url"
     ))
@@ -104,7 +104,7 @@ class PostDetailsComponent < ViewComponent::Base
     end
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Validation Errors:",
+      label: "Validation Errors",
       value: errors_html,
       key: "post.validation_errors"
     ))
@@ -112,7 +112,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_uid_item(component)
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "UID:",
+      label: "UID",
       value: content_tag(:code, @post.uid, class: "text-sm"),
       key: "post.uid"
     ))
@@ -120,7 +120,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_freefeed_post_id_item(component)
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "FreeFeed Post ID:",
+      label: "FreeFeed Post ID",
       value: content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
       key: "post.freefeed_post_id"
     ))
