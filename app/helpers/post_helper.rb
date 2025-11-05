@@ -1,4 +1,31 @@
 module PostHelper
+  def format_post_content(content)
+    return "" if content.blank?
+
+    # Trim leading and trailing whitespace
+    trimmed = content.strip
+
+    # Split by 2+ line breaks to create paragraphs
+    paragraphs = trimmed.split(/\n{2,}/)
+
+    # Process each paragraph
+    formatted_paragraphs = paragraphs.map do |para|
+      # Escape HTML to prevent XSS
+      escaped = ERB::Util.html_escape(para)
+
+      # Convert URLs to links
+      linked = auto_link_urls(escaped)
+
+      # Convert single line breaks to <br> tags
+      with_breaks = linked.gsub(/\n/, "<br>")
+
+      # Wrap in paragraph tag
+      tag.p(with_breaks.html_safe, class: "mb-4 last:mb-0")
+    end
+
+    safe_join(formatted_paragraphs)
+  end
+
   def post_status_badge_color(status)
     case status.to_s
     when "enqueued"
@@ -28,6 +55,20 @@ module PostHelper
   end
 
   private
+
+  # Convert URLs in text to clickable links
+  def auto_link_urls(text)
+    # Regex to match URLs (http, https, ftp)
+    url_regex = %r{
+      \b
+      (https?://|ftp://)
+      [^\s<>]+
+    }x
+
+    text.gsub(url_regex) do |url|
+      %(<a href="#{url}" target="_blank" rel="noopener" class="ff-link">#{url}</a>)
+    end
+  end
 
   def post_metadata_feed_link_segment(post, show_feed)
     return unless show_feed
