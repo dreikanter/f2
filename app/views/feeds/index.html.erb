@@ -7,6 +7,9 @@
     <% if (summary_line = feed_summary_line(active_count: @active_feed_count, inactive_count: @inactive_feed_count)) %>
       <% header.with_context_paragraph(summary_line) %>
     <% end %>
+    <% if pagination_total_count > 0 %>
+      <% header.with_context_paragraph("Showing #{@feeds.size} of #{pagination_total_count} feeds") %>
+    <% end %>
     <%# Sorting dropdown %>
     <% if @feeds.any? %>
       <% header.with_action_button do %>
@@ -19,7 +22,7 @@
             class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
             aria-haspopup="true"
             aria-expanded="false">
-              <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+              <%= icon(@sortable_presenter.current_direction == "asc" ? "arrow-up-short" : "arrow-down-short", css_class: "text-slate-500", aria_hidden: true) %>
               <span class="flex items-center gap-2">
                 <span><%= @sortable_presenter.current_title %></span>
                 <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
@@ -67,7 +70,7 @@
                        path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) },
                        template: "shared/pagination_tailwind" %>
   <% else %>
-    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
+    <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
       <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
       <p class="mt-2 text-sm text-slate-600">Create your first feed to start refreshing posts and sharing them with your audience.</p>
       <div class="mt-6">
