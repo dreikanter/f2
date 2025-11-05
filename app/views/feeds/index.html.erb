@@ -22,7 +22,7 @@
             class="<%= class_names('ff-button', 'ff-button--secondary', 'ff-button--compact', 'gap-2') %>"
             aria-haspopup="true"
             aria-expanded="false">
-              <%= icon("arrow-down-up", css_class: "text-slate-500", aria_hidden: true) %>
+              <%= icon(@sortable_presenter.current_direction == "asc" ? "arrow-up-short" : "arrow-down-short", css_class: "text-slate-500", aria_hidden: true) %>
               <span class="flex items-center gap-2">
                 <span><%= @sortable_presenter.current_title %></span>
                 <span class="sr-only"><%= @sortable_presenter.current_direction == "asc" ? "Ascending" : "Descending" %></span>
