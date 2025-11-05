@@ -10,11 +10,8 @@ module PostHelper
 
     # Process each paragraph
     formatted_paragraphs = paragraphs.map do |para|
-      # Escape HTML to prevent XSS
-      escaped = ERB::Util.html_escape(para)
-
-      # Convert URLs to links
-      linked = auto_link_urls(escaped)
+      # Convert URLs to links and escape all text
+      linked = auto_link_urls(para)
 
       # Convert single line breaks to <br> tags
       with_breaks = linked.gsub(/\n/, "<br>")
@@ -56,7 +53,7 @@ module PostHelper
 
   private
 
-  # Convert URLs in text to clickable links
+  # Convert URLs in text to clickable links and escape all content
   def auto_link_urls(text)
     # Regex to match URLs (http, https, ftp)
     url_regex = %r{
@@ -65,9 +62,28 @@ module PostHelper
       [^\s<>]+
     }x
 
-    text.gsub(url_regex) do |url|
-      %(<a href="#{url}" target="_blank" rel="noopener" class="ff-link">#{url}</a>)
+    last_end = 0
+    result = []
+
+    text.scan(url_regex) do
+      match_start = Regexp.last_match.begin(0)
+      match_end = Regexp.last_match.end(0)
+      url = Regexp.last_match[0]
+
+      # Escape text before this URL
+      result << ERB::Util.html_escape(text[last_end...match_start])
+
+      # Escape URL for safe embedding in href attribute and link text
+      escaped_url = ERB::Util.html_escape(url)
+      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="ff-link">#{escaped_url}</a>)
+
+      last_end = match_end
     end
+
+    # Escape remaining text after last URL
+    result << ERB::Util.html_escape(text[last_end..])
+
+    result.join
   end
 
   def post_metadata_feed_link_segment(post, show_feed)
