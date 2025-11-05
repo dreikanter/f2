@@ -15,9 +15,7 @@ class RecentEventsComponent < ViewComponent::Base
 
   def list_component
     ListGroupComponent.new.tap do |list|
-      @events.each do |event|
-        list.with_item(event_item(event))
-      end
+      list.with_items(@events.map { |event| event_item(event) })
     end
   end
 
@@ -43,7 +41,7 @@ class RecentEventsComponent < ViewComponent::Base
       "Feed refreshed"
     when "feed_refresh_error"
       "Feed refresh failed"
-    when "PostWithdrawn"
+    when "post_withdrawn"
       "Post withdrawn"
     else
       event.type.humanize
