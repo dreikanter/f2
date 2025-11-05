@@ -107,19 +107,11 @@ class EventDetailsComponent < ViewComponent::Base
   def subject_link
     return unless @event.subject_type.present?
 
-    if @event.subject.present?
-      case @event.subject_type
-      when "Feed"
-        return helpers.link_to(@event.subject_type, helpers.feed_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-      when "Post"
-        return helpers.link_to(@event.subject_type, helpers.post_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-      when "User"
-        return helpers.link_to(@event.subject_type, helpers.admin_user_path(@event.subject), class: "ff-link", data: { key: "admin.event.subject.type" })
-      end
-    end
+    filter_params = { subject_type: @event.subject_type }
+    filter_params[:subject_id] = @event.subject_id if @event.subject_id.present?
 
     helpers.link_to(@event.subject_type,
-                    helpers.admin_events_path(filter: { subject_type: @event.subject_type }),
+                    helpers.admin_events_path(filter: filter_params),
                     class: "ff-link",
                     data: { key: "admin.event.subject.type" })
   end

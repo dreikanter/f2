@@ -53,7 +53,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
   end
 
-  test "should link user subject to admin user page" do
+  test "should link user subject to filter by that subject" do
     login_as(admin_user)
     subject_user = create(:user)
     event = create(:event, subject: subject_user)
@@ -61,7 +61,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_event_path(event)
 
     assert_response :success
-    assert_select "a[data-key='admin.event.subject.type'][href='#{admin_user_path(subject_user)}']", text: "User"
+    assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_type%5D=User']", text: "User"
+    assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_id%5D=#{subject_user.id}']", text: "User"
   end
 
   # TBD: Reduce the amount of test records by changing page size
@@ -125,6 +126,22 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", count: 2
     assert_select "a[href*='subject_type']", text: "User", count: 2
     assert_select "a[href*='subject_type']", text: "Feed", count: 0
+  end
+
+  test "should filter events by subject_id" do
+    login_as(admin_user)
+    test_user = create(:user, email_address: "test_user_#{SecureRandom.uuid}@example.com")
+    feed1 = create(:feed, user: test_user, url: "https://example1.com/feed")
+    feed2 = create(:feed, user: test_user, url: "https://example2.com/feed")
+
+    event1 = create(:event, type: "Event1", subject: feed1)
+    event2 = create(:event, type: "Event2", subject: feed2)
+    event3 = create(:event, type: "Event3", subject: feed1)
+
+    get admin_events_path, params: { filter: { subject_type: "Feed", subject_id: feed1.id } }
+
+    assert_response :success
+    assert_select "tbody tr", count: 2
   end
 
   test "should handle invalid filter parameter gracefully" do
