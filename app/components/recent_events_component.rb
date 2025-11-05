@@ -36,15 +36,6 @@ class RecentEventsComponent < ViewComponent::Base
   end
 
   def fallback_message(event)
-    case event.type
-    when "feed_refresh"
-      "Feed refreshed"
-    when "feed_refresh_error"
-      "Feed refresh failed"
-    when "post_withdrawn"
-      "Post withdrawn"
-    else
-      event.type.humanize
-    end
+    I18n.t("events.types.#{event.type}", default: event.type.humanize)
   end
 end
