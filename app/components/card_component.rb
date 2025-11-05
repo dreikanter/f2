@@ -1,5 +1,5 @@
 class CardComponent < ViewComponent::Base
-  DEFAULT_BASE_CLASSES = "rounded-xl border border-slate-200 px-4 py-3 shadow-sm"
+  DEFAULT_BASE_CLASSES = "rounded-lg border border-slate-200 px-4 py-3 shadow-sm"
 
   def initialize(**html_options)
     @html_options = html_options

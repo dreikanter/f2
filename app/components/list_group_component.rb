@@ -1,5 +1,5 @@
 class ListGroupComponent < ViewComponent::Base
-  DEFAULT_LIST_CLASSES = "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm divide-y divide-slate-200"
+  DEFAULT_LIST_CLASSES = "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm divide-y divide-slate-200"
 
   attr_reader :items
 
