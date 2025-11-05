@@ -7,25 +7,25 @@ class FeedStatsComponent < ViewComponent::Base
     component = ListGroupComponent.new
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Last refresh:",
+      label: "Last refresh",
       value: last_refresh_value,
       key: "stats.last_refresh"
     ))
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Most recent post:",
+      label: "Most recent post",
       value: most_recent_post_value,
       key: "stats.most_recent_post"
     ))
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Imported posts:",
+      label: "Imported posts",
       value: helpers.number_with_delimiter(@feed.posts.count),
       key: "stats.imported_posts"
     ))
 
     component.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Published posts:",
+      label: "Published posts",
       value: helpers.number_with_delimiter(@feed.posts.published.count),
       key: "stats.published_posts"
     ))
