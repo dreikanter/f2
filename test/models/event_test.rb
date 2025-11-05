@@ -170,4 +170,44 @@ class EventTest < ActiveSupport::TestCase
     assert_equal "GET", event.metadata["request"]["method"]
     assert_equal 1500, event.metadata["timing"]["duration_ms"]
   end
+
+  test "#user_relevant should exclude debug level events" do
+    debug_event = Event.create!(type: "DebugEvent", level: :debug)
+    info_event = Event.create!(type: "InfoEvent", level: :info)
+    warning_event = Event.create!(type: "WarningEvent", level: :warning)
+    error_event = Event.create!(type: "ErrorEvent", level: :error)
+
+    relevant_events = Event.user_relevant
+
+    assert_not_includes relevant_events, debug_event
+    assert_includes relevant_events, info_event
+    assert_includes relevant_events, warning_event
+    assert_includes relevant_events, error_event
+  end
+
+  test "#user_relevant should exclude expired events" do
+    expired_event = Event.create!(type: "ExpiredEvent", level: :info, expires_at: 1.hour.ago)
+    active_event = Event.create!(type: "ActiveEvent", level: :info, expires_at: 1.hour.from_now)
+    permanent_event = Event.create!(type: "PermanentEvent", level: :info)
+
+    relevant_events = Event.user_relevant
+
+    assert_not_includes relevant_events, expired_event
+    assert_includes relevant_events, active_event
+    assert_includes relevant_events, permanent_event
+  end
+
+  test "#user_relevant should combine both filters" do
+    excluded_debug = Event.create!(type: "DebugEvent", level: :debug)
+    excluded_expired = Event.create!(type: "ExpiredInfo", level: :info, expires_at: 1.hour.ago)
+    excluded_both = Event.create!(type: "ExpiredDebug", level: :debug, expires_at: 1.hour.ago)
+    included_event = Event.create!(type: "GoodEvent", level: :info)
+
+    relevant_events = Event.user_relevant
+
+    assert_not_includes relevant_events, excluded_debug
+    assert_not_includes relevant_events, excluded_expired
+    assert_not_includes relevant_events, excluded_both
+    assert_includes relevant_events, included_event
+  end
 end
