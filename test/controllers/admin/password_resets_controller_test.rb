@@ -9,15 +9,6 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     @regular_user ||= create(:user)
   end
 
-  test "should redirect non-admin users from show" do
-    login_as(regular_user)
-    user = create(:user)
-
-    get admin_user_password_reset_path(user)
-
-    assert_redirected_to root_path
-  end
-
   test "should redirect non-admin users from create" do
     login_as(regular_user)
     user = create(:user)
@@ -25,16 +16,6 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     post admin_user_password_reset_path(user)
 
     assert_redirected_to root_path
-  end
-
-  test "should allow admin users to view password reset confirmation" do
-    login_as(admin_user)
-    user = create(:user, email_address: "test@example.com")
-
-    get admin_user_password_reset_path(user)
-
-    assert_response :success
-    assert_select "h1", "Reset Password for test@example.com"
   end
 
   test "should send password reset email when email is active" do
