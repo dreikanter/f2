@@ -82,8 +82,10 @@
         method: :delete,
         modal_id: "delete-token-modal-#{access_token.id}"
       ) do %>
-        <div class="ff-alert ff-alert--warning">
-          <p>This can't be undone. The token '<%= access_token.name %>' will be permanently removed. Any feeds using this token will be automatically disabled.</p>
+        <div class="ff-alert ff-alert--warning space-y-2">
+          <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
+          <p>Any feeds using this token will be automatically disabled.</p>
+          <p>This can't be undone.</p>
         </div>
       <% end %>
     <% end %>
