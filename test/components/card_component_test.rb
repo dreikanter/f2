@@ -5,7 +5,7 @@ class CardComponentTest < ViewComponent::TestCase
   test "renders content with default styling" do
     result = render_inline(CardComponent.new) { "Card body" }
 
-    card = result.css("div.rounded-xl").first
+    card = result.css("div.rounded-lg").first
     assert_not_nil card
     assert_equal "Card body", card.text.strip
   end
