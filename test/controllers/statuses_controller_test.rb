@@ -205,7 +205,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    events_in_page = css_select('[data-key^="recent_events."]')
+    events_in_page = css_select('[data-key^="recent_events."]:not([data-key$=".label"]):not([data-key$=".value"])')
     assert_equal 10, events_in_page.size
   end
 end
