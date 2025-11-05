@@ -29,7 +29,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_published_item(component)
-    value = @post.published_at ? helpers.long_time_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
+    value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
     component.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Published:",
       value: value,
