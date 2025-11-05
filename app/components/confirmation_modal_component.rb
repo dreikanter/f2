@@ -1,7 +1,7 @@
 class ConfirmationModalComponent < ViewComponent::Base
-  def initialize(title:, explanation:, confirm_text:, confirm_url:, method: :post, modal_id: nil)
+  def initialize(title:, details:, confirm_text:, confirm_url:, method: :post, modal_id: nil)
     @title = title
-    @explanation = explanation
+    @details = details
     @confirm_text = confirm_text
     @confirm_url = confirm_url
     @method = method
