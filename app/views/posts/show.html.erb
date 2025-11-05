@@ -8,9 +8,7 @@
         color: post_status_badge_color(@post.status),
         key: "post.status_badge"
       ) %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= link_to "Feed Entry", feed_entry_path(@post.feed_entry), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <%= link_to "View source", feed_entry_path(@post.feed_entry), class: "text-sm text-blue-600 hover:text-blue-800 ml-3" %>
     <% end %>
     <% header.with_action_button do %>
       <%= link_to "Back to Posts", posts_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
