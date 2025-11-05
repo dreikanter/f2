@@ -14,6 +14,8 @@ export default class extends Controller {
       modal.classList.add('flex')
       modal.setAttribute('aria-hidden', 'false')
       document.body.style.overflow = 'hidden'
+      // Move focus to modal for keyboard/screen reader accessibility
+      modal.focus()
     }
   }
 }
