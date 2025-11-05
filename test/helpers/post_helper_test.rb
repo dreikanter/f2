@@ -70,9 +70,9 @@ class PostHelperTest < ActionView::TestCase
   test "#format_post_content should trim leading and trailing whitespace" do
     content = "  Hello world  "
     result = format_post_content(content)
-    doc = Nokogiri::HTML.fragment(result)
-    assert_includes doc.text, "Hello world"
-    assert_not_includes doc.text, "  Hello world  "
+
+    assert_includes result, "Hello world"
+    assert_not_includes result, "  Hello world  "
   end
 
   test "#format_post_content should convert URLs to links" do
