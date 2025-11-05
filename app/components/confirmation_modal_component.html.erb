@@ -25,10 +25,8 @@
         </button>
       </div>
       <!-- Modal body -->
-      <div class="p-4 md:p-5 space-y-4">
-        <div id="<%= @modal_id %>-description" class="ff-alert ff-alert--warning">
-          <p><%= @details %></p>
-        </div>
+      <div id="<%= @modal_id %>-description" class="p-4 md:p-5 space-y-4">
+        <%= content %>
       </div>
       <!-- Modal footer -->
       <div class="flex items-center p-4 md:p-5 gap-3">

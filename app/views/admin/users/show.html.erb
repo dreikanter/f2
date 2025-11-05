@@ -263,29 +263,32 @@
 
 <%= render ConfirmationModalComponent.new(
   title: "Reset Password for #{@user.email_address}",
-  details: "This will send a password reset email to the user's current email address. The user will receive a link to set a new password. This does not change the password directly—the user must complete the reset process by clicking the link.",
   action: "Send Password Reset Email",
   url: admin_user_password_reset_path(@user),
   method: :post,
   modal_id: "password-reset-modal-#{@user.id}"
-) %>
+) do %>
+  <p>This will send a password reset email to the user's current email address. The user will receive a link to set a new password. This does not change the password directly—the user must complete the reset process by clicking the link.</p>
+<% end %>
 
 <% if @user.suspended? %>
   <%= render ConfirmationModalComponent.new(
     title: "Unsuspend User",
-    details: "This will restore #{@user.email_address}'s ability to sign in and access their account.",
     action: "Unsuspend user",
     url: admin_user_suspension_path(@user),
     method: :delete,
     modal_id: "unsuspend-user-modal-#{@user.id}"
-  ) %>
+  ) do %>
+    <p>This will restore <%= @user.email_address %>'s ability to sign in and access their account.</p>
+  <% end %>
 <% else %>
   <%= render ConfirmationModalComponent.new(
     title: "Suspend User",
-    details: "All active sessions for #{@user.email_address} will be terminated, all feeds will be disabled, and the user will be unable to sign in. You can unsuspend this user later to restore access.",
     action: "Suspend user",
     url: admin_user_suspension_path(@user),
     method: :post,
     modal_id: "suspend-user-modal-#{@user.id}"
-  ) %>
+  ) do %>
+    <p>All active sessions for <%= @user.email_address %> will be terminated, all feeds will be disabled, and the user will be unable to sign in. You can unsuspend this user later to restore access.</p>
+  <% end %>
 <% end %>
