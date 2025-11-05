@@ -83,4 +83,21 @@ module TimeHelper
       title: long_time_format(time)
     )
   end
+
+  def datetime_with_duration(time)
+    return nil unless time
+
+    "#{long_time_format(time)} (#{short_time_ago(time)})"
+  end
+
+  def datetime_with_duration_tag(time)
+    return nil unless time
+
+    content_tag(
+      :time,
+      datetime_with_duration(time),
+      datetime: time.rfc3339,
+      title: "#{time_ago(time)} ago"
+    )
+  end
 end
