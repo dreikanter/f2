@@ -105,6 +105,18 @@ class PostHelperTest < ActionView::TestCase
     assert_not_includes result, "<script>"
   end
 
+  test "#format_post_content should escape malicious URLs to prevent XSS" do
+    content = 'Check out https://evil.com" onmouseover="alert(1) for details'
+    result = format_post_content(content)
+
+    # URL should be escaped in href attribute
+    assert_includes result, 'href="https://evil.com&quot;'
+    # Event handler should be escaped and not executable
+    assert_includes result, 'onmouseover=&quot;alert(1)'
+    # Should not contain unescaped quotes that would break out of href
+    assert_not_includes result, 'href="https://evil.com"'
+  end
+
   test "#format_post_content should handle complex content with URLs and line breaks" do
     content = "Check this out:\nhttps://example.com\n\nThis is a second paragraph."
     result = format_post_content(content)
