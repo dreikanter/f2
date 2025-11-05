@@ -66,6 +66,97 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", count: 25
   end
 
+  test "should display only total when feeds counts are zero" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.feeds.value']", text: /^0 total$/
+  end
+
+  test "should hide zero enabled count" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:feed, user: user, state: :disabled)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.feeds.value']", text: /^1 total \(1 disabled\)$/
+    assert_select "[data-key='stats.feeds.value']", text: /enabled/, count: 0
+  end
+
+  test "should hide zero disabled count" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:feed, user: user, state: :enabled)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.feeds.value']", text: /^1 total \(1 enabled\)$/
+    assert_select "[data-key='stats.feeds.value']", text: /disabled/, count: 0
+  end
+
+  test "should display both enabled and disabled counts when non-zero" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:feed, user: user, state: :enabled)
+    create(:feed, user: user, state: :disabled)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.feeds.value']", text: "2 total (1 enabled, 1 disabled)"
+  end
+
+  test "should display only total when access token counts are zero" do
+    login_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.access_tokens.value']", text: /^0 total$/
+  end
+
+  test "should hide zero active token count" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:access_token, :inactive, user: user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.access_tokens.value']", text: /^1 total \(1 not active\)$/
+  end
+
+  test "should hide zero inactive token count" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:access_token, :active, user: user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.access_tokens.value']", text: /^1 total \(1 active\)$/
+    assert_select "[data-key='stats.access_tokens.value']", text: /not active/, count: 0
+  end
+
+  test "should display both active and inactive token counts when non-zero" do
+    login_as(admin_user)
+    user = create(:user)
+    create(:access_token, :active, user: user)
+    create(:access_token, :inactive, user: user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='stats.access_tokens.value']", text: "2 total (1 active, 1 not active)"
+  end
+
   private
 
   def login_as(user)
