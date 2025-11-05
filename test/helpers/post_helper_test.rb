@@ -112,7 +112,7 @@ class PostHelperTest < ActionView::TestCase
     # URL should be escaped in href attribute
     assert_includes result, 'href="https://evil.com&quot;'
     # Event handler should be escaped and not executable
-    assert_includes result, 'onmouseover=&quot;alert(1)'
+    assert_includes result, "onmouseover=&quot;alert(1)"
     # Should not contain unescaped quotes that would break out of href
     assert_not_includes result, 'href="https://evil.com"'
   end
