@@ -50,7 +50,7 @@ class PostsController < ApplicationController
     PostWithdrawalJob.perform_later(@post.id)
 
     Event.create!(
-      type: "PostWithdrawn",
+      type: "post_withdrawn",
       user: Current.user,
       subject: @post,
       level: :info

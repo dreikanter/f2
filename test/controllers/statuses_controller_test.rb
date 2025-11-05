@@ -141,7 +141,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     create(:feed, user: user)
     event1 = Event.create!(type: "feed_refresh", level: :info, message: "Feed refresh completed", user: user)
-    event2 = Event.create!(type: "PostWithdrawn", level: :info, message: "Post withdrawn", user: user)
+    event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Post withdrawn", user: user)
 
     get status_path
     assert_response :success

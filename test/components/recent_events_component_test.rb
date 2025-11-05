@@ -42,7 +42,7 @@ class RecentEventsComponentTest < ViewComponent::TestCase
 
   test "#render should display multiple events" do
     event1 = Event.create!(type: "feed_refresh", level: :info, message: "First event", user: user)
-    event2 = Event.create!(type: "PostWithdrawn", level: :info, message: "Second event", user: user)
+    event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Second event", user: user)
 
     result = render_inline(RecentEventsComponent.new(events: [event1, event2]))
 
@@ -59,7 +59,7 @@ class RecentEventsComponentTest < ViewComponent::TestCase
   test "#render should use fallback messages for known event types" do
     event1 = Event.create!(type: "feed_refresh", level: :info, message: "", user: user)
     event2 = Event.create!(type: "feed_refresh_error", level: :error, message: "", user: user)
-    event3 = Event.create!(type: "PostWithdrawn", level: :info, message: "", user: user)
+    event3 = Event.create!(type: "post_withdrawn", level: :info, message: "", user: user)
 
     result = render_inline(RecentEventsComponent.new(events: [event1, event2, event3]))
 

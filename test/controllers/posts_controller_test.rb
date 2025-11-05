@@ -160,7 +160,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last
-    assert_equal "PostWithdrawn", event.type
+    assert_equal "post_withdrawn", event.type
     assert_equal user, event.user
     assert_equal published_post, event.subject
     assert_equal "info", event.level
