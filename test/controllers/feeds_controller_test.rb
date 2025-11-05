@@ -42,7 +42,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav[aria-label='Feeds pagination']"
     assert_select "nav[aria-label='Feeds pagination'] ul[class*='inline-flex']", minimum: 1
-    assert_select "nav[aria-label='Feeds pagination'] span", text: /Showing/
+    assert_select "header p", text: /Showing/
   end
 
   test "#new should render when authenticated" do
