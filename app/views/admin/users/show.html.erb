@@ -265,8 +265,8 @@
   <%= render ConfirmationModalComponent.new(
     title: "Unsuspend User",
     details: "This will restore #{@user.email_address}'s ability to sign in and access their account.",
-    confirm_text: "Unsuspend user",
-    confirm_url: admin_user_suspension_path(@user),
+    action: "Unsuspend user",
+    url: admin_user_suspension_path(@user),
     method: :delete,
     modal_id: "unsuspend-user-modal-#{@user.id}"
   ) %>
@@ -274,8 +274,8 @@
   <%= render ConfirmationModalComponent.new(
     title: "Suspend User",
     details: "All active sessions for #{@user.email_address} will be terminated, all feeds will be disabled, and the user will be unable to sign in. You can unsuspend this user later to restore access.",
-    confirm_text: "Suspend user",
-    confirm_url: admin_user_suspension_path(@user),
+    action: "Suspend user",
+    url: admin_user_suspension_path(@user),
     method: :post,
     modal_id: "suspend-user-modal-#{@user.id}"
   ) %>
