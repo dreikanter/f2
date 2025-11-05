@@ -98,6 +98,20 @@ class PostHelperTest < ActionView::TestCase
     assert_includes paragraphs[1].text, "Paragraph 2"
   end
 
+  test "#format_post_content should create paragraphs from CRLF line breaks" do
+    content = "Paragraph 1\r\n\r\nParagraph 2"
+    result = format_post_content(content)
+
+    # Should create 2 paragraphs, not 1 paragraph with <br><br>
+    paragraphs = css_select(Nokogiri::HTML.fragment(result), "p")
+    assert_equal 2, paragraphs.size
+    assert_includes paragraphs[0].text, "Paragraph 1"
+    assert_includes paragraphs[1].text, "Paragraph 2"
+
+    # Should not have double <br> tags
+    assert_not_includes result, "<br><br>"
+  end
+
   test "#format_post_content should escape HTML to prevent XSS" do
     content = "<script>alert('xss')</script>"
     result = format_post_content(content)
