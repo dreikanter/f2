@@ -100,14 +100,26 @@
   end
 
   stats_list = ListGroupComponent.new.tap do |list|
+    feeds_parts = ["#{@stats.feeds_count} total"]
+    feeds_parts << "#{@stats.feeds_enabled_count} enabled" if @stats.feeds_enabled_count > 0
+    feeds_parts << "#{@stats.feeds_disabled_count} disabled" if @stats.feeds_disabled_count > 0
+    feeds_value = feeds_parts.size > 1 ? "#{feeds_parts.first} (#{feeds_parts[1..].join(', ')})" : feeds_parts.first
+
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Feeds",
-      value: "#{@stats.feeds_count} total (#{@stats.feeds_enabled_count} enabled, #{@stats.feeds_disabled_count} disabled)"
+      value: feeds_value,
+      key: "stats.feeds"
     ))
+
+    tokens_parts = ["#{@stats.access_tokens_count} total"]
+    tokens_parts << "#{@stats.active_access_tokens_count} active" if @stats.active_access_tokens_count > 0
+    tokens_parts << "#{@stats.inactive_access_tokens_count} not active" if @stats.inactive_access_tokens_count > 0
+    tokens_value = tokens_parts.size > 1 ? "#{tokens_parts.first} (#{tokens_parts[1..].join(', ')})" : tokens_parts.first
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Access Tokens",
-      value: "#{@stats.access_tokens_count} total (#{@stats.active_access_tokens_count} active, #{@stats.inactive_access_tokens_count} not active)"
+      value: tokens_value,
+      key: "stats.access_tokens"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
