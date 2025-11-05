@@ -51,7 +51,13 @@ class PostsListComponent < ViewComponent::Base
   def published_segment(post)
     return unless post.published_at
 
-    helpers.safe_join(["Published", helpers.time_ago_tag(post.published_at)], " ")
+    time_html = helpers.content_tag(
+      :time,
+      "#{helpers.short_time_ago(post.published_at)} ago",
+      datetime: post.published_at.rfc3339,
+      title: helpers.long_time_format(post.published_at)
+    )
+    helpers.safe_join(["Published", time_html], " ")
   end
 
   def attachments_segment(post)
