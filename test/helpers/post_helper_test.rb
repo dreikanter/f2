@@ -145,12 +145,13 @@ class PostHelperTest < ActionView::TestCase
     doc = Nokogiri::HTML.fragment(result)
     link = css_select(doc, "a").first
 
-    # URL should be properly escaped in href attribute
+    # URL regex stops at whitespace, so only captures up to the quote
     assert_not_nil link
-    assert_equal 'https://evil.com" onmouseover="alert(1)', link["href"]
+    assert_equal 'https://evil.com"', link["href"]
     # Link should not have an onmouseover attribute
     assert_nil link["onmouseover"]
-    # The malicious part should appear as text content after the link
+    # The malicious event handler should appear as escaped text
+    assert_includes doc.text, 'onmouseover="alert(1)'
     assert_includes doc.text, "for details"
   end
 
