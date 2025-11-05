@@ -86,14 +86,13 @@
               </td>
               <td>
                 <%
-                  subject_link = if event.subject_type == "Feed" && event.subject.present?
-                    link_to event.subject_type, feed_path(event.subject), class: "text-slate-600"
-                  elsif event.subject_type == "Post" && event.subject.present?
-                    link_to event.subject_type, post_path(event.subject), class: "text-slate-600"
-                  elsif event.subject_type.present?
-                    link_to admin_events_path(filter: { subject_type: event.subject_type }),
+                  subject_link = if event.subject_type.present?
+                    filter_params = { subject_type: event.subject_type }
+                    filter_params[:subject_id] = event.subject_id if event.subject_id.present?
+                    title_text = event.subject_id.present? ? "Filter by subject: #{event.subject_type} ##{event.subject_id}" : "Filter by subject type: #{event.subject_type}"
+                    link_to admin_events_path(filter: filter_params),
                             class: "text-slate-600 hover:text-slate-800",
-                            title: "Filter by subject type: #{event.subject_type}" do
+                            title: title_text do
                       event.subject_type
                     end
                   end
