@@ -77,7 +77,7 @@
     <% @access_tokens.each do |access_token| %>
       <%= render ConfirmationModalComponent.new(
         title: "Delete Access Token",
-        explanation: "The token '#{access_token.name}' will be permanently removed. Any feeds using this token will be automatically disabled.",
+        details: "This can't be undone. The token '#{access_token.name}' will be permanently removed. Any feeds using this token will be automatically disabled.",
         confirm_text: "Delete token",
         confirm_url: settings_access_token_path(access_token),
         method: :delete,

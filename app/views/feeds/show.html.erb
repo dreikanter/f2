@@ -82,7 +82,7 @@
 <% if @feed.target_group.present? %>
   <%= render ConfirmationModalComponent.new(
     title: "Confirm Purge",
-    explanation: "Every published post in #{@feed.target_group} will be withdrawn on FreeFeed. They'll remain visible in Feeder but can't be restored publicly.",
+    details: "This can't be undone. Every published post in #{@feed.target_group} will be withdrawn on FreeFeed. They'll remain visible in Feeder but can't be restored publicly.",
     confirm_text: "Purge all posts",
     confirm_url: feed_purge_path(@feed),
     method: :post,
@@ -92,7 +92,7 @@
 
 <%= render ConfirmationModalComponent.new(
   title: "Delete Feed",
-  explanation: "This feed will be permanently removed from Feeder. All configuration and history will be lost.",
+  details: "This can't be undone. This feed will be permanently removed from Feeder. All configuration and history will be lost.",
   confirm_text: "Delete feed",
   confirm_url: feed_path(@feed),
   method: :delete,
