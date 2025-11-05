@@ -29,13 +29,13 @@ Rails.application.routes.draw do
 
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
-    resource :purge, only: [:show, :create], controller: "feeds/purges"
+    resource :purge, only: :create, controller: "feeds/purges"
   end
 
   namespace :admin do
     resources :users, only: [:index, :show] do
       resource :email_update, only: [:edit, :update]
-      resource :password_reset, only: [:show, :create]
+      resource :password_reset, only: :create
       resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
       resource :available_invites, only: :update, controller: "available_invites"
       resource :email_reactivation, only: :create

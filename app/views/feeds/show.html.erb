@@ -67,15 +67,40 @@
     <div class="space-y-4 text-slate-600">
       <% if @feed.target_group.present? %>
         <div class="space-y-1">
-          <p><%= link_to "Purge feed content...", feed_purge_path(@feed), class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
+          <p><%= link_to "Purge feed content...", "#", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
           <p class="ff-text text-slate-600">Deletes all posts published to FreeFeed group <strong><%= @feed.target_group %></strong>.</p>
         </div>
       <% end %>
       <div class="space-y-1">
-        <%# TBD: Add a confirmation page here %>
-        <p><%= link_to "Delete feed...", @feed, data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this feed? This cannot be undone." }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
+        <p><%= link_to "Delete feed...", "#", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" }, class: "font-semibold text-slate-900 transition ff-focus-ring" %></p>
         <p class="ff-text text-slate-600">Disable and permanently remove the feed configuration from Feeder.</p>
       </div>
     </div>
   </section>
 </div>
+
+<% if @feed.target_group.present? %>
+  <%= render ConfirmationModalComponent.new(
+    title: "Confirm Purge",
+    action: "Purge all posts",
+    url: feed_purge_path(@feed),
+    method: :post,
+    modal_id: "purge-modal-#{@feed.id}"
+  ) do %>
+    <div class="ff-alert ff-alert--warning">
+      <p>This can't be undone. Every published post in <%= @feed.target_group %> will be withdrawn on FreeFeed. They'll remain visible in Feeder but can't be restored publicly.</p>
+    </div>
+  <% end %>
+<% end %>
+
+<%= render ConfirmationModalComponent.new(
+  title: "Delete Feed",
+  action: "Delete feed",
+  url: feed_path(@feed),
+  method: :delete,
+  modal_id: "delete-feed-modal-#{@feed.id}"
+) do %>
+  <div class="ff-alert ff-alert--warning">
+    <p>This can't be undone. This feed will be permanently removed from Feeder. All configuration and history will be lost.</p>
+  </div>
+<% end %>
