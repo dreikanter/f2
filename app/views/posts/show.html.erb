@@ -12,6 +12,9 @@
     <% header.with_action_button do %>
       <%= link_to "Back to Posts", posts_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
+    <% header.with_action_button do %>
+      <%= link_to "Source", feed_entry_path(@post.feed_entry), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <% end %>
     <% if policy(@post).destroy? %>
       <% header.with_action_button do %>
         <%= button_to "Withdraw", post_path(@post),

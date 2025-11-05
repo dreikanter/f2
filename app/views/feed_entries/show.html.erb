@@ -1,0 +1,26 @@
+<% content_for :title, "Feed Entry #{@feed_entry.id}" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "Feed Entry #{@feed_entry.id}") do |header| %>
+    <% header.with_context_paragraph do %>
+      <%= render BadgeComponent.new(
+        text: @feed_entry.status.capitalize,
+        color: feed_entry_status_badge_color(@feed_entry.status),
+        key: "feed_entry.status_badge"
+      ) %>
+    <% end %>
+    <% header.with_action_button do %>
+      <% if @feed_entry.posts.any? %>
+        <%= link_to "Back to Post", post_path(@feed_entry.posts.first), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <% else %>
+        <span class="ff-button ff-button--secondary ff-button--compact opacity-50 cursor-not-allowed">
+          Back to Post
+        </span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+    <pre class="text-slate-900 text-sm overflow-x-auto"><%= JSON.pretty_generate(@feed_entry.as_json) %></pre>
+  </div>
+</div>
