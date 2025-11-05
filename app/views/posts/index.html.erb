@@ -67,6 +67,5 @@
   <%= pagination_for @posts,
                      collection_name: "posts",
                      path_helper: ->(page) { posts_path(base_pagination_params.merge(page: page)) },
-                     template: "shared/pagination_tailwind",
-                     show_count: false %>
+                     template: "shared/pagination_tailwind" %>
 </div>

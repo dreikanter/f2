@@ -1,12 +1,5 @@
 <% if pagination_total_pages > 1 %>
-  <% show_count = local_assigns.fetch(:show_count, true) %>
-  <nav aria-label="<%= pagination_label %> pagination" class="<%= show_count ? 'mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between' : 'mt-8 flex justify-center' %>">
-    <% if show_count %>
-      <span class="text-sm text-slate-600">
-        Showing <%= collection_size %> of <%= pagination_total_count %> <%= collection_name %>
-      </span>
-    <% end %>
-
+  <nav aria-label="<%= pagination_label %> pagination" class="mt-8 flex justify-center">
     <ul class="inline-flex items-center -space-x-px rounded-lg border border-slate-200 bg-white text-sm shadow-sm">
       <% if pagination_current_page > 1 %>
         <li class="relative focus-within:z-10">

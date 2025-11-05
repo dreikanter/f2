@@ -68,8 +68,7 @@
     <%= pagination_for @feeds,
                        collection_name: "feeds",
                        path_helper: ->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) },
-                       template: "shared/pagination_tailwind",
-                       show_count: false %>
+                       template: "shared/pagination_tailwind" %>
   <% else %>
     <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
       <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
