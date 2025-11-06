@@ -26,16 +26,6 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "<svg"
   end
 
-  test "#render should generate SVG heatmap" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 1)
-
-    result = render_inline(PostsHeatmapComponent.new(user: user))
-
-    # Check that SVG is present
-    assert_includes result.to_html, "<svg"
-    assert_includes result.to_html, "</svg>"
-  end
-
   test "#render should use caching mechanism" do
     create(:feed_metric, feed: feed, date: Date.current, posts_count: 1)
 
