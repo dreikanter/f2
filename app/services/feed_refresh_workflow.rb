@@ -176,7 +176,7 @@ class FeedRefreshWorkflow
 
     # Warm up heatmap cache when new posts are imported
     if posts.any?
-      UserHeatmapBuilder.new(feed.user).warm_cache
+      UserHeatmapBuilder.new(feed.user).build_cached
     end
 
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \

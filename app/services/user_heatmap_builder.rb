@@ -26,18 +26,6 @@ class UserHeatmapBuilder
     )
   end
 
-  # Invalidates the cached heatmap for this user
-  def invalidate_cache
-    Rails.cache.delete(cache_key)
-  end
-
-  # Warms up the cache by generating and storing the heatmap
-  # Used in background jobs after data changes
-  # @param expires_in [ActiveSupport::Duration] Cache expiration time
-  def warm_cache(expires_in: 24.hours)
-    Rails.cache.write(cache_key, build, expires_in: expires_in)
-  end
-
   private
 
   def cache_key

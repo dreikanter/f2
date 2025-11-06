@@ -63,37 +63,6 @@ class UserHeatmapBuilderTest < ActiveSupport::TestCase
     assert_not_equal first_svg, second_svg
   end
 
-  test "#warm_cache should write to cache" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
-
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-
-    builder = UserHeatmapBuilder.new(user)
-    builder.warm_cache
-
-    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
-    cached_svg = Rails.cache.read(cache_key)
-
-    assert_not_nil cached_svg
-    assert_includes cached_svg, "<svg"
-  end
-
-  test "#invalidate_cache should remove from cache" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
-
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-
-    builder = UserHeatmapBuilder.new(user)
-    builder.warm_cache
-
-    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
-    assert_not_nil Rails.cache.read(cache_key), "Cache should exist before invalidation"
-
-    builder.invalidate_cache
-
-    assert_nil Rails.cache.read(cache_key), "Cache should be empty after invalidation"
-  end
-
   test "#build_cached should expire cache after 24 hours" do
     create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
 
@@ -127,24 +96,6 @@ class UserHeatmapBuilderTest < ActiveSupport::TestCase
     travel 2.hours do
       cached_svg = Rails.cache.read(cache_key)
       assert_nil cached_svg, "Cache should expire after 1 hour"
-    end
-  end
-
-  test "#warm_cache should accept custom expiration time" do
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
-
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-
-    builder = UserHeatmapBuilder.new(user)
-    builder.warm_cache(expires_in: 30.minutes)
-
-    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
-    assert_not_nil Rails.cache.read(cache_key), "Cache should exist initially"
-
-    # Travel forward 1 hour
-    travel 1.hour do
-      cached_svg = Rails.cache.read(cache_key)
-      assert_nil cached_svg, "Cache should expire after 30 minutes"
     end
   end
 end
