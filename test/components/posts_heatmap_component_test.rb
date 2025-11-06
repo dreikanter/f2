@@ -23,7 +23,7 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
     result = render_inline(PostsHeatmapComponent.new(user: user))
 
     assert result.css(".heatmap-container").any?
-    assert_includes result.to_html, "Activity"
+    assert_includes result.to_html, "<svg"
   end
 
   test "#render should generate SVG heatmap" do

@@ -7,7 +7,7 @@ class PostsHeatmapComponent < ViewComponent::Base
     data = user.posts_heatmap_data
     return if data.empty?
 
-    tag.div(heatmap_svg.html_safe, class: "heatmap-container flex justify-center")
+    tag.div(heatmap_svg.html_safe, class: "heatmap-container")
   end
 
   private
