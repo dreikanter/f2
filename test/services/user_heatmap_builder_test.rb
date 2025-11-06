@@ -111,4 +111,40 @@ class UserHeatmapBuilderTest < ActiveSupport::TestCase
       assert_nil cached_svg, "Cache should expire after 24 hours"
     end
   end
+
+  test "#build_cached should accept custom expiration time" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    builder.build_cached(expires_in: 1.hour)
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    assert_not_nil Rails.cache.read(cache_key), "Cache should exist initially"
+
+    # Travel forward 2 hours
+    travel 2.hours do
+      cached_svg = Rails.cache.read(cache_key)
+      assert_nil cached_svg, "Cache should expire after 1 hour"
+    end
+  end
+
+  test "#warm_cache should accept custom expiration time" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    builder.warm_cache(expires_in: 30.minutes)
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    assert_not_nil Rails.cache.read(cache_key), "Cache should exist initially"
+
+    # Travel forward 1 hour
+    travel 1.hour do
+      cached_svg = Rails.cache.read(cache_key)
+      assert_nil cached_svg, "Cache should expire after 30 minutes"
+    end
+  end
 end

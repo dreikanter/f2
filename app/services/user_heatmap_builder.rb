@@ -6,9 +6,10 @@ class UserHeatmapBuilder
   end
 
   # Generates and caches the heatmap SVG
+  # @param expires_in [ActiveSupport::Duration] Cache expiration time
   # @return [String] SVG markup
-  def build_cached
-    Rails.cache.fetch(cache_key, expires_in: 24.hours) do
+  def build_cached(expires_in: 24.hours)
+    Rails.cache.fetch(cache_key, expires_in: expires_in) do
       build
     end
   end
@@ -32,8 +33,9 @@ class UserHeatmapBuilder
 
   # Warms up the cache by generating and storing the heatmap
   # Used in background jobs after data changes
-  def warm_cache
-    Rails.cache.write(cache_key, build, expires_in: 24.hours)
+  # @param expires_in [ActiveSupport::Duration] Cache expiration time
+  def warm_cache(expires_in: 24.hours)
+    Rails.cache.write(cache_key, build, expires_in: expires_in)
   end
 
   private
