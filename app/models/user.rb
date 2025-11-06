@@ -129,8 +129,8 @@ class User < ApplicationRecord
     end_date = Date.current
 
     imported_posts
-      .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
-      .group("DATE(created_at)")
+      .where(posts: { created_at: start_date.beginning_of_day..end_date.end_of_day })
+      .group("DATE(posts.created_at)")
       .count
       .transform_keys { |date_string| Date.parse(date_string) }
   end
