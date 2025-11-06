@@ -8,8 +8,8 @@ class PostsHeatmapComponent < ViewComponent::Base
     return if data.empty?
 
     tag.div(class: "space-y-2") do
-      tag.h3("Activity", class: "ff-h3") +
-      tag.div(heatmap_svg.html_safe, class: "heatmap-container")
+      tag.h2("Activity", class: "ff-h2") +
+      tag.div(heatmap_svg.html_safe, class: "heatmap-container flex justify-center")
     end
   end
 

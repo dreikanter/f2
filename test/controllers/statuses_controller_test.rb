@@ -145,7 +145,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select "h2", "Recent Activity"
+    assert_select "h2", "Recent Events"
     assert_not_nil css_select('[data-key="recent_events.%d"]' % event1.id).first
     assert_not_nil css_select('[data-key="recent_events.%d"]' % event2.id).first
   end
@@ -156,7 +156,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_select "h2", { text: "Recent Activity", count: 0 }
+    assert_select "h2", { text: "Recent Events", count: 0 }
   end
 
   test "#show should only display user's own events" do
