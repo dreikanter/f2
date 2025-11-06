@@ -24,18 +24,12 @@ class PostsHeatmapComponent < ViewComponent::Base
 
   def generate_heatmap_svg
     data = user.posts_heatmap_data
-    end_date = Date.current
-    start_date = end_date - 365
 
-    builder = HeatmapBuilder.new(
-      data: data,
-      start_date: start_date,
-      end_date: end_date,
-      month_labels: true,
-      day_labels: true
+    HeatmapBuilder.build_calendar(
+      values: data,
+      show_month_labels: true,
+      show_day_labels: true
     )
-
-    builder.to_svg
   end
 
   def cache_key

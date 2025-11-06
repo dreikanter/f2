@@ -132,7 +132,7 @@ class User < ApplicationRecord
       .where(posts: { created_at: start_date.beginning_of_day..end_date.end_of_day })
       .group("DATE(posts.created_at)")
       .count
-      .transform_keys { |date_string| Date.parse(date_string) }
+      .transform_keys { |date| date.is_a?(String) ? Date.parse(date) : date }
   end
 
   def update_password!(new_password)

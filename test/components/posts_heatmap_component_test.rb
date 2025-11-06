@@ -38,19 +38,25 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "</svg>"
   end
 
-  test "#render should cache heatmap SVG" do
+  test "#render should use caching mechanism" do
     feed_entry = create(:feed_entry, feed: feed)
     create(:post, feed: feed, feed_entry: feed_entry)
 
+    # Enable caching for this test
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
     # First render should generate and cache
     component = PostsHeatmapComponent.new(user: user)
-    render_inline(component)
+    first_result = render_inline(component)
+    assert_includes first_result.to_html, "<svg"
 
     # Check cache was written
     cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
-    assert Rails.cache.exist?(cache_key)
+    cached_svg = Rails.cache.read(cache_key)
+    assert_not_nil cached_svg, "Cache should contain SVG after first render"
+    assert_includes cached_svg, "<svg"
 
-    # Second render should use cache
+    # Second render should use cache (same content)
     cached_result = render_inline(PostsHeatmapComponent.new(user: user))
     assert_includes cached_result.to_html, "<svg"
   end
