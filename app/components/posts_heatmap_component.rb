@@ -4,7 +4,8 @@ class PostsHeatmapComponent < ViewComponent::Base
   end
 
   def call
-    return unless @user.total_imported_posts_count.positive?
+    data = user.posts_heatmap_data
+    return if data.empty?
 
     tag.div(class: "space-y-2") do
       tag.h3("Activity", class: "ff-h3") +

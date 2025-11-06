@@ -12,14 +12,13 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
     @feed ||= create(:feed, user: user)
   end
 
-  test "#render should render nothing when user has no posts" do
+  test "#render should render nothing when user has no metrics" do
     result = render_inline(PostsHeatmapComponent.new(user: user))
     assert_empty result.css(".heatmap-container")
   end
 
-  test "#render should render heatmap when user has posts" do
-    feed_entry = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: feed_entry)
+  test "#render should render heatmap when user has metrics" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 1)
 
     result = render_inline(PostsHeatmapComponent.new(user: user))
 
@@ -28,8 +27,7 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
   end
 
   test "#render should generate SVG heatmap" do
-    feed_entry = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: feed_entry)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 1)
 
     result = render_inline(PostsHeatmapComponent.new(user: user))
 
@@ -39,8 +37,7 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
   end
 
   test "#render should use caching mechanism" do
-    feed_entry = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: feed_entry)
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 1)
 
     # Enable caching for this test
     Rails.cache = ActiveSupport::Cache::MemoryStore.new

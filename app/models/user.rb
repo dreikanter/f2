@@ -128,11 +128,11 @@ class User < ApplicationRecord
     start_date = 1.year.ago.to_date
     end_date = Date.current
 
-    imported_posts
-      .where(posts: { created_at: start_date.beginning_of_day..end_date.end_of_day })
-      .group("DATE(posts.created_at)")
-      .count
-      .transform_keys { |date| date.is_a?(String) ? Date.parse(date) : date }
+    FeedMetric
+      .for_user(self)
+      .for_date_range(start_date, end_date)
+      .group(:date)
+      .sum(:posts_count)
   end
 
   def update_password!(new_password)
