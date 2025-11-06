@@ -122,6 +122,19 @@ class User < ApplicationRecord
     (count / 7.0).round(1)
   end
 
+  # Returns daily post counts for the last year, formatted for heatmap rendering
+  # @return [Hash<Date, Integer>] hash mapping dates to post counts
+  def posts_heatmap_data
+    start_date = 1.year.ago.to_date
+    end_date = Date.current
+
+    imported_posts
+      .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+      .group("DATE(created_at)")
+      .count
+      .transform_keys { |date_string| Date.parse(date_string) }
+  end
+
   def update_password!(new_password)
     update!(password: new_password, password_confirmation: new_password)
   end
