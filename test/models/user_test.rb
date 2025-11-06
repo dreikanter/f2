@@ -371,4 +371,74 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal 2, user.used_invites_count
   end
+
+  test "#posts_heatmap_data should return empty hash when user has no posts" do
+    user = create(:user)
+    assert_equal({}, user.posts_heatmap_data)
+  end
+
+  test "#posts_heatmap_data should return post counts grouped by date" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    feed_entry1 = create(:feed_entry, feed: feed)
+    feed_entry2 = create(:feed_entry, feed: feed)
+    feed_entry3 = create(:feed_entry, feed: feed)
+
+    # Create posts on different dates
+    travel_to 5.days.ago do
+      create(:post, feed: feed, feed_entry: feed_entry1, created_at: Time.current)
+      create(:post, feed: feed, feed_entry: feed_entry2, created_at: Time.current)
+    end
+
+    travel_to 2.days.ago do
+      create(:post, feed: feed, feed_entry: feed_entry3, created_at: Time.current)
+    end
+
+    data = user.posts_heatmap_data
+
+    assert_equal 2, data[5.days.ago.to_date]
+    assert_equal 1, data[2.days.ago.to_date]
+    assert_equal 2, data.keys.size
+  end
+
+  test "#posts_heatmap_data should only include posts from last year" do
+    user = create(:user)
+    feed = create(:feed, user: user)
+    feed_entry_old = create(:feed_entry, feed: feed)
+    feed_entry_recent = create(:feed_entry, feed: feed)
+
+    # Create old post (more than 1 year ago)
+    travel_to 400.days.ago do
+      create(:post, feed: feed, feed_entry: feed_entry_old, created_at: Time.current)
+    end
+
+    # Create recent post
+    travel_to 10.days.ago do
+      create(:post, feed: feed, feed_entry: feed_entry_recent, created_at: Time.current)
+    end
+
+    data = user.posts_heatmap_data
+
+    assert_equal 1, data.keys.size
+    assert_equal 1, data[10.days.ago.to_date]
+    assert_nil data[400.days.ago.to_date]
+  end
+
+  test "#posts_heatmap_data should only include current user's posts" do
+    user1 = create(:user)
+    user2 = create(:user)
+    feed1 = create(:feed, user: user1)
+    feed2 = create(:feed, user: user2)
+    feed_entry1 = create(:feed_entry, feed: feed1)
+    feed_entry2 = create(:feed_entry, feed: feed2)
+
+    create(:post, feed: feed1, feed_entry: feed_entry1)
+    create(:post, feed: feed2, feed_entry: feed_entry2)
+
+    data1 = user1.posts_heatmap_data
+    data2 = user2.posts_heatmap_data
+
+    assert_equal 1, data1.values.sum
+    assert_equal 1, data2.values.sum
+  end
 end
