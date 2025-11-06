@@ -45,7 +45,10 @@
       average_posts_per_day_last_week: @user.average_posts_per_day_last_week
     ) %>
 
-    <%= render PostsHeatmapComponent.new(user: @user) %>
+    <section class="space-y-4">
+      <h2 class="ff-h2">Imported Posts</h2>
+      <%= render PostsHeatmapComponent.new(user: @user) %>
+    </section>
 
     <% if @recent_events.any? %>
       <section class="space-y-4">
