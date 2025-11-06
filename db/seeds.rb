@@ -126,6 +126,39 @@ if Rails.env.development?
 
     puts "✅ Sample feeds created (#{Feed.count} total)"
 
+  # Generate FeedMetric data for the past year
+  if FeedMetric.count == 0
+    feed_metrics = []
+    start_date = 1.year.ago.to_date
+    end_date = Date.current
+
+    Feed.find_each do |feed|
+      (start_date..end_date).each do |date|
+        # Generate activity for ~60% of days (sparse data)
+        next if rand < 0.4
+
+        posts_count = rand(0..15)
+        invalid_posts_count = rand < 0.1 ? rand(0..2) : 0
+
+        # Only record if there's actual activity
+        next if posts_count.zero? && invalid_posts_count.zero?
+
+        feed_metrics << {
+          feed_id: feed.id,
+          date: date,
+          posts_count: posts_count,
+          invalid_posts_count: invalid_posts_count,
+          created_at: Time.current,
+          updated_at: Time.current
+        }
+      end
+    end
+
+    # Batch insert all metrics
+    FeedMetric.insert_all!(feed_metrics) if feed_metrics.any?
+    puts "✅ FeedMetric data created for past year (#{FeedMetric.count} total)"
+  end
+
   # Generate posts for active feeds using batch inserts
   if Post.count == 0
     all_feed_entries = []
