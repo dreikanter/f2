@@ -174,6 +174,11 @@ class FeedRefreshWorkflow
       invalid_posts_count: rejected_posts_count
     )
 
+    # Invalidate heatmap cache when new posts are imported
+    if posts.any?
+      Rails.cache.delete("user:#{feed.user_id}:heatmap_svg:#{Date.current}")
+    end
+
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
                       "#{published_posts_count} published, " \
                       "#{failed_posts_count} failed, " \
