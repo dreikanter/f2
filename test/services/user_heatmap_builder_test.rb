@@ -1,0 +1,114 @@
+require "test_helper"
+
+class UserHeatmapBuilderTest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::TimeHelpers
+
+  def user
+    @user ||= create(:user)
+  end
+
+  def feed
+    @feed ||= create(:feed, user: user)
+  end
+
+  test "#build should generate SVG when user has metrics" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    builder = UserHeatmapBuilder.new(user)
+    svg = builder.build
+
+    assert_includes svg, "<svg"
+    assert_includes svg, "</svg>"
+  end
+
+  test "#build should handle empty data" do
+    builder = UserHeatmapBuilder.new(user)
+    svg = builder.build
+
+    assert_includes svg, "<svg"
+    assert_includes svg, "</svg>"
+  end
+
+  test "#build_cached should cache the SVG" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    svg = builder.build_cached
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    cached_svg = Rails.cache.read(cache_key)
+
+    assert_not_nil cached_svg
+    assert_equal svg, cached_svg
+    assert_includes cached_svg, "<svg"
+  end
+
+  test "#build_cached should use cached SVG on second call" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    first_svg = builder.build_cached
+
+    # Modify the cache to verify second call uses it
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    Rails.cache.write(cache_key, "cached_content", expires_in: 24.hours)
+
+    second_svg = builder.build_cached
+
+    assert_equal "cached_content", second_svg
+    assert_not_equal first_svg, second_svg
+  end
+
+  test "#warm_cache should write to cache" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    builder.warm_cache
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    cached_svg = Rails.cache.read(cache_key)
+
+    assert_not_nil cached_svg
+    assert_includes cached_svg, "<svg"
+  end
+
+  test "#invalidate_cache should remove from cache" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    builder.warm_cache
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    assert_not_nil Rails.cache.read(cache_key), "Cache should exist before invalidation"
+
+    builder.invalidate_cache
+
+    assert_nil Rails.cache.read(cache_key), "Cache should be empty after invalidation"
+  end
+
+  test "#build_cached should expire cache after 24 hours" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    builder = UserHeatmapBuilder.new(user)
+    builder.build_cached
+
+    cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
+    assert_not_nil Rails.cache.read(cache_key), "Cache should exist initially"
+
+    # Travel forward 25 hours
+    travel 25.hours do
+      cached_svg = Rails.cache.read(cache_key)
+      assert_nil cached_svg, "Cache should expire after 24 hours"
+    end
+  end
+end
