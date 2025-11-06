@@ -30,6 +30,12 @@
 en:
   hello: "Hello world"
 
+  events:
+    types:
+      feed_refresh: "Feed refreshed"
+      feed_refresh_error: "Feed refresh failed"
+      post_withdrawn: "Post withdrawn"
+
   feed_profiles:
     rss: "RSS Feed"
     xkcd: "XKCD Comics"

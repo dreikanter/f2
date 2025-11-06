@@ -20,6 +20,11 @@ class ListGroupComponent < ViewComponent::Base
     component
   end
 
+  def with_items(components)
+    components.each { |component| @items << component }
+    self
+  end
+
   def items?
     items.any?
   end

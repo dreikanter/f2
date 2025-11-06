@@ -44,5 +44,12 @@
       most_recent_post_published_at: @user.most_recent_post_published_at,
       average_posts_per_day_last_week: @user.average_posts_per_day_last_week
     ) %>
+
+    <% if @recent_events.any? %>
+      <section class="space-y-4">
+        <h2 class="ff-h2">Recent Activity</h2>
+        <%= render RecentEventsComponent.new(events: @recent_events) %>
+      </section>
+    <% end %>
   <% end %>
 </div>
