@@ -9,9 +9,7 @@ class UserHeatmapBuilder
   # @param expires_in [ActiveSupport::Duration] Cache expiration time
   # @return [String] SVG markup
   def build_cached(expires_in: 24.hours)
-    Rails.cache.fetch(cache_key, expires_in: expires_in) do
-      build
-    end
+    Rails.cache.fetch(cache_key, expires_in: expires_in) { build }
   end
 
   # Generates the heatmap SVG without caching
