@@ -28,7 +28,7 @@ Rails.application.routes.draw do
   resources :feed_previews, only: [:create, :show, :update], path: "previews"
   resource :admin, only: :show
 
-  resources :feeds, only: [:index, :show, :destroy] do
+  resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
     resource :purge, only: :create, controller: "feeds/purges"
   end
@@ -51,7 +51,7 @@ Rails.application.routes.draw do
     resource :password_update, only: [:edit, :update], controller: "settings/password_updates"
     resources :email_confirmations, only: :show, param: :token, controller: "settings/email_confirmations"
 
-    resources :access_tokens, only: [:index, :destroy], controller: "settings/access_tokens"
+    resources :access_tokens, controller: "settings/access_tokens"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

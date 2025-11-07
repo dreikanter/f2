@@ -41,10 +41,28 @@ class FeedsController < ApplicationController
     @feeds = paginate_scope
   end
 
+  def new
+    @feed = Feed.new
+    authorize @feed
+  end
+
+  def create
+    # TODO: Implement feed creation
+  end
+
   def show
     @feed = load_feed
     authorize @feed
     @recent_posts = recent_posts(@feed)
+  end
+
+  def edit
+    @feed = load_feed
+    authorize @feed
+  end
+
+  def update
+    # TODO: Implement feed update
   end
 
   def destroy

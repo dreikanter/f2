@@ -57,6 +57,9 @@
         </div>
       <% end %>
     <% end %>
+    <% header.with_action_button do %>
+      <%= link_to "New Feed", new_feed_path, class: class_names("ff-button", "ff-button--compact", "w-full sm:w-auto") %>
+    <% end %>
   <% end %>
 
   <% if @feeds.any? %>
@@ -66,7 +69,10 @@
   <% else %>
     <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
       <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
-      <p class="mt-2 text-sm text-slate-600">You'll be able to create feeds once the new feed creation interface is ready.</p>
+      <p class="mt-2 text-sm text-slate-600">Create your first feed to start refreshing posts and sharing them with your audience.</p>
+      <div class="mt-6">
+        <%= link_to "Create your first feed", new_feed_path, class: class_names("ff-button", "ff-button--compact") %>
+      </div>
     </div>
   <% end %>
 </div>

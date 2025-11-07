@@ -4,6 +4,24 @@ class Settings::AccessTokensController < ApplicationController
     @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
   end
 
+  def new
+    @access_token = AccessToken.new
+    authorize @access_token
+  end
+
+  def create
+    # TODO: Implement access token creation
+  end
+
+  def edit
+    @access_token = find_access_token
+    authorize @access_token
+  end
+
+  def update
+    # TODO: Implement access token update
+  end
+
   def destroy
     access_token = find_access_token
     authorize access_token

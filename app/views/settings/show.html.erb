@@ -60,7 +60,11 @@
         <% end %>
       </div>
       <div class="shrink-0">
-        <%= link_to "Manage", settings_access_tokens_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% if @access_tokens.any? %>
+          <%= link_to "Manage", settings_access_tokens_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% else %>
+          <%= link_to "Add Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
+        <% end %>
       </div>
     </div>
   </section>

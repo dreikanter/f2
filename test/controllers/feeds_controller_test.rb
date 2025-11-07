@@ -45,8 +45,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "header p", text: /Showing/
   end
 
+  test "#new should render when authenticated" do
+    sign_in_as(user)
+    get new_feed_url
+    assert_response :success
+  end
 
-
+  test "#create should be implemented" do
+    skip "TODO: Implement feed creation"
+  end
 
   test "#show should render feed owned by user" do
     sign_in_as(user)
@@ -61,10 +68,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "#edit should render for own feed" do
+    sign_in_as(user)
+    get edit_feed_url(feed)
+    assert_response :success
+  end
 
-
-
-
+  test "#update should be implemented" do
+    skip "TODO: Implement feed update"
+  end
 
   test "#destroy should remove own feed" do
     sign_in_as(user)
