@@ -1,9 +1,4 @@
-<%-
-
-  access_token = local_assigns.fetch(:access_token)
-  error = local_assigns[:error]
-
--%>
+<%# locals: (access_token:, error: nil) %>
 
 <% if access_token.pending? %>
   <div

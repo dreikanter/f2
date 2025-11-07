@@ -50,9 +50,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should paginate posts" do
     sign_in_as(user)
-    26.times { |i| create(:post, feed: feed, content: "Post #{i}") }
+    4.times { |i| create(:post, feed: feed, content: "Post #{i}") }
 
-    get posts_url
+    get posts_url, params: { per_page: 3 }
     assert_response :success
     assert_select "nav[aria-label='Posts pagination']"
   end

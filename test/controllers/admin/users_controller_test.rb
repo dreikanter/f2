@@ -57,13 +57,13 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   test "should paginate users" do
     login_as(admin_user)
 
-    30.times { create(:user) }
+    4.times { create(:user) }
 
-    get admin_users_path
+    get admin_users_path, params: { per_page: 3 }
 
     assert_response :success
-    assert_select ".pagination"
-    assert_select "tbody tr", count: 25
+    assert_select "nav[aria-label='Users pagination']"
+    assert_select "tbody tr", count: 3
   end
 
   test "should display only total when feeds counts are zero" do

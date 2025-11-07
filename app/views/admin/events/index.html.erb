@@ -1,6 +1,4 @@
 <% content_for :title, "Events" %>
-<% base_pagination_params = {} %>
-<% base_pagination_params[:filter] = @filter.to_h if @filter.present? %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Events") do |header| %>
@@ -113,10 +111,7 @@
     </div>
 
     <div data-key="admin.events.pagination">
-      <%= pagination_for @events,
-                         collection_name: "events",
-                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
-                         template: "shared/pagination_tailwind" %>
+      <%= render_pagination { |pagination, params| admin_events_path(pagination.merge(@filter.present? ? { filter: @filter.to_h } : {})) } %>
     </div>
   <% else %>
     <div class="ff-card">

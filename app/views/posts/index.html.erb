@@ -1,6 +1,5 @@
 <% page_title = @feed ? "#{@feed.name} posts" : "Posts" %>
 <% content_for :title, page_title %>
-<% base_pagination_params = params.permit(:feed_id, :sort, :direction).to_unsafe_h.symbolize_keys %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: page_title) do |header| %>
@@ -64,8 +63,5 @@
              show_feed: @feed.blank?,
              empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
 
-  <%= pagination_for @posts,
-                     collection_name: "posts",
-                     path_helper: ->(page) { posts_path(base_pagination_params.merge(page: page)) },
-                     template: "shared/pagination_tailwind" %>
+  <%= render_pagination { |pagination, params| posts_path(pagination.merge(feed_id: params[:feed_id])) } %>
 </div>
