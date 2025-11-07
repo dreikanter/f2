@@ -1,4 +1,6 @@
 class UserHeatmapBuilder
+  CACHE_TTL = 24.hours
+
   attr_reader :user
 
   def initialize(user)
@@ -9,7 +11,7 @@ class UserHeatmapBuilder
   # @param expires_in [ActiveSupport::Duration] Cache expiration time
   # @param force [Boolean] Force cache refresh
   # @return [String] SVG markup
-  def build_cached(expires_in: 24.hours, force: false)
+  def build_cached(expires_in: CACHE_TTL, force: false)
     Rails.cache.fetch(cache_key, expires_in: expires_in, force: force) { build }
   end
 
