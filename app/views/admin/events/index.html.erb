@@ -115,8 +115,7 @@
     <div data-key="admin.events.pagination">
       <%= pagination_for @events,
                          collection_name: "events",
-                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
-                         template: "shared/pagination_tailwind" %>
+                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) } %>
     </div>
   <% else %>
     <div class="ff-card">
