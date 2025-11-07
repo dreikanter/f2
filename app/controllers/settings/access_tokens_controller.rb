@@ -4,31 +4,6 @@ class Settings::AccessTokensController < ApplicationController
     @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
   end
 
-  def new
-    @access_token = AccessToken.new(host: AccessToken::FREEFEED_HOSTS["production"])
-    authorize @access_token
-  end
-
-  def create
-    attributes = access_token_params.merge(user: Current.user)
-    @access_token = AccessToken.build_with_token(attributes)
-    authorize @access_token
-
-    if @access_token.save
-      @access_token.validate_token_async
-
-      # TBD: Perform validation in the token form to ensure the user is adding a valid token
-      # TBD: Only the redirect path should depend on user's state
-      if Current.user.onboarding?
-        redirect_to status_path, notice: "Access token '#{@access_token.name}' created successfully."
-      else
-        redirect_to settings_access_tokens_path, notice: "Access token '#{@access_token.name}' created successfully."
-      end
-    else
-      render :new, status: :unprocessable_content
-    end
-  end
-
   def edit
     @access_token = find_access_token
     authorize @access_token
