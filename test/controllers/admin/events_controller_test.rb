@@ -204,6 +204,22 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", count: 2
   end
 
+  test "should include filter params in pagination links" do
+    login_as(admin_user)
+
+    user1 = create(:user)
+
+    30.times { create(:event, type: "TypeA", user: user1) }
+    5.times { create(:event, type: "TypeB", user: user1) }
+
+    get admin_events_path, params: { filter: { type: ["TypeA"] } }
+
+    assert_response :success
+    assert_select "tbody tr", count: 25
+    assert_select "[data-key='admin.events.pagination'] a[href*='filter']", minimum: 1
+    assert_select "[data-key='admin.events.pagination'] a[href*='type']", minimum: 1
+  end
+
   private
 
   def login_as(user)

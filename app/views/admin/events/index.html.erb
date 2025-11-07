@@ -111,7 +111,7 @@
     </div>
 
     <div data-key="admin.events.pagination">
-      <%= render_pagination { |pagination, params| admin_events_path(pagination.merge(filter: params[:filter])) } %>
+      <%= render_pagination { |pagination, params| admin_events_path(pagination.merge(@filter.present? ? { filter: @filter.to_h } : {})) } %>
     </div>
   <% else %>
     <div class="ff-card">
