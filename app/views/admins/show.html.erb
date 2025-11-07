@@ -44,7 +44,9 @@
           <span>Background Jobs</span>
         </h2>
         <p class="ff-text text-slate-600">Monitor and manage background job queues</p>
-        <%= link_to "View Jobs", "/jobs", class: "ff-button ff-button--compact" %>
+        <%= link_to "/jobs", class: "ff-button ff-button--compact", target: "_blank", rel: "noopener noreferrer" do %>
+          View Jobs <%= icon("box-arrow-up-right", css_class: "ms-3") %>
+        <% end %>
       </div>
     </div>
 
@@ -56,7 +58,9 @@
             <span>Sent Emails</span>
           </h2>
           <p class="ff-text text-slate-600">Review emails captured in development</p>
-          <%= link_to "View Sent Emails", development_sent_emails_path, class: "ff-button ff-button--compact" %>
+          <%= link_to development_sent_emails_path, class: "ff-button ff-button--compact", target: "_blank", rel: "noopener noreferrer" do %>
+            View Sent Emails <%= icon("box-arrow-up-right", css_class: "ms-3") %>
+          <% end %>
         </div>
       </div>
     <% end %>
