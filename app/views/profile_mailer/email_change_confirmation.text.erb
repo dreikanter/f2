@@ -1,13 +1,13 @@
-Confirm your new email address
+Hi,
 
-Hello,
-
-You requested to change your email address to <%= @new_email %>.
+You requested to change your email address to <%= @new_email %>. Click the link below to confirm:
 
 <%= @confirmation_url %>
 
-This link will expire in 24 hours for security reasons.
+This link will expire in <%= distance_of_time_in_words(Time.current, User::EMAIL_CONFIRMATION_TTL.from_now) %> for security reasons.
 
-If you didn't request this change, please ignore this email.
+If you didn't request this change, you can safely ignore this email. Your email address won't change.
 
-Thanks!
+--
+Feeder
+<%= root_url %>

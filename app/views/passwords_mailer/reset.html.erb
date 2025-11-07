@@ -1,4 +1,14 @@
+<p>Hi,</p>
+
+<p>Someone requested a password reset for your account. If that was you, click the link below to set a new password:</p>
+
+<p><%= link_to "Reset your password", edit_password_url(@user.password_reset_token) %></p>
+
+<p>This link will expire in <%= distance_of_time_in_words(Time.current, User::PASSWORD_RESET_TTL.from_now) %> for security reasons.</p>
+
+<p>If you didn't request this, you can safely ignore this email. Your password won't change.</p>
+
 <p>
-  You can reset your password within the next 15 minutes on
-  <%= link_to "this password reset page", edit_password_url(@user.password_reset_token) %>.
+  <strong>Feeder</strong><br>
+  <%= link_to root_url, root_url %>
 </p>

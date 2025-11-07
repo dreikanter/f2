@@ -1,15 +1,16 @@
-<h2>Confirm your email address</h2>
+<p>Hi,</p>
 
-<p>Hello,</p>
+<p>Thanks for signing up! Click the link below to confirm your email and activate your account:</p>
 
-<p>Thanks for signing up! Confirm your email to activate your account:</p>
+<p><%= link_to "Confirm your email", @confirmation_url %></p>
 
-<p><%= link_to "Confirm email address", @confirmation_url %></p>
+<p>This link will expire in <%= distance_of_time_in_words(Time.current, User::EMAIL_CONFIRMATION_TTL.from_now) %> for security reasons.</p>
 
-<p>This link will expire in 24 hours for security reasons.</p>
+<p>Your email will be used for password recovery and optional notifications. No newsletters or marketing nonsense. You can change it anytime in your account settings.</p>
 
-<p>Your email will be used for password recovery and optional notifications. No newsletter or other marketing nonsense. You can change this email in account settings any time.</p>
+<p>If you didn't create this account, you can safely ignore this email.</p>
 
-<p>If you didn't create this account, please ignore this email.</p>
-
-<p>Thanks!</p>
+<p>
+  <strong>Feeder</strong><br>
+  <%= link_to root_url, root_url %>
+</p>
