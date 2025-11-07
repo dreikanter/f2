@@ -4,7 +4,7 @@
 
 <p><%= link_to "Reset your password", edit_password_url(@user.password_reset_token) %></p>
 
-<p>This link will expire in <%= distance_of_time_in_words(User::PASSWORD_RESET_TTL) %> for security reasons.</p>
+<p>This link will expire in <%= distance_of_time_in_words(Time.current, User::PASSWORD_RESET_TTL.from_now) %> for security reasons.</p>
 
 <p>If you didn't request this, you can safely ignore this email. Your password won't change.</p>
 

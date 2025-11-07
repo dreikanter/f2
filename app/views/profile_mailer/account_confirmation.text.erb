@@ -4,7 +4,7 @@ Thanks for signing up! Click the link below to confirm your email and activate y
 
 <%= @confirmation_url %>
 
-This link will expire in <%= distance_of_time_in_words(User::EMAIL_CONFIRMATION_TTL) %> for security reasons.
+This link will expire in <%= distance_of_time_in_words(Time.current, User::EMAIL_CONFIRMATION_TTL.from_now) %> for security reasons.
 
 Your email will be used for password recovery and optional notifications. No newsletters or marketing nonsense. You can change it anytime in your account settings.
 

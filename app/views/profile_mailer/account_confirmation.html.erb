@@ -4,7 +4,7 @@
 
 <p><%= link_to "Confirm your email", @confirmation_url %></p>
 
-<p>This link will expire in <%= distance_of_time_in_words(User::EMAIL_CONFIRMATION_TTL) %> for security reasons.</p>
+<p>This link will expire in <%= distance_of_time_in_words(Time.current, User::EMAIL_CONFIRMATION_TTL.from_now) %> for security reasons.</p>
 
 <p>Your email will be used for password recovery and optional notifications. No newsletters or marketing nonsense. You can change it anytime in your account settings.</p>
 
