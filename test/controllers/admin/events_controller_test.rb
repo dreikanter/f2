@@ -65,16 +65,12 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_id%5D=#{subject_user.id}']", text: "User"
   end
 
-  # TBD: Reduce the amount of test records by changing page size
   test "should paginate events" do
     login_as(admin_user)
 
-    # Create 30 events (more than per_page of 25)
-    30.times do |i|
-      create(:event, type: "Event#{i}")
-    end
+    4.times { |i| create(:event, type: "Event#{i}") }
 
-    get admin_events_path
+    get admin_events_path, params: { per_page: 3 }
 
     assert_response :success
     assert_select '[data-key="admin.events.table"]'
@@ -82,7 +78,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="admin.events.timestamp"]', minimum: 1
     assert_select '[data-key="admin.events.level"]', text: "INFO", minimum: 1
     assert_select "[data-key=\"admin.events.pagination\"]"
-    assert_select "tbody tr", count: 25
+    assert_select "tbody tr", count: 3
   end
 
   test "should show empty state when no events exist" do
@@ -209,13 +205,13 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     user1 = create(:user)
 
-    30.times { create(:event, type: "TypeA", user: user1) }
-    5.times { create(:event, type: "TypeB", user: user1) }
+    4.times { create(:event, type: "TypeA", user: user1) }
+    2.times { create(:event, type: "TypeB", user: user1) }
 
-    get admin_events_path, params: { filter: { type: ["TypeA"] } }
+    get admin_events_path, params: { filter: { type: ["TypeA"] }, per_page: 3 }
 
     assert_response :success
-    assert_select "tbody tr", count: 25
+    assert_select "tbody tr", count: 3
     assert_select "[data-key='admin.events.pagination'] a[href*='filter']", minimum: 1
     assert_select "[data-key='admin.events.pagination'] a[href*='type']", minimum: 1
   end

@@ -35,9 +35,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should render tailwind pagination controls" do
     sign_in_as(user)
-    create_list(:feed, 26, user: user)
+    create_list(:feed, 4, user: user)
 
-    get feeds_url
+    get feeds_url, params: { per_page: 3 }
 
     assert_response :success
     assert_select "nav[aria-label='Feeds pagination']"
