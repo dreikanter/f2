@@ -1,13 +1,14 @@
-<h2>Confirm your new email address</h2>
+<p>Hi,</p>
 
-<p>Hello,</p>
+<p>You requested to change your email address to <strong><%= @new_email %></strong>. Click the link below to confirm:</p>
 
-<p>You requested to change your email address to <strong><%= @new_email %></strong>.</p>
-
-<p><%= link_to "Confirm new email address", @confirmation_url %></p>
+<p><%= link_to "Confirm new email", @confirmation_url %></p>
 
 <p>This link will expire in 24 hours for security reasons.</p>
 
-<p>If you didn't request this change, please ignore this email.</p>
+<p>If you didn't request this change, you can safely ignore this email. Your email address won't change.</p>
 
-<p>Thanks!</p>
+<p>
+  <strong>Feeder</strong><br>
+  <%= link_to root_url, root_url %>
+</p>
