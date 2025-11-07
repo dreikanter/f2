@@ -7,9 +7,10 @@ class UserHeatmapBuilder
 
   # Generates and caches the heatmap SVG
   # @param expires_in [ActiveSupport::Duration] Cache expiration time
+  # @param force [Boolean] Force cache refresh
   # @return [String] SVG markup
-  def build_cached(expires_in: 24.hours)
-    Rails.cache.fetch(cache_key, expires_in: expires_in) { build }
+  def build_cached(expires_in: 24.hours, force: false)
+    Rails.cache.fetch(cache_key, expires_in: expires_in, force: force) { build }
   end
 
   # Generates the heatmap SVG without caching
