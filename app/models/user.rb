@@ -125,8 +125,8 @@ class User < ApplicationRecord
   # Returns daily post counts for the last year, formatted for heatmap rendering
   # @return [Hash<Date, Integer>] hash mapping dates to post counts
   def posts_heatmap_data
-    start_date = 1.year.ago.to_date
-    end_date = Date.current
+    start_date = 1.year.ago.beginning_of_month
+    end_date = Date.current.end_of_month
 
     FeedMetric
       .for_user(self)
