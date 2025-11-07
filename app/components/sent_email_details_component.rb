@@ -15,22 +15,22 @@ class SentEmailDetailsComponent < ViewComponent::Base
     ListGroupComponent.new.tap do |list|
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Message ID",
-        value: helpers.content_tag(:code, email[:message_id], class: "text-xs break-all")
+        value: helpers.content_tag(:code, email[:message_id], class: "break-all")
       ))
 
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "From",
-        value: helpers.content_tag(:code, email[:from], class: "text-xs break-words")
+        value: helpers.content_tag(:code, email[:from], class: "break-words")
       ))
 
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "To",
-        value: helpers.content_tag(:code, email[:to], class: "text-xs break-words")
+        value: helpers.content_tag(:code, email[:to], class: "break-words")
       ))
 
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Date",
-        value: helpers.content_tag(:span, email[:date], class: "text-sm text-slate-700")
+        value: helpers.datetime_with_duration_tag(email[:date])
       ))
     end
   end
