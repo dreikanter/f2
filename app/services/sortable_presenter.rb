@@ -115,7 +115,7 @@ class SortablePresenter
   # @param direction [String]
   # @return [String]
   def icon_for(direction)
-    direction == "asc" ? "arrow-up-short" : "arrow-down-short"
+    direction == "asc" ? "arrow-up" : "arrow-down"
   end
 
   # Looks up the configuration hash for a given field.
