@@ -4,7 +4,7 @@
 
 <p><%= link_to "Confirm new email", @confirmation_url %></p>
 
-<p>This link will expire in 24 hours for security reasons.</p>
+<p>This link will expire in <%= distance_of_time_in_words(User::EMAIL_CONFIRMATION_TTL) %> for security reasons.</p>
 
 <p>If you didn't request this change, you can safely ignore this email. Your email address won't change.</p>
 
