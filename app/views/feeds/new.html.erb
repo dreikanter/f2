@@ -1,6 +1,11 @@
-<div class="row">
-  <div class="col-12">
-    <%= page_header "Create New Feed" %>
-    <%= render 'new_form', feed: @feed %>
+<% content_for :title, "New Feed" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "New Feed") %>
+
+  <div class="ff-card">
+    <div class="ff-card__body">
+      <p class="ff-text">Feed creation form coming soon...</p>
+    </div>
   </div>
 </div>

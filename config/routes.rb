@@ -51,10 +51,7 @@ Rails.application.routes.draw do
     resource :password_update, only: [:edit, :update], controller: "settings/password_updates"
     resources :email_confirmations, only: :show, param: :token, controller: "settings/email_confirmations"
 
-    resources :access_tokens, controller: "settings/access_tokens" do
-      resource :validation, only: [:show, :create], controller: "settings/access_token_validations"
-      resources :groups, only: :index, controller: "settings/access_token_groups"
-    end
+    resources :access_tokens, controller: "settings/access_tokens"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

@@ -1,18 +1,11 @@
-<% content_for :title, "Create New Token" %>
+<% content_for :title, "New Access Token" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Create New Token") do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Back to Access Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: "New Access Token") %>
 
-  <div class="max-w-3xl">
-    <%= render "form",
-               access_token: @access_token,
-               token_label: "FreeFeed Access Token",
-               token_placeholder: "Paste your FreeFeed access token here",
-               token_value: @access_token.token,
-               submit_text: "Create Token" %>
+  <div class="ff-card">
+    <div class="ff-card__body">
+      <p class="ff-text">Access token creation form coming soon...</p>
+    </div>
   </div>
 </div>
