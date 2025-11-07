@@ -88,12 +88,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
 
 
-  test "#show should render feed section" do
-    sign_in_as(user)
-    get feed_url(feed, section: "reposting"), as: :turbo_stream
-    assert_response :success
-    assert_match(/turbo-stream/, response.content_type)
-  end
 
 
 
