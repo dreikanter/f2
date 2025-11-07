@@ -51,7 +51,9 @@
       </table>
     </div>
 
-    <%= pagination(->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) }) %>
+    <%= pagination do |pagination_params, params|
+      admin_users_path(pagination_params)
+    end %>
   <% else %>
     <div class="flex flex-col items-center justify-center py-12">
       <p class="text-slate-500">No users found</p>

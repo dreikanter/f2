@@ -113,7 +113,9 @@
     </div>
 
     <div data-key="admin.events.pagination">
-      <%= pagination(->(page) { admin_events_path(base_pagination_params.merge(page: page)) }) %>
+      <%= pagination do |pagination_params, params|
+        admin_events_path(pagination_params.merge(filter: params[:filter]))
+      end %>
     </div>
   <% else %>
     <div class="ff-card">

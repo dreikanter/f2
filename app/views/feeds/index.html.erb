@@ -65,7 +65,9 @@
   <% if @feeds.any? %>
     <%= render FeedsListComponent.new(feeds: @feeds) %>
 
-    <%= pagination(->(page) { feeds_path(page: page, sort: params[:sort], direction: params[:direction]) }) %>
+    <%= pagination do |pagination_params, params|
+      feeds_path(pagination_params)
+    end %>
   <% else %>
     <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600">
       <h2 class="text-2xl font-semibold text-slate-900">You don't have any feeds yet</h2>
