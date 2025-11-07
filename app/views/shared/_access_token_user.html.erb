@@ -1,4 +1,4 @@
-<%- access_token = local_assigns.fetch(:access_token) -%>
+<%# locals: (access_token:) %>
 <% if access_token.owner.present? %>
   <span class="text-sm text-slate-500"><%= access_token.owner %></span>
 <% else %>
