@@ -63,7 +63,5 @@
              show_feed: @feed.blank?,
              empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
 
-  <%= pagination do |pagination_params, params|
-    posts_path(pagination_params.merge(feed_id: params[:feed_id]))
-  end %>
+  <%= render_pagination { |pagination, params| posts_path(pagination.merge(feed_id: params[:feed_id])) } %>
 </div>

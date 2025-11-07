@@ -1,14 +1,14 @@
 module PaginationHelper
-  def pagination(&path_helper)
+  def render_pagination(&path_helper)
     # Wrap the path helper to pass pagination params and current request params
     wrapped_path_helper = lambda do |page|
-      pagination_params = { page: page }
+      pagination = { page: page }
 
       # Include common pagination params (sort, direction) if present
-      pagination_params[:sort] = params[:sort] if params[:sort].present?
-      pagination_params[:direction] = params[:direction] if params[:direction].present?
+      pagination[:sort] = params[:sort] if params[:sort].present?
+      pagination[:direction] = params[:direction] if params[:direction].present?
 
-      path_helper.call(pagination_params, params)
+      path_helper.call(pagination, params)
     end
 
     render PaginationComponent.new(
