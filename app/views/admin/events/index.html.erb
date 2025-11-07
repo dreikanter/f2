@@ -1,6 +1,4 @@
 <% content_for :title, "Events" %>
-<% base_pagination_params = {} %>
-<% base_pagination_params[:filter] = @filter.to_h if @filter.present? %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Events") do |header| %>

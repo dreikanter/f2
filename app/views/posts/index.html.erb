@@ -1,6 +1,5 @@
 <% page_title = @feed ? "#{@feed.name} posts" : "Posts" %>
 <% content_for :title, page_title %>
-<% base_pagination_params = params.permit(:feed_id, :sort, :direction).to_unsafe_h.symbolize_keys %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: page_title) do |header| %>
