@@ -62,7 +62,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_users_path
 
     assert_response :success
-    assert_select ".pagination"
+    assert_select "nav[aria-label='Users pagination']"
     assert_select "tbody tr", count: 25
   end
 

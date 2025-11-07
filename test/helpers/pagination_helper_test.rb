@@ -68,8 +68,8 @@ class PaginationHelperTest < ActionView::TestCase
       assert_equal "shared/pagination", actual_params[:partial]
       assert_equal "Events", actual_params[:pagination_label]
       assert_equal path_helper, actual_params[:pagination_path]
-      assert_equal 3, actual_params[:collection_size]
-      assert_equal "events", actual_params[:collection_name]
+      assert_equal 1, actual_params[:pagination_current_page]
+      assert_equal 1, actual_params[:pagination_total_pages]
     end
   end
 
