@@ -16,17 +16,19 @@ class UserHeatmapBuilderTest < ActiveSupport::TestCase
 
     builder = UserHeatmapBuilder.new(user)
     svg = builder.build
+    doc = Nokogiri::XML(svg)
 
-    assert_includes svg, "<svg"
-    assert_includes svg, "</svg>"
+    assert_empty doc.errors, "SVG should be well-formed XML"
+    assert_equal 1, doc.css("svg").size, "Should have exactly one <svg> element"
   end
 
   test "#build should handle empty data" do
     builder = UserHeatmapBuilder.new(user)
     svg = builder.build
+    doc = Nokogiri::XML(svg)
 
-    assert_includes svg, "<svg"
-    assert_includes svg, "</svg>"
+    assert_empty doc.errors, "SVG should be well-formed XML"
+    assert_equal 1, doc.css("svg").size, "Should have exactly one <svg> element"
   end
 
   test "#build_cached should cache the result" do
@@ -51,8 +53,8 @@ class UserHeatmapBuilderTest < ActiveSupport::TestCase
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
 
     ttl = 1.hour
-    builder = UserHeatmapBuilder.new(user, expires_in: ttl)
-    builder.build_cached
+    builder = UserHeatmapBuilder.new(user)
+    builder.build_cached(expires_in: ttl)
 
     cache_key = "user:#{user.id}:heatmap_svg:#{Date.current}"
     assert_not_nil Rails.cache.read(cache_key), "Cache should exist initially"
