@@ -2,10 +2,8 @@
 
 <div class="space-y-8">
   <div class="flex items-center justify-between">
-    <h1 class="ff-h1 text-3xl" data-key="development.emails.subject"><%= h @email[:subject] %></h1>
-    <%= link_to "Back to all emails",
-                development_sent_emails_path,
-                class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <h1 class="ff-h1" data-key="development.emails.subject"><%= h @email[:subject] %></h1>
+    <%= link_to "Back to all emails", development_sent_emails_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
   </div>
 
   <%= render SentEmailDetailsComponent.new(email: @email) %>
