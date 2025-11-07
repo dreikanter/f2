@@ -174,9 +174,9 @@ class FeedRefreshWorkflow
       invalid_posts_count: rejected_posts_count
     )
 
-    # Warm up heatmap cache when new posts are imported
+    # Force refresh heatmap cache when new posts are imported
     if posts.any?
-      UserHeatmapBuilder.new(feed.user).build_cached
+      UserHeatmapBuilder.new(feed.user).build_cached(force: true)
     end
 
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
