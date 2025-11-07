@@ -113,9 +113,11 @@
     </div>
 
     <div data-key="admin.events.pagination">
-      <%= pagination_for @events,
-                         collection_name: "events",
-                         path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) } %>
+      <%= render PaginationComponent.new(
+                   collection_name: controller_name,
+                   path_helper: ->(page) { admin_events_path(base_pagination_params.merge(page: page)) },
+                   current_page: pagination_current_page,
+                   total_pages: pagination_total_pages) %>
     </div>
   <% else %>
     <div class="ff-card">
