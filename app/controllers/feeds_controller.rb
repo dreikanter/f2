@@ -41,11 +41,6 @@ class FeedsController < ApplicationController
     @feeds = paginate_scope
   end
 
-  def new
-    @feed = Feed.new
-    authorize @feed
-  end
-
   def show
     @feed = load_feed
     authorize @feed
@@ -70,18 +65,6 @@ class FeedsController < ApplicationController
       )
     else
       render turbo_stream: turbo_stream.update("edit-form-container", "")
-    end
-  end
-
-  def create
-    @feed = Feed.new(feed_params)
-    @feed.user = Current.user
-    authorize @feed
-
-    if @feed.save
-      handle_successful_feed_creation
-    else
-      render :new, status: :unprocessable_content
     end
   end
 
@@ -201,18 +184,5 @@ class FeedsController < ApplicationController
       :access_token_id,
       :target_group
     )
-  end
-
-  def handle_successful_feed_creation
-    if Current.user.onboarding?
-      Current.user.update!(state: :active)
-      redirect_to status_path, notice: "Feed was successfully created. Your onboarding is complete, and the status page will now display your feeds status."
-    else
-      notice_message = "Feed was successfully created."
-      if @feed.access_token&.active?
-        notice_message += " You can now enable it to start processing items."
-      end
-      redirect_to @feed, notice: notice_message
-    end
   end
 end
