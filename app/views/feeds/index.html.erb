@@ -65,7 +65,7 @@
   <% if @feeds.any? %>
     <%= render FeedsListComponent.new(feeds: @feeds) %>
 
-    <%= pagination do |pagination_params, params|
+    <%= pagination do |pagination_params|
       feeds_path(pagination_params)
     end %>
   <% else %>
