@@ -16,6 +16,8 @@
         background-color: #fff;
         margin: 0;
         padding: 16px;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
       }
       p {
         margin: 0 0 16px 0;
@@ -26,6 +28,15 @@
       }
       strong, b {
         font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #000 !important;
+          color: #fff !important;
+        }
+        a {
+          color: #5c9eff !important;
+        }
       }
     </style>
   </head>
