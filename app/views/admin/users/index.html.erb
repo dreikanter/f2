@@ -51,11 +51,7 @@
       </table>
     </div>
 
-    <%= render PaginationComponent.new(
-                 collection_name: controller_name,
-                 path_helper: ->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) },
-                 current_page: pagination_current_page,
-                 total_pages: pagination_total_pages) %>
+    <%= pagination(->(page) { admin_users_path(page: page, sort: params[:sort], direction: params[:direction]) }) %>
   <% else %>
     <div class="flex flex-col items-center justify-center py-12">
       <p class="text-slate-500">No users found</p>

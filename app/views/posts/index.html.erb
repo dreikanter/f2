@@ -64,9 +64,5 @@
              show_feed: @feed.blank?,
              empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
 
-  <%= render PaginationComponent.new(
-               collection_name: controller_name,
-               path_helper: ->(page) { posts_path(base_pagination_params.merge(page: page)) },
-               current_page: pagination_current_page,
-               total_pages: pagination_total_pages) %>
+  <%= pagination(->(page) { posts_path(base_pagination_params.merge(page: page)) }) %>
 </div>
