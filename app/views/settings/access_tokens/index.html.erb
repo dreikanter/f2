@@ -12,9 +12,6 @@
     <% header.with_action_button do %>
       <%= link_to "Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
-    <% header.with_action_button do %>
-      <%= link_to "New Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
-    <% end %>
   <% end %>
 
   <% if @access_tokens.any? %>
@@ -56,13 +53,6 @@
               </td>
               <td class="text-right">
                 <div class="flex justify-end gap-3 text-sm">
-                  <%= link_to "Validate",
-                              settings_access_token_validation_path(access_token),
-                              class: "ff-link",
-                              data: { turbo_method: :post } %>
-                  <%= link_to "Edit",
-                              edit_settings_access_token_path(access_token),
-                              class: "ff-link" %>
                   <%= link_to "Delete",
                               "#",
                               class: class_names("ff-link", "text-red-600", "hover:text-red-500"),
@@ -93,8 +83,7 @@
     <div class="ff-card">
       <div class="ff-card__body text-center">
         <h2 class="ff-h2 mb-2">No access tokens yet</h2>
-        <p class="ff-text mb-6">Add a FreeFeed API access token to enable content reposting.</p>
-        <%= link_to "Create New Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
+        <p class="ff-text">You'll be able to add FreeFeed API access tokens once the new token creation interface is ready.</p>
       </div>
     </div>
   <% end %>

@@ -22,18 +22,13 @@
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
       <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
-      <p class="ff-text">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
-      <div>
-        <%= link_to "Add FreeFeed token", new_settings_access_token_path, class: "ff-button" %>
-      </div>
+      <p class="ff-text">You'll be able to add FreeFeed access tokens once the new token creation interface is ready.</p>
     </section>
   <% elsif !has_feeds %>
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
-      <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
-      <div>
-        <%= link_to "Add feed", new_feed_path, class: "ff-button" %>
-      </div>
+      <p class="ff-text">Great! You've added a FreeFeed access token.</p>
+      <p class="ff-text">You'll be able to create feeds once the new feed creation interface is ready.</p>
     </section>
   <% else %>
     <h1 class="ff-h1">Status</h1>
