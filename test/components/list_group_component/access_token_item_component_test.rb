@@ -38,8 +38,8 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     access_token = create(:access_token, :active)
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
-
     icon = result.css("i.bi-check-circle").first
+
     assert_not_nil icon
   end
 
@@ -47,8 +47,8 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     access_token = create(:access_token, :inactive)
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
-
     icon = result.css("i.bi-x-circle").first
+
     assert_not_nil icon
   end
 
@@ -56,16 +56,16 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     access_token = create(:access_token)
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
-
     icon = result.css("i.bi-clock").first
+
     assert_not_nil icon
   end
 
   test "#render should link to access token show page" do
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
-
     link = result.css("a").first
+
     assert_not_nil link
     assert_includes link.attributes["href"].value, "/settings/access_tokens/#{access_token.id}"
   end
