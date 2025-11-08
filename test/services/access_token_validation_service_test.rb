@@ -32,7 +32,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should update name if it's a default name" do
-    access_token.update!(name: "New token for freefeed.net")
+    access_token.update!(name: "Token for freefeed.net (2025-01-08 12:34:56)")
     user_info = { username: "testuser", screen_name: "Test User" }
     managed_groups = []
 
@@ -44,7 +44,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       service.call
     end
 
-    assert_equal "testuser at #{access_token.host_domain}", access_token.reload.name
+    assert_equal "testuser@#{access_token.host_domain}", access_token.reload.name
     mock_client.verify
   end
 
