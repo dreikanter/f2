@@ -3,12 +3,6 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
-    <% if @access_tokens.inactive.exists? %>
-      <% header.with_context_paragraph do %>
-        <strong class="font-semibold">Heads up:</strong>
-        Inactive tokens automatically disable associated feeds. Replace inactive tokens to re-enable your feeds.
-      <% end %>
-    <% end %>
     <% header.with_action_button do %>
       <%= link_to "Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
