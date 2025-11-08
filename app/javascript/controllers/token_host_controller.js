@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["hostSelect", "link"]
+  static targets = ["hostSelect", "link", "linkText"]
 
   static values = {
     hosts: Object
@@ -21,7 +21,9 @@ export default class extends Controller {
 
     if (hostConfig) {
       this.linkTarget.href = hostConfig.token_url
-      this.linkTarget.textContent = `${hostConfig.domain} settings`
+      if (this.hasLinkTextTarget) {
+        this.linkTextTarget.textContent = `${hostConfig.domain} settings`
+      }
     }
   }
 }
