@@ -23,7 +23,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
 
-    assert_includes result.text, "Last used: Never"
+    assert_includes result.text, "Used: Never"
   end
 
   test "#render should display last used time when present" do
@@ -31,7 +31,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
 
-    assert_includes result.text, "Last used: 1h"
+    assert_includes result.text, "Used: 1h"
   end
 
   test "#render should display active status icon" do
