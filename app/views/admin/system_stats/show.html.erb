@@ -9,6 +9,7 @@
   other_used_percentage = @disk_usage[:other_used_percentage]
   free_percentage = @disk_usage[:free_percentage]
 
+  # TBD: Extract component
   table_usage_list = ListGroupComponent.new.tap do |list|
     @disk_usage[:table_usage].each do |row|
       list.with_item(ListGroupComponent::StatItemComponent.new(
@@ -18,6 +19,7 @@
     end
   end
 
+  # TBD: Extract component
   autovacuum_settings_list = ListGroupComponent.new.tap do |list|
     @disk_usage[:autovacuum_settings].each do |row|
       list.with_item(ListGroupComponent::StatItemComponent.new(

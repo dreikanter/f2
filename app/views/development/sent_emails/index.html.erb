@@ -18,6 +18,7 @@
       No emails captured yet. Emails sent in development mode will appear here.
     </div>
   <% else %>
+    <%# TBD: Extract to a component %>
     <% list = ListGroupComponent.new %>
     <% @emails.each do |email| %>
       <% subject = email[:subject].presence || "(no subject)" %>
