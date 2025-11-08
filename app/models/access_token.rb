@@ -88,7 +88,8 @@ class AccessToken < ApplicationRecord
   def set_default_name
     return if name.present?
 
-    self.name = "New token for #{host_domain}"
+    timestamp = Time.current.strftime("%Y-%m-%d %H:%M:%S")
+    self.name = "Token for #{host_domain} (#{timestamp})"
   end
 
   def disable_associated_feeds
