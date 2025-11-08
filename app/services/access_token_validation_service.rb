@@ -61,13 +61,13 @@ class AccessTokenValidationService
       expires_at: AccessTokenDetail::TTL.from_now
     )
   rescue ActiveRecord::RecordNotUnique
-    # Another job created the detail concurrently, reload and update
-    access_token.reload
-
-    access_token.access_token_detail.update!(
-      data: details_data,
-      expires_at: AccessTokenDetail::TTL.from_now
-    )
+    # Another job created the detail concurrently, lock and update
+    access_token.with_lock do
+      access_token.access_token_detail.update!(
+        data: details_data,
+        expires_at: AccessTokenDetail::TTL.from_now
+      )
+    end
   end
 
   def disable_token_and_feeds
