@@ -29,17 +29,16 @@
                         rel: "noopener",
                         class: "ff-link",
                         data: { token_host_target: "link" } do %>
-              <%= icon("box-arrow-up-right", css_class: "inline h-4 w-4") %>
-              <span data-token-host-target="linkText"><%= AccessToken::FREEFEED_HOSTS[:production][:domain] %> settings</span>
+              <span data-token-host-target="linkText">FreeFeed settings</span>
             <% end %>
           </p>
         </div>
 
-        <div class="ff-text space-y-2">
-          <p class="font-semibold">Why Feeder needs these permissions:</p>
-          <ul class="list-disc list-inside space-y-1 text-sm">
-            <li><strong>read-my-info:</strong> Allows Feeder to verify your identity and display which FreeFeed account is connected to this token.</li>
-            <li><strong>manage-posts:</strong> Allows Feeder to create new posts and reposts on your behalf when publishing feed content to FreeFeed.</li>
+        <div class="ff-alert ff-alert--secondary ff-text space-y-2">
+          <p>Why Feeder needs these permissions:</p>
+          <ul class="list-none space-y-2">
+            <li><strong><code>read-my-info</code></strong> - Allows Feeder to verify your identity and display which FreeFeed account is connected to this token.</li>
+            <li><strong><code>manage-posts</code></strong> - Allows Feeder to create new posts and reposts on your behalf when publishing feed content to FreeFeed.</li>
           </ul>
         </div>
 

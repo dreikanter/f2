@@ -38,6 +38,10 @@
     @apply border-amber-200 bg-amber-100 text-amber-800;
   }
 
+  .ff-alert--secondary {
+    @apply border-sky-100 bg-slate-100;
+  }
+
   .ff-form-group {
     @apply space-y-2;
   }
