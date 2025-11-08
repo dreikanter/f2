@@ -59,7 +59,7 @@
                               class: "ff-form-input",
                               placeholder: "e.g., My FreeFeed Token",
                               autocomplete: "off" %>
-          <p class="mt-2 text-sm text-slate-500">
+          <p class="ff-form-help">
             Give this token a memorable name. If left blank, a default name will be used.
           </p>
           <% if @access_token.errors[:name].any? %>
