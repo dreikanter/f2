@@ -25,11 +25,15 @@ class Settings::AccessTokensController < ApplicationController
 
     authorize @access_token
 
-    if @access_token.save
-      @access_token.validate_token_async
-      redirect_to settings_access_token_path(@access_token), status: :see_other
-    else
-      render :new, status: :unprocessable_entity
+    respond_to do |format|
+      if @access_token.save
+        @access_token.validate_token_async
+        format.html { redirect_to settings_access_token_path(@access_token), status: :see_other }
+        format.turbo_stream { redirect_to settings_access_token_path(@access_token), status: :see_other }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.turbo_stream { render :new, status: :unprocessable_entity }
+      end
     end
   end
 

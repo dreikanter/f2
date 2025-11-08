@@ -99,6 +99,26 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to settings_access_token_path(AccessToken.last)
   end
 
+  test "#create should redirect even when requesting turbo_stream format" do
+    sign_in_as user
+
+    assert_difference("AccessToken.count", 1) do
+      post settings_access_tokens_path,
+           params: {
+             access_token: {
+               name: "Test Token",
+               token: "test_token_123",
+               host: AccessToken::FREEFEED_HOSTS[:production][:url]
+             }
+           },
+           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    # Should redirect to show page, not return turbo_stream
+    assert_response :see_other
+    assert_redirected_to settings_access_token_path(AccessToken.last)
+  end
+
   test "#create should render new form on validation error" do
     sign_in_as user
 
