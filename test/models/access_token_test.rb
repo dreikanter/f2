@@ -272,4 +272,11 @@ class AccessTokenTest < ActiveSupport::TestCase
     token = build(:access_token, host: "https://custom.example.com", owner: "john")
     assert_equal "john at custom.example.com", token.username_with_host
   end
+
+  test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
+    AccessToken::FREEFEED_HOSTS.each do |key, config|
+      token = build(:access_token, host: config[:url])
+      assert token.valid?, "#{key} host URL (#{config[:url]}) should be valid"
+    end
+  end
 end
