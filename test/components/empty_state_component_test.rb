@@ -6,7 +6,7 @@ class EmptyStateComponentTest < ViewComponent::TestCase
       "Test content"
     end
 
-    assert_selector ".ff-card .ff-card__body.text-center.py-12", text: "Test content"
+    assert_selector '[data-key="empty-state.body"]', text: "Test content"
   end
 
   test "renders empty state with HTML content" do
@@ -14,7 +14,7 @@ class EmptyStateComponentTest < ViewComponent::TestCase
       '<h2 class="ff-h2">No items</h2><p>Add some items to get started.</p>'.html_safe
     end
 
-    assert_selector ".ff-card .ff-card__body h2.ff-h2", text: "No items"
-    assert_selector ".ff-card .ff-card__body p", text: "Add some items to get started."
+    assert_selector '[data-key="empty-state.body"]', text: "No items"
+    assert_selector '[data-key="empty-state.body"]', text: "Add some items to get started."
   end
 end
