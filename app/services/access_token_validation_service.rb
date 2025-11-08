@@ -23,9 +23,14 @@ class AccessTokenValidationService
       access_token.update!(updates)
     end
 
-    # Fetch managed groups separately - failure here should not deactivate the token
-    managed_groups = fetch_managed_groups
-    cache_token_details(user_info, managed_groups)
+    # Cache token details - failures here should not deactivate the token
+    begin
+      managed_groups = fetch_managed_groups
+      cache_token_details(user_info, managed_groups)
+    rescue => e
+      Rails.logger.error("Failed to cache token details for access_token #{access_token.id}: #{e.class} - #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+    end
   rescue
     ActiveRecord::Base.transaction do
       disable_token_and_feeds

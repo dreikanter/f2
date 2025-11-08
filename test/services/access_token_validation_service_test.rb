@@ -215,4 +215,29 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert detail.data.key?("managed_groups")
     mock_client.verify
   end
+
+  test "#call should keep token active when cache_token_details fails" do
+    user_info = { username: "testuser", screen_name: "Test User" }
+
+    mock_client.expect(:whoami, user_info)
+    mock_client.expect(:managed_groups, [])
+
+    service = AccessTokenValidationService.new(access_token)
+
+    # Stub cache_token_details to raise an error
+    service.define_singleton_method(:cache_token_details) do |user_info, managed_groups|
+      raise ActiveRecord::RecordInvalid, "Validation failed"
+    end
+
+    service.stub(:freefeed_client, mock_client) do
+      service.call
+    end
+
+    # Token should still be active despite caching failure
+    assert_equal "active", access_token.reload.status
+    assert_equal "testuser", access_token.owner
+    # Detail should not exist since caching failed
+    assert_nil access_token.access_token_detail
+    mock_client.verify
+  end
 end
