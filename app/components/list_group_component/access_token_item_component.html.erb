@@ -1,0 +1,16 @@
+<li class="flex items-baseline gap-3 p-4" data-key="<%= @key %>">
+  <span class="inline-flex shrink-0 text-slate-500">
+    <%= status_icon %>
+  </span>
+  <div class="flex flex-1 flex-col gap-1">
+    <div class="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
+      <%= link_to username_with_host, settings_access_token_path(@access_token), class: "transition hover:text-slate-700 ff-focus-ring" %>
+      <span><%= @access_token.name %></span>
+    </div>
+    <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
+      <span>Created: <%= created_ago %></span>
+      <span class="text-slate-300" aria-hidden="true">&bull;</span>
+      <span>Last used: <%= last_used_text %></span>
+    </div>
+  </div>
+</li>
