@@ -60,6 +60,22 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "#show should respond to turbo_stream format" do
+    sign_in_as user
+    get settings_access_token_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+  end
+
+  test "#show turbo_stream should replace access-token-show div" do
+    sign_in_as user
+    get settings_access_token_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_match /turbo-stream.*action="replace".*target="access-token-show"/, response.body
+  end
+
   test "#new should render when authenticated" do
     sign_in_as user
     get new_settings_access_token_path
@@ -67,8 +83,68 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#create should be implemented" do
-    skip "TODO: Implement access token creation"
+  test "#create should redirect to show page on success" do
+    sign_in_as user
+
+    assert_difference("AccessToken.count", 1) do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_redirected_to settings_access_token_path(AccessToken.last)
+  end
+
+  test "#create should render new form on validation error" do
+    sign_in_as user
+
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "", # Invalid: empty token
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#create should reject invalid host URL format" do
+    sign_in_as user
+
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: "not-a-url"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#create should require authentication" do
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_redirected_to new_session_path
   end
 
   test "#edit should render for own token" do
