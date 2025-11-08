@@ -28,11 +28,12 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.pending?
   end
 
-  test "validates presence of name" do
-    token = build(:access_token, name: nil)
+  test "sets default name when name is blank" do
+    token = build(:access_token, name: nil, host: "https://freefeed.net")
 
-    assert_not token.valid?
-    assert token.errors.of_kind?(:name, :blank)
+    token.valid?
+
+    assert_equal "New token for freefeed.net", token.name
   end
 
   test "validates presence of token on create" do
@@ -236,5 +237,39 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal access_token, enabled_feed.access_token
     assert_equal access_token, another_disabled_feed.access_token
     assert_equal access_token, disabled_feed.access_token
+  end
+
+  test "#host_domain should return domain from FREEFEED_HOSTS for known hosts" do
+    token = build(:access_token, host: "https://freefeed.net")
+    assert_equal "freefeed.net", token.host_domain
+
+    token = build(:access_token, host: "https://candy.freefeed.net")
+    assert_equal "candy.freefeed.net", token.host_domain
+
+    token = build(:access_token, host: "https://beta.freefeed.net")
+    assert_equal "beta.freefeed.net", token.host_domain
+  end
+
+  test "#host_domain should parse domain from URL for unknown hosts" do
+    token = build(:access_token, host: "https://custom.example.com")
+    assert_equal "custom.example.com", token.host_domain
+
+    token = build(:access_token, host: "http://localhost:3000")
+    assert_equal "localhost", token.host_domain
+  end
+
+  test "#username_with_host should return username with domain" do
+    token = build(:access_token, host: "https://freefeed.net", owner: "testuser")
+    assert_equal "testuser at freefeed.net", token.username_with_host
+  end
+
+  test "#username_with_host should return nil when owner is not set" do
+    token = build(:access_token, host: "https://freefeed.net", owner: nil)
+    assert_nil token.username_with_host
+  end
+
+  test "#username_with_host should work with custom hosts" do
+    token = build(:access_token, host: "https://custom.example.com", owner: "john")
+    assert_equal "john at custom.example.com", token.username_with_host
   end
 end

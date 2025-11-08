@@ -19,9 +19,7 @@ class AccessTokenValidationService
 
         # Update name if it's the default name
         if access_token.name.start_with?("New token for")
-          host_config = AccessToken::FREEFEED_HOSTS.values.find { |c| c[:url] == access_token.host }
-          domain = host_config ? host_config[:domain] : URI.parse(access_token.host).host
-          updates[:name] = "#{user_info[:username]} at #{domain}"
+          updates[:name] = "#{user_info[:username]} at #{access_token.host_domain}"
         end
 
         access_token.update!(updates)

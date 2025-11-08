@@ -69,15 +69,24 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: token_value)
   end
 
+  def username_with_host
+    return nil unless owner.present?
+
+    domain = host_domain
+    "#{owner} at #{domain}"
+  end
+
+  def host_domain
+    host_config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
+    host_config ? host_config[:domain] : URI.parse(host).host
+  end
+
   private
 
   def set_default_name
     return if name.present?
 
-    host_config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
-    domain = host_config ? host_config[:domain] : URI.parse(host).host
-
-    self.name = "New token for #{domain}"
+    self.name = "New token for #{host_domain}"
   end
 
   def disable_associated_feeds
