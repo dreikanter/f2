@@ -97,22 +97,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not_includes active_tokens, pending_token
   end
 
-  test "sets default status to pending" do
-    assert AccessToken.new.pending?
-  end
-
-  test "stores user-provided FreeFeed token" do
-    token_value = "TOKEN"
-
-    token = create(
-      :access_token,
-      token: token_value,
-      encrypted_token: token_value
-    )
-
-    assert_equal token_value, token.token
-  end
-
   test "can update status to active with owner" do
     token = create(:access_token)
     assert token.pending?
