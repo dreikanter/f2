@@ -165,31 +165,31 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     mock_client.expect(:whoami, user_info)
     mock_client.expect(:managed_groups, managed_groups)
 
-    # Simulate another job creating the detail concurrently
     service = AccessTokenValidationService.new(access_token)
+    original_cache_method = service.method(:cache_token_details)
+
+    # Simulate concurrent creation by stubbing cache_token_details
+    service.define_singleton_method(:cache_token_details) do |user_info, managed_groups|
+      # Create the detail with different data to simulate concurrent job
+      AccessTokenDetail.create!(
+        access_token: access_token,
+        data: { user_info: { username: "concurrent" }, managed_groups: [] },
+        expires_at: AccessTokenDetail::TTL.from_now
+      )
+      # This will trigger RecordNotUnique in the rescue path
+      original_cache_method.call(user_info, managed_groups)
+    end
+
     service.stub(:freefeed_client, mock_client) do
-      # Stub build_access_token_detail to raise RecordNotUnique on first save
-      access_token.stub(:build_access_token_detail, -> {
-        detail = AccessTokenDetail.new(access_token: access_token)
-        detail.define_singleton_method(:update!) do |attrs|
-          # Create the detail to simulate concurrent creation
-          AccessTokenDetail.create!(
-            access_token: access_token,
-            data: { user_info: user_info, managed_groups: managed_groups },
-            expires_at: AccessTokenDetail::TTL.from_now
-          )
-          # Raise the uniqueness error
-          raise ActiveRecord::RecordNotUnique.new("duplicate key value")
-        end
-        detail
-      }) do
-        service.call
-      end
+      service.call
     end
 
     # Token should still be active despite the race condition
     assert_equal "active", access_token.reload.status
-    assert_not_nil access_token.access_token_detail
+    detail = access_token.access_token_detail
+    assert_not_nil detail
+    # Verify the detail was updated with correct data (not the concurrent job's data)
+    assert_equal "testuser", detail.data["user_info"]["username"]
     mock_client.verify
   end
 end
