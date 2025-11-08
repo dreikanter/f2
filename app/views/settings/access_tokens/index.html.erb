@@ -30,12 +30,10 @@
       <% end %>
     <% end %>
   <% else %>
-    <div class="ff-card">
-      <div class="ff-card__body text-center py-12">
-        <h2 class="ff-h2 mb-2 text-slate-500">No access tokens yet</h2>
-        <p class="ff-text mb-6 text-slate-500">Add a FreeFeed API access token to enable content reposting.</p>
-        <%= link_to "Create New Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
-      </div>
-    </div>
+    <%= render EmptyStateComponent.new do %>
+      <h2 class="ff-h2 mb-2 text-slate-500">No access tokens yet</h2>
+      <p class="ff-text mb-6 text-slate-500">Add a FreeFeed API access token to enable content reposting.</p>
+      <%= link_to "Create New Token", new_settings_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
+    <% end %>
   <% end %>
 </div>
