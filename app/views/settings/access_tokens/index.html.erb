@@ -1,16 +1,5 @@
 <% content_for :title, "Access Tokens" %>
 
-<%
-  access_tokens_list = ListGroupComponent.new.tap do |list|
-    @access_tokens.each do |access_token|
-      list.with_item(ListGroupComponent::AccessTokenItemComponent.new(
-        access_token: access_token,
-        key: "settings.access_tokens.#{access_token.id}"
-      ))
-    end
-  end
-%>
-
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
@@ -29,7 +18,7 @@
   <% end %>
 
   <% if @access_tokens.any? %>
-    <%= render(access_tokens_list) %>
+    <%= render access_tokens_list_component(access_tokens: @access_tokens) %>
 
     <% @access_tokens.each do |access_token| %>
       <%= render ConfirmationModalComponent.new(
