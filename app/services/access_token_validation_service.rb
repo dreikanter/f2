@@ -6,30 +6,28 @@ class AccessTokenValidationService
   end
 
   def call
-    begin
-      user_info = freefeed_client.whoami
-      managed_groups = freefeed_client.managed_groups
+    user_info = freefeed_client.whoami
+    managed_groups = freefeed_client.managed_groups
 
-      ActiveRecord::Base.transaction do
-        updates = {
-          status: :active,
-          owner: user_info[:username],
-          last_used_at: Time.current
-        }
+    ActiveRecord::Base.transaction do
+      updates = {
+        status: :active,
+        owner: user_info[:username],
+        last_used_at: Time.current
+      }
 
-        # Update name if it's the default name
-        if access_token.name.start_with?("New token for")
-          updates[:name] = "#{user_info[:username]} at #{access_token.host_domain}"
-        end
-
-        access_token.update!(updates)
-
-        cache_token_details(user_info, managed_groups)
+      # Update name if it's the default name
+      if access_token.name.start_with?("New token for")
+        updates[:name] = "#{user_info[:username]} at #{access_token.host_domain}"
       end
-    rescue
-      ActiveRecord::Base.transaction do
-        disable_token_and_feeds
-      end
+
+      access_token.update!(updates)
+
+      cache_token_details(user_info, managed_groups)
+    end
+  rescue
+    ActiveRecord::Base.transaction do
+      disable_token_and_feeds
     end
   end
 
