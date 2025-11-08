@@ -61,7 +61,7 @@ class AccessTokenValidationService
   end
 
   def disable_token_and_feeds
-    access_token.update!(status: :inactive)
+    access_token.update_columns(status: :inactive, updated_at: Time.current)
     access_token.feeds.enabled.update_all(state: :disabled)
   end
 end

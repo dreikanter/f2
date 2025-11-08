@@ -137,4 +137,24 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "disabled", feed2.reload.state
     assert_equal "disabled", feed3.reload.state
   end
+
+  test "#call should deactivate token when auto-generated name conflicts" do
+    access_token.update!(name: nil)
+
+    # Create another token with the name that would be auto-generated
+    user_info = { username: "testuser", screen_name: "Test User" }
+    conflicting_name = "#{user_info[:username]}@#{access_token.host_domain}"
+    create(:access_token, user: user, name: conflicting_name)
+
+    mock_client.expect(:whoami, user_info)
+    mock_client.expect(:managed_groups, [])
+
+    service = AccessTokenValidationService.new(access_token)
+    service.stub(:freefeed_client, mock_client) do
+      service.call
+    end
+
+    # Token should be deactivated, not stuck in validating state
+    assert_equal "inactive", access_token.reload.status
+  end
 end
