@@ -1,6 +1,7 @@
 <% content_for :title, "Settings" %>
 
 <%
+  # TBD: Extract toi a component
   account_list = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Email",

@@ -9,37 +9,61 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     @access_token ||= create(:access_token, user: user)
   end
 
-  test "requires authentication for index" do
+  test "#index should require authentication" do
     get settings_access_tokens_path
     assert_redirected_to new_session_path
   end
 
-  test "shows access tokens index when authenticated" do
+  test "#index should show access tokens list" do
     sign_in_as user
     get settings_access_tokens_path
+
     assert_response :success
     assert_select "h1", "Access Tokens"
   end
 
-  test "displays empty state when no tokens" do
+  test "#index should display empty state" do
     sign_in_as user
     get settings_access_tokens_path
+
     assert_response :success
     assert_select "h2", "No access tokens yet"
   end
 
-  test "displays existing tokens" do
+  test "#index should display existing tokens" do
     sign_in_as user
     access_token
     get settings_access_tokens_path
+
     assert_response :success
-    assert_select '[data-key="settings.access_tokens.table"]'
-    assert_select "td", access_token.name
+    assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
+  end
+
+  test "#show should redirect to sign in form" do
+    get settings_access_token_path(access_token)
+    assert_redirected_to new_session_path
+  end
+
+  test "#show should render for own token" do
+    sign_in_as user
+    get settings_access_token_path(access_token)
+
+    assert_response :success
+    assert_select "h1", access_token.name
+  end
+
+  test "#show should not render for other user's token" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as user
+    get settings_access_token_path(other_token)
+
+    assert_response :not_found
   end
 
   test "#new should render when authenticated" do
     sign_in_as user
     get new_settings_access_token_path
+
     assert_response :success
   end
 
@@ -50,6 +74,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "#edit should render for own token" do
     sign_in_as user
     get edit_settings_access_token_path(access_token)
+
     assert_response :success
   end
 
@@ -59,6 +84,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "requires authentication for destroy" do
     delete settings_access_token_path(access_token)
+
     assert_redirected_to new_session_path
   end
 

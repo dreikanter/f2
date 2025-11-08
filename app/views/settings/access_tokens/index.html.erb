@@ -3,12 +3,6 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
-    <% if @access_tokens.inactive.exists? %>
-      <% header.with_context_paragraph do %>
-        <strong class="font-semibold">Heads up:</strong>
-        Inactive tokens automatically disable associated feeds. Replace inactive tokens to re-enable your feeds.
-      <% end %>
-    <% end %>
     <% header.with_action_button do %>
       <%= link_to "Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
@@ -18,58 +12,8 @@
   <% end %>
 
   <% if @access_tokens.any? %>
-    <div class="ff-table-container">
-      <table class="ff-table" data-key="settings.access_tokens.table">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Instance</th>
-            <th scope="col">Owner</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="text-center">Created</th>
-            <th scope="col" class="text-center">Last Used</th>
-            <th scope="col" class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @access_tokens.each do |access_token| %>
-            <tr>
-              <td class="max-w-xs truncate"><%= access_token.name %></td>
-              <td>
-                <span class="text-sm text-slate-500"><%= URI.parse(access_token.host).host %></span>
-              </td>
-              <td id="<%= dom_id(access_token, :user) %>">
-                <%= render "shared/access_token_user", access_token: access_token %>
-              </td>
-              <td>
-                <%= render "shared/access_token_status", access_token: access_token %>
-              </td>
-              <td class="text-center">
-                <span class="text-sm text-slate-500"><%= short_time_ago(access_token.created_at) %></span>
-              </td>
-              <td class="text-center">
-                <% if access_token.last_used_at %>
-                  <span class="text-sm text-slate-500"><%= short_time_ago(access_token.last_used_at) %></span>
-                <% else %>
-                  <span class="text-sm text-slate-400">Never</span>
-                <% end %>
-              </td>
-              <td class="text-right">
-                <div class="flex justify-end gap-3 text-sm">
-                  <%= link_to "Edit",
-                              edit_settings_access_token_path(access_token),
-                              class: "ff-link" %>
-                  <%= link_to "Delete",
-                              "#",
-                              class: class_names("ff-link", "text-red-600", "hover:text-red-500"),
-                              data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal-#{access_token.id}", action: "click->modal-trigger#open" } %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+    <%= render access_tokens_list_component(access_tokens: @access_tokens) %>
+
     <% @access_tokens.each do |access_token| %>
       <%= render ConfirmationModalComponent.new(
         title: "Delete Access Token",
