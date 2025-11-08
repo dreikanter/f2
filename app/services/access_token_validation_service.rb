@@ -42,9 +42,9 @@ class AccessTokenValidationService
 
   def fetch_managed_groups
     freefeed_client.managed_groups
-  rescue
-    Rails.logger.error("Failed to load FreeFeed groups list  for AccessToken #{access_token.id}: #{e.class} - #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
+  rescue => e
+    Rails.logger.error("Failed to load FreeFeed groups list for AccessToken #{access_token.id}: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace&.join("\n"))
     []
   end
 
