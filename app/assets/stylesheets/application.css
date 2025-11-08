@@ -107,7 +107,7 @@
   }
 
   .ff-dropdown-panel {
-    @apply z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg;
+    @apply z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm;
   }
 
   .ff-dropdown-item {
