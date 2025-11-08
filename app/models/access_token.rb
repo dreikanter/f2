@@ -71,8 +71,7 @@ class AccessToken < ApplicationRecord
   def username_with_host
     return nil unless owner.present?
 
-    domain = host_domain
-    "#{owner} at #{domain}"
+    "#{owner} at #{host_domain}"
   end
 
   def host_domain
