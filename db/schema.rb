@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_25_191059) do
+ActiveRecord::Schema[8.2].define(version: 2025_11_08_151829) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "access_token_details", force: :cascade do |t|
+    t.bigint "access_token_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "expires_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true
+    t.index ["expires_at"], name: "index_access_token_details_on_expires_at"
+  end
 
   create_table "access_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -314,6 +324,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_25_191059) do
     t.index ["state"], name: "index_users_on_state"
   end
 
+  add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
