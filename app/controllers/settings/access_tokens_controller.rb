@@ -22,7 +22,7 @@ class Settings::AccessTokensController < ApplicationController
 
     if @access_token.save
       @access_token.validate_token_async
-      redirect_to settings_access_token_path(@access_token), allow_other_host: false
+      redirect_to settings_access_token_path(@access_token)
     else
       render :new, status: :unprocessable_entity
     end
