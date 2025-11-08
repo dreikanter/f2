@@ -3,13 +3,12 @@ class AccessToken < ApplicationRecord
   has_many :feeds
   has_one :access_token_detail, dependent: :destroy
 
-  validates :name, presence: true, uniqueness: { scope: :user_id }
+  validates :name, uniqueness: { scope: :user_id }, allow_blank: true
   validates :token, presence: true, on: :create
   validates :host, presence: true, format: { with: /\Ahttps?:\/\/[^\s]+\z/, message: "must be a valid HTTP(S) URL" }
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
-  before_validation :set_default_name, on: :create
   before_destroy :disable_associated_feeds
 
   encrypts :encrypted_token
@@ -84,13 +83,6 @@ class AccessToken < ApplicationRecord
   end
 
   private
-
-  def set_default_name
-    return if name.present?
-
-    timestamp = Time.current.strftime("%Y-%m-%d %H:%M:%S")
-    self.name = "Token for #{host_domain} (#{timestamp})"
-  end
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)

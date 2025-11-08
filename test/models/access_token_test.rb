@@ -28,27 +28,9 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.pending?
   end
 
-  test "sets default name when name is blank" do
-    token = build(:access_token, name: nil, host: "https://freefeed.net")
-
-    token.valid?
-
-    assert_match(/^Token for freefeed\.net \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/, token.name)
-  end
-
-  test "generates unique default names with timestamps" do
-    token1 = build(:access_token, name: nil, host: "https://freefeed.net")
-    token1.valid?
-    name1 = token1.name
-
-    # Wait to ensure different timestamp (if clock precision allows)
-    sleep 1
-
-    token2 = build(:access_token, name: nil, host: "https://freefeed.net")
-    token2.valid?
-    name2 = token2.name
-
-    assert_not_equal name1, name2, "Default names should be unique"
+  test "allows blank name" do
+    token = build(:access_token, name: nil)
+    assert token.valid?
   end
 
   test "validates presence of token on create" do

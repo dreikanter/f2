@@ -16,8 +16,8 @@ class AccessTokenValidationService
         last_used_at: Time.current
       }
 
-      # Update name if it's the generated default name
-      if access_token.name.match?(/^Token for .+ \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/)
+      # Set name if it's blank
+      if access_token.name.blank?
         updates[:name] = "#{user_info[:username]}@#{access_token.host_domain}"
       end
 

@@ -31,8 +31,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     mock_client.verify
   end
 
-  test "#call should update name if it's a default name" do
-    access_token.update!(name: "Token for freefeed.net (2025-01-08 12:34:56)")
+  test "#call should set name if it's blank" do
+    access_token.update!(name: nil)
     user_info = { username: "testuser", screen_name: "Test User" }
     managed_groups = []
 
