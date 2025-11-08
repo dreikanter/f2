@@ -2,6 +2,8 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
   include ApplicationHelper
   include TimeHelper
 
+  UNKNOWN_USER = "...".freeze
+
   def initialize(access_token:, key: nil)
     @access_token = access_token
     @key = key
@@ -23,16 +25,11 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
   end
 
   def username_with_host
-    owner = @access_token.owner.presence || "—"
-    host = if @access_token.host.blank?
-      "—"
-    else
-      begin
-        URI.parse(@access_token.host).host || "—"
-      rescue URI::InvalidURIError, ArgumentError
-        "—"
-      end
-    end
+    raise "AccessToken should be valid at this point" unless @access_token.valid?
+
+    owner = @access_token.owner.presence || UNKNOWN_USER
+    host = @access_token.host
+
     "#{owner}@#{host}"
   end
 
