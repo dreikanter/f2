@@ -33,7 +33,7 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   def create
-    @access_token = current_user.access_tokens.build(access_token_params)
+    @access_token = Current.user.access_tokens.build(access_token_params)
     @access_token.encrypted_token = access_token_params[:token]
 
     authorize @access_token
