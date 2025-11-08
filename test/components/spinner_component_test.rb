@@ -2,7 +2,7 @@ require "test_helper"
 require "view_component/test_case"
 
 class SpinnerComponentTest < ViewComponent::TestCase
-  test "renders SVG spinner with default styling" do
+  test "should render SVG spinner with default styling" do
     result = render_inline(SpinnerComponent.new)
 
     svg = result.css("svg").first
@@ -15,7 +15,7 @@ class SpinnerComponentTest < ViewComponent::TestCase
     assert_includes svg["class"], "fill-sky-600"
   end
 
-  test "applies custom size classes" do
+  test "should apply custom size classes" do
     result = render_inline(SpinnerComponent.new(size: "w-12 h-12"))
 
     svg = result.css("svg").first
@@ -23,7 +23,7 @@ class SpinnerComponentTest < ViewComponent::TestCase
     assert_includes svg["class"], "h-12"
   end
 
-  test "applies custom color classes" do
+  test "should apply custom color classes" do
     result = render_inline(SpinnerComponent.new(color: "text-blue-500", fill: "fill-blue-800"))
 
     svg = result.css("svg").first
@@ -31,7 +31,7 @@ class SpinnerComponentTest < ViewComponent::TestCase
     assert_includes svg["class"], "fill-blue-800"
   end
 
-  test "merges additional CSS classes" do
+  test "should merge additional CSS classes" do
     result = render_inline(SpinnerComponent.new(css_class: "mr-3"))
 
     svg = result.css("svg").first
