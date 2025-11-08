@@ -5,6 +5,7 @@ class AccessTokenValidationService
     @access_token = access_token
   end
 
+  # TBD: Refactor this afte the required logic is clarified
   def call
     user_info = freefeed_client.whoami
 
