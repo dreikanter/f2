@@ -54,16 +54,10 @@ class AccessTokenValidationService
       managed_groups: managed_groups
     }
 
-    access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
-
-    access_token_detail.update!(
-      data: details_data,
-      expires_at: AccessTokenDetail::TTL.from_now
-    )
-  rescue ActiveRecord::RecordNotUnique
-    # Another job created the detail concurrently, lock and update
     access_token.with_lock do
-      access_token.access_token_detail.update!(
+      access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
+
+      access_token_detail.update!(
         data: details_data,
         expires_at: AccessTokenDetail::TTL.from_now
       )
