@@ -2,7 +2,7 @@ require "test_helper"
 
 class AccessTokenDetailTest < ActiveSupport::TestCase
   def detail
-    @detail ||= create(:access_token_detail)
+    @detail ||= build(:access_token_detail)
   end
 
   test "#expired? should return true when expires_at is in the past" do
