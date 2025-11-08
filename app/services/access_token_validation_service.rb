@@ -7,7 +7,6 @@ class AccessTokenValidationService
 
   def call
     user_info = freefeed_client.whoami
-    managed_groups = freefeed_client.managed_groups
 
     ActiveRecord::Base.transaction do
       updates = {
@@ -22,9 +21,11 @@ class AccessTokenValidationService
       end
 
       access_token.update!(updates)
-
-      cache_token_details(user_info, managed_groups)
     end
+
+    # Fetch managed groups separately - failure here should not deactivate the token
+    managed_groups = fetch_managed_groups
+    cache_token_details(user_info, managed_groups)
   rescue
     ActiveRecord::Base.transaction do
       disable_token_and_feeds
@@ -38,6 +39,13 @@ class AccessTokenValidationService
       host: access_token.host,
       token: access_token.token_value
     )
+  end
+
+  def fetch_managed_groups
+    freefeed_client.managed_groups
+  rescue
+    # Managed groups are optional metadata - return empty array on failure
+    []
   end
 
   def cache_token_details(user_info, managed_groups)
