@@ -7,24 +7,6 @@ class Settings::AccessTokensController < ApplicationController
   def show
     @access_token = find_access_token
     authorize @access_token
-
-    respond_to do |format|
-      format.html
-      format.turbo_stream do
-        render turbo_stream: [
-          turbo_stream.replace(
-            dom_id(@access_token, :status),
-            partial: "shared/access_token_status",
-            locals: { access_token: @access_token }
-          ),
-          turbo_stream.replace(
-            dom_id(@access_token, :user),
-            partial: "shared/access_token_user",
-            locals: { access_token: @access_token }
-          )
-        ]
-      end
-    end
   end
 
   def new
