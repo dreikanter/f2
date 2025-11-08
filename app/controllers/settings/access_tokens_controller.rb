@@ -27,7 +27,7 @@ class Settings::AccessTokensController < ApplicationController
 
     if @access_token.save
       @access_token.validate_token_async
-      redirect_to settings_access_token_path(@access_token)
+      redirect_to settings_access_token_path(@access_token), status: :see_other
     else
       render :new, status: :unprocessable_entity
     end
