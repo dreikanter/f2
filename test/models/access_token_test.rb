@@ -233,7 +233,7 @@ class AccessTokenTest < ActiveSupport::TestCase
 
   test "#host_domain should raise error for unknown hosts" do
     token = build(:access_token, host: "https://custom.example.com")
-    assert_raises(KeyError) { token.host_domain }
+    assert_raises(NoMethodError) { token.host_domain }
   end
 
   test "#username_with_host should return username with domain" do
@@ -265,12 +265,6 @@ class AccessTokenTest < ActiveSupport::TestCase
       # Verify domain is a valid hostname (no protocol, no path)
       assert_no_match %r{https?://}, config[:domain], "#{key} domain should not include protocol"
       assert_no_match %r{/}, config[:domain], "#{key} domain should not include path"
-    end
-  end
-
-  test "HOST_TO_DOMAIN should map all URLs to domains" do
-    AccessToken::FREEFEED_HOSTS.each do |_key, config|
-      assert_equal config[:domain], AccessToken::HOST_TO_DOMAIN[config[:url]]
     end
   end
 end

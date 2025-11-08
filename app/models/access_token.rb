@@ -36,11 +36,6 @@ class AccessToken < ApplicationRecord
     }
   }.freeze
 
-  HOST_TO_DOMAIN = FREEFEED_HOSTS.transform_values { |config| [config[:url], config[:domain]] }
-                                 .values
-                                 .to_h
-                                 .freeze
-
   def self.host_options_for_select
     FREEFEED_HOSTS.map { |_key, config| [config[:display_name], config[:url]] }
   end
@@ -81,7 +76,7 @@ class AccessToken < ApplicationRecord
   end
 
   def host_domain
-    HOST_TO_DOMAIN.fetch(host)
+    FREEFEED_HOSTS.values.find { |config| config[:url] == host }.fetch(:domain)
   end
 
   private
