@@ -33,7 +33,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     access_token
     get settings_access_tokens_path
     assert_response :success
-    assert_select '[data-key="settings.access_tokens.#{access_token.id}"]'
+    assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
   end
 
   test "#show should require authentication" do
