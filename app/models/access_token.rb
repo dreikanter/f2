@@ -81,8 +81,7 @@ class AccessToken < ApplicationRecord
   end
 
   def host_domain
-    config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
-    config ? config[:domain] : URI.parse(host).host
+    FREEFEED_HOSTS.values.find { |config| config[:url] == host }.fetch(:domain)
   end
 
   private

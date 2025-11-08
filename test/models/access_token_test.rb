@@ -231,9 +231,9 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "beta.freefeed.net", token.host_domain
   end
 
-  test "#host_domain should return fallback for unknown hosts" do
+  test "#host_domain should raise error for unknown hosts" do
     token = build(:access_token, host: "https://custom.example.com")
-    assert_equal "custom.example.com", token.host_domain
+    assert_raises(NoMethodError) { token.host_domain }
   end
 
   test "#username_with_host should return username with domain" do
