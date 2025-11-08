@@ -107,57 +107,57 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "#icon returns basic icon without classes" do
     result = icon("star")
-    assert_equal '<i class="bi bi-star inline-block" style="line-height: 1;"></i>', result
+    assert_equal '<i class="bi bi-star inline-block"></i>', result
   end
 
   test "#icon returns icon with css class" do
     result = icon("star", css_class: "text-warning")
-    assert_equal '<i class="bi bi-star inline-block text-warning" style="line-height: 1;"></i>', result
+    assert_equal '<i class="bi bi-star inline-block text-warning"></i>', result
   end
 
   test "#icon returns icon with title" do
     result = icon("star", title: "Favorite")
-    assert_equal '<i class="bi bi-star inline-block" style="line-height: 1;" title="Favorite"></i>', result
+    assert_equal '<i class="bi bi-star inline-block" title="Favorite"></i>', result
   end
 
   test "#icon returns icon with css class and title" do
     result = icon("check-circle", css_class: "text-success me-2", title: "Complete")
-    assert_equal '<i class="bi bi-check-circle inline-block text-success me-2" style="line-height: 1;" title="Complete"></i>', result
+    assert_equal '<i class="bi bi-check-circle inline-block text-success me-2" title="Complete"></i>', result
   end
 
   test "#post_status_icon returns draft icon for draft status" do
     result = post_status_icon("draft")
-    expected = '<i class="bi bi-file-earmark inline-block text-muted" style="line-height: 1;" title="Draft"></i>'
+    expected = '<i class="bi bi-file-earmark inline-block text-muted" title="Draft"></i>'
     assert_equal expected, result
   end
 
   test "#post_status_icon returns enqueued icon for enqueued status" do
     result = post_status_icon("enqueued")
-    expected = '<i class="bi bi-clock inline-block text-secondary" style="line-height: 1;" title="Enqueued"></i>'
+    expected = '<i class="bi bi-clock inline-block text-secondary" title="Enqueued"></i>'
     assert_equal expected, result
   end
 
   test "#post_status_icon returns rejected icon for rejected status" do
     result = post_status_icon("rejected")
-    expected = '<i class="bi bi-x-circle inline-block text-danger" style="line-height: 1;" title="Rejected"></i>'
+    expected = '<i class="bi bi-x-circle inline-block text-danger" title="Rejected"></i>'
     assert_equal expected, result
   end
 
   test "#post_status_icon returns published icon for published status" do
     result = post_status_icon("published")
-    expected = '<i class="bi bi-check-circle-fill inline-block text-success" style="line-height: 1;" title="Published"></i>'
+    expected = '<i class="bi bi-check-circle-fill inline-block text-success" title="Published"></i>'
     assert_equal expected, result
   end
 
   test "#post_status_icon returns failed icon for failed status" do
     result = post_status_icon("failed")
-    expected = '<i class="bi bi-exclamation-triangle inline-block text-danger" style="line-height: 1;" title="Failed"></i>'
+    expected = '<i class="bi bi-exclamation-triangle inline-block text-danger" title="Failed"></i>'
     assert_equal expected, result
   end
 
   test "#post_status_icon returns withdrawn icon for withdrawn status" do
     result = post_status_icon("withdrawn")
-    expected = '<i class="bi bi-trash inline-block text-secondary" style="line-height: 1;" title="Withdrawn"></i>'
+    expected = '<i class="bi bi-trash inline-block text-secondary" title="Withdrawn"></i>'
     assert_equal expected, result
   end
 
