@@ -12,7 +12,7 @@ class SpinnerComponentTest < ViewComponent::TestCase
     assert_includes svg["class"], "h-8"
     assert_includes svg["class"], "animate-spin"
     assert_includes svg["class"], "text-gray-300"
-    assert_includes svg["class"], "fill-cyan-600"
+    assert_includes svg["class"], "fill-sky-600"
   end
 
   test "applies custom size classes" do
