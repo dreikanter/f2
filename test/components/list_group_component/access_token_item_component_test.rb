@@ -54,7 +54,8 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     result = render_inline(component)
 
     # Check for the check-circle icon (active status)
-    assert_not_nil result.css("svg").first
+    icon = result.css("i.bi-check-circle").first
+    assert_not_nil icon
   end
 
   test "#render should display inactive status icon" do
@@ -63,7 +64,8 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     result = render_inline(component)
 
     # Check for the x-circle icon (inactive status)
-    assert_not_nil result.css("svg").first
+    icon = result.css("i.bi-x-circle").first
+    assert_not_nil icon
   end
 
   test "#render should display pending status icon" do
@@ -72,7 +74,8 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     result = render_inline(component)
 
     # Check for the clock icon (pending status)
-    assert_not_nil result.css("svg").first
+    icon = result.css("i.bi-clock").first
+    assert_not_nil icon
   end
 
   test "#render should link to access token show page" do
