@@ -22,12 +22,12 @@ class Settings::AccessTokenValidationsControllerTest < ActionDispatch::Integrati
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
   end
 
-  test "#show should replace access-token-show div" do
+  test "#show should update access-token-show div" do
     sign_in_as user
     get settings_access_token_validation_path(access_token)
 
     assert_response :success
-    assert_match /turbo-stream.*action="replace".*target="access-token-show"/, response.body
+    assert_match /turbo-stream.*action="update".*target="access-token-show"/, response.body
   end
 
   test "#show should not render for other user's token" do
