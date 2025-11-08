@@ -3,9 +3,10 @@
   "private": "true",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.16",
+    "bootstrap-icons": "^1.13.1",
+    "flowbite": "^3.1.2",
     "nodemon": "^3.1.10",
-    "tailwindcss": "^4.1.16",
-    "flowbite": "^3.1.2"
+    "tailwindcss": "^4.1.16"
   },
   "scripts": {
     "build:css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css -c ./tailwind.config.mjs",
