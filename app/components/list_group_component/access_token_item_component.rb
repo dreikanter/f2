@@ -17,12 +17,22 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
       icon("x-circle", css_class: "h-5 w-5 text-slate-400", aria_label: "Inactive")
     when "pending", "validating"
       icon("clock", css_class: "h-5 w-5 text-slate-400", aria_label: @access_token.status.capitalize)
+    else
+      icon("question-circle", css_class: "h-5 w-5 text-slate-400", aria_label: "Unknown status")
     end
   end
 
   def username_with_host
     owner = @access_token.owner.presence || "—"
-    host = URI.parse(@access_token.host).host
+    host = if @access_token.host.blank?
+      "—"
+    else
+      begin
+        URI.parse(@access_token.host).host || "—"
+      rescue URI::InvalidURIError, ArgumentError
+        "—"
+      end
+    end
     "#{owner}@#{host}"
   end
 
