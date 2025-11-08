@@ -14,13 +14,13 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
   def status_icon
     case @access_token.status
     when "active"
-      icon("check-circle", css_class: "ff-icon-status-active", aria_label: "Active")
+      icon("check-circle", css_class: "ff-icon-success", aria_label: "Active")
     when "inactive"
-      icon("x-circle", css_class: "ff-icon-status-inactive", aria_label: "Inactive")
+      icon("x-circle", css_class: "ff-icon-secondary", aria_label: "Inactive")
     when "pending", "validating"
-      icon("clock", css_class: "ff-icon-status-pending", aria_label: @access_token.status.capitalize)
+      icon("clock", css_class: "ff-icon-secondary", aria_label: @access_token.status.capitalize)
     else
-      icon("question-circle", css_class: "ff-icon-status-unknown", aria_label: "Unknown status")
+      icon("question-circle", css_class: "ff-icon-secondary", aria_label: "Unknown status")
     end
   end
 

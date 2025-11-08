@@ -166,19 +166,23 @@
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
   }
 
-  .ff-icon-status-active {
+  .ff-icon-success {
     @apply text-emerald-600;
   }
 
-  .ff-icon-status-inactive {
-    @apply text-slate-400;
+  .ff-icon-danger {
+    @apply text-red-600;
   }
 
-  .ff-icon-status-pending {
-    @apply text-slate-400;
+  .ff-icon-warning {
+    @apply text-amber-600;
   }
 
-  .ff-icon-status-unknown {
+  .ff-icon-info {
+    @apply text-sky-600;
+  }
+
+  .ff-icon-secondary {
     @apply text-slate-400;
   }
 
