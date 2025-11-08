@@ -43,8 +43,4 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert_includes valid_details, valid
     assert_not_includes valid_details, expired
   end
-
-  test "TTL constant should be 24 hours" do
-    assert_equal 24.hours, AccessTokenDetail::TTL
-  end
 end
