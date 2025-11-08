@@ -4,7 +4,7 @@
   <%= render PageHeaderComponent.new(title: "New Access Token") %>
 
   <div class="max-w-2xl">
-    <%= form_with model: @access_token, url: settings_access_tokens_path, data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
+    <%= form_with model: @access_token, url: settings_access_tokens_path, data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json, turbo: false } do |form| %>
       <div class="space-y-6">
         <div class="ff-form-group">
           <%= form.label :host, "FreeFeed Instance", class: "ff-form-label" %>
