@@ -77,11 +77,12 @@ class AccessToken < ApplicationRecord
   def username_with_host
     return nil unless owner.present?
 
-    "#{owner} at #{host_domain}"
+    "#{owner}@#{host_domain}"
   end
 
   def host_domain
-    FREEFEED_HOSTS.values.find { |config| config[:url] == host }.fetch(:domain)
+    config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
+    config ? config[:domain] : URI.parse(host).host
   end
 
   private
