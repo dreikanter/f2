@@ -1,6 +1,7 @@
 class AccessToken < ApplicationRecord
   belongs_to :user
   has_many :feeds
+  has_one :access_token_detail, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
@@ -8,6 +9,7 @@ class AccessToken < ApplicationRecord
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
+  before_validation :set_default_name, on: :create
   before_destroy :disable_associated_feeds
 
   encrypts :encrypted_token
@@ -68,6 +70,15 @@ class AccessToken < ApplicationRecord
   end
 
   private
+
+  def set_default_name
+    return if name.present?
+
+    host_config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
+    domain = host_config ? host_config[:domain] : URI.parse(host).host
+
+    self.name = "New token for #{domain}"
+  end
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
