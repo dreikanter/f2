@@ -78,7 +78,9 @@ class AccessToken < ApplicationRecord
 
   def host_domain
     host_config = FREEFEED_HOSTS.values.find { |config| config[:url] == host }
-    host_config ? host_config[:domain] : URI.parse(host).host
+    raise "Host #{host} not found in FREEFEED_HOSTS configuration" unless host_config
+
+    host_config[:domain]
   end
 
   private

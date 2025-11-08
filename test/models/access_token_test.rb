@@ -157,16 +157,16 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "https://freefeed.net", token.host
   end
 
-  test "build_with_token allows custom host override" do
-    custom_host = "https://custom.freefeed.com"
+  test "build_with_token allows host override" do
+    staging_host = AccessToken::FREEFEED_HOSTS[:staging][:url]
     token = AccessToken.build_with_token(
       name: "Test Token",
       user: user,
       token: "freefeed_token_123",
-      host: custom_host
+      host: staging_host
     )
 
-    assert_equal custom_host, token.host
+    assert_equal staging_host, token.host
   end
 
   test "FREEFEED_HOSTS contains expected standard hosts" do
@@ -250,12 +250,10 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "beta.freefeed.net", token.host_domain
   end
 
-  test "#host_domain should parse domain from URL for unknown hosts" do
+  test "#host_domain should raise error for unknown hosts" do
     token = build(:access_token, host: "https://custom.example.com")
-    assert_equal "custom.example.com", token.host_domain
-
-    token = build(:access_token, host: "http://localhost:3000")
-    assert_equal "localhost", token.host_domain
+    error = assert_raises(RuntimeError) { token.host_domain }
+    assert_match(/not found in FREEFEED_HOSTS configuration/, error.message)
   end
 
   test "#username_with_host should return username with domain" do
@@ -268,15 +266,25 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_nil token.username_with_host
   end
 
-  test "#username_with_host should work with custom hosts" do
-    token = build(:access_token, host: "https://custom.example.com", owner: "john")
-    assert_equal "john at custom.example.com", token.username_with_host
-  end
-
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
     AccessToken::FREEFEED_HOSTS.each do |key, config|
       token = build(:access_token, host: config[:url])
       assert token.valid?, "#{key} host URL (#{config[:url]}) should be valid"
+    end
+  end
+
+  test "FREEFEED_HOSTS should have complete configuration for all hosts" do
+    required_fields = [:url, :display_name, :domain, :token_url]
+
+    AccessToken::FREEFEED_HOSTS.each do |key, config|
+      required_fields.each do |field|
+        assert config.key?(field), "#{key} is missing required field: #{field}"
+        assert config[field].present?, "#{key} has blank value for field: #{field}"
+      end
+
+      # Verify domain is a valid hostname (no protocol, no path)
+      assert_no_match %r{https?://}, config[:domain], "#{key} domain should not include protocol"
+      assert_no_match %r{/}, config[:domain], "#{key} domain should not include path"
     end
   end
 end

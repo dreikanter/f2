@@ -28,9 +28,7 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
     raise "AccessToken should be valid at this point" unless @access_token.valid?
 
     owner = @access_token.owner.presence || UNKNOWN_USER
-    host = URI.parse(@access_token.host).host
-
-    "#{owner}@#{host}"
+    "#{owner}@#{@access_token.host_domain}"
   end
 
   def created_ago
