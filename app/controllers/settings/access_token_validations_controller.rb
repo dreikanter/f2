@@ -3,7 +3,7 @@ class Settings::AccessTokenValidationsController < ApplicationController
     @access_token = find_access_token
     authorize @access_token, policy_class: AccessTokenPolicy
 
-    render formats: [:turbo_stream]
+    render turbo_stream: turbo_stream.update("access-token-show", partial: "settings/access_tokens/show_content")
   end
 
   private
