@@ -25,7 +25,7 @@
                   data-clipboard-text-value="<%= registration_url(code: invite.id) %>"
                   data-action="click->clipboard#copy"
                   title="Copy invitation link to clipboard">
-                  <%= icon("clipboard", css_class: "text-sm", aria_hidden: true) %>
+                  <%= icon("clipboard", aria_hidden: true) %>
                   <span class="sr-only">Copy invitation link</span>
                 </button>
               </div>
@@ -44,7 +44,7 @@
                               method: :delete,
                               class: "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500",
                               form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
-                  <%= icon("trash", css_class: "text-sm", aria_hidden: true) %>
+                  <%= icon("trash", aria_hidden: true) %>
                   <span class="sr-only">Delete invite</span>
                 <% end %>
               <% end %>
