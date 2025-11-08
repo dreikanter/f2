@@ -29,7 +29,7 @@
                         rel: "noopener",
                         class: "ff-link",
                         data: { token_host_target: "link" } do %>
-              <span data-token-host-target="linkText">FreeFeed settings</span>
+              <span data-token-host-target="linkText"><%= AccessToken::FREEFEED_HOSTS[:production][:domain] %> settings</span>
             <% end %>
           </p>
         </div>
