@@ -52,12 +52,12 @@ class Settings::AccessTokensController < ApplicationController
           turbo_stream.replace(
             dom_id(@access_token, :status),
             partial: "shared/access_token_status",
-            locals: {access_token: @access_token}
+            locals: { access_token: @access_token }
           ),
           turbo_stream.replace(
             dom_id(@access_token, :user),
             partial: "shared/access_token_user",
-            locals: {access_token: @access_token}
+            locals: { access_token: @access_token }
           )
         ]
       end
