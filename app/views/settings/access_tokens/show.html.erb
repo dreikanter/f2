@@ -5,13 +5,15 @@
     <% header.with_action_button do %>
       <%= link_to "Back to Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
+
     <% header.with_action_button do %>
-      <%= link_to "Edit", edit_settings_access_token_path(@access_token), class: class_names("ff-button", "ff-button--compact") %>
+      <%= link_to "Edit", edit_settings_access_token_path(@access_token), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
+
     <% header.with_action_button do %>
       <%= link_to "Delete",
                   "#",
-                  class: class_names("ff-button", "ff-button--compact", "ff-button--danger"),
+                  class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
                   data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
     <% end %>
   <% end %>
