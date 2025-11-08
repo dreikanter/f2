@@ -7,13 +7,13 @@
     <div class="ff-card__body">
       <%= form_with model: @access_token, url: settings_access_tokens_path, data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
         <div class="space-y-6">
-          <div>
-            <%= form.label :host, "FreeFeed Instance", class: "ff-label" %>
+          <div class="ff-form-group">
+            <%= form.label :host, "FreeFeed Instance", class: "ff-form-label" %>
             <%= form.select :host,
                             AccessToken.host_options_for_select,
                             { selected: AccessToken::FREEFEED_HOSTS[:production][:url] },
                             {
-                              class: "ff-select",
+                              class: "ff-form-input",
                               data: {
                                 token_host_target: "hostSelect",
                                 action: "change->token-host#updateLink"
@@ -41,10 +41,10 @@
             </ul>
           </div>
 
-          <div>
-            <%= form.label :token, "Access Token", class: "ff-label" %>
+          <div class="ff-form-group">
+            <%= form.label :token, "Access Token", class: "ff-form-label" %>
             <%= form.text_field :token,
-                                class: "ff-input",
+                                class: "ff-form-input",
                                 placeholder: "Paste your FreeFeed access token here",
                                 required: true,
                                 autocomplete: "off" %>
@@ -53,10 +53,10 @@
             <% end %>
           </div>
 
-          <div>
-            <%= form.label :name, "Token Name (optional)", class: "ff-label" %>
+          <div class="ff-form-group">
+            <%= form.label :name, "Token Name (optional)", class: "ff-form-label" %>
             <%= form.text_field :name,
-                                class: "ff-input",
+                                class: "ff-form-input",
                                 placeholder: "e.g., My FreeFeed Token",
                                 autocomplete: "off" %>
             <p class="mt-2 text-sm text-slate-500">
@@ -66,11 +66,11 @@
               <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
             <% end %>
           </div>
+        </div>
 
-          <div class="flex justify-end gap-3">
-            <%= link_to "Cancel", settings_access_tokens_path, class: "ff-button ff-button--secondary" %>
-            <%= form.submit "Validate and Save", class: "ff-button" %>
-          </div>
+        <div class="ff-card__footer flex justify-end gap-3">
+          <%= link_to "Cancel", settings_access_tokens_path, class: "ff-button ff-button--secondary" %>
+          <%= form.submit "Validate and Save", class: "ff-button" %>
         </div>
       <% end %>
     </div>
