@@ -46,7 +46,7 @@
     </div>
   <% elsif @access_token.active? %>
     <div class="ff-alert ff-alert--success" data-status="active">
-      <%= icon("check-circle", css_class: "text-xl", aria_hidden: true) %>
+      <%= icon("check-circle", aria_hidden: true) %>
       <span>Token is active and ready to use</span>
     </div>
 
@@ -122,7 +122,7 @@
     <% end %>
   <% elsif @access_token.inactive? %>
     <div class="ff-alert ff-alert--error" data-status="inactive">
-      <%= icon("x-circle", css_class: "text-xl", aria_hidden: true) %>
+      <%= icon("x-circle", aria_hidden: true) %>
       <span>Token is inactive and cannot be used to access FreeFeed API</span>
     </div>
 
