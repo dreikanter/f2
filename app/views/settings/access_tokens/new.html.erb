@@ -23,13 +23,13 @@
 
         <div class="ff-alert ff-alert--info">
           <p>
-            Need a token? Create one on FreeFeed:
-            <%= link_to AccessToken::FREEFEED_HOSTS[:production][:domain],
+            Need a token? Create one on
+            <%= link_to "FreeFeed settings",
                         AccessToken::FREEFEED_HOSTS[:production][:token_url],
                         target: "_blank",
                         rel: "noopener",
                         class: "ff-link",
-                        data: { token_host_target: "link" } %>
+                        data: { token_host_target: "link" } %>.
           </p>
         </div>
 
