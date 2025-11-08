@@ -33,12 +33,6 @@ class AccessToken < ApplicationRecord
       display_name: "beta.freefeed.net (beta)",
       domain: "beta.freefeed.net",
       token_url: "https://beta.freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
-    },
-    test: {
-      url: "https://freefeed.test",
-      display_name: "freefeed.test (test)",
-      domain: "freefeed.test",
-      token_url: "https://freefeed.test/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
     }
   }.freeze
 
