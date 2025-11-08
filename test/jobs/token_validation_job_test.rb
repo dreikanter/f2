@@ -81,6 +81,19 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
+    stub_request(:get, "https://custom.freefeed.com/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     TokenValidationJob.perform_now(custom_token)
 
     custom_token.reload
@@ -168,6 +181,19 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
+    stub_request(:get, "https://freefeed.test/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     # First run fails
     TokenValidationJob.perform_now(access_token)
     access_token.reload
@@ -202,6 +228,19 @@ class TokenValidationJobTest < ActiveJob::TestCase
             id: "test-id"
           }
         }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    stub_request(:get, "https://freefeed.test/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => /Bearer freefeed_token_/,
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [].to_json,
         headers: { "Content-Type" => "application/json" }
       )
   end

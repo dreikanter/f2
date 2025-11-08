@@ -6,11 +6,11 @@ class AccessTokenValidationService
   end
 
   def call
-    ActiveRecord::Base.transaction do
-      begin
-        user_info = freefeed_client.whoami
-        managed_groups = freefeed_client.managed_groups
+    begin
+      user_info = freefeed_client.whoami
+      managed_groups = freefeed_client.managed_groups
 
+      ActiveRecord::Base.transaction do
         updates = {
           status: :active,
           owner: user_info[:username],
@@ -25,7 +25,9 @@ class AccessTokenValidationService
         access_token.update!(updates)
 
         cache_token_details(user_info, managed_groups)
-      rescue
+      end
+    rescue
+      ActiveRecord::Base.transaction do
         disable_token_and_feeds
       end
     end
