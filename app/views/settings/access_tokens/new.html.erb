@@ -24,7 +24,7 @@
         <div class="ff-alert ff-alert--info">
           <p>
             Need a token? Create one on
-            <%= link_to "FreeFeed settings",
+            <%= link_to "#{AccessToken::FREEFEED_HOSTS[:production][:domain]} settings",
                         AccessToken::FREEFEED_HOSTS[:production][:token_url],
                         target: "_blank",
                         rel: "noopener",

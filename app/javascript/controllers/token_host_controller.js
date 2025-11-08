@@ -21,7 +21,7 @@ export default class extends Controller {
 
     if (hostConfig) {
       this.linkTarget.href = hostConfig.token_url
-      this.linkTarget.textContent = hostConfig.domain
+      this.linkTarget.textContent = `${hostConfig.domain} settings`
     }
   }
 }
