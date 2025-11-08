@@ -7,11 +7,6 @@ class Settings::AccessTokensController < ApplicationController
   def show
     @access_token = find_access_token
     authorize @access_token
-
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
   end
 
   def new

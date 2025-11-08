@@ -60,22 +60,6 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "#show should respond to turbo_stream format" do
-    sign_in_as user
-    get settings_access_token_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
-  end
-
-  test "#show turbo_stream should replace access-token-show div" do
-    sign_in_as user
-    get settings_access_token_path(access_token), headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_match /turbo-stream.*action="replace".*target="access-token-show"/, response.body
-  end
-
   test "#new should render when authenticated" do
     sign_in_as user
     get new_settings_access_token_path
