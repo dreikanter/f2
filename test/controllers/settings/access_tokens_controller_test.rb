@@ -33,8 +33,26 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     access_token
     get settings_access_tokens_path
     assert_response :success
-    assert_select '[data-key="settings.access_tokens.table"]'
-    assert_select "td", access_token.name
+    assert_select '[data-key="settings.access_tokens.#{access_token.id}"]'
+  end
+
+  test "#show should require authentication" do
+    get settings_access_token_path(access_token)
+    assert_redirected_to new_session_path
+  end
+
+  test "#show should render for own token" do
+    sign_in_as user
+    get settings_access_token_path(access_token)
+    assert_response :success
+    assert_select "h1", access_token.name
+  end
+
+  test "#show should not render for other user's token" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as user
+    get settings_access_token_path(other_token)
+    assert_response :not_found
   end
 
   test "#new should render when authenticated" do
