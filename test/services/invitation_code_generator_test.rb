@@ -49,13 +49,11 @@ class InvitationCodeGeneratorTest < ActiveSupport::TestCase
     codes = 20.times.map { generator.generate }
 
     all_words = [
-      InvitationCodeGenerator::ADJECTIVES,
-      InvitationCodeGenerator::ANIMALS,
-      InvitationCodeGenerator::VERBS,
-      InvitationCodeGenerator::NOUNS,
-      InvitationCodeGenerator::COLORS,
-      InvitationCodeGenerator::OBJECTS,
-      InvitationCodeGenerator::SUFFIXES
+      InvitationCodeGenerator.adjectives,
+      InvitationCodeGenerator.animals,
+      InvitationCodeGenerator.verbs,
+      InvitationCodeGenerator.nouns,
+      InvitationCodeGenerator.colors
     ].flatten
 
     codes.each do |code|
@@ -79,9 +77,10 @@ class InvitationCodeGeneratorTest < ActiveSupport::TestCase
     generator = InvitationCodeGenerator.new
     code = generator.generate
 
-    # Should match general pattern: word-word-suffix or word-word-word-suffix
-    # where suffix is alphanumeric
-    assert_match(/\A[a-z]+-[a-z]+(-[a-z]+)?-[a-z0-9]+\z/, code,
+    # Should match general pattern: word-word-suffix
+    # where words can contain hyphens (like "african-elephant")
+    # and suffix is alphanumeric
+    assert_match(/\A[a-z-]+-[a-z-]+-[a-z0-9]+\z/, code,
                  "Code should match expected pattern format")
   end
 
@@ -99,49 +98,35 @@ class InvitationCodeGeneratorTest < ActiveSupport::TestCase
     generator = InvitationCodeGenerator.new
     adjective = generator.adjective
 
-    assert_includes InvitationCodeGenerator::ADJECTIVES, adjective
+    assert_includes InvitationCodeGenerator.adjectives, adjective
   end
 
   test "#animal should return word from animals list" do
     generator = InvitationCodeGenerator.new
     animal = generator.animal
 
-    assert_includes InvitationCodeGenerator::ANIMALS, animal
+    assert_includes InvitationCodeGenerator.animals, animal
   end
 
   test "#verb should return word from verbs list" do
     generator = InvitationCodeGenerator.new
     verb = generator.verb
 
-    assert_includes InvitationCodeGenerator::VERBS, verb
+    assert_includes InvitationCodeGenerator.verbs, verb
   end
 
   test "#noun should return word from nouns list" do
     generator = InvitationCodeGenerator.new
     noun = generator.noun
 
-    assert_includes InvitationCodeGenerator::NOUNS, noun
+    assert_includes InvitationCodeGenerator.nouns, noun
   end
 
   test "#color should return word from colors list" do
     generator = InvitationCodeGenerator.new
     color = generator.color
 
-    assert_includes InvitationCodeGenerator::COLORS, color
-  end
-
-  test "#object should return word from objects list" do
-    generator = InvitationCodeGenerator.new
-    object = generator.object
-
-    assert_includes InvitationCodeGenerator::OBJECTS, object
-  end
-
-  test "#suffix should return word from suffixes list" do
-    generator = InvitationCodeGenerator.new
-    suffix = generator.suffix
-
-    assert_includes InvitationCodeGenerator::SUFFIXES, suffix
+    assert_includes InvitationCodeGenerator.colors, color
   end
 
   test "#number should return numeric string between 10 and 999" do

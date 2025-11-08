@@ -1,63 +1,51 @@
 # frozen_string_literal: true
 
 # Generates invitation codes in "Correct Horse Battery Staple" style
-# with mildly absurd, Monty Python-esque word combinations.
+# with word combinations loaded from curated text files.
 #
 # Examples:
 #   bewildered-pangolin-42k
 #   tickle-waffle-x7p
 #   chartreuse-biscuit-wizard-m3n
 class InvitationCodeGenerator
-  # Curated word lists for mildly absurd combinations
-  ADJECTIVES = %w[
-    bewildered cosmic elder suspicious vigilant
-    quantum peculiar dubious reluctant magnificent
-    anxious startled perplexed baffled mystified
-  ].freeze
+  WORDS_DIR = Rails.root.join("lib/invitation_code_generator/words")
 
-  ANIMALS = %w[
-    pangolin llama newt hedgehog stoat
-    badger wombat platypus narwhal axolotl
-    capybara tapir quokka manatee dugong
-  ].freeze
+  class << self
+    def adjectives
+      @adjectives ||= load_words("adjectives.txt")
+    end
 
-  VERBS = %w[
-    tickle wiggle ponder dangle stumble
-    fumble waddle shuffle bobble twiddle
-    wobble fidget hobble bumble scuttle
-  ].freeze
+    def animals
+      @animals ||= load_words("animals.txt")
+    end
 
-  NOUNS = %w[
-    waffle banana toaster biscuit kettle
-    spoon crumpet marmalade custard pudding
-    teapot scone muffin pickle radish
-  ].freeze
+    def verbs
+      @verbs ||= load_words("verbs.txt")
+    end
 
-  COLORS = %w[
-    chartreuse beige mauve taupe crimson
-    ochre vermillion cerulean umber sienna
-    indigo magenta teal burgundy cobalt
-  ].freeze
+    def nouns
+      @nouns ||= load_words("nouns.txt")
+    end
 
-  OBJECTS = %w[
-    sock waffle biscuit kettle spoon
-    monocle umbrella trowel bucket spanner
-    thimble widget gadget contraption doohickey
-  ].freeze
+    def colors
+      @colors ||= load_words("colors.txt")
+    end
 
-  SUFFIXES = %w[
-    ninja wizard sage prophet oracle
-    baron duke earl knight squire
-    maestro captain admiral commander chief
-  ].freeze
+    private
+
+    def load_words(filename)
+      File.readlines(WORDS_DIR.join(filename), chomp: true).freeze
+    end
+  end
 
   # Pattern templates for code generation
   PATTERNS = [
     ->(g) { "#{g.adjective}-#{g.animal}-#{g.short_hash}" },
     ->(g) { "#{g.verb}-#{g.noun}-#{g.short_hash}" },
-    ->(g) { "#{g.color}-#{g.object}-#{g.suffix}-#{g.tiny_hash}" },
+    ->(g) { "#{g.color}-#{g.noun}-#{g.tiny_hash}" },
     ->(g) { "#{g.adjective}-#{g.noun}-#{g.number}" },
-    ->(g) { "#{g.verb}-#{g.animal}-#{g.tiny_hash}" }
+    ->(g) { "#{g.verb}-#{g.animal}-#{g.tiny_hash}" },
+    ->(g) { "#{g.adjective}-#{g.animal}-#{g.number}" }
   ].freeze
 
   def initialize(random: Random.new)
@@ -72,31 +60,23 @@ class InvitationCodeGenerator
 
   # Word accessors for pattern lambdas
   def adjective
-    ADJECTIVES.sample(random: @random)
+    self.class.adjectives.sample(random: @random)
   end
 
   def animal
-    ANIMALS.sample(random: @random)
+    self.class.animals.sample(random: @random)
   end
 
   def verb
-    VERBS.sample(random: @random)
+    self.class.verbs.sample(random: @random)
   end
 
   def noun
-    NOUNS.sample(random: @random)
+    self.class.nouns.sample(random: @random)
   end
 
   def color
-    COLORS.sample(random: @random)
-  end
-
-  def object
-    OBJECTS.sample(random: @random)
-  end
-
-  def suffix
-    SUFFIXES.sample(random: @random)
+    self.class.colors.sample(random: @random)
   end
 
   def number
