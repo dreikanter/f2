@@ -166,6 +166,22 @@
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
   }
 
+  .ff-icon-status-active {
+    @apply text-emerald-600;
+  }
+
+  .ff-icon-status-inactive {
+    @apply text-slate-400;
+  }
+
+  .ff-icon-status-pending {
+    @apply text-slate-400;
+  }
+
+  .ff-icon-status-unknown {
+    @apply text-slate-400;
+  }
+
   /* aria-busy styling for loading states */
   [aria-busy="true"] {
     opacity: 0.8;
