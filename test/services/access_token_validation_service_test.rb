@@ -157,4 +157,39 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     # Token should be deactivated, not stuck in validating state
     assert_equal "inactive", access_token.reload.status
   end
+
+  test "#call should handle concurrent detail creation" do
+    user_info = { username: "testuser", screen_name: "Test User" }
+    managed_groups = []
+
+    mock_client.expect(:whoami, user_info)
+    mock_client.expect(:managed_groups, managed_groups)
+
+    # Simulate another job creating the detail concurrently
+    service = AccessTokenValidationService.new(access_token)
+    service.stub(:freefeed_client, mock_client) do
+      # Stub build_access_token_detail to raise RecordNotUnique on first save
+      access_token.stub(:build_access_token_detail, -> {
+        detail = AccessTokenDetail.new(access_token: access_token)
+        detail.define_singleton_method(:update!) do |attrs|
+          # Create the detail to simulate concurrent creation
+          AccessTokenDetail.create!(
+            access_token: access_token,
+            data: { user_info: user_info, managed_groups: managed_groups },
+            expires_at: AccessTokenDetail::TTL.from_now
+          )
+          # Raise the uniqueness error
+          raise ActiveRecord::RecordNotUnique.new("duplicate key value")
+        end
+        detail
+      }) do
+        service.call
+      end
+    end
+
+    # Token should still be active despite the race condition
+    assert_equal "active", access_token.reload.status
+    assert_not_nil access_token.access_token_detail
+    mock_client.verify
+  end
 end

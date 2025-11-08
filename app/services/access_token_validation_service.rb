@@ -47,17 +47,18 @@ class AccessTokenValidationService
       cached_at: Time.current.iso8601
     }
 
-    if access_token.access_token_detail
-      access_token.access_token_detail.update!(
-        data: details_data,
-        expires_at: AccessTokenDetail::TTL.from_now
-      )
-    else
-      access_token.create_access_token_detail!(
-        data: details_data,
-        expires_at: AccessTokenDetail::TTL.from_now
-      )
-    end
+    access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
+    access_token_detail.update!(
+      data: details_data,
+      expires_at: AccessTokenDetail::TTL.from_now
+    )
+  rescue ActiveRecord::RecordNotUnique
+    # Another job created the detail concurrently, reload and update
+    access_token.reload
+    access_token.access_token_detail.update!(
+      data: details_data,
+      expires_at: AccessTokenDetail::TTL.from_now
+    )
   end
 
   def disable_token_and_feeds
