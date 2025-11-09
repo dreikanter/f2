@@ -5,10 +5,6 @@
       <% end %>
 
       <% header.with_action_button do %>
-        <%= link_to "Edit", edit_settings_access_token_path(@access_token), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-      <% end %>
-
-      <% header.with_action_button do %>
         <%= link_to "Delete",
                     "#",
                     class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
