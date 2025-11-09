@@ -82,14 +82,20 @@ class AccessToken < ApplicationRecord
   private
 
   def generate_default_name
-    # Find the next available Token number for this user
+    self.name = "Token #{next_available_token_number}"
+  end
+
+  # TBD: Optimize this the token management flow is when stabilized
+  def next_available_token_number
     counter = 1
+
     loop do
       candidate_name = "Token #{counter}"
       break unless user.access_tokens.where(name: candidate_name).where.not(id: id).exists?
       counter += 1
     end
-    self.name = "Token #{counter}"
+
+    counter
   end
 
   def disable_associated_feeds
