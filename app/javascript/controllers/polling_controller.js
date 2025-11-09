@@ -63,55 +63,89 @@ export default class extends Controller {
   async _tick() {
     if (!this._running) return
 
-    if (this.stopConditionSatisfied()) return this.stopPolling()
-    if (this.maxDurationValue > 0 && Date.now() - this._startedAt > this.maxDurationValue) {
-      console.warn("Polling stopped after max duration")
-      return this.stopPolling()
-    }
-    if (this._pollCount >= this.maxPollsValue) {
-      console.warn("Polling stopped after maximum attempts")
-      return this.stopPolling()
-    }
-    if (document.hidden) {
+    const pollDecision = this._shouldContinuePolling()
+
+    if (pollDecision.shouldSkip) {
       return this._scheduleNext(this.intervalValue)
     }
-    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
-      return this._scheduleNext(this.intervalValue)
+
+    if (pollDecision.shouldStop) {
+      if (pollDecision.reason) console.warn(pollDecision.reason)
+      return this.stopPolling()
     }
 
     this._pollCount += 1
 
-    this._abort?.abort()
+    try {
+      const response = await this._performPoll()
+      await this._handlePollResponse(response)
+    } catch (err) {
+      this._handlePollError(err)
+    }
+  }
+
+  _shouldContinuePolling() {
+    if (this.stopConditionSatisfied()) {
+      return { shouldStop: true }
+    }
+
+    if (this.maxDurationValue > 0 && Date.now() - this._startedAt > this.maxDurationValue) {
+      return { shouldStop: true, reason: "Polling stopped after max duration" }
+    }
+
+    if (this._pollCount >= this.maxPollsValue) {
+      return { shouldStop: true, reason: "Polling stopped after maximum attempts" }
+    }
+
+    if (document.hidden) {
+      return { shouldSkip: true }
+    }
+
+    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
+      return { shouldSkip: true }
+    }
+
+    return { shouldContinue: true }
+  }
+
+  async _performPoll() {
+    if (this._abort) this._abort.abort()
     this._abort = new AbortController()
 
-    try {
-      const response = await fetch(this.endpointValue, {
-        headers: {
-          Accept: "text/vnd.turbo-stream.html",
-          "X-Requested-With": "XMLHttpRequest"
-        },
-        credentials: "same-origin",
-        signal: this._abort.signal
-      })
+    const response = await fetch(this.endpointValue, {
+      headers: {
+        Accept: "text/vnd.turbo-stream.html",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      credentials: "same-origin",
+      signal: this._abort.signal
+    })
 
-      if (!response.ok) {
-        console.warn(`Polling stopped: ${response.status}`)
-        return this.stopPolling()
-      }
+    return response
+  }
 
-      const html = await response.text()
-      if (html && typeof Turbo !== "undefined" && Turbo.renderStreamMessage) {
-        Turbo.renderStreamMessage(html)
-      }
-
-      if (this.stopConditionSatisfied()) return this.stopPolling()
-
-      this._scheduleNext(this.intervalValue)
-    } catch (err) {
-      if (err.name === "AbortError") return
-      console.error("Polling error:", err)
-      this._scheduleNext(this.intervalValue)
+  async _handlePollResponse(response) {
+    if (!response.ok) {
+      console.warn(`Polling stopped: ${response.status}`)
+      return this.stopPolling()
     }
+
+    const html = await response.text()
+    if (html && typeof Turbo !== "undefined" && Turbo.renderStreamMessage) {
+      Turbo.renderStreamMessage(html)
+    }
+
+    if (this.stopConditionSatisfied()) {
+      return this.stopPolling()
+    }
+
+    this._scheduleNext(this.intervalValue)
+  }
+
+  _handlePollError(err) {
+    if (err.name === "AbortError") return
+    console.error("Polling error:", err)
+    this._scheduleNext(this.intervalValue)
   }
 
   stopConditionSatisfied() {
