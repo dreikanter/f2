@@ -209,7 +209,7 @@
   - Username
   - Screen name (if available)
 - Managed groups section (if user manages groups on FreeFeed)
-- Actions: Edit name, Delete, Revalidate
+- Actions: Delete, Revalidate
 
 ### Scenario 4.4: View pending token details
 
@@ -243,46 +243,13 @@
 - No username displayed
 - No user info
 - "Revalidate" button to retry validation
-- Actions: Edit name, Delete, Revalidate
+- Actions: Delete, Revalidate
 
 ---
 
 ## 5. Managing Tokens
 
-### Scenario 5.1: Edit token name
-
-**Preconditions**:
-- User is signed in
-- Token exists with name "Old Name"
-
-**Steps**:
-1. Navigate to token details page
-2. Click "Edit" or edit icon
-3. Change name to "New Name"
-4. Click "Save" or submit
-
-**Expected**:
-- Name updated to "New Name"
-- Success message shown
-- Updated name visible in list and details
-
-### Scenario 5.2: Edit token to remove name
-
-**Preconditions**:
-- User is signed in
-- Token exists with a name
-
-**Steps**:
-1. Navigate to edit form
-2. Clear the name field (make it blank)
-3. Click "Save"
-
-**Expected**:
-- Name becomes blank/null
-- No error (name is optional)
-- Token shows without name in list
-
-### Scenario 5.3: Delete token with confirmation
+### Scenario 5.1: Delete token with confirmation
 
 **Preconditions**:
 - User is signed in
@@ -300,7 +267,7 @@
 - Success message shown
 - Redirected to tokens list
 
-### Scenario 5.4: Cancel token deletion
+### Scenario 5.2: Cancel token deletion
 
 **Preconditions**:
 - User is signed in
@@ -316,7 +283,7 @@
 - Remains in list
 - No changes made
 
-### Scenario 5.5: Revalidate inactive token
+### Scenario 5.3: Revalidate inactive token
 
 **Preconditions**:
 - User is signed in
