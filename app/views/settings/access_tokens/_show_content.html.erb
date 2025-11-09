@@ -1,17 +1,19 @@
   <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Back to Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
+    <% unless @access_token.pending? || @access_token.validating? %>
+      <% header.with_action_button do %>
+        <%= link_to "Back to Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <% end %>
 
-    <% header.with_action_button do %>
-      <%= link_to "Edit", edit_settings_access_token_path(@access_token), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
+      <% header.with_action_button do %>
+        <%= link_to "Edit", edit_settings_access_token_path(@access_token), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <% end %>
 
-    <% header.with_action_button do %>
-      <%= link_to "Delete",
-                  "#",
-                  class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
-                  data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
+      <% header.with_action_button do %>
+        <%= link_to "Delete",
+                    "#",
+                    class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                    data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
+      <% end %>
     <% end %>
   <% end %>
 
