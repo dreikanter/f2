@@ -5,8 +5,7 @@
       data: {
         controller: "polling",
         polling_endpoint_value: feed_preview_path(feed_preview, format: :turbo_stream),
-        polling_stop_condition_value: "[data-feed-preview-spinner]",
-        feed_preview_spinner: true
+        polling_stop_condition_value: "[data-feed-preview-spinner]"
       }
     ) do %>
   <div class="flex-shrink-0">
