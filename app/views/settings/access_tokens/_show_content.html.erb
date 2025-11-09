@@ -55,7 +55,7 @@
     <p class="text-slate-600 mb-4">
       Posts created with this token will appear on FreeFeed on behalf of:
     </p>
-    <%= render FreefeedUserComponent.new(username: @access_token.owner) %>
+    <%= render FreefeedUserComponent.new(user: @access_token.owner) %>
   </div>
 
   <% if @access_token.access_token_detail.present? %>
