@@ -79,6 +79,10 @@ class AccessToken < ApplicationRecord
     FREEFEED_HOSTS.values.find { |config| config[:url] == host }.fetch(:domain)
   end
 
+  def disable_associated_feeds
+    feeds.enabled.update_all(state: :disabled, access_token_id: nil)
+  end
+
   private
 
   def generate_default_name
@@ -96,9 +100,5 @@ class AccessToken < ApplicationRecord
     end
 
     counter
-  end
-
-  def disable_associated_feeds
-    feeds.update_all(state: :disabled, access_token_id: nil)
   end
 end
