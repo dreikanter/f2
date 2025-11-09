@@ -125,11 +125,7 @@
   <% elsif @access_token.inactive? %>
     <div class="ff-alert ff-alert--error" data-status="inactive">
       <%= icon("x-circle", aria_hidden: true) %>
-      <span>Token is inactive and cannot be used to access FreeFeed API</span>
-    </div>
-
-    <div class="ff-text space-y-2">
-      <p>This token failed validation. It may be expired, revoked, or incorrectly copied.</p>
+      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
     </div>
 
     <%= render ListGroupComponent.new.tap { |c|
