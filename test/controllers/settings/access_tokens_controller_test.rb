@@ -105,16 +105,17 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_no_difference("AccessToken.count") do
-      assert_raises Settings::AccessTokensController::UnsupportedFreeFeedHostError do
-        post settings_access_tokens_path, params: {
-          access_token: {
-            name: "Test Token",
-            token: "test_token_123",
-            host: "https://unknown.example.com"
-          }
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: "https://unknown.example.com"
         }
-      end
+      }
     end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "New Access Token"
   end
 
   test "#create should require authentication" do
