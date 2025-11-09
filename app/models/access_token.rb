@@ -16,6 +16,9 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
+  # A user can create access token record associated with a known
+  # FreeFeed instances only (see Settings::AccessTokensController).
+  # Though the model allows to define any valid host URL.
   FREEFEED_HOSTS = {
     production: {
       url: "https://freefeed.net",
