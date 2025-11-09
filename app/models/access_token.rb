@@ -5,7 +5,7 @@ class AccessToken < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
-  validates :host, presence: true
+  validates :host, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid HTTP or HTTPS URL" }
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 

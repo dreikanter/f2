@@ -151,6 +151,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
+  test "rejects invalid host URLs" do
+    ["not a url", "ftp://example.com", "example.com"].each do |host|
+      token = build(:access_token, host: host)
+      assert_not token.valid?, "#{host.inspect} should be invalid"
+      assert token.errors.of_kind?(:host, :invalid), "#{host.inspect} should have invalid error"
+    end
+  end
+
   test "build_with_token sets default production host" do
     token = AccessToken.build_with_token(
       name: "Test Token",
