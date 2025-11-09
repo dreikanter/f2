@@ -55,7 +55,7 @@ class AccessToken < ApplicationRecord
   end
 
   def validate_token_async
-    update!(status: :validating)
+    validating!
     TokenValidationJob.perform_later(self)
   end
 
