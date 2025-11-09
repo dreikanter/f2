@@ -34,7 +34,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test ".perform_now should mark token as inactive when HTTP error occurs" do
     # Mock HTTP error
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_raise(StandardError.new("Connection failed"))
 
     assert access_token.pending?
@@ -47,7 +47,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test ".perform_now should mark token as inactive when JSON parsing fails" do
     # Mock response with invalid JSON
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
@@ -124,7 +124,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test ".perform_now should mark token as inactive when response format is invalid" do
     # Mock response with missing username field
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
@@ -146,7 +146,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should handle general exceptions in validation and broadcast errors" do
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout
 
     assert access_token.pending?
@@ -167,7 +167,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test ".perform_now should resume after failure" do
     # First attempt fails with timeout
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout.times(1)
       .then.to_return(
         status: 200,
@@ -181,7 +181,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
-    stub_request(:get, "https://freefeed.net/v4/managedGroups")
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
@@ -212,7 +212,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   private
 
   def stub_successful_freefeed_response
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
@@ -231,7 +231,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
-    stub_request(:get, "https://freefeed.net/v4/managedGroups")
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
@@ -246,7 +246,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   def stub_failed_freefeed_response
-    stub_request(:get, "https://freefeed.net/v4/users/whoami")
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
           "Authorization" => /Bearer freefeed_token_/,
