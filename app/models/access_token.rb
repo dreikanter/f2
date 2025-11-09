@@ -63,11 +63,6 @@ class AccessToken < ApplicationRecord
     encrypted_token
   end
 
-
-  def touch_last_used!
-    touch(:last_used_at)
-  end
-
   def build_client
     FreefeedClient.new(host: host, token: token_value)
   end

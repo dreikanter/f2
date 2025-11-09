@@ -91,12 +91,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert duplicate_for_different_user.valid?
   end
 
-  test "#touch_last_used! updates last_used_at" do
-    assert_nil access_token.last_used_at
-    access_token.touch_last_used!
-    assert_not_nil access_token.reload.last_used_at
-  end
-
   test "active scope returns only active tokens" do
     active_token = create(:access_token, :active)
     inactive_token = create(:access_token, :inactive)
