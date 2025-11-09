@@ -144,43 +144,11 @@ export default class extends Controller {
 
   stopConditionSatisfied() {
     if (!this.hasStopConditionValue) return false
-    const selectorInput = this.stopConditionValue.trim()
-    if (!selectorInput) return false
+    const selector = this.stopConditionValue.trim()
+    if (!selector) return false
 
-    const selectors = this.buildSelectors(selectorInput)
     const root = this.scopeValue === "document" ? document : this.element
-    return !!this.findElementFor(root, selectors)
-  }
-
-  findElementFor(root, selectors) {
-    if (Array.isArray(selectors)) {
-      for (const sel of selectors) {
-        if (root.matches?.(sel)) return root
-        const found = root.querySelector(sel)
-        if (found) return found
-      }
-      return null
-    }
-    if (root.matches?.(selectors)) return root
-    return root.querySelector(selectors)
-  }
-
-  buildSelectors(selector) {
-    if (/^[\[#.]/.test(selector) || /[\s=>:"'\]]/.test(selector)) return selector
-
-    const parts = selector.split(",").map(s => s.trim()).filter(Boolean)
-    if (parts.length > 1) {
-      return parts.map(p => this._attrToSelector(p))
-    }
-    return this._attrToSelector(selector)
-  }
-
-  _attrToSelector(token) {
-    const eq = token.indexOf("=")
-    if (eq === -1) return `[${token}]`
-    const name = token.slice(0, eq)
-    const value = token.slice(eq + 1)
-    const quoted = JSON.stringify(value)
-    return `[${name}=${quoted}]`
+    if (root.matches?.(selector)) return true
+    return !!root.querySelector(selector)
   }
 }
