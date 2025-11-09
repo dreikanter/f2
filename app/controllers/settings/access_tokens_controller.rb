@@ -1,7 +1,7 @@
 class Settings::AccessTokensController < ApplicationController
   def index
     authorize AccessToken
-    @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
+    @access_tokens = scope.order(created_at: :desc)
   end
 
   def show
@@ -54,7 +54,11 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   def find_access_token
-    policy_scope(AccessToken).find(params[:id])
+    scope.find(params[:id])
+  end
+
+  def scope
+    policy_scope(AccessToken)
   end
 
   def access_token_params
