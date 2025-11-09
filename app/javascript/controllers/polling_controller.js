@@ -42,10 +42,6 @@ export default class extends Controller {
   async _tick() {
     if (!this._running) return
 
-    if (document.hidden) {
-      return this._scheduleNext(this.intervalValue)
-    }
-
     if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
       return this._scheduleNext(this.intervalValue)
     }
