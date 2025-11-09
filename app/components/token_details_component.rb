@@ -14,9 +14,7 @@ class TokenDetailsComponent < ViewComponent::Base
   end
 
   def last_used
-    return "–" if @access_token.inactive?
-
-    @access_token.last_used_at ? helpers.datetime_with_duration_tag(@access_token.last_used_at) : "Never"
+    @access_token.last_used_at ? helpers.datetime_with_duration_tag(@access_token.last_used_at) : "–"
   end
 
   def created
