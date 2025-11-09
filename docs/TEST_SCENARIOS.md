@@ -49,6 +49,7 @@
 **Preconditions**:
 - User is signed in
 - User is on access tokens page
+- User already has 1 existing token
 
 **Steps**:
 1. Click "Add FreeFeed Access Token"
@@ -57,7 +58,8 @@
 4. Click submit
 
 **Expected**:
-- Token created successfully with blank/null name displayed as empty
+- Token created successfully
+- Auto-generated unique name displayed (e.g., "Token 2")
 
 ### Scenario 2.3: Create token for staging host
 
