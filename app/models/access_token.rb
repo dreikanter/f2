@@ -59,12 +59,8 @@ class AccessToken < ApplicationRecord
     TokenValidationJob.perform_later(self)
   end
 
-  def token_value
-    encrypted_token
-  end
-
   def build_client
-    FreefeedClient.new(host: host, token: token_value)
+    FreefeedClient.new(host: host, token: encrypted_token)
   end
 
   def username_with_host

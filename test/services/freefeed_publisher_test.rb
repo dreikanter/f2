@@ -108,7 +108,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -165,7 +165,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -207,7 +207,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -244,7 +244,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -260,7 +260,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -297,7 +297,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/posts")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -316,7 +316,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
@@ -332,7 +332,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{access_token.host}/v4/comments")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json",
           "Content-Type" => "application/json"
         },
