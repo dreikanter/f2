@@ -1,12 +1,7 @@
 <%# locals: (feed_preview:) %>
 <%= render CardComponent.new(
       class: "flex items-center gap-3",
-      role: "status",
-      data: {
-        controller: "polling",
-        polling_endpoint_value: feed_preview_path(feed_preview, format: :turbo_stream),
-        polling_stop_condition_value: "[data-feed-preview-spinner]"
-      }
+      role: "status"
     ) do %>
   <div class="flex-shrink-0">
     <%= render SpinnerComponent.new %>

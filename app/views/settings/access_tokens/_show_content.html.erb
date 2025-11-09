@@ -28,13 +28,7 @@
 <% end %>
 
 <% if @access_token.pending? || @access_token.validating? %>
-  <div
-    data-controller="polling"
-    data-polling-endpoint-value="<%= settings_access_token_validation_path(@access_token) %>"
-    data-polling-interval-value="2000"
-    data-polling-stop-condition-value="[data-status]"
-    aria-busy="true"
-    class="ff-card">
+  <div class="ff-card">
     <div class="ff-card__body">
       <div class="flex items-center justify-center py-8">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>

@@ -22,7 +22,7 @@ export default class extends Controller {
     this._running = true
     this._pollCount = 0
     this.element.setAttribute("aria-busy", "true")
-    this._scheduleNext(this.intervalValue)
+    this._scheduleNext(0)
   }
 
   stopPolling() {
