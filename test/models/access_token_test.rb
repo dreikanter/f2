@@ -265,19 +265,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "custom.example.com", token.host_domain
   end
 
-  test "#username_with_host should return username with domain" do
-    token = build(:access_token, host: "https://freefeed.net", owner: "testuser")
-    assert_equal "testuser@freefeed.net", token.username_with_host
-
-    token = build(:access_token, host: "https://custom.example.com", owner: "testuser")
-    assert_equal "testuser@custom.example.com", token.username_with_host
-  end
-
-  test "#username_with_host should return nil when owner is not set" do
-    token = build(:access_token, host: "https://freefeed.net", owner: nil)
-    assert_nil token.username_with_host
-  end
-
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
     AccessToken::FREEFEED_HOSTS.each do |key, config|
       token = build(:access_token, host: config[:url])

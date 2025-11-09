@@ -63,12 +63,6 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token)
   end
 
-  def username_with_host
-    return nil unless owner.present?
-
-    "#{owner}@#{host_domain}"
-  end
-
   def host_domain
     URI.parse(host).host
   end
