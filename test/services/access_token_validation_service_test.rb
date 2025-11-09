@@ -9,76 +9,146 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     @access_token ||= create(:access_token, user: user, status: :validating)
   end
 
-  def mock_client
-    @mock_client ||= Minitest::Mock.new
-  end
-
   test "#call should activate token on successful validation" do
-    user_info = { username: "testuser", screen_name: "Test User" }
-    managed_groups = [{ username: "group1" }, { username: "group2" }]
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: {
+          users: {
+            id: "user123",
+            username: "testuser",
+            screenName: "Test User",
+            email: "test@example.com"
+          }
+        }.to_json
+      )
 
-    mock_client.expect(:whoami, user_info)
-    mock_client.expect(:managed_groups, managed_groups)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [
+          { id: "group1", username: "group1", screenName: "Group 1" },
+          { id: "group2", username: "group2", screenName: "Group 2" }
+        ].to_json
+      )
 
     service = AccessTokenValidationService.new(access_token)
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     assert_equal "active", access_token.reload.status
     assert_equal "testuser", access_token.owner
     assert_not_nil access_token.last_used_at
-    mock_client.verify
   end
 
   test "#call should create access_token_detail if it doesn't exist" do
-    user_info = { username: "testuser", screen_name: "Test User" }
-    managed_groups = [{ username: "group1" }]
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: {
+          users: {
+            id: "user123",
+            username: "testuser",
+            screenName: "Test User"
+          }
+        }.to_json
+      )
 
-    mock_client.expect(:whoami, user_info)
-    mock_client.expect(:managed_groups, managed_groups)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [
+          { id: "group1", username: "group1", screenName: "Group 1" }
+        ].to_json
+      )
 
     service = AccessTokenValidationService.new(access_token)
     assert_nil access_token.access_token_detail
 
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     detail = access_token.reload.access_token_detail
     assert_not_nil detail
     assert_equal "testuser", detail.data["user_info"]["username"]
     assert_equal 1, detail.data["managed_groups"].length
-    mock_client.verify
   end
 
   test "#call should update access_token_detail if it exists" do
     existing_detail = create(:access_token_detail, access_token: access_token)
 
-    user_info = { username: "newuser", screen_name: "New User" }
-    managed_groups = []
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: {
+          users: {
+            id: "user456",
+            username: "newuser",
+            screenName: "New User"
+          }
+        }.to_json
+      )
 
-    mock_client.expect(:whoami, user_info)
-    mock_client.expect(:managed_groups, managed_groups)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: [].to_json
+      )
 
     service = AccessTokenValidationService.new(access_token)
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     detail = access_token.reload.access_token_detail
     assert_equal existing_detail.id, detail.id
     assert_equal "newuser", detail.data["user_info"]["username"]
-    mock_client.verify
   end
 
   test "#call should deactivate token on validation failure" do
-    mock_client.expect(:whoami, -> { raise StandardError, "API error" })
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 401, body: "Unauthorized")
 
     service = AccessTokenValidationService.new(access_token)
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     assert_equal "inactive", access_token.reload.status
   end
@@ -88,12 +158,17 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     feed2 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
 
-    mock_client.expect(:whoami, -> { raise StandardError, "API error" })
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 500, body: "Internal Server Error")
 
     service = AccessTokenValidationService.new(access_token)
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     assert_equal "disabled", feed1.reload.state
     assert_equal "disabled", feed2.reload.state
@@ -101,18 +176,37 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should deactivate token when managed_groups fails" do
-    user_info = { username: "testuser", screen_name: "Test User" }
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: {
+          users: {
+            id: "user123",
+            username: "testuser",
+            screenName: "Test User"
+          }
+        }.to_json
+      )
 
-    mock_client.expect(:whoami, user_info)
-    mock_client.expect(:managed_groups, -> { raise StandardError, "Network error" })
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 500, body: "Internal Server Error")
 
     service = AccessTokenValidationService.new(access_token)
-    service.stub(:freefeed_client, mock_client) do
-      service.call
-    end
+    service.call
 
     # Token should be inactive when managed_groups fails during cache_token_details
     assert_equal "inactive", access_token.reload.status
-    mock_client.verify
   end
 end
