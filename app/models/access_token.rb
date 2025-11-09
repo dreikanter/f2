@@ -76,7 +76,10 @@ class AccessToken < ApplicationRecord
   end
 
   def host_domain
-    FREEFEED_HOSTS.values.find { |config| config[:url] == host }.fetch(:domain)
+    config = FREEFEED_HOSTS.values.find { |c| c[:url] == host }
+    return config[:domain] if config
+
+    URI.parse(host).host
   end
 
   def disable_associated_feeds

@@ -260,9 +260,9 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "beta.freefeed.net", token.host_domain
   end
 
-  test "#host_domain should raise error for unknown hosts" do
+  test "#host_domain should fall back to URI parsing for unknown hosts" do
     token = build(:access_token, host: "https://custom.example.com")
-    assert_raises(NoMethodError) { token.host_domain }
+    assert_equal "custom.example.com", token.host_domain
   end
 
   test "#username_with_host should return username with domain" do
@@ -273,6 +273,11 @@ class AccessTokenTest < ActiveSupport::TestCase
   test "#username_with_host should return nil when owner is not set" do
     token = build(:access_token, host: "https://freefeed.net", owner: nil)
     assert_nil token.username_with_host
+  end
+
+  test "#username_with_host should work with non-whitelisted hosts" do
+    token = build(:access_token, host: "https://custom.example.com", owner: "testuser")
+    assert_equal "testuser@custom.example.com", token.username_with_host
   end
 
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
