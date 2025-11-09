@@ -185,11 +185,11 @@
 **Expected**:
 - List of all tokens displayed
 - Each token shows:
-  - Name (or blank if unnamed)
-  - Host domain
+  - Name (or auto-generated name like "Token 2")
   - Status badge (Pending/Active/Inactive)
-  - Username@domain (if active)
-  - Last used timestamp (if active)
+  - For active tokens with known username: "username@freefeed.net"
+  - For tokens without username (pending/inactive): "Host: freefeed.net"
+  - Last used timestamp (if active and available)
 - Tokens sorted appropriately (newest first or by status)
 
 ### Scenario 4.3: View active token details
