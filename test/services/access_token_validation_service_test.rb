@@ -103,7 +103,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "disabled", feed3.reload.state
   end
 
-  test "#call should keep token active when managed_groups fails" do
+  test "#call should deactivate token when managed_groups fails" do
     user_info = { username: "testuser", screen_name: "Test User" }
 
     mock_client.expect(:whoami, user_info)
@@ -114,15 +114,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       service.call
     end
 
-    # Token should still be active despite managed_groups failure
-    assert_equal "active", access_token.reload.status
-    assert_equal "testuser", access_token.owner
-    # Detail should be cached even when managed_groups fails
-    detail = access_token.access_token_detail
-    assert_not_nil detail
-    assert_equal "testuser", detail.data["user_info"]["username"]
-    # Managed groups key exists (value doesn't matter for this test)
-    assert detail.data.key?("managed_groups")
+    # Token should be inactive when managed_groups fails during cache_token_details
+    assert_equal "inactive", access_token.reload.status
     mock_client.verify
   end
 end
