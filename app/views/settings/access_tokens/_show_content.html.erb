@@ -1,134 +1,115 @@
-  <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
-    <% unless @access_token.pending? || @access_token.validating? %>
-      <% header.with_action_button do %>
-        <%= link_to "Back to Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-      <% end %>
+<%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
+  <% unless @access_token.pending? || @access_token.validating? %>
+    <% header.with_action_button do %>
+      <%= link_to "Back to Tokens", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <% end %>
 
-      <% header.with_action_button do %>
-        <%= link_to "Delete",
-                    "#",
-                    class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
-                    data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
-      <% end %>
+    <% header.with_action_button do %>
+      <%= link_to "Delete",
+                  "#",
+                  class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                  data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
     <% end %>
   <% end %>
+<% end %>
 
-  <%= render ConfirmationModalComponent.new(
-    title: "Delete Access Token",
-    action: "Delete token",
-    url: settings_access_token_path(@access_token),
-    method: :delete,
-    modal_id: "delete-token-modal"
-  ) do %>
-    <div class="ff-alert ff-alert--warning space-y-2">
-      <p>The token <em><%= @access_token.name %></em> will be permanently removed.</p>
-      <p>Any feeds using this token will be automatically disabled.</p>
-      <p>This can't be undone.</p>
+<%= render ConfirmationModalComponent.new(
+  title: "Delete Access Token",
+  action: "Delete token",
+  url: settings_access_token_path(@access_token),
+  method: :delete,
+  modal_id: "delete-token-modal"
+) do %>
+  <div class="ff-alert ff-alert--warning space-y-2">
+    <p>The token <em><%= @access_token.name %></em> will be permanently removed.</p>
+    <p>Any feeds using this token will be automatically disabled.</p>
+    <p>This can't be undone.</p>
+  </div>
+<% end %>
+
+<% if @access_token.pending? || @access_token.validating? %>
+  <div
+    data-controller="polling"
+    data-polling-endpoint-value="<%= settings_access_token_validation_path(@access_token) %>"
+    data-polling-interval-value="2000"
+    data-polling-stop-condition-value="data-status"
+    aria-busy="true"
+    class="ff-card">
+    <div class="ff-card__body">
+      <div class="flex items-center justify-center py-8">
+        <%= render SpinnerComponent.new(css_class: "mr-3") %>
+        <span class="text-lg text-slate-600">Validating token...</span>
+      </div>
     </div>
-  <% end %>
+  </div>
+<% elsif @access_token.active? %>
+  <div class="ff-alert ff-alert--success" data-status="active">
+    <%= icon("check-circle", aria_hidden: true) %>
+    <span>Token is active and ready to use</span>
+  </div>
 
-  <% if @access_token.pending? || @access_token.validating? %>
-    <div
-      data-controller="polling"
-      data-polling-endpoint-value="<%= settings_access_token_validation_path(@access_token) %>"
-      data-polling-interval-value="2000"
-      data-polling-stop-condition-value="data-status"
-      aria-busy="true"
-      class="ff-card">
+  <% if @access_token.access_token_detail && !@access_token.access_token_detail.expired? %>
+    <% details = @access_token.access_token_detail.data %>
+    <% user_info = details["user_info"] %>
+    <% managed_groups = details["managed_groups"] || [] %>
+
+    <%= render ListGroupComponent.new.tap { |c|
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "FreeFeed User",
+        value: user_info["username"],
+        key: "token.freefeed_user"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "FreeFeed Instance",
+        value: URI.parse(@access_token.host).host,
+        key: "token.host"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Last Used",
+        value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
+        key: "token.last_used"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Created",
+        value: datetime_with_duration_tag(@access_token.created_at),
+        key: "token.created"
+      ))
+    } %>
+
+    <div class="ff-card">
       <div class="ff-card__body">
-        <div class="flex items-center justify-center py-8">
-          <%= render SpinnerComponent.new(css_class: "mr-3") %>
-          <span class="text-lg text-slate-600">Validating token...</span>
+        <p class="text-sm text-slate-600 mb-4">
+          Posts created with this token will appear on FreeFeed on behalf of:
+        </p>
+        <div class="flex items-center gap-3">
+          <img
+            src="<%= @access_token.host %>/profilepics/<%= user_info["username"] %>"
+            alt="<%= user_info["username"] %>"
+            class="w-12 h-12 rounded-full"
+            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect width=%2248%22 height=%2248%22 fill=%22%23cbd5e1%22/%3E%3C/svg%3E'"
+          >
+          <span class="text-lg font-medium"><%= user_info["screen_name"] || user_info["username"] %></span>
         </div>
       </div>
     </div>
-  <% elsif @access_token.active? %>
-    <div class="ff-alert ff-alert--success" data-status="active">
-      <%= icon("check-circle", aria_hidden: true) %>
-      <span>Token is active and ready to use</span>
-    </div>
 
-    <% if @access_token.access_token_detail && !@access_token.access_token_detail.expired? %>
-      <% details = @access_token.access_token_detail.data %>
-      <% user_info = details["user_info"] %>
-      <% managed_groups = details["managed_groups"] || [] %>
-
-      <%= render ListGroupComponent.new.tap { |c|
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "FreeFeed User",
-          value: user_info["username"],
-          key: "token.freefeed_user"
-        ))
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "FreeFeed Instance",
-          value: URI.parse(@access_token.host).host,
-          key: "token.host"
-        ))
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "Last Used",
-          value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
-          key: "token.last_used"
-        ))
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "Created",
-          value: datetime_with_duration_tag(@access_token.created_at),
-          key: "token.created"
-        ))
-      } %>
-
-      <div class="ff-card">
-        <div class="ff-card__body">
-          <p class="text-sm text-slate-600 mb-4">
-            Posts created with this token will appear on FreeFeed on behalf of:
-          </p>
-          <div class="flex items-center gap-3">
-            <img
-              src="<%= @access_token.host %>/profilepics/<%= user_info["username"] %>"
-              alt="<%= user_info["username"] %>"
-              class="w-12 h-12 rounded-full"
-              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect width=%2248%22 height=%2248%22 fill=%22%23cbd5e1%22/%3E%3C/svg%3E'"
-            >
-            <span class="text-lg font-medium"><%= user_info["screen_name"] || user_info["username"] %></span>
-          </div>
-        </div>
+    <% if @access_token.feeds.any? %>
+      <div class="space-y-4">
+        <h2 class="ff-h2">Associated Feeds</h2>
+        <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
       </div>
-
-      <% if @access_token.feeds.any? %>
-        <div class="space-y-4">
-          <h2 class="ff-h2">Associated Feeds</h2>
-          <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
-        </div>
-      <% end %>
-    <% else %>
-      <%= render ListGroupComponent.new.tap { |c|
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "FreeFeed Instance",
-          value: URI.parse(@access_token.host).host,
-          key: "token.host"
-        ))
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "Last Used",
-          value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
-          key: "token.last_used"
-        ))
-        c.with_item(ListGroupComponent::StatItemComponent.new(
-          label: "Created",
-          value: datetime_with_duration_tag(@access_token.created_at),
-          key: "token.created"
-        ))
-      } %>
     <% end %>
-  <% elsif @access_token.inactive? %>
-    <div class="ff-alert ff-alert--error" data-status="inactive">
-      <%= icon("x-circle", aria_hidden: true) %>
-      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
-    </div>
-
+  <% else %>
     <%= render ListGroupComponent.new.tap { |c|
       c.with_item(ListGroupComponent::StatItemComponent.new(
         label: "FreeFeed Instance",
         value: URI.parse(@access_token.host).host,
         key: "token.host"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Last Used",
+        value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
+        key: "token.last_used"
       ))
       c.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Created",
@@ -137,3 +118,22 @@
       ))
     } %>
   <% end %>
+<% elsif @access_token.inactive? %>
+  <div class="ff-alert ff-alert--error" data-status="inactive">
+    <%= icon("x-circle", aria_hidden: true) %>
+    <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
+  </div>
+
+  <%= render ListGroupComponent.new.tap { |c|
+    c.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "FreeFeed Instance",
+      value: URI.parse(@access_token.host).host,
+      key: "token.host"
+    ))
+    c.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Created",
+      value: datetime_with_duration_tag(@access_token.created_at),
+      key: "token.created"
+    ))
+  } %>
+<% end %>
