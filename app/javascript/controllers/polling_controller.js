@@ -127,11 +127,13 @@ export default class extends Controller {
   findElementFor(root, selectors) {
     if (Array.isArray(selectors)) {
       for (const sel of selectors) {
+        if (root.matches?.(sel)) return root
         const found = root.querySelector(sel)
         if (found) return found
       }
       return null
     }
+    if (root.matches?.(selectors)) return root
     return root.querySelector(selectors)
   }
 
