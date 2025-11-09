@@ -64,9 +64,9 @@
       <h2 class="ff-h2">FreeFeed Groups</h2>
       <% if managed_groups.any? %>
         <p><%= pluralize(managed_groups.count, "groups") %> available for posting:</p>
-        <ul>
+        <ul class="list-disc list-inside">
           <% managed_groups.sort_by { _1["username"] }.each do |group| %>
-            <li><%= group["username"] %></li>
+            <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "ff-link" %></li>
           <% end %>
         </ul>
       <% else %>
