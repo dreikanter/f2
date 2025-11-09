@@ -6,12 +6,7 @@ class TokenDetailsComponent < ViewComponent::Base
   private
 
   def freefeed_user
-    return "–" unless @access_token.active?
-    return "–" unless @access_token.access_token_detail && !@access_token.access_token_detail.expired?
-
-    details = @access_token.access_token_detail.data
-    user_info = details["user_info"]
-    user_info["username"]
+    @access_token.owner.presence || "–"
   end
 
   def freefeed_instance
