@@ -14,7 +14,7 @@ class AccessTokenValidationService
 
     cache_token_details
   rescue StandardError => e
-    # TBD: USe more robust approach to handle errorhere
+    # TBD: Use more robust approach to handle errorhere
     disable_token_and_feeds
   end
 
