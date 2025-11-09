@@ -49,13 +49,11 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_not_nil detail
     assert_equal "testuser", detail.data["user_info"]["username"]
     assert_equal 1, detail.data["managed_groups"].length
-    assert_not_nil detail.expires_at
     mock_client.verify
   end
 
   test "#call should update access_token_detail if it exists" do
     existing_detail = create(:access_token_detail, access_token: access_token)
-    old_expires_at = existing_detail.expires_at
 
     user_info = { username: "newuser", screen_name: "New User" }
     managed_groups = []
@@ -71,7 +69,6 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     detail = access_token.reload.access_token_detail
     assert_equal existing_detail.id, detail.id
     assert_equal "newuser", detail.data["user_info"]["username"]
-    assert detail.expires_at > old_expires_at
     mock_client.verify
   end
 

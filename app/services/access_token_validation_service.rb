@@ -35,8 +35,7 @@ class AccessTokenValidationService
         data: {
           user_info: user_info,
           managed_groups: managed_groups
-        },
-        expires_at: AccessTokenDetail::TTL.from_now
+        }
       )
     end
   end

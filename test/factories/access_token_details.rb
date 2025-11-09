@@ -9,6 +9,5 @@ FactoryBot.define do
       }
     end
 
-    expires_at { AccessTokenDetail::TTL.from_now }
   end
 end
