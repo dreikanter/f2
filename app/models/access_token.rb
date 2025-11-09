@@ -71,7 +71,31 @@ class AccessToken < ApplicationRecord
     feeds.update_all(state: :disabled, access_token_id: nil)
   end
 
+  def disable_token_and_feeds
+    with_lock do
+      inactive!
+
+      enabled_feeds = feeds.enabled
+      return unless enabled_feeds.exists?
+
+      feed_ids = enabled_feeds.pluck(:id)
+      disabled_count = enabled_feeds.update_all(state: :disabled)
+      create_validation_failed_event(feed_ids: feed_ids, disabled_count: disabled_count)
+    end
+  end
+
   private
+
+  def create_validation_failed_event(feed_ids:, disabled_count:)
+    Event.create!(
+      type: "access_token_validation_failed",
+      user: user,
+      subject: self,
+      level: :warning,
+      message: "Token validation failed. #{disabled_count} #{'feed'.pluralize(disabled_count)} disabled.",
+      metadata: { disabled_feed_ids: feed_ids }
+    )
+  end
 
   def generate_default_name
     self.name = "Token #{next_available_token_number}"
