@@ -76,9 +76,6 @@ class AccessToken < ApplicationRecord
   end
 
   def host_domain
-    config = FREEFEED_HOSTS.values.find { |c| c[:url] == host }
-    return config[:domain] if config
-
     URI.parse(host).host
   end
 

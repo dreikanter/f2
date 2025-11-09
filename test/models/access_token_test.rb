@@ -249,7 +249,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal access_token, disabled_feed.access_token
   end
 
-  test "#host_domain should return domain from FREEFEED_HOSTS for known hosts" do
+  test "#host_domain should parse domain from host URL" do
     token = build(:access_token, host: "https://freefeed.net")
     assert_equal "freefeed.net", token.host_domain
 
@@ -258,9 +258,7 @@ class AccessTokenTest < ActiveSupport::TestCase
 
     token = build(:access_token, host: "https://beta.freefeed.net")
     assert_equal "beta.freefeed.net", token.host_domain
-  end
 
-  test "#host_domain should fall back to URI parsing for unknown hosts" do
     token = build(:access_token, host: "https://custom.example.com")
     assert_equal "custom.example.com", token.host_domain
   end
@@ -268,16 +266,14 @@ class AccessTokenTest < ActiveSupport::TestCase
   test "#username_with_host should return username with domain" do
     token = build(:access_token, host: "https://freefeed.net", owner: "testuser")
     assert_equal "testuser@freefeed.net", token.username_with_host
+
+    token = build(:access_token, host: "https://custom.example.com", owner: "testuser")
+    assert_equal "testuser@custom.example.com", token.username_with_host
   end
 
   test "#username_with_host should return nil when owner is not set" do
     token = build(:access_token, host: "https://freefeed.net", owner: nil)
     assert_nil token.username_with_host
-  end
-
-  test "#username_with_host should work with non-whitelisted hosts" do
-    token = build(:access_token, host: "https://custom.example.com", owner: "testuser")
-    assert_equal "testuser@custom.example.com", token.username_with_host
   end
 
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
