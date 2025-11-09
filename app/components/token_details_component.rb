@@ -5,30 +5,22 @@ class TokenDetailsComponent < ViewComponent::Base
 
   def call
     render ListGroupComponent.new.tap { |c|
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "FreeFeed User",
-        value: freefeed_user,
-        key: "token.freefeed_user"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "FreeFeed Instance",
-        value: freefeed_instance,
-        key: "token.host"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Last Used",
-        value: last_used,
-        key: "token.last_used"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Created",
-        value: created,
-        key: "token.created"
-      ))
+      items.each do |item_params|
+        c.with_item(ListGroupComponent::StatItemComponent.new(**item_params))
+      end
     }
   end
 
   private
+
+  def items
+    [
+      { label: "FreeFeed User", value: freefeed_user, key: "token.freefeed_user" },
+      { label: "FreeFeed Instance", value: freefeed_instance, key: "token.host" },
+      { label: "Last Used", value: last_used, key: "token.last_used" },
+      { label: "Created", value: created, key: "token.created" }
+    ]
+  end
 
   def freefeed_user
     @access_token.owner.presence || "–"
