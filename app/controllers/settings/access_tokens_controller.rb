@@ -19,7 +19,6 @@ class Settings::AccessTokensController < ApplicationController
     authorize @access_token
 
     unless valid_host?(@access_token.host)
-      @access_token.errors.add(:host, "must be a known FreeFeed host")
       render :new, status: :unprocessable_entity
       return
     end
