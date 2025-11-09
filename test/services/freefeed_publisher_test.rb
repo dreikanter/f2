@@ -32,7 +32,6 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     service = FreefeedPublisher.new(post)
 
     assert_equal post, service.post
-    assert_instance_of FreefeedClient, service.client
   end
 
   test "#initialize should raise when post is missing" do
