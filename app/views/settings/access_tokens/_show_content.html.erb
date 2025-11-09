@@ -71,7 +71,7 @@
         </ul>
       <% else %>
         <%= render EmptyStateComponent.new do %>
-          <p class="">No groups available for posting.</p>
+          <p class="ff-text--muted">No groups available for posting.</p>
         <% end %>
       <% end %>
     </div>
@@ -83,7 +83,7 @@
       <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
     <% else %>
       <%= render EmptyStateComponent.new do %>
-        <p class="">No associated feeds yet.</p>
+        <p class="ff-text--muted">No associated feeds yet.</p>
       <% end %>
     <% end %>
   </div>

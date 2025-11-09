@@ -94,6 +94,10 @@
     @apply font-semibold text-slate-800;
   }
 
+  .ff-text--muted {
+    @apply text-slate-500;
+  }
+
   .ff-focus-ring {
     @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
