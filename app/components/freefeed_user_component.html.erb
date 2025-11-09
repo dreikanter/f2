@@ -1,4 +1,7 @@
 <div class="flex items-center gap-3">
-  <%= render FreefeedAvatarComponent.new(username: @username, size: @avatar_size) %>
+  <img
+    alt="<%= @username %>"
+    class="<%= avatar_classes %>"
+  >
   <span class="text-lg"><%= @username %></span>
 </div>
