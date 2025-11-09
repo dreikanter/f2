@@ -5,7 +5,7 @@ class AccessToken < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
-  validates :host, presence: true, inclusion: { in: -> { FREEFEED_HOSTS.values.map { |config| config[:url] } }, message: "must be a known FreeFeed host" }
+  validates :host, presence: true
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
