@@ -92,7 +92,7 @@ class FeedsController < ApplicationController
   end
 
   def pagination_scope
-    policy_scope(Feed).includes(:feed_entries, :posts).order(sortable_order)
+    policy_scope(Feed).includes(:feed_entries, :posts, :access_token).order(sortable_order)
   end
 
   def load_feed
