@@ -13,8 +13,10 @@
 4. Select "Tokens" from the dropdown menu in the navbar
 
 **Expected**:
-- Redirected to dashboard after sign-in
-- See access tokens page with empty state
+- Access tokens page is displayed
+- Empty state component visible
+- Message like "No access tokens yet" or similar
+- "Add FreeFeed Access Token" button visible
 
 ---
 
