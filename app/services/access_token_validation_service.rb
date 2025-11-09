@@ -41,8 +41,24 @@ class AccessTokenValidationService
   end
 
   def disable_token_and_feeds
-    access_token.update_columns(status: :inactive, updated_at: Time.current)
-    access_token.feeds.enabled.update_all(state: :disabled)
+    access_token.with_lock do
+      access_token.update_columns(status: :inactive, updated_at: Time.current)
+
+      enabled_feeds = access_token.feeds.enabled
+      return unless enabled_feeds.exists?
+
+      feed_ids = enabled_feeds.pluck(:id)
+      disabled_count = enabled_feeds.update_all(state: :disabled)
+
+      Event.create!(
+        type: "AccessTokenValidationFailed",
+        user: access_token.user,
+        subject: access_token,
+        level: :warning,
+        message: "Token validation failed. #{disabled_count} #{'feed'.pluralize(disabled_count)} disabled.",
+        metadata: { disabled_feed_ids: feed_ids }
+      )
+    end
   end
 
   def user_info

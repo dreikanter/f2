@@ -168,11 +168,43 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 500, body: "Internal Server Error")
 
     service = AccessTokenValidationService.new(access_token)
-    service.call
+
+    assert_difference "Event.count", 1 do
+      service.call
+    end
 
     assert_equal "disabled", feed1.reload.state
     assert_equal "disabled", feed2.reload.state
     assert_equal "disabled", feed3.reload.state
+
+    event = Event.last
+    assert_equal "AccessTokenValidationFailed", event.type
+    assert_equal access_token.user, event.user
+    assert_equal access_token, event.subject
+    assert_equal "warning", event.level
+    assert_includes event.message, "2 feeds disabled"
+    assert_equal [feed1.id, feed2.id].sort, event.metadata["disabled_feed_ids"].sort
+  end
+
+  test "#call should not create event when no enabled feeds exist" do
+    create(:feed, user: user, access_token: access_token, state: :disabled)
+
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.token_value}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 401, body: "Unauthorized")
+
+    service = AccessTokenValidationService.new(access_token)
+
+    assert_no_difference "Event.count" do
+      service.call
+    end
+
+    assert_equal "inactive", access_token.reload.status
   end
 
   test "#call should deactivate token when managed_groups fails" do
