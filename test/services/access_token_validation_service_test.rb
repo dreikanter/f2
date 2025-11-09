@@ -181,6 +181,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       type: "access_token_validation_failed",
       subject: access_token
     )
+
     assert_equal access_token.user, event.user
     assert_equal "warning", event.level
     assert_includes event.message, "2 feeds disabled"
