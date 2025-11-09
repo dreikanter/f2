@@ -3,7 +3,7 @@ class AccessToken < ApplicationRecord
   has_many :feeds
   has_one :access_token_detail, dependent: :destroy
 
-  validates :name, uniqueness: { scope: :user_id }, allow_blank: true
+  validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
   validates :host, presence: true, format: { with: /\Ahttps?:\/\/[^\s]+\z/, message: "must be a valid HTTP(S) URL" }
 
