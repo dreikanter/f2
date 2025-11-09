@@ -17,25 +17,12 @@ export default class extends Controller {
     this.stopPolling()
   }
 
-  endpointValueChanged() {
-    if (this.isConnected) this.restartPolling()
-  }
-
-  stopConditionValueChanged() {
-    if (this.isConnected && this.stopConditionSatisfied()) this.stopPolling()
-  }
-
   startPolling() {
     if (this._running) return
     this._running = true
     this._pollCount = 0
     this.element.setAttribute("aria-busy", "true")
     this._scheduleNext(0)
-  }
-
-  restartPolling() {
-    this.stopPolling()
-    this.startPolling()
   }
 
   stopPolling() {
