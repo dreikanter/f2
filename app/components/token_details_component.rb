@@ -4,9 +4,9 @@ class TokenDetailsComponent < ViewComponent::Base
   end
 
   def call
-    render ListGroupComponent.new.tap do |component|
-      items.each { component.with_item(ListGroupComponent::StatItemComponent.new(**_1)) }
-    end
+    component = ListGroupComponent.new
+    items.each { component.with_item(ListGroupComponent::StatItemComponent.new(**_1)) }
+    render(component)
   end
 
   private
