@@ -5,103 +5,157 @@ export default class extends Controller {
     endpoint: String,
     interval: { type: Number, default: 2000 },
     maxPolls: { type: Number, default: 30 },
-    stopCondition: String
+    stopCondition: String,
+    scope: { type: String, default: "element" },
+    maxDuration: { type: Number, default: 0 },
+    backoffFactor: { type: Number, default: 1.0 }
   }
 
   connect() {
-    if (this.hasEndpointValue) {
-      this.startPolling();
-    }
-  }
-
-  startPolling() {
-    let pollCount = 0;
-    const maxPolls = this.maxPollsValue;
-
-    this.interval = setInterval(() => {
-      pollCount++;
-
-      if (pollCount > maxPolls) {
-        console.warn("Polling stopped after maximum attempts");
-        this.stopPolling();
-        return;
-      }
-
-      fetch(this.endpointValue, {
-        headers: {
-          "Accept": "text/vnd.turbo-stream.html",
-          "X-Requested-With": "XMLHttpRequest"
-        }
-      })
-      .then(response => {
-        if (response.ok) {
-          return response.text();
-        } else {
-          this.stopPolling();
-          return null;
-        }
-      })
-      .then(html => {
-        if (html) {
-          Turbo.renderStreamMessage(html);
-
-          if (this.stopConditionSatisfied()) {
-            this.stopPolling();
-          }
-        }
-      })
-      .catch(error => {
-        console.error("Polling error:", error);
-        this.stopPolling();
-      });
-    }, this.intervalValue);
+    this._originalBusy = this.element.getAttribute("aria-busy")
+    if (this.hasEndpointValue) this.startPolling()
   }
 
   disconnect() {
-    if (this.interval) {
-      clearInterval(this.interval);
+    this.stopPolling({ restoreBusy: true })
+  }
+
+  endpointValueChanged() {
+    if (this.isConnected) this.restartPolling()
+  }
+
+  stopConditionValueChanged() {
+    if (this.isConnected && this.stopConditionSatisfied()) this.stopPolling()
+  }
+
+  startPolling() {
+    if (this._running) return
+    this._running = true
+    this._pollCount = 0
+    this._startedAt = Date.now()
+    this._delay = this.intervalValue
+    this.element.setAttribute("aria-busy", "true")
+    this._scheduleNext(0)
+  }
+
+  restartPolling() {
+    this.stopPolling()
+    this.startPolling()
+  }
+
+  stopPolling({ restoreBusy = false } = {}) {
+    this._running = false
+    clearTimeout(this._timerId)
+    this._timerId = null
+    if (this._abort) this._abort.abort()
+    this._abort = null
+    if (restoreBusy) {
+      if (this._originalBusy === null) this.element.removeAttribute("aria-busy")
+      else this.element.setAttribute("aria-busy", this._originalBusy)
+    } else {
+      this.element.setAttribute("aria-busy", "false")
+    }
+  }
+
+  _scheduleNext(delayMs) {
+    if (!this._running) return
+    this._timerId = setTimeout(() => this._tick(), delayMs)
+  }
+
+  async _tick() {
+    if (!this._running) return
+
+    if (this.stopConditionSatisfied()) return this.stopPolling()
+    if (this.maxDurationValue > 0 && Date.now() - this._startedAt > this.maxDurationValue) {
+      console.warn("Polling stopped after max duration")
+      return this.stopPolling()
+    }
+    if (this._pollCount >= this.maxPollsValue) {
+      console.warn("Polling stopped after maximum attempts")
+      return this.stopPolling()
+    }
+    if (document.hidden) {
+      return this._scheduleNext(this._delay)
+    }
+    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
+      return this._scheduleNext(this._delay)
+    }
+
+    this._pollCount += 1
+
+    this._abort?.abort()
+    this._abort = new AbortController()
+
+    try {
+      const response = await fetch(this.endpointValue, {
+        headers: {
+          Accept: "text/vnd.turbo-stream.html",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        credentials: "same-origin",
+        signal: this._abort.signal
+      })
+
+      if (!response.ok) {
+        console.warn(`Polling stopped: ${response.status}`)
+        return this.stopPolling()
+      }
+
+      const html = await response.text()
+      if (html && typeof Turbo !== "undefined" && Turbo.renderStreamMessage) {
+        Turbo.renderStreamMessage(html)
+      }
+
+      if (this.stopConditionSatisfied()) return this.stopPolling()
+
+      this._delay = this.intervalValue
+      this._scheduleNext(this._delay)
+    } catch (err) {
+      if (err.name === "AbortError") return
+      console.error("Polling error:", err)
+      const factor = Math.max(1, this.backoffFactorValue)
+      this._delay = Math.min(this._delay * factor, 30000)
+      this._scheduleNext(this._delay)
     }
   }
 
   stopConditionSatisfied() {
-    if (!this.hasStopConditionValue) {
-      return false;
-    }
+    if (!this.hasStopConditionValue) return false
+    const selectorInput = this.stopConditionValue.trim()
+    if (!selectorInput) return false
 
-    const selector = this.stopConditionValue.trim();
-    if (!selector) {
-      return false;
-    }
-
-    const selectors = this.buildSelectors(selector);
-    const element = this.findElementFor(selectors);
-    return !!element;
+    const selectors = this.buildSelectors(selectorInput)
+    const root = this.scopeValue === "document" ? document : this.element
+    return !!this.findElementFor(root, selectors)
   }
 
-  findElementFor(selectors) {
+  findElementFor(root, selectors) {
     if (Array.isArray(selectors)) {
-      for (const selector of selectors) {
-        const found = document.querySelector(selector);
-        if (found) return found;
+      for (const sel of selectors) {
+        const found = root.querySelector(sel)
+        if (found) return found
       }
-      return null;
+      return null
     }
-    return document.querySelector(selectors);
-  }
-
-  stopPolling() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
-    this.element.setAttribute("aria-busy", "false");
+    return root.querySelector(selectors)
   }
 
   buildSelectors(selector) {
-    if (/^[\[#.]/.test(selector)) {
-      return selector;
-    }
+    if (/^[\[#.]/.test(selector) || /[\s=>:"'\]]/.test(selector)) return selector
 
-    return `[${selector}]`;
+    const parts = selector.split(",").map(s => s.trim()).filter(Boolean)
+    if (parts.length > 1) {
+      return parts.map(p => this._attrToSelector(p))
+    }
+    return this._attrToSelector(selector)
+  }
+
+  _attrToSelector(token) {
+    const eq = token.indexOf("=")
+    if (eq === -1) return `[${token}]`
+    const name = token.slice(0, eq)
+    const value = token.slice(eq + 1)
+    const quoted = JSON.stringify(value)
+    return `[${name}=${quoted}]`
   }
 }
