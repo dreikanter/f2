@@ -15,7 +15,7 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   def create
-    @access_token = Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
+    @access_token = build_acces_token
     authorize @access_token
 
     unless valid_host?(@access_token.host)
@@ -48,6 +48,10 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   private
+
+  def build_acces_token
+    Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
+  end
 
   def find_access_token
     policy_scope(AccessToken).find(params[:id])
