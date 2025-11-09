@@ -31,15 +31,6 @@ class Settings::AccessTokensController < ApplicationController
     end
   end
 
-  def edit
-    @access_token = find_access_token
-    authorize @access_token
-  end
-
-  def update
-    # TODO: Implement access token update
-  end
-
   def destroy
     access_token = find_access_token
     authorize access_token
