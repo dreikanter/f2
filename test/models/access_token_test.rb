@@ -144,16 +144,16 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.errors.of_kind?(:host, :blank)
   end
 
-  test "validates host format requires HTTP(S) URL" do
-    ["https://example.com", "http://example.com"].each do |valid_host|
-      token = build(:access_token, host: valid_host)
-      assert token.valid?, "#{valid_host} should be valid"
+  test "validates host is a known FreeFeed host" do
+    AccessToken::FREEFEED_HOSTS.values.each do |config|
+      token = build(:access_token, host: config[:url])
+      assert token.valid?, "#{config[:url]} should be valid"
     end
 
-    ["ftp://example.com", "example.com", "invalid"].each do |invalid_host|
-      token = build(:access_token, host: invalid_host)
-      assert_not token.valid?, "#{invalid_host} should be invalid"
-      assert token.errors.of_kind?(:host, :invalid)
+    ["https://unknown.example.com", "https://evil.com", "http://freefeed.com"].each do |unknown_host|
+      token = build(:access_token, host: unknown_host)
+      assert_not token.valid?, "#{unknown_host} should be invalid"
+      assert token.errors.of_kind?(:host, :inclusion)
     end
   end
 

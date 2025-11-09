@@ -101,7 +101,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "New Access Token"
   end
 
-  test "#create should reject invalid host URL format" do
+  test "#create should reject unknown host" do
     sign_in_as user
 
     assert_no_difference("AccessToken.count") do
@@ -109,7 +109,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
         access_token: {
           name: "Test Token",
           token: "test_token_123",
-          host: "not-a-url"
+          host: "https://unknown.example.com"
         }
       }
     end
