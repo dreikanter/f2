@@ -151,6 +151,7 @@
 - Status updates without manual refresh (Pending → Validating → Active/Inactive)
 - Turbo Stream updates appear smoothly
 - Polling stops when status becomes "Active" or "Inactive"
+- Polling also stops if user navigates away from the page (including Turbo transitions)
 
 ---
 
