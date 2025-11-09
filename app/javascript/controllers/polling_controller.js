@@ -75,7 +75,7 @@ export default class extends Controller {
 
     const selectors = this.buildSelectors(selector);
     const element = this.findElementFor(selectors);
-    return !element;
+    return !!element;
   }
 
   findElementFor(selectors) {
