@@ -28,9 +28,38 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert token.reload.pending?
   end
 
-  test "allows blank name" do
+  test "auto-generates name when blank" do
     token = build(:access_token, name: nil)
     assert token.valid?
+    assert_equal "Token 1", token.name
+  end
+
+  test "auto-generates unique sequential names for same user" do
+    user = create(:user)
+    token1 = create(:access_token, name: nil, user: user)
+    token2 = create(:access_token, name: nil, user: user)
+    token3 = create(:access_token, name: nil, user: user)
+
+    assert_equal "Token 1", token1.name
+    assert_equal "Token 2", token2.name
+    assert_equal "Token 3", token3.name
+  end
+
+  test "auto-generates name that skips existing names" do
+    user = create(:user)
+    create(:access_token, name: "Token 1", user: user)
+    create(:access_token, name: "Token 2", user: user)
+
+    token = create(:access_token, name: nil, user: user)
+    assert_equal "Token 3", token.name
+  end
+
+  test "auto-generates name fills gaps in sequence" do
+    user = create(:user)
+    create(:access_token, name: "Token 2", user: user)
+
+    token = create(:access_token, name: nil, user: user)
+    assert_equal "Token 1", token.name
   end
 
   test "validates presence of token on create" do

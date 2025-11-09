@@ -9,6 +9,7 @@ class AccessToken < ApplicationRecord
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
+  before_validation :generate_default_name, if: -> { name.blank? }
   before_destroy :disable_associated_feeds
 
   encrypts :encrypted_token
@@ -79,6 +80,17 @@ class AccessToken < ApplicationRecord
   end
 
   private
+
+  def generate_default_name
+    # Find the next available Token number for this user
+    counter = 1
+    loop do
+      candidate_name = "Token #{counter}"
+      break unless user.access_tokens.where(name: candidate_name).where.not(id: id).exists?
+      counter += 1
+    end
+    self.name = "Token #{counter}"
+  end
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
