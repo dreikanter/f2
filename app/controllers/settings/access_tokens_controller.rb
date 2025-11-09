@@ -1,7 +1,7 @@
 class Settings::AccessTokensController < ApplicationController
   def index
     authorize AccessToken
-    @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
+    @access_tokens = scope.order(created_at: :desc)
   end
 
   def show
@@ -15,7 +15,7 @@ class Settings::AccessTokensController < ApplicationController
   end
 
   def create
-    @access_token = Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
+    @access_token = build_acces_token
     authorize @access_token
 
     unless valid_host?(@access_token.host)
@@ -31,15 +31,6 @@ class Settings::AccessTokensController < ApplicationController
     end
   end
 
-  def edit
-    @access_token = find_access_token
-    authorize @access_token
-  end
-
-  def update
-    # TODO: Implement access token update
-  end
-
   def destroy
     access_token = find_access_token
     authorize access_token
@@ -49,8 +40,16 @@ class Settings::AccessTokensController < ApplicationController
 
   private
 
+  def build_acces_token
+    Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
+  end
+
   def find_access_token
-    policy_scope(AccessToken).find(params[:id])
+    scope.find(params[:id])
+  end
+
+  def scope
+    policy_scope(AccessToken)
   end
 
   def access_token_params

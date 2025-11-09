@@ -16,6 +16,9 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
+  # A user can create access token record associated with a known
+  # FreeFeed instances only (see Settings::AccessTokensController).
+  # Though the model allows to define any valid host URL.
   FREEFEED_HOSTS = {
     production: {
       url: "https://freefeed.net",
@@ -52,27 +55,12 @@ class AccessToken < ApplicationRecord
   end
 
   def validate_token_async
-    update!(status: :validating)
+    validating!
     TokenValidationJob.perform_later(self)
   end
 
-  def token_value
-    encrypted_token
-  end
-
-
-  def touch_last_used!
-    touch(:last_used_at)
-  end
-
   def build_client
-    FreefeedClient.new(host: host, token: token_value)
-  end
-
-  def username_with_host
-    return nil unless owner.present?
-
-    "#{owner}@#{host_domain}"
+    FreefeedClient.new(host: host, token: encrypted_token)
   end
 
   def host_domain

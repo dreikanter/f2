@@ -91,12 +91,6 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert duplicate_for_different_user.valid?
   end
 
-  test "#touch_last_used! updates last_used_at" do
-    assert_nil access_token.last_used_at
-    access_token.touch_last_used!
-    assert_not_nil access_token.reload.last_used_at
-  end
-
   test "active scope returns only active tokens" do
     active_token = create(:access_token, :active)
     inactive_token = create(:access_token, :inactive)
@@ -232,7 +226,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -269,19 +263,6 @@ class AccessTokenTest < ActiveSupport::TestCase
 
     token = build(:access_token, host: "https://custom.example.com")
     assert_equal "custom.example.com", token.host_domain
-  end
-
-  test "#username_with_host should return username with domain" do
-    token = build(:access_token, host: "https://freefeed.net", owner: "testuser")
-    assert_equal "testuser@freefeed.net", token.username_with_host
-
-    token = build(:access_token, host: "https://custom.example.com", owner: "testuser")
-    assert_equal "testuser@custom.example.com", token.username_with_host
-  end
-
-  test "#username_with_host should return nil when owner is not set" do
-    token = build(:access_token, host: "https://freefeed.net", owner: nil)
-    assert_nil token.username_with_host
   end
 
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do

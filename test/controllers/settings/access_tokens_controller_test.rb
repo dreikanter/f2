@@ -132,17 +132,6 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#edit should render for own token" do
-    sign_in_as user
-    get edit_settings_access_token_path(access_token)
-
-    assert_response :success
-  end
-
-  test "#update should be implemented" do
-    skip "TODO: Implement access token update"
-  end
-
   test "requires authentication for destroy" do
     delete settings_access_token_path(access_token)
 

@@ -51,7 +51,7 @@ Rails.application.routes.draw do
     resource :password_update, only: [:edit, :update], controller: "settings/password_updates"
     resources :email_confirmations, only: :show, param: :token, controller: "settings/email_confirmations"
 
-    resources :access_tokens, controller: "settings/access_tokens" do
+    resources :access_tokens, controller: "settings/access_tokens", except: [:edit, :update] do
       resource :validation, only: :show, controller: "settings/access_token_validations"
     end
   end

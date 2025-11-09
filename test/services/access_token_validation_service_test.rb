@@ -13,7 +13,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -32,7 +32,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -56,7 +56,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -74,7 +74,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -102,7 +102,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -120,7 +120,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -141,7 +141,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -161,7 +161,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -194,7 +194,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -213,7 +213,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )
@@ -231,7 +231,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .with(
         headers: {
-          "Authorization" => "Bearer #{access_token.token_value}",
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
           "Accept" => "application/json"
         }
       )

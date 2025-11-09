@@ -11,10 +11,6 @@ class AccessTokenPolicy < ApplicationPolicy
     authenticated?
   end
 
-  def update?
-    owner_or_admin?
-  end
-
   def destroy?
     owner_or_admin?
   end

@@ -6,7 +6,7 @@ class AccessTokenValidationService
   end
 
   def call
-    access_token.validating!
+    access_token.validating! unless access_token.validating?
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
 
@@ -23,10 +23,7 @@ class AccessTokenValidationService
   private
 
   def freefeed_client
-    @freefeed_client ||= FreefeedClient.new(
-      host: access_token.host,
-      token: access_token.token_value
-    )
+    @freefeed_client ||= access_token.build_client
   end
 
   def disable_token_and_feeds

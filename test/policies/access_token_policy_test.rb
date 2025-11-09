@@ -64,21 +64,6 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.create?
   end
 
-  test "should allow update access to token owner" do
-    policy = policy_for_user(user, access_token)
-    assert policy.update?
-  end
-
-  test "should deny update access to other users" do
-    policy = policy_for_user(user, other_access_token)
-    assert_not policy.update?
-  end
-
-  test "should allow update access to admin users" do
-    policy = policy_for_user(admin_user, access_token)
-    assert policy.update?
-  end
-
   test "should allow destroy access to token owner" do
     policy = policy_for_user(user, access_token)
     assert policy.destroy?
@@ -100,7 +85,6 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.index?
     assert_not policy.show?
     assert_not policy.create?
-    assert_not policy.update?
     assert_not policy.destroy?
   end
 
