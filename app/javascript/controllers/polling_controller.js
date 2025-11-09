@@ -10,12 +10,11 @@ export default class extends Controller {
   }
 
   connect() {
-    this._originalBusy = this.element.getAttribute("aria-busy")
     if (this.hasEndpointValue) this.startPolling()
   }
 
   disconnect() {
-    this.stopPolling({ restoreBusy: true })
+    this.stopPolling()
   }
 
   endpointValueChanged() {
@@ -39,18 +38,13 @@ export default class extends Controller {
     this.startPolling()
   }
 
-  stopPolling({ restoreBusy = false } = {}) {
+  stopPolling() {
     this._running = false
     clearTimeout(this._timerId)
     this._timerId = null
     if (this._abort) this._abort.abort()
     this._abort = null
-    if (restoreBusy) {
-      if (this._originalBusy === null) this.element.removeAttribute("aria-busy")
-      else this.element.setAttribute("aria-busy", this._originalBusy)
-    } else {
-      this.element.setAttribute("aria-busy", "false")
-    }
+    this.element.setAttribute("aria-busy", "false")
   }
 
   _scheduleNext(delayMs) {
