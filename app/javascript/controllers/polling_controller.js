@@ -7,8 +7,7 @@ export default class extends Controller {
     maxPolls: { type: Number, default: 30 },
     stopCondition: String,
     scope: { type: String, default: "element" },
-    maxDuration: { type: Number, default: 0 },
-    backoffFactor: { type: Number, default: 1.0 }
+    maxDuration: { type: Number, default: 0 }
   }
 
   connect() {
@@ -33,7 +32,6 @@ export default class extends Controller {
     this._running = true
     this._pollCount = 0
     this._startedAt = Date.now()
-    this._delay = this.intervalValue
     this.element.setAttribute("aria-busy", "true")
     this._scheduleNext(0)
   }
@@ -75,10 +73,10 @@ export default class extends Controller {
       return this.stopPolling()
     }
     if (document.hidden) {
-      return this._scheduleNext(this._delay)
+      return this._scheduleNext(this.intervalValue)
     }
     if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
-      return this._scheduleNext(this._delay)
+      return this._scheduleNext(this.intervalValue)
     }
 
     this._pollCount += 1
@@ -108,14 +106,11 @@ export default class extends Controller {
 
       if (this.stopConditionSatisfied()) return this.stopPolling()
 
-      this._delay = this.intervalValue
-      this._scheduleNext(this._delay)
+      this._scheduleNext(this.intervalValue)
     } catch (err) {
       if (err.name === "AbortError") return
       console.error("Polling error:", err)
-      const factor = Math.max(1, this.backoffFactorValue)
-      this._delay = Math.min(this._delay * factor, 30000)
-      this._scheduleNext(this._delay)
+      this._scheduleNext(this.intervalValue)
     }
   }
 
