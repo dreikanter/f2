@@ -50,35 +50,50 @@
 
   <%= render TokenDetailsComponent.new(access_token: @access_token) %>
 
-  <% if @access_token.access_token_detail && !@access_token.access_token_detail.expired? %>
-    <% details = @access_token.access_token_detail.data %>
-    <% user_info = details["user_info"] %>
-    <% managed_groups = details["managed_groups"] || [] %>
-
-    <div class="ff-card">
-      <div class="ff-card__body">
-        <p class="text-sm text-slate-600 mb-4">
-          Posts created with this token will appear on FreeFeed on behalf of:
-        </p>
-        <div class="flex items-center gap-3">
-          <img
-            src="<%= @access_token.host %>/profilepics/<%= user_info["username"] %>"
-            alt="<%= user_info["username"] %>"
-            class="w-12 h-12 rounded-full"
-            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect width=%2248%22 height=%2248%22 fill=%22%23cbd5e1%22/%3E%3C/svg%3E'"
-          >
-          <span class="text-lg font-medium"><%= user_info["screen_name"] || user_info["username"] %></span>
-        </div>
-      </div>
+  <div class="space-y-4">
+    <h2 class="ff-h2">Publisher</h2>
+    <p class="text-slate-600 mb-4">
+      Posts created with this token will appear on FreeFeed on behalf of:
+    </p>
+    <div class="flex items-center gap-3">
+      <img
+        src="<%= "#" %>"
+        alt="<%= "TBD" %>"
+        class="w-12 h-12 rounded-full"
+      >
+      <span class="text-lg"><%= @access_token.owner %></span>
     </div>
+  </div>
 
-    <% if @access_token.feeds.any? %>
-      <div class="space-y-4">
-        <h2 class="ff-h2">Associated Feeds</h2>
-        <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
-      </div>
-    <% end %>
+  <% if @access_token.access_token_detail.present? %>
+    <% managed_groups = @access_token.access_token_detail.managed_groups %>
+    <div class="space-y-4">
+      <h2 class="ff-h2">FreeFeed Groups</h2>
+      <% if managed_groups.any? %>
+        <p><%= pluralize(managed_groups.count, "groups") %> available for posting:</p>
+        <ul>
+          <% managed_groups.sort_by { _1["username"] }.each do |group| %>
+            <li><%= group["username"] %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <%= render EmptyStateComponent.new do %>
+          <p class="">No groups available for posting.</p>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
+
+  <div class="space-y-4">
+    <h2 class="ff-h2">Associated Feeds</h2>
+    <% if @access_token.feeds.any? %>
+      <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
+    <% else %>
+      <%= render EmptyStateComponent.new do %>
+        <p class="">No associated feeds yet.</p>
+      <% end %>
+    <% end %>
+  </div>
 <% elsif @access_token.inactive? %>
   <div class="ff-alert ff-alert--error" data-status="inactive">
     <%= icon("x-circle", aria_hidden: true) %>
