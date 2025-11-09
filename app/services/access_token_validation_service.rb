@@ -6,7 +6,7 @@ class AccessTokenValidationService
   end
 
   def call
-    access_token.validating!
+    access_token.validating! unless access_token.validating?
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
 
