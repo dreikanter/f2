@@ -50,28 +50,29 @@
 
   <%= render TokenDetailsComponent.new(access_token: @access_token) %>
 
-  <div class="space-y-4">
-    <h2 class="ff-h2">Publisher</h2>
-    <p class="text-slate-600 mb-4">
-      Posts created with this token will appear on FreeFeed on behalf of:
-    </p>
-    <%= render FreefeedUserComponent.new(user: @access_token.access_token_detail.user_info) %>
-  </div>
-
   <% if @access_token.access_token_detail.present? %>
-    <% managed_groups = @access_token.access_token_detail.managed_groups %>
+    <div class="space-y-4">
+      <h2 class="ff-h2">Publisher</h2>
+      <p class="text-slate-600 mb-4">
+        Posts created with this token will appear on FreeFeed on behalf of:
+      </p>
+      <%= render FreefeedUserComponent.new(user: @access_token.access_token_detail.user_info) %>
+    </div>
+
     <div class="space-y-4">
       <h2 class="ff-h2">FreeFeed Groups</h2>
-      <% if managed_groups.any? %>
-        <p><%= pluralize(managed_groups.count, "groups") %> available for posting:</p>
-        <ul class="list-disc list-inside">
-          <% managed_groups.sort_by { _1["username"] }.each do |group| %>
-            <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "ff-link" %></li>
+      <% @access_token.access_token_detail.managed_groups.tap do |groups| %>
+        <% if groups.any? %>
+          <p><%= pluralize(groups.count, "groups") %> available for posting:</p>
+          <ul class="list-disc list-inside">
+            <% groups.sort_by { _1["username"] }.each do |group| %>
+              <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "ff-link" %></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <%= render EmptyStateComponent.new do %>
+            <p class="ff-text--muted">No groups available for posting.</p>
           <% end %>
-        </ul>
-      <% else %>
-        <%= render EmptyStateComponent.new do %>
-          <p class="ff-text--muted">No groups available for posting.</p>
         <% end %>
       <% end %>
     </div>
