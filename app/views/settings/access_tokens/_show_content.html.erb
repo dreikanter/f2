@@ -45,7 +45,7 @@
 <% elsif @access_token.active? %>
   <div class="ff-alert ff-alert--success" data-status="active">
     <%= icon("check-circle", aria_hidden: true) %>
-    <span>Token is active and ready to use</span>
+    <span>Token is valid and ready to use</span>
   </div>
 
   <%= render TokenDetailsComponent.new(access_token: @access_token) %>
