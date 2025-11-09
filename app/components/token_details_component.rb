@@ -3,6 +3,31 @@ class TokenDetailsComponent < ViewComponent::Base
     @access_token = access_token
   end
 
+  def call
+    render ListGroupComponent.new.tap { |c|
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "FreeFeed User",
+        value: freefeed_user,
+        key: "token.freefeed_user"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "FreeFeed Instance",
+        value: freefeed_instance,
+        key: "token.host"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Last Used",
+        value: last_used,
+        key: "token.last_used"
+      ))
+      c.with_item(ListGroupComponent::StatItemComponent.new(
+        label: "Created",
+        value: created,
+        key: "token.created"
+      ))
+    }
+  end
+
   private
 
   def freefeed_user
