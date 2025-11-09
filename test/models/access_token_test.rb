@@ -198,19 +198,18 @@ class AccessTokenTest < ActiveSupport::TestCase
     feed_update_queries = queries.select { |q| q.include?("feeds") && q.include?("UPDATE") }
     assert_equal 1, feed_update_queries.size, "Expected exactly 1 UPDATE query for feeds, got #{feed_update_queries.size}"
 
-    # Enabled feed should be disabled and have null access_token_id
+    # All feeds should be disabled and have null access_token_id
     enabled_feed.reload
     assert_equal "disabled", enabled_feed.state
     assert_nil enabled_feed.access_token_id
 
-    # Already disabled feeds should remain unchanged (still have access_token_id)
     disabled_feed.reload
     assert_equal "disabled", disabled_feed.state
-    assert_equal token.id, disabled_feed.access_token_id
+    assert_nil disabled_feed.access_token_id
 
     another_disabled_feed.reload
     assert_equal "disabled", another_disabled_feed.state
-    assert_equal token.id, another_disabled_feed.access_token_id
+    assert_nil another_disabled_feed.access_token_id
   ensure
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
@@ -298,7 +297,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
-  test "#disable_associated_feeds should disable only enabled feeds and clear access_token_id" do
+  test "#disable_associated_feeds should disable all feeds and clear access_token_id" do
     token = create(:access_token, :active)
     enabled_feed1 = create(:feed, access_token: token, state: :enabled)
     enabled_feed2 = create(:feed, access_token: token, state: :enabled)
@@ -311,8 +310,8 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "disabled", enabled_feed2.reload.state
     assert_nil enabled_feed2.access_token_id
 
-    # Already disabled feed should remain unchanged
+    # Disabled feed should also have access_token_id cleared
     assert_equal "disabled", disabled_feed.reload.state
-    assert_equal token.id, disabled_feed.access_token_id
+    assert_nil disabled_feed.access_token_id
   end
 end

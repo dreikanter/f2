@@ -80,7 +80,7 @@ class AccessToken < ApplicationRecord
   end
 
   def disable_associated_feeds
-    feeds.enabled.update_all(state: :disabled, access_token_id: nil)
+    feeds.update_all(state: :disabled, access_token_id: nil)
   end
 
   private
