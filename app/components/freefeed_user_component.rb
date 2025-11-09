@@ -6,6 +6,6 @@ class FreefeedUserComponent < ViewComponent::Base
   private
 
   def username
-    @user.is_a?(Hash) ? @user["username"] || @user[:username] : @user
+    @user["username"] || @user[:username]
   end
 end
