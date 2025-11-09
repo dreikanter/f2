@@ -242,7 +242,8 @@
 
 **Expected**:
 - Status: "Inactive" with visual indicator (red/gray badge)
-- Alert box displayed: "Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied."
+- Alert box displayed with merged message: "Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied."
+- No additional paragraph or text in page header (alert box contains all inactive status information)
 - No username displayed
 - No user info
 - "Revalidate" button to retry validation
