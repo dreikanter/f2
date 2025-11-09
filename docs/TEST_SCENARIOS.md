@@ -96,7 +96,7 @@
 
 **Preconditions**:
 - User is signed in
-- Token created with status "Pending"
+- User has just created a token
 
 **Steps**:
 1. Copy the displayed token value
@@ -106,10 +106,11 @@
 5. Paste the copied token
 6. Authorize the token with required scopes (read-my-info, manage-posts)
 7. Return to F2 access tokens page
-8. Click "Validate" button on the pending token
+8. Wait for background job to validate the token
 
 **Expected**:
-- Status changes to "Validating"
+- Token initially shows "Pending" status briefly
+- Status automatically changes to "Validating" (transient state)
 - Page polls for updates
 - Status changes to "Active"
 - Username displays as "your_username@freefeed.net"
@@ -120,14 +121,15 @@
 
 **Preconditions**:
 - User is signed in
-- Token created with status "Pending"
+- User has just created a token
 
 **Steps**:
 1. Do NOT authorize the token in FreeFeed (or use a revoked token)
-2. Click "Validate" button
+2. Wait for background job to attempt validation
 
 **Expected**:
-- Status changes to "Validating"
+- Token initially shows "Pending" status briefly
+- Status automatically changes to "Validating" (transient state)
 - Status changes to "Inactive"
 - No username displayed
 - Error or inactive indicator shown
@@ -136,14 +138,16 @@
 
 **Preconditions**:
 - User is signed in
-- Token in "Validating" status
+- User has just created a token
+- Background validation job is running
 
 **Steps**:
 1. Stay on the page without navigating away
+2. Observe the automatic status updates
 
 **Expected**:
 - Page automatically polls every few seconds
-- Status updates without manual refresh
+- Status updates without manual refresh (Pending → Validating → Active/Inactive)
 - Turbo Stream updates appear smoothly
 - Polling stops when status becomes "Active" or "Inactive"
 
@@ -209,18 +213,19 @@
 
 **Preconditions**:
 - User is signed in
-- Token created but not validated
+- User has just created a token
+- Background validation has not yet completed
 
 **Steps**:
-1. Click on pending token
+1. Click on token immediately after creation (while still pending)
 
 **Expected**:
-- Status: "Pending" with visual indicator (yellow/gray badge)
+- Status: "Pending" with visual indicator (yellow/gray badge) - transient state
 - Token value displayed (encrypted, starts with "freefeed_token_")
 - Instructions to copy and paste into FreeFeed
 - Link or button to FreeFeed token creation page
-- "Validate" button
 - Actions: Edit name, Delete
+- Note: This state is brief and will automatically transition to Active or Inactive
 
 ### Scenario 4.5: View inactive token details
 
@@ -313,17 +318,17 @@
 
 **Preconditions**:
 - User is signed in
-- Token with status "Inactive"
+- Token with status "Inactive" (validation previously failed)
 
 **Steps**:
 1. Navigate to token details
-2. Click "Revalidate" or "Validate" button
+2. Click "Revalidate" button to trigger a new validation attempt
 
 **Expected**:
-- Validation job triggered
-- Status changes to "Validating"
-- Polling begins
-- Eventually becomes "Active" (if authorized) or "Inactive" (if still invalid)
+- Background validation job triggered
+- Status automatically changes to "Validating" (transient state)
+- Page polls for updates
+- Status eventually becomes "Active" (if now authorized in FreeFeed) or remains "Inactive" (if still invalid)
 
 ---
 
@@ -444,16 +449,17 @@
 
 **Preconditions**:
 - User is signed in
-- Token in "Pending" status
+- User has just created a token
 
 **Steps**:
-1. Open 2 browser tabs with same token
-2. Click "Validate" in both tabs simultaneously
+1. Open 2 browser tabs showing the same token details
+2. Background validation job runs automatically
 
 **Expected**:
 - No duplicate AccessTokenDetail records created
 - Locking prevents race condition
-- Both tabs eventually show same result
+- Both tabs automatically update and eventually show same validation result
+- Status transitions visible in both tabs (Pending → Validating → Active/Inactive)
 
 ### Scenario 8.5: Token value display and security
 
