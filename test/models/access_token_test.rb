@@ -185,7 +185,7 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS[:beta][:url]
   end
 
-  test "destroying access token disables and nullifies associated feeds in single query" do
+  test "destroying access token disables enabled feeds and nullifies their access_token_id" do
     token = create(:access_token, :active)
     enabled_feed = create(:feed, access_token: token, state: :enabled)
     disabled_feed = create(:feed, access_token: token, state: :disabled)
@@ -204,12 +204,19 @@ class AccessTokenTest < ActiveSupport::TestCase
     feed_update_queries = queries.select { |q| q.include?("feeds") && q.include?("UPDATE") }
     assert_equal 1, feed_update_queries.size, "Expected exactly 1 UPDATE query for feeds, got #{feed_update_queries.size}"
 
-    # All feeds should be disabled and have null access_token_id
-    [enabled_feed, disabled_feed, another_disabled_feed].each do |feed|
-      feed.reload
-      assert_equal "disabled", feed.state
-      assert_nil feed.access_token_id
-    end
+    # Enabled feed should be disabled and have null access_token_id
+    enabled_feed.reload
+    assert_equal "disabled", enabled_feed.state
+    assert_nil enabled_feed.access_token_id
+
+    # Already disabled feeds should remain unchanged (still have access_token_id)
+    disabled_feed.reload
+    assert_equal "disabled", disabled_feed.state
+    assert_equal token.id, disabled_feed.access_token_id
+
+    another_disabled_feed.reload
+    assert_equal "disabled", another_disabled_feed.state
+    assert_equal token.id, another_disabled_feed.access_token_id
   ensure
     ActiveSupport::Notifications.unsubscribe("sql.active_record")
   end
