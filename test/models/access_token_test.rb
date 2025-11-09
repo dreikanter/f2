@@ -296,4 +296,22 @@ class AccessTokenTest < ActiveSupport::TestCase
       assert_no_match %r{/}, config[:domain], "#{key} domain should not include path"
     end
   end
+
+  test "#disable_associated_feeds should disable only enabled feeds and clear access_token_id" do
+    token = create(:access_token, :active)
+    enabled_feed1 = create(:feed, access_token: token, state: :enabled)
+    enabled_feed2 = create(:feed, access_token: token, state: :enabled)
+    disabled_feed = create(:feed, access_token: token, state: :disabled)
+
+    token.disable_associated_feeds
+
+    assert_equal "disabled", enabled_feed1.reload.state
+    assert_nil enabled_feed1.access_token_id
+    assert_equal "disabled", enabled_feed2.reload.state
+    assert_nil enabled_feed2.access_token_id
+
+    # Already disabled feed should remain unchanged
+    assert_equal "disabled", disabled_feed.reload.state
+    assert_equal token.id, disabled_feed.access_token_id
+  end
 end
