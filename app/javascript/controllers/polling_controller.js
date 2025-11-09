@@ -6,8 +6,7 @@ export default class extends Controller {
     interval: { type: Number, default: 2000 },
     maxPolls: { type: Number, default: 30 },
     stopCondition: String,
-    scope: { type: String, default: "element" },
-    maxDuration: { type: Number, default: 0 }
+    scope: { type: String, default: "element" }
   }
 
   connect() {
@@ -31,7 +30,6 @@ export default class extends Controller {
     if (this._running) return
     this._running = true
     this._pollCount = 0
-    this._startedAt = Date.now()
     this.element.setAttribute("aria-busy", "true")
     this._scheduleNext(0)
   }
@@ -87,10 +85,6 @@ export default class extends Controller {
   _shouldContinuePolling() {
     if (this.stopConditionSatisfied()) {
       return { shouldStop: true }
-    }
-
-    if (this.maxDurationValue > 0 && Date.now() - this._startedAt > this.maxDurationValue) {
-      return { shouldStop: true, reason: "Polling stopped after max duration" }
     }
 
     if (this._pollCount >= this.maxPollsValue) {
