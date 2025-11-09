@@ -228,7 +228,7 @@
 - Token value displayed (encrypted, starts with "freefeed_token_")
 - Instructions to copy and paste into FreeFeed
 - Link or button to FreeFeed token creation page
-- Back, Edit, and Delete buttons are hidden (not visible during pending state)
+- Back and Delete buttons are hidden (not visible during pending state)
 - Note: This state is brief and will automatically transition to Active or Inactive
 
 ### Scenario 4.5: View inactive token details
