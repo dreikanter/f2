@@ -39,10 +39,6 @@ class AccessTokenValidationService
         expires_at: AccessTokenDetail::TTL.from_now
       )
     end
-  rescue StandardError => e
-    # Do not deativate token on details data fetch error (non-critical)
-    Rails.logger.error("Failed to cache token details for AccessToken #{access_token.id}: #{e.class} - #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
   end
 
   def disable_token_and_feeds
