@@ -12,7 +12,15 @@
   </div>
 </div>
 
-<div id="preview-status" class="space-y-6" aria-busy="<%= @feed_preview.pending? || @feed_preview.processing? %>">
+<div
+  id="preview-status"
+  class="space-y-6"
+  aria-busy="<%= @feed_preview.pending? || @feed_preview.processing? %>"
+  <% if @feed_preview.pending? || @feed_preview.processing? %>
+    data-controller="polling"
+    data-polling-endpoint-value="<%= feed_preview_path(@feed_preview, format: :turbo_stream) %>"
+    data-polling-stop-condition-value="[data-feed-preview-spinner]"
+  <% end %>>
   <% if @feed_preview.ready? %>
     <%= render "feed_previews/completed_status", feed_preview: @feed_preview %>
   <% elsif @feed_preview.pending? || @feed_preview.processing? %>
