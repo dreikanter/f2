@@ -10,8 +10,7 @@
 1. Navigate to the root page and click "Sign in" button
 2. Enter valid email and password
 3. Click "Sign in"
-4. Click "Settings" in navigation (or navigate to `/settings`)
-5. Click "Access Tokens" tab (or navigate to `/settings/access_tokens`)
+4. Select "Tokens" from the dropdown menu in the navbar
 
 **Expected**:
 - Redirected to dashboard after sign-in
@@ -25,7 +24,7 @@
 
 **Preconditions**:
 - User is signed in
-- User is on `/settings/access_tokens`
+- User is on access tokens page
 - No tokens exist
 
 **Steps**:
@@ -47,7 +46,7 @@
 
 **Preconditions**:
 - User is signed in
-- User is on `/settings/access_tokens`
+- User is on access tokens page
 
 **Steps**:
 1. Click "Add FreeFeed Access Token"
@@ -62,7 +61,7 @@
 
 **Preconditions**:
 - User is signed in
-- User is on `/settings/access_tokens`
+- User is on access tokens page
 
 **Steps**:
 1. Click "Add FreeFeed Access Token"
@@ -77,7 +76,7 @@
 
 **Preconditions**:
 - User is signed in
-- User is on `/settings/access_tokens`
+- User is on access tokens page
 
 **Steps**:
 1. Click "Add FreeFeed Access Token"
@@ -162,7 +161,7 @@
 - No tokens created
 
 **Steps**:
-1. Click "Settings" in navigation, then click "Access Tokens" tab
+1. Select "Tokens" from the dropdown menu in the navbar
 
 **Expected**:
 - Empty state component visible
@@ -195,7 +194,7 @@
 - At least one active token exists
 
 **Steps**:
-1. Click on an active token in the list (or navigate to `/settings/access_tokens/{id}`)
+1. Click on an active token in the list
 
 **Expected**:
 - Token name displayed
@@ -379,7 +378,7 @@
 
 **Steps**:
 1. Sign in as User B
-2. Navigate to `/settings/access_tokens/123`
+2. Attempt to access User A's token (e.g., by directly navigating to token ID 123)
 
 **Expected**:
 - Access denied (401/403 error)
@@ -392,7 +391,7 @@
 - User is signed out
 
 **Steps**:
-1. Navigate to the root page and attempt to access Settings
+1. Attempt to access the tokens page (e.g., by selecting "Tokens" from navbar or direct URL)
 
 **Expected**:
 - Redirected to sign-in page
@@ -406,17 +405,17 @@
 
 **Preconditions**:
 - User is signed in
-- Token created
+- User has just created a token
 - FreeFeed API temporarily down
 
 **Steps**:
-1. Click "Validate"
+1. Wait for background validation job to run
 
 **Expected**:
-- Validation job runs
+- Validation job runs automatically
 - After timeout/error, status becomes "Inactive"
 - Error logged (not necessarily shown to user)
-- User can retry validation later
+- User can click "Revalidate" button to retry validation later
 
 ### Scenario 8.2: Managed groups caching failure
 
