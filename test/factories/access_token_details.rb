@@ -4,10 +4,12 @@ FactoryBot.define do
 
     data do
       {
-        user_info: { username: "testuser", screen_name: "Test User" },
+        user_info: {
+          username: "testuser",
+          screen_name: "Test User"
+        },
         managed_groups: []
       }
     end
-
   end
 end
