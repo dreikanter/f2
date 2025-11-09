@@ -42,6 +42,7 @@ export default class extends Controller {
   async _tick() {
     if (!this._running) return
 
+    // Skip polling when offline to avoid failed requests
     if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
       return this._scheduleNext(this.intervalValue)
     }
