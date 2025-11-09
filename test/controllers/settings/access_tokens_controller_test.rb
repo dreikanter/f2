@@ -67,8 +67,69 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#create should be implemented" do
-    skip "TODO: Implement access token creation"
+  test "#create should redirect to show page on success" do
+    sign_in_as user
+
+    assert_difference("AccessToken.count", 1) do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_redirected_to settings_access_token_path(AccessToken.last)
+  end
+
+
+  test "#create should render new form on validation error" do
+    sign_in_as user
+
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "", # Invalid: empty token
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#create should reject unknown host" do
+    sign_in_as user
+
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: "https://unknown.example.com"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#create should require authentication" do
+    assert_no_difference("AccessToken.count") do
+      post settings_access_tokens_path, params: {
+        access_token: {
+          name: "Test Token",
+          token: "test_token_123",
+          host: AccessToken::FREEFEED_HOSTS[:production][:url]
+        }
+      }
+    end
+
+    assert_redirected_to new_session_path
   end
 
   test "#edit should render for own token" do

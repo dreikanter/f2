@@ -3,9 +3,76 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "New Access Token") %>
 
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <p class="ff-text">Access token creation form coming soon...</p>
-    </div>
+  <div class="max-w-2xl">
+    <%= form_with model: @access_token, url: settings_access_tokens_path, data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
+      <div class="space-y-6">
+        <div class="ff-form-group">
+          <%= form.label :host, "FreeFeed Instance", class: "ff-form-label" %>
+          <%= form.select :host,
+                          AccessToken.host_options_for_select,
+                          { selected: AccessToken::FREEFEED_HOSTS[:production][:url] },
+                          {
+                            class: "ff-form-input",
+                            autofocus: true,
+                            data: {
+                              token_host_target: "hostSelect",
+                              action: "change->token-host#updateLink"
+                            }
+                          } %>
+        </div>
+
+        <div class="ff-alert ff-alert--info">
+          <p>
+            Need a token? Create one in
+            <%= link_to AccessToken::FREEFEED_HOSTS[:production][:token_url],
+                        target: "_blank",
+                        rel: "noopener",
+                        class: "ff-link",
+                        data: { token_host_target: "link" } do %>
+              <span data-token-host-target="linkText"><%= AccessToken::FREEFEED_HOSTS[:production][:domain] %> settings</span>
+            <% end %>
+          </p>
+        </div>
+
+        <div class="ff-alert ff-alert--secondary ff-text space-y-2">
+          <p>Why Feeder needs these permissions:</p>
+          <ul class="list-none space-y-2">
+            <li><strong><code>read-my-info</code></strong> - Allows Feeder to verify your identity and display which FreeFeed account is connected to this token.</li>
+            <li><strong><code>manage-posts</code></strong> - Allows Feeder to create new posts and reposts on your behalf when publishing feed content to FreeFeed.</li>
+          </ul>
+        </div>
+
+        <div class="ff-form-group">
+          <%= form.label :token, "Access Token", class: "ff-form-label" %>
+          <%= form.text_field :token,
+                              class: "ff-form-input",
+                              placeholder: "Paste your FreeFeed access token here",
+                              required: true,
+                              autocomplete: "off" %>
+          <% if @access_token.errors[:token].any? %>
+            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
+          <% end %>
+        </div>
+
+        <div class="ff-form-group">
+          <%= form.label :name, "Token Name (optional)", class: "ff-form-label" %>
+          <%= form.text_field :name,
+                              class: "ff-form-input",
+                              placeholder: "e.g., My FreeFeed Token",
+                              autocomplete: "off" %>
+          <p class="ff-form-help">
+            Give this token a memorable name. If left blank, a default name will be used.
+          </p>
+          <% if @access_token.errors[:name].any? %>
+            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="ff-card__footer">
+        <%= form.submit "Validate and Save", class: "ff-button" %>
+        <%= link_to "Cancel", settings_access_tokens_path, class: class_names("ff-button", "ff-button--secondary") %>
+      </div>
+    <% end %>
   </div>
 </div>

@@ -14,23 +14,24 @@ class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
   def status_icon
     case @access_token.status
     when "active"
-      icon("check-circle", css_class: "h-5 w-5 text-emerald-600", aria_label: "Active")
+      icon("check-circle", css_class: "ff-icon-success", aria_label: "Active")
     when "inactive"
-      icon("x-circle", css_class: "h-5 w-5 text-slate-400", aria_label: "Inactive")
+      icon("x-circle", css_class: "ff-icon-secondary", aria_label: "Inactive")
     when "pending", "validating"
-      icon("clock", css_class: "h-5 w-5 text-slate-400", aria_label: @access_token.status.capitalize)
+      icon("clock", css_class: "ff-icon-secondary", aria_label: @access_token.status.capitalize)
     else
-      icon("question-circle", css_class: "h-5 w-5 text-slate-400", aria_label: "Unknown status")
+      icon("question-circle", css_class: "ff-icon-secondary", aria_label: "Unknown status")
     end
   end
 
   def username_with_host
     raise "AccessToken should be valid at this point" unless @access_token.valid?
 
-    owner = @access_token.owner.presence || UNKNOWN_USER
-    host = @access_token.host
-
-    "#{owner}@#{host}"
+    if @access_token.owner.present?
+      "#{@access_token.owner}@#{@access_token.host_domain}"
+    else
+      "Host: #{@access_token.host_domain}"
+    end
   end
 
   def created_ago

@@ -1,13 +1,15 @@
 class AccessToken < ApplicationRecord
   belongs_to :user
   has_many :feeds
+  has_one :access_token_detail, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :token, presence: true, on: :create
-  validates :host, presence: true, format: { with: /\Ahttps?:\/\/[^\s]+\z/, message: "must be a valid HTTP(S) URL" }
+  validates :host, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid HTTP or HTTPS URL" }
 
   enum :status, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
+  before_validation :generate_default_name, if: -> { name.blank? }
   before_destroy :disable_associated_feeds
 
   encrypts :encrypted_token
@@ -67,9 +69,36 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: token_value)
   end
 
-  private
+  def username_with_host
+    return nil unless owner.present?
+
+    "#{owner}@#{host_domain}"
+  end
+
+  def host_domain
+    URI.parse(host).host
+  end
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
+  end
+
+  private
+
+  def generate_default_name
+    self.name = "Token #{next_available_token_number}"
+  end
+
+  # TBD: Optimize this the token management flow is when stabilized
+  def next_available_token_number
+    counter = 1
+
+    loop do
+      candidate_name = "Token #{counter}"
+      break unless user.access_tokens.where(name: candidate_name).where.not(id: id).exists?
+      counter += 1
+    end
+
+    counter
   end
 end

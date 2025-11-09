@@ -30,12 +30,20 @@
     @apply border-sky-100 bg-sky-100;
   }
 
+  .ff-alert--success {
+    @apply border-emerald-200 bg-emerald-100 text-emerald-800;
+  }
+
   .ff-alert--error {
     @apply border-red-200 bg-red-100 text-red-800;
   }
 
   .ff-alert--warning {
     @apply border-amber-200 bg-amber-100 text-amber-800;
+  }
+
+  .ff-alert--secondary {
+    @apply border-sky-100 bg-slate-100;
   }
 
   .ff-form-group {
@@ -75,7 +83,7 @@
   }
 
   .ff-card__footer {
-    @apply mt-6 flex flex-wrap items-center justify-between gap-4 text-slate-600;
+    @apply mt-6 flex flex-wrap items-center justify-start sm:justify-between gap-4 text-slate-600;
   }
 
   .ff-text {
@@ -84,6 +92,10 @@
 
   .ff-text--heavy {
     @apply font-semibold text-slate-800;
+  }
+
+  .ff-text--muted {
+    @apply text-slate-500;
   }
 
   .ff-focus-ring {
@@ -103,7 +115,7 @@
   }
 
   .ff-dropdown-panel {
-    @apply z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-lg;
+    @apply z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm;
   }
 
   .ff-dropdown-item {
@@ -160,6 +172,26 @@
 
   .ff-event-level {
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+  }
+
+  .ff-icon-success {
+    @apply text-emerald-600;
+  }
+
+  .ff-icon-danger {
+    @apply text-red-600;
+  }
+
+  .ff-icon-warning {
+    @apply text-amber-600;
+  }
+
+  .ff-icon-info {
+    @apply text-sky-600;
+  }
+
+  .ff-icon-secondary {
+    @apply text-slate-400;
   }
 
   /* aria-busy styling for loading states */
