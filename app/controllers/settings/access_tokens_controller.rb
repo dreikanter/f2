@@ -20,6 +20,12 @@ class Settings::AccessTokensController < ApplicationController
 
     authorize @access_token
 
+    unless valid_host?(@access_token.host)
+      @access_token.errors.add(:host, "must be a known FreeFeed host")
+      render :new, status: :unprocessable_entity
+      return
+    end
+
     if @access_token.save
       @access_token.validate_token_async
       redirect_to settings_access_token_path(@access_token)
@@ -52,5 +58,9 @@ class Settings::AccessTokensController < ApplicationController
 
   def access_token_params
     params.require(:access_token).permit(:name, :token, :host)
+  end
+
+  def valid_host?(host)
+    AccessToken::FREEFEED_HOSTS.values.any? { |config| config[:url] == host }
   end
 end
