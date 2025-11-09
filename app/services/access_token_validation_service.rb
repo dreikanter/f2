@@ -9,13 +9,11 @@ class AccessTokenValidationService
   def call
     user_info = freefeed_client.whoami
 
-    ActiveRecord::Base.transaction do
-      access_token.update!(
-        status: :active,
-        owner: user_info[:username],
-        last_used_at: Time.current
-      )
-    end
+    access_token.update!(
+      status: :active,
+      owner: user_info[:username],
+      last_used_at: Time.current
+    )
 
     # Cache token details - failures here should not deactivate the token
     begin
