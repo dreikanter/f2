@@ -1,27 +1,13 @@
 class FreefeedUserComponent < ViewComponent::Base
-  def initialize(username:, avatar_size: "medium")
+  def initialize(username:)
     @username = username
-    @avatar_size = avatar_size
   end
 
   private
 
-  def size_classes
-    case @avatar_size
-    when "small"
-      "w-8 h-8"
-    when "medium"
-      "w-12 h-12"
-    when "large"
-      "w-16 h-16"
-    else
-      "w-12 h-12"
-    end
-  end
-
   def avatar_classes
     class_names(
-      size_classes,
+      "w-12 h-12",
       "bg-slate-200",
       "rounded-md"
     )
