@@ -23,10 +23,7 @@ class AccessTokenValidationService
   private
 
   def freefeed_client
-    @freefeed_client ||= FreefeedClient.new(
-      host: access_token.host,
-      token: access_token.token_value
-    )
+    @freefeed_client ||= access_token.build_client
   end
 
   def disable_token_and_feeds

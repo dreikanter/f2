@@ -6,12 +6,11 @@ class FreefeedPublisher
   class ValidationError < Error; end
   class PublishError < Error; end
 
-  attr_reader :post, :client
+  attr_reader :post
 
   def initialize(post)
     @post = post
     validate_post!
-    @client = build_client
   end
 
   # Publish the post to FreeFeed
@@ -41,11 +40,8 @@ class FreefeedPublisher
     raise ValidationError, "Post content is required" unless post.content.present?
   end
 
-  def build_client
-    FreefeedClient.new(
-      host: post.feed.access_token.host,
-      token: post.feed.access_token.token_value
-    )
+  def client
+    @client ||= post.feed.access_token.build_client
   end
 
   def already_published?
