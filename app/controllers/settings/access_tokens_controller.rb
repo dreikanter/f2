@@ -1,4 +1,6 @@
 class Settings::AccessTokensController < ApplicationController
+  UnsupportedFreeFeedHostError = Class.new(StandardError)
+
   def index
     authorize AccessToken
     @access_tokens = policy_scope(AccessToken).order(created_at: :desc)
@@ -17,12 +19,7 @@ class Settings::AccessTokensController < ApplicationController
   def create
     @access_token = Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
     authorize @access_token
-
-    unless valid_host?(@access_token.host)
-      @access_token.errors.add(:host, "must be a known FreeFeed host")
-      render :new, status: :unprocessable_entity
-      return
-    end
+    raise UnsupportedFreeFeedHostError unless valid_host?(@access_token.host)
 
     if @access_token.save
       @access_token.validate_token_async
