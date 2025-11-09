@@ -61,14 +61,15 @@ export default class extends Controller {
   async _tick() {
     if (!this._running) return
 
-    const pollDecision = this._shouldContinuePolling()
-
-    if (pollDecision.shouldSkip) {
+    if (document.hidden) {
       return this._scheduleNext(this.intervalValue)
     }
 
-    if (pollDecision.shouldStop) {
-      if (pollDecision.reason) console.warn(pollDecision.reason)
+    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
+      return this._scheduleNext(this.intervalValue)
+    }
+
+    if (!this._shouldContinuePolling()) {
       return this.stopPolling()
     }
 
@@ -83,23 +84,9 @@ export default class extends Controller {
   }
 
   _shouldContinuePolling() {
-    if (this.stopConditionSatisfied()) {
-      return { shouldStop: true }
-    }
-
-    if (this._pollCount >= this.maxPollsValue) {
-      return { shouldStop: true, reason: "Polling stopped after maximum attempts" }
-    }
-
-    if (document.hidden) {
-      return { shouldSkip: true }
-    }
-
-    if (typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine) {
-      return { shouldSkip: true }
-    }
-
-    return { shouldContinue: true }
+    if (this.stopConditionSatisfied()) return false
+    if (this._pollCount >= this.maxPollsValue) return false
+    return true
   }
 
   async _performPoll() {
@@ -120,7 +107,6 @@ export default class extends Controller {
 
   async _handlePollResponse(response) {
     if (!response.ok) {
-      console.warn(`Polling stopped: ${response.status}`)
       return this.stopPolling()
     }
 
