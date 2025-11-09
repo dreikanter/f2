@@ -54,7 +54,7 @@ class Settings::AccessTokenValidationsControllerTest < ActionDispatch::Integrati
 
     assert_response :success
     assert_match /data-status="active"/, response.body
-    assert_match /Token is active and ready to use/, response.body
+    assert_match /Token is valid and ready to use/, response.body
   end
 
   test "#show should show inactive state with data-status attribute" do
