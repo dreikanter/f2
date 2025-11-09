@@ -48,33 +48,12 @@
     <span>Token is active and ready to use</span>
   </div>
 
+  <%= render TokenDetailsComponent.new(access_token: @access_token) %>
+
   <% if @access_token.access_token_detail && !@access_token.access_token_detail.expired? %>
     <% details = @access_token.access_token_detail.data %>
     <% user_info = details["user_info"] %>
     <% managed_groups = details["managed_groups"] || [] %>
-
-    <%= render ListGroupComponent.new.tap { |c|
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "FreeFeed User",
-        value: user_info["username"],
-        key: "token.freefeed_user"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "FreeFeed Instance",
-        value: URI.parse(@access_token.host).host,
-        key: "token.host"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Last Used",
-        value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
-        key: "token.last_used"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Created",
-        value: datetime_with_duration_tag(@access_token.created_at),
-        key: "token.created"
-      ))
-    } %>
 
     <div class="ff-card">
       <div class="ff-card__body">
@@ -99,24 +78,6 @@
         <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
       </div>
     <% end %>
-  <% else %>
-    <%= render ListGroupComponent.new.tap { |c|
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "FreeFeed Instance",
-        value: URI.parse(@access_token.host).host,
-        key: "token.host"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Last Used",
-        value: @access_token.last_used_at ? datetime_with_duration_tag(@access_token.last_used_at) : "Never",
-        key: "token.last_used"
-      ))
-      c.with_item(ListGroupComponent::StatItemComponent.new(
-        label: "Created",
-        value: datetime_with_duration_tag(@access_token.created_at),
-        key: "token.created"
-      ))
-    } %>
   <% end %>
 <% elsif @access_token.inactive? %>
   <div class="ff-alert ff-alert--error" data-status="inactive">
@@ -124,16 +85,5 @@
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   </div>
 
-  <%= render ListGroupComponent.new.tap { |c|
-    c.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "FreeFeed Instance",
-      value: URI.parse(@access_token.host).host,
-      key: "token.host"
-    ))
-    c.with_item(ListGroupComponent::StatItemComponent.new(
-      label: "Created",
-      value: datetime_with_duration_tag(@access_token.created_at),
-      key: "token.created"
-    ))
-  } %>
+  <%= render TokenDetailsComponent.new(access_token: @access_token) %>
 <% end %>
