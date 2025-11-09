@@ -177,10 +177,11 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "disabled", feed2.reload.state
     assert_equal "disabled", feed3.reload.state
 
-    event = Event.last
-    assert_equal "access_token_validation_failed", event.type
+    event = Event.find_by!(
+      type: "access_token_validation_failed",
+      subject: access_token
+    )
     assert_equal access_token.user, event.user
-    assert_equal access_token, event.subject
     assert_equal "warning", event.level
     assert_includes event.message, "2 feeds disabled"
     assert_equal [feed1.id, feed2.id].sort, event.metadata["disabled_feed_ids"].sort
