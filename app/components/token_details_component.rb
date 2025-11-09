@@ -15,10 +15,26 @@ class TokenDetailsComponent < ViewComponent::Base
 
   def items
     [
-      { label: "FreeFeed User", value: freefeed_user, key: "token.freefeed_user" },
-      { label: "FreeFeed Instance", value: freefeed_instance, key: "token.host" },
-      { label: "Last Used", value: last_used, key: "token.last_used" },
-      { label: "Created", value: created, key: "token.created" }
+      {
+        label: "FreeFeed User",
+        value: freefeed_user,
+        key: "token.freefeed_user"
+      },
+      {
+        label: "FreeFeed Instance",
+        value: freefeed_instance,
+        key: "token.host"
+      },
+      {
+        label: "Last Used",
+        value: last_used,
+        key: "token.last_used"
+      },
+      {
+        label: "Created",
+        value: created,
+        key: "token.created"
+      }
     ]
   end
 
