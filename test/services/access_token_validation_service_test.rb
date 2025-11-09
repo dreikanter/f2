@@ -178,7 +178,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "disabled", feed3.reload.state
 
     event = Event.last
-    assert_equal "AccessTokenValidationFailed", event.type
+    assert_equal "access_token_validation_failed", event.type
     assert_equal access_token.user, event.user
     assert_equal access_token, event.subject
     assert_equal "warning", event.level

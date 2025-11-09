@@ -51,7 +51,7 @@ class AccessTokenValidationService
       disabled_count = enabled_feeds.update_all(state: :disabled)
 
       Event.create!(
-        type: "AccessTokenValidationFailed",
+        type: "access_token_validation_failed",
         user: access_token.user,
         subject: access_token,
         level: :warning,
