@@ -39,19 +39,42 @@ class StatusStatsComponent < ViewComponent::Base
 
   def layout_items
     [
-      { key: "total_feeds", label: "Total feeds", label_short: "Feeds", value: number_with_delimiter(total_feeds_count) },
-      { key: "total_imported_posts", label: "Total imported posts", label_short: "Imported", value: number_with_delimiter(total_imported_posts_count) },
-      { key: "total_published_posts", label: "Total published posts", label_short: "Published", value: number_with_delimiter(total_published_posts_count) },
-      { key: "average_posts_per_day", label: "Average posts per day (last week)", label_short: "Daily", value: average_posts_per_day_last_week.present? ? number_with_precision(average_posts_per_day_last_week.to_f, precision: 1) : "—" },
-      { key: "most_recent_post_publication", label: "Most recent post publication", label_short: "Recent", value: most_recent_post_published_at.present? ? "#{time_ago_in_words(most_recent_post_published_at)} ago" : "—" }
+      {
+        key: "total_feeds",
+        label: "Total feeds",
+        label_short: "Feeds",
+        value: number_with_delimiter(total_feeds_count)
+      },
+      {
+        key: "total_imported_posts",
+        label: "Total imported posts",
+        label_short: "Imported",
+        value: number_with_delimiter(total_imported_posts_count)
+      },
+      {
+        key: "total_published_posts",
+        label: "Total published posts",
+        label_short: "Published",
+        value: number_with_delimiter(total_published_posts_count)
+      },
+      {
+        key: "average_posts_per_day",
+        label: "Average posts per day (last week)",
+        label_short: "Daily",
+        value: average_posts_per_day_last_week.present? ? number_with_precision(average_posts_per_day_last_week.to_f, precision: 1) : "—"
+      },
+      {
+        key: "most_recent_post_publication",
+        label: "Most recent post publication",
+        label_short: "Recent",
+        value: most_recent_post_published_at.present? ? "#{time_ago_in_words(most_recent_post_published_at)} ago" : "—"
+      }
     ]
   end
 
   def mobile_list_component
     ListGroupComponent.new(css_class: "md:hidden divide-y divide-slate-200").tap do |list|
-      layout_items.each do |item|
-        list.with_item(mobile_stat_cell(item))
-      end
+      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
     end
   end
 
