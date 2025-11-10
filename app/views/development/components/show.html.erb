@@ -1,0 +1,157 @@
+<% content_for :title, "Component Reference" %>
+
+<div class="space-y-12">
+  <%= render PageHeaderComponent.new(title: "Component Reference") do |header| %>
+    <% header.with_context_paragraph do %>
+      Visual reference of all UI components in the application.
+    <% end %>
+  <% end %>
+
+  <%# Badge Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Badge Component</h2>
+    <div class="space-y-2">
+      <div class="flex flex-wrap gap-2">
+        <%= render BadgeComponent.new(text: "Blue", color: :blue) %>
+        <%= render BadgeComponent.new(text: "Gray", color: :gray) %>
+        <%= render BadgeComponent.new(text: "Red", color: :red) %>
+        <%= render BadgeComponent.new(text: "Green", color: :green) %>
+        <%= render BadgeComponent.new(text: "Yellow", color: :yellow) %>
+        <%= render BadgeComponent.new(text: "Orange", color: :orange) %>
+        <%= render BadgeComponent.new(text: "Indigo", color: :indigo) %>
+        <%= render BadgeComponent.new(text: "Purple", color: :purple) %>
+        <%= render BadgeComponent.new(text: "Pink", color: :pink) %>
+      </div>
+    </div>
+  </section>
+
+  <%# Card Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Card Component</h2>
+    <%= render CardComponent.new do %>
+      <p class="text-slate-700">This is a card component with default styling. It provides a clean container for content.</p>
+    <% end %>
+  </section>
+
+  <%# Empty State Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Empty State Component</h2>
+    <%= render EmptyStateComponent.new do %>
+      <p class="text-slate-500">No items found. Try adding some content.</p>
+    <% end %>
+  </section>
+
+  <%# Spinner Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Spinner Component</h2>
+    <%= render SpinnerComponent.new %>
+  </section>
+
+  <%# Stats Bar Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Stats Bar Component</h2>
+    <% stats_bar = StatsBarComponent.new %>
+    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Total Feeds", value: "42")) %>
+    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Active", value: "38")) %>
+    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Posts", value: "1,234")) %>
+    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Last Updated", value: "2h ago")) %>
+    <%= render stats_bar %>
+  </section>
+
+  <%# List Group Component with Feed Items %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">List Group Component (Feed Items)</h2>
+    <% list = ListGroupComponent.new %>
+    <% list.with_item(
+         ListGroupComponent::FeedItemComponent.new(
+           icon: icon("rss"),
+           title: "Tech News Daily",
+           title_url: "#",
+           metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]
+         )
+       ) %>
+    <% list.with_item(
+         ListGroupComponent::FeedItemComponent.new(
+           icon: icon("rss"),
+           title: "Design Inspiration",
+           title_url: "#",
+           metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]
+         )
+       ) %>
+    <% list.with_item(
+         ListGroupComponent::FeedItemComponent.new(
+           icon: icon("rss"),
+           title: "Ruby Weekly",
+           title_url: "#",
+           metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]
+         )
+       ) %>
+    <%= render list %>
+  </section>
+
+  <%# List Group Component with Stat Items %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">List Group Component (Stat Items)</h2>
+    <% stat_list = ListGroupComponent.new %>
+    <% stat_list.with_item(
+         ListGroupComponent::StatItemComponent.new(
+           label: "Total Feeds",
+           value: "42"
+         )
+       ) %>
+    <% stat_list.with_item(
+         ListGroupComponent::StatItemComponent.new(
+           label: "Total Posts",
+           value: "1,234"
+         )
+       ) %>
+    <% stat_list.with_item(
+         ListGroupComponent::StatItemComponent.new(
+           label: "Active Feeds",
+           value: "38"
+         )
+       ) %>
+    <%= render stat_list %>
+  </section>
+
+  <%# Pagination Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Pagination Component</h2>
+    <%= render PaginationComponent.new(
+         collection_name: "posts",
+         path_helper: ->(page) { "#page-#{page}" },
+         current_page: 3,
+         total_pages: 10
+       ) %>
+  </section>
+
+  <%# Page Header Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Page Header Component</h2>
+    <%= render PageHeaderComponent.new(title: "Example Page Title") do |header| %>
+      <% header.with_context_paragraph do %>
+        This is a context paragraph that provides additional information about the page.
+      <% end %>
+      <% header.with_action_button do %>
+        <a href="#" class="ff-button ff-button--primary ff-button--compact">Primary Action</a>
+      <% end %>
+      <% header.with_action_button do %>
+        <a href="#" class="ff-button ff-button--secondary ff-button--compact">Secondary Action</a>
+      <% end %>
+    <% end %>
+  </section>
+
+  <%# Confirmation Modal Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Confirmation Modal Component</h2>
+    <p class="text-sm text-slate-600">Modal is hidden by default. Add trigger button to show it.</p>
+    <%= render ConfirmationModalComponent.new(
+         title: "Delete Item",
+         action: "Delete",
+         url: "#",
+         method: :delete
+       ) do %>
+      Are you sure you want to delete this item? This action cannot be undone.
+    <% end %>
+  </section>
+</div>

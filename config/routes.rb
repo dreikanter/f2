@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   if Rails.env.development? || Rails.env.test?
     namespace :development do
+      resource :components, only: :show
+
       resources :sent_emails, only: [:index, :show], format: false do
         collection do
           delete :purge
