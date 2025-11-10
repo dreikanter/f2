@@ -49,4 +49,35 @@ class StatusStatsComponentTest < ViewComponent::TestCase
       assert_equal "1.5", result.css('[data-key="stats.average_posts_per_day.value"]').first.text
     end
   end
+
+  test "#render should include mobile layout with full labels" do
+    result = render_inline(
+      StatusStatsComponent.new(
+        total_feeds_count: 3,
+        total_imported_posts_count: 5,
+        total_published_posts_count: 4
+      )
+    )
+
+    mobile_layout = result.css(".md\\:hidden").first
+    assert_not_nil mobile_layout
+    assert_includes result.css(".md\\:hidden [data-key=\"stats.total_feeds.label\"]").first.text, "Total feeds"
+    assert_includes result.css(".md\\:hidden [data-key=\"stats.total_imported_posts.label\"]").first.text, "Total imported posts"
+  end
+
+  test "#render should include desktop layout with short labels" do
+    result = render_inline(
+      StatusStatsComponent.new(
+        total_feeds_count: 3,
+        total_imported_posts_count: 5,
+        total_published_posts_count: 4
+      )
+    )
+
+    desktop_layout = result.css(".hidden.md\\:flex").first
+    assert_not_nil desktop_layout
+    assert_equal "Feeds", result.css(".hidden.md\\:flex [data-key=\"stats.total_feeds.label\"]").first.text
+    assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.total_imported_posts.label\"]").first.text
+    assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.total_published_posts.label\"]").first.text
+  end
 end
