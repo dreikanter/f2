@@ -17,30 +17,55 @@ class FeedStatsComponent < ViewComponent::Base
 
   def desktop_layout
     tag.div class: "hidden md:flex md:divide-x md:divide-slate-200" do
-      safe_join(layout_items(concise: true).map { |item| desktop_stat_cell(item) })
+      safe_join(desktop_layout_items.map { |item| desktop_stat_cell(item) })
     end
   end
 
-  def layout_items(concise: false)
+  def mobile_layout_items
     [
       {
         key: "last_refresh",
-        label: concise ? "Refreshed" : "Last refresh",
+        label: "Last refresh",
         value: last_refresh_value
       },
       {
         key: "most_recent_post",
-        label: concise ? "Recent" : "Most recent publication",
+        label: "Most recent publication",
         value: most_recent_post_value
       },
       {
         key: "imported_posts",
-        label: concise ? "Imported" : "Imported posts",
+        label: "Imported posts",
         value: helpers.number_with_delimiter(@feed.posts.count)
       },
       {
         key: "published_posts",
-        label: concise ? "Published" : "Published posts",
+        label: "Published posts",
+        value: helpers.number_with_delimiter(@feed.posts.published.count)
+      }
+    ]
+  end
+
+  def desktop_layout_items
+    [
+      {
+        key: "last_refresh",
+        label: "Refreshed",
+        value: last_refresh_value
+      },
+      {
+        key: "most_recent_post",
+        label: "Recent",
+        value: most_recent_post_value
+      },
+      {
+        key: "imported_posts",
+        label: "Imported",
+        value: helpers.number_with_delimiter(@feed.posts.count)
+      },
+      {
+        key: "published_posts",
+        label: "Published",
         value: helpers.number_with_delimiter(@feed.posts.published.count)
       }
     ]
@@ -48,7 +73,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def mobile_list_component
     ListGroupComponent.new(css_class: "md:hidden divide-y divide-slate-200").tap do |list|
-      layout_items(concise: false).each do |item|
+      mobile_layout_items.each do |item|
         list.with_item(mobile_stat_cell(item))
       end
     end
