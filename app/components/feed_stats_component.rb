@@ -25,19 +25,51 @@ class FeedStatsComponent < ViewComponent::Base
 
   def mobile_layout_items
     [
-      { key: "last_refresh", label: "Last refresh", value: last_refresh_value },
-      { key: "most_recent_post", label: "Most recent publication", value: most_recent_post_value },
-      { key: "imported_posts", label: "Imported posts", value: helpers.number_with_delimiter(@feed.posts.count) },
-      { key: "published_posts", label: "Published posts", value: helpers.number_with_delimiter(@feed.posts.published.count) }
+      {
+        key: "last_refresh",
+        label: "Last refresh",
+        value: last_refresh_value
+      },
+      {
+        key: "most_recent_post",
+        label: "Most recent publication",
+        value: most_recent_post_value
+      },
+      {
+        key: "imported_posts",
+        label: "Imported posts",
+        value: helpers.number_with_delimiter(@feed.posts.count)
+      },
+      {
+        key: "published_posts",
+        label: "Published posts",
+        value: helpers.number_with_delimiter(@feed.posts.published.count)
+      }
     ]
   end
 
   def desktop_layout_items
     [
-      { key: "last_refresh", label: "Refreshed", value: last_refresh_value },
-      { key: "most_recent_post", label: "Recent", value: most_recent_post_value },
-      { key: "imported_posts", label: "Imported", value: helpers.number_with_delimiter(@feed.posts.count) },
-      { key: "published_posts", label: "Published", value: helpers.number_with_delimiter(@feed.posts.published.count) }
+      {
+        key: "last_refresh",
+        label: "Refreshed",
+        value: last_refresh_value
+      },
+      {
+        key: "most_recent_post",
+        label: "Recent",
+        value: most_recent_post_value
+      },
+      {
+        key: "imported_posts",
+        label: "Imported",
+        value: helpers.number_with_delimiter(@feed.posts.count)
+      },
+      {
+        key: "published_posts",
+        label: "Published",
+        value: helpers.number_with_delimiter(@feed.posts.published.count)
+      }
     ]
   end
 
@@ -50,7 +82,11 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def mobile_stat_cell(item)
-    ListGroupComponent::StatItemComponent.new(label: item[:label], value: item[:value], key: "stats.#{item[:key]}")
+    ListGroupComponent::StatItemComponent.new(
+      label: item[:label],
+      value: item[:value],
+      key: "stats.#{item[:key]}"
+    )
   end
 
   def desktop_stat_cell(item)
