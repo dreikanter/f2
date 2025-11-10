@@ -20,7 +20,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def layout_items
-    [
+    @layout_items ||= [
       {
         key: "last_refresh",
         label: "Last refresh",
@@ -37,13 +37,13 @@ class FeedStatsComponent < ViewComponent::Base
         key: "imported_posts",
         label: "Imported posts",
         label_short: "Imported",
-        value: helpers.number_with_delimiter(@feed.posts.count)
+        value: helpers.number_with_delimiter(imported_posts_count)
       },
       {
         key: "published_posts",
         label: "Published posts",
         label_short: "Published",
-        value: helpers.number_with_delimiter(@feed.posts.published.count)
+        value: helpers.number_with_delimiter(published_posts_count)
       }
     ]
   end
@@ -94,5 +94,13 @@ class FeedStatsComponent < ViewComponent::Base
     else
       content_tag(:span, "No posts imported", class: "text-slate-500")
     end
+  end
+
+  def imported_posts_count
+    @imported_posts_count ||= @feed.posts.count
+  end
+
+  def published_posts_count
+    @published_posts_count ||= @feed.posts.published.count
   end
 end

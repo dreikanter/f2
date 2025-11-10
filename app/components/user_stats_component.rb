@@ -22,7 +22,7 @@ class UserStatsComponent < ViewComponent::Base
   end
 
   def layout_items
-    [
+    @layout_items ||= [
       {
         key: "total_feeds",
         label: "Total feeds",
