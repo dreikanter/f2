@@ -1,5 +1,5 @@
 class StatsBarComponent < ViewComponent::Base
-  DEFAULT_BAR_CLASSES = "hidden md:flex md:divide-x md:divide-slate-200"
+  DEFAULT_CSS_CLASSES = "overflow-hidden md:flex md:divide-x md:divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm"
 
   attr_reader :items
 
@@ -11,7 +11,7 @@ class StatsBarComponent < ViewComponent::Base
   def call
     return if @items.empty?
 
-    content_tag :div, class: @css_class || DEFAULT_BAR_CLASSES do
+    content_tag :div, class: @css_class || DEFAULT_CSS_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
   end
