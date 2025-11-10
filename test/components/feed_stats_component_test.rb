@@ -57,4 +57,16 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.published_posts.label\"]").first.text
   end
+
+  test "#render should display fallback values for missing data" do
+    feed_without_data = create(:feed)
+
+    result = render_inline(FeedStatsComponent.new(feed: feed_without_data))
+
+    last_refresh_value = result.css('[data-key="stats.last_refresh.value"]').first.text
+    assert_equal "Never", last_refresh_value
+
+    most_recent_value = result.css('[data-key="stats.most_recent_post.value"]').first.text
+    assert_equal "No posts imported", most_recent_value
+  end
 end

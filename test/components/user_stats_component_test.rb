@@ -44,4 +44,13 @@ class UserStatsComponentTest < ViewComponent::TestCase
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.total_imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.total_published_posts.label\"]").first.text
   end
+
+  test "#render should display fallback value when no published posts" do
+    user_without_posts = create(:user)
+
+    result = render_inline(UserStatsComponent.new(user: user_without_posts))
+
+    recent_value = result.css('[data-key="stats.most_recent_post_publication.value"]').first.text
+    assert_equal "—", recent_value
+  end
 end
