@@ -3,14 +3,15 @@ class ListGroupComponent < ViewComponent::Base
 
   attr_reader :items
 
-  def initialize
+  def initialize(css_class: nil)
     @items = []
+    @css_class = css_class
   end
 
   def call
     return if @items.empty?
 
-    content_tag :ul, class: DEFAULT_LIST_CLASSES do
+    content_tag :ul, class: @css_class || DEFAULT_LIST_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
   end
