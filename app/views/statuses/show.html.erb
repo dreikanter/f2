@@ -37,13 +37,7 @@
     </section>
   <% else %>
     <h1 class="ff-h1">Status</h1>
-    <%= render StatusStatsComponent.new(
-      total_feeds_count: @user.total_feeds_count,
-      total_imported_posts_count: @user.total_imported_posts_count,
-      total_published_posts_count: @user.total_published_posts_count,
-      most_recent_post_published_at: @user.most_recent_post_published_at,
-      average_posts_per_day_last_week: @user.average_posts_per_day_last_week
-    ) %>
+    <%= render UserStatsComponent.new(user: @user) %>
 
     <% if @recent_events.any? %>
       <section class="space-y-4">
