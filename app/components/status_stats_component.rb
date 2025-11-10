@@ -35,47 +35,26 @@ class StatusStatsComponent < ViewComponent::Base
 
   def desktop_layout
     tag.div class: "hidden md:flex md:divide-x md:divide-slate-200" do
-      safe_join(desktop_layout_items.map { |item| desktop_stat_cell(item) })
+      safe_join(layout_items(concise: true).map { |item| desktop_stat_cell(item) })
     end
   end
 
-  def mobile_layout_items
+  def layout_items(concise: false)
     items = [
-      { key: "total_feeds", label: "Total feeds", value: number_with_delimiter(total_feeds_count) }
+      { key: "total_feeds", label: concise ? "Feeds" : "Total feeds", value: number_with_delimiter(total_feeds_count) }
     ]
 
     if total_imported_posts_count.to_i.positive?
-      items << { key: "total_imported_posts", label: "Total imported posts", value: number_with_delimiter(total_imported_posts_count) }
-      items << { key: "total_published_posts", label: "Total published posts", value: number_with_delimiter(total_published_posts_count) }
+      items << { key: "total_imported_posts", label: concise ? "Imported" : "Total imported posts", value: number_with_delimiter(total_imported_posts_count) }
+      items << { key: "total_published_posts", label: concise ? "Published" : "Total published posts", value: number_with_delimiter(total_published_posts_count) }
 
       if average_posts_per_day_last_week.present?
-        items << { key: "average_posts_per_day", label: "Average posts per day (last week)", value: number_with_precision(average_posts_per_day_last_week.to_f, precision: 1) }
+        items << { key: "average_posts_per_day", label: concise ? "Daily" : "Average posts per day (last week)", value: number_with_precision(average_posts_per_day_last_week.to_f, precision: 1) }
       end
     end
 
     if most_recent_post_published_at.present?
-      items << { key: "most_recent_post_publication", label: "Most recent post publication", value: "#{time_ago_in_words(most_recent_post_published_at)} ago" }
-    end
-
-    items
-  end
-
-  def desktop_layout_items
-    items = [
-      { key: "total_feeds", label: "Feeds", value: number_with_delimiter(total_feeds_count) }
-    ]
-
-    if total_imported_posts_count.to_i.positive?
-      items << { key: "total_imported_posts", label: "Imported", value: number_with_delimiter(total_imported_posts_count) }
-      items << { key: "total_published_posts", label: "Published", value: number_with_delimiter(total_published_posts_count) }
-
-      if average_posts_per_day_last_week.present?
-        items << { key: "average_posts_per_day", label: "Daily", value: number_with_precision(average_posts_per_day_last_week.to_f, precision: 1) }
-      end
-    end
-
-    if most_recent_post_published_at.present?
-      items << { key: "most_recent_post_publication", label: "Recent", value: "#{time_ago_in_words(most_recent_post_published_at)} ago" }
+      items << { key: "most_recent_post_publication", label: concise ? "Recent" : "Most recent post publication", value: "#{time_ago_in_words(most_recent_post_published_at)} ago" }
     end
 
     items
@@ -83,7 +62,7 @@ class StatusStatsComponent < ViewComponent::Base
 
   def mobile_list_component
     ListGroupComponent.new.tap do |list|
-      mobile_layout_items.each do |item|
+      layout_items(concise: false).each do |item|
         list.with_item(mobile_stat_cell(item))
       end
     end
