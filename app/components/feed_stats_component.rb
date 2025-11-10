@@ -77,7 +77,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def last_refresh_value
     if @feed.last_refreshed_at
-      helpers.datetime_with_duration_tag(@feed.last_refreshed_at)
+      helpers.short_time_ago_tag(@feed.last_refreshed_at)
     else
       content_tag(:span, "Never", class: "text-slate-500")
     end
@@ -85,7 +85,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def most_recent_post_value
     if @feed.most_recent_post_date
-      helpers.datetime_with_duration_tag(@feed.most_recent_post_date)
+      helpers.short_time_ago_tag(@feed.most_recent_post_date)
     else
       content_tag(:span, "No posts imported", class: "text-slate-500")
     end
