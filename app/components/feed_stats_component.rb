@@ -19,55 +19,30 @@ class FeedStatsComponent < ViewComponent::Base
 
   def desktop_layout
     tag.div class: "hidden md:flex md:divide-x md:divide-slate-200" do
-      safe_join(desktop_layout_items.map { |item| desktop_stat_cell(item) })
+      safe_join(layout_items(concise: true).map { |item| desktop_stat_cell(item) })
     end
   end
 
-  def mobile_layout_items
+  def layout_items(concise: false)
     [
       {
         key: "last_refresh",
-        label: "Last refresh",
+        label: concise ? "Refreshed" : "Last refresh",
         value: last_refresh_value
       },
       {
         key: "most_recent_post",
-        label: "Most recent publication",
+        label: concise ? "Recent" : "Most recent publication",
         value: most_recent_post_value
       },
       {
         key: "imported_posts",
-        label: "Imported posts",
+        label: concise ? "Imported" : "Imported posts",
         value: helpers.number_with_delimiter(@feed.posts.count)
       },
       {
         key: "published_posts",
-        label: "Published posts",
-        value: helpers.number_with_delimiter(@feed.posts.published.count)
-      }
-    ]
-  end
-
-  def desktop_layout_items
-    [
-      {
-        key: "last_refresh",
-        label: "Refreshed",
-        value: last_refresh_value
-      },
-      {
-        key: "most_recent_post",
-        label: "Recent",
-        value: most_recent_post_value
-      },
-      {
-        key: "imported_posts",
-        label: "Imported",
-        value: helpers.number_with_delimiter(@feed.posts.count)
-      },
-      {
-        key: "published_posts",
-        label: "Published",
+        label: concise ? "Published" : "Published posts",
         value: helpers.number_with_delimiter(@feed.posts.published.count)
       }
     ]
@@ -75,7 +50,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def mobile_list_component
     ListGroupComponent.new.tap do |list|
-      mobile_layout_items.each do |item|
+      layout_items(concise: false).each do |item|
         list.with_item(mobile_stat_cell(item))
       end
     end
