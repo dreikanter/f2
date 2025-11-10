@@ -28,9 +28,7 @@ class StatusStatsComponent < ViewComponent::Base
               :average_posts_per_day_last_week
 
   def mobile_layout
-    tag.div class: "md:hidden divide-y divide-slate-200" do
-      render(mobile_list_component)
-    end
+    render(mobile_list_component)
   end
 
   def desktop_layout
@@ -61,7 +59,7 @@ class StatusStatsComponent < ViewComponent::Base
   end
 
   def mobile_list_component
-    ListGroupComponent.new.tap do |list|
+    ListGroupComponent.new(css_class: "md:hidden divide-y divide-slate-200").tap do |list|
       layout_items(concise: false).each do |item|
         list.with_item(mobile_stat_cell(item))
       end
