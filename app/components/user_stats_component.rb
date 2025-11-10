@@ -4,9 +4,7 @@ class UserStatsComponent < ViewComponent::Base
   end
 
   def call
-    tag.div class: "rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden" do
-      safe_join([mobile_layout, desktop_layout])
-    end
+    tag.div { safe_join([mobile_layout, desktop_layout]) }
   end
 
   private
@@ -57,13 +55,13 @@ class UserStatsComponent < ViewComponent::Base
   end
 
   def mobile_list_component
-    ListGroupComponent.new(css_class: "md:hidden divide-y divide-slate-200").tap do |list|
+    ListGroupComponent.new(css_class: class_names("md:hidden", ListGroupComponent::DEFAULT_CSS_CLASSES)).tap do |list|
       layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
     end
   end
 
   def desktop_bar_component
-    StatsBarComponent.new.tap do |bar|
+    StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES)).tap do |bar|
       layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
     end
   end
