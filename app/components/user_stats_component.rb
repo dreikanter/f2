@@ -18,9 +18,7 @@ class UserStatsComponent < ViewComponent::Base
   end
 
   def desktop_layout
-    tag.div class: "hidden md:flex md:divide-x md:divide-slate-200" do
-      safe_join(layout_items.map { |item| desktop_stat_cell(item) })
-    end
+    render(desktop_bar_component)
   end
 
   def layout_items
@@ -64,16 +62,17 @@ class UserStatsComponent < ViewComponent::Base
     end
   end
 
+  def desktop_bar_component
+    StatsBarComponent.new.tap do |bar|
+      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
+    end
+  end
+
   def mobile_stat_cell(item)
     ListGroupComponent::StatItemComponent.new(label: item[:label], value: item[:value], key: "stats.#{item[:key]}")
   end
 
   def desktop_stat_cell(item)
-    tag.div class: "flex-1 flex flex-col items-center justify-center p-4 min-w-0", data: { key: "stats.#{item[:key]}" } do
-      safe_join([
-        tag.div(item[:value], class: "text-3xl font-semibold text-slate-900 whitespace-nowrap", data: { key: "stats.#{item[:key]}.value" }),
-        tag.div(item[:label_short], class: "text-sm text-slate-600 whitespace-nowrap mt-1", data: { key: "stats.#{item[:key]}.label" })
-      ])
-    end
+    StatsBarComponent::StatItemComponent.new(label: item[:label_short], value: item[:value], key: "stats.#{item[:key]}")
   end
 end
