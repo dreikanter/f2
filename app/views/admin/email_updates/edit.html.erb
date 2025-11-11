@@ -1,44 +1,38 @@
 <% content_for :title, "Change Email" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Change Email for #{@user.email_address}") do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Back to User", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: "Change Email for #{@user.email_address}") %>
 
-  <div class="ff-alert ff-alert--info">
+  <div class="ff-alert ff-alert--info max-w-2xl">
     <strong>How this works:</strong> You can either change the email immediately or send a confirmation email to the new address.
     If confirmation is required, the user must click the link in the email before the change takes effect.
   </div>
 
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
-        <div class="space-y-6">
-          <div class="ff-form-group">
-            <%= form.label :email_address, "Current Email", class: "ff-form-label" %>
-            <%= form.text_field :email_address, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-200 text-slate-500 cursor-not-allowed" %>
-          </div>
+  <div class="max-w-2xl">
+    <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
+      <div class="space-y-6">
+        <div class="ff-form-group">
+          <label class="ff-form-label">Current email</label>
+          <div class="ff-form-input bg-slate-100"><%= @user.email_address %></div>
+        </div>
 
-          <div class="ff-form-group">
-            <%= form.label :email_address, "New Email", class: "ff-form-label" %>
-            <%= form.email_field :email_address, class: "ff-form-input", required: true, autofocus: true %>
-          </div>
+        <div class="ff-form-group">
+          <%= form.label :email_address, "New email", class: "ff-form-label" %>
+          <%= form.email_field :email_address, class: "ff-form-input", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+        </div>
 
-          <div class="ff-form-group">
-            <div class="flex items-start gap-3">
-              <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
-              <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <%= form.submit "Update Email", class: "ff-button ff-button--compact", data: { turbo_confirm: "Update email for this user?" } %>
-            <%= link_to "Cancel", admin_user_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
+        <div class="ff-form-group">
+          <div class="flex items-start gap-3">
+            <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+            <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>
           </div>
         </div>
-      <% end %>
-    </div>
+      </div>
+
+      <div class="ff-card__footer">
+        <%= form.submit "Update Email", class: "ff-button", data: { turbo_confirm: "Update email for this user?" } %>
+        <%= link_to "Cancel", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary") %>
+      </div>
+    <% end %>
   </div>
 </div>
