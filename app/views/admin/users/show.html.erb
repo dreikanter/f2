@@ -148,7 +148,7 @@
       label: "Available Invites",
       value: tag.span(class: "flex items-center gap-4") {
         safe_join([
-          tag.span(id: "available-invites-value") { @user.available_invites },
+          render(partial: "available_invites_value", locals: { user: @user }),
           link_to("Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
         ])
       },
