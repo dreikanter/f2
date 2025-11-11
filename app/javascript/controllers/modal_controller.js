@@ -72,8 +72,7 @@ export default class extends Controller {
   }
 
   confirm(event) {
-    // Allow the form submission to proceed
-    // Close the modal immediately
+    // Close the modal (form submission will proceed)
     this.close()
   }
 
