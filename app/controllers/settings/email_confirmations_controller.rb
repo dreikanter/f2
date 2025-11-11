@@ -37,7 +37,7 @@ class Settings::EmailConfirmationsController < ApplicationController
       level: :info,
       subject: user,
       user: user,
-      message: "Email changed from #{old_email} to #{new_email}",
+      message: "",
       metadata: { old_email: old_email, new_email: new_email }
     )
   end
