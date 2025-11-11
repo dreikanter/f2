@@ -12,8 +12,8 @@
     <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
       <div class="space-y-6">
         <div class="ff-form-group">
-          <%= form.label :email_address, "Current email", class: "ff-form-label" %>
-          <%= form.text_field :email_address, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-100" %>
+          <label class="ff-form-label">Current email</label>
+          <div class="ff-form-input bg-slate-100"><%= @user.email_address %></div>
         </div>
 
         <div class="ff-form-group">
