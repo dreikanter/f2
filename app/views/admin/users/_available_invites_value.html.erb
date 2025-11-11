@@ -1,4 +1,1 @@
-<span id="available-invites-value" class="flex items-center gap-4">
-  <span><%= user.available_invites %></span>
-  <%= link_to "Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{user.id}", action: "click->modal-trigger#open" } %>
-</span>
+<%= user.available_invites %>
