@@ -18,14 +18,22 @@ class EventDescriptionRenderer
     @event = event
   end
 
+  # Provide default_url_options for URL helpers
+  def default_url_options
+    Rails.application.config.action_mailer.default_url_options || {}
+  end
+
   def render
     feed_count = feeds.count
+    metadata_feed_count = feeds_from_metadata.count
+    total_count = feed_count + metadata_feed_count
 
-    return fallback_message if feed_count.zero? && feeds_from_metadata.empty?
+    # Default to count: 1 for non-feed events to use the "one" form
+    count = total_count.positive? ? total_count : 1
 
     description = I18n.t(
       "events.descriptions.#{event_type}",
-      count: feed_count.positive? ? feed_count : feeds_from_metadata.count,
+      count: count,
       feed_link: single_feed_link,
       feed_links: multiple_feed_links,
       error: error_message,
