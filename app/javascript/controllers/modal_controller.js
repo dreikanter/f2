@@ -33,6 +33,10 @@ export default class extends Controller {
     // Save the currently focused element before showing modal
     this.previouslyFocusedElement = document.activeElement
 
+    // Calculate scrollbar width and add padding to prevent layout shift
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    document.body.style.paddingRight = `${scrollbarWidth}px`
+
     // Show the modal
     this.element.classList.remove('hidden')
     this.element.classList.add('flex')
@@ -58,6 +62,7 @@ export default class extends Controller {
     this.element.classList.remove('flex')
     this.element.setAttribute('aria-hidden', 'true')
     document.body.style.overflow = ''
+    document.body.style.paddingRight = ''
 
     // Restore focus to previously focused element
     if (this.previouslyFocusedElement && this.previouslyFocusedElement.focus) {
@@ -67,9 +72,8 @@ export default class extends Controller {
   }
 
   confirm(event) {
-    // Allow the form submission to proceed
-    // The modal will be closed by the page navigation
-    document.body.style.overflow = ''
+    // Close the modal (form submission will proceed)
+    this.close()
   }
 
   handleBackdropClick(event) {

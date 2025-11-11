@@ -18,8 +18,14 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    assert_redirected_to admin_user_path(target_user)
-    assert_equal "Available invites updated successfully.", flash[:notice]
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='available-invites-value']"
+    assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+    end
 
     target_user.reload
     assert_equal 10, target_user.available_invites
@@ -30,8 +36,28 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: -5 }
     }
-    assert_redirected_to admin_user_path(target_user)
-    assert_equal "Failed to update available invites.", flash[:alert]
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--error", text: /Failed to update available invites/
+    end
+
+    target_user.reload
+    assert_equal 3, target_user.available_invites
+  end
+
+  test "should not update available invites to blank value" do
+    sign_in_as admin
+    patch admin_user_available_invites_url(target_user), params: {
+      user: { available_invites: "" }
+    }
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--error", text: /Failed to update available invites/
+    end
 
     target_user.reload
     assert_equal 3, target_user.available_invites
@@ -54,7 +80,14 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    assert_redirected_to admin_user_path(target_user)
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='available-invites-value']"
+    assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+    end
 
     target_user.reload
     assert_equal 10, target_user.available_invites

@@ -1,0 +1,23 @@
+<%= render ModalComponent.new(title: "Update Available Invites", modal_id: @modal_id) do |modal| %>
+  <%= form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, id: "available-invites-form-#{@user.id}", data: { turbo_frame: "_top" }) do |form| %>
+    <div class="ff-form-group">
+      <%= form.label :available_invites, "Available Invites", class: "ff-form-label" %>
+      <span id="available-invites-input-wrapper-<%= @user.id %>">
+        <%= form.number_field(:available_invites, min: 0, class: "ff-form-input", autofocus: true) %>
+      </span>
+    </div>
+  <% end %>
+
+  <% modal.with_footer do %>
+    <%= tag.button "Update",
+                   type: "button",
+                   form: "available-invites-form-#{@user.id}",
+                   class: "ff-button ff-button--compact",
+                   data: { action: "click->modal#confirm" },
+                   onclick: "this.form.requestSubmit()" %>
+    <%= tag.button "Cancel",
+                   type: "button",
+                   class: "ff-button ff-button--secondary ff-button--compact",
+                   data: { action: "modal#close" } %>
+  <% end %>
+<% end %>

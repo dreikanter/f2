@@ -146,13 +146,13 @@
   invitations_list = ListGroupComponent.new.tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Available Invites",
-      value: form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, class: "flex gap-2 items-center", data: { turbo_frame: "_top" }) do |form|
+      value: tag.span(class: "flex items-center gap-4") {
         safe_join([
-          tag.span(@user.available_invites, class: "font-semibold"),
-          form.number_field(:available_invites, min: 0, class: "rounded-md border border-slate-300 px-2 py-1 text-sm w-20"),
-          form.submit("Update", class: "ff-button ff-button--compact text-sm px-3 py-1")
-        ], " ")
-      end
+          render(partial: "available_invites_value", locals: { user: @user }),
+          link_to("Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
+        ])
+      },
+      key: "invitations.available_invites"
     ))
 
     list.with_item(ListGroupComponent::StatItemComponent.new(
@@ -304,3 +304,5 @@
     <p>All active sessions for <%= @user.email_address %> will be terminated, all feeds will be disabled, and the user will be unable to sign in. You can unsuspend this user later to restore access.</p>
   <% end %>
 <% end %>
+
+<%= render EditAvailableInvitesModalComponent.new(user: @user) %>
