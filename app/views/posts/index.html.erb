@@ -5,6 +5,8 @@
   <%= render PageHeaderComponent.new(title: page_title) do |header| %>
     <% if @feed %>
       <% header.with_context_paragraph("Posts imported from this feed.") %>
+    <% else %>
+      <% header.with_context_paragraph("All posts from your feeds in one place.") %>
     <% end %>
     <% if pagination_total_count > 0 %>
       <% header.with_context_paragraph("Showing #{@posts.size} of #{pagination_total_count} posts") %>
