@@ -1,4 +1,4 @@
-<span id="available-invites-value" class="flex gap-2 items-center">
-  <span class="font-semibold"><%= user.available_invites %></span>
-  <%= link_to "Edit", "#", class: "ff-button ff-button--compact text-sm px-3 py-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{user.id}", action: "click->modal-trigger#open" } %>
+<span id="available-invites-value" class="flex items-center gap-4">
+  <span><%= user.available_invites %></span>
+  <%= link_to "Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{user.id}", action: "click->modal-trigger#open" } %>
 </span>
