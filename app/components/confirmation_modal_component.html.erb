@@ -1,44 +1,14 @@
-<div id="<%= @modal_id %>"
-     tabindex="-1"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="<%= @modal_id %>-title"
-     aria-describedby="<%= @modal_id %>-description"
-     aria-hidden="true"
-     class="hidden overflow-y-auto overflow-x-hidden fixed inset-0 z-50 flex justify-center items-center bg-black/25"
-     data-controller="confirmation-modal">
-  <div class="relative p-4 w-full max-w-2xl max-h-full">
-    <!-- Modal content -->
-    <div class="relative bg-white rounded-lg shadow">
-      <!-- Modal header -->
-      <div class="flex items-center justify-between p-4 md:p-5">
-        <h3 id="<%= @modal_id %>-title" class="text-xl font-semibold text-gray-900">
-          <%= @title %>
-        </h3>
-        <button type="button"
-                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                data-action="confirmation-modal#close">
-          <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-          </svg>
-          <span class="sr-only">Close modal</span>
-        </button>
-      </div>
-      <!-- Modal body -->
-      <div id="<%= @modal_id %>-description" class="p-4 md:p-5 space-y-4">
-        <%= content %>
-      </div>
-      <!-- Modal footer -->
-      <div class="flex items-center p-4 md:p-5 gap-3">
-        <%= button_to @action,
-                      @url,
-                      method: @method,
-                      class: "ff-button ff-button--danger ff-button--compact",
-                      data: { action: "confirmation-modal#confirm" } %>
-        <button type="button"
-                class="ff-button ff-button--secondary ff-button--compact"
-                data-action="confirmation-modal#close">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
+<%= render ModalComponent.new(title: @title, modal_id: @modal_id) do |modal| %>
+  <%= content %>
+
+  <% modal.with_footer do %>
+    <%= button_to @action,
+                  @url,
+                  method: @method,
+                  class: "ff-button ff-button--danger ff-button--compact",
+                  data: { action: "confirmation-modal#confirm" } %>
+    <button type="button"
+            class="ff-button ff-button--secondary ff-button--compact"
+            data-action="confirmation-modal#close">Cancel</button>
+  <% end %>
+<% end %>
