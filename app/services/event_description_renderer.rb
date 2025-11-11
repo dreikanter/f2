@@ -78,14 +78,16 @@ class EventDescriptionRenderer
     feed = all_feeds.first
     return "" unless feed
 
-    link_to(feed.name, feed_path(feed))
+    %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>).html_safe
   end
 
   def multiple_feed_links
     return "" if all_feeds.empty?
 
-    links = all_feeds.map { |feed| link_to(feed.name, feed_path(feed)) }
-    safe_join(links, ", ")
+    links = all_feeds.map do |feed|
+      %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>)
+    end
+    links.join(", ").html_safe
   end
 
   def error_message
