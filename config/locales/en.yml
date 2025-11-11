@@ -35,6 +35,42 @@ en:
       feed_refresh: "Feed refreshed"
       feed_refresh_error: "Feed refresh failed"
       post_withdrawn: "Post withdrawn"
+    descriptions:
+      feed_refresh:
+        one: "Feed %{feed_link} refreshed successfully"
+        other: "Feeds %{feed_links} refreshed successfully"
+      feed_refresh_error:
+        one: "Feed %{feed_link} refresh failed: %{error}"
+        other: "Feeds %{feed_links} refresh failed"
+      post_withdrawn:
+        one: "Post withdrawn from FreeFeed"
+      access_token_validation_failed:
+        one: "Token validation failed. Feed %{feed_link} disabled."
+        other: "Token validation failed. %{count} feeds disabled: %{feed_links}"
+      GroupPurgeStarted:
+        one: "Feed %{feed_link} purge started"
+      email_changed:
+        one: "Email address changed"
+      UserSuspended:
+        one: "Account suspended"
+      UserUnsuspended:
+        one: "Account unsuspended"
+      resend_email_sent:
+        one: "Email sent"
+      resend_email_delivered:
+        one: "Email delivered"
+      resend_email_delayed:
+        one: "Email delivery delayed"
+      resend_email_opened:
+        one: "Email opened"
+      resend_email_clicked:
+        one: "Email link clicked"
+      resend_email_bounced:
+        one: "Email bounced"
+      resend_email_complained:
+        one: "Spam complaint received"
+      resend_email_failed:
+        one: "Email delivery failed"
 
   feed_profiles:
     rss: "RSS Feed"
