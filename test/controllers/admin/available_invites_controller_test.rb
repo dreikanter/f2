@@ -43,6 +43,22 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 3, target_user.available_invites
   end
 
+  test "should not update available invites to blank value" do
+    sign_in_as admin
+    patch admin_user_available_invites_url(target_user), params: {
+      user: { available_invites: "" }
+    }
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--error", text: /Failed to update available invites/
+    end
+
+    target_user.reload
+    assert_equal 3, target_user.available_invites
+  end
+
   test "should not allow non-admin to update other user's available invites" do
     sign_in_as regular_user
     patch admin_user_available_invites_url(target_user), params: {
