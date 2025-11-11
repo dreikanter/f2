@@ -44,7 +44,8 @@ class RecentEventsComponentTest < ViewComponent::TestCase
   end
 
   test "#render should display multiple events" do
-    post = create(:post, user: user)
+    feed = create(:feed, user: user)
+    post = create(:post, feed: feed)
     event1 = Event.create!(type: "feed_refresh", level: :info, message: "First event", subject: post, user: user)
     event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Second event", subject: post, user: user)
 
@@ -62,7 +63,7 @@ class RecentEventsComponentTest < ViewComponent::TestCase
 
   test "#render should use i18n messages for known event types" do
     feed = create(:feed, user: user, name: "Example Feed")
-    post = create(:post, user: user)
+    post = create(:post, feed: feed)
     event1 = Event.create!(type: "feed_refresh", level: :info, message: "", subject: feed, user: user)
     event2 = Event.create!(type: "feed_refresh_error", level: :error, message: "", subject: feed, user: user)
     event3 = Event.create!(type: "post_withdrawn", level: :info, message: "", subject: post, user: user)
