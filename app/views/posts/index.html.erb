@@ -8,9 +8,6 @@
     <% else %>
       <% header.with_context_paragraph("All posts from your feeds in one place.") %>
     <% end %>
-    <% if pagination_total_count > 0 %>
-      <% header.with_context_paragraph("Showing #{@posts.size} of #{pagination_total_count} posts") %>
-    <% end %>
     <% if @posts.any? %>
       <% header.with_action_button do %>
         <div class="relative">
@@ -64,6 +61,12 @@
              posts: @posts,
              show_feed: @feed.blank?,
              empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
+
+  <% if pagination_total_pages > 1 %>
+    <div class="text-center text-sm text-slate-600">
+      Showing <%= @posts.size %> of <%= pagination_total_count %> posts
+    </div>
+  <% end %>
 
   <%= render_pagination { |pagination, params| posts_path(pagination.merge(feed_id: params[:feed_id])) } %>
 </div>
