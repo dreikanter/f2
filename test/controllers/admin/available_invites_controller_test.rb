@@ -18,8 +18,9 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    assert_redirected_to admin_user_path(target_user)
-    assert_equal "Available invites updated successfully.", flash[:notice]
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='available-invites-value']"
 
     target_user.reload
     assert_equal 10, target_user.available_invites
@@ -30,8 +31,9 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: -5 }
     }
-    assert_redirected_to admin_user_path(target_user)
-    assert_equal "Failed to update available invites.", flash[:alert]
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='flash-messages']"
 
     target_user.reload
     assert_equal 3, target_user.available_invites
@@ -54,7 +56,9 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    assert_redirected_to admin_user_path(target_user)
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='available-invites-value']"
 
     target_user.reload
     assert_equal 10, target_user.available_invites

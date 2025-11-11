@@ -10,7 +10,11 @@ class Admin::AvailableInvitesController < ApplicationController
         locals: { user: user }
       )
     else
-      render turbo_stream: turbo_stream.update("flash", partial: "shared/flash", locals: { alert: "Failed to update available invites." })
+      flash.now[:alert] = "Failed to update available invites."
+      render turbo_stream: turbo_stream.replace(
+        "flash-messages",
+        partial: "layouts/flash"
+      )
     end
   end
 
