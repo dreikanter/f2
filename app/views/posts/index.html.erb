@@ -6,7 +6,7 @@
     <% if @feed %>
       <% header.with_context_paragraph("Posts imported from this feed.") %>
     <% else %>
-      <% header.with_context_paragraph("All posts from your feeds in one place.") %>
+      <% header.with_context_paragraph("All posts from your feeds") %>
     <% end %>
     <% if @posts.any? %>
       <% header.with_action_button do %>
