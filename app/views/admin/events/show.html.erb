@@ -25,21 +25,19 @@
     <% end %>
   <% end %>
 
-  <% if @event.message.present? %>
-    <%
-      alert_class = case @event.level
-                    when "error"
-                      "ff-alert ff-alert--error"
-                    when "warning"
-                      "ff-alert ff-alert--warning"
-                    else
-                      "ff-alert ff-alert--info"
-                    end
-    %>
-    <div class="<%= alert_class %>">
-      <%= simple_format(@event.message, class: "mb-0") %>
-    </div>
-  <% end %>
+  <%
+    alert_class = case @event.level
+                  when "error"
+                    "ff-alert ff-alert--error"
+                  when "warning"
+                    "ff-alert ff-alert--warning"
+                  else
+                    "ff-alert ff-alert--info"
+                  end
+  %>
+  <div class="<%= alert_class %>">
+    <%= EventDescriptionRenderer.new(@event).render %>
+  </div>
 
   <%= render(EventDetailsComponent.new(event: @event)) %>
 
