@@ -7,8 +7,9 @@
                   method: @method,
                   class: "ff-button ff-button--danger ff-button--compact",
                   data: { action: "modal#confirm" } %>
-    <button type="button"
-            class="ff-button ff-button--secondary ff-button--compact"
-            data-action="modal#close">Cancel</button>
+    <%= tag.button "Cancel",
+                   type: "button",
+                   class: "ff-button ff-button--secondary ff-button--compact",
+                   data: { action: "modal#close" } %>
   <% end %>
 <% end %>
