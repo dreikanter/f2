@@ -4,11 +4,18 @@ class Admin::AvailableInvitesController < ApplicationController
     authorize user
 
     if user.update(available_invites: available_invites)
-      render turbo_stream: turbo_stream.replace(
-        "available-invites-value",
-        partial: "admin/users/available_invites_value",
-        locals: { user: user }
-      )
+      render turbo_stream: [
+        turbo_stream.replace(
+          "available-invites-value",
+          partial: "admin/users/available_invites_value",
+          locals: { user: user }
+        ),
+        turbo_stream.replace(
+          "available-invites-input-wrapper-#{user.id}",
+          partial: "admin/users/available_invites_input",
+          locals: { user: user }
+        )
+      ]
     else
       flash.now[:alert] = "Failed to update available invites."
       render turbo_stream: turbo_stream.replace(

@@ -21,6 +21,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='available-invites-value']"
+    assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
 
     target_user.reload
     assert_equal 10, target_user.available_invites
@@ -59,6 +60,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='available-invites-value']"
+    assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
 
     target_user.reload
     assert_equal 10, target_user.available_invites
