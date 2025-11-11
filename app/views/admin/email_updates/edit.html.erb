@@ -1,11 +1,7 @@
 <% content_for :title, "Change Email" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Change Email for #{@user.email_address}") do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Back to User", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: "Change Email for #{@user.email_address}") %>
 
   <div class="ff-alert ff-alert--info max-w-2xl">
     <strong>How this works:</strong> You can either change the email immediately or send a confirmation email to the new address.
