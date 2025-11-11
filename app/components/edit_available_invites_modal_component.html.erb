@@ -1,12 +1,10 @@
 <%= render ModalComponent.new(title: "Update Available Invites", modal_id: @modal_id) do %>
   <%= form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, data: { turbo_frame: "_top" }) do |form| %>
-    <div class="space-y-2">
-      <label for="user_available_invites" class="block text-sm font-medium text-gray-900">
-        Available Invites
-      </label>
-      <%= form.number_field(:available_invites, min: 0, class: "rounded-md border border-slate-300 px-3 py-2 text-sm w-full") %>
+    <div class="ff-form-group">
+      <%= form.label :available_invites, "Available Invites", class: "ff-form-label" %>
+      <%= form.number_field(:available_invites, min: 0, class: "ff-form-input") %>
     </div>
-    <div class="flex items-center gap-3 pt-4">
+    <div class="ff-card__footer">
       <%= form.submit("Update", class: "ff-button ff-button--compact", data: { action: "modal#confirm" }) %>
       <%= tag.button "Cancel",
                      type: "button",
