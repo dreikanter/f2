@@ -4,6 +4,7 @@ class Admin::AvailableInvitesController < ApplicationController
     authorize user
 
     if user.update(available_invites_params)
+      flash.now[:notice] = "Available invites updated successfully."
       render turbo_stream: [
         turbo_stream.replace(
           "available-invites-value",
@@ -14,6 +15,10 @@ class Admin::AvailableInvitesController < ApplicationController
           "available-invites-input-wrapper-#{user.id}",
           partial: "admin/users/available_invites_input",
           locals: { user: user }
+        ),
+        turbo_stream.replace(
+          "flash-messages",
+          partial: "layouts/flash"
         )
       ]
     else

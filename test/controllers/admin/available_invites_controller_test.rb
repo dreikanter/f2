@@ -22,6 +22,10 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='available-invites-value']"
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+    end
 
     target_user.reload
     assert_equal 10, target_user.available_invites
@@ -80,6 +84,10 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='available-invites-value']"
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+    end
 
     target_user.reload
     assert_equal 10, target_user.available_invites
