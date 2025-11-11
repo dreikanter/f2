@@ -28,14 +28,31 @@ class RecentEventsComponent < ViewComponent::Base
   end
 
   def event_label(event)
-    if event.message.present?
-      event.message
-    else
-      fallback_message(event)
-    end
+    message = event.message.present? ? event.message : fallback_message(event)
+
+    helpers.safe_join([
+      helpers.render(BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level))),
+      " ",
+      message
+    ])
   end
 
   def fallback_message(event)
     I18n.t("events.types.#{event.type}", default: event.type.humanize)
+  end
+
+  def badge_color(level)
+    case level
+    when "debug"
+      :gray
+    when "info"
+      :blue
+    when "warning"
+      :yellow
+    when "error"
+      :red
+    else
+      :blue
+    end
   end
 end
