@@ -34,7 +34,10 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     }
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action='replace'][target='flash-messages']"
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".ff-alert--error", text: /Failed to update available invites/
+    end
 
     target_user.reload
     assert_equal 3, target_user.available_invites
