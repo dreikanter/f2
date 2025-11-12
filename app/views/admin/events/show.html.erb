@@ -36,7 +36,7 @@
                   end
   %>
   <div class="<%= alert_class %>">
-    <%= EventDescriptionRenderer.new(@event).render %>
+    <%= render EventDescriptionComponent.new(event: @event) %>
   </div>
 
   <%= render(EventDetailsComponent.new(event: @event)) %>
