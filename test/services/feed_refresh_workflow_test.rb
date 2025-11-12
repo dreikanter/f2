@@ -203,7 +203,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, events.count
     error_event = events.first
     assert_equal "error", error_event.level
-    assert_match(/Feed.*refresh failed/, EventDescriptionRenderer.new(error_event).render)
+    assert_match(/Feed.*refresh failed/, EventDescriptionComponent.new(event: error_event).call)
     assert_equal "StandardError", error_event.metadata["error"]["class"]
   end
 
@@ -232,7 +232,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     error_event = error_events.first
     assert_equal "error", error_event.level
-    assert_match(/Feed.*refresh failed/, EventDescriptionRenderer.new(error_event).render)
+    assert_match(/Feed.*refresh failed/, EventDescriptionComponent.new(event: error_event).call)
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
@@ -276,7 +276,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     events = Event.where(subject: test_feed, type: "feed_refresh_error")
     assert_equal 1, events.count
     error_event = events.first
-    assert_match(/Feed.*refresh failed/, EventDescriptionRenderer.new(error_event).render)
+    assert_match(/Feed.*refresh failed/, EventDescriptionComponent.new(event: error_event).call)
   end
 
   test "#execute should handle database errors during entry persistence" do
@@ -314,7 +314,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       events = Event.where(subject: test_feed, type: "feed_refresh_error")
       assert_equal 1, events.count
       error_event = events.first
-      assert_match(/Feed.*refresh failed/, EventDescriptionRenderer.new(error_event).render)
+      assert_match(/Feed.*refresh failed/, EventDescriptionComponent.new(event: error_event).call)
       assert_equal "ActiveRecord::StatementInvalid", error_event.metadata["error"]["class"]
     end
   end

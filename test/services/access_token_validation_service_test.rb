@@ -184,7 +184,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     assert_equal access_token.user, event.user
     assert_equal "warning", event.level
-    assert_includes EventDescriptionRenderer.new(event).render, "2 feeds disabled"
+    assert_includes EventDescriptionComponent.new(event: event).call, "2 feeds disabled"
     assert_equal [feed1.id, feed2.id].sort, event.metadata["disabled_feed_ids"].sort
   end
 
