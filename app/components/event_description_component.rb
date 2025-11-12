@@ -28,7 +28,7 @@ class EventDescriptionComponent < ViewComponent::Base
       subject_link: subject_link,
       feed_link: single_metadata_feed_link,
       feed_links: multiple_metadata_feed_links,
-      error: error_message,
+      message: escaped_message,
       default: fallback_message
     )
 
@@ -81,9 +81,8 @@ class EventDescriptionComponent < ViewComponent::Base
     helpers.safe_join(links, ", ")
   end
 
-  def error_message
-    message = @event.metadata["error_message"] || ""
-    ERB::Util.html_escape(message)
+  def escaped_message
+    ERB::Util.html_escape(@event.message || "")
   end
 
   def fallback_message

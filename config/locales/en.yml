@@ -38,7 +38,7 @@ en:
     feed_refresh_error:
       name: "Feed refresh failed"
       description:
-        one: "Feed %{subject_link} refresh failed: %{error}"
+        one: "Feed %{subject_link} refresh failed: %{message}"
     post_withdrawn:
       name: "Post withdrawn"
       description:

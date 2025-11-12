@@ -205,7 +205,7 @@ class FeedRefreshWorkflow
       level: :error,
       subject: feed,
       user: feed.user,
-      message: "",
+      message: error.message,
       metadata: {
         stats: stats,
         error: {
@@ -213,8 +213,7 @@ class FeedRefreshWorkflow
           message: error.message,
           stage: current_step.to_s,
           backtrace: error.backtrace
-        },
-        error_message: "#{error.message}"
+        }
       }
     )
   end

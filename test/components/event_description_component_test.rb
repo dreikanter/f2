@@ -56,8 +56,8 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
       level: :error,
       subject: feed,
       user: user,
-      message: "",
-      metadata: { error_message: "Connection timeout" }
+      message: "Connection timeout",
+      metadata: {}
     )
 
     result = render_inline(EventDescriptionComponent.new(event: event))
@@ -144,8 +144,8 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
       level: :error,
       subject: feed,
       user: user,
-      message: "",
-      metadata: { error_message: "<script>alert('xss')</script>" }
+      message: "<script>alert('xss')</script>",
+      metadata: {}
     )
 
     result = render_inline(EventDescriptionComponent.new(event: event))
