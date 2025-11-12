@@ -41,8 +41,6 @@ class EventDescriptionComponent < ViewComponent::Base
       helpers.link_to(@event.subject.name, helpers.settings_access_tokens_path)
     when Post
       helpers.link_to("Post", helpers.post_path(@event.subject))
-    when User
-      ERB::Util.html_escape(@event.subject.email_address)
     else
       ""
     end
