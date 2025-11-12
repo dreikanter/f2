@@ -11,6 +11,7 @@ class EventDescriptionComponent < ViewComponent::Base
     @subject_link = build_subject_link
     @escaped_message = build_escaped_message
     @default_description = build_default_description
+    @stage = build_stage
 
     # Build metadata feed links HTML
     feeds = metadata_feeds
@@ -45,7 +46,8 @@ class EventDescriptionComponent < ViewComponent::Base
         "events.#{event_type}.description",
         subject_link: @subject_link,
         feed_links: @metadata_feed_links_html,
-        message: @escaped_message
+        message: @escaped_message,
+        stage: @stage
       )
     else
       @event.message.present? ? @escaped_message : @default_description
@@ -86,6 +88,13 @@ class EventDescriptionComponent < ViewComponent::Base
 
   def build_escaped_message
     ERB::Util.html_escape(@event.message || "")
+  end
+
+  def build_stage
+    stage = @event.metadata.dig("error", "stage")
+    return "" unless stage
+
+    stage.to_s.humanize(capitalize: false)
   end
 
   def build_default_description

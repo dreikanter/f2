@@ -36,7 +36,7 @@ en:
       description: "Feed %{subject_link} refreshed successfully"
     feed_refresh_error:
       name: "Feed refresh failed"
-      description: "Feed %{subject_link} refresh failed: %{message}"
+      description: "Feed %{subject_link} refresh failed at %{stage}: %{message}"
     post_withdrawn:
       name: "Post withdrawn"
       description: "Post withdrawn from FreeFeed"

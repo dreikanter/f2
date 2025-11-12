@@ -52,20 +52,20 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     refute_includes result.to_html, "2 feeds"
   end
 
-  test "includes error message for refresh errors" do
+  test "includes error message and stage for refresh errors" do
     event = Event.create!(
       type: "feed_refresh_error",
       level: :error,
       subject: feed,
       user: user,
       message: "Connection timeout",
-      metadata: {}
+      metadata: { error: { stage: "load_feed_contents" } }
     )
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
     assert_includes result.to_html, "Test Feed"
-    assert_includes result.to_html, "refresh failed"
+    assert_includes result.to_html, "refresh failed at load feed contents"
     assert_includes result.to_html, "Connection timeout"
   end
 
