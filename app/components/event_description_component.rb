@@ -1,11 +1,5 @@
 # Renders event descriptions with linked feed names
 #
-# Generates HTML descriptions for events by:
-# - Resolving feed references (from subject or metadata)
-# - Creating safe HTML links to feeds
-# - Using i18n templates with interpolation
-# - Supporting both single and multiple feed references
-#
 # Usage:
 #   <%= render EventDescriptionComponent.new(event: event) %>
 class EventDescriptionComponent < ViewComponent::Base
@@ -14,13 +8,16 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    description = I18n.t(
-      "events.#{event_type}.description",
-      subject_link: subject_link,
-      feed_links: metadata_feed_links,
-      message: escaped_message,
-      default: fallback_message
-    )
+    description = if I18n.exists?("events.#{event_type}.description")
+      I18n.t(
+        "events.#{event_type}.description",
+        subject_link: subject_link,
+        feed_links: metadata_feed_links,
+        message: escaped_message
+      )
+    else
+      @event.message.present? ? escaped_message : default_description
+    end
 
     description.html_safe
   end
@@ -66,12 +63,7 @@ class EventDescriptionComponent < ViewComponent::Base
     ERB::Util.html_escape(@event.message || "")
   end
 
-  def fallback_message
-    # Fall back to stored message or event name
-    if @event.message.present?
-      ERB::Util.html_escape(@event.message)
-    else
-      I18n.t("events.#{@event.type}.name", default: @event.type.humanize)
-    end
+  def default_description
+    I18n.t("events.#{@event.type}.name", default: @event.type.humanize)
   end
 end
