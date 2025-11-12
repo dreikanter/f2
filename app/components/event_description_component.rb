@@ -9,9 +9,17 @@ class EventDescriptionComponent < ViewComponent::Base
 
   def before_render
     @subject_link = compute_subject_link
-    @metadata_feed_links = compute_metadata_feed_links
     @escaped_message = compute_escaped_message
     @default_description = compute_default_description
+
+    # Compute metadata feed links HTML
+    feeds = metadata_feeds
+    @metadata_feed_links_html = if feeds.empty?
+      ""
+    else
+      links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
+      helpers.safe_join(links, ", ")
+    end
   end
 
   def call
@@ -19,7 +27,7 @@ class EventDescriptionComponent < ViewComponent::Base
       I18n.t(
         "events.#{event_type}.description",
         subject_link: @subject_link,
-        feed_links: @metadata_feed_links,
+        feed_links: @metadata_feed_links_html,
         message: @escaped_message
       )
     else
@@ -57,13 +65,6 @@ class EventDescriptionComponent < ViewComponent::Base
 
       Feed.where(id: feed_ids).order(:name)
     end
-  end
-
-  def compute_metadata_feed_links
-    return "" if metadata_feeds.empty?
-
-    links = metadata_feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
-    helpers.safe_join(links, ", ")
   end
 
   def compute_escaped_message
