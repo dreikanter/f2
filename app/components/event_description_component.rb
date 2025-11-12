@@ -57,7 +57,7 @@ class EventDescriptionComponent < ViewComponent::Base
   private
 
   def event_type
-    @event.type.underscore
+    @event.type.underscore.tr(".", "_")
   end
 
   def build_subject_link

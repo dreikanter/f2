@@ -180,4 +180,20 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     refute_includes result.to_html, "<script>"
     assert_includes result.to_html, "&lt;script&gt;"
   end
+
+  test "handles dotted event types from Resend webhooks" do
+    event = Event.create!(
+      type: "resend.email.email_bounced",
+      level: :warning,
+      subject: user,
+      user: user,
+      message: "Email bounced",
+      metadata: {}
+    )
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    # Should find i18n key events.resend_email_bounced.description
+    assert_includes result.to_html, "Email bounced"
+  end
 end
