@@ -28,7 +28,7 @@ class RecentEventsComponent < ViewComponent::Base
   end
 
   def event_label(event)
-    description = EventDescriptionRenderer.new(event).render
+    description = render(EventDescriptionComponent.new(event: event))
 
     helpers.safe_join([
       helpers.render(BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level))),
