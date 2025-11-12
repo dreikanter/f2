@@ -6,6 +6,11 @@ module EventsHelper
     "error" => { class: "badge bg-danger", char: "E" }
   }.freeze
 
+  LEVEL_ALERT_CLASSES = {
+    "error" => "ff-alert ff-alert--error",
+    "warning" => "ff-alert ff-alert--warning"
+  }.freeze
+
   def level_badge(level)
     badge = LEVEL_BADGES.fetch(level.to_s, LEVEL_BADGES["debug"])
     content_tag(:span, badge[:char], class: "#{badge[:class]} font-monospace", title: level.humanize)
@@ -14,6 +19,10 @@ module EventsHelper
   def level_badge_full(level)
     badge = LEVEL_BADGES.fetch(level.to_s, LEVEL_BADGES["debug"])
     content_tag(:span, level.humanize, class: badge[:class])
+  end
+
+  def event_alert_class(level)
+    LEVEL_ALERT_CLASSES.fetch(level.to_s, "ff-alert ff-alert--info")
   end
 
   def mail_event_types
