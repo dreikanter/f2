@@ -43,16 +43,16 @@ en:
     access_token_validation_failed:
       name: "Token validation failed"
       description: "Token validation failed. Feeds disabled: %{feed_links}"
-    GroupPurgeStarted:
+    group_purge_started:
       name: "Feed purge started"
       description: "Feed %{subject_link} purge started"
     email_changed:
       name: "Email changed"
       description: "Email address changed"
-    UserSuspended:
+    user_suspended:
       name: "User suspended"
       description: "Account suspended"
-    UserUnsuspended:
+    user_unsuspended:
       name: "User unsuspended"
       description: "Account unsuspended"
     resend_email_sent:

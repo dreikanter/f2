@@ -43,7 +43,7 @@ class Admin::UserSuspensionsController < ApplicationController
 
   def record_suspension_event(user, deactivated_feed_ids)
     Event.create!(
-      type: "UserSuspended",
+      type: "user_suspended",
       user: Current.user,
       subject: user,
       level: :warning,
@@ -53,7 +53,7 @@ class Admin::UserSuspensionsController < ApplicationController
 
   def record_unsuspension_event(user)
     Event.create!(
-      type: "UserUnsuspended",
+      type: "user_unsuspended",
       user: Current.user,
       subject: user,
       level: :info
