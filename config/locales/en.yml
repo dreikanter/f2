@@ -33,69 +33,52 @@ en:
   events:
     feed_refresh:
       name: "Feed refreshed"
-      description:
-        one: "Feed %{subject_link} refreshed successfully"
+      description: "Feed %{subject_link} refreshed successfully"
     feed_refresh_error:
       name: "Feed refresh failed"
-      description:
-        one: "Feed %{subject_link} refresh failed: %{message}"
+      description: "Feed %{subject_link} refresh failed: %{message}"
     post_withdrawn:
       name: "Post withdrawn"
-      description:
-        one: "Post withdrawn from FreeFeed"
+      description: "Post withdrawn from FreeFeed"
     access_token_validation_failed:
       name: "Token validation failed"
-      description:
-        one: "Token validation failed. Feed %{feed_link} disabled."
-        other: "Token validation failed. %{count} feeds disabled: %{feed_links}"
+      description: "Token validation failed. Feeds disabled: %{feed_links}"
     GroupPurgeStarted:
       name: "Feed purge started"
-      description:
-        one: "Feed %{subject_link} purge started"
+      description: "Feed %{subject_link} purge started"
     email_changed:
       name: "Email changed"
-      description:
-        one: "Email address changed"
+      description: "Email address changed"
     UserSuspended:
       name: "User suspended"
-      description:
-        one: "Account suspended"
+      description: "Account suspended"
     UserUnsuspended:
       name: "User unsuspended"
-      description:
-        one: "Account unsuspended"
+      description: "Account unsuspended"
     resend_email_sent:
       name: "Email sent"
-      description:
-        one: "Email sent"
+      description: "Email sent"
     resend_email_delivered:
       name: "Email delivered"
-      description:
-        one: "Email delivered"
+      description: "Email delivered"
     resend_email_delayed:
       name: "Email delayed"
-      description:
-        one: "Email delivery delayed"
+      description: "Email delivery delayed"
     resend_email_opened:
       name: "Email opened"
-      description:
-        one: "Email opened"
+      description: "Email opened"
     resend_email_clicked:
       name: "Email clicked"
-      description:
-        one: "Email link clicked"
+      description: "Email link clicked"
     resend_email_bounced:
       name: "Email bounced"
-      description:
-        one: "Email bounced"
+      description: "Email bounced"
     resend_email_complained:
       name: "Spam complaint"
-      description:
-        one: "Spam complaint received"
+      description: "Spam complaint received"
     resend_email_failed:
       name: "Email failed"
-      description:
-        one: "Email delivery failed"
+      description: "Email delivery failed"
 
   feed_profiles:
     rss: "RSS Feed"

@@ -47,7 +47,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Other Feed"
     assert_includes result.to_html, "/feeds/#{feed.id}"
     assert_includes result.to_html, "/feeds/#{other_feed.id}"
-    assert_includes result.to_html, "2 feeds disabled"
+    assert_includes result.to_html, "Feeds disabled:"
   end
 
   test "includes error message for refresh errors" do
@@ -131,8 +131,8 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    # Should still show original count of 2, not 1
-    assert_includes result.to_html, "2 feeds disabled"
+    # Should still show feed that exists, but not the deleted one
+    assert_includes result.to_html, "Feeds disabled:"
     assert_includes result.to_html, "Feed One"
     refute_includes result.to_html, "Feed Two"
   end

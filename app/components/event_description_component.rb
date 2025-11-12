@@ -14,20 +14,10 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    # Count is based on metadata feeds only (e.g., disabled_feed_ids)
-    # Use stored count if available (preserves accurate count even if feeds are deleted)
-    count = if @event.metadata["disabled_count"]
-      @event.metadata["disabled_count"]
-    else
-      metadata_feeds.count.positive? ? metadata_feeds.count : 1
-    end
-
     description = I18n.t(
       "events.#{event_type}.description",
-      count: count,
       subject_link: subject_link,
-      feed_link: single_metadata_feed_link,
-      feed_links: multiple_metadata_feed_links,
+      feed_links: metadata_feed_links,
       message: escaped_message,
       default: fallback_message
     )
@@ -67,14 +57,7 @@ class EventDescriptionComponent < ViewComponent::Base
     end
   end
 
-  def single_metadata_feed_link
-    feed = metadata_feeds.first
-    return "" unless feed
-
-    helpers.link_to(feed.name, helpers.feed_path(feed))
-  end
-
-  def multiple_metadata_feed_links
+  def metadata_feed_links
     return "" if metadata_feeds.empty?
 
     links = metadata_feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
