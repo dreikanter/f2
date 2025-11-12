@@ -59,7 +59,10 @@ class EventDescriptionComponent < ViewComponent::Base
   private
 
   def event_type
-    @event.type.underscore.tr(".", "_")
+    # Handle resend.email.* events by removing redundant .email. segment
+    # resend.email.email_bounced -> resend_email_bounced
+    normalized = @event.type.sub("resend.email.", "resend_")
+    normalized.underscore.tr(".", "_")
   end
 
   def build_subject_link

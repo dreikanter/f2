@@ -187,13 +187,14 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
       level: :warning,
       subject: user,
       user: user,
-      message: "Email bounced",
+      message: "",
       metadata: {}
     )
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
     # Should find i18n key events.resend_email_bounced.description
+    # by normalizing resend.email.email_bounced -> resend_email_bounced
     assert_includes result.to_html, "Email bounced"
   end
 end
