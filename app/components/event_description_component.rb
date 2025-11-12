@@ -14,11 +14,28 @@ class EventDescriptionComponent < ViewComponent::Base
 
     # Build metadata feed links HTML
     feeds = metadata_feeds
-    @metadata_feed_links_html = if feeds.empty?
-      ""
-    else
+    disabled_count = @event.metadata["disabled_count"]
+
+    @metadata_feed_links_html = if disabled_count && disabled_count > 0
+      count_text = "#{disabled_count} #{'feed'.pluralize(disabled_count)}"
+      if feeds.empty?
+        # All feeds deleted - show just the count
+        count_text
+      elsif feeds.length < disabled_count
+        # Some feeds deleted - show count and remaining feed names
+        links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
+        "#{count_text}: #{helpers.safe_join(links, ', ')}"
+      else
+        # All feeds still exist - show just the feed links
+        links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
+        helpers.safe_join(links, ", ")
+      end
+    elsif feeds.any?
+      # No count stored, just show the feed links
       links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
       helpers.safe_join(links, ", ")
+    else
+      ""
     end
   end
 

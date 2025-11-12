@@ -43,11 +43,13 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
+    # When all feeds exist, show just the feed links
     assert_includes result.to_html, "Test Feed"
     assert_includes result.to_html, "Other Feed"
     assert_includes result.to_html, "/feeds/#{feed.id}"
     assert_includes result.to_html, "/feeds/#{other_feed.id}"
     assert_includes result.to_html, "Feeds disabled:"
+    refute_includes result.to_html, "2 feeds"
   end
 
   test "includes error message for refresh errors" do
@@ -131,9 +133,34 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    # Should still show feed that exists, but not the deleted one
-    assert_includes result.to_html, "Feeds disabled:"
+    # Should show count and remaining feed
+    assert_includes result.to_html, "Feeds disabled: 2 feeds:"
     assert_includes result.to_html, "Feed One"
+    refute_includes result.to_html, "Feed Two"
+  end
+
+  test "shows count when all feeds are deleted" do
+    feed1 = create(:feed, user: user, name: "Feed One")
+    feed2 = create(:feed, user: user, name: "Feed Two")
+
+    event = Event.create!(
+      type: "access_token_validation_failed",
+      level: :warning,
+      subject: create(:access_token, user: user),
+      user: user,
+      message: "",
+      metadata: { disabled_feed_ids: [feed1.id, feed2.id], disabled_count: 2 }
+    )
+
+    # Delete all feeds
+    feed1.destroy!
+    feed2.destroy!
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    # Should show just the count when no feeds exist
+    assert_includes result.to_html, "Feeds disabled: 2 feeds"
+    refute_includes result.to_html, "Feed One"
     refute_includes result.to_html, "Feed Two"
   end
 

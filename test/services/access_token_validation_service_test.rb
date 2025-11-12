@@ -184,8 +184,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     assert_equal access_token.user, event.user
     assert_equal "warning", event.level
-    assert_includes EventDescriptionComponent.new(event: event).call, "Feeds disabled:"
     assert_equal [feed1.id, feed2.id].sort, event.metadata["disabled_feed_ids"].sort
+    assert_equal 2, event.metadata["disabled_count"]
   end
 
   test "#call should not create event when no enabled feeds exist" do
