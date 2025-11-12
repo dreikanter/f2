@@ -14,22 +14,20 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
+    # Count is based on metadata feeds only (e.g., disabled_feed_ids)
     # Use stored count if available (preserves accurate count even if feeds are deleted)
     count = if @event.metadata["disabled_count"]
       @event.metadata["disabled_count"]
     else
-      feed_count = feeds.count
-      metadata_feed_count = feeds_from_metadata.count
-      total_count = feed_count + metadata_feed_count
-      # Default to count: 1 for non-feed events to use the "one" form
-      total_count.positive? ? total_count : 1
+      metadata_feeds.count.positive? ? metadata_feeds.count : 1
     end
 
     description = I18n.t(
       "events.#{event_type}.description",
       count: count,
-      feed_link: single_feed_link,
-      feed_links: multiple_feed_links,
+      subject_link: subject_link,
+      feed_link: single_metadata_feed_link,
+      feed_links: multiple_metadata_feed_links,
       error: error_message,
       default: fallback_message
     )
@@ -43,18 +41,25 @@ class EventDescriptionComponent < ViewComponent::Base
     @event.type.underscore
   end
 
-  def feeds
-    @feeds ||= begin
-      if @event.subject_type == "Feed" && @event.subject
-        [@event.subject]
-      else
-        []
-      end
+  def subject_link
+    return "" unless @event.subject
+
+    case @event.subject
+    when Feed
+      %(<a href="/feeds/#{@event.subject.id}">#{ERB::Util.html_escape(@event.subject.name)}</a>).html_safe
+    when AccessToken
+      %(<a href="/settings/access_tokens">#{ERB::Util.html_escape(@event.subject.name)}</a>).html_safe
+    when Post
+      %(<a href="/posts/#{@event.subject.id}">Post</a>).html_safe
+    when User
+      ERB::Util.html_escape(@event.subject.email_address)
+    else
+      ""
     end
   end
 
-  def feeds_from_metadata
-    @feeds_from_metadata ||= begin
+  def metadata_feeds
+    @metadata_feeds ||= begin
       feed_ids = @event.metadata["disabled_feed_ids"] || []
       return [] if feed_ids.empty?
 
@@ -62,21 +67,17 @@ class EventDescriptionComponent < ViewComponent::Base
     end
   end
 
-  def all_feeds
-    @all_feeds ||= feeds + feeds_from_metadata.to_a
-  end
-
-  def single_feed_link
-    feed = all_feeds.first
+  def single_metadata_feed_link
+    feed = metadata_feeds.first
     return "" unless feed
 
     %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>).html_safe
   end
 
-  def multiple_feed_links
-    return "" if all_feeds.empty?
+  def multiple_metadata_feed_links
+    return "" if metadata_feeds.empty?
 
-    links = all_feeds.map do |feed|
+    links = metadata_feeds.map do |feed|
       %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>)
     end
     links.join(", ").html_safe

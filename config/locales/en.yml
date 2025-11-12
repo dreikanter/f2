@@ -34,13 +34,11 @@ en:
     feed_refresh:
       name: "Feed refreshed"
       description:
-        one: "Feed %{feed_link} refreshed successfully"
-        other: "Feeds %{feed_links} refreshed successfully"
+        one: "Feed %{subject_link} refreshed successfully"
     feed_refresh_error:
       name: "Feed refresh failed"
       description:
-        one: "Feed %{feed_link} refresh failed: %{error}"
-        other: "Feeds %{feed_links} refresh failed"
+        one: "Feed %{subject_link} refresh failed: %{error}"
     post_withdrawn:
       name: "Post withdrawn"
       description:
@@ -53,7 +51,7 @@ en:
     GroupPurgeStarted:
       name: "Feed purge started"
       description:
-        one: "Feed %{feed_link} purge started"
+        one: "Feed %{subject_link} purge started"
     email_changed:
       name: "Email changed"
       description:
