@@ -46,11 +46,11 @@ class EventDescriptionComponent < ViewComponent::Base
 
     case @event.subject
     when Feed
-      %(<a href="/feeds/#{@event.subject.id}">#{ERB::Util.html_escape(@event.subject.name)}</a>).html_safe
+      helpers.link_to(@event.subject.name, helpers.feed_path(@event.subject))
     when AccessToken
-      %(<a href="/settings/access_tokens">#{ERB::Util.html_escape(@event.subject.name)}</a>).html_safe
+      helpers.link_to(@event.subject.name, helpers.settings_access_tokens_path)
     when Post
-      %(<a href="/posts/#{@event.subject.id}">Post</a>).html_safe
+      helpers.link_to("Post", helpers.post_path(@event.subject))
     when User
       ERB::Util.html_escape(@event.subject.email_address)
     else
@@ -71,16 +71,14 @@ class EventDescriptionComponent < ViewComponent::Base
     feed = metadata_feeds.first
     return "" unless feed
 
-    %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>).html_safe
+    helpers.link_to(feed.name, helpers.feed_path(feed))
   end
 
   def multiple_metadata_feed_links
     return "" if metadata_feeds.empty?
 
-    links = metadata_feeds.map do |feed|
-      %(<a href="/feeds/#{feed.id}">#{ERB::Util.html_escape(feed.name)}</a>)
-    end
-    links.join(", ").html_safe
+    links = metadata_feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
+    helpers.safe_join(links, ", ")
   end
 
   def error_message
