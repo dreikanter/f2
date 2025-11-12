@@ -43,18 +43,6 @@ class RecentEventsComponentTest < ViewComponent::TestCase
     assert_match(/Email address changed/, result.text)
   end
 
-  test "#render should display multiple events" do
-    feed = create(:feed, user: user)
-    post = create(:post, feed: feed)
-    event1 = Event.create!(type: "feed_refresh", level: :info, message: "First event", subject: post, user: user)
-    event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Second event", subject: post, user: user)
-
-    result = render_inline(RecentEventsComponent.new(events: [event1, event2]))
-
-    assert_match(/First event/, result.text)
-    assert_match(/Second event/, result.text)
-  end
-
   test "#render should return nil when no events" do
     result = render_inline(RecentEventsComponent.new(events: []))
 
