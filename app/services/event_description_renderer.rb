@@ -24,12 +24,16 @@ class EventDescriptionRenderer
   end
 
   def render
-    feed_count = feeds.count
-    metadata_feed_count = feeds_from_metadata.count
-    total_count = feed_count + metadata_feed_count
-
-    # Default to count: 1 for non-feed events to use the "one" form
-    count = total_count.positive? ? total_count : 1
+    # Use stored count if available (preserves accurate count even if feeds are deleted)
+    count = if @event.metadata["disabled_count"]
+      @event.metadata["disabled_count"]
+    else
+      feed_count = feeds.count
+      metadata_feed_count = feeds_from_metadata.count
+      total_count = feed_count + metadata_feed_count
+      # Default to count: 1 for non-feed events to use the "one" form
+      total_count.positive? ? total_count : 1
+    end
 
     description = I18n.t(
       "events.descriptions.#{event_type}",
@@ -91,7 +95,8 @@ class EventDescriptionRenderer
   end
 
   def error_message
-    @event.metadata["error_message"] || ""
+    message = @event.metadata["error_message"] || ""
+    ERB::Util.html_escape(message)
   end
 
   def fallback_message

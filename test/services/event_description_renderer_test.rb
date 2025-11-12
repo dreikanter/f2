@@ -136,21 +136,46 @@ class EventDescriptionRendererTest < ActiveSupport::TestCase
     assert_kind_of ActiveSupport::SafeBuffer, result
   end
 
-  test "#render should handle deleted feeds gracefully" do
+  test "#render should preserve count when feeds are deleted" do
+    feed1 = create(:feed, user: user, name: "Feed One")
+    feed2 = create(:feed, user: user, name: "Feed Two")
+
     event = Event.create!(
       type: "access_token_validation_failed",
       level: :warning,
       subject: create(:access_token, user: user),
       user: user,
       message: "",
-      metadata: { disabled_feed_ids: [999999], disabled_count: 1 }
+      metadata: { disabled_feed_ids: [feed1.id, feed2.id], disabled_count: 2 }
+    )
+
+    # Delete one of the feeds
+    feed2.destroy!
+
+    renderer = EventDescriptionRenderer.new(event)
+    result = renderer.render
+
+    # Should still show original count of 2, not 1
+    assert_includes result, "2 feeds disabled"
+    assert_includes result, "Feed One"
+    refute_includes result, "Feed Two"
+  end
+
+  test "#render should escape HTML in error messages" do
+    feed = create(:feed, user: user, name: "Test Feed")
+    event = Event.create!(
+      type: "feed_refresh_error",
+      level: :error,
+      subject: feed,
+      user: user,
+      message: "",
+      metadata: { error_message: "<script>alert('xss')</script>" }
     )
 
     renderer = EventDescriptionRenderer.new(event)
     result = renderer.render
 
-    # Should render without crashing even if feed doesn't exist
-    assert result.present?
-    assert result.html_safe?
+    refute_includes result, "<script>"
+    assert_includes result, "&lt;script&gt;"
   end
 end
