@@ -8,11 +8,11 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def before_render
-    @subject_link = compute_subject_link
-    @escaped_message = compute_escaped_message
-    @default_description = compute_default_description
+    @subject_link = build_subject_link
+    @escaped_message = build_escaped_message
+    @default_description = build_default_description
 
-    # Compute metadata feed links HTML
+    # Build metadata feed links HTML
     feeds = metadata_feeds
     @metadata_feed_links_html = if feeds.empty?
       ""
@@ -43,7 +43,7 @@ class EventDescriptionComponent < ViewComponent::Base
     @event.type.underscore
   end
 
-  def compute_subject_link
+  def build_subject_link
     return "" unless @event.subject
 
     case @event.subject
@@ -67,11 +67,11 @@ class EventDescriptionComponent < ViewComponent::Base
     end
   end
 
-  def compute_escaped_message
+  def build_escaped_message
     ERB::Util.html_escape(@event.message || "")
   end
 
-  def compute_default_description
+  def build_default_description
     I18n.t("events.#{@event.type}.name", default: @event.type.humanize)
   end
 end
