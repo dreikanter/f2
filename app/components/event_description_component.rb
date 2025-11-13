@@ -16,19 +16,17 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    description = if I18n.exists?("events.#{event_type}.description")
+    if I18n.exists?("events.#{event_type}.description_html")
       I18n.t(
-        "events.#{event_type}.description",
+        "events.#{event_type}.description_html",
         subject_link: @subject_link,
         feed_links: @metadata_feed_links_html,
         message: @escaped_message,
         stage: @stage
       ).html_safe
     else
-      @event.message.present? ? @escaped_message : @default_description
+      (@event.message.present? ? @escaped_message : @default_description).html_safe
     end
-
-    description.html_safe
   end
 
   private
@@ -53,7 +51,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def build_escaped_message
-    ERB::Util.html_escape(@event.message || "")
+    ERB::Util.html_escape(@event.message || "").html_safe
   end
 
   def build_stage
