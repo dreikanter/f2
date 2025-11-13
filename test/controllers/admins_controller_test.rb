@@ -22,7 +22,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.ff-card[href='#{admin_users_path}']", count: 1
     assert_select "a.ff-card[href='#{admin_events_path}']", count: 1
     assert_select "a.ff-card[href='#{admin_system_stats_path}']", count: 1
-    assert_select "a.ff-card[href='/jobs']", count: 1
+    assert_select "a.ff-card[href='#{mission_control_jobs.root_path}']", count: 1
   end
 
   test "should redirect when authenticated as regular user" do
