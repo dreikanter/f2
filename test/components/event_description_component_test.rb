@@ -14,7 +14,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     @other_feed ||= create(:feed, user: user, name: "Other Feed")
   end
 
-  test "should render link for single feed event" do
+  test "#call should render link for single feed event" do
     event = Event.create!(
       type: "feed_refresh",
       level: :info,
@@ -31,7 +31,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed successfully"
   end
 
-  test "should render links for multiple feeds from metadata" do
+  test "#call should render links for multiple feeds from metadata" do
     event = Event.create!(
       type: "access_token_validation_failed",
       level: :warning,
@@ -52,7 +52,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_not_includes result.to_html, "2 feeds"
   end
 
-  test "should include error message and stage for refresh errors" do
+  test "#call should include error message and stage for refresh errors" do
     event = Event.create!(
       type: "feed_refresh_error",
       level: :error,
@@ -69,7 +69,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Connection timeout"
   end
 
-  test "should handle events without feeds gracefully" do
+  test "#call should handle events without feeds gracefully" do
     event = Event.create!(
       type: "email_changed",
       level: :info,
@@ -84,7 +84,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Email address changed"
   end
 
-  test "should fall back to stored message when present" do
+  test "#call should fall back to stored message when present" do
     event = Event.create!(
       type: "custom_event",
       level: :info,
@@ -99,7 +99,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Custom message"
   end
 
-  test "should escape HTML in fallback messages" do
+  test "#call should escape HTML in fallback messages" do
     event = Event.create!(
       type: "test_event",
       level: :info,
@@ -115,7 +115,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "&lt;script&gt;"
   end
 
-  test "shows count when all feeds are deleted" do
+  test "#call should show count when all feeds are deleted" do
     feed1 = create(:feed, user: user, name: "Feed One")
     feed2 = create(:feed, user: user, name: "Feed Two")
 
@@ -153,7 +153,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "&lt;script&gt;"
   end
 
-  test "handles dotted event types from Resend webhooks" do
+  test "#call should handle dotted event types from Resend webhooks" do
     event = Event.create!(
       type: "resend.email.email_bounced",
       level: :warning,
