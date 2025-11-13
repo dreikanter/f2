@@ -16,7 +16,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    if I18n.exists?("events.#{event_type}.description")
+    description = if I18n.exists?("events.#{event_type}.description")
       I18n.t(
         "events.#{event_type}.description",
         subject_link: @subject_link,
@@ -25,8 +25,10 @@ class EventDescriptionComponent < ViewComponent::Base
         stage: @stage
       )
     else
-      (@event.message.present? ? @escaped_message : @default_description).html_safe
+      @event.message.present? ? @escaped_message : @default_description
     end
+
+    description.html_safe
   end
 
   private
