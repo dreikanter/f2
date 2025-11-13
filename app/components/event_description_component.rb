@@ -16,7 +16,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    description = if I18n.exists?("events.#{event_type}.description")
+    if I18n.exists?("events.#{event_type}.description")
       I18n.t(
         "events.#{event_type}.description",
         subject_link: @subject_link,
@@ -25,24 +25,19 @@ class EventDescriptionComponent < ViewComponent::Base
         stage: @stage
       )
     else
-      @event.message.present? ? @escaped_message : @default_description
+      (@event.message.present? ? @escaped_message : @default_description).html_safe
     end
-
-    description.html_safe
   end
 
   private
 
+  # Handle resend.email.* events by removing redundant .email. segment
+  # resend.email.email_bounced -> resend_email_bounced
   def event_type
-    # Handle resend.email.* events by removing redundant .email. segment
-    # resend.email.email_bounced -> resend_email_bounced
-    normalized = @event.type.sub("resend.email.", "resend_")
-    normalized.underscore.tr(".", "_")
+    @event.type.sub("resend.email.", "resend_").underscore.tr(".", "_")
   end
 
   def build_subject_link
-    return "" unless @event.subject
-
     case @event.subject
     when Feed
       helpers.link_to(@event.subject.name, helpers.feed_path(@event.subject))
