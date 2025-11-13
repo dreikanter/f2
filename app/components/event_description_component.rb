@@ -67,7 +67,7 @@ class EventDescriptionComponent < ViewComponent::Base
 
   def build_metadata_feed_links_html
     feeds = disabled_feeds
-    links = feeds.map { helpers.link_to(_1.name, helpers.feed_path(_1)) }
+    links = feeds.map { helpers.link_to(_1.name, helpers.feed_path(_1), class: "ff-link") }
     linked_feeds = helpers.safe_join(links, ", ")
     deleted_feeds_count = disabled_feed_ids.count - feeds.count
 
