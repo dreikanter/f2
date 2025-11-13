@@ -154,4 +154,119 @@
       Are you sure you want to delete this item? This action cannot be undone.
     <% end %>
   </section>
+
+  <%# Event Description Component %>
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-slate-900">Event Description Component</h2>
+    <div class="space-y-2">
+      <% sample_feed = Feed.first || Feed.new(id: 1, name: "Sample Feed") %>
+      <% sample_token = AccessToken.first || AccessToken.new(id: 1, name: "Sample Token") %>
+      <% sample_post = Post.first || Post.new(id: 1) %>
+
+      <%# Feed refresh success %>
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "feed_refresh",
+            level: :info,
+            subject: sample_feed
+          )
+        ) %>
+      </div>
+
+      <%# Feed refresh error %>
+      <div class="ff-alert ff-alert--error">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "feed_refresh_error",
+            level: :error,
+            subject: sample_feed,
+            message: "Connection timeout",
+            metadata: { error: { stage: "load_feed_contents" } }
+          )
+        ) %>
+      </div>
+
+      <%# Access token validation failed with multiple feeds %>
+      <div class="ff-alert ff-alert--warning">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "access_token_validation_failed",
+            level: :warning,
+            subject: sample_token,
+            metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) }
+          )
+        ) %>
+      </div>
+
+      <%# Group purge started %>
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "group_purge_started",
+            level: :info,
+            subject: sample_feed
+          )
+        ) %>
+      </div>
+
+      <%# Post withdrawn %>
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "post_withdrawn",
+            level: :info,
+            subject: sample_post
+          )
+        ) %>
+      </div>
+
+      <%# Email events %>
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "resend.email.email_sent",
+            level: :info
+          )
+        ) %>
+      </div>
+
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "resend.email.email_delivered",
+            level: :info
+          )
+        ) %>
+      </div>
+
+      <div class="ff-alert ff-alert--error">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "resend.email.email_bounced",
+            level: :error
+          )
+        ) %>
+      </div>
+
+      <%# User events %>
+      <div class="ff-alert ff-alert--info">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "email_changed",
+            level: :info
+          )
+        ) %>
+      </div>
+
+      <div class="ff-alert ff-alert--warning">
+        <%= render EventDescriptionComponent.new(
+          event: Event.new(
+            type: "user_suspended",
+            level: :warning
+          )
+        ) %>
+      </div>
+    </div>
+  </section>
 </div>
