@@ -12,32 +12,7 @@ class EventDescriptionComponent < ViewComponent::Base
     @escaped_message = build_escaped_message
     @default_description = build_default_description
     @stage = build_stage
-
-    # Build metadata feed links HTML
-    feeds = metadata_feeds
-    disabled_count = @event.metadata["disabled_count"]
-
-    @metadata_feed_links_html = if disabled_count && disabled_count > 0
-      count_text = "#{disabled_count} #{'feed'.pluralize(disabled_count)}"
-      if feeds.empty?
-        # All feeds deleted - show just the count
-        count_text
-      elsif feeds.length < disabled_count
-        # Some feeds deleted - show count and remaining feed names
-        links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
-        "#{count_text}: #{helpers.safe_join(links, ', ')}"
-      else
-        # All feeds still exist - show just the feed links
-        links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
-        helpers.safe_join(links, ", ")
-      end
-    elsif feeds.any?
-      # No count stored, just show the feed links
-      links = feeds.map { |feed| helpers.link_to(feed.name, helpers.feed_path(feed)) }
-      helpers.safe_join(links, ", ")
-    else
-      ""
-    end
+    @metadata_feed_links_html = build_metadata_feed_links_html
   end
 
   def call
@@ -80,15 +55,6 @@ class EventDescriptionComponent < ViewComponent::Base
     end
   end
 
-  def metadata_feeds
-    @metadata_feeds ||= begin
-      feed_ids = @event.metadata["disabled_feed_ids"] || []
-      return [] if feed_ids.empty?
-
-      Feed.where(id: feed_ids).order(:name)
-    end
-  end
-
   def build_escaped_message
     ERB::Util.html_escape(@event.message || "")
   end
@@ -102,5 +68,27 @@ class EventDescriptionComponent < ViewComponent::Base
 
   def build_default_description
     I18n.t("events.#{@event.type}.name", default: @event.type.humanize)
+  end
+
+  def build_metadata_feed_links_html
+    feeds = disabled_feeds
+    links = feeds.map { helpers.link_to(_1.name, helpers.feed_path(_1)) }
+    linked_feeds = helpers.safe_join(links, ", ")
+    deleted_feeds_count = disabled_feed_ids.count - feeds.count
+
+    if deleted_feeds_count.positive?
+      deleted_feeds_note = "#{helpers.pluralize(deleted_feeds_count, 'deleted feeds')}"
+      [linked_feeds, deleted_feeds_note].compact_blank.join(" and ")
+    else
+      linked_feeds
+    end
+  end
+
+  def disabled_feeds
+    disabled_feed_ids.empty? ? [] : Feed.where(id: disabled_feed_ids)
+  end
+
+  def disabled_feed_ids
+    @disabled_feed_ids ||= @event.metadata["disabled_feed_ids"] || []
   end
 end

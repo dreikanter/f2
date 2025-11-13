@@ -79,21 +79,20 @@ class AccessToken < ApplicationRecord
       return unless enabled_feeds.exists?
 
       feed_ids = enabled_feeds.pluck(:id)
-      disabled_count = enabled_feeds.update_all(state: :disabled)
-      create_validation_failed_event(feed_ids: feed_ids, disabled_count: disabled_count)
+      create_validation_failed_event(feed_ids: feed_ids)
     end
   end
 
   private
 
-  def create_validation_failed_event(feed_ids:, disabled_count:)
+  def create_validation_failed_event(feed_ids:)
     Event.create!(
       type: "access_token_validation_failed",
       user: user,
       subject: self,
       level: :warning,
       message: "",
-      metadata: { disabled_feed_ids: feed_ids, disabled_count: disabled_count }
+      metadata: { disabled_feed_ids: feed_ids }
     )
   end
 

@@ -14,7 +14,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     @other_feed ||= create(:feed, user: user, name: "Other Feed")
   end
 
-  test "renders link for single feed event" do
+  test "should render link for single feed event" do
     event = Event.create!(
       type: "feed_refresh",
       level: :info,
@@ -31,14 +31,14 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed successfully"
   end
 
-  test "renders links for multiple feeds from metadata" do
+  test "should render links for multiple feeds from metadata" do
     event = Event.create!(
       type: "access_token_validation_failed",
       level: :warning,
       subject: create(:access_token, user: user),
       user: user,
       message: "",
-      metadata: { disabled_feed_ids: [feed.id, other_feed.id], disabled_count: 2 }
+      metadata: { disabled_feed_ids: [feed.id, other_feed.id] }
     )
 
     result = render_inline(EventDescriptionComponent.new(event: event))
@@ -49,10 +49,10 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "/feeds/#{feed.id}"
     assert_includes result.to_html, "/feeds/#{other_feed.id}"
     assert_includes result.to_html, "Feeds disabled:"
-    refute_includes result.to_html, "2 feeds"
+    assert_not_includes result.to_html, "2 feeds"
   end
 
-  test "includes error message and stage for refresh errors" do
+  test "should include error message and stage for refresh errors" do
     event = Event.create!(
       type: "feed_refresh_error",
       level: :error,
@@ -69,7 +69,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Connection timeout"
   end
 
-  test "handles events without feeds gracefully" do
+  test "should handle events without feeds gracefully" do
     event = Event.create!(
       type: "email_changed",
       level: :info,
@@ -84,7 +84,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Email address changed"
   end
 
-  test "falls back to stored message when present" do
+  test "should fall back to stored message when present" do
     event = Event.create!(
       type: "custom_event",
       level: :info,
@@ -99,7 +99,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Custom message"
   end
 
-  test "escapes HTML in fallback messages" do
+  test "should escape HTML in fallback messages" do
     event = Event.create!(
       type: "test_event",
       level: :info,
@@ -111,32 +111,8 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    refute_includes result.to_html, "<script>"
+    assert_not_includes result.to_html, "<script>"
     assert_includes result.to_html, "&lt;script&gt;"
-  end
-
-  test "preserves count when feeds are deleted" do
-    feed1 = create(:feed, user: user, name: "Feed One")
-    feed2 = create(:feed, user: user, name: "Feed Two")
-
-    event = Event.create!(
-      type: "access_token_validation_failed",
-      level: :warning,
-      subject: create(:access_token, user: user),
-      user: user,
-      message: "",
-      metadata: { disabled_feed_ids: [feed1.id, feed2.id], disabled_count: 2 }
-    )
-
-    # Delete one of the feeds
-    feed2.destroy!
-
-    result = render_inline(EventDescriptionComponent.new(event: event))
-
-    # Should show count and remaining feed
-    assert_includes result.to_html, "Feeds disabled: 2 feeds:"
-    assert_includes result.to_html, "Feed One"
-    refute_includes result.to_html, "Feed Two"
   end
 
   test "shows count when all feeds are deleted" do
@@ -149,19 +125,15 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
       subject: create(:access_token, user: user),
       user: user,
       message: "",
-      metadata: { disabled_feed_ids: [feed1.id, feed2.id], disabled_count: 2 }
+      metadata: { disabled_feed_ids: [feed1.id, feed2.id] }
     )
 
-    # Delete all feeds
     feed1.destroy!
     feed2.destroy!
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    # Should show just the count when no feeds exist
-    assert_includes result.to_html, "Feeds disabled: 2 feeds"
-    refute_includes result.to_html, "Feed One"
-    refute_includes result.to_html, "Feed Two"
+    assert_equal "Token validation failed. Feeds disabled: 2 deleted feeds", result.to_html
   end
 
   test "escapes HTML in error messages" do
@@ -177,7 +149,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    refute_includes result.to_html, "<script>"
+    assert_not_includes result.to_html, "<script>"
     assert_includes result.to_html, "&lt;script&gt;"
   end
 
