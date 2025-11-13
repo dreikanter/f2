@@ -155,7 +155,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
   test "#call should disable enabled feeds on validation failure" do
     feed1 = create(:feed, user: user, access_token: access_token, state: :enabled)
-    feed2 = create(:feed, user: user, access_token: access_token, state: :disabled)
+    feed2 = create(:feed, user: user, access_token: access_token, state: :enabled)
+    feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
@@ -174,6 +175,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     assert_equal "disabled", feed1.reload.state
     assert_equal "disabled", feed2.reload.state
+    assert_equal "disabled", feed3.reload.state
 
     event = Event.find_by!(
       type: "access_token_validation_failed",
@@ -183,6 +185,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal access_token.user, event.user
     assert_equal "warning", event.level
     assert_equal [feed1.id, feed2.id].sort, event.metadata["disabled_feed_ids"].sort
+    assert_equal 2, event.metadata["disabled_count"]
   end
 
   test "#call should not create event when no enabled feeds exist" do
