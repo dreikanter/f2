@@ -23,7 +23,7 @@ class EventDescriptionComponent < ViewComponent::Base
         feed_links: @metadata_feed_links_html,
         message: @escaped_message,
         stage: @stage
-      )
+      ).html_safe
     else
       @event.message.present? ? @escaped_message : @default_description
     end
