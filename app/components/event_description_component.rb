@@ -78,7 +78,7 @@ class EventDescriptionComponent < ViewComponent::Base
 
     if deleted_feeds_count.positive?
       deleted_feeds_note = helpers.pluralize(deleted_feeds_count, "deleted feeds")
-      [linked_feeds, deleted_feeds_note].compact_blank.join(" and ")
+      helpers.safe_join([linked_feeds.presence, deleted_feeds_note].compact_blank, " and ")
     else
       linked_feeds
     end
