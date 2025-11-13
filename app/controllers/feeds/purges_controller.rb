@@ -6,7 +6,7 @@ class Feeds::PurgesController < ApplicationController
     GroupPurgeJob.perform_later(feed.id)
 
     Event.create!(
-      type: "GroupPurgeStarted",
+      type: "group_purge_started",
       user: Current.user,
       subject: feed,
       level: :info,

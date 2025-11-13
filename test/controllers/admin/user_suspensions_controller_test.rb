@@ -84,7 +84,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
-  test "#create should record UserSuspended event with deactivated feed IDs" do
+  test "#create should record user_suspended event with deactivated feed IDs" do
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
@@ -95,14 +95,14 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     end
 
     event = Event.last
-    assert_equal "UserSuspended", event.type
+    assert_equal "user_suspended", event.type
     assert_equal admin_user, event.user
     assert_equal target_user, event.subject
     assert_equal "warning", event.level
     assert_equal [feed1.id, feed2.id].sort, event.metadata["deactivated_feed_ids"].sort
   end
 
-  test "#destroy should record UserUnsuspended event" do
+  test "#destroy should record user_unsuspended event" do
     sign_in_as admin_user
     post admin_user_suspension_path(target_user)
 
@@ -111,7 +111,7 @@ class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
     end
 
     event = Event.last
-    assert_equal "UserUnsuspended", event.type
+    assert_equal "user_unsuspended", event.type
     assert_equal admin_user, event.user
     assert_equal target_user, event.subject
     assert_equal "info", event.level

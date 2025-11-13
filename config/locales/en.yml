@@ -31,10 +31,54 @@ en:
   hello: "Hello world"
 
   events:
-    types:
-      feed_refresh: "Feed refreshed"
-      feed_refresh_error: "Feed refresh failed"
-      post_withdrawn: "Post withdrawn"
+    feed_refresh:
+      name: "Feed refreshed"
+      description_html: "Feed %{subject_link} refreshed successfully"
+    feed_refresh_error:
+      name: "Feed refresh failed"
+      description_html: "Feed %{subject_link} refresh failed at %{stage}: %{message}"
+    post_withdrawn:
+      name: "Post withdrawn"
+      description_html: "Post withdrawn from FreeFeed"
+    access_token_validation_failed:
+      name: "Token validation failed"
+      description_html: "Token validation failed. Feeds disabled: %{feed_links}"
+    group_purge_started:
+      name: "Feed purge started"
+      description_html: "Feed %{subject_link} purge started"
+    email_changed:
+      name: "Email changed"
+      description_html: "Email address changed"
+    user_suspended:
+      name: "User suspended"
+      description_html: "Account suspended"
+    user_unsuspended:
+      name: "User unsuspended"
+      description_html: "Account unsuspended"
+    resend_email_sent:
+      name: "Email sent"
+      description_html: "Email sent"
+    resend_email_delivered:
+      name: "Email delivered"
+      description_html: "Email delivered"
+    resend_email_delayed:
+      name: "Email delayed"
+      description_html: "Email delivery delayed"
+    resend_email_opened:
+      name: "Email opened"
+      description_html: "Email opened"
+    resend_email_clicked:
+      name: "Email clicked"
+      description_html: "Email link clicked"
+    resend_email_bounced:
+      name: "Email bounced"
+      description_html: "Email bounced"
+    resend_email_complained:
+      name: "Spam complaint"
+      description_html: "Spam complaint received"
+    resend_email_failed:
+      name: "Email failed"
+      description_html: "Email delivery failed"
 
   feed_profiles:
     rss: "RSS Feed"

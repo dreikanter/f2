@@ -92,8 +92,8 @@ class AccessToken < ApplicationRecord
       user: user,
       subject: self,
       level: :warning,
-      message: "Token validation failed. #{disabled_count} #{'feed'.pluralize(disabled_count)} disabled.",
-      metadata: { disabled_feed_ids: feed_ids }
+      message: "",
+      metadata: { disabled_feed_ids: feed_ids, disabled_count: disabled_count }
     )
   end
 

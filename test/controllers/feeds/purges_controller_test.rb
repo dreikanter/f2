@@ -42,7 +42,7 @@ class Feeds::PurgesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Feed purge started for testgroup", flash[:notice]
 
     event = Event.last
-    assert_equal "GroupPurgeStarted", event.type
+    assert_equal "group_purge_started", event.type
     assert_equal user, event.user
     assert_equal feed, event.subject
     assert_equal "info", event.level

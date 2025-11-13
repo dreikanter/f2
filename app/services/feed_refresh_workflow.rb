@@ -194,7 +194,7 @@ class FeedRefreshWorkflow
       level: :info,
       subject: feed,
       user: feed.user,
-      message: "Feed refresh completed for #{feed.name}",
+      message: "",
       metadata: { stats: stats }
     )
   end
@@ -205,7 +205,7 @@ class FeedRefreshWorkflow
       level: :error,
       subject: feed,
       user: feed.user,
-      message: "Feed refresh failed at #{current_step}: #{error.message}",
+      message: error.message,
       metadata: {
         stats: stats,
         error: {
