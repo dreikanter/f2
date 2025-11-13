@@ -136,7 +136,28 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_equal "Token validation failed. Feeds disabled: 2 deleted feeds", result.to_html
   end
 
-  test "escapes HTML in error messages" do
+  test "#call should render links and deleted feed counts without escaping HTML" do
+    feed1 = create(:feed, user: user, name: "Feed One")
+    feed2 = create(:feed, user: user, name: "Feed Two")
+
+    event = Event.create!(
+      type: "access_token_validation_failed",
+      level: :warning,
+      subject: create(:access_token, user: user),
+      user: user,
+      message: "",
+      metadata: { disabled_feed_ids: [feed1.id, feed2.id] }
+    )
+
+    feed2.destroy!
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    assert_includes result.to_html, %(<a class="ff-link" href="/feeds/#{feed1.id}">Feed One</a>)
+    assert_includes result.to_html, "1 deleted feed"
+  end
+
+  test "#call should escape HTML in error messages" do
     feed = create(:feed, user: user, name: "Test Feed")
     event = Event.create!(
       type: "feed_refresh_error",
