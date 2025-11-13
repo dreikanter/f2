@@ -42,11 +42,11 @@ class EventDescriptionComponent < ViewComponent::Base
   def build_subject_link
     case @event.subject
     when Feed
-      helpers.link_to(@event.subject.name, helpers.feed_path(@event.subject))
+      helpers.link_to(@event.subject.name, helpers.feed_path(@event.subject), class: "ff-link")
     when AccessToken
-      helpers.link_to(@event.subject.name, helpers.settings_access_tokens_path)
+      helpers.link_to(@event.subject.name, helpers.settings_access_tokens_path, class: "ff-link")
     when Post
-      helpers.link_to("Post", helpers.post_path(@event.subject))
+      helpers.link_to("Post", helpers.post_path(@event.subject), class: "ff-link")
     else
       ""
     end
