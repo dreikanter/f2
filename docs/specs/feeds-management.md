@@ -19,10 +19,10 @@ Implement create, edit, and delete functionality for Feed records in the Feeder 
 
 ### To Be Implemented
 
-- [ ] Feed creation flow with profile detection
+- [ ] Feed creation flow with profile identification
 - [ ] Feed editing form
 - [ ] `FeedsController#create` and `#update` actions
-- [ ] Profile detection endpoint
+- [ ] Profile identification endpoint
 - [ ] Groups API endpoint for token-based group fetching
 - [ ] Client-side form dynamics (Stimulus controllers)
 
@@ -47,8 +47,8 @@ When the user lands on `/feeds/new`, display:
   - Accepts any valid HTTP/HTTPS URL
   - Required field
 - **Detect Button**: Primary action button
-  - Label: "Detect Feed Profile"
-  - Triggers profile detection
+  - Label: "Detect Feed Format"
+  - Triggers profile identification
 
 #### 1.3 Profile Detection Process
 
@@ -80,7 +80,7 @@ When the user lands on `/feeds/new`, display:
 
 **No Manual Profile Override**: If detection fails, users must try a different URL. No dropdown to manually select profiles.
 
-#### 1.4 Expanded Form State
+#### 1.5 Expanded Form State
 
 After successful detection, show:
 
@@ -200,7 +200,7 @@ SCHEDULE_INTERVALS = {
 - Flash message: "Feed '{name}' was successfully created."
 - If enabled: Additional message: "Your feed is now active and will check for new posts {schedule_display}."
 
-#### 1.5 No Data Persistence During Detection
+#### 1.6 No Data Persistence During Detection
 
 **Critical**: Profile detection does NOT create database records. All detected/extracted data (URL, profile, title) are form parameters that get submitted when the user clicks the final create button.
 
