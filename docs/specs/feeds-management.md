@@ -50,21 +50,37 @@ When the user lands on `/feeds/new`, display:
   - Label: "Detect Feed Format"
   - Triggers profile identification
 
-#### 1.3 Profile Detection Process
+#### 1.3 Initiate Profile Detection Process
 
-**Endpoint**: `POST /feeds/detect` (new)
+**Endpoint**: `POST /feeds/details` (`create` action starts identification process)
 
 **Request Parameters**:
 - `url`: The feed URL to detect
 
 **Server-side Process**:
-1. Validate URL format (HTTP/HTTPS)
-2. Fetch URL content via `HttpLoader`
+1. Create a temporary DB record `FeedDetails` (`url: url, status: processing`) (avoid creating duplicates; if the record already exists, do not run the background job)
+2. Run a background job that will identify and persist feed details in a temporary DB record (`FeedDetails`)
+3. Return Turbo Stream response, switching the page to "Loading" state (see `FeedPreviewsController` for an example)
+
+**Background Job**:
+1. Accept `FeedDetails` record from parameters and validate it's URL format (HTTP/HTTPS)
+2. Fetch feed data from the HTTP URL
 3. Run `FeedProfileDetector.detect(url, response)`
-4. If profile found:
+4. If profile matched:
    - Run appropriate `TitleExtractor` for the profile
    - Extract feed title
-5. Return Turbo Stream response
+5. Save details to the `FeedDetails` and update it's status to `success` or `failed`, depending on identification result
+
+#### 1.4 Poll for the Profile Detection Result
+
+**Endpoint**: `GET /feeds/details` (`show` action responds to polling for the identification results)
+
+**Request Parameters**:
+- `url`: The feed URL that is now a key to find the identification result
+
+**Server-side Process**:
+1. Find the `FeedDetails` record matching the provided URL parameter
+2. Return Turbo Stream response
 
 **Success Response** (Turbo Stream):
 - Replace form with expanded version including:
