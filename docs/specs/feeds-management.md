@@ -7,35 +7,39 @@ Implement create, edit, and delete functionality for Feed records in the Feeder 
 ## Current State
 
 ### Existing Implementation
-- ✅ Feed model with comprehensive validations
-- ✅ Feed profile system (RSS, XKCD) with ProfileMatcher
-- ✅ TitleExtractor for RSS feeds
-- ✅ Feed scheduling via FeedSchedulerJob and cron expressions
-- ✅ AccessToken model with FreeFeed integration
-- ✅ Feeds index and show pages
-- ✅ Feed enable/disable via FeedStatusesController
-- ✅ Feed deletion functionality
+
+- [x] Feed model with comprehensive validations
+- [x] Feed profile system (RSS, XKCD) with ProfileMatcher
+- [x] TitleExtractor for RSS feeds
+- [x] Feed scheduling via FeedSchedulerJob and cron expressions
+- [x] AccessToken model with FreeFeed integration
+- [x] Feeds index and show pages
+- [x] Feed enable/disable via FeedStatusesController
+- [x] Feed deletion functionality
 
 ### To Be Implemented
-- ❌ Feed creation flow with profile detection
-- ❌ Feed editing form
-- ❌ FeedsController#create and #update actions
-- ❌ Profile detection endpoint
-- ❌ Groups API endpoint for token-based group fetching
-- ❌ Client-side form dynamics (Stimulus controllers)
 
----
+- [ ] Feed creation flow with profile detection
+- [ ] Feed editing form
+- [ ] `FeedsController#create` and `#update` actions
+- [ ] Profile detection endpoint
+- [ ] Groups API endpoint for token-based group fetching
+- [ ] Client-side form dynamics (Stimulus controllers)
+
+
 
 ## Feature Requirements
 
 ### 1. Feed Creation Flow
 
 #### 1.1 Entry Point
+
 - **Location**: Feeds index page (`/feeds`)
 - **Trigger**: "New Feed" button (already exists)
 - **Destination**: `/feeds/new` (GET)
 
 #### 1.2 Initial Form State (Collapsed)
+
 When the user lands on `/feeds/new`, display:
 - **URL Input**: Text field for feed URL
   - Label: "Feed URL"
@@ -47,6 +51,7 @@ When the user lands on `/feeds/new`, display:
   - Triggers profile detection
 
 #### 1.3 Profile Detection Process
+
 **Endpoint**: `POST /feeds/detect` (new)
 
 **Request Parameters**:
@@ -76,6 +81,7 @@ When the user lands on `/feeds/new`, display:
 **No Manual Profile Override**: If detection fails, users must try a different URL. No dropdown to manually select profiles.
 
 #### 1.4 Expanded Form State
+
 After successful detection, show:
 
 **1. URL (Read-only)**
@@ -195,18 +201,21 @@ SCHEDULE_INTERVALS = {
 - If enabled: Additional message: "Your feed is now active and will check for new posts {schedule_display}."
 
 #### 1.5 No Data Persistence During Detection
+
 **Critical**: Profile detection does NOT create database records. All detected/extracted data (URL, profile, title) are form parameters that get submitted when the user clicks the final create button.
 
----
+
 
 ### 2. Feed Editing Flow
 
 #### 2.1 Entry Point
+
 - **Location**: Feed show page (`/feeds/:id`)
 - **Trigger**: "Edit" button/link
 - **Destination**: `/feeds/:id/edit` (GET)
 
 #### 2.2 Edit Form Layout
+
 The edit form is identical to the expanded create form with these differences:
 
 **Read-only Fields** (cannot be changed):
@@ -230,12 +239,14 @@ The edit form is identical to the expanded create form with these differences:
 - If feed is currently enabled, attempting to save invalid configuration that breaks `can_be_enabled?` should show validation error
 
 #### 2.3 Form Submission
+
 - Button label: "Update Feed Configuration"
 - On success: Redirect to feed show page
 - Flash message: "Feed '{name}' was successfully updated."
 - If feed is enabled and configuration changed: Additional message: "Changes will take effect on the next scheduled refresh."
 
 #### 2.4 Concurrent Edit Protection
+
 Use **optimistic locking** to handle concurrent modifications:
 
 **Implementation**:
@@ -252,7 +263,7 @@ If background job disables feed while user is editing:
 - User sees current state (disabled) when redirected to edit form
 - Form validation allows saving even if disabled (state is not in edit form)
 
----
+
 
 ### 3. Feed Deletion
 
@@ -263,7 +274,7 @@ If background job disables feed while user is editing:
 
 **No changes required** to deletion flow.
 
----
+
 
 ## Technical Implementation Details
 
@@ -296,6 +307,7 @@ end
 ### Controller Actions
 
 #### FeedsController#new
+
 ```ruby
 def new
   @feed = current_user.feeds.build
@@ -303,6 +315,7 @@ end
 ```
 
 #### FeedsController#create
+
 ```ruby
 def create
   @feed = current_user.feeds.build(feed_params)
@@ -320,6 +333,7 @@ end
 ```
 
 #### FeedsController#edit
+
 ```ruby
 def edit
   @feed = current_user.feeds.find(params[:id])
@@ -327,6 +341,7 @@ end
 ```
 
 #### FeedsController#update
+
 ```ruby
 def update
   @feed = current_user.feeds.find(params[:id])
@@ -344,6 +359,7 @@ end
 ```
 
 #### FeedsController#detect (NEW)
+
 ```ruby
 def detect
   url = params[:url]
@@ -394,6 +410,7 @@ end
 ```
 
 #### AccessTokensController#groups (NEW)
+
 ```ruby
 class AccessTokensController < ApplicationController
   def groups
@@ -429,6 +446,7 @@ end
 ### Model Changes
 
 #### Feed Model - Schedule Interval Mapping
+
 ```ruby
 SCHEDULE_INTERVALS = {
   "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
@@ -462,6 +480,7 @@ end
 ### Stimulus Controllers
 
 #### feed-form-controller.js
+
 Handles:
 - Form state management (collapsed vs expanded)
 - Dynamic group loading when token changes
@@ -618,7 +637,7 @@ end
 - State changes are atomic via enum transitions
 - Edit form doesn't change state, so no conflict
 
----
+
 
 ## UI/UX Guidelines
 
@@ -646,7 +665,7 @@ Per CLAUDE.md requirements:
 - Show loading indicator on Detect button during detection
 - Disable group selector until token is selected
 
----
+
 
 ## Testing Requirements
 
@@ -702,7 +721,7 @@ Per CLAUDE.md requirements:
 - Maintain 100% coverage for new code
 - Use SimpleCov to verify
 
----
+
 
 ## Implementation Plan (High-Level)
 
@@ -753,7 +772,7 @@ This will be broken into separate PRs after spec approval:
 3. Loading states and indicators
 4. Accessibility improvements (ARIA labels, keyboard navigation)
 
----
+
 
 ## Open Questions / Assumptions
 
@@ -769,7 +788,7 @@ This will be broken into separate PRs after spec approval:
 
 6. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
 
----
+
 
 ## Success Criteria
 
@@ -786,6 +805,6 @@ This will be broken into separate PRs after spec approval:
 - ✅ RuboCop passes for all Ruby files
 - ✅ UI text follows tone guidelines from CLAUDE.md
 
----
+
 
 This specification is ready for your review. Please confirm if this aligns with your vision, or let me know if any adjustments are needed.
