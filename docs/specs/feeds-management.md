@@ -127,7 +127,7 @@ When the user lands on `/feeds/new`, display:
 After successful identification, show:
 
 **1. URL (Read-only)**
-- Display as disabled text input (grayed out)
+- Display as disabled text input (grayed out, see current email field at `app/views/settings/email_updates/edit.html.erb` for example)
 - Value remains submitted but not editable
 - Label: "Feed URL"
 
