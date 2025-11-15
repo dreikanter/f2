@@ -113,6 +113,10 @@ When the user lands on `/feeds/new`, display:
 - Uses existing `polling_controller.js` Stimulus controller
 - Poll interval: 2 seconds (default)
 - Maximum polls: 30 attempts = 60 seconds total (default)
+- **Timeout configuration**: Client-side polling timeout and server-side timeout detection **must use the same value** (60 seconds)
+  - This ensures polling stops at the same time the server considers the job timed out
+  - Implementation: Define timeout as constant `FEED_IDENTIFICATION_TIMEOUT = 60.seconds`, pass to client via Stimulus data attribute
+  - Do not hardcode timeout values separately on client and server
 - Automatically handles:
   - Network errors (continues polling)
   - Offline mode (pauses polling when `navigator.onLine` is false)
@@ -147,11 +151,13 @@ When the user lands on `/feeds/new`, display:
 - **Stop polling** - identification failed
 
 **Timeout Handling**:
-If 30 polls complete without success/failure (cache stuck in "processing"):
+If polling timeout (60 seconds, defined by `FEED_IDENTIFICATION_TIMEOUT`) is reached without success/failure:
 - Polling automatically stops (handled by polling_controller)
+- Server detects timeout using same constant value
 - Show timeout error state via Turbo Stream
 - Error message: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."
-- Provide "Try Again" button
+- Form returns to collapsed state with URL field populated
+- User can edit URL or click "Identify Feed Format" button to retry
 
 **No Manual Profile Override**: If identification fails, users must try a different URL. No dropdown to manually select profiles.
 
@@ -162,20 +168,27 @@ After successful identification, show:
 **1. URL (Read-only)**
 - Display as disabled text input (grayed out, see current email field at `app/views/settings/email_updates/edit.html.erb` for example)
 - Label: "Feed URL"
+- Aria label: "Feed URL (cannot be changed)"
+- Grayed out background to indicate read-only state
 - Hidden field: `f.hidden_field :url` (controller uses this, not cache)
 
 **2. Identified Profile (Read-only)**
-- Display as static text field styled like form input
+- Display as static text (not an input field)
+- Visual styling matches form inputs but clearly not interactive
 - Show profile name in human-readable format (e.g., "RSS Feed")
-- Label: "Feed Type"
+- Label: "Feed Type (detected automatically)"
 - Hidden field: `f.hidden_field :feed_profile_key` (controller uses this, not cache)
 
 **3. Feed Title (Editable)**
-- Text input pre-filled with extracted title from identification
+- Text input pre-filled with extracted title from identification (or empty if extraction failed)
 - User can modify
 - Label: "Feed Name"
+- Placeholder: "Enter a name for this feed"
 - Validation: Required, max 40 chars, unique within user's scope
-- Help text: "This name will be displayed in your feeds list"
+- Input maxlength attribute set to 40 (prevents typing/pasting longer values)
+- Help text:
+  - If title was extracted and pre-filled: "You can edit this name if you'd like"
+  - If title is empty: "We couldn't automatically detect a name. Please enter one."
 - Value comes from identification result, not cache (passed via locals)
 
 **4. Reposting Configuration Section**
@@ -188,6 +201,8 @@ Section header: "Reposting Settings"
 - Display format: `{host_domain} - {owner}` (e.g., "freefeed.net - username")
 - Uses `AccessToken.active.where(user: current_user)`
 - Required field
+- **Default selection**: First token alphabetically by `host_domain`
+- **On form load**: Automatically triggers groups fetch for pre-selected token (no user action needed)
 - Note: User is guaranteed to have at least one active token (verified in section 1.2)
 - When changed:
   - Immediately disable token selector (prevent race conditions)
@@ -197,32 +212,44 @@ Section header: "Reposting Settings"
 - Implemented via `data-action="change->groups-loader#loadGroups"` on select
 
 **4.2 Target Group Selector**
-- Initially: Disabled select with placeholder "Select a FreeFeed account first"
+- Initially: Shows loading state immediately (groups are auto-fetched on form load)
 - Label: "Target Group"
-- Dynamically re-rendered via Turbo Stream when access token is selected
+- Help text (always shown): "The FreeFeed group where posts will be published. Groups are like channels or communities."
+- Dynamically re-rendered via Turbo Stream when access token is selected or groups are fetched
 - Fetches from: `GET /access_tokens/:access_token_id/groups` (returns Turbo Stream)
 - Display format: Group name as shown in FreeFeed API
 - Required field
+- **User cannot enter group name manually** - must select from dropdown
 
 **Loading State** (while fetching groups):
-- Select element remains visible with disabled state
+- Select element visible with disabled state
 - First option shows "Loading groups..." as placeholder
 - Select is disabled (`disabled="disabled"`)
-- This prevents form submission while groups are loading
+- Prevents form submission while loading
 
-**Success State** (groups fetched):
+**Success State** (groups fetched successfully):
 - Regular select dropdown with fetched groups as options
 - Select is enabled
 - Groups displayed in alphabetical order
 - Pre-selects current feed's target_group if editing
 
-**Error/Fallback State** (groups loading failed):
-- Text input replaces select dropdown
-- Help text: "Could not load groups. Enter the group name manually."
-- Validation: Lowercase letters, numbers, underscores, dashes only; max 80 chars
-- Pre-fills current feed's target_group if editing
+**Empty Groups State** (API succeeded but no groups):
+- Select remains disabled
+- Shows message below select (similar to validation error styling): "This account doesn't manage any groups yet."
+- Shows "Retry" link to fetch groups again
+- User must add token with groups or select different token
 
-**General Help Text**: "The FreeFeed group where posts will be published"
+**Network Error State** (API request failed):
+- Select remains disabled
+- Shows error message below select (similar to validation error styling): "Could not load groups (network error)."
+- Shows "Retry" link to fetch groups again
+- User can click retry or select different token
+
+**Missing/Invalid Token State** (token not found or API rejected):
+- Select remains disabled
+- Shows error message below select: "Unable to load groups. Please select a different FreeFeed account or add a new one."
+- No retry link (user must fix token issue first)
+- User must select different token or add new active token
 
 **4.3 Groups Endpoint Implementation**
 `GET /access_tokens/:access_token_id/groups`
@@ -252,7 +279,7 @@ Section header: "Refresh Schedule"
 - Label: "Check for new posts every"
 - Options: 10m, 20m, 30m, 1h, 2h, 6h, 12h, 1d, 2d
 - Display format: Human-readable (e.g., "10 minutes", "1 hour", "2 days")
-- Default: 1h
+- **Default: Every 1 hour** (explicitly shown in form, pre-selected)
 - Required field
 
 **5.2 Schedule Intervals Configuration**
@@ -277,9 +304,10 @@ SCHEDULE_INTERVALS = {
 - `Feed#schedule_interval=(key)`: Sets cron_expression from key
 
 **6. Feed State Configuration**
-- Checkbox input (checked by default)
-- Label: "Enable this feed immediately after creation"
+- Checkbox input
+- Label: "Enable feed"
 - Help text: "Enabled feeds will automatically check for new posts and publish them to FreeFeed"
+- **Default state**: Checked for new feeds with valid configuration
 - If unchecked: Feed is created with `state: :disabled`
 - If checked: Feed is created with `state: :enabled` (must pass `can_be_enabled?` validation)
 
@@ -293,9 +321,16 @@ SCHEDULE_INTERVALS = {
 - Button label dynamically reflects state:
   - If enable checkbox checked: "Create and Enable Feed"
   - If enable checkbox unchecked: "Create Feed"
+  - On submit: Button disabled, text changes to "Creating..."
 - On success: Redirect to feed show page (`/feeds/:id`)
-- Flash message: "Feed '{name}' was successfully created."
-- If enabled: Additional message: "Your feed is now active and will check for new posts {schedule_display}."
+- Flash message (enhanced):
+  - If enabled: "Feed '[name]' was successfully created and is now active. New posts will be checked every [interval] and published to [group]."
+  - If disabled: "Feed '[name]' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
+- On validation error:
+  - Form re-renders with all submitted data preserved
+  - Errors shown inline below each field
+  - Button re-enabled automatically
+  - Focus moves to first error field (accessibility)
 
 #### 1.6 Temporary Cache Storage During Identification
 
@@ -312,6 +347,8 @@ SCHEDULE_INTERVALS = {
 - **Destination**: `/feeds/:id/edit` (GET)
 
 #### 2.2 Edit Form Layout
+
+**Important Note**: Display notice at top of edit form: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
 
 The edit form is identical to the expanded create form with these differences:
 
@@ -338,9 +375,15 @@ The edit form is identical to the expanded create form with these differences:
 #### 2.3 Form Submission
 
 - Button label: "Update Feed Configuration"
+- On submit: Button disabled, text changes to "Updating..."
 - On success: Redirect to feed show page
 - Flash message: "Feed '{name}' was successfully updated."
 - If feed is enabled and configuration changed: Additional message: "Changes will take effect on the next scheduled refresh."
+- On validation error:
+  - Form re-renders with all submitted data preserved
+  - Errors shown inline below each field
+  - Button re-enabled automatically
+  - Focus moves to first error field (accessibility)
 
 #### 2.4 Concurrent Edits
 
@@ -366,6 +409,21 @@ The edit form is identical to the expanded create form with these differences:
 - Cascading deletes: feed_schedule, events, feed_entries, feed_metrics, posts
 
 **No changes required** to deletion flow.
+
+### 4. Feed Show Page Enhancements
+
+**Additional Information to Display**:
+- **Next check time**: Display countdown or timestamp, e.g., "Next check in 45 minutes"
+  - Only shown for enabled feeds
+  - Calculated from last check time + schedule interval
+  - Added to feed stats section
+- **Status badge**: "Active" (green) or "Disabled" (gray)
+  - Should already exist in current implementation
+  - Prominently displayed under feed title
+- **Link to FreeFeed group**: "View posts in [group] →"
+  - External link to FreeFeed group page
+  - Allows user to see published posts
+  - Format: `https://[freefeed_host]/[group_name]`
 
 
 
@@ -530,8 +588,9 @@ def show
   case cached_data[:status]
   when "processing"
     # Check if processing for too long (job may have crashed/stuck)
+    # Uses same timeout constant as client-side polling
     started_at = cached_data[:started_at] || Time.current
-    timeout_threshold = 90.seconds
+    timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
 
     if Time.current - started_at > timeout_threshold
       # Job timed out - clean up stuck cache entry and show error
@@ -948,21 +1007,23 @@ export default class extends Controller {
 
 **app/views/feeds/_identification_loading.html.erb**:
 - Loading state during async identification
-- Shows loading indicator (spinner + text)
+- Shows loading indicator (spinner + friendly message)
 - Uses `polling_controller` to poll `GET /feeds/details?url=<url>`
-- Poll interval: 2 seconds, max 30 polls (60 seconds)
+- Poll interval: 2 seconds
+- Max polls: derived from `FEED_IDENTIFICATION_TIMEOUT` constant (passed as data attribute)
 - Stops when element with `data-identification-state="complete"` or `data-identification-state="error"` appears in DOM
+- Loading message: "Checking this feed... This usually takes a few seconds."
 - Example structure:
 ```erb
 <div class="feed-form-loading"
      data-controller="polling"
      data-polling-endpoint-value="<%= feed_details_path(url: url) %>"
      data-polling-interval-value="2000"
-     data-polling-max-polls-value="30"
+     data-polling-max-polls-value="<%= FeedDetailsController::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
      data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
   <div class="flex items-center justify-center py-8">
     <div class="spinner mr-3"></div>
-    <p class="text-gray-600">Identifying feed format...</p>
+    <p class="text-gray-600">Checking this feed... This usually takes a few seconds.</p>
   </div>
 </div>
 ```
@@ -1155,8 +1216,8 @@ Per CLAUDE.md requirements:
   - **Rate limiting**: Returns 429 when user exceeds 10 requests per minute
   - **Cache entry**: Includes `started_at` timestamp for timeout detection
 - `FeedDetailsController#show`:
-  - Returns processing state when status is "processing" and under 90s
-  - **Timeout detection**: Returns error when processing exceeds 90 seconds
+  - Returns processing state when status is "processing" and under timeout threshold
+  - **Timeout detection**: Returns error when processing exceeds `IDENTIFICATION_TIMEOUT_SECONDS` (60 seconds)
   - **Timeout cleanup**: Deletes stuck cache entry on timeout
   - Returns expanded form when status is "success"
   - Returns error when status is "failed"
@@ -1291,7 +1352,10 @@ This will be broken into separate PRs after spec approval:
    - Returns 429 Too Many Requests with clear error message
 
 4. **Stuck Job Detection**: Server **must** detect and recover from stuck "processing" state:
-   - Timeout threshold: **90 seconds** from `started_at` timestamp
+   - Timeout threshold: **60 seconds** from `started_at` timestamp (defined by `FEED_IDENTIFICATION_TIMEOUT` constant)
+   - **Critical**: Client-side polling timeout and server-side timeout detection must use the same value
+   - Timeout value defined once as constant, referenced in both client and server code
+   - Client receives timeout value via Stimulus data attribute (not hardcoded)
    - Automatically clean up stuck cache entries
    - Show timeout error to user with retry option
 
