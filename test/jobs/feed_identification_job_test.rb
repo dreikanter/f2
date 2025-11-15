@@ -10,7 +10,11 @@ class FeedIdentificationJobTest < ActiveJob::TestCase
   end
 
   def cache_key(url)
-    "feed_identification/#{user.id}/#{Digest::SHA256.hexdigest(url)}"
+    cache_key_for_user(user.id, url)
+  end
+
+  def cache_key_for_user(user_id, url)
+    FeedIdentificationCache.key_for(user_id, url)
   end
 
   test "should be queued on default queue" do
@@ -162,6 +166,19 @@ class FeedIdentificationJobTest < ActiveJob::TestCase
 
     expected_cache_key = "feed_identification/#{user.id}/#{Digest::SHA256.hexdigest(url)}"
     assert_not_nil Rails.cache.read(expected_cache_key)
+  end
+
+  test "should handle missing user gracefully" do
+    non_existent_user_id = 999999
+    url = "http://example.com/feed.xml"
+
+    assert_nothing_raised do
+      FeedIdentificationJob.perform_now(non_existent_user_id, url)
+    end
+
+    # Cache should not be written for non-existent user
+    cached_data = Rails.cache.read(cache_key_for_user(non_existent_user_id, url))
+    assert_nil cached_data
   end
 
   test "should cache results for 10 minutes" do

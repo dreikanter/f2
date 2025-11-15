@@ -13,7 +13,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def cache_key(url)
-    "feed_identification/#{user.id}/#{Digest::SHA256.hexdigest(url)}"
+    FeedIdentificationCache.key_for(user.id, url)
   end
 
   test "#create should require authentication" do
