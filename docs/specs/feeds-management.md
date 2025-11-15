@@ -298,6 +298,9 @@ SCHEDULE_INTERVALS = {
 }.freeze
 ```
 
+**Timezone Configuration**:
+All cron expressions are evaluated in UTC (configured via `config.time_zone = 'UTC'` in `config/application.rb`). Ensure this setting is consistently applied across all environments (development, test, production). If per-schedule timezone variation is required in the future, timezone can be embedded directly in individual cron strings (e.g., `"0 9 * * * America/New_York"`).
+
 **Helper methods**:
 - `Feed.schedule_intervals_for_select`: Returns array for dropdown
 - `Feed#schedule_interval`: Returns display key (e.g., "1h") from cron
