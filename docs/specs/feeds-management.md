@@ -164,15 +164,16 @@ Section header: "Reposting Settings"
 - Uses `AccessToken.active.where(user: current_user)`
 - Required field
 - Note: User is guaranteed to have at least one active token (verified in section 1.2)
+- When changed: Triggers `GET /access_tokens/:id/groups` to fetch and re-render target group selector
 
 **4.2 Target Group Selector**
 - Dropdown select (initially disabled/empty)
 - Label: "Target Group"
-- Dynamically populated when access token is selected
-- Fetches from: `GET /access_tokens/:id/groups` (returns JSON)
+- Dynamically re-rendered via Turbo Stream when access token is selected
+- Fetches from: `GET /access_tokens/:id/groups` (returns Turbo Stream)
 - Display format: Group name as shown in FreeFeed API
 - Required field
-- Allows manual text entry as fallback
+- Allows manual text entry as fallback (text input that also accepts free-form values)
 - Validation: Lowercase letters, numbers, underscores, dashes only; max 80 chars
 - Help text: "The FreeFeed group where posts will be published"
 
@@ -180,23 +181,21 @@ Section header: "Reposting Settings"
 `GET /access_tokens/:id/groups`
 
 **Logic**:
-1. Verify access token belongs to `current_user` (401 if not)
-2. Verify token is active (422 if not)
+1. Verify access token belongs to `current_user` (404 if not)
+2. Verify token is active (show error state if not)
 3. Fetch groups via `FreefeedClient` (built from token)
 4. Cache result for 10 minutes (keyed by token_id)
-5. Return JSON array of group names
+5. Return Turbo Stream that replaces the target group selector partial
 
-**Response Format**:
-```json
-{
-  "groups": ["group1", "group2", "group3"]
-}
-```
+**Response**: Turbo Stream that renders `_target_group_selector.html.erb` partial with:
+- Fetched groups as select options
+- Current feed's target_group value pre-selected (for edit mode)
+- Allows manual text entry for groups not in the list
 
 **Error Handling**:
-- 401: Unauthorized (token doesn't belong to user)
-- 422: Token not active or FreeFeed API error
-- Return empty array on API failure (allow manual entry)
+- 404: Token not found or doesn't belong to user → render selector with empty options and help text
+- FreeFeed API error → render selector with empty options and help text: "Could not load groups. You can enter a group name manually."
+- Both cases allow manual text entry as fallback
 
 **5. Feed Refresh Schedule Section**
 Section header: "Refresh Schedule"
@@ -535,21 +534,38 @@ end
 class AccessTokensController < ApplicationController
   def groups
     @token = current_user.access_tokens.find(params[:id])
+    @feed = current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
 
-    unless @token.active?
-      return render json: { error: "Token is not active" }, status: :unprocessable_entity
+    @groups = if @token.active?
+      Rails.cache.fetch("access_token_groups/#{@token.id}", expires_in: 10.minutes) do
+        fetch_groups_from_freefeed(@token)
+      end
+    else
+      [] # Token not active, show empty list with manual entry option
     end
 
-    groups = Rails.cache.fetch("access_token_groups/#{@token.id}", expires_in: 10.minutes) do
-      fetch_groups_from_freefeed(@token)
-    end
-
-    render json: { groups: groups }
+    render turbo_stream: turbo_stream.replace(
+      "target-group-selector",
+      partial: "feeds/target_group_selector",
+      locals: { feed: @feed, groups: @groups, token: @token }
+    )
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Access token not found" }, status: :not_found
+    # Token not found, render empty selector
+    @groups = []
+    render turbo_stream: turbo_stream.replace(
+      "target-group-selector",
+      partial: "feeds/target_group_selector",
+      locals: { feed: @feed, groups: @groups, token: nil }
+    )
   rescue => e
-    Rails.logger.error("Failed to fetch groups for token #{@token.id}: #{e.message}")
-    render json: { groups: [] } # Allow manual entry on error
+    # FreeFeed API error, render empty selector with help text
+    Rails.logger.error("Failed to fetch groups for token #{@token&.id}: #{e.message}")
+    @groups = []
+    render turbo_stream: turbo_stream.replace(
+      "target-group-selector",
+      partial: "feeds/target_group_selector",
+      locals: { feed: @feed, groups: @groups, token: @token, error: true }
+    )
   end
 
   private
@@ -665,50 +681,19 @@ end
 #### feed-form-controller.js
 
 Handles:
-- Form state management (collapsed vs expanded)
-- Dynamic group loading when token changes
-- Form validation feedback
 - Enable checkbox state tracking
+- Submit button label updates
+
+**Note**: Group loading is handled via Turbo Stream (no JavaScript needed). The access token selector triggers a Turbo Stream request when changed, which re-renders the target group selector partial.
 
 ```javascript
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["groupSelect", "tokenSelect", "enableCheckbox", "submitButton"]
+  static targets = ["enableCheckbox", "submitButton"]
 
   connect() {
     this.updateSubmitButtonLabel()
-  }
-
-  async tokenChanged(event) {
-    const tokenId = event.target.value
-
-    if (!tokenId) {
-      this.groupSelectTarget.innerHTML = '<option value="">Select a token first</option>'
-      this.groupSelectTarget.disabled = true
-      return
-    }
-
-    this.groupSelectTarget.disabled = true
-    this.groupSelectTarget.innerHTML = '<option value="">Loading groups...</option>'
-
-    try {
-      const response = await fetch(`/access_tokens/${tokenId}/groups`)
-      const data = await response.json()
-
-      if (data.groups && data.groups.length > 0) {
-        this.groupSelectTarget.innerHTML = '<option value="">Select a group</option>' +
-          data.groups.map(g => `<option value="${g}">${g}</option>`).join('')
-      } else {
-        this.groupSelectTarget.innerHTML = '<option value="">No groups available (you can type manually)</option>'
-      }
-
-      this.groupSelectTarget.disabled = false
-    } catch (error) {
-      console.error('Failed to load groups:', error)
-      this.groupSelectTarget.innerHTML = '<option value="">Error loading groups (you can type manually)</option>'
-      this.groupSelectTarget.disabled = false
-    }
   }
 
   updateSubmitButtonLabel() {
@@ -756,6 +741,15 @@ export default class extends Controller {
 - Full form with all fields
 - Used after identification succeeds and for edit mode
 - Handles read-only URL/profile for edit
+- Includes target group selector with `id="target-group-selector"`
+
+**app/views/feeds/_target_group_selector.html.erb**:
+- Partial for target group selector (dynamically re-rendered via Turbo Stream)
+- Wrapped in `<div id="target-group-selector">`
+- If groups present: Shows datalist/combo box with fetched groups
+- If no groups or error: Shows text input with help text about manual entry
+- Accepts current feed's target_group value for pre-selection
+- Allows manual text entry as fallback
 
 **app/views/feeds/_identification_loading.html.erb**:
 - Loading state during async identification
@@ -777,11 +771,13 @@ export default class extends Controller {
 **Access Token Selector**:
 - Always has at least one token available (prerequisite check in section 1.2)
 - Dropdown populated with active tokens only
+- Uses Turbo Frame or simple link with `data-turbo-stream` to trigger groups fetch on change
 
 **Target Group Selector**:
 - Combo box: dropdown + manual text entry
 - Uses `datalist` HTML5 element for suggestions while allowing free text
-- JavaScript populates datalist from API response
+- Dynamically updated via Turbo Stream when token changes (no JavaScript needed)
+- Partial includes empty/error states with appropriate help text
 
 **Schedule Interval Selector**:
 - Standard select dropdown
@@ -897,11 +893,12 @@ Per CLAUDE.md requirements:
   - Returns error when status is "failed"
   - Returns error when cache entry missing/expired
 - `AccessTokensController#groups`:
-  - Returns groups for active token owned by user
-  - Returns 404 for non-existent token
-  - Returns 404 for token owned by different user
-  - Returns 422 for inactive token
-  - Handles FreeFeed API errors gracefully
+  - Returns Turbo Stream with groups for active token owned by user
+  - Renders target_group_selector partial with fetched groups
+  - Renders empty selector for non-existent token
+  - Renders empty selector for token owned by different user
+  - Renders empty selector with error state when token inactive
+  - Handles FreeFeed API errors gracefully (renders empty selector with help text)
 
 ### Job Tests
 - `FeedIdentificationJob`:
@@ -923,7 +920,7 @@ Per CLAUDE.md requirements:
 - Concurrent edit flow: two users edit same feed → second sees error
 
 ### System Tests (if applicable)
-- JavaScript interactions: token selection triggers group load
+- Turbo Stream interactions: token selection triggers Turbo Stream request and group selector updates
 - Form state transitions: collapsed → expanded
 - Submit button label updates based on checkbox
 
@@ -981,9 +978,9 @@ This will be broken into separate PRs after spec approval:
 
 ### PR 6: Stimulus Controller for Form Dynamics
 1. Create feed-form Stimulus controller
-2. Implement token change → group load
-3. Implement submit button label updates
-4. Add data attributes to form elements
+2. Implement submit button label updates
+3. Add data attributes to form elements
+4. Note: Token change → group load is handled via Turbo Stream (no JavaScript needed)
 
 ### PR 7: Polish and Edge Cases
 1. Empty states (no tokens, no groups)
