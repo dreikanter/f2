@@ -9,6 +9,22 @@ class Feed < ApplicationRecord
     invalid_posts_count
   ].freeze
 
+  # Timezone for all cron expression evaluation
+  # Must match config.time_zone in config/application.rb
+  FEED_CRON_TIMEZONE = "UTC".freeze
+
+  SCHEDULE_INTERVALS = {
+    "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
+    "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
+    "30m" => { cron: "*/30 * * * *", display: "30 minutes" },
+    "1h" => { cron: "0 * * * *", display: "1 hour" },
+    "2h" => { cron: "0 */2 * * *", display: "2 hours" },
+    "6h" => { cron: "0 */6 * * *", display: "6 hours" },
+    "12h" => { cron: "0 */12 * * *", display: "12 hours" },
+    "1d" => { cron: "0 0 * * *", display: "1 day" },
+    "2d" => { cron: "0 0 */2 * *", display: "2 days" }
+  }.freeze
+
   belongs_to :user
   belongs_to :access_token, optional: true
 
@@ -60,6 +76,22 @@ class Feed < ApplicationRecord
       .where("feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL", Time.current)
       .where(state: :enabled)
   }
+
+  def self.schedule_intervals_for_select
+    SCHEDULE_INTERVALS.map { |key, config| [config[:display], key] }
+  end
+
+  def schedule_interval
+    SCHEDULE_INTERVALS.find { |_key, config| config[:cron] == cron_expression }&.first
+  end
+
+  def schedule_interval=(key)
+    self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
+  end
+
+  def schedule_display
+    SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
+  end
 
   def feed_profile_present?
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
