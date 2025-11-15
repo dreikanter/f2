@@ -560,7 +560,7 @@ class FeedIdentificationJob < ApplicationJob
 
     begin
       # Fetch feed data
-      response = Loader::HttpLoader.new(url).load
+      response = http_client.get(url)
 
       # Identify profile
       profile_key = FeedProfileDetector.detect(url, response)
@@ -605,6 +605,12 @@ class FeedIdentificationJob < ApplicationJob
         expires_in: 10.minutes
       )
     end
+  end
+
+  private
+
+  def http_client
+    @http_client ||= HttpClient.build
   end
 end
 ```
@@ -957,7 +963,7 @@ This will be broken into separate PRs after spec approval:
 
 3. **Custom Cron Expressions**: Not supported in initial implementation. Users must choose from predefined intervals. Could be future enhancement.
 
-4. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `Loader::HttpLoader`.
+4. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `HttpClient`.
 
 5. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
 
