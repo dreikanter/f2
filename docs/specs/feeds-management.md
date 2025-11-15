@@ -109,6 +109,17 @@ When the user lands on `/feeds/new`, display:
 **Request Parameters**:
 - `url`: The feed URL used to generate the cache key
 
+**Polling Implementation**:
+- Uses existing `polling_controller.js` Stimulus controller
+- Poll interval: 2 seconds (default)
+- Maximum polls: 30 attempts = 60 seconds total (default)
+- Automatically handles:
+  - Network errors (continues polling)
+  - Offline mode (pauses polling when `navigator.onLine` is false)
+  - Non-OK HTTP responses (stops polling)
+  - Aborts previous request if new poll starts
+- Stop condition: Presence of `.feed-form-expanded` or `.feed-form-error` element in DOM
+
 **Server-side Process**:
 1. Generate cache key from `current_user.id` and URL
 2. Fetch data from Rails cache
@@ -119,17 +130,28 @@ When the user lands on `/feeds/new`, display:
   - Identified profile
   - Extracted title (or empty if extraction failed)
   - All configuration fields
+  - **Hidden fields**: `url`, `feed_profile_key`, `name` (from cache)
+- Add CSS class `feed-form-expanded` to trigger polling stop condition
 - **Stop polling** - identification complete
 
 **Processing Response** (Turbo Stream, when `status: "processing"`):
 - Keep polling state active with loading indicator
 - **Continue polling** via Turbo Stream refresh until status changes
+- After 30 polls (60 seconds), polling automatically stops and shows timeout state
 
 **Failure Response** (Turbo Stream, when `status: "failed"`):
 - Show inline error message in form
 - Keep URL field populated for editing
 - Error message: "We couldn't identify a feed profile for this URL. Please check the URL and try again, or try a different feed source."
+- Add CSS class `feed-form-error` to trigger polling stop condition
 - **Stop polling** - identification failed
+
+**Timeout Handling**:
+If 30 polls complete without success/failure (cache stuck in "processing"):
+- Polling automatically stops (handled by polling_controller)
+- Show timeout error state via Turbo Stream
+- Error message: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."
+- Provide "Try Again" button
 
 **No Manual Profile Override**: If identification fails, users must try a different URL. No dropdown to manually select profiles.
 
@@ -139,21 +161,22 @@ After successful identification, show:
 
 **1. URL (Read-only)**
 - Display as disabled text input (grayed out, see current email field at `app/views/settings/email_updates/edit.html.erb` for example)
-- Value remains submitted but not editable
 - Label: "Feed URL"
+- Hidden field: `f.hidden_field :url` (ensures data persists even if cache expires)
 
 **2. Identified Profile (Read-only)**
 - Display as static text field styled like form input
 - Show profile name in human-readable format (e.g., "RSS Feed")
 - Label: "Feed Type"
-- Hidden input submits `feed_profile_key`
+- Hidden field: `f.hidden_field :feed_profile_key` (controller uses this, not cache)
 
 **3. Feed Title (Editable)**
-- Text input pre-filled with extracted title
+- Text input pre-filled with extracted title from identification
 - User can modify
 - Label: "Feed Name"
 - Validation: Required, max 40 chars, unique within user's scope
 - Help text: "This name will be displayed in your feeds list"
+- Value comes from identification result, not cache (passed via locals)
 
 **4. Reposting Configuration Section**
 Section header: "Reposting Settings"
@@ -166,19 +189,40 @@ Section header: "Reposting Settings"
 - Uses `AccessToken.active.where(user: current_user)`
 - Required field
 - Note: User is guaranteed to have at least one active token (verified in section 1.2)
-- When changed: Triggers `GET /access_tokens/:id/groups` to fetch and re-render target group selector
+- When changed:
+  - Immediately disable token selector (prevent race conditions)
+  - Trigger Turbo Stream request: `GET /access_tokens/:id/groups`
+  - Re-render target group selector with loading state
+  - Re-enable token selector after groups loaded
+- Implemented via `data-action="change->groups-loader#loadGroups"` on select
 
 **4.2 Target Group Selector**
-- Initially disabled/empty until token is selected
+- Initially: Disabled select with placeholder "Select a FreeFeed account first"
 - Label: "Target Group"
 - Dynamically re-rendered via Turbo Stream when access token is selected
 - Fetches from: `GET /access_tokens/:id/groups` (returns Turbo Stream)
 - Display format: Group name as shown in FreeFeed API
 - Required field
-- **If groups successfully loaded**: Regular select dropdown with fetched groups
-- **If groups loading failed**: Text input with help text for manual entry
+
+**Loading State** (while fetching groups):
+- Select element remains visible with disabled state
+- First option shows "Loading groups..." as placeholder
+- Select is disabled (`disabled="disabled"`)
+- This prevents form submission while groups are loading
+
+**Success State** (groups fetched):
+- Regular select dropdown with fetched groups as options
+- Select is enabled
+- Groups displayed in alphabetical order
+- Pre-selects current feed's target_group if editing
+
+**Error/Fallback State** (groups loading failed):
+- Text input replaces select dropdown
+- Help text: "Could not load groups. Enter the group name manually."
 - Validation: Lowercase letters, numbers, underscores, dashes only; max 80 chars
-- Help text: "The FreeFeed group where posts will be published"
+- Pre-fills current feed's target_group if editing
+
+**General Help Text**: "The FreeFeed group where posts will be published"
 
 **4.3 Groups Endpoint Implementation**
 `GET /access_tokens/:id/groups`
@@ -378,7 +422,18 @@ def create
     render :new, status: :unprocessable_entity
   end
 end
+
+private
+
+def feed_params
+  params.require(:feed).permit(:url, :feed_profile_key, :name, :access_token_id, :target_group, :schedule_interval)
+end
 ```
+
+**Important**: Controller uses form params (from hidden fields), NOT cached identification data. This ensures:
+- Form submission works even if cache expires (>10 minutes)
+- No dependency on Rails.cache during create
+- All data explicitly submitted by user
 
 #### FeedsController#edit
 
@@ -469,6 +524,9 @@ def show
   case cached_data[:status]
   when "processing"
     # Still processing, keep polling
+    # Note: polling_controller will stop after 30 attempts (60 seconds)
+    # If max polls reached, the loading state remains visible
+    # Consider: Check poll count and show timeout error after max attempts
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_loading",
@@ -651,13 +709,117 @@ end
 
 ### Stimulus Controllers
 
+**Existing controllers used**:
+- `polling_controller.js` - Handles async polling for feed identification results
+
+**New controllers to implement**:
+
+#### feed-identification-controller.js
+
+Handles disabling Identify button and URL input to prevent double-submission:
+
+```javascript
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["submitButton", "urlInput"]
+
+  // Turbo events
+  disableForm(event) {
+    if (this.hasSubmitButtonTarget) {
+      this.submitButtonTarget.disabled = true
+    }
+    if (this.hasUrlInputTarget) {
+      this.urlInputTarget.disabled = true
+    }
+  }
+
+  enableForm(event) {
+    if (this.hasSubmitButtonTarget) {
+      this.submitButtonTarget.disabled = false
+    }
+    if (this.hasUrlInputTarget) {
+      this.urlInputTarget.disabled = false
+    }
+  }
+}
+```
+
+Usage in `_form_collapsed.html.erb`:
+```erb
+<%= form_with url: feed_details_path,
+              data: {
+                controller: "feed-identification",
+                action: "turbo:submit-start->feed-identification#disableForm turbo:submit-end->feed-identification#enableForm"
+              } do |f| %>
+  <%= f.text_field :url, data: { feed_identification_target: "urlInput" } %>
+  <%= f.submit "Identify Feed Format", data: { feed_identification_target: "submitButton" } %>
+<% end %>
+```
+
+#### groups-loader-controller.js
+
+Handles loading state for groups selector when token changes:
+
+```javascript
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["tokenSelect", "groupsContainer"]
+
+  loadGroups(event) {
+    // Disable token selector to prevent race conditions
+    if (this.hasTokenSelectTarget) {
+      this.tokenSelectTarget.disabled = true
+    }
+
+    // Show loading state in groups container immediately
+    if (this.hasGroupsContainerTarget) {
+      this.showLoadingState()
+    }
+  }
+
+  showLoadingState() {
+    // Render loading select immediately (before Turbo Stream response)
+    this.groupsContainerTarget.innerHTML = `
+      <select disabled class="form-select" name="feed[target_group]">
+        <option>Loading groups...</option>
+      </select>
+    `
+  }
+
+  // Called after Turbo Stream replaces groups selector
+  groupsLoaded(event) {
+    // Re-enable token selector
+    if (this.hasTokenSelectTarget) {
+      this.tokenSelectTarget.disabled = false
+    }
+  }
+}
+```
+
+Usage in `_form_expanded.html.erb`:
+```erb
+<div data-controller="groups-loader">
+  <%= f.select :access_token_id,
+               options_for_select(...),
+               {},
+               data: {
+                 groups_loader_target: "tokenSelect",
+                 action: "change->groups-loader#loadGroups"
+               } %>
+
+  <div id="target-group-selector"
+       data-groups-loader-target="groupsContainer"
+       data-action="turbo:frame-load->groups-loader#groupsLoaded">
+    <%= render "target_group_selector", ... %>
+  </div>
+</div>
+```
+
 #### feed-form-controller.js
 
-Handles:
-- Enable checkbox state tracking
-- Submit button label updates
-
-**Note**: Group loading is handled via Turbo Stream (no JavaScript needed). The access token selector triggers a Turbo Stream request when changed, which re-renders the target group selector partial.
+Handles submit button label updates based on enable checkbox:
 
 ```javascript
 import { Controller } from "@hotwired/stimulus"
@@ -714,7 +876,10 @@ export default class extends Controller {
 - Full form with all fields
 - Used after identification succeeds and for edit mode
 - Handles read-only URL/profile for edit
+- Has CSS class `feed-form-expanded` (triggers polling stop condition)
+- Includes hidden fields: `url`, `feed_profile_key`, `name` (from identification)
 - Includes target group selector with `id="target-group-selector"`
+- Uses `data-controller="groups-loader"` for token/groups interaction
 
 **app/views/feeds/_target_group_selector.html.erb**:
 - Partial for target group selector (dynamically re-rendered via Turbo Stream)
@@ -726,12 +891,30 @@ export default class extends Controller {
 
 **app/views/feeds/_identification_loading.html.erb**:
 - Loading state during async identification
-- Shows loading indicator
-- Polls `GET /feeds/details` via Turbo Stream
+- Shows loading indicator (spinner + text)
+- Uses `polling_controller` to poll `GET /feeds/details?url=<url>`
+- Poll interval: 2 seconds, max 30 polls (60 seconds)
+- Stops when `.feed-form-expanded` or `.feed-form-error` appears in DOM
+- Example structure:
+```erb
+<div class="feed-form-loading"
+     data-controller="polling"
+     data-polling-endpoint-value="<%= feed_details_path(url: url) %>"
+     data-polling-interval-value="2000"
+     data-polling-max-polls-value="30"
+     data-polling-stop-condition-value=".feed-form-expanded, .feed-form-error">
+  <div class="flex items-center justify-center py-8">
+    <div class="spinner mr-3"></div>
+    <p class="text-gray-600">Identifying feed format...</p>
+  </div>
+</div>
+```
 
 **app/views/feeds/_identification_error.html.erb**:
 - Error state after failed identification
 - Shows error message and URL input for retry
+- Has CSS class `feed-form-error` (triggers polling stop condition)
+- Provides "Try Again" button to restart process
 
 **app/views/feeds/_blocked_no_tokens.html.erb**:
 - Blocked state when user has no active access tokens
@@ -744,17 +927,36 @@ export default class extends Controller {
 **Access Token Selector**:
 - Always has at least one token available (prerequisite check in section 1.2)
 - Dropdown populated with active tokens only
-- Uses Turbo Frame or simple link with `data-turbo-stream` to trigger groups fetch on change
+- Disabled during groups loading (managed by groups-loader Stimulus controller)
+- Triggers Turbo Stream request on change via `data-action="change->groups-loader#loadGroups"`
 
 **Target Group Selector**:
 - Standard select dropdown when groups are available
 - Falls back to text input when groups can't be loaded (error state)
-- Dynamically updated via Turbo Stream when token changes (no JavaScript needed)
-- Partial handles both states (select vs text input) with appropriate help text
+- Dynamically updated via Turbo Stream when token changes
+- Disabled during loading with "Loading groups..." placeholder
+- Never stuck disabled: Turbo Stream always responds (success or error fallback)
 
 **Schedule Interval Selector**:
 - Standard select dropdown
 - Human-readable labels, cron values hidden
+
+### JavaScript Requirements
+
+This feature requires JavaScript to be enabled:
+- **Turbo**: For async form submission, streaming updates, and polling
+- **Stimulus**: For form interactions (button disabling, loading states, label updates)
+- **No fallback**: JavaScript is a base application requirement
+- Users with JavaScript disabled will see non-functional forms
+
+**Browser Support**:
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+- IE11 and older browsers not supported
+
+**Polyfills**: None required for target browsers (all support Fetch API, ES6+)
 
 ### Validation Error Display
 
@@ -819,11 +1021,44 @@ Per CLAUDE.md requirements:
 - Responsive: single column on mobile, optimized spacing on desktop
 - Clear visual separation between sections
 
-### Button States
-- Disable submit button during form processing
-- Show loading indicator during async identification (polling state)
-- Disable group selector until token is selected
-- Disable Identify button while identification is in progress
+### Button States and Form Element Disabling
+
+**Feed Identification Flow**:
+
+**Identify Button** (_form_collapsed.html.erb):
+- Disabled on form submit to prevent double-clicks
+- Implemented via Stimulus controller listening to `turbo:submit-start` event
+- Re-enabled only if validation error occurs and form re-renders
+- During polling: Button is replaced by loading state (not visible)
+
+**URL Input**:
+- Disabled on form submit (same Stimulus controller as Identify button)
+- Prevents editing mid-process
+
+**Create/Update Flow**:
+
+**Submit Button** (Create Feed / Update Feed):
+- Disabled on form submit to prevent double-submission
+- Standard Turbo behavior handles this automatically
+- Label updates dynamically based on enable checkbox (feed-form Stimulus controller)
+- Re-enabled if validation errors cause form re-render
+
+**Access Token Selector**:
+- Disabled while groups are being fetched for selected token
+- Prevents race condition from rapid token changes
+- Managed by groups-loader Stimulus controller
+- Re-enabled after groups load (success or error)
+
+**Target Group Selector**:
+- Initially disabled until token is selected
+- Disabled during groups loading (shows "Loading groups..." placeholder)
+- Enabled after groups successfully loaded
+- Never stuck in disabled state: loading always completes (success or error fallback)
+
+**General Principle**: All disabled states are temporary and guaranteed to resolve via:
+- Turbo Stream response (re-renders with enabled state)
+- Stimulus controller managing disable/enable lifecycle
+- Error handlers that re-enable controls even on failure
 
 
 
@@ -887,8 +1122,13 @@ Per CLAUDE.md requirements:
 
 ### System Tests (if applicable)
 - Turbo Stream interactions: token selection triggers Turbo Stream request and group selector updates
-- Form state transitions: collapsed → expanded
+- Form state transitions: collapsed → loading → expanded
 - Submit button label updates based on checkbox
+- Polling behavior: identification polling stops on success/failure/timeout
+- Button disabling: Identify button disabled on submit, prevents double-clicks
+- Groups loading: Token selector disabled while groups loading, prevents race conditions
+- Loading states: Groups selector shows "Loading groups..." while fetching
+- Error recovery: All disabled states resolve (never stuck disabled)
 
 ### Test Data Setup
 - Use FactoryBot for feed creation
@@ -941,11 +1181,13 @@ This will be broken into separate PRs after spec approval:
 4. Update controller tests
 5. Integration test for edit flow
 
-### PR 6: Stimulus Controller for Form Dynamics
-1. Create feed-form Stimulus controller
-2. Implement submit button label updates
-3. Add data attributes to form elements
-4. Note: Token change → group load is handled via Turbo Stream (no JavaScript needed)
+### PR 6: Stimulus Controllers for Form Dynamics
+1. Create feed-identification-controller (disable Identify button on submit)
+2. Create groups-loader-controller (manage token/groups loading states)
+3. Create feed-form-controller (submit button label updates)
+4. Add data attributes to form elements
+5. Configure polling_controller usage in identification_loading partial
+6. Test all controllers with appropriate system/integration tests
 
 ### PR 7: Polish and Edge Cases
 1. Empty states (no tokens, no groups)
