@@ -118,7 +118,7 @@ When the user lands on `/feeds/new`, display:
   - Offline mode (pauses polling when `navigator.onLine` is false)
   - Non-OK HTTP responses (stops polling)
   - Aborts previous request if new poll starts
-- Stop condition: Presence of `.feed-form-expanded` or `.feed-form-error` element in DOM
+- Stop condition: `[data-identification-state="complete"]` or `[data-identification-state="error"]`
 
 **Server-side Process**:
 1. Generate cache key from `current_user.id` and URL
@@ -131,7 +131,7 @@ When the user lands on `/feeds/new`, display:
   - Extracted title (or empty if extraction failed)
   - All configuration fields
   - **Hidden fields**: `url`, `feed_profile_key`, `name` (from cache)
-- Add CSS class `feed-form-expanded` to trigger polling stop condition
+- Add `data-identification-state="complete"` attribute to container to trigger polling stop condition
 - **Stop polling** - identification complete
 
 **Processing Response** (Turbo Stream, when `status: "processing"`):
@@ -143,7 +143,7 @@ When the user lands on `/feeds/new`, display:
 - Show inline error message in form
 - Keep URL field populated for editing
 - Error message: "We couldn't identify a feed profile for this URL. Please check the URL and try again, or try a different feed source."
-- Add CSS class `feed-form-error` to trigger polling stop condition
+- Add `data-identification-state="error"` attribute to container to trigger polling stop condition
 - **Stop polling** - identification failed
 
 **Timeout Handling**:
@@ -876,7 +876,7 @@ export default class extends Controller {
 - Full form with all fields
 - Used after identification succeeds and for edit mode
 - Handles read-only URL/profile for edit
-- Has CSS class `feed-form-expanded` (triggers polling stop condition)
+- Has `data-identification-state="complete"` attribute (triggers polling stop condition)
 - Includes hidden fields: `url`, `feed_profile_key`, `name` (from identification)
 - Includes target group selector with `id="target-group-selector"`
 - Uses `data-controller="groups-loader"` for token/groups interaction
@@ -894,7 +894,7 @@ export default class extends Controller {
 - Shows loading indicator (spinner + text)
 - Uses `polling_controller` to poll `GET /feeds/details?url=<url>`
 - Poll interval: 2 seconds, max 30 polls (60 seconds)
-- Stops when `.feed-form-expanded` or `.feed-form-error` appears in DOM
+- Stops when element with `data-identification-state="complete"` or `data-identification-state="error"` appears in DOM
 - Example structure:
 ```erb
 <div class="feed-form-loading"
@@ -902,7 +902,7 @@ export default class extends Controller {
      data-polling-endpoint-value="<%= feed_details_path(url: url) %>"
      data-polling-interval-value="2000"
      data-polling-max-polls-value="30"
-     data-polling-stop-condition-value=".feed-form-expanded, .feed-form-error">
+     data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
   <div class="flex items-center justify-center py-8">
     <div class="spinner mr-3"></div>
     <p class="text-gray-600">Identifying feed format...</p>
@@ -913,7 +913,7 @@ export default class extends Controller {
 **app/views/feeds/_identification_error.html.erb**:
 - Error state after failed identification
 - Shows error message and URL input for retry
-- Has CSS class `feed-form-error` (triggers polling stop condition)
+- Has `data-identification-state="error"` attribute (triggers polling stop condition)
 - Provides "Try Again" button to restart process
 
 **app/views/feeds/_blocked_no_tokens.html.erb**:
