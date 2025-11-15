@@ -541,9 +541,7 @@ class AccessTokensController < ApplicationController
 
   def fetch_groups_from_freefeed(token)
     client = token.build_client
-    # Assuming FreefeedClient has a method to fetch groups
-    # This will need to be implemented based on FreeFeed API
-    client.fetch_managed_groups.map(&:username) # Returns array of group names
+    client.managed_groups.map(&:username) # Returns array of group names
   end
 end
 ```
@@ -953,17 +951,15 @@ This will be broken into separate PRs after spec approval:
 
 ## Open Questions / Assumptions
 
-1. **FreefeedClient#fetch_managed_groups**: Assuming this method exists or will be implemented. Need to verify FreeFeed API endpoint for fetching user's managed groups.
+1. **Group Validation**: We're validating format only, not existence in FreeFeed. If group doesn't exist, posting will fail gracefully during background job. This is acceptable per specification.
 
-2. **Group Validation**: We're validating format only, not existence in FreeFeed. If group doesn't exist, posting will fail gracefully during background job. This is acceptable per specification.
+2. **Title Extraction Failure**: If title extractor returns nil/empty, the name field will be blank and user must fill it manually. This is expected behavior.
 
-3. **Title Extraction Failure**: If title extractor returns nil/empty, the name field will be blank and user must fill it manually. This is expected behavior.
+3. **Custom Cron Expressions**: Not supported in initial implementation. Users must choose from predefined intervals. Could be future enhancement.
 
-4. **Custom Cron Expressions**: Not supported in initial implementation. Users must choose from predefined intervals. Could be future enhancement.
+4. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `Loader::HttpLoader`.
 
-5. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `Loader::HttpLoader`.
-
-6. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
+5. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
 
 
 
