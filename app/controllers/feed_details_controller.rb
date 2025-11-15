@@ -64,7 +64,7 @@ class FeedDetailsController < ApplicationController
   end
 
   def feed_identification_cache_key(url)
-    "feed_identification/#{Current.user.id}/#{Digest::SHA256.hexdigest(url)}"
+    FeedIdentificationCache.key_for(Current.user.id, url)
   end
 
   def handle_processing_status(cached_data, url, cache_key)
