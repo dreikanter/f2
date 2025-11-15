@@ -184,11 +184,10 @@ Section header: "Reposting Settings"
 `GET /access_tokens/:id/groups`
 
 **Logic**:
-1. Verify access token belongs to `current_user` (404 if not)
-2. Verify token is active (show error state if not)
-3. Fetch groups via `FreefeedClient` (built from token)
-4. Cache result for 10 minutes (keyed by token_id)
-5. Return Turbo Stream that replaces the target group selector partial
+1. Lookup access token by ID (scoped to `current_user`)
+2. If token found and active: fetch groups from FreeFeed API (with 10-minute cache)
+3. If token not found, inactive, or API fails: return empty groups array
+4. Return Turbo Stream that replaces the target group selector partial
 
 **Response**: Turbo Stream that renders `_target_group_selector.html.erb` partial with:
 - If groups fetched successfully: Select dropdown with groups as options
@@ -196,9 +195,10 @@ Section header: "Reposting Settings"
 - Current feed's target_group value pre-selected/pre-filled (for edit mode)
 
 **Error Handling**:
-- 404: Token not found or doesn't belong to user → render text input with help text
-- FreeFeed API error → render text input with help text: "Could not load groups. Enter the group name manually."
-- Token inactive → render text input with help text: "This token is inactive. Enter the group name manually or select a different token."
+- Token not found or doesn't belong to user → render empty selector with text input fallback
+- FreeFeed API error → render empty selector with text input fallback (logged)
+- Token inactive → render empty selector with text input fallback
+- All cases gracefully degrade to manual text entry instead of breaking the form
 
 **5. Feed Refresh Schedule Section**
 Section header: "Refresh Schedule"
@@ -440,13 +440,6 @@ def create
     partial: "feeds/identification_loading",
     locals: { url: url }
   )
-rescue => e
-  Rails.logger.error("Feed identification initiation failed: #{e.message}")
-  render turbo_stream: turbo_stream.replace(
-    "feed-form",
-    partial: "feeds/identification_error",
-    locals: { url: url, error: "An error occurred while checking this feed." }
-  )
 end
 
 private
@@ -502,13 +495,6 @@ def show
       locals: { url: url, error: cached_data[:error] || "We couldn't identify a feed profile for this URL." }
     )
   end
-rescue => e
-  Rails.logger.error("Feed identification polling failed: #{e.message}")
-  render turbo_stream: turbo_stream.replace(
-    "feed-form",
-    partial: "feeds/identification_error",
-    locals: { url: url, error: "An error occurred while checking identification status." }
-  )
 end
 
 private
@@ -523,15 +509,15 @@ end
 ```ruby
 class AccessTokensController < ApplicationController
   def groups
-    @token = current_user.access_tokens.find(params[:id])
+    @token = current_user.access_tokens.find_by(id: params[:id])
     @feed = current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
 
-    @groups = if @token.active?
-      Rails.cache.fetch("access_token_groups/#{@token.id}", expires_in: 10.minutes) do
-        fetch_groups_from_freefeed(@token)
-      end
+    # Use find_by instead of find - if token not found or doesn't belong to user,
+    # gracefully render empty selector (better UX for Turbo Stream context)
+    @groups = if @token&.active?
+      fetch_groups_with_cache(@token)
     else
-      [] # Token not active, show empty list with manual entry option
+      []
     end
 
     render turbo_stream: turbo_stream.replace(
@@ -539,26 +525,19 @@ class AccessTokensController < ApplicationController
       partial: "feeds/target_group_selector",
       locals: { feed: @feed, groups: @groups, token: @token }
     )
-  rescue ActiveRecord::RecordNotFound
-    # Token not found, render empty selector
-    @groups = []
-    render turbo_stream: turbo_stream.replace(
-      "target-group-selector",
-      partial: "feeds/target_group_selector",
-      locals: { feed: @feed, groups: @groups, token: nil }
-    )
-  rescue => e
-    # FreeFeed API error, render empty selector with help text
-    Rails.logger.error("Failed to fetch groups for token #{@token&.id}: #{e.message}")
-    @groups = []
-    render turbo_stream: turbo_stream.replace(
-      "target-group-selector",
-      partial: "feeds/target_group_selector",
-      locals: { feed: @feed, groups: @groups, token: @token, error: true }
-    )
   end
 
   private
+
+  def fetch_groups_with_cache(token)
+    Rails.cache.fetch("access_token_groups/#{token.id}", expires_in: 10.minutes) do
+      fetch_groups_from_freefeed(token)
+    end
+  rescue => e
+    # FreeFeed API error - return empty array so template can show text input fallback
+    Rails.logger.error("Failed to fetch groups for token #{token.id}: #{e.message}")
+    []
+  end
 
   def fetch_groups_from_freefeed(token)
     client = token.build_client
