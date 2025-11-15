@@ -167,13 +167,14 @@ Section header: "Reposting Settings"
 - When changed: Triggers `GET /access_tokens/:id/groups` to fetch and re-render target group selector
 
 **4.2 Target Group Selector**
-- Dropdown select (initially disabled/empty)
+- Initially disabled/empty until token is selected
 - Label: "Target Group"
 - Dynamically re-rendered via Turbo Stream when access token is selected
 - Fetches from: `GET /access_tokens/:id/groups` (returns Turbo Stream)
 - Display format: Group name as shown in FreeFeed API
 - Required field
-- Allows manual text entry as fallback (text input that also accepts free-form values)
+- **If groups successfully loaded**: Regular select dropdown with fetched groups
+- **If groups loading failed**: Text input with help text for manual entry
 - Validation: Lowercase letters, numbers, underscores, dashes only; max 80 chars
 - Help text: "The FreeFeed group where posts will be published"
 
@@ -188,14 +189,14 @@ Section header: "Reposting Settings"
 5. Return Turbo Stream that replaces the target group selector partial
 
 **Response**: Turbo Stream that renders `_target_group_selector.html.erb` partial with:
-- Fetched groups as select options
-- Current feed's target_group value pre-selected (for edit mode)
-- Allows manual text entry for groups not in the list
+- If groups fetched successfully: Select dropdown with groups as options
+- If groups fetch failed: Text input for manual entry
+- Current feed's target_group value pre-selected/pre-filled (for edit mode)
 
 **Error Handling**:
-- 404: Token not found or doesn't belong to user → render selector with empty options and help text
-- FreeFeed API error → render selector with empty options and help text: "Could not load groups. You can enter a group name manually."
-- Both cases allow manual text entry as fallback
+- 404: Token not found or doesn't belong to user → render text input with help text
+- FreeFeed API error → render text input with help text: "Could not load groups. Enter the group name manually."
+- Token inactive → render text input with help text: "This token is inactive. Enter the group name manually or select a different token."
 
 **5. Feed Refresh Schedule Section**
 Section header: "Refresh Schedule"
@@ -746,10 +747,10 @@ export default class extends Controller {
 **app/views/feeds/_target_group_selector.html.erb**:
 - Partial for target group selector (dynamically re-rendered via Turbo Stream)
 - Wrapped in `<div id="target-group-selector">`
-- If groups present: Shows datalist/combo box with fetched groups
-- If no groups or error: Shows text input with help text about manual entry
-- Accepts current feed's target_group value for pre-selection
-- Allows manual text entry as fallback
+- **If groups present**: Shows regular `<select>` dropdown with fetched groups as options
+- **If no groups or error**: Shows `<input type="text">` with help text about manual entry
+- Accepts current feed's target_group value for pre-selection/pre-fill
+- Help text displayed below the field explaining the current state
 
 **app/views/feeds/_identification_loading.html.erb**:
 - Loading state during async identification
@@ -774,10 +775,10 @@ export default class extends Controller {
 - Uses Turbo Frame or simple link with `data-turbo-stream` to trigger groups fetch on change
 
 **Target Group Selector**:
-- Combo box: dropdown + manual text entry
-- Uses `datalist` HTML5 element for suggestions while allowing free text
+- Standard select dropdown when groups are available
+- Falls back to text input when groups can't be loaded (error state)
 - Dynamically updated via Turbo Stream when token changes (no JavaScript needed)
-- Partial includes empty/error states with appropriate help text
+- Partial handles both states (select vs text input) with appropriate help text
 
 **Schedule Interval Selector**:
 - Standard select dropdown
