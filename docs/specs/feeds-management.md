@@ -298,23 +298,19 @@ The edit form is identical to the expanded create form with these differences:
 - Flash message: "Feed '{name}' was successfully updated."
 - If feed is enabled and configuration changed: Additional message: "Changes will take effect on the next scheduled refresh."
 
-#### 2.4 Concurrent Edit Protection
+#### 2.4 Concurrent Edits
 
-Use **optimistic locking** to handle concurrent modifications:
+**Approach**: Last-write-wins (no locking)
 
-**Implementation**:
-1. Add `lock_version` column to feeds table (integer, default 0)
-2. Include `lock_version` as hidden field in edit form
-3. On update, Rails automatically checks version match
-4. On `StaleObjectError`:
-   - Show friendly error message: "This feed was modified by another user or process. Please review the current settings and try again."
-   - Redirect back to edit form with current (reloaded) data
+**Rationale**:
+- Low contention: Single user editing their own feeds
+- Edit form doesn't change `state` (handled via separate enable/disable actions)
+- Short transaction time (~50ms for UPDATE)
+- Acceptable risk: User overwrites their own recent changes
 
-**Edge Case - Background Disabling**:
-If background job disables feed while user is editing:
-- Optimistic lock will catch this
-- User sees current state (disabled) when redirected to edit form
-- Form validation allows saving even if disabled (state is not in edit form)
+**Edge Cases**:
+- If background job disables feed while user is editing: User's update will succeed, but feed remains disabled (state is not changed via edit form)
+- If user edits same feed in multiple tabs: Last save wins
 
 
 
@@ -333,22 +329,17 @@ If background job disables feed while user is editing:
 
 ### Database Changes
 
-**Migration 1: Add lock_version to feeds**
-```ruby
-add_column :feeds, :lock_version, :integer, default: 0, null: false
-```
+No database migrations needed for feed CRUD functionality. All required columns already exist in the feeds table.
 
 ### Routing Changes
 
 Add to `config/routes.rb`:
 ```ruby
-resources :feeds do
-  resource :status, only: :update, controller: "feed_statuses"
-  resource :purge, only: :create, controller: "feeds/purges"
-end
-
+# Feeds CRUD routes already exist with status and purge nested resources
+# Only add the new feed details resource:
 resource :feed_details, only: [:create, :show], path: 'feeds/details'
 
+# Add groups endpoint to existing access_tokens routes:
 resources :access_tokens, only: [] do
   member do
     get :groups # Fetch groups for token
@@ -408,10 +399,6 @@ def update
   else
     render :edit, status: :unprocessable_entity
   end
-rescue ActiveRecord::StaleObjectError
-  flash.now[:error] = "This feed was modified by another user or process. Please review the current settings and try again."
-  @feed.reload
-  render :edit, status: :conflict
 end
 ```
 
@@ -801,10 +788,7 @@ Follow existing pattern from AccessToken forms:
 3. **Parameter Filtering**: Strong parameters in controller
 4. **URL Validation**: Validate HTTP/HTTPS only, prevent SSRF
 5. **Token Ownership**: Verify access token belongs to current_user
-6. **Race Conditions**:
-   - Optimistic locking for updates
-   - Transaction wrapper for create with state=enabled
-   - Atomic operations where needed
+6. **Race Conditions**: Transaction wrapper for create with state=enabled
 
 ### Race Condition Protection Strategy
 
@@ -821,14 +805,13 @@ end
 ```
 
 **During Update**:
-- Use optimistic locking (lock_version)
-- If concurrent modification: reload and show error
-- State changes remain separate (via FeedStatusesController)
+- No locking needed (last-write-wins acceptable)
+- State changes remain separate (via FeedStatusesController, not edit form)
 
 **Background Job Interference**:
 - Background jobs use their own locking mechanisms (advisory locks in FeedRefreshJob)
 - State changes are atomic via enum transitions
-- Edit form doesn't change state, so no conflict
+- Edit form doesn't change state, so minimal conflict risk
 
 
 
@@ -866,7 +849,6 @@ Per CLAUDE.md requirements:
 ### Model Tests
 - `Feed#schedule_interval` and `#schedule_interval=` conversions
 - `Feed.schedule_intervals_for_select` returns correct format
-- Optimistic locking behavior on concurrent updates
 - Validation of schedule interval values
 
 ### Controller Tests
@@ -884,7 +866,6 @@ Per CLAUDE.md requirements:
 - `FeedsController#update`:
   - Success with valid params
   - Failure with invalid params
-  - Handles stale object error
 - `FeedDetailsController#create`:
   - Creates cache entry and enqueues job for valid URL
   - Reuses existing cache entry if present
@@ -920,7 +901,6 @@ Per CLAUDE.md requirements:
 - Identification failure flow: identify fails → retry with different URL
 - Identification reuse flow: same URL identified twice within TTL → reuses cache
 - Token change flow: select token → groups load → select group
-- Concurrent edit flow: two users edit same feed → second sees error
 
 ### System Tests (if applicable)
 - Turbo Stream interactions: token selection triggers Turbo Stream request and group selector updates
@@ -944,10 +924,9 @@ Per CLAUDE.md requirements:
 
 This will be broken into separate PRs after spec approval:
 
-### PR 1: Model and Database Foundation
-1. Add lock_version column migration
-2. Add schedule interval methods to Feed model
-3. Model tests for new methods
+### PR 1: Feed Model Schedule Intervals
+1. Add schedule interval methods to Feed model
+2. Model tests for schedule interval conversion methods
 
 ### PR 2: Profile Identification Infrastructure
 1. Create FeedDetailsController with create and show actions
@@ -975,7 +954,7 @@ This will be broken into separate PRs after spec approval:
 ### PR 5: Feed Editing Flow
 1. Update edit action
 2. Reuse/adapt form partial for edit mode
-3. Implement update action with optimistic locking
+3. Implement update action
 4. Update controller tests
 5. Integration test for edit flow
 
