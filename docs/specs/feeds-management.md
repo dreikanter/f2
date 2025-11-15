@@ -162,7 +162,7 @@ After successful identification, show:
 **1. URL (Read-only)**
 - Display as disabled text input (grayed out, see current email field at `app/views/settings/email_updates/edit.html.erb` for example)
 - Label: "Feed URL"
-- Hidden field: `f.hidden_field :url` (ensures data persists even if cache expires)
+- Hidden field: `f.hidden_field :url` (controller uses this, not cache)
 
 **2. Identified Profile (Read-only)**
 - Display as static text field styled like form input
