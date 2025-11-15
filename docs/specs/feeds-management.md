@@ -191,7 +191,7 @@ Section header: "Reposting Settings"
 - Note: User is guaranteed to have at least one active token (verified in section 1.2)
 - When changed:
   - Immediately disable token selector (prevent race conditions)
-  - Trigger Turbo Stream request: `GET /access_tokens/:id/groups`
+  - Trigger Turbo Stream request: `GET /access_tokens/:access_token_id/groups`
   - Re-render target group selector with loading state
   - Re-enable token selector after groups loaded
 - Implemented via `data-action="change->groups-loader#loadGroups"` on select
@@ -200,7 +200,7 @@ Section header: "Reposting Settings"
 - Initially: Disabled select with placeholder "Select a FreeFeed account first"
 - Label: "Target Group"
 - Dynamically re-rendered via Turbo Stream when access token is selected
-- Fetches from: `GET /access_tokens/:id/groups` (returns Turbo Stream)
+- Fetches from: `GET /access_tokens/:access_token_id/groups` (returns Turbo Stream)
 - Display format: Group name as shown in FreeFeed API
 - Required field
 
@@ -225,7 +225,7 @@ Section header: "Reposting Settings"
 **General Help Text**: "The FreeFeed group where posts will be published"
 
 **4.3 Groups Endpoint Implementation**
-`GET /access_tokens/:id/groups`
+`GET /access_tokens/:access_token_id/groups`
 
 **Logic**:
 1. Lookup access token by ID (scoped to `current_user`)
@@ -383,13 +383,13 @@ Add to `config/routes.rb`:
 # Only add the new feed details resource:
 resource :feed_details, only: [:create, :show], path: 'feeds/details'
 
-# Add groups endpoint to existing access_tokens routes:
+# Add groups resource to existing access_tokens routes:
 resources :access_tokens, only: [] do
-  member do
-    get :groups # Fetch groups for token
-  end
+  resources :groups, only: :index, controller: 'access_tokens/groups'
 end
 ```
+
+This creates route: `GET /access_tokens/:access_token_id/groups`
 
 ### Controller Actions
 
@@ -582,12 +582,12 @@ def feed_identification_cache_key(url)
 end
 ```
 
-#### AccessTokensController#groups (NEW)
+#### AccessTokens::GroupsController#index (NEW)
 
 ```ruby
-class AccessTokensController < ApplicationController
-  def groups
-    @token = current_user.access_tokens.find_by(id: params[:id])
+class AccessTokens::GroupsController < ApplicationController
+  def index
+    @token = current_user.access_tokens.find_by(id: params[:access_token_id])
     @feed = current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
 
     # Use find_by instead of find - if token not found or doesn't belong to user,
@@ -1161,7 +1161,7 @@ Per CLAUDE.md requirements:
   - Returns expanded form when status is "success"
   - Returns error when status is "failed"
   - Returns error when cache entry missing/expired
-- `AccessTokensController#groups`:
+- `AccessTokens::GroupsController#index`:
   - Returns Turbo Stream with groups for active token owned by user
   - Renders target_group_selector partial with fetched groups
   - Renders empty selector for non-existent token
@@ -1230,11 +1230,11 @@ This will be broken into separate PRs after spec approval:
 5. Mock HTTP responses and cache in tests
 
 ### PR 3: Groups API Endpoint
-1. Add groups action to AccessTokensController
-2. Add route
+1. Create AccessTokens::GroupsController with index action
+2. Add nested resource route
 3. Implement FreefeedClient method to fetch groups
 4. Controller tests with mocked API
-5. Cache implementation
+5. Cache implementation with race_condition_ttl and failure handling
 
 ### PR 4: Feed Creation Flow
 1. Update new action with active token check
