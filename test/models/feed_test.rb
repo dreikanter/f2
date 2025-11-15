@@ -374,4 +374,62 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 1, result.length
     assert_equal 5, result[0]["posts_count"]
   end
+
+  test ".schedule_intervals_for_select should return array of display names and keys" do
+    result = Feed.schedule_intervals_for_select
+
+    expected = [
+      ["10 minutes", "10m"],
+      ["20 minutes", "20m"],
+      ["30 minutes", "30m"],
+      ["1 hour", "1h"],
+      ["2 hours", "2h"],
+      ["6 hours", "6h"],
+      ["12 hours", "12h"],
+      ["1 day", "1d"],
+      ["2 days", "2d"]
+    ]
+
+    assert_equal expected, result
+  end
+
+  test "#schedule_interval should return key for matching cron expression" do
+    feed = build(:feed, cron_expression: "0 * * * *")
+
+    assert_equal "1h", feed.schedule_interval
+  end
+
+  test "#schedule_interval should return nil for non-standard cron expression" do
+    feed = build(:feed, cron_expression: "15 3 * * *")
+
+    assert_nil feed.schedule_interval
+  end
+
+  test "#schedule_interval= should set cron_expression from valid key" do
+    feed = build(:feed)
+
+    feed.schedule_interval = "1h"
+
+    assert_equal "0 * * * *", feed.cron_expression
+  end
+
+  test "#schedule_interval= should set nil for invalid key" do
+    feed = build(:feed, cron_expression: "0 * * * *")
+
+    feed.schedule_interval = "invalid"
+
+    assert_nil feed.cron_expression
+  end
+
+  test "#schedule_display should return display name for standard interval" do
+    feed = build(:feed, cron_expression: "0 * * * *")
+
+    assert_equal "1 hour", feed.schedule_display
+  end
+
+  test "#schedule_display should return cron expression for non-standard interval" do
+    feed = build(:feed, cron_expression: "15 3 * * *")
+
+    assert_equal "15 3 * * *", feed.schedule_display
+  end
 end
