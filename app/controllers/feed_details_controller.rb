@@ -17,7 +17,7 @@ class FeedDetailsController < ApplicationController
     cache_key = feed_identification_cache_key(url)
     cached_data = Rails.cache.read(cache_key)
 
-    if cached_data.nil?
+    if cached_data.nil? || cached_data[:status] != "processing"
       Rails.cache.write(
         cache_key,
         { status: "processing", url: url, started_at: Time.current },
