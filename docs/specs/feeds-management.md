@@ -41,6 +41,15 @@ Implement create, edit, and delete functionality for Feed records in the Feeder 
 
 #### 1.2 Initial Form State (Collapsed)
 
+**Prerequisite Check**: Before displaying the form, verify the user has at least one active access token.
+
+**If NO active tokens exist**:
+- Display blocked state message: "You need to add an active FreeFeed access token before creating a feed."
+- Show prominent link/button: "Add Access Token" (links to `/settings/access_tokens/new`)
+- Do NOT show the URL input or Identify button
+- This prevents users from going through identification only to discover they can't complete the form
+
+**If active tokens exist**:
 When the user lands on `/feeds/new`, display:
 - **URL Input**: Text field for feed URL
   - Label: "Feed URL"
@@ -154,7 +163,7 @@ Section header: "Reposting Settings"
 - Display format: `{host_domain} - {owner}` (e.g., "freefeed.net - username")
 - Uses `AccessToken.active.where(user: current_user)`
 - Required field
-- Empty state message (if no active tokens): "You need to add an active access token first. [Add Token]" (link to settings)
+- Note: User is guaranteed to have at least one active token (verified in section 1.2)
 
 **4.2 Target Group Selector**
 - Dropdown select (initially disabled/empty)
@@ -352,6 +361,11 @@ end
 ```ruby
 def new
   @feed = current_user.feeds.build
+  @has_active_tokens = current_user.access_tokens.active.exists?
+
+  # View will check @has_active_tokens and show either:
+  # - Blocked state with "Add Access Token" link if false
+  # - Normal form if true
 end
 ```
 
@@ -752,11 +766,17 @@ export default class extends Controller {
 - Error state after failed identification
 - Shows error message and URL input for retry
 
+**app/views/feeds/_blocked_no_tokens.html.erb**:
+- Blocked state when user has no active access tokens
+- Shows message: "You need to add an active FreeFeed access token before creating a feed."
+- Prominent "Add Access Token" button/link to `/settings/access_tokens/new`
+- Prevents frustration of going through identification only to be blocked later
+
 ### Form Field Considerations
 
 **Access Token Selector**:
-- If user has no active tokens: Show prominent message with link to `/settings/access_tokens/new`
-- Empty state handled gracefully
+- Always has at least one token available (prerequisite check in section 1.2)
+- Dropdown populated with active tokens only
 
 **Target Group Selector**:
 - Combo box: dropdown + manual text entry
@@ -851,7 +871,10 @@ Per CLAUDE.md requirements:
 - Validation of schedule interval values
 
 ### Controller Tests
-- `FeedsController#new`: renders form
+- `FeedsController#new`:
+  - Renders form when user has active tokens
+  - Shows blocked state when user has no active tokens
+  - Sets @has_active_tokens correctly
 - `FeedsController#create`:
   - Success with valid params
   - Failure with invalid params
@@ -892,6 +915,7 @@ Per CLAUDE.md requirements:
 
 ### Integration Tests
 - Complete flow: new form → identify (async) → poll → fill fields → create → show page
+- Blocked state flow: user with no tokens visits new → sees blocked message → clicks add token link
 - Edit flow: edit form → update → show page
 - Identification failure flow: identify fails → retry with different URL
 - Identification reuse flow: same URL identified twice within TTL → reuses cache
@@ -940,12 +964,13 @@ This will be broken into separate PRs after spec approval:
 5. Cache implementation
 
 ### PR 4: Feed Creation Flow
-1. Update new action
-2. Create collapsed form partial
-3. Create expanded form partial
-4. Implement create action
-5. Form submission tests
-6. Integration test for full flow
+1. Update new action with active token check
+2. Create blocked state partial (no active tokens)
+3. Create collapsed form partial
+4. Create expanded form partial
+5. Implement create action
+6. Form submission tests
+7. Integration test for full flow including blocked state
 
 ### PR 5: Feed Editing Flow
 1. Update edit action
