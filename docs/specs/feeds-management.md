@@ -481,7 +481,7 @@ def create
     # Create cache entry with processing status
     Rails.cache.write(
       cache_key,
-      { status: "processing", url: url },
+      { status: "processing", url: url, started_at: Time.current },
       expires_in: 10.minutes
     )
 
@@ -504,6 +504,12 @@ def feed_identification_cache_key(url)
 end
 ```
 
+**Rate Limiting**:
+- Limit identification requests to **10 per hour per user**
+- Prevents job queue flooding from malicious or accidental spam
+- Returns 429 Too Many Requests if limit exceeded
+- Error message: "Too many identification attempts. Please wait before trying again."
+
 #### FeedDetailsController#show (NEW)
 
 ```ruby
@@ -523,10 +529,24 @@ def show
 
   case cached_data[:status]
   when "processing"
-    # Still processing, keep polling
-    # Note: polling_controller will stop after 30 attempts (60 seconds)
-    # If max polls reached, the loading state remains visible
-    # Consider: Check poll count and show timeout error after max attempts
+    # Check if processing for too long (job may have crashed/stuck)
+    started_at = cached_data[:started_at] || Time.current
+    timeout_threshold = 90.seconds
+
+    if Time.current - started_at > timeout_threshold
+      # Job timed out - clean up stuck cache entry and show error
+      Rails.cache.delete(cache_key)
+      return render turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_error",
+        locals: {
+          url: url,
+          error: "Feed identification timed out. The feed may not be responding. Please try again."
+        }
+      )
+    end
+
+    # Still processing normally
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_loading",
@@ -588,12 +608,24 @@ class AccessTokensController < ApplicationController
   private
 
   def fetch_groups_with_cache(token)
-    Rails.cache.fetch("access_token_groups/#{token.id}", expires_in: 10.minutes) do
+    Rails.cache.fetch(
+      "access_token_groups/#{token.id}",
+      expires_in: 10.minutes,
+      race_condition_ttl: 5.seconds
+    ) do
       fetch_groups_from_freefeed(token)
     end
   rescue => e
-    # FreeFeed API error - return empty array so template can show text input fallback
+    # FreeFeed API error - cache failure with shorter TTL to prevent hammering
     Rails.logger.error("Failed to fetch groups for token #{token.id}: #{e.message}")
+
+    # Cache empty result for 1 minute to prevent repeated API calls
+    Rails.cache.write(
+      "access_token_groups/#{token.id}",
+      [],
+      expires_in: 1.minute
+    )
+
     []
   end
 
@@ -706,6 +738,31 @@ def schedule_display
   SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
 end
 ```
+
+#### Feed Model - Validations
+
+**Uniqueness Constraint**:
+- Validate `(user_id, url, target_group)` combination is unique
+- Allows same URL to different groups (user may want to cross-post)
+- Prevents duplicate feeds to the same destination
+- Error message: "A feed with this URL and target group already exists"
+
+**Access Token Ownership**:
+- Validate `access_token` belongs to the feed's `user`
+- Prevents malicious users from assigning someone else's token via crafted POST
+- Checked on create and update
+- Error message: "Access token is invalid"
+
+**Schedule Interval**:
+- Validate `schedule_interval` is a valid key in `SCHEDULE_INTERVALS` constant
+- If invalid key provided, `cron_expression` becomes nil and validation fails
+- Error message: "Schedule interval is not valid"
+
+**Data Consistency for Feed Creation**:
+- When creating enabled feed: wrap in transaction
+- If feed saves but schedule creation fails, entire operation rolls back
+- Ensures feed is never left in inconsistent state (enabled without schedule)
+- User sees error and can retry with all data intact
 
 ### Stimulus Controllers
 
@@ -1068,6 +1125,12 @@ Per CLAUDE.md requirements:
 - `Feed#schedule_interval` and `#schedule_interval=` conversions
 - `Feed.schedule_intervals_for_select` returns correct format
 - Validation of schedule interval values
+- **Uniqueness validation**: Rejects duplicate (user_id, url, target_group)
+- **Uniqueness validation**: Allows same URL to different groups
+- **Access token ownership**: Rejects token belonging to different user
+- **Access token ownership**: Accepts token belonging to same user
+- **Schedule interval validation**: Rejects invalid interval keys
+- **Data consistency**: Transaction rolls back if schedule creation fails on enabled feed
 
 ### Controller Tests
 - `FeedsController#new`:
@@ -1089,8 +1152,12 @@ Per CLAUDE.md requirements:
   - Reuses existing cache entry if present
   - Returns error for invalid URL
   - Returns loading state Turbo Stream
+  - **Rate limiting**: Returns 429 when user exceeds 10 requests per hour
+  - **Cache entry**: Includes `started_at` timestamp for timeout detection
 - `FeedDetailsController#show`:
-  - Returns processing state when status is "processing"
+  - Returns processing state when status is "processing" and under 90s
+  - **Timeout detection**: Returns error when processing exceeds 90 seconds
+  - **Timeout cleanup**: Deletes stuck cache entry on timeout
   - Returns expanded form when status is "success"
   - Returns error when status is "failed"
   - Returns error when cache entry missing/expired
@@ -1101,6 +1168,8 @@ Per CLAUDE.md requirements:
   - Renders empty selector for token owned by different user
   - Renders empty selector with error state when token inactive
   - Handles FreeFeed API errors gracefully (renders empty selector with help text)
+  - **Cache failure handling**: Caches empty result for 1 minute on API error
+  - **Race condition protection**: Uses `race_condition_ttl: 5.seconds`
 
 ### Job Tests
 - `FeedIdentificationJob`:
@@ -1111,6 +1180,8 @@ Per CLAUDE.md requirements:
   - Updates cache with failed status when profile not identified
   - Updates cache with failed status on HTTP errors
   - Uses correct cache key format
+  - **No automatic retry**: Job does not retry on failure (user must retry manually)
+  - **HTTP timeout**: Respects HttpClient timeout configuration (5s connect, 10s read)
 
 ### Integration Tests
 - Complete flow: new form → identify (async) → poll → fill fields → create → show page
@@ -1197,17 +1268,42 @@ This will be broken into separate PRs after spec approval:
 
 
 
-## Open Questions / Assumptions
+## Requirements and Assumptions
 
-1. **Group Validation**: We're validating format only, not existence in FreeFeed. If group doesn't exist, posting will fail gracefully during background job. This is acceptable per specification.
+### Firm Requirements
+
+1. **HTTP Client Timeout**: `HttpClient` **must** enforce timeouts to prevent indefinite hangs:
+   - Connection timeout: **5 seconds**
+   - Read timeout: **10 seconds**
+   - Total timeout: **15 seconds maximum**
+   - Max redirects: **5** (prevent redirect loops)
+   - These are critical to prevent worker exhaustion from unresponsive URLs
+
+2. **Job Failure Handling**: `FeedIdentificationJob` **must not** automatically retry on failure:
+   - All failures update cache with `status: "failed"` and error message
+   - User sees error in UI and decides whether to retry manually
+   - No exponential backoff or automatic retry logic
+   - Transient network errors require user to re-submit
+
+3. **Rate Limiting**: Feed identification endpoint **must** enforce rate limits:
+   - **10 requests per hour per user**
+   - Prevents job queue flooding
+   - Returns 429 Too Many Requests with clear error message
+
+4. **Stuck Job Detection**: Server **must** detect and recover from stuck "processing" state:
+   - Timeout threshold: **90 seconds** from `started_at` timestamp
+   - Automatically clean up stuck cache entries
+   - Show timeout error to user with retry option
+
+### Assumptions
+
+1. **Group Validation**: Validating format only, not existence in FreeFeed. If group doesn't exist, posting will fail gracefully during background job. This is acceptable.
 
 2. **Title Extraction Failure**: If title extractor returns nil/empty, the name field will be blank and user must fill it manually. This is expected behavior.
 
 3. **Custom Cron Expressions**: Not supported in initial implementation. Users must choose from predefined intervals. Could be future enhancement.
 
-4. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `HttpClient`.
-
-5. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
+4. **SSRF Protection**: URL validation prevents obvious internal network access (localhost, 127.0.0.1, etc.). Additional safeguards may be needed depending on deployment environment.
 
 
 
