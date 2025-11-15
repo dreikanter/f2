@@ -93,12 +93,17 @@ When the user lands on `/feeds/new`, display:
 **Background Job (`FeedIdentificationJob`)**:
 1. Receive `user_id` and `url` as parameters
 2. Validate URL format (HTTP/HTTPS)
-3. Fetch feed data from the HTTP URL
-4. Run `FeedProfileDetector.detect(url, response)`
-5. If profile matched:
-   - Run appropriate `TitleExtractor` for the profile
-   - Extract feed title
-   - Update cache with `status: "success"`, `feed_profile_key`, and `title`
+3. Fetch feed data from the HTTP URL using `HttpClient`
+4. Instantiate `FeedProfileDetector` and call `detect` method:
+   ```ruby
+   detector = FeedProfileDetector.new(url, response)
+   matcher_class = detector.detect
+   ```
+5. If profile matched (matcher_class is not nil):
+   - Convert matcher class to profile key (e.g., `ProfileMatcher::RssProfileMatcher` -> "rss")
+   - Get title extractor class via `FeedProfile.title_extractor_class_for(profile_key)`
+   - Instantiate extractor and extract feed title
+   - Update cache with `status: "success"`, `feed_profile_key` (string), and `title`
 6. If profile not matched or error occurred:
    - Update cache with `status: "failed"` and error message
 
@@ -299,7 +304,7 @@ SCHEDULE_INTERVALS = {
 ```
 
 **Timezone Configuration**:
-All cron expressions are evaluated in UTC (configured via `config.time_zone = 'UTC'` in `config/application.rb`). Ensure this setting is consistently applied across all environments (development, test, production). If per-schedule timezone variation is required in the future, timezone can be embedded directly in individual cron strings (e.g., `"0 9 * * * America/New_York"`).
+All cron expressions are evaluated in the timezone specified by `FEED_CRON_TIMEZONE` constant (set to `"UTC"`). This **must match** `config.time_zone` in `config/application.rb`. Fugit will parse cron expressions using the application's configured timezone. Ensure `config.time_zone = 'UTC'` is set consistently across all environments (development, test, production). If per-schedule timezone variation is required in the future, timezone can be embedded directly in individual cron strings (e.g., `"0 9 * * * America/New_York"`).
 
 **Helper methods**:
 - `Feed.schedule_intervals_for_select`: Returns array for dropdown
@@ -693,7 +698,8 @@ class AccessTokens::GroupsController < ApplicationController
 
   def fetch_groups_from_freefeed(token)
     client = token.build_client
-    client.managed_groups.map(&:username) # Returns array of group names
+    # managed_groups returns array of hashes with symbol keys
+    client.managed_groups.map { |group| group[:username] }
   end
 end
 ```
@@ -711,15 +717,21 @@ class FeedIdentificationJob < ApplicationJob
     cache_key = "feed_identification/#{user_id}/#{Digest::SHA256.hexdigest(url)}"
 
     begin
-      # Fetch feed data
+      # Fetch feed data with configured timeouts
       response = http_client.get(url)
 
-      # Identify profile
-      profile_key = FeedProfileDetector.detect(url, response)
+      # Identify profile using instance method
+      detector = FeedProfileDetector.new(url, response)
+      matcher_class = detector.detect
 
-      if profile_key
+      if matcher_class
+        # Convert matcher class to profile key string
+        # e.g., ProfileMatcher::RssProfileMatcher -> "rss"
+        profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, '').underscore
+
         # Extract title
-        title_extractor = FeedProfile.title_extractor_class_for(profile_key).new(url, response)
+        title_extractor_class = FeedProfile.title_extractor_class_for(profile_key)
+        title_extractor = title_extractor_class.new(url, response)
         title = title_extractor.title rescue nil
 
         # Update cache with success
@@ -762,7 +774,9 @@ class FeedIdentificationJob < ApplicationJob
   private
 
   def http_client
-    @http_client ||= HttpClient.build
+    # Build client with timeouts (total timeout: 30 seconds by default)
+    # For feed identification, use shorter timeout to fail fast
+    @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
   end
 end
 ```
@@ -772,6 +786,10 @@ end
 #### Feed Model - Schedule Interval Mapping
 
 ```ruby
+# Timezone for all cron expression evaluation
+# Must match config.time_zone in config/application.rb
+FEED_CRON_TIMEZONE = "UTC".freeze
+
 SCHEDULE_INTERVALS = {
   "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
   "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
@@ -1245,7 +1263,7 @@ Per CLAUDE.md requirements:
   - Updates cache with failed status on HTTP errors
   - Uses correct cache key format
   - **No automatic retry**: Job does not retry on failure (user must retry manually)
-  - **HTTP timeout**: Respects HttpClient timeout configuration (5s connect, 10s read)
+  - **HTTP timeout**: Respects HttpClient timeout configuration (15 seconds total, 5 redirects max)
 
 ### Integration Tests
 - Complete flow: new form → identify (async) → poll → fill fields → create → show page
@@ -1337,10 +1355,9 @@ This will be broken into separate PRs after spec approval:
 ### Firm Requirements
 
 1. **HTTP Client Timeout**: `HttpClient` **must** enforce timeouts to prevent indefinite hangs:
-   - Connection timeout: **5 seconds**
-   - Read timeout: **10 seconds**
-   - Total timeout: **15 seconds maximum**
+   - Timeout: **15 seconds** (applies to both connection and read operations)
    - Max redirects: **5** (prevent redirect loops)
+   - Usage: `HttpClient.build(timeout: 15, max_redirects: 5)`
    - These are critical to prevent worker exhaustion from unresponsive URLs
 
 2. **Job Failure Handling**: `FeedIdentificationJob` **must not** automatically retry on failure:
