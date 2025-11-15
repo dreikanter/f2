@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement create, edit, and delete functionality for Feed records in the Feeder application. This feature allows users to configure feed sources, detect feed profiles, and set up automated content reposting to FreeFeed groups.
+Implement create, edit, and delete functionality for Feed records in the Feeder application. This feature allows users to configure feed sources, identify feed profiles, and set up automated content reposting to FreeFeed groups.
 
 ## Current State
 
@@ -47,8 +47,8 @@ When the user lands on `/feeds/new`, display:
   - Placeholder: "https://example.com/feed.xml"
   - Accepts any valid HTTP/HTTPS URL
   - Required field
-- **Detect Button**: Primary action button
-  - Label: "Detect Feed Format"
+- **Identify Button**: Primary action button
+  - Label: "Identify Feed Format"
   - Triggers profile identification
 
 #### 1.3 Initiate Profile Identification Process
@@ -107,7 +107,7 @@ When the user lands on `/feeds/new`, display:
 
 **Success Response** (Turbo Stream, when `status: "success"`):
 - Replace form with expanded version including:
-  - Detected profile
+  - Identified profile
   - Extracted title (or empty if extraction failed)
   - All configuration fields
 
@@ -118,20 +118,20 @@ When the user lands on `/feeds/new`, display:
 **Failure Response** (Turbo Stream, when `status: "failed"`):
 - Show inline error message in form
 - Keep URL field populated for editing
-- Error message: "We couldn't detect a feed profile for this URL. Please check the URL and try again, or try a different feed source."
+- Error message: "We couldn't identify a feed profile for this URL. Please check the URL and try again, or try a different feed source."
 
 **No Manual Profile Override**: If identification fails, users must try a different URL. No dropdown to manually select profiles.
 
 #### 1.5 Expanded Form State
 
-After successful detection, show:
+After successful identification, show:
 
 **1. URL (Read-only)**
 - Display as disabled text input (grayed out)
 - Value remains submitted but not editable
 - Label: "Feed URL"
 
-**2. Detected Profile (Read-only)**
+**2. Identified Profile (Read-only)**
 - Display as static text field styled like form input
 - Show profile name in human-readable format (e.g., "RSS Feed")
 - Label: "Feed Type"
@@ -496,7 +496,7 @@ def show
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_error",
-      locals: { url: url, error: cached_data[:error] || "We couldn't detect a feed profile for this URL." }
+      locals: { url: url, error: cached_data[:error] || "We couldn't identify a feed profile for this URL." }
     )
   end
 rescue => e
@@ -565,7 +565,7 @@ class FeedIdentificationJob < ApplicationJob
       # Fetch feed data
       response = Loader::HttpLoader.new(url).load
 
-      # Detect profile
+      # Identify profile
       profile_key = FeedProfileDetector.detect(url, response)
 
       if profile_key
@@ -736,7 +736,7 @@ export default class extends Controller {
 
 **app/views/feeds/_form_collapsed.html.erb**:
 - Initial identification form
-- URL input + Detect button
+- URL input + Identify button
 
 **app/views/feeds/_form_expanded.html.erb**:
 - Full form with all fields
@@ -826,7 +826,7 @@ Per CLAUDE.md requirements:
 - ✅ "Check for new posts every" (not "Refresh interval")
 - ✅ "Target Group" (not "FreeFeed group identifier")
 - ✅ "Feed Type: RSS Feed" (not "Feed Profile: rss")
-- ✅ "We couldn't detect a feed profile" (not "Profile detection failed")
+- ✅ "We couldn't identify a feed profile" (not "Profile identification failed")
 
 ### Form Layout
 - Follow existing form patterns from AccessToken creation
@@ -838,7 +838,7 @@ Per CLAUDE.md requirements:
 - Disable submit button during form processing
 - Show loading indicator during async identification (polling state)
 - Disable group selector until token is selected
-- Disable Detect button while identification is in progress
+- Disable Identify button while identification is in progress
 
 
 
@@ -886,7 +886,7 @@ Per CLAUDE.md requirements:
   - Successfully identifies XKCD feed and updates cache
   - Extracts title correctly
   - Handles title extraction failure gracefully
-  - Updates cache with failed status when profile not detected
+  - Updates cache with failed status when profile not identified
   - Updates cache with failed status on HTTP errors
   - Uses correct cache key format
 
@@ -986,10 +986,10 @@ This will be broken into separate PRs after spec approval:
 
 ## Success Criteria
 
-- ✅ User can create a new feed by entering URL and detecting profile
+- ✅ User can create a new feed by entering URL and identifying profile
 - ✅ User can configure all feed settings (title, token, group, schedule, state)
 - ✅ User can edit existing feed configuration (except URL and profile)
-- ✅ Profile detection works for RSS and XKCD feeds
+- ✅ Profile identification works for RSS and XKCD feeds
 - ✅ Groups are fetched dynamically based on selected token
 - ✅ Form validates all fields and shows helpful error messages
 - ✅ Feed can be created in enabled or disabled state
