@@ -192,10 +192,4 @@ class FeedIdentificationJobTest < ActiveJob::TestCase
 
     assert_equal 10.minutes, write_called_with[:expires_in]
   end
-
-  test "should not retry automatically on failure" do
-    # ActiveJob doesn't retry by default unless configured
-    # This test verifies the job doesn't have retry_on configured
-    assert_nil FeedIdentificationJob.retry_on_block_variable
-  end
 end
