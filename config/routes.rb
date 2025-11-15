@@ -35,6 +35,8 @@ Rails.application.routes.draw do
     resource :purge, only: :create, controller: "feeds/purges"
   end
 
+  resource :feed_details, only: [:create, :show], path: "feeds/details"
+
   namespace :admin do
     resources :users, only: [:index, :show] do
       resource :email_update, only: [:edit, :update]
