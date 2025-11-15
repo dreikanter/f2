@@ -189,6 +189,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "We couldn't identify a feed profile for this URL"
+    assert_includes response.body, "We couldn&#39;t identify a feed profile for this URL"
   end
 end
