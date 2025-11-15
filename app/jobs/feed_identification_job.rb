@@ -13,6 +13,11 @@ class FeedIdentificationJob < ApplicationJob
 
     begin
       response = http_client.get(url)
+
+      unless response.success?
+        raise HttpClient::Error, "HTTP request failed with status #{response.status}"
+      end
+
       detector = FeedProfileDetector.new(url, response)
       matcher_class = detector.detect
 
