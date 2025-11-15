@@ -119,15 +119,17 @@ When the user lands on `/feeds/new`, display:
   - Identified profile
   - Extracted title (or empty if extraction failed)
   - All configuration fields
+- **Stop polling** - identification complete
 
 **Processing Response** (Turbo Stream, when `status: "processing"`):
-- Keep polling state active
-- Show loading indicator
+- Keep polling state active with loading indicator
+- **Continue polling** via Turbo Stream refresh until status changes
 
 **Failure Response** (Turbo Stream, when `status: "failed"`):
 - Show inline error message in form
 - Keep URL field populated for editing
 - Error message: "We couldn't identify a feed profile for this URL. Please check the URL and try again, or try a different feed source."
+- **Stop polling** - identification failed
 
 **No Manual Profile Override**: If identification fails, users must try a different URL. No dropdown to manually select profiles.
 
