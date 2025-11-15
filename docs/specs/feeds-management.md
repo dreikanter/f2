@@ -19,10 +19,11 @@ Implement create, edit, and delete functionality for Feed records in the Feeder 
 
 ### To Be Implemented
 
-- [ ] Feed creation flow with profile identification
+- [ ] Feed creation flow with async profile identification
 - [ ] Feed editing form
 - [ ] `FeedsController#create` and `#update` actions
-- [ ] Profile identification endpoint
+- [ ] `FeedDetailsController` for async identification (create and show actions)
+- [ ] `FeedIdentificationJob` background job
 - [ ] Groups API endpoint for token-based group fetching
 - [ ] Client-side form dynamics (Stimulus controllers)
 
@@ -50,51 +51,76 @@ When the user lands on `/feeds/new`, display:
   - Label: "Detect Feed Format"
   - Triggers profile identification
 
-#### 1.3 Initiate Profile Detection Process
+#### 1.3 Initiate Profile Identification Process
 
-**Endpoint**: `POST /feeds/details` (`create` action starts identification process)
+**Endpoint**: `POST /feeds/details` (`FeedDetailsController#create` starts identification process)
 
 **Request Parameters**:
-- `url`: The feed URL to detect
+- `url`: The feed URL to identify
+
+**Cache Strategy**:
+- **Cache Key**: `"feed_identification/#{current_user.id}/#{Digest::SHA256.hexdigest(url)}"`
+- **TTL**: 10 minutes
+- **Reuse**: If cache entry exists, reuse it and do not enqueue background job
+- **Data Structure**:
+  ```ruby
+  {
+    status: "processing" | "success" | "failed",
+    url: "original_url",
+    feed_profile_key: "rss" (if success),
+    title: "extracted_title" (if success, can be nil),
+    error: "error_message" (if failed)
+  }
+  ```
 
 **Server-side Process**:
-1. Create a temporary DB record `FeedDetails` (`url: url, status: processing`) (avoid creating duplicates; if the record already exists, do not run the background job)
-2. Run a background job that will identify and persist feed details in a temporary DB record (`FeedDetails`)
-3. Return Turbo Stream response, switching the page to "Loading" state (see `FeedPreviewsController` for an example)
+1. Generate cache key from `current_user.id` and URL
+2. Check if cache entry exists:
+   - If exists: Return current status (don't enqueue new job)
+   - If not exists: Create cache entry with `status: "processing"`
+3. Enqueue `FeedIdentificationJob` with user_id and URL
+4. Return Turbo Stream response, switching the page to "Loading" state (see `FeedPreviewsController` for an example)
 
-**Background Job**:
-1. Accept `FeedDetails` record from parameters and validate it's URL format (HTTP/HTTPS)
-2. Fetch feed data from the HTTP URL
-3. Run `FeedProfileDetector.detect(url, response)`
-4. If profile matched:
+**Background Job (`FeedIdentificationJob`)**:
+1. Receive `user_id` and `url` as parameters
+2. Validate URL format (HTTP/HTTPS)
+3. Fetch feed data from the HTTP URL
+4. Run `FeedProfileDetector.detect(url, response)`
+5. If profile matched:
    - Run appropriate `TitleExtractor` for the profile
    - Extract feed title
-5. Save details to the `FeedDetails` and update it's status to `success` or `failed`, depending on identification result
+   - Update cache with `status: "success"`, `feed_profile_key`, and `title`
+6. If profile not matched or error occurred:
+   - Update cache with `status: "failed"` and error message
 
-#### 1.4 Poll for the Profile Detection Result
+#### 1.4 Poll for the Profile Identification Result
 
-**Endpoint**: `GET /feeds/details` (`show` action responds to polling for the identification results)
+**Endpoint**: `GET /feeds/details` (`FeedDetailsController#show` responds to polling for the identification results)
 
 **Request Parameters**:
-- `url`: The feed URL that is now a key to find the identification result
+- `url`: The feed URL used to generate the cache key
 
 **Server-side Process**:
-1. Find the `FeedDetails` record matching the provided URL parameter
-2. Return Turbo Stream response
+1. Generate cache key from `current_user.id` and URL
+2. Fetch data from Rails cache
+3. Based on status, return appropriate Turbo Stream response
 
-**Success Response** (Turbo Stream):
+**Success Response** (Turbo Stream, when `status: "success"`):
 - Replace form with expanded version including:
   - Detected profile
   - Extracted title (or empty if extraction failed)
   - All configuration fields
 
-**Failure Response** (Turbo Stream):
+**Processing Response** (Turbo Stream, when `status: "processing"`):
+- Keep polling state active
+- Show loading indicator
+
+**Failure Response** (Turbo Stream, when `status: "failed"`):
 - Show inline error message in form
 - Keep URL field populated for editing
 - Error message: "We couldn't detect a feed profile for this URL. Please check the URL and try again, or try a different feed source."
-- Do not create any database records
 
-**No Manual Profile Override**: If detection fails, users must try a different URL. No dropdown to manually select profiles.
+**No Manual Profile Override**: If identification fails, users must try a different URL. No dropdown to manually select profiles.
 
 #### 1.5 Expanded Form State
 
@@ -216,9 +242,9 @@ SCHEDULE_INTERVALS = {
 - Flash message: "Feed '{name}' was successfully created."
 - If enabled: Additional message: "Your feed is now active and will check for new posts {schedule_display}."
 
-#### 1.6 No Data Persistence During Detection
+#### 1.6 Temporary Cache Storage During Identification
 
-**Critical**: Profile detection does NOT create database records. All detected/extracted data (URL, profile, title) are form parameters that get submitted when the user clicks the final create button.
+**Critical**: Profile identification uses Rails cache for temporary storage (10 minute TTL). No Feed database records are created during identification. All identified data (URL, profile, title) are passed as form parameters when the user submits the final create button. Cache entries are scoped by user_id to prevent data leakage between users.
 
 
 
@@ -306,12 +332,11 @@ add_column :feeds, :lock_version, :integer, default: 0, null: false
 Add to `config/routes.rb`:
 ```ruby
 resources :feeds do
-  collection do
-    post :detect # Profile detection endpoint
-  end
   resource :status, only: :update, controller: "feed_statuses"
   resource :purge, only: :create, controller: "feeds/purges"
 end
+
+resource :feed_details, only: [:create, :show], path: 'feeds/details'
 
 resources :access_tokens, only: [] do
   member do
@@ -374,54 +399,119 @@ rescue ActiveRecord::StaleObjectError
 end
 ```
 
-#### FeedsController#detect (NEW)
+#### FeedDetailsController#create (NEW)
 
 ```ruby
-def detect
+def create
   url = params[:url]
 
   # Validate URL format
   unless url.present? && url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
     return render turbo_stream: turbo_stream.replace(
       "feed-form",
-      partial: "feeds/detection_error",
+      partial: "feeds/identification_error",
       locals: { url: url, error: "Please enter a valid URL" }
     )
   end
 
-  # Fetch and detect profile
-  response = Loader::HttpLoader.new(url).load
-  profile_key = FeedProfileDetector.detect(url, response)
+  cache_key = feed_identification_cache_key(url)
 
-  if profile_key
-    # Extract title
-    title_extractor = FeedProfile.title_extractor_class_for(profile_key).new(url, response)
-    title = title_extractor.title rescue nil
+  # Check if identification already in progress or completed
+  cached_data = Rails.cache.read(cache_key)
 
+  if cached_data.nil?
+    # Create cache entry with processing status
+    Rails.cache.write(
+      cache_key,
+      { status: "processing", url: url },
+      expires_in: 10.minutes
+    )
+
+    # Enqueue background job
+    FeedIdentificationJob.perform_later(current_user.id, url)
+  end
+
+  # Return loading state (polls via show action)
+  render turbo_stream: turbo_stream.replace(
+    "feed-form",
+    partial: "feeds/identification_loading",
+    locals: { url: url }
+  )
+rescue => e
+  Rails.logger.error("Feed identification initiation failed: #{e.message}")
+  render turbo_stream: turbo_stream.replace(
+    "feed-form",
+    partial: "feeds/identification_error",
+    locals: { url: url, error: "An error occurred while checking this feed." }
+  )
+end
+
+private
+
+def feed_identification_cache_key(url)
+  "feed_identification/#{current_user.id}/#{Digest::SHA256.hexdigest(url)}"
+end
+```
+
+#### FeedDetailsController#show (NEW)
+
+```ruby
+def show
+  url = params[:url]
+  cache_key = feed_identification_cache_key(url)
+  cached_data = Rails.cache.read(cache_key)
+
+  if cached_data.nil?
+    # Cache expired or never existed
+    return render turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/identification_error",
+      locals: { url: url, error: "Identification session expired. Please try again." }
+    )
+  end
+
+  case cached_data[:status]
+  when "processing"
+    # Still processing, keep polling
+    render turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/identification_loading",
+      locals: { url: url }
+    )
+  when "success"
+    # Build feed object with identified data
     @feed = current_user.feeds.build(
-      url: url,
-      feed_profile_key: profile_key,
-      name: title
+      url: cached_data[:url],
+      feed_profile_key: cached_data[:feed_profile_key],
+      name: cached_data[:title]
     )
 
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/form_expanded",
-      locals: { feed: @feed, profile_key: profile_key }
+      locals: { feed: @feed }
     )
-  else
+  when "failed"
+    # Identification failed
     render turbo_stream: turbo_stream.replace(
       "feed-form",
-      partial: "feeds/detection_error",
-      locals: { url: url, error: "We couldn't detect a feed profile for this URL." }
+      partial: "feeds/identification_error",
+      locals: { url: url, error: cached_data[:error] || "We couldn't detect a feed profile for this URL." }
     )
   end
 rescue => e
+  Rails.logger.error("Feed identification polling failed: #{e.message}")
   render turbo_stream: turbo_stream.replace(
     "feed-form",
-    partial: "feeds/detection_error",
-    locals: { url: url, error: "An error occurred while checking this feed." }
+    partial: "feeds/identification_error",
+    locals: { url: url, error: "An error occurred while checking identification status." }
   )
+end
+
+private
+
+def feed_identification_cache_key(url)
+  "feed_identification/#{current_user.id}/#{Digest::SHA256.hexdigest(url)}"
 end
 ```
 
@@ -455,6 +545,69 @@ class AccessTokensController < ApplicationController
     # Assuming FreefeedClient has a method to fetch groups
     # This will need to be implemented based on FreeFeed API
     client.fetch_managed_groups.map(&:username) # Returns array of group names
+  end
+end
+```
+
+### Background Jobs
+
+#### FeedIdentificationJob (NEW)
+
+```ruby
+class FeedIdentificationJob < ApplicationJob
+  queue_as :default
+
+  def perform(user_id, url)
+    user = User.find(user_id)
+    cache_key = "feed_identification/#{user_id}/#{Digest::SHA256.hexdigest(url)}"
+
+    begin
+      # Fetch feed data
+      response = Loader::HttpLoader.new(url).load
+
+      # Detect profile
+      profile_key = FeedProfileDetector.detect(url, response)
+
+      if profile_key
+        # Extract title
+        title_extractor = FeedProfile.title_extractor_class_for(profile_key).new(url, response)
+        title = title_extractor.title rescue nil
+
+        # Update cache with success
+        Rails.cache.write(
+          cache_key,
+          {
+            status: "success",
+            url: url,
+            feed_profile_key: profile_key,
+            title: title
+          },
+          expires_in: 10.minutes
+        )
+      else
+        # Update cache with failure
+        Rails.cache.write(
+          cache_key,
+          {
+            status: "failed",
+            url: url,
+            error: "Could not identify feed profile"
+          },
+          expires_in: 10.minutes
+        )
+      end
+    rescue => e
+      Rails.logger.error("Feed identification failed for #{url}: #{e.message}")
+      Rails.cache.write(
+        cache_key,
+        {
+          status: "failed",
+          url: url,
+          error: "An error occurred while identifying the feed"
+        },
+        expires_in: 10.minutes
+      )
+    end
   end
 end
 ```
@@ -582,16 +735,21 @@ export default class extends Controller {
 ```
 
 **app/views/feeds/_form_collapsed.html.erb**:
-- Initial detection form
+- Initial identification form
 - URL input + Detect button
 
 **app/views/feeds/_form_expanded.html.erb**:
 - Full form with all fields
-- Used after detection succeeds and for edit mode
+- Used after identification succeeds and for edit mode
 - Handles read-only URL/profile for edit
 
-**app/views/feeds/_detection_error.html.erb**:
-- Error state after failed detection
+**app/views/feeds/_identification_loading.html.erb**:
+- Loading state during async identification
+- Shows loading indicator
+- Polls `GET /feeds/details` via Turbo Stream
+
+**app/views/feeds/_identification_error.html.erb**:
+- Error state after failed identification
 - Shows error message and URL input for retry
 
 ### Form Field Considerations
@@ -678,8 +836,9 @@ Per CLAUDE.md requirements:
 
 ### Button States
 - Disable submit button during form processing
-- Show loading indicator on Detect button during detection
+- Show loading indicator during async identification (polling state)
 - Disable group selector until token is selected
+- Disable Detect button while identification is in progress
 
 
 
@@ -704,11 +863,16 @@ Per CLAUDE.md requirements:
   - Success with valid params
   - Failure with invalid params
   - Handles stale object error
-- `FeedsController#detect`:
-  - Success with valid RSS feed
-  - Failure with invalid URL
-  - Failure with non-feed URL
-  - Extracts title correctly
+- `FeedDetailsController#create`:
+  - Creates cache entry and enqueues job for valid URL
+  - Reuses existing cache entry if present
+  - Returns error for invalid URL
+  - Returns loading state Turbo Stream
+- `FeedDetailsController#show`:
+  - Returns processing state when status is "processing"
+  - Returns expanded form when status is "success"
+  - Returns error when status is "failed"
+  - Returns error when cache entry missing/expired
 - `AccessTokensController#groups`:
   - Returns groups for active token owned by user
   - Returns 404 for non-existent token
@@ -716,10 +880,21 @@ Per CLAUDE.md requirements:
   - Returns 422 for inactive token
   - Handles FreeFeed API errors gracefully
 
+### Job Tests
+- `FeedIdentificationJob`:
+  - Successfully identifies RSS feed and updates cache
+  - Successfully identifies XKCD feed and updates cache
+  - Extracts title correctly
+  - Handles title extraction failure gracefully
+  - Updates cache with failed status when profile not detected
+  - Updates cache with failed status on HTTP errors
+  - Uses correct cache key format
+
 ### Integration Tests
-- Complete flow: new form → detect → fill fields → create → show page
+- Complete flow: new form → identify (async) → poll → fill fields → create → show page
 - Edit flow: edit form → update → show page
-- Detection failure flow: detect fails → retry with different URL
+- Identification failure flow: identify fails → retry with different URL
+- Identification reuse flow: same URL identified twice within TTL → reuses cache
 - Token change flow: select token → groups load → select group
 - Concurrent edit flow: two users edit same feed → second sees error
 
@@ -730,8 +905,10 @@ Per CLAUDE.md requirements:
 
 ### Test Data Setup
 - Use FactoryBot for feed creation
-- Mock HTTP responses for feed detection
+- Mock HTTP responses for feed identification
 - Mock FreeFeed API responses for groups endpoint
+- Mock Rails.cache for feed identification tests
+- Use `perform_enqueued_jobs` for testing async identification flow
 
 ### Test Coverage Goal
 - Maintain 100% coverage for new code
@@ -748,11 +925,12 @@ This will be broken into separate PRs after spec approval:
 2. Add schedule interval methods to Feed model
 3. Model tests for new methods
 
-### PR 2: Profile Detection Infrastructure
-1. Add detect action to FeedsController
-2. Create detection error partial
-3. Controller tests for detection
-4. Mock HTTP responses in tests
+### PR 2: Profile Identification Infrastructure
+1. Create FeedDetailsController with create and show actions
+2. Create FeedIdentificationJob
+3. Create identification partials (loading, error)
+4. Controller and job tests
+5. Mock HTTP responses and cache in tests
 
 ### PR 3: Groups API Endpoint
 1. Add groups action to AccessTokensController
@@ -800,7 +978,7 @@ This will be broken into separate PRs after spec approval:
 
 4. **Custom Cron Expressions**: Not supported in initial implementation. Users must choose from predefined intervals. Could be future enhancement.
 
-5. **Profile Detection Timeout**: Need to define timeout for HTTP requests during detection (suggest 10 seconds) to prevent hanging.
+5. **Profile Identification Timeout**: HTTP requests during identification should timeout after 10 seconds to prevent hanging. This should be configured in `Loader::HttpLoader`.
 
 6. **SSRF Protection**: URL validation should prevent internal network access. May need additional safeguards depending on deployment environment.
 
