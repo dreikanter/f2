@@ -505,7 +505,7 @@ end
 ```
 
 **Rate Limiting**:
-- Limit identification requests to **10 per hour per user**
+- Limit identification requests to **10 per minute per user**
 - Prevents job queue flooding from malicious or accidental spam
 - Returns 429 Too Many Requests if limit exceeded
 - Error message: "Too many identification attempts. Please wait before trying again."
@@ -1152,7 +1152,7 @@ Per CLAUDE.md requirements:
   - Reuses existing cache entry if present
   - Returns error for invalid URL
   - Returns loading state Turbo Stream
-  - **Rate limiting**: Returns 429 when user exceeds 10 requests per hour
+  - **Rate limiting**: Returns 429 when user exceeds 10 requests per minute
   - **Cache entry**: Includes `started_at` timestamp for timeout detection
 - `FeedDetailsController#show`:
   - Returns processing state when status is "processing" and under 90s
@@ -1286,7 +1286,7 @@ This will be broken into separate PRs after spec approval:
    - Transient network errors require user to re-submit
 
 3. **Rate Limiting**: Feed identification endpoint **must** enforce rate limits:
-   - **10 requests per hour per user**
+   - **10 requests per minute per user**
    - Prevents job queue flooding
    - Returns 429 Too Many Requests with clear error message
 
