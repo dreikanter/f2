@@ -9,7 +9,6 @@ class FeedDetailsJobTest < ActiveJob::TestCase
     non_existent_user_id = -1
     url = "http://example.com/feed.xml"
 
-    # Should not raise an error or call the service
     assert_nothing_raised do
       FeedDetailsJob.perform_now(non_existent_user_id, url)
     end

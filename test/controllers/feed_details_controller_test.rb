@@ -285,7 +285,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Could not identify feed profile"
+    assert_includes response.body, "Unsupported feed profile"
     assert_includes response.body, 'data-identification-state="error"'
   end
 

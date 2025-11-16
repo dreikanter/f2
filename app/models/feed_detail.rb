@@ -5,6 +5,5 @@ class FeedDetail < ApplicationRecord
 
   validates :url, presence: true
 
-  # Clean up old feed detail records
   scope :stale, -> { where("created_at < ?", 1.hour.ago) }
 end

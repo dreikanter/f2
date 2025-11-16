@@ -104,7 +104,7 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     feed_detail = FeedDetail.find_by(user: user, url: url)
     assert_not_nil feed_detail
     assert_equal "failed", feed_detail.status
-    assert_equal "Could not identify feed profile", feed_detail.error
+    assert_equal "Unsupported feed profile", feed_detail.error
   end
 
   test "#identify should update record with failed status on HTTP errors" do

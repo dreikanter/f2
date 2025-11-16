@@ -6,48 +6,28 @@ class FeedDetailsFetcher
   end
 
   def identify
-    feed_detail = FeedDetail.find_or_initialize_by(user: @user, url: @url)
+    response = http_client.get(@url)
+    raise "HTTP request failed with status #{response.status}" unless response.success?
 
-    begin
-      response = http_client.get(@url)
+    matcher_class = FeedProfileDetector.new(@url, response).detect
 
-      unless response.success?
-        raise HttpClient::Error, "HTTP request failed with status #{response.status}"
-      end
-
-      detector = FeedProfileDetector.new(@url, response)
-      matcher_class = detector.detect
-
-      if matcher_class
-        profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
-        title = extract_title(profile_key, @url, response)
-
-        feed_detail.update!(
-          status: :success,
-          feed_profile_key: profile_key,
-          title: title,
-          error: nil
-        )
-      else
-        feed_detail.update!(
-          status: :failed,
-          feed_profile_key: nil,
-          title: nil,
-          error: "Could not identify feed profile"
-        )
-      end
-    rescue => e
-      @logger.error("Feed identification failed for #{@url}: #{e.class} - #{e.message}")
-      feed_detail.update!(
-        status: :failed,
-        feed_profile_key: nil,
-        title: nil,
-        error: "An error occurred while identifying the feed"
-      )
+    if matcher_class
+      profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
+      title = extract_title(profile_key, @url, response)
+      feed_detail.update!(status: :success, feed_profile_key: profile_key, title: title, error: nil)
+    else
+      feed_detail.update!(status: :failed, feed_profile_key: nil, title: nil, error: "Unsupported feed profile")
     end
+  rescue StandardError => e
+    @logger.error("Feed identification failed for #{@url}: #{e.class} - #{e.message}")
+    feed_detail.update!(status: :failed, feed_profile_key: nil, title: nil, error: "An error occurred while identifying the feed")
   end
 
   private
+
+  def feed_detail
+    @feed_detail ||= FeedDetail.find_or_initialize_by(user: @user, url: @url)
+  end
 
   def http_client
     @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
