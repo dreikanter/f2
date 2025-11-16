@@ -70,7 +70,7 @@ class FeedDetailsController < ApplicationController
 
     if started_at.nil?
       Rails.cache.delete(cache_key)
-      return render turbo_stream: identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again.")
+      return render identification_error(error: "Identification session is invalid. Please try again.")
     end
 
     timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
