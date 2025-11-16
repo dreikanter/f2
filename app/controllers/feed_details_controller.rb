@@ -1,10 +1,10 @@
 class FeedDetailsController < ApplicationController
   before_action :require_authentication
 
-  IDENTIFICATION_TIMEOUT_SECONDS = 60
+  IDENTIFICATION_TIMEOUT_SECONDS = 30
 
   def create
-    unless valid_url?(feed_url)
+    unless valid_url?
       return render turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
@@ -55,19 +55,19 @@ class FeedDetailsController < ApplicationController
   private
 
   def feed_url
-    params[:url]
+    @feed_url ||= params[:url]
   end
 
   def cache_key
-    FeedIdentificationCache.key_for(Current.user.id, feed_url)
+    @cache_key ||= FeedIdentificationCache.key_for(Current.user.id, feed_url)
   end
 
   def cached_data
-    Rails.cache.read(cache_key)
+    @cached_data ||= Rails.cache.read(cache_key)
   end
 
-  def valid_url?(url)
-    url.present? && url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
+  def valid_url?
+    feed_url.present? && feed_url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
   end
 
   def handle_processing_status

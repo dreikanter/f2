@@ -163,7 +163,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
     Rails.cache.write(
       cache_key(url),
-      { status: "processing", url: url, started_at: 61.seconds.ago },
+      { status: "processing", url: url, started_at: 31.seconds.ago },
       expires_in: 10.minutes
     )
 
