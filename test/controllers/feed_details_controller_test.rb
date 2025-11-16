@@ -28,13 +28,19 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
         post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
+
+      cached_data = Rails.cache.read(cache_key(url))
+      assert_equal "processing", cached_data[:status]
+      assert_equal url, cached_data[:url]
+      assert_not_nil cached_data[:started_at]
+      assert_kind_of ActiveSupport::TimeWithZone, cached_data[:started_at]
     end
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
   end
 
-  test "#create should reuse existing cache entry if present" do
+  test "#create should not enqueue job when already processing" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
@@ -46,6 +52,49 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
         post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
         assert_response :success
       end
+    end
+  end
+
+  test "#create should isolate cache by user" do
+    user2 = create(:user)
+    url = "http://example.com/feed.xml"
+
+    sign_in_as(user)
+
+    with_caching do
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      sign_in_as(user2)
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      # Both users should have separate cache entries
+      user1_cache = Rails.cache.read(FeedIdentificationCache.key_for(user.id, url))
+      user2_cache = Rails.cache.read(FeedIdentificationCache.key_for(user2.id, url))
+
+      assert_not_nil user1_cache
+      assert_not_nil user2_cache
+      assert_equal "processing", user1_cache[:status]
+      assert_equal "processing", user2_cache[:status]
+    end
+  end
+
+  test "#create should isolate cache by URL" do
+    sign_in_as(user)
+    url1 = "http://example.com/feed1.xml"
+    url2 = "http://example.com/feed2.xml"
+
+    with_caching do
+      post feed_details_path, params: { url: url1 }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_details_path, params: { url: url2 }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      # Both URLs should have separate cache entries
+      cache1 = Rails.cache.read(cache_key(url1))
+      cache2 = Rails.cache.read(cache_key(url2))
+
+      assert_not_nil cache1
+      assert_not_nil cache2
+      assert_equal url1, cache1[:url]
+      assert_equal url2, cache2[:url]
     end
   end
 
@@ -156,6 +205,22 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       # Check status while still processing (don't perform jobs)
       get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
+      assert_response :success
+      assert_includes response.body, "Checking this feed"
+    end
+  end
+
+  test "#show should poll processing state immediately after create" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    with_caching do
+      # Create initiates processing
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      assert_response :success
+
+      # Show (polling) returns processing state
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "Checking this feed"
     end
