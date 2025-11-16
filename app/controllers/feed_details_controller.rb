@@ -19,13 +19,18 @@ class FeedDetailsController < ApplicationController
     return handle_success_status if feed_detail.success?
 
     if feed_detail.new_record? || feed_detail.failed?
-      feed_detail.update!(
-        status: :processing,
-        started_at: Time.current,
-        feed_profile_key: nil,
-        title: nil,
-        error: nil
-      )
+      begin
+        feed_detail.update!(
+          status: :processing,
+          started_at: Time.current,
+          feed_profile_key: nil,
+          title: nil,
+          error: nil
+        )
+      rescue ActiveRecord::RecordNotUnique
+        # Race condition: another process created the record, reload and continue
+        feed_detail.reload
+      end
 
       FeedDetailsJob.perform_later(Current.user.id, feed_url)
     end
