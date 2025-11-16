@@ -62,6 +62,48 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "#create should reuse successful identification from cache" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    Rails.cache.write(
+      cache_key(url),
+      {
+        status: "success",
+        url: url,
+        feed_profile_key: "youtube",
+        title: "Example Channel"
+      },
+      expires_in: 10.minutes
+    )
+
+    assert_no_enqueued_jobs do
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, "Feed identified: youtube"
+    assert_includes response.body, 'data-identification-state="complete"'
+  end
+
+  test "#create should restart identification for failed cache entry" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    Rails.cache.write(
+      cache_key(url),
+      { status: "failed", url: url, error: "Previous attempt failed" },
+      expires_in: 10.minutes
+    )
+
+    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, "Checking this feed"
+  end
+
   test "#create should return error for invalid URL" do
     sign_in_as(user)
 
