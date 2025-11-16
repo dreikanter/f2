@@ -9,7 +9,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     @original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
     # Clear rate limit store between tests
-    FeedDetailsController::RATE_LIMIT_STORE.clear
+    FeedDetailsController.cache_store.clear
   end
 
   teardown do

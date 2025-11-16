@@ -2,9 +2,10 @@ class FeedDetailsController < ApplicationController
   before_action :require_authentication
 
   IDENTIFICATION_TIMEOUT_SECONDS = 30
-  RATE_LIMIT_STORE = ActiveSupport::Cache::MemoryStore.new
 
-  rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, store: RATE_LIMIT_STORE, with: -> {
+  self.cache_store = ActiveSupport::Cache::MemoryStore.new
+
+  rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_error",
