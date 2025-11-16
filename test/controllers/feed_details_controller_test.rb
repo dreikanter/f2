@@ -195,6 +195,30 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should return invalid session error when started_at is missing" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    with_caching do
+      # Create processing cache entry via controller
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      # Manipulate cache to remove started_at (invalid state)
+      cached_data = Rails.cache.read(cache_key(url))
+      Rails.cache.write(
+        cache_key(url),
+        cached_data.except(:started_at),
+        expires_in: 10.minutes
+      )
+
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :success
+      assert_includes response.body, "Identification session is invalid"
+      assert_nil Rails.cache.read(cache_key(url)), "Cache entry should be deleted when invalid"
+    end
+  end
+
   test "#show should return timeout error when processing exceeds threshold" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
