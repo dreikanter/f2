@@ -12,7 +12,7 @@ class FeedDetailsController < ApplicationController
       return handle_success_status
     end
 
-    if cached_data.nil? || identification_status == "failed"
+    if identification_status == "failed"
       data = {
         status: "processing",
         url: feed_url,
