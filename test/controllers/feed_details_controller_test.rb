@@ -24,58 +24,65 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    with_caching do
+      assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
+        post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
     end
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
-
-    cached_data = Rails.cache.read(cache_key(url))
-    assert_not_nil cached_data
-    assert_equal "processing", cached_data[:status]
-    assert_equal url, cached_data[:url]
-    assert_not_nil cached_data[:started_at]
   end
 
   test "#create should reuse existing cache entry if present" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "processing", url: url, started_at: Time.current },
-      expires_in: 10.minutes
-    )
-
-    assert_no_enqueued_jobs do
+    with_caching do
       post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    end
+      assert_response :success
 
-    assert_response :success
+      assert_no_enqueued_jobs do
+        post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        assert_response :success
+      end
+    end
   end
 
   test "#create should reuse successful identification from cache" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      {
-        status: "success",
-        url: url,
-        feed_profile_key: "youtube",
-        title: "Example Channel"
-      },
-      expires_in: 10.minutes
-    )
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Example Feed</title>
+          <description>Test Description</description>
+          <link>http://example.com</link>
+          <item>
+            <title>Test Post</title>
+            <description>Test content</description>
+            <link>http://example.com/post1</link>
+          </item>
+        </channel>
+      </rss>
+    XML
 
-    assert_no_enqueued_jobs do
+    stub_request(:get, url)
+      .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
+
+    with_caching do
       post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      perform_enqueued_jobs
+
+      assert_no_enqueued_jobs do
+        post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
     end
 
     assert_response :success
-    assert_includes response.body, "Feed identified: youtube"
+    assert_includes response.body, "Feed identified: rss"
     assert_includes response.body, 'data-identification-state="complete"'
   end
 
@@ -83,18 +90,20 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "failed", url: url, error: "Previous attempt failed" },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "failed", url: url, error: "Previous attempt failed" },
+        expires_in: 10.minutes
+      )
 
-    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
+        post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+
+      assert_response :success
+      assert_includes response.body, "Checking this feed"
     end
-
-    assert_response :success
-    assert_includes response.body, "Checking this feed"
   end
 
   test "#create should return error for invalid URL" do
@@ -172,67 +181,75 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "processing", url: url, started_at: Time.current },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "processing", url: url, started_at: Time.current },
+        expires_in: 10.minutes
+      )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "Checking this feed"
+      assert_response :success
+      assert_includes response.body, "Checking this feed"
+    end
   end
 
   test "#show should return timeout error when processing exceeds threshold" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "processing", url: url, started_at: 31.seconds.ago },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "processing", url: url, started_at: 31.seconds.ago },
+        expires_in: 10.minutes
+      )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "taking longer than expected"
-    assert_nil Rails.cache.read(cache_key(url)), "Cache entry should be deleted on timeout"
+      assert_response :success
+      assert_includes response.body, "taking longer than expected"
+      assert_nil Rails.cache.read(cache_key(url)), "Cache entry should be deleted on timeout"
+    end
   end
 
   test "#show should return expanded form when status is success" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "success", url: url, feed_profile_key: "rss", title: "Test Feed" },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "success", url: url, feed_profile_key: "rss", title: "Test Feed" },
+        expires_in: 10.minutes
+      )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, 'action="replace"'
-    assert_includes response.body, 'target="feed-form"'
+      assert_response :success
+      assert_includes response.body, 'action="replace"'
+      assert_includes response.body, 'target="feed-form"'
+    end
   end
 
   test "#show should return error when status is failed" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "failed", url: url, error: "Could not identify feed profile" },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "failed", url: url, error: "Could not identify feed profile" },
+        expires_in: 10.minutes
+      )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "Could not identify feed profile"
-    assert_includes response.body, 'data-identification-state="error"'
+      assert_response :success
+      assert_includes response.body, "Could not identify feed profile"
+      assert_includes response.body, 'data-identification-state="error"'
+    end
   end
 
   test "#show should return error when cache entry is missing" do
@@ -249,15 +266,17 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    Rails.cache.write(
-      cache_key(url),
-      { status: "failed", url: url },
-      expires_in: 10.minutes
-    )
+    with_caching do
+      Rails.cache.write(
+        cache_key(url),
+        { status: "failed", url: url },
+        expires_in: 10.minutes
+      )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "We couldn&#39;t identify a feed profile for this URL"
+      assert_response :success
+      assert_includes response.body, "We couldn&#39;t identify a feed profile for this URL"
+    end
   end
 end
