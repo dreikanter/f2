@@ -1,12 +1,20 @@
-<div id="feed-form"
-     data-controller="polling"
-     data-polling-endpoint-value="<%= feed_details_path(url: url) %>"
-     data-polling-interval-value="2000"
-     data-polling-max-polls-value="<%= FeedDetailsController::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
-     data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']"
-     class="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm">
-  <div class="flex items-center justify-center space-x-4">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
-    <p class="text-slate-600">Checking this feed... This usually takes a few seconds.</p>
+<%= render CardComponent.new(
+      id: "feed-form",
+      class: "flex items-center gap-3",
+      role: "status",
+      data: {
+        controller: "polling",
+        polling_endpoint_value: feed_details_path(url: url),
+        polling_interval_value: Feed::IDENTIFICATION_POLLING_INTERVAL_MS,
+        polling_max_polls_value: FeedDetailsController::IDENTIFICATION_TIMEOUT_SECONDS / 2,
+        polling_stop_condition_value: "[data-identification-state='complete'], [data-identification-state='error']"
+      }
+    ) do %>
+  <div class="flex-shrink-0">
+    <%= render SpinnerComponent.new %>
   </div>
-</div>
+  <div class="space-y-1">
+    <p class="ff-text ff-text--heavy">Checking this feed...</p>
+    <p class="ff-text">This usually takes a few seconds.</p>
+  </div>
+<% end %>

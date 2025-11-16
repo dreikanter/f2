@@ -3,6 +3,7 @@ class Feed < ApplicationRecord
   DESCRIPTION_MAX_LENGTH = 100
   TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
   TARGET_GROUP_MAX_LENGTH = 80
+  IDENTIFICATION_POLLING_INTERVAL_MS = 2000
 
   SUPPORTED_METRICS = %i[
     posts_count
