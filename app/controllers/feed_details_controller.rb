@@ -13,39 +13,32 @@ class FeedDetailsController < ApplicationController
 
   def create
     unless valid_url?
-      return render identification_error(error: "Please enter a valid URL")
+      return render(identification_error(error: "Please enter a valid URL"))
     end
 
-    detail = feed_detail
+    return handle_success_status if feed_detail.success?
 
-    if detail.success?
-      return handle_success_status
-    end
-
-    if detail.new_record? || detail.failed?
-      detail.assign_attributes(
+    if feed_detail.new_record? || feed_detail.failed?
+      feed_detail.update!(
         status: :processing,
         started_at: Time.current,
         feed_profile_key: nil,
         title: nil,
         error: nil
       )
-      detail.save!
 
       FeedDetailsJob.perform_later(Current.user.id, feed_url)
     end
 
-    render identification_loading
+    render(identification_loading)
   end
 
   def show
-    detail = feed_detail
-
-    unless detail.persisted?
-      return render identification_error(error: "Identification session expired. Please try again.")
+    unless feed_detail.persisted?
+      return render(identification_error(error: "Identification session expired. Please try again."))
     end
 
-    case detail.status
+    case feed_detail.status
     when "processing"
       handle_processing_status
     when "success"
@@ -58,7 +51,7 @@ class FeedDetailsController < ApplicationController
   private
 
   def feed_detail
-    @feed_detail ||= FeedDetail.find_or_initialize_for(user: Current.user, url: feed_url)
+    @feed_detail ||= FeedDetail.find_or_initialize_by(user: Current.user, url: feed_url)
   end
 
   def valid_url?
@@ -66,40 +59,34 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_processing_status
-    detail = feed_detail
-
-    if detail.started_at.nil?
-      detail.destroy
-      return render identification_error(error: "Identification session is invalid. Please try again.")
+    if feed_detail.started_at.nil?
+      feed_detail.destroy
+      return render(identification_error(error: "Identification session is invalid. Please try again."))
     end
 
     timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
 
-    if Time.current - detail.started_at > timeout_threshold
-      detail.destroy
-      return render identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again.")
+    if Time.current - feed_detail.started_at > timeout_threshold
+      feed_detail.destroy
+      return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end
 
-    render identification_loading
+    render(identification_loading)
   end
 
   def handle_success_status
-    detail = feed_detail
-
     feed = Current.user.feeds.build(
-      url: detail.url,
-      feed_profile_key: detail.feed_profile_key,
-      name: detail.title
+      url: feed_detail.url,
+      feed_profile_key: feed_detail.feed_profile_key,
+      name: feed_detail.title
     )
 
-    render identification_success(feed)
+    render(identification_success(feed))
   end
 
   def handle_failed_status
-    detail = feed_detail
-
-    error_message = detail.error.presence || "We couldn't identify a feed profile for this URL."
-    render identification_error(error: error_message)
+    error_message = feed_detail.error.presence || "We couldn't identify a feed profile for this URL."
+    render(identification_error(error: error_message))
   end
 
   def identification_error(error:)

@@ -6,7 +6,7 @@ class FeedDetailsFetcher
   end
 
   def identify
-    feed_detail = FeedDetail.find_or_initialize_for(user: @user, url: @url)
+    feed_detail = FeedDetail.find_or_initialize_by(user: @user, url: @url)
 
     begin
       response = http_client.get(@url)
@@ -22,31 +22,28 @@ class FeedDetailsFetcher
         profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
         title = extract_title(profile_key, @url, response)
 
-        feed_detail.assign_attributes(
+        feed_detail.update!(
           status: :success,
           feed_profile_key: profile_key,
           title: title,
           error: nil
         )
-        feed_detail.save!
       else
-        feed_detail.assign_attributes(
+        feed_detail.update!(
           status: :failed,
           feed_profile_key: nil,
           title: nil,
           error: "Could not identify feed profile"
         )
-        feed_detail.save!
       end
     rescue => e
       @logger.error("Feed identification failed for #{@url}: #{e.class} - #{e.message}")
-      feed_detail.assign_attributes(
+      feed_detail.update!(
         status: :failed,
         feed_profile_key: nil,
         title: nil,
         error: "An error occurred while identifying the feed"
       )
-      feed_detail.save!
     end
   end
 
