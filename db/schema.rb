@@ -64,7 +64,7 @@ ActiveRecord::Schema[8.2].define(version: 2025_11_16_214137) do
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.bigint "user_id", null: false
-    t.index ["user_id", "url"], name: "index_feed_details_on_user_id_and_url"
+    t.index ["user_id", "url"], name: "index_feed_details_on_user_id_and_url", unique: true
     t.index ["user_id"], name: "index_feed_details_on_user_id"
   end
 

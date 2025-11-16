@@ -12,6 +12,6 @@ class CreateFeedDetails < ActiveRecord::Migration[8.2]
       t.timestamps
     end
 
-    add_index :feed_details, [:user_id, :url]
+    add_index :feed_details, [:user_id, :url], unique: true
   end
 end
