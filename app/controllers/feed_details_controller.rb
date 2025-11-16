@@ -3,6 +3,14 @@ class FeedDetailsController < ApplicationController
 
   IDENTIFICATION_TIMEOUT_SECONDS = 30
 
+  rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
+    render turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/identification_error",
+      locals: { url: params[:url], error: "Too many identification attempts. Please wait before trying again." }
+    ), status: :too_many_requests
+  }
+
   def create
     unless valid_url?
       return render identification_error(error: "Please enter a valid URL")
@@ -56,7 +64,20 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_processing_status
-    started_at = cached_data[:started_at] || Time.current
+    started_at = cached_data[:started_at]
+
+    if started_at.nil?
+      Rails.cache.delete(cache_key)
+      return render turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_error",
+        locals: {
+          url: feed_url,
+          error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."
+        }
+      )
+    end
+
     timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
 
     if Time.current - started_at > timeout_threshold
