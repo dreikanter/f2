@@ -3,8 +3,6 @@ class FeedDetailsController < ApplicationController
 
   IDENTIFICATION_TIMEOUT_SECONDS = 30
 
-  self.cache_store = ActiveSupport::Cache::MemoryStore.new
-
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     render turbo_stream: turbo_stream.replace(
       "feed-form",

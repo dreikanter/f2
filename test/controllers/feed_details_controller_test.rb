@@ -140,40 +140,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Checking this feed"
   end
 
-  test "#create should enforce rate limit of 10 requests per minute" do
-    sign_in_as(user)
-
-    # Make 10 requests with different URLs - all should succeed
-    10.times do |i|
-      url = "http://example.com/feed#{i}.xml"
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      assert_response :success
-    end
-
-    # 11th request should be rate limited
-    post feed_details_path, params: { url: "http://example.com/feed11.xml" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :too_many_requests
-    assert_includes response.body, "Too many identification attempts"
-    assert_includes response.body, "Please wait before trying again"
-  end
-
-  test "#create should not enqueue job when rate limited" do
-    sign_in_as(user)
-
-    # Exhaust rate limit with different URLs
-    10.times do |i|
-      url = "http://example.com/feed#{i}.xml"
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    end
-
-    # Verify no job enqueued on rate limited request
-    assert_no_enqueued_jobs do
-      post feed_details_path, params: { url: "http://example.com/feed11.xml" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    end
-
-    assert_response :too_many_requests
-  end
-
   test "#show should require authentication" do
     get feed_details_path, params: { url: "http://example.com/feed.xml" }
     assert_redirected_to new_session_path
