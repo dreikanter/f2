@@ -5,15 +5,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
   setup do
     clear_enqueued_jobs
-    # Use memory store for cache-dependent tests (test env uses null_store by default)
-    @original_cache = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-    # Clear rate limit store between tests
-    FeedDetailsController.cache_store.clear
-  end
-
-  teardown do
-    Rails.cache = @original_cache
   end
 
   def user
