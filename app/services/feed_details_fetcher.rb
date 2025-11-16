@@ -1,15 +1,12 @@
-class FeedDetails
-  CACHE_EXPIRES_IN = 10.minutes
-
-  def initialize(user:, url:, cache: Rails.cache, logger: Rails.logger)
+class FeedDetailsFetcher
+  def initialize(user:, url:, logger: Rails.logger)
     @user = user
     @url = url
-    @cache = cache
     @logger = logger
   end
 
   def identify
-    cache_key = FeedIdentificationCache.key_for(@user.id, @url)
+    feed_detail = FeedDetail.find_or_initialize_for(user: @user, url: @url)
 
     begin
       response = http_client.get(@url)
@@ -25,37 +22,35 @@ class FeedDetails
         profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
         title = extract_title(profile_key, @url, response)
 
-        write_cache(
-          cache_key,
-          status: "success",
-          url: @url,
+        feed_detail.assign_attributes(
+          status: :success,
           feed_profile_key: profile_key,
-          title: title
+          title: title,
+          error: nil
         )
+        feed_detail.save!
       else
-        write_cache(
-          cache_key,
-          status: "failed",
-          url: @url,
+        feed_detail.assign_attributes(
+          status: :failed,
+          feed_profile_key: nil,
+          title: nil,
           error: "Could not identify feed profile"
         )
+        feed_detail.save!
       end
     rescue => e
       @logger.error("Feed identification failed for #{@url}: #{e.class} - #{e.message}")
-      write_cache(
-        cache_key,
-        status: "failed",
-        url: @url,
+      feed_detail.assign_attributes(
+        status: :failed,
+        feed_profile_key: nil,
+        title: nil,
         error: "An error occurred while identifying the feed"
       )
+      feed_detail.save!
     end
   end
 
   private
-
-  def write_cache(cache_key, **data)
-    @cache.write(cache_key, data, expires_in: CACHE_EXPIRES_IN)
-  end
 
   def http_client
     @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)

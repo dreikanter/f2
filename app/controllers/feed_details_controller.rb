@@ -16,18 +16,22 @@ class FeedDetailsController < ApplicationController
       return render identification_error(error: "Please enter a valid URL")
     end
 
-    if identification_status == "success"
+    detail = feed_detail
+
+    if detail.success?
       return handle_success_status
     end
 
-    if identification_status.nil? || identification_status == "failed"
-      data = {
-        status: "processing",
-        url: feed_url,
-        started_at: Time.current
-      }
+    if detail.new_record? || detail.failed?
+      detail.assign_attributes(
+        status: :processing,
+        started_at: Time.current,
+        feed_profile_key: nil,
+        title: nil,
+        error: nil
+      )
+      detail.save!
 
-      Rails.cache.write(cache_key, data, expires_in: 10.minutes)
       FeedDetailsJob.perform_later(Current.user.id, feed_url)
     end
 
@@ -35,11 +39,13 @@ class FeedDetailsController < ApplicationController
   end
 
   def show
-    if cached_data.nil?
+    detail = feed_detail
+
+    unless detail.persisted?
       return render identification_error(error: "Identification session expired. Please try again.")
     end
 
-    case cached_data[:status]
+    case detail.status
     when "processing"
       handle_processing_status
     when "success"
@@ -51,12 +57,8 @@ class FeedDetailsController < ApplicationController
 
   private
 
-  def cache_key
-    @cache_key ||= FeedIdentificationCache.key_for(Current.user.id, feed_url)
-  end
-
-  def cached_data
-    @cached_data ||= Rails.cache.read(cache_key)
+  def feed_detail
+    @feed_detail ||= FeedDetail.find_or_initialize_for(user: Current.user, url: feed_url)
   end
 
   def valid_url?
@@ -64,17 +66,17 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_processing_status
-    started_at = cached_data[:started_at]
+    detail = feed_detail
 
-    if started_at.nil?
-      Rails.cache.delete(cache_key)
+    if detail.started_at.nil?
+      detail.destroy
       return render identification_error(error: "Identification session is invalid. Please try again.")
     end
 
     timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
 
-    if Time.current - started_at > timeout_threshold
-      Rails.cache.delete(cache_key)
+    if Time.current - detail.started_at > timeout_threshold
+      detail.destroy
       return render identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again.")
     end
 
@@ -82,17 +84,21 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_success_status
+    detail = feed_detail
+
     feed = Current.user.feeds.build(
-      url: cached_data[:url],
-      feed_profile_key: cached_data[:feed_profile_key],
-      name: cached_data[:title]
+      url: detail.url,
+      feed_profile_key: detail.feed_profile_key,
+      name: detail.title
     )
 
     render identification_success(feed)
   end
 
   def handle_failed_status
-    error_message = cached_data[:error] || "We couldn't identify a feed profile for this URL."
+    detail = feed_detail
+
+    error_message = detail.error.presence || "We couldn't identify a feed profile for this URL."
     render identification_error(error: error_message)
   end
 
@@ -124,10 +130,6 @@ class FeedDetailsController < ApplicationController
         locals: { feed: feed }
       )
     }
-  end
-
-  def identification_status
-    cached_data&.dig(:status)
   end
 
   def feed_url

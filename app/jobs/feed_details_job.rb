@@ -9,6 +9,6 @@ class FeedDetailsJob < ApplicationJob
       return
     end
 
-    FeedDetails.new(user: user, url: url).identify
+    FeedDetailsFetcher.new(user: user, url: url).identify
   end
 end

@@ -47,7 +47,15 @@ class FeedsController < ApplicationController
   end
 
   def create
-    # TODO: Implement feed creation
+    @feed = Current.user.feeds.build(feed_params)
+    authorize @feed
+
+    if @feed.save
+      cleanup_feed_identification(@feed.url)
+      redirect_to feed_path(@feed), notice: "Feed was successfully created."
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
 
   def show
@@ -62,7 +70,15 @@ class FeedsController < ApplicationController
   end
 
   def update
-    # TODO: Implement feed update
+    @feed = load_feed
+    authorize @feed
+
+    if @feed.update(feed_params)
+      cleanup_feed_identification(@feed.url)
+      redirect_to feed_path(@feed), notice: "Feed was successfully updated."
+    else
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   def destroy
@@ -97,5 +113,23 @@ class FeedsController < ApplicationController
 
   def load_feed
     policy_scope(Feed).find(params[:id])
+  end
+
+  def feed_params
+    params.require(:feed).permit(
+      :url,
+      :name,
+      :feed_profile_key,
+      :description,
+      :target_group,
+      :access_token_id,
+      :cron_expression,
+      :schedule_interval,
+      :state
+    )
+  end
+
+  def cleanup_feed_identification(url)
+    FeedDetail.find_by(user: Current.user, url: url)&.destroy
   end
 end

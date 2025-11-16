@@ -23,7 +23,6 @@ module ActiveSupport
   class TestCase
     include FactoryBot::Syntax::Methods
     include SnapshotTesting
-    include CachingHelpers
 
     # Run tests in parallel with specified workers
     # Disable parallel testing when SimpleCov is running to get accurate coverage
