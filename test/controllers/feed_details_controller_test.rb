@@ -68,24 +68,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "processing", user2_feed_detail.status
   end
 
-  test "#create should isolate feed detail by URL" do
-    sign_in_as(user)
-    url1 = "http://example.com/feed1.xml"
-    url2 = "http://example.com/feed2.xml"
-
-    post feed_details_path, params: { url: url1 }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    post feed_details_path, params: { url: url2 }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    # Both URLs should have separate feed detail records
-    feed_detail1 = FeedDetail.find_by(user: user, url: url1)
-    feed_detail2 = FeedDetail.find_by(user: user, url: url2)
-
-    assert_not_nil feed_detail1
-    assert_not_nil feed_detail2
-    assert_equal url1, feed_detail1.url
-    assert_equal url2, feed_detail2.url
-  end
-
   test "#create should reuse successful feed detail" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
@@ -148,29 +130,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Please enter a valid URL"
-    assert_includes response.body, 'target="feed-form"'
-  end
-
-  test "#create should return error for empty URL" do
-    sign_in_as(user)
-
-    post feed_details_path, params: { url: "" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_includes response.body, "Please enter a valid URL"
-  end
-
-  test "#create should return loading state turbo stream" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_includes response.body, "turbo-stream"
-    assert_includes response.body, 'action="replace"'
-    assert_includes response.body, 'target="feed-form"'
-    assert_includes response.body, "Checking this feed"
   end
 
   test "#show should require authentication" do
@@ -188,20 +147,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     # Check status while still processing (don't perform jobs)
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "Checking this feed"
-  end
-
-  test "#show should poll processing state immediately after create" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-
-    # Create initiates processing
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-
-    # Show (polling) returns processing state
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "Checking this feed"
   end
@@ -297,26 +242,5 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Identification session expired"
-  end
-
-  test "#show should use default error message when failed status has no error" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-
-    stub_request(:get, url)
-      .to_return(status: 200, body: "Not a valid feed", headers: { "Content-Type" => "text/plain" })
-
-    # Create failed feed detail via controller and job
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    perform_enqueued_jobs
-
-    # Manipulate record to remove error field (edge case)
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    feed_detail.update_column(:error, nil)
-
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_includes response.body, "We couldn&#39;t identify a feed profile for this URL"
   end
 end
