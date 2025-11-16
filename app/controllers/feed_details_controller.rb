@@ -13,7 +13,7 @@ class FeedDetailsController < ApplicationController
     end
 
     if cached_data&.dig(:status) == "success"
-      return handle_success_status(cached_data)
+      return handle_success_status
     end
 
     if cached_data.nil? || cached_data[:status] == "failed"
@@ -44,11 +44,11 @@ class FeedDetailsController < ApplicationController
 
     case cached_data[:status]
     when "processing"
-      handle_processing_status(cached_data, feed_url, cache_key)
+      handle_processing_status
     when "success"
-      handle_success_status(cached_data)
+      handle_success_status
     when "failed"
-      handle_failed_status(cached_data, feed_url)
+      handle_failed_status
     end
   end
 
@@ -59,7 +59,7 @@ class FeedDetailsController < ApplicationController
   end
 
   def cache_key
-    feed_identification_cache_key(feed_url)
+    FeedIdentificationCache.key_for(Current.user.id, feed_url)
   end
 
   def cached_data
@@ -70,11 +70,7 @@ class FeedDetailsController < ApplicationController
     url.present? && url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
   end
 
-  def feed_identification_cache_key(url)
-    FeedIdentificationCache.key_for(Current.user.id, url)
-  end
-
-  def handle_processing_status(cached_data, url, cache_key)
+  def handle_processing_status
     started_at = cached_data[:started_at] || Time.current
     timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
 
@@ -84,7 +80,7 @@ class FeedDetailsController < ApplicationController
         "feed-form",
         partial: "feeds/identification_error",
         locals: {
-          url: url,
+          url: feed_url,
           error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."
         }
       )
@@ -93,11 +89,11 @@ class FeedDetailsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_loading",
-      locals: { url: url }
+      locals: { url: feed_url }
     )
   end
 
-  def handle_success_status(cached_data)
+  def handle_success_status
     @feed = Current.user.feeds.build(
       url: cached_data[:url],
       feed_profile_key: cached_data[:feed_profile_key],
@@ -111,13 +107,13 @@ class FeedDetailsController < ApplicationController
     )
   end
 
-  def handle_failed_status(cached_data, url)
+  def handle_failed_status
     error_message = cached_data[:error] || "We couldn't identify a feed profile for this URL."
 
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_error",
-      locals: { url: url, error: error_message }
+      locals: { url: feed_url, error: error_message }
     )
   end
 end
