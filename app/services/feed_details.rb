@@ -25,42 +25,39 @@ class FeedDetails
         profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
         title = extract_title(profile_key, @url, response)
 
-        @cache.write(
+        write_cache(
           cache_key,
-          {
-            status: "success",
-            url: @url,
-            feed_profile_key: profile_key,
-            title: title
-          },
-          expires_in: CACHE_EXPIRES_IN
+          status: "success",
+          url: @url,
+          feed_profile_key: profile_key,
+          title: title
         )
       else
-        @cache.write(
+        write_cache(
           cache_key,
-          {
-            status: "failed",
-            url: @url,
-            error: "Could not identify feed profile"
-          },
-          expires_in: CACHE_EXPIRES_IN
+          status: "failed",
+          url: @url,
+          error: "Could not identify feed profile"
         )
       end
     rescue => e
-      @logger.error("Feed identification failed for #{@url}: #{e.message}")
-      @cache.write(
+      @logger.error("Feed identification failed for #{@url}: #{e.class} - #{e.message}")
+      write_cache(
         cache_key,
-        {
-          status: "failed",
-          url: @url,
-          error: "An error occurred while identifying the feed"
-        },
-        expires_in: CACHE_EXPIRES_IN
+        status: "failed",
+        url: @url,
+        error: "An error occurred while identifying the feed"
       )
     end
   end
 
   private
+
+  def write_cache(cache_key, **data)
+    @cache.write(cache_key, data, expires_in: CACHE_EXPIRES_IN)
+  rescue => e
+    @logger.error("Failed to write cache for #{@url}: #{e.class} - #{e.message}")
+  end
 
   def http_client
     @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
