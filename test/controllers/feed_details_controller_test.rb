@@ -90,13 +90,15 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    with_caching do
-      Rails.cache.write(
-        cache_key(url),
-        { status: "failed", url: url, error: "Previous attempt failed" },
-        expires_in: 10.minutes
-      )
+    stub_request(:get, url)
+      .to_return(status: 404, body: "Not Found")
 
+    with_caching do
+      # First attempt - creates failed cache entry
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      perform_enqueued_jobs
+
+      # Second attempt - should restart identification
       assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
         post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
@@ -182,12 +184,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     with_caching do
-      Rails.cache.write(
-        cache_key(url),
-        { status: "processing", url: url, started_at: Time.current },
-        expires_in: 10.minutes
-      )
+      # Create processing cache entry via controller
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
+      # Check status while still processing (don't perform jobs)
       get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
       assert_response :success
@@ -200,9 +200,14 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     with_caching do
+      # Create processing cache entry via controller
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      # Manipulate cache to simulate long-running job
+      cached_data = Rails.cache.read(cache_key(url))
       Rails.cache.write(
         cache_key(url),
-        { status: "processing", url: url, started_at: 31.seconds.ago },
+        cached_data.merge(started_at: 31.seconds.ago),
         expires_in: 10.minutes
       )
 
@@ -218,12 +223,24 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <description>Test Description</description>
+          <link>http://example.com</link>
+        </channel>
+      </rss>
+    XML
+
+    stub_request(:get, url)
+      .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
+
     with_caching do
-      Rails.cache.write(
-        cache_key(url),
-        { status: "success", url: url, feed_profile_key: "rss", title: "Test Feed" },
-        expires_in: 10.minutes
-      )
+      # Create successful cache entry via controller and job
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      perform_enqueued_jobs
 
       get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
@@ -237,12 +254,13 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
+    stub_request(:get, url)
+      .to_return(status: 200, body: "Not a valid feed", headers: { "Content-Type" => "text/plain" })
+
     with_caching do
-      Rails.cache.write(
-        cache_key(url),
-        { status: "failed", url: url, error: "Could not identify feed profile" },
-        expires_in: 10.minutes
-      )
+      # Create failed cache entry via controller and job
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      perform_enqueued_jobs
 
       get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
@@ -266,10 +284,19 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
+    stub_request(:get, url)
+      .to_return(status: 200, body: "Not a valid feed", headers: { "Content-Type" => "text/plain" })
+
     with_caching do
+      # Create failed cache entry via controller and job
+      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      perform_enqueued_jobs
+
+      # Manipulate cache to remove error field (edge case)
+      cached_data = Rails.cache.read(cache_key(url))
       Rails.cache.write(
         cache_key(url),
-        { status: "failed", url: url },
+        cached_data.except(:error),
         expires_in: 10.minutes
       )
 
