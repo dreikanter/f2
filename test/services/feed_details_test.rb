@@ -193,40 +193,4 @@ class FeedDetailsTest < ActiveSupport::TestCase
 
     assert_equal 10.minutes, write_called_with[:expires_in]
   end
-
-  test "#identify should handle cache write failures gracefully" do
-    url = "http://example.com/feed.xml"
-
-    rss_content = <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel>
-          <title>Test Feed</title>
-        </channel>
-      </rss>
-    XML
-
-    stub_request(:get, url)
-      .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
-
-    # Create a mock cache that fails on write
-    mock_cache = Minitest::Mock.new
-    mock_cache.expect(:write, nil) do |_key, _value, _options|
-      raise StandardError, "Cache write failed"
-    end
-
-    log_output = StringIO.new
-    logger = ActiveSupport::Logger.new(log_output)
-
-    # Should not raise an error even if cache write fails
-    assert_nothing_raised do
-      service = FeedDetails.new(user: user, url: url, cache: mock_cache, logger: logger)
-      service.identify
-    end
-
-    # Should log the cache write failure
-    log_output.rewind
-    log_message = log_output.read
-    assert_includes log_message, "Failed to write cache"
-  end
 end

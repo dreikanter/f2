@@ -55,8 +55,6 @@ class FeedDetails
 
   def write_cache(cache_key, **data)
     @cache.write(cache_key, data, expires_in: CACHE_EXPIRES_IN)
-  rescue => e
-    @logger.error("Failed to write cache for #{@url}: #{e.class} - #{e.message}")
   end
 
   def http_client
