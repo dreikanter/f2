@@ -6,6 +6,10 @@ module ProfileMatcher
       /<rdf:RDF/i
     ].freeze
 
+    def self.profile_key
+      "rss"
+    end
+
     def match?
       return false if response.body.blank?
 

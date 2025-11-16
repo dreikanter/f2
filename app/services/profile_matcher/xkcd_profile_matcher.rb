@@ -2,6 +2,10 @@ module ProfileMatcher
   class XkcdProfileMatcher < Base
     XKCD_DOMAIN = "xkcd.com"
 
+    def self.profile_key
+      "xkcd"
+    end
+
     def match?
       return false if url.blank?
 

@@ -12,7 +12,7 @@ class FeedDetailsFetcher
     matcher_class = FeedProfileDetector.new(@url, response).detect
 
     if matcher_class
-      profile_key = matcher_class.name.demodulize.gsub(/ProfileMatcher$/, "").underscore
+      profile_key = matcher_class.profile_key
       title = extract_title(profile_key, @url, response)
       feed_detail.update!(status: :success, feed_profile_key: profile_key, title: title, error: nil)
     else
