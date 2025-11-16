@@ -23,7 +23,7 @@ class FeedDetailsController < ApplicationController
         expires_in: 10.minutes
       )
 
-      FeedIdentificationJob.perform_later(Current.user.id, feed_url)
+      FeedDetailsJob.perform_later(Current.user.id, feed_url)
     end
 
     render turbo_stream: turbo_stream.replace(

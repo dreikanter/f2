@@ -31,7 +31,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
       post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
@@ -96,7 +96,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       expires_in: 10.minutes
     )
 
-    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
       post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
