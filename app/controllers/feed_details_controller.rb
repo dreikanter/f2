@@ -5,41 +5,30 @@ class FeedDetailsController < ApplicationController
 
   def create
     unless valid_url?
-      return render turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_error",
-        locals: { url: feed_url, error: "Please enter a valid URL" }
-      )
+      return render identification_error(error: "Please enter a valid URL")
     end
 
-    if cached_data&.dig(:status) == "success"
+    if identification_status == "success"
       return handle_success_status
     end
 
-    if cached_data.nil? || cached_data[:status] == "failed"
-      Rails.cache.write(
-        cache_key,
-        { status: "processing", url: feed_url, started_at: Time.current },
-        expires_in: 10.minutes
-      )
+    if cached_data.nil? || identification_status == "failed"
+      data = {
+        status: "processing",
+        url: feed_url,
+        started_at: Time.current
+      }
 
+      Rails.cache.write(cache_key, data, expires_in: 10.minutes)
       FeedDetailsJob.perform_later(Current.user.id, feed_url)
     end
 
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/identification_loading",
-      locals: { url: feed_url }
-    )
+    render identification_loading
   end
 
   def show
     if cached_data.nil?
-      return render turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_error",
-        locals: { url: feed_url, error: "Identification session expired. Please try again." }
-      )
+      return render identification_error(error: "Identification session expired. Please try again.")
     end
 
     case cached_data[:status]
@@ -53,10 +42,6 @@ class FeedDetailsController < ApplicationController
   end
 
   private
-
-  def feed_url
-    @feed_url ||= params[:url]
-  end
 
   def cache_key
     @cache_key ||= FeedIdentificationCache.key_for(Current.user.id, feed_url)
@@ -76,44 +61,62 @@ class FeedDetailsController < ApplicationController
 
     if Time.current - started_at > timeout_threshold
       Rails.cache.delete(cache_key)
-      return render turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_error",
-        locals: {
-          url: feed_url,
-          error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."
-        }
-      )
+      return render identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again.")
     end
 
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/identification_loading",
-      locals: { url: feed_url }
-    )
+    render identification_loading
   end
 
   def handle_success_status
-    @feed = Current.user.feeds.build(
+    feed = Current.user.feeds.build(
       url: cached_data[:url],
       feed_profile_key: cached_data[:feed_profile_key],
       name: cached_data[:title]
     )
 
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/form_expanded",
-      locals: { feed: @feed }
-    )
+    render identification_success(feed)
   end
 
   def handle_failed_status
     error_message = cached_data[:error] || "We couldn't identify a feed profile for this URL."
+    render identification_error(error: error_message)
+  end
 
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/identification_error",
-      locals: { url: feed_url, error: error_message }
-    )
+  def identification_error(error:)
+    {
+      turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_error",
+        locals: { url: feed_url, error: error }
+      )
+    }
+  end
+
+  def identification_loading
+    {
+      turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_loading",
+        locals: { url: feed_url }
+      )
+    }
+  end
+
+  def identification_success(feed)
+    {
+      turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/form_expanded",
+        locals: { feed: feed }
+      )
+    }
+  end
+
+  def identification_status
+    cached_data&.dig(:status)
+  end
+
+  def feed_url
+    @feed_url ||= params[:url]
   end
 end
