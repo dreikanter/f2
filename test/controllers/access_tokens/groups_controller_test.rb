@@ -106,5 +106,19 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/Could not load groups/, response.body)
+    assert_match(/Retry/, response.body)
+  end
+
+  test "handles unauthorized token without retry link" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 401, body: "Unauthorized")
+
+    get settings_access_token_groups_path(active_token)
+
+    assert_response :success
+    assert_match(/Unable to load groups/, response.body)
+    assert_no_match(/Retry/, response.body)
   end
 end

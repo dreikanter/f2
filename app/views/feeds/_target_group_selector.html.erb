@@ -20,6 +20,8 @@
           Unable to load groups. Please select a FreeFeed account.
         <% elsif !token.active? %>
           This token is inactive. Please select a different FreeFeed account or add a new one.
+        <% elsif defined?(token_error) && token_error == :unauthorized %>
+          Unable to load groups. Please select a different FreeFeed account or add a new one.
         <% else %>
           Could not load groups for this account.
           <%= link_to "Retry", settings_access_token_groups_path(token),
