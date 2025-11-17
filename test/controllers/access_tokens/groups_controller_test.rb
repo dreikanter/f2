@@ -121,4 +121,17 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Unable to load groups/, response.body)
     assert_no_match(/Retry/, response.body)
   end
+
+  test "handles empty groups list with appropriate message" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [].to_json)
+
+    get settings_access_token_groups_path(active_token)
+
+    assert_response :success
+    assert_match(/doesn't manage any groups yet/, response.body)
+    assert_match(/Retry/, response.body)
+  end
 end

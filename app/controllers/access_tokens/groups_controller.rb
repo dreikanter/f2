@@ -25,7 +25,7 @@ class AccessTokens::GroupsController < ApplicationController
     ) do
       fetch_groups_from_freefeed(token)
     end
-    [groups, nil]
+    [groups, groups.empty? ? :empty : nil]
   rescue FreefeedClient::UnauthorizedError => e
     Rails.logger.error("Unauthorized error for token #{token.id}: #{e.message}")
     [[], :unauthorized]
