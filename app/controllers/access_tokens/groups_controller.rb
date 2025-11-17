@@ -2,7 +2,7 @@ class AccessTokens::GroupsController < ApplicationController
   def index
     @token = Current.user.access_tokens.find_by(id: params[:access_token_id])
     @feed = Current.user.feeds.find_by(id: params[:feed_id]) || Current.user.feeds.build
-    @groups, @token_error = fetch_groups_with_cache(@token) if @token&.active?
+    @groups, @token_error = fetch_groups_with_cache(@token, params[:retry].present?) if @token&.active?
     @groups ||= []
 
     render turbo_stream: turbo_stream.replace(
@@ -14,9 +14,12 @@ class AccessTokens::GroupsController < ApplicationController
 
   private
 
-  def fetch_groups_with_cache(token)
+  def fetch_groups_with_cache(token, bust_cache = false)
+    cache_key = "access_token_groups/#{token.id}"
+    Rails.cache.delete(cache_key) if bust_cache
+
     groups = Rails.cache.fetch(
-      "access_token_groups/#{token.id}",
+      cache_key,
       expires_in: 10.minutes,
       race_condition_ttl: 5.seconds,
       error_handler: ->(exception:, key:, **) {

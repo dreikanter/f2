@@ -134,4 +134,40 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/doesn't manage any groups yet/, response.body)
     assert_match(/Retry/, response.body)
   end
+
+  test "busts cache when retry parameter is present" do
+    sign_in_as user
+
+    call_count = 0
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return do |_request|
+        call_count += 1
+        if call_count == 1
+          { status: 200, body: [].to_json }
+        else
+          { status: 200, body: [{ "username" => "newgroup" }].to_json }
+        end
+      end
+
+    get settings_access_token_groups_path(active_token)
+    assert_match(/doesn't manage any groups yet/, response.body)
+    assert_equal 1, call_count
+
+    get settings_access_token_groups_path(active_token, retry: 1)
+    assert_match(/newgroup/, response.body)
+    assert_equal 2, call_count
+  end
+
+  test "renders text input for error states" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    get settings_access_token_groups_path(active_token)
+
+    assert_response :success
+    assert_match(/input.*type="text".*feed\[target_group\]/, response.body)
+    assert_no_match(/select.*disabled/, response.body)
+  end
 end
