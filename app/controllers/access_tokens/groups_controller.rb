@@ -2,14 +2,7 @@ class AccessTokens::GroupsController < ApplicationController
   def index
     @token = Current.user.access_tokens.find_by(id: params[:access_token_id])
     @feed = Current.user.feeds.find_by(id: params[:feed_id]) || Current.user.feeds.build
-
-    # Use find_by instead of find - if token not found or doesn't belong to user,
-    # gracefully render empty selector (better UX for Turbo Stream context)
-    @groups = if @token&.active?
-      fetch_groups_with_cache(@token)
-    else
-      []
-    end
+    @groups = @token&.active? ? fetch_groups_with_cache(@token) : []
 
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
@@ -31,16 +24,12 @@ class AccessTokens::GroupsController < ApplicationController
     ) do
       fetch_groups_from_freefeed(token)
     end
-  rescue => e
-    # FreeFeed API error - log and return empty array
-    # Do not write to cache here - let Rails.cache.fetch handle race conditions
+  rescue StandardError => e
     Rails.logger.error("Failed to fetch groups for token #{token.id}: #{e.message}")
     []
   end
 
   def fetch_groups_from_freefeed(token)
-    client = token.build_client
-    # managed_groups returns array of hashes with symbol keys
-    client.managed_groups.map { |group| group[:username] }
+    token.build_client.managed_groups.map { |group| group[:username] }
   end
 end
