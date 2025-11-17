@@ -24,21 +24,17 @@ class AccessTokens::GroupsController < ApplicationController
     Rails.cache.fetch(
       "access_token_groups/#{token.id}",
       expires_in: 10.minutes,
-      race_condition_ttl: 5.seconds
+      race_condition_ttl: 5.seconds,
+      error_handler: ->(exception:, key:, **) {
+        Rails.logger.error("Cache error for key #{key}: #{exception.message}")
+      }
     ) do
       fetch_groups_from_freefeed(token)
     end
   rescue => e
-    # FreeFeed API error - cache failure with shorter TTL to prevent hammering
+    # FreeFeed API error - log and return empty array
+    # Do not write to cache here - let Rails.cache.fetch handle race conditions
     Rails.logger.error("Failed to fetch groups for token #{token.id}: #{e.message}")
-
-    # Cache empty result for 1 minute to prevent repeated API calls
-    Rails.cache.write(
-      "access_token_groups/#{token.id}",
-      [],
-      expires_in: 1.minute
-    )
-
     []
   end
 
