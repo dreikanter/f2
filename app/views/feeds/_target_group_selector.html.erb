@@ -11,25 +11,24 @@
         The FreeFeed group where posts will be published. Groups are like channels or communities.
       </p>
     <% else %>
-      <%= text_field_tag "feed[target_group]",
-                         feed.target_group,
-                         class: "ff-form-input",
-                         placeholder: "Enter group name",
-                         required: true %>
-      <p class="ff-form-help">
+      <%= select_tag "feed[target_group]",
+                     options_for_select([[feed.target_group.presence || "Select a group", ""]]),
+                     class: "ff-form-input",
+                     disabled: true %>
+      <p class="ff-form-error">
         <% if token.nil? %>
-          Unable to load groups. Please select a FreeFeed account or enter the group name manually.
+          Unable to load groups. Please select a FreeFeed account.
         <% elsif !token.active? %>
-          This token is inactive. Please select a different FreeFeed account or enter the group name manually.
+          This token is inactive. Please select a different FreeFeed account or add a new one.
         <% elsif defined?(token_error) && token_error == :unauthorized %>
-          Unable to load groups. Please select a different FreeFeed account or enter the group name manually.
+          Unable to load groups. Please select a different FreeFeed account or add a new one.
         <% elsif defined?(token_error) && token_error == :empty %>
-          This account doesn't manage any groups yet. You can enter a group name manually.
+          This account doesn't manage any groups yet.
           <%= link_to "Retry", settings_access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
                       class: "ff-link" %>
         <% else %>
-          Could not load groups for this account. You can enter a group name manually.
+          Could not load groups for this account.
           <%= link_to "Retry", settings_access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
                       class: "ff-link" %>

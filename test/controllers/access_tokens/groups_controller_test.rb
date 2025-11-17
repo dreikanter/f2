@@ -158,7 +158,7 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, call_count
   end
 
-  test "renders text input for error states" do
+  test "renders disabled select for error states" do
     sign_in_as user
 
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
@@ -167,7 +167,8 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     get settings_access_token_groups_path(active_token)
 
     assert_response :success
-    assert_match(/input.*type="text".*feed\[target_group\]/, response.body)
-    assert_no_match(/select.*disabled/, response.body)
+    assert_match(/select.*disabled/, response.body)
+    assert_match(/Could not load groups/, response.body)
+    assert_no_match(/input.*type="text"/, response.body)
   end
 end
