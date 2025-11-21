@@ -41,9 +41,6 @@ class AccessTokens::GroupsController < ApplicationController
     }
   end
 
-  def fetch_groups_with_cache
-  end
-
   def access_token
     @access_token ||= current_user.access_tokens.find_by(id: params[:access_token_id])
   end
