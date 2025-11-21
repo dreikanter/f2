@@ -1,46 +1,63 @@
 class AccessTokens::GroupsController < ApplicationController
+  GROUPS_CACHE_TTL = 10.minutes
+
   def index
-    @token = Current.user.access_tokens.find_by(id: params[:access_token_id])
-    @feed = Current.user.feeds.find_by(id: params[:feed_id]) || Current.user.feeds.build
-    @groups, @token_error = fetch_groups_with_cache(@token, params[:retry].present?) if @token&.active?
-    @groups ||= []
+    Rails.cache.delete(cache_key) if bust_cache?
 
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
       partial: "feeds/target_group_selector",
-      locals: {
-        feed: @feed,
-        groups: @groups,
-        token: @token,
-        token_error: @token_error
-      }
+      locals: locals.merge(feed: feed, token: access_token)
     )
   end
 
   private
 
-  def fetch_groups_with_cache(token, bust_cache = false)
-    cache_key = "access_token_groups/#{token.id}"
-    Rails.cache.delete(cache_key) if bust_cache
+  def locals
+    if access_token.active?
+      groups = Rails.cache.fetch(cache_key, expires_in: GROUPS_CACHE_TTL) do
+        fetch_groups_from_freefeed(access_token)
+      end
 
-    groups = Rails.cache.fetch(
-      cache_key,
-      expires_in: 10.minutes,
-      race_condition_ttl: 5.seconds,
-      error_handler: ->(exception:, key:, **) {
-        Rails.logger.error("Cache error for key #{key}: #{exception.message}")
+      {
+        groups: groups,
+        token_error: groups.empty? ? :empty : nil
       }
-    ) do
-      fetch_groups_from_freefeed(token)
+    else
+      {
+        groups: [],
+        token_error: :inactive_token
+      }
     end
-
-    [groups, groups.empty? ? :empty : nil]
   rescue FreefeedClient::UnauthorizedError => e
-    Rails.logger.error("Unauthorized error for token #{token.id}: #{e.message}")
-    [[], :unauthorized]
+    {
+      groups: [],
+      token_error: :unauthorized
+    }
   rescue StandardError => e
-    Rails.logger.error("Failed to fetch groups for token #{token.id}: #{e.message}")
-    [[], :api_error]
+    {
+      groups: [],
+      token_error: :api_error
+    }
+  end
+
+  def fetch_groups_with_cache
+  end
+
+  def access_token
+    @access_token ||= current_user.access_tokens.find_by(id: params[:access_token_id])
+  end
+
+  def feed
+    @feed ||= current_user.feeds.find_by(id: params[:feed_id]) || current_user.feeds.build
+  end
+
+  def cache_key
+    "access_token_groups/#{access_token.id}"
+  end
+
+  def bust_cache?
+    params[:retry].present?
   end
 
   def fetch_groups_from_freefeed(token)
