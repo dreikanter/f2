@@ -8,7 +8,12 @@ class AccessTokens::GroupsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
       partial: "feeds/target_group_selector",
-      locals: { feed: @feed, groups: @groups, token: @token, token_error: @token_error }
+      locals: {
+        feed: @feed,
+        groups: @groups,
+        token: @token,
+        token_error: @token_error
+      }
     )
   end
 
@@ -28,6 +33,7 @@ class AccessTokens::GroupsController < ApplicationController
     ) do
       fetch_groups_from_freefeed(token)
     end
+
     [groups, groups.empty? ? :empty : nil]
   rescue FreefeedClient::UnauthorizedError => e
     Rails.logger.error("Unauthorized error for token #{token.id}: #{e.message}")
