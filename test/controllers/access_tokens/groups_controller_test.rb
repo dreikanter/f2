@@ -25,17 +25,29 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     @feed ||= create(:feed, user: user, target_group: "mygroup")
   end
 
-  test "requires authentication" do
+  test "should require authentication" do
     get settings_access_token_groups_path(active_token)
     assert_redirected_to new_session_path
   end
 
-  test "returns Turbo Stream with fetched groups" do
+  test "should return Turbo Stream with fetched groups" do
     sign_in_as user
 
     groups_response = [
-      { "id" => "group1", "username" => "testgroup1", "screenName" => "Test Group 1", "isPrivate" => "0", "isRestricted" => "0" },
-      { "id" => "group2", "username" => "testgroup2", "screenName" => "Test Group 2", "isPrivate" => "1", "isRestricted" => "0" }
+      {
+        "id" => "group1",
+        "username" => "testgroup1",
+        "screenName" => "Test Group 1",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group2",
+        "username" => "testgroup2",
+        "screenName" => "Test Group 2",
+        "isPrivate" => "1",
+        "isRestricted" => "0"
+      }
     ]
 
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
@@ -55,9 +67,27 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     groups_response = [
-      { "id" => "group1", "username" => "zebra", "screenName" => "Zebra", "isPrivate" => "0", "isRestricted" => "0" },
-      { "id" => "group2", "username" => "alpha", "screenName" => "Alpha", "isPrivate" => "0", "isRestricted" => "0" },
-      { "id" => "group3", "username" => "beta", "screenName" => "Beta", "isPrivate" => "0", "isRestricted" => "0" }
+      {
+        "id" => "group1",
+        "username" => "zebra",
+        "screenName" => "Zebra",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group2",
+        "username" => "alpha",
+        "screenName" => "Alpha",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      },
+      {
+        "id" => "group3",
+        "username" => "beta",
+        "screenName" => "Beta",
+        "isPrivate" => "0",
+        "isRestricted" => "0"
+      }
     ]
 
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
@@ -69,16 +99,16 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/alpha.*beta.*zebra/m, response.body)
   end
 
-  test "renders disabled selector for non-existent token" do
+  test "should render disabled selector for non-existent token" do
     sign_in_as user
 
-    get settings_access_token_groups_path(access_token_id: 99999)
+    get settings_access_token_groups_path(access_token_id: -1)
 
     assert_response :success
     assert_match(/Unable to load groups/, response.body)
   end
 
-  test "renders disabled selector for other user's token" do
+  test "should render disabled selector for other user's token" do
     sign_in_as user
 
     get settings_access_token_groups_path(other_users_token)
@@ -87,7 +117,7 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Unable to load groups/, response.body)
   end
 
-  test "renders disabled selector for inactive token" do
+  test "should render disabled selector for inactive token" do
     sign_in_as user
 
     get settings_access_token_groups_path(inactive_token)
@@ -135,30 +165,24 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Retry/, response.body)
   end
 
-  test "busts cache when retry parameter is present" do
+  test "should purge cache when retry parameter is present" do
     sign_in_as user
 
-    call_count = 0
+    # Stubbing sequential requests
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
-      .to_return do |_request|
-        call_count += 1
-        if call_count == 1
-          { status: 200, body: [].to_json }
-        else
-          { status: 200, body: [{ "username" => "newgroup" }].to_json }
-        end
-      end
+      .to_return(
+        { status: 200, body: [].to_json },
+        { status: 200, body: [{ "username" => "newgroup" }].to_json }
+      )
 
     get settings_access_token_groups_path(active_token)
     assert_match(/doesn't manage any groups yet/, response.body)
-    assert_equal 1, call_count
 
     get settings_access_token_groups_path(active_token, retry: 1)
     assert_match(/newgroup/, response.body)
-    assert_equal 2, call_count
   end
 
-  test "renders disabled select for error states" do
+  test "should render disabled select for error states" do
     sign_in_as user
 
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
