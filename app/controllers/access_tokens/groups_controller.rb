@@ -2,8 +2,6 @@ class AccessTokens::GroupsController < ApplicationController
   GROUPS_CACHE_TTL = 10.minutes
 
   def index
-    Rails.cache.delete(cache_key) if bust_cache?
-
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
       partial: "feeds/target_group_selector",
@@ -14,35 +12,38 @@ class AccessTokens::GroupsController < ApplicationController
   private
 
   def locals
-    if access_token.active?
-      groups = Rails.cache.fetch(cache_key, expires_in: GROUPS_CACHE_TTL) do
-        fetch_groups_from_freefeed(access_token)
-      end
+    if access_token.blank?
+      error_locals(:missing_token)
+    elsif access_token.active?
+      Rails.cache.delete(cache_key) if bust_cache?
+      groups = Rails.cache.fetch(cache_key, expires_in: GROUPS_CACHE_TTL) { fetch_groups_from_freefeed }
 
       {
         groups: groups,
         token_error: groups.empty? ? :empty : nil
       }
     else
-      {
-        groups: [],
-        token_error: :inactive_token
-      }
+      error_locals(:inactive_token)
     end
   rescue FreefeedClient::UnauthorizedError => e
-    {
-      groups: [],
-      token_error: :unauthorized
-    }
+    error_locals(:unauthorized)
   rescue StandardError => e
+    error_locals(:api_error)
+  end
+
+  def error_locals(error)
     {
       groups: [],
-      token_error: :api_error
+      token_error: error
     }
   end
 
   def access_token
-    @access_token ||= current_user.access_tokens.find_by(id: params[:access_token_id])
+    if defined?(@access_token)
+      @access_token
+    else
+      @access_token ||= current_user.access_tokens.find_by(id: params[:access_token_id])
+    end
   end
 
   def feed
@@ -57,7 +58,7 @@ class AccessTokens::GroupsController < ApplicationController
     params[:retry].present?
   end
 
-  def fetch_groups_from_freefeed(token)
-    token.build_client.managed_groups.map { |group| group[:username] }
+  def fetch_groups_from_freefeed
+    access_token.build_client.managed_groups.map { |group| group[:username] }
   end
 end
