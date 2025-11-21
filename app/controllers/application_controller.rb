@@ -9,7 +9,9 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def pundit_user
+  # Pundit uses this method to get the "user" for authorization checks
+  # SEE: https://github.com/varvet/pundit?tab=readme-ov-file#customize-pundit-user
+  def current_user
     Current.user
   end
 
