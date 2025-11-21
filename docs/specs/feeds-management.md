@@ -1221,16 +1221,6 @@ Per CLAUDE.md requirements:
 - Identification reuse flow: same URL identified twice → reuses FeedDetail record
 - Token change flow: select token → groups load → select group
 
-### System Tests (if applicable)
-- Turbo Stream interactions: token selection triggers Turbo Stream request and group selector updates
-- Form state transitions: collapsed → loading → expanded
-- Submit button label updates based on checkbox
-- Polling behavior: identification polling stops on success/failure/timeout
-- Button disabling: Identify button disabled on submit, prevents double-clicks
-- Groups loading: Token selector disabled while groups loading, prevents race conditions
-- Loading states: Groups selector shows "Loading groups..." while fetching
-- Error recovery: All disabled states resolve (never stuck disabled)
-
 ### Test Data Setup
 - Use FactoryBot for feed creation and FeedDetail records
 - Mock HTTP responses for feed identification
