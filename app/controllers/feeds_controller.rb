@@ -42,30 +42,26 @@ class FeedsController < ApplicationController
   end
 
   def new
-    @feed = Current.user.feeds.build
+    @feed = feeds_scope.build
     authorize @feed
-    @has_active_tokens = Current.user.access_tokens.active.exists?
+    @has_active_tokens = active_access_tokens?
   end
 
   def create
-    @feed = Current.user.feeds.build(feed_params)
+    @feed = feeds_scope.build(feed_params)
     authorize @feed
 
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
-    if @feed.enabled?
-      ActiveRecord::Base.transaction do
-        @feed.save!
-        @feed.create_feed_schedule! if @feed.feed_schedule.nil?
-      end
-    else
+    ActiveRecord::Base.transaction do
       @feed.save!
+      @feed.create_feed_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
     end
 
     cleanup_feed_identification(@feed.url)
     redirect_to feed_path(@feed), notice: success_message
   rescue ActiveRecord::RecordInvalid
-    @has_active_tokens = Current.user.access_tokens.active.exists?
+    @has_active_tokens = active_access_tokens?
     render :new, status: :unprocessable_entity
   end
 
@@ -100,6 +96,14 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def active_access_tokens?
+    Current.user.access_tokens.active.exists?
+  end
+
+  def feeds_scope
+    Current.user.feeds
+  end
 
   def sortable_fields
     SORTABLE_FIELDS
