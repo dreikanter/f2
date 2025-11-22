@@ -1,4 +1,4 @@
-class Settings::EmailUpdatesController < ApplicationController
+class EmailUpdatesController < ApplicationController
   def edit
     @user = Current.user
   end

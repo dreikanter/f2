@@ -171,7 +171,7 @@ If polling timeout (30 seconds) is reached without success/failure:
 After successful identification, show:
 
 **1. URL (Read-only)**
-- Display as disabled text input (grayed out, see current email field at `app/views/settings/email_updates/edit.html.erb` for example)
+- Display as disabled text input (grayed out, see current email field at `app/views/email_updates/edit.html.erb` for example)
 - Label: "Feed URL"
 - Aria label: "Feed URL (cannot be changed)"
 - Grayed out background to indicate read-only state
