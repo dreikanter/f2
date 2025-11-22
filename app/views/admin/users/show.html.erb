@@ -287,7 +287,7 @@
   <%= render ConfirmationModalComponent.new(
     title: "Unsuspend User",
     action: "Unsuspend user",
-    url: admin_user_suspension_path(@user),
+    url: admin_user_user_suspension_path(@user),
     method: :delete,
     modal_id: "unsuspend-user-modal-#{@user.id}"
   ) do %>
@@ -297,7 +297,7 @@
   <%= render ConfirmationModalComponent.new(
     title: "Suspend User",
     action: "Suspend user",
-    url: admin_user_suspension_path(@user),
+    url: admin_user_user_suspension_path(@user),
     method: :post,
     modal_id: "suspend-user-modal-#{@user.id}"
   ) do %>
