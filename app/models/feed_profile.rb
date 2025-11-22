@@ -67,4 +67,18 @@ class FeedProfile
   def self.title_extractor_class_for(key)
     class_for(key, :title_extractor)
   end
+
+  # Returns a human-readable display name for a profile key
+  # @param key [String] the profile key
+  # @return [String] the display name
+  def self.display_name_for(key)
+    case key
+    when "rss"
+      "RSS Feed"
+    when "xkcd"
+      "XKCD"
+    else
+      key.to_s.titleize
+    end
+  end
 end
