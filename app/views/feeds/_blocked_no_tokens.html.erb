@@ -1,0 +1,20 @@
+<div id="feed-form" class="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm space-y-6">
+  <div class="rounded-md bg-amber-50 p-4">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <%= icon("exclamation-triangle", css_class: "h-5 w-5 text-amber-400", aria_hidden: true) %>
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-amber-800">Access token required</h3>
+        <div class="mt-2 text-sm text-amber-700 space-y-2">
+          <p>You need to add an active FreeFeed access token before creating a feed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <%= link_to "Add Access Token", new_access_token_path, class: "ff-button ff-button--compact w-full sm:w-auto" %>
+    <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary ff-button--compact w-full sm:w-auto ml-0 sm:ml-3 mt-3 sm:mt-0" %>
+  </div>
+</div>
