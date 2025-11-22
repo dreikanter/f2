@@ -1,4 +1,4 @@
-class Settings::AccessTokenGroupsController < ApplicationController
+class AccessTokens::GroupsController < ApplicationController
   GROUPS_CACHE_TTL = 10.minutes
 
   def index

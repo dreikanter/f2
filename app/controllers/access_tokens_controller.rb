@@ -1,4 +1,4 @@
-class Settings::AccessTokensController < ApplicationController
+class AccessTokensController < ApplicationController
   def index
     authorize AccessToken
     @access_tokens = scope.order(created_at: :desc)

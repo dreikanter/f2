@@ -58,9 +58,11 @@ Rails.application.routes.draw do
     resources :email_confirmations, only: :show, param: :token
   end
 
-  resources :access_tokens, except: [:edit, :update], controller: "settings/access_tokens" do
-    resource :validation, only: :show, controller: "settings/access_token_validations"
-    resources :groups, only: :index, controller: "settings/access_token_groups"
+  resources :access_tokens, except: [:edit, :update] do
+    scope module: :access_tokens do
+      resource :validation, only: :show
+      resources :groups, only: :index
+    end
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

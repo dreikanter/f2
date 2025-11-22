@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
+class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
