@@ -57,7 +57,7 @@ Rails.application.routes.draw do
 
     resources :access_tokens, except: [:edit, :update] do
       resource :validation, only: :show
-      resources :groups, only: :index, controller: "access_tokens/groups"
+      resources :groups, only: :index
     end
   end
 
