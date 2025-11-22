@@ -1,4 +1,4 @@
-class Admin::UserSuspensionsController < ApplicationController
+class Admin::SuspensionsController < ApplicationController
   def create
     authorize User, :suspend?
     user = find_user

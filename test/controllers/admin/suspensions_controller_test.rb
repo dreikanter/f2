@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Admin::UserSuspensionsControllerTest < ActionDispatch::IntegrationTest
+class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
   def admin_user
     @admin_user ||= create(:user, :admin)
   end
