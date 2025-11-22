@@ -13,7 +13,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as admin_user
     assert target_user.active?
 
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
     assert_redirected_to admin_user_path(target_user)
     target_user.reload
@@ -25,7 +25,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     session1 = target_user.sessions.create!(user_agent: "Browser 1", ip_address: "1.1.1.1")
     session2 = target_user.sessions.create!(user_agent: "Browser 2", ip_address: "2.2.2.2")
 
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
     assert_equal 0, target_user.reload.sessions.count
   end
@@ -35,7 +35,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
 
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
     assert_equal "disabled", feed1.reload.state
     assert_equal "disabled", feed2.reload.state
@@ -45,7 +45,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as admin_user
     suspended_user = create(:user, :suspended)
 
-    delete admin_user_user_suspension_path(suspended_user)
+    delete admin_user_suspension_path(suspended_user)
 
     assert_redirected_to admin_user_path(suspended_user)
     suspended_user.reload
@@ -57,9 +57,9 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     feed1 = create(:feed, :enabled, user: target_user)
     feed2 = create(:feed, :enabled, user: target_user)
 
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
-    delete admin_user_user_suspension_path(target_user)
+    delete admin_user_suspension_path(target_user)
 
     assert_equal "disabled", feed1.reload.state
     assert_equal "disabled", feed2.reload.state
@@ -68,7 +68,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
   test "#create should require admin permission" do
     sign_in_as create(:user)
 
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
@@ -78,7 +78,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as create(:user)
     suspended_user = create(:user, :suspended)
 
-    delete admin_user_user_suspension_path(suspended_user)
+    delete admin_user_suspension_path(suspended_user)
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
@@ -91,7 +91,7 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     feed3 = create(:feed, :disabled, user: target_user)
 
     assert_difference "Event.count", 1 do
-      post admin_user_user_suspension_path(target_user)
+      post admin_user_suspension_path(target_user)
     end
 
     event = Event.last
@@ -104,10 +104,10 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#destroy should record user_unsuspended event" do
     sign_in_as admin_user
-    post admin_user_user_suspension_path(target_user)
+    post admin_user_suspension_path(target_user)
 
     assert_difference "Event.count", 1 do
-      delete admin_user_user_suspension_path(target_user)
+      delete admin_user_suspension_path(target_user)
     end
 
     event = Event.last
