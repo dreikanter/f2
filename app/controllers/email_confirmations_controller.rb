@@ -1,4 +1,4 @@
-class Settings::EmailConfirmationsController < ApplicationController
+class EmailConfirmationsController < ApplicationController
   allow_unauthenticated_access
 
   def show

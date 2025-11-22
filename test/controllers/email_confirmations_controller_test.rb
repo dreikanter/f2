@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
+class EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
