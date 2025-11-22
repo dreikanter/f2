@@ -51,11 +51,9 @@ class FeedsController < ApplicationController
     @feed = Current.user.feeds.build(feed_params)
     authorize @feed
 
-    # Set state based solely on enable_feed parameter (not from params)
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
     saved = if @feed.enabled?
-      # Use transaction for enabled feeds
       ActiveRecord::Base.transaction do
         @feed.save!
         @feed.create_feed_schedule! if @feed.feed_schedule.nil?
