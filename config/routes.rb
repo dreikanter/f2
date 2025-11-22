@@ -41,8 +41,8 @@ Rails.application.routes.draw do
     resources :users, only: [:index, :show] do
       resource :email_update, only: [:edit, :update]
       resource :password_reset, only: :create
-      resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
-      resource :available_invites, only: :update, controller: "available_invites"
+      resource :suspension, only: [:create, :destroy]
+      resource :available_invites, only: :update
       resource :email_reactivation, only: :create
     end
 
@@ -50,14 +50,18 @@ Rails.application.routes.draw do
     resource :system_stats, only: :show
   end
 
-  resource :settings, only: :show do
-    resource :email_update, only: [:edit, :update], controller: "settings/email_updates"
-    resource :password_update, only: [:edit, :update], controller: "settings/password_updates"
-    resources :email_confirmations, only: :show, param: :token, controller: "settings/email_confirmations"
+  resource :settings, only: :show
 
-    resources :access_tokens, controller: "settings/access_tokens", except: [:edit, :update] do
-      resource :validation, only: :show, controller: "settings/access_token_validations"
-      resources :groups, only: :index, controller: "access_tokens/groups"
+  namespace :settings do
+    resource :email_update, only: [:edit, :update]
+    resource :password_update, only: [:edit, :update]
+    resources :email_confirmations, only: :show, param: :token
+  end
+
+  resources :access_tokens, except: [:edit, :update] do
+    scope module: :access_tokens do
+      resource :validation, only: :show
+      resources :groups, only: :index
     end
   end
 

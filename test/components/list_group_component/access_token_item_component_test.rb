@@ -67,6 +67,6 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
     link = result.css("a").first
 
     assert_not_nil link
-    assert_includes link.attributes["href"].value, "/settings/access_tokens/#{access_token.id}"
+    assert_includes link.attributes["href"].value, "/access_tokens/#{access_token.id}"
   end
 end

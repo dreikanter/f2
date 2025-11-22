@@ -4,7 +4,7 @@
   </span>
   <div class="flex flex-1 flex-col gap-1">
     <div class="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
-      <%= link_to @access_token.name, settings_access_token_path(@access_token), class: "transition hover:text-slate-700 ff-focus-ring" %>
+      <%= link_to @access_token.name, access_token_path(@access_token), class: "transition hover:text-slate-700 ff-focus-ring" %>
     </div>
     <div class="ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500">
       <span><%= username_with_host %></span>

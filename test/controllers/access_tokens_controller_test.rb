@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
+class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -10,13 +10,13 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#index should require authentication" do
-    get settings_access_tokens_path
+    get access_tokens_path
     assert_redirected_to new_session_path
   end
 
   test "#index should show access tokens list" do
     sign_in_as user
-    get settings_access_tokens_path
+    get access_tokens_path
 
     assert_response :success
     assert_select "h1", "Access Tokens"
@@ -24,7 +24,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should display empty state" do
     sign_in_as user
-    get settings_access_tokens_path
+    get access_tokens_path
 
     assert_response :success
     assert_select "h2", "No access tokens yet"
@@ -33,20 +33,20 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "#index should display existing tokens" do
     sign_in_as user
     access_token
-    get settings_access_tokens_path
+    get access_tokens_path
 
     assert_response :success
     assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
   end
 
   test "#show should redirect to sign in form" do
-    get settings_access_token_path(access_token)
+    get access_token_path(access_token)
     assert_redirected_to new_session_path
   end
 
   test "#show should render for own token" do
     sign_in_as user
-    get settings_access_token_path(access_token)
+    get access_token_path(access_token)
 
     assert_response :success
     assert_select "h1", access_token.name
@@ -55,14 +55,14 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "#show should not render for other user's token" do
     other_token = create(:access_token, user: create(:user))
     sign_in_as user
-    get settings_access_token_path(other_token)
+    get access_token_path(other_token)
 
     assert_response :not_found
   end
 
   test "#new should render when authenticated" do
     sign_in_as user
-    get new_settings_access_token_path
+    get new_access_token_path
 
     assert_response :success
   end
@@ -71,7 +71,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_difference("AccessToken.count", 1) do
-      post settings_access_tokens_path, params: {
+      post access_tokens_path, params: {
         access_token: {
           name: "Test Token",
           token: "test_token_123",
@@ -80,7 +80,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to settings_access_token_path(AccessToken.last)
+    assert_redirected_to access_token_path(AccessToken.last)
   end
 
 
@@ -88,7 +88,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_no_difference("AccessToken.count") do
-      post settings_access_tokens_path, params: {
+      post access_tokens_path, params: {
         access_token: {
           name: "Test Token",
           token: "", # Invalid: empty token
@@ -105,7 +105,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_no_difference("AccessToken.count") do
-      post settings_access_tokens_path, params: {
+      post access_tokens_path, params: {
         access_token: {
           name: "Test Token",
           token: "test_token_123",
@@ -120,7 +120,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should require authentication" do
     assert_no_difference("AccessToken.count") do
-      post settings_access_tokens_path, params: {
+      post access_tokens_path, params: {
         access_token: {
           name: "Test Token",
           token: "test_token_123",
@@ -133,7 +133,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "requires authentication for destroy" do
-    delete settings_access_token_path(access_token)
+    delete access_token_path(access_token)
 
     assert_redirected_to new_session_path
   end
@@ -143,10 +143,10 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     assert_difference("AccessToken.count", -1) do
-      delete settings_access_token_path(access_token)
+      delete access_token_path(access_token)
     end
 
-    assert_redirected_to settings_access_tokens_path
+    assert_redirected_to access_tokens_path
     assert_equal "Access token '#{access_token.name}' has been deleted.", flash[:notice]
   end
 
@@ -155,7 +155,7 @@ class Settings::AccessTokensControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
 
     assert_no_difference("AccessToken.count") do
-      delete settings_access_token_path(other_token)
+      delete access_token_path(other_token)
     end
 
     assert_response :not_found

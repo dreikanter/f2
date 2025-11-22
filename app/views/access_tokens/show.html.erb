@@ -3,16 +3,16 @@
 <% if @access_token.pending? || @access_token.validating? %>
   <div
     data-controller="polling"
-    data-polling-endpoint-value="<%= settings_access_token_validation_path(@access_token) %>"
+    data-polling-endpoint-value="<%= access_token_validation_path(@access_token) %>"
     data-polling-interval-value="2000"
     data-polling-stop-condition-value="[data-status]"
     aria-busy="true">
     <div id="access-token-show" class="space-y-8">
-      <%= render "settings/access_tokens/show_content" %>
+      <%= render "access_tokens/show_content" %>
     </div>
   </div>
 <% else %>
   <div id="access-token-show" class="space-y-8">
-    <%= render "settings/access_tokens/show_content" %>
+    <%= render "access_tokens/show_content" %>
   </div>
 <% end %>
