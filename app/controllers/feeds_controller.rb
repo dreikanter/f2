@@ -42,20 +42,41 @@ class FeedsController < ApplicationController
   end
 
   def new
-    @feed = Feed.new
+    @feed = Current.user.feeds.build
     authorize @feed
+    @has_active_tokens = Current.user.access_tokens.active.exists?
   end
 
   def create
     @feed = Current.user.feeds.build(feed_params)
     authorize @feed
 
-    if @feed.save
-      cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: "Feed was successfully created."
+    # Set state based on enable_feed parameter
+    if params[:enable_feed] == "1"
+      @feed.state = :enabled
+    end
+
+    saved = if @feed.enabled?
+      # Use transaction for enabled feeds
+      ActiveRecord::Base.transaction do
+        @feed.save!
+        @feed.create_feed_schedule! if @feed.feed_schedule.nil?
+        true
+      end
     else
+      @feed.save
+    end
+
+    if saved
+      cleanup_feed_identification(@feed.url)
+      redirect_to feed_path(@feed), notice: success_message
+    else
+      @has_active_tokens = Current.user.access_tokens.active.exists?
       render :new, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordInvalid => e
+    @has_active_tokens = Current.user.access_tokens.active.exists?
+    render :new, status: :unprocessable_entity
   end
 
   def show
@@ -131,5 +152,13 @@ class FeedsController < ApplicationController
 
   def cleanup_feed_identification(url)
     FeedDetail.find_by(user: Current.user, url: url)&.destroy
+  end
+
+  def success_message
+    if @feed.enabled?
+      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{@feed.schedule_display} and published to #{@feed.target_group}."
+    else
+      "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
+    end
   end
 end
