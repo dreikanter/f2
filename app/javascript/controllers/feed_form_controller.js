@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Manages feed form submit button label based on enable checkbox state.
+// Manages feed form submit button label based on "Enable" checkbox state.
 // When creating a new feed, updates button text to reflect whether the feed
-// will be enabled ("Create and Enable Feed") or disabled ("Create Feed").
+// will be enabled or not.
 export default class extends Controller {
   static targets = ["enableCheckbox", "submitButton"]
 
