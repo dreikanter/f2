@@ -153,7 +153,8 @@ class FeedsController < ApplicationController
 
   def success_message
     if @feed.enabled?
-      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{@feed.schedule_display} and published to #{@feed.target_group}."
+      interval = @feed.schedule_display || "the configured interval"
+      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{interval} and published to #{@feed.target_group}."
     else
       "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
     end
