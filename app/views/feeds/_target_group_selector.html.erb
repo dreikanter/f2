@@ -24,12 +24,12 @@
           Unable to load groups. Please select a different FreeFeed account or add a new one.
         <% elsif defined?(token_error) && token_error == :empty %>
           This account doesn't manage any groups yet.
-          <%= link_to "Retry", settings_access_token_access_token_groups_path(token, feed_id: feed.id, retry: 1),
+          <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
                       class: "ff-link" %>
         <% else %>
           Could not load groups for this account.
-          <%= link_to "Retry", settings_access_token_access_token_groups_path(token, feed_id: feed.id, retry: 1),
+          <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
                       class: "ff-link" %>
         <% end %>

@@ -56,11 +56,11 @@ Rails.application.routes.draw do
     resource :email_update, only: [:edit, :update]
     resource :password_update, only: [:edit, :update]
     resources :email_confirmations, only: :show, param: :token
+  end
 
-    resources :access_tokens, except: [:edit, :update] do
-      resource :access_token_validation, only: :show
-      resources :access_token_groups, only: :index
-    end
+  resources :access_tokens, except: [:edit, :update], controller: "settings/access_tokens" do
+    resource :validation, only: :show, controller: "settings/access_token_validations"
+    resources :groups, only: :index, controller: "settings/access_token_groups"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

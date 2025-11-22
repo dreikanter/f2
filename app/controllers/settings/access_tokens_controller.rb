@@ -25,7 +25,7 @@ class Settings::AccessTokensController < ApplicationController
 
     if @access_token.save
       @access_token.validate_token_async
-      redirect_to settings_access_token_path(@access_token)
+      redirect_to access_token_path(@access_token)
     else
       render :new, status: :unprocessable_entity
     end
@@ -35,7 +35,7 @@ class Settings::AccessTokensController < ApplicationController
     access_token = find_access_token
     authorize access_token
     access_token.destroy!
-    redirect_to settings_access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
+    redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
   end
 
   private

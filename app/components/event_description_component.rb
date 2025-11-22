@@ -45,7 +45,7 @@ class EventDescriptionComponent < ViewComponent::Base
     when Feed
       helpers.link_to(event.subject.name, helpers.feed_path(event.subject), class: "ff-link")
     when AccessToken
-      helpers.link_to(event.subject.name, helpers.settings_access_tokens_path, class: "ff-link")
+      helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "ff-link")
     when Post
       helpers.link_to("Post", helpers.post_path(event.subject), class: "ff-link")
     else
