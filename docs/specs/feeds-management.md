@@ -4,6 +4,24 @@
 
 Implement create, edit, and delete functionality for Feed records in the Feeder application. This feature allows users to configure feed sources, identify feed profiles, and set up automated content reposting to FreeFeed groups.
 
+## Implementation Status Summary
+
+**Completed (PRs #265, #266, #269):**
+- ✅ Feed model schedule interval abstraction
+- ✅ Async feed identification infrastructure (backend + UI polling)
+- ✅ Groups API endpoint with caching
+- ✅ Critical Stimulus controllers: `polling_controller.js` (feed identification) and `groups_controller.js` (token/groups loading)
+
+**Next: PR4 - Feed Creation Flow**
+- Forms and views (collapsed, expanded, blocked states)
+- FeedsController create/new enhancements
+- Remaining Stimulus controllers: `feed_identification_controller.js` and `feed_form_controller.js`
+- Full integration tests
+
+**Future:**
+- PR5: Feed editing flow
+- PR6: Polish and accessibility improvements
+
 ## Current State
 
 ### Existing Implementation
@@ -22,11 +40,13 @@ Implement create, edit, and delete functionality for Feed records in the Feeder 
 - [x] `FeedDetailsController` for async identification (create and show actions) - **PR1**
 - [x] `FeedDetailsJob` and `FeedDetailsFetcher` service - **PR1**
 - [x] `FeedDetail` model for identification storage - **PR1**
+- [x] `polling_controller.js` configuration for feed identification - **PR1**
 - [x] Groups API endpoint for token-based group fetching - **PR3**
+- [x] `groups_controller.js` for token/groups loading states - **PR3**
 - [ ] Feed creation flow with async profile identification - **PR4**
 - [ ] Feed editing form - **PR5**
 - [ ] `FeedsController#create` and `#update` actions - **PR4/PR5**
-- [ ] Client-side form dynamics (Stimulus controllers) - **PR6**
+- [ ] Remaining client-side form dynamics (identification and form controllers) - **PR4**
 
 
 
@@ -214,7 +234,7 @@ Section header: "Reposting Settings"
   - Trigger Turbo Stream request: `GET /access_tokens/:access_token_id/groups`
   - Re-render target group selector with loading state
   - Re-enable token selector after groups loaded
-- Implemented via `data-action="change->groups-loader#loadGroups"` on select
+- Implemented via `data-action="change->groups#refresh"` on select (using groups_controller.js)
 
 **4.2 Target Group Selector**
 - Initially: Shows loading state immediately (groups are auto-fetched on form load)
@@ -787,10 +807,11 @@ end
 
 ### Stimulus Controllers
 
-**Existing controllers used**:
-- `polling_controller.js` - Handles async polling for feed identification results
+**Already implemented (PR1 and PR3)**:
+- `polling_controller.js` - Handles async polling for feed identification results (configured in `_identification_loading.html.erb`)
+- `groups_controller.js` - Manages token/groups loading states and dynamic group selector updates (handles items 2 and 5 from original PR6 plan)
 
-**New controllers to implement**:
+**To be implemented in PR4**:
 
 #### feed-identification-controller.js
 
@@ -833,66 +854,6 @@ Usage in `_form_collapsed.html.erb`:
   <%= f.text_field :url, data: { feed_identification_target: "urlInput" } %>
   <%= f.submit "Identify Feed Format", data: { feed_identification_target: "submitButton" } %>
 <% end %>
-```
-
-#### groups-loader-controller.js
-
-Handles loading state for groups selector when token changes:
-
-```javascript
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  static targets = ["tokenSelect", "groupsContainer"]
-
-  loadGroups(event) {
-    // Disable token selector to prevent race conditions
-    if (this.hasTokenSelectTarget) {
-      this.tokenSelectTarget.disabled = true
-    }
-
-    // Show loading state in groups container immediately
-    if (this.hasGroupsContainerTarget) {
-      this.showLoadingState()
-    }
-  }
-
-  showLoadingState() {
-    // Render loading select immediately (before Turbo Stream response)
-    this.groupsContainerTarget.innerHTML = `
-      <select disabled class="form-select" name="feed[target_group]">
-        <option>Loading groups...</option>
-      </select>
-    `
-  }
-
-  // Called after Turbo Stream replaces groups selector
-  groupsLoaded(event) {
-    // Re-enable token selector
-    if (this.hasTokenSelectTarget) {
-      this.tokenSelectTarget.disabled = false
-    }
-  }
-}
-```
-
-Usage in `_form_expanded.html.erb`:
-```erb
-<div data-controller="groups-loader">
-  <%= f.select :access_token_id,
-               options_for_select(...),
-               {},
-               data: {
-                 groups_loader_target: "tokenSelect",
-                 action: "change->groups-loader#loadGroups"
-               } %>
-
-  <div id="target-group-selector"
-       data-groups-loader-target="groupsContainer"
-       data-action="turbo:frame-load->groups-loader#groupsLoaded">
-    <%= render "target_group_selector", ... %>
-  </div>
-</div>
 ```
 
 #### feed-form-controller.js
@@ -957,7 +918,7 @@ export default class extends Controller {
 - Has `data-identification-state="complete"` attribute (triggers polling stop condition)
 - Includes hidden fields: `url`, `feed_profile_key`, `name` (from identification)
 - Includes target group selector with `id="target-group-selector"`
-- Uses `data-controller="groups-loader"` for token/groups interaction
+- Uses `data-controller="groups"` for token/groups interaction (implemented in groups_controller.js)
 
 **app/views/feeds/_target_group_selector.html.erb**:
 - Partial for target group selector (dynamically re-rendered via Turbo Stream)
@@ -1007,8 +968,8 @@ export default class extends Controller {
 **Access Token Selector**:
 - Always has at least one token available (prerequisite check in section 1.2)
 - Dropdown populated with active tokens only
-- Disabled during groups loading (managed by groups-loader Stimulus controller)
-- Triggers Turbo Stream request on change via `data-action="change->groups-loader#loadGroups"`
+- Disabled during groups loading (managed by groups Stimulus controller)
+- Triggers Turbo Stream request on change via `data-action="change->groups#refresh"`
 
 **Target Group Selector**:
 - Standard select dropdown when groups are available
@@ -1126,7 +1087,7 @@ Per CLAUDE.md requirements:
 **Access Token Selector**:
 - Disabled while groups are being fetched for selected token
 - Prevents race condition from rapid token changes
-- Managed by groups-loader Stimulus controller
+- Managed by groups Stimulus controller (groups_controller.js)
 - Re-enabled after groups load (success or error)
 
 **Target Group Selector**:
@@ -1237,55 +1198,82 @@ Per CLAUDE.md requirements:
 ## Implementation Plan (High-Level)
 
 ### ✅ PR 1: Profile Identification Infrastructure (COMPLETED)
+**Merged in:** #266
+
+Implemented async feed identification backend and UI polling:
 1. ✅ Create FeedDetail model with database migration
 2. ✅ Create FeedDetailsController with create and show actions
 3. ✅ Create FeedDetailsJob background job
 4. ✅ Create FeedDetailsFetcher service
 5. ✅ Create identification partials (loading, error)
-6. ✅ Controller, job, and service tests
-7. ✅ Rate limiting (10 per minute per user)
-8. ✅ Timeout detection (30 seconds)
+6. ✅ Configure polling_controller.js for identification result polling
+7. ✅ Controller, job, and service tests
+8. ✅ Rate limiting (10 per minute per user)
+9. ✅ Timeout detection (30 seconds)
 
 ### ✅ PR 2: Feed Model Schedule Intervals (COMPLETED)
-1. ✅ Add schedule interval methods to Feed model
-2. ✅ Model tests for schedule interval conversion methods
+**Merged in:** #265
 
-### ✅ PR 3: Groups API Endpoint (COMPLETED)
+Implemented schedule interval abstraction and helper methods:
+1. ✅ Add SCHEDULE_INTERVALS constant to Feed model
+2. ✅ Add schedule_interval methods (getter/setter/for_select)
+3. ✅ Model tests for schedule interval conversion methods
+
+### ✅ PR 3: Groups API Endpoint and UI Controller (COMPLETED)
+**Merged in:** #269
+
+Implemented groups fetching API and dynamic loading in UI:
 1. ✅ Create AccessTokens::GroupsController with index action
-2. ✅ Add nested resource route
-3. ✅ Create target_group_selector partial
-4. ✅ Controller tests with mocked API
-5. ✅ Cache implementation with race_condition_ttl and failure handling
+2. ✅ Add nested resource route under access_tokens
+3. ✅ Create target_group_selector partial (dynamically updated)
+4. ✅ Create groups_controller.js for token/groups loading states
+5. ✅ Controller tests with mocked FreeFeed API
+6. ✅ Cache implementation with race_condition_ttl and failure handling
 
-### PR 4: Feed Creation Flow
-1. Update new action with active token check
-2. Create blocked state partial (no active tokens)
-3. Create collapsed form partial
-4. Create expanded form partial
-5. Implement create action
-6. Form submission tests
-7. Integration test for full flow including blocked state
+### PR 4: Feed Creation Flow with UI Dynamics
+Implement complete feed creation user flow including forms and remaining Stimulus controllers:
+
+**Forms and Views:**
+1. Update FeedsController#new action with active token check
+2. Create _blocked_no_tokens.html.erb partial (no active tokens state)
+3. Create _form_collapsed.html.erb partial (initial URL input)
+4. Create _form_expanded.html.erb partial (full form after identification)
+5. Update new.html.erb to integrate form flow
+
+**Controller Logic:**
+6. Enhance FeedsController#create action:
+   - Handle enable_feed parameter
+   - Transaction wrapper for enabled feeds
+   - Cleanup FeedDetail after successful creation
+   - Enhanced flash messages
+
+**Stimulus Controllers (from original PR6):**
+7. Create feed_identification_controller.js (disable Identify button on submit)
+8. Create feed_form_controller.js (submit button label updates based on enable checkbox)
+9. Add data attributes to form elements for controller bindings
+
+**Tests:**
+10. Form submission tests (create with enabled/disabled state)
+11. Validation error tests
+12. Integration test for full flow (URL input → identify → fill form → create)
+13. Integration test for blocked state (no tokens)
+
+**Note:** groups_controller.js and polling_controller.js configuration are already implemented (PR1 and PR3).
 
 ### PR 5: Feed Editing Flow
-1. Update edit action
-2. Reuse/adapt form partial for edit mode
-3. Implement update action
-4. Update controller tests
-5. Integration test for edit flow
+1. Update FeedsController#edit action
+2. Adapt _form_expanded.html.erb for edit mode (read-only URL/profile)
+3. Update edit.html.erb with edit-mode specific messaging
+4. Enhance FeedsController#update action with enhanced flash messages
+5. Update controller tests for edit/update actions
+6. Integration test for edit flow
 
-### PR 6: Stimulus Controllers for Form Dynamics
-1. Create feed-identification-controller (disable Identify button on submit)
-2. Create groups-loader-controller (manage token/groups loading states)
-3. Create feed-form-controller (submit button label updates)
-4. Add data attributes to form elements
-5. Configure polling_controller usage in identification_loading partial
-6. Test all controllers with appropriate system/integration tests
-
-### PR 7: Polish and Edge Cases
-1. Empty states (no tokens, no groups)
-2. Error message improvements
-3. Loading states and indicators
-4. Accessibility improvements (ARIA labels, keyboard navigation)
+### PR 6: Polish and Edge Cases
+1. Empty states refinements (no tokens, no groups)
+2. Error message improvements and consistency
+3. Loading states and visual indicators polish
+4. Accessibility improvements (ARIA labels, keyboard navigation, focus management)
+5. Form validation error display enhancements
 
 
 
