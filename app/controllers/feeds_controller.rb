@@ -53,24 +53,18 @@ class FeedsController < ApplicationController
 
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
-    saved = if @feed.enabled?
+    if @feed.enabled?
       ActiveRecord::Base.transaction do
         @feed.save!
         @feed.create_feed_schedule! if @feed.feed_schedule.nil?
-        true
       end
     else
-      @feed.save
+      @feed.save!
     end
 
-    if saved
-      cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: success_message
-    else
-      @has_active_tokens = Current.user.access_tokens.active.exists?
-      render :new, status: :unprocessable_entity
-    end
-  rescue ActiveRecord::RecordInvalid => e
+    cleanup_feed_identification(@feed.url)
+    redirect_to feed_path(@feed), notice: success_message
+  rescue ActiveRecord::RecordInvalid
     @has_active_tokens = Current.user.access_tokens.active.exists?
     render :new, status: :unprocessable_entity
   end
