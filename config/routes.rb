@@ -42,7 +42,7 @@ Rails.application.routes.draw do
       resource :email_update, only: [:edit, :update]
       resource :password_reset, only: :create
       resource :suspension, only: [:create, :destroy], controller: "user_suspensions"
-      resource :available_invites, only: :update, controller: "available_invites"
+      resource :available_invites, only: :update
       resource :email_reactivation, only: :create
     end
 
