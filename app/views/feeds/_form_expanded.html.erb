@@ -6,7 +6,7 @@
   form_method = edit_mode ? :patch : :post
 
   # Get active tokens for current user
-  active_tokens = Current.user.access_tokens.active.order(:host_domain)
+  active_tokens = Current.user.access_tokens.active.order(:host)
   default_token = active_tokens.first
 
   # Get profile display name
