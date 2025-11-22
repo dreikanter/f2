@@ -1,6 +1,6 @@
 require "test_helper"
 
-class PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
+class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end

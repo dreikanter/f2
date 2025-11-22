@@ -1,6 +1,6 @@
 require "test_helper"
 
-class GroupsControllerTest < ActionDispatch::IntegrationTest
+class Settings::AccessTokenGroupsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -26,7 +26,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should require authentication" do
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
     assert_redirected_to new_session_path
   end
 
@@ -54,7 +54,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
       .with(headers: { "Authorization" => "Bearer #{active_token.encrypted_token}", "Accept" => "application/json" })
       .to_return(status: 200, body: groups_response.to_json)
 
-    get settings_access_token_groups_path(active_token), params: { feed_id: feed.id }
+    get settings_access_token_access_token_groups_path(active_token), params: { feed_id: feed.id }
 
     assert_response :success
     assert_includes ["text/vnd.turbo-stream.html", "text/vnd.turbo-stream.html; charset=utf-8"], response.media_type
@@ -93,7 +93,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
       .to_return(status: 200, body: groups_response.to_json)
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
 
     assert_response :success
     assert_match(/alpha.*beta.*zebra/m, response.body)
@@ -102,7 +102,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
   test "should render disabled selector for non-existent token" do
     sign_in_as user
 
-    get settings_access_token_groups_path(access_token_id: -1)
+    get settings_access_token_access_token_groups_path(access_token_id: -1)
 
     assert_response :success
     assert_match(/Unable to load groups/, response.body)
@@ -111,7 +111,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
   test "should render disabled selector for other user's token" do
     sign_in_as user
 
-    get settings_access_token_groups_path(other_users_token)
+    get settings_access_token_access_token_groups_path(other_users_token)
 
     assert_response :success
     assert_match(/Unable to load groups/, response.body)
@@ -120,7 +120,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
   test "should render disabled selector for inactive token" do
     sign_in_as user
 
-    get settings_access_token_groups_path(inactive_token)
+    get settings_access_token_access_token_groups_path(inactive_token)
 
     assert_response :success
     assert_match(/This token is inactive/, response.body)
@@ -132,7 +132,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
       .to_return(status: 500, body: "Internal Server Error")
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
 
     assert_response :success
     assert_match(/Could not load groups/, response.body)
@@ -145,7 +145,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
       .to_return(status: 401, body: "Unauthorized")
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
 
     assert_response :success
     assert_match(/Unable to load groups/, response.body)
@@ -158,7 +158,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
       .to_return(status: 200, body: [].to_json)
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
 
     assert_response :success
     assert_match(/doesn't manage any groups yet/, response.body)
@@ -175,10 +175,10 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
         { status: 200, body: [{ "username" => "newgroup" }].to_json }
       )
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
     assert_match(/doesn't manage any groups yet/, response.body)
 
-    get settings_access_token_groups_path(active_token, retry: 1)
+    get settings_access_token_access_token_groups_path(active_token, retry: 1)
     assert_match(/newgroup/, response.body)
   end
 
@@ -188,7 +188,7 @@ class GroupsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "#{active_token.host}/v4/managedGroups")
       .to_return(status: 500, body: "Internal Server Error")
 
-    get settings_access_token_groups_path(active_token)
+    get settings_access_token_access_token_groups_path(active_token)
 
     assert_response :success
     assert_match(/select.*disabled/, response.body)

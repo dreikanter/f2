@@ -50,14 +50,16 @@ Rails.application.routes.draw do
     resource :system_stats, only: :show
   end
 
-  resource :settings, only: :show do
+  resource :settings, only: :show
+
+  namespace :settings do
     resource :email_update, only: [:edit, :update]
     resource :password_update, only: [:edit, :update]
     resources :email_confirmations, only: :show, param: :token
 
     resources :access_tokens, except: [:edit, :update] do
-      resource :validation, only: :show
-      resources :groups, only: :index
+      resource :access_token_validation, only: :show
+      resources :access_token_groups, only: :index
     end
   end
 
