@@ -18,8 +18,8 @@ export default class extends Controller {
 
     if (isNew) {
       this.submitButtonTarget.textContent = isEnabled ?
-        'Create and Enable Feed' :
-        'Create Feed'
+        this.submitButtonTarget.dataset.enabledLabel :
+        this.submitButtonTarget.dataset.disabledLabel
     }
   }
 }
