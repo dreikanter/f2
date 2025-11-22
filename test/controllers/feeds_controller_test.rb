@@ -51,8 +51,90 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#create should be implemented" do
-    skip "TODO: Implement feed creation"
+  test "#create should create feed with enabled state when enable_feed is checked" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+
+    feed = Feed.last
+    assert_equal "enabled", feed.state
+    assert_redirected_to feed_path(feed)
+    assert_match "successfully created and is now active", flash[:notice]
+  end
+
+  test "#create should create feed with disabled state when enable_feed is not checked" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    feed = Feed.last
+    assert_equal "disabled", feed.state
+    assert_redirected_to feed_path(feed)
+    assert_match "currently disabled", flash[:notice]
+  end
+
+  test "#create should ignore state param and use enable_feed instead" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h",
+      state: "enabled"  # Attempt to bypass UI
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    feed = Feed.last
+    assert_equal "disabled", feed.state, "State should be disabled despite state param"
+  end
+
+  test "#create should render form with errors on validation failure" do
+    sign_in_as(user)
+    access_token  # Ensure user has active token so form shows
+
+    feed_params = {
+      url: "invalid-url",
+      name: "",
+      feed_profile_key: "rss"
+    }
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: feed_params }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", text: "New Feed"
   end
 
   test "#show should render feed owned by user" do

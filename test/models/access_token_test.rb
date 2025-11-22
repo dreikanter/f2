@@ -265,6 +265,19 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "custom.example.com", token.host_domain
   end
 
+  test "#display_name should return host_domain and username when detail exists" do
+    token = create(:access_token, :active, host: "https://freefeed.net")
+    token.create_access_token_detail!(data: { "user_info" => { "username" => "testuser" } })
+
+    assert_equal "freefeed.net - testuser", token.display_name
+  end
+
+  test "#display_name should return host_domain and token name when detail missing" do
+    token = build(:access_token, host: "https://freefeed.net", name: "My Token")
+
+    assert_equal "freefeed.net - My Token", token.display_name
+  end
+
   test "FREEFEED_HOSTS URLs should all be valid HTTP(S) URLs" do
     AccessToken::FREEFEED_HOSTS.each do |key, config|
       token = build(:access_token, host: config[:url])

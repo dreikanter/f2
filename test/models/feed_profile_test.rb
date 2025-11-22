@@ -98,4 +98,16 @@ class FeedProfileTest < ActiveSupport::TestCase
   test "title_extractor_class_for returns TitleExtractor::RssTitleExtractor for xkcd profile" do
     assert_equal TitleExtractor::RssTitleExtractor, FeedProfile.title_extractor_class_for("xkcd")
   end
+
+  test "#display_name_for should return RSS Feed for rss profile" do
+    assert_equal "RSS Feed", FeedProfile.display_name_for("rss")
+  end
+
+  test "#display_name_for should return XKCD for xkcd profile" do
+    assert_equal "XKCD", FeedProfile.display_name_for("xkcd")
+  end
+
+  test "#display_name_for should titleize unknown profile keys" do
+    assert_equal "Custom Profile", FeedProfile.display_name_for("custom_profile")
+  end
 end
