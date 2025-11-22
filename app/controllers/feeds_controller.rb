@@ -51,10 +51,8 @@ class FeedsController < ApplicationController
     @feed = Current.user.feeds.build(feed_params)
     authorize @feed
 
-    # Set state based on enable_feed parameter
-    if params[:enable_feed] == "1"
-      @feed.state = :enabled
-    end
+    # Set state based solely on enable_feed parameter (not from params)
+    @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
     saved = if @feed.enabled?
       # Use transaction for enabled feeds
@@ -145,8 +143,7 @@ class FeedsController < ApplicationController
       :target_group,
       :access_token_id,
       :cron_expression,
-      :schedule_interval,
-      :state
+      :schedule_interval
     )
   end
 
