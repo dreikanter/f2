@@ -4,7 +4,7 @@
   <%= render PageHeaderComponent.new(title: "New Feed") %>
 
   <div class="max-w-3xl mx-auto">
-    <% if @has_active_tokens %>
+    <% if active_access_tokens? %>
       <%= render "form_collapsed" %>
     <% else %>
       <%= render "blocked_no_tokens" %>

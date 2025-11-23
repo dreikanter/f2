@@ -2,6 +2,8 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
+  helper_method :active_access_tokens?
+
   MAX_RECENT_POSTS = 5
 
   SORTABLE_FIELDS = {
@@ -44,7 +46,6 @@ class FeedsController < ApplicationController
   def new
     @feed = feeds_scope.build
     authorize @feed
-    @has_active_tokens = active_access_tokens?
   end
 
   def create
@@ -61,7 +62,6 @@ class FeedsController < ApplicationController
     cleanup_feed_identification(@feed.url)
     redirect_to feed_path(@feed), notice: success_message
   rescue ActiveRecord::RecordInvalid
-    @has_active_tokens = active_access_tokens?
     render :new, status: :unprocessable_entity
   end
 
