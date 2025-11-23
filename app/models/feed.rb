@@ -198,6 +198,15 @@ class Feed < ApplicationRecord
     ).to_a
   end
 
+  # Creates a feed schedule with initial timestamps
+  # @return [FeedSchedule] the created schedule
+  def create_initial_schedule!
+    create_feed_schedule!(
+      next_run_at: Time.current,
+      last_run_at: Time.current
+    )
+  end
+
   private
 
   def cron_expression_is_valid
@@ -212,6 +221,6 @@ class Feed < ApplicationRecord
     return unless enabled?
     return if feed_schedule.present?
 
-    create_feed_schedule!
+    create_initial_schedule!
   end
 end
