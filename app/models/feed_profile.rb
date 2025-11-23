@@ -3,12 +3,14 @@
 class FeedProfile
   PROFILES = {
     "rss" => {
+      display_name: "RSS Feed",
       loader: "Loader::HttpLoader",
       processor: "Processor::RssProcessor",
       normalizer: "Normalizer::RssNormalizer",
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "xkcd" => {
+      display_name: "XKCD",
       loader: "Loader::HttpLoader",
       processor: "Processor::RssProcessor",
       normalizer: "Normalizer::XkcdNormalizer",
@@ -66,5 +68,12 @@ class FeedProfile
   # @return [Class] the title extractor class
   def self.title_extractor_class_for(key)
     class_for(key, :title_extractor)
+  end
+
+  # Returns a human-readable display name for a profile key
+  # @param key [String] the profile key
+  # @return [String] the display name
+  def self.display_name_for(key)
+    PROFILES.dig(key, :display_name) || key.to_s.titleize
   end
 end
