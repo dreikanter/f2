@@ -2,20 +2,20 @@ require "test_helper"
 
 class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   def storage
-    @storage ||= EmailStorage::FileSystemStorage.new(test_dir)
+    @storage ||= EmailStorage::FileSystemStorage.new(storage_dir)
   end
 
-  def test_dir
-    @test_dir ||= Rails.root.join("tmp", "test_email_storage_#{SecureRandom.hex(8)}")
+  def storage_dir
+    @storage_dir ||= Rails.root.join("tmp", "test_email_storage_#{SecureRandom.hex(8)}")
   end
 
   setup do
-    FileUtils.rm_rf(test_dir)
-    FileUtils.mkdir_p(test_dir)
+    FileUtils.rm_rf(storage_dir)
+    FileUtils.mkdir_p(storage_dir)
   end
 
   teardown do
-    FileUtils.rm_rf(test_dir)
+    FileUtils.rm_rf(storage_dir)
   end
 
   test "#initialize validates directory is inside Rails.root/tmp" do
@@ -31,7 +31,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   end
 
   test "#ordered_list returns empty array when directory does not exist" do
-    FileUtils.rm_rf(test_dir)
+    FileUtils.rm_rf(storage_dir)
     assert_equal [], storage.ordered_list
   end
 
@@ -56,7 +56,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   test "#ordered_list skips files with invalid filenames" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Valid")
-    File.write(test_dir.join("invalid.yml"), "data")
+    File.write(storage_dir.join("invalid.yml"), "data")
 
     emails = storage.ordered_list
     assert_equal 1, emails.size
@@ -70,7 +70,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     corrupt_id = "20250102_120000_456_#{corrupt_uuid}"
 
     create_test_email(valid_id, "Valid")
-    File.write(test_dir.join("#{corrupt_id}.yml"), "invalid: yaml: [")
+    File.write(storage_dir.join("#{corrupt_id}.yml"), "invalid: yaml: [")
 
     emails = storage.ordered_list
     assert_equal 1, emails.size
@@ -109,8 +109,8 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
   test "#load_email returns nil for corrupted YAML" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
-    File.write(test_dir.join("#{full_id}.yml"), "invalid: yaml: [")
-    File.write(test_dir.join("#{full_id}.txt"), "Content")
+    File.write(storage_dir.join("#{full_id}.yml"), "invalid: yaml: [")
+    File.write(storage_dir.join("#{full_id}.txt"), "Content")
 
     assert_nil storage.load_email(uuid)
   end
@@ -127,7 +127,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
       "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
       "multipart" => false
     }
-    File.write(test_dir.join("#{full_id}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("#{full_id}.yml"), metadata.to_yaml)
 
     email = storage.load_email(uuid)
     assert_equal "Test", email[:subject]
@@ -148,7 +148,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
 
     assert_match(/\A[0-9a-f\-]{36}\z/, uuid)
 
-    files = Dir.glob(test_dir.join("*_#{uuid}.*"))
+    files = Dir.glob(storage_dir.join("*_#{uuid}.*"))
     assert_equal 2, files.size
 
     yml_file = files.find { |f| f.end_with?(".yml") }
@@ -174,7 +174,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
 
     assert_match(/\A[0-9a-f\-]{36}\z/, uuid)
 
-    files = Dir.glob(test_dir.join("*_#{uuid}.*"))
+    files = Dir.glob(storage_dir.join("*_#{uuid}.*"))
     html_file = files.find { |f| f.end_with?(".html") }
 
     assert html_file
@@ -204,7 +204,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     storage.purge
 
     assert_equal 0, storage.ordered_list.size
-    assert Dir.exist?(test_dir)
+    assert Dir.exist?(storage_dir)
   end
 
   private
@@ -221,8 +221,8 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     }
     timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
     filename = "#{timestamp_str}_#{uuid}"
-    File.write(test_dir.join("#{filename}.yml"), metadata.to_yaml)
-    File.write(test_dir.join("#{filename}.txt"), body)
+    File.write(storage_dir.join("#{filename}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("#{filename}.txt"), body)
   end
 
   def create_multipart_email(uuid, subject, text, html, timestamp: Time.parse("2025-01-01T12:00:00+00:00"))
@@ -237,8 +237,8 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     }
     timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
     filename = "#{timestamp_str}_#{uuid}"
-    File.write(test_dir.join("#{filename}.yml"), metadata.to_yaml)
-    File.write(test_dir.join("#{filename}.txt"), text)
-    File.write(test_dir.join("#{filename}.html"), html)
+    File.write(storage_dir.join("#{filename}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("#{filename}.txt"), text)
+    File.write(storage_dir.join("#{filename}.html"), html)
   end
 end
