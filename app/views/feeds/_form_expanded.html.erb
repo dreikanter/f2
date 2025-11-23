@@ -1,19 +1,10 @@
-<%
-  edit_mode ||= false
-  feed ||= @feed
-  form_url = edit_mode ? feed_path(feed) : feeds_path
-  form_method = edit_mode ? :patch : :post
-
-  active_tokens = Current.user.access_tokens.active.order(:host)
-  default_token = active_tokens.first
-
-  profile_display = feed.feed_profile_key.present? ? FeedProfile.display_name_for(feed.feed_profile_key) : "Unknown"
-%>
+<%# locals: (edit_mode: false, feed: @feed) %>
+<% active_tokens = Current.user.access_tokens.active.order(:host) %>
 
 <div id="feed-form" data-identification-state="complete">
   <%= form_with model: feed,
-                url: form_url,
-                method: form_method,
+                url: (edit_mode ? feed_path(feed) : feeds_path),
+                method: (edit_mode ? :patch : :post),
                 data: {
                   controller: "feed-form groups",
                   groups_endpoint_value: access_token_groups_path(":access_token_id"),
@@ -48,7 +39,7 @@
       <div class="ff-form-group">
         <%= label_tag "feed_profile_display", "Feed Type", class: "ff-form-label" %>
         <%= text_field_tag "feed_profile_display",
-                           profile_display,
+                           (feed.feed_profile_key.present? ? FeedProfile.display_name_for(feed.feed_profile_key) : "Unknown"),
                            disabled: true,
                            class: "ff-form-input bg-slate-100",
                            aria: { label: "Feed Type (detected automatically)" } %>
@@ -83,7 +74,7 @@
                          active_tokens,
                          :id,
                          :display_name,
-                         feed.access_token_id || default_token&.id
+                         feed.access_token_id || active_tokens.first&.id
                        ),
                        {},
                        {
