@@ -1,10 +1,5 @@
 <div id="feed-form" class="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm">
-  <%= form_with url: feed_details_path,
-                method: :post,
-                data: {
-                  controller: "feed-identification",
-                  action: "turbo:submit-start->feed-identification#disableForm turbo:submit-end->feed-identification#enableForm"
-                } do |f| %>
+  <%= form_with url: feed_details_path, method: :post do |f| %>
     <div class="space-y-6">
       <div class="ff-form-group">
         <%= f.label :url, "Feed URL", class: "ff-form-label" %>
@@ -12,15 +7,14 @@
                          placeholder: "https://example.com/feed.xml",
                          class: "ff-form-input",
                          required: true,
-                         autofocus: true,
-                         data: { feed_identification_target: "urlInput" } %>
+                         autofocus: true %>
         <p class="ff-form-help">Enter the URL of the RSS feed or supported site you want to import.</p>
       </div>
 
       <div>
         <%= f.submit "Identify Feed Format",
                      class: "ff-button ff-button--compact w-full sm:w-auto",
-                     data: { feed_identification_target: "submitButton" } %>
+                     data: { turbo_submits_with: "Identifying..." } %>
         <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary ff-button--compact w-full sm:w-auto ml-0 sm:ml-3 mt-3 sm:mt-0" %>
       </div>
     </div>
