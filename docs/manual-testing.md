@@ -45,8 +45,7 @@ This creates:
 **Setup:**
 ```ruby
 # In Rails console: HOST=localhost:3000 bin/rails console
-token = AccessToken.first
-token.update!(status: :inactive)
+AccessToken.all.each(&:inactive!)
 ```
 
 **Steps:**
