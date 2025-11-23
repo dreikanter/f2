@@ -3,12 +3,14 @@
 class FeedProfile
   PROFILES = {
     "rss" => {
+      display_name: "RSS Feed",
       loader: "Loader::HttpLoader",
       processor: "Processor::RssProcessor",
       normalizer: "Normalizer::RssNormalizer",
       title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "xkcd" => {
+      display_name: "XKCD",
       loader: "Loader::HttpLoader",
       processor: "Processor::RssProcessor",
       normalizer: "Normalizer::XkcdNormalizer",
@@ -72,13 +74,6 @@ class FeedProfile
   # @param key [String] the profile key
   # @return [String] the display name
   def self.display_name_for(key)
-    case key
-    when "rss"
-      "RSS Feed"
-    when "xkcd"
-      "XKCD"
-    else
-      key.to_s.titleize
-    end
+    PROFILES.dig(key, :display_name) || key.to_s.titleize
   end
 end
