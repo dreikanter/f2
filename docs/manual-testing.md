@@ -11,17 +11,17 @@ This guide provides step-by-step testing instructions for the feed creation feat
 su - postgres -c "/usr/lib/postgresql/16/bin/pg_ctl start -D /var/lib/postgresql/16/main -l /tmp/postgres.log -o '-c config_file=/etc/postgresql/16/main/postgresql.conf'"
 
 # Create development database (if needed)
-HOST=localhost:3000 bin/rails db:create db:migrate
+bin/rails db:create db:migrate
 
 # Start Rails server
-HOST=localhost:3000 bin/rails server
+bin/rails server
 ```
 
 ### 2. Create Test Data
 
 ```bash
 # Load seed data (creates test user, access tokens, sample feeds)
-HOST=localhost:3000 bin/rails db:seed
+bin/rails db:seed
 ```
 
 This creates:
@@ -304,18 +304,18 @@ su - postgres -c "/usr/lib/postgresql/16/bin/pg_ctl start -D /var/lib/postgresql
 
 **Database doesn't exist:**
 ```bash
-HOST=localhost:3000 bin/rails db:create db:migrate
+bin/rails db:create db:migrate
 ```
 
 **Need fresh test data:**
 ```bash
 # Reset database and reload seed data
-HOST=localhost:3000 bin/rails db:reset
+bin/rails db:reset
 # Or just reload seeds without dropping database
-HOST=localhost:3000 bin/rails db:seed
+bin/rails db:seed
 ```
 
 **Rails console:**
 ```bash
-HOST=localhost:3000 bin/rails console
+bin/rails console
 ```
