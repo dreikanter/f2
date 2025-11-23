@@ -20,13 +20,14 @@ HOST=localhost:3000 bin/rails server
 ### 2. Create Test Data
 
 ```bash
-# Run the setup script
-HOST=localhost:3000 bin/rails runner tmp/setup_test_data.rb
+# Load seed data (creates test user, access tokens, sample feeds)
+HOST=localhost:3000 bin/rails db:seed
 ```
 
 This creates:
-- **User**: test@example.com / password1234567890
-- **Access Token**: Active token for freefeed.net
+- **User**: test@example.com / password1234567890 (active state, admin permissions)
+- **Access Tokens**: 3 active tokens and 2 inactive tokens for freefeed.net
+- **Sample Feeds**: 5 example feeds (4 enabled, 1 disabled) with posts and events
 
 ### 3. Sign In
 
@@ -308,7 +309,10 @@ HOST=localhost:3000 bin/rails db:create db:migrate
 
 **Need fresh test data:**
 ```bash
-HOST=localhost:3000 bin/rails runner tmp/setup_test_data.rb
+# Reset database and reload seed data
+HOST=localhost:3000 bin/rails db:reset
+# Or just reload seeds without dropping database
+HOST=localhost:3000 bin/rails db:seed
 ```
 
 **Rails console:**
