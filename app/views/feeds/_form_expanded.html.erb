@@ -10,8 +10,7 @@
                   groups_endpoint_value: access_token_groups_path(":access_token_id"),
                   groups_loading_text_value: "Loading groups...",
                   groups_default_text_value: "The FreeFeed group where posts will be published."
-                },
-                class: "rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm" do |f| %>
+                } do |f| %>
     <div class="space-y-6">
       <% if edit_mode %>
         <div class="rounded-md bg-blue-50 p-4 mb-6">
@@ -61,7 +60,7 @@
         <% end %>
       </div>
 
-      <div class="border-t border-slate-200 pt-6 mt-6">
+      <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
         <div class="ff-form-group">
@@ -93,7 +92,7 @@
                    token: nil %>
       </div>
 
-      <div class="border-t border-slate-200 pt-6 mt-6">
+      <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Refresh Schedule</h3>
 
         <div class="ff-form-group">
@@ -109,7 +108,7 @@
       </div>
 
       <% unless edit_mode %>
-        <div class="border-t border-slate-200 pt-6 mt-6">
+        <div class="mt-6">
           <div class="flex items-start">
             <div class="flex items-center h-5">
               <%= check_box_tag "enable_feed",
@@ -129,23 +128,22 @@
           </div>
         </div>
       <% end %>
+    </div>
 
-      <div class="border-t border-slate-200 pt-6 mt-6">
-        <% if edit_mode %>
-          <%= f.submit "Update Feed Configuration",
-                       class: "ff-button ff-button--compact w-full sm:w-auto" %>
-        <% else %>
-          <%= f.submit "Create and Enable Feed",
-                       class: "ff-button ff-button--compact w-full sm:w-auto",
-                       data: {
-                         feed_form_target: "submitButton",
-                         mode: "new",
-                         enabled_label: "Create and Enable Feed",
-                         disabled_label: "Create Feed"
-                       } %>
-        <% end %>
-        <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary ff-button--compact w-full sm:w-auto ml-0 sm:ml-3 mt-3 sm:mt-0" %>
-      </div>
+    <div class="ff-card__footer">
+      <% if edit_mode %>
+        <%= f.submit "Update Feed Configuration", class: "ff-button" %>
+      <% else %>
+        <%= f.submit "Create and Enable Feed",
+                     class: "ff-button",
+                     data: {
+                       feed_form_target: "submitButton",
+                       mode: "new",
+                       enabled_label: "Create and Enable Feed",
+                       disabled_label: "Create Feed"
+                     } %>
+      <% end %>
+      <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
     </div>
   <% end %>
 </div>
