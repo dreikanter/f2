@@ -98,11 +98,11 @@ class FeedsController < ApplicationController
   private
 
   def active_access_tokens?
-    Current.user.access_tokens.active.exists?
+    current_user.access_tokens.active.exists?
   end
 
   def feeds_scope
-    Current.user.feeds
+    current_user.feeds
   end
 
   def sortable_fields
@@ -144,7 +144,7 @@ class FeedsController < ApplicationController
   end
 
   def cleanup_feed_identification(url)
-    FeedDetail.find_by(user: Current.user, url: url)&.destroy
+    FeedDetail.find_by(user: current_user, url: url)&.destroy
   end
 
   def success_message
