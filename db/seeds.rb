@@ -4,7 +4,7 @@
 
 # Create a test user for development
 if Rails.env.development?
-  dev_password = "password1234567890"
+  dev_password = "password123"
 
   user = User.find_or_initialize_by(email_address: "test@example.com") do |u|
     u.state = :active

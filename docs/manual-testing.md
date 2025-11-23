@@ -25,7 +25,7 @@ HOST=localhost:3000 bin/rails db:seed
 ```
 
 This creates:
-- **User**: test@example.com / password1234567890 (active state, admin permissions)
+- **User**: test@example.com / password123 (active state, admin permissions)
 - **Access Tokens**: 3 active tokens and 2 inactive tokens for freefeed.net
 - **Sample Feeds**: 5 example feeds (4 enabled, 1 disabled) with posts and events
 
@@ -34,7 +34,7 @@ This creates:
 1. Navigate to `http://localhost:3000`
 2. Sign in with:
    - Email: `test@example.com`
-   - Password: `password1234567890`
+   - Password: `password123`
 
 ---
 
