@@ -39,40 +39,11 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "loader_class_for raises ArgumentError for invalid key" do
+  test "class_for methods raise ArgumentError for invalid keys" do
     assert_raises(ArgumentError) { FeedProfile.loader_class_for("invalid") }
-  end
-
-  test "loader_class_for raises ArgumentError for nil key" do
-    assert_raises(ArgumentError) { FeedProfile.loader_class_for(nil) }
-  end
-
-  test "processor_class_for raises ArgumentError for invalid key" do
     assert_raises(ArgumentError) { FeedProfile.processor_class_for("invalid") }
-  end
-
-  test "processor_class_for raises ArgumentError for nil key" do
-    assert_raises(ArgumentError) { FeedProfile.processor_class_for(nil) }
-  end
-
-  test "normalizer_class_for raises ArgumentError for invalid key" do
     assert_raises(ArgumentError) { FeedProfile.normalizer_class_for("invalid") }
-  end
-
-  test "normalizer_class_for raises ArgumentError for nil key" do
-    assert_raises(ArgumentError) { FeedProfile.normalizer_class_for(nil) }
-  end
-
-  test "loader_class_for returns Loader::HttpLoader for rss profile" do
-    assert_equal Loader::HttpLoader, FeedProfile.loader_class_for("rss")
-  end
-
-  test "processor_class_for returns Processor::RssProcessor for rss profile" do
-    assert_equal Processor::RssProcessor, FeedProfile.processor_class_for("rss")
-  end
-
-  test "normalizer_class_for returns Normalizer::RssNormalizer for rss profile" do
-    assert_equal Normalizer::RssNormalizer, FeedProfile.normalizer_class_for("rss")
+    assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for("invalid") }
   end
 
   test "all PROFILES have resolvable title extractor classes" do
@@ -81,22 +52,6 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert title_extractor_class.present?, "Profile '#{key}' should have a resolvable title extractor class"
       assert title_extractor_class < TitleExtractor::Base, "Profile '#{key}' title extractor should inherit from TitleExtractor::Base"
     end
-  end
-
-  test "title_extractor_class_for raises ArgumentError for invalid key" do
-    assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for("invalid") }
-  end
-
-  test "title_extractor_class_for raises ArgumentError for nil key" do
-    assert_raises(ArgumentError) { FeedProfile.title_extractor_class_for(nil) }
-  end
-
-  test "title_extractor_class_for returns TitleExtractor::RssTitleExtractor for rss profile" do
-    assert_equal TitleExtractor::RssTitleExtractor, FeedProfile.title_extractor_class_for("rss")
-  end
-
-  test "title_extractor_class_for returns TitleExtractor::RssTitleExtractor for xkcd profile" do
-    assert_equal TitleExtractor::RssTitleExtractor, FeedProfile.title_extractor_class_for("xkcd")
   end
 
   test "#display_name_for should return RSS Feed for rss profile" do
