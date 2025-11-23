@@ -35,5 +35,8 @@
         <% end %>
       </p>
     <% end %>
+    <% if feed.errors[:target_group].any? %>
+      <p class="ff-form-error"><%= feed.errors[:target_group].first %></p>
+    <% end %>
   </div>
 </div>

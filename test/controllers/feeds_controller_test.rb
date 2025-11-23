@@ -139,6 +139,34 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "New Feed"
   end
 
+  test "#create should render expanded form with preserved data on validation failure" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "",  # Missing required field
+      schedule_interval: "1h"
+    }
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "h1", text: "New Feed"
+
+    # Verify expanded form is shown, not collapsed form
+    assert_select "input[name='feed[url_display]'][disabled]"
+    assert_select "input[name='feed[name]'][value='Test Feed']"
+
+    # Verify validation errors are shown
+    assert_select "p.ff-form-error", text: /can't be blank|must be filled/
+  end
+
   test "#show should render feed owned by user" do
     sign_in_as(user)
     get feed_url(feed)
