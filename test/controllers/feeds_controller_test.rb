@@ -70,6 +70,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_equal "enabled", feed.state
+    assert_not_nil feed.feed_schedule
+    assert_not_nil feed.feed_schedule.next_run_at
+    assert_not_nil feed.feed_schedule.last_run_at
     assert_redirected_to feed_path(feed)
     assert_match "successfully created and is now active", flash[:notice]
   end

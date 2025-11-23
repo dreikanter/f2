@@ -75,7 +75,10 @@ class FeedTest < ActiveSupport::TestCase
 
     feed.update!(state: :enabled)
 
-    assert_not_nil feed.reload.feed_schedule
+    schedule = feed.reload.feed_schedule
+    assert_not_nil schedule
+    assert_not_nil schedule.next_run_at
+    assert_not_nil schedule.last_run_at
   end
 
   test "should not create duplicate feed_schedule when already exists" do

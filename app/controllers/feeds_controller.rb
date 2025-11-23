@@ -56,7 +56,7 @@ class FeedsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @feed.save!
-      @feed.create_feed_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+      @feed.create_initial_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
     end
 
     cleanup_feed_identification(@feed.url)
