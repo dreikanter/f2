@@ -186,8 +186,58 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#update should be implemented" do
-    skip "TODO: Implement feed update"
+  test "#update should update feed with valid params" do
+    sign_in_as(user)
+    new_token = create(:access_token, user: user, host: "https://freefeed.net")
+
+    patch feed_url(feed), params: {
+      feed: {
+        name: "Updated Feed Name",
+        access_token_id: new_token.id,
+        target_group: "new-group",
+        schedule_interval: "2h"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    follow_redirect!
+    assert_match "Feed 'Updated Feed Name' was successfully updated", response.body
+
+    feed.reload
+    assert_equal "Updated Feed Name", feed.name
+    assert_equal new_token.id, feed.access_token_id
+    assert_equal "new-group", feed.target_group
+    assert_equal "2h", feed.schedule_interval
+  end
+
+  test "#update should show additional message for enabled feeds" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
+
+    patch feed_url(enabled_feed), params: {
+      feed: {
+        name: "Updated Active Feed",
+        target_group: "updated-group"
+      }
+    }
+
+    assert_redirected_to feed_path(enabled_feed)
+    follow_redirect!
+    assert_match "Changes will take effect on the next scheduled refresh", response.body
+  end
+
+  test "#update should render edit form with errors on validation failure" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
+      feed: {
+        name: "",
+        url: "invalid-url"
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "form"
   end
 
   test "#destroy should remove own feed" do
