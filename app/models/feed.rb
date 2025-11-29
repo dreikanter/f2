@@ -198,13 +198,19 @@ class Feed < ApplicationRecord
     ).to_a
   end
 
-  # Creates a feed schedule with initial timestamps
-  # @return [FeedSchedule] the created schedule
-  def create_initial_schedule!
-    create_feed_schedule!(
-      next_run_at: Time.current,
-      last_run_at: Time.current
-    )
+  # Resets the feed schedule to run immediately
+  # Creates a new schedule if none exists, or updates existing schedule's next_run_at
+  # @return [FeedSchedule] the created or updated schedule
+  def reset_schedule!
+    if feed_schedule.present?
+      feed_schedule.update!(next_run_at: Time.current)
+      feed_schedule
+    else
+      create_feed_schedule!(
+        next_run_at: Time.current,
+        last_run_at: Time.current
+      )
+    end
   end
 
   private
@@ -221,6 +227,6 @@ class Feed < ApplicationRecord
     return unless enabled?
     return if feed_schedule.present?
 
-    create_initial_schedule!
+    reset_schedule!
   end
 end

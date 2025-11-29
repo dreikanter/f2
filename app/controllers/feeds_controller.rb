@@ -49,14 +49,14 @@ class FeedsController < ApplicationController
   end
 
   def create
-    @feed = feeds_scope.build(feed_params)
+    @feed = feeds_scope.build(create_feed_params)
     authorize @feed
 
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
     ActiveRecord::Base.transaction do
       @feed.save!
-      @feed.create_initial_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+      @feed.reset_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
     end
 
     cleanup_feed_identification(@feed.url)
@@ -80,9 +80,10 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
 
-    if @feed.update(feed_params)
+    if @feed.update(update_feed_params)
+      reset_schedule_if_interval_changed
       cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: "Feed was successfully updated."
+      redirect_to feed_path(@feed), notice: update_message
     else
       render :edit, status: :unprocessable_entity
     end
@@ -143,6 +144,27 @@ class FeedsController < ApplicationController
     )
   end
 
+  def create_feed_params
+    feed_params
+  end
+
+  def update_feed_params
+    params.require(:feed).permit(
+      :name,
+      :description,
+      :target_group,
+      :access_token_id,
+      :schedule_interval
+    )
+  end
+
+  def reset_schedule_if_interval_changed
+    return unless @feed.saved_change_to_cron_expression?
+    return unless @feed.feed_schedule.present?
+
+    @feed.reset_schedule!
+  end
+
   def cleanup_feed_identification(url)
     FeedDetail.find_by(user: current_user, url: url)&.destroy
   end
@@ -153,5 +175,11 @@ class FeedsController < ApplicationController
     else
       "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
     end
+  end
+
+  def update_message
+    message = "Feed '#{@feed.name}' was successfully updated."
+    message += " Changes will take effect on the next scheduled refresh." if @feed.enabled?
+    message
   end
 end

@@ -186,8 +186,115 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#update should be implemented" do
-    skip "TODO: Implement feed update"
+  test "#update should update feed with valid params" do
+    sign_in_as(user)
+    new_token = create(:access_token, user: user, host: "https://freefeed.net")
+
+    patch feed_url(feed), params: {
+      feed: {
+        name: "Updated Feed Name",
+        access_token_id: new_token.id,
+        target_group: "new-group",
+        schedule_interval: "2h"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    follow_redirect!
+    assert_match "Feed 'Updated Feed Name' was successfully updated", response.body
+
+    feed.reload
+    assert_equal "Updated Feed Name", feed.name
+    assert_equal new_token.id, feed.access_token_id
+    assert_equal "new-group", feed.target_group
+    assert_equal "2h", feed.schedule_interval
+  end
+
+  test "#update should show additional message for enabled feeds" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
+
+    patch feed_url(enabled_feed), params: {
+      feed: {
+        name: "Updated Active Feed",
+        target_group: "updated-group"
+      }
+    }
+
+    assert_redirected_to feed_path(enabled_feed)
+    follow_redirect!
+    assert_match "Changes will take effect on the next scheduled refresh", response.body
+  end
+
+  test "#update should render edit form with errors on validation failure" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
+      feed: {
+        name: "",
+        url: "invalid-url"
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "form"
+  end
+
+  test "#update should not allow changing url or feed_profile_key" do
+    sign_in_as(user)
+    original_url = feed.url
+    original_profile = feed.feed_profile_key
+
+    patch feed_url(feed), params: {
+      feed: {
+        url: "https://evil.com/feed.xml",
+        feed_profile_key: "xkcd",
+        name: "Updated Name"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    feed.reload
+    assert_equal original_url, feed.url
+    assert_equal original_profile, feed.feed_profile_key
+    assert_equal "Updated Name", feed.name
+  end
+
+  test "#update should reset schedule next_run_at when interval changes" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
+    enabled_feed.create_feed_schedule!(next_run_at: 12.hours.from_now, last_run_at: Time.current)
+    old_next_run = enabled_feed.feed_schedule.next_run_at
+
+    patch feed_url(enabled_feed), params: {
+      feed: {
+        schedule_interval: "10m"
+      }
+    }
+
+    assert_redirected_to feed_path(enabled_feed)
+    enabled_feed.reload
+    assert_equal "10m", enabled_feed.schedule_interval
+    assert_operator enabled_feed.feed_schedule.next_run_at, :<, old_next_run
+    assert_in_delta Time.current, enabled_feed.feed_schedule.next_run_at, 5.seconds
+  end
+
+  test "#update should not allow direct cron_expression updates" do
+    sign_in_as(user)
+    feed.update!(schedule_interval: "1h")
+    original_cron = feed.cron_expression
+
+    patch feed_url(feed), params: {
+      feed: {
+        cron_expression: "0 0 * * *",
+        name: "Updated Name"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    feed.reload
+    assert_equal original_cron, feed.cron_expression
+    assert_equal "Updated Name", feed.name
   end
 
   test "#destroy should remove own feed" do

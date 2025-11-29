@@ -7,7 +7,7 @@
                 method: (edit_mode ? :patch : :post),
                 data: {
                   controller: "feed-form groups",
-                  groups_endpoint_value: access_token_groups_path(":access_token_id"),
+                  groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
                   groups_loading_text_value: "Loading groups...",
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
@@ -17,6 +17,11 @@
           <div class="flex">
             <div class="flex-shrink-0">
               <%= icon("information-circle", css_class: "h-5 w-5 text-blue-400", aria_hidden: true) %>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.
+              </p>
             </div>
           </div>
         </div>
@@ -132,7 +137,9 @@
 
     <div class="ff-card__footer">
       <% if edit_mode %>
-        <%= f.submit "Update Feed Configuration", class: "ff-button" %>
+        <%= f.submit "Update Feed Configuration",
+                     class: "ff-button",
+                     data: { turbo_submits_with: "Updating..." } %>
       <% else %>
         <%= f.submit "Create and Enable Feed",
                      class: "ff-button",
