@@ -82,7 +82,7 @@ class FeedsController < ApplicationController
 
     if @feed.update(feed_params)
       cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: "Feed was successfully updated."
+      redirect_to feed_path(@feed), notice: update_message
     else
       render :edit, status: :unprocessable_entity
     end
@@ -153,5 +153,11 @@ class FeedsController < ApplicationController
     else
       "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
     end
+  end
+
+  def update_message
+    message = "Feed '#{@feed.name}' was successfully updated."
+    message += " Changes will take effect on the next scheduled refresh." if @feed.enabled?
+    message
   end
 end
