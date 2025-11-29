@@ -18,6 +18,11 @@
             <div class="flex-shrink-0">
               <%= icon("information-circle", css_class: "h-5 w-5 text-blue-400", aria_hidden: true) %>
             </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.
+              </p>
+            </div>
           </div>
         </div>
       <% end %>
@@ -132,7 +137,9 @@
 
     <div class="ff-card__footer">
       <% if edit_mode %>
-        <%= f.submit "Update Feed Configuration", class: "ff-button" %>
+        <%= f.submit "Update Feed Configuration",
+                     class: "ff-button",
+                     data: { turbo_submits_with: "Updating..." } %>
       <% else %>
         <%= f.submit "Create and Enable Feed",
                      class: "ff-button",
