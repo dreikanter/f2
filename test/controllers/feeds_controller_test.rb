@@ -260,6 +260,25 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Name", feed.name
   end
 
+  test "#update should reset schedule next_run_at when interval changes" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
+    enabled_feed.create_feed_schedule!(next_run_at: 12.hours.from_now, last_run_at: Time.current)
+    old_next_run = enabled_feed.feed_schedule.next_run_at
+
+    patch feed_url(enabled_feed), params: {
+      feed: {
+        schedule_interval: "10m"
+      }
+    }
+
+    assert_redirected_to feed_path(enabled_feed)
+    enabled_feed.reload
+    assert_equal "10m", enabled_feed.schedule_interval
+    assert_operator enabled_feed.feed_schedule.next_run_at, :<, old_next_run
+    assert_in_delta Time.current, enabled_feed.feed_schedule.next_run_at, 5.seconds
+  end
+
   test "#destroy should remove own feed" do
     sign_in_as(user)
     feed = create(:feed, user: user)

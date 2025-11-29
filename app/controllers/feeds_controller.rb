@@ -81,6 +81,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     if @feed.update(update_feed_params)
+      reset_schedule_if_interval_changed
       cleanup_feed_identification(@feed.url)
       redirect_to feed_path(@feed), notice: update_message
     else
@@ -156,6 +157,13 @@ class FeedsController < ApplicationController
       :cron_expression,
       :schedule_interval
     )
+  end
+
+  def reset_schedule_if_interval_changed
+    return unless @feed.saved_change_to_cron_expression?
+    return unless @feed.feed_schedule.present?
+
+    @feed.feed_schedule.update!(next_run_at: Time.current)
   end
 
   def cleanup_feed_identification(url)
