@@ -49,7 +49,7 @@ class FeedsController < ApplicationController
   end
 
   def create
-    @feed = feeds_scope.build(feed_params)
+    @feed = feeds_scope.build(create_feed_params)
     authorize @feed
 
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
@@ -80,7 +80,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
 
-    if @feed.update(feed_params)
+    if @feed.update(update_feed_params)
       cleanup_feed_identification(@feed.url)
       redirect_to feed_path(@feed), notice: update_message
     else
@@ -135,6 +135,21 @@ class FeedsController < ApplicationController
       :url,
       :name,
       :feed_profile_key,
+      :description,
+      :target_group,
+      :access_token_id,
+      :cron_expression,
+      :schedule_interval
+    )
+  end
+
+  def create_feed_params
+    feed_params
+  end
+
+  def update_feed_params
+    params.require(:feed).permit(
+      :name,
       :description,
       :target_group,
       :access_token_id,

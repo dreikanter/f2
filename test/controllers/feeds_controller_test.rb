@@ -240,6 +240,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form"
   end
 
+  test "#update should not allow changing url or feed_profile_key" do
+    sign_in_as(user)
+    original_url = feed.url
+    original_profile = feed.feed_profile_key
+
+    patch feed_url(feed), params: {
+      feed: {
+        url: "https://evil.com/feed.xml",
+        feed_profile_key: "xkcd",
+        name: "Updated Name"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    feed.reload
+    assert_equal original_url, feed.url
+    assert_equal original_profile, feed.feed_profile_key
+    assert_equal "Updated Name", feed.name
+  end
+
   test "#destroy should remove own feed" do
     sign_in_as(user)
     feed = create(:feed, user: user)
