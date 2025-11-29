@@ -56,7 +56,7 @@ class FeedsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       @feed.save!
-      @feed.create_initial_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+      @feed.reset_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
     end
 
     cleanup_feed_identification(@feed.url)
@@ -163,7 +163,7 @@ class FeedsController < ApplicationController
     return unless @feed.saved_change_to_cron_expression?
     return unless @feed.feed_schedule.present?
 
-    @feed.feed_schedule.update!(next_run_at: Time.current)
+    @feed.reset_schedule!
   end
 
   def cleanup_feed_identification(url)
