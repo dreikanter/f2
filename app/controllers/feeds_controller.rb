@@ -154,7 +154,6 @@ class FeedsController < ApplicationController
       :description,
       :target_group,
       :access_token_id,
-      :cron_expression,
       :schedule_interval
     )
   end

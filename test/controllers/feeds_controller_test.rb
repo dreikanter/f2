@@ -279,6 +279,24 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_in_delta Time.current, enabled_feed.feed_schedule.next_run_at, 5.seconds
   end
 
+  test "#update should not allow direct cron_expression updates" do
+    sign_in_as(user)
+    feed.update!(schedule_interval: "1h")
+    original_cron = feed.cron_expression
+
+    patch feed_url(feed), params: {
+      feed: {
+        cron_expression: "0 0 * * *",
+        name: "Updated Name"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    feed.reload
+    assert_equal original_cron, feed.cron_expression
+    assert_equal "Updated Name", feed.name
+  end
+
   test "#destroy should remove own feed" do
     sign_in_as(user)
     feed = create(:feed, user: user)
