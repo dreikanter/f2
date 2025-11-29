@@ -3,9 +3,7 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Edit Feed") %>
 
-  <div class="ff-card">
-    <div class="ff-card__body">
-      <p class="ff-text">Feed editing form coming soon...</p>
-    </div>
+  <div class="max-w-3xl mx-auto">
+    <%= render "form_expanded", feed: @feed, edit_mode: true %>
   </div>
 </div>
