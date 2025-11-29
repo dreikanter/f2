@@ -38,6 +38,8 @@ class Feed < ApplicationRecord
 
   enum :state, { disabled: 0, enabled: 1 }, default: :disabled
 
+  after_update :create_schedule_on_enable
+
   validates :name,
             presence: true,
             uniqueness: { scope: :user_id },
@@ -196,6 +198,15 @@ class Feed < ApplicationRecord
     ).to_a
   end
 
+  # Creates a feed schedule with initial timestamps
+  # @return [FeedSchedule] the created schedule
+  def create_initial_schedule!
+    create_feed_schedule!(
+      next_run_at: Time.current,
+      last_run_at: Time.current
+    )
+  end
+
   private
 
   def cron_expression_is_valid
@@ -203,5 +214,13 @@ class Feed < ApplicationRecord
 
     parsed_cron = Fugit.parse(cron_expression)
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
+  end
+
+  def create_schedule_on_enable
+    return unless saved_change_to_state?
+    return unless enabled?
+    return if feed_schedule.present?
+
+    create_initial_schedule!
   end
 end

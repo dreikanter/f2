@@ -99,8 +99,9 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_includes response.body, "Feed identified: rss"
     assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, "Feed Type"
+    assert_includes response.body, "RSS Feed"
   end
 
   test "#create should restart identification for failed feed detail" do

@@ -6,11 +6,14 @@
 if Rails.env.development?
   dev_password = "password123"
 
-  user = User.find_or_initialize_by(email_address: "test@example.com").tap do |user|
-    user.password = dev_password
-    user.password_confirmation = dev_password
+  user = User.find_or_initialize_by(email_address: "test@example.com") do |u|
+    u.state = :active
+    u.name = "Test User"
   end
 
+  user.password = dev_password
+  user.password_confirmation = dev_password
+  user.state = :active
   user.save!
 
   # Update existing users to have password_updated_at

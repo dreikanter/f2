@@ -67,6 +67,11 @@ class AccessToken < ApplicationRecord
     URI.parse(host).host
   end
 
+  def display_name
+    owner = access_token_detail&.user_info&.dig("username") || name
+    "#{host_domain} - #{owner}"
+  end
+
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
   end

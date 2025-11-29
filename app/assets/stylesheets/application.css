@@ -55,7 +55,7 @@
   }
 
   .ff-form-input {
-    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2;
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2;
   }
 
   .ff-form-help {

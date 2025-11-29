@@ -67,6 +67,31 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.disabled?
   end
 
+  test "should create feed_schedule when transitioning from disabled to enabled" do
+    access_token = create(:access_token, :active)
+    feed = create(:feed, state: :disabled, access_token: access_token, target_group: "testgroup", cron_expression: "0 * * * *")
+
+    assert_nil feed.feed_schedule
+
+    feed.update!(state: :enabled)
+
+    schedule = feed.reload.feed_schedule
+    assert_not_nil schedule
+    assert_not_nil schedule.next_run_at
+    assert_not_nil schedule.last_run_at
+  end
+
+  test "should not create duplicate feed_schedule when already exists" do
+    access_token = create(:access_token, :active)
+    feed = create(:feed, :with_schedule, state: :disabled, access_token: access_token, target_group: "testgroup")
+
+    existing_schedule = feed.feed_schedule
+
+    feed.update!(state: :enabled)
+
+    assert_equal existing_schedule.id, feed.reload.feed_schedule.id
+  end
+
   test "should have empty description by default" do
     feed = build(:feed)
     assert_equal "", feed.description

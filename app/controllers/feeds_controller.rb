@@ -2,6 +2,8 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
+  helper_method :active_access_tokens?
+
   MAX_RECENT_POSTS = 5
 
   SORTABLE_FIELDS = {
@@ -42,20 +44,25 @@ class FeedsController < ApplicationController
   end
 
   def new
-    @feed = Feed.new
+    @feed = feeds_scope.build
     authorize @feed
   end
 
   def create
-    @feed = Current.user.feeds.build(feed_params)
+    @feed = feeds_scope.build(feed_params)
     authorize @feed
 
-    if @feed.save
-      cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: "Feed was successfully created."
-    else
-      render :new, status: :unprocessable_entity
+    @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
+
+    ActiveRecord::Base.transaction do
+      @feed.save!
+      @feed.create_initial_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
     end
+
+    cleanup_feed_identification(@feed.url)
+    redirect_to feed_path(@feed), notice: success_message
+  rescue ActiveRecord::RecordInvalid
+    render :new, status: :unprocessable_entity
   end
 
   def show
@@ -89,6 +96,14 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def active_access_tokens?
+    current_user.access_tokens.active.exists?
+  end
+
+  def feeds_scope
+    current_user.feeds
+  end
 
   def sortable_fields
     SORTABLE_FIELDS
@@ -124,12 +139,19 @@ class FeedsController < ApplicationController
       :target_group,
       :access_token_id,
       :cron_expression,
-      :schedule_interval,
-      :state
+      :schedule_interval
     )
   end
 
   def cleanup_feed_identification(url)
-    FeedDetail.find_by(user: Current.user, url: url)&.destroy
+    FeedDetail.find_by(user: current_user, url: url)&.destroy
+  end
+
+  def success_message
+    if @feed.enabled?
+      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{@feed.schedule_display} and published to #{@feed.target_group}."
+    else
+      "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
+    end
   end
 end

@@ -1,4 +1,149 @@
+<%# locals: (edit_mode: false, feed: @feed) %>
+<% active_tokens = Current.user.access_tokens.active.order(:host) %>
+
 <div id="feed-form" data-identification-state="complete">
-  <%# Stub partial for PR 2 testing - will be implemented in PR 4 %>
-  <p>Feed identified: <%= feed.feed_profile_key %></p>
+  <%= form_with model: feed,
+                url: (edit_mode ? feed_path(feed) : feeds_path),
+                method: (edit_mode ? :patch : :post),
+                data: {
+                  controller: "feed-form groups",
+                  groups_endpoint_value: access_token_groups_path(":access_token_id"),
+                  groups_loading_text_value: "Loading groups...",
+                  groups_default_text_value: "The FreeFeed group where posts will be published."
+                } do |f| %>
+    <div class="space-y-6">
+      <% if edit_mode %>
+        <div class="rounded-md bg-blue-50 p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <%= icon("information-circle", css_class: "h-5 w-5 text-blue-400", aria_hidden: true) %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="ff-form-group">
+        <%= f.label :url, "Feed URL", class: "ff-form-label" %>
+        <%= f.text_field :url_display,
+                         value: feed.url,
+                         disabled: true,
+                         class: "ff-form-input bg-slate-100",
+                         aria: { label: "Feed URL (cannot be changed)" } %>
+        <%= f.hidden_field :url %>
+      </div>
+
+      <div class="ff-form-group">
+        <%= label_tag "feed_profile_display", "Feed Type", class: "ff-form-label" %>
+        <%= text_field_tag "feed_profile_display",
+                           (feed.feed_profile_key.present? ? FeedProfile.display_name_for(feed.feed_profile_key) : "Unknown"),
+                           disabled: true,
+                           class: "ff-form-input bg-slate-100",
+                           aria: { label: "Feed Type (detected automatically)" } %>
+        <%= f.hidden_field :feed_profile_key %>
+        <p class="ff-form-help">Detected automatically based on the feed URL.</p>
+      </div>
+
+      <div class="ff-form-group">
+        <%= f.label :name, "Feed Name", class: "ff-form-label" %>
+        <%= f.text_field :name,
+                         placeholder: "Enter a name for this feed",
+                         maxlength: Feed::NAME_MAX_LENGTH,
+                         class: "ff-form-input",
+                         required: true %>
+        <% if feed.name.present? %>
+          <p class="ff-form-help">You can edit this name if you'd like.</p>
+        <% else %>
+          <p class="ff-form-help">We couldn't automatically detect a name. Please enter one.</p>
+        <% end %>
+        <% if f.object.errors[:name].any? %>
+          <p class="ff-form-error"><%= f.object.errors[:name].first %></p>
+        <% end %>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
+
+        <div class="ff-form-group">
+          <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
+          <%= f.select :access_token_id,
+                       options_from_collection_for_select(
+                         active_tokens,
+                         :id,
+                         :display_name,
+                         feed.access_token_id || active_tokens.first&.id
+                       ),
+                       {},
+                       {
+                         class: "ff-form-input",
+                         required: true,
+                         data: {
+                           action: "change->groups#refresh",
+                           groups_target: "tokenSelect"
+                         }
+                       } %>
+          <% if f.object.errors[:access_token].any? %>
+            <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
+          <% end %>
+        </div>
+
+        <%= render "feeds/target_group_selector",
+                   feed: feed,
+                   groups: [],
+                   token: nil %>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="text-base font-semibold text-slate-900 mb-4">Refresh Schedule</h3>
+
+        <div class="ff-form-group">
+          <%= f.label :schedule_interval, "Check for new posts every", class: "ff-form-label" %>
+          <%= f.select :schedule_interval,
+                       Feed.schedule_intervals_for_select,
+                       { selected: feed.schedule_interval || "1h" },
+                       { class: "ff-form-input", required: true } %>
+          <% if f.object.errors[:cron_expression].any? %>
+            <p class="ff-form-error"><%= f.object.errors[:cron_expression].first %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <% unless edit_mode %>
+        <div class="mt-6">
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <%= check_box_tag "enable_feed",
+                                "1",
+                                true,
+                                id: "enable_feed",
+                                class: "ff-checkbox",
+                                data: {
+                                  action: "change->feed-form#updateSubmitButtonLabel",
+                                  feed_form_target: "enableCheckbox"
+                                } %>
+            </div>
+            <div class="ml-3">
+              <%= label_tag "enable_feed", "Enable feed", class: "ff-form-label mb-0" %>
+              <p class="ff-form-help mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="ff-card__footer">
+      <% if edit_mode %>
+        <%= f.submit "Update Feed Configuration", class: "ff-button" %>
+      <% else %>
+        <%= f.submit "Create and Enable Feed",
+                     class: "ff-button",
+                     data: {
+                       feed_form_target: "submitButton",
+                       mode: "new",
+                       enabled_label: "Create and Enable Feed",
+                       disabled_label: "Create Feed"
+                     } %>
+      <% end %>
+      <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
+    </div>
+  <% end %>
 </div>

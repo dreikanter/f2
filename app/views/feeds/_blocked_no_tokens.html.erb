@@ -1,0 +1,11 @@
+<%# locals: () %>
+<div id="feed-form">
+  <div class="ff-alert ff-alert--warning">
+    <p>You need to have an active FreeFeed access token before creating a feed.</p>
+  </div>
+
+  <div class="ff-card__footer">
+    <%= link_to "Add Access Token", new_access_token_path, class: "ff-button" %>
+    <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
+  </div>
+</div>
