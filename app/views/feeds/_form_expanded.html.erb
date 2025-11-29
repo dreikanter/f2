@@ -7,7 +7,7 @@
                 method: (edit_mode ? :patch : :post),
                 data: {
                   controller: "feed-form groups",
-                  groups_endpoint_value: access_token_groups_path(":access_token_id"),
+                  groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
                   groups_loading_text_value: "Loading groups...",
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
