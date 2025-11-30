@@ -172,6 +172,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(feed)
     assert_response :success
     assert_includes response.body, feed.name
+    assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
   test "#show should return not found for other user's feed" do

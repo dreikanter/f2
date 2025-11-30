@@ -2,51 +2,25 @@
 
 ## Overview
 
-Implement create, edit, and delete functionality for Feed records in the Feeder application. This feature allows users to configure feed sources, identify feed profiles, and set up automated content reposting to FreeFeed groups.
+This specification documents the create, edit, and delete functionality for Feed records in the Feeder application. This feature allows users to configure feed sources, identify feed profiles, and set up automated content reposting to FreeFeed groups.
 
-## Implementation Status Summary
+**Implementation completed in PRs #265, #266, #269, #278, and #286.**
 
-**Completed (PRs #265, #266, #269):**
-- ✅ Feed model schedule interval abstraction
-- ✅ Async feed identification infrastructure (backend + UI polling)
-- ✅ Groups API endpoint with caching
-- ✅ Critical Stimulus controllers: `polling_controller.js` (feed identification) and `groups_controller.js` (token/groups loading)
+## Implemented Features
 
-**Next: PR4 - Feed Creation Flow**
-- Forms and views (collapsed, expanded, blocked states)
-- FeedsController create/new enhancements
-- Remaining Stimulus controllers: `feed_identification_controller.js` and `feed_form_controller.js`
-- Full integration tests
-
-**Future:**
-- PR5: Feed editing flow
-- PR6: Polish and accessibility improvements
-
-## Current State
-
-### Existing Implementation
-
-- [x] Feed model with comprehensive validations
-- [x] Feed profile system (RSS, XKCD) with ProfileMatcher
-- [x] TitleExtractor for RSS feeds
-- [x] Feed scheduling via FeedSchedulerJob and cron expressions
-- [x] AccessToken model with FreeFeed integration
-- [x] Feeds index and show pages
-- [x] Feed enable/disable via FeedStatusesController
-- [x] Feed deletion functionality
-
-### To Be Implemented
-
-- [x] `FeedDetailsController` for async identification (create and show actions) - **PR1**
-- [x] `FeedDetailsJob` and `FeedDetailsFetcher` service - **PR1**
-- [x] `FeedDetail` model for identification storage - **PR1**
-- [x] `polling_controller.js` configuration for feed identification - **PR1**
-- [x] Groups API endpoint for token-based group fetching - **PR3**
-- [x] `groups_controller.js` for token/groups loading states - **PR3**
-- [ ] Feed creation flow with async profile identification - **PR4**
-- [ ] Feed editing form - **PR5**
-- [ ] `FeedsController#create` and `#update` actions - **PR4/PR5**
-- [ ] Remaining client-side form dynamics (identification and form controllers) - **PR4**
+- Feed model with comprehensive validations
+- Feed profile system (RSS, XKCD) with ProfileMatcher
+- TitleExtractor for RSS feeds
+- Feed scheduling via FeedSchedulerJob and cron expressions
+- AccessToken model with FreeFeed integration
+- Feeds index and show pages with edit functionality
+- Feed enable/disable via FeedStatusesController
+- Feed deletion functionality
+- Async feed identification infrastructure (backend + UI polling)
+- Groups API endpoint with caching
+- Feed creation flow with async profile identification
+- Feed editing flow with read-only URL/profile constraints
+- Stimulus controllers: `polling_controller.js`, `groups_controller.js`, and `feed_form_controller.js`
 
 
 
@@ -1193,90 +1167,6 @@ Per CLAUDE.md requirements:
 - Maintain 100% coverage for new code
 - Use SimpleCov to verify
 
-
-
-## Implementation Plan (High-Level)
-
-### ✅ PR 1: Profile Identification Infrastructure (COMPLETED)
-**Merged in:** #266
-
-Implemented async feed identification backend and UI polling:
-1. ✅ Create FeedDetail model with database migration
-2. ✅ Create FeedDetailsController with create and show actions
-3. ✅ Create FeedDetailsJob background job
-4. ✅ Create FeedDetailsFetcher service
-5. ✅ Create identification partials (loading, error)
-6. ✅ Configure polling_controller.js for identification result polling
-7. ✅ Controller, job, and service tests
-8. ✅ Rate limiting (10 per minute per user)
-9. ✅ Timeout detection (30 seconds)
-
-### ✅ PR 2: Feed Model Schedule Intervals (COMPLETED)
-**Merged in:** #265
-
-Implemented schedule interval abstraction and helper methods:
-1. ✅ Add SCHEDULE_INTERVALS constant to Feed model
-2. ✅ Add schedule_interval methods (getter/setter/for_select)
-3. ✅ Model tests for schedule interval conversion methods
-
-### ✅ PR 3: Groups API Endpoint and UI Controller (COMPLETED)
-**Merged in:** #269
-
-Implemented groups fetching API and dynamic loading in UI:
-1. ✅ Create AccessTokens::GroupsController with index action
-2. ✅ Add nested resource route under access_tokens
-3. ✅ Create target_group_selector partial (dynamically updated)
-4. ✅ Create groups_controller.js for token/groups loading states
-5. ✅ Controller tests with mocked FreeFeed API
-6. ✅ Cache implementation with race_condition_ttl and failure handling
-
-### PR 4: Feed Creation Flow with UI Dynamics
-Implement complete feed creation user flow including forms and remaining Stimulus controllers:
-
-**Forms and Views:**
-1. Update FeedsController#new action with active token check
-2. Create _blocked_no_tokens.html.erb partial (no active tokens state)
-3. Create _form_collapsed.html.erb partial (initial URL input)
-4. Create _form_expanded.html.erb partial (full form after identification)
-5. Update new.html.erb to integrate form flow
-
-**Controller Logic:**
-6. Enhance FeedsController#create action:
-   - Handle enable_feed parameter
-   - Transaction wrapper for enabled feeds
-   - Cleanup FeedDetail after successful creation
-   - Enhanced flash messages
-
-**Stimulus Controllers (from original PR6):**
-7. Create feed_identification_controller.js (disable Identify button on submit)
-8. Create feed_form_controller.js (submit button label updates based on enable checkbox)
-9. Add data attributes to form elements for controller bindings
-
-**Tests:**
-10. Form submission tests (create with enabled/disabled state)
-11. Validation error tests
-12. Integration test for full flow (URL input → identify → fill form → create)
-13. Integration test for blocked state (no tokens)
-
-**Note:** groups_controller.js and polling_controller.js configuration are already implemented (PR1 and PR3).
-
-### PR 5: Feed Editing Flow
-1. Update FeedsController#edit action
-2. Adapt _form_expanded.html.erb for edit mode (read-only URL/profile)
-3. Update edit.html.erb with edit-mode specific messaging
-4. Enhance FeedsController#update action with enhanced flash messages
-5. Update controller tests for edit/update actions
-6. Integration test for edit flow
-
-### PR 6: Polish and Edge Cases
-1. Empty states refinements (no tokens, no groups)
-2. Error message improvements and consistency
-3. Loading states and visual indicators polish
-4. Accessibility improvements (ARIA labels, keyboard navigation, focus management)
-5. Form validation error display enhancements
-
-
-
 ## Requirements and Assumptions
 
 ### Firm Requirements
@@ -1337,7 +1227,3 @@ Implement complete feed creation user flow including forms and remaining Stimulu
 - ✅ Test coverage is 100% for new code
 - ✅ RuboCop passes for all Ruby files
 - ✅ UI text follows tone guidelines from CLAUDE.md
-
-
-
-This specification is ready for your review. Please confirm if this aligns with your vision, or let me know if any adjustments are needed.

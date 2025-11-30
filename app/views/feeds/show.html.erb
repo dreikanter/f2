@@ -5,6 +5,9 @@
     <% if (status_summary = feed_status_summary(@feed)).present? %>
       <% header.with_context_paragraph(status_summary) %>
     <% end %>
+    <% header.with_action_button do %>
+      <%= link_to "Edit", edit_feed_path(@feed), class: "ff-button ff-button--secondary ff-button--compact" %>
+    <% end %>
     <% if @feed.enabled? %>
       <% header.with_action_button do %>
         <%= button_to "Disable",
