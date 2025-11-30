@@ -10,25 +10,58 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#show should render status when authenticated with no feeds" do
-    sign_in_as user
+  test "#show should render onboarding state 1 - no active tokens" do
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as onboarding_user
     get status_path
     assert_response :success
     assert_select "h1", "Welcome to Feeder"
+    assert_select "p", text: /add a FreeFeed access token/
+    assert_select "a[href='#{new_access_token_path}']", text: "Add FreeFeed token"
   end
 
-  test "#show should render status when authenticated with feeds" do
-    sign_in_as user
-    create(:feed, user: user)
+  test "#show should render onboarding state 2 - has token, no feeds" do
+    onboarding_user = create(:user, state: :onboarding)
+    create(:access_token, :active, user: onboarding_user)
+    sign_in_as onboarding_user
+    get status_path
+    assert_response :success
+    assert_select "h1", "Welcome to Feeder"
+    assert_select "p", text: /create your first feed/
+    assert_select "a[href='#{new_feed_path}']", text: "Add feed"
+  end
+
+  test "#show should render active state 3 - normal dashboard" do
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    create(:feed, user: active_user)
+    sign_in_as active_user
     get status_path
     assert_response :success
     assert_select "h1", "Status"
+    assert_select "div.ff-alert", count: 0
+  end
+
+  test "#show should render active state 4 - missing active tokens warning" do
+    active_user = create(:user, state: :active)
+    inactive_token = create(:access_token, :inactive, user: active_user)
+    create(:feed, user: active_user, access_token: inactive_token)
+    sign_in_as active_user
+    get status_path
+    assert_response :success
+    assert_select "h1", "Status"
+    assert_select ".ff-alert--warning" do
+      assert_select "p", text: /don't have any active FreeFeed tokens/
+      assert_select "a[href='#{new_access_token_path}']", text: "Add a token"
+    end
   end
 
   test "#show should display total feeds count" do
-    sign_in_as user
-    feed1 = create(:feed, user: user)
-    feed2 = create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    feed1 = create(:feed, user: active_user)
+    feed2 = create(:feed, user: active_user)
 
     get status_path
     assert_response :success
@@ -37,8 +70,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should display total imported posts count" do
-    sign_in_as user
-    feed = create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    feed = create(:feed, user: active_user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     create(:post, feed: feed, feed_entry: entry1)
@@ -51,8 +86,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should display total published posts count" do
-    sign_in_as user
-    feed = create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    feed = create(:feed, user: active_user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
@@ -67,8 +104,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should display most recent post publication timestamp" do
-    sign_in_as user
-    feed = create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    feed = create(:feed, user: active_user)
     entry = create(:feed_entry, feed: feed)
     create(:post, feed: feed, feed_entry: entry, status: :published, published_at: 1.day.ago)
 
@@ -79,7 +118,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should hide most recent post publication when no published posts" do
-    sign_in_as user
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as onboarding_user
 
     get status_path
     assert_response :success
@@ -87,8 +127,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should display average posts per day for last week" do
-    sign_in_as user
-    feed = create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    feed = create(:feed, user: active_user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     create(:post, feed: feed, feed_entry: entry1, published_at: 2.days.ago)
@@ -101,7 +143,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should hide average posts per day when no posts" do
-    sign_in_as user
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as onboarding_user
 
     get status_path
     assert_response :success
@@ -109,7 +152,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should hide post statistics when no posts" do
-    sign_in_as user
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as onboarding_user
 
     get status_path
     assert_response :success
@@ -119,16 +163,20 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.average_posts_per_day"]').empty?
   end
 
-  test "#show should render empty state when no feeds" do
-    sign_in_as user
+  test "#show should render onboarding state when no feeds" do
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as onboarding_user
 
     get status_path
     assert_response :success
+    assert_select "h1", "Welcome to Feeder"
   end
 
-  test "#show should display statistics when feeds exist" do
-    sign_in_as user
-    create(:feed, user: user)
+  test "#show should display statistics when feeds exist and user is active" do
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
 
     get status_path
     assert_response :success
@@ -138,10 +186,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should display recent user events" do
-    sign_in_as user
-    create(:feed, user: user)
-    event1 = Event.create!(type: "feed_refresh", level: :info, message: "Feed refresh completed", user: user)
-    event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Post withdrawn", user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
+    event1 = Event.create!(type: "feed_refresh", level: :info, message: "Feed refresh completed", user: active_user)
+    event2 = Event.create!(type: "post_withdrawn", level: :info, message: "Post withdrawn", user: active_user)
 
     get status_path
     assert_response :success
@@ -151,8 +201,10 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should hide recent events section when no events" do
-    sign_in_as user
-    create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
 
     get status_path
     assert_response :success
@@ -160,10 +212,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should only display user's own events" do
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
     other_user = create(:user)
-    sign_in_as user
-    create(:feed, user: user)
-    user_event = Event.create!(type: "feed_refresh", level: :info, message: "User's event", user: user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
+    user_event = Event.create!(type: "feed_refresh", level: :info, message: "User's event", user: active_user)
     other_event = Event.create!(type: "feed_refresh", level: :info, message: "Other's event", user: other_user)
 
     get status_path
@@ -173,10 +227,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should exclude debug level events" do
-    sign_in_as user
-    create(:feed, user: user)
-    info_event = Event.create!(type: "info_event", level: :info, message: "Info event", user: user)
-    debug_event = Event.create!(type: "debug_event", level: :debug, message: "Debug event", user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
+    info_event = Event.create!(type: "info_event", level: :info, message: "Info event", user: active_user)
+    debug_event = Event.create!(type: "debug_event", level: :debug, message: "Debug event", user: active_user)
 
     get status_path
     assert_response :success
@@ -185,10 +241,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should exclude expired events" do
-    sign_in_as user
-    create(:feed, user: user)
-    active_event = Event.create!(type: "active_event", level: :info, message: "Active event", user: user)
-    expired_event = Event.create!(type: "expired_event", level: :info, message: "Expired event", user: user, expires_at: 1.hour.ago)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
+    active_event = Event.create!(type: "active_event", level: :info, message: "Active event", user: active_user)
+    expired_event = Event.create!(type: "expired_event", level: :info, message: "Expired event", user: active_user, expires_at: 1.hour.ago)
 
     get status_path
     assert_response :success
@@ -197,10 +255,12 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should limit to 10 recent events" do
-    sign_in_as user
-    create(:feed, user: user)
+    active_user = create(:user, state: :active)
+    create(:access_token, :active, user: active_user)
+    sign_in_as active_user
+    create(:feed, user: active_user)
     15.times do |i|
-      Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user, created_at: i.minutes.ago)
+      Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: active_user, created_at: i.minutes.ago)
     end
 
     get status_path
