@@ -5,10 +5,7 @@
      data-polling-max-polls-value="<%= FeedDetailsController::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
      data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
   <div id="feed-form">
-    <%= render CardComponent.new(
-          class: "flex items-center gap-3",
-          role: "status"
-        ) do %>
+    <%= render CardComponent.new(class: "flex items-center gap-3", role: "status") do %>
       <div class="flex-shrink-0">
         <%= render SpinnerComponent.new %>
       </div>
