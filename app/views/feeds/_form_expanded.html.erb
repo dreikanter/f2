@@ -1,7 +1,7 @@
 <%# locals: (edit_mode: false, feed: @feed) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 
-<div id="feed-form" data-identification-state="complete">
+<div data-identification-state="complete">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
