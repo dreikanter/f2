@@ -57,6 +57,7 @@ class FeedsController < ApplicationController
     ActiveRecord::Base.transaction do
       @feed.save!
       @feed.reset_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+      Current.user.active! if Current.user.onboarding?
     end
 
     cleanup_feed_identification(@feed.url)

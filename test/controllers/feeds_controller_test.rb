@@ -167,6 +167,74 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p.ff-form-error", text: /can't be blank|must be filled/
   end
 
+  test "#create should transition user from onboarding to active state" do
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as(onboarding_user)
+    token = create(:access_token, :active, user: onboarding_user)
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "First Feed",
+      feed_profile_key: "rss",
+      access_token_id: token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert onboarding_user.onboarding?, "User should start in onboarding state"
+
+    post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+
+    onboarding_user.reload
+    assert onboarding_user.active?, "User should transition to active state after creating first feed"
+  end
+
+  test "#create should not change state if user is already active" do
+    active_user = create(:user, state: :active)
+    sign_in_as(active_user)
+    token = create(:access_token, :active, user: active_user)
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Another Feed",
+      feed_profile_key: "rss",
+      access_token_id: token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert active_user.active?, "User should start in active state"
+
+    post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+
+    active_user.reload
+    assert active_user.active?, "User should remain in active state"
+  end
+
+  test "#create should rollback state transition if feed save fails" do
+    onboarding_user = create(:user, state: :onboarding)
+    sign_in_as(onboarding_user)
+    token = create(:access_token, :active, user: onboarding_user)
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "",  # Invalid - will fail validation
+      feed_profile_key: "rss",
+      access_token_id: token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert onboarding_user.onboarding?, "User should start in onboarding state"
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+
+    onboarding_user.reload
+    assert onboarding_user.onboarding?, "User should remain in onboarding state after failed feed creation"
+  end
+
   test "#show should render feed owned by user" do
     sign_in_as(user)
     get feed_url(feed)
