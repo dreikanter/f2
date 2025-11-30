@@ -1,9 +1,13 @@
-<%= render CardComponent.new(class: "flex items-center gap-3", role: "status") do %>
-  <div class="flex-shrink-0">
-    <%= render SpinnerComponent.new %>
+<div class="ff-card" role="status">
+  <div class="ff-card__body">
+    <div class="flex items-center gap-3">
+      <div class="flex-shrink-0">
+        <%= render SpinnerComponent.new %>
+      </div>
+      <div class="space-y-1">
+        <p class="ff-text ff-text--heavy">Checking this feed...</p>
+        <p class="ff-text">This usually takes a few seconds.</p>
+      </div>
+    </div>
   </div>
-  <div class="space-y-1">
-    <p class="ff-text ff-text--heavy">Checking this feed...</p>
-    <p class="ff-text">This usually takes a few seconds.</p>
-  </div>
-<% end %>
+</div>
