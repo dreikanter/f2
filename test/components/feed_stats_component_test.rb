@@ -43,7 +43,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     mobile_layout = result.css(".md\\:hidden").first
     assert_not_nil mobile_layout
     assert_equal "Last refresh", result.css(".md\\:hidden [data-key=\"stats.last_refresh.label\"]").first.text
-    assert_equal "Most recent publication", result.css(".md\\:hidden [data-key=\"stats.most_recent_post.label\"]").first.text
+    assert_equal "Latest imported post", result.css(".md\\:hidden [data-key=\"stats.most_recent_post.label\"]").first.text
     assert_equal "Imported posts", result.css(".md\\:hidden [data-key=\"stats.imported_posts.label\"]").first.text
   end
 
@@ -53,7 +53,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     desktop_layout = result.css(".hidden.md\\:flex").first
     assert_not_nil desktop_layout
     assert_equal "Refreshed", result.css(".hidden.md\\:flex [data-key=\"stats.last_refresh.label\"]").first.text
-    assert_equal "Recent", result.css(".hidden.md\\:flex [data-key=\"stats.most_recent_post.label\"]").first.text
+    assert_equal "Latest", result.css(".hidden.md\\:flex [data-key=\"stats.most_recent_post.label\"]").first.text
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.published_posts.label\"]").first.text
   end
@@ -67,6 +67,6 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     assert_equal "Never", last_refresh_value
 
     most_recent_value = result.css('[data-key="stats.most_recent_post.value"]').first.text
-    assert_equal "No posts imported", most_recent_value
+    assert_equal "None", most_recent_value
   end
 end

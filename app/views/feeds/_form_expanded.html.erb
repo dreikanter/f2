@@ -1,7 +1,7 @@
 <%# locals: (edit_mode: false, feed: @feed) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 
-<div id="feed-form" data-identification-state="complete">
+<div data-identification-state="complete">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
@@ -13,17 +13,8 @@
                 } do |f| %>
     <div class="space-y-6">
       <% if edit_mode %>
-        <div class="rounded-md bg-blue-50 p-4 mb-6">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <%= icon("information-circle", css_class: "h-5 w-5 text-blue-400", aria_hidden: true) %>
-            </div>
-            <div class="ml-3">
-              <p class="text-sm text-blue-700">
-                Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.
-              </p>
-            </div>
-          </div>
+        <div class="ff-alert ff-alert--info">
+          <p>Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.</p>
         </div>
       <% end %>
 

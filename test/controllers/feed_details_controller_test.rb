@@ -213,7 +213,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'action="replace"'
+    assert_includes response.body, 'action="update"'
     assert_includes response.body, 'target="feed-form"'
   end
 
