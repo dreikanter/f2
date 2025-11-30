@@ -76,7 +76,7 @@ class FeedDetailsController < ApplicationController
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end
 
-    render(identification_loading)
+    render(identification_loading_poll)
   end
 
   def handle_success_status
@@ -110,6 +110,15 @@ class FeedDetailsController < ApplicationController
         "feed-form",
         partial: "feeds/identification_loading",
         locals: { url: feed_url }
+      )
+    }
+  end
+
+  def identification_loading_poll
+    {
+      turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_loading_poll"
       )
     }
   end
