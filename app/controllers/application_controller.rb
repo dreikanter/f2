@@ -7,6 +7,8 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  helper_method :current_user
+
   private
 
   # Pundit uses this method to get the "user" for authorization checks
