@@ -96,7 +96,7 @@ class FeedDetailsController < ApplicationController
 
   def identification_error(error:)
     {
-      turbo_stream: turbo_stream.replace(
+      turbo_stream: turbo_stream.update(
         "feed-form",
         partial: "feeds/identification_error",
         locals: { url: feed_url, error: error }
@@ -107,7 +107,7 @@ class FeedDetailsController < ApplicationController
   def identification_loading
     {
       turbo_stream: turbo_stream.replace(
-        "feed-form",
+        "feed-form-wrapper",
         partial: "feeds/identification_loading",
         locals: { url: feed_url }
       )
@@ -116,7 +116,7 @@ class FeedDetailsController < ApplicationController
 
   def identification_loading_poll
     {
-      turbo_stream: turbo_stream.replace(
+      turbo_stream: turbo_stream.update(
         "feed-form",
         partial: "feeds/identification_loading_poll"
       )
@@ -125,7 +125,7 @@ class FeedDetailsController < ApplicationController
 
   def identification_success(feed)
     {
-      turbo_stream: turbo_stream.replace(
+      turbo_stream: turbo_stream.update(
         "feed-form",
         partial: "feeds/form_expanded",
         locals: { feed: feed }
