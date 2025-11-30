@@ -71,8 +71,9 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 6. Verify you are redirected to the feed creation page
 
 **Cleanup:**
-```ruby
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); bin/rails db:seed; puts 'Cleanup complete'"
+```bash
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); puts 'User state reset'"
+bin/rails db:seed
 ```
 
 ---
@@ -112,8 +113,9 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
    - No warning alerts
 
 **Cleanup:**
-```ruby
-bin/rails runner "Feed.find_by(name: 'Test Feed')&.destroy; bin/rails db:seed; puts 'Cleanup complete'"
+```bash
+bin/rails runner "Feed.find_by(name: 'Test Feed')&.destroy; puts 'Feed removed'"
+bin/rails db:seed
 ```
 
 ---
@@ -215,8 +217,9 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
    - The message about adding a token (NOT about creating a feed)
 
 **Cleanup:**
-```ruby
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.first.update!(status: :active); bin/rails db:seed; puts 'Cleanup complete'"
+```bash
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.first.update!(status: :active); puts 'User state reset'"
+bin/rails db:seed
 ```
 
 ---
@@ -249,8 +252,8 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
    - The page shows the normal dashboard with zero counts
 
 **Cleanup:**
-```ruby
-bin/rails runner "bin/rails db:seed; puts 'Cleanup complete'"
+```bash
+bin/rails db:seed
 ```
 
 ---
@@ -285,8 +288,9 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
    - User is STILL in onboarding state
 
 **Cleanup:**
-```ruby
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); bin/rails db:seed; puts 'Cleanup complete'"
+```bash
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); puts 'User state reset'"
+bin/rails db:seed
 ```
 
 ---
