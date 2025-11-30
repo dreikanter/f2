@@ -17,7 +17,7 @@ This manual provides test cases for validating the onboarding flow and status pa
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :onboarding); u.access_tokens.update_all(status: :inactive); puts 'Setup complete: User is onboarding, all tokens inactive'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.onboarding!; u.access_tokens.update_all(status: :inactive); puts 'Setup complete: User is onboarding, all tokens inactive'"
 ```
 
 **Expected State:**
@@ -39,7 +39,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 
 **Cleanup:**
 ```ruby
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); puts 'Cleanup complete'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; puts 'Cleanup complete'"
 ```
 
 ---
@@ -51,7 +51,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :onboarding); u.feeds.destroy_all; u.access_tokens.each { |t| t.update!(status: :active) if t.status != 'active' }; puts 'Setup complete: User is onboarding, has active tokens, no feeds'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.onboarding!; u.feeds.destroy_all; u.access_tokens.each { |t| t.active! if t.status != 'active' }; puts 'Setup complete: User is onboarding, has active tokens, no feeds'"
 ```
 
 **Expected State:**
@@ -72,7 +72,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 
 **Cleanup:**
 ```bash
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); puts 'User state reset'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; puts 'User state reset'"
 bin/rails db:seed
 ```
 
@@ -85,7 +85,7 @@ bin/rails db:seed
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :onboarding); u.feeds.destroy_all; u.access_tokens.first.update!(status: :active); puts 'Setup complete: User ready to complete onboarding'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.onboarding!; u.feeds.destroy_all; u.access_tokens.first.active!; puts 'Setup complete: User ready to complete onboarding'"
 ```
 
 **Expected State:**
@@ -127,7 +127,7 @@ bin/rails db:seed
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.first.update!(status: :active) unless u.access_tokens.active.any?; puts 'Setup complete: Active user with active tokens and feeds'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; u.access_tokens.first.active! unless u.access_tokens.active.any?; puts 'Setup complete: Active user with active tokens and feeds'"
 ```
 
 **Expected State:**
@@ -162,7 +162,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.update_all(status: :inactive); puts 'Setup complete: Active user with all tokens inactive'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; u.access_tokens.update_all(status: :inactive); puts 'Setup complete: Active user with all tokens inactive'"
 ```
 
 **Expected State:**
@@ -198,7 +198,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.access_
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :onboarding); u.feeds.destroy_all; t = u.access_tokens.first; t.update!(status: :active); puts 'Setup complete: Onboarding user with one active token, no feeds'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.onboarding!; u.feeds.destroy_all; t = u.access_tokens.first; t.active!; puts 'Setup complete: Onboarding user with one active token, no feeds'"
 ```
 
 **Expected State:**
@@ -218,7 +218,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 
 **Cleanup:**
 ```bash
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.first.update!(status: :active); puts 'User state reset'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; u.access_tokens.first.active!; puts 'User state reset'"
 bin/rails db:seed
 ```
 
@@ -231,7 +231,7 @@ bin/rails db:seed
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); u.access_tokens.first.update!(status: :active); puts 'Setup complete: Active user with feeds'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; u.access_tokens.first.active!; puts 'Setup complete: Active user with feeds'"
 ```
 
 **Expected State:**
@@ -265,7 +265,7 @@ bin/rails db:seed
 **Setup:**
 ```ruby
 # Run in Rails console or as oneliner:
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :onboarding); u.feeds.destroy_all; u.access_tokens.first.update!(status: :active); puts 'Setup complete: Onboarding user ready to create first feed'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.onboarding!; u.feeds.destroy_all; u.access_tokens.first.active!; puts 'Setup complete: Onboarding user ready to create first feed'"
 ```
 
 **Expected State:**
@@ -289,7 +289,7 @@ bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!
 
 **Cleanup:**
 ```bash
-bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.update!(state: :active); puts 'User state reset'"
+bin/rails runner "u = User.find_by(email_address: 'test@example.com'); u.active!; puts 'User state reset'"
 bin/rails db:seed
 ```
 
