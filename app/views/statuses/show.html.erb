@@ -1,21 +1,23 @@
+<%# locals: (recent_events:, has_active_tokens:, no_feeds:) %>
+
 <% content_for :title, "Status" %>
 
 <div class="space-y-8">
-  <% if @user.email_deactivated? %>
+  <% if current_user.email_deactivated? %>
     <div class="ff-alert ff-alert--warning space-y-2" role="alert">
       <p class="ff-text ff-text--heavy">Your email address is not receiving our emails.</p>
-      <% if @user.can_change_email? %>
+      <% if current_user.can_change_email? %>
         <p class="ff-text">
           <%= link_to "Update your email address", edit_settings_email_update_path, class: "ff-link" %>
           to continue receiving notifications.
         </p>
       <% else %>
-        <p class="ff-text">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <p class="ff-text">You can update your email address in <%= distance_of_time_in_words(current_user.time_until_email_change_allowed) %>.</p>
       <% end %>
     </div>
   <% end %>
 
-  <% if @user.onboarding? && !@has_active_tokens %>
+  <% if current_user.onboarding? && !has_active_tokens %>
     <%# State 1: Onboarding - No active tokens %>
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
@@ -25,7 +27,7 @@
         <%= link_to "Add FreeFeed token", new_access_token_path, class: "ff-button" %>
       </div>
     </section>
-  <% elsif @user.onboarding? && @has_active_tokens && !@has_feeds %>
+  <% elsif current_user.onboarding? && has_active_tokens && no_feeds %>
     <%# State 2: Onboarding - Has token, no feeds %>
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
@@ -38,7 +40,7 @@
     <%# State 3 & 4: Active user - Show normal dashboard %>
     <h1 class="ff-h1">Status</h1>
 
-    <% if @user.active? && !@has_active_tokens %>
+    <% if current_user.active? && !has_active_tokens %>
       <%# State 4: Active user with no active tokens - Show warning %>
       <div class="ff-alert ff-alert--warning space-y-2" role="alert">
         <p class="ff-text ff-text--heavy">You don't have any active FreeFeed tokens.</p>
@@ -49,12 +51,12 @@
       </div>
     <% end %>
 
-    <%= render UserStatsComponent.new(user: @user) %>
+    <%= render UserStatsComponent.new(user: current_user) %>
 
-    <% if @recent_events.any? %>
+    <% if recent_events.any? %>
       <section class="space-y-4">
         <h2 class="ff-h2">Recent Activity</h2>
-        <%= render RecentEventsComponent.new(events: @recent_events) %>
+        <%= render RecentEventsComponent.new(events: recent_events) %>
       </section>
     <% end %>
   <% end %>
