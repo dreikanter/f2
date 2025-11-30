@@ -1,6 +1,4 @@
 class StatusesController < ApplicationController
-  helper_method :has_active_tokens?
-
   def show
     locals = {
       recent_events: recent_events,
