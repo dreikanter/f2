@@ -27,8 +27,8 @@ class FeedStatsComponent < ViewComponent::Base
       },
       {
         key: "most_recent_post",
-        label: "Most recent publication",
-        label_short: "Recent",
+        label: "Latest imported post",
+        label_short: "Latest",
         value: most_recent_post_value
       },
       {
@@ -86,7 +86,7 @@ class FeedStatsComponent < ViewComponent::Base
     if @feed.most_recent_post_date
       helpers.short_time_ago_tag(@feed.most_recent_post_date)
     else
-      content_tag(:span, "No posts imported", class: "text-slate-500")
+      content_tag(:span, "None", class: "text-slate-500")
     end
   end
 
