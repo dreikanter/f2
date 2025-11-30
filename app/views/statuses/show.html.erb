@@ -8,8 +8,7 @@
       <p class="ff-text ff-text--heavy">Your email address is not receiving our emails.</p>
       <% if current_user.can_change_email? %>
         <p class="ff-text">
-          <%= link_to "Update your email address", edit_settings_email_update_path, class: "ff-link" %>
-          to continue receiving notifications.
+          <%= link_to "Update your email address", edit_settings_email_update_path, class: "ff-link" %> to continue receiving notifications.
         </p>
       <% else %>
         <p class="ff-text">You can update your email address in <%= distance_of_time_in_words(current_user.time_until_email_change_allowed) %>.</p>
@@ -18,7 +17,7 @@
   <% end %>
 
   <% if current_user.onboarding? && !has_active_tokens %>
-    <%# State 1: Onboarding - No active tokens %>
+    <%# Onboarding - No active tokens %>
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
       <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
@@ -28,7 +27,7 @@
       </div>
     </section>
   <% elsif current_user.onboarding? && has_active_tokens && no_feeds %>
-    <%# State 2: Onboarding - Has token, no feeds %>
+    <%# Onboarding - Has token, no feeds %>
     <section class="space-y-4">
       <h1 class="ff-h1">Welcome to Feeder</h1>
       <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
@@ -37,16 +36,15 @@
       </div>
     </section>
   <% else %>
-    <%# State 3 & 4: Active user - Show normal dashboard %>
+    <%# Active user %>
     <h1 class="ff-h1">Status</h1>
 
     <% if current_user.active? && !has_active_tokens %>
-      <%# State 4: Active user with no active tokens - Show warning %>
+      <%# Active user with no active tokens %>
       <div class="ff-alert ff-alert--warning space-y-2" role="alert">
         <p class="ff-text ff-text--heavy">You don't have any active FreeFeed tokens.</p>
         <p class="ff-text">
-          <%= link_to "Add a token", new_access_token_path, class: "ff-link" %>
-          to resume posting.
+          <%= link_to "Add a token", new_access_token_path, class: "ff-link" %> to resume posting.
         </p>
       </div>
     <% end %>
