@@ -428,7 +428,7 @@ GEM
       attr_extras (>= 6.2.4)
       diff-lcs
       patience_diff
-    svix (1.81.0)
+    svix (1.83.0)
     thor (1.4.0)
     thruster (0.1.16)
     thruster (0.1.16-aarch64-linux)
