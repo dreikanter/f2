@@ -1,0 +1,80 @@
+name: CI (smolvm)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install smolvm
+        run: |
+          curl -sSL https://smolmachines.com/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Cache smolvm machine state
+        id: smolvm-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.smolvm
+            ~/.cache/smolvm
+            ~/.local/share/smolvm
+          key: smolvm-${{ runner.os }}-ruby-3.4.1-${{ hashFiles('Gemfile.lock') }}
+          restore-keys: |
+            smolvm-${{ runner.os }}-ruby-3.4.1-
+
+      - name: Create machine and install gems (cache miss)
+        if: steps.smolvm-cache.outputs.cache-hit != 'true'
+        run: |
+          sed "s|WORKSPACE_PATH|${GITHUB_WORKSPACE}|g" \
+            .github/smolvm/Smolfile.toml > /tmp/Smolfile
+          smolvm machine create ci-test -s /tmp/Smolfile
+          smolvm machine start --name ci-test
+          smolvm machine exec --name ci-test -- bash -c "apt-get update -qq && apt-get install -y --no-install-recommends libpq-dev pkg-config libyaml-dev build-essential"
+          smolvm machine exec --name ci-test -- bash -c "cd /workspace && bundle install"
+          smolvm machine stop --name ci-test
+
+      - name: Start machine
+        run: smolvm machine start --name ci-test
+
+      - name: Get PostgreSQL host IP
+        run: |
+          echo "POSTGRES_HOST=$(ip route show default | awk '{print $3}')" >> $GITHUB_ENV
+
+      - name: Run tests
+        run: |
+          smolvm machine exec --name ci-test -- bash -c "
+            cd /workspace &&
+            RAILS_ENV=test DATABASE_URL=postgres://postgres:postgres@${POSTGRES_HOST}:5432 bin/rails db:test:prepare test
+          "
+
+      - name: Stop machine
+        if: always()
+        run: smolvm machine stop --name ci-test

@@ -1,0 +1,5 @@
+image = "ruby:3.4.1"
+net = true
+
+[dev]
+volumes = ["WORKSPACE_PATH:/workspace"]
