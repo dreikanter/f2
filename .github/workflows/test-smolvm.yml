@@ -32,61 +32,37 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          sudo modprobe kvm 2>/dev/null || true
+          sudo modprobe kvm-intel 2>/dev/null || true
+          sudo modprobe kvm-amd 2>/dev/null || true
+          ls -la /dev/kvm
 
       - name: Install smolvm
         run: |
           curl -sSL https://smolmachines.com/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Diagnose smolvm environment
-        run: |
-          {
-            echo "## smolvm diagnostics"
-            echo ""
-            echo "**which smolvm:** $(which smolvm 2>&1)"
-            echo ""
-            echo "**smolvm wrapper:**"
-            echo '```'
-            head -5 ~/.smolvm/smolvm 2>&1 || echo "not a text file"
-            echo '```'
-            echo ""
-            echo "**installed files:**"
-            echo '```'
-            ls -la ~/.smolvm/ 2>&1
-            echo '```'
-            echo ""
-            echo "**smolvm lib:**"
-            echo '```'
-            ls -la ~/.smolvm/lib/ 2>&1 || echo "no lib dir"
-            echo '```'
-            echo ""
-            echo "**ldd:**"
-            echo '```'
-            ldd ~/.smolvm/smolvm-bin 2>&1 || ldd ~/.smolvm/smolvm 2>&1 || echo "ldd failed"
-            echo '```'
-            echo ""
-            echo "**KVM:**"
-            echo '```'
-            ls -la /dev/kvm 2>&1 || echo "KVM not found"
-            echo '```'
-            echo ""
-            echo "**smolvm --version:**"
-            echo '```'
-            smolvm --version 2>&1 || echo "smolvm --version failed with exit $?"
-            echo '```'
-          } >> $GITHUB_STEP_SUMMARY
-
       - name: Start smolvm server
         run: |
-          XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          mkdir -p "${XDG_RUNTIME_DIR}"
-          echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}" >> $GITHUB_ENV
+          export XDG_RUNTIME_DIR=/tmp/smolvm-run
+          mkdir -p "$XDG_RUNTIME_DIR"
+          echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> $GITHUB_ENV
           smolvm serve &
-          sleep 3
+          for i in $(seq 15); do
+            [ -S "$XDG_RUNTIME_DIR/smolvm.sock" ] && echo "Server ready" && break
+            sleep 1
+          done
 
       - name: Smoke test smolvm
         run: |
-          smolvm machine run --net --image alpine -- sh -c "echo smolvm-ok"
+          smolvm machine run --net --image alpine -- sh -c "echo smolvm-ok" \
+            > /tmp/smolvm-smoke.txt 2>&1
+          EXIT=$?
+          cat /tmp/smolvm-smoke.txt
+          if [ $EXIT -ne 0 ]; then
+            echo "::error::smolvm smoke test failed (exit $EXIT): $(head -5 /tmp/smolvm-smoke.txt | tr '\n' ' ')"
+            exit $EXIT
+          fi
 
       - name: Cache smolvm machine state
         id: smolvm-cache
