@@ -3,7 +3,7 @@ name: CI (smolvm)
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
 
 jobs:
   test:
