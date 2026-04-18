@@ -38,6 +38,19 @@ jobs:
           curl -sSL https://smolmachines.com/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Start smolvm server
+        run: |
+          mkdir -p "${XDG_RUNTIME_DIR:-/tmp/smolvm-run}"
+          export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/smolvm-run}"
+          smolvm serve &
+          echo "SMOLVM_PID=$!" >> $GITHUB_ENV
+          echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}" >> $GITHUB_ENV
+          sleep 2
+
+      - name: Smoke test smolvm
+        run: |
+          smolvm machine run --image alpine -- echo "smolvm works"
+
       - name: Cache smolvm machine state
         id: smolvm-cache
         uses: actions/cache@v4
