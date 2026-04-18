@@ -38,18 +38,55 @@ jobs:
           curl -sSL https://smolmachines.com/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Diagnose smolvm environment
+        run: |
+          {
+            echo "## smolvm diagnostics"
+            echo ""
+            echo "**which smolvm:** $(which smolvm 2>&1)"
+            echo ""
+            echo "**smolvm wrapper:**"
+            echo '```'
+            head -5 ~/.smolvm/smolvm 2>&1 || echo "not a text file"
+            echo '```'
+            echo ""
+            echo "**installed files:**"
+            echo '```'
+            ls -la ~/.smolvm/ 2>&1
+            echo '```'
+            echo ""
+            echo "**smolvm lib:**"
+            echo '```'
+            ls -la ~/.smolvm/lib/ 2>&1 || echo "no lib dir"
+            echo '```'
+            echo ""
+            echo "**ldd:**"
+            echo '```'
+            ldd ~/.smolvm/smolvm-bin 2>&1 || ldd ~/.smolvm/smolvm 2>&1 || echo "ldd failed"
+            echo '```'
+            echo ""
+            echo "**KVM:**"
+            echo '```'
+            ls -la /dev/kvm 2>&1 || echo "KVM not found"
+            echo '```'
+            echo ""
+            echo "**smolvm --version:**"
+            echo '```'
+            smolvm --version 2>&1 || echo "smolvm --version failed with exit $?"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Start smolvm server
         run: |
-          mkdir -p "${XDG_RUNTIME_DIR:-/tmp/smolvm-run}"
-          export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/smolvm-run}"
-          smolvm serve &
-          echo "SMOLVM_PID=$!" >> $GITHUB_ENV
+          XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+          mkdir -p "${XDG_RUNTIME_DIR}"
           echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}" >> $GITHUB_ENV
-          sleep 2
+          smolvm serve &
+          sleep 3
 
       - name: Smoke test smolvm
         run: |
-          smolvm machine run --image alpine -- echo "smolvm works"
+          smolvm machine run --net --image alpine -- sh -c "echo smolvm-ok"
 
       - name: Cache smolvm machine state
         id: smolvm-cache
