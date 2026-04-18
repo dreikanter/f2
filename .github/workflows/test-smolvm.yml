@@ -37,6 +37,9 @@ jobs:
           sudo modprobe kvm-amd 2>/dev/null || true
           ls -la /dev/kvm
 
+      - name: Install dependencies
+        run: sudo apt-get install -y e2fsprogs
+
       - name: Install smolvm
         run: |
           curl -sSL https://smolmachines.com/install.sh | bash
@@ -47,9 +50,19 @@ jobs:
           export XDG_RUNTIME_DIR=/tmp/smolvm-run
           mkdir -p "$XDG_RUNTIME_DIR"
           echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> $GITHUB_ENV
-          smolvm serve &
-          for i in $(seq 15); do
-            [ -S "$XDG_RUNTIME_DIR/smolvm.sock" ] && echo "Server ready" && break
+          smolvm serve > /tmp/smolvm-serve.log 2>&1 &
+          echo "smolvm serve PID: $!"
+          for i in $(seq 20); do
+            if [ -S "$XDG_RUNTIME_DIR/smolvm.sock" ]; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "::error::smolvm server did not start within 20s"
+              echo "--- serve log ---"
+              cat /tmp/smolvm-serve.log
+              exit 1
+            fi
             sleep 1
           done
 
@@ -61,6 +74,8 @@ jobs:
           cat /tmp/smolvm-smoke.txt
           if [ $EXIT -ne 0 ]; then
             echo "::error::smolvm smoke test failed (exit $EXIT): $(head -5 /tmp/smolvm-smoke.txt | tr '\n' ' ')"
+            echo "--- smolvm serve log ---"
+            cat /tmp/smolvm-serve.log || true
             exit $EXIT
           fi
 
