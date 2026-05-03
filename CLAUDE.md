@@ -85,8 +85,8 @@ Use `.github/pull_request_template.md` for PR descriptions.
 
 ## Tooling Notes
 
-- Use mise for managng Ruby and Node runtimes.
-- Use `mise exec --` to run Ruby/Bundler commands.
+- Use mise for managing Ruby and Node runtimes.
+- Run Rails binstubs directly after mise activation, e.g. `bin/rails test`.
 - Assume Ruby environment already has required gems installed, so avoid installing or updating gems during tasks.
 
 ## Testing
