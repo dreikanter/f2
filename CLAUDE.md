@@ -12,39 +12,15 @@ This repository contains the **Feeder** Rails 8 application for scheduling and r
 
 ## Commit Requirements
 
-**Goal:** Every commit is a single, meaningful, self-contained change (e.g., DB migration, controller change, HTML layout tweak, test coverage improvement). No grab-bag commits. Keep the test suite green for each commit.
+Practice atomic commits: each commit should be one meaningful, complete change.
 
-### Commit-before-you-code loop
-
-1. **Plan → Split work:** Break the task into 3–7 smallest meaningful steps, each summarized in one short sentence (“Add X”, “Refactor Y”, “Fix Z”). If the message needs “and”, split it.
-2. **Implement one step only.**
-3. **Stage precisely:** use `git add -p` (or IDE line/selection staging) to include only the hunks that satisfy the one-sentence change.
-4. **Run tests/linters:** keep the suite green per commit.
-5. **Commit message (subject ≤ 50 chars, imperative):**
-
-   * Subject: “Add user\_email index”
-   * Body (optional): why + constraints/links.
-6. **Repeat** for the next planned step. If changes get mixed, use `git reset -p`, `git commit --amend`, or `git rebase -i` to reorganize before pushing.
-
-### What counts as “atomic”
-
-* **Single purpose & complete:** one logical change, fully done.
-* **Examples:**
-
-  * “Add migration for `orders.status` enum” (+ entity change if required).
-  * “Refactor `UserService` to use async/await” (no styling changes).
-  * “Fix divide-by-zero in `calc()` + test.”
-
-### Review yourself before push
-
-* Inspect `git status`, `git diff`, `git log --oneline`.
-* Squash/fixup only when several commits are fragments of the *same* unit of work.
-
-### Guardrails
-
-* **Never** stage unrelated edits together (formatting, renames, feature code in one commit).
-* If mid-flow you discover a second concern, **stop** and create a new TODO line; do not keep coding in the same commit.
-* Prefer many small PRs built from atomic commits; they’re easier to review, revert, and bisect.
+- Split work into small steps before coding.
+- Implement one step at a time.
+- Stage only related hunks, preferably with `git add -p`.
+- Run the relevant tests/linters before each commit.
+- Use short imperative subjects, 50 characters or less.
+- Keep unrelated cleanup, formatting, and feature work in separate commits.
+- Review `git status`, `git diff`, and `git log --oneline` before pushing.
 
 ## Code style
 
