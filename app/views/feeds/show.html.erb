@@ -85,7 +85,8 @@
     modal_id: "purge-modal-#{@feed.id}"
   ) do %>
     <div class="ff-alert ff-alert--warning space-y-2" role="alert">
-      <p>Every published post in <%= @feed.target_group %> will be withdrawn on FreeFeed. They'll remain visible in Feeder import history, and will not be re-imported during the next feed refresh.</p>
+      <p>Every published post in <%= @feed.target_group %> will be withdrawn on FreeFeed.</p>
+      <p>They'll remain visible in Feeder import history, and will not be re-imported during the next feed refresh.</p>
       <p>This operation can't be undone.</p>
     </div>
   <% end %>
