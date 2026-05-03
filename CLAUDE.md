@@ -83,17 +83,7 @@ When writing instructions or explanations:
 
 ## PR description
 
-Use the following format:
-
-```
-Changes:
-
-- Change 1
-- Change 2
-- ...
-```
-
-When listing the changes, start from the most important. Generalize. Skip boring details.
+Use `.github/pull_request_template.md` for PR descriptions.
 
 ## Tooling Notes
 
