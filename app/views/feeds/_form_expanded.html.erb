@@ -56,33 +56,35 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
-        <div class="ff-form-group">
-          <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
-          <%= f.select :access_token_id,
-                       options_from_collection_for_select(
-                         active_tokens,
-                         :id,
-                         :display_name,
-                         feed.access_token_id || active_tokens.first&.id
-                       ),
-                       {},
-                       {
-                         class: "ff-form-input pb-2",
-                         required: true,
-                         data: {
-                           action: "change->groups#refresh",
-                           groups_target: "tokenSelect"
-                         }
-                       } %>
-          <% if f.object.errors[:access_token].any? %>
-            <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
-          <% end %>
-        </div>
+        <div class="space-y-6">
+          <div class="ff-form-group">
+            <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
+            <%= f.select :access_token_id,
+                         options_from_collection_for_select(
+                           active_tokens,
+                           :id,
+                           :display_name,
+                           feed.access_token_id || active_tokens.first&.id
+                         ),
+                         {},
+                         {
+                           class: "ff-form-input pb-2",
+                           required: true,
+                           data: {
+                             action: "change->groups#refresh",
+                             groups_target: "tokenSelect"
+                           }
+                         } %>
+            <% if f.object.errors[:access_token].any? %>
+              <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
+            <% end %>
+          </div>
 
-        <%= render "feeds/target_group_selector",
-                   feed: feed,
-                   groups: [],
-                   token: nil %>
+          <%= render "feeds/target_group_selector",
+                     feed: feed,
+                     groups: [],
+                     token: nil %>
+        </div>
       </div>
 
       <div class="mt-6">
