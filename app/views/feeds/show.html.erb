@@ -84,7 +84,7 @@
     method: :post,
     modal_id: "purge-modal-#{@feed.id}"
   ) do %>
-    <div class="ff-alert ff-alert--warning">
+    <div class="ff-alert ff-alert--warning space-y-2" role="alert">
       <p>Every published post in <%= @feed.target_group %> will be withdrawn on FreeFeed. They'll remain visible in Feeder import history, and will not be re-imported during the next feed refresh.</p>
       <p>This operation can't be undone.</p>
     </div>
@@ -98,7 +98,7 @@
   method: :delete,
   modal_id: "delete-feed-modal-#{@feed.id}"
 ) do %>
-  <div class="ff-alert ff-alert--warning space-y-2">
+  <div class="ff-alert ff-alert--warning space-y-2" role="alert">
     <p>This feed will be permanently removed from Feeder, as well as the related reposting history.</p>
     <p>Associated access token will remain untouched.</p>
     <p>All FreeFeed posts will remain published.</p>

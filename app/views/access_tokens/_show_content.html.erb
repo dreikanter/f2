@@ -20,7 +20,7 @@
   method: :delete,
   modal_id: "delete-token-modal"
 ) do %>
-  <div class="ff-alert ff-alert--warning space-y-2">
+  <div class="ff-alert ff-alert--warning space-y-2" role="alert">
     <p>The token <em><%= @access_token.name %></em> will be permanently removed.</p>
     <p>Any feeds using this token will be automatically disabled.</p>
     <p>This can't be undone.</p>
