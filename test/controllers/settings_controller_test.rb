@@ -13,6 +13,9 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     get settings_url
     assert_response :success
+    assert_select "h2", text: "Your Account"
+    assert_select "h2", text: "FreeFeed Application Tokens", count: 0
+    assert_select "h2", text: "Feeder Invites", count: 0
   end
 
   test "should redirect to login when not authenticated" do

@@ -12,21 +12,6 @@
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
     <div class="space-y-6">
-      <% if edit_mode %>
-        <div class="rounded-md bg-blue-50 p-4 mb-6">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <%= icon("information-circle", css_class: "h-5 w-5 text-blue-400", aria_hidden: true) %>
-            </div>
-            <div class="ml-3">
-              <p class="text-sm text-blue-700">
-                Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.
-              </p>
-            </div>
-          </div>
-        </div>
-      <% end %>
-
       <div class="ff-form-group">
         <%= f.label :url, "Feed URL", class: "ff-form-label" %>
         <%= f.text_field :url_display,
@@ -35,6 +20,9 @@
                          class: "ff-form-input bg-slate-100",
                          aria: { label: "Feed URL (cannot be changed)" } %>
         <%= f.hidden_field :url %>
+        <% if edit_mode %>
+          <p class="ff-form-help">Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.</p>
+        <% end %>
       </div>
 
       <div class="ff-form-group">
@@ -45,7 +33,6 @@
                            class: "ff-form-input bg-slate-100",
                            aria: { label: "Feed Type (detected automatically)" } %>
         <%= f.hidden_field :feed_profile_key %>
-        <p class="ff-form-help">Detected automatically based on the feed URL.</p>
       </div>
 
       <div class="ff-form-group">
@@ -68,33 +55,35 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
-        <div class="ff-form-group">
-          <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
-          <%= f.select :access_token_id,
-                       options_from_collection_for_select(
-                         active_tokens,
-                         :id,
-                         :display_name,
-                         feed.access_token_id || active_tokens.first&.id
-                       ),
-                       {},
-                       {
-                         class: "ff-form-input",
-                         required: true,
-                         data: {
-                           action: "change->groups#refresh",
-                           groups_target: "tokenSelect"
-                         }
-                       } %>
-          <% if f.object.errors[:access_token].any? %>
-            <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
-          <% end %>
-        </div>
+        <div class="space-y-6">
+          <div class="ff-form-group">
+            <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
+            <%= f.select :access_token_id,
+                         options_from_collection_for_select(
+                           active_tokens,
+                           :id,
+                           :display_name,
+                           feed.access_token_id || active_tokens.first&.id
+                         ),
+                         {},
+                         {
+                           class: "ff-form-input pb-2",
+                           required: true,
+                           data: {
+                             action: "change->groups#refresh",
+                             groups_target: "tokenSelect"
+                           }
+                         } %>
+            <% if f.object.errors[:access_token].any? %>
+              <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
+            <% end %>
+          </div>
 
-        <%= render "feeds/target_group_selector",
-                   feed: feed,
-                   groups: [],
-                   token: nil %>
+          <%= render "feeds/target_group_selector",
+                     feed: feed,
+                     groups: [],
+                     token: nil %>
+        </div>
       </div>
 
       <div class="mt-6">
