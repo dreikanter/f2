@@ -1,12 +1,11 @@
 # F2 Project Memory
 
-This repository contains the **Feeder** Rails 8 application for scheduling and refreshing feeds.
+This repository contains the **Feeder** application for reposting content from external sources to Freefeed social network.
 
 ## Tech Stack
 
 - Rails (edge) + PostgreSQL.
-- Authentication via bcrypt sessions with password reset.
-- Background jobs via SolidQueue using Fugit cron expressions.
+- Background jobs via SolidQueue.
 - Frontend: Turbo, Stimulus
 - Deployment: Kamal
 
@@ -78,9 +77,9 @@ When writing instructions or explanations:
 
 ## Development Guidelines
 
-- Ruby version is defined in `.ruby-version`.
 - Follow standard Rails conventions.
 - Use two-space indentation.
+- Use mise for managng Ruby and Node runtimes.
 
 ## PR description
 
