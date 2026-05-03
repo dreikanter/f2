@@ -4,9 +4,6 @@
   <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
     <% header.with_action_button do %>
-      <%= link_to "Settings", settings_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
-    <% end %>
-    <% header.with_action_button do %>
       <%= link_to "New Token", new_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
     <% end %>
   <% end %>
