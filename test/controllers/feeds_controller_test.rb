@@ -185,6 +185,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
+    assert_select ".ff-form-group" do
+      assert_select "label", text: "Feed URL"
+      assert_select ".ff-form-help", text: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
+    end
   end
 
   test "#update should update feed with valid params" do
