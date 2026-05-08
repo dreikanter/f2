@@ -21,7 +21,7 @@ proxy:
 # Accessories
 accessories:
   db:
-    image: postgres:17
+    image: postgres:18
     host: 123.123.123.123
     port: "127.0.0.1:5432:5432"
     env:

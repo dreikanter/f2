@@ -65,7 +65,7 @@ proxy:
 
 accessories:
   db:
-    image: postgres:17
+    image: postgres:18
     host: <hetzner-ip>
     # ...
 ```
