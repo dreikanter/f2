@@ -56,19 +56,14 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [:id]
 
-  if ENV["SECRET_KEY_BASE_DUMMY"].present?
-    # Assets are precompiled during the Docker build, before runtime env vars are available.
-    config.action_mailer.default_url_options = { host: "example.com" }
-  else
-    # Enable DNS rebinding protection and other `Host` header attacks.
-    hosts = ENV.fetch("HOSTS").split(",").map(&:strip)
-    config.hosts = hosts
-
-    config.action_mailer.default_url_options = { host: ENV.fetch("ACTION_MAILER_HOST") }
-  end
+  # Enable DNS rebinding protection and other `Host` header attacks.
+  hosts = ENV.fetch("HOSTS").split(",").map(&:strip)
+  config.hosts = hosts
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  config.action_mailer.default_url_options = { host: ENV.fetch("ACTION_MAILER_HOST") }
 
   # See resend initializer for configuration
   config.action_mailer.delivery_method = :resend
