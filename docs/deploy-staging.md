@@ -118,7 +118,7 @@ The `.key` files are gitignored. Store and share them through the team password 
 
 ## Database
 
-Each destination runs a Kamal PostgreSQL accessory named `db`.
+Each destination runs a Kamal PostgreSQL accessory named `db`. PostgreSQL 18 stores versioned data under `/var/lib/postgresql`, so the accessory mounts `data:/var/lib/postgresql` instead of mounting the `data` subdirectory directly.
 
 The app connects through `config/database.yml` using:
 
