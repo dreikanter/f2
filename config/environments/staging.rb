@@ -1,5 +1,6 @@
 require_relative "production"
 
 Rails.application.configure do
-  config.hosts = ["dev.fffeeder.com"]
+  hosts = ENV.fetch("HOSTS").split(",").map(&:strip)
+  config.hosts = hosts
 end
