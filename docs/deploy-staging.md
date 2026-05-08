@@ -33,10 +33,17 @@ Create an `A` record:
 dev.fffeeder.com.  A  <hetzner-ip>
 ```
 
-Confirm propagation before running `kamal setup` — Let's Encrypt cert issuance via kamal-proxy needs the domain to resolve to the server:
+Confirm propagation before running `kamal setup` — Let's Encrypt cert issuance via kamal-proxy needs the domain to resolve to the server. Check with `dig`:
 
 ```bash
 dig +short dev.fffeeder.com
+# Expected output: <hetzner-ip>
+```
+
+Or poll until it matches:
+
+```bash
+until [ "$(dig +short dev.fffeeder.com)" = "<hetzner-ip>" ]; do sleep 5; done
 ```
 
 ## 3. Update `config/deploy.yml`
