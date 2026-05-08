@@ -10,9 +10,7 @@ servers:
 # Configure proxy for web role.
 proxy:
   ssl: true
-  hosts:
-    - fffeeder.com
-    - www.fffeeder.com
+  host: fffeeder.com
 
 # Accessories.
 accessories:
@@ -33,6 +31,6 @@ accessories:
 env:
   clear:
     RAILS_ENV: production
-    HOSTS: fffeeder.com,www.fffeeder.com
+    HOSTS: fffeeder.com
     ACTION_MAILER_HOST: fffeeder.com
     DATABASE_URL: postgres://f2:password@f2-db:5432/f2_production
