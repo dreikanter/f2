@@ -18,6 +18,8 @@ bin/kamal deploy -d production
 
 `www.fffeeder.com` is redirected to `fffeeder.com` by Cloudflare, so Kamal and Rails only need to accept the apex production host.
 
+The image is currently built for `amd64`, so deployment hosts should be x86_64/amd64 servers.
+
 ## Config layout
 
 - `config/deploy.yml` — shared Kamal config: service name, image, registry, shared secrets, aliases, asset path, builder.
@@ -72,6 +74,13 @@ dig +short fffeeder.com
 ```
 
 If a domain is proxied by Cloudflare and SSH does not work through it, use a direct DNS name or the server IP in `servers` and `accessories.db.host`. Keep `proxy.host` set to the public app domain.
+
+Confirm the host architecture matches the configured builder architecture:
+
+```bash
+ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
+ssh root@fffeeder.com "uname -m"       # expected: x86_64
+```
 
 ## Secrets
 
@@ -129,6 +138,23 @@ The app connects through `config/database.yml` using:
 
 Do not put the database password in `DATABASE_URL`. Keep it in Kamal secrets.
 
+## Preflight
+
+Before deploying, verify the local environment and target host:
+
+```bash
+git pull
+
+test -n "$GHCR_TOKEN" && echo "GHCR_TOKEN set"
+test -n "$POSTGRES_PASSWORD" && echo "POSTGRES_PASSWORD set"
+test -f config/credentials/staging.key
+
+ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
+bin/kamal config -d staging
+```
+
+For production, use `config/credentials/production.key`, `root@fffeeder.com`, and `bin/kamal config -d production`.
+
 ## First deploy
 
 For a new server, run setup once:
@@ -154,7 +180,15 @@ curl -I https://dev.fffeeder.com/up
 curl -I https://fffeeder.com/up
 bin/kamal app details -d staging
 bin/kamal app details -d production
+bin/kamal accessory details db -d staging
+bin/kamal accessory details db -d production
 ```
+
+Expected result:
+
+- `/up` returns `200`
+- web and jobs containers are running
+- the `db` accessory is running
 
 ## Staging database reset
 
@@ -173,6 +207,50 @@ bin/kamal accessory remove db -d staging   # prompts; this deletes the data volu
 bin/kamal accessory boot db -d staging
 bin/kamal app exec --reuse "bin/rails db:prepare" -d staging
 ```
+
+## Honeybadger
+
+Staging and production read Honeybadger configuration from encrypted Rails credentials:
+
+```yaml
+honeybadger:
+  api_key: your_environment_key
+```
+
+Edit credentials with:
+
+```bash
+EDITOR="code --wait" bin/rails credentials:edit --environment staging
+EDITOR="code --wait" bin/rails credentials:edit --environment production
+```
+
+If staging does not have a valid key, the app still runs, but logs will include Honeybadger `403` warnings.
+
+## Troubleshooting
+
+If deploy fails or the target does not become healthy, check the app and accessory logs:
+
+```bash
+bin/kamal app logs -d staging --lines 200
+bin/kamal accessory logs db -d staging --lines 100
+bin/kamal app details -d staging
+bin/kamal accessory details db -d staging
+```
+
+If the app container exited before Kamal can find it, inspect containers directly on the host:
+
+```bash
+ssh root@dev.fffeeder.com 'docker ps -a --filter label=service=f2 --filter label=destination=staging'
+ssh root@dev.fffeeder.com 'docker logs --timestamps --tail 200 <container-id-or-name>'
+```
+
+Common issues:
+
+- `flag needs an argument: 'p' in -p` during `docker login` — `GHCR_TOKEN` is not set locally.
+- `could not translate host name "f2-db"` — the PostgreSQL accessory is not running or failed to join the Docker network.
+- PostgreSQL 18 complains about `/var/lib/postgresql/data` — recreate the accessory after pulling the config that mounts `data:/var/lib/postgresql`.
+- `/up` returns `403` with `Blocked hosts` — Rails host authorization is blocking the health check; `/up` should be excluded in production config.
+- platform mismatch — confirm the server is `x86_64` and `builder.arch` is `amd64`.
 
 ## Useful commands
 
