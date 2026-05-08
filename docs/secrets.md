@@ -127,46 +127,6 @@ If a `.key` file is exposed:
 4. Distribute the new `.key` via the password manager and update `RAILS_MASTER_KEY` wherever it is set (Kamal hosts, CI).
 5. Commit and deploy.
 
-## Migration: removing the base credentials file
-
-Run once if the project still has the default Rails layout (a single base `config/credentials.yml.enc` with `config/master.key`). After this, dev and test boot with no key.
-
-1. Read out the current contents:
-
-   ```bash
-   bin/rails credentials:show
-   ```
-
-2. Recreate the values per environment:
-
-   ```bash
-   EDITOR="code --wait" bin/rails credentials:edit --environment production
-   EDITOR="code --wait" bin/rails credentials:edit --environment staging
-   ```
-
-3. Remove the base file and the master key:
-
-   ```bash
-   git rm config/credentials.yml.enc
-   rm -f config/master.key
-   ```
-
-4. Update `.kamal/secrets` (and any per-destination `.kamal/secrets.<env>`) to read the per-env key instead of `config/master.key`:
-
-   ```diff
-   -RAILS_MASTER_KEY=$(cat config/master.key)
-   +RAILS_MASTER_KEY=$(cat config/credentials/production.key)
-   ```
-
-5. Confirm dev and test boot with no key present:
-
-   ```bash
-   bin/rails server
-   bin/rails test
-   ```
-
-6. Commit the deletion and the `.kamal/secrets` change.
-
 ## Troubleshooting
 
 - **`ActiveSupport::EncryptedConfiguration::MissingKeyError`** — an encrypted file exists but no key is available. In dev/test this usually means a stale `config/credentials.yml.enc` was left behind; remove it. In staging/production, confirm `RAILS_MASTER_KEY` matches the `<env>.yml.enc` being decrypted.
