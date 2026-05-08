@@ -123,30 +123,7 @@ curl -I https://dev.fffeeder.com/up
 bin/kamal app details -d staging
 ```
 
-## 6. Seed test data
-
-`db/seeds.rb` is currently gated on `Rails.env.development?`. Loosen the guard so the new staging environment can seed too:
-
-```ruby
-# db/seeds.rb
-if Rails.env.development? || Rails.env.staging?
-  # ...
-end
-```
-
-Then run on the server:
-
-```bash
-bin/kamal app exec --reuse "bin/rails db:seed" -d staging
-```
-
-For richer staging-only fixtures, add a `lib/tasks/staging.rake` task and invoke it the same way:
-
-```bash
-bin/kamal app exec --reuse "bin/rails staging:seed" -d staging
-```
-
-## 7. Rebuilding the database
+## 6. Rebuilding the database
 
 Because staging data is disposable, the fastest reset drops and recreates the schema from inside the app container:
 
@@ -164,7 +141,7 @@ bin/kamal accessory boot db -d staging
 bin/kamal app exec --reuse "bin/rails db:prepare" -d staging
 ```
 
-## 8. Day-to-day
+## 7. Day-to-day
 
 All commands take `-d staging` to target this destination:
 
@@ -176,12 +153,3 @@ bin/kamal shell -d staging                 # bash inside app container (alias)
 bin/kamal dbc -d staging                   # rails dbconsole (alias)
 bin/kamal rollback <version> -d staging    # roll back to a prior image
 ```
-
-## Checklist
-
-- [ ] Hetzner server provisioned, SSH access works as `root`
-- [ ] `dev.fffeeder.com` A record resolves to the server
-- [ ] `config/deploy.staging.yml` updated (server IPs + `proxy.host`)
-- [ ] `GITHUB_TOKEN`, `POSTGRES_PASSWORD` exported; `config/credentials/staging.key` present
-- [ ] `bin/kamal setup -d staging` succeeded; `https://dev.fffeeder.com` serves the app
-- [ ] DB seeded with test data
