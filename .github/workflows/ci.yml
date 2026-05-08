@@ -57,6 +57,8 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
+      # Pinned to match the production accessory in config/deploy.yml.
+      # Bump in lockstep — see docs/postgres-upgrade.md.
       postgres:
         image: postgres:18
         env:
