@@ -1,58 +1,81 @@
 # Secrets Management
 
-Feeder keeps secret values (API tokens, signing secrets, third-party keys) in Rails encrypted credentials. The decryption key lives outside the repo: locally in `config/credentials/<env>.key`, and in production as the `RAILS_MASTER_KEY` environment variable injected by Kamal.
+## Convention
 
-Non-secret per-environment configuration goes in `.env` (gitignored) and is documented in `.env.sample`. Do not put secrets in `.env`.
+- Encrypted credentials are used **only in staging and production**.
+- In **development and test**, `Rails.application.credentials` is empty by design. Every read returns `nil`. There is no `config/master.key` and no base `config/credentials.yml.enc`.
+- Code that reads credentials must be nil-safe so the dev server and the test suite boot without a key.
+- Non-secret per-environment configuration goes in `.env` (gitignored). See `.env.sample` for the template. Do not put secrets in `.env`.
 
-## How it fits together
+## Layout
 
-- `config/credentials.yml.enc` — shared/base credentials, decrypted with `config/master.key`. Used when no environment-specific file exists.
-- `config/credentials/<env>.yml.enc` — encrypted credentials for a single environment (e.g. `staging`, `production`), decrypted with `config/credentials/<env>.key`.
-- `config/credentials/<env>.key` and `config/master.key` — gitignored. Treat as sensitive; share via a password manager.
-- `RAILS_MASTER_KEY` — environment variable Rails reads when the matching `.key` file is absent. Kamal sets it from `.kamal/secrets` (which reads `config/credentials/<env>.key` on the deploy host or pulls from a password manager).
+| Path | Purpose | Tracked? |
+| --- | --- | --- |
+| `config/credentials/staging.yml.enc` | Staging secrets, encrypted with `staging.key`. | yes |
+| `config/credentials/staging.key` | Decryption key for staging. | gitignored |
+| `config/credentials/production.yml.enc` | Production secrets, encrypted with `production.key`. | yes |
+| `config/credentials/production.key` | Decryption key for production. | gitignored |
 
-Rails picks the file matching `Rails.env`, falling back to the base `credentials.yml.enc`. Code reads values via `Rails.application.credentials`:
+`RAILS_MASTER_KEY` is the env var Rails reads when no `.key` file is present. Kamal sets it for each destination from `.kamal/secrets.<env>`, which reads `config/credentials/<env>.key` on the deploy host (or pulls the value from a password manager).
+
+## Reading credentials in code
 
 ```ruby
 Rails.application.credentials.dig(:resend_api_token)
 Rails.application.credentials.dig(:honeybadger, :api_key)
 ```
 
-## Creating an environment-specific credentials file
+In dev and test these return `nil`. Every call site must tolerate that:
 
-Use this when a new environment needs its own secrets (e.g. bringing up `staging`). It generates the encrypted file and the matching key.
+- **Optional integrations** — pass the value through to the gem and let it self-disable. Honeybadger does this when `api_key` is `nil`. The Resend mailer is never invoked in dev because `config.action_mailer.delivery_method = :file` (development) and `:test` (test).
+- **Required values** — guard explicitly, e.g. `return head :unauthorized if secret.blank?` (see `app/controllers/resend_webhooks_controller.rb`).
+- **Tests** — stub the credential per-test:
+
+  ```ruby
+  Rails.application.credentials.stub(:resend_signing_secret, "test_secret") do
+    # ...
+  end
+  ```
+
+When adding a new credential read, run `bin/rails server` and `bin/rails test` with no key present and confirm both still boot.
+
+## Creating the credentials file for an environment
+
+Run once per environment to generate the encrypted file and its key:
 
 ```bash
 EDITOR="code --wait" bin/rails credentials:edit --environment staging
+EDITOR="code --wait" bin/rails credentials:edit --environment production
 ```
 
-This creates:
+`--wait` is required for editors that detach by default (VS Code, Zed, Cursor). `vim`/`nano` work without it.
 
-- `config/credentials/staging.yml.enc` (commit it)
-- `config/credentials/staging.key` (gitignored; share via password manager)
+Each command produces:
 
-Verify the key is gitignored before doing anything else:
+- `config/credentials/<env>.yml.enc` — commit it.
+- `config/credentials/<env>.key` — gitignored. Share via the team password manager.
+
+Verify the key is ignored before doing anything else:
 
 ```bash
 git check-ignore -v config/credentials/staging.key
 ```
 
-Then store the key in the team password manager and make it available wherever the app boots:
+Make the key available wherever the app boots in that environment:
 
-- **Local:** keep the `.key` file in place; Rails will read it automatically.
-- **Kamal/production:** export `RAILS_MASTER_KEY` before deploy, or reference it from `.kamal/secrets` (see `.kamal/secrets` for the pattern already used for the default key).
+- **Kamal:** `.kamal/secrets.<env>` exports `RAILS_MASTER_KEY` (either reading the local `.key` file or pulling from a password manager — see the existing `.kamal/secrets` for the pattern).
+- **CI:** export `RAILS_MASTER_KEY=<env-key>` as a CI secret if a job runs in staging or production mode.
 
 ## Use case: add a new secret
 
 1. Open the file for the target environment:
 
    ```bash
-   EDITOR="code --wait" bin/rails credentials:edit                          # base
-   EDITOR="code --wait" bin/rails credentials:edit --environment staging    # staging
-   EDITOR="code --wait" bin/rails credentials:edit --environment production # production
+   EDITOR="code --wait" bin/rails credentials:edit --environment staging
+   EDITOR="code --wait" bin/rails credentials:edit --environment production
    ```
 
-   Rails decrypts the file into a temp file, opens it in `$EDITOR`, then re-encrypts and writes it back when the editor exits. `--wait` is required for editors that detach by default (VS Code, Zed, Cursor); `vim`/`nano` work without it.
+   Always pass `--environment`. There is no base `credentials.yml.enc` in this project, and creating one would silently override per-env files in dev/test.
 
 2. Add the key. Use nesting for grouped values:
 
@@ -62,13 +85,13 @@ Then store the key in the team password manager and make it available wherever t
      api_key: hbp_xxxxxxxxxxxxxxxx
    ```
 
-3. Save and close. Confirm the encrypted file changed and the key file did not:
+3. Save and close. Confirm only the encrypted file changed:
 
    ```bash
-   git status config/credentials*
+   git status config/credentials
    ```
 
-4. Read the value in code:
+4. Read the value in code with a nil-safe call:
 
    ```ruby
    Rails.application.credentials.dig(:resend_api_token)
@@ -77,34 +100,76 @@ Then store the key in the team password manager and make it available wherever t
 5. Commit the encrypted file:
 
    ```bash
-   git add config/credentials.yml.enc        # or config/credentials/staging.yml.enc
-   git commit -m "Add Resend API token"
+   git add config/credentials/production.yml.enc
+   git commit -m "Add Resend API token to production credentials"
    ```
+
+If the same secret is needed in staging, repeat step 1 with `--environment staging` and commit that file too.
 
 ## Use case: change an existing secret
 
-Same flow as adding — `bin/rails credentials:edit` decrypts in place. Update the value, save, and commit the re-encrypted file.
+Same flow — `bin/rails credentials:edit --environment <env>` decrypts in place. Update the value, save, commit the re-encrypted file.
 
 If the secret is rotating because it leaked:
 
 1. Revoke the old value at the provider first.
-2. Edit credentials and replace the value.
+2. Edit the credentials file and replace the value.
 3. Commit and deploy in the same change so callers pick up the new value immediately.
-4. If the leak exposed `master.key` or any `<env>.key`, rotate the master key itself (see below) — rotating only the secrets inside is not enough.
+4. If the leak exposed an `<env>.key` file, rotate the key itself (see below) — replacing the secrets inside is not enough.
 
-## Rotating a master key
+## Rotating a key
 
-If a `.key` file is exposed, the encrypted file must be re-encrypted under a new key:
+If a `.key` file is exposed:
 
-1. Decrypt and copy the current contents (`bin/rails credentials:edit` and copy the YAML).
-2. Delete the old `.enc` and `.key` pair.
-3. Run `bin/rails credentials:edit --environment <env>` to generate a fresh pair.
-4. Paste the contents back, save.
-5. Distribute the new `.key` via password manager and update `RAILS_MASTER_KEY` wherever it is set (Kamal hosts, CI).
-6. Deploy.
+1. Print the current contents: `bin/rails credentials:show --environment <env>`. Copy the YAML to the clipboard.
+2. Delete the old pair: `git rm config/credentials/<env>.yml.enc && rm config/credentials/<env>.key`.
+3. Create a fresh pair: `EDITOR="code --wait" bin/rails credentials:edit --environment <env>`. Paste the YAML, save.
+4. Distribute the new `.key` via the password manager and update `RAILS_MASTER_KEY` wherever it is set (Kamal hosts, CI).
+5. Commit and deploy.
+
+## Migration: removing the base credentials file
+
+Run once if the project still has the default Rails layout (a single base `config/credentials.yml.enc` with `config/master.key`). After this, dev and test boot with no key.
+
+1. Read out the current contents:
+
+   ```bash
+   bin/rails credentials:show
+   ```
+
+2. Recreate the values per environment:
+
+   ```bash
+   EDITOR="code --wait" bin/rails credentials:edit --environment production
+   EDITOR="code --wait" bin/rails credentials:edit --environment staging
+   ```
+
+3. Remove the base file and the master key:
+
+   ```bash
+   git rm config/credentials.yml.enc
+   rm -f config/master.key
+   ```
+
+4. Update `.kamal/secrets` (and any per-destination `.kamal/secrets.<env>`) to read the per-env key instead of `config/master.key`:
+
+   ```diff
+   -RAILS_MASTER_KEY=$(cat config/master.key)
+   +RAILS_MASTER_KEY=$(cat config/credentials/production.key)
+   ```
+
+5. Confirm dev and test boot with no key present:
+
+   ```bash
+   bin/rails server
+   bin/rails test
+   ```
+
+6. Commit the deletion and the `.kamal/secrets` change.
 
 ## Troubleshooting
 
-- **`ActiveSupport::MessageEncryptor::InvalidMessage`** — the key doesn't match the `.enc` file. Confirm the right `.key` is present, or that `RAILS_MASTER_KEY` matches the environment's `.enc` file.
-- **`bin/rails credentials:edit` opens an empty file and exits immediately** — `$EDITOR` is detaching. Set it to a foreground command (`export EDITOR="code --wait"` or `export EDITOR=vim`).
-- **Secret reads as `nil` in code** — `Rails.env` doesn't match the file you edited. `bin/rails credentials:show --environment <env>` prints the decrypted contents for the given env.
+- **`ActiveSupport::EncryptedConfiguration::MissingKeyError`** — an encrypted file exists but no key is available. In dev/test this usually means a stale `config/credentials.yml.enc` was left behind; remove it. In staging/production, confirm `RAILS_MASTER_KEY` matches the `<env>.yml.enc` being decrypted.
+- **`ActiveSupport::MessageEncryptor::InvalidMessage`** — the key doesn't match the `.enc` file. Confirm the right `.key` is in place, or that `RAILS_MASTER_KEY` matches the environment.
+- **`bin/rails credentials:edit` opens an empty file and exits immediately** — `$EDITOR` is detaching. Use a foreground command (`export EDITOR="code --wait"` or `export EDITOR=vim`).
+- **A credential reads as `nil` in staging or production** — `Rails.env` doesn't match the file you edited, or the deploy didn't pick up `RAILS_MASTER_KEY`. `bin/rails credentials:show --environment <env>` prints the decrypted contents for the given env.
