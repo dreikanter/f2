@@ -97,15 +97,15 @@ This project keeps the GHCR token mapping in `.kamal/secrets-common`:
 KAMAL_REGISTRY_PASSWORD=$GHCR_TOKEN
 ```
 
-Destination-specific files provide the database password and Rails credentials key:
+Destination-specific files provide the database password and Rails credentials key. Each destination reads its own shell variable so both can stay exported at once without crossing values:
 
 ```bash
 # .kamal/secrets.staging
-POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD_STAGING
 RAILS_MASTER_KEY=$(cat config/credentials/staging.key)
 
 # .kamal/secrets.production
-POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD_PRODUCTION
 RAILS_MASTER_KEY=$(cat config/credentials/production.key)
 ```
 
@@ -113,7 +113,8 @@ Before deploying, make sure these are available locally:
 
 ```bash
 export GHCR_TOKEN=<ghcr-token>
-export POSTGRES_PASSWORD=<database-password>
+export POSTGRES_PASSWORD_STAGING=<staging-database-password>
+export POSTGRES_PASSWORD_PRODUCTION=<production-database-password>
 ```
 
 And make sure the destination credentials key exists locally:
@@ -146,14 +147,14 @@ Before deploying, verify the local environment and target host:
 git pull
 
 test -n "$GHCR_TOKEN" && echo "GHCR_TOKEN set"
-test -n "$POSTGRES_PASSWORD" && echo "POSTGRES_PASSWORD set"
+test -n "$POSTGRES_PASSWORD_STAGING" && echo "POSTGRES_PASSWORD_STAGING set"
 test -f config/credentials/staging.key
 
 ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
 bin/kamal config -d staging
 ```
 
-For production, use `config/credentials/production.key`, `root@fffeeder.com`, and `bin/kamal config -d production`.
+For production, use `$POSTGRES_PASSWORD_PRODUCTION`, `config/credentials/production.key`, `root@fffeeder.com`, and `bin/kamal config -d production`.
 
 ## First deploy
 
