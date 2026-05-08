@@ -16,7 +16,7 @@
 | `config/credentials/production.yml.enc` | Production secrets, encrypted with `production.key`. | yes |
 | `config/credentials/production.key` | Decryption key for production. | gitignored |
 
-`RAILS_MASTER_KEY` is the env var Rails reads when no `.key` file is present. Kamal sets it for each destination from `.kamal/secrets.<env>`, which reads `config/credentials/<env>.key` on the deploy host (or pulls the value from a password manager).
+`RAILS_MASTER_KEY` is the env var Rails reads when no `.key` file is present. Kamal sets it from `.kamal/secrets.staging` or `.kamal/secrets.production`, which read the matching `config/credentials/<env>.key` file.
 
 ## Reading credentials in code
 
@@ -63,7 +63,7 @@ git check-ignore -v config/credentials/staging.key
 
 Make the key available wherever the app boots in that environment:
 
-- **Kamal:** `.kamal/secrets.<env>` exports `RAILS_MASTER_KEY` (either reading the local `.key` file or pulling from a password manager — see the existing `.kamal/secrets` for the pattern).
+- **Kamal:** `.kamal/secrets.staging` and `.kamal/secrets.production` export `RAILS_MASTER_KEY` from the matching `config/credentials/<env>.key` file.
 - **CI:** export `RAILS_MASTER_KEY=<env-key>` as a CI secret if a job runs in staging or production mode.
 
 ## Use case: add a new secret
