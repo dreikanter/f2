@@ -1,0 +1,38 @@
+# Deploy to these servers.
+servers:
+  web:
+    - fffeeder.com
+  jobs:
+    hosts:
+      - fffeeder.com
+    cmd: bin/jobs
+
+# Configure proxy for web role.
+proxy:
+  ssl: true
+  hosts:
+    - fffeeder.com
+    - www.fffeeder.com
+
+# Accessories.
+accessories:
+  db:
+    image: postgres:18
+    host: fffeeder.com
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_DB: f2_production
+        POSTGRES_USER: f2
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+
+# Environment variables.
+env:
+  clear:
+    RAILS_ENV: production
+    HOSTS: fffeeder.com,www.fffeeder.com
+    ACTION_MAILER_HOST: fffeeder.com
+    DATABASE_URL: postgres://f2:password@f2-db:5432/f2_production
