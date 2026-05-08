@@ -1,5 +1,5 @@
 <%= turbo_stream.replace dom_id(@post) do %>
-  <%= render "shared/post_row", post: @post %>
+  <%= render PostsListComponent.item_component(post: @post, helpers: self, show_feed: true) %>
 <% end %>
 
 <%= turbo_stream.prepend "flash-messages" do %>
