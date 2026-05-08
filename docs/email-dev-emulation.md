@@ -10,6 +10,4 @@ In development and test environments, the app does not send real emails. Outgoin
 
 ## Viewing captured emails
 
-- `GET /development/sent_emails` — list all captured messages.
-- `GET /development/sent_emails/:id` — view a single message.
-- `DELETE /development/sent_emails/purge` — clear the inbox.
+With the Rails server running, open `/development/sent_emails` in your browser to see the inbox of captured messages. Click any entry to read it. Use the "Purge All" button to clear the inbox when you want a clean slate.
