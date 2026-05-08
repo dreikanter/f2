@@ -85,7 +85,7 @@ Kamal destination deploys read:
 This project keeps the GHCR token mapping in `.kamal/secrets-common`:
 
 ```bash
-KAMAL_REGISTRY_PASSWORD=$GITHUB_TOKEN
+KAMAL_REGISTRY_PASSWORD=$GHCR_TOKEN
 ```
 
 Destination-specific files provide the database password and Rails credentials key:
@@ -103,7 +103,7 @@ RAILS_MASTER_KEY=$(cat config/credentials/production.key)
 Before deploying, make sure these are available locally:
 
 ```bash
-export GITHUB_TOKEN=<ghcr-token>
+export GHCR_TOKEN=<ghcr-token>
 export POSTGRES_PASSWORD=<database-password>
 ```
 
