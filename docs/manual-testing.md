@@ -10,7 +10,7 @@ The application must be running with seed data loaded:
 
 ```bash
 # Start PostgreSQL
-su - postgres -c "/usr/lib/postgresql/16/bin/pg_ctl start -D /var/lib/postgresql/16/main -l /tmp/postgres.log -o '-c config_file=/etc/postgresql/16/main/postgresql.conf'"
+su - postgres -c "/usr/lib/postgresql/18/bin/pg_ctl start -D /var/lib/postgresql/18/main -l /tmp/postgres.log -o '-c config_file=/etc/postgresql/18/main/postgresql.conf'"
 
 # Setup database with seed data
 bin/rails db:create db:migrate db:seed
