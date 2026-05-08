@@ -1,6 +1,6 @@
 # Staging Deployment (Hetzner + Kamal)
 
-Deploy Feeder to a fresh Hetzner Cloud server as a staging environment. Functionally identical to production, but with an ephemeral database you can drop and reseed at will.
+Deploys Feeder to a fresh Hetzner Cloud server as a staging environment. Functionally identical to production, but with an ephemeral database that can be dropped and reseeded at will.
 
 - **Domain:** `dev.fffeeder.com`
 - **Database name:** `f2_staging`
@@ -8,12 +8,22 @@ Deploy Feeder to a fresh Hetzner Cloud server as a staging environment. Function
 
 ## 1. Provision the Hetzner server
 
-1. Create a Cloud server (Ubuntu 24.04 LTS, CX22 is enough to start, larger if you plan to run heavier workloads).
-2. Add your SSH key during creation so you get root access without a password.
+1. Create a Cloud server (Ubuntu 24.04 LTS, CX22 is enough to start; pick a larger instance type when running heavier workloads).
+2. Attach an SSH key during creation so the server is reachable as `root` without a password.
 3. Note the public IPv4 address.
 4. (Optional) Enable Hetzner Cloud Firewall and allow inbound `22`, `80`, `443` only.
 
-Kamal installs Docker on first run, so no manual server setup is required beyond SSH access as `root` (or another user with passwordless `sudo` and Docker permissions).
+Verify SSH access:
+
+```bash
+ssh root@<hetzner-ip> "uname -a"
+```
+
+No further server setup is required — `bin/kamal setup` (step 5) installs Docker on first run via the bootstrap step:
+
+```bash
+bin/kamal server bootstrap   # runs implicitly during `setup`; can also be run on its own
+```
 
 ## 2. Point DNS at the server
 
@@ -23,7 +33,11 @@ Create an `A` record:
 dev.fffeeder.com.  A  <hetzner-ip>
 ```
 
-Wait until it resolves before running `kamal setup` — Let's Encrypt cert issuance via kamal-proxy needs the domain to point at the server.
+Confirm propagation before running `kamal setup` — Let's Encrypt cert issuance via kamal-proxy needs the domain to resolve to the server:
+
+```bash
+dig +short dev.fffeeder.com
+```
 
 ## 3. Update `config/deploy.yml`
 
@@ -49,11 +63,16 @@ accessories:
     # ...
 ```
 
-Keep `RAILS_ENV: production` and `DATABASE_URL=postgres://f2:password@f2-db:5432/f2_staging` (the password segment is a Kamal-internal placeholder; the real password comes from the `POSTGRES_PASSWORD` secret). Commit these changes.
+Keep `RAILS_ENV: production` and `DATABASE_URL=postgres://f2:password@f2-db:5432/f2_staging` (the password segment is a Kamal-internal placeholder; the real password comes from the `POSTGRES_PASSWORD` secret). Commit the changes:
+
+```bash
+git add config/deploy.yml
+git commit -m "Configure staging server"
+```
 
 ## 4. Prepare secrets
 
-`kamal` reads `.kamal/secrets`, which pulls from your local env. Before any deploy command, export:
+`kamal` reads `.kamal/secrets`, which pulls from the local environment. Export before running any deploy command:
 
 ```bash
 export GITHUB_TOKEN=<ghcr-pat-with-read:packages>      # KAMAL_REGISTRY_PASSWORD
@@ -62,12 +81,12 @@ export POSTGRES_PASSWORD=<generate-a-strong-password>  # used by the db accessor
 ```
 
 Notes:
-- Use a **dedicated** `config/master.key` for staging if you don't want production credentials decryptable on this box. Keep that key out of git; store it in your password manager.
-- Freefeed API keys are configured per-user inside the app (Access Tokens). Staging will only ever post to whatever Freefeed accounts you enter there — there's no shared production key in the deploy.
+- Use a **dedicated** `config/master.key` for staging when production credentials should not be decryptable on this box. Keep that key out of git; store it in a password manager.
+- Freefeed API keys are configured per-user inside the app (Access Tokens). Staging only posts to whatever Freefeed accounts are entered there — there is no shared production key in the deploy.
 
 ## 5. First deploy
 
-From your laptop, on the branch you want to ship:
+From the workstation, on the branch to ship:
 
 ```bash
 bin/kamal setup
@@ -81,9 +100,16 @@ Subsequent deploys:
 bin/kamal deploy
 ```
 
+Verify:
+
+```bash
+curl -I https://dev.fffeeder.com/up
+bin/kamal app details
+```
+
 ## 6. Seed test data
 
-`db/seeds.rb` is gated on `Rails.env.development?`, so it won't run automatically on staging. Two options:
+`db/seeds.rb` is gated on `Rails.env.development?`, so it does not run automatically on staging. Two options:
 
 **Option A — quick and dirty (recommended for staging):** loosen the guard so staging can seed too.
 
@@ -94,24 +120,28 @@ if Rails.env.development? || ENV["ALLOW_SEEDS"] == "1"
 end
 ```
 
-Then on the server:
+Then run on the server:
 
 ```bash
 bin/kamal app exec --reuse "env ALLOW_SEEDS=1 bin/rails db:seed"
 ```
 
-**Option B — keep seeds dev-only**, and create staging fixtures via `bin/rails console` or a dedicated rake task (e.g. `lib/tasks/staging.rake`) that builds the same fixture set.
+**Option B — keep seeds dev-only**, and create staging fixtures via a dedicated rake task (e.g. `lib/tasks/staging.rake`) that builds the same fixture set:
+
+```bash
+bin/kamal app exec --reuse "bin/rails staging:seed"
+```
 
 ## 7. Rebuilding the database
 
-Because staging data is disposable, the fastest reset is to drop and recreate the schema from inside the app container:
+Because staging data is disposable, the fastest reset drops and recreates the schema from inside the app container:
 
 ```bash
 bin/kamal app exec --reuse "bin/rails db:drop db:create db:migrate"
 bin/kamal app exec --reuse "env ALLOW_SEEDS=1 bin/rails db:seed"
 ```
 
-If you want a truly clean slate (including the Postgres data volume):
+For a truly clean slate (including the Postgres data volume):
 
 ```bash
 bin/kamal accessory stop db
