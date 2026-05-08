@@ -9,13 +9,7 @@ class PostsListComponent < ViewComponent::Base
     component = ListGroupComponent.new
 
     @posts.each do |post|
-      component.with_item(ListGroupComponent::PostItemComponent.new(
-        icon: helpers.post_status_icon(post.status),
-        title: helpers.post_content_preview(post.content, 80),
-        title_url: helpers.post_path(post),
-        metadata_segments: metadata_segments_for(post),
-        key: helpers.dom_id(post)
-      ))
+      component.with_item(self.class.item_component(post:, helpers: helpers, show_feed: @show_feed))
     end
 
     component
@@ -25,30 +19,38 @@ class PostsListComponent < ViewComponent::Base
     content_tag(:p, @empty_text, class: "ff-text text-slate-500")
   end
 
-  private
+  def self.item_component(post:, helpers:, show_feed: false)
+    ListGroupComponent::PostItemComponent.new(
+      icon: helpers.post_status_icon(post.status),
+      title: helpers.post_content_preview(post.content, 80),
+      title_url: helpers.post_path(post),
+      metadata_segments: metadata_segments_for(post:, helpers:, show_feed:),
+      key: helpers.dom_id(post)
+    )
+  end
 
-  def metadata_segments_for(post)
+  def self.metadata_segments_for(post:, helpers:, show_feed: false)
     withdraw_allowed = helpers.policy(post).destroy?
 
     [
-      feed_link_segment(post),
-      published_segment(post),
-      attachments_segment(post),
-      comments_segment(post),
-      source_link_segment(post),
-      freefeed_link_segment(post),
-      withdraw_link_segment(post, withdraw_allowed)
+      feed_link_segment(post:, helpers:, show_feed:),
+      published_segment(post:, helpers:),
+      attachments_segment(post:),
+      comments_segment(post:),
+      source_link_segment(post:, helpers:),
+      freefeed_link_segment(post:, helpers:),
+      withdraw_link_segment(post:, helpers:, withdraw_allowed:)
     ].compact
   end
 
-  def feed_link_segment(post)
-    return unless @show_feed
+  def self.feed_link_segment(post:, helpers:, show_feed: false)
+    return unless show_feed
     return unless post.feed.present?
 
     helpers.link_to(post.feed.name, helpers.feed_path(post.feed), class: "ff-link")
   end
 
-  def published_segment(post)
+  def self.published_segment(post:, helpers:)
     return unless post.published_at
 
     time_html = helpers.content_tag(
@@ -60,27 +62,27 @@ class PostsListComponent < ViewComponent::Base
     helpers.safe_join(["Published", time_html], " ")
   end
 
-  def attachments_segment(post)
+  def self.attachments_segment(post:)
     attachments_count = Array(post.attachment_urls).size
     return if attachments_count.zero?
 
     "Attachments: #{attachments_count}"
   end
 
-  def comments_segment(post)
+  def self.comments_segment(post:)
     comments_count = Array(post.comments).size
     return if comments_count.zero?
 
     "Comments: #{comments_count}"
   end
 
-  def source_link_segment(post)
+  def self.source_link_segment(post:, helpers:)
     return unless post.source_url.present?
 
     helpers.link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "ff-link")
   end
 
-  def freefeed_link_segment(post)
+  def self.freefeed_link_segment(post:, helpers:)
     return unless post.freefeed_post_id.present?
 
     feed = post.feed
@@ -92,7 +94,7 @@ class PostsListComponent < ViewComponent::Base
     helpers.link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
   end
 
-  def withdraw_link_segment(post, withdraw_allowed)
+  def self.withdraw_link_segment(post:, helpers:, withdraw_allowed:)
     return unless withdraw_allowed
 
     helpers.link_to(

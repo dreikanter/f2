@@ -155,8 +155,10 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
     assert_includes response.body, "turbo-stream"
-    assert_includes response.body, dom_id(published_post)
+    assert_includes response.body, "data-key=\"#{dom_id(published_post)}\""
+    assert_includes response.body, "Withdrawn"
     assert_includes response.body, "The post will be withdrawn from FreeFeed"
+    refute_includes response.body, "data-bs-toggle"
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last
