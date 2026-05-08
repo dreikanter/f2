@@ -82,7 +82,8 @@ production:
     <<: *default
     database: f2_production
     username: f2
-    password: <%= ENV["TMP_RAILS_DATABASE_PASSWORD"] %>
+    password: <%= ENV["POSTGRES_PASSWORD"] %>
+    host: f2-db
   cache:
     <<: *primary_production
     database: f2_production_cache
@@ -101,7 +102,8 @@ staging:
     <<: *default
     database: f2_staging
     username: f2
-    password: <%= ENV["TMP_RAILS_DATABASE_PASSWORD"] %>
+    password: <%= ENV["POSTGRES_PASSWORD"] %>
+    host: f2-db
   cache:
     <<: *primary_staging
     database: f2_staging_cache
@@ -112,5 +114,5 @@ staging:
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_staging
-    database: f2_production_cable
+    database: f2_staging_cable
     migrations_paths: db/cable_migrate

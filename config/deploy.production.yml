@@ -33,4 +33,3 @@ env:
     RAILS_ENV: production
     HOSTS: fffeeder.com
     ACTION_MAILER_HOST: fffeeder.com
-    DATABASE_URL: postgres://f2:password@f2-db:5432/f2_production

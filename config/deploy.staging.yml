@@ -33,4 +33,3 @@ env:
     RAILS_ENV: staging
     HOSTS: dev.fffeeder.com
     ACTION_MAILER_HOST: dev.fffeeder.com
-    DATABASE_URL: postgres://f2:password@f2-db:5432/f2_staging

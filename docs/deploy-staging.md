@@ -80,7 +80,7 @@ accessories:
     # ...
 ```
 
-Keep `RAILS_ENV: staging` and `DATABASE_URL=postgres://f2:password@f2-db:5432/f2_staging` (the password segment is a Kamal-internal placeholder; the real password comes from the `POSTGRES_PASSWORD` secret). Commit the changes:
+Keep `RAILS_ENV: staging`. The app connects to the Kamal PostgreSQL accessory through `config/database.yml`, using the `POSTGRES_PASSWORD` secret. Commit the changes:
 
 ```bash
 git add config/deploy.staging.yml
