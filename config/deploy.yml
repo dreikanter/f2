@@ -20,9 +20,9 @@ registry:
 # Environment variables shared by all destinations.
 env:
   clear:
-    APP_REVISION: <%= `git rev-parse HEAD`.strip %>
-    APP_REVISION_SHORT: <%= `git rev-parse --short HEAD`.strip %>
-    APP_DEPLOYED_AT: <%= `date -u +%Y-%m-%dT%H:%M:%SZ`.strip %>
+    APP_REVISION: "<%= `git rev-parse HEAD`.strip %>"
+    APP_REVISION_SHORT: "<%= `git rev-parse --short HEAD`.strip %>"
+    APP_DEPLOYED_AT: "<%= `date -u +%Y-%m-%dT%H:%M:%SZ`.strip %>"
   secret:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
