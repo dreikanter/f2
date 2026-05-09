@@ -9,6 +9,36 @@
   other_used_percentage = @disk_usage[:other_used_percentage]
   free_percentage = @disk_usage[:free_percentage]
 
+  revision_value = if @release_info[:revision_short].present?
+    tag.code(@release_info[:revision_short], title: @release_info[:revision])
+  else
+    "—"
+  end
+
+  deployed_at_value = if @release_info[:deployed_at]
+    tag.code(long_time_tag(@release_info[:deployed_at]))
+  else
+    "—"
+  end
+
+  release_info_list = ListGroupComponent.new.tap do |list|
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Revision",
+      value: revision_value,
+      key: "release.revision"
+    ))
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Deployed at",
+      value: deployed_at_value,
+      key: "release.deployed_at"
+    ))
+    list.with_item(ListGroupComponent::StatItemComponent.new(
+      label: "Environment",
+      value: tag.code(Rails.env),
+      key: "release.environment"
+    ))
+  end
+
   # TBD: Extract component
   table_usage_list = ListGroupComponent.new.tap do |list|
     @disk_usage[:table_usage].each do |row|
@@ -36,6 +66,11 @@
       <%= link_to "Back to Admin", admin_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
     <% end %>
   <% end %>
+
+  <section class="space-y-4">
+    <h2 class="ff-h2">Deployed Version</h2>
+    <%= render(release_info_list) %>
+  </section>
 
   <section class="space-y-4">
     <h2 class="ff-h2">Disk Usage</h2>
