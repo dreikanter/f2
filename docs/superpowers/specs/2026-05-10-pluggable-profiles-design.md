@@ -70,12 +70,9 @@ The pipeline always has exactly three stages — Loader, Processor, Normalizer. 
 - **`FeedEntry`** — unchanged shape. The schema *is* the inter-stage contract. The processor that produced it is irrelevant downstream.
 - **`Post`** — unchanged. Produced by the normalizer regardless of profile.
 - **`LlmUsage`** *(new)* — one row per LLM stage execution.
-  - Fields: `id`, `user_id`, `feed_id` (nullable for ad hoc validation), `profile_key` (string, references the registry), `stage` (`loader` | `processor` | `normalizer`), `provider`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_cents`, `outcome` (`success` | `schema_error` | `provider_error` | `budget_blocked`), `started_at`, `finished_at`.
+  - Fields: `id`, `user_id`, `feed_id` (nullable for ad hoc validation), `profile_key` (string, references the registry), `stage` (`loader` | `processor` | `normalizer`), `provider`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_cents`, `outcome` (`success` | `schema_error` | `provider_error`), `started_at`, `finished_at`.
   - Indexed by `(user_id, started_at)` and `(feed_id, started_at)` for usage rollups; `profile_key` is grouped by string for per-profile rollups.
-- **`Budget`** *(simple, optional)* — single row per user, monthly cap.
-  - Fields: `user_id`, `monthly_cents` (nullable = no cap), `current_period_start`, `current_period_used_cents`.
-  - When tripped, the system disables LLM-using feeds for the rest of the period and writes events.
-- **`Event`** — already exists. Becomes the audit log for stage failures, schema violations, and budget trips.
+- **`Event`** — already exists. Becomes the audit log for stage failures and schema violations.
 
 ## Pipeline execution
 
@@ -94,10 +91,11 @@ The pipeline:
 LLM-using stages call a single `LlmClient` service keyed to the feed's user. The stage doesn't talk to the provider SDK directly; it asks the client for a structured result. The client is the chokepoint that:
 
 - Resolves the user's active `LlmCredential` for the relevant provider.
-- Applies the budget pre-check before issuing the call.
 - Adapts the request to the provider (structured-output mechanism, tool requests).
 - Validates the response against the supplied output schema.
 - Writes an `LlmUsage` row with feed/profile/stage metadata, regardless of outcome.
+
+Budget enforcement (caps that pause feeds when crossed) is a deliberate v1 omission — see "Future scope." For v1, the client tracks usage so users can see what they've spent; spending controls are a follow-up.
 
 Pseudocode at the call site:
 
@@ -129,14 +127,12 @@ Cost tracking, budget enforcement, schema validation, and usage logging are all 
 
 - **Provider error / network.** Retry once with backoff. If still failing, mark this run failed; keep the feed enabled. Event logged. Matches today's transient-failure behavior.
 - **Schema validation failure.** No retry. Mark this run failed. Event logged. If the same profile produces N consecutive schema failures, surface a flag on the profile (likely a bad prompt).
-- **Budget exceeded.** The LLM client checks the budget before each call. If the user's monthly cap would be crossed, the call is not made; outcome `budget_blocked` is recorded; the feed is auto-disabled for the rest of the period; the user is notified via the existing event/notifications path.
 - **No malformed posts pass through.** Output is schema-validated by the LLM client before any downstream stage sees it. A response that fails validation never becomes a `Post`.
 
 ### Cost surface
 
 - A feed's show page shows *that feed's* LLM spend (current period, last period, lifetime).
 - A `/settings/llm_usage` (or similar) page aggregates by feed/profile/day.
-- A budget control on the user (off by default) sets a monthly cap.
 - Schema-violation rate per profile is visible to operators — useful signal for tuning built-in prompts.
 
 ## User-facing surfaces
@@ -153,7 +149,7 @@ This section describes the **conceptual surfaces** the feature requires — whic
 ### Settings and monitoring
 
 - **`/settings/llm_credentials`** — list, add, validate, revoke. Same shape as access tokens.
-- **`/settings/llm_usage`** — usage and budget. Default empty until a credential exists.
+- **`/settings/llm_usage`** — usage rollups per feed/profile/day. Default empty until a credential exists.
 - **Feed show page** — adds an LLM usage panel when the feed's profile uses LLM stages. Recent runs, schema-violation count, current-period cost.
 - **Operator-only profile views** — the maintainer can review aggregate usage and reliability across feeds for each system profile, useful for tuning prompts and identifying regressions. Not exposed to end users in v1.
 
@@ -173,7 +169,7 @@ Each phase produces a verifiable, reviewable result. Phases are sized to land in
 
 **Phase 3 — `LlmClient` + first LLM-using stage class.** Build the `LlmClient` service: provider call (Anthropic in v1), structured-output enforcement via forced tool-use, schema validation, `LlmUsage` write. Add `LlmUsage` model. Ship one built-in LLM-using stage class and a profile that uses it end-to-end. The lowest-risk choice is an LLM-backed normalizer (RSS loader/processor + LLM normalizer for sanitization/length-fitting): the loader path is unchanged and the LLM is exercised on a small, well-scoped transformation. *Verifiable:* a user can create a feed using this profile and see properly normalized posts; `LlmUsage` rows record token counts and cost estimates accurately.
 
-**Phase 4 — Budget enforcement.** Add `Budget`. Pre-call check in the LLM client. Disable-on-trip path with events and notifications. Surface usage in the feed show page and a `/settings/llm_usage` page (gated on wireframe pass). *Verifiable:* setting a low cap and exceeding it disables the feed and notifies the user; usage UI displays accurate aggregates.
+**Phase 4 — Usage visibility.** Surface LLM usage in the feed show page (per-feed lifetime/current-period spend) and a `/settings/llm_usage` page with rollups by feed/profile/day (gated on wireframe pass). No spending caps; this phase makes consumption visible so users can decide what they want to do about it. *Verifiable:* a user can see accurate per-feed and aggregate token/cost numbers after running LLM-backed feeds for a while.
 
 **Phase 5 — LLM-using loader stage classes.** Implement loader classes that produce structured items via the LLM API (using provider server-side web search and web fetch tools), plus a `Processor::PassthroughProcessor` that maps loader output to `FeedEntry` instances. Ship at least one built-in profile that exercises the path end-to-end (e.g., "Twitter via search" or "Website without RSS"). *Verifiable:* a user creates a feed for a non-RSS source and gets posts from it.
 
@@ -183,6 +179,7 @@ Each phase ends with merged tests, a green CI, and an updated migration story. P
 
 ## Future scope (not in v1)
 
+- **Budget enforcement.** Spending caps that pause LLM-using feeds when crossed, with pre-call checks and user notifications. Designed as a thin layer over the v1 usage tracking; the `LlmClient` already writes one row per call, so a per-period sum is easy to compare against a cap. Tracked separately so the v1 release isn't blocked on the policy/UX of caps. *Tracked in:* [#359](https://github.com/dreikanter/f2/issues/359).
 - **User-authored profiles.** A clone-and-edit flow where power users create their own profiles by adapting built-in ones. Adds a parameter-schema editor, a stage editor, prompt and output-schema editing, a test panel, and the validation surface those imply. This is the moment the profile registry migrates from code into a `profiles` database table: a seed task copies the in-code registry into rows; user-authored profiles are inserted as rows with `user_id`/`system_owned`/`cloned_from_id`; `Feed.feed_profile_key` is replaced by `Feed.profile_id`; `LlmUsage.profile_key` becomes `LlmUsage.profile_id`. The existing stage classes don't change. Revisit once v1 is in real use and there's evidence that built-in profiles can't cover the demand.
 - **Profile sharing.** Visibility flag on user-authored profiles, fork count, marketplace surfaces. Builds on top of user-authored profiles.
 - **Per-feed parameter overrides** beyond the profile's declared schema. Currently rejected: parameters not declared by the profile have no schema, no validation, no test path.
