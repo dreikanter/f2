@@ -13,29 +13,37 @@ This design extends feeder2 so users (and operators) can introduce new content s
 
 ## Goal
 
-> A feed is a recurring publication. A profile is a recipe. A user owns both. Profiles describe how to produce structured entries; everything downstream of that — scheduling, dedup, publishing, metrics — is shared infrastructure that operates on the same record types for every profile.
+> A feed is a recurring publication a user owns. A profile is a recipe the system maintains. Profiles describe how to produce structured entries; everything downstream of that — scheduling, dedup, publishing, metrics — is shared infrastructure that operates on the same record types for every profile.
 
 ## Conceptual model
 
 The system has one execution loop and three concept layers above it:
 
 - **Publication contract.** A feed promises: on this schedule, post new items to this group with this token, don't duplicate, track health. Same for every feed regardless of source.
-- **Profile (recipe).** A first-class artifact that names its three stages (Loader, Processor, Normalizer) and declares the parameters it needs from a feed. Each stage is a Ruby class; some stage classes use the LLM API internally, most don't.
+- **Profile (recipe).** A system-curated artifact that names three stages (Loader, Processor, Normalizer), supplies their per-stage configuration where applicable, and declares the parameters it asks of feeds. Each stage is a Ruby class; some stage classes use the LLM API internally, most don't.
 - **Feed (instance).** Picks a profile and supplies values for its parameters (URL, channel ID, search query, prompt content where the profile asks for it, etc.). Owns the schedule, target group, access token, name, dedup state, and metrics.
 
-Stage outputs are **stable, schema-conformant data**. The loader produces a list of raw items keyed by stable IDs. The processor produces `FeedEntry` records. The normalizer produces `Post` drafts. Every stage implementation must satisfy this contract — whether it parses XML, calls an HTTP endpoint, or invokes the LLM API. Schema validation is the safety boundary.
+Stage outputs satisfy stable contracts:
+
+- **Loader** returns raw data for the feed (an HTTP body, a parsed JSON array, etc.).
+- **Processor** splits the raw data into individual items and returns an array of unsaved `FeedEntry` instances, each carrying a `uid` (dedup key), `published_at`, and a per-item `raw_data` hash. Persistence and dedup happen in the surrounding workflow.
+- **Normalizer** turns one `FeedEntry` into a `Post` draft.
+
+Every stage implementation must satisfy its contract — whether it parses XML, calls an HTTP endpoint, or invokes the LLM API. Schema validation (for LLM responses) is the safety boundary at the seams that need one.
 
 Why this model is sustainable:
 
 1. **One execution loop.** The scheduler, dedup, publishing, metrics, and monitoring receive the same record types from every profile. New sources arrive as new stage classes plus a profile row pointing at them — not branches in core code.
-2. **One unit of reuse: the profile.** Prompts, schemas, and stage choices live on profiles, not scattered across feeds.
+2. **One unit of reuse: the profile.** Per-stage configuration, prompts, and schemas live on profile rows, not scattered across feeds.
 3. **One contract per stage.** A loader is a loader, regardless of whether it uses libxml or the Anthropic API. Stages are interchangeable at the seams; the rest of the system is decoupled from how content was produced.
+
+The pipeline always has exactly three stages — Loader, Processor, Normalizer. They are the model's structural seams, not a configurable list. There is no "stages array."
 
 ## Information architecture
 
 ### Entities
 
-- **`User`** — unchanged. Owns access tokens, LLM credentials, profiles, feeds.
+- **`User`** — unchanged. Owns access tokens, LLM credentials, feeds. (Profiles are system-owned in v1.)
 - **`AccessToken`** — unchanged. FreeFeed credential, used at publish.
 - **`LlmCredential`** *(new)* — per-user encrypted provider key.
   - Fields: `user_id`, `provider`, `display_name`, `encrypted_key`, `last_validated_at`, `state` (`active` | `invalid` | `revoked`), timestamps.
@@ -43,14 +51,13 @@ Why this model is sustainable:
   - Validated on save (a small known-good provider call).
   - Has many `LlmUsage`.
 - **`Profile`** — evolved from the static `FeedProfile` registry into a database row.
-  - Fields: `id`, `user_id` (nullable for system-owned), `system_owned` (boolean), `key` (slug), `display_name`, `description`, `parameter_schema` (JSON Schema), `stages` (JSON), `cloned_from_id` (nullable), timestamps.
-  - `stages` shape: `{ loader: {...}, processor: {...}, normalizer: {...} }`. Each stage entry has the form `{ class: "Loader::HttpLoader", config: { ... } }`. The class name resolves to a registered stage class. The config is class-specific: an HTTP loader's config might be empty (it gets its URL from feed params); an LLM stage class's config typically includes `model`, `prompt_template`, `output_schema`, and optional provider tool requests.
-  - **Where prompts live.** Prompts are part of the profile's stage configuration, *as templates*. The profile's `parameter_schema` decides what is feed-controlled by interpolation into those templates. Two patterns sit naturally side by side:
-    - *Prompt baked into the profile, narrow parameter:* a "Vanity Search" profile holds a fixed prompt template and exposes a single `topic` parameter. Most users get LLM-backed feeds without writing any prompt.
-    - *Prompt as a profile parameter:* a "Custom LLM Normalizer" profile declares a `prompt` parameter of type `long_text`; its stage template interpolates the user's prompt directly. Users who want their own normalization rule fill in the parameter without cloning.
-  - The Feed never carries a free-text "raw prompt" field. What it carries is values for whatever parameters the profile declared, which *may* include a prompt where the profile asks for one. The discipline is that prompt content always flows through a profile-declared schema.
-  - Built-in profiles seeded at boot with `system_owned: true` and `user_id: null`. Their content lives in a seed file; the row is the canonical reference at runtime.
-  - User-defined profiles are created by **cloning** a built-in (or another user-owned profile). Cloning copies all fields and sets `cloned_from_id`.
+  - Fields: `id`, `key` (slug, unique), `display_name`, `description`, `parameter_schema` (JSON), `loader_class` (string), `loader_config` (JSON, nullable), `processor_class` (string), `processor_config` (JSON, nullable), `normalizer_class` (string), `normalizer_config` (JSON, nullable), `requires_llm` (boolean, derived but stored for query convenience), timestamps.
+  - The three `*_class` columns hold the registered stage class name. The matching `*_config` columns hold class-specific configuration. For canonical stages the config is typically null or empty; for LLM-using stages it carries `model`, `prompt_template`, `output_schema`, and any provider tool requests.
+  - All v1 profiles are system-owned and seeded from code. There is no `user_id`, `cloned_from_id`, or `system_owned` flag because v1 has only system profiles. (User-authored profiles are deferred to a future scope; when added, those columns become a small migration on this table — see "Future scope.")
+  - **Where prompts live.** When a profile uses an LLM stage, the prompt is part of that stage's `*_config` as a template string. The profile's `parameter_schema` decides what feed-supplied values are interpolated into the template. Built-in profiles use one of two patterns, depending on what the profile is for:
+    - *Prompt baked in, narrow parameter:* a "Twitter via search" profile holds a fixed prompt template and exposes only a `username` parameter. Users get an LLM-backed feed without writing any prompt.
+    - *Prompt as a parameter:* a "Custom LLM normalizer" profile declares a `user_prompt` parameter of type `long_text`; its stage template wraps the user's prompt. Users who want their own normalization rule fill in the parameter when configuring the feed.
+  - The Feed never carries a free-text "raw prompt" field. It carries values for whatever parameters the profile declared, which *may* include a prompt-typed parameter when the profile is designed to accept one. Prompt content always flows through a profile-declared schema.
 - **`Feed`** — same role as today.
   - Replaces `feed_profile_key` with `profile_id` (FK to Profile).
   - Adds `params` (JSONB) holding values for the chosen profile's `parameter_schema`. Validated on save against the schema.
@@ -63,11 +70,7 @@ Why this model is sustainable:
 - **`Budget`** *(simple, optional)* — single row per user, monthly cap.
   - Fields: `user_id`, `monthly_cents` (nullable = no cap), `current_period_start`, `current_period_used_cents`.
   - When tripped, the system disables LLM-using feeds for the rest of the period and writes events.
-- **`Event`** — already exists. Becomes the audit log for stage failures, schema violations, budget trips, profile changes affecting active feeds.
-
-### Identifiers
-
-`Profile.key` is a global slug for built-in profiles (`rss`, `xkcd`, etc.) used in seeds, fixtures, and admin tools. User-owned profiles are addressed by database id; their `key` is null.
+- **`Event`** — already exists. Becomes the audit log for stage failures, schema violations, and budget trips.
 
 ## Pipeline execution
 
@@ -82,14 +85,23 @@ The context bundles shared resources:
 
 The pipeline:
 
-1. **Loader** runs (`profile.loader_class.new(context, feed_params).call`) and returns raw items. Each item carries a stable source ID used downstream for dedup. An `Http::HttpLoader` ignores `context.llm_client`; an `Llm::WebSearchLoader` uses it.
-2. **Processor** runs over the raw items and returns `FeedEntry` records. For profiles whose loader already emits structured entries (typical of LLM loaders that produce final-form items), the processor is a passthrough class.
-3. **Normalizer** runs per entry and returns a `Post` draft.
-4. **Publish, dedup, schedule, metrics** — unchanged paths.
+1. **Loader** runs (`profile.loader_class.constantize.new(feed, context).call`) and returns raw data — typically an HTTP response body or, for LLM loaders, a parsed structured payload (e.g., a JSON array). An `Http::HttpLoader` ignores `context.llm_client`; an `Llm::WebSearchLoader` uses it.
+2. **Processor** receives the loader's raw data and returns an array of unsaved `FeedEntry` instances, each populated with `feed`, `uid` (the dedup key), `published_at`, and a per-item `raw_data` hash. For profiles whose loader already emits structured items, the processor is a passthrough class that maps each item into a `FeedEntry` instance without parsing.
+3. The surrounding workflow persists new `FeedEntry` instances (skipping duplicates by `uid`) and feeds new ones into the normalizer.
+4. **Normalizer** runs per entry and returns a `Post` draft.
+5. **Publish, schedule, metrics** — unchanged paths.
 
-LLM-using stages call `context.llm_client.call(prompt:, schema:, model:, tools:)` once per execution. The provider's server-side tools (web search, web fetch) are invoked inline within that single call: the API client makes one HTTP request out and gets one response back, with tool results already incorporated. There is no client-side tool loop, no agent SDK, no mid-run state — the loop, if any, lives entirely on the provider's side and is billed in the response's usage breakdown.
+### How LLM stages call the provider
 
-Cost tracking, budget enforcement, schema validation, and usage logging are all properties of the LLM client, not of the stage. A new LLM-using stage class only describes *how* it wants the LLM called; the surrounding policies are applied uniformly.
+An LLM-using stage calls `context.llm_client.call(prompt:, schema:, model:, tools:)` once per execution. The LLM client adapts the request to the chosen provider:
+
+- **Anthropic** doesn't have a single `response_format: json_schema` parameter. The standard pattern for guaranteed structured output is to declare a tool with the desired schema as its `input_schema` and force the model to call it via `tool_choice: {type: "tool", name: "..."}`. The tool's `input` becomes the structured response. Provider-native server tools (web search, web fetch) are added to the same `tools` array; the provider runs them server-side inside the same API call.
+- **OpenAI** uses `response_format: {type: "json_schema", json_schema: {strict: true, schema: ...}}` directly, plus its own server-managed search/fetch tools where applicable.
+- The LLM client owns these provider-specific shapes. Stage classes only declare *what* they want (a prompt template, an output schema, a list of tool names); they don't know which mechanism the provider uses to enforce structure.
+
+Either way, it's one HTTP request out and one response back, with any tool results already incorporated. There is no client-side tool loop, no agent SDK, no mid-run state — the loop lives entirely on the provider's side and is billed in the response's usage breakdown.
+
+Cost tracking, budget enforcement, schema validation, and usage logging are all properties of the LLM client. A new LLM-using stage class only describes *how* it wants the LLM called; the surrounding policies are applied uniformly.
 
 ### Failure semantics
 
@@ -103,40 +115,29 @@ Cost tracking, budget enforcement, schema validation, and usage logging are all 
 - A feed's show page shows *that feed's* LLM spend (current period, last period, lifetime).
 - A `/settings/llm_usage` (or similar) page aggregates by feed/profile/day.
 - A budget control on the user (off by default) sets a monthly cap.
-- Schema-violation rate per profile is visible — useful signal for profile authors.
+- Schema-violation rate per profile is visible to operators — useful signal for tuning built-in prompts.
 
 ## User-facing surfaces
 
 This section describes the **conceptual surfaces** the feature requires — which pages exist, what they're for, what state they reach. It does **not** define visual design or interaction details. Visual design is iterated as wireframe mockups in a separate cycle, gating any view-code work in the corresponding implementation phase.
 
-### Two-tier UX
-
-**Tier 1 — Casual user.**
+### Feed creation and editing
 
 - "New Feed" lists profiles. Each profile has a name, short description, and a marker for whether it requires LLM credentials.
 - Selecting a profile reveals a form generated from `profile.parameter_schema`. Users see "URL" or "Channel ID" or "Search query" — never the word "stage."
-- If the chosen profile uses LLM stages and the user lacks an LLM credential, the existing prerequisite-gate pattern kicks in: a clear "Add a Claude API key to use this profile" call to action, mirroring the existing access-token gate at `/feeds/new`.
+- If the chosen profile uses LLM stages and the user lacks an LLM credential, a prerequisite gate kicks in: "Add a Claude API key to use this profile," mirroring the existing access-token gate at `/feeds/new`.
+- Editing a feed lets the user change parameter values within the constraints of the chosen profile's schema. The profile itself is not editable (and switching a feed to a different profile is not supported in v1, because it would require re-validating dedup history).
 
-**Tier 2 — Power user.**
-
-- A profile's page exposes a "Clone" action.
-- The clone editor has three sections:
-  - **Parameter schema** — declare what the profile asks of feeds (name, type, label, validation).
-  - **Stages** — for each of `loader`, `processor`, `normalizer`, pick a stage class from the registry and provide its config (for LLM-using classes that means model, prompt template, output schema, and any provider tool requests).
-  - **Test panel** — run the profile against sample input or a real URL, see the staged output and a token/cost estimate before saving.
-- Saving creates a user-owned profile assignable to feeds.
-- Editing a profile **affects every feed using it**. The editor warns about this and shows the affected feed count.
-
-### Settings and monitoring surfaces
+### Settings and monitoring
 
 - **`/settings/llm_credentials`** — list, add, validate, revoke. Same shape as access tokens.
 - **`/settings/llm_usage`** — usage and budget. Default empty until a credential exists.
 - **Feed show page** — adds an LLM usage panel when the feed's profile uses LLM stages. Recent runs, schema-violation count, current-period cost.
-- **Profile pages** — show usage and reliability across all feeds using the profile.
+- **Operator-only profile views** — the maintainer can review aggregate usage and reliability across feeds for each system profile, useful for tuning prompts and identifying regressions. Not exposed to end users in v1.
 
 ## Migration from current state
 
-- The current `FeedProfile` is a Ruby class wrapping a frozen `PROFILES` hash with two entries (`rss`, `xkcd`). Migration moves this into seeded rows of the new `Profile` table; the existing class either becomes a thin adapter for legacy callers during transition or is deleted at the end of the migration phase.
+- The current `FeedProfile` is a Ruby class wrapping a frozen `PROFILES` hash with two entries (`rss`, `xkcd`). Migration moves this into seeded rows of the new `profiles` table; the existing class either becomes a thin adapter for legacy callers during transition or is deleted at the end of the migration phase.
 - `Feed.feed_profile_key` becomes `Feed.profile_id`; a backfill maps each existing key to the seeded row id. `feed_profile_key` is removed at the end of the phase, not during.
 - `Feed.params` is added empty for existing feeds. Whether the URL moves into `params.url` (under the seeded RSS profile's `{ url: string }` schema) or stays a top-level Feed field for backward compatibility is decided in the phase 1 sub-spec; both paths preserve current behavior.
 
@@ -144,25 +145,31 @@ This section describes the **conceptual surfaces** the feature requires — whic
 
 Each phase produces a verifiable, reviewable result. Phases are sized to land in independent PRs (target ~500–1500 LOC of substantive change per phase, excluding generated migrations and tests). Each phase that touches UI is preceded by a wireframe pass.
 
-**Phase 1 — Profile as data.** Migrate `FeedProfile` from class registry to a `profiles` table with seeded rows for `rss` and `xkcd`. Add `parameter_schema`, `stages`, `system_owned`, `user_id`, `cloned_from_id`. Add `Feed.profile_id` and `Feed.params`; backfill from `feed_profile_key` and `url`. Existing stage classes keep their interfaces. No behavior change. *Verifiable:* full test suite green; manual test refresh of an RSS feed produces the same posts as before.
+**Phase 1 — Profile as data.** Migrate `FeedProfile` from class registry to a `profiles` table with seeded rows for `rss` and `xkcd`. Add `key`, `display_name`, `description`, `parameter_schema`, the three `*_class` columns and the three `*_config` columns, and `requires_llm`. Add `Feed.profile_id` and `Feed.params`; backfill from `feed_profile_key` and `url`. Existing stage classes keep their interfaces. No behavior change. *Verifiable:* full test suite green; manual test refresh of an RSS feed produces the same posts as before.
 
 **Phase 2 — LLM credentials.** Add `LlmCredential` model, encryption at rest, validation-on-save. Add `/settings/llm_credentials` UI (gated on wireframe pass). No LLM execution yet. *Verifiable:* a user can add, validate, and revoke an Anthropic credential.
 
-**Phase 3 — Execution context + first LLM-using stage class.** Introduce the execution context plumbing (resources passed into stages) along with the LLM client that owns provider calls, schema validation, and usage logging. Ship one built-in LLM-using stage class and a profile that uses it end-to-end. The lowest-risk choice is an LLM-backed normalizer (RSS loader/processor + LLM normalizer for sanitization/length-fitting): the loader path is unchanged and the LLM is exercised on a small, well-scoped transformation. *Verifiable:* a user can create a feed using this profile and see properly normalized posts; `LlmUsage` rows record token counts and cost estimates accurately.
+**Phase 3 — Execution context + first LLM-using stage class.** Introduce the execution context plumbing (resources passed into stages) along with the LLM client that owns provider calls, structured-output enforcement, schema validation, and usage logging. Ship one built-in LLM-using stage class and a profile that uses it end-to-end. The lowest-risk choice is an LLM-backed normalizer (RSS loader/processor + LLM normalizer for sanitization/length-fitting): the loader path is unchanged and the LLM is exercised on a small, well-scoped transformation. *Verifiable:* a user can create a feed using this profile and see properly normalized posts; `LlmUsage` rows record token counts and cost estimates accurately.
 
 **Phase 4 — Budget enforcement.** Add `Budget`. Pre-call check in the LLM client. Disable-on-trip path with events and notifications. Surface usage in the feed show page and a `/settings/llm_usage` page (gated on wireframe pass). *Verifiable:* setting a low cap and exceeding it disables the feed and notifies the user; usage UI displays accurate aggregates.
 
-**Phase 5 — LLM-using loader stage classes.** Implement loader classes that produce structured entries via the LLM API (using provider server-side web search and web fetch tools). Ship "Web Search Aggregator" and "Website Without RSS" built-in profiles. *Verifiable:* a user creates a feed for a non-RSS site and gets posts from it.
+**Phase 5 — LLM-using loader stage classes.** Implement loader classes that produce structured items via the LLM API (using provider server-side web search and web fetch tools), plus a `Processor::PassthroughProcessor` that maps loader output to `FeedEntry` instances. Ship at least one built-in profile that exercises the path end-to-end (e.g., "Twitter via search" or "Website without RSS"). *Verifiable:* a user creates a feed for a non-RSS source and gets posts from it.
 
-**Phase 6 — Profile authoring (advanced UX).** Clone-and-edit flow. Editor for parameter schema, stages, and a test panel. Affected-feeds warning on save (gated on wireframe pass — this is the most UX-heavy phase and should be the most carefully iterated). *Verifiable:* a power user can clone a built-in, change a prompt, and use the result on a feed.
+**Phase 6 — Polish and observability.** Schema-violation rate per profile, profile health flags, usage trend visualizations, audit-log linking from feeds to events. *Verifiable:* operator and user can answer "why is this feed failing" without reading code.
 
-**Phase 7 — Polish and observability.** Schema-violation rate per profile, profile health flags, usage trend visualizations, audit-log linking from feeds to events. *Verifiable:* operator and user can answer "why is this feed failing" without reading code.
+Each phase ends with merged tests, a green CI, and an updated migration story. Phases 2–6 each begin with a small sub-spec covering surface-level details (model fields, exact UI states) so this spec doesn't have to predict everything.
 
-Each phase ends with merged tests, a green CI, and an updated migration story. Phases 2–7 each begin with a small sub-spec covering surface-level details (model fields, exact UI states) so this spec doesn't have to predict everything.
+## Future scope (not in v1)
+
+- **User-authored profiles.** A clone-and-edit flow where power users create their own profiles by adapting built-in ones. Adds a parameter-schema editor, a stage editor, prompt and output-schema editing, a test panel, and the validation surface those imply. Defers naturally onto the v1 model: add `user_id`, `system_owned`, and `cloned_from_id` columns when the feature lands; existing profiles get `system_owned: true`; the existing UI is unchanged for users who don't author profiles. Revisit once v1 is in real use and there's evidence that built-in profiles can't cover the demand.
+- **Profile sharing.** Visibility flag on user-authored profiles, fork count, marketplace surfaces. Builds on top of user-authored profiles.
+- **Per-feed parameter overrides** beyond the profile's declared schema. Currently rejected: parameters not declared by the profile have no schema, no validation, no test path.
+- **Bounded LLM agents (multi-turn tool loops).** Possible later as a different stage shape; would introduce client-side tool-loop orchestration, mid-run cost control, and prompt-injection handling. Not justified by the v1 use cases.
+- **Additional LLM providers** beyond Anthropic. The `LlmCredential.provider` column is the seam.
 
 ## Open questions (deferred to per-phase sub-specs)
 
-- Whether the processor for an LLM-loader profile is a passthrough class or skipped by configuration. Decide in phase 5.
+- Whether the processor for an LLM-loader profile is a single passthrough class or class-per-profile. Decide in phase 5.
 - Exact JSON Schema dialect for `parameter_schema` (Draft 7 vs. 2020-12). Decide in phase 1.
 - Encryption strategy for `LlmCredential.encrypted_key`. Likely Rails' built-in `encrypts`. Confirm in phase 2.
-- Whether profile editing should snapshot to a version (and feeds opt in to upgrade) once user-defined profiles are in real use. Revisit after phase 6.
+- Whether the profile registry of available stage class names should live in code (a constant) or in a separate `stage_classes` lookup table. Decide in phase 1.
