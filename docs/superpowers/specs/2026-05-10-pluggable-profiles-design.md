@@ -79,26 +79,43 @@ The pipeline always has exactly three stages — Loader, Processor, Normalizer. 
 
 ## Pipeline execution
 
-A feed firing runs the same loop as today, with one structural addition: an **execution context** object passed to stages.
-
-The context bundles shared resources:
-
-- **`http_client`** — for stages that fetch URLs.
-- **`llm_client`** — present when the user has an active `LlmCredential` for the relevant provider. The client wraps the provider SDK and is the single chokepoint for: applying the credential, recording an `LlmUsage` row per call, validating output against an expected schema, and consulting the budget. Stages that don't use LLM ignore it.
-- **`feed`, `user`** — the records the run belongs to, for stages that need them (most don't). The profile is reachable via the registry by `feed.feed_profile_key`.
-- **`logger`, `event_recorder`** — for stage-level logging and audit events.
+A feed firing runs the same loop as today. Stage classes keep their existing constructor signatures: the loader receives the feed, the processor receives the feed and the loader's raw data, the normalizer receives a feed entry. From a feed, a stage reaches the user (`feed.user`), the profile registry entry (`FeedProfile[feed.feed_profile_key]`), and any per-stage configuration (`profile.loader_config` and friends).
 
 The pipeline:
 
-1. **Loader** runs (the loader class named by `profile.loader_class`, instantiated with the feed and context) and returns raw data — typically an HTTP response body or, for LLM loaders, a parsed structured payload (e.g., a JSON array). An `Http::HttpLoader` ignores `context.llm_client`; an `Llm::WebSearchLoader` uses it.
+1. **Loader** runs — the loader class named by `profile.loader_class`, instantiated with the feed (and the loader's `*_config` from the registry where applicable). It returns raw data: typically an HTTP response body, or, for LLM loaders, a parsed structured payload (e.g., a JSON array).
 2. **Processor** receives the loader's raw data and returns an array of unsaved `FeedEntry` instances, each populated with `feed`, `uid` (the dedup key), `published_at`, and a per-item `raw_data` hash. For profiles whose loader already emits structured items, the processor is a passthrough class that maps each item into a `FeedEntry` instance without parsing.
 3. The surrounding workflow persists new `FeedEntry` instances (skipping duplicates by `uid`) and feeds new ones into the normalizer.
 4. **Normalizer** runs per entry and returns a `Post` draft.
 5. **Publish, schedule, metrics** — unchanged paths.
 
+### LLM client
+
+LLM-using stages call a single `LlmClient` service keyed to the feed's user. The stage doesn't talk to the provider SDK directly; it asks the client for a structured result. The client is the chokepoint that:
+
+- Resolves the user's active `LlmCredential` for the relevant provider.
+- Applies the budget pre-check before issuing the call.
+- Adapts the request to the provider (structured-output mechanism, tool requests).
+- Validates the response against the supplied output schema.
+- Writes an `LlmUsage` row with feed/profile/stage metadata, regardless of outcome.
+
+Pseudocode at the call site:
+
+```ruby
+result = LlmClient.for(feed).call(
+  stage:           :normalizer,
+  model:           config[:model],
+  prompt:          rendered_prompt,
+  output_schema:   config[:output_schema],
+  tools:           config[:tools]
+)
+```
+
+A stage that doesn't use the LLM never instantiates the client. There is no shared "context" object passed around — the LLM client is a service stages reach for when they need it, the same way they reach for `HttpClient` today.
+
 ### How LLM stages call the provider
 
-An LLM-using stage calls `context.llm_client.call(prompt:, schema:, model:, tools:)` once per execution. The LLM client adapts the request to the chosen provider:
+The `LlmClient` adapts the request to the chosen provider:
 
 - **Anthropic** doesn't have a single `response_format: json_schema` parameter. The standard pattern for guaranteed structured output is to declare a tool with the desired schema as its `input_schema` and force the model to call it via `tool_choice: {type: "tool", name: "..."}`. The tool's `input` becomes the structured response. Provider-native server tools (web search, web fetch) are added to the same `tools` array; the provider runs them server-side inside the same API call.
 - **OpenAI** uses `response_format: {type: "json_schema", json_schema: {strict: true, schema: ...}}` directly, plus its own server-managed search/fetch tools where applicable.
@@ -154,7 +171,7 @@ Each phase produces a verifiable, reviewable result. Phases are sized to land in
 
 **Phase 2 — LLM credentials.** Add `LlmCredential` model, encryption at rest, validation-on-save. Add `/settings/llm_credentials` UI (gated on wireframe pass). No LLM execution yet. *Verifiable:* a user can add, validate, and revoke an Anthropic credential.
 
-**Phase 3 — Execution context + first LLM-using stage class.** Introduce the execution context plumbing (resources passed into stages) along with the LLM client that owns provider calls, structured-output enforcement, schema validation, and usage logging. Ship one built-in LLM-using stage class and a profile that uses it end-to-end. The lowest-risk choice is an LLM-backed normalizer (RSS loader/processor + LLM normalizer for sanitization/length-fitting): the loader path is unchanged and the LLM is exercised on a small, well-scoped transformation. *Verifiable:* a user can create a feed using this profile and see properly normalized posts; `LlmUsage` rows record token counts and cost estimates accurately.
+**Phase 3 — `LlmClient` + first LLM-using stage class.** Build the `LlmClient` service: provider call (Anthropic in v1), structured-output enforcement via forced tool-use, schema validation, `LlmUsage` write. Add `LlmUsage` model. Ship one built-in LLM-using stage class and a profile that uses it end-to-end. The lowest-risk choice is an LLM-backed normalizer (RSS loader/processor + LLM normalizer for sanitization/length-fitting): the loader path is unchanged and the LLM is exercised on a small, well-scoped transformation. *Verifiable:* a user can create a feed using this profile and see properly normalized posts; `LlmUsage` rows record token counts and cost estimates accurately.
 
 **Phase 4 — Budget enforcement.** Add `Budget`. Pre-call check in the LLM client. Disable-on-trip path with events and notifications. Surface usage in the feed show page and a `/settings/llm_usage` page (gated on wireframe pass). *Verifiable:* setting a low cap and exceeding it disables the feed and notifies the user; usage UI displays accurate aggregates.
 
