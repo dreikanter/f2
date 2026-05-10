@@ -13,15 +13,15 @@ This design extends feeder2 so users (and operators) can introduce new content s
 
 ## Goal
 
-> A feed is a recurring publication a user owns. A profile is a recipe the system maintains. Profiles describe how to produce structured entries; everything downstream of that — scheduling, dedup, publishing, metrics — is shared infrastructure that operates on the same record types for every profile.
+> A feed is a recurring publication a user owns. A profile is a recipe the system ships in code. Profiles describe how to produce structured entries; everything downstream of that — scheduling, dedup, publishing, metrics — is shared infrastructure that operates on the same record types for every profile.
 
 ## Conceptual model
 
 The system has one execution loop and three concept layers above it:
 
 - **Publication contract.** A feed promises: on this schedule, post new items to this group with this token, don't duplicate, track health. Same for every feed regardless of source.
-- **Profile (recipe).** A system-curated artifact that names three stages (Loader, Processor, Normalizer), supplies their per-stage configuration where applicable, and declares the parameters it asks of feeds. Each stage is a Ruby class; some stage classes use the LLM API internally, most don't.
-- **Feed (instance).** Picks a profile and supplies values for its parameters (URL, channel ID, search query, prompt content where the profile asks for it, etc.). Owns the schedule, target group, access token, name, dedup state, and metrics.
+- **Profile (recipe).** A system-curated record that names three stages (Loader, Processor, Normalizer), supplies their per-stage configuration where applicable, and declares the parameters it asks of feeds. Profiles are defined in code (an enriched `FeedProfile` registry), not in the database — they ship and evolve with the application. Each stage is a Ruby class; some stage classes use the LLM API internally, most don't.
+- **Feed (instance).** Picks a profile (by key) and supplies values for its parameters (URL, channel ID, search query, prompt content where the profile asks for it, etc.). Owns the schedule, target group, access token, name, dedup state, and metrics.
 
 Stage outputs satisfy stable contracts:
 
@@ -50,23 +50,28 @@ The pipeline always has exactly three stages — Loader, Processor, Normalizer. 
   - The `provider` column makes the model future-proof for additional LLM providers (OpenAI, compatible endpoints): adding one is a row migration on this table, not a redesign of credential ownership, validation, or usage tracking. Anthropic is the provider supported in v1.
   - Validated on save (a small known-good provider call).
   - Has many `LlmUsage`.
-- **`Profile`** — evolved from the static `FeedProfile` registry into a database row.
-  - Fields: `id`, `key` (slug, unique), `display_name`, `description`, `parameter_schema` (JSON), `loader_class` (string), `loader_config` (JSON, nullable), `processor_class` (string), `processor_config` (JSON, nullable), `normalizer_class` (string), `normalizer_config` (JSON, nullable), `requires_llm` (boolean, derived but stored for query convenience), timestamps.
-  - The three `*_class` columns hold the registered stage class name. The matching `*_config` columns hold class-specific configuration. For canonical stages the config is typically null or empty; for LLM-using stages it carries `model`, `prompt_template`, `output_schema`, and any provider tool requests.
-  - All v1 profiles are system-owned and seeded from code. There is no `user_id`, `cloned_from_id`, or `system_owned` flag because v1 has only system profiles. (User-authored profiles are deferred to a future scope; when added, those columns become a small migration on this table — see "Future scope.")
+- **`FeedProfile`** *(registry, not a table)* — an enriched version of the existing Ruby registry. Each entry has:
+  - `key` (slug, unique) — used by `Feed.feed_profile_key`.
+  - `display_name`, `description` — for the feed-creation UI.
+  - `parameter_schema` (JSON Schema) — declares what values feeds must supply; drives form generation.
+  - `loader_class`, `loader_config` — class name string and class-specific config (typically empty for canonical stages; for LLM-using stages, carries `model`, `prompt_template`, `output_schema`, and any provider tool requests).
+  - `processor_class`, `processor_config` — same shape.
+  - `normalizer_class`, `normalizer_config` — same shape.
+  - `requires_llm?` — derived (true if any stage's class is LLM-using).
+  - The registry can be a Ruby constant, a small DSL, or YAML files in `config/profiles/`. Phase 1 picks the form. The point is that profiles are **deployed code**, not data: they evolve atomically with the stage classes that consume them.
   - **Where prompts live.** When a profile uses an LLM stage, the prompt is part of that stage's `*_config` as a template string. The profile's `parameter_schema` decides what feed-supplied values are interpolated into the template. Built-in profiles use one of two patterns, depending on what the profile is for:
     - *Prompt baked in, narrow parameter:* a "Twitter via search" profile holds a fixed prompt template and exposes only a `username` parameter. Users get an LLM-backed feed without writing any prompt.
     - *Prompt as a parameter:* a "Custom LLM normalizer" profile declares a `user_prompt` parameter of type `long_text`; its stage template wraps the user's prompt. Users who want their own normalization rule fill in the parameter when configuring the feed.
   - The Feed never carries a free-text "raw prompt" field. It carries values for whatever parameters the profile declared, which *may* include a prompt-typed parameter when the profile is designed to accept one. Prompt content always flows through a profile-declared schema.
 - **`Feed`** — same role as today.
-  - Replaces `feed_profile_key` with `profile_id` (FK to Profile).
-  - Adds `params` (JSONB) holding values for the chosen profile's `parameter_schema`. Validated on save against the schema.
+  - Keeps `feed_profile_key` as the reference to the profile registry entry.
+  - Adds `params` (JSONB) holding values for the chosen profile's `parameter_schema`. Validated on save against the schema looked up in the registry.
   - Existing fields keep their meaning: `cron_expression`, `target_group`, `access_token_id`, `state`, `name`, `description`.
 - **`FeedEntry`** — unchanged shape. The schema *is* the inter-stage contract. The processor that produced it is irrelevant downstream.
 - **`Post`** — unchanged. Produced by the normalizer regardless of profile.
 - **`LlmUsage`** *(new)* — one row per LLM stage execution.
-  - Fields: `id`, `user_id`, `feed_id` (nullable for ad hoc validation), `profile_id`, `stage` (`loader` | `processor` | `normalizer`), `provider`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_cents`, `outcome` (`success` | `schema_error` | `provider_error` | `budget_blocked`), `started_at`, `finished_at`.
-  - Indexed by `(user_id, started_at)` and `(feed_id, started_at)` for usage rollups.
+  - Fields: `id`, `user_id`, `feed_id` (nullable for ad hoc validation), `profile_key` (string, references the registry), `stage` (`loader` | `processor` | `normalizer`), `provider`, `model`, `input_tokens`, `output_tokens`, `cost_estimate_cents`, `outcome` (`success` | `schema_error` | `provider_error` | `budget_blocked`), `started_at`, `finished_at`.
+  - Indexed by `(user_id, started_at)` and `(feed_id, started_at)` for usage rollups; `profile_key` is grouped by string for per-profile rollups.
 - **`Budget`** *(simple, optional)* — single row per user, monthly cap.
   - Fields: `user_id`, `monthly_cents` (nullable = no cap), `current_period_start`, `current_period_used_cents`.
   - When tripped, the system disables LLM-using feeds for the rest of the period and writes events.
@@ -80,12 +85,12 @@ The context bundles shared resources:
 
 - **`http_client`** — for stages that fetch URLs.
 - **`llm_client`** — present when the user has an active `LlmCredential` for the relevant provider. The client wraps the provider SDK and is the single chokepoint for: applying the credential, recording an `LlmUsage` row per call, validating output against an expected schema, and consulting the budget. Stages that don't use LLM ignore it.
-- **`feed`, `user`, `profile`** — the records the run belongs to, for stages that need them (most don't).
+- **`feed`, `user`** — the records the run belongs to, for stages that need them (most don't). The profile is reachable via the registry by `feed.feed_profile_key`.
 - **`logger`, `event_recorder`** — for stage-level logging and audit events.
 
 The pipeline:
 
-1. **Loader** runs (`profile.loader_class.constantize.new(feed, context).call`) and returns raw data — typically an HTTP response body or, for LLM loaders, a parsed structured payload (e.g., a JSON array). An `Http::HttpLoader` ignores `context.llm_client`; an `Llm::WebSearchLoader` uses it.
+1. **Loader** runs (the loader class named by `profile.loader_class`, instantiated with the feed and context) and returns raw data — typically an HTTP response body or, for LLM loaders, a parsed structured payload (e.g., a JSON array). An `Http::HttpLoader` ignores `context.llm_client`; an `Llm::WebSearchLoader` uses it.
 2. **Processor** receives the loader's raw data and returns an array of unsaved `FeedEntry` instances, each populated with `feed`, `uid` (the dedup key), `published_at`, and a per-item `raw_data` hash. For profiles whose loader already emits structured items, the processor is a passthrough class that maps each item into a `FeedEntry` instance without parsing.
 3. The surrounding workflow persists new `FeedEntry` instances (skipping duplicates by `uid`) and feeds new ones into the normalizer.
 4. **Normalizer** runs per entry and returns a `Post` draft.
@@ -137,15 +142,15 @@ This section describes the **conceptual surfaces** the feature requires — whic
 
 ## Migration from current state
 
-- The current `FeedProfile` is a Ruby class wrapping a frozen `PROFILES` hash with two entries (`rss`, `xkcd`). Migration moves this into seeded rows of the new `profiles` table; the existing class either becomes a thin adapter for legacy callers during transition or is deleted at the end of the migration phase.
-- `Feed.feed_profile_key` becomes `Feed.profile_id`; a backfill maps each existing key to the seeded row id. `feed_profile_key` is removed at the end of the phase, not during.
-- `Feed.params` is added empty for existing feeds. Whether the URL moves into `params.url` (under the seeded RSS profile's `{ url: string }` schema) or stays a top-level Feed field for backward compatibility is decided in the phase 1 sub-spec; both paths preserve current behavior.
+- The current `FeedProfile` is a Ruby class wrapping a frozen `PROFILES` hash with two entries (`rss`, `xkcd`). It gains `description`, `parameter_schema`, and the three `*_config` slots; the two existing profiles get filled in. No new tables.
+- `Feed.feed_profile_key` keeps its meaning. `Feed.params` (JSONB) is added; it is empty for existing feeds, and validated against `FeedProfile[feed_profile_key].parameter_schema` on save.
+- Whether `Feed.url` moves into `params.url` (under the RSS profile's `{ url: string }` schema) or stays a top-level Feed column for backward compatibility is decided in the phase 1 sub-spec; both paths preserve current behavior.
 
 ## Implementation roadmap
 
 Each phase produces a verifiable, reviewable result. Phases are sized to land in independent PRs (target ~500–1500 LOC of substantive change per phase, excluding generated migrations and tests). Each phase that touches UI is preceded by a wireframe pass.
 
-**Phase 1 — Profile as data.** Migrate `FeedProfile` from class registry to a `profiles` table with seeded rows for `rss` and `xkcd`. Add `key`, `display_name`, `description`, `parameter_schema`, the three `*_class` columns and the three `*_config` columns, and `requires_llm`. Add `Feed.profile_id` and `Feed.params`; backfill from `feed_profile_key` and `url`. Existing stage classes keep their interfaces. No behavior change. *Verifiable:* full test suite green; manual test refresh of an RSS feed produces the same posts as before.
+**Phase 1 — Enrich profile registry; add `Feed.params`.** Extend the existing `FeedProfile` registry with `description`, `parameter_schema`, and per-stage `*_config` slots. Pick the form (Ruby constant, DSL, or YAML files in `config/profiles/`). Update the two existing profiles (`rss`, `xkcd`) to the richer shape. Add `Feed.params` (JSONB) with on-save schema validation. No new tables. Existing stage classes keep their interfaces. No behavior change. *Verifiable:* full test suite green; manual test refresh of an RSS feed produces the same posts as before.
 
 **Phase 2 — LLM credentials.** Add `LlmCredential` model, encryption at rest, validation-on-save. Add `/settings/llm_credentials` UI (gated on wireframe pass). No LLM execution yet. *Verifiable:* a user can add, validate, and revoke an Anthropic credential.
 
@@ -161,7 +166,7 @@ Each phase ends with merged tests, a green CI, and an updated migration story. P
 
 ## Future scope (not in v1)
 
-- **User-authored profiles.** A clone-and-edit flow where power users create their own profiles by adapting built-in ones. Adds a parameter-schema editor, a stage editor, prompt and output-schema editing, a test panel, and the validation surface those imply. Defers naturally onto the v1 model: add `user_id`, `system_owned`, and `cloned_from_id` columns when the feature lands; existing profiles get `system_owned: true`; the existing UI is unchanged for users who don't author profiles. Revisit once v1 is in real use and there's evidence that built-in profiles can't cover the demand.
+- **User-authored profiles.** A clone-and-edit flow where power users create their own profiles by adapting built-in ones. Adds a parameter-schema editor, a stage editor, prompt and output-schema editing, a test panel, and the validation surface those imply. This is the moment the profile registry migrates from code into a `profiles` database table: a seed task copies the in-code registry into rows; user-authored profiles are inserted as rows with `user_id`/`system_owned`/`cloned_from_id`; `Feed.feed_profile_key` is replaced by `Feed.profile_id`; `LlmUsage.profile_key` becomes `LlmUsage.profile_id`. The existing stage classes don't change. Revisit once v1 is in real use and there's evidence that built-in profiles can't cover the demand.
 - **Profile sharing.** Visibility flag on user-authored profiles, fork count, marketplace surfaces. Builds on top of user-authored profiles.
 - **Per-feed parameter overrides** beyond the profile's declared schema. Currently rejected: parameters not declared by the profile have no schema, no validation, no test path.
 - **Bounded LLM agents (multi-turn tool loops).** Possible later as a different stage shape; would introduce client-side tool-loop orchestration, mid-run cost control, and prompt-injection handling. Not justified by the v1 use cases.
@@ -169,7 +174,8 @@ Each phase ends with merged tests, a green CI, and an updated migration story. P
 
 ## Open questions (deferred to per-phase sub-specs)
 
-- Whether the processor for an LLM-loader profile is a single passthrough class or class-per-profile. Decide in phase 5.
+- Form of the registry — Ruby constant vs. small DSL vs. YAML files in `config/profiles/`. Decide in phase 1.
 - Exact JSON Schema dialect for `parameter_schema` (Draft 7 vs. 2020-12). Decide in phase 1.
+- Whether `Feed.url` migrates into `params.url` or stays a top-level column. Decide in phase 1.
 - Encryption strategy for `LlmCredential.encrypted_key`. Likely Rails' built-in `encrypts`. Confirm in phase 2.
-- Whether the profile registry of available stage class names should live in code (a constant) or in a separate `stage_classes` lookup table. Decide in phase 1.
+- Whether the processor for an LLM-loader profile is a single passthrough class or class-per-profile. Decide in phase 5.
