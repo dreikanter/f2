@@ -28,14 +28,14 @@
 <% end %>
 
 <% if @access_token.pending? || @access_token.validating? %>
-  <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+  <%= render CardComponent.new do %>
     <div class="space-y-6">
       <div class="flex items-center justify-center py-8">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>
         <span class="text-lg text-slate-600">Validating token...</span>
       </div>
     </div>
-  </div>
+  <% end %>
 <% elsif @access_token.active? %>
   <%= render AlertComponent.new(variant: :success, data: { status: "active" }) do %>
     <%= icon("check-circle", aria_hidden: true) %>

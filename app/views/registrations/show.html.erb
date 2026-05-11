@@ -3,7 +3,7 @@
 
 <div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
   <% if @invite.nil? %>
-    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+    <%= render CardComponent.new do %>
       <div class="space-y-6">
         <h1 class="text-4xl font-semibold mb-6 text-slate-900">This invite link doesn't look right</h1>
         <p class="text-slate-600">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
@@ -21,9 +21,9 @@
           <p class="text-slate-600">Ask someone who already uses Feeder to send you a new link.</p>
         </div>
       </div>
-    </div>
+    <% end %>
   <% elsif @invite.used? %>
-    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+    <%= render CardComponent.new do %>
       <div class="space-y-6">
         <h1 class="text-4xl font-semibold mb-6 text-slate-900">This invite was already used</h1>
         <p class="text-slate-600">This link has already been used to create an account.</p>
@@ -48,9 +48,9 @@
           <p class="text-slate-600">Ask the person who sent this link to share a new one.</p>
         </div>
       </div>
-    </div>
+    <% end %>
   <% else %>
-    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+    <%= render CardComponent.new do %>
       <div class="space-y-6">
         <div class="space-y-4">
           <h1 class="text-4xl font-semibold mb-6 text-slate-900">Create your account</h1>
@@ -90,6 +90,6 @@
           </div>
         <% end %>
       </div>
-    </div>
+    <% end %>
   <% end %>
 </div>
