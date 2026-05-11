@@ -15,6 +15,10 @@ class Event < ApplicationRecord
   scope :not_expired, -> { where("expires_at IS NULL OR expires_at >= ?", Time.current) }
   scope :user_relevant, -> { where.not(level: :debug).not_expired }
 
+  def alert_variant
+    level == "debug" ? :info : level.to_sym
+  end
+
   def expired?
     expires_at.present? && expires_at < Time.current
   end

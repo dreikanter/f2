@@ -1,14 +1,14 @@
 <%# locals: () %>
 <div class="<%= 'space-y-3 mb-4' if notice || alert %>" id="flash-messages">
   <% if notice %>
-    <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800 alert" role="alert">
+    <%= render AlertComponent.new(variant: :info) do %>
       <span><%= sanitize(notice) %></span>
-    </div>
+    <% end %>
   <% end %>
 
   <% if alert %>
-    <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 alert" role="alert">
+    <%= render AlertComponent.new(variant: :error) do %>
       <span><%= sanitize(alert) %></span>
-    </div>
+    <% end %>
   <% end %>
 </div>

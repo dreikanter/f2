@@ -6,9 +6,9 @@
     <p class="text-sm text-slate-600">Enter and confirm a new password to finish resetting your account.</p>
 
     <% if flash[:alert] %>
-      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800" role="alert">
+      <%= render AlertComponent.new(variant: :error) do %>
         <span><%= flash[:alert] %></span>
-      </div>
+      <% end %>
     <% end %>
 
     <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>

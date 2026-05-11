@@ -164,7 +164,7 @@
       <% sample_post = Post.first || Post.new(id: 1) %>
 
       <%# Feed refresh success %>
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "feed_refresh",
@@ -172,10 +172,10 @@
             subject: sample_feed
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# Feed refresh error %>
-      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800">
+      <%= render AlertComponent.new(variant: :error) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "feed_refresh_error",
@@ -185,10 +185,10 @@
             metadata: { error: { stage: "load_feed_contents" } }
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# Access token validation failed with multiple feeds %>
-      <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
+      <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "access_token_validation_failed",
@@ -197,10 +197,10 @@
             metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) }
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# Group purge started %>
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "group_purge_started",
@@ -208,10 +208,10 @@
             subject: sample_feed
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# Post withdrawn %>
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "post_withdrawn",
@@ -219,54 +219,54 @@
             subject: sample_post
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# Email events %>
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_sent",
             level: :info
           )
         ) %>
-      </div>
+      <% end %>
 
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_delivered",
             level: :info
           )
         ) %>
-      </div>
+      <% end %>
 
-      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800">
+      <%= render AlertComponent.new(variant: :error) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_bounced",
             level: :error
           )
         ) %>
-      </div>
+      <% end %>
 
       <%# User events %>
-      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
+      <%= render AlertComponent.new(variant: :info) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "email_changed",
             level: :info
           )
         ) %>
-      </div>
+      <% end %>
 
-      <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
+      <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "user_suspended",
             level: :warning
           )
         ) %>
-      </div>
+      <% end %>
     </div>
   </section>
 </div>

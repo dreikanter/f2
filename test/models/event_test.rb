@@ -210,4 +210,11 @@ class EventTest < ActiveSupport::TestCase
     assert_not_includes relevant_events, excluded_both
     assert_includes relevant_events, included_event
   end
+
+  test "#alert_variant should map level to AlertComponent variant" do
+    assert_equal :info, Event.new(level: :info).alert_variant
+    assert_equal :warning, Event.new(level: :warning).alert_variant
+    assert_equal :error, Event.new(level: :error).alert_variant
+    assert_equal :info, Event.new(level: :debug).alert_variant
+  end
 end

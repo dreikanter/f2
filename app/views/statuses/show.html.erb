@@ -5,7 +5,7 @@
 
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
-    <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
+    <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
       <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
       <% if @user.can_change_email? %>
         <p class="text-slate-600">
@@ -15,7 +15,7 @@
       <% else %>
         <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
-    </div>
+    <% end %>
   <% end %>
 
   <% if suggest_to_add_tokens %>

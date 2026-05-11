@@ -4,14 +4,14 @@
   <%= render PageHeaderComponent.new(title: "Change Email Address") %>
 
   <% if @user.email_deactivated? %>
-    <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 max-w-2xl space-y-2" role="alert">
+    <%= render AlertComponent.new(variant: :warning, class: "max-w-2xl space-y-2") do %>
       <p class="font-semibold text-slate-800">Your email is deactivated.</p>
       <% if @user.can_change_email? %>
         <p class="text-slate-600">Update your email address below to continue receiving notifications.</p>
       <% else %>
         <p class="text-slate-600">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
-    </div>
+    <% end %>
   <% end %>
 
   <div class="max-w-2xl">
