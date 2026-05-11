@@ -10,30 +10,6 @@
 /* Reusable UI primitives, see [20251031_8549] */
 
 @layer components {
-  .ff-alert {
-    @apply rounded-lg border px-4 py-3 text-sky-800;
-  }
-
-  .ff-alert--info {
-    @apply border-sky-100 bg-sky-100;
-  }
-
-  .ff-alert--success {
-    @apply border-emerald-200 bg-emerald-100 text-emerald-800;
-  }
-
-  .ff-alert--error {
-    @apply border-red-200 bg-red-100 text-red-800;
-  }
-
-  .ff-alert--warning {
-    @apply border-amber-200 bg-amber-100 text-amber-800;
-  }
-
-  .ff-alert--secondary {
-    @apply border-sky-100 bg-slate-100;
-  }
-
   .ff-form-group {
     @apply space-y-2;
   }

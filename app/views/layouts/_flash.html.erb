@@ -1,13 +1,13 @@
 <%# locals: () %>
 <div class="<%= 'space-y-3 mb-4' if notice || alert %>" id="flash-messages">
   <% if notice %>
-    <div class="ff-alert ff-alert--info alert" role="alert">
+    <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800 alert" role="alert">
       <span><%= sanitize(notice) %></span>
     </div>
   <% end %>
 
   <% if alert %>
-    <div class="ff-alert ff-alert--error alert" role="alert">
+    <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 alert" role="alert">
       <span><%= sanitize(alert) %></span>
     </div>
   <% end %>

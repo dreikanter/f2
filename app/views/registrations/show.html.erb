@@ -64,7 +64,7 @@
         <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
           <div class="space-y-6">
             <% if @user.errors.any? %>
-              <div class="ff-alert ff-alert--error" role="alert">
+              <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800" role="alert">
                 <span><%= @user.errors.full_messages.to_sentence.capitalize %></span>
               </div>
             <% end %>

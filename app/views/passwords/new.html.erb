@@ -6,7 +6,7 @@
     <p class="text-slate-600">Enter your email address and we’ll send you a reset link.</p>
 
     <% if flash[:alert] %>
-      <div class="ff-alert ff-alert--error" role="alert">
+      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800" role="alert">
         <span><%= flash[:alert] %></span>
       </div>
     <% end %>
