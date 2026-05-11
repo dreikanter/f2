@@ -1,17 +1,25 @@
 class CardComponent < ViewComponent::Base
-  DEFAULT_BASE_CLASSES = "rounded-lg border border-slate-200 px-4 py-3 shadow-sm"
+  BASE_CLASSES = "w-full rounded-none border-0 bg-white p-0 " \
+                 "sm:rounded-lg sm:border sm:border-slate-200 sm:p-6 sm:shadow-xs"
+  LINKED_CLASSES = "block no-underline hover:shadow-lg transition-shadow"
 
-  def initialize(**html_options)
+  def initialize(href: nil, **html_options)
+    @href = href
     @html_options = html_options
   end
 
   def call
-    content_tag :div, content, merged_options
+    if @href
+      link_to(@href, **merged_options) { content }
+    else
+      content_tag(:div, content, merged_options)
+    end
   end
 
   private
 
   def merged_options
-    @html_options.merge(class: helpers.class_names(DEFAULT_BASE_CLASSES, @html_options[:class]))
+    classes = helpers.class_names(BASE_CLASSES, (@href && LINKED_CLASSES), @html_options[:class])
+    @html_options.merge(class: classes)
   end
 end

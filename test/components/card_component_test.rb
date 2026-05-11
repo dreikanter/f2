@@ -2,15 +2,17 @@ require "test_helper"
 require "view_component/test_case"
 
 class CardComponentTest < ViewComponent::TestCase
-  test "renders content with default styling" do
+  test "#call should render a div with default styling" do
     result = render_inline(CardComponent.new) { "Card body" }
 
-    card = result.css("div.rounded-lg").first
+    card = result.at_css("div")
     assert_not_nil card
     assert_equal "Card body", card.text.strip
+    assert_includes card["class"], "bg-white"
+    assert_includes card["class"], "sm:rounded-lg"
   end
 
-  test "merges classes and forwards html attributes" do
+  test "#call should merge classes and forward html attributes" do
     result = render_inline(
       CardComponent.new(
         class: "test",
@@ -26,5 +28,19 @@ class CardComponentTest < ViewComponent::TestCase
     assert_equal "test-card", card["id"]
     assert_equal "Polling...", card.css("p").first.text
     assert_includes card["class"], "test"
+  end
+
+  test "#call should render an anchor when href is given" do
+    result = render_inline(
+      CardComponent.new(href: "/somewhere", target: "_blank", rel: "noopener")
+    ) { "Linked card" }
+
+    card = result.at_css("a")
+    assert_not_nil card
+    assert_equal "/somewhere", card["href"]
+    assert_equal "_blank", card["target"]
+    assert_equal "noopener", card["rel"]
+    assert_includes card["class"], "hover:shadow-lg"
+    assert_includes card["class"], "no-underline"
   end
 end
