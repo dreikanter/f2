@@ -28,7 +28,7 @@
           </button>
           <div
             id="<%= sort_menu_id %>"
-            class="ff-dropdown-panel"
+            class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm"
             role="menu"
             aria-labelledby="<%= "#{sort_menu_id}-button" %>">
             <ul class="py-1 text-base text-slate-600">
@@ -36,7 +36,7 @@
                 <li>
                   <%= link_to option.path,
                               class: class_names(
-                                "ff-dropdown-item",
+                                "flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none",
                                 "font-semibold text-slate-900": option.active?
                               ) do %>
                     <span><%= option.title %></span>

@@ -106,14 +106,6 @@
     @apply bg-slate-900 text-white md:bg-slate-100 md:text-slate-600 md:ring-2 md:ring-slate-600;
   }
 
-  .ff-dropdown-panel {
-    @apply z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm;
-  }
-
-  .ff-dropdown-item {
-    @apply flex items-center justify-between gap-2 px-4 py-2 transition hover:bg-slate-50 focus:bg-slate-100 focus:outline-none;
-  }
-
   .ff-h1 {
     @apply text-4xl font-semibold mb-0 text-slate-900;
   }
