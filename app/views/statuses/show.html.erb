@@ -20,7 +20,7 @@
 
   <% if suggest_to_add_tokens %>
     <section class="space-y-4">
-      <h1 class="ff-h1">Welcome to Feeder</h1>
+      <h1 class="text-4xl font-semibold mb-0 text-slate-900">Welcome to Feeder</h1>
       <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
       <p class="ff-text">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
       <div class="mt-8">
@@ -29,14 +29,14 @@
     </section>
   <% elsif suggest_adding_feeds %>
     <section class="space-y-4">
-      <h1 class="ff-h1">Welcome to Feeder</h1>
+      <h1 class="text-4xl font-semibold mb-0 text-slate-900">Welcome to Feeder</h1>
       <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
       <div class="mt-8">
         <%= link_to "Add feed", new_feed_path, class: "ff-button" %>
       </div>
     </section>
   <% else %>
-    <h1 class="ff-h1">Status</h1>
+    <h1 class="text-4xl font-semibold mb-0 text-slate-900">Status</h1>
     <%= render UserStatsComponent.new(user: @user) %>
 
     <% if @recent_events.any? %>
