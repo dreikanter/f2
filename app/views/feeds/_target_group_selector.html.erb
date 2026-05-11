@@ -1,21 +1,21 @@
 <div id="target-group-selector">
-  <div class="ff-form-group">
-    <%= label_tag "feed[target_group]", "Target Group", class: "ff-form-label" %>
+  <div class="space-y-2">
+    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-slate-800" %>
 
     <% if groups.present? %>
       <%= select_tag "feed[target_group]",
                      options_for_select(groups.sort, feed.target_group),
-                     class: "ff-form-input",
+                     class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                      required: true %>
-      <p class="ff-form-help">
+      <p class="text-slate-500">
         The FreeFeed group where posts will be published. Groups are like channels or communities.
       </p>
     <% else %>
       <%= select_tag "feed[target_group]",
                      options_for_select([[feed.target_group.presence || "Select a group", ""]]),
-                     class: "ff-form-input",
+                     class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                      disabled: true %>
-      <p class="ff-form-error">
+      <p class="text-sm text-red-600">
         <% if token.nil? %>
           Unable to load groups. Please select a FreeFeed account.
         <% elsif !token.active? %>
@@ -36,7 +36,7 @@
       </p>
     <% end %>
     <% if feed.errors[:target_group].any? %>
-      <p class="ff-form-error"><%= feed.errors[:target_group].first %></p>
+      <p class="text-sm text-red-600"><%= feed.errors[:target_group].first %></p>
     <% end %>
   </div>
 </div>

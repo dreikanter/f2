@@ -11,17 +11,17 @@
   <div class="max-w-2xl">
     <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
       <div class="space-y-6">
-        <div class="ff-form-group">
-          <label class="ff-form-label">Current email</label>
-          <div class="ff-form-input bg-slate-100"><%= @user.email_address %></div>
+        <div class="space-y-2">
+          <label class="block font-semibold text-slate-800">Current email</label>
+          <div class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100"><%= @user.email_address %></div>
         </div>
 
-        <div class="ff-form-group">
-          <%= form.label :email_address, "New email", class: "ff-form-label" %>
-          <%= form.email_field :email_address, class: "ff-form-input", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+        <div class="space-y-2">
+          <%= form.label :email_address, "New email", class: "block font-semibold text-slate-800" %>
+          <%= form.email_field :email_address, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
         </div>
 
-        <div class="ff-form-group">
+        <div class="space-y-2">
           <div class="flex items-start gap-3">
             <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
             <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>

@@ -1,9 +1,9 @@
 <%= render ModalComponent.new(title: "Update Available Invites", modal_id: @modal_id) do |modal| %>
   <%= form_with(model: @user, url: admin_user_available_invites_path(@user), method: :patch, id: "available-invites-form-#{@user.id}", data: { turbo_frame: "_top" }) do |form| %>
-    <div class="ff-form-group">
-      <%= form.label :available_invites, "Available Invites", class: "ff-form-label" %>
+    <div class="space-y-2">
+      <%= form.label :available_invites, "Available Invites", class: "block font-semibold text-slate-800" %>
       <span id="available-invites-input-wrapper-<%= @user.id %>">
-        <%= form.number_field(:available_invites, min: 0, class: "ff-form-input", autofocus: true) %>
+        <%= form.number_field(:available_invites, min: 0, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", autofocus: true) %>
       </span>
     </div>
   <% end %>

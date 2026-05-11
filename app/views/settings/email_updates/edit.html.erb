@@ -17,14 +17,14 @@
   <div class="max-w-2xl">
     <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
       <div class="space-y-6">
-        <div class="ff-form-group">
-          <%= form.label :current_email, "Current email", class: "ff-form-label" %>
-          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-100" %>
+        <div class="space-y-2">
+          <%= form.label :current_email, "Current email", class: "block font-semibold text-slate-800" %>
+          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100" %>
         </div>
 
-        <div class="ff-form-group">
-          <%= form.label :email_address, "New email", class: "ff-form-label" %>
-          <%= form.email_field :email_address, value: "", class: "ff-form-input", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+        <div class="space-y-2">
+          <%= form.label :email_address, "New email", class: "block font-semibold text-slate-800" %>
+          <%= form.email_field :email_address, value: "", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
         </div>
       </div>
 
