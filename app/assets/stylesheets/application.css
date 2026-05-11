@@ -178,18 +178,6 @@
     @apply text-emerald-600;
   }
 
-  .ff-icon-danger {
-    @apply text-red-600;
-  }
-
-  .ff-icon-warning {
-    @apply text-amber-600;
-  }
-
-  .ff-icon-info {
-    @apply text-sky-600;
-  }
-
   .ff-icon-secondary {
     @apply text-slate-400;
   }
