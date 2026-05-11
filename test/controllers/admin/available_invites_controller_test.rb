@@ -24,7 +24,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+      assert_select ".bg-sky-100", text: /Available invites updated successfully/
     end
 
     target_user.reload
@@ -40,7 +40,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".ff-alert--error", text: /Failed to update available invites/
+      assert_select ".bg-red-100", text: /Failed to update available invites/
     end
 
     target_user.reload
@@ -56,7 +56,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html", response.media_type
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".ff-alert--error", text: /Failed to update available invites/
+      assert_select ".bg-red-100", text: /Failed to update available invites/
     end
 
     target_user.reload
@@ -86,7 +86,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".ff-alert--info", text: /Available invites updated successfully/
+      assert_select ".bg-sky-100", text: /Available invites updated successfully/
     end
 
     target_user.reload
