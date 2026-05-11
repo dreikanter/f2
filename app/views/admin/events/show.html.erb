@@ -25,7 +25,7 @@
     <% end %>
   <% end %>
 
-  <%= render AlertComponent.new(variant: event_alert_variant(@event.level)) do %>
+  <%= render AlertComponent.new(variant: @event.alert_variant) do %>
     <%= render EventDescriptionComponent.new(event: @event) %>
   <% end %>
 
