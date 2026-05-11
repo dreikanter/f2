@@ -164,7 +164,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[name]'][value='Test Feed']"
 
     # Verify validation errors are shown
-    assert_select "p.ff-form-error", text: /can't be blank|must be filled/
+    assert_select "p.text-red-600", text: /can't be blank|must be filled/
   end
 
   test "#show should render feed owned by user" do
@@ -185,10 +185,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
-    assert_select ".ff-form-group" do
-      assert_select "label", text: "Feed URL"
-      assert_select ".ff-form-help", text: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
-    end
+    assert_select "label", text: "Feed URL"
+    assert_select "p.text-slate-500", text: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
   end
 
   test "#update should update feed with valid params" do

@@ -78,7 +78,7 @@ module PostHelper
 
       # Escape URL for safe embedding in href attribute and link text
       escaped_url = ERB::Util.html_escape(url)
-      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="ff-link">#{escaped_url}</a>)
+      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500">#{escaped_url}</a>)
 
       last_end = match_end
     end
@@ -93,7 +93,7 @@ module PostHelper
     return unless show_feed
     return unless post.feed.present?
 
-    link_to(post.feed.name, feed_path(post.feed), class: "ff-link")
+    link_to(post.feed.name, feed_path(post.feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def post_metadata_published_segment(post)
@@ -119,7 +119,7 @@ module PostHelper
   def post_metadata_source_link_segment(post)
     return unless post.source_url.present?
 
-    link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "ff-link")
+    link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def post_metadata_freefeed_link_segment(post)
@@ -131,7 +131,7 @@ module PostHelper
     return unless feed.present? && access_token.present? && feed.target_group.present?
 
     freefeed_url = "#{access_token.host}/#{feed.target_group}/#{post.freefeed_post_id}"
-    link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
+    link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def post_metadata_withdraw_link_segment(post, withdraw_allowed)
@@ -141,7 +141,7 @@ module PostHelper
       "Withdraw",
       post_path(post),
       data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
-      class: class_names("ff-link", "text-red-600 hover:text-red-500")
+      class: "font-medium underline underline-offset-4 transition text-red-600 hover:text-red-500"
     )
   end
 end

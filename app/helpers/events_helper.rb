@@ -7,8 +7,8 @@ module EventsHelper
   }.freeze
 
   LEVEL_ALERT_CLASSES = {
-    "error" => "ff-alert ff-alert--error",
-    "warning" => "ff-alert ff-alert--warning"
+    "error" => "rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800",
+    "warning" => "rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800"
   }.freeze
 
   def level_badge(level)
@@ -22,7 +22,7 @@ module EventsHelper
   end
 
   def event_alert_class(level)
-    LEVEL_ALERT_CLASSES.fetch(level.to_s, "ff-alert ff-alert--info")
+    LEVEL_ALERT_CLASSES.fetch(level.to_s, "rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800")
   end
 
   def mail_event_types

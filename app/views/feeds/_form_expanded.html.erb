@@ -12,43 +12,43 @@
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
     <div class="space-y-6">
-      <div class="ff-form-group">
-        <%= f.label :url, "Feed URL", class: "ff-form-label" %>
+      <div class="space-y-2">
+        <%= f.label :url, "Feed URL", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :url_display,
                          value: feed.url,
                          disabled: true,
-                         class: "ff-form-input bg-slate-100",
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
                          aria: { label: "Feed URL (cannot be changed)" } %>
         <%= f.hidden_field :url %>
         <% if edit_mode %>
-          <p class="ff-form-help">Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.</p>
+          <p class="text-slate-500">Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.</p>
         <% end %>
       </div>
 
-      <div class="ff-form-group">
-        <%= label_tag "feed_profile_display", "Feed Type", class: "ff-form-label" %>
+      <div class="space-y-2">
+        <%= label_tag "feed_profile_display", "Feed Type", class: "block font-semibold text-slate-800" %>
         <%= text_field_tag "feed_profile_display",
                            (feed.feed_profile_key.present? ? FeedProfile.display_name_for(feed.feed_profile_key) : "Unknown"),
                            disabled: true,
-                           class: "ff-form-input bg-slate-100",
+                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
                            aria: { label: "Feed Type (detected automatically)" } %>
         <%= f.hidden_field :feed_profile_key %>
       </div>
 
-      <div class="ff-form-group">
-        <%= f.label :name, "Feed Name", class: "ff-form-label" %>
+      <div class="space-y-2">
+        <%= f.label :name, "Feed Name", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :name,
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
-                         class: "ff-form-input",
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          required: true %>
         <% if feed.name.present? %>
-          <p class="ff-form-help">You can edit this name if you'd like.</p>
+          <p class="text-slate-500">You can edit this name if you'd like.</p>
         <% else %>
-          <p class="ff-form-help">We couldn't automatically detect a name. Please enter one.</p>
+          <p class="text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
         <% end %>
         <% if f.object.errors[:name].any? %>
-          <p class="ff-form-error"><%= f.object.errors[:name].first %></p>
+          <p class="text-sm text-red-600"><%= f.object.errors[:name].first %></p>
         <% end %>
       </div>
 
@@ -56,8 +56,8 @@
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
         <div class="space-y-6">
-          <div class="ff-form-group">
-            <%= f.label :access_token_id, "FreeFeed Account", class: "ff-form-label" %>
+          <div class="space-y-2">
+            <%= f.label :access_token_id, "FreeFeed Account", class: "block font-semibold text-slate-800" %>
             <%= f.select :access_token_id,
                          options_from_collection_for_select(
                            active_tokens,
@@ -67,7 +67,7 @@
                          ),
                          {},
                          {
-                           class: "ff-form-input pb-2",
+                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
                            required: true,
                            data: {
                              action: "change->groups#refresh",
@@ -75,7 +75,7 @@
                            }
                          } %>
             <% if f.object.errors[:access_token].any? %>
-              <p class="ff-form-error"><%= f.object.errors[:access_token].first %></p>
+              <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
             <% end %>
           </div>
 
@@ -89,14 +89,14 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Refresh Schedule</h3>
 
-        <div class="ff-form-group">
-          <%= f.label :schedule_interval, "Check for new posts every", class: "ff-form-label" %>
+        <div class="space-y-2">
+          <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-slate-800" %>
           <%= f.select :schedule_interval,
                        Feed.schedule_intervals_for_select,
                        { selected: feed.schedule_interval || "1h" },
-                       { class: "ff-form-input", required: true } %>
+                       { class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true } %>
           <% if f.object.errors[:cron_expression].any? %>
-            <p class="ff-form-error"><%= f.object.errors[:cron_expression].first %></p>
+            <p class="text-sm text-red-600"><%= f.object.errors[:cron_expression].first %></p>
           <% end %>
         </div>
       </div>
@@ -109,29 +109,28 @@
                                 "1",
                                 true,
                                 id: "enable_feed",
-                                class: "ff-checkbox",
                                 data: {
                                   action: "change->feed-form#updateSubmitButtonLabel",
                                   feed_form_target: "enableCheckbox"
                                 } %>
             </div>
             <div class="ml-3">
-              <%= label_tag "enable_feed", "Enable feed", class: "ff-form-label mb-0" %>
-              <p class="ff-form-help mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
+              <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-slate-800 mb-0" %>
+              <p class="text-slate-500 mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
             </div>
           </div>
         </div>
       <% end %>
     </div>
 
-    <div class="ff-card__footer">
+    <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
       <% if edit_mode %>
         <%= f.submit "Update Feed Configuration",
-                     class: "ff-button",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                      data: { turbo_submits_with: "Updating..." } %>
       <% else %>
         <%= f.submit "Create and Enable Feed",
-                     class: "ff-button",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                      data: {
                        feed_form_target: "submitButton",
                        mode: "new",
@@ -139,7 +138,7 @@
                        disabled_label: "Create Feed"
                      } %>
       <% end %>
-      <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
+      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>
 </div>

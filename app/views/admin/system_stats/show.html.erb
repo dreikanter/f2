@@ -63,17 +63,17 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "System Stats") do |header| %>
     <% header.with_action_button do %>
-      <%= link_to "Back to Admin", admin_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <%= link_to "Back to Admin", admin_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
     <% end %>
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Deployed Version</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Deployed Version</h2>
     <%= render(release_info_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Disk Usage</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Disk Usage</h2>
 
     <%# Visual disk usage bar %>
     <div class="space-y-3">
@@ -106,35 +106,35 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Postgres Table Usage</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Postgres Table Usage</h2>
     <%= render(table_usage_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Vacuum Stats</h2>
-    <div class="ff-table-container">
-      <table class="ff-table">
-        <thead>
-          <tr>
-            <th scope="col">Table</th>
-            <th scope="col" class="text-right">Live Tuples</th>
-            <th scope="col" class="text-right">Dead Tuples</th>
-            <th scope="col">Last Vacuum</th>
-            <th scope="col">Last Autovacuum</th>
-            <th scope="col" class="text-right">Vacuum Count</th>
-            <th scope="col" class="text-right">Autovacuum Count</th>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Vacuum Stats</h2>
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-left text-sm text-slate-700">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+          <tr class="hover:bg-slate-50">
+            <th scope="col" class="px-6 py-3">Table</th>
+            <th scope="col" class="px-6 py-3 text-right">Live Tuples</th>
+            <th scope="col" class="px-6 py-3 text-right">Dead Tuples</th>
+            <th scope="col" class="px-6 py-3">Last Vacuum</th>
+            <th scope="col" class="px-6 py-3">Last Autovacuum</th>
+            <th scope="col" class="px-6 py-3 text-right">Vacuum Count</th>
+            <th scope="col" class="px-6 py-3 text-right">Autovacuum Count</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-200 bg-white">
           <% @disk_usage[:vacuum_stats].each do |row| %>
-            <tr>
-              <td class="font-mono text-sm"><%= row["relname"] %></td>
-              <td class="text-right"><%= number_with_delimiter(row["n_live_tup"]) %></td>
-              <td class="text-right"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
-              <td><%= short_time_ago_tag(row["last_vacuum"]) %></td>
-              <td><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
-              <td class="text-right"><%= row["vacuum_count"] %></td>
-              <td class="text-right"><%= row["autovacuum_count"] %></td>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 whitespace-nowrap font-mono text-sm"><%= row["relname"] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right"><%= number_with_delimiter(row["n_live_tup"]) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
+              <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago_tag(row["last_vacuum"]) %></td>
+              <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right"><%= row["vacuum_count"] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right"><%= row["autovacuum_count"] %></td>
             </tr>
           <% end %>
         </tbody>
@@ -143,7 +143,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Autovacuum Settings</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Autovacuum Settings</h2>
     <%= render(autovacuum_settings_list) %>
   </section>
 </div>

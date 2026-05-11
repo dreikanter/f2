@@ -37,7 +37,7 @@ class EventDetailsComponent < ViewComponent::Base
     user_value = if @event.user_id.present?
       helpers.link_to("User ##{@event.user_id}",
                       helpers.admin_events_path(filter: { user_id: @event.user_id }),
-                      class: "ff-link",
+                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
                       data: { key: "admin.event.user" })
     else
       helpers.tag.em("System", class: "text-slate-500", data: { key: "admin.event.user" })
@@ -112,7 +112,7 @@ class EventDetailsComponent < ViewComponent::Base
 
     helpers.link_to(@event.subject_type,
                     helpers.admin_events_path(filter: filter_params),
-                    class: "ff-link",
+                    class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
                     data: { key: "admin.event.subject.type" })
   end
 

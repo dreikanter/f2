@@ -133,10 +133,10 @@
         This is a context paragraph that provides additional information about the page.
       <% end %>
       <% header.with_action_button do %>
-        <a href="#" class="ff-button ff-button--primary ff-button--compact">Primary Action</a>
+        <a href="#" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">Primary Action</a>
       <% end %>
       <% header.with_action_button do %>
-        <a href="#" class="ff-button ff-button--secondary ff-button--compact">Secondary Action</a>
+        <a href="#" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">Secondary Action</a>
       <% end %>
     <% end %>
   </section>
@@ -164,7 +164,7 @@
       <% sample_post = Post.first || Post.new(id: 1) %>
 
       <%# Feed refresh success %>
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "feed_refresh",
@@ -175,7 +175,7 @@
       </div>
 
       <%# Feed refresh error %>
-      <div class="ff-alert ff-alert--error">
+      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "feed_refresh_error",
@@ -188,7 +188,7 @@
       </div>
 
       <%# Access token validation failed with multiple feeds %>
-      <div class="ff-alert ff-alert--warning space-y-2" role="alert">
+      <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "access_token_validation_failed",
@@ -200,7 +200,7 @@
       </div>
 
       <%# Group purge started %>
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "group_purge_started",
@@ -211,7 +211,7 @@
       </div>
 
       <%# Post withdrawn %>
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "post_withdrawn",
@@ -222,7 +222,7 @@
       </div>
 
       <%# Email events %>
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_sent",
@@ -231,7 +231,7 @@
         ) %>
       </div>
 
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_delivered",
@@ -240,7 +240,7 @@
         ) %>
       </div>
 
-      <div class="ff-alert ff-alert--error">
+      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "resend.email.email_bounced",
@@ -250,7 +250,7 @@
       </div>
 
       <%# User events %>
-      <div class="ff-alert ff-alert--info">
+      <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "email_changed",
@@ -259,7 +259,7 @@
         ) %>
       </div>
 
-      <div class="ff-alert ff-alert--warning space-y-2" role="alert">
+      <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "user_suspended",

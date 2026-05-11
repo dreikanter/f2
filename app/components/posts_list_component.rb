@@ -16,7 +16,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def render_empty_state
-    content_tag(:p, @empty_text, class: "ff-text text-slate-500")
+    content_tag(:p, @empty_text, class: "text-slate-500")
   end
 
   def self.item_component(post:, helpers:, show_feed: false)
@@ -47,7 +47,7 @@ class PostsListComponent < ViewComponent::Base
     return unless show_feed
     return unless post.feed.present?
 
-    helpers.link_to(post.feed.name, helpers.feed_path(post.feed), class: "ff-link")
+    helpers.link_to(post.feed.name, helpers.feed_path(post.feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def self.published_segment(post:, helpers:)
@@ -79,7 +79,7 @@ class PostsListComponent < ViewComponent::Base
   def self.source_link_segment(post:, helpers:)
     return unless post.source_url.present?
 
-    helpers.link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "ff-link")
+    helpers.link_to("Source post", post.source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def self.freefeed_link_segment(post:, helpers:)
@@ -91,7 +91,7 @@ class PostsListComponent < ViewComponent::Base
     return unless feed.present? && access_token.present? && feed.target_group.present?
 
     freefeed_url = "#{access_token.host}/#{feed.target_group}/#{post.freefeed_post_id}"
-    helpers.link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "ff-link")
+    helpers.link_to("FreeFeed post", freefeed_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def self.withdraw_link_segment(post:, helpers:, withdraw_allowed:)
@@ -101,7 +101,7 @@ class PostsListComponent < ViewComponent::Base
       "Withdraw",
       helpers.post_path(post),
       data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
-      class: helpers.class_names("ff-link", "text-red-600 hover:text-red-500")
+      class: "font-medium underline underline-offset-4 transition text-red-600 hover:text-red-500"
     )
   end
 end

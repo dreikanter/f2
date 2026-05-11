@@ -4,7 +4,7 @@
   <%= render PageHeaderComponent.new(title: "Access Tokens") do |header| %>
     <% header.with_context_paragraph("Manage your FreeFeed API tokens used for reposting content.") %>
     <% header.with_action_button do %>
-      <%= link_to "New Token", new_access_token_path, class: class_names("ff-button", "ff-button--compact") %>
+      <%= link_to "New Token", new_access_token_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
     <% end %>
   <% end %>
 
@@ -19,7 +19,7 @@
         method: :delete,
         modal_id: "delete-token-modal-#{access_token.id}"
       ) do %>
-        <div class="ff-alert ff-alert--warning space-y-2" role="alert">
+        <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
           <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
           <p>Any feeds using this token will be automatically disabled.</p>
           <p>This can't be undone.</p>
@@ -28,9 +28,9 @@
     <% end %>
   <% else %>
     <%= render EmptyStateComponent.new do %>
-      <h2 class="ff-h2 mb-2 text-slate-500">No access tokens yet</h2>
-      <p class="ff-text mb-6 text-slate-500">Add a FreeFeed API access token to enable content reposting.</p>
-      <%= link_to "Create New Token", new_access_token_path, class: "ff-button" %>
+      <h2 class="text-2xl font-semibold mb-2 text-slate-500">No access tokens yet</h2>
+      <p class="mb-6 text-slate-500">Add a FreeFeed API access token to enable content reposting.</p>
+      <%= link_to "Create New Token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     <% end %>
   <% end %>
 </div>

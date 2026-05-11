@@ -3,59 +3,59 @@
 
 <div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
   <% if @invite.nil? %>
-    <div class="ff-card">
-      <div class="ff-card__body">
-        <h1 class="ff-card__title">This invite link doesn't look right</h1>
-        <p class="ff-text">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
+    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+      <div class="space-y-6">
+        <h1 class="text-4xl font-semibold mb-6 text-slate-900">This invite link doesn't look right</h1>
+        <p class="text-slate-600">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
 
         <div class="space-y-2">
-          <p class="ff-text ff-text--heavy">Already have an account?</p>
-          <p class="ff-text">
-            <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+          <p class="font-semibold text-slate-800">Already have an account?</p>
+          <p class="text-slate-600">
+            <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
             with your email and password.
           </p>
         </div>
 
         <div class="space-y-2">
-          <p class="ff-text ff-text--heavy">Need an invitation?</p>
-          <p class="ff-text">Ask someone who already uses Feeder to send you a new link.</p>
+          <p class="font-semibold text-slate-800">Need an invitation?</p>
+          <p class="text-slate-600">Ask someone who already uses Feeder to send you a new link.</p>
         </div>
       </div>
     </div>
   <% elsif @invite.used? %>
-    <div class="ff-card">
-      <div class="ff-card__body">
-        <h1 class="ff-card__title">This invite was already used</h1>
-        <p class="ff-text">This link has already been used to create an account.</p>
+    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+      <div class="space-y-6">
+        <h1 class="text-4xl font-semibold mb-6 text-slate-900">This invite was already used</h1>
+        <p class="text-slate-600">This link has already been used to create an account.</p>
 
         <div class="space-y-4">
-          <p class="ff-text ff-text--heavy">Already have an account?</p>
+          <p class="font-semibold text-slate-800">Already have an account?</p>
           <ul class="list-disc space-y-1 ps-5 text-slate-600">
             <li>
               Forgot your password?
-              <%= link_to "Reset it here", new_password_path, class: "ff-link" %>.
+              <%= link_to "Reset it here", new_password_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>.
             </li>
             <li>
               Otherwise,
-              <%= link_to "sign in", new_session_path, class: "ff-link" %>
+              <%= link_to "sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
               with your email and password.
             </li>
           </ul>
         </div>
 
         <div class="space-y-4">
-          <p class="ff-text ff-text--heavy">Need a fresh invitation?</p>
-          <p class="ff-text">Ask the person who sent this link to share a new one.</p>
+          <p class="font-semibold text-slate-800">Need a fresh invitation?</p>
+          <p class="text-slate-600">Ask the person who sent this link to share a new one.</p>
         </div>
       </div>
     </div>
   <% else %>
-    <div class="ff-card">
-      <div class="ff-card__body">
+    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+      <div class="space-y-6">
         <div class="space-y-4">
-          <h1 class="ff-card__title">Create your account</h1>
+          <h1 class="text-4xl font-semibold mb-6 text-slate-900">Create your account</h1>
           <% if @invite&.created_by_user %>
-            <p class="ff-text">
+            <p class="text-slate-600">
               <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
             </p>
           <% end %>
@@ -64,28 +64,28 @@
         <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
           <div class="space-y-6">
             <% if @user.errors.any? %>
-              <div class="ff-alert ff-alert--error" role="alert">
+              <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800" role="alert">
                 <span><%= @user.errors.full_messages.to_sentence.capitalize %></span>
               </div>
             <% end %>
 
-            <div class="ff-form-group">
-              <%= form.label :email_address, "Email", class: "ff-form-label" %>
-              <%= form.email_field :email_address, class: "ff-form-input", required: true, autofocus: true %>
-              <p class="ff-form-help">Only used for password resets—we don't send marketing emails.</p>
+            <div class="space-y-2">
+              <%= form.label :email_address, "Email", class: "block font-semibold text-slate-800" %>
+              <%= form.email_field :email_address, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true, autofocus: true %>
+              <p class="text-slate-500">Only used for password resets—we don't send marketing emails.</p>
             </div>
 
-            <div class="ff-form-group">
-              <%= form.label :password, class: "ff-form-label" %>
-              <%= form.password_field :password, class: "ff-form-input", required: true %>
-              <p class="ff-form-help">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
+            <div class="space-y-2">
+              <%= form.label :password, class: "block font-semibold text-slate-800" %>
+              <%= form.password_field :password, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true %>
+              <p class="text-slate-500">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
             </div>
           </div>
-          <div class="ff-card__footer flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <%= form.submit "Create account", class: "ff-button w-full sm:w-auto" %>
+          <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 w-full sm:w-auto" %>
             <span class="text-slate-600">
               Already use Feeder?
-              <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+              <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
             </span>
           </div>
         <% end %>

@@ -7,14 +7,14 @@
         <%= button_to "Purge All",
                       purge_development_sent_emails_path,
                       method: :delete,
-                      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact", "text-red-600 hover:text-red-700"),
+                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", "text-red-600 hover:text-red-700"),
                       data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
       <% end %>
     <% end %>
   <% end %>
 
   <% if @emails.empty? %>
-    <div class="ff-alert ff-alert--info" data-key="development.emails.empty">
+    <div class="rounded-lg border border-sky-100 bg-sky-100 px-4 py-3 text-sky-800" data-key="development.emails.empty">
       No emails captured yet. Emails sent in development mode will appear here.
     </div>
   <% else %>

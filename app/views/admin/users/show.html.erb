@@ -92,8 +92,8 @@
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Actions",
         value: safe_join([
-          button_to("Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "ff-button ff-button--compact"),
-          link_to("View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "ff-button ff-button--secondary ff-button--compact")
+          button_to("Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
+          link_to("View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1")
         ], " ")
       ))
     end
@@ -149,7 +149,7 @@
       value: tag.span(class: "flex items-center gap-4") {
         safe_join([
           render(partial: "available_invites_value", locals: { user: @user }),
-          link_to("Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
+          link_to("Edit", "#", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
         ])
       },
       key: "invitations.available_invites"
@@ -169,47 +169,47 @@
 
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <h1 class="ff-h1"><%= @user.email_address %></h1>
-    <%= link_to "Back to Users", admin_users_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <h1 class="text-4xl font-semibold mb-0 text-slate-900"><%= @user.email_address %></h1>
+    <%= link_to "Back to Users", admin_users_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
   </div>
 
   <%= render(user_info) %>
 
   <% if @user.email_deactivated? %>
     <section class="space-y-4">
-      <h2 class="ff-h2">Email Status</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Email Status</h2>
       <%= render(email_status_list) %>
     </section>
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Statistics</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Statistics</h2>
     <%= render(stats_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Invitations</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Invitations</h2>
     <%= render(invitations_list) %>
   </section>
 
   <% if @stats.invited_users.any? %>
     <section class="space-y-4">
-      <h3 class="ff-h3">Users Invited by <%= @user.name %></h3>
-      <div class="ff-table-container">
-        <table class="ff-table">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col">Invited</th>
+      <h3 class="text-xl font-semibold mb-2 text-slate-900">Users Invited by <%= @user.name %></h3>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-700">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+            <tr class="hover:bg-slate-50">
+              <th scope="col" class="px-6 py-3">Name</th>
+              <th scope="col" class="px-6 py-3">Email</th>
+              <th scope="col" class="px-6 py-3">Invited</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200 bg-white">
             <% @stats.invited_users.each do |invite| %>
-              <tr>
-                <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "ff-link" %></td>
-                <td><%= invite.invited_user.email_address %></td>
-                <td><%= short_time_ago(invite.created_at) %></td>
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4 whitespace-nowrap"><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></td>
+                <td class="px-6 py-4 whitespace-nowrap"><%= invite.invited_user.email_address %></td>
+                <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago(invite.created_at) %></td>
               </tr>
             <% end %>
           </tbody>
@@ -219,32 +219,32 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Active Sessions</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Active Sessions</h2>
 
     <% if @stats.sessions.any? %>
-      <div class="ff-table-container">
-        <table class="ff-table">
-          <thead>
-            <tr>
-              <th scope="col">IP Address</th>
-              <th scope="col">User Agent</th>
-              <th scope="col" class="text-center">Created</th>
-              <th scope="col" class="text-center">Last Seen</th>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-700">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+            <tr class="hover:bg-slate-50">
+              <th scope="col" class="px-6 py-3">IP Address</th>
+              <th scope="col" class="px-6 py-3">User Agent</th>
+              <th scope="col" class="px-6 py-3 text-center">Created</th>
+              <th scope="col" class="px-6 py-3 text-center">Last Seen</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200 bg-white">
             <% @stats.sessions.each do |session| %>
-              <tr>
-                <td><%= session.ip_address %></td>
-                <td class="max-w-md">
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4 whitespace-nowrap"><%= session.ip_address %></td>
+                <td class="px-6 py-4 whitespace-nowrap max-w-md">
                   <div class="truncate"><%= session.user_agent %></div>
                 </td>
-                <td class="text-center">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
                   <time class="text-slate-500" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
                     <%= short_time_ago(session.created_at) %>
                   </time>
                 </td>
-                <td class="text-center">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
                   <time class="text-slate-500" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
                     <%= short_time_ago(session.updated_at) %>
                   </time>
@@ -260,14 +260,14 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Actions</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Actions</h2>
     <div class="flex gap-2">
-      <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
-      <%= link_to "Reset Password", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+      <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Reset Password", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% if @user.suspended? %>
-        <%= link_to "Unsuspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+        <%= link_to "Unsuspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% else %>
-        <%= link_to "Suspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+        <%= link_to "Suspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% end %>
     </div>
   </section>

@@ -33,6 +33,6 @@ class FeedsListComponent < ViewComponent::Base
     return "Target: #{target}" if target == "None" || !feed.access_token
 
     url = "#{feed.access_token.host}/#{feed.target_group}"
-    safe_join(["Target:", helpers.link_to(target, url, target: "_blank", rel: "noopener", class: "ff-link")], " ")
+    safe_join(["Target:", helpers.link_to(target, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
   end
 end

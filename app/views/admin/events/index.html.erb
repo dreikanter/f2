@@ -19,28 +19,28 @@
     <% end %>
     <% if @filter.present? %>
       <% header.with_action_button do %>
-        <%= link_to "Reset Filter", admin_events_path, class: "ff-button ff-button--secondary ff-button--compact" %>
+        <%= link_to "Reset Filter", admin_events_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       <% end %>
     <% end %>
     <% header.with_action_button do %>
-      <%= link_to "Back to Admin", admin_path, class: "ff-button ff-button--secondary ff-button--compact" %>
+      <%= link_to "Back to Admin", admin_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     <% end %>
   <% end %>
 
   <% if @events.any? %>
-    <div class="ff-table-container">
-      <table class="ff-table ff-table--dense" data-key="admin.events.table">
-        <thead>
-          <tr>
-            <th scope="col">Event</th>
-            <th scope="col">User</th>
-            <th scope="col">Subject</th>
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-left text-sm text-slate-700" data-key="admin.events.table">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+          <tr class="hover:bg-slate-50">
+            <th scope="col" class="px-4 py-2">Event</th>
+            <th scope="col" class="px-4 py-2">User</th>
+            <th scope="col" class="px-4 py-2">Subject</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-200 bg-white">
           <% @events.each do |event| %>
-            <tr>
-              <td class="align-top">
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-2 align-top">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center gap-2">
                     <%= link_to admin_event_path(event),
@@ -59,7 +59,7 @@
                       }
                       badge_class = level_badge_classes.fetch(level_key, "bg-slate-200 text-slate-600")
                     %>
-                    <span class="ff-event-level <%= badge_class %>" data-key="admin.events.level"><%= level_key.upcase %></span>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide <%= badge_class %>" data-key="admin.events.level"><%= level_key.upcase %></span>
                     <%= link_to admin_events_path(filter: { type: [event.type] }), class: "font-semibold", title: "Filter by type: #{event.type}" do %>
                       <code class="text-sm" data-key="admin.events.type"><%= event.type %></code>
                     <% end %>
@@ -71,7 +71,7 @@
                   </div>
                 </div>
               </td>
-              <td>
+              <td class="px-4 py-2">
                 <% if event.user_id.present? %>
                   <%= link_to "User ##{event.user_id}",
                               admin_events_path(filter: { user_id: event.user_id }),
@@ -82,7 +82,7 @@
                   <em class="text-slate-500" data-key="admin.events.user">System</em>
                 <% end %>
               </td>
-              <td>
+              <td class="px-4 py-2">
                 <%
                   subject_link = if event.subject_type.present?
                     filter_params = { subject_type: event.subject_type }
@@ -114,10 +114,10 @@
       <%= render_pagination { |pagination, params| admin_events_path(pagination.merge(@filter.present? ? { filter: @filter.to_h } : {})) } %>
     </div>
   <% else %>
-    <div class="ff-card">
-      <div class="ff-card__body text-center py-12">
-        <h2 class="ff-h2">No events found</h2>
-        <p class="ff-text">Events will appear here as they are created.</p>
+    <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+      <div class="space-y-6 text-center py-12">
+        <h2 class="text-2xl font-semibold mb-3 text-slate-900">No events found</h2>
+        <p class="text-slate-600">Events will appear here as they are created.</p>
       </div>
     </div>
   <% end %>

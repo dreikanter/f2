@@ -2,22 +2,22 @@
 <div id="feed-form">
   <%= form_with url: feed_details_path, method: :post do |f| %>
     <div class="space-y-6">
-      <div class="ff-form-group">
-        <%= f.label :url, "Feed URL", class: "ff-form-label" %>
+      <div class="space-y-2">
+        <%= f.label :url, "Feed URL", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :url,
                          placeholder: "https://example.com/feed.xml",
-                         class: "ff-form-input",
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          required: true,
                          autofocus: true %>
-        <p class="ff-form-help">Enter the URL of the RSS feed or supported site you want to import.</p>
+        <p class="text-slate-500">Enter the URL of the RSS feed or supported site you want to import.</p>
       </div>
     </div>
 
-    <div class="ff-card__footer">
+    <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
       <%= f.submit "Identify Feed Format",
-                   class: "ff-button",
+                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                    data: { turbo_submits_with: "Identifying..." } %>
-      <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
+      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>
 </div>

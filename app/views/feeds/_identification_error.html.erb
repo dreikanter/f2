@@ -16,13 +16,13 @@
   </div>
 
   <%= form_with url: feed_details_path, method: :post, class: "space-y-6" do |f| %>
-    <div class="ff-form-group">
-      <%= f.label :url, "Feed URL", class: "ff-form-label" %>
-      <%= f.text_field :url, value: url, placeholder: "https://example.com/feed.xml", class: "ff-form-input" %>
+    <div class="space-y-2">
+      <%= f.label :url, "Feed URL", class: "block font-semibold text-slate-800" %>
+      <%= f.text_field :url, value: url, placeholder: "https://example.com/feed.xml", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
     </div>
 
     <div>
-      <%= f.submit "Try Again", class: "ff-button ff-button--compact w-full sm:w-auto" %>
+      <%= f.submit "Try Again", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 w-full sm:w-auto" %>
     </div>
   <% end %>
 </div>

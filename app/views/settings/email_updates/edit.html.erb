@@ -4,12 +4,12 @@
   <%= render PageHeaderComponent.new(title: "Change Email Address") %>
 
   <% if @user.email_deactivated? %>
-    <div class="ff-alert ff-alert--danger max-w-2xl space-y-2" role="alert">
-      <p class="ff-text ff-text--heavy">Your email is deactivated.</p>
+    <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 max-w-2xl space-y-2" role="alert">
+      <p class="font-semibold text-slate-800">Your email is deactivated.</p>
       <% if @user.can_change_email? %>
-        <p class="ff-text">Update your email address below to continue receiving notifications.</p>
+        <p class="text-slate-600">Update your email address below to continue receiving notifications.</p>
       <% else %>
-        <p class="ff-text">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <p class="text-slate-600">You can change your email again in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
     </div>
   <% end %>
@@ -17,20 +17,20 @@
   <div class="max-w-2xl">
     <%= form_with model: @user, url: settings_email_update_path, method: :patch, local: true do |form| %>
       <div class="space-y-6">
-        <div class="ff-form-group">
-          <%= form.label :current_email, "Current email", class: "ff-form-label" %>
-          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "ff-form-input bg-slate-100" %>
+        <div class="space-y-2">
+          <%= form.label :current_email, "Current email", class: "block font-semibold text-slate-800" %>
+          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100" %>
         </div>
 
-        <div class="ff-form-group">
-          <%= form.label :email_address, "New email", class: "ff-form-label" %>
-          <%= form.email_field :email_address, value: "", class: "ff-form-input", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+        <div class="space-y-2">
+          <%= form.label :email_address, "New email", class: "block font-semibold text-slate-800" %>
+          <%= form.email_field :email_address, value: "", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
         </div>
       </div>
 
-      <div class="ff-card__footer">
-        <%= form.submit "Update Email", class: "ff-button" %>
-        <%= link_to "Cancel", settings_path, class: class_names("ff-button", "ff-button--secondary") %>
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
+        <%= form.submit "Update Email", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Cancel", settings_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
       </div>
     <% end %>
   </div>

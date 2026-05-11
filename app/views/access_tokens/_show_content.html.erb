@@ -1,13 +1,13 @@
 <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
   <% unless @access_token.pending? || @access_token.validating? %>
     <% header.with_action_button do %>
-      <%= link_to "Back to Tokens", access_tokens_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+      <%= link_to "Back to Tokens", access_tokens_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
     <% end %>
 
     <% header.with_action_button do %>
       <%= link_to "Delete",
                   "#",
-                  class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                  class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
                   data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
     <% end %>
   <% end %>
@@ -20,7 +20,7 @@
   method: :delete,
   modal_id: "delete-token-modal"
 ) do %>
-  <div class="ff-alert ff-alert--warning space-y-2" role="alert">
+  <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
     <p>The token <em><%= @access_token.name %></em> will be permanently removed.</p>
     <p>Any feeds using this token will be automatically disabled.</p>
     <p>This can't be undone.</p>
@@ -28,8 +28,8 @@
 <% end %>
 
 <% if @access_token.pending? || @access_token.validating? %>
-  <div class="ff-card">
-    <div class="ff-card__body">
+  <div class="w-full rounded-none border-0 bg-white p-0 shadow-none sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
+    <div class="space-y-6">
       <div class="flex items-center justify-center py-8">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>
         <span class="text-lg text-slate-600">Validating token...</span>
@@ -37,7 +37,7 @@
     </div>
   </div>
 <% elsif @access_token.active? %>
-  <div class="ff-alert ff-alert--success" data-status="active">
+  <div class="rounded-lg border border-emerald-200 bg-emerald-100 px-4 py-3 text-emerald-800" data-status="active">
     <%= icon("check-circle", aria_hidden: true) %>
     <span>Token is valid and ready to use</span>
   </div>
@@ -46,7 +46,7 @@
 
   <% if @access_token.access_token_detail.present? %>
     <div class="space-y-4">
-      <h2 class="ff-h2">Publisher</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Publisher</h2>
       <p class="text-slate-600 mb-4">
         Posts created with this token will appear on FreeFeed on behalf of:
       </p>
@@ -56,18 +56,18 @@
     </div>
 
     <div class="space-y-4">
-      <h2 class="ff-h2">FreeFeed Groups</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">FreeFeed Groups</h2>
       <% @access_token.access_token_detail.managed_groups.tap do |groups| %>
         <% if groups.any? %>
           <p><%= pluralize(groups.count, "groups") %> available for posting:</p>
           <ul class="list-disc list-inside">
             <% groups.sort_by { _1["username"] }.each do |group| %>
-              <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "ff-link" %></li>
+              <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
             <% end %>
           </ul>
         <% else %>
           <%= render EmptyStateComponent.new do %>
-            <p class="ff-text--muted">No groups available for posting.</p>
+            <p class="text-slate-500">No groups available for posting.</p>
           <% end %>
         <% end %>
       <% end %>
@@ -75,17 +75,17 @@
   <% end %>
 
   <div class="space-y-4">
-    <h2 class="ff-h2">Associated Feeds</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Associated Feeds</h2>
     <% if @access_token.feeds.any? %>
       <%= render FeedsListComponent.new(feeds: @access_token.feeds) %>
     <% else %>
       <%= render EmptyStateComponent.new do %>
-        <p class="ff-text--muted">No associated feeds yet.</p>
+        <p class="text-slate-500">No associated feeds yet.</p>
       <% end %>
     <% end %>
   </div>
 <% elsif @access_token.inactive? %>
-  <div class="ff-alert ff-alert--error" data-status="inactive">
+  <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800" data-status="inactive">
     <%= icon("x-circle", aria_hidden: true) %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   </div>

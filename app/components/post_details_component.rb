@@ -23,7 +23,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_feed_item(component)
     component.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Feed",
-      value: helpers.link_to(@post.feed.name, @post.feed, class: "ff-link"),
+      value: helpers.link_to(@post.feed.name, @post.feed, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
       key: "post.feed"
     ))
   end
@@ -41,7 +41,7 @@ class PostDetailsComponent < ViewComponent::Base
     attachments_html = safe_join(
       @post.attachment_urls.map do |url|
         filename = extract_filename(url)
-        helpers.link_to(url, target: "_blank", rel: "noopener", class: "ff-link inline-flex items-center") do
+        helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center") do
           safe_join([
             helpers.icon("file-earmark-image", aria_hidden: true),
             content_tag(:span, filename, class: "sr-only")
@@ -82,7 +82,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_source_url_item(component)
     value = if @post.source_url.present?
-      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "ff-link truncate block")
+      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 truncate block")
     else
       content_tag(:span, "None", class: "text-slate-500")
     end
