@@ -50,13 +50,13 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Stats</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Stats</h2>
     <%= render FeedStatsComponent.new(feed: @feed) %>
   </section>
 
   <section class="space-y-4">
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-      <h2 class="ff-h2 mb-0">Recent posts</h2>
+      <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent posts</h2>
       <% if @recent_posts.any? %>
         <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "ff-link text-sm" %>
       <% end %>
@@ -66,7 +66,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Danger zone</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Danger zone</h2>
     <div class="flex gap-2">
       <% if @feed.target_group.present? %>
         <%= link_to "Purge feed...", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>

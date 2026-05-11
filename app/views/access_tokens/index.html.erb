@@ -28,7 +28,7 @@
     <% end %>
   <% else %>
     <%= render EmptyStateComponent.new do %>
-      <h2 class="ff-h2 mb-2 text-slate-500">No access tokens yet</h2>
+      <h2 class="text-2xl font-semibold mb-2 text-slate-500">No access tokens yet</h2>
       <p class="ff-text mb-6 text-slate-500">Add a FreeFeed API access token to enable content reposting.</p>
       <%= link_to "Create New Token", new_access_token_path, class: "ff-button" %>
     <% end %>

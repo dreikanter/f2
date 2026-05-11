@@ -177,18 +177,18 @@
 
   <% if @user.email_deactivated? %>
     <section class="space-y-4">
-      <h2 class="ff-h2">Email Status</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Email Status</h2>
       <%= render(email_status_list) %>
     </section>
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Statistics</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Statistics</h2>
     <%= render(stats_list) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Invitations</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Invitations</h2>
     <%= render(invitations_list) %>
   </section>
 
@@ -219,7 +219,7 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Active Sessions</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Active Sessions</h2>
 
     <% if @stats.sessions.any? %>
       <div class="ff-table-container">
@@ -260,7 +260,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="ff-h2">Actions</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Actions</h2>
     <div class="flex gap-2">
       <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
       <%= link_to "Reset Password", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>

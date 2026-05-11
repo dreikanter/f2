@@ -41,7 +41,7 @@
 
     <% if @recent_events.any? %>
       <section class="space-y-4">
-        <h2 class="ff-h2">Recent Activity</h2>
+        <h2 class="text-2xl font-semibold mb-3 text-slate-900">Recent Activity</h2>
         <%= render RecentEventsComponent.new(events: @recent_events) %>
       </section>
     <% end %>
