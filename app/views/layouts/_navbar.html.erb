@@ -51,9 +51,9 @@
           <%
             # Desktop classes
             desktop_link_classes = class_names(
-              "ff-nav-link",
-              { "ff-nav-link--active" => item[:active] },
-              "rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              "inline-flex items-center rounded-sm px-3 py-2 transition md:px-2 md:py-1",
+              { "bg-slate-900 text-white md:bg-slate-100 md:text-slate-600 md:ring-2 md:ring-slate-600" => item[:active] },
+              "outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             )
           %>
           <li>
