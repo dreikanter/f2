@@ -26,12 +26,12 @@
           This account doesn't manage any groups yet.
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
-                      class: "ff-link" %>
+                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
         <% else %>
           Could not load groups for this account.
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
-                      class: "ff-link" %>
+                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
         <% end %>
       </p>
     <% end %>

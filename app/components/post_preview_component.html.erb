@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-lg font-semibold text-slate-900"><%= title %></h2>
       <% if source_url %>
-        <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "ff-link text-sm" %>
+        <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm" %>
       <% end %>
     </div>
     <% if metadata_segments.any? %>

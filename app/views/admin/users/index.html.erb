@@ -24,7 +24,7 @@
           <% @users.each do |user| %>
             <tr>
               <td>
-                <%= link_to user.email_address, admin_user_path(user), class: "ff-link" %>
+                <%= link_to user.email_address, admin_user_path(user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
                 <% if user.admin? %>
                   <span class="text-slate-500">(admin)</span>
                 <% end %>

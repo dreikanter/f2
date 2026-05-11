@@ -58,7 +58,7 @@
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent posts</h2>
       <% if @recent_posts.any? %>
-        <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "ff-link text-sm" %>
+        <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm" %>
       <% end %>
     </div>
 

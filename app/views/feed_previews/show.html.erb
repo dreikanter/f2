@@ -4,7 +4,7 @@
   <div>
     <h1 class="text-4xl font-semibold mb-0 text-slate-900">Feed Preview</h1>
     <p class="text-slate-600 mt-2">
-      Source URL: <a href="<%= @feed_preview.url %>" target="_blank" rel="noopener" class="ff-link break-all"><%= @feed_preview.url %></a> (<%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %>)
+      Source URL: <a href="<%= @feed_preview.url %>" target="_blank" rel="noopener" class="font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 break-all"><%= @feed_preview.url %></a> (<%= t("feed_profiles.#{@feed_preview.feed_profile_key}") %>)
     </p>
   </div>
   <div id="header-actions" class="flex w-full items-center justify-between gap-5 sm:w-auto sm:justify-end">

@@ -11,7 +11,7 @@
         <div class="space-y-2">
           <p class="font-semibold text-slate-800">Already have an account?</p>
           <p class="text-slate-600">
-            <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+            <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
             with your email and password.
           </p>
         </div>
@@ -33,11 +33,11 @@
           <ul class="list-disc space-y-1 ps-5 text-slate-600">
             <li>
               Forgot your password?
-              <%= link_to "Reset it here", new_password_path, class: "ff-link" %>.
+              <%= link_to "Reset it here", new_password_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>.
             </li>
             <li>
               Otherwise,
-              <%= link_to "sign in", new_session_path, class: "ff-link" %>
+              <%= link_to "sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
               with your email and password.
             </li>
           </ul>
@@ -85,7 +85,7 @@
             <%= form.submit "Create account", class: "ff-button w-full sm:w-auto" %>
             <span class="text-slate-600">
               Already use Feeder?
-              <%= link_to "Sign in", new_session_path, class: "ff-link" %>
+              <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
             </span>
           </div>
         <% end %>

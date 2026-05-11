@@ -62,10 +62,6 @@
     @apply text-slate-500;
   }
 
-  .ff-link {
-    @apply font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500;
-  }
-
   .ff-button {
     @apply inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1;
   }

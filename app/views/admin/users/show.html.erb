@@ -149,7 +149,7 @@
       value: tag.span(class: "flex items-center gap-4") {
         safe_join([
           render(partial: "available_invites_value", locals: { user: @user }),
-          link_to("Edit", "#", class: "ff-link text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
+          link_to("Edit", "#", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "edit-available-invites-modal-#{@user.id}", action: "click->modal-trigger#open" })
         ])
       },
       key: "invitations.available_invites"
@@ -207,7 +207,7 @@
           <tbody>
             <% @stats.invited_users.each do |invite| %>
               <tr>
-                <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "ff-link" %></td>
+                <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></td>
                 <td><%= invite.invited_user.email_address %></td>
                 <td><%= short_time_ago(invite.created_at) %></td>
               </tr>

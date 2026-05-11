@@ -62,7 +62,7 @@
           <p><%= pluralize(groups.count, "groups") %> available for posting:</p>
           <ul class="list-disc list-inside">
             <% groups.sort_by { _1["username"] }.each do |group| %>
-              <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "ff-link" %></li>
+              <li><%= link_to group["username"], "#{@access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
             <% end %>
           </ul>
         <% else %>
