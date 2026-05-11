@@ -19,11 +19,11 @@
         method: :delete,
         modal_id: "delete-token-modal-#{access_token.id}"
       ) do %>
-        <div class="rounded-lg border border-amber-200 bg-amber-100 px-4 py-3 text-amber-800 space-y-2" role="alert">
+        <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
           <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
           <p>Any feeds using this token will be automatically disabled.</p>
           <p>This can't be undone.</p>
-        </div>
+        <% end %>
       <% end %>
     <% end %>
   <% else %>
