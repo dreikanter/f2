@@ -8,22 +8,22 @@
   <% end %>
 
   <% if @users.any? %>
-    <div class="ff-table-container">
-      <table class="ff-table">
-        <thead>
-          <tr>
-            <th scope="col">Email</th>
-            <th scope="col">Name</th>
-            <th scope="col" class="text-center">Feeds</th>
-            <th scope="col" class="text-center">Tokens</th>
-            <th scope="col" class="text-center">Posts</th>
-            <th scope="col" class="text-center">Last Seen</th>
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-left text-sm text-slate-700">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+          <tr class="hover:bg-slate-50">
+            <th scope="col" class="px-6 py-3">Email</th>
+            <th scope="col" class="px-6 py-3">Name</th>
+            <th scope="col" class="px-6 py-3 text-center">Feeds</th>
+            <th scope="col" class="px-6 py-3 text-center">Tokens</th>
+            <th scope="col" class="px-6 py-3 text-center">Posts</th>
+            <th scope="col" class="px-6 py-3 text-center">Last Seen</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-200 bg-white">
           <% @users.each do |user| %>
-            <tr>
-              <td>
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 whitespace-nowrap">
                 <%= link_to user.email_address, admin_user_path(user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
                 <% if user.admin? %>
                   <span class="text-slate-500">(admin)</span>
@@ -32,11 +32,11 @@
                   <span class="ml-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">email bounced</span>
                 <% end %>
               </td>
-              <td><%= user.name %></td>
-              <td class="text-center"><%= user.feeds_count %></td>
-              <td class="text-center"><%= user.access_tokens_count %></td>
-              <td class="text-center"><%= user.posts_count %></td>
-              <td class="text-center">
+              <td class="px-6 py-4 whitespace-nowrap"><%= user.name %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-center"><%= user.feeds_count %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-center"><%= user.access_tokens_count %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-center"><%= user.posts_count %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
                 <% if user.last_seen_at %>
                   <time class="text-slate-500" datetime="<%= user.last_seen_at.iso8601 %>" title="<%= user.last_seen_at.to_fs(:long) %>">
                     <%= short_time_ago(user.last_seen_at) %>

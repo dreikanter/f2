@@ -82,42 +82,6 @@
     @apply mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600;
   }
 
-  .ff-table-container {
-    @apply overflow-x-auto rounded-lg border border-slate-200;
-  }
-
-  .ff-table {
-    @apply w-full text-left text-sm text-slate-700;
-  }
-
-  .ff-table thead {
-    @apply border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600;
-  }
-
-  .ff-table th {
-    @apply px-6 py-3;
-  }
-
-  .ff-table tbody {
-    @apply divide-y divide-slate-200 bg-white;
-  }
-
-  .ff-table tr {
-    @apply hover:bg-slate-50;
-  }
-
-  .ff-table td {
-    @apply px-6 py-4 whitespace-nowrap;
-  }
-
-  .ff-table--dense th {
-    @apply px-4 py-2;
-  }
-
-  .ff-table--dense td {
-    @apply px-4 py-2;
-  }
-
   /* aria-busy styling for loading states */
   [aria-busy="true"] {
     opacity: 0.8;

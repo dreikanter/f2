@@ -195,21 +195,21 @@
   <% if @stats.invited_users.any? %>
     <section class="space-y-4">
       <h3 class="text-xl font-semibold mb-2 text-slate-900">Users Invited by <%= @user.name %></h3>
-      <div class="ff-table-container">
-        <table class="ff-table">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col">Invited</th>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-700">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+            <tr class="hover:bg-slate-50">
+              <th scope="col" class="px-6 py-3">Name</th>
+              <th scope="col" class="px-6 py-3">Email</th>
+              <th scope="col" class="px-6 py-3">Invited</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200 bg-white">
             <% @stats.invited_users.each do |invite| %>
-              <tr>
-                <td><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></td>
-                <td><%= invite.invited_user.email_address %></td>
-                <td><%= short_time_ago(invite.created_at) %></td>
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4 whitespace-nowrap"><%= link_to invite.invited_user.name, admin_user_path(invite.invited_user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></td>
+                <td class="px-6 py-4 whitespace-nowrap"><%= invite.invited_user.email_address %></td>
+                <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago(invite.created_at) %></td>
               </tr>
             <% end %>
           </tbody>
@@ -222,29 +222,29 @@
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Active Sessions</h2>
 
     <% if @stats.sessions.any? %>
-      <div class="ff-table-container">
-        <table class="ff-table">
-          <thead>
-            <tr>
-              <th scope="col">IP Address</th>
-              <th scope="col">User Agent</th>
-              <th scope="col" class="text-center">Created</th>
-              <th scope="col" class="text-center">Last Seen</th>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-700">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+            <tr class="hover:bg-slate-50">
+              <th scope="col" class="px-6 py-3">IP Address</th>
+              <th scope="col" class="px-6 py-3">User Agent</th>
+              <th scope="col" class="px-6 py-3 text-center">Created</th>
+              <th scope="col" class="px-6 py-3 text-center">Last Seen</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200 bg-white">
             <% @stats.sessions.each do |session| %>
-              <tr>
-                <td><%= session.ip_address %></td>
-                <td class="max-w-md">
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4 whitespace-nowrap"><%= session.ip_address %></td>
+                <td class="px-6 py-4 whitespace-nowrap max-w-md">
                   <div class="truncate"><%= session.user_agent %></div>
                 </td>
-                <td class="text-center">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
                   <time class="text-slate-500" datetime="<%= session.created_at.iso8601 %>" title="<%= session.created_at.to_fs(:long) %>">
                     <%= short_time_ago(session.created_at) %>
                   </time>
                 </td>
-                <td class="text-center">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
                   <time class="text-slate-500" datetime="<%= session.updated_at.iso8601 %>" title="<%= session.updated_at.to_fs(:long) %>">
                     <%= short_time_ago(session.updated_at) %>
                   </time>

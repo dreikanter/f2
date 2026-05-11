@@ -28,19 +28,19 @@
   <% end %>
 
   <% if @events.any? %>
-    <div class="ff-table-container">
-      <table class="ff-table ff-table--dense" data-key="admin.events.table">
-        <thead>
-          <tr>
-            <th scope="col">Event</th>
-            <th scope="col">User</th>
-            <th scope="col">Subject</th>
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-left text-sm text-slate-700" data-key="admin.events.table">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+          <tr class="hover:bg-slate-50">
+            <th scope="col" class="px-4 py-2">Event</th>
+            <th scope="col" class="px-4 py-2">User</th>
+            <th scope="col" class="px-4 py-2">Subject</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-200 bg-white">
           <% @events.each do |event| %>
-            <tr>
-              <td class="align-top">
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-2 align-top">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center gap-2">
                     <%= link_to admin_event_path(event),
@@ -71,7 +71,7 @@
                   </div>
                 </div>
               </td>
-              <td>
+              <td class="px-4 py-2">
                 <% if event.user_id.present? %>
                   <%= link_to "User ##{event.user_id}",
                               admin_events_path(filter: { user_id: event.user_id }),
@@ -82,7 +82,7 @@
                   <em class="text-slate-500" data-key="admin.events.user">System</em>
                 <% end %>
               </td>
-              <td>
+              <td class="px-4 py-2">
                 <%
                   subject_link = if event.subject_type.present?
                     filter_params = { subject_type: event.subject_type }
