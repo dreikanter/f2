@@ -6,7 +6,7 @@
       <% header.with_context_paragraph(status_summary) %>
     <% end %>
     <% header.with_action_button do %>
-      <%= link_to "Edit", edit_feed_path(@feed), class: "ff-button ff-button--secondary ff-button--compact" %>
+      <%= link_to "Edit", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     <% end %>
     <% if @feed.enabled? %>
       <% header.with_action_button do %>
@@ -15,7 +15,7 @@
                       method: :patch,
                       params: { status: "disabled" },
                       data: { turbo_confirm: "Disable this feed?" },
-                      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
                       form: { class: "inline-block" } %>
       <% end %>
     <% elsif @feed.can_be_enabled? %>
@@ -24,12 +24,12 @@
                       feed_status_path(@feed),
                       method: :patch,
                       params: { status: "enabled" },
-                      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
                       form: { class: "inline-block" } %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
-        <span class="ff-button ff-button--secondary ff-button--compact cursor-not-allowed opacity-60" title="Complete setup to enable this feed">Enable</span>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-not-allowed opacity-60" title="Complete setup to enable this feed">Enable</span>
       <% end %>
     <% end %>
     <% if @feed.can_be_previewed? %>
@@ -38,13 +38,13 @@
                       feed_previews_path,
                       params: { url: @feed.url, feed_profile_key: @feed.feed_profile_key },
                       method: :post,
-                      class: class_names("ff-button", "ff-button--secondary", "ff-button--compact"),
+                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
                       data: { turbo: false },
                           form: { class: "inline-block" } %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
-        <span class="ff-button ff-button--secondary ff-button--compact cursor-not-allowed opacity-60" title="Preview requires feed URL and profile">Preview</span>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-not-allowed opacity-60" title="Preview requires feed URL and profile">Preview</span>
       <% end %>
     <% end %>
   <% end %>
@@ -69,9 +69,9 @@
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Danger zone</h2>
     <div class="flex gap-2">
       <% if @feed.target_group.present? %>
-        <%= link_to "Purge feed...", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
+        <%= link_to "Purge feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
       <% end %>
-      <%= link_to "Delete feed...", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
+      <%= link_to "Delete feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
     </div>
   </section>
 </div>

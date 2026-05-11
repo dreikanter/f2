@@ -70,8 +70,8 @@
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
-        <%= form.submit "Validate and Save", class: "ff-button" %>
-        <%= link_to "Cancel", access_tokens_path, class: class_names("ff-button", "ff-button--secondary") %>
+        <%= form.submit "Validate and Save", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Cancel", access_tokens_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
       </div>
     <% end %>
   </div>

@@ -126,11 +126,11 @@
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
       <% if edit_mode %>
         <%= f.submit "Update Feed Configuration",
-                     class: "ff-button",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                      data: { turbo_submits_with: "Updating..." } %>
       <% else %>
         <%= f.submit "Create and Enable Feed",
-                     class: "ff-button",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                      data: {
                        feed_form_target: "submitButton",
                        mode: "new",
@@ -138,7 +138,7 @@
                        disabled_label: "Create Feed"
                      } %>
       <% end %>
-      <%= link_to "Cancel", feeds_path, class: "ff-button ff-button--secondary" %>
+      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>
 </div>

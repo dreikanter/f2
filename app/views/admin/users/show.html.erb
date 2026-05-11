@@ -92,8 +92,8 @@
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Actions",
         value: safe_join([
-          button_to("Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "ff-button ff-button--compact"),
-          link_to("View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "ff-button ff-button--secondary ff-button--compact")
+          button_to("Reactivate Email", admin_user_email_reactivation_path(@user), method: :post, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
+          link_to("View Email Events", admin_events_path(filter: { user_id: @user.id, type: mail_event_types }), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1")
         ], " ")
       ))
     end
@@ -170,7 +170,7 @@
 <div class="space-y-8">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <h1 class="text-4xl font-semibold mb-0 text-slate-900"><%= @user.email_address %></h1>
-    <%= link_to "Back to Users", admin_users_path, class: class_names("ff-button", "ff-button--secondary", "ff-button--compact") %>
+    <%= link_to "Back to Users", admin_users_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
   </div>
 
   <%= render(user_info) %>
@@ -262,12 +262,12 @@
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Actions</h2>
     <div class="flex gap-2">
-      <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "ff-button ff-button--secondary ff-button--compact" %>
-      <%= link_to "Reset Password", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+      <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Reset Password", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% if @user.suspended? %>
-        <%= link_to "Unsuspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+        <%= link_to "Unsuspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% else %>
-        <%= link_to "Suspend user", "#", class: "ff-button ff-button--secondary ff-button--compact", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+        <%= link_to "Suspend user", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% end %>
     </div>
   </section>
