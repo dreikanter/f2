@@ -84,7 +84,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
     follow_redirect!
-    assert_select ".alert", text: /Email confirmation is required. Please check your inbox./
+    assert_select "[role=\"alert\"]", text: /Email confirmation is required. Please check your inbox./
   end
 
   test "#create should show deactivated email message for inactive user with deactivated email" do
@@ -95,6 +95,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
     follow_redirect!
-    assert_select ".alert", text: /Your confirmation email could not be delivered. Please update your email address./
+    assert_select "[role=\"alert\"]", text: /Your confirmation email could not be delivered. Please update your email address./
   end
 end

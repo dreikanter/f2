@@ -23,7 +23,7 @@ class Admin::EmailReactivationsControllerTest < ActionDispatch::IntegrationTest
     assert_nil user.email_deactivation_reason
     assert_redirected_to admin_user_path(user)
     follow_redirect!
-    assert_select ".alert", text: /Email reactivated successfully/
+    assert_select "[role=\"alert\"]", text: /Email reactivated successfully/
   end
 
   test "should prevent non-admin from reactivating user email" do
