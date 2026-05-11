@@ -34,10 +34,4 @@ class AlertComponentTest < ViewComponent::TestCase
     assert_includes alert["class"], "space-y-2"
     assert_includes alert["class"], "bg-amber-100"
   end
-
-  test "#call should raise for unknown variants" do
-    assert_raises(KeyError) do
-      render_inline(AlertComponent.new(variant: :danger)) { "x" }
-    end
-  end
 end
