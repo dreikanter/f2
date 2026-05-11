@@ -90,14 +90,6 @@
     @apply text-base text-slate-600;
   }
 
-  .ff-text--heavy {
-    @apply font-semibold text-slate-800;
-  }
-
-  .ff-text--muted {
-    @apply text-slate-500;
-  }
-
   .ff-table-container {
     @apply overflow-x-auto rounded-lg border border-slate-200;
   }

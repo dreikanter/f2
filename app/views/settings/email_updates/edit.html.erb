@@ -5,7 +5,7 @@
 
   <% if @user.email_deactivated? %>
     <div class="ff-alert ff-alert--danger max-w-2xl space-y-2" role="alert">
-      <p class="ff-text ff-text--heavy">Your email is deactivated.</p>
+      <p class="ff-text font-semibold text-slate-800">Your email is deactivated.</p>
       <% if @user.can_change_email? %>
         <p class="ff-text">Update your email address below to continue receiving notifications.</p>
       <% else %>
