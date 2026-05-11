@@ -126,10 +126,6 @@
     @apply text-2xl font-semibold mb-3 text-slate-900;
   }
 
-  .ff-h3 {
-    @apply text-xl font-semibold mb-2 text-slate-900;
-  }
-
   .ff-table-container {
     @apply overflow-x-auto rounded-lg border border-slate-200;
   }
