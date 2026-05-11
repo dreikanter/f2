@@ -59,7 +59,7 @@
                       }
                       badge_class = level_badge_classes.fetch(level_key, "bg-slate-200 text-slate-600")
                     %>
-                    <span class="ff-event-level <%= badge_class %>" data-key="admin.events.level"><%= level_key.upcase %></span>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide <%= badge_class %>" data-key="admin.events.level"><%= level_key.upcase %></span>
                     <%= link_to admin_events_path(filter: { type: [event.type] }), class: "font-semibold", title: "Filter by type: #{event.type}" do %>
                       <code class="text-sm" data-key="admin.events.type"><%= event.type %></code>
                     <% end %>
