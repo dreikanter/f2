@@ -17,6 +17,6 @@ class AlertComponent < ViewComponent::Base
   def call
     options = { role: "alert" }.merge(@html_options)
     options[:class] = helpers.class_names(BASE_CLASSES, VARIANT_CLASSES.fetch(@variant), @html_options[:class])
-    content_tag :div, content, **options
+    content_tag :div, content, options
   end
 end
