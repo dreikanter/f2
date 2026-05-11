@@ -29,7 +29,7 @@
         </div>
       </div>
 
-      <div class="ff-card__footer">
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
         <%= form.submit "Update Email", class: "ff-button", data: { turbo_confirm: "Update email for this user?" } %>
         <%= link_to "Cancel", admin_user_path(@user), class: class_names("ff-button", "ff-button--secondary") %>
       </div>
