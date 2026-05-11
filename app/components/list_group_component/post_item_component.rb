@@ -3,7 +3,7 @@ class ListGroupComponent::PostItemComponent < ViewComponent::Base
   CONTENT_WRAPPER_CLASSES = "flex items-baseline gap-3 sm:flex-1"
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
   INNER_WRAPPER_CLASSES = "flex flex-1 flex-col gap-1"
-  TITLE_CLASSES = "inline-flex items-start text-base font-semibold text-slate-900 transition hover:text-slate-700 ff-focus-ring"
+  TITLE_CLASSES = "inline-flex items-start text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
   METADATA_CLASSES = "ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500"
   BULLET_CLASSES = "text-slate-300"
 
