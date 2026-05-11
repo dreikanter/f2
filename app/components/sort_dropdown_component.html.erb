@@ -1,0 +1,38 @@
+<div class="relative">
+  <button
+    id="<%= button_id %>"
+    type="button"
+    data-dropdown-toggle="<%= menu_id %>"
+    data-dropdown-placement="bottom-end"
+    class="<%= trigger_classes %>"
+    aria-haspopup="true"
+    aria-expanded="false">
+    <%= icon(direction_icon, css_class: "text-slate-500", aria_hidden: true) %>
+    <span class="flex items-center gap-2">
+      <span><%= presenter.current_title %></span>
+      <span class="sr-only"><%= direction_label %></span>
+    </span>
+    <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+  </button>
+  <div
+    id="<%= menu_id %>"
+    class="<%= panel_classes %>"
+    role="menu"
+    aria-labelledby="<%= button_id %>">
+    <ul class="py-1 text-base text-slate-600">
+      <% presenter.options.each do |option| %>
+        <li>
+          <%= link_to option.path, class: option_classes(option) do %>
+            <span><%= option.title %></span>
+            <% if option.icon_name.present? %>
+              <span class="flex items-center text-slate-500">
+                <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
+              </span>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>
