@@ -102,10 +102,6 @@
     @apply rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
 
-  .ff-nav-brand {
-    @apply inline-flex items-center text-lg font-semibold text-slate-900;
-  }
-
   .ff-nav-link {
     @apply inline-flex items-center rounded-sm px-3 py-2 transition md:px-2 md:py-1;
   }
