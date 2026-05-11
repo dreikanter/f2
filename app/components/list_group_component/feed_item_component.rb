@@ -3,7 +3,7 @@ class ListGroupComponent::FeedItemComponent < ViewComponent::Base
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
   CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-1"
   TITLE_CLASSES = "inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-  METADATA_CLASSES = "ff-text flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500"
+  METADATA_CLASSES = "flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500"
   BULLET_CLASSES = "text-slate-300"
 
   def initialize(icon:, title:, title_url:, metadata_segments: [], key: nil)

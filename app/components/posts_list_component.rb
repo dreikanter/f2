@@ -16,7 +16,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def render_empty_state
-    content_tag(:p, @empty_text, class: "ff-text text-slate-500")
+    content_tag(:p, @empty_text, class: "text-slate-500")
   end
 
   def self.item_component(post:, helpers:, show_feed: false)

@@ -6,14 +6,14 @@
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
     <div class="ff-alert ff-alert--warning space-y-2" role="alert">
-      <p class="ff-text font-semibold text-slate-800">Your email address is not receiving our emails.</p>
+      <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
       <% if @user.can_change_email? %>
-        <p class="ff-text">
+        <p class="text-slate-600">
           <%= link_to "Update your email address", edit_settings_email_update_path, class: "ff-link" %>
           to continue receiving notifications.
         </p>
       <% else %>
-        <p class="ff-text">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
     </div>
   <% end %>
@@ -21,8 +21,8 @@
   <% if suggest_to_add_tokens %>
     <section class="space-y-4">
       <h1 class="text-4xl font-semibold mb-0 text-slate-900">Welcome to Feeder</h1>
-      <p class="ff-text">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
-      <p class="ff-text">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
+      <p class="text-slate-600">Feeder helps you automatically share content from your favorite sources to FreeFeed.</p>
+      <p class="text-slate-600">To get started, add a FreeFeed access token so Feeder can post on your behalf.</p>
       <div class="mt-8">
         <%= link_to "Add FreeFeed token", new_access_token_path, class: "ff-button" %>
       </div>
@@ -30,7 +30,7 @@
   <% elsif suggest_adding_feeds %>
     <section class="space-y-4">
       <h1 class="text-4xl font-semibold mb-0 text-slate-900">Welcome to Feeder</h1>
-      <p class="ff-text">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
+      <p class="text-slate-600">Great! You've added a FreeFeed access token. Now you can create your first feed.</p>
       <div class="mt-8">
         <%= link_to "Add feed", new_feed_path, class: "ff-button" %>
       </div>

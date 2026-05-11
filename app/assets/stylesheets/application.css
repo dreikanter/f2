@@ -86,10 +86,6 @@
     @apply mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600;
   }
 
-  .ff-text {
-    @apply text-base text-slate-600;
-  }
-
   .ff-table-container {
     @apply overflow-x-auto rounded-lg border border-slate-200;
   }
