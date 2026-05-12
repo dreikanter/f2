@@ -79,6 +79,18 @@ When writing instructions or explanations:
 
 - Follow standard Rails conventions.
 
+## Error Reporting
+
+Report handled exceptions through `Rails.error`.
+
+```ruby
+Rails.error.report(e, context: { feed_id: feed.id })
+
+Rails.error.handle(SomeExpectedError, context: { ... }) do
+  do_work
+end
+```
+
 ## PR description
 
 Use `.github/pull_request_template.md` for PR descriptions.
