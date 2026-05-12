@@ -161,7 +161,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-          --tmpfs=/var/lib/postgresql/data:rw
+          --tmpfs=/var/lib/postgresql/data
 
       # redis:
       #   image: redis
