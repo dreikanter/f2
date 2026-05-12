@@ -81,21 +81,15 @@ When writing instructions or explanations:
 
 ## Error Reporting
 
-Report handled exceptions through `Rails.error`, not the Honeybadger API directly. Honeybadger subscribes to `ActiveSupport::ErrorReporter` automatically, so reports still reach it without coupling call sites to the vendor.
+Report handled exceptions through `Rails.error`.
 
 ```ruby
-# Good: vendor-agnostic, testable with assert_error_reported
 Rails.error.report(e, context: { feed_id: feed.id })
 
 Rails.error.handle(SomeExpectedError, context: { ... }) do
   do_work
 end
-
-# Avoid in app code:
-Honeybadger.notify(e, context: { ... })
 ```
-
-Keep the `Honeybadger.configure` block in `config/initializers/honeybadger.rb` — only call sites should be vendor-agnostic.
 
 ## PR description
 
