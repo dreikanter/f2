@@ -1,6 +1,10 @@
 ---
 EnableDefaultLinters: false
 
+# Scope to project templates so CI does not lint vendored gem ERBs
+# (bundler-cache installs gems under vendor/bundle/ in the workspace).
+glob: "app/**/*.erb"
+
 linters:
   FinalNewline:
     enabled: true
