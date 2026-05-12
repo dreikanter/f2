@@ -150,3 +150,8 @@ end
 - Example in a component: `tag.li class: "…", data: { key: "stats.total_feeds" }`.
 - In tests, query via `css_select('[data-key="stats.total_feeds"]')`.
 - Keep keys short, namespaced (`component.element`) for readability.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
