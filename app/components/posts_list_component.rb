@@ -16,7 +16,9 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def render_empty_state
-    content_tag(:p, @empty_text, class: "text-slate-500")
+    content_tag(:div, class: "rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600") do
+      content_tag(:h2, @empty_text, class: "text-2xl font-semibold text-slate-900")
+    end
   end
 
   def self.item_component(post:, helpers:, show_feed: false)
