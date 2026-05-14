@@ -51,8 +51,6 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
-  gem "solargraph"
-
   # Test data factories [https://github.com/thoughtbot/factory_bot]
   gem "factory_bot_rails"
 end
