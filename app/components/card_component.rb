@@ -1,7 +1,7 @@
 class CardComponent < ViewComponent::Base
   BASE_CLASSES = "w-full rounded-none border-0 bg-white p-0 " \
                  "sm:rounded-lg sm:border sm:border-slate-200 sm:p-6 sm:shadow-xs"
-  LINKED_CLASSES = "block no-underline hover:shadow-lg transition-shadow"
+  LINKED_CLASSES = "block no-underline hover:bg-slate-50 hover:shadow-md transition duration-75"
 
   def initialize(href: nil, **html_options)
     @href = href
