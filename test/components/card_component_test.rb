@@ -40,7 +40,8 @@ class CardComponentTest < ViewComponent::TestCase
     assert_equal "/somewhere", card["href"]
     assert_equal "_blank", card["target"]
     assert_equal "noopener", card["rel"]
-    assert_includes card["class"], "hover:shadow-lg"
+    assert_includes card["class"], "hover:shadow-md"
+    assert_includes card["class"], "hover:bg-slate-50"
     assert_includes card["class"], "no-underline"
   end
 end
