@@ -38,4 +38,71 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     result = normalizer.send(:normalize_comments)
     assert_equal [], result
   end
+
+  test "#validate_universal_post_shape! should accept a post with all required fields" do
+    post = Post.new(
+      feed: feed_entry.feed,
+      feed_entry: feed_entry,
+      source_url: "https://example.com/post/1",
+      published_at: Time.current,
+      uid: "uid-1"
+    )
+
+    assert_nothing_raised { normalizer.validate_universal_post_shape!(post) }
+  end
+
+  test "#validate_universal_post_shape! should accept a post with blank source_url" do
+    # source_url is intentionally not in the strict shape check — profiles
+    # may emit "" for it (e.g., RSS rejecting an over-length URL); content
+    # validation handles the rejection.
+    post = Post.new(
+      feed: feed_entry.feed,
+      feed_entry: feed_entry,
+      source_url: "",
+      published_at: Time.current,
+      uid: "uid-1"
+    )
+
+    assert_nothing_raised { normalizer.validate_universal_post_shape!(post) }
+  end
+
+  test "#validate_universal_post_shape! should raise when uid is missing" do
+    post = Post.new(
+      feed: feed_entry.feed,
+      feed_entry: feed_entry,
+      source_url: "https://example.com/post/1",
+      published_at: Time.current,
+      uid: nil
+    )
+
+    error = assert_raises(Normalizer::UniversalPostShapeError) do
+      normalizer.validate_universal_post_shape!(post)
+    end
+    assert_includes error.message, "uid"
+  end
+
+  test "#validate_universal_post_shape! should raise when published_at is missing" do
+    post = Post.new(
+      feed: feed_entry.feed,
+      feed_entry: feed_entry,
+      source_url: "https://example.com/post/1",
+      published_at: nil,
+      uid: "uid-1"
+    )
+
+    error = assert_raises(Normalizer::UniversalPostShapeError) do
+      normalizer.validate_universal_post_shape!(post)
+    end
+    assert_includes error.message, "published_at"
+  end
+
+  test "#validate_universal_post_shape! should list every missing field in one error" do
+    post = Post.new(feed: feed_entry.feed, feed_entry: feed_entry, uid: nil, published_at: nil)
+
+    error = assert_raises(Normalizer::UniversalPostShapeError) do
+      normalizer.validate_universal_post_shape!(post)
+    end
+    assert_includes error.message, "uid"
+    assert_includes error.message, "published_at"
+  end
 end
