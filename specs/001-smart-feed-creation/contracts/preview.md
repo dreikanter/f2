@@ -69,9 +69,16 @@ When `cache_key` is provided and `refresh: false`:
 - Cache hit → return the cached `Preview` immediately. No LLM call. No `LlmUsage` row written.
 - Cache miss → compute preview, write to cache, return.
 
-Cache key construction (computed by caller, not service): `Digest::SHA256.hexdigest("preview:#{feed_detail_id}:#{profile_key}:#{params.to_json}")`. TTL: 24 hours (longer than any reasonable in-progress flow; cleaned eagerly when feed is saved or feed_detail is destroyed).
+Cache key construction (computed by caller, not service): `Digest::SHA256.hexdigest("preview:#{feed_detail_id}:#{profile_key}:#{params.to_json}")`. TTL: 24 hours (longer than any reasonable in-progress flow).
 
-`refresh: true` is the "Refresh preview" button: bust the cache for the key, recompute, write fresh.
+**Invalidation**:
+1. `FeedDetailsController#destroy` (the user-initiated cancel from T032) deletes the entry as part of `cleanup_feed_identification`.
+2. `FeedsController#create` deletes the entry in the same `cleanup_feed_identification` call after the feed is saved.
+3. `FeedsController#update` deletes the entry when a source-side field changes (the same code path that re-runs detection per FR-026 / FR-027).
+4. `refresh: true` is the "Refresh preview" button: bust the cache for the key, recompute, write fresh.
+5. TTL expiry (24h) is the backstop for cases none of the above fire (user closed the tab).
+
+A saved feed being edited never reuses an old preview cache entry — the feed-edit flow starts a fresh `FeedDetail` so the cache key (which embeds `feed_detail_id`) is necessarily different.
 
 ## Background execution
 

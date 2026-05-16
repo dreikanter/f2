@@ -61,6 +61,7 @@ Feed ─── has_many :llm_usages │ (nullable feed_id for previews)
 - Created → enqueues validation job → moves to `validating` → settles to `active` or `inactive`.
 - Marking another credential default un-defaults the previous one in the same transaction (`before_save` callback).
 - Destroying a credential: nullifies `feeds.llm_credential_id`; for any feed left in `enabled` state without a usable credential, the feed is moved to `disabled` with an audit Event (existing pattern from `AccessToken#disable_associated_feeds`).
+- `active → inactive` transition (provider revoked the key, or scheduled re-validation failed): same cascade as destroy — for any `enabled` feed using this credential and lacking another acceptable credential, move the feed to `disabled` with an audit Event. The credential row stays; only its reachability into `enabled` feeds is severed. User can fix the credential and re-enable the feed.
 
 **Indexes**:
 - `(user_id, provider, display_name)` unique
@@ -221,7 +222,7 @@ loader: {
 
 ## 8. Provider registry (new, code-only)
 
-Parallel to `FeedProfile` for AI providers. Drives the credential form generator and tells `LlmClient::Adapter` which RubyLLM provider key to use. There is no per-provider adapter class — RubyLLM handles provider dispatch from this string.
+Parallel to `FeedProfile` for AI providers. Drives the credential form generator and tells `LlmClient` which RubyLLM provider key to use. RubyLLM handles provider dispatch from this string; there is no per-provider class.
 
 ```ruby
 module LlmProvider
@@ -234,7 +235,7 @@ module LlmProvider
         "properties" => { "api_key" => { "type" => "string", "minLength" => 10 } },
         "required" => ["api_key"]
       },
-      validate_call: ->(client) { client.health_check(provider: "anthropic") }
+      validate_call: ->(client) { client.health_check }
     }
     # OpenAI, Gemini, OpenAI-compatible: future entries.
   }.freeze

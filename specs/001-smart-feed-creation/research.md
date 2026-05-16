@@ -95,11 +95,11 @@ ALTER TABLE feed_details ADD COLUMN candidates JSONB NOT NULL DEFAULT '[]';
 
 **Decision**: Implement `LlmClient` as a thin Ruby service over the **`ruby_llm` gem**, a maintained multi-provider abstraction (Anthropic, OpenAI, Gemini, Bedrock, OpenRouter, Ollama). The first provider shipped is Anthropic; OpenAI and others land later as registry entries with no new adapter code. Structured output is delegated to RubyLLM, which internally uses each provider's native mechanism (forced tool use for Anthropic, `response_format: json_schema` for OpenAI) so our code stays provider-agnostic.
 
-A single `app/services/llm_client/adapter.rb` wraps RubyLLM; the per-provider seam collapses into one file. The top-level `LlmClient.for(feed)` resolves the user's credential, configures RubyLLM with the credential's API key, and returns a uniform interface to stage classes.
+`LlmClient` invokes RubyLLM directly — no separate adapter class. `LlmClient.for(feed)` resolves the user's credential, configures RubyLLM with the credential's API key and provider, and returns a client bound to that credential. `LlmClient.call` then handles schema validation, `LlmUsage` write, exception mapping, and the detection guard. Stage classes never see the provider name or RubyLLM.
 
 **Rationale**: The spec's "two-axis" abstraction (credentials × providers) is exactly what RubyLLM is built for. Writing one adapter per provider would duplicate the work RubyLLM already does; switching SDKs lets us add providers as registry rows instead of code. RubyLLM exposes per-provider features critical to this spec: prompt-cache token counts (`cache_read_input_tokens` for Anthropic), provider-side server tools (Anthropic `web_search` / `web_fetch`), structured output via JSON Schema, and normalized usage telemetry. Our `LlmClient` shrinks to the parts that *should* be ours: credential resolution, `LlmUsage` persistence, schema validation via JSONSchemer, the detection-phase guard, and `Rails.error.report` routing.
 
-**Test strategy**: At the `LlmClient` seam — stage tests stub `LlmClient` with `Minitest::Mock` returning canned `(structured_output, usage)` tuples. The RubyLLM adapter has its own contract tests using `WebMock` to simulate provider responses (success, schema violation, provider error, rate limit), one fixture set per provider that has a profile in the registry. No VCR; cassettes drift and obscure intent.
+**Test strategy**: Stage tests stub `LlmClient` with `Minitest::Mock` returning canned `(structured_output, usage)` tuples. `LlmClient` itself is tested end-to-end with `WebMock` against per-provider fixture responses (success, schema violation, provider error, rate limit, timeout). No VCR; cassettes drift and obscure intent.
 
 **Alternatives considered**:
 - *Direct `anthropic` Ruby gem*: works, but every new provider needs a hand-written adapter that re-derives auth/retry/tool/cache plumbing. Reject — RubyLLM removes that duplication.
@@ -232,7 +232,7 @@ Classification rules:
 | JSON Schema dialect | Parent spec, phase 1 | Draft 2020-12 via `json_schemer` |
 | `Feed.url` migration | Parent spec, phase 1 | Drop column; absorb into `feeds.params` |
 | Detection record schema | Handoff D6 | `feed_details.candidates` JSONB; mirror recommended into existing `feed_profile_key` |
-| LLM SDK + structured output | Plan-time | `ruby_llm` gem (multi-provider); single adapter at `LlmClient::Adapter` delegating provider-specific structured-output dispatch |
+| LLM SDK + structured output | Plan-time | `ruby_llm` gem (multi-provider); `LlmClient` calls it directly with no intermediate adapter class |
 | Credential storage | Parent spec, phase 2 | JSONB encrypted via Rails `encrypts`; provider-specific schema |
 | Default-credential uniqueness | Spec FR-013 | Partial unique index + model callback |
 | Preview implementation | Spec FR-014–019 | Reuse `FeedRefreshWorkflow` with `preview: true` mode |

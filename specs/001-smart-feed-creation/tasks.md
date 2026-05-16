@@ -98,14 +98,14 @@ description: "Tasks: Smart Feed Creation"
 - [ ] T038 [US2] Create `app/models/llm_usage.rb` with associations and enums (`stage`, `purpose`, `outcome`). Factory in `test/factories/llm_usages.rb`. Tests in `test/models/llm_usage_test.rb` cover field validations and enum behavior.
 - [ ] T039 [US2] Create `app/models/llm_provider.rb` (code-only registry per data-model §8) with Anthropic entry: display_name, ruby_llm_provider symbol, credential_schema (JSON Schema for `{api_key}`), `validate_call` lambda. Tests in `test/models/llm_provider_test.rb`.
 
-### LlmClient and adapter
+### LlmClient
 
-- [ ] T040 [US2] Create `app/services/llm_client/adapter.rb` wrapping the `ruby_llm` gem per [`contracts/llm_client.md`](./contracts/llm_client.md): one class, multi-provider via the `provider:` argument; delegates structured-output dispatch to RubyLLM; surfaces token usage (including `cache_read_tokens` for Anthropic prompt caching). Tests in `test/services/llm_client/adapter_test.rb` use `WebMock` with fixture responses for each registered provider: success, schema-violation (raises `SchemaError`), 429 (raises `RateLimited` with `retry_after`), 5xx (raises `ProviderError`), timeout (raises `Timeout`). Anthropic-specific assertions cover prompt-cache token surfacing and server-side `web_search` / `web_fetch` tool pass-through.
-- [ ] T041 [US2] Create `app/services/llm_client.rb` (top-level) per [`contracts/llm_client.md`](./contracts/llm_client.md): `for(feed)` / `for(user, provider)` / `for(credential)` factories; `call(...)` method that resolves credential → adapter → schema-validates response → writes `LlmUsage` row → returns `Result`. Detection guard (`raise DetectionForbidden if Thread.current[:llm_detection_phase]`). Reports unexpected errors via `Rails.error.report`. Tests in `test/services/llm_client_test.rb` use `Minitest::Mock` for the adapter; cover usage-row-on-success, usage-row-on-each-failure, schema validation, detection-guard fires, cost computation from rate table.
+- T040 — *Removed.* The per-provider adapter class was folded into `LlmClient` itself; RubyLLM is the multi-provider abstraction, so a separate adapter layer added no value.
+- [ ] T041 [US2] Create `app/services/llm_client.rb` per [`contracts/llm_client.md`](./contracts/llm_client.md): `for(feed)` / `for(user, provider)` / `for(credential)` factories; `call(...)` method that resolves credential → invokes `ruby_llm` with the credential's provider+key → schema-validates response via JSONSchemer → writes `LlmUsage` row → returns `Result`. Translates RubyLLM exceptions into `ProviderError` / `RateLimited` / `Timeout` / `SchemaError`. Detection guard (`raise DetectionForbidden if Thread.current[:llm_detection_phase]`). Reports unexpected errors via `Rails.error.report`. `health_check` method used by `LlmCredentialValidationJob`. Tests in `test/services/llm_client_test.rb` use `WebMock` with fixture responses per registered provider: success, schema-violation, 429, 500, timeout, detection-guard, cost computation from rate table. Anthropic-specific assertions cover prompt-cache token surfacing and server-side `web_search` / `web_fetch` pass-through.
 
 ### Credentials UI and validation job
 
-- [ ] T042 [US2] Create `app/jobs/llm_credential_validation_job.rb` calling `LlmClient.for(credential).call(...)` (using the adapter's `health_check`); writes `last_validated_at` / `last_error` / state. Tests in `test/jobs/llm_credential_validation_job_test.rb` cover happy path and provider-error path.
+- [ ] T042 [US2] Create `app/jobs/llm_credential_validation_job.rb` calling `LlmClient.for(credential).health_check`; writes `last_validated_at` / `last_error` / state. Tests in `test/jobs/llm_credential_validation_job_test.rb` cover happy path and provider-error path.
 - [ ] T043 [US2] Add `resources :llm_credentials, except: %i[edit update]` in `config/routes.rb` with nested `resource :validation, only: %i[show]` and `resource :default, only: %i[update]`. Routing tests in `test/routes/llm_credentials_routes_test.rb`.
 - [ ] T044 [US2] Create `app/controllers/llm_credentials_controller.rb` with `#index`, `#new`, `#show` (polling shell mirroring `AccessTokensController#show`), `#create` (enqueues validation job), `#destroy` (cascades per T037). Tests in `test/controllers/llm_credentials_controller_test.rb`.
 - [ ] T045 [US2] Create `app/controllers/llm_credentials/defaults_controller.rb` for `#update` ("Make default"): wraps the un-default-others + set-default in a single transaction, relies on the partial unique index. Returns Turbo Stream updating both rows' "Default" badges. Tests in `test/controllers/llm_credentials/defaults_controller_test.rb` cover set-default-when-none-exists, switch-default-from-another, attempt-to-double-default (DB rejects).
@@ -198,8 +198,7 @@ description: "Tasks: Smart Feed Creation"
 
 - T034–T036 (migrations) parallel; block T037, T038.
 - T039 (provider registry) parallel.
-- T040 (RubyLLM adapter) parallel.
-- T041 (LlmClient) depends on T039, T040.
+- T041 (LlmClient) depends on T039.
 - T042 (validation job) depends on T041, T037.
 - T043–T046 (credentials controller/views/routes) depend on T037, T038; T045 depends on T037.
 - T047–T049 (LLM stages) parallel after T041.
@@ -223,7 +222,7 @@ description: "Tasks: Smart Feed Creation"
 - After Setup completes: T005, T006 in parallel (different migrations); then T009, T010, T011, T012, T016, T017 in parallel.
 - After Foundational completes: Story 1 and Story 2 can be developed in parallel by separate developers.
 - Within Story 1: T021–T027 in parallel.
-- Within Story 2: T034–T036 in parallel; T039, T040 in parallel; T047–T049 in parallel; T050 in parallel.
+- Within Story 2: T034–T036 in parallel; T047–T049 in parallel; T050 in parallel.
 - Within Story 3: T057, T058 in parallel.
 - Within Polish: T063–T066 in parallel; T067 in parallel; T068 last.
 
@@ -247,4 +246,4 @@ description: "Tasks: Smart Feed Creation"
 - View partials are committed with their tests and any associated Stimulus controller in the same commit.
 - The **vocabulary firewall** test (T063) is intentionally cross-cutting; new view tasks (T023–T028, T046, T054, T055) include local vocabulary checks, but T063 is the catch-all backstop.
 - `data-key` attributes are used for all new test-targeted DOM elements (project convention from CLAUDE.md).
-- AI calls in tests are stubbed at the `LlmClient` seam; the adapter is tested in isolation with `WebMock`. No live AI calls in CI.
+- AI calls in tests are stubbed at the `LlmClient` seam for stage tests; `LlmClient` itself is tested end-to-end with `WebMock` against per-provider fixture responses. No live AI calls in CI.
