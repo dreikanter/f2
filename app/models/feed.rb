@@ -236,13 +236,17 @@ class Feed < ApplicationRecord
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
   end
 
+  # Structural sanity check: in normal use the form is generated from the
+  # same parameter_schema, so this can only fire on a forged POST or a code
+  # bug. The "<pointer> <message>" output is machine-only — the future
+  # per-field form renderer translates it; nothing surfaces raw to users.
   def params_against_profile_schema
     return unless feed_profile_present?
 
     schema = FeedProfile.parameter_schema_for(feed_profile_key)
     return if schema.blank?
 
-    JSONSchemer.schema(schema).validate(params || {}).each do |error|
+    JSONSchemer.schema(schema, format: true).validate(params || {}).each do |error|
       pointer = error["data_pointer"].to_s
       message = pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
       errors.add(:params, message)
