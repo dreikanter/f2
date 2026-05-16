@@ -244,4 +244,80 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Identification session expired"
   end
+
+  test "#show should surface a single-candidate payload in the form data-candidates attribute" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    rss_body = "<?xml version=\"1.0\"?><rss><channel><title>Example</title></channel></rss>"
+    stub_request(:get, url).to_return(status: 200, body: rss_body)
+
+    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    perform_enqueued_jobs
+
+    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    payload = extract_candidates_payload(response.body)
+    assert_equal 1, payload.size
+    assert_equal "rss", payload.first["profile_key"]
+    assert_equal "specific_match", payload.first["rank_reason"]
+  end
+
+  test "#show should surface a multi-candidate payload ranked recommended first" do
+    sign_in_as(user)
+    url = "https://xkcd.com/rss.xml"
+    rss_body = "<?xml version=\"1.0\"?><rss><channel><title>xkcd.com</title></channel></rss>"
+    stub_request(:get, url).to_return(status: 200, body: rss_body)
+
+    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    perform_enqueued_jobs
+
+    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    payload = extract_candidates_payload(response.body)
+    assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
+    assert_equal 0, payload.first["rank"]
+    assert_equal "specific_match", payload.first["rank_reason"]
+    assert_equal "generic_match", payload.last["rank_reason"]
+  end
+
+  test "#show should surface an AI-only fallback payload when only an AI matcher fires" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    # Stub the feed_detail directly with an AI-only candidate list — simulates
+    # what the fetcher will write when only the llm_website_extractor matches
+    # (the AI matcher itself ships in a later PR, so we construct the payload
+    # here as a stand-in to exercise the controller payload contract today).
+    feed_detail = FeedDetail.create!(
+      user: user,
+      url: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    payload = extract_candidates_payload(response.body)
+    assert_equal 1, payload.size
+    assert_equal "llm_website_extractor", payload.first["profile_key"]
+    assert_equal true, payload.first["depends_on_ai"]
+    assert_equal "ai_fallback", payload.first["rank_reason"]
+  ensure
+    feed_detail&.destroy
+  end
+
+  private
+
+  def extract_candidates_payload(body)
+    # The form swap puts data-candidates="<json>" on the wrapper. Capybara/
+    # Nokogiri would be overkill; a regex over the escaped JSON works for the
+    # contract here. The view always renders this attribute on
+    # data-identification-state="complete".
+    match = body.match(/data-candidates="(?<json>[^"]*)"/)
+    return [] unless match
+
+    JSON.parse(CGI.unescapeHTML(match[:json]))
+  end
 end

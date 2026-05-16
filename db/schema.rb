@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_16_021733) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_16_213102) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,10 +58,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_16_021733) do
     t.jsonb "candidates", default: [], null: false
     t.datetime "created_at", null: false
     t.text "error"
-    t.string "feed_profile_key"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
-    t.string "title"
     t.datetime "updated_at", null: false
     t.string "url", null: false
     t.bigint "user_id", null: false

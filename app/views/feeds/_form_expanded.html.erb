@@ -1,7 +1,9 @@
-<%# locals: (edit_mode: false, feed: @feed) %>
+<%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 
-<div id="feed-form" data-identification-state="complete">
+<div id="feed-form"
+     data-identification-state="complete"
+     data-candidates="<%= candidates.to_json %>">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),

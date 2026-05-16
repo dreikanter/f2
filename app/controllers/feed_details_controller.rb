@@ -23,8 +23,7 @@ class FeedDetailsController < ApplicationController
         feed_detail.update!(
           status: :processing,
           started_at: Time.current,
-          feed_profile_key: nil,
-          title: nil,
+          candidates: [],
           error: nil
         )
       rescue ActiveRecord::RecordNotUnique
@@ -80,13 +79,14 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_success_status
+    recommended = feed_detail.candidates.first || {}
     feed = Current.user.feeds.build(
       url: feed_detail.url,
-      feed_profile_key: feed_detail.feed_profile_key,
-      name: feed_detail.title
+      feed_profile_key: recommended["profile_key"],
+      name: recommended["title"]
     )
 
-    render(identification_success(feed))
+    render(identification_success(feed, candidates: feed_detail.candidates))
   end
 
   def handle_failed_status
@@ -114,12 +114,12 @@ class FeedDetailsController < ApplicationController
     }
   end
 
-  def identification_success(feed)
+  def identification_success(feed, candidates: [])
     {
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/form_expanded",
-        locals: { feed: feed }
+        locals: { feed: feed, candidates: candidates }
       )
     }
   end

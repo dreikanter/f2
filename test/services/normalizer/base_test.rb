@@ -38,4 +38,28 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     result = normalizer.send(:normalize_comments)
     assert_equal [], result
   end
+
+  test "#normalize should raise MissingUidError when the subclass produces a blank uid" do
+    subclass = Class.new(Normalizer::Base) do
+      def self.name = "Normalizer::NoUidNormalizer"
+      def build_post
+        Post.new(feed: feed_entry.feed, feed_entry: feed_entry, source_url: "", published_at: Time.current, uid: nil)
+      end
+    end
+
+    error = assert_raises(Normalizer::MissingUidError) { subclass.new(feed_entry).normalize }
+    assert_includes error.message, "Normalizer::NoUidNormalizer"
+  end
+
+  test "#normalize should raise MissingPublishedAtError when the subclass produces a nil published_at" do
+    subclass = Class.new(Normalizer::Base) do
+      def self.name = "Normalizer::NoPublishedAtNormalizer"
+      def build_post
+        Post.new(feed: feed_entry.feed, feed_entry: feed_entry, source_url: "", published_at: nil, uid: "uid-1")
+      end
+    end
+
+    error = assert_raises(Normalizer::MissingPublishedAtError) { subclass.new(feed_entry).normalize }
+    assert_includes error.message, "Normalizer::NoPublishedAtNormalizer"
+  end
 end

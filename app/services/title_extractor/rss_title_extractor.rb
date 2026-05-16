@@ -4,9 +4,9 @@ module TitleExtractor
     # Extracts the feed title from RSS XML
     # @return [String, nil] the feed title or nil if it cannot be extracted
     def title
-      return nil if response.body.blank?
+      return nil if fetched_body.blank?
 
-      doc = Nokogiri::XML(response.body)
+      doc = Nokogiri::XML(fetched_body)
       extract_title(doc)
     rescue Nokogiri::XML::SyntaxError
       nil

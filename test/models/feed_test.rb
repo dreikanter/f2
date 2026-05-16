@@ -20,12 +20,6 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:name, :taken)
   end
 
-  test "should require url" do
-    feed = build(:feed, params: {})
-    assert_not feed.valid?
-    assert feed.errors.of_kind?(:url, :blank)
-  end
-
   test "should default params to empty hash for new records" do
     feed = Feed.new
     assert_equal({}, feed.params)
@@ -207,19 +201,6 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:name, :too_long)
 
     feed = build(:feed, name: "Valid Name With Spaces")
-    assert feed.valid?
-  end
-
-  test "should validate url format" do
-    feed = build(:feed, url: "not-a-url")
-    assert_not feed.valid?
-    assert feed.errors.of_kind?(:url, :invalid)
-
-    feed = build(:feed, url: "ftp://example.com")
-    assert_not feed.valid?
-    assert feed.errors.of_kind?(:url, :invalid)
-
-    feed = build(:feed, url: "https://example.com/feed.xml")
     assert feed.valid?
   end
 

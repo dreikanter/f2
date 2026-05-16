@@ -134,9 +134,9 @@ Feed ─── has_many :llm_usages │ (nullable feed_id for previews)
 
 | Column | Status | Notes |
 |--------|--------|-------|
-| `feed_profile_key` | unchanged | Now mirrors the **recommended** candidate (index 0 of `candidates`). Existing readers continue to work. |
-| `title` | unchanged | Pre-filled feed name from the recommended candidate |
-| `candidates` | **added** | `jsonb`, default `[]`, ranked-list shape per research §4 |
+| `feed_profile_key` | **removed** | Recommended profile lives in `candidates[0].profile_key`; the column was a redundant mirror with no enforced sync invariant. |
+| `title` | **removed** | Same — recommended title lives in `candidates[0].title`. |
+| `candidates` | **added** | `jsonb`, default `[]`, ranked-list shape per research §4. Single source of truth for the detection result. |
 | All other columns | unchanged | |
 
 `status` enum is unchanged: `processing → success | failed`. The `failed` state now means "no candidates at all AND no AI-backed fallback applies" (very rare with curated AI fallbacks); typical "RSS not found" cases land in `success` with an AI-only candidate list.
@@ -144,6 +144,8 @@ Feed ─── has_many :llm_usages │ (nullable feed_id for previews)
 **Validations**:
 - `candidates`: when `status: :success`, MUST be a non-empty array. When `status: :failed`, MAY be empty. When `status: :processing`, MAY be `[]`.
 - Each candidate entry validates against a fixed schema (`profile_key` required and registry-known; `rank` integer; `depends_on_ai` boolean; `title` optional).
+
+**Readers**: `FeedDetailsController#handle_success_status` reads `feed_detail.candidates.first` to build the in-progress `Feed` instance. There is no other reader of the recommended candidate outside the controller.
 
 **Lifecycle**: unchanged from today; cleanup on feed save still applies (`cleanup_feed_identification(url)` — but the cleanup key becomes `(user_id, params_digest)` rather than `(user_id, url)` to handle non-URL inputs).
 

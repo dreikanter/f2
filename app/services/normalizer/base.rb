@@ -14,11 +14,16 @@ module Normalizer
       @feed_entry = feed_entry
     end
 
-    # Normalizes feed entry into a Post with validation
+    # Normalizes feed entry into a Post with validation. Raises if the
+    # subclass produced a Post missing dedup or ordering invariants —
+    # those are programming errors, covered by per-profile tests.
     #
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
+      raise MissingUidError, "#{self.class.name} produced a Post with no uid" if post.uid.blank?
+      raise MissingPublishedAtError, "#{self.class.name} produced a Post with no published_at" if post.published_at.blank?
+
       # TBD: Consider renaming this field
       post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected

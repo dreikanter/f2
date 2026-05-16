@@ -45,13 +45,6 @@ class Feed < ApplicationRecord
             uniqueness: { scope: :user_id },
             length: { maximum: NAME_MAX_LENGTH }
 
-  validates :url,
-            presence: true,
-            format: {
-              with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
-              message: "must be a valid HTTP or HTTPS URL"
-            }
-
   validates :cron_expression, presence: true, if: :enabled?
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }

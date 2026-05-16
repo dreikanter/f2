@@ -1,16 +1,17 @@
 module TitleExtractor
-  # Base class for feed title extractors
+  # Base class for feed title extractors.
   #
-  # Subclasses must implement the #title method to extract the feed title
-  # from the URL and HTTP response.
+  # Constructor takes the same shape as ProfileMatcher::Base —
+  # (input, fetched_body) — so the detector can share one call shape
+  # across matchers and title extractors.
   class Base
-    attr_reader :url, :response
+    attr_reader :input, :fetched_body
 
-    # @param url [String] the feed URL
-    # @param response [HttpClient::Response] the HTTP response object
-    def initialize(url, response)
-      @url = url
-      @response = response
+    # @param input [String] the user's raw input (URL today)
+    # @param fetched_body [String, nil] the body of the URL when applicable
+    def initialize(input, fetched_body = nil)
+      @input = input
+      @fetched_body = fetched_body
     end
 
     # Extracts the feed title
