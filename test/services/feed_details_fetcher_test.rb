@@ -136,4 +136,64 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     assert_equal "failed", feed_detail.status
     assert_equal "An error occurred while identifying the feed", feed_detail.error
   end
+
+  test "#identify should persist a ranked candidates array on success" do
+    url = "http://example.com/feed.xml"
+
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Example Feed</title>
+        </channel>
+      </rss>
+    XML
+
+    stub_request(:get, url).to_return(status: 200, body: rss_content)
+
+    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+
+    feed_detail = FeedDetail.find_by(user: user, url: url)
+    assert_equal 1, feed_detail.candidates.size
+
+    candidate = feed_detail.candidates.first
+    assert_equal "rss", candidate["profile_key"]
+    assert_equal "Example Feed", candidate["title"]
+    assert_equal false, candidate["depends_on_ai"]
+    assert_equal 0, candidate["rank"]
+    assert_equal "specific_match", candidate["rank_reason"]
+  end
+
+  test "#identify should persist multiple candidates ranked when multiple match" do
+    url = "https://xkcd.com/rss.xml"
+
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>xkcd.com</title>
+        </channel>
+      </rss>
+    XML
+
+    stub_request(:get, url).to_return(status: 200, body: rss_content)
+
+    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+
+    feed_detail = FeedDetail.find_by(user: user, url: url)
+    profile_keys = feed_detail.candidates.map { |c| c["profile_key"] }
+    assert_equal %w[xkcd rss], profile_keys, "xkcd outranks rss for xkcd.com URLs"
+    assert_equal "xkcd", feed_detail.feed_profile_key, "feed_profile_key mirrors the recommended candidate"
+  end
+
+  test "#identify should persist an empty candidates array when no profile matches" do
+    url = "http://example.com/page.html"
+    stub_request(:get, url).to_return(status: 200, body: "<html><body/></html>")
+
+    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+
+    feed_detail = FeedDetail.find_by(user: user, url: url)
+    assert_equal "failed", feed_detail.status
+    assert_equal [], feed_detail.candidates
+  end
 end

@@ -17,14 +17,27 @@ class FeedDetailsFetcher
         status: :success,
         feed_profile_key: recommended.profile_key,
         title: recommended.title,
+        candidates: serialize_candidates(result.candidates),
         error: nil
       )
     else
-      feed_detail.update!(status: :failed, feed_profile_key: nil, title: nil, error: "Unsupported feed profile")
+      feed_detail.update!(
+        status: :failed,
+        feed_profile_key: nil,
+        title: nil,
+        candidates: [],
+        error: "Unsupported feed profile"
+      )
     end
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_url_for_logging(@url)}: #{e.class} - #{e.message}")
-    feed_detail.update!(status: :failed, feed_profile_key: nil, title: nil, error: "An error occurred while identifying the feed")
+    feed_detail.update!(
+      status: :failed,
+      feed_profile_key: nil,
+      title: nil,
+      candidates: [],
+      error: "An error occurred while identifying the feed"
+    )
   end
 
   private
@@ -51,5 +64,17 @@ class FeedDetailsFetcher
 
   def http_client
     @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
+  end
+
+  def serialize_candidates(candidates)
+    candidates.map do |c|
+      {
+        "profile_key" => c.profile_key,
+        "title" => c.title,
+        "depends_on_ai" => c.depends_on_ai,
+        "rank" => c.rank,
+        "rank_reason" => c.rank_reason.to_s
+      }
+    end
   end
 end
