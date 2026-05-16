@@ -25,7 +25,7 @@ description: "Tasks: Smart Feed Creation"
 
 **Purpose**: Add new gems and shared scaffolding all subsequent phases depend on.
 
-- [ ] T001 Add `anthropic` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
+- [ ] T001 Add `ruby_llm` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
 - [X] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
 - [ ] T003 [P] Create `config/llm_rates.yml` with per-model token cost table (Anthropic models initially); add `app/services/llm_client/rate_table.rb` loader with test in `test/services/llm_client/rate_table_test.rb`.
 - [X] T004 [P] Add `test/support/feed_profile_validator.rb` (test helper) that validates the enriched `FeedProfile::PROFILES` shape using `json_schemer`; add `test/models/feed_profile_validator_test.rb` covering valid + malformed entries. (Registry is a frozen constant — covered in CI, no runtime boot hook needed.)
@@ -96,11 +96,11 @@ description: "Tasks: Smart Feed Creation"
 - [ ] T036 [P] [US2] Create migration `db/migrate/*_add_llm_credential_id_to_feeds.rb`: nullable FK + index. Reversibility verified.
 - [ ] T037 [US2] Create `app/models/llm_credential.rb` with `encrypts :credential_data`, validations (provider in registry, `display_name` uniqueness scoped to `(user_id, provider)`, `credential_data` validated against `LlmProvider::PROVIDERS[provider][:credential_schema]`), `is_default` callback un-defaulting siblings, `state` enum mirroring `AccessToken`. Factory in `test/factories/llm_credentials.rb`. Tests in `test/models/llm_credential_test.rb` cover validations, default uniqueness (including a partial-unique-index race test), encryption round-trip, schema validation per provider, destroy → nullify dependent feeds → disable feeds without other usable credentials.
 - [ ] T038 [US2] Create `app/models/llm_usage.rb` with associations and enums (`stage`, `purpose`, `outcome`). Factory in `test/factories/llm_usages.rb`. Tests in `test/models/llm_usage_test.rb` cover field validations and enum behavior.
-- [ ] T039 [US2] Create `app/models/llm_provider.rb` (code-only registry per data-model §8) with Anthropic entry: display_name, adapter class name, credential_schema (JSON Schema for `{api_key}`), `validate_call` lambda. Boot-time validation. Tests in `test/models/llm_provider_test.rb`.
+- [ ] T039 [US2] Create `app/models/llm_provider.rb` (code-only registry per data-model §8) with Anthropic entry: display_name, ruby_llm_provider symbol, credential_schema (JSON Schema for `{api_key}`), `validate_call` lambda. Tests in `test/models/llm_provider_test.rb`.
 
 ### LlmClient and adapter
 
-- [ ] T040 [US2] Create `app/services/llm_client/anthropic.rb` adapter implementing the per-provider interface from [`contracts/llm_client.md`](./contracts/llm_client.md): forced tool use for structured output; surfaces token usage. Tests in `test/services/llm_client/anthropic_test.rb` use `WebMock` with fixture responses for: success, schema-violation (raises `SchemaError`), 429 (raises `RateLimited` with `retry_after`), 5xx (raises `ProviderError`), timeout (raises `Timeout`).
+- [ ] T040 [US2] Create `app/services/llm_client/adapter.rb` wrapping the `ruby_llm` gem per [`contracts/llm_client.md`](./contracts/llm_client.md): one class, multi-provider via the `provider:` argument; delegates structured-output dispatch to RubyLLM; surfaces token usage (including `cache_read_tokens` for Anthropic prompt caching). Tests in `test/services/llm_client/adapter_test.rb` use `WebMock` with fixture responses for each registered provider: success, schema-violation (raises `SchemaError`), 429 (raises `RateLimited` with `retry_after`), 5xx (raises `ProviderError`), timeout (raises `Timeout`). Anthropic-specific assertions cover prompt-cache token surfacing and server-side `web_search` / `web_fetch` tool pass-through.
 - [ ] T041 [US2] Create `app/services/llm_client.rb` (top-level) per [`contracts/llm_client.md`](./contracts/llm_client.md): `for(feed)` / `for(user, provider)` / `for(credential)` factories; `call(...)` method that resolves credential → adapter → schema-validates response → writes `LlmUsage` row → returns `Result`. Detection guard (`raise DetectionForbidden if Thread.current[:llm_detection_phase]`). Reports unexpected errors via `Rails.error.report`. Tests in `test/services/llm_client_test.rb` use `Minitest::Mock` for the adapter; cover usage-row-on-success, usage-row-on-each-failure, schema validation, detection-guard fires, cost computation from rate table.
 
 ### Credentials UI and validation job
@@ -198,7 +198,7 @@ description: "Tasks: Smart Feed Creation"
 
 - T034–T036 (migrations) parallel; block T037, T038.
 - T039 (provider registry) parallel.
-- T040 (Anthropic adapter) parallel.
+- T040 (RubyLLM adapter) parallel.
 - T041 (LlmClient) depends on T039, T040.
 - T042 (validation job) depends on T041, T037.
 - T043–T046 (credentials controller/views/routes) depend on T037, T038; T045 depends on T037.

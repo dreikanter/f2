@@ -54,7 +54,7 @@ Sign in (or `bin/rails console`-create) a user with at least one **active** Free
 ### 2c. Save anyway after preview failure
 
 1. Add a deliberately-bad Anthropic credential (e.g., a syntactically valid but unauthorized key). Save → settles to `inactive` with a clear error.
-2. Use a working credential to start a feed creation that *will* fail at preview time — easiest reproduction: set `Loader::LlmLoader` to use a deliberately-impossible source URL via the form, or stub `LlmClient::Anthropic` in a console test.
+2. Use a working credential to start a feed creation that *will* fail at preview time — easiest reproduction: set `Loader::LlmLoader` to use a deliberately-impossible source URL via the form, or stub `LlmClient::Adapter` in a console test.
 3. **Expect**: preview pane shows the failure message and "Save as disabled" button.
 4. Click "Save as disabled". **Confirm** feed exists with `state = disabled`.
 5. From the feed show page, click "Enable" — **confirm** the system re-runs preview before flipping to `enabled`.

@@ -221,22 +221,22 @@ loader: {
 
 ## 8. Provider registry (new, code-only)
 
-Parallel to `FeedProfile` for AI providers. Drives the credential form generator and the `LlmClient` adapter routing.
+Parallel to `FeedProfile` for AI providers. Drives the credential form generator and tells `LlmClient::Adapter` which RubyLLM provider key to use. There is no per-provider adapter class — RubyLLM handles provider dispatch from this string.
 
 ```ruby
 module LlmProvider
   PROVIDERS = {
     "anthropic" => {
       display_name: "Anthropic (Claude)",
-      adapter: "LlmClient::Anthropic",
+      ruby_llm_provider: :anthropic,
       credential_schema: {
         "type" => "object",
         "properties" => { "api_key" => { "type" => "string", "minLength" => 10 } },
         "required" => ["api_key"]
       },
-      validate_call: ->(client) { client.health_check }
+      validate_call: ->(client) { client.health_check(provider: "anthropic") }
     }
-    # OpenAI, OpenAI-compatible: future entries.
+    # OpenAI, Gemini, OpenAI-compatible: future entries.
   }.freeze
 end
 ```
