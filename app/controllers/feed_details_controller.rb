@@ -86,7 +86,7 @@ class FeedDetailsController < ApplicationController
       name: feed_detail.title
     )
 
-    render(identification_success(feed))
+    render(identification_success(feed, candidates: feed_detail.candidates))
   end
 
   def handle_failed_status
@@ -114,12 +114,12 @@ class FeedDetailsController < ApplicationController
     }
   end
 
-  def identification_success(feed)
+  def identification_success(feed, candidates: [])
     {
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/form_expanded",
-        locals: { feed: feed }
+        locals: { feed: feed, candidates: candidates }
       )
     }
   end
