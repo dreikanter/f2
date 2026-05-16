@@ -6,21 +6,15 @@
 # be persisted regardless of whether normalization is performed.
 #
 module Normalizer
-  # Raised when a normalizer returns a Post missing fields the universal
-  # post shape requires (see notes/profile-contracts.md §1). This is a
-  # programming error in the normalizer, distinct from per-post
-  # content validation (which records :rejected on the Post instead).
-  class UniversalPostShapeError < StandardError; end
-
-  # The fields every profile MUST populate. uid is required for dedup
-  # (FR-020); published_at is required for ordering. source_url is also
-  # in the universal shape (notes/profile-contracts.md §1) but profiles
-  # are allowed to emit "" when a per-post URL is unavailable — content
-  # validation rejects such posts via validation_errors instead.
-  UNIVERSAL_REQUIRED_FIELDS = %i[uid published_at].freeze
-
   class Base
     include HtmlTextUtils
+
+    # The fields every profile MUST populate. uid is required for dedup
+    # (FR-020); published_at is required for ordering. source_url is also
+    # in the universal shape (notes/profile-contracts.md §1) but profiles
+    # are allowed to emit "" when a per-post URL is unavailable — content
+    # validation rejects such posts via validation_errors instead.
+    UNIVERSAL_REQUIRED_FIELDS = %i[uid published_at].freeze
 
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)

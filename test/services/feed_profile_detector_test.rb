@@ -100,6 +100,26 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     assert reported.any? { |msg, _| msg == "kaboom" }, "expected Rails.error.report to capture the matcher failure"
   end
 
+  test ".call should report title-extraction failures via Rails.error and return nil for the title" do
+    boom_extractor = Class.new do
+      def initialize(_input, _response); end
+      def title
+        raise StandardError, "title boom"
+      end
+    end
+
+    reported = []
+    FeedProfile.stub(:title_extractor_class_for, ->(_key) { boom_extractor }) do
+      Rails.error.stub(:report, ->(err, **kwargs) { reported << [err.message, kwargs] }) do
+        result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
+        assert_nil result.candidates.first.title, "title should be nil when extractor raises"
+      end
+    end
+
+    assert reported.any? { |msg, kwargs| msg == "title boom" && kwargs.dig(:context, :source) == "title_extraction" },
+           "expected Rails.error.report to capture the title-extraction failure"
+  end
+
   test ".call should set and clear Thread.current[:llm_detection_phase]" do
     captured_flag = nil
     spy = build_matcher_class("SpyProfileMatcher", specificity: 1) do
