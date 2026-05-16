@@ -1,20 +1,47 @@
-# Feed profile configuration that defines how feeds are processed.
+# Feed profile registry. Each entry describes one input → posts pipeline
+# (matcher + parameter shape + loader/processor/normalizer triple).
 #
 class FeedProfile
+  STAGES = %i[loader processor normalizer].freeze
+
   PROFILES = {
     "rss" => {
       display_name: "RSS Feed",
-      loader: "Loader::HttpLoader",
-      processor: "Processor::RssProcessor",
-      normalizer: "Normalizer::RssNormalizer",
-      title_extractor: "TitleExtractor::RssTitleExtractor"
+      description: "Posts from a site's RSS or Atom feed",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::RssProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"]
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::RssNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
     },
     "xkcd" => {
       display_name: "XKCD",
-      loader: "Loader::HttpLoader",
-      processor: "Processor::RssProcessor",
-      normalizer: "Normalizer::XkcdNormalizer",
-      title_extractor: "TitleExtractor::RssTitleExtractor"
+      description: "Posts from xkcd.com with the alt text included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::XkcdProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"]
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::XkcdNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
     }
   }.freeze
 
@@ -31,15 +58,72 @@ class FeedProfile
     PROFILES.key?(key)
   end
 
-  # Resolves and returns a service class for a given profile key and service type
+  # Bracket access to the full registry entry for a profile key
   # @param key [String] the profile key
-  # @param service_type [Symbol] the service type (:loader, :processor, :normalizer, :title_extractor)
-  # @return [Class] the service class
-  def self.class_for(key, service_type)
-    class_name = PROFILES.dig(key, service_type)
-    raise ArgumentError, "Profile '#{key}' not found" unless class_name
+  # @return [Hash, nil] the registry entry hash or nil if not found
+  def self.[](key)
+    PROFILES[key]
+  end
+
+  # Returns matcher classes whose input_shape accepts the given shape, in
+  # registration order. Pass nil/:any to get every matcher.
+  # @param input_shape [Symbol, nil] one of :url, :handle, :query, :any, nil
+  # @return [Array<Class>] matcher classes
+  def self.matchers_for(input_shape)
+    PROFILES.filter_map do |_key, entry|
+      next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
+
+      entry[:matcher].constantize
+    end
+  end
+
+  # @param key [String] the profile key
+  # @return [Boolean] true if any of the profile's stages calls an LLM
+  def self.depends_on_ai?(key)
+    !!PROFILES.dig(key, :depends_on_ai)
+  end
+
+  # Returns the JSON Schema describing the feed's params hash
+  # @param key [String] the profile key
+  # @return [Hash, nil] the parameter schema (nil if profile not found)
+  def self.parameter_schema_for(key)
+    PROFILES.dig(key, :parameter_schema)
+  end
+
+  # Resolves and returns a stage class for a given profile key and stage type
+  # @param key [String] the profile key
+  # @param stage [Symbol] the stage (:loader, :processor, :normalizer, :title_extractor)
+  # @return [Class] the stage class
+  def self.class_for(key, stage)
+    raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
+
+    entry = PROFILES.fetch(key)
+    raw = entry[stage]
+
+    class_name =
+      case raw
+      when Hash then raw[:class]
+      when String then raw
+      end
+
+    raise ArgumentError, "Profile '#{key}' has no #{stage}" if class_name.nil?
 
     class_name.constantize
+  end
+
+  # @param key [String] the profile key
+  # @param stage [Symbol] the stage (:loader, :processor, :normalizer)
+  # @return [Hash] the stage's config hash (frozen empty hash if none)
+  def self.config_for(key, stage)
+    raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
+
+    entry = PROFILES.fetch(key)
+    raw = entry[stage]
+
+    case raw
+    when Hash then raw[:config] || {}
+    else {}
+    end
   end
 
   # Resolves and returns the loader class for a given profile key
