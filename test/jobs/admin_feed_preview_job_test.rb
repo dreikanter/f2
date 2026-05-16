@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FeedPreviewJobTest < ActiveJob::TestCase
+class AdminFeedPreviewJobTest < ActiveJob::TestCase
   def user
     @user ||= create(:user)
   end
@@ -10,28 +10,28 @@ class FeedPreviewJobTest < ActiveJob::TestCase
   end
 
   test "should be queued on default queue" do
-    assert_equal "default", FeedPreviewJob.queue_name
+    assert_equal "default", AdminFeedPreviewJob.queue_name
   end
 
   test "should handle missing feed preview gracefully" do
     # Should not raise an error
     assert_nothing_raised do
-      FeedPreviewJob.perform_now("non-existent-id")
+      AdminFeedPreviewJob.perform_now("non-existent-id")
     end
   end
 
   test "should perform job later" do
-    assert_enqueued_with(job: FeedPreviewJob, args: [feed_preview.id]) do
-      FeedPreviewJob.perform_later(feed_preview.id)
+    assert_enqueued_with(job: AdminFeedPreviewJob, args: [feed_preview.id]) do
+      AdminFeedPreviewJob.perform_later(feed_preview.id)
     end
   end
 
   test "should inherit from ApplicationJob" do
-    assert_equal ApplicationJob, FeedPreviewJob.superclass
+    assert_equal ApplicationJob, AdminFeedPreviewJob.superclass
   end
 
   test "should respond to perform method" do
-    assert_respond_to FeedPreviewJob.new, :perform
+    assert_respond_to AdminFeedPreviewJob.new, :perform
   end
 
   test "should execute workflow when preview exists" do
@@ -62,7 +62,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
     # This should execute the workflow path (line 9)
     assert_nothing_raised do
-      FeedPreviewJob.perform_now(valid_preview.id)
+      AdminFeedPreviewJob.perform_now(valid_preview.id)
     end
 
     # Verify the preview was processed successfully
@@ -84,7 +84,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
     # The job should handle the error, log it, and update status
     assert_raises StandardError do
-      FeedPreviewJob.perform_now(failing_preview.id)
+      AdminFeedPreviewJob.perform_now(failing_preview.id)
     end
 
     # Check that the preview status was updated to failed
@@ -100,7 +100,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
     # Job should handle missing preview gracefully
     assert_nothing_raised do
-      FeedPreviewJob.perform_now(preview_id)
+      AdminFeedPreviewJob.perform_now(preview_id)
     end
   end
 
@@ -117,7 +117,7 @@ class FeedPreviewJobTest < ActiveJob::TestCase
 
     # This should trigger the error logging path
     assert_raises StandardError do
-      FeedPreviewJob.perform_now(failing_preview.id)
+      AdminFeedPreviewJob.perform_now(failing_preview.id)
     end
   end
 end

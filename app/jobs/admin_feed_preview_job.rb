@@ -1,4 +1,4 @@
-class FeedPreviewJob < ApplicationJob
+class AdminFeedPreviewJob < ApplicationJob
   queue_as :default
 
   # @param feed_preview_id [String] UUID of the feed preview to generate
@@ -8,7 +8,7 @@ class FeedPreviewJob < ApplicationJob
 
     FeedPreviewWorkflow.new(feed_preview).execute
   rescue => e
-    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
+    Rails.logger.error "AdminFeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
 
     feed_preview&.update!(status: :failed)
     raise
