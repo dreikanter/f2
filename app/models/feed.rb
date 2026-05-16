@@ -38,6 +38,11 @@ class Feed < ApplicationRecord
 
   enum :state, { disabled: 0, enabled: 1 }, default: :disabled
 
+  # Tied to the preview a user just saw when saving an enabled feed. Set by
+  # FeedsController#create / #update from request params; verified by
+  # enabling_requires_recent_preview. Not persisted.
+  attr_accessor :preview_token
+
   after_update :create_schedule_on_enable
 
   validates :name,
@@ -56,6 +61,7 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
+  validate :enabling_requires_recent_preview
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -244,6 +250,25 @@ class Feed < ApplicationRecord
       message = pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
       errors.add(:params, message)
     end
+  end
+
+  # Saving an enabled feed with source-side changes requires a fresh
+  # preview_token bound to the current (profile_key, params). Operational
+  # state toggles on an unchanged feed (FeedStatusesController#update) don't
+  # need to re-prove a preview — that's FR-026/027/028's distinction between
+  # operational and source-side edits.
+  def enabling_requires_recent_preview
+    return unless enabled?
+    return unless new_record? || will_save_change_to_params? || will_save_change_to_feed_profile_key?
+
+    valid_token = PreviewToken.verify(
+      preview_token,
+      user_id: user_id,
+      profile_key: feed_profile_key,
+      params: params || {}
+    )
+
+    errors.add(:state, :preview_required, message: "requires a recent preview") unless valid_token
   end
 
   def create_schedule_on_enable

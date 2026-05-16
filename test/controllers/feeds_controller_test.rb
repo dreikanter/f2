@@ -64,8 +64,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       schedule_interval: "1h"
     }
 
+    preview_token = PreviewToken.sign(
+      user_id: user.id,
+      profile_key: "rss",
+      params: { "url" => "http://example.com/feed.xml" },
+      generated_at: Time.current
+    )
+
     assert_difference("Feed.count", 1) do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: preview_token }
     end
 
     feed = Feed.last
