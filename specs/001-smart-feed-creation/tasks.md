@@ -28,7 +28,7 @@ description: "Tasks: Smart Feed Creation"
 - [ ] T001 Add `anthropic` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
 - [X] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
 - [ ] T003 [P] Create `config/llm_rates.yml` with per-model token cost table (Anthropic models initially); add `app/services/llm_client/rate_table.rb` loader with test in `test/services/llm_client/rate_table_test.rb`.
-- [ ] T004 [P] Create `config/initializers/feed_profile_validator.rb` that validates the enriched `FeedProfile::PROFILES` shape at boot using `json_schemer`; add `test/initializers/feed_profile_validator_test.rb` covering valid + malformed entries.
+- [X] T004 [P] Create `config/initializers/feed_profile_validator.rb` that validates the enriched `FeedProfile::PROFILES` shape at boot using `json_schemer`; add `test/initializers/feed_profile_validator_test.rb` covering valid + malformed entries.
 
 **Checkpoint**: Project boots cleanly with new gems and validator hooks in place.
 
