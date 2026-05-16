@@ -21,9 +21,14 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should require url" do
-    feed = build(:feed, url: nil)
+    feed = build(:feed, params: {})
     assert_not feed.valid?
     assert feed.errors.of_kind?(:url, :blank)
+  end
+
+  test "should default params to empty hash for new records" do
+    feed = Feed.new
+    assert_equal({}, feed.params)
   end
 
   test "should require cron_expression for enabled feeds" do

@@ -57,7 +57,6 @@ class Feed < ApplicationRecord
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
   normalizes :name, with: ->(name) { name.to_s.strip }
-  normalizes :url, with: ->(url) { url.to_s.strip }
   normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
   normalizes :target_group, with: ->(group) { group.present? ? group.to_s.strip.downcase : nil }
@@ -94,6 +93,15 @@ class Feed < ApplicationRecord
 
   def schedule_display
     SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
+  end
+
+  def url
+    params&.dig("url")
+  end
+
+  def url=(value)
+    normalized = value.is_a?(String) ? value.strip : value
+    self.params = (params || {}).merge("url" => normalized)
   end
 
   def feed_profile_present?

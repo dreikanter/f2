@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :feed do
     association :user
     sequence(:name) { |n| "sample-feed-#{n}-#{SecureRandom.uuid[0..7]}" }
-    url { "https://example.com/feed.xml" }
+    params { { "url" => "https://example.com/feed.xml" } }
     cron_expression { "0 */6 * * *" }
     state { :disabled }
     description { "" }

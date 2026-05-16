@@ -26,7 +26,7 @@ description: "Tasks: Smart Feed Creation"
 **Purpose**: Add new gems and boot-time scaffolding all subsequent phases depend on.
 
 - [ ] T001 Add `anthropic` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
-- [ ] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
+- [X] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
 - [ ] T003 [P] Create `config/llm_rates.yml` with per-model token cost table (Anthropic models initially); add `app/services/llm_client/rate_table.rb` loader with test in `test/services/llm_client/rate_table_test.rb`.
 - [ ] T004 [P] Create `config/initializers/feed_profile_validator.rb` that validates the enriched `FeedProfile::PROFILES` shape at boot using `json_schemer`; add `test/initializers/feed_profile_validator_test.rb` covering valid + malformed entries.
 
@@ -38,7 +38,7 @@ description: "Tasks: Smart Feed Creation"
 
 **Purpose**: Schema changes, profile-registry refactor, detection contract change, preview pipeline scaffold. **All user stories depend on these.**
 
-- [ ] T005 Add migration `db/migrate/*_drop_url_add_params_to_feeds.rb` — drops `feeds.url` column, adds `feeds.params jsonb NOT NULL DEFAULT '{}'`; backfills any pre-existing rows with `params = {"url" => url}` before dropping. Reversibility verified. Test: `test/models/feed_test.rb` updated for `params`.
+- [X] T005 Add migration `db/migrate/*_drop_url_add_params_to_feeds.rb` — drops `feeds.url` column, adds `feeds.params jsonb NOT NULL DEFAULT '{}'`; backfills any pre-existing rows with `params = {"url" => url}` before dropping. Reversibility verified. Test: `test/models/feed_test.rb` updated for `params`.
 - [ ] T006 Add migration `db/migrate/*_add_candidates_to_feed_details.rb` — `feed_details.candidates jsonb NOT NULL DEFAULT '[]'`. Reversibility verified. Test: `test/models/feed_detail_test.rb` updated.
 - [ ] T007 Refactor `app/models/feed_profile.rb` to the enriched per-entry shape per [`contracts/profile_registry.md`](./contracts/profile_registry.md) (`input_shape`, `parameter_schema`, `loader/processor/normalizer { class:, config: }`, `matcher`); migrate `rss` and `xkcd` entries to the new shape; update `test/models/feed_profile_test.rb` covering registry validation, lookup helpers (`matchers_for`, `depends_on_ai?`, `parameter_schema_for`).
 - [ ] T008 [P] Add `Feed#url` accessor in `app/models/feed.rb` returning `params["url"]`; add `params` schema validation against `FeedProfile[feed_profile_key].parameter_schema`; update `test/models/feed_test.rb` for both behaviors.
