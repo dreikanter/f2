@@ -99,12 +99,7 @@ class FeedProfile
 
     entry = PROFILES.fetch(key)
     raw = entry[stage]
-
-    class_name =
-      case raw
-      when Hash then raw[:class]
-      when String then raw
-      end
+    class_name = raw.is_a?(Hash) ? raw[:class] : raw
 
     raise ArgumentError, "Profile '#{key}' has no #{stage}" if class_name.nil?
 

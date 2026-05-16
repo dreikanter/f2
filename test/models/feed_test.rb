@@ -56,6 +56,15 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "https://example.com/feed.xml", feed.url
   end
 
+  test "#url= should remove the url key when assigned nil" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "extra" => "value" })
+    feed.url = nil
+
+    assert_nil feed.url
+    assert_not feed.params.key?("url")
+    assert_equal "value", feed.params["extra"]
+  end
+
   test "should reject params missing required keys per profile schema" do
     feed = build(:feed, feed_profile_key: "rss", params: {})
     assert_not feed.valid?

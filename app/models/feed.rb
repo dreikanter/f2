@@ -101,8 +101,13 @@ class Feed < ApplicationRecord
   end
 
   def url=(value)
-    normalized = value.is_a?(String) ? value.strip : value
-    self.params = (params || {}).merge("url" => normalized)
+    next_params = (params || {}).dup
+    if value.nil?
+      next_params.delete("url")
+    else
+      next_params["url"] = value.is_a?(String) ? value.strip : value
+    end
+    self.params = next_params
   end
 
   def feed_profile_present?
