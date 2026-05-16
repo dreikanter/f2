@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FeedProfileValidatorTest < ActiveSupport::TestCase
+class FeedProfile::ValidatorTest < ActiveSupport::TestCase
   def valid_entry
     {
       display_name: "Sample",
@@ -22,20 +22,20 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   end
 
   test "validates the live FeedProfile::PROFILES registry" do
-    assert_nothing_raised { FeedProfileValidator.validate! }
+    assert_nothing_raised { FeedProfile::Validator.validate! }
   end
 
   test "accepts a valid registry" do
     assert_nothing_raised do
-      FeedProfileValidator.validate!("sample" => valid_entry)
+      FeedProfile::Validator.validate!("sample" => valid_entry)
     end
   end
 
   test "rejects entry missing required key" do
     entry = valid_entry.except(:display_name)
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "display_name"
@@ -44,8 +44,8 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test "rejects entry with unknown input_shape" do
     entry = valid_entry.merge(input_shape: :twitter)
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "input_shape"
@@ -54,8 +54,8 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test "rejects stage entry that is a bare string instead of {class:, config:}" do
     entry = valid_entry.merge(loader: "Loader::HttpLoader")
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "loader"
@@ -64,8 +64,8 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test "rejects stage entry missing class" do
     entry = valid_entry.merge(loader: { config: {} })
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "loader"
@@ -75,8 +75,8 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test "rejects unknown extra keys at top level" do
     entry = valid_entry.merge(rogue_key: 42)
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "rogue_key"
@@ -85,8 +85,8 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   test "requires output_schema when depends_on_ai is true" do
     entry = valid_entry.merge(depends_on_ai: true, output_schema: nil)
 
-    error = assert_raises(FeedProfileValidator::Error) do
-      FeedProfileValidator.validate!("sample" => entry)
+    error = assert_raises(FeedProfile::Validator::Error) do
+      FeedProfile::Validator.validate!("sample" => entry)
     end
 
     assert_includes error.message, "output_schema is required when depends_on_ai is true"
@@ -99,7 +99,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     )
 
     assert_nothing_raised do
-      FeedProfileValidator.validate!("sample" => entry)
+      FeedProfile::Validator.validate!("sample" => entry)
     end
   end
 end
