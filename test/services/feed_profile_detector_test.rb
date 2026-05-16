@@ -1,81 +1,150 @@
 require "test_helper"
 
 class FeedProfileDetectorTest < ActiveSupport::TestCase
-  test ".DETECTION_ORDER should contain only valid matcher classes" do
-    FeedProfileDetector::DETECTION_ORDER.each do |matcher_class_name|
-      assert_nothing_raised do
-        matcher_class_name.constantize
-      end
-
-      error_message = "#{matcher_class_name} should inherit from ProfileMatcher::Base"
-      assert matcher_class_name.constantize < ProfileMatcher::Base, error_message
-    end
-  end
-
-  def detector(url, body)
-    response = HttpClient::Response.new(status: 200, body: body)
-    FeedProfileDetector.new(url, response)
-  end
-
   def rss_feed_body
     <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
         <channel>
           <title>Test Feed</title>
-          <description>A test feed</description>
         </channel>
       </rss>
     XML
   end
 
-  test "#detect should return xkcd profile for xkcd.com URLs" do
-    actual = detector("https://xkcd.com/rss.xml", rss_feed_body).detect
-    assert_equal ProfileMatcher::XkcdProfileMatcher, actual
+  test ".call should return DetectionResult with the InputClassifier shape" do
+    result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
+    assert_equal :url, result.input_shape
   end
 
-  test "#detect should return rss profile for generic RSS feeds" do
-    actual = detector("https://example.com/feed.xml", rss_feed_body).detect
-    assert_equal ProfileMatcher::RssProfileMatcher, actual
+  test ".call should return empty candidates for malformed input" do
+    result = FeedProfileDetector.call(input: "")
+    assert_equal :malformed, result.input_shape
+    assert_empty result.candidates
   end
 
-  test "#detect should prefer xkcd over rss for xkcd.com URLs" do
-    actual = detector("https://xkcd.com/atom.xml", rss_feed_body).detect
-    assert_equal ProfileMatcher::XkcdProfileMatcher, actual
+  test ".call should return empty candidates when no matcher fires" do
+    result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
+    assert_equal :url, result.input_shape
+    assert_empty result.candidates
   end
 
-  test "#detect should return nil for non-matching content" do
-    html = "<html><body>Not a feed</body></html>"
-    assert_nil detector("https://example.com/page.html", html).detect
+  test ".call should return a ranked candidate for a generic RSS feed" do
+    result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
+    assert_equal ["rss"], result.candidates.map(&:profile_key)
+
+    candidate = result.candidates.first
+    assert_equal 0, candidate.rank
+    assert_equal false, candidate.depends_on_ai
+    assert_equal :specific_match, candidate.rank_reason
   end
 
-  test "#detect should return nil for blank response body" do
-    assert_nil detector("https://example.com/feed.xml", "").detect
+  test ".call should rank specific matchers above generic ones" do
+    result = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
+
+    profile_keys = result.candidates.map(&:profile_key)
+    assert_equal %w[xkcd rss], profile_keys, "xkcd (specificity 100) outranks rss (specificity 10)"
+
+    xkcd, rss = result.candidates
+    assert_equal 0, xkcd.rank
+    assert_equal 1, rss.rank
+    assert_equal :specific_match, xkcd.rank_reason
+    assert_equal :generic_match, rss.rank_reason
   end
 
-  test "#detect should return rss profile for RSS 1.0 feeds" do
-    rdf_body = <<~XML
-      <?xml version="1.0"?>
-      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-        <channel>
-          <title>RDF Feed</title>
-        </channel>
-      </rdf:RDF>
-    XML
+  test ".call should place AI-backed candidates after non-AI candidates" do
+    matchers = [ProfileMatcher::RssProfileMatcher, ai_matcher_class(specificity: 1000)]
 
-    actual = detector("https://example.com/rss.rdf", rdf_body).detect
-    assert_equal ProfileMatcher::RssProfileMatcher, actual
-  end
+    FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
+      result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
 
-  test "#detect should raise error for invalid URLs" do
-    assert_raises(URI::InvalidURIError) do
-      detector("not a url", rss_feed_body).detect
+      assert_equal "rss", result.candidates.first.profile_key, "non-AI ranks above AI even when AI is more specific"
+      assert_equal "fake_ai", result.candidates.last.profile_key
+      assert_equal :specific_match, result.candidates.first.rank_reason
+      assert_equal :ai_fallback, result.candidates.last.rank_reason
     end
   end
 
-  test "#detect should prioritize specific profiles before generic" do
-    xkcd_url = "https://xkcd.com/rss.xml"
-    result = detector(xkcd_url, rss_feed_body).detect
-    assert_equal ProfileMatcher::XkcdProfileMatcher, result
+  test ".call should use registration order as the tiebreaker" do
+    tie_matcher = build_matcher_class("FakeTieProfileMatcher", specificity: 10)
+    matchers = [ProfileMatcher::RssProfileMatcher, tie_matcher]
+
+    FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
+      result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
+      assert_equal "rss", result.candidates.first.profile_key, "rss registered first wins the tie"
+    end
+  end
+
+  test ".call should be deterministic across repeated invocations" do
+    result_a = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
+    result_b = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
+    assert_equal result_a.candidates.map(&:profile_key), result_b.candidates.map(&:profile_key)
+  end
+
+  test ".call should skip a matcher that raises and continue the chain" do
+    bomb = build_matcher_class("BombProfileMatcher", specificity: 50) do
+      def match?
+        raise StandardError, "kaboom"
+      end
+    end
+    matchers = [bomb, ProfileMatcher::RssProfileMatcher]
+
+    reported = []
+    Rails.error.stub(:report, ->(err, **kwargs) { reported << [err.message, kwargs] }) do
+      FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
+        result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
+        assert_includes result.candidates.map(&:profile_key), "rss", "rss still matches even though bomb raised"
+      end
+    end
+
+    assert reported.any? { |msg, _| msg == "kaboom" }, "expected Rails.error.report to capture the matcher failure"
+  end
+
+  test ".call should set and clear Thread.current[:llm_detection_phase]" do
+    captured_flag = nil
+    spy = build_matcher_class("SpyProfileMatcher", specificity: 1) do
+      define_method(:match?) do
+        captured_flag = Thread.current[:llm_detection_phase]
+        false
+      end
+    end
+
+    FeedProfile.stub(:matchers_for, ->(_) { [spy] }) do
+      FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: "")
+    end
+
+    assert_equal true, captured_flag, "flag should be set while matchers run"
+    assert_nil Thread.current[:llm_detection_phase], "flag must be cleared after call"
+  end
+
+  private
+
+  def build_matcher_class(class_name, specificity:, &block)
+    Class.new(ProfileMatcher::Base) do
+      const_set(:NAME_OVERRIDE, "ProfileMatcher::#{class_name}")
+      define_singleton_method(:name) { const_get(:NAME_OVERRIDE) }
+      input_shape :url
+      match_specificity specificity
+      depends_on_ai false
+
+      def match?
+        true
+      end
+
+      class_eval(&block) if block
+    end
+  end
+
+  def ai_matcher_class(specificity:)
+    Class.new(ProfileMatcher::Base) do
+      define_singleton_method(:name) { "ProfileMatcher::FakeAiProfileMatcher" }
+      input_shape :url
+      match_specificity specificity
+      depends_on_ai true
+
+      def match?
+        true
+      end
+    end
   end
 end
