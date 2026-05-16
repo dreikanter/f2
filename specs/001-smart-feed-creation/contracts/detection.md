@@ -48,7 +48,7 @@ For each matcher whose input_shape ∈ {input_shape, :any}:
 Sort candidates by:
   primary:   depends_on_ai ASC                 # non-AI before AI
   secondary: match_specificity DESC            # specific before generic
-  tertiary:  registration order ASC            # stable tiebreaker
+  tertiary:  registration order ASC            # = index in FeedProfile::PROFILES insertion order
 
 Assign rank = index after sort.
 Record rank_reason as one of:

@@ -93,18 +93,22 @@ ALTER TABLE feed_details ADD COLUMN candidates JSONB NOT NULL DEFAULT '[]';
 
 ## 5. LLM client: SDK choice and structured output
 
-**Decision**: Implement `LlmClient` as a thin Ruby service over the **`anthropic` Ruby gem** (Anthropic-published) for v1. Structured output via **forced tool use**: declare a tool whose `input_schema` is the profile's `output_schema`, set `tool_choice: {type: "tool", name: "..."}`, return the tool's `input` as the response payload.
+**Decision**: Implement `LlmClient` as a thin Ruby service over the **`ruby_llm` gem**, a maintained multi-provider abstraction (Anthropic, OpenAI, Gemini, Bedrock, OpenRouter, Ollama). The first provider shipped is Anthropic; OpenAI and others land later as registry entries with no new adapter code. Structured output is delegated to RubyLLM, which internally uses each provider's native mechanism (forced tool use for Anthropic, `response_format: json_schema` for OpenAI) so our code stays provider-agnostic.
 
-Provider adapters live under `app/services/llm_client/<provider>.rb`. The top-level `LlmClient.for(feed)` resolves the user's credential, selects the adapter, and returns a uniform interface to stage classes.
+`LlmClient` invokes RubyLLM directly — no separate adapter class. `LlmClient.for(feed)` resolves the user's credential, configures RubyLLM with the credential's API key and provider, and returns a client bound to that credential. `LlmClient.call` then handles schema validation, `LlmUsage` write, exception mapping, and the detection guard. Stage classes never see the provider name or RubyLLM.
 
-**Rationale**: The official Anthropic gem handles auth, retries, and the latest API surface (server-side web search/fetch tools, prompt caching). Forced tool use is Anthropic's documented pattern for guaranteed structured output and allows mixing in provider-side server tools (web search, web fetch) for AI loaders without a client-side tool loop. Single HTTP request out → single response in, with usage data populated for `LlmUsage`.
+**Rationale**: The spec's "two-axis" abstraction (credentials × providers) is exactly what RubyLLM is built for. Writing one adapter per provider would duplicate the work RubyLLM already does; switching SDKs lets us add providers as registry rows instead of code. RubyLLM exposes per-provider features critical to this spec: prompt-cache token counts (`cache_read_input_tokens` for Anthropic), provider-side server tools (Anthropic `web_search` / `web_fetch`), structured output via JSON Schema, and normalized usage telemetry. Our `LlmClient` shrinks to the parts that *should* be ours: credential resolution, `LlmUsage` persistence, schema validation via JSONSchemer, the detection-phase guard, and `Rails.error.report` routing.
 
-**Test strategy**: At the `LlmClient` seam — stage tests stub `LlmClient` with `Minitest::Mock` returning canned `(structured_output, usage)` tuples. The Anthropic adapter has its own contract tests using `WebMock` to simulate provider responses (success, schema violation, provider error, rate limit). No VCR; cassettes drift and obscure intent.
+**Test strategy**: Stage tests stub `LlmClient` with `Minitest::Mock` returning canned `(structured_output, usage)` tuples. `LlmClient` itself is tested end-to-end with `WebMock` against per-provider fixture responses (success, schema violation, provider error, rate limit, timeout). No VCR; cassettes drift and obscure intent.
 
 **Alternatives considered**:
-- *Raw HTTP via existing `HttpClient`*: works, but means tracking the API surface manually (tools, prompt caching, batch). Reject for v1.
-- *`ruby-openai` style multi-provider gem*: doesn't cover Anthropic's forced tool use uniformly; we'd still need the adapter layer. Reject.
+- *Direct `anthropic` Ruby gem*: works, but every new provider needs a hand-written adapter that re-derives auth/retry/tool/cache plumbing. Reject — RubyLLM removes that duplication.
+- *Raw HTTP via existing `HttpClient`*: tracks every provider's API surface manually. Reject for v1.
 - *VCR cassettes for adapter tests*: cassettes go stale, mask intent, and require periodic re-recording with real keys in CI. WebMock-with-fixtures is more maintainable.
+
+**Caveats**:
+- Solo-maintainer dependency. Pin a known-good version and review release notes before upgrading.
+- Provider-specific quirks (new Anthropic server tools, vendor changes) may briefly lag the underlying API. If a profile needs a feature RubyLLM doesn't expose yet, an escape hatch is to bypass the wrapper for that one call — but we should treat that as exceptional, not a default.
 
 ---
 
@@ -228,7 +232,7 @@ Classification rules:
 | JSON Schema dialect | Parent spec, phase 1 | Draft 2020-12 via `json_schemer` |
 | `Feed.url` migration | Parent spec, phase 1 | Drop column; absorb into `feeds.params` |
 | Detection record schema | Handoff D6 | `feed_details.candidates` JSONB; mirror recommended into existing `feed_profile_key` |
-| LLM SDK + structured output | Plan-time | `anthropic` gem; forced tool use; adapters under `LlmClient::*` |
+| LLM SDK + structured output | Plan-time | `ruby_llm` gem (multi-provider); `LlmClient` calls it directly with no intermediate adapter class |
 | Credential storage | Parent spec, phase 2 | JSONB encrypted via Rails `encrypts`; provider-specific schema |
 | Default-credential uniqueness | Spec FR-013 | Partial unique index + model callback |
 | Preview implementation | Spec FR-014–019 | Reuse `FeedRefreshWorkflow` with `preview: true` mode |

@@ -22,7 +22,7 @@ The work spans parent-spec phases 1, 2, 3, and 5, but is sliced here so Story 1 
 
 **Language/Version**: Ruby (pinned in `.ruby-version`, managed by mise)
 
-**Primary Dependencies**: Rails edge, Turbo, Stimulus, Tailwind CSS + DaisyUI, SolidQueue, Feedjira (RSS parsing, existing), Nokogiri (existing), `httpx`/internal `HttpClient` (existing). New: `anthropic` Ruby gem (or raw HTTP via existing `HttpClient`) for the Anthropic adapter; JSON Schema validator (`json-schema` or `json_schemer`) for parameter and LLM-output validation.
+**Primary Dependencies**: Rails edge, Turbo, Stimulus, Tailwind CSS + DaisyUI, SolidQueue, Feedjira (RSS parsing, existing), Nokogiri (existing), `httpx`/internal `HttpClient` (existing). New: `ruby_llm` gem (multi-provider LLM SDK; Anthropic first, OpenAI / others follow as registry entries); `json_schemer` for parameter and LLM-output validation.
 
 **Storage**: PostgreSQL via Rails migrations. New tables: `llm_credentials`, `llm_usages`. Modified tables: `feed_details` (carry ranked-profile list), `feeds` (add `params` JSONB; per A6, no production data, free to drop `feeds.url` once profile params absorb it). Existing `feed_profile.rb` registry remains code-defined (parent-spec future-scope move to DB is deferred).
 
@@ -113,8 +113,7 @@ app/
 │   ├── feed_profile_detector.rb             (mod) — return ranked array, not first hit
 │   ├── feed_details_fetcher.rb              (mod) — drive new detector contract
 │   ├── feed_preview_service.rb              (new) — bounded loader→processor→normalizer; non-persistent
-│   ├── llm_client.rb                        (new) — chokepoint for all AI calls; writes LlmUsage
-│   ├── llm_client/anthropic.rb              (new) — provider adapter (forced tool use for structured output)
+│   ├── llm_client.rb                        (new) — chokepoint for all AI calls; wraps ruby_llm; writes LlmUsage
 │   ├── profile_matcher/
 │   │   ├── base.rb                          (mod) — declare input_shape; rank() helper
 │   │   ├── xkcd_profile_matcher.rb          (mod) — declare input_shape: :url
@@ -161,12 +160,12 @@ test/
 ├── models/                                  — llm_credential_test.rb, llm_usage_test.rb, feed_test.rb (mod), feed_detail_test.rb (mod)
 ├── controllers/                             — feed_details, feeds, feed_previews, llm_credentials
 ├── jobs/                                    — feed_details_job (mod), feed_preview_job, llm_credential_validation_job
-├── services/                                — input_classifier, feed_profile_detector (mod), feed_preview_service, llm_client, llm_client/anthropic, profile_matcher/* (mod + new), loader/llm_loader, processor/passthrough_processor, normalizer/llm_normalizer
+├── services/                                — input_classifier, feed_profile_detector (mod), feed_preview_service, llm_client, profile_matcher/* (mod + new), loader/llm_loader, processor/passthrough_processor, normalizer/llm_normalizer
 ├── system/                                  — smart_feed_creation_test.rb (Story 1, Story 2 happy paths end-to-end)
 └── factories/                               — llm_credential, llm_usage
 ```
 
-**Structure Decision**: Standard Rails monolith layout (CLAUDE.md says "Follow standard Rails conventions"). All new work fits under existing `app/{models,controllers,services,views,jobs}` with new sub-namespaces (`Loader::LlmLoader`, `Normalizer::LlmNormalizer`, `LlmClient::Anthropic`) where they parallel existing namespaces. No new top-level directories needed.
+**Structure Decision**: Standard Rails monolith layout (CLAUDE.md says "Follow standard Rails conventions"). All new work fits under existing `app/{models,controllers,services,views,jobs}` with new sub-namespaces (`Loader::LlmLoader`, `Normalizer::LlmNormalizer`) where they parallel existing namespaces. `LlmClient` is the only chokepoint for AI calls and lives at `app/services/llm_client.rb` with no sub-namespace. No new top-level directories needed.
 
 ## Complexity Tracking
 
