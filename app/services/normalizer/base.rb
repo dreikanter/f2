@@ -9,40 +9,25 @@ module Normalizer
   class Base
     include HtmlTextUtils
 
-    # The fields every profile MUST populate. uid is required for dedup
-    # (FR-020); published_at is required for ordering. source_url is also
-    # in the universal shape (notes/profile-contracts.md §1) but profiles
-    # are allowed to emit "" when a per-post URL is unavailable — content
-    # validation rejects such posts via validation_errors instead.
-    UNIVERSAL_REQUIRED_FIELDS = %i[uid published_at].freeze
-
     # @param feed_entry [FeedEntry] the feed entry to normalize
     def initialize(feed_entry)
       @feed_entry = feed_entry
     end
 
-    # Normalizes feed entry into a Post with validation
+    # Normalizes feed entry into a Post with validation. Raises if the
+    # subclass produced a Post missing dedup or ordering invariants —
+    # those are programming errors, covered by per-profile tests.
     #
     # @return [Post] post with status set based on validation
     def normalize
       post = build_post
-      validate_universal_post_shape!(post)
+      raise MissingUidError, "#{self.class.name} produced a Post with no uid" if post.uid.blank?
+      raise MissingPublishedAtError, "#{self.class.name} produced a Post with no published_at" if post.published_at.blank?
+
       # TBD: Consider renaming this field
       post.validation_errors = validate_content
       post.status = post.validation_errors.empty? ? :enqueued : :rejected
       post
-    end
-
-    # Asserts the structural invariants every profile must satisfy per
-    # notes/profile-contracts.md §1. Raises UniversalPostShapeError on
-    # violation — this is for normalizer correctness, not user-visible
-    # validation (content/image gaps land in validation_errors instead).
-    def validate_universal_post_shape!(post)
-      missing = UNIVERSAL_REQUIRED_FIELDS.select { |field| post.public_send(field).blank? }
-      return if missing.empty?
-
-      raise UniversalPostShapeError,
-            "#{self.class.name} produced a Post missing required fields: #{missing.join(', ')}"
     end
 
     private
