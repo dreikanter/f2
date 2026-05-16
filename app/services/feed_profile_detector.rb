@@ -86,8 +86,7 @@ class FeedProfileDetector
     return nil unless FeedProfile[profile_key]&.dig(:title_extractor)
 
     title_class = FeedProfile.title_extractor_class_for(profile_key)
-    response = HttpClient::Response.new(status: 200, body: fetched_body.to_s)
-    title_class.new(input, response).title
+    title_class.new(input, fetched_body).title
   rescue StandardError => e
     Rails.error.report(e, context: { profile_key: profile_key, source: "title_extraction" })
     nil

@@ -2,8 +2,7 @@ require "test_helper"
 
 class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
   def extractor(body)
-    response = HttpClient::Response.new(status: 200, body: body)
-    TitleExtractor::RssTitleExtractor.new("https://example.com/feed.xml", response)
+    TitleExtractor::RssTitleExtractor.new("https://example.com/feed.xml", body)
   end
 
   test "#title should extract title from RSS 2.0 feed" do
