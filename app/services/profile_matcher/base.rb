@@ -1,31 +1,70 @@
 module ProfileMatcher
-  # Base class for feed profile matchers
+  # Base class for feed profile matchers.
   #
-  # Subclasses must implement the #match? method to determine if a feed
-  # matches a specific profile based on URL and HTTP response.
-  # Subclasses should also implement self.profile_key to return their profile identifier.
+  # Subclasses declare metadata at the class level via the DSL:
+  #
+  #   class MyMatcher < Base
+  #     input_shape :url           # one of :url, :handle, :query, :any
+  #     match_specificity 10       # integer; higher = more specific
+  #     depends_on_ai false        # default false; AI matchers set true
+  #   end
+  #
+  # The detector reads these declarations to filter matchers by input
+  # shape, rank them, and skip the AI-using ones during the no-AI
+  # detection phase. The matcher itself implements #match?, which returns
+  # true if the profile applies to the input (and optional fetched body).
   class Base
-    attr_reader :url, :response
+    INPUT_SHAPES = %i[url handle query any].freeze
 
-    # @param url [String] the feed URL
-    # @param response [HttpClient::Response] the HTTP response object
-    def initialize(url, response)
-      @url = url
-      @response = response
+    class << self
+      def input_shape(value = nil)
+        if value.nil?
+          @input_shape || raise(NotImplementedError, "#{name} must declare input_shape via the class-level DSL")
+        else
+          raise ArgumentError, "input_shape must be one of #{INPUT_SHAPES.inspect}, got #{value.inspect}" unless INPUT_SHAPES.include?(value)
+
+          @input_shape = value
+        end
+      end
+
+      def match_specificity(value = nil)
+        if value.nil?
+          @match_specificity || raise(NotImplementedError, "#{name} must declare match_specificity via the class-level DSL")
+        else
+          raise ArgumentError, "match_specificity must be an Integer, got #{value.inspect}" unless value.is_a?(Integer)
+
+          @match_specificity = value
+        end
+      end
+
+      def depends_on_ai(value = nil)
+        if value.nil?
+          @depends_on_ai.nil? ? false : @depends_on_ai
+        else
+          @depends_on_ai = value ? true : false
+        end
+      end
+
+      # Profile key derived from the class name (e.g.
+      # ProfileMatcher::RssProfileMatcher → "rss"). Subclasses may
+      # override if the convention doesn't apply.
+      def profile_key
+        name.demodulize.gsub(/ProfileMatcher$/, "").underscore
+      end
     end
 
-    # Determines if the feed matches this profile
-    # @return [Boolean] true if the feed matches this profile
+    attr_reader :input, :fetched_body
+
+    # @param input [String] the user's raw input (URL, handle, or query)
+    # @param fetched_body [String, nil] the body of the URL when input_shape is :url
+    #   and FeedDetailsFetcher already fetched it; nil otherwise
+    def initialize(input, fetched_body = nil)
+      @input = input
+      @fetched_body = fetched_body
+    end
+
     def match?
       raise NotImplementedError, "Subclasses must implement #match?"
-    end
-
-    # Returns the profile key for this matcher
-    # Default implementation derives it from the class name (fallback for compatibility)
-    # Subclasses should override this with an explicit profile key
-    # @return [String] the profile key (e.g., "rss", "xkcd")
-    def self.profile_key
-      name.demodulize.gsub(/ProfileMatcher$/, "").underscore
     end
   end
 end

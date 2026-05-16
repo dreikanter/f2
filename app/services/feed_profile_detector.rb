@@ -21,7 +21,7 @@ class FeedProfileDetector
   def detect
     DETECTION_ORDER.each do |matcher_class_name|
       matcher_class = matcher_class_name.constantize
-      matcher = matcher_class.new(url, response)
+      matcher = matcher_class.new(url, response&.body)
       return matcher_class if matcher.match?
     end
 

@@ -1,19 +1,18 @@
 module ProfileMatcher
   class RssProfileMatcher < Base
+    input_shape :url
+    match_specificity 10
+
     RSS_INDICATORS = [
       /<rss[\s>]/i,
       /<feed[\s>]/i,
       /<rdf:RDF/i
     ].freeze
 
-    def self.profile_key
-      "rss"
-    end
-
     def match?
-      return false if response.body.blank?
+      return false if fetched_body.blank?
 
-      RSS_INDICATORS.any? { |pattern| response.body.match?(pattern) }
+      RSS_INDICATORS.any? { |pattern| fetched_body.match?(pattern) }
     end
   end
 end

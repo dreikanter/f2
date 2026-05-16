@@ -2,8 +2,19 @@ require "test_helper"
 
 class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
   def matcher(body)
-    response = HttpClient::Response.new(status: 200, body: body)
-    ProfileMatcher::RssProfileMatcher.new("https://example.com/feed.xml", response)
+    ProfileMatcher::RssProfileMatcher.new("https://example.com/feed.xml", body)
+  end
+
+  test ".input_shape should be :url" do
+    assert_equal :url, ProfileMatcher::RssProfileMatcher.input_shape
+  end
+
+  test ".match_specificity should be 10" do
+    assert_equal 10, ProfileMatcher::RssProfileMatcher.match_specificity
+  end
+
+  test ".depends_on_ai should be false" do
+    assert_equal false, ProfileMatcher::RssProfileMatcher.depends_on_ai
   end
 
   test "#match? should match RSS 2.0 feeds" do
@@ -47,7 +58,7 @@ class ProfileMatcher::RssProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher("<html><body>Not a feed</body></html>").match?
   end
 
-  test "#match? should handle blank response body" do
+  test "#match? should handle blank fetched_body" do
     assert_not matcher("").match?
     assert_not matcher(nil).match?
   end

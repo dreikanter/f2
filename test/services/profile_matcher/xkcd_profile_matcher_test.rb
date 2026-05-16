@@ -1,12 +1,21 @@
 require "test_helper"
 
 class ProfileMatcher::XkcdProfileMatcherTest < ActiveSupport::TestCase
-  def response
-    @response ||= HttpClient::Response.new(status: 200, body: "ignore")
+  def matcher(url)
+    ProfileMatcher::XkcdProfileMatcher.new(url)
   end
 
-  def matcher(url)
-    ProfileMatcher::XkcdProfileMatcher.new(url, response)
+  test ".input_shape should be :url" do
+    assert_equal :url, ProfileMatcher::XkcdProfileMatcher.input_shape
+  end
+
+  test ".match_specificity should be 100" do
+    # Higher than RSS (10) so xkcd.com URLs prefer the XKCD profile.
+    assert_equal 100, ProfileMatcher::XkcdProfileMatcher.match_specificity
+  end
+
+  test ".depends_on_ai should be false" do
+    assert_equal false, ProfileMatcher::XkcdProfileMatcher.depends_on_ai
   end
 
   test "#match? should match xkcd.com URLs" do
@@ -25,7 +34,7 @@ class ProfileMatcher::XkcdProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher("https://example.com/xkcd.com/feed.xml").match?
   end
 
-  test "#match? should handle blank URLs" do
+  test "#match? should handle blank inputs" do
     assert_not matcher("").match?
     assert_not matcher(nil).match?
   end
