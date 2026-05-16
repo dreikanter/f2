@@ -52,11 +52,11 @@ end
 
 ## 3. `Feed.url` migration (parent spec phase 1, deferred decision)
 
-**Decision**: **Drop `feeds.url` as a top-level column; move source-side data into `feeds.params` (JSONB).** Per spec Assumption A6, no production data exists, so we don't need a migration story — the migration sets `params = {"url" => url}` for any pre-existing dev rows and removes the column in the same change.
+**Decision**: **Drop `feeds.url` as a top-level column; move source-side data into `feeds.params` (JSONB).** Per spec Assumption A6, no production data exists, so the migration is a straight drop-add (no backfill); reversibility is verified on an empty DB.
 
 **Rationale**: Once `parameter_schema` drives form generation, every source-side value (URL, handle, query, refinement prompt) lives in `params`. Keeping `url` as a privileged top-level column would require the RSS profile to special-case it. Treating all source-side values uniformly under `params` eliminates the special case and aligns RSS, XKCD, AI-from-website, AI-handle-search, and AI-web-search under one shape.
 
-`Feed#url` becomes a convenience method: `def url; params["url"]; end` for the profiles that have one.
+`Feed#url` becomes a virtual attribute: `#url` reads `params["url"]` and `#url=` writes through to it (with whitespace stripped). This keeps existing controllers, views, fixtures, and strong-params plumbing unchanged.
 
 **Alternatives considered**:
 - *Keep `feeds.url` for backward-compat*: A6 frees us from this. Reject.
