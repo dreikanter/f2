@@ -23,14 +23,14 @@ description: "Tasks: Smart Feed Creation"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Add new gems and boot-time scaffolding all subsequent phases depend on.
+**Purpose**: Add new gems and shared scaffolding all subsequent phases depend on.
 
 - [ ] T001 Add `anthropic` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
-- [ ] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
+- [X] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
 - [ ] T003 [P] Create `config/llm_rates.yml` with per-model token cost table (Anthropic models initially); add `app/services/llm_client/rate_table.rb` loader with test in `test/services/llm_client/rate_table_test.rb`.
-- [ ] T004 [P] Create `config/initializers/feed_profile_validator.rb` that validates the enriched `FeedProfile::PROFILES` shape at boot using `json_schemer`; add `test/initializers/feed_profile_validator_test.rb` covering valid + malformed entries.
+- [X] T004 [P] Add `test/support/feed_profile_validator.rb` (test helper) that validates the enriched `FeedProfile::PROFILES` shape using `json_schemer`; add `test/models/feed_profile_validator_test.rb` covering valid + malformed entries. (Registry is a frozen constant — covered in CI, no runtime boot hook needed.)
 
-**Checkpoint**: Project boots cleanly with new gems and validator hooks in place.
+**Checkpoint**: Project boots cleanly with new gems; `FeedProfile::PROFILES` shape is validated in CI.
 
 ---
 
@@ -38,10 +38,10 @@ description: "Tasks: Smart Feed Creation"
 
 **Purpose**: Schema changes, profile-registry refactor, detection contract change, preview pipeline scaffold. **All user stories depend on these.**
 
-- [ ] T005 Add migration `db/migrate/*_drop_url_add_params_to_feeds.rb` — drops `feeds.url` column, adds `feeds.params jsonb NOT NULL DEFAULT '{}'`; backfills any pre-existing rows with `params = {"url" => url}` before dropping. Reversibility verified. Test: `test/models/feed_test.rb` updated for `params`.
-- [ ] T006 Add migration `db/migrate/*_add_candidates_to_feed_details.rb` — `feed_details.candidates jsonb NOT NULL DEFAULT '[]'`. Reversibility verified. Test: `test/models/feed_detail_test.rb` updated.
-- [ ] T007 Refactor `app/models/feed_profile.rb` to the enriched per-entry shape per [`contracts/profile_registry.md`](./contracts/profile_registry.md) (`input_shape`, `parameter_schema`, `loader/processor/normalizer { class:, config: }`, `matcher`); migrate `rss` and `xkcd` entries to the new shape; update `test/models/feed_profile_test.rb` covering registry validation, lookup helpers (`matchers_for`, `depends_on_ai?`, `parameter_schema_for`).
-- [ ] T008 [P] Add `Feed#url` accessor in `app/models/feed.rb` returning `params["url"]`; add `params` schema validation against `FeedProfile[feed_profile_key].parameter_schema`; update `test/models/feed_test.rb` for both behaviors.
+- [X] T005 Add migration `db/migrate/*_drop_url_add_params_to_feeds.rb` — drops `feeds.url` column, adds `feeds.params jsonb NOT NULL DEFAULT '{}'`. Reversibility verified on an empty DB (per A6, no production data). Test: `test/models/feed_test.rb` updated for `params`.
+- [X] T006 Add migration `db/migrate/*_add_candidates_to_feed_details.rb` — `feed_details.candidates jsonb NOT NULL DEFAULT '[]'`. Reversibility verified. Test: `test/models/feed_detail_test.rb` updated.
+- [X] T007 Refactor `app/models/feed_profile.rb` to the enriched per-entry shape per [`contracts/profile_registry.md`](./contracts/profile_registry.md) (`input_shape`, `parameter_schema`, `loader/processor/normalizer { class:, config: }`, `matcher`); migrate `rss` and `xkcd` entries to the new shape; update `test/models/feed_profile_test.rb` covering registry validation, lookup helpers (`matchers_for`, `depends_on_ai?`, `parameter_schema_for`).
+- [X] T008 [P] Add `Feed#url` accessor in `app/models/feed.rb` returning `params["url"]`; add `params` schema validation against `FeedProfile[feed_profile_key].parameter_schema`; update `test/models/feed_test.rb` for both behaviors.
 - [ ] T009 [P] Create `app/services/input_classifier.rb` returning `:url | :handle | :query | :malformed` per research §10. Tests in `test/services/input_classifier_test.rb` covering each shape including edge cases (whitespace-only, single char, IDN URLs, fediverse `@user@instance` handles).
 - [ ] T010 Refactor `app/services/profile_matcher/base.rb` to declare `input_shape` and `match_specificity` (class-level DSL); update `test/services/profile_matcher/base_test.rb`.
 - [ ] T011 [P] Update `app/services/profile_matcher/rss_profile_matcher.rb` to declare `input_shape: :url`, `match_specificity: 10`; update `test/services/profile_matcher/rss_profile_matcher_test.rb`.

@@ -57,12 +57,12 @@ class Feed < ApplicationRecord
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
   normalizes :name, with: ->(name) { name.to_s.strip }
-  normalizes :url, with: ->(url) { url.to_s.strip }
   normalizes :cron_expression, with: ->(cron) { cron.to_s.strip }
   normalizes :description, with: ->(desc) { desc.to_s.gsub(/\s+/, " ").strip }
   normalizes :target_group, with: ->(group) { group.present? ? group.to_s.strip.downcase : nil }
 
   validate :cron_expression_is_valid
+  validate :params_against_profile_schema
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -94,6 +94,20 @@ class Feed < ApplicationRecord
 
   def schedule_display
     SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
+  end
+
+  def url
+    params&.dig("url")
+  end
+
+  def url=(value)
+    next_params = (params || {}).dup
+    if value.nil?
+      next_params.delete("url")
+    else
+      next_params["url"] = value.is_a?(String) ? value.strip : value
+    end
+    self.params = next_params
   end
 
   def feed_profile_present?
@@ -220,6 +234,23 @@ class Feed < ApplicationRecord
 
     parsed_cron = Fugit.parse(cron_expression)
     errors.add(:cron_expression, "is not a valid cron expression") unless parsed_cron
+  end
+
+  # Structural sanity check: in normal use the form is generated from the
+  # same parameter_schema, so this can only fire on a forged POST or a code
+  # bug. The "<pointer> <message>" output is machine-only — the future
+  # per-field form renderer translates it; nothing surfaces raw to users.
+  def params_against_profile_schema
+    return unless feed_profile_present?
+
+    schema = FeedProfile.parameter_schema_for(feed_profile_key)
+    return if schema.blank?
+
+    JSONSchemer.schema(schema, format: true).validate(params || {}).each do |error|
+      pointer = error["data_pointer"].to_s
+      message = pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
+      errors.add(:params, message)
+    end
   end
 
   def create_schedule_on_enable

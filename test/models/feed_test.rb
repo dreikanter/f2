@@ -21,9 +21,73 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should require url" do
-    feed = build(:feed, url: nil)
+    feed = build(:feed, params: {})
     assert_not feed.valid?
     assert feed.errors.of_kind?(:url, :blank)
+  end
+
+  test "should default params to empty hash for new records" do
+    feed = Feed.new
+    assert_equal({}, feed.params)
+  end
+
+  test "#url should return params['url']" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml" })
+    assert_equal "https://example.com/feed.xml", feed.url
+  end
+
+  test "#url should return nil when params has no url" do
+    feed = build(:feed, params: {})
+    assert_nil feed.url
+  end
+
+  test "#url= should write into params['url']" do
+    feed = build(:feed, params: { "extra" => "value" })
+    feed.url = "https://example.com/new.xml"
+
+    assert_equal "https://example.com/new.xml", feed.params["url"]
+    assert_equal "value", feed.params["extra"], "should preserve existing params"
+  end
+
+  test "#url= should strip whitespace from string values" do
+    feed = build(:feed)
+    feed.url = "  https://example.com/feed.xml  "
+
+    assert_equal "https://example.com/feed.xml", feed.url
+  end
+
+  test "#url= should remove the url key when assigned nil" do
+    feed = build(:feed, params: { "url" => "https://example.com/feed.xml", "extra" => "value" })
+    feed.url = nil
+
+    assert_nil feed.url
+    assert_not feed.params.key?("url")
+    assert_equal "value", feed.params["extra"]
+  end
+
+  test "should reject params missing required keys per profile schema" do
+    feed = build(:feed, feed_profile_key: "rss", params: {})
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:params, "object at root is missing required properties: url")
+  end
+
+  test "should reject params with malformed url per profile schema" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "not-a-uri" })
+    assert_not feed.valid?
+    assert feed.errors[:params].any? { |msg| msg.include?("/url") && msg.include?("uri") },
+           "expected a /url + uri error, got: #{feed.errors[:params].inspect}"
+  end
+
+  test "should accept params matching profile schema" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+    feed.valid?
+    assert_empty feed.errors[:params]
+  end
+
+  test "should skip params schema validation when feed_profile_key is unknown" do
+    feed = build(:feed, feed_profile_key: "nonexistent", params: { "anything" => 1 })
+    feed.valid?
+    assert_empty feed.errors[:params]
   end
 
   test "should require cron_expression for enabled feeds" do

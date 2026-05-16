@@ -1,6 +1,6 @@
 # Implementation Plan: Smart Feed Creation
 
-**Branch**: `001-smart-feed-creation` | **Date**: 2026-05-16 | **Spec**: [`spec.md`](./spec.md)
+**Date**: 2026-05-16 | **Spec**: [`spec.md`](./spec.md)
 
 **Input**: Feature specification from `/specs/001-smart-feed-creation/spec.md`
 

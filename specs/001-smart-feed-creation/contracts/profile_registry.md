@@ -3,7 +3,7 @@
 **Audience**: stage-class authors and operators adding new profiles.
 **Status**: planning-time (Phase 1 design output).
 
-Each entry in `FeedProfile::PROFILES` is a `Hash` matching the schema below. Schema-validated at boot in `config/initializers/feed_profile_validator.rb`; boot fails loudly if a profile is malformed.
+Each entry in `FeedProfile::PROFILES` is a `Hash` matching the schema below. Schema-validated in CI via `test/support/feed_profile_validator.rb`; the test suite fails loudly if a profile is malformed. (The registry is a frozen constant, so a runtime boot check would be wasted work.)
 
 ## Hash schema
 
@@ -57,7 +57,7 @@ For LLM-using stages, `StageEntry.config` carries the LLM-specific bits:
 2. Write or reuse loader / processor / normalizer classes.
 3. Add the entry to `FeedProfile::PROFILES`.
 4. Add a profile fixture in `test/fixtures/profiles/` and a profile-level test exercising `parameter_schema` validity, end-to-end `FeedRefreshWorkflow` for one sample item, and (if AI-backed) an `LlmClient` stub.
-5. CI fails if the boot validator rejects the new entry.
+5. CI fails if `FeedProfileValidator.validate!` rejects the new entry.
 
 ## Examples
 
