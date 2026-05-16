@@ -152,7 +152,7 @@ end
 - Keep keys short, namespaced (`component.element`) for readability.
 
 <!-- SPECKIT START -->
-Active feature: **smart-feed-creation** (branch `001-smart-feed-creation`).
+Active feature: **smart-feed-creation** (delivered across multiple PRs).
 For technical context, project structure, and conventions for this feature,
 read [`specs/001-smart-feed-creation/plan.md`](specs/001-smart-feed-creation/plan.md).
 <!-- SPECKIT END -->

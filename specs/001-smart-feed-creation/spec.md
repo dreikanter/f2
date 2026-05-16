@@ -1,7 +1,5 @@
 # Feature Specification: Smart Feed Creation
 
-**Feature Branch**: `001-smart-feed-creation`
-
 **Created**: 2026-05-14
 
 **Status**: Draft
