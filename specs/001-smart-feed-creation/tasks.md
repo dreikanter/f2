@@ -23,7 +23,7 @@ description: "Tasks: Smart Feed Creation"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Add new gems and boot-time scaffolding all subsequent phases depend on.
+**Purpose**: Add new gems and shared scaffolding all subsequent phases depend on.
 
 - [ ] T001 Add `anthropic` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test — dependency-only commit.)
 - [X] T002 Add `json_schemer` gem to `Gemfile` and run `bundle install`; commit `Gemfile` + `Gemfile.lock`. (No test.)
