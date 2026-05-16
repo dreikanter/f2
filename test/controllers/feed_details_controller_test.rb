@@ -292,8 +292,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       user: user,
       url: url,
       status: :success,
-      feed_profile_key: "llm_website_extractor",
-      title: "Example",
       candidates: [
         { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]

@@ -38,8 +38,9 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     assert_not_nil feed_detail
     assert_equal "success", feed_detail.status
     assert_equal url, feed_detail.url
-    assert_equal "rss", feed_detail.feed_profile_key
-    assert_equal "Test RSS Feed", feed_detail.title
+    recommended = feed_detail.candidates.first
+    assert_equal "rss", recommended["profile_key"]
+    assert_equal "Test RSS Feed", recommended["title"]
   end
 
   test "#identify should successfully identify XKCD feed and update record" do
@@ -65,7 +66,7 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     feed_detail = FeedDetail.find_by(user: user, url: url)
     assert_not_nil feed_detail
     assert_equal "success", feed_detail.status
-    assert_equal "xkcd", feed_detail.feed_profile_key
+    assert_equal "xkcd", feed_detail.candidates.first["profile_key"]
   end
 
   test "#identify should handle title extraction failure gracefully" do
@@ -89,7 +90,7 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     feed_detail = FeedDetail.find_by(user: user, url: url)
     assert_not_nil feed_detail
     assert_equal "success", feed_detail.status
-    assert_nil feed_detail.title
+    assert_nil feed_detail.candidates.first["title"]
   end
 
   test "#identify should update record with failed status when profile not identified" do
@@ -183,7 +184,6 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     feed_detail = FeedDetail.find_by(user: user, url: url)
     profile_keys = feed_detail.candidates.map { |c| c["profile_key"] }
     assert_equal %w[xkcd rss], profile_keys, "xkcd outranks rss for xkcd.com URLs"
-    assert_equal "xkcd", feed_detail.feed_profile_key, "feed_profile_key mirrors the recommended candidate"
   end
 
   test "#identify should persist an empty candidates array when no profile matches" do

@@ -66,10 +66,12 @@ end
 
 ## 4. Detection record schema (handoff D6)
 
-**Decision**: Extend `feed_details` with a single `candidates` JSONB column carrying the ranked list. Existing `feed_profile_key` and `title` columns stay (the recommended candidate's key + title), so existing single-candidate code paths and the polling shell continue to work without rework.
+**Decision**: Replace `feed_details.feed_profile_key` and `feed_details.title` with a single `candidates` JSONB column carrying the ranked list. The recommended candidate is just `candidates[0]`; there are no mirrored columns to keep in sync.
 
 ```sql
 ALTER TABLE feed_details ADD COLUMN candidates JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE feed_details DROP COLUMN feed_profile_key;
+ALTER TABLE feed_details DROP COLUMN title;
 ```
 
 `candidates` shape (one entry per matching profile, ordered by rank):
@@ -83,11 +85,11 @@ ALTER TABLE feed_details ADD COLUMN candidates JSONB NOT NULL DEFAULT '[]';
 ]
 ```
 
-**Rationale**: One JSONB column avoids creating a `feed_detail_candidates` join table for what's a small, append-only, per-record list. The recommended candidate (index 0) is mirrored into `feed_profile_key` for backward-compat with existing `cleanup_feed_identification(url)` logic. No production data, so the migration is a `change` (not a multi-step rollout).
+**Rationale**: One JSONB column avoids creating a `feed_detail_candidates` join table for what's a small, append-only, per-record list. No production data (A6), so dropping the redundant columns is a single migration with no backfill story. The previous design kept mirrored `feed_profile_key` / `title` columns "for backward compat", but the only reader of those columns was the controller's own `handle_success_status` — it now reads `candidates.first` directly.
 
 **Alternatives considered**:
 - *Separate `feed_detail_candidates` table*: relational normalization for no querying benefit. Reject.
-- *Replace `feed_profile_key` entirely with `candidates[0]`*: forces every existing reader to JSON-traverse. Mirroring is cheap. Reject.
+- *Keep mirrored `feed_profile_key` / `title` columns*: requires a sync invariant nothing enforces; the JSONB is the source of truth. Reject.
 
 ---
 
@@ -231,7 +233,7 @@ Classification rules:
 | Profile registry shape | Parent spec, phase 1 | Ruby module, enriched frozen `PROFILES` hash |
 | JSON Schema dialect | Parent spec, phase 1 | Draft 2020-12 via `json_schemer` |
 | `Feed.url` migration | Parent spec, phase 1 | Drop column; absorb into `feeds.params` |
-| Detection record schema | Handoff D6 | `feed_details.candidates` JSONB; mirror recommended into existing `feed_profile_key` |
+| Detection record schema | Handoff D6 | `feed_details.candidates` JSONB; drop legacy `feed_profile_key` / `title` columns (no mirror) |
 | LLM SDK + structured output | Plan-time | `ruby_llm` gem (multi-provider); `LlmClient` calls it directly with no intermediate adapter class |
 | Credential storage | Parent spec, phase 2 | JSONB encrypted via Rails `encrypts`; provider-specific schema |
 | Default-credential uniqueness | Spec FR-013 | Partial unique index + model callback |

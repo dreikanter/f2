@@ -10,34 +10,19 @@ class FeedDetailsFetcher
     raise "HTTP request failed with status #{response.status}" unless response.success?
 
     result = FeedProfileDetector.call(input: @url, fetched_body: response.body)
-    recommended = result.candidates.first
 
-    if recommended
+    if result.candidates.any?
       feed_detail.update!(
         status: :success,
-        feed_profile_key: recommended.profile_key,
-        title: recommended.title,
         candidates: serialize_candidates(result.candidates),
         error: nil
       )
     else
-      feed_detail.update!(
-        status: :failed,
-        feed_profile_key: nil,
-        title: nil,
-        candidates: [],
-        error: "Unsupported feed profile"
-      )
+      feed_detail.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
     end
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_url_for_logging(@url)}: #{e.class} - #{e.message}")
-    feed_detail.update!(
-      status: :failed,
-      feed_profile_key: nil,
-      title: nil,
-      candidates: [],
-      error: "An error occurred while identifying the feed"
-    )
+    feed_detail.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
   end
 
   private

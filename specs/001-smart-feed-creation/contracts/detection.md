@@ -69,9 +69,7 @@ Record rank_reason as one of:
 `FeedDetailsFetcher` writes the `DetectionResult` to `feed_details`:
 
 - `feed_details.status = :success` if `candidates` non-empty, else `:failed`.
-- `feed_details.feed_profile_key = candidates.first.profile_key` (mirrors recommended; backward-compat for `cleanup_feed_identification`).
-- `feed_details.title = candidates.first.title` (or first non-blank title in the list).
-- `feed_details.candidates` = serialized array of candidate hashes (see [`../research.md`](../research.md) §4 for shape).
+- `feed_details.candidates` = serialized array of candidate hashes (see [`../research.md`](../research.md) §4 for shape). Single source of truth — there are no mirrored `feed_profile_key` / `title` columns.
 
 ## Test contract
 
@@ -82,4 +80,4 @@ Record rank_reason as one of:
 ## What changes for callers
 
 - `FeedDetailsController#show` (the polling endpoint) must serialize `candidates` into the Turbo Stream payload; the `_form_expanded` partial reads it to render the chooser.
-- Existing single-candidate code paths (e.g., `Feed#feed_profile_key` lookup) keep working because `feed_details.feed_profile_key` is still populated.
+- The controller builds the in-progress `Feed` instance from `feed_detail.candidates.first` — `profile_key` and `title` come from the recommended candidate, not from columns on `feed_details`.
