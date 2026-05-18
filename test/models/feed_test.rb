@@ -118,6 +118,12 @@ class FeedTest < ActiveSupport::TestCase
 
     assert feed.disabled?
 
+    feed.preview_token = PreviewToken.sign(
+      user_id: feed.user_id,
+      profile_key: feed.feed_profile_key,
+      params: feed.params,
+      generated_at: Time.current
+    )
     feed.enabled!
     assert feed.enabled?
 
@@ -131,6 +137,12 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.feed_schedule
 
+    feed.preview_token = PreviewToken.sign(
+      user_id: feed.user_id,
+      profile_key: feed.feed_profile_key,
+      params: feed.params,
+      generated_at: Time.current
+    )
     feed.update!(state: :enabled)
 
     schedule = feed.reload.feed_schedule
@@ -145,6 +157,12 @@ class FeedTest < ActiveSupport::TestCase
 
     existing_schedule = feed.feed_schedule
 
+    feed.preview_token = PreviewToken.sign(
+      user_id: feed.user_id,
+      profile_key: feed.feed_profile_key,
+      params: feed.params,
+      generated_at: Time.current
+    )
     feed.update!(state: :enabled)
 
     assert_equal existing_schedule.id, feed.reload.feed_schedule.id
@@ -501,5 +519,158 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed, cron_expression: "15 3 * * *")
 
     assert_equal "15 3 * * *", feed.schedule_display
+  end
+
+  # T018: enabling_requires_recent_preview validation
+  def preview_user
+    @preview_user ||= create(:user)
+  end
+
+  def preview_token_for(feed, generated_at: Time.current)
+    PreviewToken.sign(
+      user_id: feed.user_id,
+      profile_key: feed.feed_profile_key,
+      params: feed.params,
+      generated_at: generated_at
+    )
+  end
+
+  def access_token_for(user)
+    create(:access_token, :active, user: user)
+  end
+
+  test "should require preview_token when creating a feed in enabled state" do
+    feed = build(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = nil
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:state, :preview_required)
+  end
+
+  test "should allow creating a feed in enabled state with a valid preview_token" do
+    feed = build(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "should reject creating an enabled feed with a tampered preview_token" do
+    feed = build(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed).reverse
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:state, :preview_required)
+  end
+
+  test "should reject creating an enabled feed when preview_token was signed for different params" do
+    feed = build(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = PreviewToken.sign(
+      user_id: feed.user_id,
+      profile_key: "rss",
+      params: { "url" => "https://OTHER.example/feed.xml" },
+      generated_at: Time.current
+    )
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:state, :preview_required)
+  end
+
+  test "should reject creating an enabled feed with an expired preview_token" do
+    feed = build(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed, generated_at: 2.hours.ago)
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:state, :preview_required)
+  end
+
+  test "should require preview_token when an enabled feed's params change" do
+    feed = create(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = nil
+    feed.params = { "url" => "https://other.example/feed.xml" }
+
+    assert_not feed.valid?
+    assert feed.errors.of_kind?(:state, :preview_required)
+  end
+
+  test "should allow updating an enabled feed's params with a valid preview_token" do
+    feed = create(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.params = { "url" => "https://other.example/feed.xml" }
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "should not require preview_token when feed remains disabled" do
+    feed = create(:feed,
+      user: preview_user,
+      state: :disabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.description = "Updated"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "should not require preview_token for operational-only updates on enabled feed" do
+    feed = create(:feed,
+      user: preview_user,
+      state: :enabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = nil
+    feed.description = "Updated"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "should not require preview_token when toggling state on unchanged enabled feed" do
+    # FeedStatusesController#update flow: pure state toggle, no source-side change.
+    feed = create(:feed,
+      user: preview_user,
+      state: :disabled,
+      access_token: access_token_for(preview_user),
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = nil
+    feed.state = :enabled
+
+    assert feed.valid?, feed.errors.full_messages.inspect
   end
 end

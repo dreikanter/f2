@@ -132,7 +132,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     existing_preview = create(:feed_preview, user: user, status: :ready, data: { "posts" => [] }, url: "http://old.com/feed.xml")
 
     assert_no_changes -> { FeedPreview.count } do
-      assert_enqueued_with(job: FeedPreviewJob, args: [existing_preview.id]) do
+      assert_enqueued_with(job: AdminFeedPreviewJob, args: [existing_preview.id]) do
         patch feed_preview_url(existing_preview), params: {}
       end
     end

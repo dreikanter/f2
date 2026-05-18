@@ -98,6 +98,6 @@ class FeedPreviewsController < ApplicationController
   end
 
   def enqueue_preview_job(preview)
-    FeedPreviewJob.perform_later(preview.id)
+    AdminFeedPreviewJob.perform_later(preview.id)
   end
 end

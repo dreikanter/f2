@@ -1,16 +1,39 @@
+# Async wrapper for FeedPreviewService.call. Writes the resulting
+# Preview (or a failure marker on error) into Rails.cache so the
+# polling shell on the feed creation form can pick it up.
 class FeedPreviewJob < ApplicationJob
   queue_as :default
 
-  # @param feed_preview_id [String] UUID of the feed preview to generate
-  def perform(feed_preview_id)
-    feed_preview = FeedPreview.find_by(id: feed_preview_id)
-    return unless feed_preview
+  FAILURE_TTL = 24.hours
 
-    FeedPreviewWorkflow.new(feed_preview).execute
-  rescue => e
-    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
+  # @param args [Hash] keyword-like hash with stringified keys:
+  #   - user_id           [Integer]
+  #   - profile_key       [String]
+  #   - params            [Hash]
+  #   - cache_key         [String]
+  #   - llm_credential_id [Integer, nil]
+  #   - limit             [Integer, optional]
+  def perform(args)
+    args = args.deep_stringify_keys
+    cache_key = args.fetch("cache_key")
+    user = User.find_by(id: args.fetch("user_id"))
+    return unless user
 
-    feed_preview&.update!(status: :failed)
-    raise
+    FeedPreviewService.call(
+      user: user,
+      profile_key: args.fetch("profile_key"),
+      params: args.fetch("params", {}),
+      llm_credential: nil,
+      cache_key: cache_key,
+      refresh: true,
+      limit: args.fetch("limit", 5)
+    )
+  rescue FeedPreviewService::Error => e
+    Rails.error.report(e, context: { user_id: args["user_id"], profile_key: args["profile_key"] })
+    Rails.cache.write(
+      cache_key,
+      { error: e.class.name.demodulize, message: e.message },
+      expires_in: FAILURE_TTL
+    )
   end
 end

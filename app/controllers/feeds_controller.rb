@@ -52,6 +52,7 @@ class FeedsController < ApplicationController
     @feed = feeds_scope.build(create_feed_params)
     authorize @feed
 
+    @feed.preview_token = params[:preview_token]
     @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
 
     ActiveRecord::Base.transaction do
@@ -79,6 +80,8 @@ class FeedsController < ApplicationController
   def update
     @feed = load_feed
     authorize @feed
+
+    @feed.preview_token = params[:preview_token]
 
     if @feed.update(update_feed_params)
       reset_schedule_if_interval_changed
