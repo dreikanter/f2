@@ -93,12 +93,13 @@ class Feeds::PreviewsController < ApplicationController
     return @preview_params if defined?(@preview_params)
 
     raw = params[:params]
-    @preview_params =
+    hash =
       case raw
       when ActionController::Parameters then raw.to_unsafe_h
       when Hash then raw
       else {}
       end
+    @preview_params = hash.deep_stringify_keys
   end
 
   def profile_key

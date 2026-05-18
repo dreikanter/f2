@@ -314,11 +314,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     original_url = feed.url
     original_profile = feed.feed_profile_key
+    original_params = feed.params
 
     patch feed_url(feed), params: {
       feed: {
         url: "https://evil.com/feed.xml",
         feed_profile_key: "xkcd",
+        params: { url: "https://evil.com/feed.xml", smuggled: "yes" },
         name: "Updated Name"
       }
     }
@@ -327,6 +329,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed.reload
     assert_equal original_url, feed.url
     assert_equal original_profile, feed.feed_profile_key
+    assert_equal original_params, feed.params, "raw params jsonb must not be mass-assignable on update"
     assert_equal "Updated Name", feed.name
   end
 

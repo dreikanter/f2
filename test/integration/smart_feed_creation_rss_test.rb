@@ -46,7 +46,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     Rails.cache = previous
   end
 
-  test "RSS happy path: paste → detect → preview → save enabled" do
+  test "#post should drive RSS happy path: paste, detect, preview, save enabled" do
     sign_in_as(user)
     access_token
     stub_request(:get, feed_url)
@@ -99,7 +99,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "XKCD URL outranks generic RSS" do
+  test "#post should rank XKCD profile above generic RSS for an xkcd.com URL" do
     sign_in_as(user)
     xkcd_url = "https://xkcd.com/"
     stub_request(:get, xkcd_url)
@@ -115,7 +115,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "cancel during detection returns user to collapsed form with input preserved" do
+  test "#delete should return user to collapsed form with their input preserved" do
     sign_in_as(user)
     create(:feed_detail, user: user, url: feed_url, status: :processing, started_at: Time.current)
 

@@ -53,7 +53,7 @@ class FeedDetailsController < ApplicationController
   end
 
   def destroy
-    original_url = feed_detail.url if feed_detail.persisted?
+    original_url = feed_detail.persisted? ? feed_detail.url : feed_url
     feed_detail.destroy if feed_detail.persisted?
 
     render turbo_stream: turbo_stream.replace(
