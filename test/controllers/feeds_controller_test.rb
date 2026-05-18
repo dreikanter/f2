@@ -192,8 +192,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
-    assert_select "label", text: "Feed URL"
-    assert_select "p.text-slate-500", text: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
+    assert_select "label", text: "Source"
+    assert_select "p.text-slate-500", text: "Source and type can't be changed after creation. Start a new feed to follow a different source."
   end
 
   test "#update should update feed with valid params" do

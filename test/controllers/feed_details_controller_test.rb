@@ -100,7 +100,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="complete"'
-    assert_includes response.body, "Feed Type"
     assert_includes response.body, "RSS Feed"
   end
 
