@@ -1,0 +1,26 @@
+# Per-model token rates (USD per million tokens).
+#
+# Used by LlmClient::RateTable to compute LlmUsage#cost_usd from the token
+# counts reported by ruby_llm. Update whenever a provider rate changes.
+#
+# Cache rates apply to Anthropic prompt caching:
+#   - cache_write: tokens that *populated* a cache entry on this call
+#   - cache_read:  tokens served from an existing cache entry
+# Models without prompt caching can omit those keys.
+
+anthropic:
+  claude-opus-4-7:
+    input_per_million: 15.00
+    output_per_million: 75.00
+    cache_write_per_million: 18.75
+    cache_read_per_million: 1.50
+  claude-sonnet-4-6:
+    input_per_million: 3.00
+    output_per_million: 15.00
+    cache_write_per_million: 3.75
+    cache_read_per_million: 0.30
+  claude-haiku-4-5:
+    input_per_million: 0.80
+    output_per_million: 4.00
+    cache_write_per_million: 1.00
+    cache_read_per_million: 0.08
