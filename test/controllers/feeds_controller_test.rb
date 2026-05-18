@@ -107,6 +107,49 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "currently disabled", flash[:notice]
   end
 
+  test "#create should downgrade to disabled when enable_feed=1 but preview_token is absent" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+
+    feed = Feed.last
+    assert_equal "disabled", feed.state
+    assert_redirected_to feed_path(feed)
+    assert_match "currently disabled", flash[:notice]
+  end
+
+  test "#create should downgrade to disabled when preview_token is tampered" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: "not-a-real-token" }
+    end
+
+    assert_equal "disabled", Feed.last.state
+  end
+
   test "#create should ignore state param and use enable_feed instead" do
     sign_in_as(user)
     access_token
@@ -152,15 +195,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed_params = {
       url: "http://example.com/feed.xml",
-      name: "Test Feed",
+      name: "",  # Missing required field (validated regardless of state)
       feed_profile_key: "rss",
       access_token_id: access_token.id,
-      target_group: "",  # Missing required field
+      target_group: "testgroup",
       schedule_interval: "1h"
     }
 
     assert_no_difference("Feed.count") do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
     end
 
     assert_response :unprocessable_entity
@@ -168,7 +211,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     # Verify expanded form is shown, not collapsed form
     assert_select "input[name='feed[url_display]'][disabled]"
-    assert_select "input[name='feed[name]'][value='Test Feed']"
 
     # Verify validation errors are shown
     assert_select "p.text-red-600", text: /can't be blank|must be filled/
