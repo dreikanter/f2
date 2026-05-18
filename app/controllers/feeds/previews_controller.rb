@@ -18,7 +18,7 @@ class Feeds::PreviewsController < ApplicationController
         [:preview_failed, { failure: cached_preview, retry_url: action_url }]
       else
         enqueue_preview_job
-        [:preview_loading, { poll_url: action_url(format: :turbo_stream) }]
+        [:preview_loading, { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }]
       end
 
     render_view_state
@@ -29,7 +29,7 @@ class Feeds::PreviewsController < ApplicationController
     enqueue_preview_job(refresh: true)
 
     @partial = :preview_loading
-    @partial_locals = { poll_url: action_url(format: :turbo_stream) }
+    @partial_locals = { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }
 
     render_view_state
   end
@@ -121,5 +121,12 @@ class Feeds::PreviewsController < ApplicationController
       params: preview_params,
       format: format
     )
+  end
+
+  def cancel_url
+    return nil unless draft?
+
+    source = preview_params["url"].presence
+    source ? feed_details_path(url: source) : nil
   end
 end

@@ -68,7 +68,8 @@
                          profile_key: feed.feed_profile_key,
                          params: { url: feed.url },
                          format: :turbo_stream
-                       ) %>
+                       ),
+                       cancel_url: feed_details_path(url: feed.url) %>
           <% end %>
         </div>
       <% end %>

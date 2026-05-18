@@ -52,6 +52,17 @@ class FeedDetailsController < ApplicationController
     end
   end
 
+  def destroy
+    original_url = feed_detail.url if feed_detail.persisted?
+    feed_detail.destroy if feed_detail.persisted?
+
+    render turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/form_collapsed",
+      locals: { url: original_url }
+    )
+  end
+
   private
 
   def feed_detail

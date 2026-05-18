@@ -307,6 +307,40 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     feed_detail&.destroy
   end
 
+  test "#destroy should require authentication" do
+    delete feed_details_path
+    assert_redirected_to new_session_path
+  end
+
+  test "#destroy should remove the user's in-progress feed_detail and re-render collapsed form" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(:feed_detail, user: user, url: url, status: :processing, started_at: Time.current)
+
+    assert_difference("FeedDetail.count", -1) do
+      delete feed_details_path,
+             params: { url: url },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_includes response.body, 'id="feed-form"'
+    assert_includes response.body, url
+  end
+
+  test "#destroy should be idempotent when no feed_detail exists" do
+    sign_in_as(user)
+
+    assert_no_difference("FeedDetail.count") do
+      delete feed_details_path,
+             params: { url: "http://example.com/feed.xml" },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+  end
+
   private
 
   def extract_candidates_payload(body)
