@@ -53,7 +53,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     @feed.preview_token = params[:preview_token]
-    @feed.state = params[:enable_feed] == "1" ? :enabled : :disabled
+    @feed.state = initial_state_for(@feed)
 
     ActiveRecord::Base.transaction do
       @feed.save!
@@ -77,6 +77,11 @@ class FeedsController < ApplicationController
     authorize @feed
   end
 
+  # Per FR-026/FR-027/FR-028 operational fields (name, target_group, schedule,
+  # access_token) edit freely; source-side fields (url, feed_profile_key,
+  # params) are not editable from this form and stay anchored to the original
+  # detection result. Re-pointing a feed at a different source means creating
+  # a new feed.
   def update
     @feed = load_feed
     authorize @feed
@@ -170,6 +175,22 @@ class FeedsController < ApplicationController
 
   def cleanup_feed_identification(url)
     FeedDetail.find_by(user: current_user, url: url)&.destroy
+  end
+
+  # A user who ticked "Enable feed" still only saves enabled when the request
+  # carries a valid preview_token bound to (profile_key, params). Anything
+  # else degrades gracefully to disabled so the feed still gets saved.
+  def initial_state_for(feed)
+    return :disabled unless params[:enable_feed] == "1"
+
+    token_valid = PreviewToken.verify(
+      params[:preview_token],
+      user_id: current_user.id,
+      profile_key: feed.feed_profile_key,
+      params: feed.params || {}
+    )
+
+    token_valid ? :enabled : :disabled
   end
 
   def success_message

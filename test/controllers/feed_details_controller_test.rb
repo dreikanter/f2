@@ -100,7 +100,6 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="complete"'
-    assert_includes response.body, "Feed Type"
     assert_includes response.body, "RSS Feed"
   end
 
@@ -306,6 +305,66 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ai_fallback", payload.first["rank_reason"]
   ensure
     feed_detail&.destroy
+  end
+
+  test "#destroy should require authentication" do
+    delete feed_details_path
+    assert_redirected_to new_session_path
+  end
+
+  test "#destroy should remove the user's in-progress feed_detail and re-render collapsed form" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(:feed_detail, user: user, url: url, status: :processing, started_at: Time.current)
+
+    assert_difference("FeedDetail.count", -1) do
+      delete feed_details_path,
+             params: { url: url },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_includes response.body, 'id="feed-form"'
+    assert_includes response.body, url
+  end
+
+  test "#destroy should be idempotent and echo the typed URL when no feed_detail exists" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    assert_no_difference("FeedDetail.count") do
+      delete feed_details_path,
+             params: { url: url },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, url
+  end
+
+  test "#show should render the candidate chooser when multiple candidates exist" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(
+      :feed_detail,
+      user: user,
+      url: url,
+      started_at: Time.current,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match" },
+        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, "data-key=\"candidates\""
+    assert_includes response.body, "data-key=\"candidate.rss\""
+    assert_includes response.body, "data-key=\"candidate.llm_website_extractor\""
+    assert_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
   private

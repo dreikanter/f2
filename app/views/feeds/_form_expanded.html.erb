@@ -1,5 +1,6 @@
 <%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
+<% multi_candidate = !edit_mode && candidates.size > 1 %>
 
 <div id="feed-form"
      data-identification-state="complete"
@@ -14,27 +15,24 @@
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
     <div class="space-y-6">
+      <% if multi_candidate %>
+        <%= render "feeds/candidate_chooser", candidates: candidates %>
+      <% else %>
+        <%= f.hidden_field :feed_profile_key %>
+      <% end %>
+
       <div class="space-y-2">
-        <%= f.label :url, "Feed URL", class: "block font-semibold text-slate-800" %>
+        <%= f.label :url, "Source", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :url_display,
                          value: feed.url,
                          disabled: true,
                          class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
-                         aria: { label: "Feed URL (cannot be changed)" } %>
+                         aria: { label: "Source (cannot be changed)" },
+                         data: { key: "form.source-display" } %>
         <%= f.hidden_field :url %>
-        <% if edit_mode %>
-          <p class="text-slate-500">Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed.</p>
+        <% unless multi_candidate %>
+          <p class="text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
         <% end %>
-      </div>
-
-      <div class="space-y-2">
-        <%= label_tag "feed_profile_display", "Feed Type", class: "block font-semibold text-slate-800" %>
-        <%= text_field_tag "feed_profile_display",
-                           (feed.feed_profile_key.present? ? FeedProfile.display_name_for(feed.feed_profile_key) : "Unknown"),
-                           disabled: true,
-                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
-                           aria: { label: "Feed Type (detected automatically)" } %>
-        <%= f.hidden_field :feed_profile_key %>
       </div>
 
       <div class="space-y-2">
@@ -43,7 +41,8 @@
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
                          class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
-                         required: true %>
+                         required: true,
+                         data: { key: "form.name" } %>
         <% if feed.name.present? %>
           <p class="text-slate-500">You can edit this name if you'd like.</p>
         <% else %>
@@ -53,6 +52,27 @@
           <p class="text-sm text-red-600"><%= f.object.errors[:name].first %></p>
         <% end %>
       </div>
+
+      <% unless edit_mode %>
+        <div class="mt-2" data-key="form.preview">
+          <%= turbo_frame_tag "feed-preview",
+                              src: feed_live_preview_path(
+                                "draft",
+                                profile_key: feed.feed_profile_key,
+                                params: { url: feed.url }
+                              ),
+                              loading: "lazy" do %>
+            <%= render "feeds/preview_loading",
+                       poll_url: feed_live_preview_path(
+                         "draft",
+                         profile_key: feed.feed_profile_key,
+                         params: { url: feed.url },
+                         format: :turbo_stream
+                       ),
+                       cancel_url: feed_details_path(url: feed.url) %>
+          <% end %>
+        </div>
+      <% end %>
 
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>

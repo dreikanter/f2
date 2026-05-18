@@ -107,6 +107,49 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "currently disabled", flash[:notice]
   end
 
+  test "#create should downgrade to disabled when enable_feed=1 but preview_token is absent" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+
+    feed = Feed.last
+    assert_equal "disabled", feed.state
+    assert_redirected_to feed_path(feed)
+    assert_match "currently disabled", flash[:notice]
+  end
+
+  test "#create should downgrade to disabled when preview_token is tampered" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: "not-a-real-token" }
+    end
+
+    assert_equal "disabled", Feed.last.state
+  end
+
   test "#create should ignore state param and use enable_feed instead" do
     sign_in_as(user)
     access_token
@@ -152,15 +195,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed_params = {
       url: "http://example.com/feed.xml",
-      name: "Test Feed",
+      name: "",  # Missing required field (validated regardless of state)
       feed_profile_key: "rss",
       access_token_id: access_token.id,
-      target_group: "",  # Missing required field
+      target_group: "testgroup",
       schedule_interval: "1h"
     }
 
     assert_no_difference("Feed.count") do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
     end
 
     assert_response :unprocessable_entity
@@ -168,7 +211,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     # Verify expanded form is shown, not collapsed form
     assert_select "input[name='feed[url_display]'][disabled]"
-    assert_select "input[name='feed[name]'][value='Test Feed']"
 
     # Verify validation errors are shown
     assert_select "p.text-red-600", text: /can't be blank|must be filled/
@@ -192,8 +234,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
-    assert_select "label", text: "Feed URL"
-    assert_select "p.text-slate-500", text: "Feed URL and Type cannot be changed after creation. To use a different URL, create a new feed."
+    assert_select "label", text: "Source"
+    assert_select "p.text-slate-500", text: "Source and type can't be changed after creation. Start a new feed to follow a different source."
   end
 
   test "#update should update feed with valid params" do
@@ -250,15 +292,35 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form"
   end
 
+  test "#update should not require preview_token for operational-only edits on enabled feed" do
+    sign_in_as(user)
+    enabled_feed = create(:feed,
+                          user: user,
+                          state: :enabled,
+                          access_token: access_token,
+                          target_group: "tg",
+                          feed_profile_key: "rss",
+                          params: { "url" => "http://example.com/feed.xml" })
+
+    patch feed_url(enabled_feed), params: { feed: { name: "Renamed Feed" } }
+
+    assert_redirected_to feed_path(enabled_feed)
+    enabled_feed.reload
+    assert_equal "Renamed Feed", enabled_feed.name
+    assert_equal "enabled", enabled_feed.state
+  end
+
   test "#update should not allow changing url or feed_profile_key" do
     sign_in_as(user)
     original_url = feed.url
     original_profile = feed.feed_profile_key
+    original_params = feed.params
 
     patch feed_url(feed), params: {
       feed: {
         url: "https://evil.com/feed.xml",
         feed_profile_key: "xkcd",
+        params: { url: "https://evil.com/feed.xml", smuggled: "yes" },
         name: "Updated Name"
       }
     }
@@ -267,6 +329,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed.reload
     assert_equal original_url, feed.url
     assert_equal original_profile, feed.feed_profile_key
+    assert_equal original_params, feed.params, "raw params jsonb must not be mass-assignable on update"
     assert_equal "Updated Name", feed.name
   end
 

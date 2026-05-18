@@ -18,7 +18,7 @@ class Feeds::PreviewsController < ApplicationController
         [:preview_failed, { failure: cached_preview, retry_url: action_url }]
       else
         enqueue_preview_job
-        [:preview_loading, { poll_url: action_url(format: :turbo_stream) }]
+        [:preview_loading, { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }]
       end
 
     render_view_state
@@ -29,7 +29,7 @@ class Feeds::PreviewsController < ApplicationController
     enqueue_preview_job(refresh: true)
 
     @partial = :preview_loading
-    @partial_locals = { poll_url: action_url(format: :turbo_stream) }
+    @partial_locals = { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }
 
     render_view_state
   end
@@ -93,12 +93,13 @@ class Feeds::PreviewsController < ApplicationController
     return @preview_params if defined?(@preview_params)
 
     raw = params[:params]
-    @preview_params =
+    hash =
       case raw
       when ActionController::Parameters then raw.to_unsafe_h
       when Hash then raw
       else {}
       end
+    @preview_params = hash.deep_stringify_keys
   end
 
   def profile_key
@@ -121,5 +122,12 @@ class Feeds::PreviewsController < ApplicationController
       params: preview_params,
       format: format
     )
+  end
+
+  def cancel_url
+    return nil unless draft?
+
+    source = preview_params["url"].presence
+    source ? feed_details_path(url: source) : nil
   end
 end
