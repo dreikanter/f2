@@ -77,6 +77,11 @@ class FeedsController < ApplicationController
     authorize @feed
   end
 
+  # Per FR-026/FR-027/FR-028 operational fields (name, target_group, schedule,
+  # access_token) edit freely; source-side fields (url, feed_profile_key,
+  # params) are not editable from this form and stay anchored to the original
+  # detection result. Re-pointing a feed at a different source means creating
+  # a new feed.
   def update
     @feed = load_feed
     authorize @feed

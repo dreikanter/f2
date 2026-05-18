@@ -292,6 +292,24 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form"
   end
 
+  test "#update should not require preview_token for operational-only edits on enabled feed" do
+    sign_in_as(user)
+    enabled_feed = create(:feed,
+                          user: user,
+                          state: :enabled,
+                          access_token: access_token,
+                          target_group: "tg",
+                          feed_profile_key: "rss",
+                          params: { "url" => "http://example.com/feed.xml" })
+
+    patch feed_url(enabled_feed), params: { feed: { name: "Renamed Feed" } }
+
+    assert_redirected_to feed_path(enabled_feed)
+    enabled_feed.reload
+    assert_equal "Renamed Feed", enabled_feed.name
+    assert_equal "enabled", enabled_feed.state
+  end
+
   test "#update should not allow changing url or feed_profile_key" do
     sign_in_as(user)
     original_url = feed.url
