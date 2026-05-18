@@ -28,6 +28,7 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
+  belongs_to :llm_credential, optional: true
 
   has_one :feed_schedule, dependent: :destroy
 
