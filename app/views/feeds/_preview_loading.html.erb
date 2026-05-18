@@ -1,0 +1,18 @@
+<%# locals: (poll_url:) %>
+<div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-xs"
+     role="status"
+     data-controller="polling"
+     data-polling-endpoint-value="<%= poll_url %>"
+     data-polling-interval-value="2000"
+     data-polling-max-polls-value="30"
+     data-polling-stop-condition-value="[data-key='preview.success'], [data-key='preview.failed']"
+     data-polling-scope-value="document"
+     data-key="preview.loading">
+  <div class="flex-shrink-0">
+    <%= render SpinnerComponent.new %>
+  </div>
+  <div class="space-y-1">
+    <p class="font-semibold text-slate-800">Fetching a preview...</p>
+    <p class="text-slate-600">This usually takes a few seconds.</p>
+  </div>
+</div>
