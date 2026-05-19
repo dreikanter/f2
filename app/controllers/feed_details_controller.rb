@@ -12,8 +12,8 @@ class FeedDetailsController < ApplicationController
   }
 
   def create
-    unless valid_url?
-      return render(identification_error(error: "Please enter a valid URL"))
+    if InputClassifier.classify(feed_url) == :malformed
+      return render(identification_error(error: "Please enter a link, handle, or a few words to search for"))
     end
 
     return handle_success_status if feed_detail.success?
@@ -91,9 +91,13 @@ class FeedDetailsController < ApplicationController
 
   def handle_success_status
     recommended = feed_detail.candidates.first || {}
+    profile_key = recommended["profile_key"]
+    input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
+    params_for_input = { input_shape.to_s => feed_detail.url }
+
     feed = Current.user.feeds.build(
-      url: feed_detail.url,
-      feed_profile_key: recommended["profile_key"],
+      params: params_for_input,
+      feed_profile_key: profile_key,
       name: recommended["title"]
     )
 

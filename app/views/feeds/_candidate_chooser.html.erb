@@ -1,4 +1,4 @@
-<%# locals: (candidates: []) %>
+<%# locals: (candidates: [], input: nil) %>
 <% selected_key = candidates.first&.dig("profile_key") %>
 
 <div class="space-y-2"
@@ -9,7 +9,7 @@
   <div class="space-y-2">
     <% candidates.each_with_index do |candidate, index| %>
       <% profile_key = candidate["profile_key"] %>
-      <% display_name = FeedProfile.display_name_for(profile_key) %>
+      <% display_name = candidate_summary(profile_key, input) %>
       <% description = FeedProfile[profile_key]&.dig(:description) %>
       <% uses_ai = !!candidate["depends_on_ai"] %>
       <% is_first = index.zero? %>
