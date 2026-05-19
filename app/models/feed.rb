@@ -63,6 +63,7 @@ class Feed < ApplicationRecord
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
   validate :enabling_requires_recent_preview
+  validate :llm_credential_belongs_to_user
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -270,6 +271,14 @@ class Feed < ApplicationRecord
     )
 
     errors.add(:state, :preview_required, message: "requires a recent preview") unless valid_token
+  end
+
+  def llm_credential_belongs_to_user
+    return if llm_credential.nil?
+    return if user_id.nil?
+    return if llm_credential.user_id == user_id
+
+    errors.add(:llm_credential, "must belong to the same user")
   end
 
   def create_schedule_on_enable

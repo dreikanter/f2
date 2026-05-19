@@ -42,6 +42,80 @@ class FeedProfile
       normalizer: { class: "Normalizer::XkcdNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
+    },
+    "llm_website_extractor" => {
+      display_name: "AI page reader",
+      description: "Uses AI to extract recent posts from a webpage that doesn't expose an RSS feed",
+      input_shape: :url,
+      depends_on_ai: true,
+      matcher: "ProfileMatcher::LlmWebsiteExtractorMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"]
+      },
+      loader: {
+        class: "Loader::LlmLoader",
+        config: {
+          model: "claude-sonnet-4-6",
+          prompt_template: <<~PROMPT,
+            Visit {{url}} and extract up to 10 of the most recent posts or articles.
+            For each item, return a stable permalink as `uid`, a title, body text,
+            an optional list of supplementary comments, an optional list of image URLs,
+            the source URL, and the published date in ISO 8601.
+          PROMPT
+          output_schema: {
+            "type" => "object",
+            "properties" => {
+              "items" => {
+                "type" => "array",
+                "items" => {
+                  "type" => "object",
+                  "properties" => {
+                    "uid" => { "type" => "string" },
+                    "title" => { "type" => "string" },
+                    "body" => { "type" => "string" },
+                    "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
+                    "images" => { "type" => "array", "items" => { "type" => "string" } },
+                    "source_url" => { "type" => "string" },
+                    "published_at" => { "type" => "string" }
+                  },
+                  "required" => ["uid", "body", "source_url"]
+                }
+              }
+            },
+            "required" => ["items"]
+          },
+          tools: ["web_search", "web_fetch"]
+        }
+      },
+      processor: { class: "Processor::PassthroughProcessor", config: {} },
+      normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
+      title_extractor: nil,
+      output_schema: {
+        "type" => "object",
+        "properties" => {
+          "items" => {
+            "type" => "array",
+            "items" => {
+              "type" => "object",
+              "properties" => {
+                "uid" => { "type" => "string" },
+                "title" => { "type" => "string" },
+                "body" => { "type" => "string" },
+                "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
+                "images" => { "type" => "array", "items" => { "type" => "string" } },
+                "source_url" => { "type" => "string" },
+                "published_at" => { "type" => "string" }
+              },
+              "required" => ["uid", "body", "source_url"]
+            }
+          }
+        },
+        "required" => ["items"]
+      }
     }
   }.freeze
 

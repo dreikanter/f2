@@ -11,14 +11,22 @@ class Feeds::PreviewsController < ApplicationController
 
   def show
     @partial, @partial_locals =
-      case cached_preview
-      when FeedPreviewService::Preview
-        [:preview, { preview: cached_preview, refresh_url: action_url }]
-      when Hash
-        [:preview_failed, { failure: cached_preview, retry_url: action_url }]
+      if needs_credential_gate?
+        [:credential_gate, {
+          profile_key: profile_key,
+          new_credential_path: new_llm_credential_path,
+          return_to: draft? && preview_params["url"].present? ? feed_details_path(url: preview_params["url"]) : nil
+        }]
       else
-        enqueue_preview_job
-        [:preview_loading, { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }]
+        case cached_preview
+        when FeedPreviewService::Preview
+          [:preview, { preview: cached_preview, refresh_url: action_url }]
+        when Hash
+          [:preview_failed, { failure: cached_preview, retry_url: action_url }]
+        else
+          enqueue_preview_job
+          [:preview_loading, { poll_url: action_url(format: :turbo_stream), cancel_url: cancel_url }]
+        end
       end
 
     render_view_state
@@ -129,5 +137,22 @@ class Feeds::PreviewsController < ApplicationController
 
     source = preview_params["url"].presence
     source ? feed_details_path(url: source) : nil
+  end
+
+  def needs_credential_gate?
+    return false unless FeedProfile.exists?(profile_key)
+    return false unless FeedProfile.depends_on_ai?(profile_key)
+
+    !user_has_usable_credential?
+  end
+
+  def user_has_usable_credential?
+    return false unless Current.user
+
+    if draft?
+      Current.user.llm_credentials.active.exists?
+    else
+      feed.llm_credential&.active? || Current.user.llm_credentials.active.exists?
+    end
   end
 end

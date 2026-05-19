@@ -174,4 +174,69 @@ class FeedPreviewServiceTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test ".call should raise CredentialMissing when an AI profile has no credential" do
+    assert_raises FeedPreviewService::CredentialMissing do
+      FeedPreviewService.call(
+        user: user,
+        profile_key: "llm_website_extractor",
+        params: { "url" => "https://example.com" }
+      )
+    end
+  end
+
+  test ".call should map LlmClient::SchemaError to AiUnparseable" do
+    with_loader_stub(LlmClient::SchemaError.new("bad shape")) do
+      assert_raises FeedPreviewService::AiUnparseable do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  test ".call should map LlmClient::ProviderError to FeedPreviewService::ProviderError" do
+    with_loader_stub(LlmClient::ProviderError.new("boom")) do
+      assert_raises FeedPreviewService::ProviderError do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  test ".call should map LlmClient::RateLimited to FeedPreviewService::ProviderError" do
+    with_loader_stub(LlmClient::RateLimited.new("429")) do
+      assert_raises FeedPreviewService::ProviderError do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  private
+
+  # Stubs LlmClient.for so the loader receives a fake client whose
+  # #call raises `error`. Confined to the block — no monkey-patching
+  # or source-file reloading.
+  def with_loader_stub(error)
+    fake_client = Class.new do
+      def initialize(err) = (@err = err)
+      def call(**_) = raise(@err)
+    end.new(error)
+
+    LlmClient.stub(:for, ->(*_args) { fake_client }) do
+      yield
+    end
+  end
 end

@@ -147,6 +147,7 @@ class FeedsController < ApplicationController
       :description,
       :target_group,
       :access_token_id,
+      :llm_credential_id,
       :cron_expression,
       :schedule_interval
     )
@@ -162,6 +163,7 @@ class FeedsController < ApplicationController
       :description,
       :target_group,
       :access_token_id,
+      :llm_credential_id,
       :schedule_interval
     )
   end

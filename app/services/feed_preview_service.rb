@@ -111,13 +111,26 @@ class FeedPreviewService
   end
 
   def build_temp_feed
-    Feed.new(user: user, feed_profile_key: profile_key, params: params)
+    Feed.new(
+      user: user,
+      feed_profile_key: profile_key,
+      params: params,
+      llm_credential: llm_credential
+    )
   end
 
   def load_raw(temp_feed)
     temp_feed.loader_instance.load
+  rescue LlmClient::SchemaError => e
+    Rails.error.report(e, context: error_context)
+    raise AiUnparseable, e.message
+  rescue LlmClient::RateLimited, LlmClient::ProviderError, LlmClient::Timeout => e
+    Rails.error.report(e, context: error_context)
+    raise ProviderError, e.message
+  rescue LlmClient::CredentialMissing => e
+    raise CredentialMissing, e.message
   rescue StandardError => e
-    Rails.error.report(e, context: { profile_key: profile_key, user_id: user&.id })
+    Rails.error.report(e, context: error_context)
     raise SourceUnreachable, e.message
   end
 
@@ -126,8 +139,12 @@ class FeedPreviewService
     entries = entries.reject { |entry| entry.uid.blank? }
     entries.first(limit)
   rescue StandardError => e
-    Rails.error.report(e, context: { profile_key: profile_key, user_id: user&.id })
+    Rails.error.report(e, context: error_context)
     raise SourceUnreachable, e.message
+  end
+
+  def error_context
+    { profile_key: profile_key, user_id: user&.id }
   end
 
   def normalize_to_drafts(temp_feed, entries)

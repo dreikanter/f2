@@ -159,6 +159,32 @@ class Feeds::PreviewsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should render the credential gate when an AI profile is selected but the user has no credentials" do
+    sign_in_as(user)
+
+    with_memory_cache do
+      get feed_live_preview_path("draft"),
+          params: { profile_key: "llm_website_extractor", params: { url: "https://example.com" } }
+
+      assert_response :success
+      assert_select "[data-key='credentials.gate']"
+      assert_select "[data-key='credentials.gate.add']"
+    end
+  end
+
+  test "#show should not render the credential gate when the user has an active AI credential" do
+    sign_in_as(user)
+    create(:llm_credential, :active, user: user)
+
+    with_memory_cache do
+      get feed_live_preview_path("draft"),
+          params: { profile_key: "llm_website_extractor", params: { url: "https://example.com" } }
+
+      assert_response :success
+      assert_select "[data-key='credentials.gate']", false
+    end
+  end
+
   test "#destroy should clear the cached preview" do
     sign_in_as(user)
 

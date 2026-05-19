@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
-    assert_equal ["rss", "xkcd"], FeedProfile.all.sort
+    assert_equal ["llm_website_extractor", "rss", "xkcd"], FeedProfile.all.sort
   end
 
   test ".exists? returns true for valid profile key" do
@@ -45,7 +45,13 @@ class FeedProfileTest < ActiveSupport::TestCase
       end
 
       if entry[:depends_on_ai]
-        assert_kind_of Hash, entry[:output_schema], "#{key}: output_schema required for AI profile"
+        # AI profiles either declare the universal-post output_schema at
+        # the top level or carry it on the AI-using stage's config.
+        ai_stage_config = FeedProfile::STAGES
+          .map { |stage| entry[stage][:config] }
+          .find { |c| c[:output_schema].is_a?(Hash) }
+        assert_kind_of Hash, ai_stage_config&.dig(:output_schema) || entry[:output_schema],
+                       "#{key}: output_schema required for AI profile"
       end
     end
   end
@@ -81,8 +87,12 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all PROFILES have resolvable title extractor classes" do
-    FeedProfile::PROFILES.each_key do |key|
+  test "all non-AI PROFILES have resolvable title extractor classes" do
+    # AI-backed profiles emit the universal post shape directly, so they
+    # skip the title-extractor stage.
+    FeedProfile::PROFILES.each do |key, entry|
+      next if entry[:depends_on_ai]
+
       title_extractor_class = FeedProfile.title_extractor_class_for(key)
       assert title_extractor_class.present?, "Profile '#{key}' should have a resolvable title extractor class"
       assert title_extractor_class < TitleExtractor::Base, "Profile '#{key}' title extractor should inherit from TitleExtractor::Base"
@@ -133,6 +143,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".depends_on_ai? returns true for AI-backed profiles" do
+    assert FeedProfile.depends_on_ai?("llm_website_extractor")
     assert_not FeedProfile.depends_on_ai?("rss")
     assert_not FeedProfile.depends_on_ai?("xkcd")
     assert_not FeedProfile.depends_on_ai?("nonexistent")
