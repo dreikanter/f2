@@ -23,33 +23,36 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     assert_empty result.candidates
   end
 
-  test ".call should return empty candidates when no matcher fires" do
+  test ".call should fall back to AI extraction when no non-AI matcher fires for a URL" do
     result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
     assert_equal :url, result.input_shape
-    assert_empty result.candidates
+    assert_equal ["llm_website_extractor"], result.candidates.map(&:profile_key)
+    assert_equal :ai_fallback, result.candidates.first.rank_reason
   end
 
-  test ".call should return a ranked candidate for a generic RSS feed" do
+  test ".call should rank a generic RSS feed above the AI fallback" do
     result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
-    assert_equal ["rss"], result.candidates.map(&:profile_key)
+    assert_equal ["rss", "llm_website_extractor"], result.candidates.map(&:profile_key)
 
-    candidate = result.candidates.first
-    assert_equal 0, candidate.rank
-    assert_equal false, candidate.depends_on_ai
-    assert_equal :specific_match, candidate.rank_reason
+    rss = result.candidates.first
+    assert_equal 0, rss.rank
+    assert_equal false, rss.depends_on_ai
+    assert_equal :specific_match, rss.rank_reason
   end
 
-  test ".call should rank specific matchers above generic ones" do
+  test ".call should rank specific matchers above generic ones, with AI fallback last" do
     result = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
 
     profile_keys = result.candidates.map(&:profile_key)
-    assert_equal %w[xkcd rss], profile_keys, "xkcd (specificity 100) outranks rss (specificity 10)"
+    assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd (100) > rss (10) > AI (1)"
 
-    xkcd, rss = result.candidates
+    xkcd, rss, ai = result.candidates
     assert_equal 0, xkcd.rank
     assert_equal 1, rss.rank
+    assert_equal 2, ai.rank
     assert_equal :specific_match, xkcd.rank_reason
     assert_equal :generic_match, rss.rank_reason
+    assert_equal :ai_fallback, ai.rank_reason
   end
 
   test ".call should place AI-backed candidates after non-AI candidates" do
