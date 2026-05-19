@@ -82,7 +82,7 @@ Sign in (or `bin/rails console`-create) a user with at least one **active** Free
 2. Note the count of `LlmUsage` rows with `purpose: :preview` for your user.
 3. Refresh the browser tab (Cmd-R). **Expect**: same form-expanded state, same preview, **same `LlmUsage` count** — no new row.
 4. Click "Refresh preview". **Expect**: a new `LlmUsage` row with `purpose: :preview` appears.
-5. Change the "AI prompt refinement" parameter (if the profile exposes one). **Expect**: preview auto-re-runs; new `LlmUsage` row.
+5. **(deferred)** Auto-re-running the preview when a profile-specific parameter changes is not yet wired (the AI profiles ship with a single `url` / `handle` / `query` parameter, so there's nothing to change mid-flow). The "Refresh preview" button is the only path to a fresh preview.
 
 ## 5. Edit feed source (FR-026, FR-027, FR-028)
 
