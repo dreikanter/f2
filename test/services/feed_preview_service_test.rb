@@ -174,4 +174,63 @@ class FeedPreviewServiceTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test ".call should raise CredentialMissing when an AI profile has no credential" do
+    assert_raises FeedPreviewService::CredentialMissing do
+      FeedPreviewService.call(
+        user: user,
+        profile_key: "llm_website_extractor",
+        params: { "url" => "https://example.com" }
+      )
+    end
+  end
+
+  test ".call should map LlmClient::SchemaError to AiUnparseable" do
+    with_loader_stub(LlmClient::SchemaError.new("bad shape")) do
+      assert_raises FeedPreviewService::AiUnparseable do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  test ".call should map LlmClient::ProviderError to FeedPreviewService::ProviderError" do
+    with_loader_stub(LlmClient::ProviderError.new("boom")) do
+      assert_raises FeedPreviewService::ProviderError do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  test ".call should map LlmClient::RateLimited to FeedPreviewService::ProviderError" do
+    with_loader_stub(LlmClient::RateLimited.new("429")) do
+      assert_raises FeedPreviewService::ProviderError do
+        FeedPreviewService.call(
+          user: user,
+          profile_key: "llm_website_extractor",
+          params: { "url" => "https://example.com" },
+          llm_credential: create(:llm_credential, :active, user: user)
+        )
+      end
+    end
+  end
+
+  private
+
+  def with_loader_stub(error)
+    Loader::LlmLoader.define_method(:load) { raise error }
+    yield
+  ensure
+    Loader::LlmLoader.send(:remove_method, :load) if Loader::LlmLoader.method_defined?(:load)
+    load Rails.root.join("app/services/loader/llm_loader.rb")
+  end
 end

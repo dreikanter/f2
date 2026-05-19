@@ -19,11 +19,13 @@ class FeedPreviewJob < ApplicationJob
     user = User.find_by(id: args.fetch("user_id"))
     return unless user
 
+    llm_credential = LlmCredential.find_by(id: args["llm_credential_id"]) if args["llm_credential_id"]
+
     FeedPreviewService.call(
       user: user,
       profile_key: args.fetch("profile_key"),
       params: args.fetch("params", {}),
-      llm_credential: nil,
+      llm_credential: llm_credential,
       cache_key: cache_key,
       refresh: true,
       limit: args.fetch("limit", 5)
