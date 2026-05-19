@@ -230,8 +230,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Unsupported feed profile"
-    assert_includes response.body, 'data-identification-state="error"'
+    # When no structured profile matches, the AI fallback now fires and the
+    # form lands in the complete state instead of the error state.
+    assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, "llm_website_extractor"
   end
 
   test "#show should return error when feed detail is missing" do
@@ -256,9 +258,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
-    assert_equal 1, payload.size
-    assert_equal "rss", payload.first["profile_key"]
+    # RSS plus the AI fallback. RSS ranks first.
+    assert_equal %w[rss llm_website_extractor], payload.map { |c| c["profile_key"] }
     assert_equal "specific_match", payload.first["rank_reason"]
+    assert_equal "ai_fallback", payload.last["rank_reason"]
   end
 
   test "#show should surface a multi-candidate payload ranked recommended first" do
@@ -273,10 +276,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
-    assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
+    assert_equal %w[xkcd rss llm_website_extractor], payload.map { |c| c["profile_key"] }
     assert_equal 0, payload.first["rank"]
     assert_equal "specific_match", payload.first["rank_reason"]
-    assert_equal "generic_match", payload.last["rank_reason"]
+    assert_equal "ai_fallback", payload.last["rank_reason"]
   end
 
   test "#show should surface an AI-only fallback payload when only an AI matcher fires" do

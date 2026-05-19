@@ -94,7 +94,28 @@ class FeedProfile
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil,
-      output_schema: nil
+      output_schema: {
+        "type" => "object",
+        "properties" => {
+          "items" => {
+            "type" => "array",
+            "items" => {
+              "type" => "object",
+              "properties" => {
+                "uid" => { "type" => "string" },
+                "title" => { "type" => "string" },
+                "body" => { "type" => "string" },
+                "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
+                "images" => { "type" => "array", "items" => { "type" => "string" } },
+                "source_url" => { "type" => "string" },
+                "published_at" => { "type" => "string" }
+              },
+              "required" => ["uid", "body", "source_url"]
+            }
+          }
+        },
+        "required" => ["items"]
+      }
     }
   }.freeze
 

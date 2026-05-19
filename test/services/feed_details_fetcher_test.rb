@@ -93,7 +93,7 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     assert_nil feed_detail.candidates.first["title"]
   end
 
-  test "#identify should update record with failed status when profile not identified" do
+  test "#identify should fall back to AI extraction when no structured profile matches" do
     url = "http://example.com/unknown.txt"
 
     stub_request(:get, url)
@@ -104,8 +104,8 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
 
     feed_detail = FeedDetail.find_by(user: user, url: url)
     assert_not_nil feed_detail
-    assert_equal "failed", feed_detail.status
-    assert_equal "Unsupported feed profile", feed_detail.error
+    assert_equal "success", feed_detail.status
+    assert_equal "llm_website_extractor", feed_detail.candidates.first["profile_key"]
   end
 
   test "#identify should update record with failed status on HTTP errors" do
@@ -155,7 +155,7 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
 
     feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_equal 1, feed_detail.candidates.size
+    assert_equal %w[rss llm_website_extractor], feed_detail.candidates.map { |c| c["profile_key"] }
 
     candidate = feed_detail.candidates.first
     assert_equal "rss", candidate["profile_key"]
@@ -183,17 +183,18 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
 
     feed_detail = FeedDetail.find_by(user: user, url: url)
     profile_keys = feed_detail.candidates.map { |c| c["profile_key"] }
-    assert_equal %w[xkcd rss], profile_keys, "xkcd outranks rss for xkcd.com URLs"
+    assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
   end
 
-  test "#identify should persist an empty candidates array when no profile matches" do
+  test "#identify should record the AI fallback as the only candidate when no structured profile matches" do
     url = "http://example.com/page.html"
     stub_request(:get, url).to_return(status: 200, body: "<html><body/></html>")
 
     FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
 
     feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_equal "failed", feed_detail.status
-    assert_equal [], feed_detail.candidates
+    assert_equal "success", feed_detail.status
+    assert_equal ["llm_website_extractor"], feed_detail.candidates.map { |c| c["profile_key"] }
+    assert_equal true, feed_detail.candidates.first["depends_on_ai"]
   end
 end
