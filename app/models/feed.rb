@@ -111,6 +111,16 @@ class Feed < ApplicationRecord
     self.params = next_params
   end
 
+  # Whichever param the profile uses as the user-facing source — url for
+  # URL profiles, handle for handle profiles, query for query profiles.
+  # Used by views that need to show "what the user typed" without caring
+  # about the underlying input shape.
+  def source_input
+    return nil if params.blank?
+
+    params["url"] || params["handle"] || params["query"]
+  end
+
   def feed_profile_present?
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end

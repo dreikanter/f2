@@ -6,10 +6,9 @@ class FeedDetailsFetcher
   end
 
   def identify
-    response = http_client.get(@url)
-    raise "HTTP request failed with status #{response.status}" unless response.success?
+    body = fetch_body_for_url
 
-    result = FeedProfileDetector.call(input: @url, fetched_body: response.body)
+    result = FeedProfileDetector.call(input: @url, fetched_body: body)
 
     if result.candidates.any?
       feed_detail.update!(
@@ -26,6 +25,18 @@ class FeedDetailsFetcher
   end
 
   private
+
+  # Fetch the URL body for inspection by URL matchers; skip the fetch
+  # entirely for handle / query inputs since structured URL detection
+  # doesn't apply.
+  def fetch_body_for_url
+    return nil if InputClassifier.classify(@url) != :url
+
+    response = http_client.get(@url)
+    raise "HTTP request failed with status #{response.status}" unless response.success?
+
+    response.body
+  end
 
   def sanitize_url_for_logging(url)
     return "[invalid URL]" if url.blank?

@@ -149,7 +149,8 @@ class FeedsController < ApplicationController
       :access_token_id,
       :llm_credential_id,
       :cron_expression,
-      :schedule_interval
+      :schedule_interval,
+      params: {}
     )
   end
 

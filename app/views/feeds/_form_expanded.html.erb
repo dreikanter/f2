@@ -16,7 +16,7 @@
                 } do |f| %>
     <div class="space-y-6">
       <% if multi_candidate %>
-        <%= render "feeds/candidate_chooser", candidates: candidates %>
+        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.url %>
       <% else %>
         <%= f.hidden_field :feed_profile_key %>
       <% end %>
@@ -31,12 +31,14 @@
       <div class="space-y-2">
         <%= f.label :url, "Source", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :url_display,
-                         value: feed.url,
+                         value: feed.source_input,
                          disabled: true,
                          class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
                          aria: { label: "Source (cannot be changed)" },
                          data: { key: "form.source-display" } %>
-        <%= f.hidden_field :url %>
+        <% feed.params&.each do |key, value| %>
+          <%= hidden_field_tag "feed[params][#{key}]", value %>
+        <% end %>
         <% unless multi_candidate %>
           <p class="text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
         <% end %>

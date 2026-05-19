@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
-    assert_equal ["llm_website_extractor", "rss", "xkcd"], FeedProfile.all.sort
+    assert_equal ["llm_handle_search", "llm_web_search", "llm_website_extractor", "rss", "xkcd"], FeedProfile.all.sort
   end
 
   test ".exists? returns true for valid profile key" do
@@ -130,9 +130,9 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers_for returns empty for unmatched input_shape" do
-    assert_empty FeedProfile.matchers_for(:handle)
-    assert_empty FeedProfile.matchers_for(:query)
+  test ".matchers_for returns the handle and query matchers for their shapes" do
+    assert_includes FeedProfile.matchers_for(:handle), ProfileMatcher::LlmHandleSearchMatcher
+    assert_includes FeedProfile.matchers_for(:query), ProfileMatcher::LlmWebSearchMatcher
   end
 
   test ".matchers_for returns every matcher when input_shape is nil or :any" do

@@ -94,7 +94,7 @@ class FeedProfile
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil,
-      output_schema: {
+      output_schema: UNIVERSAL_OUTPUT_SCHEMA = {
         "type" => "object",
         "properties" => {
           "items" => {
@@ -116,8 +116,78 @@ class FeedProfile
         },
         "required" => ["items"]
       }
+    },
+    "llm_handle_search" => {
+      display_name: "Follow a handle",
+      description: "Uses AI to follow posts from a social handle (X, Mastodon, …) without a structured feed",
+      input_shape: :handle,
+      depends_on_ai: true,
+      matcher: "ProfileMatcher::LlmHandleSearchMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "handle" => { "type" => "string", "minLength" => 2, "maxLength" => 80 }
+        },
+        "required" => ["handle"]
+      },
+      loader: {
+        class: "Loader::LlmLoader",
+        config: {
+          model: "claude-sonnet-4-6",
+          prompt_template: <<~PROMPT,
+            Find the most recent posts published by `{{handle}}` on any platform you can
+            search. For each item, return a stable permalink as `uid`, a title, body text,
+            optional supplementary comments, optional image URLs, the source URL, and the
+            published date in ISO 8601. Return at most 10 items.
+          PROMPT
+          output_schema: nil, # filled below by reference
+          tools: ["web_search"]
+        }
+      },
+      processor: { class: "Processor::PassthroughProcessor", config: {} },
+      normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
+      title_extractor: nil,
+      output_schema: nil # filled below by reference
+    },
+    "llm_web_search" => {
+      display_name: "Follow a web search",
+      description: "Uses AI to follow results for a search query as an evergreen subscription",
+      input_shape: :query,
+      depends_on_ai: true,
+      matcher: "ProfileMatcher::LlmWebSearchMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "query" => { "type" => "string", "minLength" => 3, "maxLength" => 200 }
+        },
+        "required" => ["query"]
+      },
+      loader: {
+        class: "Loader::LlmLoader",
+        config: {
+          model: "claude-sonnet-4-6",
+          prompt_template: <<~PROMPT,
+            Search the web for `{{query}}` and return the most recent matching articles or
+            posts. For each item, return a stable permalink as `uid`, a title, body text,
+            optional supplementary comments, optional image URLs, the source URL, and the
+            published date in ISO 8601. Return at most 10 items.
+          PROMPT
+          output_schema: nil,
+          tools: ["web_search"]
+        }
+      },
+      processor: { class: "Processor::PassthroughProcessor", config: {} },
+      normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
+      title_extractor: nil,
+      output_schema: nil
     }
-  }.freeze
+  }.tap do |profiles|
+    schema = profiles["llm_website_extractor"][:output_schema]
+    profiles["llm_handle_search"][:output_schema] = schema
+    profiles["llm_handle_search"][:loader][:config][:output_schema] = schema
+    profiles["llm_web_search"][:output_schema] = schema
+    profiles["llm_web_search"][:loader][:config][:output_schema] = schema
+  end.freeze
 
   # Returns all available profile keys
   # @return [Array<String>] list of profile keys

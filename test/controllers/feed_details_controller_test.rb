@@ -123,13 +123,33 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Checking this feed"
   end
 
-  test "#create should return error for invalid URL" do
+  test "#create should reject empty or malformed input" do
     sign_in_as(user)
 
-    post feed_details_path, params: { url: "not-a-url" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_details_path, params: { url: "" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Please enter a valid URL"
+    assert_includes response.body, "Please enter a link, handle, or a few words"
+  end
+
+  test "#create should accept a free-text query as input" do
+    sign_in_as(user)
+
+    assert_enqueued_with(job: FeedDetailsJob) do
+      post feed_details_path, params: { url: "ai safety news" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+  end
+
+  test "#create should accept a handle as input" do
+    sign_in_as(user)
+
+    assert_enqueued_with(job: FeedDetailsJob) do
+      post feed_details_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
   end
 
   test "#show should require authentication" do

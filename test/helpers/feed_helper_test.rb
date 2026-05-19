@@ -113,4 +113,18 @@ class FeedHelperTest < ActionView::TestCase
       assert_equal expected, feed_status_summary(feed)
     end
   end
+
+  test "#candidate_summary should fall back to the profile display name for URL profiles" do
+    assert_equal "RSS Feed", candidate_summary("rss", "https://example.com/feed.xml")
+    assert_equal "AI page reader", candidate_summary("llm_website_extractor", "https://example.com")
+  end
+
+  test "#candidate_summary should personalize the handle profile with the user's input" do
+    assert_equal "Follow @alice via AI search", candidate_summary("llm_handle_search", "@alice")
+  end
+
+  test "#candidate_summary should personalize the web-search profile with the user's input" do
+    assert_equal "Follow web search results for \"climate change\"",
+                 candidate_summary("llm_web_search", "climate change")
+  end
 end
