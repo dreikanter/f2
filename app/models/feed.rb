@@ -114,11 +114,15 @@ class Feed < ApplicationRecord
   # Whichever param the profile uses as the user-facing source — url for
   # URL profiles, handle for handle profiles, query for query profiles.
   # Used by views that need to show "what the user typed" without caring
-  # about the underlying input shape.
+  # about the underlying input shape. Driven by the profile's input_shape
+  # so smuggled keys in the params jsonb can't disguise the real source.
   def source_input
     return nil if params.blank?
 
-    params["url"] || params["handle"] || params["query"]
+    shape = FeedProfile[feed_profile_key]&.dig(:input_shape)
+    return params["url"] if shape.nil?
+
+    params[shape.to_s]
   end
 
   def feed_profile_present?

@@ -13,7 +13,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  test "#post should detect a handle input and offer the llm_handle_search candidate" do
+  test "#create should detect a handle input and offer the llm_handle_search candidate" do
     sign_in_as(user)
 
     post feed_details_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -24,7 +24,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "llm_handle_search"
   end
 
-  test "#post should detect a free-text query and offer the llm_web_search candidate" do
+  test "#create should detect a free-text query and offer the llm_web_search candidate" do
     sign_in_as(user)
 
     post feed_details_path, params: { url: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -35,7 +35,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "llm_web_search"
   end
 
-  test "#post should render the personalized candidate summary for a handle input" do
+  test "#create should render the personalized candidate summary for a handle input" do
     sign_in_as(user)
 
     post feed_details_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }

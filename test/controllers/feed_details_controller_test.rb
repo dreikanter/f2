@@ -330,6 +330,49 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     feed_detail&.destroy
   end
 
+  test "#show should write the user's input under params[handle] for handle profiles" do
+    sign_in_as(user)
+    handle = "@alice"
+    create(
+      :feed_detail,
+      user: user,
+      url: handle,
+      started_at: Time.current,
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_handle_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_details_path, params: { url: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'name="feed[params][handle]"'
+    assert_includes response.body, "value=\"#{handle}\""
+    refute_includes response.body, 'name="feed[params][url]"'
+  end
+
+  test "#show should write the user's input under params[query] for query profiles" do
+    sign_in_as(user)
+    query = "climate change"
+    create(
+      :feed_detail,
+      user: user,
+      url: query,
+      started_at: Time.current,
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_web_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_details_path, params: { url: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'name="feed[params][query]"'
+    refute_includes response.body, 'name="feed[params][url]"'
+  end
+
   test "#destroy should require authentication" do
     delete feed_details_path
     assert_redirected_to new_session_path

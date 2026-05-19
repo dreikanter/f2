@@ -150,7 +150,10 @@ class FeedsController < ApplicationController
       :llm_credential_id,
       :cron_expression,
       :schedule_interval,
-      params: {}
+      # Only the three known input-shape keys are accepted. Anything
+      # else inside the params hash would otherwise persist into
+      # `feeds.params` jsonb undetected — see the profile schemas.
+      params: [:url, :handle, :query]
     )
   end
 

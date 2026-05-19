@@ -4,6 +4,32 @@
 class FeedProfile
   STAGES = %i[loader processor normalizer].freeze
 
+  # Shared output shape for AI-extraction profiles. All AI profiles
+  # converge on this `{ items: [...] }` envelope; only the prompt and
+  # the tools the loader is allowed to use differ.
+  UNIVERSAL_OUTPUT_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "items" => {
+        "type" => "array",
+        "items" => {
+          "type" => "object",
+          "properties" => {
+            "uid" => { "type" => "string" },
+            "title" => { "type" => "string" },
+            "body" => { "type" => "string" },
+            "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
+            "images" => { "type" => "array", "items" => { "type" => "string" } },
+            "source_url" => { "type" => "string" },
+            "published_at" => { "type" => "string" }
+          },
+          "required" => ["uid", "body", "source_url"]
+        }
+      }
+    },
+    "required" => ["items"]
+  }.freeze
+
   PROFILES = {
     "rss" => {
       display_name: "RSS Feed",
@@ -16,7 +42,8 @@ class FeedProfile
         "properties" => {
           "url" => { "type" => "string", "format" => "uri" }
         },
-        "required" => ["url"]
+        "required" => ["url"],
+        "additionalProperties" => false
       },
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
@@ -35,7 +62,8 @@ class FeedProfile
         "properties" => {
           "url" => { "type" => "string", "format" => "uri" }
         },
-        "required" => ["url"]
+        "required" => ["url"],
+        "additionalProperties" => false
       },
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
@@ -54,7 +82,8 @@ class FeedProfile
         "properties" => {
           "url" => { "type" => "string", "format" => "uri" }
         },
-        "required" => ["url"]
+        "required" => ["url"],
+        "additionalProperties" => false
       },
       loader: {
         class: "Loader::LlmLoader",
@@ -94,28 +123,7 @@ class FeedProfile
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil,
-      output_schema: UNIVERSAL_OUTPUT_SCHEMA = {
-        "type" => "object",
-        "properties" => {
-          "items" => {
-            "type" => "array",
-            "items" => {
-              "type" => "object",
-              "properties" => {
-                "uid" => { "type" => "string" },
-                "title" => { "type" => "string" },
-                "body" => { "type" => "string" },
-                "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
-                "images" => { "type" => "array", "items" => { "type" => "string" } },
-                "source_url" => { "type" => "string" },
-                "published_at" => { "type" => "string" }
-              },
-              "required" => ["uid", "body", "source_url"]
-            }
-          }
-        },
-        "required" => ["items"]
-      }
+      output_schema: UNIVERSAL_OUTPUT_SCHEMA
     },
     "llm_handle_search" => {
       display_name: "Follow a handle",
@@ -128,7 +136,8 @@ class FeedProfile
         "properties" => {
           "handle" => { "type" => "string", "minLength" => 2, "maxLength" => 80 }
         },
-        "required" => ["handle"]
+        "required" => ["handle"],
+        "additionalProperties" => false
       },
       loader: {
         class: "Loader::LlmLoader",
@@ -160,7 +169,8 @@ class FeedProfile
         "properties" => {
           "query" => { "type" => "string", "minLength" => 3, "maxLength" => 200 }
         },
-        "required" => ["query"]
+        "required" => ["query"],
+        "additionalProperties" => false
       },
       loader: {
         class: "Loader::LlmLoader",
@@ -182,11 +192,11 @@ class FeedProfile
       output_schema: nil
     }
   }.tap do |profiles|
-    schema = profiles["llm_website_extractor"][:output_schema]
-    profiles["llm_handle_search"][:output_schema] = schema
-    profiles["llm_handle_search"][:loader][:config][:output_schema] = schema
-    profiles["llm_web_search"][:output_schema] = schema
-    profiles["llm_web_search"][:loader][:config][:output_schema] = schema
+    profiles["llm_handle_search"][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
+    profiles["llm_handle_search"][:loader][:config][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
+    profiles["llm_web_search"][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
+    profiles["llm_web_search"][:loader][:config][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
+    profiles.each_value(&:freeze)
   end.freeze
 
   # Returns all available profile keys
