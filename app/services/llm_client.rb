@@ -69,7 +69,13 @@ class LlmClient
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
       record_failure(feed, profile_key, stage, purpose, model, :timeout, started_at)
       raise Timeout, e.message
-    rescue RubyLLM::Error => e
+    rescue RubyLLM::Error,
+           RubyLLM::ConfigurationError,
+           RubyLLM::ModelNotFoundError,
+           RubyLLM::PromptNotFoundError,
+           RubyLLM::InvalidRoleError,
+           RubyLLM::InvalidToolChoiceError,
+           RubyLLM::UnsupportedAttachmentError => e
       Rails.error.report(e, context: error_context(feed, profile_key, stage, model, purpose))
       record_failure(feed, profile_key, stage, purpose, model, :provider_error, started_at)
       raise ProviderError, e.message
@@ -123,7 +129,7 @@ class LlmClient
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(model:, prompt:, output_schema:, tools:)
     api_key = credential.credential_data["api_key"]
-    raise ProviderError, "credential missing api_key" if api_key.blank?
+    raise RubyLLM::ConfigurationError, "credential missing api_key" if api_key.blank?
 
     context = RubyLLM.context do |config|
       config.public_send("#{credential.provider}_api_key=", api_key)

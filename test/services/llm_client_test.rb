@@ -189,4 +189,32 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.health_check }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
+
+  test "#call should map RubyLLM::ModelNotFoundError to ProviderError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::ModelNotFoundError.new("unknown model"))
+
+    assert_difference("LlmUsage.count", 1) do
+      assert_raises(LlmClient::ProviderError) { client.call(**call_args) }
+    end
+
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
+  test "#call should map RubyLLM::ConfigurationError to ProviderError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::ConfigurationError.new("misconfigured"))
+
+    assert_raises(LlmClient::ProviderError) { client.call(**call_args) }
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
+  test "#call should raise ProviderError immediately when the credential has no api_key" do
+    bad_credential = build(:llm_credential, user: user, credential_data: {})
+    bad_credential.save(validate: false)
+    client = LlmClient.new(bad_credential)
+
+    assert_raises(LlmClient::ProviderError) { client.call(**call_args(feed: nil)) }
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
 end
