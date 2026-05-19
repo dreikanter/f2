@@ -1,9 +1,9 @@
 # Quickstart: Smart Feed Creation
 
 **Audience**: anyone verifying this feature locally — author, reviewer, QA.
-**Plan**: [`plan.md`](./plan.md) · **Spec**: [`spec.md`](./spec.md)
+**Plan**: [`plan.md`](./plan.md) · **Spec**: [`spec.md`](./spec.md) · **PR plan**: [`plan-prs.md`](./plan-prs.md)
 
-This walkthrough exercises each user story end-to-end against a local dev environment. It assumes the implementation is fully landed; treat it as a definition-of-done checklist.
+This walkthrough exercises each user story end-to-end against a local dev environment. It assumes the implementation is fully landed; treat it as a definition-of-done checklist. Items deferred past the v1 cut are flagged inline with **(deferred)**.
 
 ## 0. Prerequisites
 
@@ -89,16 +89,16 @@ Sign in (or `bin/rails console`-create) a user with at least one **active** Free
 **Goal**: confirm operational vs source-side edit semantics.
 
 1. Edit an `enabled` RSS feed: change its name and target group, save. **Confirm** state stays `enabled`; no `LlmUsage` rows added; no preview re-run.
-2. Edit the same feed: change the URL to a different RSS source. **Expect**: detection re-runs, preview re-runs, save button labelled appropriately. **Confirm** state stays `enabled` after a successful re-preview.
-3. Edit an RSS feed: change the URL to one whose detection now matches the *AI website extractor* profile. **Expect**: warning ("This change switches the source type to AI extraction. Past dedup history won't transfer.") with explicit confirm/cancel. On confirm + successful preview, save → state stays `enabled`.
+2. **(deferred)** In-form source-side edits (changing the URL of an existing feed) are not exposed in v1 — the edit form keeps source and type read-only. To follow a different source, create a new feed. The model-level gate (`Feed#enabling_requires_recent_preview`) is in place for when the edit-source UI ships.
 
-## 6. Multi-credential picker (FR-013)
+## 6. Multi-credential default (FR-013)
 
 **Goal**: confirm default-credential behavior.
 
 1. Add a second Anthropic credential ("Work"). On `/llm_credentials`, click "Make default" on it.
-2. Start a new AI-backed feed. **Expect**: confirmation step shows a credential picker preselecting "Work".
-3. Switch to "Personal" via the picker — **expect**: this changes the feed's credential without changing the user's default. **Confirm** at the DB level that the user's default is still "Work".
+2. **Confirm** at the DB level that the partial unique index has un-defaulted the previous credential.
+3. Start a new AI-backed feed; **expect** the preview uses the user's default credential.
+4. **(deferred)** A per-feed credential picker on the creation form is not yet exposed; the feed always uses the user's active default for the required provider.
 
 ## 7. Vocabulary firewall (FR-022)
 
@@ -106,8 +106,8 @@ Sign in (or `bin/rails console`-create) a user with at least one **active** Free
 
 ```bash
 # From repo root, in your browser, view-source on /feeds/new at each state.
-# Or run the specific lint check the team adds during this feature:
-bin/rails test test/system/smart_feed_creation_vocabulary_test.rb
+# Or run the integration-level vocabulary check shipped with this feature:
+bin/rails test test/integration/smart_feed_creation_vocabulary_test.rb
 ```
 
 Banned: "profile", "matcher", "pipeline", "stage", "loader", "processor", "normalizer", "LLM" (any case). Allowed: "AI", "AI credentials", provider brand names.
@@ -131,8 +131,8 @@ bin/rails db:migrate:redo STEP=$(git diff --name-only main... | grep -c db/migra
 
 **Goal**: confirm the user can see what AI cost them.
 
-1. Navigate to a feed's show page. **Expect**: an "AI usage" panel showing this feed's lifetime + current-period spend.
-2. Navigate to `/settings/llm_usage` (or wherever the parent-spec phase 4 surfaces it). **Expect**: rollup by feed/profile/day; preview-purpose spend separated from scheduled-run spend.
+1. The cost notice on the new-feed form is in place ("AI fetches cost tokens..."), and `LlmUsage` rows are written with `cost_estimate_cents` for every call.
+2. **(deferred)** The per-feed "AI usage" panel on the feed show page and the `/settings/llm_usage` rollup are parent-spec phase 4 — the data they need is already captured.
 
 ## Done
 
