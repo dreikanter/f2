@@ -392,7 +392,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_18_235416) do
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
-  add_foreign_key "feeds", "llm_credentials"
+  add_foreign_key "feeds", "llm_credentials", on_delete: :nullify
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id"

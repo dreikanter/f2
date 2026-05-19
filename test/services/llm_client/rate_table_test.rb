@@ -36,35 +36,53 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
     assert_nil LlmClient::RateTable.rate_for(provider: "made-up", model: "claude-sonnet-4-6")
   end
 
-  test "#cost_for should compute cost from input and output tokens" do
+  test "#cost_for should compute cost in cents from input and output tokens" do
     # claude-sonnet-4-6: $3 input / $15 output per million.
-    # 1_000_000 input + 200_000 output = 3.00 + 3.00 = 6.00
+    # 1_000_000 input + 200_000 output = $3.00 + $3.00 = $6.00 = 600 cents
     cost = LlmClient::RateTable.cost_for(
       provider: "anthropic",
       model: "claude-sonnet-4-6",
       usage: usage(input: 1_000_000, output: 200_000)
     )
 
-    assert_in_delta 6.0, cost, 0.0001
+    assert_equal 600, cost
   end
 
   test "#cost_for should add prompt-cache token costs" do
     # claude-sonnet-4-6: cache_write $3.75/M, cache_read $0.30/M.
-    # 1M input + 1M cache_write + 1M cache_read = 3.00 + 3.75 + 0.30 = 7.05
+    # 1M input + 1M cache_write + 1M cache_read = $3.00 + $3.75 + $0.30 = $7.05 = 705 cents
     cost = LlmClient::RateTable.cost_for(
       provider: "anthropic",
       model: "claude-sonnet-4-6",
       usage: usage(input: 1_000_000, cache_write: 1_000_000, cache_read: 1_000_000)
     )
 
-    assert_in_delta 7.05, cost, 0.0001
+    assert_equal 705, cost
   end
 
-  test "#cost_for should return 0.0 for an unknown model" do
-    assert_equal 0.0, LlmClient::RateTable.cost_for(
+  test "#cost_for should return 0 for an unknown model" do
+    assert_equal 0, LlmClient::RateTable.cost_for(
       provider: "anthropic",
       model: "claude-imaginary",
       usage: usage(input: 1_000_000)
     )
+  end
+
+  test "should return an empty table when the rates file is missing" do
+    original = LlmClient::RateTable::PATH
+    LlmClient::RateTable.send(:remove_const, :PATH)
+    LlmClient::RateTable.const_set(:PATH, Rails.root.join("config/__does_not_exist__.yml"))
+    LlmClient::RateTable.reload!
+
+    assert_nil LlmClient::RateTable.rate_for(provider: "anthropic", model: "claude-sonnet-4-6")
+    assert_equal 0, LlmClient::RateTable.cost_for(
+      provider: "anthropic",
+      model: "claude-sonnet-4-6",
+      usage: usage(input: 1_000_000)
+    )
+  ensure
+    LlmClient::RateTable.send(:remove_const, :PATH)
+    LlmClient::RateTable.const_set(:PATH, original)
+    LlmClient::RateTable.reload!
   end
 end

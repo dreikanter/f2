@@ -91,6 +91,14 @@ class LlmCredentialTest < ActiveSupport::TestCase
     refute first.reload.is_default?
   end
 
+  test "destroy should be a no-op when no feeds reference the credential" do
+    credential = create(:llm_credential, user: user)
+
+    assert_difference("LlmCredential.count", -1) do
+      credential.destroy!
+    end
+  end
+
   test "destroy should nullify dependent feeds and disable any feed left enabled" do
     credential = create(:llm_credential, user: user)
     feed = create(:feed,

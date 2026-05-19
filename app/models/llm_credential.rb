@@ -11,6 +11,10 @@ class LlmCredential < ApplicationRecord
   # enabled state in one pass.
   has_many :feeds
 
+  # Rails 8 stores the encryption envelope as a JSON object
+  # ({"h": {...}, "p": "<ciphertext>"}) which `jsonb` accepts natively.
+  # The raw column contains only the envelope; the API key is never
+  # stored in plaintext.
   encrypts :credential_data
 
   enum :state, { pending: 0, validating: 1, active: 2, inactive: 3 }

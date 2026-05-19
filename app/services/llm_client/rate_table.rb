@@ -34,16 +34,18 @@ class LlmClient::RateTable
       )
     end
 
+    # Returns the cost of the call in integer cents to match
+    # LlmUsage#cost_estimate_cents. An unknown model returns 0.
     def cost_for(provider:, model:, usage:)
       rate = rate_for(provider: provider, model: model)
-      return 0.0 unless rate
+      return 0 unless rate
 
-      cents = 0.0
-      cents += usage.input_tokens.to_i * rate.input_per_million
-      cents += usage.output_tokens.to_i * rate.output_per_million
-      cents += usage.cache_write_tokens.to_i * rate.cache_write_per_million
-      cents += usage.cache_read_tokens.to_i * rate.cache_read_per_million
-      (cents / 1_000_000.0).round(6)
+      dollars_per_million = 0.0
+      dollars_per_million += usage.input_tokens.to_i * rate.input_per_million
+      dollars_per_million += usage.output_tokens.to_i * rate.output_per_million
+      dollars_per_million += usage.cache_write_tokens.to_i * rate.cache_write_per_million
+      dollars_per_million += usage.cache_read_tokens.to_i * rate.cache_read_per_million
+      ((dollars_per_million / 1_000_000.0) * 100).round
     end
 
     def reload!
@@ -57,6 +59,8 @@ class LlmClient::RateTable
     end
 
     def load_table
+      return {} unless File.exist?(PATH)
+
       raw = File.read(PATH)
       parsed = YAML.safe_load(raw, permitted_classes: [Symbol, Float])
       parsed || {}
