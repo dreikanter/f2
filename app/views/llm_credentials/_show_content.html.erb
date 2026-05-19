@@ -1,0 +1,54 @@
+<div class="space-y-6" data-key="llm_credential.show">
+  <%= render PageHeaderComponent.new(title: @llm_credential.display_name) do |header| %>
+    <% header.with_context_paragraph(LlmProvider.display_name_for(@llm_credential.provider).to_s) %>
+  <% end %>
+
+  <% case @llm_credential.state %>
+  <% when "pending", "validating" %>
+    <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-xs"
+         data-key="llm_credential.validating">
+      <div class="flex-shrink-0">
+        <%= render SpinnerComponent.new %>
+      </div>
+      <div class="space-y-1">
+        <p class="font-semibold text-slate-800">Checking your credential...</p>
+        <p class="text-slate-600">This usually takes a few seconds.</p>
+      </div>
+    </div>
+  <% when "active" %>
+    <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-2"
+         data-credential-state="active"
+         data-key="llm_credential.active">
+      <p class="font-semibold text-emerald-900">Credential is active</p>
+      <% if @llm_credential.last_validated_at %>
+        <p class="text-sm text-emerald-800">Last checked <%= time_ago_in_words(@llm_credential.last_validated_at) %> ago.</p>
+      <% end %>
+    </div>
+  <% when "inactive" %>
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 space-y-2"
+         data-credential-state="inactive"
+         data-key="llm_credential.inactive">
+      <p class="font-semibold text-red-900">We couldn't use this credential</p>
+      <% if @llm_credential.last_error.present? %>
+        <p class="text-sm text-red-800"><%= @llm_credential.last_error %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex flex-wrap gap-3">
+    <%= link_to "Back to credentials",
+                llm_credentials_path,
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+    <% unless @llm_credential.is_default? %>
+      <%= button_to "Make default",
+                    llm_credential_default_path(@llm_credential),
+                    method: :patch,
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
+    <% end %>
+    <%= button_to "Delete",
+                  llm_credential_path(@llm_credential),
+                  method: :delete,
+                  form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50" %>
+  </div>
+</div>

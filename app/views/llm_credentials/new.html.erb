@@ -1,0 +1,62 @@
+<% content_for :title, "New AI Credential" %>
+
+<div class="max-w-2xl mx-auto space-y-6" data-key="llm_credentials.new">
+  <%= render PageHeaderComponent.new(title: "Add an AI Credential") do |header| %>
+    <% header.with_context_paragraph("Connect a provider key so AI feeds can fetch posts on your behalf.") %>
+  <% end %>
+
+  <%= form_with model: @llm_credential, url: llm_credentials_path do |f| %>
+    <% if @llm_credential.errors.any? %>
+      <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
+        <ul class="list-disc list-inside text-sm">
+          <% @llm_credential.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <div class="space-y-6">
+      <div class="space-y-2">
+        <%= f.label :provider, "AI Provider", class: "block font-semibold text-slate-800" %>
+        <%= f.select :provider,
+                     LlmProvider.all.map { |key| [LlmProvider.display_name_for(key), key] },
+                     {},
+                     class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                     required: true,
+                     data: { key: "llm_credentials.provider" } %>
+      </div>
+
+      <div class="space-y-2">
+        <%= f.label :display_name, "Name", class: "block font-semibold text-slate-800" %>
+        <%= f.text_field :display_name,
+                         placeholder: "Personal Anthropic key",
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                         required: true,
+                         data: { key: "llm_credentials.display-name" } %>
+        <p class="text-slate-500">A label so you can tell credentials apart later.</p>
+      </div>
+
+      <% schema = LlmProvider.credential_schema_for(@llm_credential.provider) || { "properties" => {} } %>
+      <% schema["properties"].each do |key, _spec| %>
+        <div class="space-y-2">
+          <%= label_tag "llm_credential_credential_data_#{key}", key.humanize, class: "block font-semibold text-slate-800" %>
+          <%= password_field_tag "llm_credential[credential_data][#{key}]",
+                                 @llm_credential.credential_data&.dig(key),
+                                 id: "llm_credential_credential_data_#{key}",
+                                 class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                                 required: schema["required"]&.include?(key),
+                                 autocomplete: "off",
+                                 data: { key: "llm_credentials.credential-data.#{key}" } %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
+      <%= f.submit "Save Credential",
+                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                   data: { turbo_submits_with: "Saving..." } %>
+      <%= link_to "Cancel", llm_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+    </div>
+  <% end %>
+</div>
