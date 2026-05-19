@@ -33,11 +33,11 @@ module Normalizer
 
     def normalize_published_at(value)
       return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
-      return nil if value.blank?
+      return Time.current if value.blank?
 
       Time.parse(value.to_s)
     rescue ArgumentError
-      nil
+      Time.current
     end
 
     def validate_content

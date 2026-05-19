@@ -48,12 +48,12 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
     assert_equal 2026, entries[0].published_at.year
   end
 
-  test "#process should tolerate invalid published_at strings" do
+  test "#process should default to the current time when published_at is invalid" do
     items = [{ "uid" => "u1", "published_at" => "not a date" }]
 
     entries = Processor::PassthroughProcessor.new(feed, items).process
 
-    assert_nil entries[0].published_at
+    assert_in_delta Time.current.to_f, entries[0].published_at.to_f, 5.0
   end
 
   test "#process should accept symbol keys as well as strings" do

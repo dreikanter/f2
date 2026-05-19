@@ -10,8 +10,6 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
 
   setup { clear_enqueued_jobs }
 
-  teardown { restore_llm_loader }
-
   def user
     @user ||= create(:user)
   end
@@ -48,22 +46,22 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     Rails.cache = previous
   end
 
-  def stub_loader(result)
-    @llm_loader_stubbed = true
-    Loader::LlmLoader.define_method(:load) do
-      case result
-      when Exception then raise result
-      else result
+  # Stubs LlmClient.for so the loader receives a fake client whose #call
+  # returns / raises the prescripted result. Block-scoped, no
+  # monkey-patching of stage classes.
+  def with_llm_client(result, &block)
+    fake_client = Class.new do
+      def initialize(result) = (@result = result)
+      def call(**_args)
+        case @result
+        when Exception then raise @result
+        when Hash then LlmClient::Result.new(payload: @result, usage_id: 1)
+        else raise ArgumentError, "unsupported stub result: #{@result.class}"
+        end
       end
-    end
-  end
+    end.new(result)
 
-  def restore_llm_loader
-    return unless @llm_loader_stubbed
-
-    Loader::LlmLoader.send(:remove_method, :load) if Loader::LlmLoader.method_defined?(:load)
-    load Rails.root.join("app/services/loader/llm_loader.rb")
-    @llm_loader_stubbed = false
+    LlmClient.stub(:for, ->(*_args) { fake_client }, &block)
   end
 
   def detect(url)
@@ -76,10 +74,10 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     access_token
     credential
-    stub_loader(sample_items)
 
-    with_memory_cache do
-      detect(ai_url)
+    with_llm_client({ "items" => sample_items }) do
+      with_memory_cache do
+        detect(ai_url)
 
       get feed_details_path, params: { url: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
@@ -115,6 +113,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       end
 
       assert_equal "enabled", Feed.last.state
+      end
     end
   end
 

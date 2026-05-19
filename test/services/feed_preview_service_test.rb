@@ -226,11 +226,17 @@ class FeedPreviewServiceTest < ActiveSupport::TestCase
 
   private
 
+  # Stubs LlmClient.for so the loader receives a fake client whose
+  # #call raises `error`. Confined to the block — no monkey-patching
+  # or source-file reloading.
   def with_loader_stub(error)
-    Loader::LlmLoader.define_method(:load) { raise error }
-    yield
-  ensure
-    Loader::LlmLoader.send(:remove_method, :load) if Loader::LlmLoader.method_defined?(:load)
-    load Rails.root.join("app/services/loader/llm_loader.rb")
+    fake_client = Class.new do
+      def initialize(err) = (@err = err)
+      def call(**_) = raise(@err)
+    end.new(error)
+
+    LlmClient.stub(:for, ->(*_args) { fake_client }) do
+      yield
+    end
   end
 end

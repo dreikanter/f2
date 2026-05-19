@@ -673,4 +673,32 @@ class FeedTest < ActiveSupport::TestCase
 
     assert feed.valid?, feed.errors.full_messages.inspect
   end
+
+  test "should reject an llm_credential belonging to a different user" do
+    owner = create(:user)
+    stranger = create(:user)
+    foreign_credential = create(:llm_credential, user: stranger)
+
+    feed = build(:feed,
+                 user: owner,
+                 llm_credential: foreign_credential,
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+
+    refute feed.valid?
+    assert_includes feed.errors[:llm_credential], "must belong to the same user"
+  end
+
+  test "should accept its own user's llm_credential" do
+    user = create(:user)
+    credential = create(:llm_credential, user: user)
+
+    feed = build(:feed,
+                 user: user,
+                 llm_credential: credential,
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
 end

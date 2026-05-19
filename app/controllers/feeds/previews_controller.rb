@@ -12,7 +12,11 @@ class Feeds::PreviewsController < ApplicationController
   def show
     @partial, @partial_locals =
       if needs_credential_gate?
-        [:credential_gate, { profile_key: profile_key, new_credential_path: new_llm_credential_path }]
+        [:credential_gate, {
+          profile_key: profile_key,
+          new_credential_path: new_llm_credential_path,
+          return_to: draft? && preview_params["url"].present? ? feed_details_path(url: preview_params["url"]) : nil
+        }]
       else
         case cached_preview
         when FeedPreviewService::Preview

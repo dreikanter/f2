@@ -14,7 +14,9 @@ module Processor
         FeedEntry.new(
           feed: feed,
           uid: uid,
-          published_at: parse_time(item["published_at"] || item[:published_at]),
+          # AI-extracted items rarely come with a reliable published_at;
+          # fall back to the current time so downstream invariants hold.
+          published_at: parse_time(item["published_at"] || item[:published_at]) || Time.current,
           status: :pending,
           raw_data: item.deep_stringify_keys
         )
