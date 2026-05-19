@@ -1,0 +1,59 @@
+<% content_for :title, "AI Credentials" %>
+
+<div class="space-y-8" data-key="llm_credentials.index">
+  <%= render PageHeaderComponent.new(title: "AI Credentials") do |header| %>
+    <% header.with_context_paragraph("Connect your AI provider keys to use AI-backed feed extraction.") %>
+    <% header.with_action_button do %>
+      <%= link_to "New Credential",
+                  new_llm_credential_path,
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
+                  data: { key: "llm_credentials.new-button" } %>
+    <% end %>
+  <% end %>
+
+  <% if @llm_credentials.any? %>
+    <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-xs">
+      <% @llm_credentials.each do |credential| %>
+        <li class="p-4 flex flex-wrap items-center justify-between gap-3"
+            data-key="llm_credential.<%= credential.id %>">
+          <div class="space-y-1">
+            <p class="font-semibold text-slate-800">
+              <%= link_to credential.display_name, llm_credential_path(credential), class: "underline-offset-4 hover:underline" %>
+              <% if credential.is_default? %>
+                <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
+                      data-key="llm_credential.default-badge">Default</span>
+              <% end %>
+            </p>
+            <p class="text-sm text-slate-500">
+              <%= LlmProvider.display_name_for(credential.provider) %> · status: <%= credential.state %>
+            </p>
+            <% if credential.last_error.present? %>
+              <p class="text-sm text-red-600"><%= credential.last_error %></p>
+            <% end %>
+          </div>
+          <div class="flex items-center gap-2">
+            <% unless credential.is_default? %>
+              <%= button_to "Make default",
+                            llm_credential_default_path(credential),
+                            method: :patch,
+                            class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50",
+                            data: { key: "llm_credential.make-default" } %>
+            <% end %>
+            <%= button_to "Delete",
+                          llm_credential_path(credential),
+                          method: :delete,
+                          form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
+                          class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-50",
+                          data: { key: "llm_credential.delete" } %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= render EmptyStateComponent.new do %>
+      <h2 class="text-2xl font-semibold mb-2 text-slate-500">No AI credentials yet</h2>
+      <p class="mb-6 text-slate-500">Add a provider key to use AI-backed feed extraction.</p>
+      <%= link_to "Add Credential", new_llm_credential_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+    <% end %>
+  <% end %>
+</div>
