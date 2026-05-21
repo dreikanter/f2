@@ -1,4 +1,4 @@
-class FeedDetail < ApplicationRecord
+class FeedIdentification < ApplicationRecord
   IDENTIFICATION_TIMEOUT_SECONDS = 30
 
   belongs_to :user

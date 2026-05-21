@@ -180,7 +180,7 @@ class FeedsController < ApplicationController
   end
 
   def cleanup_feed_identification(url)
-    FeedDetail.find_by(user: current_user, url: url)&.destroy
+    FeedIdentification.find_by(user: current_user, url: url)&.destroy
   end
 
   # A user who ticked "Enable feed" still only saves enabled when the request

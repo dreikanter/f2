@@ -78,7 +78,7 @@
                          params: { url: feed.url },
                          format: :turbo_stream
                        ),
-                       cancel_url: feed_details_path(url: feed.url) %>
+                       cancel_url: feed_identifications_path(url: feed.url) %>
           <% end %>
         </div>
       <% end %>

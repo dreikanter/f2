@@ -69,7 +69,7 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
     assert_no_banned_vocabulary(response.body, page: "/llm_credentials/:id")
   end
 
-  test "feed_details success response (form-expanded) should not leak implementation vocabulary" do
+  test "feed_identifications success response (form-expanded) should not leak implementation vocabulary" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     rss_body = <<~XML
@@ -83,12 +83,12 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
     XML
     stub_request(:get, url).to_return(status: 200, body: rss_body)
 
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
-    assert_no_banned_vocabulary(response.body, page: "feed_details (success / form-expanded)")
+    assert_no_banned_vocabulary(response.body, page: "feed_identifications (success / form-expanded)")
   end
 
   test "feed show page should not leak implementation vocabulary" do

@@ -1,4 +1,4 @@
-class FeedDetailsFetcher
+class FeedIdentificationFetcher
   def initialize(user:, url:, logger: Rails.logger)
     @user = user
     @url = url
@@ -11,17 +11,17 @@ class FeedDetailsFetcher
     result = FeedProfileDetector.call(input: @url, fetched_body: body)
 
     if result.candidates.any?
-      feed_detail.update!(
+      feed_identification.update!(
         status: :success,
         candidates: serialize_candidates(result.candidates),
         error: nil
       )
     else
-      feed_detail.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
+      feed_identification.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
     end
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_url_for_logging(@url)}: #{e.class} - #{e.message}")
-    feed_detail.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
+    feed_identification.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
   end
 
   private
@@ -49,12 +49,12 @@ class FeedDetailsFetcher
     "[invalid URL]"
   end
 
-  def feed_detail
-    @feed_detail ||= begin
-      FeedDetail.find_or_create_by!(user: @user, url: @url)
+  def feed_identification
+    @feed_identification ||= begin
+      FeedIdentification.find_or_create_by!(user: @user, url: @url)
     rescue ActiveRecord::RecordNotUnique
       # Race condition: another process created the record, retry once to get it
-      FeedDetail.find_by!(user: @user, url: @url)
+      FeedIdentification.find_by!(user: @user, url: @url)
     end
   end
 
