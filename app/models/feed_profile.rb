@@ -2,8 +2,6 @@
 # (matcher + parameter shape + loader/processor/normalizer triple).
 #
 class FeedProfile
-  STAGES = %i[loader processor normalizer].freeze
-
   # Shared output shape for AI-extraction profiles. All AI profiles
   # converge on this `{ items: [...] }` envelope; only the prompt and
   # the tools the loader is allowed to use differ.

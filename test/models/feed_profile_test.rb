@@ -38,7 +38,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert_kind_of String, entry[:matcher], "#{key}: matcher"
       assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
 
-      FeedProfile::STAGES.each do |stage|
+      %i[loader processor normalizer].each do |stage|
         assert_kind_of Hash, entry[stage], "#{key}: #{stage} entry must be a hash"
         assert_kind_of String, entry[stage][:class], "#{key}: #{stage}.class"
         assert_kind_of Hash, entry[stage][:config], "#{key}: #{stage}.config"
@@ -47,7 +47,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       if entry[:depends_on_ai]
         # AI profiles either declare the universal-post output_schema at
         # the top level or carry it on the AI-using stage's config.
-        ai_stage_config = FeedProfile::STAGES
+        ai_stage_config = %i[loader processor normalizer]
           .map { |stage| entry[stage][:config] }
           .find { |c| c[:output_schema].is_a?(Hash) }
         assert_kind_of Hash, ai_stage_config&.dig(:output_schema) || entry[:output_schema],
