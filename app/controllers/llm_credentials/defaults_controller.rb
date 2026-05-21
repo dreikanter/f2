@@ -5,7 +5,8 @@ class LlmCredentials::DefaultsController < ApplicationController
 
     credential.make_default!
 
-    redirect_to llm_credentials_path, notice: "'#{credential.display_name}' is now the default for #{LlmProvider.display_name_for(credential.provider)}."
+    provider_name = LlmProvider.find(credential.provider)&.display_name
+    redirect_to llm_credentials_path, notice: "'#{credential.display_name}' is now the default for #{provider_name}."
   end
 
   private

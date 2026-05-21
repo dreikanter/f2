@@ -35,7 +35,7 @@ class LlmClient
       when LlmCredential
         target
       when Feed
-        target.llm_credential || default_credential_for(target.user, provider || LlmProvider.all.first)
+        target.llm_credential || default_credential_for(target.user, provider || LlmProvider.names.first)
       when User
         default_credential_for(target, provider)
       end
@@ -134,7 +134,7 @@ class LlmClient
     context = RubyLLM.context do |config|
       config.public_send("#{credential.provider}_api_key=", api_key)
     end
-    chat = context.chat(model: model, provider: LlmProvider.ruby_llm_provider_for(credential.provider))
+    chat = context.chat(model: model, provider: LlmProvider.find(credential.provider).ruby_llm_provider)
     chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)
     tools.each { |t| chat.with_tool(t) if chat.respond_to?(:with_tool) }
 

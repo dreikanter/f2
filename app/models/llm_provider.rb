@@ -2,9 +2,24 @@
 # `FeedProfile`. Drives the credential form generator (per-provider
 # credential schema) and tells `LlmClient` which RubyLLM provider key
 # to use.
-module LlmProvider
+class LlmProvider
+  attr_reader :name, :display_name, :ruby_llm_provider, :credential_schema
+
+  def initialize(name:, display_name:, ruby_llm_provider:, credential_schema:)
+    @name = name
+    @display_name = display_name
+    @ruby_llm_provider = ruby_llm_provider
+    @credential_schema = credential_schema
+    freeze
+  end
+
+  def validate(client)
+    client.health_check
+  end
+
   PROVIDERS = {
-    "anthropic" => {
+    "anthropic" => new(
+      name: "anthropic",
       display_name: "Anthropic (Claude)",
       ruby_llm_provider: :anthropic,
       credential_schema: {
@@ -14,34 +29,29 @@ module LlmProvider
         },
         "required" => ["api_key"],
         "additionalProperties" => false
-      },
-      validate_call: ->(client) { client.health_check }
-    }
+      }
+    )
   }.freeze
 
   class << self
     def all
+      PROVIDERS.values
+    end
+
+    def names
       PROVIDERS.keys
     end
 
-    def exists?(provider)
-      PROVIDERS.key?(provider.to_s)
+    def find(name)
+      return nil if name.nil?
+
+      PROVIDERS[name.to_s]
     end
 
-    def [](provider)
-      PROVIDERS[provider.to_s]
-    end
+    def exists?(name)
+      return false if name.nil?
 
-    def display_name_for(provider)
-      PROVIDERS.dig(provider.to_s, :display_name)
-    end
-
-    def credential_schema_for(provider)
-      PROVIDERS.dig(provider.to_s, :credential_schema)
-    end
-
-    def ruby_llm_provider_for(provider)
-      PROVIDERS.dig(provider.to_s, :ruby_llm_provider)
+      PROVIDERS.key?(name.to_s)
     end
   end
 end

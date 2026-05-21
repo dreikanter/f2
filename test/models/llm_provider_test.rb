@@ -1,8 +1,13 @@
 require "test_helper"
 
 class LlmProviderTest < ActiveSupport::TestCase
-  test "#all should list registered provider keys" do
-    assert_includes LlmProvider.all, "anthropic"
+  test "#all should return registered provider instances" do
+    assert_includes LlmProvider.all.map(&:name), "anthropic"
+    assert LlmProvider.all.all? { |p| p.is_a?(LlmProvider) }
+  end
+
+  test "#names should list registered provider keys" do
+    assert_includes LlmProvider.names, "anthropic"
   end
 
   test "#exists? should return true for registered providers" do
@@ -15,26 +20,32 @@ class LlmProviderTest < ActiveSupport::TestCase
     refute LlmProvider.exists?(nil)
   end
 
-  test "#[] should return the registry entry" do
-    entry = LlmProvider["anthropic"]
-    assert_kind_of Hash, entry
-    assert_equal "Anthropic (Claude)", entry[:display_name]
-    assert_equal :anthropic, entry[:ruby_llm_provider]
+  test "#find should return the provider instance" do
+    provider = LlmProvider.find("anthropic")
+    assert_kind_of LlmProvider, provider
+    assert_equal "anthropic", provider.name
+    assert_equal "Anthropic (Claude)", provider.display_name
+    assert_equal :anthropic, provider.ruby_llm_provider
   end
 
-  test "#display_name_for should return the human-readable label" do
-    assert_equal "Anthropic (Claude)", LlmProvider.display_name_for("anthropic")
+  test "#find should accept symbol keys" do
+    assert_equal "anthropic", LlmProvider.find(:anthropic).name
   end
 
-  test "#credential_schema_for should return a JSON Schema requiring api_key" do
-    schema = LlmProvider.credential_schema_for("anthropic")
+  test "#find should return nil for unknown providers" do
+    assert_nil LlmProvider.find("does-not-exist")
+    assert_nil LlmProvider.find(nil)
+  end
+
+  test "#credential_schema should require api_key" do
+    schema = LlmProvider.find("anthropic").credential_schema
     assert_equal "object", schema["type"]
     assert_includes schema["required"], "api_key"
     assert_equal false, schema["additionalProperties"]
   end
 
-  test "#ruby_llm_provider_for should return the RubyLLM provider symbol" do
-    assert_equal :anthropic, LlmProvider.ruby_llm_provider_for("anthropic")
+  test "instances should be frozen" do
+    assert LlmProvider.find("anthropic").frozen?
   end
 
   test "registry should be frozen" do
