@@ -111,7 +111,7 @@ class LlmClient
     call(
       feed: nil,
       profile_key: nil,
-      stage: :validation,
+      stage: nil,
       purpose: :credential_validation,
       model: default_model_for(credential.provider),
       prompt: "Reply with the single word: ok",

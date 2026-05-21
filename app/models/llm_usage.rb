@@ -6,7 +6,7 @@ class LlmUsage < ApplicationRecord
   belongs_to :feed, optional: true
   belongs_to :llm_credential, optional: true
 
-  enum :stage, { loader: 0, processor: 1, normalizer: 2, validation: 3 }
+  enum :stage, { loader: 0, processor: 1, normalizer: 2 }
   enum :purpose, { scheduled_run: 0, preview: 1, credential_validation: 2 }
   enum :outcome, {
     success: 0,

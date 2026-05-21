@@ -20,7 +20,7 @@ class LlmUsageTest < ActiveSupport::TestCase
   end
 
   test "should expose stage enum values" do
-    assert_equal({ "loader" => 0, "processor" => 1, "normalizer" => 2, "validation" => 3 }, LlmUsage.stages)
+    assert_equal({ "loader" => 0, "processor" => 1, "normalizer" => 2 }, LlmUsage.stages)
   end
 
   test "should expose purpose enum values" do
