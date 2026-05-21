@@ -179,7 +179,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
     assert_equal true, client.health_check
     assert_equal "credential_validation", LlmUsage.last.purpose
-    assert_equal "validation", LlmUsage.last.stage
+    assert_nil LlmUsage.last.stage
   end
 
   test "#health_check should raise ProviderError when the provider rejects the call" do

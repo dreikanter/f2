@@ -10,17 +10,18 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert usage.valid?, usage.errors.full_messages.inspect
   end
 
-  test "should require provider, model, and timing fields" do
+  test "should require provider, model, outcome, and timing fields" do
     usage = LlmUsage.new
     refute usage.valid?
     assert usage.errors[:provider].any?
     assert usage.errors[:model].any?
+    assert usage.errors[:outcome].any?
     assert usage.errors[:started_at].any?
     assert usage.errors[:finished_at].any?
   end
 
   test "should expose stage enum values" do
-    assert_equal({ "loader" => 0, "processor" => 1, "normalizer" => 2, "validation" => 3 }, LlmUsage.stages)
+    assert_equal({ "loader" => 0, "processor" => 1, "normalizer" => 2 }, LlmUsage.stages)
   end
 
   test "should expose purpose enum values" do
