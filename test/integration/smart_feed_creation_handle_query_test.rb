@@ -16,10 +16,10 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   test "#create should detect a handle input and offer the llm_handle_search candidate" do
     sign_in_as(user)
 
-    post feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "llm_handle_search"
   end
@@ -27,10 +27,10 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   test "#create should detect a free-text query and offer the llm_web_search candidate" do
     sign_in_as(user)
 
-    post feed_identifications_path, params: { url: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { url: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "llm_web_search"
   end
@@ -38,10 +38,10 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   test "#create should render the personalized candidate summary for a handle input" do
     sign_in_as(user)
 
-    post feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     # Multi-candidate would render the chooser; single-candidate renders the
     # source caption. Either way the user's input appears in the form copy.
     assert_includes response.body, "@alice"

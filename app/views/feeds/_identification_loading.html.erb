@@ -2,7 +2,7 @@
      class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 shadow-xs"
      role="status"
      data-controller="polling"
-     data-polling-endpoint-value="<%= feed_identifications_path(url: url) %>"
+     data-polling-endpoint-value="<%= feed_identifications_path(input: input) %>"
      data-polling-interval-value="<%= Feed::IDENTIFICATION_POLLING_INTERVAL_MS %>"
      data-polling-max-polls-value="<%= FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
      data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
@@ -14,7 +14,7 @@
     <p class="text-slate-600">This usually takes a few seconds.</p>
   </div>
   <%= button_to "Cancel",
-                feed_identifications_path(url: url),
+                feed_identifications_path(input: input),
                 method: :delete,
                 form: { data: { turbo_frame: "_top" } },
                 class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50",
