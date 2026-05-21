@@ -53,12 +53,12 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_details_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
 
       perform_enqueued_jobs
 
-      get feed_details_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "RSS Feed"
@@ -95,7 +95,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       assert_equal "enabled", feed.state
       assert_equal "Example Feed", feed.name
       assert_equal feed_url, feed.url
-      assert_nil FeedDetail.find_by(user: user, url: feed_url), "FeedDetail should be cleaned up after save"
+      assert_nil FeedIdentification.find_by(user: user, input: feed_url), "FeedIdentification should be cleaned up after save"
     end
   end
 
@@ -106,10 +106,10 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_details_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       perform_enqueued_jobs
 
-      get feed_details_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "XKCD"
     end
@@ -117,10 +117,10 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
 
   test "#delete should return user to collapsed form with their input preserved" do
     sign_in_as(user)
-    create(:feed_detail, user: user, url: feed_url, status: :processing, started_at: Time.current)
+    create(:feed_identification, user: user, input: feed_url, status: :processing, started_at: Time.current)
 
-    assert_difference("FeedDetail.count", -1) do
-      delete feed_details_path,
+    assert_difference("FeedIdentification.count", -1) do
+      delete feed_identifications_path,
              params: { url: feed_url },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end

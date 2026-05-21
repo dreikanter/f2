@@ -15,7 +15,7 @@ class Feeds::PreviewsController < ApplicationController
         [:credential_gate, {
           profile_key: profile_key,
           new_credential_path: new_llm_credential_path,
-          return_to: draft? && preview_params["url"].present? ? feed_details_path(url: preview_params["url"]) : nil
+          return_to: draft? && preview_params["url"].present? ? feed_identifications_path(url: preview_params["url"]) : nil
         }]
       else
         case cached_preview
@@ -136,7 +136,7 @@ class Feeds::PreviewsController < ApplicationController
     return nil unless draft?
 
     source = preview_params["url"].presence
-    source ? feed_details_path(url: source) : nil
+    source ? feed_identifications_path(url: source) : nil
   end
 
   def needs_credential_gate?

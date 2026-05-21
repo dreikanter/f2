@@ -1,27 +1,27 @@
-class FeedDetailsFetcher
-  def initialize(user:, url:, logger: Rails.logger)
+class FeedIdentificationFetcher
+  def initialize(user:, input:, logger: Rails.logger)
     @user = user
-    @url = url
+    @input = input
     @logger = logger
   end
 
   def identify
-    body = fetch_body_for_url
+    body = fetch_body_for_input
 
-    result = FeedProfileDetector.call(input: @url, fetched_body: body)
+    result = FeedProfileDetector.call(input: @input, fetched_body: body)
 
     if result.candidates.any?
-      feed_detail.update!(
+      feed_identification.update!(
         status: :success,
         candidates: serialize_candidates(result.candidates),
         error: nil
       )
     else
-      feed_detail.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
+      feed_identification.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
     end
   rescue StandardError => e
-    @logger.error("Feed identification failed for #{sanitize_url_for_logging(@url)}: #{e.class} - #{e.message}")
-    feed_detail.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
+    @logger.error("Feed identification failed for #{sanitize_input_for_logging(@input)}: #{e.class} - #{e.message}")
+    feed_identification.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
   end
 
   private
@@ -29,32 +29,32 @@ class FeedDetailsFetcher
   # Fetch the URL body for inspection by URL matchers; skip the fetch
   # entirely for handle / query inputs since structured URL detection
   # doesn't apply.
-  def fetch_body_for_url
-    return nil if InputClassifier.classify(@url) != :url
+  def fetch_body_for_input
+    return nil if InputClassifier.classify(@input) != :url
 
-    response = http_client.get(@url)
+    response = http_client.get(@input)
     raise "HTTP request failed with status #{response.status}" unless response.success?
 
     response.body
   end
 
-  def sanitize_url_for_logging(url)
-    return "[invalid URL]" if url.blank?
+  def sanitize_input_for_logging(input)
+    return "[invalid input]" if input.blank?
 
-    uri = URI.parse(url)
+    uri = URI.parse(input)
     # Remove query parameters to avoid logging sensitive data
     uri.query = nil
     uri.to_s
   rescue URI::InvalidURIError
-    "[invalid URL]"
+    "[invalid input]"
   end
 
-  def feed_detail
-    @feed_detail ||= begin
-      FeedDetail.find_or_create_by!(user: @user, url: @url)
+  def feed_identification
+    @feed_identification ||= begin
+      FeedIdentification.find_or_create_by!(user: @user, input: @input)
     rescue ActiveRecord::RecordNotUnique
       # Race condition: another process created the record, retry once to get it
-      FeedDetail.find_by!(user: @user, url: @url)
+      FeedIdentification.find_by!(user: @user, input: @input)
     end
   end
 

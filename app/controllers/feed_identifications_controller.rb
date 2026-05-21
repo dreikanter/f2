@@ -1,4 +1,4 @@
-class FeedDetailsController < ApplicationController
+class FeedIdentificationsController < ApplicationController
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
@@ -10,15 +10,15 @@ class FeedDetailsController < ApplicationController
   }
 
   def create
-    if InputClassifier.classify(feed_url) == :malformed
+    if InputClassifier.classify(feed_input) == :malformed
       return render(identification_error(error: "Please enter a link, handle, or a few words to search for"))
     end
 
-    return handle_success_status if feed_detail.success?
+    return handle_success_status if feed_identification.success?
 
-    if feed_detail.new_record? || feed_detail.failed?
+    if feed_identification.new_record? || feed_identification.failed?
       begin
-        feed_detail.update!(
+        feed_identification.update!(
           status: :processing,
           started_at: Time.current,
           candidates: [],
@@ -26,21 +26,21 @@ class FeedDetailsController < ApplicationController
         )
       rescue ActiveRecord::RecordNotUnique
         # Race condition: another process created the record, reload and continue
-        feed_detail.reload
+        feed_identification.reload
       end
 
-      FeedDetailsJob.perform_later(Current.user.id, feed_url)
+      FeedIdentificationJob.perform_later(Current.user.id, feed_input)
     end
 
     render(identification_loading)
   end
 
   def show
-    unless feed_detail.persisted?
+    unless feed_identification.persisted?
       return render(identification_error(error: "Identification session expired. Please try again."))
     end
 
-    case feed_detail.status
+    case feed_identification.status
     when "processing"
       handle_processing_status
     when "success"
@@ -51,34 +51,30 @@ class FeedDetailsController < ApplicationController
   end
 
   def destroy
-    original_url = feed_detail.persisted? ? feed_detail.url : feed_url
-    feed_detail.destroy if feed_detail.persisted?
+    original_input = feed_identification.persisted? ? feed_identification.input : feed_input
+    feed_identification.destroy if feed_identification.persisted?
 
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/form_collapsed",
-      locals: { url: original_url }
+      locals: { url: original_input }
     )
   end
 
   private
 
-  def feed_detail
-    @feed_detail ||= FeedDetail.find_or_initialize_by(user: Current.user, url: feed_url)
-  end
-
-  def valid_url?
-    feed_url.present? && feed_url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
+  def feed_identification
+    @feed_identification ||= FeedIdentification.find_or_initialize_by(user: Current.user, input: feed_input)
   end
 
   def handle_processing_status
-    if feed_detail.invalid_processing?
-      feed_detail.destroy
+    if feed_identification.invalid_processing?
+      feed_identification.destroy
       return render(identification_error(error: "Identification session is invalid. Please try again."))
     end
 
-    if feed_detail.timed_out?
-      feed_detail.destroy
+    if feed_identification.timed_out?
+      feed_identification.destroy
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end
 
@@ -86,10 +82,10 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_success_status
-    recommended = feed_detail.candidates.first || {}
+    recommended = feed_identification.candidates.first || {}
     profile_key = recommended["profile_key"]
     input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
-    params_for_input = { input_shape.to_s => feed_detail.url }
+    params_for_input = { input_shape.to_s => feed_identification.input }
 
     feed = Current.user.feeds.build(
       params: params_for_input,
@@ -97,11 +93,11 @@ class FeedDetailsController < ApplicationController
       name: recommended["title"]
     )
 
-    render(identification_success(feed, candidates: feed_detail.candidates))
+    render(identification_success(feed, candidates: feed_identification.candidates))
   end
 
   def handle_failed_status
-    error_message = feed_detail.error.presence || "We couldn't identify a feed profile for this URL."
+    error_message = feed_identification.error.presence || "We couldn't identify a feed profile for this URL."
     render(identification_error(error: error_message))
   end
 
@@ -110,7 +106,7 @@ class FeedDetailsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { url: feed_url, error: error }
+        locals: { url: feed_input, error: error }
       )
     }
   end
@@ -120,7 +116,7 @@ class FeedDetailsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_loading",
-        locals: { url: feed_url }
+        locals: { url: feed_input }
       )
     }
   end
@@ -135,7 +131,7 @@ class FeedDetailsController < ApplicationController
     }
   end
 
-  def feed_url
-    @feed_url ||= params[:url]
+  def feed_input
+    @feed_input ||= params[:url]
   end
 end

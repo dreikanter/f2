@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_21_000000) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,17 +54,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_000000) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
-  create_table "feed_details", force: :cascade do |t|
+  create_table "feed_identifications", force: :cascade do |t|
     t.jsonb "candidates", default: [], null: false
     t.datetime "created_at", null: false
     t.text "error"
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.string "url", null: false
+    t.string "input", null: false
     t.bigint "user_id", null: false
-    t.index ["user_id", "url"], name: "index_feed_details_on_user_id_and_url", unique: true
-    t.index ["user_id"], name: "index_feed_details_on_user_id"
+    t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
+    t.index ["user_id"], name: "index_feed_identifications_on_user_id"
   end
 
   create_table "feed_entries", force: :cascade do |t|
@@ -385,7 +385,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_000000) do
   add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
-  add_foreign_key "feed_details", "users"
+  add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
   add_foreign_key "feed_metrics", "feeds", on_delete: :cascade

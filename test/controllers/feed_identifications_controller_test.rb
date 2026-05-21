@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
+class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
   setup do
@@ -12,7 +12,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should require authentication" do
-    post feed_details_path, params: { url: "http://example.com/feed.xml" }
+    post feed_identifications_path, params: { url: "http://example.com/feed.xml" }
     assert_redirected_to new_session_path
   end
 
@@ -20,16 +20,16 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+      post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "processing", feed_detail.status
-    assert_equal url, feed_detail.url
-    assert_not_nil feed_detail.started_at
-    assert_kind_of ActiveSupport::TimeWithZone, feed_detail.started_at
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "processing", feed_identification.status
+    assert_equal url, feed_identification.input
+    assert_not_nil feed_identification.started_at
+    assert_kind_of ActiveSupport::TimeWithZone, feed_identification.started_at
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
@@ -39,11 +39,11 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
 
     assert_no_enqueued_jobs do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
     end
   end
@@ -53,19 +53,19 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     sign_in_as(user)
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     sign_in_as(user2)
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Both users should have separate feed detail records
-    user1_feed_detail = FeedDetail.find_by(user: user, url: url)
-    user2_feed_detail = FeedDetail.find_by(user: user2, url: url)
+    user1_feed_identification = FeedIdentification.find_by(user: user, input: url)
+    user2_feed_identification = FeedIdentification.find_by(user: user2, input: url)
 
-    assert_not_nil user1_feed_detail
-    assert_not_nil user2_feed_detail
-    assert_equal "processing", user1_feed_detail.status
-    assert_equal "processing", user2_feed_detail.status
+    assert_not_nil user1_feed_identification
+    assert_not_nil user2_feed_identification
+    assert_equal "processing", user1_feed_identification.status
+    assert_equal "processing", user2_feed_identification.status
   end
 
   test "#create should reuse successful feed detail" do
@@ -91,11 +91,11 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
     assert_no_enqueued_jobs do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
@@ -111,12 +111,12 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 404, body: "Not Found")
 
     # First attempt - creates failed feed detail
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
     # Second attempt - should restart identification
-    assert_enqueued_with(job: FeedDetailsJob, args: [user.id, url]) do
-      post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_enqueued_with(job: FeedIdentificationJob, args: [user.id, url]) do
+      post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
@@ -126,7 +126,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   test "#create should reject empty or malformed input" do
     sign_in_as(user)
 
-    post feed_details_path, params: { url: "" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: "" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Please enter a link, handle, or a few words"
@@ -135,8 +135,8 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   test "#create should accept a free-text query as input" do
     sign_in_as(user)
 
-    assert_enqueued_with(job: FeedDetailsJob) do
-      post feed_details_path, params: { url: "ai safety news" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      post feed_identifications_path, params: { url: "ai safety news" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
@@ -145,15 +145,15 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   test "#create should accept a handle as input" do
     sign_in_as(user)
 
-    assert_enqueued_with(job: FeedDetailsJob) do
-      post feed_details_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      post feed_identifications_path, params: { url: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
   end
 
   test "#show should require authentication" do
-    get feed_details_path, params: { url: "http://example.com/feed.xml" }
+    get feed_identifications_path, params: { url: "http://example.com/feed.xml" }
     assert_redirected_to new_session_path
   end
 
@@ -162,10 +162,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     # Create processing feed detail via controller
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Check status while still processing (don't perform jobs)
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Checking this feed"
@@ -176,17 +176,17 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     # Create processing feed detail via controller
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Manipulate record to remove started_at (invalid state)
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    feed_detail.update_column(:started_at, nil)
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    feed_identification.update_column(:started_at, nil)
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Identification session is invalid"
-    assert_nil FeedDetail.find_by(user: user, url: url), "Feed detail should be deleted when invalid"
+    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
   end
 
   test "#show should return timeout error when processing exceeds threshold" do
@@ -194,17 +194,17 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
 
     # Create processing feed detail via controller
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Manipulate record to simulate long-running job
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    feed_detail.update_column(:started_at, 31.seconds.ago)
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    feed_identification.update_column(:started_at, 31.seconds.ago)
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "taking longer than expected"
-    assert_nil FeedDetail.find_by(user: user, url: url), "Feed detail should be deleted on timeout"
+    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted on timeout"
   end
 
   test "#show should return expanded form when status is success" do
@@ -226,10 +226,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
     # Create successful feed detail via controller and job
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, 'action="replace"'
@@ -244,10 +244,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: "Not a valid feed", headers: { "Content-Type" => "text/plain" })
 
     # Create failed feed detail via controller and job
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     # When no structured profile matches, the AI fallback now fires and the
@@ -260,7 +260,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Identification session expired"
@@ -272,10 +272,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>Example</title></channel></rss>"
     stub_request(:get, url).to_return(status: 200, body: rss_body)
 
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
     # RSS plus the AI fallback. RSS ranks first.
@@ -290,10 +290,10 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>xkcd.com</title></channel></rss>"
     stub_request(:get, url).to_return(status: 200, body: rss_body)
 
-    post feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
     assert_equal %w[xkcd rss llm_website_extractor], payload.map { |c| c["profile_key"] }
@@ -306,20 +306,20 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    # Stub the feed_detail directly with an AI-only candidate list — simulates
+    # Stub the feed_identification directly with an AI-only candidate list — simulates
     # what the fetcher will write when only the llm_website_extractor matches
     # (the AI matcher itself ships in a later PR, so we construct the payload
     # here as a stand-in to exercise the controller payload contract today).
-    feed_detail = FeedDetail.create!(
+    feed_identification = FeedIdentification.create!(
       user: user,
-      url: url,
+      input: url,
       status: :success,
       candidates: [
         { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
     assert_equal 1, payload.size
@@ -327,16 +327,16 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, payload.first["depends_on_ai"]
     assert_equal "ai_fallback", payload.first["rank_reason"]
   ensure
-    feed_detail&.destroy
+    feed_identification&.destroy
   end
 
   test "#show should write the user's input under params[handle] for handle profiles" do
     sign_in_as(user)
     handle = "@alice"
     create(
-      :feed_detail,
+      :feed_identification,
       user: user,
-      url: handle,
+      input: handle,
       started_at: Time.current,
       status: :success,
       candidates: [
@@ -344,7 +344,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       ]
     )
 
-    get feed_details_path, params: { url: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, 'name="feed[params][handle]"'
@@ -356,9 +356,9 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     query = "climate change"
     create(
-      :feed_detail,
+      :feed_identification,
       user: user,
-      url: query,
+      input: query,
       started_at: Time.current,
       status: :success,
       candidates: [
@@ -366,7 +366,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       ]
     )
 
-    get feed_details_path, params: { url: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, 'name="feed[params][query]"'
@@ -374,17 +374,17 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#destroy should require authentication" do
-    delete feed_details_path
+    delete feed_identifications_path
     assert_redirected_to new_session_path
   end
 
-  test "#destroy should remove the user's in-progress feed_detail and re-render collapsed form" do
+  test "#destroy should remove the user's in-progress feed_identification and re-render collapsed form" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    create(:feed_detail, user: user, url: url, status: :processing, started_at: Time.current)
+    create(:feed_identification, user: user, input: url, status: :processing, started_at: Time.current)
 
-    assert_difference("FeedDetail.count", -1) do
-      delete feed_details_path,
+    assert_difference("FeedIdentification.count", -1) do
+      delete feed_identifications_path,
              params: { url: url },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
@@ -395,12 +395,12 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, url
   end
 
-  test "#destroy should be idempotent and echo the typed URL when no feed_detail exists" do
+  test "#destroy should be idempotent and echo the typed URL when no feed_identification exists" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    assert_no_difference("FeedDetail.count") do
-      delete feed_details_path,
+    assert_no_difference("FeedIdentification.count") do
+      delete feed_identifications_path,
              params: { url: url },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
@@ -413,9 +413,9 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     create(
-      :feed_detail,
+      :feed_identification,
       user: user,
-      url: url,
+      input: url,
       started_at: Time.current,
       status: :success,
       candidates: [
@@ -424,7 +424,7 @@ class FeedDetailsControllerTest < ActionDispatch::IntegrationTest
       ]
     )
 
-    get feed_details_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "data-key=\"candidates\""

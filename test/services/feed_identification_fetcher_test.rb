@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FeedDetailsFetcherTest < ActiveSupport::TestCase
+class FeedIdentificationFetcherTest < ActiveSupport::TestCase
   setup do
     @logger = ActiveSupport::Logger.new(nil) # Silent logger for tests
   end
@@ -31,14 +31,14 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "success", feed_detail.status
-    assert_equal url, feed_detail.url
-    recommended = feed_detail.candidates.first
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "success", feed_identification.status
+    assert_equal url, feed_identification.input
+    recommended = feed_identification.candidates.first
     assert_equal "rss", recommended["profile_key"]
     assert_equal "Test RSS Feed", recommended["title"]
   end
@@ -60,13 +60,13 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "success", feed_detail.status
-    assert_equal "xkcd", feed_detail.candidates.first["profile_key"]
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "success", feed_identification.status
+    assert_equal "xkcd", feed_identification.candidates.first["profile_key"]
   end
 
   test "#identify should handle title extraction failure gracefully" do
@@ -84,13 +84,13 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: rss_content, headers: { "Content-Type" => "application/xml" })
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "success", feed_detail.status
-    assert_nil feed_detail.candidates.first["title"]
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "success", feed_identification.status
+    assert_nil feed_identification.candidates.first["title"]
   end
 
   test "#identify should fall back to AI extraction when no structured profile matches" do
@@ -99,13 +99,13 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 200, body: "Not a valid feed format", headers: { "Content-Type" => "text/plain" })
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "success", feed_detail.status
-    assert_equal "llm_website_extractor", feed_detail.candidates.first["profile_key"]
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "success", feed_identification.status
+    assert_equal "llm_website_extractor", feed_identification.candidates.first["profile_key"]
   end
 
   test "#identify should update record with failed status on HTTP errors" do
@@ -114,13 +114,13 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_return(status: 500, body: "Internal Server Error")
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "failed", feed_detail.status
-    assert_includes feed_detail.error, "An error occurred while identifying the feed"
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "failed", feed_identification.status
+    assert_includes feed_identification.error, "An error occurred while identifying the feed"
   end
 
   test "#identify should handle network errors gracefully" do
@@ -129,13 +129,13 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     stub_request(:get, url)
       .to_raise(HttpClient::TimeoutError.new("Connection timeout"))
 
-    service = FeedDetailsFetcher.new(user: user, url: url, logger: @logger)
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
     service.identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_not_nil feed_detail
-    assert_equal "failed", feed_detail.status
-    assert_equal "An error occurred while identifying the feed", feed_detail.error
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_not_nil feed_identification
+    assert_equal "failed", feed_identification.status
+    assert_equal "An error occurred while identifying the feed", feed_identification.error
   end
 
   test "#identify should persist a ranked candidates array on success" do
@@ -152,12 +152,12 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_equal %w[rss llm_website_extractor], feed_detail.candidates.map { |c| c["profile_key"] }
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal %w[rss llm_website_extractor], feed_identification.candidates.map { |c| c["profile_key"] }
 
-    candidate = feed_detail.candidates.first
+    candidate = feed_identification.candidates.first
     assert_equal "rss", candidate["profile_key"]
     assert_equal "Example Feed", candidate["title"]
     assert_equal false, candidate["depends_on_ai"]
@@ -179,10 +179,10 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
 
     stub_request(:get, url).to_return(status: 200, body: rss_content)
 
-    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    profile_keys = feed_detail.candidates.map { |c| c["profile_key"] }
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
     assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
   end
 
@@ -190,11 +190,11 @@ class FeedDetailsFetcherTest < ActiveSupport::TestCase
     url = "http://example.com/page.html"
     stub_request(:get, url).to_return(status: 200, body: "<html><body/></html>")
 
-    FeedDetailsFetcher.new(user: user, url: url, logger: @logger).identify
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
 
-    feed_detail = FeedDetail.find_by(user: user, url: url)
-    assert_equal "success", feed_detail.status
-    assert_equal ["llm_website_extractor"], feed_detail.candidates.map { |c| c["profile_key"] }
-    assert_equal true, feed_detail.candidates.first["depends_on_ai"]
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "success", feed_identification.status
+    assert_equal ["llm_website_extractor"], feed_identification.candidates.map { |c| c["profile_key"] }
+    assert_equal true, feed_identification.candidates.first["depends_on_ai"]
   end
 end

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FeedDetailsJobTest < ActiveJob::TestCase
+class FeedIdentificationJobTest < ActiveJob::TestCase
   def user
     @user ||= create(:user)
   end
@@ -10,7 +10,7 @@ class FeedDetailsJobTest < ActiveJob::TestCase
     url = "http://example.com/feed.xml"
 
     assert_nothing_raised do
-      FeedDetailsJob.perform_now(non_existent_user_id, url)
+      FeedIdentificationJob.perform_now(non_existent_user_id, url)
     end
   end
 end
