@@ -149,14 +149,14 @@ class FeedProfile
             optional supplementary comments, optional image URLs, the source URL, and the
             published date in ISO 8601. Return at most 10 items.
           PROMPT
-          output_schema: nil, # filled below by reference
+          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
           tools: ["web_search"]
         }
       },
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil,
-      output_schema: nil # filled below by reference
+      output_schema: UNIVERSAL_OUTPUT_SCHEMA
     },
     "llm_web_search" => {
       display_name: "Follow a web search",
@@ -182,22 +182,16 @@ class FeedProfile
             optional supplementary comments, optional image URLs, the source URL, and the
             published date in ISO 8601. Return at most 10 items.
           PROMPT
-          output_schema: nil,
+          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
           tools: ["web_search"]
         }
       },
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
       title_extractor: nil,
-      output_schema: nil
+      output_schema: UNIVERSAL_OUTPUT_SCHEMA
     }
-  }.tap do |profiles|
-    profiles["llm_handle_search"][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
-    profiles["llm_handle_search"][:loader][:config][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
-    profiles["llm_web_search"][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
-    profiles["llm_web_search"][:loader][:config][:output_schema] = UNIVERSAL_OUTPUT_SCHEMA
-    profiles.each_value(&:freeze)
-  end.freeze
+  }.freeze
 
   # Returns all available profile keys
   # @return [Array<String>] list of profile keys
