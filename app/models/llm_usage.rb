@@ -18,5 +18,6 @@ class LlmUsage < ApplicationRecord
 
   validates :provider, presence: true
   validates :model, presence: true
+  validates :outcome, presence: true
   validates :started_at, :finished_at, presence: true
 end
