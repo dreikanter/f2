@@ -95,6 +95,11 @@ end
 
 Use `.github/pull_request_template.md` for PR descriptions.
 
+Keep the description focused on purpose and conceptual level — what the
+change accomplishes and why. Don't enumerate every technical detail in
+the diff; reviewers can read the diff. A few bullets or a short paragraph
+is usually enough.
+
 ## Tooling Notes
 
 - Use mise for managing Ruby and Node runtimes.
