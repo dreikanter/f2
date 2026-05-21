@@ -5,7 +5,7 @@ class FeedIdentificationsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_error",
-      locals: { url: params[:url], error: "Too many identification attempts. Please wait before trying again." }
+      locals: { input: params[:input], error: "Too many identification attempts. Please wait before trying again." }
     ), status: :too_many_requests
   }
 
@@ -57,7 +57,7 @@ class FeedIdentificationsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/form_collapsed",
-      locals: { url: original_input }
+      locals: { input: original_input }
     )
   end
 
@@ -106,7 +106,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { url: feed_input, error: error }
+        locals: { input: feed_input, error: error }
       )
     }
   end
@@ -116,7 +116,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_loading",
-        locals: { url: feed_input }
+        locals: { input: feed_input }
       )
     }
   end
@@ -132,6 +132,6 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def feed_input
-    @feed_input ||= params[:url]
+    @feed_input ||= params[:input]
   end
 end

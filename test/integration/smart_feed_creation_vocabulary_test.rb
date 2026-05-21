@@ -83,10 +83,10 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
     XML
     stub_request(:get, url).to_return(status: 200, body: rss_body)
 
-    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_no_banned_vocabulary(response.body, page: "feed_identifications (success / form-expanded)")
   end
