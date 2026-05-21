@@ -19,7 +19,7 @@ class LlmCredential < ApplicationRecord
 
   enum :state, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
-  validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.all } }
+  validates :provider, presence: true, inclusion: { in: ->(_) { LlmProvider.names } }
   validates :display_name,
             presence: true,
             length: { maximum: DISPLAY_NAME_MAX_LENGTH },
@@ -45,7 +45,7 @@ class LlmCredential < ApplicationRecord
     return if provider.blank?
     return errors.add(:credential_data, "is missing") if credential_data.blank?
 
-    schema = LlmProvider.credential_schema_for(provider)
+    schema = LlmProvider.find(provider)&.credential_schema
     return if schema.blank?
 
     JSONSchemer.schema(schema).validate(credential_data).each do |error|

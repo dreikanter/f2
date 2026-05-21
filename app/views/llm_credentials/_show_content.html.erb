@@ -1,6 +1,6 @@
 <div class="space-y-6" data-key="llm_credential.show">
   <%= render PageHeaderComponent.new(title: @llm_credential.display_name) do |header| %>
-    <% header.with_context_paragraph(LlmProvider.display_name_for(@llm_credential.provider).to_s) %>
+    <% header.with_context_paragraph(LlmProvider.find(@llm_credential.provider)&.display_name.to_s) %>
   <% end %>
 
   <% case @llm_credential.state %>

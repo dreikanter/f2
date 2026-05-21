@@ -10,7 +10,7 @@ class LlmCredentialsController < ApplicationController
   end
 
   def new
-    @llm_credential = LlmCredential.new(provider: params[:provider] || LlmProvider.all.first)
+    @llm_credential = LlmCredential.new(provider: params[:provider] || LlmProvider.names.first)
     @return_to = safe_return_to
     authorize @llm_credential
   end
