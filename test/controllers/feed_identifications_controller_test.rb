@@ -24,10 +24,10 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
-    feed_identification = FeedIdentification.find_by(user: user, url: url)
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "processing", feed_identification.status
-    assert_equal url, feed_identification.url
+    assert_equal url, feed_identification.input
     assert_not_nil feed_identification.started_at
     assert_kind_of ActiveSupport::TimeWithZone, feed_identification.started_at
 
@@ -59,8 +59,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Both users should have separate feed detail records
-    user1_feed_identification = FeedIdentification.find_by(user: user, url: url)
-    user2_feed_identification = FeedIdentification.find_by(user: user2, url: url)
+    user1_feed_identification = FeedIdentification.find_by(user: user, input: url)
+    user2_feed_identification = FeedIdentification.find_by(user: user2, input: url)
 
     assert_not_nil user1_feed_identification
     assert_not_nil user2_feed_identification
@@ -179,14 +179,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Manipulate record to remove started_at (invalid state)
-    feed_identification = FeedIdentification.find_by(user: user, url: url)
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
     feed_identification.update_column(:started_at, nil)
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "Identification session is invalid"
-    assert_nil FeedIdentification.find_by(user: user, url: url), "Feed identification should be deleted when invalid"
+    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
   end
 
   test "#show should return timeout error when processing exceeds threshold" do
@@ -197,14 +197,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     # Manipulate record to simulate long-running job
-    feed_identification = FeedIdentification.find_by(user: user, url: url)
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
     feed_identification.update_column(:started_at, 31.seconds.ago)
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
     assert_includes response.body, "taking longer than expected"
-    assert_nil FeedIdentification.find_by(user: user, url: url), "Feed identification should be deleted on timeout"
+    assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted on timeout"
   end
 
   test "#show should return expanded form when status is success" do
@@ -312,7 +312,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # here as a stand-in to exercise the controller payload contract today).
     feed_identification = FeedIdentification.create!(
       user: user,
-      url: url,
+      input: url,
       status: :success,
       candidates: [
         { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
@@ -336,7 +336,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     create(
       :feed_identification,
       user: user,
-      url: handle,
+      input: handle,
       started_at: Time.current,
       status: :success,
       candidates: [
@@ -358,7 +358,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     create(
       :feed_identification,
       user: user,
-      url: query,
+      input: query,
       started_at: Time.current,
       status: :success,
       candidates: [
@@ -381,7 +381,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#destroy should remove the user's in-progress feed_identification and re-render collapsed form" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    create(:feed_identification, user: user, url: url, status: :processing, started_at: Time.current)
+    create(:feed_identification, user: user, input: url, status: :processing, started_at: Time.current)
 
     assert_difference("FeedIdentification.count", -1) do
       delete feed_identifications_path,
@@ -415,7 +415,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     create(
       :feed_identification,
       user: user,
-      url: url,
+      input: url,
       started_at: Time.current,
       status: :success,
       candidates: [

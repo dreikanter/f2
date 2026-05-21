@@ -6,14 +6,14 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   end
 
   test "should default candidates to an empty array" do
-    identification = FeedIdentification.new(user: user, url: "https://example.com/feed.xml")
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml")
     assert_equal [], identification.candidates
   end
 
   test "should persist candidates as JSONB" do
     identification = FeedIdentification.create!(
       user: user,
-      url: "https://example.com/feed.xml",
+      input: "https://example.com/feed.xml",
       status: :success,
       candidates: [
         { "profile_key" => "rss", "rank" => 0, "depends_on_ai" => false, "title" => "Sample Feed" }
@@ -29,24 +29,24 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   end
 
   test "#invalid_processing? should be true when processing without started_at" do
-    identification = FeedIdentification.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: nil)
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
     assert_predicate identification, :invalid_processing?
   end
 
   test "#invalid_processing? should be false when started_at is present" do
-    identification = FeedIdentification.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: Time.current)
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: Time.current)
     refute_predicate identification, :invalid_processing?
   end
 
   test "#invalid_processing? should be false for non-processing status" do
-    identification = FeedIdentification.new(user: user, url: "https://example.com/feed.xml", status: :success, started_at: nil)
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :success, started_at: nil)
     refute_predicate identification, :invalid_processing?
   end
 
   test "#timed_out? should be true when processing exceeds the identification timeout" do
     identification = FeedIdentification.new(
       user: user,
-      url: "https://example.com/feed.xml",
+      input: "https://example.com/feed.xml",
       status: :processing,
       started_at: (FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS + 1).seconds.ago
     )
@@ -56,7 +56,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   test "#timed_out? should be false within the identification timeout" do
     identification = FeedIdentification.new(
       user: user,
-      url: "https://example.com/feed.xml",
+      input: "https://example.com/feed.xml",
       status: :processing,
       started_at: 1.second.ago
     )
@@ -64,14 +64,14 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   end
 
   test "#timed_out? should be false when started_at is missing" do
-    identification = FeedIdentification.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: nil)
+    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
     refute_predicate identification, :timed_out?
   end
 
   test "#timed_out? should be false for non-processing status" do
     identification = FeedIdentification.new(
       user: user,
-      url: "https://example.com/feed.xml",
+      input: "https://example.com/feed.xml",
       status: :success,
       started_at: 1.hour.ago
     )
@@ -81,7 +81,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   test "should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(
       user: user,
-      url: "https://example.com/article",
+      input: "https://example.com/article",
       status: :success,
       candidates: [
         { "profile_key" => "rss", "rank" => 0, "depends_on_ai" => false },

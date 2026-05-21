@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :feed_identification do
     association :user
-    sequence(:url) { |n| "https://example.com/feed-#{n}.xml" }
+    sequence(:input) { |n| "https://example.com/feed-#{n}.xml" }
     status { :processing }
     candidates { [] }
 

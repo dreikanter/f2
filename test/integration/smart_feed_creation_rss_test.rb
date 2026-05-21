@@ -95,7 +95,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       assert_equal "enabled", feed.state
       assert_equal "Example Feed", feed.name
       assert_equal feed_url, feed.url
-      assert_nil FeedIdentification.find_by(user: user, url: feed_url), "FeedIdentification should be cleaned up after save"
+      assert_nil FeedIdentification.find_by(user: user, input: feed_url), "FeedIdentification should be cleaned up after save"
     end
   end
 
@@ -117,7 +117,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
 
   test "#delete should return user to collapsed form with their input preserved" do
     sign_in_as(user)
-    create(:feed_identification, user: user, url: feed_url, status: :processing, started_at: Time.current)
+    create(:feed_identification, user: user, input: feed_url, status: :processing, started_at: Time.current)
 
     assert_difference("FeedIdentification.count", -1) do
       delete feed_identifications_path,

@@ -10,7 +10,7 @@ class FeedIdentificationsController < ApplicationController
   }
 
   def create
-    if InputClassifier.classify(feed_url) == :malformed
+    if InputClassifier.classify(feed_input) == :malformed
       return render(identification_error(error: "Please enter a link, handle, or a few words to search for"))
     end
 
@@ -29,7 +29,7 @@ class FeedIdentificationsController < ApplicationController
         feed_identification.reload
       end
 
-      FeedIdentificationJob.perform_later(Current.user.id, feed_url)
+      FeedIdentificationJob.perform_later(Current.user.id, feed_input)
     end
 
     render(identification_loading)
@@ -51,24 +51,20 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def destroy
-    original_url = feed_identification.persisted? ? feed_identification.url : feed_url
+    original_input = feed_identification.persisted? ? feed_identification.input : feed_input
     feed_identification.destroy if feed_identification.persisted?
 
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/form_collapsed",
-      locals: { url: original_url }
+      locals: { url: original_input }
     )
   end
 
   private
 
   def feed_identification
-    @feed_identification ||= FeedIdentification.find_or_initialize_by(user: Current.user, url: feed_url)
-  end
-
-  def valid_url?
-    feed_url.present? && feed_url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
+    @feed_identification ||= FeedIdentification.find_or_initialize_by(user: Current.user, input: feed_input)
   end
 
   def handle_processing_status
@@ -89,7 +85,7 @@ class FeedIdentificationsController < ApplicationController
     recommended = feed_identification.candidates.first || {}
     profile_key = recommended["profile_key"]
     input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
-    params_for_input = { input_shape.to_s => feed_identification.url }
+    params_for_input = { input_shape.to_s => feed_identification.input }
 
     feed = Current.user.feeds.build(
       params: params_for_input,
@@ -110,7 +106,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { url: feed_url, error: error }
+        locals: { url: feed_input, error: error }
       )
     }
   end
@@ -120,7 +116,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_loading",
-        locals: { url: feed_url }
+        locals: { url: feed_input }
       )
     }
   end
@@ -135,7 +131,7 @@ class FeedIdentificationsController < ApplicationController
     }
   end
 
-  def feed_url
-    @feed_url ||= params[:url]
+  def feed_input
+    @feed_input ||= params[:url]
   end
 end

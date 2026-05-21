@@ -179,8 +179,8 @@ class FeedsController < ApplicationController
     @feed.reset_schedule!
   end
 
-  def cleanup_feed_identification(url)
-    FeedIdentification.find_by(user: current_user, url: url)&.destroy
+  def cleanup_feed_identification(input)
+    FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 
   # A user who ticked "Enable feed" still only saves enabled when the request
