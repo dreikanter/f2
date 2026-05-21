@@ -4,7 +4,7 @@
      data-controller="polling"
      data-polling-endpoint-value="<%= feed_details_path(url: url) %>"
      data-polling-interval-value="<%= Feed::IDENTIFICATION_POLLING_INTERVAL_MS %>"
-     data-polling-max-polls-value="<%= FeedDetailsController::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
+     data-polling-max-polls-value="<%= FeedDetail::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
      data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
   <div class="flex-shrink-0">
     <%= render SpinnerComponent.new %>
