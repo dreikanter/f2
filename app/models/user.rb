@@ -10,6 +10,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :feeds, dependent: :destroy
   has_many :feed_previews, dependent: :destroy
+  has_many :feed_details, dependent: :destroy
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
   has_many :llm_credentials, dependent: :destroy

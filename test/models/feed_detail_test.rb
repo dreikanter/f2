@@ -28,6 +28,56 @@ class FeedDetailTest < ActiveSupport::TestCase
     assert_equal false, detail.candidates.first["depends_on_ai"]
   end
 
+  test "#invalid_processing? should be true when processing without started_at" do
+    detail = FeedDetail.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: nil)
+    assert_predicate detail, :invalid_processing?
+  end
+
+  test "#invalid_processing? should be false when started_at is present" do
+    detail = FeedDetail.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: Time.current)
+    refute_predicate detail, :invalid_processing?
+  end
+
+  test "#invalid_processing? should be false for non-processing status" do
+    detail = FeedDetail.new(user: user, url: "https://example.com/feed.xml", status: :success, started_at: nil)
+    refute_predicate detail, :invalid_processing?
+  end
+
+  test "#timed_out? should be true when processing exceeds the identification timeout" do
+    detail = FeedDetail.new(
+      user: user,
+      url: "https://example.com/feed.xml",
+      status: :processing,
+      started_at: (FeedDetail::IDENTIFICATION_TIMEOUT_SECONDS + 1).seconds.ago
+    )
+    assert_predicate detail, :timed_out?
+  end
+
+  test "#timed_out? should be false within the identification timeout" do
+    detail = FeedDetail.new(
+      user: user,
+      url: "https://example.com/feed.xml",
+      status: :processing,
+      started_at: 1.second.ago
+    )
+    refute_predicate detail, :timed_out?
+  end
+
+  test "#timed_out? should be false when started_at is missing" do
+    detail = FeedDetail.new(user: user, url: "https://example.com/feed.xml", status: :processing, started_at: nil)
+    refute_predicate detail, :timed_out?
+  end
+
+  test "#timed_out? should be false for non-processing status" do
+    detail = FeedDetail.new(
+      user: user,
+      url: "https://example.com/feed.xml",
+      status: :success,
+      started_at: 1.hour.ago
+    )
+    refute_predicate detail, :timed_out?
+  end
+
   test "should accept multiple ranked candidates" do
     detail = FeedDetail.create!(
       user: user,

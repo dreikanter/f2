@@ -1,8 +1,6 @@
 class FeedDetailsController < ApplicationController
   before_action :require_authentication
 
-  IDENTIFICATION_TIMEOUT_SECONDS = 30
-
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     render turbo_stream: turbo_stream.replace(
       "feed-form",
@@ -74,14 +72,12 @@ class FeedDetailsController < ApplicationController
   end
 
   def handle_processing_status
-    if feed_detail.started_at.nil?
+    if feed_detail.invalid_processing?
       feed_detail.destroy
       return render(identification_error(error: "Identification session is invalid. Please try again."))
     end
 
-    timeout_threshold = IDENTIFICATION_TIMEOUT_SECONDS.seconds
-
-    if Time.current - feed_detail.started_at > timeout_threshold
+    if feed_detail.timed_out?
       feed_detail.destroy
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end
