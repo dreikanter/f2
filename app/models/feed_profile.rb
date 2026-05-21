@@ -191,114 +191,118 @@ class FeedProfile
     }
   }.freeze
 
-  # Returns all available profile keys
-  # @return [Array<String>] list of profile keys
-  def self.all
-    PROFILES.keys
-  end
-
-  # Checks if a profile key exists
-  # @param key [String] the profile key to check
-  # @return [Boolean] true if the profile exists
-  def self.exists?(key)
-    PROFILES.key?(key)
-  end
-
-  # Bracket access to the full registry entry for a profile key
-  # @param key [String] the profile key
-  # @return [Hash, nil] the registry entry hash or nil if not found
-  def self.[](key)
-    PROFILES[key]
-  end
-
-  # Returns matcher classes whose input_shape accepts the given shape, in
-  # registration order. Pass nil/:any to get every matcher.
-  # @param input_shape [Symbol, nil] one of :url, :handle, :query, :any, nil
-  # @return [Array<Class>] matcher classes
-  def self.matchers_for(input_shape)
-    PROFILES.filter_map do |_key, entry|
-      next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
-
-      entry[:matcher].constantize
+  class << self
+    # Returns all available profile keys
+    # @return [Array<String>] list of profile keys
+    def all
+      PROFILES.keys
     end
-  end
 
-  # @param key [String] the profile key
-  # @return [Boolean] true if any of the profile's stages calls an LLM
-  def self.depends_on_ai?(key)
-    !!PROFILES.dig(key, :depends_on_ai)
-  end
-
-  # Returns the JSON Schema describing the feed's params hash
-  # @param key [String] the profile key
-  # @return [Hash, nil] the parameter schema (nil if profile not found)
-  def self.parameter_schema_for(key)
-    PROFILES.dig(key, :parameter_schema)
-  end
-
-  # Resolves and returns a stage class for a given profile key and stage type
-  # @param key [String] the profile key
-  # @param stage [Symbol] the stage (:loader, :processor, :normalizer, :title_extractor)
-  # @return [Class] the stage class
-  def self.class_for(key, stage)
-    raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
-
-    entry = PROFILES.fetch(key)
-    raw = entry[stage]
-    class_name = raw.is_a?(Hash) ? raw[:class] : raw
-
-    raise ArgumentError, "Profile '#{key}' has no #{stage}" if class_name.nil?
-
-    class_name.constantize
-  end
-
-  # @param key [String] the profile key
-  # @param stage [Symbol] the stage (:loader, :processor, :normalizer)
-  # @return [Hash] the stage's config hash (frozen empty hash if none)
-  def self.config_for(key, stage)
-    raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
-
-    entry = PROFILES.fetch(key)
-    raw = entry[stage]
-
-    case raw
-    when Hash then raw[:config] || {}
-    else {}
+    # Checks if a profile key exists
+    # @param key [String] the profile key to check
+    # @return [Boolean] true if the profile exists
+    def exists?(key)
+      PROFILES.key?(key)
     end
-  end
 
-  # Resolves and returns the loader class for a given profile key
-  # @param key [String] the profile key
-  # @return [Class] the loader class
-  def self.loader_class_for(key)
-    class_for(key, :loader)
-  end
+    # Bracket access to the full registry entry for a profile key
+    # @param key [String] the profile key
+    # @return [Hash, nil] the registry entry hash or nil if not found
+    def [](key)
+      PROFILES[key]
+    end
 
-  # Resolves and returns the processor class for a given profile key
-  # @param key [String] the profile key
-  # @return [Class] the processor class
-  def self.processor_class_for(key)
-    class_for(key, :processor)
-  end
+    # Returns matcher classes whose input_shape accepts the given shape, in
+    # registration order. Pass nil/:any to get every matcher.
+    # @param input_shape [Symbol, nil] one of :url, :handle, :query, :any, nil
+    # @return [Array<Class>] matcher classes
+    def matchers_for(input_shape)
+      PROFILES.filter_map do |_key, entry|
+        next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
 
-  # Resolves and returns the normalizer class for a given profile key
-  # @param key [String] the profile key
-  # @return [Class] the normalizer class
-  def self.normalizer_class_for(key)
-    class_for(key, :normalizer)
-  end
+        entry[:matcher].constantize
+      end
+    end
 
-  # Resolves and returns the title extractor class for a given profile key
-  # @param key [String] the profile key
-  # @return [Class] the title extractor class
-  def self.title_extractor_class_for(key)
-    class_for(key, :title_extractor)
-  end
+    # @param key [String] the profile key
+    # @return [Boolean] true if any of the profile's stages calls an LLM
+    def depends_on_ai?(key)
+      !!PROFILES.dig(key, :depends_on_ai)
+    end
 
-  # Returns a human-readable display name for a profile key
-  # @param key [String] the profile key
-  # @return [String] the display name
-  def self.display_name_for(key)
-    PROFILES.dig(key, :display_name) || key.to_s.titleize
+    # Returns the JSON Schema describing the feed's params hash
+    # @param key [String] the profile key
+    # @return [Hash, nil] the parameter schema (nil if profile not found)
+    def parameter_schema_for(key)
+      PROFILES.dig(key, :parameter_schema)
+    end
+
+    # @param key [String] the profile key
+    # @param stage [Symbol] the stage (:loader, :processor, :normalizer)
+    # @return [Hash] the stage's config hash (frozen empty hash if none)
+    def config_for(key, stage)
+      raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
+
+      entry = PROFILES.fetch(key)
+      raw = entry[stage]
+
+      case raw
+      when Hash then raw[:config] || {}
+      else {}
+      end
+    end
+
+    # Resolves and returns the loader class for a given profile key
+    # @param key [String] the profile key
+    # @return [Class] the loader class
+    def loader_class_for(key)
+      class_for(key, :loader)
+    end
+
+    # Resolves and returns the processor class for a given profile key
+    # @param key [String] the profile key
+    # @return [Class] the processor class
+    def processor_class_for(key)
+      class_for(key, :processor)
+    end
+
+    # Resolves and returns the normalizer class for a given profile key
+    # @param key [String] the profile key
+    # @return [Class] the normalizer class
+    def normalizer_class_for(key)
+      class_for(key, :normalizer)
+    end
+
+    # Resolves and returns the title extractor class for a given profile key
+    # @param key [String] the profile key
+    # @return [Class] the title extractor class
+    def title_extractor_class_for(key)
+      class_for(key, :title_extractor)
+    end
+
+    # Returns a human-readable display name for a profile key
+    # @param key [String] the profile key
+    # @return [String] the display name
+    def display_name_for(key)
+      PROFILES.dig(key, :display_name) || key.to_s.titleize
+    end
+
+    private
+
+    # Resolves a stage class for a given profile key and stage type.
+    # @param key [String] the profile key
+    # @param stage [Symbol] the stage (:loader, :processor, :normalizer, :title_extractor)
+    # @return [Class] the stage class
+    def class_for(key, stage)
+      raise ArgumentError, "Profile '#{key}' not found" unless PROFILES.key?(key)
+
+      entry = PROFILES.fetch(key)
+      raw = entry[stage]
+      class_name = raw.is_a?(Hash) ? raw[:class] : raw
+
+      raise ArgumentError, "Profile '#{key}' has no #{stage}" if class_name.nil?
+
+      class_name.constantize
+    end
   end
 end
