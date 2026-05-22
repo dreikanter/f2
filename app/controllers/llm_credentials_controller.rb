@@ -6,24 +6,24 @@ class LlmCredentialsController < ApplicationController
 
   def show
     @llm_credential = find_credential
-    @return_to = params[:return_to]
+    @input = params[:input]
     authorize @llm_credential
   end
 
   def new
     @llm_credential = LlmCredential.new(provider: params[:provider] || LlmProvider.names.first)
-    @return_to = safe_return_to
+    @input = params[:input]
     authorize @llm_credential
   end
 
   def create
     @llm_credential = build_credential
-    @return_to = safe_return_to
+    @input = params[:input]
     authorize @llm_credential
 
     if @llm_credential.save
       LlmCredentialValidationJob.perform_later(@llm_credential)
-      redirect_to llm_credential_path(@llm_credential, return_to: @return_to)
+      redirect_to llm_credential_path(@llm_credential, input: @input)
     else
       render :new, status: :unprocessable_entity
     end
@@ -66,12 +66,5 @@ class LlmCredentialsController < ApplicationController
     when Hash then raw
     else {}
     end
-  end
-
-  # Only accept same-host paths so a hostile redirect can't smuggle
-  # users off-site after they save a credential.
-  def safe_return_to
-    candidate = params[:return_to].to_s
-    candidate if candidate.start_with?("/") && !candidate.start_with?("//")
   end
 end

@@ -1,4 +1,4 @@
-<%# locals: (llm_credential:, return_to: nil) %>
+<%# locals: (llm_credential:, input: nil) %>
 <div class="space-y-6" data-key="llm_credential.show">
   <%= render PageHeaderComponent.new(title: llm_credential.display_name) do |header| %>
     <% header.with_context_paragraph(LlmProvider.find(llm_credential.provider)&.display_name.to_s) %>
@@ -37,10 +37,9 @@
   <% end %>
 
   <div class="flex flex-wrap gap-3">
-    <% safe_return_to = return_to.to_s %>
-    <% if llm_credential.active? && safe_return_to.start_with?("/") && !safe_return_to.start_with?("//") %>
+    <% if llm_credential.active? && input.present? %>
       <%= link_to "Continue setting up your feed",
-                  safe_return_to,
+                  feed_identifications_path(input: input),
                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500",
                   data: { key: "llm_credential.return-to" } %>
     <% end %>

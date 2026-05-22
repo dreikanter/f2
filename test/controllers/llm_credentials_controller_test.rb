@@ -70,12 +70,12 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", saved.state
   end
 
-  test "#create should preserve return_to through to the show redirect" do
+  test "#create should preserve input through to the show redirect" do
     sign_in_as(user)
-    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+    input = "https://example.com"
 
     post llm_credentials_url, params: {
-      return_to: return_to,
+      input: input,
       llm_credential: {
         provider: "anthropic",
         display_name: "My Key",
@@ -84,29 +84,29 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     }
 
     saved = LlmCredential.last
-    assert_redirected_to llm_credential_path(saved, return_to: return_to)
+    assert_redirected_to llm_credential_path(saved, input: input)
   end
 
-  test "#new should embed return_to in the form action" do
+  test "#new should embed input in the form action" do
     sign_in_as(user)
-    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+    input = "https://example.com"
 
-    get new_llm_credential_url, params: { return_to: return_to }
+    get new_llm_credential_url, params: { input: input }
 
     assert_response :success
-    assert_select "form[action=?]", llm_credentials_path(return_to: return_to)
+    assert_select "form[action=?]", llm_credentials_path(input: input)
   end
 
-  test "#show should carry return_to into the validation polling endpoint" do
+  test "#show should carry input into the validation polling endpoint" do
     sign_in_as(user)
     pending = create(:llm_credential, user: user, state: :pending)
-    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+    input = "https://example.com"
 
-    get llm_credential_url(pending, return_to: return_to)
+    get llm_credential_url(pending, input: input)
 
     assert_response :success
     assert_select "[data-polling-endpoint-value=?]",
-                  llm_credential_validation_path(pending, return_to: return_to)
+                  llm_credential_validation_path(pending, input: input)
   end
 
   test "#create should render :new with errors on invalid input" do
