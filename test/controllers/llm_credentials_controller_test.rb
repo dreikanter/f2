@@ -70,6 +70,45 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", saved.state
   end
 
+  test "#create should preserve input through to the show redirect" do
+    sign_in_as(user)
+    input = "https://example.com"
+
+    post llm_credentials_url, params: {
+      input: input,
+      llm_credential: {
+        provider: "anthropic",
+        display_name: "My Key",
+        credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
+      }
+    }
+
+    saved = LlmCredential.last
+    assert_redirected_to llm_credential_path(saved, input: input)
+  end
+
+  test "#new should embed input in the form action" do
+    sign_in_as(user)
+    input = "https://example.com"
+
+    get new_llm_credential_url, params: { input: input }
+
+    assert_response :success
+    assert_select "form[action=?]", llm_credentials_path(input: input)
+  end
+
+  test "#show should carry input into the validation polling endpoint" do
+    sign_in_as(user)
+    pending = create(:llm_credential, user: user, state: :pending)
+    input = "https://example.com"
+
+    get llm_credential_url(pending, input: input)
+
+    assert_response :success
+    assert_select "[data-polling-endpoint-value=?]",
+                  llm_credential_validation_path(pending, input: input)
+  end
+
   test "#create should render :new with errors on invalid input" do
     sign_in_as(user)
 

@@ -15,7 +15,7 @@ class Feeds::PreviewsController < ApplicationController
         [:credential_gate, {
           profile_key: profile_key,
           new_credential_path: new_llm_credential_path,
-          return_to: draft? && preview_params["url"].present? ? feed_identifications_path(input: preview_params["url"]) : nil
+          input: draft? ? preview_params["url"] : nil
         }]
       else
         case cached_preview
