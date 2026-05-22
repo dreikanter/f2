@@ -6,11 +6,9 @@
 
 **Input**: User description: "Iterate on the specs in docs/superpowers/specs. Note the latter addition (ability to create new feeds from URL — already implemented manner, or using a prompt, for content sources not available as a RSS/deterministic, procedurally processible source). Focus on simple and clean system design, extensibility, very easy to understand UX (should be accessible to non-technical users). Do not rush to find a solution, analyze, iterate on available approaches, figure out the best system design. Do not make users to keep in mind unnecessary concepts or do unnecessary steps. Prefer to simplify and automate when reasonably possible. Understand the context and the goal well before approaching the solution or planning."
 
-**Parent design**: [`docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md`](../../docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md)
-(provides the underlying architecture: pluggable profile registry, three-stage pipeline, LLM credentials, usage tracking)
+**Parent design**: pluggable profile architecture — three-stage pipeline (Detector / Fetcher / Normalizer), profile registry, LLM credentials, usage tracking. Originally drafted in `docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md` (since removed); the architecture it described is the foundation this spec builds on.
 
-**Supersedes**: [`docs/superpowers/specs/2026-05-12-profiles-detection-handoff.md`](../../docs/superpowers/specs/2026-05-12-profiles-detection-handoff.md)
-(this spec fills the gap that handoff document identified; the handoff doc's open decisions D1–D6 are resolved here under *Assumptions*)
+**Supersedes**: the earlier handoff doc `docs/superpowers/specs/2026-05-12-profiles-detection-handoff.md` (since removed). Its open decisions D1–D6 are resolved here under *Assumptions*.
 
 ## Clarifications
 

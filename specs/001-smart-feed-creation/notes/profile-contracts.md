@@ -8,8 +8,7 @@ into concrete data-model and stage-class contracts.
 
 **Parent docs**:
 - [`spec.md`](../spec.md) — particularly FR-015 to FR-020.
-- [`../../../docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md`](../../../docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md)
-  — defines the three-stage pipeline and the `FeedEntry` shape.
+- The three-stage pipeline and `FeedEntry` shape are defined by the pluggable profile architecture summarized in `spec.md` (originally drafted in `docs/superpowers/specs/2026-05-10-pluggable-profiles-design.md`, since removed).
 
 ## 1. Required post fields (every profile, AI-backed or not)
 
