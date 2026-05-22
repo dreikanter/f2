@@ -6,6 +6,7 @@ class LlmCredentialsController < ApplicationController
 
   def show
     @llm_credential = find_credential
+    @return_to = params[:return_to]
     authorize @llm_credential
   end
 

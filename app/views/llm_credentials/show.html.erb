@@ -8,11 +8,11 @@
     data-polling-stop-condition-value="[data-credential-state]"
     aria-busy="true">
     <div id="llm-credential-show" class="space-y-8">
-      <%= render "llm_credentials/show_content", llm_credential: @llm_credential, return_to: params[:return_to] %>
+      <%= render "llm_credentials/show_content", llm_credential: @llm_credential, return_to: @return_to %>
     </div>
   </div>
 <% else %>
   <div id="llm-credential-show" class="space-y-8">
-    <%= render "llm_credentials/show_content", llm_credential: @llm_credential, return_to: params[:return_to] %>
+    <%= render "llm_credentials/show_content", llm_credential: @llm_credential, return_to: @return_to %>
   </div>
 <% end %>
