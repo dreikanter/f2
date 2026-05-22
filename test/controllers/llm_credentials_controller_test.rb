@@ -70,6 +70,45 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", saved.state
   end
 
+  test "#create should preserve return_to through to the show redirect" do
+    sign_in_as(user)
+    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+
+    post llm_credentials_url, params: {
+      return_to: return_to,
+      llm_credential: {
+        provider: "anthropic",
+        display_name: "My Key",
+        credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
+      }
+    }
+
+    saved = LlmCredential.last
+    assert_redirected_to llm_credential_path(saved, return_to: return_to)
+  end
+
+  test "#new should embed return_to in the form action" do
+    sign_in_as(user)
+    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+
+    get new_llm_credential_url, params: { return_to: return_to }
+
+    assert_response :success
+    assert_select "form[action=?]", llm_credentials_path(return_to: return_to)
+  end
+
+  test "#show should carry return_to into the validation polling endpoint" do
+    sign_in_as(user)
+    pending = create(:llm_credential, user: user, state: :pending)
+    return_to = "/feed_identifications?input=https%3A%2F%2Fexample.com"
+
+    get llm_credential_url(pending, return_to: return_to)
+
+    assert_response :success
+    assert_select "[data-polling-endpoint-value=?]",
+                  llm_credential_validation_path(pending, return_to: return_to)
+  end
+
   test "#create should render :new with errors on invalid input" do
     sign_in_as(user)
 

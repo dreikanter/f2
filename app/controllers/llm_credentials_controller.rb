@@ -18,11 +18,12 @@ class LlmCredentialsController < ApplicationController
 
   def create
     @llm_credential = build_credential
+    @return_to = safe_return_to
     authorize @llm_credential
 
     if @llm_credential.save
       LlmCredentialValidationJob.perform_later(@llm_credential)
-      redirect_to llm_credential_path(@llm_credential, return_to: safe_return_to)
+      redirect_to llm_credential_path(@llm_credential, return_to: @return_to)
     else
       render :new, status: :unprocessable_entity
     end

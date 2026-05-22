@@ -3,7 +3,7 @@
 <% if @llm_credential.pending? || @llm_credential.validating? %>
   <div
     data-controller="polling"
-    data-polling-endpoint-value="<%= llm_credential_validation_path(@llm_credential) %>"
+    data-polling-endpoint-value="<%= llm_credential_validation_path(@llm_credential, return_to: @return_to) %>"
     data-polling-interval-value="2000"
     data-polling-stop-condition-value="[data-credential-state]"
     aria-busy="true">
