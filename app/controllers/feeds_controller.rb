@@ -165,15 +165,17 @@ class FeedsController < ApplicationController
     feed_params
   end
 
+  # Drafts (per FR-007) may still edit source-side fields (url,
+  # feed_profile_key, params) because they haven't been confirmed yet. Once a
+  # feed transitions out of :draft for the first time (FR-008), those fields
+  # lock in for the rest of the feed's lifetime regardless of later
+  # pause/resume — strong params silently drops them for non-drafts.
   def update_feed_params
-    params.require(:feed).permit(
-      :name,
-      :description,
-      :target_group,
-      :access_token_id,
-      :llm_credential_id,
-      :schedule_interval
-    )
+    always_permitted = %i[name description target_group access_token_id llm_credential_id schedule_interval]
+    draft_only_permitted = [:url, :feed_profile_key, { params: %i[url handle query] }]
+
+    permitted_keys = @feed&.draft? ? always_permitted + draft_only_permitted : always_permitted
+    params.require(:feed).permit(*permitted_keys)
   end
 
   def reset_schedule_if_interval_changed

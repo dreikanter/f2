@@ -32,6 +32,10 @@ FactoryBot.define do
       end
     end
 
+    trait :draft do
+      state { :draft }
+    end
+
     trait :disabled do
       state { :disabled }
     end

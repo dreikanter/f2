@@ -332,6 +332,28 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Name", feed.name
   end
 
+  test "#update should permit url change when feed is draft" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+    new_url = "https://example.com/new-feed.xml"
+
+    patch feed_url(draft), params: { feed: { params: { url: new_url } } }
+
+    draft.reload
+    assert_equal new_url, draft.url
+  end
+
+  test "#update should ignore url change when feed is disabled" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user,
+                      params: { "url" => "https://original.com/feed.xml" })
+
+    patch feed_url(disabled), params: { feed: { params: { url: "https://attacker.com/feed.xml" } } }
+
+    disabled.reload
+    assert_equal "https://original.com/feed.xml", disabled.url
+  end
+
   test "#update should reset schedule next_run_at when interval changes" do
     sign_in_as(user)
     enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
