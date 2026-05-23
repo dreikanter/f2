@@ -1,7 +1,7 @@
 class ListGroupComponent::FeedItemComponent < ViewComponent::Base
-  DEFAULT_ITEM_CLASS = "flex flex-1 flex-col gap-2"
+  DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 p-4"
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
-  CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-1"
+  CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-2"
   TITLE_ROW_CLASSES = "flex flex-wrap items-center gap-2"
   TITLE_CLASSES = "inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
   METADATA_CLASSES = "flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500"
