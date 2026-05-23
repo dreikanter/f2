@@ -111,7 +111,7 @@ class Feed < ApplicationRecord
     self.params = next_params
   end
 
-  # Whichever param the profile uses as the user-facing source — url for
+  # Whichever param the profile uses as the user-facing source: url for
   # URL profiles, handle for handle profiles, query for query profiles.
   # Used by views that need to show "what the user typed" without caring
   # about the underlying input shape. Driven by the profile's input_shape
@@ -266,7 +266,7 @@ class Feed < ApplicationRecord
 
   # Structural sanity check: in normal use the form is generated from the
   # same parameter_schema, so this can only fire on a forged POST or a code
-  # bug. The "<pointer> <message>" output is machine-only — the future
+  # bug. The "<pointer> <message>" output is machine-only; the future
   # per-field form renderer translates it; nothing surfaces raw to users.
   def params_against_profile_schema
     return unless feed_profile_present?
@@ -284,7 +284,7 @@ class Feed < ApplicationRecord
   # Fires only via `save(context: :enable)`, called exclusively from
   # `Feed#enable`. Routine operational edits on an enabled feed (paused/
   # renamed/rescheduled) skip this check because they run under the default
-  # save context — only an explicit user-initiated promotion through the
+  # save context. Only an explicit user-initiated promotion through the
   # form has to re-prove a fresh preview bound to (profile_key, params).
   def enabling_requires_recent_preview
     valid_token = PreviewToken.verify(

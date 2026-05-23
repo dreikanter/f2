@@ -59,7 +59,7 @@ class FeedsController < ApplicationController
 
     if @feed.save
       if params[:enable_feed] == "1" && !@feed.enable
-        flash.now[:alert] = "Couldn't enable — see issues below."
+        flash.now[:alert] = "Couldn't enable. See issues below."
         render :new, status: :unprocessable_entity
       else
         cleanup_feed_identification(@feed.url) if @feed.url
@@ -92,9 +92,9 @@ class FeedsController < ApplicationController
     @feed.preview_token = params[:preview_token]
     @feed.assign_attributes(update_feed_params)
 
-    # Unticked Enable on an enabled feed = pause request. Leave drafts and
-    # disabled feeds at their current state — promotion (if requested)
-    # happens via @feed.enable after the first save.
+    # Unticked Enable on an enabled feed = pause request. Drafts and disabled
+    # feeds stay at their current state; promotion (if requested) happens via
+    # @feed.enable after the first save.
     @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1"
 
     if @feed.save
@@ -103,7 +103,7 @@ class FeedsController < ApplicationController
       interval_changed = @feed.saved_change_to_cron_expression?
 
       if params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
-        flash.now[:alert] = "Couldn't enable — see issues below."
+        flash.now[:alert] = "Couldn't enable. See issues below."
         render :edit, status: :unprocessable_entity
       else
         @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
@@ -170,7 +170,7 @@ class FeedsController < ApplicationController
       :schedule_interval,
       # Only the three known input-shape keys are accepted. Anything
       # else inside the params hash would otherwise persist into
-      # `feeds.params` jsonb undetected — see the profile schemas.
+      # `feeds.params` jsonb undetected. See the profile schemas.
       params: [:url, :handle, :query]
     )
   end
@@ -183,7 +183,7 @@ class FeedsController < ApplicationController
   # feed_profile_key, params) because they haven't been confirmed yet. Once a
   # feed transitions out of :draft for the first time (FR-008), those fields
   # lock in for the rest of the feed's lifetime regardless of later
-  # pause/resume — strong params silently drops them for non-drafts.
+  # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
     always_permitted = %i[name description target_group access_token_id llm_credential_id schedule_interval]
     draft_only_permitted = [:url, :feed_profile_key, { params: %i[url handle query] }]
@@ -198,7 +198,7 @@ class FeedsController < ApplicationController
 
   # `#create` only produces `enabled` or `draft` today (the disabled branch is
   # kept as a defensive fallback for any future caller that lands here in the
-  # disabled state — `#update` doesn't share this helper).
+  # disabled state; `#update` doesn't share this helper).
   def success_message_for(feed)
     if feed.enabled?
       "Feed '#{feed.name}' was successfully created and is now active."

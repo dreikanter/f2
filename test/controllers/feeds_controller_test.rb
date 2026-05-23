@@ -138,7 +138,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
-      # target_group missing — required only when enabled
+      # target_group missing (required only when enabled)
       schedule_interval: "1h"
     }
 
@@ -167,7 +167,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed_params = {
       url: "http://example.com/feed.xml",
       name: "Test Feed",
-      # feed_profile_key missing — required in every state (draft envelope)
+      # feed_profile_key missing (required in every state, draft envelope)
       access_token_id: access_token.id,
       target_group: "testgroup",
       schedule_interval: "1h"
