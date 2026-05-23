@@ -164,7 +164,7 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 ### Key Entities
 
-- **Feed.state** — enum, three values, default `draft`. Encodes the lifecycle. Numeric mapping `{ draft: 0, disabled: 1, enabled: 2 }`. Existing data: the current `disabled: 0, enabled: 1` mapping must be migrated to the new numeric values (data backfill, not just schema change).
+- **Feed.state** — enum, three values, default `draft`. Encodes the lifecycle. Numeric mapping `{ draft: 0, disabled: 1, enabled: 2 }`. The dev database is reset on cutover; no data backfill is required. The schema-default change (column default flips from `0` to `0` with new meaning) and the model-default change ride along with the migration.
 - **Feed (validation envelope)** — split into draft envelope (always) and enabled envelope (when `enabled?`). No new columns; relaxed/conditional validators on existing columns.
 - **Identification (`FeedIdentification`)** — unchanged. Draft creation does not interact with identification storage.
 
@@ -187,7 +187,7 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 - `001-smart-feed-creation` provides: the entry point and identification flow; the credential gate UI; the LLM credential resource and polling endpoint; the access token resource.
 - No new external dependencies (no new gems, no new third-party services).
-- Migration: `feeds.state` numeric remap (existing data uses `0/1` for disabled/enabled; new mapping is `0/1/2` for draft/disabled/enabled). Existing rows whose `state` is `0` must be remapped to `1` (disabled), and rows whose `state` is `1` must be remapped to `2` (enabled). A reversible migration is required.
+- Migration: the `feeds.state` numeric mapping changes (from `{ disabled: 0, enabled: 1 }` to `{ draft: 0, disabled: 1, enabled: 2 }`). The app is pre-production and the dev DB will be reset on cutover; **no data backfill or reversible remap is required**. The migration is schema-only (column default change, optional comment/check-constraint adjustments).
 
 ## Out of scope (for this spec)
 
