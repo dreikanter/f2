@@ -30,7 +30,7 @@
   <% elsif suggest_adding_feeds %>
     <%= render "feeds/empty_state" %>
   <% else %>
-    <h1 class="text-4xl font-semibold mb-0 text-slate-900">Status</h1>
+    <%= render PageHeaderComponent.new(title: "Status") %>
     <%= render UserStatsComponent.new(user: @user) %>
 
     <% if @recent_events.any? %>
