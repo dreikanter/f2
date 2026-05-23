@@ -1,8 +1,9 @@
 require "test_helper"
 
-# FR-016 + FR-017 state gating: saving an enabled feed requires a fresh
-# preview_token tied to (user, profile, params). Anything else lands the
-# feed in `disabled` state.
+# FR-012 + FR-013 state gating: saving an enabled feed requires a fresh
+# preview_token tied to (user, profile, params). Anything else falls back
+# to `draft` state (per the single-save-at-target controller flow) so the
+# typed data is preserved and the user can fix the issue and re-enable.
 class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
@@ -47,17 +48,17 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", Feed.last.state
   end
 
-  test "#post should degrade to disabled when no preview token is supplied" do
+  test "#post should fall back to draft when no preview token is supplied" do
     sign_in_as(user)
 
     assert_difference("Feed.count", 1) do
       post feeds_path, params: feed_params(preview_token: nil)
     end
 
-    assert_equal "disabled", Feed.last.state
+    assert_equal "draft", Feed.last.state
   end
 
-  test "#post should reject a tampered preview token and land disabled" do
+  test "#post should reject a tampered preview token and fall back to draft" do
     sign_in_as(user)
     tampered = valid_preview_token.split(".").first + ".not-a-real-signature"
 
@@ -65,10 +66,10 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
       post feeds_path, params: feed_params(preview_token: tampered)
     end
 
-    assert_equal "disabled", Feed.last.state
+    assert_equal "draft", Feed.last.state
   end
 
-  test "#post should reject an expired preview token and land disabled" do
+  test "#post should reject an expired preview token and fall back to draft" do
     sign_in_as(user)
 
     expired = PreviewToken.sign(
@@ -82,10 +83,10 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
       post feeds_path, params: feed_params(preview_token: expired)
     end
 
-    assert_equal "disabled", Feed.last.state
+    assert_equal "draft", Feed.last.state
   end
 
-  test "#post should reject a preview token for different params and land disabled" do
+  test "#post should reject a preview token for different params and fall back to draft" do
     sign_in_as(user)
 
     mismatched_token = PreviewToken.sign(
@@ -97,6 +98,6 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
 
     post feeds_path, params: feed_params(preview_token: mismatched_token)
 
-    assert_equal "disabled", Feed.last.state
+    assert_equal "draft", Feed.last.state
   end
 end

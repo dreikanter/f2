@@ -55,19 +55,17 @@ class FeedsController < ApplicationController
   def create
     @feed = feeds_scope.build(create_feed_params)
     authorize @feed
-
     @feed.preview_token = params[:preview_token]
-    @feed.state = initial_state_for(@feed)
+    @feed.state = params[:enable_feed] == "1" ? :enabled : :draft
 
-    ActiveRecord::Base.transaction do
-      @feed.save!
+    case attempt_save(@feed)
+    when :enabled, :draft_saved
       @feed.reset_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+      cleanup_feed_identification(@feed.url) if @feed.url
+      redirect_to feed_path(@feed), notice: success_message_for(@feed)
+    when :draft_fallback, :failed
+      render :new, status: :unprocessable_entity
     end
-
-    cleanup_feed_identification(@feed.url)
-    redirect_to feed_path(@feed), notice: success_message
-  rescue ActiveRecord::RecordInvalid
-    render :new, status: :unprocessable_entity
   end
 
   def show
@@ -189,27 +187,51 @@ class FeedsController < ApplicationController
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 
-  # A user who ticked "Enable feed" still only saves enabled when the request
-  # carries a valid preview_token bound to (profile_key, params). Anything
-  # else degrades gracefully to disabled so the feed still gets saved.
-  def initial_state_for(feed)
-    return :disabled unless params[:enable_feed] == "1"
-
-    token_valid = PreviewToken.verify(
-      params[:preview_token],
-      user_id: current_user.id,
-      profile_key: feed.feed_profile_key,
-      params: feed.params || {}
-    )
-
-    token_valid ? :enabled : :disabled
+  # Save the feed at its target state in one attempt. When the user ticked
+  # "Enable feed" but the enabled envelope fails validation, fall back to
+  # saving the same data as a draft so typed input is preserved, then re-attach
+  # the original enabled-state errors so the form can render them. The
+  # single-save shape (rather than save-then-promote) is required so
+  # `enabling_requires_recent_preview` fires on new records and on source-side
+  # changes — promoting after a successful draft save would self-skip it.
+  #
+  # Outcomes:
+  #   :enabled         — saved at target enabled state
+  #   :draft_saved     — saved at target draft state (user didn't request enable)
+  #   :draft_fallback  — user requested enable, validation failed, persisted as draft with errors
+  #   :failed          — couldn't save even as draft
+  def attempt_save(feed)
+    attempting_enable = feed.enabled?
+    if feed.save
+      attempting_enable ? :enabled : :draft_saved
+    elsif attempting_enable
+      enabled_errors = feed.errors.map { |error| [error.attribute, error.message] }
+      feed.state = :draft
+      if feed.save
+        enabled_errors.each { |attribute, message| feed.errors.add(attribute, message) }
+        flash.now[:alert] = "Saved as draft. Fix the issues below to enable."
+        :draft_fallback
+      else
+        :failed
+      end
+    else
+      :failed
+    end
   end
 
-  def success_message
-    if @feed.enabled?
-      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{@feed.schedule_display} and published to #{@feed.target_group}."
-    else
-      "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
+  # `#create` only produces `enabled` or `draft` today (the disabled branch is
+  # kept as a defensive fallback for any future caller that lands here in the
+  # disabled state — `#update` doesn't share this helper).
+  def success_message_for(feed)
+    case feed.state
+    when "enabled"
+      "Feed '#{feed.name}' was successfully created and is now active. " \
+        "New posts will be checked every #{feed.schedule_display} and published to #{feed.target_group}."
+    when "disabled"
+      "Feed '#{feed.name}' was successfully created but is currently disabled. " \
+        "Enable it from the feed page when you're ready to start importing posts."
+    when "draft"
+      "Feed saved as draft. Continue setup from your feeds list when ready."
     end
   end
 

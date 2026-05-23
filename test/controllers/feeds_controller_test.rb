@@ -51,7 +51,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#create should create feed with enabled state when enable_feed is checked" do
+  test "#create should save and enable when checkbox checked and all fields valid" do
     sign_in_as(user)
     access_token
 
@@ -76,7 +76,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     feed = Feed.last
-    assert_equal "enabled", feed.state
+    assert_predicate feed, :enabled?
     assert_not_nil feed.feed_schedule
     assert_not_nil feed.feed_schedule.next_run_at
     assert_not_nil feed.feed_schedule.last_run_at
@@ -84,7 +84,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "successfully created and is now active", flash[:notice]
   end
 
-  test "#create should create feed with disabled state when enable_feed is not checked" do
+  test "#create should save as draft when checkbox unchecked" do
     sign_in_as(user)
     access_token
 
@@ -102,12 +102,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     feed = Feed.last
-    assert_equal "disabled", feed.state
+    assert_predicate feed, :draft?
     assert_redirected_to feed_path(feed)
-    assert_match "currently disabled", flash[:notice]
+    assert_match "Feed saved as draft", flash[:notice]
   end
 
-  test "#create should downgrade to disabled when enable_feed=1 but preview_token is absent" do
+  test "#create should preserve enabling_requires_recent_preview check" do
     sign_in_as(user)
     access_token
 
@@ -124,13 +124,63 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
-    feed = Feed.last
-    assert_equal "disabled", feed.state
-    assert_redirected_to feed_path(feed)
-    assert_match "currently disabled", flash[:notice]
+    assert_response :unprocessable_entity
+    assert_predicate Feed.last, :draft?
+    assert_match "Saved as draft", flash[:alert]
   end
 
-  test "#create should downgrade to disabled when preview_token is tampered" do
+  test "#create should fall back to draft when enable-validation fails but draft-validation passes" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      # target_group missing — required only when enabled
+      schedule_interval: "1h"
+    }
+
+    preview_token = PreviewToken.sign(
+      user_id: user.id,
+      profile_key: "rss",
+      params: { "url" => "http://example.com/feed.xml" },
+      generated_at: Time.current
+    )
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: preview_token }
+    end
+
+    assert_response :unprocessable_entity
+    assert_predicate Feed.last, :draft?
+    assert_match "Saved as draft", flash[:alert]
+    # Target group error rendered inline by _target_group_selector partial
+    assert_select "#target-group-selector p.text-red-600", text: /can(?:'|&#39;)t be blank/
+  end
+
+  test "#create should fail without persisting when even draft validation fails" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      # feed_profile_key missing — required in every state (draft envelope)
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "#create should fall back to draft when preview_token is tampered" do
     sign_in_as(user)
     access_token
 
@@ -147,7 +197,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: "not-a-real-token" }
     end
 
-    assert_equal "disabled", Feed.last.state
+    assert_response :unprocessable_entity
+    assert_predicate Feed.last, :draft?
   end
 
   test "#create should ignore state param and use enable_feed instead" do
@@ -169,7 +220,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     feed = Feed.last
-    assert_equal "disabled", feed.state, "State should be disabled despite state param"
+    assert_predicate feed, :draft?, "State should be draft despite state param"
   end
 
   test "#create should render form with errors on validation failure" do
