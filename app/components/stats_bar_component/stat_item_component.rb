@@ -1,6 +1,6 @@
 class StatsBarComponent::StatItemComponent < ViewComponent::Base
   DEFAULT_CELL_CLASSES = "flex-1 flex flex-col items-center justify-center p-4 min-w-0"
-  VALUE_CLASSES = "text-3xl font-semibold text-slate-900 whitespace-nowrap"
+  VALUE_CLASSES = "text-2xl font-semibold text-slate-900 whitespace-nowrap"
   LABEL_CLASSES = "text-sm text-slate-600 whitespace-nowrap mt-1"
 
   def initialize(label:, value:, key: nil)

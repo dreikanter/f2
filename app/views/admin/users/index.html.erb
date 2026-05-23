@@ -53,8 +53,6 @@
 
     <%= render_pagination { |pagination| admin_users_path(pagination) } %>
   <% else %>
-    <div class="flex flex-col items-center justify-center py-12">
-      <p class="text-slate-500">No users found</p>
-    </div>
+    <%= render EmptyStateComponent.new("No users found") %>
   <% end %>
 </div>
