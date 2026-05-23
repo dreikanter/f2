@@ -108,9 +108,31 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:feed_profile_key, :blank)
   end
 
-  test "should have disabled state by default" do
+  test "should have disabled state when factory builds a feed" do
     feed = build(:feed)
     assert_equal "disabled", feed.state
+  end
+
+  test "#state should default to :draft for new records" do
+    assert_equal "draft", Feed.new.state
+  end
+
+  test "#draft? should return true for draft feeds and false otherwise" do
+    assert build(:feed, state: :draft).draft?
+    assert_not build(:feed, state: :disabled).draft?
+    assert_not build(:feed, state: :enabled).draft?
+  end
+
+  test "#disabled? should return true for disabled feeds and false otherwise" do
+    assert build(:feed, state: :disabled).disabled?
+    assert_not build(:feed, state: :draft).disabled?
+    assert_not build(:feed, state: :enabled).disabled?
+  end
+
+  test "#enabled? should return true for enabled feeds and false otherwise" do
+    assert build(:feed, state: :enabled).enabled?
+    assert_not build(:feed, state: :draft).enabled?
+    assert_not build(:feed, state: :disabled).enabled?
   end
 
   test "should support state transitions" do
@@ -209,6 +231,20 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
+  test ".due should select only enabled feeds (excludes draft and disabled)" do
+    freeze_time do
+      draft_feed = create(:feed, state: :draft)
+      disabled_feed = create(:feed, state: :disabled)
+      enabled_feed = create(:feed, state: :enabled)
+
+      due_feeds = Feed.due
+
+      assert_includes due_feeds, enabled_feed
+      assert_not_includes due_feeds, draft_feed
+      assert_not_includes due_feeds, disabled_feed
+    end
+  end
+
   test "should require user" do
     feed = build(:feed, user: nil)
     assert_not feed.valid?
@@ -269,11 +305,6 @@ class FeedTest < ActiveSupport::TestCase
 
     feed2 = build(:feed, user: user2, name: "same-name")
     assert feed2.valid?
-  end
-
-  test "should set default state to disabled for new records" do
-    feed = Feed.new
-    assert_equal "disabled", feed.state
   end
 
   test "should not change state for persisted records" do
