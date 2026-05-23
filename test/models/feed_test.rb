@@ -778,4 +778,64 @@ class FeedTest < ActiveSupport::TestCase
 
     assert feed.valid?, feed.errors.full_messages.inspect
   end
+
+  test "#enabling an AI feed should require an llm_credential" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 llm_credential: nil)
+    feed.state = :enabled
+    feed.preview_token = preview_token_for(feed)
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:llm_credential], "must be selected for AI-backed feeds"
+  end
+
+  test "#enabling an AI feed should reject an inactive llm_credential" do
+    user = create(:user)
+    credential = create(:llm_credential, :inactive, user: user)
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 llm_credential: credential)
+    feed.state = :enabled
+    feed.preview_token = preview_token_for(feed)
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:llm_credential], "must be active (currently inactive)"
+  end
+
+  test "#enabling an AI feed should accept an active llm_credential" do
+    user = create(:user)
+    credential = create(:llm_credential, :active, user: user)
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 llm_credential: credential)
+    feed.state = :enabled
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#enabling a non-AI feed should not require an llm_credential" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" },
+                 llm_credential: nil)
+    feed.state = :enabled
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
 end

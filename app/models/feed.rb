@@ -63,6 +63,7 @@ class Feed < ApplicationRecord
   validate :enabling_requires_recent_preview
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
+  validate :llm_credential_required_when_enabled_ai_profile, if: :enabled?
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -300,6 +301,17 @@ class Feed < ApplicationRecord
     return if access_token.user_id == user_id
 
     errors.add(:access_token, "must belong to the same user")
+  end
+
+  def llm_credential_required_when_enabled_ai_profile
+    return unless feed_profile_present?
+    return unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    if llm_credential.nil?
+      errors.add(:llm_credential, "must be selected for AI-backed feeds")
+    elsif !llm_credential.active?
+      errors.add(:llm_credential, "must be active (currently #{llm_credential.state})")
+    end
   end
 
   def create_schedule_on_enable
