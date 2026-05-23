@@ -182,10 +182,11 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "destroying access token disables enabled feeds and nullifies their access_token_id" do
-    token = create(:access_token, :active)
-    enabled_feed = create(:feed, access_token: token, state: :enabled)
-    disabled_feed = create(:feed, access_token: token, state: :disabled)
-    another_disabled_feed = create(:feed, access_token: token, state: :disabled)
+    user = create(:user)
+    token = create(:access_token, :active, user: user)
+    enabled_feed = create(:feed, user: user, access_token: token, state: :enabled)
+    disabled_feed = create(:feed, user: user, access_token: token, state: :disabled)
+    another_disabled_feed = create(:feed, user: user, access_token: token, state: :disabled)
 
     # Track database queries to ensure single query
     queries = []
@@ -217,10 +218,11 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "should disable enabled feeds when token validation service marks token inactive" do
-    access_token = create(:access_token, status: :validating)
-    enabled_feed = create(:feed, access_token: access_token, state: :enabled)
-    another_disabled_feed = create(:feed, access_token: access_token, state: :disabled)
-    disabled_feed = create(:feed, access_token: access_token, state: :disabled)
+    user = create(:user)
+    access_token = create(:access_token, status: :validating, user: user)
+    enabled_feed = create(:feed, user: user, access_token: access_token, state: :enabled)
+    another_disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
+    disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
 
     # Stub HTTP request to return 401 Unauthorized, triggering the rescue block
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
@@ -301,10 +303,11 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "#disable_associated_feeds should disable all feeds and clear access_token_id" do
-    token = create(:access_token, :active)
-    enabled_feed1 = create(:feed, access_token: token, state: :enabled)
-    enabled_feed2 = create(:feed, access_token: token, state: :enabled)
-    disabled_feed = create(:feed, access_token: token, state: :disabled)
+    user = create(:user)
+    token = create(:access_token, :active, user: user)
+    enabled_feed1 = create(:feed, user: user, access_token: token, state: :enabled)
+    enabled_feed2 = create(:feed, user: user, access_token: token, state: :enabled)
+    disabled_feed = create(:feed, user: user, access_token: token, state: :disabled)
 
     token.disable_associated_feeds
 

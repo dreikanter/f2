@@ -1,12 +1,16 @@
 require "test_helper"
 
 class PostWithdrawalJobTest < ActiveJob::TestCase
+  def user
+    @user ||= create(:user)
+  end
+
   def access_token
-    @access_token ||= create(:access_token, :active)
+    @access_token ||= create(:access_token, :active, user: user)
   end
 
   def feed
-    @feed ||= create(:feed, access_token: access_token)
+    @feed ||= create(:feed, user: user, access_token: access_token)
   end
 
   def post
