@@ -9,9 +9,10 @@ class FeedsListComponent < ViewComponent::Base
     @feeds.each do |feed|
       component.with_item(ListGroupComponent::FeedItemComponent.new(
         icon: helpers.feed_status_icon(feed),
-        title: feed.name,
+        title: display_title_for(feed),
         title_url: helpers.feed_path(feed),
-        metadata_segments: metadata_segments_for(feed)
+        metadata_segments: metadata_segments_for(feed),
+        badge: badge_for(feed)
       ))
     end
 
@@ -19,6 +20,19 @@ class FeedsListComponent < ViewComponent::Base
   end
 
   private
+
+  # FR-022a: drafts may have a blank name (operational fields are optional
+  # until promotion). Fall back to the user's typed input, then to a
+  # generic label, so the row always has a clickable title.
+  def display_title_for(feed)
+    feed.name.presence || feed.source_input.presence || "Untitled draft"
+  end
+
+  def badge_for(feed)
+    return nil unless feed.draft?
+
+    render(BadgeComponent.new(text: "Draft", color: :yellow, key: "feed.#{feed.id}.draft_badge"))
+  end
 
   def metadata_segments_for(feed)
     [
