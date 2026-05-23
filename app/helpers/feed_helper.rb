@@ -57,18 +57,15 @@ module FeedHelper
     end
   end
 
-  def feed_summary_line(active_count:, inactive_count:)
+  def feed_summary_line(active_count:, inactive_count:, draft_count:)
     active_part = pluralize_count(active_count, "active feed")
     inactive_part = pluralize_count(inactive_count, "inactive feed")
+    draft_part = pluralize_count(draft_count, "draft feed")
 
-    parts = [active_part, inactive_part].compact
+    parts = [active_part, inactive_part, draft_part].compact
     return nil if parts.empty?
 
-    if parts.size == 1
-      "You have #{parts.first}"
-    else
-      "You have #{parts.first} and #{parts.last}"
-    end
+    "You have #{parts.to_sentence}"
   end
 
   private
