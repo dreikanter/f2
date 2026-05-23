@@ -238,6 +238,43 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p.text-slate-500", text: "Source and type can't be changed after creation. Start a new feed to follow a different source."
   end
 
+  test "#edit should render Save feed button and unchecked always-interactable Enable checkbox for a draft" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    get edit_feed_url(draft)
+
+    assert_response :success
+    assert_select "input[type=submit][value='Save feed']"
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
+                  "Enable checkbox should not be checked for a draft feed"
+  end
+
+  test "#edit should render Save feed button with unchecked Enable checkbox for a disabled feed" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user)
+
+    get edit_feed_url(disabled)
+
+    assert_response :success
+    assert_select "input[type=submit][value='Save feed']"
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
+                  "Enable checkbox should not be checked for a disabled feed"
+  end
+
+  test "#edit should render Save feed button with checked Enable checkbox for an enabled feed" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token)
+
+    get edit_feed_url(enabled)
+
+    assert_response :success
+    assert_select "input[type=submit][value='Save feed']"
+    assert_select "input[type=checkbox][name='enable_feed'][checked]:not([disabled])"
+  end
+
   test "#update should update feed with valid params" do
     sign_in_as(user)
     new_token = create(:access_token, user: user, host: "https://freefeed.net")
