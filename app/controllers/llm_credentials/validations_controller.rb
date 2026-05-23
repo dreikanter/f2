@@ -6,7 +6,7 @@ class LlmCredentials::ValidationsController < ApplicationController
     render turbo_stream: turbo_stream.update(
       "llm-credential-show",
       partial: "llm_credentials/show_content",
-      locals: { llm_credential: llm_credential, input: params[:input] }
+      locals: { llm_credential: llm_credential, feed_id: params[:feed_id] }
     )
   end
 

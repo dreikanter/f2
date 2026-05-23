@@ -58,11 +58,14 @@ class FeedsController < ApplicationController
     @feed.preview_token = params[:preview_token]
 
     if @feed.save
-      if params[:enable_feed] == "1" && !@feed.enable
+      cleanup_feed_identification(@feed.url) if @feed.url
+
+      if gate_commit?
+        redirect_to new_llm_credential_path(feed_id: @feed.id)
+      elsif params[:enable_feed] == "1" && !@feed.enable
         flash.now[:alert] = "Couldn't enable. See issues below."
         render :new, status: :unprocessable_entity
       else
-        cleanup_feed_identification(@feed.url) if @feed.url
         redirect_to feed_path(@feed), notice: success_message_for(@feed)
       end
     else
@@ -92,22 +95,23 @@ class FeedsController < ApplicationController
     @feed.preview_token = params[:preview_token]
     @feed.assign_attributes(update_feed_params)
 
-    # Unticked Enable on an enabled feed = pause request. Drafts and disabled
-    # feeds stay at their current state; promotion (if requested) happens via
-    # @feed.enable after the first save.
-    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1"
+    # Unticked Enable on an enabled feed = pause request (gate flow skips this
+    # because the gate only appears for drafts without usable credentials).
+    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1" && !gate_commit?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression?
+      cleanup_feed_identification(@feed.url) if @feed.url
 
-      if params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
+      if gate_commit?
+        redirect_to new_llm_credential_path(feed_id: @feed.id)
+      elsif params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
         flash.now[:alert] = "Couldn't enable. See issues below."
         render :edit, status: :unprocessable_entity
       else
         @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
-        cleanup_feed_identification(@feed.url) if @feed.url
         redirect_to feed_path(@feed), notice: update_message_for(@feed)
       end
     else
@@ -123,6 +127,13 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  # The credential gate (rendered in the preview pane when the chosen profile
+  # is AI and the user has no usable credentials) submits the feed form with
+  # this commit value. See app/views/feeds/_credential_gate.html.erb.
+  def gate_commit?
+    params[:commit] == "save_as_draft_and_add_credentials"
+  end
 
   def active_access_tokens?
     current_user.access_tokens.active.exists?

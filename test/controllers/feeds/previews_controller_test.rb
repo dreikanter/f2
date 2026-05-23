@@ -168,7 +168,25 @@ class Feeds::PreviewsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_select "[data-key='credentials.gate']"
-      assert_select "[data-key='credentials.gate.add']"
+      assert_select "button[data-key='credentials.gate.add'][type='submit'][name='commit'][value='save_as_draft_and_add_credentials']",
+                    text: /Add AI credentials/
+      assert_select "[data-key='credentials.gate.help']",
+                    text: /We'll save your feed as a draft/
+    end
+  end
+
+  test "#show should render the credential gate for a saved draft feed without an AI credential" do
+    sign_in_as(user)
+    draft_feed = create(:feed, :draft, user: user, feed_profile_key: "llm_website_extractor",
+                                       params: { "url" => "https://example.com" })
+
+    with_memory_cache do
+      get feed_live_preview_path(draft_feed),
+          params: { profile_key: "llm_website_extractor", params: { url: "https://example.com" } }
+
+      assert_response :success
+      assert_select "[data-key='credentials.gate']"
+      assert_select "button[data-key='credentials.gate.add'][name='commit'][value='save_as_draft_and_add_credentials']"
     end
   end
 

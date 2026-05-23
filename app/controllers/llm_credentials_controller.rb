@@ -6,24 +6,25 @@ class LlmCredentialsController < ApplicationController
 
   def show
     @llm_credential = find_credential
-    @input = params[:input]
+    @feed = scoped_feed(params[:feed_id])
     authorize @llm_credential
   end
 
   def new
     @llm_credential = LlmCredential.new(provider: params[:provider] || LlmProvider.names.first)
-    @input = params[:input]
+    @feed = scoped_feed(params[:feed_id])
     authorize @llm_credential
   end
 
   def create
     @llm_credential = build_credential
-    @input = params[:input]
+    @feed = scoped_feed(params[:feed_id])
     authorize @llm_credential
 
     if @llm_credential.save
+      @feed&.update_column(:llm_credential_id, @llm_credential.id)
       LlmCredentialValidationJob.perform_later(@llm_credential)
-      redirect_to llm_credential_path(@llm_credential, input: @input)
+      redirect_to llm_credential_path(@llm_credential, feed_id: @feed&.id)
     else
       render :new, status: :unprocessable_entity
     end
@@ -37,6 +38,12 @@ class LlmCredentialsController < ApplicationController
   end
 
   private
+
+  def scoped_feed(feed_id)
+    return nil if feed_id.blank?
+
+    Current.user.feeds.find_by(id: feed_id)
+  end
 
   def build_credential
     Current.user.llm_credentials.build(

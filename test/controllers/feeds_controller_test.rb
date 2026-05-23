@@ -223,6 +223,57 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate feed, :draft?, "State should be draft despite state param"
   end
 
+  test "#create should save as draft and redirect to credential setup when commit signals gate" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: {
+        feed: feed_params,
+        commit: "save_as_draft_and_add_credentials"
+      }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?
+    assert_redirected_to new_llm_credential_path(feed_id: feed.id)
+  end
+
+  test "#create gate-commit should ignore enable_feed=1" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: {
+        feed: feed_params,
+        enable_feed: "1",
+        commit: "save_as_draft_and_add_credentials"
+      }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?, "Gate commit must force draft regardless of enable_feed"
+    assert_redirected_to new_llm_credential_path(feed_id: feed.id)
+  end
+
   test "#create should render form with errors on validation failure" do
     sign_in_as(user)
 
@@ -540,6 +591,21 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     enabled_feed.reload
     assert_predicate enabled_feed, :disabled?
     assert_equal "Paused Feed", enabled_feed.name
+  end
+
+  test "#update should save and redirect to credential setup when commit signals gate" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    patch feed_url(draft), params: {
+      feed: { name: "Updated Draft Name" },
+      commit: "save_as_draft_and_add_credentials"
+    }
+
+    assert_redirected_to new_llm_credential_path(feed_id: draft.id)
+    draft.reload
+    assert_predicate draft, :draft?
+    assert_equal "Updated Draft Name", draft.name
   end
 
   test "#update should save changes to a draft without enabling" do

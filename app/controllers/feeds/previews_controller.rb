@@ -14,8 +14,7 @@ class Feeds::PreviewsController < ApplicationController
       if needs_credential_gate?
         [:credential_gate, {
           profile_key: profile_key,
-          new_credential_path: new_llm_credential_path,
-          input: draft? ? preview_params["url"] : nil
+          feed_id: draft? ? nil : feed.id
         }]
       else
         case cached_preview

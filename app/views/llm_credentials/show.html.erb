@@ -3,16 +3,16 @@
 <% if @llm_credential.pending? || @llm_credential.validating? %>
   <div
     data-controller="polling"
-    data-polling-endpoint-value="<%= llm_credential_validation_path(@llm_credential, input: @input) %>"
+    data-polling-endpoint-value="<%= llm_credential_validation_path(@llm_credential, feed_id: @feed&.id) %>"
     data-polling-interval-value="2000"
     data-polling-stop-condition-value="[data-credential-state]"
     aria-busy="true">
     <div id="llm-credential-show" class="space-y-8">
-      <%= render "llm_credentials/show_content", llm_credential: @llm_credential, input: @input %>
+      <%= render "llm_credentials/show_content", llm_credential: @llm_credential, feed_id: @feed&.id %>
     </div>
   </div>
 <% else %>
   <div id="llm-credential-show" class="space-y-8">
-    <%= render "llm_credentials/show_content", llm_credential: @llm_credential, input: @input %>
+    <%= render "llm_credentials/show_content", llm_credential: @llm_credential, feed_id: @feed&.id %>
   </div>
 <% end %>
