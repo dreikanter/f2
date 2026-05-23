@@ -46,10 +46,8 @@ class Feed < ApplicationRecord
 
   after_update :create_schedule_on_enable
 
-  validates :name,
-            presence: true,
-            uniqueness: { scope: :user_id },
-            length: { maximum: NAME_MAX_LENGTH }
+  validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
+  validates :name, presence: true, if: :enabled?
 
   validates :cron_expression, presence: true, if: :enabled?
   validates :feed_profile_key, presence: true
@@ -62,9 +60,10 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
-  validate :enabling_requires_recent_preview
+  validate :enabling_requires_recent_preview, on: :enable
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
+  validate :llm_credential_required_when_enabled_ai_profile, if: :enabled?
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -112,7 +111,7 @@ class Feed < ApplicationRecord
     self.params = next_params
   end
 
-  # Whichever param the profile uses as the user-facing source — url for
+  # Whichever param the profile uses as the user-facing source: url for
   # URL profiles, handle for handle profiles, query for query profiles.
   # Used by views that need to show "what the user typed" without caring
   # about the underlying input shape. Driven by the profile's input_shape
@@ -150,6 +149,19 @@ class Feed < ApplicationRecord
 
   def can_be_enabled?
     access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
+  end
+
+  # Promote the feed to enabled, running the enable-envelope validators
+  # (default + on: :enable). If validation fails, the DB stays at the prior
+  # state, errors are added to the feed, and the in-memory state is rolled
+  # back to its persisted value so re-renders (e.g., source-side field
+  # editability for drafts) reflect DB truth.
+  def enable
+    self.state = :enabled
+    return true if save(context: :enable)
+
+    self.state = state_was
+    false
   end
 
   def can_be_previewed?
@@ -254,7 +266,7 @@ class Feed < ApplicationRecord
 
   # Structural sanity check: in normal use the form is generated from the
   # same parameter_schema, so this can only fire on a forged POST or a code
-  # bug. The "<pointer> <message>" output is machine-only — the future
+  # bug. The "<pointer> <message>" output is machine-only; the future
   # per-field form renderer translates it; nothing surfaces raw to users.
   def params_against_profile_schema
     return unless feed_profile_present?
@@ -269,15 +281,12 @@ class Feed < ApplicationRecord
     end
   end
 
-  # Saving an enabled feed with source-side changes requires a fresh
-  # preview_token bound to the current (profile_key, params). Operational
-  # state toggles on an unchanged feed (FeedStatusesController#update) don't
-  # need to re-prove a preview — that's FR-026/027/028's distinction between
-  # operational and source-side edits.
+  # Fires only via `save(context: :enable)`, called exclusively from
+  # `Feed#enable`. Routine operational edits on an enabled feed (paused/
+  # renamed/rescheduled) skip this check because they run under the default
+  # save context. Only an explicit user-initiated promotion through the
+  # form has to re-prove a fresh preview bound to (profile_key, params).
   def enabling_requires_recent_preview
-    return unless enabled?
-    return unless new_record? || will_save_change_to_params? || will_save_change_to_feed_profile_key?
-
     valid_token = PreviewToken.verify(
       preview_token,
       user_id: user_id,
@@ -302,6 +311,17 @@ class Feed < ApplicationRecord
     return if access_token.user_id == user_id
 
     errors.add(:access_token, "must belong to the same user")
+  end
+
+  def llm_credential_required_when_enabled_ai_profile
+    return unless feed_profile_present?
+    return unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    if llm_credential.nil?
+      errors.add(:llm_credential, "must be selected for AI-backed feeds")
+    elsif !llm_credential.active?
+      errors.add(:llm_credential, "must be active (currently #{llm_credential.state})")
+    end
   end
 
   def create_schedule_on_enable

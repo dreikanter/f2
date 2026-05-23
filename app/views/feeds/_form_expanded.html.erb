@@ -9,7 +9,7 @@
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
                 data: {
-                  controller: "feed-form groups",
+                  controller: "groups",
                   groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
                   groups_loading_text_value: "Loading groups...",
                   groups_default_text_value: "The FreeFeed group where posts will be published."
@@ -24,7 +24,7 @@
       <% if FeedProfile.exists?(feed.feed_profile_key) && FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
         <p class="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-900"
            data-key="ai-cost.notice">
-          AI fetches (including this preview) cost tokens — you'll see your spend on the feed page.
+          AI fetches (including this preview) cost tokens. You'll see your spend on the feed page.
         </p>
       <% end %>
 
@@ -132,43 +132,25 @@
         </div>
       </div>
 
-      <% unless edit_mode %>
-        <div class="mt-6">
-          <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <%= check_box_tag "enable_feed",
-                                "1",
-                                true,
-                                id: "enable_feed",
-                                data: {
-                                  action: "change->feed-form#updateSubmitButtonLabel",
-                                  feed_form_target: "enableCheckbox"
-                                } %>
-            </div>
-            <div class="ml-3">
-              <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-slate-800 mb-0" %>
-              <p class="text-slate-500 mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
-            </div>
+      <div class="mt-6">
+        <div class="flex items-start">
+          <div class="flex items-center h-5">
+            <%= check_box_tag "enable_feed",
+                              "1",
+                              params[:enable_feed] == "1" || feed.enabled?,
+                              id: "enable_feed" %>
+          </div>
+          <div class="ml-3">
+            <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-slate-800 mb-0" %>
+            <p class="text-slate-500 mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
           </div>
         </div>
-      <% end %>
+      </div>
     </div>
 
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
-      <% if edit_mode %>
-        <%= f.submit "Update Feed Configuration",
-                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
-                     data: { turbo_submits_with: "Updating..." } %>
-      <% else %>
-        <%= f.submit "Create and Enable Feed",
-                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
-                     data: {
-                       feed_form_target: "submitButton",
-                       mode: "new",
-                       enabled_label: "Create and Enable Feed",
-                       disabled_label: "Create Feed"
-                     } %>
-      <% end %>
+      <%= f.submit "Save feed",
+                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>

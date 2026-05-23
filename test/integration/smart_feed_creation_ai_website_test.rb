@@ -131,7 +131,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#post should accept save-anyway after a preview failure and land disabled" do
+  test "#post should accept save-anyway after a preview failure and land as draft" do
     sign_in_as(user)
     access_token
     credential
@@ -151,6 +151,6 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_equal "disabled", Feed.last.state
+    assert_equal "draft", Feed.last.state
   end
 end

@@ -55,19 +55,19 @@ class FeedsController < ApplicationController
   def create
     @feed = feeds_scope.build(create_feed_params)
     authorize @feed
-
     @feed.preview_token = params[:preview_token]
-    @feed.state = initial_state_for(@feed)
 
-    ActiveRecord::Base.transaction do
-      @feed.save!
-      @feed.reset_schedule! if @feed.enabled? && @feed.feed_schedule.nil?
+    if @feed.save
+      if params[:enable_feed] == "1" && !@feed.enable
+        flash.now[:alert] = "Couldn't enable. See issues below."
+        render :new, status: :unprocessable_entity
+      else
+        cleanup_feed_identification(@feed.url) if @feed.url
+        redirect_to feed_path(@feed), notice: success_message_for(@feed)
+      end
+    else
+      render :new, status: :unprocessable_entity
     end
-
-    cleanup_feed_identification(@feed.url)
-    redirect_to feed_path(@feed), notice: success_message
-  rescue ActiveRecord::RecordInvalid
-    render :new, status: :unprocessable_entity
   end
 
   def show
@@ -89,13 +89,27 @@ class FeedsController < ApplicationController
   def update
     @feed = load_feed
     authorize @feed
-
     @feed.preview_token = params[:preview_token]
+    @feed.assign_attributes(update_feed_params)
 
-    if @feed.update(update_feed_params)
-      reset_schedule_if_interval_changed
-      cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: update_message
+    # Unticked Enable on an enabled feed = pause request. Drafts and disabled
+    # feeds stay at their current state; promotion (if requested) happens via
+    # @feed.enable after the first save.
+    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1"
+
+    if @feed.save
+      # Capture interval-change signal from the first save before the
+      # promotion attempt's save overwrites `saved_changes`.
+      interval_changed = @feed.saved_change_to_cron_expression?
+
+      if params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
+        flash.now[:alert] = "Couldn't enable. See issues below."
+        render :edit, status: :unprocessable_entity
+      else
+        @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
+        cleanup_feed_identification(@feed.url) if @feed.url
+        redirect_to feed_path(@feed), notice: update_message_for(@feed)
+      end
     else
       render :edit, status: :unprocessable_entity
     end
@@ -156,7 +170,7 @@ class FeedsController < ApplicationController
       :schedule_interval,
       # Only the three known input-shape keys are accepted. Anything
       # else inside the params hash would otherwise persist into
-      # `feeds.params` jsonb undetected — see the profile schemas.
+      # `feeds.params` jsonb undetected. See the profile schemas.
       params: [:url, :handle, :query]
     )
   end
@@ -165,55 +179,44 @@ class FeedsController < ApplicationController
     feed_params
   end
 
+  # Drafts (per FR-007) may still edit source-side fields (url,
+  # feed_profile_key, params) because they haven't been confirmed yet. Once a
+  # feed transitions out of :draft for the first time (FR-008), those fields
+  # lock in for the rest of the feed's lifetime regardless of later
+  # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
-    params.require(:feed).permit(
-      :name,
-      :description,
-      :target_group,
-      :access_token_id,
-      :llm_credential_id,
-      :schedule_interval
-    )
-  end
+    always_permitted = %i[name description target_group access_token_id llm_credential_id schedule_interval]
+    draft_only_permitted = [:url, :feed_profile_key, { params: %i[url handle query] }]
 
-  def reset_schedule_if_interval_changed
-    return unless @feed.saved_change_to_cron_expression?
-    return unless @feed.feed_schedule.present?
-
-    @feed.reset_schedule!
+    permitted_keys = @feed&.draft? ? always_permitted + draft_only_permitted : always_permitted
+    params.require(:feed).permit(*permitted_keys)
   end
 
   def cleanup_feed_identification(input)
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 
-  # A user who ticked "Enable feed" still only saves enabled when the request
-  # carries a valid preview_token bound to (profile_key, params). Anything
-  # else degrades gracefully to disabled so the feed still gets saved.
-  def initial_state_for(feed)
-    return :disabled unless params[:enable_feed] == "1"
-
-    token_valid = PreviewToken.verify(
-      params[:preview_token],
-      user_id: current_user.id,
-      profile_key: feed.feed_profile_key,
-      params: feed.params || {}
-    )
-
-    token_valid ? :enabled : :disabled
-  end
-
-  def success_message
-    if @feed.enabled?
-      "Feed '#{@feed.name}' was successfully created and is now active. New posts will be checked every #{@feed.schedule_display} and published to #{@feed.target_group}."
+  # `#create` only produces `enabled` or `draft` today (the disabled branch is
+  # kept as a defensive fallback for any future caller that lands here in the
+  # disabled state; `#update` doesn't share this helper).
+  def success_message_for(feed)
+    if feed.enabled?
+      "Feed '#{feed.name}' was successfully created and is now active."
+    elsif feed.disabled?
+      "Feed '#{feed.name}' was successfully created but is currently disabled. " \
+        "Enable it from the feed page when you're ready to start importing posts."
     else
-      "Feed '#{@feed.name}' was successfully created but is currently disabled. Enable it from the feed page when you're ready to start importing posts."
+      "Feed saved as draft. Continue setup from your feeds list when ready."
     end
   end
 
-  def update_message
-    message = "Feed '#{@feed.name}' was successfully updated."
-    message += " Changes will take effect on the next scheduled refresh." if @feed.enabled?
-    message
+  def update_message_for(feed)
+    if feed.enabled?
+      "Feed '#{feed.name}' was successfully updated. Changes will take effect on the next scheduled refresh."
+    elsif feed.disabled?
+      "Feed '#{feed.name}' was successfully updated."
+    else
+      "Draft saved. Finish setup when you're ready to enable it."
+    end
   end
 end

@@ -2,20 +2,26 @@ class FeedStatusesController < ApplicationController
   include FeedHelper
 
   def update
-    @feed = load_feed
+    feed = load_feed
+
+    if feed.draft?
+      redirect_to edit_feed_path(feed),
+                  alert: "Drafts must be promoted via the feed form, not the status toggle."
+      return
+    end
 
     case status
     when "enabled"
-      enable(@feed)
+      enable(feed)
     when "disabled"
-      disable(@feed)
+      disable(feed)
     else
-      redirect_to @feed, alert: "Invalid status parameter."
+      redirect_to feed, alert: "Invalid status parameter."
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Feed not found."
   rescue ActiveRecord::StaleObjectError
-    redirect_to @feed, alert: "Feed was modified by another user. Please try again."
+    redirect_to feed, alert: "Feed was modified by another user. Please try again."
   end
 
   private
@@ -33,9 +39,9 @@ class FeedStatusesController < ApplicationController
   end
 
   def disable(feed)
-    @feed.with_lock do
-      @feed.disabled!
-      redirect_to @feed, notice: "Feed was successfully disabled."
+    feed.with_lock do
+      feed.disabled!
+      redirect_to feed, notice: "Feed was successfully disabled."
     end
   end
 
