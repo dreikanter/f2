@@ -195,10 +195,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed_params = {
       url: "http://example.com/feed.xml",
-      name: "",  # Missing required field (validated regardless of state)
+      name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
-      target_group: "testgroup",
+      target_group: "INVALID GROUP!",  # Invalid format (always validated)
       schedule_interval: "1h"
     }
 
@@ -213,7 +213,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[url_display]'][disabled]"
 
     # Verify validation errors are shown
-    assert_select "p.text-red-600", text: /can't be blank|must be filled/
+    assert_select "p.text-red-600", text: /lowercase letters/
   end
 
   test "#show should render feed owned by user" do
@@ -283,8 +283,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     patch feed_url(feed), params: {
       feed: {
-        name: "",
-        url: "invalid-url"
+        target_group: "INVALID GROUP!"
       }
     }
 

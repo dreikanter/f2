@@ -46,10 +46,8 @@ class Feed < ApplicationRecord
 
   after_update :create_schedule_on_enable
 
-  validates :name,
-            presence: true,
-            uniqueness: { scope: :user_id },
-            length: { maximum: NAME_MAX_LENGTH }
+  validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
+  validates :name, presence: true, if: :enabled?
 
   validates :cron_expression, presence: true, if: :enabled?
   validates :feed_profile_key, presence: true

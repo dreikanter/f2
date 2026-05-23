@@ -6,9 +6,22 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
-  test "should require name" do
-    feed = build(:feed, name: nil)
+  test "should require name when enabled" do
+    feed = build(:feed, state: :enabled, name: nil)
     assert_not feed.valid?
+    assert feed.errors.of_kind?(:name, :blank)
+  end
+
+  test "#name should not be required when state is draft" do
+    feed = build(:feed, state: :draft, name: nil)
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#name should be required when transitioning to enabled" do
+    feed = build(:feed, state: :draft, name: nil)
+    feed.state = :enabled
+
+    feed.valid?
     assert feed.errors.of_kind?(:name, :blank)
   end
 
