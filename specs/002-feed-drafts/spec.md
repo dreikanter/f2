@@ -134,6 +134,7 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
   If the fallback save itself fails (rare — would mean a non-state-specific validation also failed, e.g., a malformed target group), the controller MUST re-render the form with all errors and NOT persist anything.
 - **FR-014**: When "Enable feed" is unchecked, the feed MUST be persisted in its current state — drafts stay as drafts, configured feeds (`enabled`) become `disabled`, paused feeds (`disabled`) stay disabled.
+- **FR-014a**: The existing operational status toggle (`FeedStatusesController#update`, mounted at `resource :status, only: :update`) MUST continue to coexist unchanged. It remains the canonical one-click pause/resume control on the feed show page; the form's "Enable feed" checkbox is the *form-submission* path for the same operational transition. Both surfaces invoke the same underlying state changes (`enabled ⇄ disabled`); neither subsumes the other. The status toggle MUST NOT be exposed for drafts (drafts can't be operationally toggled — they're promoted via the form).
 - **FR-015**: The credential-gate's "Add AI credentials" button MUST persist the feed under the draft envelope (regardless of "Enable feed" checkbox state) before redirecting to credential setup. This is the only submit path that bypasses the checkbox-driven state decision; in every other case "Save feed" with the checkbox unchecked is the explicit save-as-draft action.
 
 **Credential round-trip**
