@@ -102,7 +102,7 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 **State model**
 
-- **FR-001**: `Feed.state` MUST be an enum with values `draft`, `disabled`, `enabled` (numeric mapping: `draft: 0, disabled: 1, enabled: 2`). New feeds MUST default to `draft`.
+- **FR-001**: `Feed.state` MUST be an enum with values `draft`, `disabled`, `enabled` (numeric mapping: `draft: 0, disabled: 1, enabled: 2`). New feeds MUST default to `draft`. **Behavioral change**: the default flips from today's `disabled` to `draft`. Both the model `default:` and the schema column `default:` change. Any code, fixture, seed, or `Feed.new` call that relies on "new feeds default to disabled" now defaults to `draft` and MUST be audited. The existing `factories/feeds.rb` factory sets `state` explicitly, so factory-based tests are unaffected; non-factory construction paths (seeds, console scripts, ad hoc test setup) must be reviewed.
 - **FR-002**: Allowed state transitions: `draft → enabled` (gated by the enabled envelope), `enabled → disabled` (free, operational), `disabled → enabled` (gated by the enabled envelope). The transitions `draft → disabled` and `enabled → draft` / `disabled → draft` MUST NOT be possible.
 - **FR-003**: The `due` scope MUST continue to select only `state: :enabled` feeds. Drafts and paused feeds MUST be excluded from scheduled processing.
 
