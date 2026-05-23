@@ -114,11 +114,6 @@
       <%= render_pagination { |pagination, params| admin_events_path(pagination.merge(@filter.present? ? { filter: @filter.to_h } : {})) } %>
     </div>
   <% else %>
-    <%= render CardComponent.new do %>
-      <div class="space-y-6 text-center py-12">
-        <h2 class="text-2xl font-semibold mb-3 text-slate-900">No events found</h2>
-        <p class="text-slate-600">Events will appear here as they are created.</p>
-      </div>
-    <% end %>
+    <%= render EmptyStateComponent.new("No events to show yet.") %>
   <% end %>
 </div>
