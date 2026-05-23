@@ -33,7 +33,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     feed
 
     assert_no_enqueued_jobs do
-      patch feed_url(feed), params: { feed: { name: "Renamed" } }
+      patch feed_url(feed), params: { feed: { name: "Renamed" }, enable_feed: "1" }
     end
 
     assert_redirected_to feed_path(feed)

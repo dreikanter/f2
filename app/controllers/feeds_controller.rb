@@ -89,12 +89,26 @@ class FeedsController < ApplicationController
     authorize @feed
 
     @feed.preview_token = params[:preview_token]
+    @feed.assign_attributes(update_feed_params)
 
-    if @feed.update(update_feed_params)
+    fallback =
+      if params[:enable_feed] == "1"
+        prior = @feed.state_was.to_sym
+        @feed.state = :enabled
+        prior
+      else
+        # Unchecked: pause an enabled feed, leave disabled/draft as-is.
+        # No fallback needed — we're not attempting promotion.
+        @feed.state = :disabled if @feed.enabled?
+        nil
+      end
+
+    case attempt_update_save(@feed, fallback)
+    when :saved
       reset_schedule_if_interval_changed
-      cleanup_feed_identification(@feed.url)
-      redirect_to feed_path(@feed), notice: update_message
-    else
+      cleanup_feed_identification(@feed.url) if @feed.url
+      redirect_to feed_path(@feed), notice: update_message_for(@feed)
+    when :fallback_saved, :failed
       render :edit, status: :unprocessable_entity
     end
   end
@@ -235,9 +249,46 @@ class FeedsController < ApplicationController
     end
   end
 
-  def update_message
-    message = "Feed '#{@feed.name}' was successfully updated."
-    message += " Changes will take effect on the next scheduled refresh." if @feed.enabled?
-    message
+  # Save an existing feed at its target state in one attempt. When the user
+  # ticked "Enable feed" but the enabled envelope fails validation, fall back
+  # to the feed's prior persisted state (passed in by the caller) so the data
+  # is still saved and typed input is preserved, then re-attach the original
+  # enabled-state errors so the form can render them. Mirrors #create's
+  # `attempt_save` but the fallback target is state-aware: drafts that fail
+  # to enable stay drafts; disabled feeds that fail to re-enable stay
+  # disabled (FR-013).
+  #
+  # Outcomes:
+  #   :saved           — saved at target state (enabled, or unchanged/paused)
+  #   :fallback_saved  — user requested enable, validation failed, persisted at fallback state with errors
+  #   :failed          — couldn't save even at fallback (or no fallback was available)
+  def attempt_update_save(feed, fallback)
+    attempting_enable = feed.enabled?
+    if feed.save
+      :saved
+    elsif attempting_enable && fallback
+      enabled_errors = feed.errors.map { |error| [error.attribute, error.message] }
+      feed.state = fallback
+      if feed.save
+        enabled_errors.each { |attribute, message| feed.errors.add(attribute, message) }
+        flash.now[:alert] = "Couldn't enable — see issues below."
+        :fallback_saved
+      else
+        :failed
+      end
+    else
+      :failed
+    end
+  end
+
+  def update_message_for(feed)
+    case feed.state
+    when "enabled"
+      "Feed '#{feed.name}' was successfully updated. Changes will take effect on the next scheduled refresh."
+    when "disabled"
+      "Feed '#{feed.name}' was successfully updated."
+    when "draft"
+      "Draft saved. Finish setup when you're ready to enable it."
+    end
   end
 end

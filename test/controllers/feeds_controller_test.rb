@@ -358,7 +358,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       feed: {
         name: "Updated Active Feed",
         target_group: "updated-group"
-      }
+      },
+      enable_feed: "1"
     }
 
     assert_redirected_to feed_path(enabled_feed)
@@ -389,7 +390,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                           feed_profile_key: "rss",
                           params: { "url" => "http://example.com/feed.xml" })
 
-    patch feed_url(enabled_feed), params: { feed: { name: "Renamed Feed" } }
+    patch feed_url(enabled_feed), params: { feed: { name: "Renamed Feed" }, enable_feed: "1" }
 
     assert_redirected_to feed_path(enabled_feed)
     enabled_feed.reload
@@ -451,7 +452,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     patch feed_url(enabled_feed), params: {
       feed: {
         schedule_interval: "10m"
-      }
+      },
+      enable_feed: "1"
     }
 
     assert_redirected_to feed_path(enabled_feed)
@@ -477,6 +479,79 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed.reload
     assert_equal original_cron, feed.cron_expression
     assert_equal "Updated Name", feed.name
+  end
+
+  test "#update should promote a draft to enabled when checkbox checked and valid" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user, access_token: access_token,
+                                  target_group: "tg",
+                                  feed_profile_key: "rss",
+                                  params: { "url" => "http://example.com/feed.xml" })
+
+    preview_token = PreviewToken.sign(
+      user_id: user.id,
+      profile_key: "rss",
+      params: { "url" => "http://example.com/feed.xml" },
+      generated_at: Time.current
+    )
+
+    patch feed_url(draft), params: {
+      feed: { name: "Promoted Feed" },
+      enable_feed: "1",
+      preview_token: preview_token
+    }
+
+    assert_redirected_to feed_path(draft)
+    draft.reload
+    assert_predicate draft, :enabled?
+    assert_equal "Promoted Feed", draft.name
+  end
+
+  test "#update should keep a disabled feed disabled when enable-validation fails" do
+    sign_in_as(user)
+    disabled = create(:feed, :disabled, user: user, access_token: access_token,
+                                        target_group: "tg",
+                                        feed_profile_key: "rss",
+                                        params: { "url" => "http://example.com/feed.xml" })
+
+    # No preview_token sent: enabling_requires_recent_preview fires only if
+    # params/feed_profile_key change or it's a new record. To force a real
+    # enable-side failure on an existing disabled feed, clear target_group
+    # (required only when enabled).
+    patch feed_url(disabled), params: {
+      feed: { target_group: "" },
+      enable_feed: "1"
+    }
+
+    assert_response :unprocessable_entity
+    disabled.reload
+    assert_predicate disabled, :disabled?, "Disabled feed must not fall back to draft"
+    assert_match "Couldn't enable", flash[:alert]
+    assert_select "#target-group-selector p.text-red-600", text: /can(?:'|&#39;)t be blank/
+  end
+
+  test "#update should pause an enabled feed when checkbox unchecked" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, :enabled, user: user, access_token: access_token)
+
+    patch feed_url(enabled_feed), params: { feed: { name: "Paused Feed" } }
+
+    assert_redirected_to feed_path(enabled_feed)
+    enabled_feed.reload
+    assert_predicate enabled_feed, :disabled?
+    assert_equal "Paused Feed", enabled_feed.name
+  end
+
+  test "#update should save changes to a draft without enabling" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    patch feed_url(draft), params: { feed: { name: "Updated Draft" } }
+
+    assert_redirected_to feed_path(draft)
+    draft.reload
+    assert_predicate draft, :draft?
+    assert_equal "Updated Draft", draft.name
   end
 
   test "#destroy should remove own feed" do
