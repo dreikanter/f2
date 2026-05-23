@@ -5,7 +5,7 @@
     <% header.with_context_paragraph("Connect a provider key so AI feeds can fetch posts on your behalf.") %>
   <% end %>
 
-  <%= form_with model: @llm_credential, url: llm_credentials_path(input: @input) do |f| %>
+  <%= form_with model: @llm_credential, url: llm_credentials_path(feed_id: @feed&.id) do |f| %>
     <% if @llm_credential.errors.any? %>
       <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
         <ul class="list-disc list-inside text-sm">

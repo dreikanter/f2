@@ -38,4 +38,17 @@ class LlmCredentials::ValidationsControllerTest < ActionDispatch::IntegrationTes
 
     assert_response :not_found
   end
+
+  test "#show should render the partial with feed_id when feed_id is provided" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get llm_credential_validation_url(active, feed_id: draft.id),
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, "llm-credential-show"
+    assert_includes response.body, edit_feed_path(draft.id)
+  end
 end

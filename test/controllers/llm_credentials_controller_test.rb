@@ -196,6 +196,38 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "#show should render Continue setting up your feed link when credential is active and feed_id is owned" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get llm_credential_url(active, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Continue setting up your feed"
+  end
+
+  test "#show should not render Continue setting up your feed link when credential is pending" do
+    sign_in_as(user)
+    pending = create(:llm_credential, user: user, state: :pending)
+    draft = create(:feed, :draft, user: user)
+
+    get llm_credential_url(pending, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a", text: "Continue setting up your feed", count: 0
+  end
+
+  test "#show should not render Continue setting up your feed link when feed_id is missing" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+
+    get llm_credential_url(active)
+
+    assert_response :success
+    assert_select "a", text: "Continue setting up your feed", count: 0
+  end
+
   test "#destroy should delete own credential" do
     sign_in_as(user)
     credential
