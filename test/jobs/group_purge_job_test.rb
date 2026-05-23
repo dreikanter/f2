@@ -1,12 +1,16 @@
 require "test_helper"
 
 class GroupPurgeJobTest < ActiveJob::TestCase
+  def user
+    @user ||= create(:user)
+  end
+
   def access_token
-    @access_token ||= create(:access_token, :active)
+    @access_token ||= create(:access_token, :active, user: user)
   end
 
   def feed
-    @feed ||= create(:feed, access_token: access_token, target_group: "testgroup")
+    @feed ||= create(:feed, user: user, access_token: access_token, target_group: "testgroup")
   end
 
   test ".perform_now should withdraw all posts with freefeed_post_id from feed" do
@@ -44,7 +48,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should process posts for specified feed only" do
-    other_feed = create(:feed, access_token: access_token, target_group: "othergroup")
+    other_feed = create(:feed, user: user, access_token: access_token, target_group: "othergroup")
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: other_feed, freefeed_post_id: "post2", status: :withdrawn)
 

@@ -132,8 +132,9 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should create feed_schedule when transitioning from disabled to enabled" do
-    access_token = create(:access_token, :active)
-    feed = create(:feed, state: :disabled, access_token: access_token, target_group: "testgroup", cron_expression: "0 * * * *")
+    user = create(:user)
+    access_token = create(:access_token, :active, user: user)
+    feed = create(:feed, user: user, state: :disabled, access_token: access_token, target_group: "testgroup", cron_expression: "0 * * * *")
 
     assert_nil feed.feed_schedule
 
@@ -152,8 +153,9 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should not create duplicate feed_schedule when already exists" do
-    access_token = create(:access_token, :active)
-    feed = create(:feed, :with_schedule, state: :disabled, access_token: access_token, target_group: "testgroup")
+    user = create(:user)
+    access_token = create(:access_token, :active, user: user)
+    feed = create(:feed, :with_schedule, user: user, state: :disabled, access_token: access_token, target_group: "testgroup")
 
     existing_schedule = feed.feed_schedule
 
@@ -281,8 +283,9 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#can_be_enabled? returns true when feed has active access token and target group" do
-    access_token = create(:access_token, :active)
-    feed = create(:feed, access_token: access_token, target_group: "test_group")
+    user = create(:user)
+    access_token = create(:access_token, :active, user: user)
+    feed = create(:feed, user: user, access_token: access_token, target_group: "test_group")
 
     assert feed.can_be_enabled?
   end
@@ -294,15 +297,17 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "#can_be_enabled? returns false when feed has inactive access token" do
-    access_token = create(:access_token, :inactive)
-    feed = create(:feed, access_token: access_token, target_group: "test_group")
+    user = create(:user)
+    access_token = create(:access_token, :inactive, user: user)
+    feed = create(:feed, user: user, access_token: access_token, target_group: "test_group")
 
     assert_not feed.can_be_enabled?
   end
 
   test "#can_be_enabled? returns false when feed has no target group" do
-    access_token = create(:access_token, :active)
-    feed = create(:feed, access_token: access_token, target_group: nil)
+    user = create(:user)
+    access_token = create(:access_token, :active, user: user)
+    feed = create(:feed, user: user, access_token: access_token, target_group: nil)
 
     assert_not feed.can_be_enabled?
   end
@@ -696,6 +701,34 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  llm_credential: credential,
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#access_token should reject a token belonging to a different user" do
+    owner = create(:user)
+    stranger = create(:user)
+    foreign_token = create(:access_token, :active, user: stranger)
+
+    feed = build(:feed,
+                 user: owner,
+                 access_token: foreign_token,
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+
+    refute feed.valid?
+    assert_includes feed.errors[:access_token], "must belong to the same user"
+  end
+
+  test "#access_token should accept the user's own token" do
+    user = create(:user)
+    token = create(:access_token, :active, user: user)
+
+    feed = build(:feed,
+                 user: user,
+                 access_token: token,
                  feed_profile_key: "rss",
                  params: { "url" => "https://example.com/feed.xml" })
 

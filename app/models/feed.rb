@@ -64,6 +64,7 @@ class Feed < ApplicationRecord
   validate :params_against_profile_schema
   validate :enabling_requires_recent_preview
   validate :llm_credential_belongs_to_user
+  validate :access_token_belongs_to_user
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -293,6 +294,14 @@ class Feed < ApplicationRecord
     return if llm_credential.user_id == user_id
 
     errors.add(:llm_credential, "must belong to the same user")
+  end
+
+  def access_token_belongs_to_user
+    return if access_token.nil?
+    return if user_id.nil?
+    return if access_token.user_id == user_id
+
+    errors.add(:access_token, "must belong to the same user")
   end
 
   def create_schedule_on_enable
