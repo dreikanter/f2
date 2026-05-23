@@ -237,14 +237,13 @@ class FeedsController < ApplicationController
   # kept as a defensive fallback for any future caller that lands here in the
   # disabled state — `#update` doesn't share this helper).
   def success_message_for(feed)
-    case feed.state
-    when "enabled"
+    if feed.enabled?
       "Feed '#{feed.name}' was successfully created and is now active. " \
         "New posts will be checked every #{feed.schedule_display} and published to #{feed.target_group}."
-    when "disabled"
+    elsif feed.disabled?
       "Feed '#{feed.name}' was successfully created but is currently disabled. " \
         "Enable it from the feed page when you're ready to start importing posts."
-    when "draft"
+    else
       "Feed saved as draft. Continue setup from your feeds list when ready."
     end
   end
@@ -282,12 +281,11 @@ class FeedsController < ApplicationController
   end
 
   def update_message_for(feed)
-    case feed.state
-    when "enabled"
+    if feed.enabled?
       "Feed '#{feed.name}' was successfully updated. Changes will take effect on the next scheduled refresh."
-    when "disabled"
+    elsif feed.disabled?
       "Feed '#{feed.name}' was successfully updated."
-    when "draft"
+    else
       "Draft saved. Finish setup when you're ready to enable it."
     end
   end
