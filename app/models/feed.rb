@@ -37,7 +37,7 @@ class Feed < ApplicationRecord
   has_many :feed_metrics, dependent: :destroy
   has_many :posts, dependent: :destroy
 
-  enum :state, { disabled: 0, enabled: 1 }, default: :disabled
+  enum :state, { draft: 0, disabled: 1, enabled: 2 }, default: :draft
 
   # Tied to the preview a user just saw when saving an enabled feed. Set by
   # FeedsController#create / #update from request params; verified by

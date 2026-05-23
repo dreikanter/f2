@@ -6,33 +6,37 @@ class FeedsController < ApplicationController
 
   MAX_RECENT_POSTS = 5
 
-  SORTABLE_FIELDS = {
-    name: {
-      title: "Name",
-      order_by: "LOWER(feeds.name)",
-      direction: :asc
-    },
-    status: {
-      title: "Status",
-      order_by: "CASE WHEN feeds.state = 1 THEN 0 ELSE 1 END",
-      direction: :asc
-    },
-    target_group: {
-      title: "Target Group",
-      order_by: "LOWER(feeds.target_group)",
-      direction: :asc
-    },
-    last_refresh: {
-      title: "Last Refresh",
-      order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
-      direction: :desc
-    },
-    recent_post: {
-      title: "Recent Post",
-      order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
-      direction: :desc
+  SORTABLE_FIELDS = begin
+    enabled_sort_position = 0
+    other_sort_position = 1
+    {
+      name: {
+        title: "Name",
+        order_by: "LOWER(feeds.name)",
+        direction: :asc
+      },
+      status: {
+        title: "Status",
+        order_by: "CASE WHEN feeds.state = #{Feed.states[:enabled]} THEN #{enabled_sort_position} ELSE #{other_sort_position} END",
+        direction: :asc
+      },
+      target_group: {
+        title: "Target Group",
+        order_by: "LOWER(feeds.target_group)",
+        direction: :asc
+      },
+      last_refresh: {
+        title: "Last Refresh",
+        order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
+        direction: :desc
+      },
+      recent_post: {
+        title: "Recent Post",
+        order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
+        direction: :desc
+      }
     }
-  }.freeze
+  end.freeze
 
   def index
     authorize Feed
