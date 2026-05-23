@@ -17,6 +17,11 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
+  test "#name should persist as NULL when state is draft" do
+    feed = create(:feed, state: :draft, name: nil)
+    assert_nil feed.reload.name
+  end
+
   test "#name should be required when transitioning to enabled" do
     feed = build(:feed, state: :draft, name: nil)
     feed.state = :enabled
