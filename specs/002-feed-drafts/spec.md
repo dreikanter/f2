@@ -148,6 +148,7 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 **Feed list and discard**
 
 - **FR-022**: The feeds list (`FeedsListComponent` and any related views) MUST visually distinguish drafts from other states. The minimum is a "Draft" badge (and corresponding status icon).
+- **FR-022a**: A draft list row MUST always have a non-empty, clickable title. Since FR-006 lets drafts persist without a `name`, the row's title MUST fall back to the feed's `source_input` (the URL / handle / query the user typed — already exposed by `Feed#source_input`) when `name` is blank. If `source_input` is also blank (defensive — shouldn't be reachable in practice since the draft envelope requires a source-input), the literal label "Untitled draft" MUST be used. This applies only to the list row label; the underlying `feed.name` value MUST remain whatever the user typed (or nil), without server-side coercion.
 - **FR-023**: Each draft row in the list MUST surface a "Continue setup" affordance (linking to `edit_feed_path(feed)`) and a "Discard" affordance (linking to the destroy action).
 - **FR-024**: The destroy action on a draft MUST present a softer confirmation copy than on a configured feed: "Discard this draft? No data will be lost since it hasn't been activated."
 
