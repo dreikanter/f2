@@ -90,7 +90,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Events"
     assert_select '[data-key="admin.events.table"]', count: 0 # No table should be rendered
     assert_select '[data-key="empty-state"]'
-    assert_select "p", "No events to show yet."
+    assert_select "p", "No events to show yet"
   end
 
   test "should show recorded subject when subject missing" do
