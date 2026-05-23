@@ -1,9 +1,11 @@
 require "test_helper"
 
-# FR-012 + FR-013 state gating: saving an enabled feed requires a fresh
-# preview_token tied to (user, profile, params). Anything else falls back
-# to `draft` state (per the single-save-at-target controller flow) so the
-# typed data is preserved and the user can fix the issue and re-enable.
+# FR-012 + FR-013 state gating: promoting a feed to enabled requires a
+# fresh preview_token tied to (user, profile, params). The controller uses
+# a save-then-promote flow: the initial save persists the feed as a draft
+# (new records default to :draft), then `Feed#enable` attempts the
+# promotion under the `:enable` validation context. A missing or invalid
+# token keeps the feed at :draft and re-renders the form with errors.
 class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)

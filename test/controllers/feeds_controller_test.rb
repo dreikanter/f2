@@ -107,7 +107,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Feed saved as draft", flash[:notice]
   end
 
-  test "#create should preserve enabling_requires_recent_preview check" do
+  test "#create should persist as draft and re-render with errors when preview_token is missing" do
     sign_in_as(user)
     access_token
 
@@ -126,10 +126,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_predicate Feed.last, :draft?
-    assert_match "Saved as draft", flash[:alert]
+    assert_match "Couldn't enable", flash[:alert]
   end
 
-  test "#create should fall back to draft when enable-validation fails but draft-validation passes" do
+  test "#create should persist as draft and re-render when enable-validation fails on a missing field" do
     sign_in_as(user)
     access_token
 
@@ -155,7 +155,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_predicate Feed.last, :draft?
-    assert_match "Saved as draft", flash[:alert]
+    assert_match "Couldn't enable", flash[:alert]
     # Target group error rendered inline by _target_group_selector partial
     assert_select "#target-group-selector p.text-red-600", text: /can(?:'|&#39;)t be blank/
   end
@@ -180,7 +180,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "#create should fall back to draft when preview_token is tampered" do
+  test "#create should persist as draft and re-render when preview_token is tampered" do
     sign_in_as(user)
     access_token
 
