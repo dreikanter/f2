@@ -63,6 +63,17 @@ class FeedHelperTest < ActionView::TestCase
     assert_includes result, 'aria-label="Disabled"'
   end
 
+  test "#feed_status_icon should render draft icon" do
+    feed = build(:feed, :draft)
+
+    result = feed_status_icon(feed)
+
+    assert_includes result, "bi-pencil-square"
+    assert_includes result, "text-amber-500"
+    assert_includes result, 'title="Draft"'
+    assert_includes result, 'aria-label="Draft"'
+  end
+
   test "#feed_summary_line should describe active and inactive counts" do
     result = feed_summary_line(active_count: 2, inactive_count: 1)
     assert_equal "You have 2 active feeds and 1 inactive feed", result

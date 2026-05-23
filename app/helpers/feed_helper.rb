@@ -30,6 +30,11 @@ module FeedHelper
            css_class: "text-emerald-500 text-base leading-5",
            title: "Enabled",
            aria_label: "Enabled")
+    elsif feed.draft?
+      icon("pencil-square",
+           css_class: "text-amber-500 text-base leading-5",
+           title: "Draft",
+           aria_label: "Draft")
     else
       icon("x-circle",
            css_class: "text-slate-400 text-base leading-5",
