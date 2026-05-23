@@ -125,8 +125,14 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 **Save and promotion flow**
 
-- **FR-012**: On `FeedsController#create` and `#update`, the controller MUST first persist the feed under the draft envelope (so typed data is not lost), then attempt a state transition if "Enable feed" was checked.
-- **FR-013**: When "Enable feed" is checked and the enabled envelope passes, the feed MUST transition to `enabled`. When the enabled envelope fails, the feed MUST remain a draft (for new records) or remain in its current state (for existing records that were already `disabled` and are being re-enabled), and the form MUST re-render with the enabled-envelope errors and a flash alert: "Saved as draft. Fix the issues below to enable." (Or "Couldn't enable — see issues below" for the re-enable case.)
+- **FR-012**: On `FeedsController#create` and `#update`, the controller MUST attempt a *single* save at the target state derived from the "Enable feed" checkbox: `:enabled` if checked, otherwise the feed's current state (or `:draft` for a brand-new record). This is important: a two-step "save as draft, then update to enabled" sequence MUST NOT be used, because by the time the second save runs the record is no longer new and the source-side fields are no longer dirty, which causes `enabling_requires_recent_preview` to self-skip and silently turns the preview-token gate into a no-op.
+- **FR-013**: When the single save attempt at target state succeeds, the user MUST be redirected per the resulting state (feed show on enable, feeds list on save-as-draft). When the single save attempt FAILS *and* the target state was `:enabled`, the controller MUST:
+  1. Capture the enabled-envelope errors collected by the failed save.
+  2. Fall back to a fallback state — `:draft` for new records, the prior state (typically `:disabled`) for existing records — and re-save under that state's relaxed envelope so the user's typed data is preserved.
+  3. Re-attach the captured enabled-envelope errors to the in-memory feed for display.
+  4. Re-render the form with those errors and a flash alert: "Saved as draft. Fix the issues below to enable." for new records, or "Couldn't enable — see issues below." for the re-enable case.
+
+  If the fallback save itself fails (rare — would mean a non-state-specific validation also failed, e.g., a malformed target group), the controller MUST re-render the form with all errors and NOT persist anything.
 - **FR-014**: When "Enable feed" is unchecked, the feed MUST be persisted in its current state — drafts stay as drafts, configured feeds (`enabled`) become `disabled`, paused feeds (`disabled`) stay disabled.
 - **FR-015**: The credential-gate's "Add AI credentials" button MUST persist the feed under the draft envelope (regardless of "Enable feed" checkbox state) before redirecting to credential setup. This is the only submit path that bypasses the checkbox-driven state decision; in every other case "Save feed" with the checkbox unchecked is the explicit save-as-draft action.
 
