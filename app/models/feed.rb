@@ -151,6 +151,20 @@ class Feed < ApplicationRecord
     access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
+  # Returns true if this feed would pass validation as :enabled. Used by
+  # callers (controllers / views) that want to know whether promoting the
+  # feed would succeed without actually attempting the transition. Operates
+  # on a dup so the receiver is never mutated. preview_token is an
+  # attr_accessor (not a column), so dup doesn't copy it — we forward it
+  # explicitly so the enabling_requires_recent_preview check sees the same
+  # token the caller already obtained.
+  def ready_to_enable?
+    feed = dup
+    feed.preview_token = preview_token
+    feed.state = :enabled
+    feed.valid?
+  end
+
   def can_be_previewed?
     url.present? && feed_profile_present?
   end

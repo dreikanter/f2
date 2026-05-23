@@ -838,4 +838,68 @@ class FeedTest < ActiveSupport::TestCase
 
     assert feed.valid?, feed.errors.full_messages.inspect
   end
+
+  test "#ready_to_enable? should return true for a draft with all enabled-envelope fields" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 state: :draft,
+                 access_token: access_token_for(user),
+                 target_group: "testgroup",
+                 cron_expression: "0 * * * *",
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.ready_to_enable?
+  end
+
+  test "#ready_to_enable? should return false when target_group is missing" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 state: :draft,
+                 access_token: access_token_for(user),
+                 target_group: nil,
+                 cron_expression: "0 * * * *",
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed)
+
+    assert_not feed.ready_to_enable?
+  end
+
+  test "#ready_to_enable? should return false for an AI feed without llm_credential" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 state: :draft,
+                 access_token: access_token_for(user),
+                 target_group: "testgroup",
+                 cron_expression: "0 * * * *",
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 llm_credential: nil)
+    feed.preview_token = preview_token_for(feed)
+
+    assert_not feed.ready_to_enable?
+  end
+
+  test "#ready_to_enable? should not mutate the receiver" do
+    user = create(:user)
+    feed = build(:feed,
+                 user: user,
+                 state: :draft,
+                 access_token: access_token_for(user),
+                 target_group: "testgroup",
+                 cron_expression: "0 * * * *",
+                 feed_profile_key: "rss",
+                 params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = preview_token_for(feed)
+
+    assert feed.draft?
+    feed.ready_to_enable?
+    assert feed.draft?
+    assert_empty feed.errors
+  end
 end
