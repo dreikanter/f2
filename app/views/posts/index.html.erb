@@ -15,10 +15,11 @@
     <% end %>
   <% end %>
 
-  <%= render PostsListComponent.new(
-             posts: @posts,
-             show_feed: @feed.blank?,
-             empty_text: @feed ? "No posts imported yet from this feed." : "No posts yet.") %>
+  <% if @posts.any? %>
+    <%= render PostsListComponent.new(posts: @posts, show_feed: @feed.blank?) %>
+  <% else %>
+    <%= render EmptyStateComponent.new(@feed ? "No posts imported yet from this feed." : "No posts yet.") %>
+  <% end %>
 
   <% if pagination_total_pages > 1 %>
     <div class="text-center text-sm text-slate-600">
