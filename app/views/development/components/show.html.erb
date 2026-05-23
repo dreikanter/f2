@@ -36,9 +36,7 @@
   <%# Empty State Component %>
   <section class="space-y-4">
     <h2 class="text-xl font-semibold text-slate-900">Empty State Component</h2>
-    <%= render EmptyStateComponent.new do %>
-      <p class="text-slate-500">No items found. Try adding some content.</p>
-    <% end %>
+    <%= render EmptyStateComponent.new("No items found. Try adding some content.") %>
   </section>
 
   <%# Spinner Component %>
