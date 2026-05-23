@@ -4,6 +4,12 @@ class FeedStatusesController < ApplicationController
   def update
     @feed = load_feed
 
+    if @feed.draft?
+      redirect_to edit_feed_path(@feed),
+                  alert: "Drafts must be promoted via the feed form, not the status toggle."
+      return
+    end
+
     case status
     when "enabled"
       enable(@feed)

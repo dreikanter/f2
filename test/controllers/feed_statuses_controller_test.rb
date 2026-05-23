@@ -36,6 +36,64 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
+  test "#update should pause an enabled feed when status=disabled" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, :enabled, user: user)
+
+    patch feed_status_path(enabled_feed), params: { status: "disabled" }
+
+    assert_redirected_to enabled_feed
+    follow_redirect!
+    assert_includes response.body, "Feed was successfully disabled"
+
+    enabled_feed.reload
+    assert_equal "disabled", enabled_feed.state
+  end
+
+  test "#update should re-enable a disabled feed when envelope is satisfied" do
+    sign_in_as(user)
+    disabled_feed = create(:feed, :disabled, user: user)
+
+    patch feed_status_path(disabled_feed), params: { status: "enabled" }
+
+    assert_redirected_to disabled_feed
+    follow_redirect!
+    assert_includes response.body, "Feed was successfully enabled"
+
+    disabled_feed.reload
+    assert_equal "enabled", disabled_feed.state
+  end
+
+  test "#update should reject toggling a draft and redirect with an alert" do
+    sign_in_as(user)
+    draft_feed = create(:feed, :draft, user: user)
+
+    patch feed_status_path(draft_feed), params: { status: "enabled" }
+
+    assert_redirected_to edit_feed_path(draft_feed)
+    follow_redirect!
+    assert_includes response.body,
+                    "Drafts must be promoted via the feed form, not the status toggle."
+
+    draft_feed.reload
+    assert_equal "draft", draft_feed.state
+  end
+
+  test "#update should reject disabling a draft and redirect with an alert" do
+    sign_in_as(user)
+    draft_feed = create(:feed, :draft, user: user)
+
+    patch feed_status_path(draft_feed), params: { status: "disabled" }
+
+    assert_redirected_to edit_feed_path(draft_feed)
+    follow_redirect!
+    assert_includes response.body,
+                    "Drafts must be promoted via the feed form, not the status toggle."
+
+    draft_feed.reload
+    assert_equal "draft", draft_feed.state
+  end
+
   test "#update should not enable feed when access token is missing" do
     sign_in_as(user)
     feed_without_token = create(:feed, :without_access_token, user: user)
