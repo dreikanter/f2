@@ -153,7 +153,10 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 **Authorization cleanup (adjacent)**
 
-- **FR-025**: The `llm_credential_belongs_to_user` model validator MUST be removed. Ownership scoping MUST move to the controller seam: `llm_credential_id` and `access_token_id` MUST be looked up via the user's own collection (e.g., `current_user.llm_credentials.find_by(id: …)`) before assignment to a feed.
+- **FR-025**: Ownership for `llm_credential_id` and `access_token_id` on `Feed` MUST be enforced at the controller seam by looking up the referenced record via the user's own collection (e.g., `current_user.llm_credentials.find_by(id: …)`, `current_user.access_tokens.find_by(id: …)`) before assignment. The work involved is asymmetric across the two associations:
+  - **LLM credentials**: today enforced by the `llm_credential_belongs_to_user` model validator. The validator MUST be removed; the controller seam picks up the enforcement.
+  - **Access tokens**: today *not* enforced anywhere (no model validator, no controller scoping). The controller-seam enforcement MUST be added — this is a new check closing an existing gap, not a relocation.
+  No new model-level ownership validators MUST be introduced. Both associations end up scoped identically at the controller; the asymmetry is only in what existed before.
 
 **Migration impact and audits**
 
