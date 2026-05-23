@@ -70,12 +70,32 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", saved.state
   end
 
-  test "#create should preserve input through to the show redirect" do
+  test "#new should accept and remember a feed_id owned by current_user" do
     sign_in_as(user)
-    input = "https://example.com"
+    draft = create(:feed, :draft, user: user)
+
+    get new_llm_credential_url, params: { feed_id: draft.id }
+
+    assert_response :success
+    assert_select "[data-key='llm_credentials.new']"
+  end
+
+  test "#new should ignore foreign feed_id" do
+    sign_in_as(user)
+    other_draft = create(:feed, :draft, user: other_user)
+
+    get new_llm_credential_url, params: { feed_id: other_draft.id }
+
+    assert_response :success
+    assert_select "[data-key='llm_credentials.new']"
+  end
+
+  test "#create should auto-attach the credential to the owned feed" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
 
     post llm_credentials_url, params: {
-      input: input,
+      feed_id: draft.id,
       llm_credential: {
         provider: "anthropic",
         display_name: "My Key",
@@ -84,29 +104,43 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     }
 
     saved = LlmCredential.last
-    assert_redirected_to llm_credential_path(saved, input: input)
+    draft.reload
+    assert_equal saved.id, draft.llm_credential_id
   end
 
-  test "#new should embed input in the form action" do
+  test "#create should not attach when feed_id is foreign" do
     sign_in_as(user)
-    input = "https://example.com"
+    other_draft = create(:feed, :draft, user: other_user)
+    original_credential_id = other_draft.llm_credential_id
 
-    get new_llm_credential_url, params: { input: input }
+    post llm_credentials_url, params: {
+      feed_id: other_draft.id,
+      llm_credential: {
+        provider: "anthropic",
+        display_name: "My Key",
+        credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
+      }
+    }
 
-    assert_response :success
-    assert_select "form[action=?]", llm_credentials_path(input: input)
+    other_draft.reload
+    assert_equal original_credential_id, other_draft.llm_credential_id
   end
 
-  test "#show should carry input into the validation polling endpoint" do
+  test "#create should redirect with feed_id in the show path" do
     sign_in_as(user)
-    pending = create(:llm_credential, user: user, state: :pending)
-    input = "https://example.com"
+    draft = create(:feed, :draft, user: user)
 
-    get llm_credential_url(pending, input: input)
+    post llm_credentials_url, params: {
+      feed_id: draft.id,
+      llm_credential: {
+        provider: "anthropic",
+        display_name: "My Key",
+        credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
+      }
+    }
 
-    assert_response :success
-    assert_select "[data-polling-endpoint-value=?]",
-                  llm_credential_validation_path(pending, input: input)
+    saved = LlmCredential.last
+    assert_redirected_to llm_credential_path(saved, feed_id: draft.id)
   end
 
   test "#create should render :new with errors on invalid input" do
