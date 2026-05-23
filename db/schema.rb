@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_23_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,19 +54,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
-  create_table "feed_identifications", force: :cascade do |t|
-    t.jsonb "candidates", default: [], null: false
-    t.datetime "created_at", null: false
-    t.text "error"
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.string "input", null: false
-    t.bigint "user_id", null: false
-    t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
-    t.index ["user_id"], name: "index_feed_identifications_on_user_id"
-  end
-
   create_table "feed_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "feed_id", null: false
@@ -88,6 +75,19 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
     t.index ["feed_id", "uid"], name: "index_feed_entry_uids_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_feed_entry_uids_on_feed_id"
     t.index ["imported_at"], name: "index_feed_entry_uids_on_imported_at"
+  end
+
+  create_table "feed_identifications", force: :cascade do |t|
+    t.jsonb "candidates", default: [], null: false
+    t.datetime "created_at", null: false
+    t.text "error"
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "input", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
+    t.index ["user_id"], name: "index_feed_identifications_on_user_id"
   end
 
   create_table "feed_metrics", force: :cascade do |t|
@@ -130,7 +130,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
     t.string "description", default: "", null: false
     t.string "feed_profile_key"
     t.datetime "import_after"
-    t.string "name", null: false
+    t.string "name"
     t.jsonb "params", default: {}, null: false
     t.integer "state", default: 0, null: false
     t.string "target_group", limit: 80
@@ -385,9 +385,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_120100) do
   add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
   add_foreign_key "events", "users"
-  add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
+  add_foreign_key "feed_identifications", "users"
   add_foreign_key "feed_metrics", "feeds", on_delete: :cascade
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"

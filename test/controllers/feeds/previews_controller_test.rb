@@ -109,7 +109,6 @@ class Feeds::PreviewsControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_select "[data-key='preview.failed']"
       assert_select "[data-key='preview.failed.retry']"
-      assert_select "[data-key='preview.failed.save-disabled']"
     end
   end
 

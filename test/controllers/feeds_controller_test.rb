@@ -33,6 +33,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "You have 1 inactive feed"
   end
 
+  test "#index should include drafts in summary line" do
+    sign_in_as(user)
+    create(:feed, :enabled, user: user)
+    create(:feed, :disabled, user: user)
+    create(:feed, :draft, user: user)
+    create(:feed, :draft, user: user)
+
+    get feeds_url
+
+    assert_response :success
+    assert_select "p", text: "You have 1 active feed, 1 inactive feed, and 2 draft feeds"
+  end
+
   test "#index should render tailwind pagination controls" do
     sign_in_as(user)
     create_list(:feed, 4, user: user)

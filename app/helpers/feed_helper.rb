@@ -30,6 +30,11 @@ module FeedHelper
            css_class: "text-emerald-500 text-base leading-5",
            title: "Enabled",
            aria_label: "Enabled")
+    elsif feed.draft?
+      icon("pencil-square",
+           css_class: "text-amber-500 text-base leading-5",
+           title: "Draft",
+           aria_label: "Draft")
     else
       icon("x-circle",
            css_class: "text-slate-400 text-base leading-5",
@@ -52,18 +57,15 @@ module FeedHelper
     end
   end
 
-  def feed_summary_line(active_count:, inactive_count:)
+  def feed_summary_line(active_count:, inactive_count:, draft_count:)
     active_part = pluralize_count(active_count, "active feed")
     inactive_part = pluralize_count(inactive_count, "inactive feed")
+    draft_part = pluralize_count(draft_count, "draft feed")
 
-    parts = [active_part, inactive_part].compact
+    parts = [active_part, inactive_part, draft_part].compact
     return nil if parts.empty?
 
-    if parts.size == 1
-      "You have #{parts.first}"
-    else
-      "You have #{parts.first} and #{parts.last}"
-    end
+    "You have #{parts.to_sentence}"
   end
 
   private

@@ -63,23 +63,49 @@ class FeedHelperTest < ActionView::TestCase
     assert_includes result, 'aria-label="Disabled"'
   end
 
+  test "#feed_status_icon should render draft icon" do
+    feed = build(:feed, :draft)
+
+    result = feed_status_icon(feed)
+
+    assert_includes result, "bi-pencil-square"
+    assert_includes result, "text-amber-500"
+    assert_includes result, 'title="Draft"'
+    assert_includes result, 'aria-label="Draft"'
+  end
+
+  test "#feed_summary_line should describe active, inactive, and draft counts" do
+    result = feed_summary_line(active_count: 2, inactive_count: 1, draft_count: 3)
+    assert_equal "You have 2 active feeds, 1 inactive feed, and 3 draft feeds", result
+  end
+
   test "#feed_summary_line should describe active and inactive counts" do
-    result = feed_summary_line(active_count: 2, inactive_count: 1)
+    result = feed_summary_line(active_count: 2, inactive_count: 1, draft_count: 0)
     assert_equal "You have 2 active feeds and 1 inactive feed", result
   end
 
   test "#feed_summary_line should handle single active count" do
-    result = feed_summary_line(active_count: 1, inactive_count: 0)
+    result = feed_summary_line(active_count: 1, inactive_count: 0, draft_count: 0)
     assert_equal "You have 1 active feed", result
   end
 
   test "#feed_summary_line should handle single inactive count" do
-    result = feed_summary_line(active_count: 0, inactive_count: 3)
+    result = feed_summary_line(active_count: 0, inactive_count: 3, draft_count: 0)
     assert_equal "You have 3 inactive feeds", result
   end
 
+  test "#feed_summary_line should handle only draft count" do
+    result = feed_summary_line(active_count: 0, inactive_count: 0, draft_count: 1)
+    assert_equal "You have 1 draft feed", result
+  end
+
+  test "#feed_summary_line should describe active and draft counts" do
+    result = feed_summary_line(active_count: 2, inactive_count: 0, draft_count: 1)
+    assert_equal "You have 2 active feeds and 1 draft feed", result
+  end
+
   test "#feed_summary_line should return nil for zero counts" do
-    assert_nil feed_summary_line(active_count: 0, inactive_count: 0)
+    assert_nil feed_summary_line(active_count: 0, inactive_count: 0, draft_count: 0)
   end
 
   test "#feed_status_summary should describe enabled feed" do
