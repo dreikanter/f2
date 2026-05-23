@@ -1,8 +1,7 @@
 class PostsListComponent < ViewComponent::Base
-  def initialize(posts:, show_feed: false, empty_text: "No posts yet.")
+  def initialize(posts:, show_feed: false)
     @posts = posts
     @show_feed = show_feed
-    @empty_text = empty_text
   end
 
   def render_list
@@ -13,12 +12,6 @@ class PostsListComponent < ViewComponent::Base
     end
 
     component
-  end
-
-  def render_empty_state
-    content_tag(:div, class: "rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-600") do
-      content_tag(:h2, @empty_text, class: "text-2xl font-semibold text-slate-900")
-    end
   end
 
   def self.item_component(post:, helpers:, show_feed: false)
