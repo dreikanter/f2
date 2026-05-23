@@ -49,10 +49,12 @@
     <% end %>
   <% end %>
 
-  <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Stats</h2>
-    <%= render FeedStatsComponent.new(feed: @feed) %>
-  </section>
+  <% if @recent_posts.any? %>
+    <section class="space-y-4">
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Stats</h2>
+      <%= render FeedStatsComponent.new(feed: @feed) %>
+    </section>
+  <% end %>
 
   <section class="space-y-4">
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

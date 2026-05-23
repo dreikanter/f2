@@ -339,6 +339,21 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
+  test "#show should hide stats section when feed has no posts" do
+    sign_in_as(user)
+    get feed_url(feed)
+    assert_response :success
+    assert_select "h2", text: "Stats", count: 0
+  end
+
+  test "#show should show stats section when feed has posts" do
+    create(:post, feed: feed)
+    sign_in_as(user)
+    get feed_url(feed)
+    assert_response :success
+    assert_select "h2", text: "Stats", count: 1
+  end
+
   test "#show should return not found for other user's feed" do
     sign_in_as(user)
     get feed_url(other_feed)
