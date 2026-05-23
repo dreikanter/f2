@@ -4,6 +4,10 @@ class PostsListComponent < ViewComponent::Base
     @show_feed = show_feed
   end
 
+  def call
+    render render_list
+  end
+
   def render_list
     component = ListGroupComponent.new
 
