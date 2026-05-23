@@ -588,7 +588,11 @@ class FeedTest < ActiveSupport::TestCase
     create(:access_token, :active, user: user)
   end
 
-  test "should require preview_token when creating a feed in enabled state" do
+  # The preview-required check is scoped to `on: :enable`, so it fires only
+  # via `save(context: :enable)` (i.e. through `Feed#enable`). These tests
+  # validate the check directly using `valid?(:enable)`.
+
+  test "should require preview_token when promoting a new feed to enabled state" do
     feed = build(:feed,
       user: preview_user,
       state: :enabled,
@@ -597,11 +601,11 @@ class FeedTest < ActiveSupport::TestCase
       params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = nil
 
-    assert_not feed.valid?
+    assert_not feed.valid?(:enable)
     assert feed.errors.of_kind?(:state, :preview_required)
   end
 
-  test "should allow creating a feed in enabled state with a valid preview_token" do
+  test "should allow promoting a new feed to enabled with a valid preview_token" do
     feed = build(:feed,
       user: preview_user,
       state: :enabled,
@@ -610,10 +614,10 @@ class FeedTest < ActiveSupport::TestCase
       params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = preview_token_for(feed)
 
-    assert feed.valid?, feed.errors.full_messages.inspect
+    assert feed.valid?(:enable), feed.errors.full_messages.inspect
   end
 
-  test "should reject creating an enabled feed with a tampered preview_token" do
+  test "should reject promoting a feed with a tampered preview_token" do
     feed = build(:feed,
       user: preview_user,
       state: :enabled,
@@ -622,11 +626,11 @@ class FeedTest < ActiveSupport::TestCase
       params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = preview_token_for(feed).reverse
 
-    assert_not feed.valid?
+    assert_not feed.valid?(:enable)
     assert feed.errors.of_kind?(:state, :preview_required)
   end
 
-  test "should reject creating an enabled feed when preview_token was signed for different params" do
+  test "should reject promoting a feed when preview_token was signed for different params" do
     feed = build(:feed,
       user: preview_user,
       state: :enabled,
@@ -640,11 +644,11 @@ class FeedTest < ActiveSupport::TestCase
       generated_at: Time.current
     )
 
-    assert_not feed.valid?
+    assert_not feed.valid?(:enable)
     assert feed.errors.of_kind?(:state, :preview_required)
   end
 
-  test "should reject creating an enabled feed with an expired preview_token" do
+  test "should reject promoting a feed with an expired preview_token" do
     feed = build(:feed,
       user: preview_user,
       state: :enabled,
@@ -653,11 +657,11 @@ class FeedTest < ActiveSupport::TestCase
       params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = preview_token_for(feed, generated_at: 2.hours.ago)
 
-    assert_not feed.valid?
+    assert_not feed.valid?(:enable)
     assert feed.errors.of_kind?(:state, :preview_required)
   end
 
-  test "should require preview_token when an enabled feed's params change" do
+  test "should require preview_token when re-promoting an enabled feed with new params" do
     feed = create(:feed,
       user: preview_user,
       state: :enabled,
@@ -667,11 +671,11 @@ class FeedTest < ActiveSupport::TestCase
     feed.preview_token = nil
     feed.params = { "url" => "https://other.example/feed.xml" }
 
-    assert_not feed.valid?
+    assert_not feed.valid?(:enable)
     assert feed.errors.of_kind?(:state, :preview_required)
   end
 
-  test "should allow updating an enabled feed's params with a valid preview_token" do
+  test "should allow re-promoting an enabled feed with a valid preview_token for new params" do
     feed = create(:feed,
       user: preview_user,
       state: :enabled,
@@ -681,7 +685,7 @@ class FeedTest < ActiveSupport::TestCase
     feed.params = { "url" => "https://other.example/feed.xml" }
     feed.preview_token = preview_token_for(feed)
 
-    assert feed.valid?, feed.errors.full_messages.inspect
+    assert feed.valid?(:enable), feed.errors.full_messages.inspect
   end
 
   test "should not require preview_token when feed remains disabled" do
@@ -710,7 +714,9 @@ class FeedTest < ActiveSupport::TestCase
   end
 
   test "should not require preview_token when toggling state on unchanged enabled feed" do
-    # FeedStatusesController#update flow: pure state toggle, no source-side change.
+    # FeedStatusesController#update flow: pure state toggle via `enabled!`,
+    # which runs the default save context (not :enable), so the preview
+    # check stays out of the way.
     feed = create(:feed,
       user: preview_user,
       state: :disabled,
@@ -839,67 +845,55 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
-  test "#ready_to_enable? should return true for a draft with all enabled-envelope fields" do
+  test "#enable should promote a valid draft to enabled state" do
     user = create(:user)
-    feed = build(:feed,
-                 user: user,
-                 state: :draft,
-                 access_token: access_token_for(user),
-                 target_group: "testgroup",
-                 cron_expression: "0 * * * *",
-                 feed_profile_key: "rss",
-                 params: { "url" => "https://example.com/feed.xml" })
+    feed = create(:feed,
+                  user: user,
+                  state: :draft,
+                  access_token: access_token_for(user),
+                  target_group: "testgroup",
+                  cron_expression: "0 * * * *",
+                  feed_profile_key: "rss",
+                  params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = preview_token_for(feed)
 
-    assert feed.ready_to_enable?
+    assert feed.enable
+    assert_predicate feed, :enabled?
+    assert_predicate feed.reload, :enabled?
   end
 
-  test "#ready_to_enable? should return false when target_group is missing" do
+  test "#enable should return false and roll back in-memory state on validation failure" do
     user = create(:user)
-    feed = build(:feed,
-                 user: user,
-                 state: :draft,
-                 access_token: access_token_for(user),
-                 target_group: nil,
-                 cron_expression: "0 * * * *",
-                 feed_profile_key: "rss",
-                 params: { "url" => "https://example.com/feed.xml" })
+    feed = create(:feed,
+                  user: user,
+                  state: :draft,
+                  access_token: access_token_for(user),
+                  target_group: nil,
+                  cron_expression: "0 * * * *",
+                  feed_profile_key: "rss",
+                  params: { "url" => "https://example.com/feed.xml" })
     feed.preview_token = preview_token_for(feed)
 
-    assert_not feed.ready_to_enable?
+    assert_not feed.enable
+    assert_predicate feed, :draft?, "in-memory state should be rolled back to persisted value"
+    assert_predicate feed.reload, :draft?
+    assert_not_empty feed.errors
   end
 
-  test "#ready_to_enable? should return false for an AI feed without llm_credential" do
+  test "#enable should require a fresh preview_token" do
     user = create(:user)
-    feed = build(:feed,
-                 user: user,
-                 state: :draft,
-                 access_token: access_token_for(user),
-                 target_group: "testgroup",
-                 cron_expression: "0 * * * *",
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
-                 llm_credential: nil)
-    feed.preview_token = preview_token_for(feed)
+    feed = create(:feed,
+                  user: user,
+                  state: :draft,
+                  access_token: access_token_for(user),
+                  target_group: "testgroup",
+                  cron_expression: "0 * * * *",
+                  feed_profile_key: "rss",
+                  params: { "url" => "https://example.com/feed.xml" })
+    feed.preview_token = nil
 
-    assert_not feed.ready_to_enable?
-  end
-
-  test "#ready_to_enable? should not mutate the receiver" do
-    user = create(:user)
-    feed = build(:feed,
-                 user: user,
-                 state: :draft,
-                 access_token: access_token_for(user),
-                 target_group: "testgroup",
-                 cron_expression: "0 * * * *",
-                 feed_profile_key: "rss",
-                 params: { "url" => "https://example.com/feed.xml" })
-    feed.preview_token = preview_token_for(feed)
-
-    assert feed.draft?
-    feed.ready_to_enable?
-    assert feed.draft?
-    assert_empty feed.errors
+    assert_not feed.enable
+    assert feed.errors.of_kind?(:state, :preview_required)
+    assert_predicate feed, :draft?
   end
 end

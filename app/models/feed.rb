@@ -60,7 +60,7 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
-  validate :enabling_requires_recent_preview
+  validate :enabling_requires_recent_preview, on: :enable
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
   validate :llm_credential_required_when_enabled_ai_profile, if: :enabled?
@@ -151,18 +151,17 @@ class Feed < ApplicationRecord
     access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
-  # Returns true if this feed would pass validation as :enabled. Used by
-  # callers (controllers / views) that want to know whether promoting the
-  # feed would succeed without actually attempting the transition. Operates
-  # on a dup so the receiver is never mutated. preview_token is an
-  # attr_accessor (not a column), so dup doesn't copy it — we forward it
-  # explicitly so the enabling_requires_recent_preview check sees the same
-  # token the caller already obtained.
-  def ready_to_enable?
-    feed = dup
-    feed.preview_token = preview_token
-    feed.state = :enabled
-    feed.valid?
+  # Promote the feed to enabled, running the enable-envelope validators
+  # (default + on: :enable). If validation fails, the DB stays at the prior
+  # state, errors are added to the feed, and the in-memory state is rolled
+  # back to its persisted value so re-renders (e.g., source-side field
+  # editability for drafts) reflect DB truth.
+  def enable
+    self.state = :enabled
+    return true if save(context: :enable)
+
+    self.state = state_was
+    false
   end
 
   def can_be_previewed?
@@ -282,15 +281,12 @@ class Feed < ApplicationRecord
     end
   end
 
-  # Saving an enabled feed with source-side changes requires a fresh
-  # preview_token bound to the current (profile_key, params). Operational
-  # state toggles on an unchanged feed (FeedStatusesController#update) don't
-  # need to re-prove a preview — that's FR-026/027/028's distinction between
-  # operational and source-side edits.
+  # Fires only via `save(context: :enable)`, called exclusively from
+  # `Feed#enable`. Routine operational edits on an enabled feed (paused/
+  # renamed/rescheduled) skip this check because they run under the default
+  # save context — only an explicit user-initiated promotion through the
+  # form has to re-prove a fresh preview bound to (profile_key, params).
   def enabling_requires_recent_preview
-    return unless enabled?
-    return unless new_record? || will_save_change_to_params? || will_save_change_to_feed_profile_key?
-
     valid_token = PreviewToken.verify(
       preview_token,
       user_id: user_id,
