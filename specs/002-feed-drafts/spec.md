@@ -155,6 +155,10 @@ A user has finished configuring a feed (all required fields filled in) but isn't
 
 - **FR-025**: The `llm_credential_belongs_to_user` model validator MUST be removed. Ownership scoping MUST move to the controller seam: `llm_credential_id` and `access_token_id` MUST be looked up via the user's own collection (e.g., `current_user.llm_credentials.find_by(id: …)`) before assignment to a feed.
 
+**Migration impact and audits**
+
+- **FR-026**: The enum numeric remap (`disabled: 0 → 1`, `enabled: 1 → 2`, `draft: 0` new) means any code that references the *literal integer values* of `feeds.state` becomes incorrect on cutover. Such references MUST be found and updated as part of this work. At minimum, audit: raw SQL fragments referencing `feeds.state = <integer>`; ActiveRecord scopes or queries using integers instead of symbols; fixtures; client-side code (Stimulus/JS) that compares against literal integers. Existing example: `FeedsController` (in the sortable status fragment) currently embeds a literal `feeds.state = 1` for "enabled" — that value MUST become `2` (or be rewritten in terms of the symbolic state).
+
 ### Key Entities
 
 - **Feed.state** — enum, three values, default `draft`. Encodes the lifecycle. Numeric mapping `{ draft: 0, disabled: 1, enabled: 2 }`. Existing data: the current `disabled: 0, enabled: 1` mapping must be migrated to the new numeric values (data backfill, not just schema change).
