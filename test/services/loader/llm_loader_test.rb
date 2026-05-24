@@ -49,4 +49,20 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     error = assert_raises(StandardError) { loader.load }
     assert_match(/items/, error.message)
   end
+
+  test "#rendered_prompt should substitute the profile's input_shape source" do
+    feed = build(:feed, feed_profile_key: "llm_handle_search", params: { "handle" => "@someone" })
+    loader = Loader::LlmLoader.new(feed)
+    loader.stub(:config, { prompt_template: "Follow {{handle}} now ({{input}})" }) do
+      assert_equal "Follow @someone now (@someone)", loader.send(:rendered_prompt)
+    end
+  end
+
+  test "#rendered_prompt should still substitute url for url profiles" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://x.test" })
+    loader = Loader::LlmLoader.new(feed)
+    loader.stub(:config, { prompt_template: "Load {{url}}" }) do
+      assert_equal "Load https://x.test", loader.send(:rendered_prompt)
+    end
+  end
 end
