@@ -63,18 +63,13 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "RSS Feed"
 
-      get feed_live_preview_path("draft"),
-          params: { profile_key: "rss", params: { url: feed_url } }
+      post feed_preview_path(profile_key: "rss", "params" => { "url" => feed_url })
       assert_response :success
 
       perform_enqueued_jobs
 
-      preview = FeedPreviewService.call(
-        user: user,
-        profile_key: "rss",
-        params: { "url" => feed_url }
-      )
-      assert preview.preview_token.present?, "preview should issue a token"
+      preview = FeedPreview.last
+      assert_predicate preview, :ready?, "preview should be ready after the job runs"
 
       assert_difference("Feed.count", 1) do
         post feeds_path, params: {
@@ -86,8 +81,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
             target_group: "testgroup",
             schedule_interval: "1h"
           },
-          enable_feed: "1",
-          preview_token: preview.preview_token
+          enable_feed: "1"
         }
       end
 

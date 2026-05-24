@@ -77,15 +77,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       schedule_interval: "1h"
     }
 
-    preview_token = PreviewToken.sign(
-      user_id: user.id,
-      profile_key: "rss",
-      params: { "url" => "http://example.com/feed.xml" },
-      generated_at: Time.current
-    )
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
 
     assert_difference("Feed.count", 1) do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: preview_token }
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
     feed = Feed.last
@@ -120,7 +116,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Feed saved as draft", flash[:notice]
   end
 
-  test "#create should persist as draft and re-render with errors when preview_token is missing" do
+  test "#create should persist as draft and re-render with errors when no recent preview exists" do
     sign_in_as(user)
     access_token
 
@@ -155,15 +151,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       schedule_interval: "1h"
     }
 
-    preview_token = PreviewToken.sign(
-      user_id: user.id,
-      profile_key: "rss",
-      params: { "url" => "http://example.com/feed.xml" },
-      generated_at: Time.current
-    )
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
 
     assert_difference("Feed.count", 1) do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: preview_token }
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
     assert_response :unprocessable_entity
@@ -193,7 +185,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "#create should persist as draft and re-render when preview_token is tampered" do
+  test "#create should persist as draft and re-render when the preview is for a different source" do
     sign_in_as(user)
     access_token
 
@@ -206,8 +198,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       schedule_interval: "1h"
     }
 
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => "http://other.example/feed.xml" }, ready_at: Time.current)
+
     assert_difference("Feed.count", 1) do
-      post feeds_path, params: { feed: feed_params, enable_feed: "1", preview_token: "not-a-real-token" }
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
     assert_response :unprocessable_entity
@@ -476,7 +471,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form"
   end
 
-  test "#update should not require preview_token for operational-only edits on enabled feed" do
+  test "#update should not require a preview for operational-only edits on enabled feed" do
     sign_in_as(user)
     enabled_feed = create(:feed,
                           user: user,
@@ -584,17 +579,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                   feed_profile_key: "rss",
                                   params: { "url" => "http://example.com/feed.xml" })
 
-    preview_token = PreviewToken.sign(
-      user_id: user.id,
-      profile_key: "rss",
-      params: { "url" => "http://example.com/feed.xml" },
-      generated_at: Time.current
-    )
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
 
     patch feed_url(draft), params: {
       feed: { name: "Promoted Feed" },
-      enable_feed: "1",
-      preview_token: preview_token
+      enable_feed: "1"
     }
 
     assert_redirected_to feed_path(draft)
@@ -610,10 +600,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                         feed_profile_key: "rss",
                                         params: { "url" => "http://example.com/feed.xml" })
 
-    # No preview_token sent: enabling_requires_recent_preview fires only if
-    # params/feed_profile_key change or it's a new record. To force a real
-    # enable-side failure on an existing disabled feed, clear target_group
-    # (required only when enabled).
+    # No preview seeded: enabling_requires_recent_preview would fire anyway,
+    # but to force a real enable-side failure that isn't the preview gate,
+    # clear target_group (required only when enabled).
     patch feed_url(disabled), params: {
       feed: { target_group: "" },
       enable_feed: "1"

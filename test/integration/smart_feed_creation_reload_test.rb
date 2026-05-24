@@ -54,49 +54,23 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#get on the live preview should not re-enqueue the preview job on a cache hit" do
+  test "#show on an existing ready preview should not re-enqueue the preview job" do
     sign_in_as(user)
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => feed_url }, ready_at: Time.current)
 
-    with_memory_cache do
-      stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
-      # First fetch warms the cache via the preview service.
-      FeedPreviewService.call(
-        user: user,
-        profile_key: "rss",
-        params: { "url" => feed_url },
-        cache_key: cache_key
-      )
-
-      assert_no_enqueued_jobs do
-        get feed_live_preview_path("draft"),
-            params: { profile_key: "rss", params: { url: feed_url } }
-      end
+    assert_no_enqueued_jobs do
+      get feed_preview_path(profile_key: "rss", "params" => { "url" => feed_url })
     end
   end
 
-  test "#post on the live preview should re-enqueue the job with refresh" do
+  test "#create should re-enqueue the preview job to refresh" do
     sign_in_as(user)
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+           params: { "url" => feed_url }, ready_at: Time.current)
 
-    with_memory_cache do
-      stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
-      FeedPreviewService.call(
-        user: user,
-        profile_key: "rss",
-        params: { "url" => feed_url },
-        cache_key: cache_key
-      )
-
-      assert_enqueued_with(job: FeedPreviewJob) do
-        post feed_live_preview_path("draft"),
-             params: { profile_key: "rss", params: { url: feed_url } }
-      end
+    assert_enqueued_with(job: FeedPreviewJob) do
+      post feed_preview_path(profile_key: "rss", "params" => { "url" => feed_url })
     end
-  end
-
-  private
-
-  def cache_key
-    canonical = { "url" => feed_url }.deep_stringify_keys.sort.to_h.to_json
-    "preview:draft:#{user.id}:rss:#{Digest::SHA256.hexdigest(canonical)}"
   end
 end
