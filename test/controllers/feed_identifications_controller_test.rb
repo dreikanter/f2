@@ -330,7 +330,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed_identification&.destroy
   end
 
-  test "#show should write the user's input under params[handle] for handle profiles" do
+  test "#show should write the user's input under params[query] for handle inputs" do
     sign_in_as(user)
     handle = "@alice"
     create(
@@ -340,14 +340,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_handle_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm_web_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
     get feed_identifications_path, params: { input: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'name="feed[params][handle]"'
+    assert_includes response.body, 'name="feed[params][query]"'
     assert_includes response.body, "value=\"#{handle}\""
     refute_includes response.body, 'name="feed[params][url]"'
   end

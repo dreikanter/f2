@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
-    assert_equal ["llm_handle_search", "llm_web_search", "llm_website_extractor", "rss", "xkcd"], FeedProfile.all.sort
+    assert_equal ["llm_web_search", "llm_website_extractor", "rss", "xkcd"], FeedProfile.all.sort
   end
 
   test ".exists? returns true for valid profile key" do
@@ -33,7 +33,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     FeedProfile::PROFILES.each do |key, entry|
       assert_kind_of String, entry[:display_name], "#{key}: display_name"
       assert_kind_of String, entry[:description], "#{key}: description"
-      assert_includes %i[url handle query any], entry[:input_shape], "#{key}: input_shape"
+      assert_includes %i[url query any], entry[:input_shape], "#{key}: input_shape"
       assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
       assert_kind_of String, entry[:matcher], "#{key}: matcher"
       assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
@@ -133,8 +133,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers_for returns the handle and query matchers for their shapes" do
-    assert_includes FeedProfile.matchers_for(:handle), ProfileMatcher::LlmHandleSearchMatcher
+  test ".matchers_for returns the query matcher for the query shape" do
     assert_includes FeedProfile.matchers_for(:query), ProfileMatcher::LlmWebSearchMatcher
   end
 

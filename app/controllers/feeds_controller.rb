@@ -179,7 +179,7 @@ class FeedsController < ApplicationController
       # Only the three known input-shape keys are accepted. Anything
       # else inside the params hash would otherwise persist into
       # `feeds.params` jsonb undetected. See the profile schemas.
-      params: [:url, :handle, :query]
+      params: [:url, :query]
     )
   end
 

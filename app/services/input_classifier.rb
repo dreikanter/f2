@@ -1,8 +1,7 @@
-# Classifies a raw user input as :url, :handle, :query, or :malformed.
+# Classifies a raw user input as :url, :query, or :malformed.
 # Called once at the start of feed detection; matchers declare which shapes
 # they accept. See specs/001-smart-feed-creation/research.md §10.
 class InputClassifier
-  HANDLE_REGEX = /\A@[A-Za-z0-9_]{1,30}(@[A-Za-z0-9.-]+)?\z/
   QUERY_MIN_LENGTH = 3
   QUERY_MAX_LENGTH = 200
 
@@ -17,7 +16,6 @@ class InputClassifier
   def classify
     return :malformed if malformed?
     return :url if url?
-    return :handle if handle?
     return :query if query?
 
     :malformed
@@ -36,10 +34,6 @@ class InputClassifier
     uri.is_a?(URI::HTTP) && uri.host.present?
   rescue URI::InvalidURIError
     false
-  end
-
-  def handle?
-    input.match?(HANDLE_REGEX)
   end
 
   def query?

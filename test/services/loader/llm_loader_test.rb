@@ -49,4 +49,20 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     error = assert_raises(StandardError) { loader.load }
     assert_match(/items/, error.message)
   end
+
+  test "#rendered_prompt should substitute the source input" do
+    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "rust async" })
+    loader = Loader::LlmLoader.new(feed)
+    loader.stub(:config, { prompt_template: "Find {{input}}" }) do
+      assert_equal "Find rust async", loader.send(:rendered_prompt)
+    end
+  end
+
+  test "#rendered_prompt should treat user input literally (no regex backref expansion)" do
+    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => 'a\0b' })
+    loader = Loader::LlmLoader.new(feed)
+    loader.stub(:config, { prompt_template: "Q: {{input}}" }) do
+      assert_equal 'Q: a\0b', loader.send(:rendered_prompt)
+    end
+  end
 end
