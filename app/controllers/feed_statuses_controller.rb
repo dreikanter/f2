@@ -12,7 +12,7 @@ class FeedStatusesController < ApplicationController
     return enable(feed) if feed.enabled?
     return disable(feed) if feed.disabled?
 
-    redirect_to feed_path(feed.id), alert: "Invalid status parameter."
+    raise "Unexpected feed state: #{feed.state.inspect}"
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Feed not found."
   rescue ActiveRecord::StaleObjectError
