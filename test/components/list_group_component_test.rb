@@ -2,24 +2,12 @@ require "test_helper"
 require "view_component/test_case"
 
 class ListGroupComponentTest < ViewComponent::TestCase
-  test "#render should display titles and trailing text" do
-    component = ListGroupComponent.new(tag: :dl)
-    component.with_item(ListGroupComponent::StatItemComponent.new(label: "Example item", value: "42", key: "stats.example"))
-    result = render_inline(component)
-
-    list = result.at_css("dl")
-    assert_not_nil list
-    item = result.css('[data-key="stats.example"]').first
-    assert_not_nil item
-    assert_equal "Example item", result.css('[data-key="stats.example.label"]').first.text
-    assert_equal "42", result.css('[data-key="stats.example.value"]').first.text
-  end
-
-  test "#render should allow custom body and trailing slots" do
+  test "#render should render a ul container" do
     component = ListGroupComponent.new
     component.with_item StubItemComponent.new(body_text: "Custom body", value: "Trailing slot", key: "stats.custom")
     result = render_inline(component)
 
+    assert_not_nil result.at_css("ul")
     item = result.css('[data-key="stats.custom"]').first
     assert_not_nil item
     assert_equal "Custom body", result.css('[data-key="stats.custom.label"]').first.text.strip

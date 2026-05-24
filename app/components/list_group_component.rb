@@ -3,16 +3,15 @@ class ListGroupComponent < ViewComponent::Base
 
   attr_reader :items
 
-  def initialize(css_class: nil, tag: :ul)
+  def initialize(css_class: nil)
     @items = []
     @css_class = css_class
-    @tag = tag
   end
 
   def call
     return if @items.empty?
 
-    content_tag @tag, class: @css_class || DEFAULT_CSS_CLASSES do
+    content_tag container_tag, class: @css_class || DEFAULT_CSS_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
   end
@@ -29,5 +28,11 @@ class ListGroupComponent < ViewComponent::Base
 
   def items?
     items.any?
+  end
+
+  private
+
+  def container_tag
+    :ul
   end
 end
