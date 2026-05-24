@@ -28,17 +28,10 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        streams = []
-
-        # Update the status section
-        if partial_name = STATUS_PARTIALS[@feed_preview.status]
-        streams << turbo_stream.update("preview-status",
-          partial: "feed_previews/#{partial_name}", locals: { feed_preview: @feed_preview })
-        end
-
-        # Update the header actions to show/hide refresh button
-        streams << turbo_stream.update("header-actions",
-          partial: "feed_previews/header_actions", locals: { feed_preview: @feed_preview })
+        streams = [
+          status_section_stream(@feed_preview),
+          header_action(@feed_preview)
+        ].compact
 
         render turbo_stream: streams
       end
@@ -99,5 +92,25 @@ class FeedPreviewsController < ApplicationController
 
   def enqueue_preview_job(preview)
     AdminFeedPreviewJob.perform_later(preview.id)
+  end
+
+  def status_section_stream(feed_preview)
+    partial_name = STATUS_PARTIALS[feed_preview.status]
+    return unless partial_name
+
+    turbo_stream.update(
+      "preview-status",
+      partial: "feed_previews/#{partial_name}",
+      locals: { feed_preview: feed_preview }
+    )
+  end
+
+  # Show/hide refresh button
+  def header_action(feed_preview)
+    turbo_stream.update(
+      "header-actions",
+      partial: "feed_previews/header_actions",
+      locals: { feed_preview: feed_preview }
+    )
   end
 end
