@@ -2,7 +2,7 @@
 
 <%
   # TBD: Extract higher-level components
-  user_info = ListGroupComponent.new.tap do |list|
+  user_info = ListGroupComponent.new(tag: :dl).tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Email",
       value: @user.email_address
@@ -69,7 +69,7 @@
   end
 
   email_status_list = if @user.email_deactivated?
-    ListGroupComponent.new.tap do |list|
+    ListGroupComponent.new(tag: :dl).tap do |list|
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: "Status",
         value: tag.span("Deactivated", class: "inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20")
@@ -99,7 +99,7 @@
     end
   end
 
-  stats_list = ListGroupComponent.new.tap do |list|
+  stats_list = ListGroupComponent.new(tag: :dl).tap do |list|
     feeds_parts = ["#{@stats.feeds_count} total"]
     feeds_parts << "#{@stats.feeds_enabled_count} enabled" if @stats.feeds_enabled_count > 0
     feeds_parts << "#{@stats.feeds_disabled_count} disabled" if @stats.feeds_disabled_count > 0
@@ -143,7 +143,7 @@
     ))
   end
 
-  invitations_list = ListGroupComponent.new.tap do |list|
+  invitations_list = ListGroupComponent.new(tag: :dl).tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Available Invites",
       value: tag.span(class: "flex items-center gap-4") {

@@ -21,7 +21,7 @@
     "—"
   end
 
-  release_info_list = ListGroupComponent.new.tap do |list|
+  release_info_list = ListGroupComponent.new(tag: :dl).tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Revision",
       value: revision_value,
@@ -40,7 +40,7 @@
   end
 
   # TBD: Extract component
-  table_usage_list = ListGroupComponent.new.tap do |list|
+  table_usage_list = ListGroupComponent.new(tag: :dl).tap do |list|
     @disk_usage[:table_usage].each do |row|
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: tag.code(row["table_name"]),
@@ -50,7 +50,7 @@
   end
 
   # TBD: Extract component
-  autovacuum_settings_list = ListGroupComponent.new.tap do |list|
+  autovacuum_settings_list = ListGroupComponent.new(tag: :dl).tap do |list|
     @disk_usage[:autovacuum_settings].each do |row|
       list.with_item(ListGroupComponent::StatItemComponent.new(
         label: tag.code(row["name"]),

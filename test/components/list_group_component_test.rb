@@ -3,11 +3,11 @@ require "view_component/test_case"
 
 class ListGroupComponentTest < ViewComponent::TestCase
   test "#render should display titles and trailing text" do
-    component = ListGroupComponent.new
+    component = ListGroupComponent.new(tag: :dl)
     component.with_item(ListGroupComponent::StatItemComponent.new(label: "Example item", value: "42", key: "stats.example"))
     result = render_inline(component)
 
-    list = result.at_css("ul")
+    list = result.at_css("dl")
     assert_not_nil list
     item = result.css('[data-key="stats.example"]').first
     assert_not_nil item

@@ -2,7 +2,7 @@
 
 <%
   # TBD: Extract toi a component
-  account_list = ListGroupComponent.new.tap do |list|
+  account_list = ListGroupComponent.new(tag: :dl).tap do |list|
     list.with_item(ListGroupComponent::StatItemComponent.new(
       label: "Email",
       value: tag.span(class: "flex items-center gap-4") {
