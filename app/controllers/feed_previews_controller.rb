@@ -1,5 +1,6 @@
 class FeedPreviewsController < ApplicationController
   before_action :require_authentication
+  before_action :guard_preview, only: %i[show create]
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
   # makes an unexpected status fail loudly rather than silently fall through.
@@ -11,32 +12,29 @@ class FeedPreviewsController < ApplicationController
   }.freeze
 
   # GET /preview?profile_key=…&params[…]=…
-  # Workhorse for the lazy turbo-frame and polling: find-or-create the row for
-  # (user, profile_key, params_digest), enqueue when it has no fresh result,
+  # Workhorse for the lazy turbo-frame and polling: find or create the row for
+  # (user, profile_key, params_digest), start a run when it has no fresh result,
   # and render the current state.
   def show
-    return render_cleared if source_blank?
-    return render_cleared unless FeedProfile.exists?(profile_key)
-    return render_credential_gate if needs_credential_gate?
-
-    locate_preview
-    if @preview.new_record? || @preview.failed? || stale_ready?(@preview)
-      start_run(@preview)
-    end
-    render_state(@preview)
+    preview = locate_preview
+    preview = start_run(preview) if needs_run?(preview)
+    render_state(preview)
   end
 
   # POST /preview — explicit refresh: always start a fresh run.
   def create
-    return render_cleared if source_blank?
-    return render_cleared unless FeedProfile.exists?(profile_key)
-    return render_credential_gate if needs_credential_gate?
-
-    start_run(locate_preview)
-    render_state(@preview)
+    render_state(start_run(locate_preview))
   end
 
   private
+
+  # Shared guard for show/create: clear the pane for a blank or unknown source,
+  # or show the credential gate for an AI profile without an active credential.
+  def guard_preview
+    return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
+
+    render_credential_gate if needs_credential_gate?
+  end
 
   def previews
     Current.user.feed_previews
@@ -47,20 +45,22 @@ class FeedPreviewsController < ApplicationController
   end
 
   def locate_preview
-    @preview = previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
+    previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
   end
 
+  def needs_run?(preview)
+    preview.new_record? || preview.failed? || stale_ready?(preview)
+  end
+
+  # Start a fresh run and return the persisted row. If a concurrent request
+  # already inserted this (user, profile, source) row, adopt the winner's row
+  # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.assign_attributes(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
-    begin
-      preview.save!
-    rescue ActiveRecord::RecordNotUnique
-      # Another concurrent request already inserted this row — load the winner's
-      # row and render its state without enqueuing a second job.
-      @preview = previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
-      return
-    end
+    preview.update!(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
     FeedPreviewJob.perform_later(preview.id, preview.run_id)
+    preview
+  rescue ActiveRecord::RecordNotUnique
+    previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
   end
 
   def profile_key
