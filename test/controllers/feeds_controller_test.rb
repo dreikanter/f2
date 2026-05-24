@@ -339,6 +339,16 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
+  test "#show should not offer a status toggle for a draft feed" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    get feed_url(draft)
+
+    assert_response :success
+    assert_select "form[action='#{feed_status_path(draft)}']", count: 0
+  end
+
   test "#show should hide stats section when feed has no posts" do
     sign_in_as(user)
     get feed_url(feed)

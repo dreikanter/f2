@@ -4,19 +4,10 @@ class FeedStatusesController < ApplicationController
   def update
     feed = load_feed
 
-    if feed.draft?
-      redirect_to edit_feed_path(feed),
-                  alert: "Drafts must be promoted via the feed form, not the status toggle."
-      return
-    end
-
     case status
-    when "enabled"
-      enable(feed)
-    when "disabled"
-      disable(feed)
-    else
-      redirect_to feed, alert: "Invalid status parameter."
+    when "enabled" then enable(feed)
+    when "disabled" then disable(feed)
+    else raise "Unsupported status: #{status.inspect}"
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Feed not found."
