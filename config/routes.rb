@@ -35,7 +35,6 @@ Rails.application.routes.draw do
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
     resource :purge, only: :create, controller: "feeds/purges"
-    resource :preview, only: [:show, :create, :destroy], controller: "feeds/previews", as: :live_preview
   end
 
   namespace :admin do

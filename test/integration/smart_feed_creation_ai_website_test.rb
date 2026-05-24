@@ -118,7 +118,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
 
       assert_response :success
-      assert_select "[data-key='preview.credential_gate']"
+      assert_select "[data-key='credentials.gate']"
       assert_no_enqueued_jobs
     end
   end
