@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_23_000000) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_24_210153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -107,10 +107,14 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_23_000000) do
     t.string "feed_profile_key"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.string "url", null: false
     t.bigint "user_id", null: false
+    t.jsonb "params", default: {}, null: false
+    t.string "params_digest", null: false
+    t.datetime "ready_at"
+    t.string "run_id"
     t.index ["created_at"], name: "index_feed_previews_on_created_at"
     t.index ["status"], name: "index_feed_previews_on_status"
+    t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
     t.index ["user_id"], name: "index_feed_previews_on_user_id"
   end
 
