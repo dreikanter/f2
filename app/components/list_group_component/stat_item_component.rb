@@ -11,17 +11,17 @@ class ListGroupComponent::StatItemComponent < ViewComponent::Base
 
   def call
     content_tag :div, class: DEFAULT_ITEM_CLASS, data: { key: @key } do
-      safe_join([label_dt, value_dd])
+      safe_join([label_element, value_element])
     end
   end
 
   private
 
-  def label_dt
+  def label_element
     content_tag(:dt, @label, class: LABEL_CLASSES, data: label_data)
   end
 
-  def value_dd
+  def value_element
     content_tag(:dd, @value, class: VALUE_CLASSES, data: value_data)
   end
 
