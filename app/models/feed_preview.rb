@@ -2,24 +2,39 @@ class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
 
   belongs_to :user
+  belongs_to :feed, optional: true
 
-  enum :status, {
-    pending: 0,
-    processing: 1,
-    ready: 2,
-    failed: 3
-  }
+  enum :status, { pending: 0, processing: 1, ready: 2, failed: 3 }
 
-  validates :url, presence: true
-  validates :url, uniqueness: { scope: :feed_profile_key }
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
-  validate :url_must_be_valid
+  before_validation :assign_params_digest
 
-  normalizes :url, with: ->(url) { url.to_s.strip }
+  # A preview's identity is the user-provided source input (the value behind the
+  # profile's input_shape) — NOT the whole params hash. User input for a new feed
+  # is intentionally minimal (one field today); params derived later during
+  # processing must not change identity. Hashing that single value also sidesteps
+  # hash key-ordering (and jsonb read-ordering) entirely. When user-supplied input
+  # grows beyond one field, extend this to cover the new user fields (still not
+  # the derived ones).
+  def self.digest_for(feed_profile_key, params)
+    Digest::SHA256.hexdigest(source_input(feed_profile_key, params).to_s)
+  end
 
-  scope :for_cache_key, ->(url, feed_profile_key) { where(url: url, feed_profile_key: feed_profile_key) }
+  # The user-facing source value for a profile, selected by its input_shape.
+  def self.source_input(feed_profile_key, params)
+    shape = FeedProfile[feed_profile_key]&.dig(:input_shape) || :url
+    (params || {})[shape.to_s]
+  end
+
+  def self.fresh_ready(user_id:, feed_profile_key:, params:, within:)
+    where(user_id: user_id, feed_profile_key: feed_profile_key, params_digest: digest_for(feed_profile_key, params))
+      .ready
+      .where(ready_at: within.ago..)
+      .order(ready_at: :desc)
+      .first
+  end
 
   def posts_data
     (data.present? && ready? && data["posts"]) || []
@@ -31,11 +46,7 @@ class FeedPreview < ApplicationRecord
 
   private
 
-  def url_must_be_valid
-    return if url.blank?
-
-    unless UrlValidator.valid?(url)
-      errors.add(:url, "must be a valid HTTP or HTTPS URL")
-    end
+  def assign_params_digest
+    self[:params_digest] = self.class.digest_for(feed_profile_key, params)
   end
 end

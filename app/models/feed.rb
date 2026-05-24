@@ -39,10 +39,9 @@ class Feed < ApplicationRecord
 
   enum :state, { draft: 0, disabled: 1, enabled: 2 }, default: :draft
 
-  # Tied to the preview a user just saw when saving an enabled feed. Set by
-  # FeedsController#create / #update from request params; verified by
-  # enabling_requires_recent_preview. Not persisted.
-  attr_accessor :preview_token
+  # Window within which a ready FeedPreview proves the user just saw a preview
+  # of this source. Enforced by enabling_requires_recent_preview on enable.
+  ENABLE_PREVIEW_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
 
@@ -123,6 +122,10 @@ class Feed < ApplicationRecord
     return params["url"] if shape.nil?
 
     params[shape.to_s]
+  end
+
+  def source_input_shape
+    (FeedProfile[feed_profile_key]&.dig(:input_shape) || :url).to_s
   end
 
   def feed_profile_present?
@@ -287,14 +290,13 @@ class Feed < ApplicationRecord
   # save context. Only an explicit user-initiated promotion through the
   # form has to re-prove a fresh preview bound to (profile_key, params).
   def enabling_requires_recent_preview
-    valid_token = PreviewToken.verify(
-      preview_token,
+    fresh = FeedPreview.fresh_ready(
       user_id: user_id,
-      profile_key: feed_profile_key,
-      params: params || {}
+      feed_profile_key: feed_profile_key,
+      params: params || {},
+      within: ENABLE_PREVIEW_WINDOW
     )
-
-    errors.add(:state, :preview_required, message: "requires a recent preview") unless valid_token
+    errors.add(:state, :preview_required, message: "requires a recent preview") unless fresh
   end
 
   def llm_credential_belongs_to_user

@@ -65,20 +65,12 @@
       <% unless edit_mode %>
         <div class="mt-2" data-key="form.preview">
           <%= turbo_frame_tag "feed-preview",
-                              src: feed_live_preview_path(
-                                "draft",
+                              src: feed_preview_path(
                                 profile_key: feed.feed_profile_key,
-                                params: { url: feed.url }
+                                "params" => { feed.source_input_shape => feed.source_input }
                               ),
                               loading: "lazy" do %>
-            <%= render "feeds/preview_loading",
-                       poll_url: feed_live_preview_path(
-                         "draft",
-                         profile_key: feed.feed_profile_key,
-                         params: { url: feed.url },
-                         format: :turbo_stream
-                       ),
-                       cancel_url: feed_identifications_path(input: feed.url) %>
+            <p class="text-slate-500">Building a preview…</p>
           <% end %>
         </div>
       <% end %>

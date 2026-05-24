@@ -52,7 +52,6 @@ class FeedsController < ApplicationController
   def create
     @feed = feeds_scope.build(create_feed_params)
     authorize @feed
-    @feed.preview_token = params[:preview_token]
 
     if @feed.save
       cleanup_feed_identification(@feed.url) if @feed.url
@@ -89,7 +88,6 @@ class FeedsController < ApplicationController
   def update
     @feed = load_feed
     authorize @feed
-    @feed.preview_token = params[:preview_token]
     @feed.assign_attributes(update_feed_params)
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this

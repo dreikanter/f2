@@ -27,7 +27,7 @@ Rails.application.routes.draw do
 
   resources :posts, only: [:index, :show, :destroy]
   resources :feed_entries, only: :show
-  resources :feed_previews, only: [:create, :show, :update], path: "previews"
+  resource :feed_preview, only: [:show, :create], path: "preview"
   resource :admin, only: :show
 
   resource :feed_identifications, only: [:create, :show, :destroy]
@@ -35,7 +35,6 @@ Rails.application.routes.draw do
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
     resource :purge, only: :create, controller: "feeds/purges"
-    resource :preview, only: [:show, :create, :destroy], controller: "feeds/previews", as: :live_preview
   end
 
   namespace :admin do

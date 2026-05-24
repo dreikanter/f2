@@ -83,18 +83,12 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_includes response.body, "AI page reader"
 
-      get feed_live_preview_path("draft"),
-          params: { profile_key: "llm_website_extractor", params: { url: ai_url } }
+      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
       assert_response :success
       perform_enqueued_jobs
 
-      preview = FeedPreviewService.call(
-        user: user,
-        profile_key: "llm_website_extractor",
-        params: { "url" => ai_url },
-        llm_credential: credential
-      )
-      assert preview.preview_token.present?
+      preview = FeedPreview.last
+      assert_predicate preview, :ready?
 
       assert_difference("Feed.count", 1) do
         post feeds_path, params: {
@@ -107,8 +101,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
             schedule_interval: "1h",
             llm_credential_id: credential.id
           },
-          enable_feed: "1",
-          preview_token: preview.preview_token
+          enable_feed: "1"
         }
       end
 
@@ -122,8 +115,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     # no credential created
 
     with_memory_cache do
-      get feed_live_preview_path("draft"),
-          params: { profile_key: "llm_website_extractor", params: { url: ai_url } }
+      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
 
       assert_response :success
       assert_select "[data-key='credentials.gate']"

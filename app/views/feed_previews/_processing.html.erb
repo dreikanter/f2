@@ -1,0 +1,13 @@
+<%# locals: (preview:) %>
+<div class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 shadow-xs"
+     role="status"
+     aria-busy="true"
+     data-key="preview.processing">
+  <div class="flex-shrink-0">
+    <%= render SpinnerComponent.new %>
+  </div>
+  <div class="space-y-1">
+    <p class="font-semibold text-slate-800">Building a preview…</p>
+    <p class="text-slate-600">This usually takes a few seconds while we fetch and format this feed.</p>
+  </div>
+</div>

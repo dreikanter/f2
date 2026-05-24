@@ -1,0 +1,16 @@
+<%# locals: (preview:) %>
+<div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 space-y-3"
+     role="alert"
+     data-key="preview.failed"
+     data-preview-done>
+  <div class="space-y-1">
+    <p class="font-semibold text-slate-800">We couldn't build a preview.</p>
+    <p class="text-slate-600">Something went wrong fetching this source. Double-check it and give it another go.</p>
+  </div>
+  <%= button_to "Try again",
+                feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params),
+                method: :post,
+                class: "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50",
+                form: { class: "inline-block" },
+                data: { key: "preview.try-again" } %>
+</div>

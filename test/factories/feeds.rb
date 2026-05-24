@@ -16,14 +16,6 @@ FactoryBot.define do
       if feed.feed_profile_key.nil?
         feed.feed_profile_key = "rss"
       end
-      if feed.state == "enabled" && feed.preview_token.nil?
-        feed.preview_token = PreviewToken.sign(
-          user_id: feed.user&.id,
-          profile_key: feed.feed_profile_key,
-          params: feed.params,
-          generated_at: Time.current
-        )
-      end
     end
 
     trait :with_schedule do
