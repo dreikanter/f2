@@ -104,6 +104,23 @@ class AdminFeedPreviewJobTest < ActiveJob::TestCase
     end
   end
 
+  test "should fail gracefully when an AI profile has no credential" do
+    preview = create(:feed_preview,
+                     user: user,
+                     feed_profile_key: "llm_website_extractor",
+                     url: "https://example.com",
+                     status: :pending)
+
+    # User has no AI credentials, so LlmClient.for raises CredentialMissing.
+    # This is an expected user-state condition, not an alert-worthy crash:
+    # the job should mark the preview failed without re-raising.
+    assert_nothing_raised do
+      AdminFeedPreviewJob.perform_now(preview.id)
+    end
+
+    assert preview.reload.failed?
+  end
+
   test "should log error when workflow execution fails" do
     # Create a preview that will cause the workflow to fail
     failing_preview = create(:feed_preview,
