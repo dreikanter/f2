@@ -28,7 +28,11 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream do
-        streams = [status_section_stream(@feed_preview), header_action(@feed_preview)].compact
+        streams = [
+          status_section_stream(@feed_preview),
+          header_action(@feed_preview)
+        ].compact
+
         render turbo_stream: streams
       end
     end
