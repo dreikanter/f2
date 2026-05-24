@@ -125,6 +125,10 @@ class Feed < ApplicationRecord
     params[shape.to_s]
   end
 
+  def source_input_shape
+    (FeedProfile[feed_profile_key]&.dig(:input_shape) || :url).to_s
+  end
+
   def feed_profile_present?
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end

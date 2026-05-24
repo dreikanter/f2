@@ -32,21 +32,6 @@
         <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-not-allowed opacity-60" title="Complete setup to enable this feed">Enable</span>
       <% end %>
     <% end %>
-    <% if @feed.can_be_previewed? %>
-      <% header.with_action_button do %>
-        <%= button_to "Preview",
-                      feed_previews_path,
-                      params: { url: @feed.url, feed_profile_key: @feed.feed_profile_key },
-                      method: :post,
-                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
-                      data: { turbo: false },
-                          form: { class: "inline-block" } %>
-      <% end %>
-    <% else %>
-      <% header.with_action_button do %>
-        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-not-allowed opacity-60" title="Preview requires feed URL and source type">Preview</span>
-      <% end %>
-    <% end %>
   <% end %>
 
   <% if @recent_posts.any? %>

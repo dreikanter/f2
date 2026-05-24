@@ -1,116 +1,110 @@
 class FeedPreviewsController < ApplicationController
   before_action :require_authentication
 
-  STATUS_PARTIALS = {
-    "ready" => "completed_status",
-    "pending" => "processing_status",
-    "processing" => "processing_status",
-    "failed" => "failed_status"
-  }.freeze
-
-  def create
-    feed_profile_key = params[:feed_profile_key]
-
-    unless FeedProfile.exists?(feed_profile_key)
-      redirect_back(fallback_location: feeds_path, alert: "Feed profile not found.")
-      return
-    end
-
-    feed_preview = create_and_enqueue_preview(url: params[:url], feed_profile_key: feed_profile_key)
-    redirect_to feed_preview_path(feed_preview)
-  rescue ActiveRecord::RecordInvalid
-    redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
-  end
-
+  # GET /preview?profile_key=…&params[…]=…
+  # Workhorse for the lazy turbo-frame and polling: find-or-create the row for
+  # (user, profile_key, params_digest), enqueue when it has no fresh result,
+  # and render the current state.
   def show
-    @feed_preview = FeedPreview.find(params[:id])
+    return render_cleared if source_blank?
+    return render_credential_gate if needs_credential_gate?
 
-    respond_to do |format|
-      format.html
-      format.turbo_stream do
-        streams = [
-          status_section_stream(@feed_preview),
-          header_action(@feed_preview)
-        ].compact
-
-        render turbo_stream: streams
-      end
+    preview = locate_preview
+    if preview.new_record? || preview.failed?
+      start_run(preview)
     end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to feeds_path, alert: "Preview not found."
+    render_state(preview)
   end
 
-  def update
-    existing_preview = FeedPreview.find(params[:id])
+  # POST /preview — explicit refresh: always start a fresh run.
+  def create
+    return render_cleared if source_blank?
+    return render_credential_gate if needs_credential_gate?
 
-    feed_preview = create_and_enqueue_preview(
-      url: existing_preview.url,
-      feed_profile_key: existing_preview.feed_profile_key,
-      force_refresh: true
-    )
+    start_run(locate_preview)
+    render_state(@preview)
+  end
 
-    redirect_to feed_preview_path(feed_preview)
-  rescue ActiveRecord::RecordNotFound
-    redirect_to feeds_path, alert: "Preview not found."
-  rescue ActiveRecord::RecordInvalid
-    redirect_back(fallback_location: feeds_path, alert: "Invalid URL provided.")
+  # DELETE /preview — clear the pane (and drop the row).
+  def destroy
+    previews.where(feed_profile_key: profile_key, params_digest: digest).destroy_all
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", "") }
+      format.html { head :no_content }
+    end
   end
 
   private
 
-  def create_and_enqueue_preview(url:, feed_profile_key:, force_refresh: false)
-    existing_preview = FeedPreview.for_cache_key(url, feed_profile_key).where(user: Current.user).first
+  def previews
+    Current.user.feed_previews
+  end
 
-    unless existing_preview
-      preview = create_new_preview(url, feed_profile_key)
-      enqueue_preview_job(preview)
-      return preview
+  def digest
+    @digest ||= FeedPreview.digest_for(preview_params)
+  end
+
+  def locate_preview
+    @preview = previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
+  end
+
+  def start_run(preview)
+    preview.update!(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    FeedPreviewJob.perform_later(preview.id, preview.run_id)
+  end
+
+  def profile_key
+    @profile_key ||= params[:profile_key].to_s
+  end
+
+  def preview_params
+    @preview_params ||= begin
+      raw = params[:params]
+      hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
+      hash.deep_stringify_keys
     end
+  end
 
-    if force_refresh
-      existing_preview.update!(status: :pending, data: nil)
-      enqueue_preview_job(existing_preview)
-      return existing_preview
+  def source_blank?
+    shape = FeedProfile[profile_key]&.dig(:input_shape)
+    key = shape ? shape.to_s : "url"
+    preview_params[key].to_s.strip.blank?
+  end
+
+  def needs_credential_gate?
+    return false unless FeedProfile.exists?(profile_key)
+    return false unless FeedProfile.depends_on_ai?(profile_key)
+
+    !Current.user.llm_credentials.active.exists?
+  end
+
+  def render_state(preview)
+    respond_to do |format|
+      format.html { render :show, locals: { preview: preview } }
+      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", state_partial(preview)) }
     end
+  end
 
-    if existing_preview.failed?
-      existing_preview.update!(status: :pending)
-      enqueue_preview_job(existing_preview)
+  def state_partial(preview)
+    case preview.status
+    when "ready" then { partial: "feed_previews/ready", locals: { preview: preview } }
+    when "failed" then { partial: "feed_previews/failed", locals: { preview: preview } }
+    else { partial: "feed_previews/processing", locals: { preview: preview } }
     end
-
-    existing_preview
   end
 
-  def create_new_preview(url, feed_profile_key)
-    FeedPreview.create!(
-      url: url,
-      feed_profile_key: feed_profile_key,
-      user_id: Current.user.id,
-      status: :pending
-    )
+  def render_cleared
+    respond_to do |format|
+      format.html { head :no_content }
+      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", "") }
+    end
   end
 
-  def enqueue_preview_job(preview)
-    AdminFeedPreviewJob.perform_later(preview.id)
-  end
-
-  def status_section_stream(feed_preview)
-    partial_name = STATUS_PARTIALS[feed_preview.status]
-    return unless partial_name
-
-    turbo_stream.update(
-      "preview-status",
-      partial: "feed_previews/#{partial_name}",
-      locals: { feed_preview: feed_preview }
-    )
-  end
-
-  # Show/hide refresh button
-  def header_action(feed_preview)
-    turbo_stream.update(
-      "header-actions",
-      partial: "feed_previews/header_actions",
-      locals: { feed_preview: feed_preview }
+  def render_credential_gate
+    render turbo_stream: turbo_stream.update(
+      "feed-preview",
+      partial: "feed_previews/credential_gate",
+      locals: { profile_key: profile_key }
     )
   end
 end
