@@ -136,20 +136,6 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_nil preview.data
   end
 
-  test "#destroy should clear the pane and drop the row" do
-    sign_in_as(user)
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-                                      params: { "url" => "http://example.com/feed.xml" })
-
-    assert_difference("FeedPreview.count", -1) do
-      delete feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-             headers: TURBO_STREAM
-    end
-
-    assert_response :success
-    assert user.feed_previews.where(feed_profile_key: "rss").none?
-  end
-
   # Fix 1: create-race robustness
   test "#show should not 500 or double-enqueue when a concurrent request already saved the row" do
     sign_in_as(user)

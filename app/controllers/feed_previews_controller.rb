@@ -36,15 +36,6 @@ class FeedPreviewsController < ApplicationController
     render_state(@preview)
   end
 
-  # DELETE /preview — clear the pane (and drop the row).
-  def destroy
-    previews.where(feed_profile_key: profile_key, params_digest: digest).destroy_all
-    respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", "") }
-      format.html { head :no_content }
-    end
-  end
-
   private
 
   def previews
