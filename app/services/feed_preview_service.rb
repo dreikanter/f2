@@ -1,19 +1,17 @@
 # In-memory preview of a feed. Runs the loader/processor/normalizer
-# pipeline against a non-persisted Feed instance, returns a Preview of
-# 2–5 PostDrafts, and mints a preview_token gating Feed#enable.
+# pipeline against a non-persisted Feed instance and returns a Preview of
+# 2–5 PostDrafts.
 #
-# Per contracts/preview.md the long-term plan is to share one workflow
-# with FeedRefreshWorkflow (preview: true mode). For now this service
-# drives the pipeline directly to keep the preview path simple and
-# orthogonal to the persistence-heavy refresh workflow.
+# Legacy: superseded by the persisted FeedPreview stack (FeedPreviewsController
+# + FeedPreviewWorkflow + FeedPreviewJob). Kept only until the nested
+# Feeds::PreviewsController is removed; the enable gate no longer relies on it.
 class FeedPreviewService
   Preview = Data.define(
     :posts,
     :generated_at,
     :source_summary,
     :used_ai,
-    :llm_usage_id,
-    :preview_token
+    :llm_usage_id
   )
 
   PostDraft = Data.define(
@@ -105,8 +103,7 @@ class FeedPreviewService
       generated_at: Time.current,
       source_summary: build_source_summary,
       used_ai: profile_depends_on_ai?,
-      llm_usage_id: nil,
-      preview_token: mint_token
+      llm_usage_id: nil
     )
   end
 
@@ -176,14 +173,5 @@ class FeedPreviewService
     label = FeedProfile.display_name_for(profile_key)
     source_hint = params["url"].presence || params.values.first.to_s
     source_hint.present? ? "#{label}: #{source_hint}" : label
-  end
-
-  def mint_token
-    PreviewToken.sign(
-      user_id: user&.id,
-      profile_key: profile_key,
-      params: params,
-      generated_at: Time.current
-    )
   end
 end
