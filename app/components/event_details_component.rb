@@ -4,7 +4,7 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def call
-    component = ListGroupComponent.new
+    component = ListComponent.new
 
     add_type_item(component)
     add_level_item(component)
@@ -20,14 +20,14 @@ class EventDetailsComponent < ViewComponent::Base
   private
 
   def add_type_item(component)
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Type",
       value: helpers.tag.code(@event.type, class: "text-sm", data: { key: "admin.events.type" })
     ))
   end
 
   def add_level_item(component)
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Level",
       value: @event.level.capitalize
     ))
@@ -43,7 +43,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.em("System", class: "text-slate-500", data: { key: "admin.event.user" })
     end
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "User",
       value: user_value
     ))
@@ -59,7 +59,7 @@ class EventDetailsComponent < ViewComponent::Base
 
     subject_value = helpers.safe_join(parts)
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Subject",
       value: subject_value
     ))
@@ -72,7 +72,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.span("(#{helpers.short_time_ago(@event.created_at)})", class: "text-slate-500")
     ])
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Created",
       value: value
     ))
@@ -85,7 +85,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.span("(#{helpers.short_time_ago(@event.updated_at)})", class: "text-slate-500")
     ])
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Updated",
       value: value
     ))
@@ -98,7 +98,7 @@ class EventDetailsComponent < ViewComponent::Base
       expires_status_badge
     ])
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Expires",
       value: expires_value
     ))

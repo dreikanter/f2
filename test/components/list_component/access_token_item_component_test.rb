@@ -1,13 +1,13 @@
 require "test_helper"
 require "view_component/test_case"
 
-class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
+class ListComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
   def access_token
     @access_token ||= create(:access_token, :active, owner: "testuser", name: "Test Token")
   end
 
   test "#render should display access token information" do
-    component = ListGroupComponent::AccessTokenItemComponent.new(
+    component = ListComponent::AccessTokenItemComponent.new(
       access_token: access_token,
       key: "settings.access_tokens.#{access_token.id}"
     )
@@ -20,7 +20,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
 
   test "#render should display 'Never' for last_used_at when nil" do
     access_token = create(:access_token, :active, last_used_at: nil)
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
 
     assert_includes result.text, "Used: Never"
@@ -28,7 +28,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
 
   test "#render should display last used time when present" do
     access_token = create(:access_token, :active, last_used_at: 1.hour.ago)
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
 
     assert_includes result.text, "Used: 1h"
@@ -36,7 +36,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
 
   test "#render should display active status icon" do
     access_token = create(:access_token, :active)
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
     icon = result.css("i.bi-check-circle").first
 
@@ -45,7 +45,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
 
   test "#render should display inactive status icon" do
     access_token = create(:access_token, :inactive)
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
     icon = result.css("i.bi-x-circle").first
 
@@ -54,7 +54,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
 
   test "#render should display pending status icon" do
     access_token = create(:access_token)
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
     icon = result.css("i.bi-clock").first
 
@@ -62,7 +62,7 @@ class ListGroupComponent::AccessTokenItemComponentTest < ViewComponent::TestCase
   end
 
   test "#render should link to access token show page" do
-    component = ListGroupComponent::AccessTokenItemComponent.new(access_token: access_token)
+    component = ListComponent::AccessTokenItemComponent.new(access_token: access_token)
     result = render_inline(component)
     link = result.css("a").first
 

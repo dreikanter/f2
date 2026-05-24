@@ -11,7 +11,7 @@ class StatsBarComponent < ViewComponent::Base
   def call
     return if @items.empty?
 
-    content_tag :div, class: @css_class || DEFAULT_CSS_CLASSES do
+    content_tag :dl, class: @css_class || DEFAULT_CSS_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
   end

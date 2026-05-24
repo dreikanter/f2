@@ -8,10 +8,10 @@ class FeedsListComponent < ViewComponent::Base
   DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
 
   def call
-    component = ListGroupComponent.new
+    component = ListComponent.new
 
     @feeds.each do |feed|
-      component.with_item(ListGroupComponent::FeedItemComponent.new(
+      component.with_item(ListComponent::FeedItemComponent.new(
         icon: helpers.feed_status_icon(feed),
         title: display_title_for(feed),
         title_url: helpers.feed_path(feed),

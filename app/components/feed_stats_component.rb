@@ -47,7 +47,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def mobile_list_component
-    ListGroupComponent.new(css_class: class_names("md:hidden", ListGroupComponent::DEFAULT_CSS_CLASSES)).tap do |list|
+    DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES)).tap do |list|
       layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
     end
   end
@@ -59,7 +59,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def mobile_stat_cell(item)
-    ListGroupComponent::StatItemComponent.new(
+    ListComponent::StatItemComponent.new(
       label: item[:label],
       value: item[:value],
       key: "stats.#{item[:key]}"

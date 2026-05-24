@@ -12,23 +12,23 @@ class SentEmailDetailsComponent < ViewComponent::Base
   attr_reader :email
 
   def list_group
-    ListGroupComponent.new.tap do |list|
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+    ListComponent.new.tap do |list|
+      list.with_item(ListComponent::StatItemComponent.new(
         label: "Message ID",
         value: helpers.content_tag(:code, email[:message_id], class: "break-all")
       ))
 
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: "From",
         value: helpers.content_tag(:code, email[:from], class: "break-words")
       ))
 
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: "To",
         value: helpers.content_tag(:code, email[:to], class: "break-words")
       ))
 
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: "Date",
         value: helpers.datetime_with_duration_tag(email[:date])
       ))

@@ -9,7 +9,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def render_list
-    component = ListGroupComponent.new
+    component = ListComponent.new
 
     @posts.each do |post|
       component.with_item(self.class.item_component(post:, helpers: helpers, show_feed: @show_feed))
@@ -19,7 +19,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def self.item_component(post:, helpers:, show_feed: false)
-    ListGroupComponent::PostItemComponent.new(
+    ListComponent::PostItemComponent.new(
       icon: helpers.post_status_icon(post.status),
       title: helpers.post_content_preview(post.content, 80),
       title_url: helpers.post_path(post),

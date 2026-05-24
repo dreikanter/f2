@@ -1,4 +1,4 @@
-class ListGroupComponent::AccessTokenItemComponent < ViewComponent::Base
+class ListComponent::AccessTokenItemComponent < ViewComponent::Base
   include ApplicationHelper
   include TimeHelper
 

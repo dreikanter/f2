@@ -21,18 +21,18 @@
     "—"
   end
 
-  release_info_list = ListGroupComponent.new.tap do |list|
-    list.with_item(ListGroupComponent::StatItemComponent.new(
+  release_info_list = DescriptionListComponent.new.tap do |list|
+    list.with_item(ListComponent::StatItemComponent.new(
       label: "Revision",
       value: revision_value,
       key: "release.revision"
     ))
-    list.with_item(ListGroupComponent::StatItemComponent.new(
+    list.with_item(ListComponent::StatItemComponent.new(
       label: "Deployed at",
       value: deployed_at_value,
       key: "release.deployed_at"
     ))
-    list.with_item(ListGroupComponent::StatItemComponent.new(
+    list.with_item(ListComponent::StatItemComponent.new(
       label: "Environment",
       value: tag.code(Rails.env),
       key: "release.environment"
@@ -40,9 +40,9 @@
   end
 
   # TBD: Extract component
-  table_usage_list = ListGroupComponent.new.tap do |list|
+  table_usage_list = DescriptionListComponent.new.tap do |list|
     @disk_usage[:table_usage].each do |row|
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: tag.code(row["table_name"]),
         value: row["total_size"]
       ))
@@ -50,9 +50,9 @@
   end
 
   # TBD: Extract component
-  autovacuum_settings_list = ListGroupComponent.new.tap do |list|
+  autovacuum_settings_list = DescriptionListComponent.new.tap do |list|
     @disk_usage[:autovacuum_settings].each do |row|
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: tag.code(row["name"]),
         value: row["setting"]
       ))

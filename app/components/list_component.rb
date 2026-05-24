@@ -1,4 +1,4 @@
-class ListGroupComponent < ViewComponent::Base
+class ListComponent < ViewComponent::Base
   DEFAULT_CSS_CLASSES = "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm divide-y divide-slate-200"
 
   attr_reader :items
@@ -11,7 +11,7 @@ class ListGroupComponent < ViewComponent::Base
   def call
     return if @items.empty?
 
-    content_tag :ul, class: @css_class || DEFAULT_CSS_CLASSES do
+    content_tag container_tag, class: @css_class || DEFAULT_CSS_CLASSES do
       safe_join(@items.map { |item| item.render_in(view_context) })
     end
   end
@@ -28,5 +28,11 @@ class ListGroupComponent < ViewComponent::Base
 
   def items?
     items.any?
+  end
+
+  private
+
+  def container_tag
+    :ul
   end
 end

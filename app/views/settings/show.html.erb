@@ -2,8 +2,8 @@
 
 <%
   # TBD: Extract toi a component
-  account_list = ListGroupComponent.new.tap do |list|
-    list.with_item(ListGroupComponent::StatItemComponent.new(
+  account_list = DescriptionListComponent.new.tap do |list|
+    list.with_item(ListComponent::StatItemComponent.new(
       label: "Email",
       value: tag.span(class: "flex items-center gap-4") {
         safe_join([
@@ -14,7 +14,7 @@
       key: "settings.email"
     ))
 
-    list.with_item(ListGroupComponent::StatItemComponent.new(
+    list.with_item(ListComponent::StatItemComponent.new(
       label: "Password",
       value: tag.span(class: "flex items-center gap-4") {
         safe_join([
@@ -26,7 +26,7 @@
     ))
 
     if @user.permissions.any?
-      list.with_item(ListGroupComponent::StatItemComponent.new(
+      list.with_item(ListComponent::StatItemComponent.new(
         label: "Permissions",
         value: @user.permissions.map { |permission| permission.name.humanize }.join(", "),
         key: "settings.permissions"
