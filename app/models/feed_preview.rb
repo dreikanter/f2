@@ -11,32 +11,29 @@ class FeedPreview < ApplicationRecord
 
   before_validation :assign_params_digest
 
-  # Canonical digest of the source params. Must match Feed#params_digest so the
-  # enable gate (reader) and the preview (writer) agree on identity.
-  def self.digest_for(params)
-    Digest::SHA256.hexdigest(canonicalize(params || {}).to_json)
+  # A preview's identity is the user-provided source input (the value behind the
+  # profile's input_shape) — NOT the whole params hash. User input for a new feed
+  # is intentionally minimal (one field today); params derived later during
+  # processing must not change identity. Hashing that single value also sidesteps
+  # hash key-ordering (and jsonb read-ordering) entirely. When user-supplied input
+  # grows beyond one field, extend this to cover the new user fields (still not
+  # the derived ones).
+  def self.digest_for(feed_profile_key, params)
+    Digest::SHA256.hexdigest(source_input(feed_profile_key, params).to_s)
   end
 
-  # Recursively sort hash keys (stringify at every level) so that nested
-  # structures produce a stable digest regardless of key insertion order.
-  def self.canonicalize(value)
-    case value
-    when Hash then value.map { |k, v| [k.to_s, canonicalize(v)] }.sort_by(&:first).to_h
-    when Array then value.map { |v| canonicalize(v) }
-    else value
-    end
+  # The user-facing source value for a profile, selected by its input_shape.
+  def self.source_input(feed_profile_key, params)
+    shape = FeedProfile[feed_profile_key]&.dig(:input_shape) || :url
+    (params || {})[shape.to_s]
   end
 
   def self.fresh_ready(user_id:, feed_profile_key:, params:, within:)
-    where(user_id: user_id, feed_profile_key: feed_profile_key, params_digest: digest_for(params))
+    where(user_id: user_id, feed_profile_key: feed_profile_key, params_digest: digest_for(feed_profile_key, params))
       .ready
       .where(ready_at: within.ago..)
       .order(ready_at: :desc)
       .first
-  end
-
-  def params_digest
-    self.class.digest_for(params)
   end
 
   def posts_data
@@ -50,6 +47,6 @@ class FeedPreview < ApplicationRecord
   private
 
   def assign_params_digest
-    self[:params_digest] = self.class.digest_for(params)
+    self[:params_digest] = self.class.digest_for(feed_profile_key, params)
   end
 end

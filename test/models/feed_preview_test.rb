@@ -85,16 +85,23 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 0, preview.posts_count
   end
 
-  test "#params_digest should be stable regardless of key order" do
-    a = build(:feed_preview, params: { "url" => "https://x.test", "extra" => "1" })
-    b = build(:feed_preview, params: { "extra" => "1", "url" => "https://x.test" })
-    assert_equal a.params_digest, b.params_digest
+  test ".digest_for should depend only on the profile's source input" do
+    same_source = FeedPreview.digest_for("rss", { "url" => "https://x.test" })
+    with_extra = FeedPreview.digest_for("rss", { "url" => "https://x.test", "derived" => "anything" })
+    assert_equal same_source, with_extra,
+                 "non-source params must not change identity"
   end
 
-  test "#params_digest should be stable regardless of nested key order" do
-    a = FeedPreview.digest_for({ "outer" => { "b" => 2, "a" => 1 }, "z" => "x" })
-    b = FeedPreview.digest_for({ "z" => "x", "outer" => { "a" => 1, "b" => 2 } })
-    assert_equal a, b
+  test ".digest_for should differ for different source input" do
+    refute_equal FeedPreview.digest_for("rss", { "url" => "https://a.test" }),
+                 FeedPreview.digest_for("rss", { "url" => "https://b.test" })
+  end
+
+  test ".digest_for should read the source key for the profile's input_shape" do
+    query_digest = FeedPreview.digest_for("llm_web_search", { "query" => "rust async" })
+    # A url key is ignored for a query-shaped profile; the query value drives it.
+    assert_equal query_digest,
+                 FeedPreview.digest_for("llm_web_search", { "query" => "rust async", "url" => "ignored" })
   end
 
   test ".fresh_ready should find a ready preview within the window" do

@@ -43,7 +43,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def digest
-    @digest ||= FeedPreview.digest_for(preview_params)
+    @digest ||= FeedPreview.digest_for(profile_key, preview_params)
   end
 
   def locate_preview
