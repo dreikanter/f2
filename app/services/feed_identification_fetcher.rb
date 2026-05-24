@@ -27,7 +27,7 @@ class FeedIdentificationFetcher
   private
 
   # Fetch the URL body for inspection by URL matchers; skip the fetch
-  # entirely for handle / query inputs since structured URL detection
+  # entirely for query inputs since structured URL detection
   # doesn't apply.
   def fetch_body_for_input
     return nil if InputClassifier.classify(@input) != :url

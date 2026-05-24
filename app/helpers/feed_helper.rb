@@ -1,6 +1,6 @@
 module FeedHelper
   # Plain-language label for a detection candidate. URL-based candidates
-  # use the profile's display_name; handle / query candidates inject the
+  # use the profile's display_name; query candidates inject the
   # user's input into a short sentence so the chooser feels natural for
   # non-URL inputs.
   def candidate_summary(profile_key, input)

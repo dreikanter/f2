@@ -55,7 +55,7 @@ module ProfileMatcher
 
     attr_reader :input, :fetched_body
 
-    # @param input [String] the user's raw input (URL, handle, or query)
+    # @param input [String] the user's raw input (URL or query)
     # @param fetched_body [String, nil] the body of the URL when input_shape is :url
     #   and FeedIdentificationFetcher already fetched it; nil otherwise
     def initialize(input, fetched_body = nil)
