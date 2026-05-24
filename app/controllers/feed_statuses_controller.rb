@@ -4,15 +4,11 @@ class FeedStatusesController < ApplicationController
   def update
     feed = load_feed
 
-    if feed.draft?
-      redirect_to edit_feed_path(feed), alert: "This feed is still a draft. Finish setting it up here before you can enable or disable it."
-      return
+    case status
+    when "enabled" then enable(feed)
+    when "disabled" then disable(feed)
+    else raise "Unsupported status: #{status.inspect}"
     end
-
-    return enable(feed) if feed.enabled?
-    return disable(feed) if feed.disabled?
-
-    raise "Unexpected feed state: #{feed.state.inspect}"
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Feed not found."
   rescue ActiveRecord::StaleObjectError

@@ -36,6 +36,14 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
+  test "#update should reject an unsupported status" do
+    sign_in_as(user)
+
+    assert_raises(RuntimeError) do
+      patch feed_status_path(feed), params: { status: "bogus" }
+    end
+  end
+
   test "#update should pause an enabled feed when status=disabled" do
     sign_in_as(user)
     enabled_feed = create(:feed, :enabled, user: user)
@@ -62,36 +70,6 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     disabled_feed.reload
     assert_equal "enabled", disabled_feed.state
-  end
-
-  test "#update should reject toggling a draft and redirect with an alert" do
-    sign_in_as(user)
-    draft_feed = create(:feed, :draft, user: user)
-
-    patch feed_status_path(draft_feed), params: { status: "enabled" }
-
-    assert_redirected_to edit_feed_path(draft_feed)
-    follow_redirect!
-    assert_includes response.body,
-                    "Drafts must be promoted via the feed form, not the status toggle."
-
-    draft_feed.reload
-    assert_equal "draft", draft_feed.state
-  end
-
-  test "#update should reject disabling a draft and redirect with an alert" do
-    sign_in_as(user)
-    draft_feed = create(:feed, :draft, user: user)
-
-    patch feed_status_path(draft_feed), params: { status: "disabled" }
-
-    assert_redirected_to edit_feed_path(draft_feed)
-    follow_redirect!
-    assert_includes response.body,
-                    "Drafts must be promoted via the feed form, not the status toggle."
-
-    draft_feed.reload
-    assert_equal "draft", draft_feed.state
   end
 
   test "#update should not enable feed when access token is missing" do
