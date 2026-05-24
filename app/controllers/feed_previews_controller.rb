@@ -1,6 +1,15 @@
 class FeedPreviewsController < ApplicationController
   before_action :require_authentication
 
+  # Maps each FeedPreview status to the pane partial that renders it. `fetch`
+  # makes an unexpected status fail loudly rather than silently fall through.
+  STATE_PARTIALS = {
+    "pending" => "processing",
+    "processing" => "processing",
+    "ready" => "ready",
+    "failed" => "failed"
+  }.freeze
+
   # GET /preview?profile_key=…&params[…]=…
   # Workhorse for the lazy turbo-frame and polling: find-or-create the row for
   # (user, profile_key, params_digest), enqueue when it has no fresh result,
@@ -100,11 +109,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def state_partial(preview)
-    case preview.status
-    when "ready" then { partial: "feed_previews/ready", locals: { preview: preview } }
-    when "failed" then { partial: "feed_previews/failed", locals: { preview: preview } }
-    else { partial: "feed_previews/processing", locals: { preview: preview } }
-    end
+    { partial: "feed_previews/#{STATE_PARTIALS.fetch(preview.status)}", locals: { preview: preview } }
   end
 
   def render_cleared
