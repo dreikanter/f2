@@ -58,6 +58,14 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     end
   end
 
+  test "#rendered_prompt should substitute the query for query profiles" do
+    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "rust async" })
+    loader = Loader::LlmLoader.new(feed)
+    loader.stub(:config, { prompt_template: "Search {{query}} ({{input}})" }) do
+      assert_equal "Search rust async (rust async)", loader.send(:rendered_prompt)
+    end
+  end
+
   test "#rendered_prompt should still substitute url for url profiles" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://x.test" })
     loader = Loader::LlmLoader.new(feed)
