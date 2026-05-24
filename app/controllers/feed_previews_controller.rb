@@ -95,16 +95,19 @@ class FeedPreviewsController < ApplicationController
 
   def render_cleared
     respond_to do |format|
-      format.html { head :no_content }
+      format.html { render html: helpers.turbo_frame_tag("feed-preview"), layout: false }
       format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", "") }
     end
   end
 
   def render_credential_gate
-    render turbo_stream: turbo_stream.update(
-      "feed-preview",
-      partial: "feed_previews/credential_gate",
-      locals: { profile_key: profile_key }
-    )
+    gate = { partial: "feed_previews/credential_gate", locals: { profile_key: profile_key } }
+    respond_to do |format|
+      format.html do
+        body = helpers.turbo_frame_tag("feed-preview") { render_to_string(gate).html_safe }
+        render html: body, layout: false
+      end
+      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", **gate) }
+    end
   end
 end

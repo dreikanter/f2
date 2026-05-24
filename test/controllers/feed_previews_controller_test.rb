@@ -70,7 +70,10 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_match(/preview\.credential_gate/, response.body)
+    assert_select "[data-key='credentials.gate']" do
+      assert_select "button[type='submit'][name='commit'][value='save_as_draft_and_add_credentials']",
+                    text: /Add AI credentials/
+    end
   end
 
   test "#show should render the credential gate when only credential is inactive" do
@@ -85,7 +88,10 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_match(/preview\.credential_gate/, response.body)
+    assert_select "[data-key='credentials.gate']" do
+      assert_select "button[type='submit'][name='commit'][value='save_as_draft_and_add_credentials']",
+                    text: /Add AI credentials/
+    end
   end
 
   test "#show should proceed for an AI profile with an active credential" do
