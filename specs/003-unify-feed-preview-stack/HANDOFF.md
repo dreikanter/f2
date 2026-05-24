@@ -38,6 +38,11 @@ The current form **auto-previews** the recommended candidate the moment the expa
 
 ## Remaining work
 
+**Order (decided): 1) merge #442 → 2) PR3 (retention job) → 3) manual preview.** The two
+are independent (no shared files of note), so this is a priority choice, not a
+dependency. PR3 is the quick win and goes first; the manual-preview follow-up —
+which also closes #442's interim multi-candidate/refresh gaps — comes after.
+
 ### PR3 — `FeedPreview` retention/prune job (small, independent)
 Spec: `plan.md` Phase H. Add `PruneFeedPreviewsJob` deleting rows older than a window comfortably larger than `Feed::ENABLE_PREVIEW_WINDOW` (e.g. `created_at < 7.days.ago`), schedule it in `config/recurring.yml` (dev + prod), with a test. Branch from `main` after #442 merges. The unique key bounds row growth to (user × profile × source), but the cache TTL is gone, so this still ships.
 
