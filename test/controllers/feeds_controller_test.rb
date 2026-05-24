@@ -349,6 +349,13 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='#{feed_status_path(draft)}']", count: 0
   end
 
+  test "#show should not render a preview button" do
+    sign_in_as(user)
+    get feed_url(feed)
+    assert_response :success
+    assert_select "form[action='#{feed_preview_path}']", count: 0
+  end
+
   test "#show should hide stats section when feed has no posts" do
     sign_in_as(user)
     get feed_url(feed)
