@@ -5,7 +5,7 @@ class FeedStatusesController < ApplicationController
     feed = load_feed
 
     if feed.draft?
-      redirect_to edit_feed_path(feed), alert: "Drafts must be promoted via the feed form, not the status toggle."
+      redirect_to edit_feed_path(feed), alert: "This feed is still a draft. Finish setting it up here before you can enable or disable it."
       return
     end
 
