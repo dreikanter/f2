@@ -10,27 +10,38 @@ class FeedPreviewWorkflow
 
   attr_reader :feed_preview
 
-  def initialize(feed_preview)
+  def initialize(feed_preview, run_id: nil)
     @feed_preview = feed_preview
+    @run_id = run_id || feed_preview.run_id
   end
 
   private
+
+  attr_reader :run_id
+
+  # Conditional update: only the current run may transition the row. A stale
+  # run (superseded by a newer enqueue that rewrote run_id) updates 0 rows.
+  def transition!(attrs)
+    scope = FeedPreview.where(id: feed_preview.id, run_id: run_id)
+    updated = scope.update_all(attrs.merge(updated_at: Time.current))
+    feed_preview.reload if updated.positive?
+    updated.positive?
+  end
 
   def on_error(error)
     record_error_stats(error, current_step: current_step)
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
-    feed_preview.update!(status: :failed)
+    transition!(status: FeedPreview.statuses[:failed])
   end
 
   def initialize_workflow(_input)
     record_started_at
-    feed_preview.update!(status: :processing)
+    transition!(status: FeedPreview.statuses[:processing])
 
-    # Create a temporary feed object for workflow processing
     Feed.new(
-      url: feed_preview.url,
+      params: feed_preview.params,
       feed_profile_key: feed_preview.feed_profile_key,
       user: feed_preview.user
     )
@@ -90,12 +101,11 @@ class FeedPreviewWorkflow
 
   def finalize_workflow(posts)
     record_completed_at
-
-    feed_preview.update!(
-      status: :ready,
+    transition!(
+      status: FeedPreview.statuses[:ready],
+      ready_at: Time.current,
       data: { posts: posts, stats: stats }
     )
-
     posts
   end
 end

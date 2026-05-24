@@ -6,11 +6,38 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   def feed_preview
-    @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss", status: :pending)
+    @feed_preview ||= create(:feed_preview, user: user, feed_profile_key: "rss",
+                             params: { "url" => "https://example.com/feed.xml" },
+                             status: :pending, run_id: "run-1")
   end
 
   def workflow
-    @workflow ||= FeedPreviewWorkflow.new(feed_preview)
+    @workflow ||= FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+  end
+
+  def rss_body
+    <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <description>Test Description</description>
+          <link>https://example.com</link>
+          <item>
+            <title>Test Post</title>
+            <description>Test content for preview</description>
+            <link>https://example.com/post1</link>
+            <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
+            <guid>https://example.com/post1</guid>
+          </item>
+        </channel>
+      </rss>
+    XML
+  end
+
+  def stub_rss_loader_returning_one_item
+    stub_request(:get, "https://example.com/feed.xml")
+      .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
   end
 
   test "#initialize should assign feed_preview" do
@@ -19,11 +46,15 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#initialize should produce executable workflow" do
-    # Basic test to verify the workflow can be created and has the right attributes
-    workflow = FeedPreviewWorkflow.new(feed_preview)
-    assert_equal feed_preview, workflow.feed_preview
-    assert_equal({}, workflow.stats)
-    assert_respond_to workflow, :execute
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    assert_equal feed_preview, wf.feed_preview
+    assert_equal({}, wf.stats)
+    assert_respond_to wf, :execute
+  end
+
+  test "#initialize should fall back to feed_preview.run_id when run_id is omitted" do
+    wf = FeedPreviewWorkflow.new(feed_preview)
+    assert_respond_to wf, :execute
   end
 
   test ".included should mix in Workflow module" do
@@ -31,7 +62,6 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should be defined as workflow step" do
-    # Verify the workflow has the expected steps defined
     assert_respond_to workflow, :execute
   end
 
@@ -40,43 +70,51 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
   end
 
   test "#execute should support error handling helpers" do
-    # Test that the workflow has error handling methods available
-    workflow_instance = FeedPreviewWorkflow.new(feed_preview)
-
-    # Check that the workflow responds to error handling methods
-    assert_respond_to workflow_instance, :execute
-
-    # Test that error handling paths exist (they're covered by integration tests)
-    # The actual error handling is tested through the job tests
-    assert_equal feed_preview, workflow_instance.feed_preview
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    assert_respond_to wf, :execute
+    assert_equal feed_preview, wf.feed_preview
   end
 
   test "#record_stats should merge stats correctly" do
-    workflow_instance = FeedPreviewWorkflow.new(feed_preview)
-
-    # Test that stats start empty
-    assert_empty workflow_instance.stats
-
-    # We can test the record_stats functionality indirectly by checking
-    # the stats accessor after workflow initialization
-    assert_respond_to workflow_instance, :stats
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    assert_empty wf.stats
+    assert_respond_to wf, :stats
   end
 
   test "#record_stats should store provided values" do
-    # Test the private record_stats method functionality
-    workflow_instance = FeedPreviewWorkflow.new(feed_preview)
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
+    assert_empty wf.stats
 
-    # We can't call private methods directly, but we can verify the stats accessor works
-    assert_empty workflow_instance.stats
-
-    # Simulate stats recording through method stubbing
-    workflow_instance.define_singleton_method(:test_record_stats) do
+    wf.define_singleton_method(:test_record_stats) do
       send(:record_stats, test_stat: "value", count: 42)
     end
 
-    workflow_instance.test_record_stats
+    wf.test_record_stats
 
-    expected_stats = { test_stat: "value", count: 42 }
-    assert_equal expected_stats, workflow_instance.stats
+    assert_equal({ test_stat: "value", count: 42 }, wf.stats)
+  end
+
+  test "#execute should mark the preview ready with normalized posts and ready_at" do
+    preview = create(:feed_preview, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-1")
+    stub_rss_loader_returning_one_item
+
+    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute
+
+    preview.reload
+    assert preview.ready?
+    assert preview.ready_at.present?
+    assert_equal 1, preview.posts_count
+  end
+
+  test "#execute should not finalize when the run_id is stale" do
+    preview = create(:feed_preview, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-2")
+    stub_rss_loader_returning_one_item
+
+    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute # superseded run
+
+    preview.reload
+    refute preview.ready?
   end
 end
