@@ -5,19 +5,14 @@ class FeedStatusesController < ApplicationController
     feed = load_feed
 
     if feed.draft?
-      redirect_to edit_feed_path(feed),
-                  alert: "Drafts must be promoted via the feed form, not the status toggle."
+      redirect_to edit_feed_path(feed), alert: "Drafts must be promoted via the feed form, not the status toggle."
       return
     end
 
-    case status
-    when "enabled"
-      enable(feed)
-    when "disabled"
-      disable(feed)
-    else
-      redirect_to feed, alert: "Invalid status parameter."
-    end
+    return enable(feed) if feed.enabled?
+    return disable(feed) if feed.disabled?
+
+    redirect_to feed_path(feed.id), alert: "Invalid status parameter."
   rescue ActiveRecord::RecordNotFound
     redirect_to feeds_path, alert: "Feed not found."
   rescue ActiveRecord::StaleObjectError
