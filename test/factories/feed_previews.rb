@@ -8,6 +8,7 @@ FactoryBot.define do
 
     trait :completed do
       status { :ready }
+      ready_at { 1.minute.ago }
       data do
         {
           posts: [

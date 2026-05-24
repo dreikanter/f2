@@ -7,18 +7,20 @@ class FeedPreviewsController < ApplicationController
   # and render the current state.
   def show
     return render_cleared if source_blank?
+    return render_cleared unless FeedProfile.exists?(profile_key)
     return render_credential_gate if needs_credential_gate?
 
-    preview = locate_preview
-    if preview.new_record? || preview.failed?
-      start_run(preview)
+    locate_preview
+    if @preview.new_record? || @preview.failed? || stale_ready?(@preview)
+      start_run(@preview)
     end
-    render_state(preview)
+    render_state(@preview)
   end
 
   # POST /preview — explicit refresh: always start a fresh run.
   def create
     return render_cleared if source_blank?
+    return render_cleared unless FeedProfile.exists?(profile_key)
     return render_credential_gate if needs_credential_gate?
 
     start_run(locate_preview)
@@ -49,7 +51,15 @@ class FeedPreviewsController < ApplicationController
   end
 
   def start_run(preview)
-    preview.update!(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    preview.assign_attributes(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    begin
+      preview.save!
+    rescue ActiveRecord::RecordNotUnique
+      # Another concurrent request already inserted this row — load the winner's
+      # row and render its state without enqueuing a second job.
+      @preview = previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
+      return
+    end
     FeedPreviewJob.perform_later(preview.id, preview.run_id)
   end
 
@@ -63,6 +73,10 @@ class FeedPreviewsController < ApplicationController
       hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : (raw || {})
       hash.deep_stringify_keys
     end
+  end
+
+  def stale_ready?(preview)
+    preview.ready? && preview.ready_at.present? && preview.ready_at < Feed::ENABLE_PREVIEW_WINDOW.ago
   end
 
   def source_blank?

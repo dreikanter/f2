@@ -14,8 +14,17 @@ class FeedPreview < ApplicationRecord
   # Canonical digest of the source params. Must match Feed#params_digest so the
   # enable gate (reader) and the preview (writer) agree on identity.
   def self.digest_for(params)
-    canonical = (params || {}).deep_stringify_keys.sort.to_h.to_json
-    Digest::SHA256.hexdigest(canonical)
+    Digest::SHA256.hexdigest(canonicalize(params || {}).to_json)
+  end
+
+  # Recursively sort hash keys (stringify at every level) so that nested
+  # structures produce a stable digest regardless of key insertion order.
+  def self.canonicalize(value)
+    case value
+    when Hash then value.map { |k, v| [k.to_s, canonicalize(v)] }.sort_by(&:first).to_h
+    when Array then value.map { |v| canonicalize(v) }
+    else value
+    end
   end
 
   def self.fresh_ready(user_id:, feed_profile_key:, params:, within:)

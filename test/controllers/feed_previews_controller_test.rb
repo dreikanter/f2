@@ -150,6 +150,85 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert user.feed_previews.where(feed_profile_key: "rss").none?
   end
 
+  # Fix 1: create-race robustness
+  test "#show should not 500 or double-enqueue when a concurrent request already saved the row" do
+    sign_in_as(user)
+
+    existing = create(:feed_preview, user: user, feed_profile_key: "rss",
+                                     params: { "url" => "http://example.com/feed.xml" },
+                                     status: :pending, run_id: SecureRandom.uuid)
+
+    # Simulate the race: find_or_initialize_by returns new_record? = false because
+    # the row exists, but start_run would try save! and hit RecordNotUnique if it
+    # were new. Here we verify the simpler invariant: when the row already exists,
+    # show renders 2xx without creating another row or enqueueing.
+    assert_no_difference("FeedPreview.count") do
+      assert_no_enqueued_jobs do
+        get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+      end
+    end
+
+    assert_response :success
+    assert_equal 1, user.feed_previews.where(feed_profile_key: "rss").count
+    existing.reload
+    assert existing.pending?
+  end
+
+
+  # Fix 2: stale ready triggers fresh run
+  test "#show should enqueue a fresh run when ready preview is outside the enable window" do
+    sign_in_as(user)
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                      params: { "url" => "http://example.com/feed.xml" },
+                                      ready_at: (Feed::ENABLE_PREVIEW_WINDOW + 5.minutes).ago)
+
+    assert_enqueued_with(job: FeedPreviewJob) do
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+    end
+
+    assert_response :success
+  end
+
+  test "#show should not enqueue when ready preview is within the enable window" do
+    sign_in_as(user)
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                      params: { "url" => "http://example.com/feed.xml" },
+                                      ready_at: 1.minute.ago)
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+    end
+
+    assert_response :success
+  end
+
+  # Fix 3: unknown profile_key renders cleared pane, no row, no job
+  test "#show should render cleared pane for an unknown profile_key" do
+    sign_in_as(user)
+
+    assert_no_difference("FeedPreview.count") do
+      assert_no_enqueued_jobs do
+        get feed_preview_url(profile_key: "nope", "params" => { url: "http://example.com/feed.xml" }),
+            headers: TURBO_STREAM
+      end
+    end
+
+    assert_response :success
+  end
+
+  test "#create should render cleared pane for an unknown profile_key" do
+    sign_in_as(user)
+
+    assert_no_difference("FeedPreview.count") do
+      assert_no_enqueued_jobs do
+        post feed_preview_url(profile_key: "nope", "params" => { url: "http://example.com/feed.xml" }),
+             headers: TURBO_STREAM
+      end
+    end
+
+    assert_response :success
+  end
+
   test "#show should scope previews to the current user" do
     other = create(:user)
     create(:feed_preview, :completed, user: other, feed_profile_key: "rss",

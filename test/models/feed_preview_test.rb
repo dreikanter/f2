@@ -91,6 +91,12 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal a.params_digest, b.params_digest
   end
 
+  test "#params_digest should be stable regardless of nested key order" do
+    a = FeedPreview.digest_for({ "outer" => { "b" => 2, "a" => 1 }, "z" => "x" })
+    b = FeedPreview.digest_for({ "z" => "x", "outer" => { "a" => 1, "b" => 2 } })
+    assert_equal a, b
+  end
+
   test ".fresh_ready should find a ready preview within the window" do
     user = create(:user)
     preview = create(:feed_preview, :completed, user: user,

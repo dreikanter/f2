@@ -117,4 +117,17 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     preview.reload
     refute preview.ready?
   end
+
+  # Fix 5: superseded run halts early without calling the loader or marking failed
+  test "#execute should not invoke the loader and should not mark failed when run_id is superseded" do
+    preview = create(:feed_preview, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-2")
+
+    # The stub for the loader URL is intentionally absent — if the loader were
+    # called it would raise a WebMock::NetConnectNotAllowedError, failing the test.
+    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute
+
+    preview.reload
+    assert preview.pending?, "expected preview to remain pending (not failed), got #{preview.status}"
+  end
 end

@@ -38,7 +38,7 @@ class FeedPreviewWorkflow
 
   def initialize_workflow(_input)
     record_started_at
-    transition!(status: FeedPreview.statuses[:processing])
+    halt! unless transition!(status: FeedPreview.statuses[:processing])
 
     Feed.new(
       params: feed_preview.params,

@@ -26,6 +26,9 @@
 #     end
 #   end
 module Workflow
+  # Raised by halt! to stop the workflow without triggering on_error.
+  class HaltExecution < StandardError; end
+
   # Enable DSL syntax
   def self.included(base)
     base.extend(ClassMethods)
@@ -58,6 +61,9 @@ module Workflow
         current_input = send(step_name, current_input)
         after_step(current_input)
         logger.info "#{self.class.name}: Completed step: #{step_name}"
+      rescue HaltExecution
+        logger.info "#{self.class.name}: Halted at step: #{step_name}"
+        return nil
       rescue => e
         on_error(e)
         raise
@@ -79,6 +85,11 @@ module Workflow
   end
 
   private
+
+  # Call from any step to stop execution cleanly (no on_error, no re-raise).
+  def halt!
+    raise HaltExecution
+  end
 
   def before_step(_input)
     # Override
