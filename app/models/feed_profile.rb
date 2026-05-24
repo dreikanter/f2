@@ -88,7 +88,7 @@ class FeedProfile
         config: {
           model: "claude-sonnet-4-6",
           prompt_template: <<~PROMPT,
-            Visit {{url}} and extract up to 10 of the most recent posts or articles.
+            Visit {{input}} and extract up to 10 of the most recent posts or articles.
             For each item, return a stable permalink as `uid`, a title, body text,
             an optional list of supplementary comments, an optional list of image URLs,
             the source URL, and the published date in ISO 8601.
@@ -123,42 +123,9 @@ class FeedProfile
       title_extractor: nil,
       output_schema: UNIVERSAL_OUTPUT_SCHEMA
     },
-    "llm_handle_search" => {
-      display_name: "Follow a handle",
-      description: "Uses AI to follow posts from a social handle (X, Mastodon, …) without a structured feed",
-      input_shape: :handle,
-      depends_on_ai: true,
-      matcher: "ProfileMatcher::LlmHandleSearchMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "handle" => { "type" => "string", "minLength" => 2, "maxLength" => 80 }
-        },
-        "required" => ["handle"],
-        "additionalProperties" => false
-      },
-      loader: {
-        class: "Loader::LlmLoader",
-        config: {
-          model: "claude-sonnet-4-6",
-          prompt_template: <<~PROMPT,
-            Find the most recent posts published by `{{handle}}` on any platform you can
-            search. For each item, return a stable permalink as `uid`, a title, body text,
-            optional supplementary comments, optional image URLs, the source URL, and the
-            published date in ISO 8601. Return at most 10 items.
-          PROMPT
-          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
-          tools: ["web_search"]
-        }
-      },
-      processor: { class: "Processor::PassthroughProcessor", config: {} },
-      normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
-      title_extractor: nil,
-      output_schema: UNIVERSAL_OUTPUT_SCHEMA
-    },
     "llm_web_search" => {
-      display_name: "Follow a web search",
-      description: "Uses AI to follow results for a search query as an evergreen subscription",
+      display_name: "AI search",
+      description: "Uses AI to follow an account, handle, or search topic as an evergreen subscription",
       input_shape: :query,
       depends_on_ai: true,
       matcher: "ProfileMatcher::LlmWebSearchMatcher",
@@ -175,10 +142,12 @@ class FeedProfile
         config: {
           model: "claude-sonnet-4-6",
           prompt_template: <<~PROMPT,
-            Search the web for `{{query}}` and return the most recent matching articles or
-            posts. For each item, return a stable permalink as `uid`, a title, body text,
-            optional supplementary comments, optional image URLs, the source URL, and the
-            published date in ISO 8601. Return at most 10 items.
+            Find the most recent posts for `{{input}}` and return the matching articles or
+            posts. The input may be an account or handle (e.g. `@someone`), in which case
+            follow that account's posts, or a free-text topic to search for. For each item,
+            return a stable permalink as `uid`, a title, body text, optional supplementary
+            comments, optional image URLs, the source URL, and the published date in ISO 8601.
+            Return at most 10 items.
           PROMPT
           output_schema: UNIVERSAL_OUTPUT_SCHEMA,
           tools: ["web_search"]
@@ -214,7 +183,7 @@ class FeedProfile
 
     # Returns matcher classes whose input_shape accepts the given shape, in
     # registration order. Pass nil/:any to get every matcher.
-    # @param input_shape [Symbol, nil] one of :url, :handle, :query, :any, nil
+    # @param input_shape [Symbol, nil] one of :url, :query, :any, nil
     # @return [Array<Class>] matcher classes
     def matchers_for(input_shape)
       PROFILES.filter_map do |_key, entry|

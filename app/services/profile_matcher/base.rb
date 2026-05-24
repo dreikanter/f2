@@ -4,7 +4,7 @@ module ProfileMatcher
   # Subclasses declare metadata at the class level via the DSL:
   #
   #   class MyMatcher < Base
-  #     input_shape :url           # one of :url, :handle, :query, :any
+  #     input_shape :url           # one of :url, :query, :any
   #     match_specificity 10       # integer; higher = more specific
   #     depends_on_ai false        # default false; AI matchers set true
   #   end
@@ -14,7 +14,7 @@ module ProfileMatcher
   # detection phase. The matcher itself implements #match?, which returns
   # true if the profile applies to the input (and optional fetched body).
   class Base
-    INPUT_SHAPES = %i[url handle query any].freeze
+    INPUT_SHAPES = %i[url query any].freeze
 
     class << self
       def input_shape(value = nil)

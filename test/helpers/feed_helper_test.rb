@@ -145,12 +145,13 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal "AI page reader", candidate_summary("llm_website_extractor", "https://example.com")
   end
 
-  test "#candidate_summary should personalize the handle profile with the user's input" do
-    assert_equal "Follow @alice via AI search", candidate_summary("llm_handle_search", "@alice")
+  test "#candidate_summary should personalize the web-search profile with the user's input" do
+    assert_equal "Follow AI search results for \"climate change\"",
+                 candidate_summary("llm_web_search", "climate change")
   end
 
-  test "#candidate_summary should personalize the web-search profile with the user's input" do
-    assert_equal "Follow web search results for \"climate change\"",
-                 candidate_summary("llm_web_search", "climate change")
+  test "#candidate_summary should personalize the web-search profile with a handle input" do
+    assert_equal "Follow AI search results for \"@alice\"",
+                 candidate_summary("llm_web_search", "@alice")
   end
 end

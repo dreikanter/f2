@@ -35,19 +35,11 @@ class InputClassifierTest < ActiveSupport::TestCase
     assert_not_equal :url, InputClassifier.classify("http:///path")
   end
 
-  test ".classify should return :handle for fediverse-shaped handles" do
-    assert_equal :handle, InputClassifier.classify("@user")
-    assert_equal :handle, InputClassifier.classify("@alice_42")
-    assert_equal :handle, InputClassifier.classify("@user@mastodon.social")
-    assert_equal :handle, InputClassifier.classify("@user@sub.example.com")
-  end
-
-  test ".classify should not return :handle for malformed handle strings" do
-    assert_not_equal :handle, InputClassifier.classify("@")
-    assert_not_equal :handle, InputClassifier.classify("@user@")
-    assert_not_equal :handle, InputClassifier.classify("@user@@instance")
-    assert_not_equal :handle, InputClassifier.classify("user@example.com")
-    assert_not_equal :handle, InputClassifier.classify("@with spaces")
+  test ".classify should return :query for fediverse-shaped handles" do
+    assert_equal :query, InputClassifier.classify("@user")
+    assert_equal :query, InputClassifier.classify("@alice_42")
+    assert_equal :query, InputClassifier.classify("@user@mastodon.social")
+    assert_equal :query, InputClassifier.classify("@user@sub.example.com")
   end
 
   test ".classify should return :query for non-URL, non-handle text within length bounds" do
@@ -70,7 +62,7 @@ class InputClassifierTest < ActiveSupport::TestCase
 
   test ".classify should strip whitespace before classifying" do
     assert_equal :url, InputClassifier.classify("  https://example.com  ")
-    assert_equal :handle, InputClassifier.classify("  @user@instance.tld\n")
+    assert_equal :query, InputClassifier.classify("  @user@instance.tld\n")
     assert_equal :query, InputClassifier.classify("  hello world  ")
   end
 

@@ -36,10 +36,7 @@ module Loader
 
     def rendered_prompt
       source = feed.source_input.to_s
-      config.fetch(:prompt_template).to_s
-            .gsub("{{url}}", source)
-            .gsub("{{input}}", source)
-            .gsub("{{#{feed.source_input_shape}}}", source)
+      config.fetch(:prompt_template).to_s.gsub("{{input}}") { source }
     end
   end
 end
