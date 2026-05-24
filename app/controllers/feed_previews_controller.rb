@@ -95,7 +95,10 @@ class FeedPreviewsController < ApplicationController
   def render_state(preview)
     respond_to do |format|
       format.html { render :show, locals: { preview: preview } }
-      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview", state_partial(preview)) }
+      # Swap only the inner body so the polling host (rendered by `show`) stays
+      # mounted across polls; ready/failed bodies carry `data-preview-done`,
+      # which trips the poller's stop-condition.
+      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview-body", state_partial(preview)) }
     end
   end
 
