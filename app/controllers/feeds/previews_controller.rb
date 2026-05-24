@@ -11,7 +11,9 @@ class Feeds::PreviewsController < ApplicationController
 
   def show
     @partial, @partial_locals =
-      if needs_credential_gate?
+      if source_input_blank?
+        [nil, {}]
+      elsif needs_credential_gate?
         [:credential_gate, {
           profile_key: profile_key,
           feed_id: draft? ? nil : feed.id
@@ -56,13 +58,24 @@ class Feeds::PreviewsController < ApplicationController
     respond_to do |format|
       format.html { render "feeds/previews/show" }
       format.turbo_stream do
-        render turbo_stream: turbo_stream.update(
-          "feed-preview",
-          partial: "feeds/#{@partial}",
-          locals: @partial_locals
-        )
+        stream =
+          if @partial
+            turbo_stream.update("feed-preview", partial: "feeds/#{@partial}", locals: @partial_locals)
+          else
+            turbo_stream.update("feed-preview", "")
+          end
+        render turbo_stream: stream
       end
     end
+  end
+
+  # The profile's required source input (url/handle/query). When it's blank
+  # there's nothing to preview yet, so we skip the job and clear the pane
+  # instead of running the pipeline against an empty source.
+  def source_input_blank?
+    shape = FeedProfile[profile_key]&.dig(:input_shape)
+    param_key = shape ? shape.to_s : "url"
+    preview_params[param_key].to_s.strip.blank?
   end
 
   def cached_preview

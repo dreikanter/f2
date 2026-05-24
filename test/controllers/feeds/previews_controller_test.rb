@@ -158,6 +158,33 @@ class Feeds::PreviewsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should not enqueue a preview when the source input is blank" do
+    sign_in_as(user)
+
+    with_memory_cache do
+      assert_no_enqueued_jobs do
+        get feed_live_preview_path("draft"), params: { profile_key: "xkcd", params: { url: "" } }
+      end
+
+      assert_response :success
+      assert_select "turbo-frame#feed-preview"
+      assert_select "[data-key='preview.loading']", false
+    end
+  end
+
+  test "#show should not enqueue a preview when the source input is missing" do
+    sign_in_as(user)
+
+    with_memory_cache do
+      assert_no_enqueued_jobs do
+        get feed_live_preview_path("draft"), params: { profile_key: "xkcd" }
+      end
+
+      assert_response :success
+      assert_select "turbo-frame#feed-preview"
+    end
+  end
+
   test "#show should render the credential gate when an AI profile is selected but the user has no credentials" do
     sign_in_as(user)
 
