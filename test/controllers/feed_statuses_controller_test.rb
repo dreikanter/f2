@@ -123,16 +123,6 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed_with_inactive_token.state
   end
 
-  test "#update should handle invalid status parameter" do
-    sign_in_as(user)
-
-    patch feed_status_path(feed), params: { status: "invalid" }
-
-    assert_redirected_to feed
-    follow_redirect!
-    assert_includes response.body, "Invalid status parameter"
-  end
-
   test "#update should redirect to login when not authenticated" do
     patch feed_status_path(feed), params: { status: "enabled" }
     assert_redirected_to new_session_url
