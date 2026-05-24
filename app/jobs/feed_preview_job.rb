@@ -1,41 +1,20 @@
-# Async wrapper for FeedPreviewService.call. Writes the resulting
-# Preview (or a failure marker on error) into Rails.cache so the
-# polling shell on the feed creation form can pick it up.
+# Runs FeedPreviewWorkflow for a persisted FeedPreview, under its current run_id.
 class FeedPreviewJob < ApplicationJob
   queue_as :default
 
-  FAILURE_TTL = 24.hours
+  # @param feed_preview_id [String] UUID of the FeedPreview
+  # @param run_id [String] the run token captured when this job was enqueued
+  def perform(feed_preview_id, run_id)
+    feed_preview = FeedPreview.find_by(id: feed_preview_id)
+    return unless feed_preview
 
-  # @param args [Hash] keyword-like hash with stringified keys:
-  #   - user_id           [Integer]
-  #   - profile_key       [String]
-  #   - params            [Hash]
-  #   - cache_key         [String]
-  #   - llm_credential_id [Integer, nil]
-  #   - limit             [Integer, optional]
-  def perform(args)
-    args = args.deep_stringify_keys
-    cache_key = args.fetch("cache_key")
-    user = User.find_by(id: args.fetch("user_id"))
-    return unless user
-
-    llm_credential = LlmCredential.find_by(id: args["llm_credential_id"]) if args["llm_credential_id"]
-
-    FeedPreviewService.call(
-      user: user,
-      profile_key: args.fetch("profile_key"),
-      params: args.fetch("params", {}),
-      llm_credential: llm_credential,
-      cache_key: cache_key,
-      refresh: true,
-      limit: args.fetch("limit", 5)
-    )
-  rescue FeedPreviewService::Error => e
-    Rails.error.report(e, context: { user_id: args["user_id"], profile_key: args["profile_key"] })
-    Rails.cache.write(
-      cache_key,
-      { error: e.class.name.demodulize, message: e.message },
-      expires_in: FAILURE_TTL
-    )
+    FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
+  rescue LlmClient::CredentialMissing => e
+    # AI profile previewed without an active credential. The workflow already
+    # marked the preview failed; this is a user-state condition, not a crash.
+    Rails.logger.info "FeedPreviewJob: no AI credential for preview #{feed_preview_id}: #{e.message}"
+  rescue => e
+    Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
+    raise
   end
 end
