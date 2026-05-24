@@ -1,9 +1,9 @@
 require "test_helper"
 require "view_component/test_case"
 
-class ListGroupComponentTest < ViewComponent::TestCase
+class ListComponentTest < ViewComponent::TestCase
   test "#render should render a ul container" do
-    component = ListGroupComponent.new
+    component = ListComponent.new
     component.with_item StubItemComponent.new(body_text: "Custom body", value: "Trailing slot", key: "stats.custom")
     result = render_inline(component)
 

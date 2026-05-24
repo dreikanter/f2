@@ -1,4 +1,4 @@
-class ListGroupComponent::PostItemComponent < ViewComponent::Base
+class ListComponent::PostItemComponent < ViewComponent::Base
   DEFAULT_ITEM_CLASS = "flex flex-col gap-2 p-4 sm:flex-row sm:items-start sm:gap-4"
   CONTENT_WRAPPER_CLASSES = "flex items-baseline gap-3 sm:flex-1"
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"

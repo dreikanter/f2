@@ -1,4 +1,4 @@
-class DescriptionListComponent < ListGroupComponent
+class DescriptionListComponent < ListComponent
   private
 
   def container_tag

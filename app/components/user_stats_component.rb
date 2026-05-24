@@ -67,7 +67,7 @@ class UserStatsComponent < ViewComponent::Base
   end
 
   def mobile_stat_cell(item)
-    ListGroupComponent::StatItemComponent.new(label: item[:label], value: item[:value], key: "stats.#{item[:key]}")
+    ListComponent::StatItemComponent.new(label: item[:label], value: item[:value], key: "stats.#{item[:key]}")
   end
 
   def desktop_stat_cell(item)

@@ -4,7 +4,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def call
-    component = ListGroupComponent.new
+    component = ListComponent.new
 
     add_feed_item(component)
     add_published_item(component)
@@ -21,7 +21,7 @@ class PostDetailsComponent < ViewComponent::Base
   private
 
   def add_feed_item(component)
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Feed",
       value: helpers.link_to(@post.feed.name, @post.feed, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
       key: "post.feed"
@@ -30,7 +30,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_published_item(component)
     value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Published",
       value: value,
       key: "post.published"
@@ -51,7 +51,7 @@ class PostDetailsComponent < ViewComponent::Base
       " "
     )
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Attachments (#{@post.attachment_urls.length})",
       value: attachments_html,
       key: "post.attachments"
@@ -73,7 +73,7 @@ class PostDetailsComponent < ViewComponent::Base
       end
     )
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Comments (#{@post.comments.length})",
       value: comments_html,
       key: "post.comments"
@@ -87,7 +87,7 @@ class PostDetailsComponent < ViewComponent::Base
       content_tag(:span, "None", class: "text-slate-500")
     end
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Source URL",
       value: value,
       key: "post.source_url"
@@ -103,7 +103,7 @@ class PostDetailsComponent < ViewComponent::Base
       content_tag(:div, @post.validation_errors, class: "text-red-600")
     end
 
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "Validation Errors",
       value: errors_html,
       key: "post.validation_errors"
@@ -111,7 +111,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_uid_item(component)
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "UID",
       value: content_tag(:code, @post.uid, class: "text-sm"),
       key: "post.uid"
@@ -119,7 +119,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_freefeed_post_id_item(component)
-    component.with_item(ListGroupComponent::StatItemComponent.new(
+    component.with_item(ListComponent::StatItemComponent.new(
       label: "FreeFeed Post ID",
       value: content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
       key: "post.freefeed_post_id"

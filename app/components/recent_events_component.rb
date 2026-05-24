@@ -14,13 +14,13 @@ class RecentEventsComponent < ViewComponent::Base
   attr_reader :events
 
   def list_component
-    ListGroupComponent.new.tap do |list|
+    ListComponent.new.tap do |list|
       list.with_items(@events.map { |event| event_item(event) })
     end
   end
 
   def event_item(event)
-    ListGroupComponent::StatItemComponent.new(
+    ListComponent::StatItemComponent.new(
       label: event_label(event),
       value: helpers.time_ago_tag(event.created_at),
       key: "recent_events.#{event.id}"

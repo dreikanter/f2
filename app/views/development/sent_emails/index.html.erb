@@ -19,11 +19,11 @@
     <% end %>
   <% else %>
     <%# TBD: Extract to a component %>
-    <% list = ListGroupComponent.new %>
+    <% list = ListComponent.new %>
     <% @emails.each do |email| %>
       <% subject = email[:subject].presence || "(no subject)" %>
       <% list.with_item(
-           ListGroupComponent::FeedItemComponent.new(
+           ListComponent::FeedItemComponent.new(
              icon: icon("envelope"),
              title: subject,
              title_url: development_sent_email_path(id: email[:id]),

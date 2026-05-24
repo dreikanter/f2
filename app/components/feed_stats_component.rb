@@ -59,7 +59,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def mobile_stat_cell(item)
-    ListGroupComponent::StatItemComponent.new(
+    ListComponent::StatItemComponent.new(
       label: item[:label],
       value: item[:value],
       key: "stats.#{item[:key]}"

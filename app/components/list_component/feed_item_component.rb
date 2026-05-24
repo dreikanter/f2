@@ -1,4 +1,4 @@
-class ListGroupComponent::FeedItemComponent < ViewComponent::Base
+class ListComponent::FeedItemComponent < ViewComponent::Base
   DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 p-4"
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
   CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-2"
