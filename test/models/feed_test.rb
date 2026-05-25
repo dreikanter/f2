@@ -355,6 +355,18 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
+  test "#can_be_previewed? should be true for a query-shaped profile with a query" do
+    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "ruby news" })
+
+    assert feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be false when the source input is blank" do
+    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "" })
+
+    assert_not feed.can_be_previewed?
+  end
+
   test "#processor_class resolves correct processor class" do
     feed = create(:feed, feed_profile_key: "rss")
 

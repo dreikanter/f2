@@ -165,7 +165,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    url.present? && feed_profile_present?
+    source_input.present? && feed_profile_present?
   end
 
   # Creates and returns a loader instance for this feed
