@@ -3,9 +3,43 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Edit Access Token") %>
 
-  <%= render CardComponent.new do %>
-    <div class="space-y-6">
-      <p class="text-slate-600">Access token editing form coming soon...</p>
-    </div>
-  <% end %>
+  <div class="max-w-2xl">
+    <%= form_with model: @access_token do |form| %>
+      <div class="space-y-10">
+        <div class="space-y-2">
+          <%= form.label :name, "Token Name", class: "block font-semibold text-slate-800" %>
+          <%= form.text_field :name,
+                              class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                              placeholder: "e.g., My FreeFeed Token",
+                              autocomplete: "off",
+                              autofocus: true %>
+          <% if @access_token.errors[:name].any? %>
+            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
+          <% end %>
+        </div>
+
+        <div class="space-y-2">
+          <p class="block font-semibold text-slate-800">FreeFeed Instance</p>
+          <p class="text-slate-600"><%= @access_token.host %></p>
+        </div>
+
+        <div class="space-y-2">
+          <%= form.label :token, "New Token Value", class: "block font-semibold text-slate-800" %>
+          <%= form.text_field :token,
+                              class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                              placeholder: "Paste a new token here to replace the current one",
+                              autocomplete: "off" %>
+          <p class="text-slate-500">Leave blank to keep the existing token. Entering a new value will trigger re-validation.</p>
+          <% if @access_token.errors[:token].any? %>
+            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
+        <%= form.submit "Save Changes", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Cancel", access_token_path(@access_token), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      </div>
+    <% end %>
+  </div>
 </div>

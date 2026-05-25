@@ -279,6 +279,76 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "#edit should require authentication" do
+    get edit_access_token_path(access_token)
+    assert_redirected_to new_session_path
+  end
+
+  test "#edit should render for own token" do
+    sign_in_as user
+    get edit_access_token_path(access_token)
+
+    assert_response :success
+    assert_select "h1", "Edit Access Token"
+  end
+
+  test "#edit should not render for other user's token" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as user
+    get edit_access_token_path(other_token)
+
+    assert_response :not_found
+  end
+
+  test "#update should require authentication" do
+    patch access_token_path(access_token), params: { access_token: { name: "New Name" } }
+    assert_redirected_to new_session_path
+  end
+
+  test "#update should update name" do
+    sign_in_as user
+    patch access_token_path(access_token), params: { access_token: { name: "Updated Name" } }
+
+    assert_redirected_to access_token_path(access_token)
+    assert_equal "Updated Name", access_token.reload.name
+    assert_equal "Changes saved.", flash[:notice]
+  end
+
+  test "#update should not re-validate when only name changes" do
+    sign_in_as user
+    assert_no_enqueued_jobs do
+      patch access_token_path(access_token), params: { access_token: { name: "Updated Name" } }
+    end
+  end
+
+  test "#update should update encrypted token and re-validate when new token provided" do
+    sign_in_as user
+    assert_enqueued_jobs 1, only: TokenValidationJob do
+      patch access_token_path(access_token), params: {
+        access_token: { name: access_token.name, token: "new_token_value" }
+      }
+    end
+
+    assert_redirected_to access_token_path(access_token)
+  end
+
+  test "#update should render edit on validation error" do
+    sign_in_as user
+    other = create(:access_token, name: "Taken Name", user: user)
+    patch access_token_path(access_token), params: { access_token: { name: other.name } }
+
+    assert_response :unprocessable_entity
+    assert_select "h1", "Edit Access Token"
+  end
+
+  test "#update should not update other user's token" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as user
+    patch access_token_path(other_token), params: { access_token: { name: "Hacked" } }
+
+    assert_response :not_found
+  end
+
   test "requires authentication for destroy" do
     delete access_token_path(access_token)
 

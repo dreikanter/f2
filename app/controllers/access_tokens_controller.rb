@@ -35,6 +35,27 @@ class AccessTokensController < ApplicationController
     end
   end
 
+  def edit
+    @access_token = find_access_token
+    authorize @access_token
+  end
+
+  def update
+    @access_token = find_access_token
+    authorize @access_token
+
+    new_token = params.dig(:access_token, :token).presence
+    attrs = { name: params.dig(:access_token, :name) }
+    attrs[:encrypted_token] = new_token if new_token
+
+    if @access_token.update(attrs)
+      @access_token.validate_token_async if new_token
+      redirect_to access_token_path(@access_token), notice: "Changes saved."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   def destroy
     access_token = find_access_token
     authorize access_token

@@ -58,7 +58,7 @@ Rails.application.routes.draw do
     resources :email_confirmations, only: :show, param: :token
   end
 
-  resources :access_tokens, except: [:edit, :update] do
+  resources :access_tokens do
     scope module: :access_tokens do
       resource :validation, only: :show
       resources :groups, only: :index
