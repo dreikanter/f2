@@ -5,7 +5,7 @@ class LlmCredentialTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "should be valid with a registered provider and a schema-compliant credential_data" do
+  test "should be valid with a registered provider and an api_key" do
     credential = build(:llm_credential, user: user)
     assert credential.valid?, credential.errors.full_messages.inspect
   end
@@ -16,16 +16,16 @@ class LlmCredentialTest < ActiveSupport::TestCase
     assert_includes credential.errors[:provider], "is not included in the list"
   end
 
-  test "should reject credential_data that violates the provider schema" do
-    credential = build(:llm_credential, user: user, credential_data: { "api_key" => "x" })
+  test "should reject a blank api_key" do
+    credential = build(:llm_credential, user: user, credential_data: { "api_key" => "" })
     refute credential.valid?
-    assert credential.errors[:credential_data].any?
+    assert_includes credential.errors[:base], "Enter your API key"
   end
 
   test "should reject missing credential_data" do
     credential = build(:llm_credential, user: user, credential_data: {})
     refute credential.valid?
-    assert credential.errors[:credential_data].any?
+    assert_includes credential.errors[:base], "Enter your API key"
   end
 
   test "should enforce display_name uniqueness per (user, provider)" do

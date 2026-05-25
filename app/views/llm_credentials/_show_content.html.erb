@@ -29,10 +29,8 @@
     <div class="rounded-lg border border-red-200 bg-red-50 p-4 space-y-2"
          data-credential-state="inactive"
          data-key="llm_credential.inactive">
-      <p class="font-semibold text-red-900">We couldn't use this credential</p>
-      <% if llm_credential.last_error.present? %>
-        <p class="text-sm text-red-800"><%= llm_credential.last_error %></p>
-      <% end %>
+      <p class="font-semibold text-red-900">This key didn't work</p>
+      <p class="text-sm text-red-800">Double-check you copied the whole key from your provider's dashboard, then add it again.</p>
     </div>
   <% end %>
 
