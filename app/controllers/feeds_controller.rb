@@ -56,7 +56,7 @@ class FeedsController < ApplicationController
     if @feed.save
       cleanup_feed_identification(@feed.url) if @feed.url
 
-      if gate_commit?
+      if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
       elsif params[:enable_feed] == "1" && !@feed.enable
         flash.now[:alert] = "Couldn't enable. See issues below."
@@ -92,7 +92,7 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1" && !gate_commit?
+    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1" && !require_llm_credentials?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
@@ -100,7 +100,7 @@ class FeedsController < ApplicationController
       interval_changed = @feed.saved_change_to_cron_expression?
       cleanup_feed_identification(@feed.url) if @feed.url
 
-      if gate_commit?
+      if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
       elsif params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
         flash.now[:alert] = "Couldn't enable. See issues below."
@@ -126,7 +126,7 @@ class FeedsController < ApplicationController
   # The credential gate (rendered in the preview pane when the chosen profile
   # is AI and the user has no usable credentials) submits the feed form with
   # this commit value. See app/views/feeds/_credential_gate.html.erb.
-  def gate_commit?
+  def require_llm_credentials?
     params[:commit] == "save_as_draft_and_add_credentials"
   end
 
