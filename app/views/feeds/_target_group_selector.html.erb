@@ -17,11 +17,11 @@
                      disabled: true %>
       <p class="text-sm text-red-600">
         <% if token.nil? %>
-          Unable to load groups. Please select a FreeFeed account.
+          Unable to load groups. Please select an access token.
         <% elsif !token.active? %>
-          This token is inactive. Please select a different FreeFeed account or add a new one.
+          This token is inactive. Please select a different access token or add a new one.
         <% elsif defined?(token_error) && token_error == :unauthorized %>
-          Unable to load groups. Please select a different FreeFeed account or add a new one.
+          Unable to load groups. Please select a different access token or add a new one.
         <% elsif defined?(token_error) && token_error == :empty %>
           This account doesn't manage any groups yet.
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),

@@ -351,6 +351,55 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed_identification&.destroy
   end
 
+  test "#show should preselect the default schedule interval with no blank option" do
+    sign_in_as(user)
+    create(:access_token, :active, user: user)
+    url = "http://example.com/feed.xml"
+    feed_identification = FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "select[name='feed[schedule_interval]'] option[value='']", count: 0
+    assert_select "select[name='feed[schedule_interval]'] option[selected='selected']" do |options|
+      assert_equal Feed::DEFAULT_SCHEDULE_INTERVAL, options.first["value"]
+    end
+  ensure
+    feed_identification&.destroy
+  end
+
+  test "#show should preselect the first active access token with no blank option" do
+    sign_in_as(user)
+    first_token = create(:access_token, :active, user: user, host: "https://aaa.freefeed.net")
+    create(:access_token, :active, user: user, host: "https://zzz.freefeed.net")
+    url = "http://example.com/feed.xml"
+    feed_identification = FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "select[name='feed[access_token_id]'] option[value='']", count: 0
+    assert_select "select[name='feed[access_token_id]'] option[selected='selected']" do |options|
+      assert_equal first_token.id.to_s, options.first["value"]
+    end
+  ensure
+    feed_identification&.destroy
+  end
+
   test "#show should write the user's input under params[query] for handle inputs" do
     sign_in_as(user)
     handle = "@alice"
