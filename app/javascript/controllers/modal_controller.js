@@ -64,6 +64,8 @@ export default class extends Controller {
     document.body.style.overflow = ''
     document.body.style.paddingRight = ''
 
+    this.element.dispatchEvent(new CustomEvent('modal:hide', { bubbles: true }))
+
     // Restore focus to previously focused element
     if (this.previouslyFocusedElement && this.previouslyFocusedElement.focus) {
       this.previouslyFocusedElement.focus()
