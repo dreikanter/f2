@@ -21,9 +21,8 @@
         <%= f.label :provider, "AI Provider", class: "block font-semibold text-slate-800" %>
         <%= f.select :provider,
                      LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
-                     { include_blank: false },
+                     {},
                      class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
-                     required: true,
                      data: { key: "llm_credentials.provider" } %>
       </div>
 
