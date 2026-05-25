@@ -98,13 +98,10 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     end
 
     # Step 5: visit the edit page, fill in the remaining required fields,
-    # tick "Enable feed", and submit after a fresh preview ran. The feed
-    # should transition into the enabled state.
+    # tick "Enable feed", and submit. Previewing is optional — the feed should
+    # transition to the enabled state without requiring a recent preview.
     get edit_feed_path(draft)
     assert_response :success
-
-    create(:feed_preview, :completed, user: user, feed_profile_key: "llm_website_extractor",
-           params: { "url" => ai_url }, ready_at: Time.current)
 
     patch feed_path(draft), params: {
       feed: {

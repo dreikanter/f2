@@ -1,11 +1,9 @@
 require "test_helper"
 
-# FR-012 + FR-013 state gating: promoting a feed to enabled requires a
-# fresh, ready FeedPreview tied to (user, profile, params). The controller
-# uses a save-then-promote flow: the initial save persists the feed as a
-# draft (new records default to :draft), then `Feed#enable` attempts the
-# promotion under the `:enable` validation context. A missing, stale, or
-# mismatched preview keeps the feed at :draft and re-renders the form.
+# FR-012 + FR-013 state gating: the controller uses a save-then-promote flow:
+# the initial save persists the feed as a draft (new records default to :draft),
+# then `Feed#enable` attempts the promotion under the `:enable` validation context.
+# Previewing is optional — a feed can be enabled with or without a recent preview.
 class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
@@ -46,17 +44,17 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", Feed.last.state
   end
 
-  test "#post should fall back to draft when no recent preview exists" do
+  test "#post should enable a feed when no preview exists" do
     sign_in_as(user)
 
     assert_difference("Feed.count", 1) do
       post feeds_path, params: feed_params
     end
 
-    assert_equal "draft", Feed.last.state
+    assert_equal "enabled", Feed.last.state
   end
 
-  test "#post should reject a stale preview and fall back to draft" do
+  test "#post should enable a feed even when the only preview is stale" do
     sign_in_as(user)
     seed_preview(ready_at: 2.hours.ago)
 
@@ -64,15 +62,15 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
       post feeds_path, params: feed_params
     end
 
-    assert_equal "draft", Feed.last.state
+    assert_equal "enabled", Feed.last.state
   end
 
-  test "#post should reject a preview for different params and fall back to draft" do
+  test "#post should enable a feed even when the only preview is for different params" do
     sign_in_as(user)
     seed_preview(params: { "url" => "http://different.com/feed.xml" })
 
     post feeds_path, params: feed_params
 
-    assert_equal "draft", Feed.last.state
+    assert_equal "enabled", Feed.last.state
   end
 end
