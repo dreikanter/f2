@@ -19,7 +19,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "h1", "Access Tokens"
+    assert_select "h1", "Freefeed Access Tokens"
   end
 
   test "#index should display empty state" do

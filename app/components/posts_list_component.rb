@@ -32,6 +32,7 @@ class PostsListComponent < ViewComponent::Base
 
     [
       feed_link_segment(post:, helpers:, show_feed:),
+      status_segment(post:),
       published_segment(post:, helpers:),
       attachments_segment(post:),
       comments_segment(post:),
@@ -39,6 +40,10 @@ class PostsListComponent < ViewComponent::Base
       freefeed_link_segment(post:, helpers:),
       withdraw_link_segment(post:, helpers:, withdraw_allowed:)
     ].compact
+  end
+
+  def self.status_segment(post:)
+    "Withdrawn" if post.status.to_s == "withdrawn"
   end
 
   def self.feed_link_segment(post:, helpers:, show_feed: false)
