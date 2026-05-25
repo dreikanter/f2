@@ -749,36 +749,44 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert pos_a < pos_z, "Expected A Feed to appear before Z Feed"
   end
 
-  test "#index should sort feeds by status with enabled first when ascending" do
+  test "#index should sort feeds by status as draft, enabled, disabled when ascending" do
     sign_in_as(user)
     create(:feed, :enabled, user: user, name: "Enabled Feed")
     create(:feed, user: user, name: "Disabled Feed", state: :disabled)
+    create(:feed, user: user, name: "Draft Feed", state: :draft)
 
     get feeds_url(sort: "status", direction: "asc")
     assert_response :success
 
     response_body = response.body
-    pos_disabled = response_body.index("Disabled Feed")
+    pos_draft = response_body.index("Draft Feed")
     pos_enabled = response_body.index("Enabled Feed")
+    pos_disabled = response_body.index("Disabled Feed")
+    assert_not_nil pos_draft, "Expected draft feed to be rendered"
     assert_not_nil pos_enabled, "Expected enabled feed to be rendered"
     assert_not_nil pos_disabled, "Expected disabled feed to be rendered"
+    assert pos_draft < pos_enabled, "Expected draft feed to appear before enabled feed"
     assert pos_enabled < pos_disabled, "Expected enabled feed to appear before disabled feed"
   end
 
-  test "#index should sort feeds by status with disabled first when descending" do
+  test "#index should sort feeds by status as disabled, enabled, draft when descending" do
     sign_in_as(user)
     create(:feed, :enabled, user: user, name: "Enabled Feed")
     create(:feed, user: user, name: "Disabled Feed", state: :disabled)
+    create(:feed, user: user, name: "Draft Feed", state: :draft)
 
     get feeds_url(sort: "status", direction: "desc")
     assert_response :success
 
     response_body = response.body
-    pos_disabled = response_body.index("Disabled Feed")
+    pos_draft = response_body.index("Draft Feed")
     pos_enabled = response_body.index("Enabled Feed")
+    pos_disabled = response_body.index("Disabled Feed")
+    assert_not_nil pos_draft, "Expected draft feed to be rendered"
     assert_not_nil pos_enabled, "Expected enabled feed to be rendered"
     assert_not_nil pos_disabled, "Expected disabled feed to be rendered"
     assert pos_disabled < pos_enabled, "Expected disabled feed to appear before enabled feed"
+    assert pos_enabled < pos_draft, "Expected enabled feed to appear before draft feed"
   end
 
   test "#pagination should preserve sort parameters" do

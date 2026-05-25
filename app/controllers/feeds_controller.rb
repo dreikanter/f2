@@ -14,7 +14,7 @@ class FeedsController < ApplicationController
     },
     status: {
       title: "Status",
-      order_by: "CASE WHEN feeds.state = #{Feed.states[:enabled]} THEN 0 ELSE 1 END",
+      order_by: "CASE feeds.state WHEN #{Feed.states[:draft]} THEN 0 WHEN #{Feed.states[:enabled]} THEN 1 ELSE 2 END",
       direction: :asc
     },
     target_group: {
