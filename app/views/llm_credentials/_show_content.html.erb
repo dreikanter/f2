@@ -37,11 +37,18 @@
   <% end %>
 
   <div class="flex flex-wrap gap-3">
-    <% if llm_credential.active? && feed_id.present? %>
-      <%= link_to "Continue setting up your feed",
-                  edit_feed_path(feed_id),
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500",
-                  data: { key: "llm_credential.return-to" } %>
+    <% if feed_id.present? %>
+      <% if llm_credential.active? %>
+        <%= link_to "Continue setting up your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500",
+                    data: { key: "llm_credential.return-to" } %>
+      <% else %>
+        <%= link_to "Back to your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50",
+                    data: { key: "llm_credential.return-to" } %>
+      <% end %>
     <% end %>
     <%= link_to "Back to credentials",
                 llm_credentials_path,

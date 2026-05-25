@@ -25,7 +25,7 @@ class LlmProvider
       credential_schema: {
         "type" => "object",
         "properties" => {
-          "api_key" => { "type" => "string", "minLength" => 10 }
+          "api_key" => { "type" => "string", "minLength" => 10, "title" => "API key" }
         },
         "required" => ["api_key"],
         "additionalProperties" => false

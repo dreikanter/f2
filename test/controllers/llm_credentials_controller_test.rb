@@ -38,7 +38,7 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get llm_credentials_url
     assert_response :success
-    assert_select "h2", text: /No AI credentials yet/
+    assert_select "[data-key='empty-state']", text: /No AI credentials yet/
   end
 
   test "#new should render the form" do
@@ -78,6 +78,7 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='llm_credentials.new']"
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
   end
 
   test "#new should ignore foreign feed_id" do
@@ -218,6 +219,17 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Continue setting up your feed", count: 0
   end
 
+  test "#show should render a back-to-feed link when credential is inactive and feed_id is owned" do
+    sign_in_as(user)
+    inactive = create(:llm_credential, :inactive, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get llm_credential_url(inactive, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
+  end
+
   test "#show should not render Continue setting up your feed link when feed_id is missing" do
     sign_in_as(user)
     active = create(:llm_credential, :active, user: user)
@@ -236,6 +248,19 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
       delete llm_credential_url(credential)
     end
     assert_redirected_to llm_credentials_path
+  end
+
+  test "#destroy should keep usage rows and clear their credential reference" do
+    sign_in_as(user)
+    usage = create(:llm_usage, user: user, llm_credential: credential)
+
+    assert_difference("LlmCredential.count", -1) do
+      assert_no_difference("LlmUsage.count") do
+        delete llm_credential_url(credential)
+      end
+    end
+    assert_redirected_to llm_credentials_path
+    assert_nil usage.reload.llm_credential_id
   end
 
   test "#destroy should 404 for another user's credential" do
