@@ -218,6 +218,17 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Continue setting up your feed", count: 0
   end
 
+  test "#show should render a back-to-feed link when credential is inactive and feed_id is owned" do
+    sign_in_as(user)
+    inactive = create(:llm_credential, :inactive, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get llm_credential_url(inactive, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
+  end
+
   test "#show should not render Continue setting up your feed link when feed_id is missing" do
     sign_in_as(user)
     active = create(:llm_credential, :active, user: user)
