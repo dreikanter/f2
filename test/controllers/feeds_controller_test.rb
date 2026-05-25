@@ -226,6 +226,49 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate feed, :draft?, "State should be draft despite state param"
   end
 
+  test "#create should save as draft and redirect to token setup when commit signals token gate" do
+    sign_in_as(user)
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: {
+        feed: {
+          url: "http://example.com/feed.xml",
+          name: "Test Feed",
+          feed_profile_key: "rss",
+          target_group: "testgroup",
+          schedule_interval: "1h"
+        },
+        commit: "save_as_draft_and_add_token"
+      }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?
+    assert_redirected_to new_access_token_path(feed_id: feed.id)
+  end
+
+  test "#create token-gate commit should ignore enable_feed=1" do
+    sign_in_as(user)
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: {
+        feed: {
+          url: "http://example.com/feed.xml",
+          name: "Test Feed",
+          feed_profile_key: "rss",
+          target_group: "testgroup",
+          schedule_interval: "1h"
+        },
+        enable_feed: "1",
+        commit: "save_as_draft_and_add_token"
+      }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?, "Token gate commit must force draft regardless of enable_feed"
+    assert_redirected_to new_access_token_path(feed_id: feed.id)
+  end
+
   test "#create should save as draft and redirect to credential setup when commit signals gate" do
     sign_in_as(user)
     access_token
@@ -638,6 +681,21 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     enabled_feed.reload
     assert_predicate enabled_feed, :disabled?
     assert_equal "Paused Feed", enabled_feed.name
+  end
+
+  test "#update should save and redirect to token setup when commit signals token gate" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    patch feed_url(draft), params: {
+      feed: { name: "Updated Draft Name" },
+      commit: "save_as_draft_and_add_token"
+    }
+
+    assert_redirected_to new_access_token_path(feed_id: draft.id)
+    draft.reload
+    assert_predicate draft, :draft?
+    assert_equal "Updated Draft Name", draft.name
   end
 
   test "#update should save and redirect to credential setup when commit signals gate" do

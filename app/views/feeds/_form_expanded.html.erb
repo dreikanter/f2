@@ -103,24 +103,28 @@
         <div class="space-y-6">
           <div class="space-y-2">
             <%= f.label :access_token_id, "FreeFeed Account", class: "block font-semibold text-slate-800" %>
-            <%= f.select :access_token_id,
-                         options_from_collection_for_select(
-                           active_tokens,
-                           :id,
-                           :display_name,
-                           feed.access_token_id || active_tokens.first&.id
-                         ),
-                         {},
-                         {
-                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
-                           required: true,
-                           data: {
-                             action: "change->groups#refresh",
-                             groups_target: "tokenSelect"
-                           }
-                         } %>
-            <% if f.object.errors[:access_token].any? %>
-              <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
+            <% if active_tokens.empty? %>
+              <%= render "feeds/token_gate" %>
+            <% else %>
+              <%= f.select :access_token_id,
+                           options_from_collection_for_select(
+                             active_tokens,
+                             :id,
+                             :display_name,
+                             feed.access_token_id || active_tokens.first&.id
+                           ),
+                           {},
+                           {
+                             class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
+                             required: true,
+                             data: {
+                               action: "change->groups#refresh",
+                               groups_target: "tokenSelect"
+                             }
+                           } %>
+              <% if f.object.errors[:access_token].any? %>
+                <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
+              <% end %>
             <% end %>
           </div>
 
