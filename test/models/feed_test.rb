@@ -529,6 +529,10 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal expected, result
   end
 
+  test "DEFAULT_SCHEDULE_INTERVAL should be a known schedule interval key" do
+    assert_includes Feed::SCHEDULE_INTERVALS.keys, Feed::DEFAULT_SCHEDULE_INTERVAL
+  end
+
   test "#schedule_interval should return key for matching cron expression" do
     feed = build(:feed, cron_expression: "0 * * * *")
 

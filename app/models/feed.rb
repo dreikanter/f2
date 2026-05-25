@@ -26,6 +26,10 @@ class Feed < ApplicationRecord
     "2d" => { cron: "0 0 */2 * *", display: "2 days" }
   }.freeze
 
+  # Pre-selected interval for the "Check for new posts every" dropdown when a
+  # feed has no schedule yet. Must be a key in SCHEDULE_INTERVALS.
+  DEFAULT_SCHEDULE_INTERVAL = "2h"
+
   belongs_to :user
   belongs_to :access_token, optional: true
   belongs_to :llm_credential, optional: true
