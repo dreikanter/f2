@@ -1,5 +1,5 @@
 class ListComponent::FeedItemComponent < ViewComponent::Base
-  DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 p-4"
+  DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 px-4 py-3"
   ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
   CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-2"
   TITLE_ROW_CLASSES = "flex flex-wrap items-center gap-2"
@@ -20,7 +20,7 @@ class ListComponent::FeedItemComponent < ViewComponent::Base
 
   def call
     content_tag :li, class: DEFAULT_ITEM_CLASS, data: { key: @key } do
-      safe_join([icon_span, content_wrapper])
+      content_wrapper
     end
   end
 
