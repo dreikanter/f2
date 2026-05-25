@@ -39,6 +39,15 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
   end
 
+  test "#index should display host when token owner is not set" do
+    sign_in_as user
+    create(:access_token, user: user, owner: nil)
+    get access_tokens_path
+
+    assert_response :success
+    assert_match(/Host:/, response.body)
+  end
+
   test "#show should redirect to sign in form" do
     get access_token_path(access_token)
     assert_redirected_to new_session_path
