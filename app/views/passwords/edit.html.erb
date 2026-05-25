@@ -12,7 +12,7 @@
     <% end %>
 
     <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
-      <div class="space-y-6">
+      <div class="space-y-10">
         <div class="space-y-2">
           <%= form.label :password, "New password", class: "block font-semibold text-slate-800" %>
           <%= form.password_field :password,
