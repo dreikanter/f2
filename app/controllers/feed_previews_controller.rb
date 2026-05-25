@@ -11,7 +11,7 @@ class FeedPreviewsController < ApplicationController
     "failed" => "failed"
   }.freeze
 
-  # GET /preview?profile_key=…&params[…]=…
+  # GET /feed_preview?profile_key=…&params[…]=…
   # Workhorse for the lazy turbo-frame and polling: find or create the row for
   # (user, profile_key, params_digest), start a run when it has no fresh result,
   # and render the current state.
@@ -21,7 +21,7 @@ class FeedPreviewsController < ApplicationController
     render_state(preview)
   end
 
-  # POST /preview — explicit refresh: always start a fresh run.
+  # POST /feed_preview — explicit refresh: always start a fresh run.
   def create
     render_state(start_run(locate_preview))
   end
