@@ -6,19 +6,19 @@ class AccessTokensController < ApplicationController
 
   def show
     @access_token = find_access_token
-    @feed = scoped_feed(params[:feed_id])
+    @feed = load_feed
     authorize @access_token
   end
 
   def new
     @access_token = AccessToken.new
-    @feed = scoped_feed(params[:feed_id])
+    @feed = load_feed
     authorize @access_token
   end
 
   def create
     @access_token = build_acces_token
-    @feed = scoped_feed(params[:feed_id])
+    @feed = load_feed
     authorize @access_token
 
     unless valid_host?(@access_token.host)
@@ -44,10 +44,10 @@ class AccessTokensController < ApplicationController
 
   private
 
-  def scoped_feed(feed_id)
-    return nil if feed_id.blank?
+  def load_feed
+    return nil if params[:feed_id].blank?
 
-    Current.user.feeds.find_by(id: feed_id)
+    Current.user.feeds.find_by(id: params[:feed_id])
   end
 
   def build_acces_token
