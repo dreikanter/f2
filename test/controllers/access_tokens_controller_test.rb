@@ -174,6 +174,44 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Continue setting up your feed", count: 0
   end
 
+  test "#show should render Back to your feed link in all states when feed_id is present" do
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    [create(:access_token, user: user, status: :pending),
+     create(:access_token, :active, user: user),
+     create(:access_token, :inactive, user: user)].each do |token|
+      get access_token_path(token, feed_id: draft.id)
+      assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
+    end
+  end
+
+  test "#show should not render Back to your feed link when feed_id is missing" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_select "a", text: "Back to your feed", count: 0
+  end
+
+  test "#new should point Cancel to feed editor when feed_id is present" do
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    get new_access_token_path, params: { feed_id: draft.id }
+
+    assert_select "a[href=?]", edit_feed_path(draft), text: "Cancel"
+  end
+
+  test "#new should point Cancel to tokens list when feed_id is absent" do
+    sign_in_as user
+
+    get new_access_token_path
+
+    assert_select "a[href=?]", access_tokens_path, text: "Cancel"
+  end
+
   test "#show should not render Continue setting up your feed link when feed_id is missing" do
     sign_in_as user
     active = create(:access_token, :active, user: user)
