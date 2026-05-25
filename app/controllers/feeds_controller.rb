@@ -58,9 +58,8 @@ class FeedsController < ApplicationController
 
       if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
-      elsif params[:enable_feed] == "1" && !@feed.enable
-        flash.now[:alert] = "Couldn't enable. See issues below."
-        render :new, status: :unprocessable_entity
+      elsif enable_feed?
+        enable_and_respond(@feed)
       else
         redirect_to feed_path(@feed), notice: success_message_for(@feed)
       end
@@ -92,7 +91,7 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && params[:enable_feed] != "1" && !require_llm_credentials?
+    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_llm_credentials?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
@@ -102,9 +101,8 @@ class FeedsController < ApplicationController
 
       if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
-      elsif params[:enable_feed] == "1" && !@feed.enabled? && !@feed.enable
-        flash.now[:alert] = "Couldn't enable. See issues below."
-        render :edit, status: :unprocessable_entity
+      elsif enable_feed? && !@feed.enabled?
+        promote_and_redirect(@feed, interval_changed)
       else
         @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
         redirect_to feed_path(@feed), notice: update_message_for(@feed)
@@ -128,6 +126,34 @@ class FeedsController < ApplicationController
   # this commit value. See app/views/feeds/_credential_gate.html.erb.
   def require_llm_credentials?
     params[:commit] == "save_as_draft_and_add_credentials"
+  end
+
+  def enable_feed?
+    params[:enable_feed] == "1"
+  end
+
+  def enable_and_respond(feed)
+    if feed.enable
+      redirect_to feed_path(feed), notice: success_message_for(feed)
+    else
+      flash.now[:alert] = "Couldn't enable. See issues below."
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def promote_and_redirect(feed, interval_changed)
+    feed.transaction do
+      if feed.enable
+        feed.reset_schedule! if interval_changed && feed.feed_schedule.present?
+      end
+    end
+
+    if feed.enabled?
+      redirect_to feed_path(feed), notice: update_message_for(feed)
+    else
+      flash.now[:alert] = "Couldn't enable. See issues below."
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   def active_access_tokens?
