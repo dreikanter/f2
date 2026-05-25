@@ -557,7 +557,7 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "15 3 * * *", feed.schedule_display
   end
 
-  # T018: enabling_requires_recent_preview validation
+  # Preview is optional and does not gate enabling.
   def preview_user
     @preview_user ||= create(:user)
   end
@@ -566,127 +566,29 @@ class FeedTest < ActiveSupport::TestCase
     create(:access_token, :active, user: user)
   end
 
-  # The preview-required check is scoped to `on: :enable`, so it fires only
-  # via `save(context: :enable)` (i.e. through `Feed#enable`). These tests
-  # validate the check directly using `valid?(:enable)`.
-
-  test "should require a recent preview when promoting a new feed to enabled state" do
-    feed = build(:feed,
+  test "#enable should promote a feed to enabled without any preview" do
+    feed = create(:feed, :disabled,
       user: preview_user,
-      state: :enabled,
       access_token: access_token_for(preview_user),
+      target_group: "tg",
       feed_profile_key: "rss",
       params: { "url" => "https://example.com/feed.xml" })
 
-    assert_not feed.valid?(:enable)
-    assert feed.errors.of_kind?(:state, :preview_required)
+    assert feed.enable, feed.errors.full_messages.inspect
+    assert_predicate feed.reload, :enabled?
   end
 
-  test "should allow promoting a new feed to enabled with a fresh ready preview" do
-    feed = build(:feed,
+  test "#enable should fail when a required enabled-state field is missing" do
+    feed = create(:feed, :disabled,
       user: preview_user,
-      state: :enabled,
       access_token: access_token_for(preview_user),
+      target_group: "",
       feed_profile_key: "rss",
       params: { "url" => "https://example.com/feed.xml" })
-    seed_ready_preview(feed)
 
-    assert feed.valid?(:enable), feed.errors.full_messages.inspect
-  end
-
-  test "should reject promoting a feed when the preview is for different params" do
-    feed = build(:feed,
-      user: preview_user,
-      state: :enabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    create(:feed_preview, :completed,
-           user: feed.user,
-           feed_profile_key: "rss",
-           params: { "url" => "https://OTHER.example/feed.xml" },
-           ready_at: Time.current)
-
-    assert_not feed.valid?(:enable)
-    assert feed.errors.of_kind?(:state, :preview_required)
-  end
-
-  test "should reject promoting a feed with a stale preview" do
-    feed = build(:feed,
-      user: preview_user,
-      state: :enabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    seed_ready_preview(feed, ready_at: 2.hours.ago)
-
-    assert_not feed.valid?(:enable)
-    assert feed.errors.of_kind?(:state, :preview_required)
-  end
-
-  test "should require a recent preview when re-promoting an enabled feed with new params" do
-    feed = create(:feed,
-      user: preview_user,
-      state: :enabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    feed.params = { "url" => "https://other.example/feed.xml" }
-
-    assert_not feed.valid?(:enable)
-    assert feed.errors.of_kind?(:state, :preview_required)
-  end
-
-  test "should allow re-promoting an enabled feed with a fresh preview for new params" do
-    feed = create(:feed,
-      user: preview_user,
-      state: :enabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    feed.params = { "url" => "https://other.example/feed.xml" }
-    seed_ready_preview(feed)
-
-    assert feed.valid?(:enable), feed.errors.full_messages.inspect
-  end
-
-  test "should not require a preview when feed remains disabled" do
-    feed = create(:feed,
-      user: preview_user,
-      state: :disabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    feed.description = "Updated"
-
-    assert feed.valid?, feed.errors.full_messages.inspect
-  end
-
-  test "should not require a preview for operational-only updates on enabled feed" do
-    feed = create(:feed,
-      user: preview_user,
-      state: :enabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    feed.description = "Updated"
-
-    assert feed.valid?, feed.errors.full_messages.inspect
-  end
-
-  test "should not require a preview when toggling state on unchanged enabled feed" do
-    # FeedStatusesController#update flow: pure state toggle via `enabled!`,
-    # which runs the default save context (not :enable), so the preview
-    # check stays out of the way.
-    feed = create(:feed,
-      user: preview_user,
-      state: :disabled,
-      access_token: access_token_for(preview_user),
-      feed_profile_key: "rss",
-      params: { "url" => "https://example.com/feed.xml" })
-    feed.state = :enabled
-
-    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_not feed.enable
+    assert feed.errors.of_kind?(:target_group, :blank)
+    assert_predicate feed.reload, :disabled?
   end
 
   test "should reject an llm_credential belonging to a different user" do
@@ -811,7 +713,6 @@ class FeedTest < ActiveSupport::TestCase
                   cron_expression: "0 * * * *",
                   feed_profile_key: "rss",
                   params: { "url" => "https://example.com/feed.xml" })
-    seed_ready_preview(feed)
 
     assert feed.enable
     assert_predicate feed, :enabled?
@@ -828,27 +729,10 @@ class FeedTest < ActiveSupport::TestCase
                   cron_expression: "0 * * * *",
                   feed_profile_key: "rss",
                   params: { "url" => "https://example.com/feed.xml" })
-    seed_ready_preview(feed)
 
     assert_not feed.enable
     assert_predicate feed, :draft?, "in-memory state should be rolled back to persisted value"
     assert_predicate feed.reload, :draft?
     assert_not_empty feed.errors
-  end
-
-  test "#enable should require a fresh preview" do
-    user = create(:user)
-    feed = create(:feed,
-                  user: user,
-                  state: :draft,
-                  access_token: access_token_for(user),
-                  target_group: "testgroup",
-                  cron_expression: "0 * * * *",
-                  feed_profile_key: "rss",
-                  params: { "url" => "https://example.com/feed.xml" })
-
-    assert_not feed.enable
-    assert feed.errors.of_kind?(:state, :preview_required)
-    assert_predicate feed, :draft?
   end
 end
