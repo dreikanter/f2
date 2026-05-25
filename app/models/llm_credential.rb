@@ -25,7 +25,7 @@ class LlmCredential < ApplicationRecord
             length: { maximum: DISPLAY_NAME_MAX_LENGTH },
             uniqueness: { scope: [:user_id, :provider] }
 
-  validate :credential_data_matches_provider_schema
+  validate :api_key_present
 
   before_save :clear_other_defaults_if_promoting
   before_destroy :disable_dependent_feeds
@@ -41,18 +41,10 @@ class LlmCredential < ApplicationRecord
 
   private
 
-  def credential_data_matches_provider_schema
+  def api_key_present
     return if provider.blank?
-    return errors.add(:credential_data, "is missing") if credential_data.blank?
 
-    schema = LlmProvider.find(provider)&.credential_schema
-    return if schema.blank?
-
-    JSONSchemer.schema(schema).validate(credential_data).each do |error|
-      pointer = error["data_pointer"].to_s
-      message = pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
-      errors.add(:credential_data, message)
-    end
+    errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
   def clear_other_defaults_if_promoting

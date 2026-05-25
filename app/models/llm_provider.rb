@@ -1,35 +1,23 @@
 # Code-only registry of AI providers `LlmClient` can talk to. Parallels
-# `FeedProfile`. Drives the credential form generator (per-provider
-# credential schema) and tells `LlmClient` which RubyLLM provider key
-# to use.
+# `FeedProfile`. Tells `LlmClient` which RubyLLM provider key to use.
+# Every provider authenticates with a single API key; if one ever needs
+# more fields, add them for that provider specifically rather than
+# generalizing back to a schema.
 class LlmProvider
-  attr_reader :name, :display_name, :ruby_llm_provider, :credential_schema
+  attr_reader :name, :display_name, :ruby_llm_provider
 
-  def initialize(name:, display_name:, ruby_llm_provider:, credential_schema:)
+  def initialize(name:, display_name:, ruby_llm_provider:)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
-    @credential_schema = credential_schema
     freeze
-  end
-
-  def validate(client)
-    client.health_check
   end
 
   PROVIDERS = {
     "anthropic" => new(
       name: "anthropic",
       display_name: "Anthropic (Claude)",
-      ruby_llm_provider: :anthropic,
-      credential_schema: {
-        "type" => "object",
-        "properties" => {
-          "api_key" => { "type" => "string", "minLength" => 10, "title" => "API key" }
-        },
-        "required" => ["api_key"],
-        "additionalProperties" => false
-      }
+      ruby_llm_provider: :anthropic
     )
   }.freeze
 

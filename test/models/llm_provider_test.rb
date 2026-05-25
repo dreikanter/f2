@@ -37,13 +37,6 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_nil LlmProvider.find(nil)
   end
 
-  test "#credential_schema should require api_key" do
-    schema = LlmProvider.find("anthropic").credential_schema
-    assert_equal "object", schema["type"]
-    assert_includes schema["required"], "api_key"
-    assert_equal false, schema["additionalProperties"]
-  end
-
   test "instances should be frozen" do
     assert LlmProvider.find("anthropic").frozen?
   end
