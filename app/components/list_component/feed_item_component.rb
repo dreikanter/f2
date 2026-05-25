@@ -1,6 +1,5 @@
 class ListComponent::FeedItemComponent < ViewComponent::Base
   DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 px-4 py-3"
-  ICON_CLASSES = "inline-flex shrink-0 text-slate-500"
   CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-2"
   TITLE_ROW_CLASSES = "flex flex-wrap items-center gap-2"
   TITLE_CLASSES = "inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
@@ -8,8 +7,7 @@ class ListComponent::FeedItemComponent < ViewComponent::Base
   BULLET_CLASSES = "text-slate-300"
   ACTIONS_ROW_CLASSES = "flex flex-wrap items-center gap-2 pt-1"
 
-  def initialize(icon:, title:, title_url:, metadata_segments: [], badge: nil, actions: nil, key: nil)
-    @icon = icon
+  def initialize(title:, title_url:, metadata_segments: [], badge: nil, actions: nil, key: nil)
     @title = title
     @title_url = title_url
     @metadata_segments = metadata_segments
@@ -25,10 +23,6 @@ class ListComponent::FeedItemComponent < ViewComponent::Base
   end
 
   private
-
-  def icon_span
-    content_tag(:span, @icon, class: ICON_CLASSES)
-  end
 
   def content_wrapper
     content_tag(:div, class: CONTENT_WRAPPER_CLASSES) do
