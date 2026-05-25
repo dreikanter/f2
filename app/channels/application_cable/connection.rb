@@ -1,4 +1,5 @@
 module ApplicationCable
+  # Currently unused; preserved during the dev stage for future real-time features.
   class Connection < ActionCable::Connection::Base
     identified_by :current_user
 
