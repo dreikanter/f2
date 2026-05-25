@@ -57,6 +57,18 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_match /Token is valid and ready to use/, response.body
   end
 
+  test "#show should render the Continue link with feed_id when feed_id is provided" do
+    access_token.update!(status: :active)
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    get access_token_validation_path(access_token, feed_id: draft.id)
+
+    assert_response :success
+    assert_includes response.body, "access-token-show"
+    assert_includes response.body, edit_feed_path(draft.id)
+  end
+
   test "#show should show inactive state with data-status attribute" do
     access_token.update!(status: :inactive)
     sign_in_as user
