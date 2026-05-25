@@ -35,7 +35,7 @@ class FeedsListComponent < ViewComponent::Base
   def badge_for(feed)
     return nil unless feed.draft?
 
-    render(BadgeComponent.new(text: "Draft", color: :yellow, key: "feed.#{feed.id}.draft_badge"))
+    render(BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge"))
   end
 
   # FR-023: drafts surface inline "Continue setup" and "Discard" affordances so
