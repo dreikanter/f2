@@ -61,6 +61,12 @@ are filled, whether or not the user previewed it.
   longer governs enabling; it only bounds how long a ready preview is reused
   before `FeedPreviewsController#stale_ready?` forces a re-run. Update the
   controller, its test, and the `PruneFeedPreviewsJob` comment.
+- **Sweep all references** so the removed invariant can't creep back: controller
+  + controller test, `feed_test.rb` and `feed_preview_test.rb`, the prune-job
+  comment, and any prose that still describes a preview as "what proves a preview
+  happened" / the enable proof (e.g. `specs/003-*` and `CLAUDE.md` if present).
+  Spec 003 stays the historical record of what #442 shipped; only fix prose that
+  describes *current* behavior.
 
 ### Previewability
 
@@ -78,8 +84,18 @@ are filled, whether or not the user previewed it.
   candidate radio or the hidden `feed_profile_key` field) **and** the source is
   present. It listens for candidate-chooser selection changes.
 - On click, the controller reads the current `profile_key` and source value,
-  builds `feed_preview_path(profile_key:, params: { source_input_shape => source })`,
+  builds `feed_preview_path(profile_key:, params: { input_shape => source })`,
   points the popup's `feed-preview` turbo-frame at it, and opens the popup.
+- **Param-key contract:** the `input_shape` is derived from the *selected*
+  profile, not from the originally-rendered feed. Each candidate payload carries
+  its `input_shape` (add it to the `candidates` JSON on `#feed-form`); the
+  single-candidate case uses the feed's `source_input_shape`. Today all
+  candidates for one classified input are the same shape, but deriving per-profile
+  keeps switching candidates correct if that ever stops holding.
+- **Edit mode** has no candidate chooser (source and profile are locked), so the
+  button previews the feed's persisted `feed_profile_key` + `params` and reuses
+  the same persisted `FeedPreview` row as create — a "check what this feed would
+  post now" action.
 
 ### Preview popup
 
@@ -89,11 +105,32 @@ are filled, whether or not the user previewed it.
 - The popup body holds `turbo_frame_tag "feed-preview"`. Setting its `src` loads
   `feed_previews/show` — the existing stable polling host — which polls until a
   terminal (`ready`/`failed`) body marks itself `data-preview-done`. The
-  `_ready`/`_processing`/`_failed`/`_credential_gate` partials are reused as-is.
+  `_ready`/`_processing`/`_credential_gate` partials are reused; `_failed` is
+  adjusted (see below).
+- **Exactly one preview host exists on the page** (the popup's). The old lazy
+  frame is removed, so the global `feed-preview` / `feed-preview-body` ids the
+  turbo-stream updates target are unambiguous.
 - **First open** uses `show` (reuses a recent ready preview within the freshness
   window — saves AI tokens). The in-pane **"Refresh preview"** button uses
   `create` (forces a fresh run; the frame reloads and the poller restarts because
   the new processing body has no `data-preview-done`).
+- **Refresh wiring (fixed):** both "Refresh preview" (`_ready`) and "Try again"
+  (`_failed`) are `type="button"` controls that POST `create` and then reload the
+  `feed-preview` frame — locating it via `closest("turbo-frame#feed-preview")`
+  rather than a Stimulus `frameTarget` (the current `preview_controller` reload is
+  dead because no target is declared). This also removes the only `button_to` in
+  the partials.
+- **No `<form>` inside the preview partials.** The popup renders inside the feed
+  form, so a nested `<form>` (e.g. `_failed`'s old `button_to`) would be invalid
+  HTML. The only submit allowed is `_credential_gate`'s button, which deliberately
+  posts the *outer* feed form ("save as draft & add credentials").
+- **Closing the popup stops polling.** `ModalComponent` hides via CSS only, so
+  Stimulus `disconnect` does not fire and a mid-`processing` poller would keep
+  hitting the endpoint in the hidden popup. On close, the frame is cleared so the
+  polling host unmounts (`disconnect` → `stopPolling`). Reopening re-points the
+  frame at `show`, which reuses the now-ready row — so no work is lost. This
+  preview-specific behavior lives in the preview controller, not in the shared
+  `modal_controller`.
 
 ### Deletions / simplifications (front-end)
 
@@ -101,8 +138,21 @@ are filled, whether or not the user previewed it.
 - `candidate_chooser_controller.js`'s `feed:candidate-changed` dispatch — the
   radios already submit `feed[feed_profile_key]` directly, so no JS is needed for
   selection to take effect.
-- `preview_controller.js`'s `_onCandidateChanged` handler; the controller slims
-  to refresh-only (POST `create`, reload the `feed-preview` frame).
+- `preview_controller.js`'s `_onCandidateChanged` handler and `frameTarget`; the
+  controller slims to refresh-only — POST `create`, then reload the frame located
+  via `closest("turbo-frame#feed-preview")` (drives both `_ready` Refresh and
+  `_failed` Try again).
+
+### UX copy
+
+Preview now reads as an optional confidence check, not a required step, and AI
+token spend should be honest about when it happens:
+
+- The amber AI cost notice currently says "AI fetches (including this preview)
+  cost tokens." Since preview no longer auto-runs, drop the parenthetical and make
+  the preview/refresh actions own the "this may spend tokens" message instead.
+- The button reads as optional (e.g. "Preview" / "See what we'd post"); nothing
+  implies the feed can't be saved or enabled without it.
 
 ## Non-goals
 
@@ -119,7 +169,10 @@ refresh/candidate-switch:
 
 - Button enables only when a profile is selected and source is present.
 - Click opens the popup; it polls and renders the preview.
-- "Refresh preview" forces a fresh run and re-renders.
+- "Refresh preview" and "Try again" force a fresh run and visibly re-render
+  (the reload-via-`closest` path actually works).
+- Closing the popup mid-`processing` stops the poller (no requests to the hidden
+  popup); reopening shows the now-ready result.
 - AI profile without an active credential shows the credential gate; its button
   saves the feed as a draft.
 - Edit-mode form shows the same button and popup.
@@ -133,11 +186,11 @@ refresh/candidate-switch:
 - `app/controllers/feed_previews_controller.rb` — unchanged behavior; constant
   rename in `stale_ready?`.
 - `app/views/feeds/_form_expanded.html.erb` — button + popup replace the frame.
-- `app/views/feed_previews/{show,_ready,_processing,_failed,_credential_gate}.html.erb`
-  — reused as-is.
+- `app/views/feed_previews/{show,_ready,_processing,_credential_gate}.html.erb`
+  — reused; `_failed.html.erb` drops its `button_to` for a JS-driven Try again.
+- `app/views/feeds/_candidate_chooser.html.erb` / candidate builder — add
+  `input_shape` to each candidate payload.
 - `app/javascript/controllers/preview_button_controller.js` — new.
 - `app/javascript/controllers/{preview,candidate_chooser}_controller.js` — slim down.
 - `app/components/modal_component.*` — reused.
 - `app/jobs/prune_feed_previews_job.rb` — comment update for the constant rename.
-</content>
-</invoke>
