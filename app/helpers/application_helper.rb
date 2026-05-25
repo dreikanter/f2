@@ -16,11 +16,12 @@ module ApplicationHelper
   end
 
   LUCIDE_ICONS = {
-    "play"  => '<polygon points="6 3 20 12 6 21 6 3"/>',
-    "pause" => '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+    "play"          => '<polygon points="6 3 20 12 6 21 6 3"/>',
+    "pause"         => '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+    "external-link" => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>'
   }.freeze
 
-  def lucide_icon(name, css_class: nil)
+  def lucide_icon(name, css_class: nil, size: "size-9")
     path_data = LUCIDE_ICONS[name]
     return "".html_safe unless path_data
 
@@ -35,7 +36,7 @@ module ApplicationHelper
       "stroke-linecap": "round",
       "stroke-linejoin": "round",
       "aria-hidden": "true",
-      class: class_names("size-9 shrink-0", css_class)
+      class: class_names(size, "shrink-0", css_class)
     )
   end
 
