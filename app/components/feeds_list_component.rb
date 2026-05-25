@@ -35,7 +35,7 @@ class FeedsListComponent < ViewComponent::Base
   def badge_for(feed)
     return nil unless feed.draft?
 
-    render(BadgeComponent.new(text: "Draft", color: :yellow, key: "feed.#{feed.id}.draft_badge"))
+    render(BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge"))
   end
 
   # FR-023: drafts surface inline "Continue setup" and "Discard" affordances so
@@ -70,6 +70,7 @@ class FeedsListComponent < ViewComponent::Base
     return "Target: #{target}" if target == "None" || !feed.access_token
 
     url = "#{feed.access_token.host}/#{feed.target_group}"
-    safe_join(["Target:", helpers.link_to(target, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
+    link_content = safe_join([target, " ".html_safe, helpers.lucide_icon("external-link", size: "size-3.5", css_class: "inline align-text-bottom")])
+    safe_join(["Target:", helpers.link_to(link_content, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
   end
 end
