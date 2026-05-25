@@ -14,7 +14,7 @@
   <% if @llm_credentials.any? %>
     <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-xs">
       <% @llm_credentials.each do |credential| %>
-        <li class="p-4 flex flex-wrap items-center justify-between gap-3"
+        <li class="px-4 py-3 flex flex-wrap items-center justify-between gap-3"
             data-key="llm_credential.<%= credential.id %>">
           <div class="space-y-1">
             <p class="font-semibold text-slate-800">

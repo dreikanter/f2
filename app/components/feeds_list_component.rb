@@ -12,7 +12,6 @@ class FeedsListComponent < ViewComponent::Base
 
     @feeds.each do |feed|
       component.with_item(ListComponent::FeedItemComponent.new(
-        icon: helpers.feed_status_icon(feed),
         title: display_title_for(feed),
         title_url: helpers.feed_path(feed),
         metadata_segments: metadata_segments_for(feed),

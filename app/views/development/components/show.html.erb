@@ -62,7 +62,6 @@
     <% list = ListComponent.new %>
     <% list.with_item(
          ListComponent::FeedItemComponent.new(
-           icon: icon("rss"),
            title: "Tech News Daily",
            title_url: "#",
            metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]
@@ -70,7 +69,6 @@
        ) %>
     <% list.with_item(
          ListComponent::FeedItemComponent.new(
-           icon: icon("rss"),
            title: "Design Inspiration",
            title_url: "#",
            metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]
@@ -78,7 +76,6 @@
        ) %>
     <% list.with_item(
          ListComponent::FeedItemComponent.new(
-           icon: icon("rss"),
            title: "Ruby Weekly",
            title_url: "#",
            metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]

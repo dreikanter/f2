@@ -1,7 +1,4 @@
-<li class="flex items-baseline gap-3 p-4" data-key="<%= @key %>">
-  <span class="inline-flex shrink-0 text-slate-500">
-    <%= status_icon %>
-  </span>
+<li class="flex items-baseline gap-3 px-4 py-3" data-key="<%= @key %>">
   <div class="flex flex-1 flex-col gap-1">
     <div class="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
       <%= link_to @access_token.name, access_token_path(@access_token), class: "transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
