@@ -677,6 +677,10 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='preview.open']", count: 1
+    # The preview-button controller must wrap BOTH the profile field and the
+    # button, or it can't read the selected feed_profile_key at click time.
+    assert_select "#feed-form[data-controller~='preview-button'] [data-key='preview.open']", count: 1
+    assert_select "#feed-form[data-controller~='preview-button'] input[name='feed[feed_profile_key]']", count: 1
   end
 
   test "#destroy should remove own feed" do

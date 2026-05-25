@@ -1,10 +1,26 @@
 <%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 <% multi_candidate = !edit_mode && candidates.size > 1 %>
+<%
+  preview_shapes =
+    if multi_candidate
+      candidates.to_h { |c| [c["profile_key"], FeedProfile[c["profile_key"]]&.dig(:input_shape).to_s] }
+    else
+      { feed.feed_profile_key => feed.source_input_shape }
+    end
+%>
 
+<%# preview-button is mounted on the whole form so it can read the selected
+    feed_profile_key (radios or hidden field) and react to candidate changes;
+    the button and the modal's frame are nested targets within it. %>
 <div id="feed-form"
      data-identification-state="complete"
-     data-candidates="<%= candidates.to_json %>">
+     data-candidates="<%= candidates.to_json %>"
+     data-controller="preview-button"
+     data-preview-button-endpoint-value="<%= feed_preview_path %>"
+     data-preview-button-source-value="<%= feed.source_input %>"
+     data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
+     data-preview-button-modal-id-value="feed-preview-modal">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
@@ -62,21 +78,7 @@
         <% end %>
       </div>
 
-      <%
-        preview_shapes =
-          if multi_candidate
-            candidates.to_h { |c| [c["profile_key"], FeedProfile[c["profile_key"]]&.dig(:input_shape).to_s] }
-          else
-            { feed.feed_profile_key => feed.source_input_shape }
-          end
-      %>
-      <div class="mt-2"
-           data-key="form.preview"
-           data-controller="preview-button"
-           data-preview-button-endpoint-value="<%= feed_preview_path %>"
-           data-preview-button-source-value="<%= feed.source_input %>"
-           data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
-           data-preview-button-modal-id-value="feed-preview-modal">
+      <div class="mt-2" data-key="form.preview">
         <button type="button"
                 <%= "disabled" unless feed.can_be_previewed? %>
                 class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
