@@ -72,6 +72,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @recent_posts = recent_posts(@feed)
+    @has_llm_usages = @feed.llm_usages.exists?
   end
 
   def edit
