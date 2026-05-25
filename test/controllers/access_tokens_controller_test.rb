@@ -19,7 +19,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "h1", "Access Tokens"
+    assert_select "h1", "Freefeed Access Tokens"
   end
 
   test "#index should display empty state" do
@@ -37,6 +37,15 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
+  end
+
+  test "#index should display host when token owner is not set" do
+    sign_in_as user
+    create(:access_token, user: user, owner: nil)
+    get access_tokens_path
+
+    assert_response :success
+    assert_match(/Host:/, response.body)
   end
 
   test "#show should redirect to sign in form" do

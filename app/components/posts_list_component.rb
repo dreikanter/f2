@@ -19,8 +19,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def self.item_component(post:, helpers:, show_feed: false)
-    ListComponent::PostItemComponent.new(
-      icon: helpers.post_status_icon(post.status),
+    ListComponent::ItemComponent.new(
       title: helpers.post_content_preview(post.content, 80),
       title_url: helpers.post_path(post),
       metadata_segments: metadata_segments_for(post:, helpers:, show_feed:),
@@ -33,6 +32,7 @@ class PostsListComponent < ViewComponent::Base
 
     [
       feed_link_segment(post:, helpers:, show_feed:),
+      status_segment(post:),
       published_segment(post:, helpers:),
       attachments_segment(post:),
       comments_segment(post:),
@@ -40,6 +40,10 @@ class PostsListComponent < ViewComponent::Base
       freefeed_link_segment(post:, helpers:),
       withdraw_link_segment(post:, helpers:, withdraw_allowed:)
     ].compact
+  end
+
+  def self.status_segment(post:)
+    "Withdrawn" if post.status.to_s == "withdrawn"
   end
 
   def self.feed_link_segment(post:, helpers:, show_feed: false)

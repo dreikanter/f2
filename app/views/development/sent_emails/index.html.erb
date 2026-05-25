@@ -23,7 +23,7 @@
     <% @emails.each do |email| %>
       <% subject = email[:subject].presence || "(no subject)" %>
       <% list.with_item(
-           ListComponent::FeedItemComponent.new(
+           ListComponent::ItemComponent.new(
              title: subject,
              title_url: development_sent_email_path(id: email[:id]),
              metadata_segments: [

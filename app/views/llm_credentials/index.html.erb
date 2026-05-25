@@ -12,43 +12,7 @@
   <% end %>
 
   <% if @llm_credentials.any? %>
-    <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-xs">
-      <% @llm_credentials.each do |credential| %>
-        <li class="px-4 py-3 flex flex-wrap items-center justify-between gap-3"
-            data-key="llm_credential.<%= credential.id %>">
-          <div class="space-y-1">
-            <p class="font-semibold text-slate-800">
-              <%= link_to credential.display_name, llm_credential_path(credential), class: "underline-offset-4 hover:underline" %>
-              <% if credential.is_default? %>
-                <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
-                      data-key="llm_credential.default-badge">Default</span>
-              <% end %>
-            </p>
-            <p class="text-sm text-slate-500">
-              <%= LlmProvider.find(credential.provider)&.display_name %> · status: <%= credential.state %>
-            </p>
-            <% if credential.inactive? %>
-              <p class="text-sm text-red-600">This key didn't work. Open it to add a new one.</p>
-            <% end %>
-          </div>
-          <div class="flex items-center gap-2">
-            <% unless credential.is_default? %>
-              <%= button_to "Make default",
-                            llm_credential_default_path(credential),
-                            method: :patch,
-                            class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50",
-                            data: { key: "llm_credential.make-default" } %>
-            <% end %>
-            <%= button_to "Delete",
-                          llm_credential_path(credential),
-                          method: :delete,
-                          form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
-                          class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-50",
-                          data: { key: "llm_credential.delete" } %>
-          </div>
-        </li>
-      <% end %>
-    </ul>
+    <%= render LlmCredentialsListComponent.new(credentials: @llm_credentials) %>
   <% else %>
     <%= render EmptyStateComponent.new("No AI credentials yet — add one to use AI-backed feed extraction") %>
   <% end %>

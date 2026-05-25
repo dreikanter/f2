@@ -21,7 +21,7 @@
               <%= link_to "Settings", settings_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
             </li>
             <li>
-              <%= link_to "Tokens", access_tokens_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
+              <%= link_to "Freefeed Access Tokens", access_tokens_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
             </li>
             <li>
               <%= link_to "AI Credentials", llm_credentials_path, class: "block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" %>
@@ -100,7 +100,7 @@
                 }
               ),
               aria: (current_page?(settings_path) ? { current: "page" } : nil) %>
-          <%= link_to "Tokens", access_tokens_path,
+          <%= link_to "Freefeed Access Tokens", access_tokens_path,
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 border-b border-slate-200",
                 {
