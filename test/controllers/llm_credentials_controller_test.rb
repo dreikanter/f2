@@ -240,6 +240,102 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Continue setting up your feed", count: 0
   end
 
+  test "#edit should render the form" do
+    sign_in_as(user)
+    get edit_llm_credential_url(credential)
+    assert_response :success
+    assert_select "[data-key='llm_credentials.edit']"
+    assert_select "[data-key='llm_credentials.display-name']"
+    assert_select "[data-key='llm_credentials.credential-data.api_key']"
+  end
+
+  test "#edit should 404 for another user's credential" do
+    sign_in_as(user)
+    other = create(:llm_credential, user: other_user)
+    get edit_llm_credential_url(other)
+    assert_response :not_found
+  end
+
+  test "#update should update display_name, reset to pending, and re-enqueue validation" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+
+    assert_enqueued_with(job: LlmCredentialValidationJob) do
+      patch llm_credential_url(active), params: {
+        llm_credential: {
+          display_name: "Renamed Key",
+          credential_data: { api_key: "" }
+        }
+      }
+    end
+
+    active.reload
+    assert_redirected_to llm_credential_path(active)
+    assert_equal "Renamed Key", active.display_name
+    assert_equal "pending", active.state
+  end
+
+  test "#update should replace credential_data when a new api_key is provided" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+    new_key = "sk-ant-#{SecureRandom.hex(16)}"
+
+    patch llm_credential_url(active), params: {
+      llm_credential: {
+        display_name: active.display_name,
+        credential_data: { api_key: new_key }
+      }
+    }
+
+    active.reload
+    assert_equal new_key, active.credential_data["api_key"]
+  end
+
+  test "#update should keep existing credential_data when api_key is blank" do
+    sign_in_as(user)
+    active = create(:llm_credential, :active, user: user)
+    original_key = active.credential_data["api_key"]
+
+    patch llm_credential_url(active), params: {
+      llm_credential: {
+        display_name: active.display_name,
+        credential_data: { api_key: "" }
+      }
+    }
+
+    active.reload
+    assert_equal original_key, active.credential_data["api_key"]
+  end
+
+  test "#update should render :edit with errors on invalid input" do
+    sign_in_as(user)
+    get edit_llm_credential_url(credential)
+
+    patch llm_credential_url(credential), params: {
+      llm_credential: {
+        display_name: "",
+        credential_data: { api_key: "" }
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "[data-key='llm_credentials.edit']"
+  end
+
+  test "#update should 404 for another user's credential" do
+    sign_in_as(user)
+    other = create(:llm_credential, user: other_user)
+
+    patch llm_credential_url(other), params: {
+      llm_credential: {
+        display_name: "Hacked",
+        credential_data: { api_key: "" }
+      }
+    }
+
+    assert_response :not_found
+  end
+
   test "#destroy should delete own credential" do
     sign_in_as(user)
     credential

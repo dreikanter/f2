@@ -65,7 +65,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :llm_credentials, except: [:edit, :update] do
+  resources :llm_credentials do
     scope module: :llm_credentials do
       resource :validation, only: :show
       resource :default, only: :update

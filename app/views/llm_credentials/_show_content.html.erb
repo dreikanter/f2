@@ -57,6 +57,10 @@
                     method: :patch,
                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
     <% end %>
+    <%= link_to "Edit",
+                edit_llm_credential_path(llm_credential),
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50",
+                data: { key: "llm_credential.edit" } %>
     <%= button_to "Delete",
                   llm_credential_path(llm_credential),
                   method: :delete,

@@ -30,6 +30,27 @@ class LlmCredentialsController < ApplicationController
     end
   end
 
+  def edit
+    @llm_credential = find_credential
+    authorize @llm_credential
+  end
+
+  def update
+    @llm_credential = find_credential
+    authorize @llm_credential
+
+    attrs = { display_name: credential_params[:display_name], state: :pending }
+    new_key = credential_data_from_params["api_key"]
+    attrs[:credential_data] = { "api_key" => new_key } if new_key.present?
+
+    if @llm_credential.update(attrs)
+      LlmCredentialValidationJob.perform_later(@llm_credential)
+      redirect_to llm_credential_path(@llm_credential)
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   def destroy
     credential = find_credential
     authorize credential
