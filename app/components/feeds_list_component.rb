@@ -11,7 +11,7 @@ class FeedsListComponent < ViewComponent::Base
     component = ListComponent.new
 
     @feeds.each do |feed|
-      component.with_item(ListComponent::FeedItemComponent.new(
+      component.with_item(ListComponent::ItemComponent.new(
         title: display_title_for(feed),
         title_url: helpers.feed_path(feed),
         metadata_segments: metadata_segments_for(feed),

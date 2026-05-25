@@ -1,39 +1,40 @@
-class ListComponent::FeedItemComponent < ViewComponent::Base
-  DEFAULT_ITEM_CLASS = "flex items-baseline gap-3 px-4 py-3"
-  CONTENT_WRAPPER_CLASSES = "flex flex-1 flex-col gap-2"
+class ListComponent::ItemComponent < ViewComponent::Base
+  ITEM_CLASSES = "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3"
+  CONTENT_CLASSES = "flex flex-1 flex-col gap-1"
   TITLE_ROW_CLASSES = "flex flex-wrap items-center gap-2"
   TITLE_CLASSES = "inline-flex items-center text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-  METADATA_CLASSES = "flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500"
+  METADATA_CLASSES = "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500"
   BULLET_CLASSES = "text-slate-300"
-  ACTIONS_ROW_CLASSES = "flex flex-wrap items-center gap-2 pt-1"
+  ACTIONS_CLASSES = "flex items-center gap-2 shrink-0"
 
-  def initialize(title:, title_url:, metadata_segments: [], badge: nil, actions: nil, key: nil)
+  def initialize(title:, title_url:, metadata_segments: [], badge: nil, actions: nil, note: nil, key: nil)
     @title = title
     @title_url = title_url
     @metadata_segments = metadata_segments
     @badge = badge
     @actions = actions
+    @note = note
     @key = key
   end
 
   def call
-    content_tag :li, class: DEFAULT_ITEM_CLASS, data: { key: @key } do
-      content_wrapper
+    content_tag :li, class: ITEM_CLASSES, data: key_data do
+      safe_join([content_div, actions_div].compact)
     end
   end
 
   private
 
-  def content_wrapper
-    content_tag(:div, class: CONTENT_WRAPPER_CLASSES) do
-      safe_join([title_row, metadata_div, actions_row].compact)
+  def content_div
+    content_tag(:div, class: CONTENT_CLASSES) do
+      safe_join([title_row, metadata_div, @note].compact)
     end
   end
 
-  def actions_row
-    return nil if @actions.blank?
+  def actions_div
+    return if @actions.blank?
 
-    content_tag(:div, @actions, class: ACTIONS_ROW_CLASSES)
+    content_tag(:div, @actions, class: ACTIONS_CLASSES)
   end
 
   def title_row
@@ -59,5 +60,9 @@ class ListComponent::FeedItemComponent < ViewComponent::Base
 
       safe_join(segments)
     end
+  end
+
+  def key_data
+    @key ? { key: @key } : {}
   end
 end
