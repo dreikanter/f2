@@ -70,6 +70,11 @@ class FeedsListComponent < ViewComponent::Base
     return "Target: #{target}" if target == "None" || !feed.access_token
 
     url = "#{feed.access_token.host}/#{feed.target_group}"
-    safe_join(["Target:", helpers.link_to(target, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
+    link_content = safe_join([target, "&nbsp;".html_safe, external_link_icon])
+    safe_join(["Target:", helpers.link_to(link_content, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
+  end
+
+  def external_link_icon
+    %(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>).html_safe
   end
 end
