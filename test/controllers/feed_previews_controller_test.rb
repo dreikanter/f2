@@ -162,11 +162,11 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
 
   # Fix 2: stale ready triggers fresh run
-  test "#show should enqueue a fresh run when ready preview is outside the enable window" do
+  test "#show should enqueue a fresh run when ready preview is outside the freshness window" do
     sign_in_as(user)
     create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
                                       params: { "url" => "http://example.com/feed.xml" },
-                                      ready_at: (Feed::ENABLE_PREVIEW_WINDOW + 5.minutes).ago)
+                                      ready_at: (Feed::PREVIEW_FRESHNESS_WINDOW + 5.minutes).ago)
 
     assert_enqueued_with(job: FeedPreviewJob) do
       get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
@@ -175,7 +175,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#show should not enqueue when ready preview is within the enable window" do
+  test "#show should not enqueue when ready preview is within the freshness window" do
     sign_in_as(user)
     create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
                                       params: { "url" => "http://example.com/feed.xml" },

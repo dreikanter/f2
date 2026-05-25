@@ -1,5 +1,5 @@
-# Removes stale preview rows. The enable gate only honors previews newer than
-# Feed::ENABLE_PREVIEW_WINDOW, so anything older than RETENTION is safe to drop.
+# Removes stale preview rows. Ready previews are only reused within
+# Feed::PREVIEW_FRESHNESS_WINDOW, so anything older than RETENTION is safe to drop.
 class PruneFeedPreviewsJob < ApplicationJob
   queue_as :default
 

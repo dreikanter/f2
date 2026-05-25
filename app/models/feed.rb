@@ -40,7 +40,7 @@ class Feed < ApplicationRecord
   enum :state, { draft: 0, disabled: 1, enabled: 2 }, default: :draft
 
   # How long a ready FeedPreview is reused before a fresh run is forced.
-  ENABLE_PREVIEW_WINDOW = 60.minutes
+  PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
 

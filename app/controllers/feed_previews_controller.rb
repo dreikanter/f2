@@ -76,7 +76,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def stale_ready?(preview)
-    preview.ready? && preview.ready_at.present? && preview.ready_at < Feed::ENABLE_PREVIEW_WINDOW.ago
+    preview.ready? && preview.ready_at.present? && preview.ready_at < Feed::PREVIEW_FRESHNESS_WINDOW.ago
   end
 
   def source_blank?
