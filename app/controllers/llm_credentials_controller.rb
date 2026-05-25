@@ -39,11 +39,7 @@ class LlmCredentialsController < ApplicationController
     @llm_credential = find_credential
     authorize @llm_credential
 
-    attrs = { display_name: credential_params[:display_name], state: :pending }
-    new_key = credential_data_from_params["api_key"]
-    attrs[:credential_data] = { "api_key" => new_key } if new_key.present?
-
-    if @llm_credential.update(attrs)
+    if @llm_credential.update(updated_credential_attrs)
       LlmCredentialValidationJob.perform_later(@llm_credential)
       redirect_to llm_credential_path(@llm_credential)
     else
@@ -64,6 +60,13 @@ class LlmCredentialsController < ApplicationController
     return nil if feed_id.blank?
 
     Current.user.feeds.find_by(id: feed_id)
+  end
+
+  def updated_credential_attrs
+    attrs = { display_name: credential_params[:display_name], state: :pending }
+    data = credential_data_from_params
+    attrs[:credential_data] = data if data["api_key"].present?
+    attrs
   end
 
   def build_credential
