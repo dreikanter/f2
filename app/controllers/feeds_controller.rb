@@ -2,8 +2,6 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
 
-  helper_method :active_access_tokens?
-
   MAX_RECENT_POSTS = 5
 
   SORTABLE_FIELDS = {
@@ -58,6 +56,8 @@ class FeedsController < ApplicationController
 
       if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
+      elsif require_access_token?
+        redirect_to new_access_token_path(feed_id: @feed.id)
       elsif enable_feed?
         enable_and_respond(@feed)
       else
@@ -91,7 +91,7 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_llm_credentials?
+    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_llm_credentials? && !require_access_token?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
@@ -101,6 +101,8 @@ class FeedsController < ApplicationController
 
       if require_llm_credentials?
         redirect_to new_llm_credential_path(feed_id: @feed.id)
+      elsif require_access_token?
+        redirect_to new_access_token_path(feed_id: @feed.id)
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
       else
@@ -121,11 +123,12 @@ class FeedsController < ApplicationController
 
   private
 
-  # The credential gate (rendered in the preview pane when the chosen profile
-  # is AI and the user has no usable credentials) submits the feed form with
-  # this commit value. See app/views/feeds/_credential_gate.html.erb.
   def require_llm_credentials?
     params[:commit] == "save_as_draft_and_add_credentials"
+  end
+
+  def require_access_token?
+    params[:commit] == "save_as_draft_and_add_token"
   end
 
   def enable_feed?
@@ -154,10 +157,6 @@ class FeedsController < ApplicationController
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :edit, status: :unprocessable_entity
     end
-  end
-
-  def active_access_tokens?
-    current_user.access_tokens.active.exists?
   end
 
   def feeds_scope
