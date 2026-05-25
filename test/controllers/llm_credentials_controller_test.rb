@@ -238,6 +238,19 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to llm_credentials_path
   end
 
+  test "#destroy should keep usage rows and clear their credential reference" do
+    sign_in_as(user)
+    usage = create(:llm_usage, user: user, llm_credential: credential)
+
+    assert_difference("LlmCredential.count", -1) do
+      assert_no_difference("LlmUsage.count") do
+        delete llm_credential_url(credential)
+      end
+    end
+    assert_redirected_to llm_credentials_path
+    assert_nil usage.reload.llm_credential_id
+  end
+
   test "#destroy should 404 for another user's credential" do
     sign_in_as(user)
     other = create(:llm_credential, user: other_user)
