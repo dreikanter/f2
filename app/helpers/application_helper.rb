@@ -15,6 +15,31 @@ module ApplicationHelper
     truncate(content.strip, length: length)
   end
 
+  LUCIDE_ICONS = {
+    "play"          => '<polygon points="6 3 20 12 6 21 6 3"/>',
+    "pause"         => '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+    "external-link" => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>'
+  }.freeze
+
+  def lucide_icon(name, css_class: nil, size: "size-9")
+    path_data = LUCIDE_ICONS[name]
+    return "".html_safe unless path_data
+
+    content_tag(
+      :svg,
+      path_data.html_safe,
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "aria-hidden": "true",
+      class: class_names(size, "shrink-0", css_class)
+    )
+  end
+
   def icon(name, css_class: nil, title: nil, aria_hidden: nil, aria_label: nil)
     options = {
       class: class_names("bi", "bi-#{name}", "inline-block", css_class)
