@@ -5,7 +5,7 @@
 
   <div class="max-w-2xl">
     <%= form_with model: @access_token, url: access_tokens_path(feed_id: @feed&.id), data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
-      <div class="space-y-6">
+      <div class="space-y-10">
         <div class="space-y-2">
           <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-slate-800" %>
           <%= form.select :host,

@@ -30,7 +30,7 @@
                   groups_loading_text_value: "Loading groups...",
                   groups_default_text_value: "The FreeFeed group where posts will be published."
                 } do |f| %>
-    <div class="space-y-6">
+    <div class="space-y-10">
       <% if multi_candidate %>
         <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.url %>
       <% else %>
@@ -99,7 +99,7 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
-        <div class="space-y-6">
+        <div class="space-y-10">
           <div class="space-y-2">
             <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
             <% if active_tokens.empty? %>

@@ -5,7 +5,7 @@
     <h1 class="text-4xl font-semibold mb-6 text-slate-900">Sign in to Feeder</h1>
 
     <%= form_with url: session_path, local: true do |form| %>
-      <div class="space-y-6">
+      <div class="space-y-10">
         <div class="space-y-2">
           <%= form.label :email_address, "Email", class: "block font-semibold text-slate-800" %>
           <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
