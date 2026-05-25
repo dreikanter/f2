@@ -1,25 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Manages the preview pane on the feed creation form.
-//
-// - Reloads the embedded turbo-frame when the user picks a different
-//   candidate profile (event from candidate-chooser).
-// - Refreshes the frame on demand via the explicit "Refresh preview"
-//   button (posts to the preview controller, which busts the cache).
+// Forces a fresh preview run from inside the feed-preview frame (the "Refresh
+// preview" / "Try again" buttons). POSTs to the preview endpoint (which busts
+// the cached run) and reloads the enclosing turbo-frame so the polling host
+// remounts and resumes polling.
 export default class extends Controller {
-  static targets = ["frame"]
-  static values = {
-    refreshUrl: String
-  }
-
-  connect() {
-    this._onCandidateChanged = this._onCandidateChanged.bind(this)
-    document.addEventListener("feed:candidate-changed", this._onCandidateChanged)
-  }
-
-  disconnect() {
-    document.removeEventListener("feed:candidate-changed", this._onCandidateChanged)
-  }
+  static values = { refreshUrl: String }
 
   async refresh(event) {
     event?.preventDefault()
@@ -37,30 +23,13 @@ export default class extends Controller {
       credentials: "same-origin"
     })
 
-    this._reloadFrame()
-  }
-
-  _onCandidateChanged(event) {
-    const profileKey = event.detail?.profileKey
-    if (!profileKey || !this.hasFrameTarget) return
-
-    const src = this.frameTarget.getAttribute("src")
-    if (!src) return
-
-    const url = new URL(src, window.location.origin)
-    url.searchParams.set("profile_key", profileKey)
-    this.frameTarget.setAttribute("src", url.toString())
-  }
-
-  _reloadFrame() {
-    if (!this.hasFrameTarget) return
-
-    if (typeof this.frameTarget.reload === "function") {
-      this.frameTarget.reload()
-    } else {
-      const src = this.frameTarget.getAttribute("src")
-      this.frameTarget.setAttribute("src", "")
-      this.frameTarget.setAttribute("src", src)
+    const frame = this.element.closest("turbo-frame#feed-preview")
+    if (frame && typeof frame.reload === "function") {
+      frame.reload()
+    } else if (frame) {
+      const src = frame.getAttribute("src")
+      frame.setAttribute("src", "")
+      frame.setAttribute("src", src)
     }
   }
 }
