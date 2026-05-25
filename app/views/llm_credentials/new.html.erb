@@ -2,7 +2,7 @@
 
 <div class="max-w-2xl mx-auto space-y-6" data-key="llm_credentials.new">
   <%= render PageHeaderComponent.new(title: "Add an AI Credential") do |header| %>
-    <% header.with_context_paragraph("Connect a provider key so AI feeds can fetch posts on your behalf.") %>
+    <% header.with_context_paragraph("Add an API key so AI-powered feeds can fetch web content.") %>
   <% end %>
 
   <%= form_with model: @llm_credential, url: llm_credentials_path(feed_id: @feed&.id) do |f| %>
@@ -38,9 +38,9 @@
       </div>
 
       <% schema = LlmProvider.find(@llm_credential.provider)&.credential_schema || { "properties" => {} } %>
-      <% schema["properties"].each do |key, _spec| %>
+      <% schema["properties"].each do |key, spec| %>
         <div class="space-y-2">
-          <%= label_tag "llm_credential_credential_data_#{key}", key.humanize, class: "block font-semibold text-slate-800" %>
+          <%= label_tag "llm_credential_credential_data_#{key}", spec["title"] || key.humanize, class: "block font-semibold text-slate-800" %>
           <%= password_field_tag "llm_credential[credential_data][#{key}]",
                                  @llm_credential.credential_data&.dig(key),
                                  id: "llm_credential_credential_data_#{key}",

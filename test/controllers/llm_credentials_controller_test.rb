@@ -38,7 +38,7 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get llm_credentials_url
     assert_response :success
-    assert_select "h2", text: /No AI credentials yet/
+    assert_select "[data-key='empty-state']", text: /No AI credentials yet/
   end
 
   test "#new should render the form" do
