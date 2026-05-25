@@ -27,8 +27,8 @@
             <p class="text-sm text-slate-500">
               <%= LlmProvider.find(credential.provider)&.display_name %> · status: <%= credential.state %>
             </p>
-            <% if credential.last_error.present? %>
-              <p class="text-sm text-red-600"><%= credential.last_error %></p>
+            <% if credential.inactive? %>
+              <p class="text-sm text-red-600">This key didn't work. Open it to add a new one.</p>
             <% end %>
           </div>
           <div class="flex items-center gap-2">
