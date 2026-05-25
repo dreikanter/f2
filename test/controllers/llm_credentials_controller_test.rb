@@ -78,6 +78,7 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='llm_credentials.new']"
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
   end
 
   test "#new should ignore foreign feed_id" do
