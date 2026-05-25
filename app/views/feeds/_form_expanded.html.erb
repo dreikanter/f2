@@ -50,7 +50,7 @@
         <%= f.text_field :url_display,
                          value: feed.source_input,
                          disabled: true,
-                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 bg-slate-100",
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
                          aria: { label: "Source (cannot be changed)" },
                          data: { key: "form.source-display" } %>
         <% feed.params&.each do |key, value| %>
