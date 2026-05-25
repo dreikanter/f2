@@ -77,9 +77,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       schedule_interval: "1h"
     }
 
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
-
     assert_difference("Feed.count", 1) do
       post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
@@ -116,7 +113,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Feed saved as draft", flash[:notice]
   end
 
-  test "#create should persist as draft and re-render with errors when no recent preview exists" do
+  test "#create should enable a feed without any preview" do
     sign_in_as(user)
     access_token
 
@@ -133,9 +130,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
-    assert_response :unprocessable_entity
-    assert_predicate Feed.last, :draft?
-    assert_match "Couldn't enable", flash[:alert]
+    feed = Feed.last
+    assert_predicate feed, :enabled?
+    assert_redirected_to feed_path(feed)
   end
 
   test "#create should persist as draft and re-render when enable-validation fails on a missing field" do
@@ -150,9 +147,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       # target_group missing (required only when enabled)
       schedule_interval: "1h"
     }
-
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
 
     assert_difference("Feed.count", 1) do
       post feeds_path, params: { feed: feed_params, enable_feed: "1" }
@@ -185,7 +179,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "#create should persist as draft and re-render when the preview is for a different source" do
+  test "#create should enable a feed even when the only preview is for a different source" do
     sign_in_as(user)
     access_token
 
@@ -205,8 +199,9 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       post feeds_path, params: { feed: feed_params, enable_feed: "1" }
     end
 
-    assert_response :unprocessable_entity
-    assert_predicate Feed.last, :draft?
+    feed = Feed.last
+    assert_predicate feed, :enabled?
+    assert_redirected_to feed_path(feed)
   end
 
   test "#create should ignore state param and use enable_feed instead" do
@@ -323,6 +318,28 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[url_display]'][disabled]"
 
     # Verify validation errors are shown
+    assert_select "p.text-red-600", text: /lowercase letters/
+  end
+
+  test "#create should keep the expanded form for a query-shaped feed on validation failure" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      name: "Search Feed",
+      feed_profile_key: "llm_web_search",
+      params: { query: "ruby news" },
+      access_token_id: access_token.id,
+      target_group: "INVALID GROUP!",  # Invalid format (always validated)
+      schedule_interval: "1h"
+    }
+
+    post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+
+    assert_response :unprocessable_entity
+    # Query-shaped feeds have a blank url; the expanded form must still render
+    # (keyed off source_input, not url) so the preview button survives the error.
+    assert_select "[data-key='preview.open']", count: 1
     assert_select "p.text-red-600", text: /lowercase letters/
   end
 
@@ -579,9 +596,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                   feed_profile_key: "rss",
                                   params: { "url" => "http://example.com/feed.xml" })
 
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-           params: { "url" => "http://example.com/feed.xml" }, ready_at: Time.current)
-
     patch feed_url(draft), params: {
       feed: { name: "Promoted Feed" },
       enable_feed: "1"
@@ -600,9 +614,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
                                         feed_profile_key: "rss",
                                         params: { "url" => "http://example.com/feed.xml" })
 
-    # No preview seeded: enabling_requires_recent_preview would fire anyway,
-    # but to force a real enable-side failure that isn't the preview gate,
-    # clear target_group (required only when enabled).
+    # Clear target_group to force an enable-side validation failure
+    # (target_group is required only when a feed is enabled).
     patch feed_url(disabled), params: {
       feed: { target_group: "" },
       enable_feed: "1"
@@ -652,6 +665,44 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     draft.reload
     assert_predicate draft, :draft?
     assert_equal "Updated Draft", draft.name
+  end
+
+  test "#create should re-render the expanded form with a manual preview button and no auto-loading frame" do
+    sign_in_as(user)
+    access_token
+
+    post feeds_path, params: {
+      feed: {
+        url: "http://example.com/feed.xml",
+        name: "Test Feed",
+        feed_profile_key: "rss",
+        access_token_id: access_token.id,
+        target_group: "INVALID GROUP!",
+        schedule_interval: "1h"
+      },
+      enable_feed: "0"
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "[data-key='preview.open']", count: 1
+    assert_select "turbo-frame#feed-preview[loading='lazy']", count: 0
+    assert_select "turbo-frame#feed-preview[src]", count: 0
+  end
+
+  test "#edit should render a manual preview button" do
+    sign_in_as(user)
+    feed = create(:feed, :disabled, user: user, access_token: access_token,
+                                     feed_profile_key: "rss",
+                                     params: { "url" => "http://example.com/feed.xml" })
+
+    get edit_feed_path(feed)
+
+    assert_response :success
+    assert_select "[data-key='preview.open']", count: 1
+    # The preview-button controller must wrap BOTH the profile field and the
+    # button, or it can't read the selected feed_profile_key at click time.
+    assert_select "#feed-form[data-controller~='preview-button'] [data-key='preview.open']", count: 1
+    assert_select "#feed-form[data-controller~='preview-button'] input[name='feed[feed_profile_key]']", count: 1
   end
 
   test "#destroy should remove own feed" do

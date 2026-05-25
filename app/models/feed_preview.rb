@@ -28,14 +28,6 @@ class FeedPreview < ApplicationRecord
     (params || {})[shape.to_s]
   end
 
-  def self.fresh_ready(user_id:, feed_profile_key:, params:, within:)
-    where(user_id: user_id, feed_profile_key: feed_profile_key, params_digest: digest_for(feed_profile_key, params))
-      .ready
-      .where(ready_at: within.ago..)
-      .order(ready_at: :desc)
-      .first
-  end
-
   def posts_data
     (data.present? && ready? && data["posts"]) || []
   end

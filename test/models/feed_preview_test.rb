@@ -103,28 +103,4 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal query_digest,
                  FeedPreview.digest_for("llm_web_search", { "query" => "rust async", "url" => "ignored" })
   end
-
-  test ".fresh_ready should find a ready preview within the window" do
-    user = create(:user)
-    preview = create(:feed_preview, :completed, user: user,
-                     feed_profile_key: "rss", params: { "url" => "https://x.test" })
-    preview.update!(ready_at: 1.minute.ago)
-
-    found = FeedPreview.fresh_ready(
-      user_id: user.id, feed_profile_key: "rss",
-      params: { "url" => "https://x.test" }, within: 60.minutes
-    )
-    assert_equal preview, found
-  end
-
-  test ".fresh_ready should ignore stale or non-ready previews" do
-    user = create(:user)
-    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
-           params: { "url" => "https://x.test" }, ready_at: 2.hours.ago)
-
-    assert_nil FeedPreview.fresh_ready(
-      user_id: user.id, feed_profile_key: "rss",
-      params: { "url" => "https://x.test" }, within: 60.minutes
-    )
-  end
 end

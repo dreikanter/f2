@@ -1,10 +1,26 @@
 <%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 <% multi_candidate = !edit_mode && candidates.size > 1 %>
+<%
+  preview_shapes =
+    if multi_candidate
+      candidates.to_h { |c| [c["profile_key"], FeedProfile[c["profile_key"]]&.dig(:input_shape).to_s] }
+    else
+      { feed.feed_profile_key => feed.source_input_shape }
+    end
+%>
 
+<%# preview-button is mounted on the whole form so it can read the selected
+    feed_profile_key (radios or hidden field) and react to candidate changes;
+    the button and the modal's frame are nested targets within it. %>
 <div id="feed-form"
      data-identification-state="complete"
-     data-candidates="<%= candidates.to_json %>">
+     data-candidates="<%= candidates.to_json %>"
+     data-controller="preview-button"
+     data-preview-button-endpoint-value="<%= feed_preview_path %>"
+     data-preview-button-source-value="<%= feed.source_input %>"
+     data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
+     data-preview-button-modal-id-value="feed-preview-modal">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
@@ -21,10 +37,12 @@
         <%= f.hidden_field :feed_profile_key %>
       <% end %>
 
-      <% if FeedProfile.exists?(feed.feed_profile_key) && FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
+      <%# Show the cost notice whenever an AI path is selectable — including a
+          non-recommended AI candidate — so token spend stays explicit. %>
+      <% if FeedProfile.depends_on_ai?(feed.feed_profile_key) || candidates.any? { |c| c["depends_on_ai"] } %>
         <p class="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-900"
            data-key="ai-cost.notice">
-          AI fetches (including this preview) cost tokens. You'll see your spend on the feed page.
+          AI fetches cost tokens. Previewing or refreshing a preview spends some too — you'll see your spend on the feed page.
         </p>
       <% end %>
 
@@ -62,18 +80,22 @@
         <% end %>
       </div>
 
-      <% unless edit_mode %>
-        <div class="mt-2" data-key="form.preview">
-          <%= turbo_frame_tag "feed-preview",
-                              src: feed_preview_path(
-                                profile_key: feed.feed_profile_key,
-                                "params" => { feed.source_input_shape => feed.source_input }
-                              ),
-                              loading: "lazy" do %>
-            <p class="text-slate-500">Building a preview…</p>
+      <div class="mt-2" data-key="form.preview">
+        <button type="button"
+                <%= "disabled" unless feed.can_be_previewed? %>
+                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-preview-button-target="button"
+                data-action="click->preview-button#open"
+                data-key="preview.open">
+          See what we'd post
+        </button>
+
+        <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
+          <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
+            <p class="text-slate-500">Your preview will show up here.</p>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>

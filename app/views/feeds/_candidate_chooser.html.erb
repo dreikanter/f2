@@ -2,7 +2,6 @@
 <% selected_key = candidates.first&.dig("profile_key") %>
 
 <div class="space-y-2"
-     data-controller="candidate-chooser"
      data-key="candidates">
   <%= label_tag nil, "How should we fetch posts?", class: "block font-semibold text-slate-800" %>
 
@@ -19,9 +18,7 @@
                name="feed[feed_profile_key]"
                value="<%= profile_key %>"
                <%= "checked" if is_first %>
-               class="mt-1"
-               data-action="change->candidate-chooser#switch"
-               data-candidate-chooser-target="option">
+               class="mt-1">
         <span class="flex flex-col gap-1">
           <span class="flex flex-wrap items-center gap-2">
             <span class="font-semibold text-slate-800"><%= display_name %></span>

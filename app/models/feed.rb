@@ -39,9 +39,8 @@ class Feed < ApplicationRecord
 
   enum :state, { draft: 0, disabled: 1, enabled: 2 }, default: :draft
 
-  # Window within which a ready FeedPreview proves the user just saw a preview
-  # of this source. Enforced by enabling_requires_recent_preview on enable.
-  ENABLE_PREVIEW_WINDOW = 60.minutes
+  # How long a ready FeedPreview is reused before a fresh run is forced.
+  PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
 
@@ -59,7 +58,6 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
-  validate :enabling_requires_recent_preview, on: :enable
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
   validate :llm_credential_required_when_enabled_ai_profile, if: :enabled?
@@ -154,21 +152,20 @@ class Feed < ApplicationRecord
     access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
-  # Promote the feed to enabled, running the enable-envelope validators
-  # (default + on: :enable). If validation fails, the DB stays at the prior
-  # state, errors are added to the feed, and the in-memory state is rolled
-  # back to its persisted value so re-renders (e.g., source-side field
-  # editability for drafts) reflect DB truth.
+  # Promote the feed to enabled, running the enabled-state validators. If
+  # validation fails, the DB stays at the prior state, errors are added to the
+  # feed, and the in-memory state is rolled back to its persisted value so
+  # re-renders reflect DB truth.
   def enable
     self.state = :enabled
-    return true if save(context: :enable)
+    return true if save
 
     self.state = state_was
     false
   end
 
   def can_be_previewed?
-    url.present? && feed_profile_present?
+    source_input.present? && feed_profile_present?
   end
 
   # Creates and returns a loader instance for this feed
@@ -282,21 +279,6 @@ class Feed < ApplicationRecord
       message = pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
       errors.add(:params, message)
     end
-  end
-
-  # Fires only via `save(context: :enable)`, called exclusively from
-  # `Feed#enable`. Routine operational edits on an enabled feed (paused/
-  # renamed/rescheduled) skip this check because they run under the default
-  # save context. Only an explicit user-initiated promotion through the
-  # form has to re-prove a fresh preview bound to (profile_key, params).
-  def enabling_requires_recent_preview
-    fresh = FeedPreview.fresh_ready(
-      user_id: user_id,
-      feed_profile_key: feed_profile_key,
-      params: params || {},
-      within: ENABLE_PREVIEW_WINDOW
-    )
-    errors.add(:state, :preview_required, message: "requires a recent preview") unless fresh
   end
 
   def llm_credential_belongs_to_user

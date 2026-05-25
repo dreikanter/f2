@@ -330,6 +330,27 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed_identification&.destroy
   end
 
+  test "#show should show the AI cost notice when a non-recommended candidate is AI" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    feed_identification = FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" },
+        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='ai-cost.notice']", count: 1
+  ensure
+    feed_identification&.destroy
+  end
+
   test "#show should write the user's input under params[query] for handle inputs" do
     sign_in_as(user)
     handle = "@alice"
