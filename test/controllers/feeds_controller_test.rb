@@ -321,6 +321,28 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p.text-red-600", text: /lowercase letters/
   end
 
+  test "#create should keep the expanded form for a query-shaped feed on validation failure" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      name: "Search Feed",
+      feed_profile_key: "llm_web_search",
+      params: { query: "ruby news" },
+      access_token_id: access_token.id,
+      target_group: "INVALID GROUP!",  # Invalid format (always validated)
+      schedule_interval: "1h"
+    }
+
+    post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+
+    assert_response :unprocessable_entity
+    # Query-shaped feeds have a blank url; the expanded form must still render
+    # (keyed off source_input, not url) so the preview button survives the error.
+    assert_select "[data-key='preview.open']", count: 1
+    assert_select "p.text-red-600", text: /lowercase letters/
+  end
+
   test "#show should render feed owned by user" do
     sign_in_as(user)
     get feed_url(feed)

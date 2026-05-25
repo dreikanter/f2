@@ -6,7 +6,7 @@
   <div class="max-w-2xl">
     <% if !active_access_tokens? %>
       <%= render "blocked_no_tokens" %>
-    <% elsif @feed.url.present? %>
+    <% elsif @feed.source_input.present? %>
       <%= render "form_expanded", feed: @feed, edit_mode: false %>
     <% else %>
       <%= render "form_collapsed" %>

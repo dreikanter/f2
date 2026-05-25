@@ -32,7 +32,7 @@ export default class extends Controller {
   open(event) {
     event?.preventDefault()
     const profileKey = this._selectedProfileKey()
-    if (!profileKey || !this.sourceValue || !this.hasFrameTarget) return
+    if (!profileKey || !this.sourceValue.trim() || !this.hasFrameTarget) return
 
     const shape = this.shapesValue[profileKey]
     if (!shape) return
@@ -47,7 +47,7 @@ export default class extends Controller {
 
   refreshAvailability() {
     if (!this.hasButtonTarget) return
-    const ready = !!this._selectedProfileKey() && !!this.sourceValue
+    const ready = !!this._selectedProfileKey() && !!this.sourceValue.trim()
     this.buttonTarget.disabled = !ready
   }
 
