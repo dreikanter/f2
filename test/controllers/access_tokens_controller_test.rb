@@ -84,6 +84,144 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
 
+  test "#new should accept and remember a feed_id owned by current_user" do
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    get new_access_token_path, params: { feed_id: draft.id }
+
+    assert_response :success
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#new should ignore foreign feed_id" do
+    sign_in_as user
+    other_draft = create(:feed, :draft, user: create(:user))
+
+    get new_access_token_path, params: { feed_id: other_draft.id }
+
+    assert_response :success
+    assert_select "h1", "New Access Token"
+  end
+
+  test "#create should auto-attach the token to the owned feed" do
+    sign_in_as user
+    draft = create(:feed, :without_access_token, :draft, user: user)
+
+    post access_tokens_path, params: {
+      feed_id: draft.id,
+      access_token: {
+        name: "Test Token",
+        token: "test_token_123",
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
+      }
+    }
+
+    assert_equal AccessToken.last.id, draft.reload.access_token_id
+  end
+
+  test "#create should not attach when feed_id is foreign" do
+    sign_in_as user
+    other_draft = create(:feed, :without_access_token, :draft, user: create(:user))
+
+    post access_tokens_path, params: {
+      feed_id: other_draft.id,
+      access_token: {
+        name: "Test Token",
+        token: "test_token_123",
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
+      }
+    }
+
+    assert_nil other_draft.reload.access_token_id
+  end
+
+  test "#create should redirect with feed_id in the show path" do
+    sign_in_as user
+    draft = create(:feed, :without_access_token, :draft, user: user)
+
+    post access_tokens_path, params: {
+      feed_id: draft.id,
+      access_token: {
+        name: "Test Token",
+        token: "test_token_123",
+        host: AccessToken::FREEFEED_HOSTS[:production][:url]
+      }
+    }
+
+    assert_redirected_to access_token_path(AccessToken.last, feed_id: draft.id)
+  end
+
+  test "#show should render Continue setting up your feed link when token is active and feed_id is owned" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+    draft = create(:feed, :draft, user: user)
+
+    get access_token_path(active, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a[href=?]", edit_feed_path(draft.id), text: "Continue setting up your feed"
+  end
+
+  test "#show should not render Continue setting up your feed link when token is pending" do
+    sign_in_as user
+    pending = create(:access_token, user: user, status: :pending)
+    draft = create(:feed, :draft, user: user)
+
+    get access_token_path(pending, feed_id: draft.id)
+
+    assert_response :success
+    assert_select "a", text: "Continue setting up your feed", count: 0
+  end
+
+  test "#show should render Back to your feed link in all states when feed_id is present" do
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    [create(:access_token, user: user, status: :pending),
+     create(:access_token, :active, user: user),
+     create(:access_token, :inactive, user: user)].each do |token|
+      get access_token_path(token, feed_id: draft.id)
+      assert_select "a[href=?]", edit_feed_path(draft.id), text: "Back to your feed"
+    end
+  end
+
+  test "#show should not render Back to your feed link when feed_id is missing" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_select "a", text: "Back to your feed", count: 0
+  end
+
+  test "#new should point Cancel to feed editor when feed_id is present" do
+    sign_in_as user
+    draft = create(:feed, :draft, user: user)
+
+    get new_access_token_path, params: { feed_id: draft.id }
+
+    assert_select "a[href=?]", edit_feed_path(draft), text: "Cancel"
+  end
+
+  test "#new should point Cancel to tokens list when feed_id is absent" do
+    sign_in_as user
+
+    get new_access_token_path
+
+    assert_select "a[href=?]", access_tokens_path, text: "Cancel"
+  end
+
+  test "#show should not render Continue setting up your feed link when feed_id is missing" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "a", text: "Continue setting up your feed", count: 0
+  end
+
   test "#create should render new form on validation error" do
     sign_in_as user
 

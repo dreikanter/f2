@@ -6,7 +6,7 @@ class AccessTokens::ValidationsController < ApplicationController
     render turbo_stream: turbo_stream.update(
       "access-token-show",
       partial: "access_tokens/show_content",
-      locals: { access_token: access_token }
+      locals: { access_token: access_token, feed_id: params[:feed_id] }
     )
   end
 

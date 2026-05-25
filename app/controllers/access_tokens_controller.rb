@@ -6,16 +6,19 @@ class AccessTokensController < ApplicationController
 
   def show
     @access_token = find_access_token
+    @feed = load_feed
     authorize @access_token
   end
 
   def new
     @access_token = AccessToken.new
+    @feed = load_feed
     authorize @access_token
   end
 
   def create
     @access_token = build_acces_token
+    @feed = load_feed
     authorize @access_token
 
     unless valid_host?(@access_token.host)
@@ -24,8 +27,9 @@ class AccessTokensController < ApplicationController
     end
 
     if @access_token.save
+      @feed&.update_column(:access_token_id, @access_token.id)
       @access_token.validate_token_async
-      redirect_to access_token_path(@access_token)
+      redirect_to access_token_path(@access_token, feed_id: @feed&.id)
     else
       render :new, status: :unprocessable_entity
     end
@@ -39,6 +43,12 @@ class AccessTokensController < ApplicationController
   end
 
   private
+
+  def load_feed
+    return nil if params[:feed_id].blank?
+
+    Current.user.feeds.find_by(id: params[:feed_id])
+  end
 
   def build_acces_token
     Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
