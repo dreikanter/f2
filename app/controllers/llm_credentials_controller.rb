@@ -30,6 +30,23 @@ class LlmCredentialsController < ApplicationController
     end
   end
 
+  def edit
+    @llm_credential = find_credential
+    authorize @llm_credential
+  end
+
+  def update
+    @llm_credential = find_credential
+    authorize @llm_credential
+
+    if @llm_credential.update(updated_credential_attrs)
+      LlmCredentialValidationJob.perform_later(@llm_credential)
+      redirect_to llm_credential_path(@llm_credential)
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   def destroy
     credential = find_credential
     authorize credential
@@ -43,6 +60,13 @@ class LlmCredentialsController < ApplicationController
     return nil if feed_id.blank?
 
     Current.user.feeds.find_by(id: feed_id)
+  end
+
+  def updated_credential_attrs
+    attrs = { display_name: credential_params[:display_name], state: :pending }
+    data = credential_data_from_params
+    attrs[:credential_data] = data if data["api_key"].present?
+    attrs
   end
 
   def build_credential
