@@ -645,6 +645,40 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Draft", draft.name
   end
 
+  test "#create should re-render the expanded form with a manual preview button and no auto-loading frame" do
+    sign_in_as(user)
+    access_token
+
+    post feeds_path, params: {
+      feed: {
+        url: "http://example.com/feed.xml",
+        name: "Test Feed",
+        feed_profile_key: "rss",
+        access_token_id: access_token.id,
+        target_group: "INVALID GROUP!",
+        schedule_interval: "1h"
+      },
+      enable_feed: "0"
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "[data-key='preview.open']", count: 1
+    assert_select "turbo-frame#feed-preview[loading='lazy']", count: 0
+    assert_select "turbo-frame#feed-preview[src]", count: 0
+  end
+
+  test "#edit should render a manual preview button" do
+    sign_in_as(user)
+    feed = create(:feed, :disabled, user: user, access_token: access_token,
+                                     feed_profile_key: "rss",
+                                     params: { "url" => "http://example.com/feed.xml" })
+
+    get edit_feed_path(feed)
+
+    assert_response :success
+    assert_select "[data-key='preview.open']", count: 1
+  end
+
   test "#destroy should remove own feed" do
     sign_in_as(user)
     feed = create(:feed, user: user)

@@ -62,18 +62,36 @@
         <% end %>
       </div>
 
-      <% unless edit_mode %>
-        <div class="mt-2" data-key="form.preview">
-          <%= turbo_frame_tag "feed-preview",
-                              src: feed_preview_path(
-                                profile_key: feed.feed_profile_key,
-                                "params" => { feed.source_input_shape => feed.source_input }
-                              ),
-                              loading: "lazy" do %>
-            <p class="text-slate-500">Building a preview…</p>
+      <%
+        preview_shapes =
+          if multi_candidate
+            candidates.to_h { |c| [c["profile_key"], FeedProfile[c["profile_key"]]&.dig(:input_shape).to_s] }
+          else
+            { feed.feed_profile_key => feed.source_input_shape }
+          end
+      %>
+      <div class="mt-2"
+           data-key="form.preview"
+           data-controller="preview-button"
+           data-preview-button-endpoint-value="<%= feed_preview_path %>"
+           data-preview-button-source-value="<%= feed.source_input %>"
+           data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
+           data-preview-button-modal-id-value="feed-preview-modal">
+        <button type="button"
+                <%= "disabled" unless feed.can_be_previewed? %>
+                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-preview-button-target="button"
+                data-action="click->preview-button#open"
+                data-key="preview.open">
+          See what we'd post
+        </button>
+
+        <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
+          <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
+            <p class="text-slate-500">Your preview will show up here.</p>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
