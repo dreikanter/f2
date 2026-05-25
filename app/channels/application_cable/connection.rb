@@ -1,5 +1,9 @@
+# Currently unused; preserved during the dev stage for future real-time features
+# 
+# TODO: Consider removing the ActionCable dependency if there will be no practical
+#   use upon public release
+# 
 module ApplicationCable
-  # Currently unused; preserved during the dev stage for future real-time features.
   class Connection < ActionCable::Connection::Base
     identified_by :current_user
 
