@@ -1,4 +1,6 @@
 class PageHeaderComponent < ViewComponent::Base
+  renders_one :title_icon
+
   renders_many :context_paragraphs, ->(content = nil, &block) do
     content || block.call
   end
