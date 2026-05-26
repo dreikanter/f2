@@ -131,6 +131,10 @@ class Feed < ApplicationRecord
     (FeedProfile[feed_profile_key]&.dig(:input_shape) || :url).to_s
   end
 
+  def display_name
+    name.presence || "Untitled feed"
+  end
+
   def feed_profile_present?
     feed_profile_key.present? && FeedProfile.exists?(feed_profile_key)
   end

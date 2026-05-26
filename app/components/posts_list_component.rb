@@ -50,7 +50,7 @@ class PostsListComponent < ViewComponent::Base
     return unless show_feed
     return unless post.feed.present?
 
-    helpers.link_to(post.feed.name, helpers.feed_path(post.feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+    helpers.link_to(post.feed.display_name, helpers.feed_path(post.feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
   end
 
   def self.published_segment(post:, helpers:)

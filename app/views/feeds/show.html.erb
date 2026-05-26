@@ -1,7 +1,7 @@
-<% content_for :title, @feed.name %>
+<% content_for :title, @feed.display_name %>
 
 <div class="space-y-10">
-  <%= render PageHeaderComponent.new(title: @feed.name) do |header| %>
+  <%= render PageHeaderComponent.new(title: @feed.display_name) do |header| %>
     <% if @feed.enabled? %>
       <% header.with_title_icon { icon("play", css_class: "size-9 text-green-600") } %>
     <% else %>
