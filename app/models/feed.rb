@@ -132,7 +132,7 @@ class Feed < ApplicationRecord
   end
 
   def display_name
-    name.presence || source_input.presence || "Untitled feed"
+    name.presence || "Untitled feed"
   end
 
   def feed_profile_present?

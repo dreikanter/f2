@@ -43,13 +43,8 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "My Feed", feed.display_name
   end
 
-  test "#display_name should fall back to source_input when name is blank" do
-    feed = build(:feed, name: nil, params: { "url" => "https://example.com/feed.xml" })
-    assert_equal "https://example.com/feed.xml", feed.display_name
-  end
-
-  test "#display_name should return placeholder when name and source_input are both blank" do
-    feed = build(:feed, name: nil, params: {})
+  test "#display_name should return placeholder when name is blank" do
+    feed = build(:feed, name: nil)
     assert_equal "Untitled feed", feed.display_name
   end
 
