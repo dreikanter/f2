@@ -24,20 +24,14 @@ module FeedHelper
 
   def feed_status_icon(feed)
     if feed.enabled?
-      icon("check-circle-fill",
-           css_class: "text-emerald-500 text-base leading-5",
-           title: "Enabled",
-           aria_label: "Enabled")
+      lucide_icon("circle-check", css_class: "text-emerald-500", size: "size-4",
+                  title: "Enabled", aria_label: "Enabled")
     elsif feed.draft?
-      icon("pencil-square",
-           css_class: "text-amber-500 text-base leading-5",
-           title: "Draft",
-           aria_label: "Draft")
+      lucide_icon("square-pen", css_class: "text-amber-500", size: "size-4",
+                  title: "Draft", aria_label: "Draft")
     else
-      icon("x-circle",
-           css_class: "text-slate-400 text-base leading-5",
-           title: "Disabled",
-           aria_label: "Disabled")
+      lucide_icon("circle-x", css_class: "text-slate-400", size: "size-4",
+                  title: "Disabled", aria_label: "Disabled")
     end
   end
 

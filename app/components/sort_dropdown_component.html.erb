@@ -7,12 +7,12 @@
     class="<%= trigger_classes %>"
     aria-haspopup="true"
     aria-expanded="false">
-    <%= icon(direction_icon, css_class: "text-slate-500", aria_hidden: true) %>
+    <%= lucide_icon(direction_icon, css_class: "text-slate-500", size: "size-4") %>
     <span class="flex items-center gap-2">
       <span><%= presenter.current_title %></span>
       <span class="sr-only"><%= direction_label %></span>
     </span>
-    <%= icon("chevron-down", css_class: "text-xs text-slate-400", aria_hidden: true) %>
+    <%= lucide_icon("chevron-down", css_class: "text-slate-400", size: "size-4") %>
   </button>
   <div
     id="<%= menu_id %>"
@@ -26,7 +26,7 @@
             <span><%= option.title %></span>
             <% if option.icon_name.present? %>
               <span class="flex items-center text-slate-500">
-                <%= icon(option.icon_name, css_class: "text-slate-400", aria_hidden: true) %>
+                <%= lucide_icon(option.icon_name, css_class: "text-slate-400", size: "size-4") %>
                 <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
               </span>
             <% end %>

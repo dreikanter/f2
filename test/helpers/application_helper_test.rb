@@ -105,60 +105,81 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
   end
 
-  test "#icon returns basic icon without classes" do
-    result = icon("star")
-    assert_equal '<i class="bi bi-star inline-block"></i>', result
+  test "#lucide_icon returns svg for known icon" do
+    result = lucide_icon("star")
+    assert_includes result, "<svg"
+    assert_includes result, 'aria-hidden="true"'
+    assert_includes result, 'class="size-9 shrink-0"'
   end
 
-  test "#icon returns icon with css class" do
-    result = icon("star", css_class: "text-warning")
-    assert_equal '<i class="bi bi-star inline-block text-warning"></i>', result
+  test "#lucide_icon returns svg with css class" do
+    result = lucide_icon("star", css_class: "text-warning")
+    assert_includes result, 'class="size-9 shrink-0 text-warning"'
   end
 
-  test "#icon returns icon with title" do
-    result = icon("star", title: "Favorite")
-    assert_equal '<i class="bi bi-star inline-block" title="Favorite"></i>', result
+  test "#lucide_icon returns svg with size override" do
+    result = lucide_icon("star", size: "size-4")
+    assert_includes result, 'class="size-4 shrink-0"'
   end
 
-  test "#icon returns icon with css class and title" do
-    result = icon("check-circle", css_class: "text-success me-2", title: "Complete")
-    assert_equal '<i class="bi bi-check-circle inline-block text-success me-2" title="Complete"></i>', result
+  test "#lucide_icon returns empty string for unknown icon" do
+    result = lucide_icon("nonexistent-icon")
+    assert_equal "", result
+  end
+
+  test "#lucide_icon renders title attribute when provided" do
+    result = lucide_icon("star", title: "Favorite")
+    assert_includes result, 'title="Favorite"'
+    assert_includes result, 'aria-hidden="true"'
+  end
+
+  test "#lucide_icon renders aria-label and role when aria_label provided" do
+    result = lucide_icon("star", aria_label: "Favorite")
+    assert_includes result, 'aria-label="Favorite"'
+    assert_includes result, 'role="img"'
+    assert_not_includes result, "aria-hidden"
   end
 
   test "#post_status_icon returns draft icon for draft status" do
     result = post_status_icon("draft")
-    expected = '<i class="bi bi-file-earmark inline-block text-muted" title="Draft"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Draft"'
+    assert_includes result, "text-muted"
   end
 
   test "#post_status_icon returns enqueued icon for enqueued status" do
     result = post_status_icon("enqueued")
-    expected = '<i class="bi bi-clock inline-block text-secondary" title="Enqueued"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Enqueued"'
+    assert_includes result, "text-secondary"
   end
 
   test "#post_status_icon returns rejected icon for rejected status" do
     result = post_status_icon("rejected")
-    expected = '<i class="bi bi-x-circle inline-block text-danger" title="Rejected"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Rejected"'
+    assert_includes result, "text-danger"
   end
 
   test "#post_status_icon returns published icon for published status" do
     result = post_status_icon("published")
-    expected = '<i class="bi bi-check-circle-fill inline-block text-success" title="Published"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Published"'
+    assert_includes result, "text-success"
   end
 
   test "#post_status_icon returns failed icon for failed status" do
     result = post_status_icon("failed")
-    expected = '<i class="bi bi-exclamation-triangle inline-block text-danger" title="Failed"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Failed"'
+    assert_includes result, "text-danger"
   end
 
   test "#post_status_icon returns withdrawn icon for withdrawn status" do
     result = post_status_icon("withdrawn")
-    expected = '<i class="bi bi-trash inline-block text-secondary" title="Withdrawn"></i>'
-    assert_equal expected, result
+    assert_includes result, "<svg"
+    assert_includes result, 'title="Withdrawn"'
+    assert_includes result, "text-secondary"
   end
 
   test "#post_status_icon returns capitalized text for unknown status" do

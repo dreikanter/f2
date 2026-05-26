@@ -49,7 +49,7 @@
   <% end %>
 <% elsif access_token.active? %>
   <%= render AlertComponent.new(variant: :success, data: { status: "active" }) do %>
-    <%= icon("check-circle", aria_hidden: true) %>
+    <%= lucide_icon("circle-check", size: "size-5") %>
     <span>Token is valid and ready to use</span>
   <% end %>
 
@@ -100,7 +100,7 @@
   </div>
 <% elsif access_token.inactive? %>
   <%= render AlertComponent.new(variant: :error, data: { status: "inactive" }) do %>
-    <%= icon("x-circle", aria_hidden: true) %>
+    <%= lucide_icon("circle-x", size: "size-5") %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   <% end %>
 

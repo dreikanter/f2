@@ -43,7 +43,7 @@ class PostDetailsComponent < ViewComponent::Base
         filename = extract_filename(url)
         helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center") do
           safe_join([
-            helpers.icon("file-earmark-image", aria_hidden: true),
+            helpers.lucide_icon("file-image", size: "size-4"),
             content_tag(:span, filename, class: "sr-only")
           ])
         end
