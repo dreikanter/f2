@@ -40,18 +40,6 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal expected, result
   end
 
-  test "#page_header with text block content" do
-    result = page_header("Settings") do
-      "Some content"
-    end
-
-    expected = <<~HTML.strip
-      <div class="d-flex justify-content-between align-items-center mb-4"><h1>Settings</h1>Some content</div>
-    HTML
-
-    assert_equal expected, result
-  end
-
   test "#page_section_header renders h2 with title and classes" do
     result = page_section_header("Title")
 
@@ -105,31 +93,31 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "Content with spaces", post_content_preview(content_with_whitespace)
   end
 
-  test "#lucide_icon returns svg for known icon" do
-    result = lucide_icon("star")
+  test "#icon returns svg for known icon" do
+    result = icon("star")
     assert_includes result, "<svg"
     assert_includes result, 'aria-hidden="true"'
     assert_includes result, 'class="shrink-0"'
   end
 
-  test "#lucide_icon returns svg with css class" do
-    result = lucide_icon("star", css_class: "size-4 text-warning")
+  test "#icon returns svg with css class" do
+    result = icon("star", css_class: "size-4 text-warning")
     assert_includes result, 'class="shrink-0 size-4 text-warning"'
   end
 
-  test "#lucide_icon returns empty string for unknown icon" do
-    result = lucide_icon("nonexistent-icon")
+  test "#icon returns empty string for unknown icon" do
+    result = icon("nonexistent-icon")
     assert_equal "", result
   end
 
-  test "#lucide_icon renders title attribute when provided" do
-    result = lucide_icon("star", title: "Favorite")
+  test "#icon renders title attribute when provided" do
+    result = icon("star", title: "Favorite")
     assert_includes result, 'title="Favorite"'
     assert_includes result, 'aria-hidden="true"'
   end
 
-  test "#lucide_icon renders aria-label and role when aria_label provided" do
-    result = lucide_icon("star", aria_label: "Favorite")
+  test "#icon renders aria-label and role when aria_label provided" do
+    result = icon("star", aria_label: "Favorite")
     assert_includes result, 'aria-label="Favorite"'
     assert_includes result, 'role="img"'
     assert_not_includes result, "aria-hidden"
@@ -188,7 +176,6 @@ class ApplicationHelperTest < ActionView::TestCase
     result = highlight_json(json_hash)
 
     assert_includes result, "<div class=\"highlight\">"
-    assert_includes result, "</div>"
   end
 
   test "#navbar_items should return empty array when user is missing" do

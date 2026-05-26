@@ -24,13 +24,13 @@ module FeedHelper
 
   def feed_status_icon(feed)
     if feed.enabled?
-      lucide_icon("circle-check", css_class: "size-4 text-emerald-500",
+      icon("circle-check", css_class: "size-4 text-emerald-500",
                   title: "Enabled", aria_label: "Enabled")
     elsif feed.draft?
-      lucide_icon("square-pen", css_class: "size-4 text-amber-500",
+      icon("square-pen", css_class: "size-4 text-amber-500",
                   title: "Draft", aria_label: "Draft")
     else
-      lucide_icon("circle-x", css_class: "size-4 text-slate-400",
+      icon("circle-x", css_class: "size-4 text-slate-400",
                   title: "Disabled", aria_label: "Disabled")
     end
   end

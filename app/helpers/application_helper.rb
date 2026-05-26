@@ -15,7 +15,7 @@ module ApplicationHelper
     truncate(content.strip, length: length)
   end
 
-  LUCIDE_ICONS = {
+  ICONS = {
     # Media
     "pause"          => '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
     "play"           => '<polygon points="6 3 20 12 6 21 6 3"/>',
@@ -46,8 +46,8 @@ module ApplicationHelper
     "users"          => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
   }.freeze
 
-  def lucide_icon(name, css_class: nil, title: nil, aria_label: nil)
-    path_data = LUCIDE_ICONS[name]
+  def icon(name, css_class: nil, title: nil, aria_label: nil)
+    path_data = ICONS[name]
     return "".html_safe unless path_data
 
     options = {
@@ -76,17 +76,17 @@ module ApplicationHelper
   def post_status_icon(status)
     case status.to_s
     when "draft"
-      lucide_icon("file", css_class: "size-4 text-muted", title: "Draft")
+      icon("file", css_class: "size-4 text-muted", title: "Draft")
     when "enqueued"
-      lucide_icon("clock", css_class: "size-4 text-secondary", title: "Enqueued")
+      icon("clock", css_class: "size-4 text-secondary", title: "Enqueued")
     when "rejected"
-      lucide_icon("circle-x", css_class: "size-4 text-danger", title: "Rejected")
+      icon("circle-x", css_class: "size-4 text-danger", title: "Rejected")
     when "published"
-      lucide_icon("circle-check", css_class: "size-4 text-success", title: "Published")
+      icon("circle-check", css_class: "size-4 text-success", title: "Published")
     when "failed"
-      lucide_icon("triangle-alert", css_class: "size-4 text-danger", title: "Failed")
+      icon("triangle-alert", css_class: "size-4 text-danger", title: "Failed")
     when "withdrawn"
-      lucide_icon("trash-2", css_class: "size-4 text-secondary", title: "Withdrawn")
+      icon("trash-2", css_class: "size-4 text-secondary", title: "Withdrawn")
     else
       content_tag(:span, status.capitalize, class: "text-muted")
     end
