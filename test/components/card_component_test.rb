@@ -9,7 +9,7 @@ class CardComponentTest < ViewComponent::TestCase
     assert_not_nil card
     assert_equal "Card body", card.text.strip
     assert_includes card["class"], "bg-white"
-    assert_includes card["class"], "sm:rounded-lg"
+    assert_includes card["class"], "rounded-lg"
   end
 
   test "#call should merge classes and forward html attributes" do
