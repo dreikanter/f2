@@ -9,7 +9,8 @@ class PageHeaderComponent < ViewComponent::Base
     content || block.call
   end
 
-  def initialize(title:)
+  def initialize(title:, title_data: nil)
     @title = title
+    @title_data = title_data
   end
 end
