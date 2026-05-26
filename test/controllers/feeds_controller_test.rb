@@ -90,6 +90,29 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "successfully created and is now active", flash[:notice]
   end
 
+  test "#create should save as draft with blank name" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?
+    assert_nil feed.name
+    assert_redirected_to feed_path(feed)
+  end
+
   test "#create should save as draft when checkbox unchecked" do
     sign_in_as(user)
     access_token
