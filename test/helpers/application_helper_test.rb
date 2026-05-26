@@ -109,17 +109,12 @@ class ApplicationHelperTest < ActionView::TestCase
     result = lucide_icon("star")
     assert_includes result, "<svg"
     assert_includes result, 'aria-hidden="true"'
-    assert_includes result, 'class="size-9 shrink-0"'
+    assert_includes result, 'class="shrink-0"'
   end
 
   test "#lucide_icon returns svg with css class" do
-    result = lucide_icon("star", css_class: "text-warning")
-    assert_includes result, 'class="size-9 shrink-0 text-warning"'
-  end
-
-  test "#lucide_icon returns svg with size override" do
-    result = lucide_icon("star", size: "size-4")
-    assert_includes result, 'class="size-4 shrink-0"'
+    result = lucide_icon("star", css_class: "size-4 text-warning")
+    assert_includes result, 'class="shrink-0 size-4 text-warning"'
   end
 
   test "#lucide_icon returns empty string for unknown icon" do

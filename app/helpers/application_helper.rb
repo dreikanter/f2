@@ -46,7 +46,7 @@ module ApplicationHelper
     "users"          => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
   }.freeze
 
-  def lucide_icon(name, css_class: nil, size: "size-9", title: nil, aria_label: nil)
+  def lucide_icon(name, css_class: nil, title: nil, aria_label: nil)
     path_data = LUCIDE_ICONS[name]
     return "".html_safe unless path_data
 
@@ -58,7 +58,7 @@ module ApplicationHelper
       "stroke-width": "2",
       "stroke-linecap": "round",
       "stroke-linejoin": "round",
-      class: class_names(size, "shrink-0", css_class)
+      class: class_names("shrink-0", css_class)
     }
 
     options[:title] = title if title.present?
@@ -76,17 +76,17 @@ module ApplicationHelper
   def post_status_icon(status)
     case status.to_s
     when "draft"
-      lucide_icon("file", css_class: "text-muted", size: "size-4", title: "Draft")
+      lucide_icon("file", css_class: "size-4 text-muted", title: "Draft")
     when "enqueued"
-      lucide_icon("clock", css_class: "text-secondary", size: "size-4", title: "Enqueued")
+      lucide_icon("clock", css_class: "size-4 text-secondary", title: "Enqueued")
     when "rejected"
-      lucide_icon("circle-x", css_class: "text-danger", size: "size-4", title: "Rejected")
+      lucide_icon("circle-x", css_class: "size-4 text-danger", title: "Rejected")
     when "published"
-      lucide_icon("circle-check", css_class: "text-success", size: "size-4", title: "Published")
+      lucide_icon("circle-check", css_class: "size-4 text-success", title: "Published")
     when "failed"
-      lucide_icon("triangle-alert", css_class: "text-danger", size: "size-4", title: "Failed")
+      lucide_icon("triangle-alert", css_class: "size-4 text-danger", title: "Failed")
     when "withdrawn"
-      lucide_icon("trash-2", css_class: "text-secondary", size: "size-4", title: "Withdrawn")
+      lucide_icon("trash-2", css_class: "size-4 text-secondary", title: "Withdrawn")
     else
       content_tag(:span, status.capitalize, class: "text-muted")
     end

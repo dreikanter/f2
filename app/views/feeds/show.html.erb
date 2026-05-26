@@ -3,9 +3,9 @@
 <div class="space-y-10">
   <%= render PageHeaderComponent.new(title: @feed.name) do |header| %>
     <% if @feed.enabled? %>
-      <% header.with_title_icon { lucide_icon("play", css_class: "text-green-600") } %>
+      <% header.with_title_icon { lucide_icon("play", css_class: "size-9 text-green-600") } %>
     <% else %>
-      <% header.with_title_icon { lucide_icon("pause", css_class: "text-slate-400") } %>
+      <% header.with_title_icon { lucide_icon("pause", css_class: "size-9 text-slate-400") } %>
     <% end %>
     <% if (status_summary = feed_status_summary(@feed)).present? %>
       <% header.with_context_paragraph(status_summary) %>

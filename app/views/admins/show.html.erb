@@ -7,7 +7,7 @@
     <%= render CardComponent.new(href: admin_users_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= lucide_icon("users", size: "size-5") %>
+          <%= lucide_icon("users", css_class: "size-5") %>
           <span>Users</span>
         </h2>
         <p class="text-slate-600">Manage user accounts and permissions</p>
@@ -17,7 +17,7 @@
     <%= render CardComponent.new(href: admin_events_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= lucide_icon("calendar", size: "size-5") %>
+          <%= lucide_icon("calendar", css_class: "size-5") %>
           <span>System Events</span>
         </h2>
         <p class="text-slate-600">View system events, logs, and activity</p>
@@ -27,7 +27,7 @@
     <%= render CardComponent.new(href: admin_system_stats_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= lucide_icon("hard-drive", size: "size-5") %>
+          <%= lucide_icon("hard-drive", css_class: "size-5") %>
           <span>System Info</span>
         </h2>
         <p class="text-slate-600">View disk usage and other system information</p>
@@ -37,7 +37,7 @@
     <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= lucide_icon("layers", size: "size-5") %>
+          <%= lucide_icon("layers", css_class: "size-5") %>
           <span>Background Jobs</span>
         </h2>
         <p class="text-slate-600">Monitor and manage background job queues</p>
@@ -48,7 +48,7 @@
       <%= render CardComponent.new(href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer") do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= lucide_icon("inbox", size: "size-5") %>
+            <%= lucide_icon("inbox", css_class: "size-5") %>
             <span>Sent Emails</span>
           </h2>
           <p class="text-slate-600">Review emails captured in development</p>
@@ -58,7 +58,7 @@
       <%= render CardComponent.new(href: development_components_path, target: "_blank", rel: "noopener noreferrer") do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= lucide_icon("layout-grid", size: "size-5") %>
+            <%= lucide_icon("layout-grid", css_class: "size-5") %>
             <span>UI Reference</span>
           </h2>
           <p class="text-slate-600">Reference for all reusable UI components.</p>
