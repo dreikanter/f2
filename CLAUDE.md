@@ -103,10 +103,7 @@ is usually enough.
 ## Tooling Notes
 
 - Use mise for managing Ruby and Node runtimes (local dev).
-- **Remote Claude Code environments** don't have mise. Use rbenv directly:
-  - Ruby is at `/opt/rbenv/versions/3.3.6/bin` — the session-start hook adds it to `PATH` automatically.
-  - If it's missing from `PATH`, prefix commands: `PATH="/opt/rbenv/versions/3.3.6/bin:$PATH" bin/rails test`.
-  - PostgreSQL and gems are set up by `.claude/hooks/session-start.sh` on session start.
+- **Remote Claude Code environments** don't have mise. The session-start hook (`.claude/hooks/session-start.sh`) sets up Ruby via rbenv, starts PostgreSQL, and installs gems automatically. Run binstubs directly after that.
 - Run Rails binstubs directly: `bin/rails test`, `bin/rubocop -f github`.
 
 ## Testing
