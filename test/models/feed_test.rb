@@ -38,6 +38,21 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:name, :taken)
   end
 
+  test "#display_name should return name when present" do
+    feed = build(:feed, name: "My Feed")
+    assert_equal "My Feed", feed.display_name
+  end
+
+  test "#display_name should fall back to source_input when name is blank" do
+    feed = build(:feed, name: nil, params: { "url" => "https://example.com/feed.xml" })
+    assert_equal "https://example.com/feed.xml", feed.display_name
+  end
+
+  test "#display_name should return placeholder when name and source_input are both blank" do
+    feed = build(:feed, name: nil, params: {})
+    assert_equal "Untitled feed", feed.display_name
+  end
+
   test "should default params to empty hash for new records" do
     feed = Feed.new
     assert_equal({}, feed.params)

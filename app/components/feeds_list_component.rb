@@ -25,11 +25,8 @@ class FeedsListComponent < ViewComponent::Base
 
   private
 
-  # FR-022a: drafts may have a blank name (operational fields are optional
-  # until promotion). Fall back to the user's typed input, then to a
-  # generic label, so the row always has a clickable title.
   def display_title_for(feed)
-    feed.name.presence || feed.source_input.presence || "Untitled draft"
+    feed.display_name
   end
 
   def badge_for(feed)

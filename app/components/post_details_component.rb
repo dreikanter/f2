@@ -23,7 +23,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_feed_item(component)
     component.with_item(ListComponent::StatItemComponent.new(
       label: "Feed",
-      value: helpers.link_to(@post.feed.name, @post.feed, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
+      value: helpers.link_to(@post.feed.display_name, @post.feed, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
       key: "post.feed"
     ))
   end
