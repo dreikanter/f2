@@ -19,6 +19,7 @@ class LlmClient
   end
 
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
+  CallContext = Data.define(:feed, :profile_key, :stage, :purpose, :model)
 
   class << self
     def for(target, provider = nil)
@@ -57,17 +58,18 @@ class LlmClient
   def call(feed:, profile_key:, stage:, model:, prompt:, output_schema:, tools: [], purpose: :scheduled_run)
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
+    ctx = CallContext.new(feed: feed, profile_key: profile_key, stage: stage, purpose: purpose, model: model)
     started_at = Time.current
 
     begin
       response = invoke_provider(model: model, prompt: prompt, output_schema: output_schema, tools: tools)
     rescue RubyLLM::RateLimitError => e
-      record_failure(feed, profile_key, stage, purpose, model, :rate_limited, started_at, error_message: e.message)
+      write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
       raised.retry_after = e.try(:retry_after)
       raise raised
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
-      record_failure(feed, profile_key, stage, purpose, model, :timeout, started_at, error_message: e.message)
+      write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
       raise Timeout, e.message
     rescue RubyLLM::Error,
            RubyLLM::ConfigurationError,
@@ -76,8 +78,8 @@ class LlmClient
            RubyLLM::InvalidRoleError,
            RubyLLM::InvalidToolChoiceError,
            RubyLLM::UnsupportedAttachmentError => e
-      Rails.error.report(e, context: error_context(feed, profile_key, stage, model, purpose))
-      record_failure(feed, profile_key, stage, purpose, model, :provider_error, started_at, error_message: e.message)
+      Rails.error.report(e, context: error_context(ctx))
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise ProviderError, e.message
     end
 
@@ -86,22 +88,13 @@ class LlmClient
     begin
       validate_payload!(response.payload, output_schema)
     rescue SchemaError => e
-      record_failure(feed, profile_key, stage, purpose, model, :schema_error, started_at,
-                     finished_at: finished_at, response: response, error_message: e.message)
+      write_usage(ctx, outcome: :schema_error, started_at: started_at,
+                  finished_at: finished_at, response: response, error_message: e.message)
       raise
     end
 
-    usage = write_usage(
-      feed: feed,
-      profile_key: profile_key,
-      stage: stage,
-      purpose: purpose,
-      model: model,
-      response: response,
-      outcome: :success,
-      started_at: started_at,
-      finished_at: finished_at
-    )
+    usage = write_usage(ctx, outcome: :success, started_at: started_at,
+                        finished_at: finished_at, response: response)
 
     Result.new(payload: response.payload, usage_id: usage.id)
   end
@@ -167,48 +160,14 @@ class LlmClient
     raise SchemaError, "response did not match schema: #{errors.first['error']}"
   end
 
-  def write_usage(feed:, profile_key:, stage:, purpose:, model:, response:, outcome:, started_at:, finished_at:)
-    cost = LlmClient::RateTable.cost_for(
-      provider: credential.provider,
-      model: model,
-      usage: LlmClient::RateTable::Usage.new(
-        input_tokens: response.input_tokens,
-        output_tokens: response.output_tokens,
-        cache_write_tokens: response.cache_write_tokens,
-        cache_read_tokens: response.cache_read_tokens
-      )
-    )
-
-    LlmUsage.create!(
-      user: credential.user,
-      feed: feed,
-      llm_credential: credential,
-      profile_key: profile_key,
-      stage: stage,
-      purpose: purpose,
-      provider: credential.provider,
-      model: model,
-      input_tokens: response.input_tokens,
-      output_tokens: response.output_tokens,
-      cache_write_tokens: response.cache_write_tokens,
-      cache_read_tokens: response.cache_read_tokens,
-      cost_estimate_cents: cost,
-      outcome: outcome,
-      started_at: started_at,
-      finished_at: finished_at,
-      duration_ms: ((finished_at - started_at) * 1000).round
-    )
-  end
-
-  def record_failure(feed, profile_key, stage, purpose, model, outcome, started_at,
-                     finished_at: nil, response: nil, error_message: nil)
+  def write_usage(ctx, outcome:, started_at:, finished_at: nil, response: nil, error_message: nil)
     finished_at ||= Time.current
     tokens = response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
     )
     cost = LlmClient::RateTable.cost_for(
       provider: credential.provider,
-      model: model,
+      model: ctx.model,
       usage: LlmClient::RateTable::Usage.new(
         input_tokens: tokens.input_tokens,
         output_tokens: tokens.output_tokens,
@@ -219,13 +178,13 @@ class LlmClient
 
     LlmUsage.create!(
       user: credential.user,
-      feed: feed,
+      feed: ctx.feed,
       llm_credential: credential,
-      profile_key: profile_key,
-      stage: stage,
-      purpose: purpose,
+      profile_key: ctx.profile_key,
+      stage: ctx.stage,
+      purpose: ctx.purpose,
       provider: credential.provider,
-      model: model,
+      model: ctx.model,
       input_tokens: tokens.input_tokens,
       output_tokens: tokens.output_tokens,
       cache_write_tokens: tokens.cache_write_tokens,
@@ -246,14 +205,14 @@ class LlmClient
     end
   end
 
-  def error_context(feed, profile_key, stage, model, purpose)
+  def error_context(ctx)
     {
-      feed_id: feed&.id,
-      profile_key: profile_key,
+      feed_id: ctx.feed&.id,
+      profile_key: ctx.profile_key,
       provider: credential.provider,
-      model: model,
-      stage: stage,
-      purpose: purpose
+      model: ctx.model,
+      stage: ctx.stage,
+      purpose: ctx.purpose
     }
   end
 end
