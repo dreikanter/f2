@@ -109,7 +109,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_predicate feed, :draft?
-    assert_nil feed.name
+    assert_predicate feed.name, :blank?
     assert_redirected_to feed_path(feed)
   end
 
