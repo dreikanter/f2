@@ -1,5 +1,5 @@
 class StatsBarComponent < ViewComponent::Base
-  DEFAULT_CSS_CLASSES = "overflow-hidden md:flex md:divide-x md:divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm"
+  DEFAULT_CSS_CLASSES = "overflow-hidden md:flex md:divide-x md:divide-slate-200 rounded-lg border border-slate-200 bg-white"
 
   attr_reader :items
 

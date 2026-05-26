@@ -1,10 +1,11 @@
 <% content_for :title, h(@email[:subject]) %>
 
 <div class="space-y-8">
-  <div class="flex items-center justify-between">
-    <h1 class="text-4xl font-semibold mb-0 text-slate-900" data-key="development.emails.subject"><%= h @email[:subject] %></h1>
-    <%= link_to "Back to all emails", development_sent_emails_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
-  </div>
+  <%= render PageHeaderComponent.new(title: h(@email[:subject]), title_data: { key: "development.emails.subject" }) do |header| %>
+    <% header.with_action_button do %>
+      <%= link_to "Back to all emails", development_sent_emails_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+    <% end %>
+  <% end %>
 
   <%= render SentEmailDetailsComponent.new(email: @email) %>
 
