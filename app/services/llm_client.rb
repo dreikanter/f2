@@ -62,12 +62,12 @@ class LlmClient
     begin
       response = invoke_provider(model: model, prompt: prompt, output_schema: output_schema, tools: tools)
     rescue RubyLLM::RateLimitError => e
-      record_failure(feed, profile_key, stage, purpose, model, :rate_limited, started_at)
+      record_failure(feed, profile_key, stage, purpose, model, :rate_limited, started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
       raised.retry_after = e.try(:retry_after)
       raise raised
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
-      record_failure(feed, profile_key, stage, purpose, model, :timeout, started_at)
+      record_failure(feed, profile_key, stage, purpose, model, :timeout, started_at, error_message: e.message)
       raise Timeout, e.message
     rescue RubyLLM::Error,
            RubyLLM::ConfigurationError,
@@ -77,7 +77,7 @@ class LlmClient
            RubyLLM::InvalidToolChoiceError,
            RubyLLM::UnsupportedAttachmentError => e
       Rails.error.report(e, context: error_context(feed, profile_key, stage, model, purpose))
-      record_failure(feed, profile_key, stage, purpose, model, :provider_error, started_at)
+      record_failure(feed, profile_key, stage, purpose, model, :provider_error, started_at, error_message: e.message)
       raise ProviderError, e.message
     end
 
@@ -85,8 +85,9 @@ class LlmClient
 
     begin
       validate_payload!(response.payload, output_schema)
-    rescue SchemaError
-      record_failure(feed, profile_key, stage, purpose, model, :schema_error, started_at, finished_at)
+    rescue SchemaError => e
+      record_failure(feed, profile_key, stage, purpose, model, :schema_error, started_at,
+                     finished_at: finished_at, response: response, error_message: e.message)
       raise
     end
 
@@ -194,11 +195,28 @@ class LlmClient
       cost_estimate_cents: cost,
       outcome: outcome,
       started_at: started_at,
-      finished_at: finished_at
+      finished_at: finished_at,
+      duration_ms: ((finished_at - started_at) * 1000).round
     )
   end
 
-  def record_failure(feed, profile_key, stage, purpose, model, outcome, started_at, finished_at = nil)
+  def record_failure(feed, profile_key, stage, purpose, model, outcome, started_at,
+                     finished_at: nil, response: nil, error_message: nil)
+    finished_at ||= Time.current
+    tokens = response || ProviderResponse.new(
+      payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
+    )
+    cost = LlmClient::RateTable.cost_for(
+      provider: credential.provider,
+      model: model,
+      usage: LlmClient::RateTable::Usage.new(
+        input_tokens: tokens.input_tokens,
+        output_tokens: tokens.output_tokens,
+        cache_write_tokens: tokens.cache_write_tokens,
+        cache_read_tokens: tokens.cache_read_tokens
+      )
+    )
+
     LlmUsage.create!(
       user: credential.user,
       feed: feed,
@@ -208,14 +226,16 @@ class LlmClient
       purpose: purpose,
       provider: credential.provider,
       model: model,
-      input_tokens: 0,
-      output_tokens: 0,
-      cache_write_tokens: 0,
-      cache_read_tokens: 0,
-      cost_estimate_cents: 0,
+      input_tokens: tokens.input_tokens,
+      output_tokens: tokens.output_tokens,
+      cache_write_tokens: tokens.cache_write_tokens,
+      cache_read_tokens: tokens.cache_read_tokens,
+      cost_estimate_cents: cost,
       outcome: outcome,
       started_at: started_at,
-      finished_at: finished_at || Time.current
+      finished_at: finished_at,
+      duration_ms: ((finished_at - started_at) * 1000).round,
+      error_message: error_message
     )
   end
 

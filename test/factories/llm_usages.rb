@@ -16,5 +16,7 @@ FactoryBot.define do
     outcome { :success }
     started_at { 2.seconds.ago }
     finished_at { 1.second.ago }
+    duration_ms { 1_000 }
+    error_message { nil }
   end
 end

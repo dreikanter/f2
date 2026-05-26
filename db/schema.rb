@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_25_000000) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_26_213333) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -191,6 +191,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_25_000000) do
     t.datetime "finished_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "duration_ms"
+    t.text "error_message"
     t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
     t.index ["feed_id"], name: "index_llm_usages_on_feed_id"
     t.index ["llm_credential_id"], name: "index_llm_usages_on_llm_credential_id"
