@@ -78,7 +78,7 @@
       <% access_token.access_token_detail.managed_groups.tap do |groups| %>
         <% if groups.any? %>
           <p><%= pluralize(groups.count, "groups") %> available for posting:</p>
-          <ul class="list-disc list-inside">
+          <ul class="list-disc list-inside space-y-1">
             <% groups.sort_by { _1["username"] }.each do |group| %>
               <li><%= link_to group["username"], "#{access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
             <% end %>
