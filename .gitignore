@@ -41,7 +41,7 @@
 bun.lock
 bun.lockb
 /coverage
-/.claude
+/.claude/claude_settings_local.json
 .env
 !.env.sample
 .zed
