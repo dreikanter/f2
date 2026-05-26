@@ -70,7 +70,7 @@ class FeedsListComponent < ViewComponent::Base
     return "Target: #{target}" if target == "None" || !feed.access_token
 
     url = "#{feed.access_token.host}/#{feed.target_group}"
-    link_content = safe_join([target, " ".html_safe, helpers.lucide_icon("external-link", size: "size-3.5", css_class: "inline align-text-bottom")])
+    link_content = safe_join([target, " ".html_safe, helpers.icon("external-link", css_class: "size-3.5 inline align-text-bottom")])
     safe_join(["Target:", helpers.link_to(link_content, url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")], " ")
   end
 end

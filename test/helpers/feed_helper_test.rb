@@ -46,10 +46,11 @@ class FeedHelperTest < ActionView::TestCase
 
     result = feed_status_icon(feed)
 
-    assert_includes result, "bi-check-circle-fill"
+    assert_includes result, "<svg"
     assert_includes result, "text-emerald-500"
     assert_includes result, 'title="Enabled"'
     assert_includes result, 'aria-label="Enabled"'
+    assert_includes result, 'role="img"'
   end
 
   test "#feed_status_icon should render disabled icon" do
@@ -57,10 +58,11 @@ class FeedHelperTest < ActionView::TestCase
 
     result = feed_status_icon(feed)
 
-    assert_includes result, "bi-x-circle"
+    assert_includes result, "<svg"
     assert_includes result, "text-slate-400"
     assert_includes result, 'title="Disabled"'
     assert_includes result, 'aria-label="Disabled"'
+    assert_includes result, 'role="img"'
   end
 
   test "#feed_status_icon should render draft icon" do
@@ -68,10 +70,11 @@ class FeedHelperTest < ActionView::TestCase
 
     result = feed_status_icon(feed)
 
-    assert_includes result, "bi-pencil-square"
+    assert_includes result, "<svg"
     assert_includes result, "text-amber-500"
     assert_includes result, 'title="Draft"'
     assert_includes result, 'aria-label="Draft"'
+    assert_includes result, 'role="img"'
   end
 
   test "#feed_summary_line should describe active, inactive, and draft counts" do
