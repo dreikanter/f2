@@ -28,7 +28,7 @@ class FeedsListComponentTest < ViewComponent::TestCase
     assert_match "https://example.com/draft-feed.xml", result.text
   end
 
-  test "#call renders 'Untitled draft' when both name and source_input are blank" do
+  test "#call renders 'Untitled feed' when name is blank" do
     feed = build(
       :feed,
       :draft,
@@ -41,7 +41,7 @@ class FeedsListComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedsListComponent.new(feeds: [feed]))
 
-    assert_match "Untitled draft", result.text
+    assert_match "Untitled feed", result.text
   end
 
   test "#call renders draft badge for draft feeds" do
