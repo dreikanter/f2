@@ -113,18 +113,9 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 100_000, usage.input_tokens
     assert_equal 5_000, usage.output_tokens
     assert usage.cost_estimate_cents.positive?, "expected non-zero cost for a known model"
-    assert_not_nil usage.duration_ms, "expected duration_ms to be populated"
+    assert_kind_of Integer, usage.duration_ms
+    assert usage.duration_ms >= 0
     assert_nil usage.error_message
-  end
-
-  test "#call should populate duration_ms on success" do
-    client = LlmClient.new(credential)
-    stub_provider_response(client)
-
-    client.call(default_ctx, **call_opts)
-
-    assert_kind_of Integer, LlmUsage.last.duration_ms
-    assert LlmUsage.last.duration_ms >= 0
   end
 
   test "#call should populate error_message on provider error" do
@@ -167,9 +158,10 @@ class LlmClientTest < ActiveSupport::TestCase
     usage = LlmUsage.last
     assert_equal "rate_limited", usage.outcome
     assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
   end
 
-  test "#call should populate error_message on timeout" do
+  test "#call should populate error_message and duration_ms on timeout" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, Net::ReadTimeout.new)
 
@@ -177,6 +169,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
     usage = LlmUsage.last
     assert_equal "timeout", usage.outcome
+    assert_not_nil usage.error_message
     assert_not_nil usage.duration_ms
   end
 
