@@ -2,7 +2,7 @@ require "test_helper"
 
 class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
-    assert_equal ["llm_web_search", "llm_website_extractor", "rss", "xkcd", "youtube"], FeedProfile.all.sort
+    assert_equal ["llm_web_search", "llm_website_extractor", "reddit", "rss", "xkcd", "youtube"], FeedProfile.all.sort
   end
 
   test ".exists? returns true for valid profile key" do
