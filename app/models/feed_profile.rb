@@ -123,6 +123,26 @@ class FeedProfile
       title_extractor: nil,
       output_schema: UNIVERSAL_OUTPUT_SCHEMA
     },
+    "youtube" => {
+      display_name: "YouTube",
+      description: "Videos from a YouTube channel",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::YoutubeProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::YoutubeLoader", config: {} },
+      processor: { class: "Processor::YoutubeProcessor", config: {} },
+      normalizer: { class: "Normalizer::YoutubeNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "llm_web_search" => {
       display_name: "AI search",
       description: "Uses AI to follow an account, handle, or search topic as an evergreen subscription",

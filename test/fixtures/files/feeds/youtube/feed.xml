@@ -1,0 +1,368 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="https://www.youtube.com/feeds/videos.xml?channel_id=UCabc123def456ghi789jkl"/>
+ <id>yt:channel:UCabc123def456ghi789jkl</id>
+ <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+ <title>Sample Tech Channel</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/UCabc123def456ghi789jkl"/>
+ <author>
+  <name>Sample Tech Channel</name>
+  <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+ </author>
+ <published>2020-01-01T00:00:00+00:00</published>
+ <entry>
+  <id>yt:video:aAbBcCdDeEf</id>
+  <yt:videoId>aAbBcCdDeEf</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Getting Started with Ruby on Rails</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=aAbBcCdDeEf"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-09-15T10:00:00+00:00</published>
+  <updated>2024-09-15T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Getting Started with Ruby on Rails</media:title>
+   <media:content url="https://www.youtube.com/v/aAbBcCdDeEf?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/aAbBcCdDeEf/hqdefault.jpg" width="480" height="360"/>
+   <media:description>A beginner-friendly introduction to building web applications with Ruby on Rails.
+
+In this video we cover:
+- Setting up your development environment
+- Creating your first Rails app
+- Understanding the MVC pattern
+
+Subscribe for more tutorials: https://www.youtube.com/channel/UCabc123def456ghi789jkl</media:description>
+   <media:community>
+    <media:starRating count="18420" average="4.91" min="1" max="5"/>
+    <media:statistics views="312540"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:bBcCdDeEfFg</id>
+  <yt:videoId>bBcCdDeEfFg</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Understanding ActiveRecord Associations</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=bBcCdDeEfFg"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-09-08T10:00:00+00:00</published>
+  <updated>2024-09-08T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Understanding ActiveRecord Associations</media:title>
+   <media:content url="https://www.youtube.com/v/bBcCdDeEfFg?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/bBcCdDeEfFg/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Deep dive into has_many, belongs_to, and has_many :through associations in Rails.
+
+Source code: https://github.com/sample/rails-associations</media:description>
+   <media:community>
+    <media:starRating count="9870" average="4.85" min="1" max="5"/>
+    <media:statistics views="178900"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:cCdDeEfFgGh</id>
+  <yt:videoId>cCdDeEfFgGh</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Testing Rails Apps with Minitest</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=cCdDeEfFgGh"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-09-01T10:00:00+00:00</published>
+  <updated>2024-09-01T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Testing Rails Apps with Minitest</media:title>
+   <media:content url="https://www.youtube.com/v/cCdDeEfFgGh?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/cCdDeEfFgGh/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Learn how to write reliable tests for your Rails application using Minitest and fixtures.</media:description>
+   <media:community>
+    <media:starRating count="7340" average="4.80" min="1" max="5"/>
+    <media:statistics views="134200"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:dDeEfFgGhHi</id>
+  <yt:videoId>dDeEfFgGhHi</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Background Jobs with Solid Queue</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=dDeEfFgGhHi"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-08-25T10:00:00+00:00</published>
+  <updated>2024-08-25T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Background Jobs with Solid Queue</media:title>
+   <media:content url="https://www.youtube.com/v/dDeEfFgGhHi?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/dDeEfFgGhHi/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Processing background jobs in Rails using Solid Queue — setup, configuration, and monitoring.</media:description>
+   <media:community>
+    <media:starRating count="5120" average="4.88" min="1" max="5"/>
+    <media:statistics views="98400"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:eEfFgGhHiIj</id>
+  <yt:videoId>eEfFgGhHiIj</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Deploying Rails with Kamal</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=eEfFgGhHiIj"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-08-18T10:00:00+00:00</published>
+  <updated>2024-08-18T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Deploying Rails with Kamal</media:title>
+   <media:content url="https://www.youtube.com/v/eEfFgGhHiIj?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/eEfFgGhHiIj/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Step-by-step guide to deploying a Rails application to a VPS using Kamal 2.</media:description>
+   <media:community>
+    <media:starRating count="6250" average="4.82" min="1" max="5"/>
+    <media:statistics views="115600"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:fFgGhHiIjJk</id>
+  <yt:videoId>fFgGhHiIjJk</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Turbo Frames and Streams Explained</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=fFgGhHiIjJk"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-08-11T10:00:00+00:00</published>
+  <updated>2024-08-11T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Turbo Frames and Streams Explained</media:title>
+   <media:content url="https://www.youtube.com/v/fFgGhHiIjJk?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/fFgGhHiIjJk/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Build reactive UIs without JavaScript using Turbo Frames and Turbo Streams in Rails 8.</media:description>
+   <media:community>
+    <media:starRating count="8910" average="4.76" min="1" max="5"/>
+    <media:statistics views="162300"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:gGhHiIjJkKl</id>
+  <yt:videoId>gGhHiIjJkKl</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>PostgreSQL Full-Text Search in Rails</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=gGhHiIjJkKl"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-08-04T10:00:00+00:00</published>
+  <updated>2024-08-04T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>PostgreSQL Full-Text Search in Rails</media:title>
+   <media:content url="https://www.youtube.com/v/gGhHiIjJkKl?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/gGhHiIjJkKl/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Implement fast, scalable full-text search using PostgreSQL tsvectors directly in your Rails app.</media:description>
+   <media:community>
+    <media:starRating count="4780" average="4.90" min="1" max="5"/>
+    <media:statistics views="88700"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:hHiIjJkKlLm</id>
+  <yt:videoId>hHiIjJkKlLm</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Stimulus JS Controllers from Scratch</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=hHiIjJkKlLm"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-07-28T10:00:00+00:00</published>
+  <updated>2024-07-28T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Stimulus JS Controllers from Scratch</media:title>
+   <media:content url="https://www.youtube.com/v/hHiIjJkKlLm?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/hHiIjJkKlLm/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Practical guide to writing Stimulus controllers for interactive UI behavior in Hotwire apps.</media:description>
+   <media:community>
+    <media:starRating count="6630" average="4.83" min="1" max="5"/>
+    <media:statistics views="121000"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:iIjJkKlLmMn</id>
+  <yt:videoId>iIjJkKlLmMn</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Rails Database Migrations Deep Dive</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=iIjJkKlLmMn"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-07-21T10:00:00+00:00</published>
+  <updated>2024-07-21T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Rails Database Migrations Deep Dive</media:title>
+   <media:content url="https://www.youtube.com/v/iIjJkKlLmMn?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/iIjJkKlLmMn/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Everything you need to know about writing, running, and rolling back database migrations in Rails.</media:description>
+   <media:community>
+    <media:starRating count="5440" average="4.87" min="1" max="5"/>
+    <media:statistics views="99800"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:jJkKlLmMnNo</id>
+  <yt:videoId>jJkKlLmMnNo</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>API Authentication with Devise</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=jJkKlLmMnNo"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-07-14T10:00:00+00:00</published>
+  <updated>2024-07-14T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>API Authentication with Devise</media:title>
+   <media:content url="https://www.youtube.com/v/jJkKlLmMnNo?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/jJkKlLmMnNo/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Add token-based authentication to your Rails API using Devise and JWT.</media:description>
+   <media:community>
+    <media:starRating count="7120" average="4.79" min="1" max="5"/>
+    <media:statistics views="130500"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:kKlLmMnNoOp</id>
+  <yt:videoId>kKlLmMnNoOp</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Caching Strategies in Rails</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=kKlLmMnNoOp"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-07-07T10:00:00+00:00</published>
+  <updated>2024-07-07T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Caching Strategies in Rails</media:title>
+   <media:content url="https://www.youtube.com/v/kKlLmMnNoOp?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/kKlLmMnNoOp/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Fragment caching, Russian doll caching, and HTTP caching explained with practical examples.</media:description>
+   <media:community>
+    <media:starRating count="4390" average="4.86" min="1" max="5"/>
+    <media:statistics views="80200"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:lLmMnNoOpPq</id>
+  <yt:videoId>lLmMnNoOpPq</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Building a REST API with Rails</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=lLmMnNoOpPq"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-06-30T10:00:00+00:00</published>
+  <updated>2024-06-30T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Building a REST API with Rails</media:title>
+   <media:content url="https://www.youtube.com/v/lLmMnNoOpPq?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/lLmMnNoOpPq/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Build a fully-featured JSON API with Rails, including serialization, versioning, and error handling.</media:description>
+   <media:community>
+    <media:starRating count="9560" average="4.88" min="1" max="5"/>
+    <media:statistics views="175400"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:mMnNoOpPqQr</id>
+  <yt:videoId>mMnNoOpPqQr</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>ActiveJob and Email Queuing</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=mMnNoOpPqQr"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-06-23T10:00:00+00:00</published>
+  <updated>2024-06-23T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>ActiveJob and Email Queuing</media:title>
+   <media:content url="https://www.youtube.com/v/mMnNoOpPqQr?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/mMnNoOpPqQr/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Send transactional emails asynchronously using ActionMailer and ActiveJob with a persistent queue backend.</media:description>
+   <media:community>
+    <media:starRating count="3870" average="4.84" min="1" max="5"/>
+    <media:statistics views="71300"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:nNoOpPqQrRs</id>
+  <yt:videoId>nNoOpPqQrRs</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Rails Security Best Practices</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=nNoOpPqQrRs"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-06-16T10:00:00+00:00</published>
+  <updated>2024-06-16T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Rails Security Best Practices</media:title>
+   <media:content url="https://www.youtube.com/v/nNoOpPqQrRs?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/nNoOpPqQrRs/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Protect your Rails app from SQL injection, XSS, CSRF, and other common vulnerabilities.</media:description>
+   <media:community>
+    <media:starRating count="6180" average="4.92" min="1" max="5"/>
+    <media:statistics views="113600"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:oOpPqQrRsSt</id>
+  <yt:videoId>oOpPqQrRsSt</yt:videoId>
+  <yt:channelId>UCabc123def456ghi789jkl</yt:channelId>
+  <title>Polymorphic Associations in Rails</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=oOpPqQrRsSt"/>
+  <author>
+   <name>Sample Tech Channel</name>
+   <uri>https://www.youtube.com/channel/UCabc123def456ghi789jkl</uri>
+  </author>
+  <published>2024-06-09T10:00:00+00:00</published>
+  <updated>2024-06-09T10:00:00+00:00</updated>
+  <media:group>
+   <media:title>Polymorphic Associations in Rails</media:title>
+   <media:content url="https://www.youtube.com/v/oOpPqQrRsSt?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i.ytimg.com/vi/oOpPqQrRsSt/hqdefault.jpg" width="480" height="360"/>
+   <media:description>When and how to use polymorphic associations for flexible, reusable model relationships in Rails.</media:description>
+   <media:community>
+    <media:starRating count="4950" average="4.89" min="1" max="5"/>
+    <media:statistics views="91100"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

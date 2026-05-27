@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://i.ytimg.com/vi/aAbBcCdDeEf/hqdefault.jpg"
+  ],
+  "comments": [
+    "A beginner-friendly introduction to building web applications with Ruby on Rails. In this video we cover: - Setting up your development environment - Creating your first Rails app - Understanding the MVC pattern Subscribe for more tutorials: https://www.youtube.com/channel/UCabc123def456ghi789jkl"
+  ],
+  "content": "Getting Started with Ruby on Rails - https://www.youtube.com/watch?v=aAbBcCdDeEf",
+  "published_at": "2024-09-15T10:00:00.000Z",
+  "source_url": "https://www.youtube.com/watch?v=aAbBcCdDeEf",
+  "status": "enqueued",
+  "uid": "yt:video:aAbBcCdDeEf",
+  "validation_errors": []
+}
