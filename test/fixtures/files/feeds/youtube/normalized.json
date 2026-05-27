@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+  ],
+  "comments": [
+    "This is the video description."
+  ],
+  "content": "Sample Video Title - https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "published_at": "2024-09-12T10:00:00.000Z",
+  "source_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "status": "enqueued",
+  "uid": "yt:video:dQw4w9WgXcQ",
+  "validation_errors": []
+}

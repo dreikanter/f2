@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"
+      xmlns:media="http://search.yahoo.com/mrss/"
+      xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw"/>
+  <id>yt:channel:UC_x5XG1OV2P6uZZ5FSM9Ttw</id>
+  <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+  <title>Test Channel</title>
+  <entry>
+    <id>yt:video:dQw4w9WgXcQ</id>
+    <yt:videoId>dQw4w9WgXcQ</yt:videoId>
+    <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+    <title>Sample Video Title</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"/>
+    <author>
+      <name>Test Channel</name>
+    </author>
+    <published>2024-09-12T10:00:00+00:00</published>
+    <updated>2024-09-12T10:00:00+00:00</updated>
+    <media:group>
+      <media:title>Sample Video Title</media:title>
+      <media:content url="https://www.youtube.com/v/dQw4w9WgXcQ?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" width="480" height="360"/>
+      <media:description>This is the video description.</media:description>
+      <media:community>
+        <media:starRating count="100" average="5.00" min="1" max="5"/>
+        <media:statistics views="1234"/>
+      </media:community>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:oHg5SJYRHA0</id>
+    <yt:videoId>oHg5SJYRHA0</yt:videoId>
+    <yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId>
+    <title>Another Video</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=oHg5SJYRHA0"/>
+    <author>
+      <name>Test Channel</name>
+    </author>
+    <published>2024-09-10T08:00:00+00:00</published>
+    <updated>2024-09-10T08:00:00+00:00</updated>
+    <media:group>
+      <media:title>Another Video</media:title>
+      <media:content url="https://www.youtube.com/v/oHg5SJYRHA0?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i.ytimg.com/vi/oHg5SJYRHA0/hqdefault.jpg" width="480" height="360"/>
+      <media:description>Another video description.</media:description>
+    </media:group>
+  </entry>
+</feed>
