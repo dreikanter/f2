@@ -20,18 +20,6 @@ class LlmClient
 
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
 
-  class CallContext
-    attr_reader :feed, :profile_key, :stage, :model, :purpose
-
-    def initialize(feed:, profile_key:, stage:, model:, purpose: :scheduled_run)
-      @feed = feed
-      @profile_key = profile_key
-      @stage = stage
-      @model = model
-      @purpose = purpose
-    end
-  end
-
   class << self
     def for(target, provider = nil)
       credential = resolve_credential(target, provider)
