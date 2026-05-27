@@ -1,8 +1,8 @@
 require "test_helper"
 
 class Processor::YoutubeProcessorTest < ActiveSupport::TestCase
-  CHANNEL_ID = "UCMCgOm8GZkHp8zJ6l7_hIuA"
-  FIRST_VIDEO_ID = "CNJL4GsSrcc"
+  CHANNEL_ID = "UCabc123def456ghi789jkl"
+  FIRST_VIDEO_ID = "aAbBcCdDeEf"
 
   def feed
     @feed ||= create(:feed, url: "https://www.youtube.com/feeds/videos.xml?channel_id=#{CHANNEL_ID}")
@@ -34,7 +34,7 @@ class Processor::YoutubeProcessorTest < ActiveSupport::TestCase
     entry = processor.process.first
     entry.save!
 
-    assert_equal "https://i4.ytimg.com/vi/#{FIRST_VIDEO_ID}/hqdefault.jpg", entry.raw_data["thumbnail"]
+    assert_equal "https://i.ytimg.com/vi/#{FIRST_VIDEO_ID}/hqdefault.jpg", entry.raw_data["thumbnail"]
   end
 
   test "#process should include video URL in raw_data" do
