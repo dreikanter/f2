@@ -52,7 +52,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   def with_llm_client(result, &block)
     fake_client = Class.new do
       def initialize(result) = (@result = result)
-      def call(**_args)
+      def call(_ctx, **_opts)
         case @result
         when Exception then raise @result
         when Hash then LlmClient::Result.new(payload: @result, usage_id: 1)

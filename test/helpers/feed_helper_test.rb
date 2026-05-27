@@ -143,6 +143,25 @@ class FeedHelperTest < ActionView::TestCase
     end
   end
 
+  test "#feed_missing_enablement_parts should not report source missing for query-type feed with query" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: "testgroup",
+                        feed_profile_key: "llm_web_search",
+                        params: { "query" => "climate change news" })
+    result = feed_missing_enablement_parts(feed)
+
+    assert_not_includes result, "source"
+  end
+
+  test "#feed_missing_enablement_parts should report source missing when neither url nor query present" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: "testgroup",
+                        params: {})
+    result = feed_missing_enablement_parts(feed)
+
+    assert_includes result, "source"
+  end
+
   test "#candidate_summary should fall back to the profile display name for URL profiles" do
     assert_equal "RSS Feed", candidate_summary("rss", "https://example.com/feed.xml")
     assert_equal "AI page reader", candidate_summary("llm_website_extractor", "https://example.com")

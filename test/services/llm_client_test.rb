@@ -35,19 +35,25 @@ class LlmClientTest < ActiveSupport::TestCase
     client.define_singleton_method(:invoke_provider) { |**_| raise error }
   end
 
-  def call_args(**overrides)
-    {
+  def default_ctx(**overrides)
+    LlmClient::CallContext.new(
       feed: feed,
       profile_key: "llm_website_extractor",
       stage: :loader,
       model: "claude-sonnet-4-6",
+      **overrides
+    )
+  end
+
+  def call_opts
+    {
       prompt: "Extract posts",
       output_schema: {
         "type" => "object",
         "properties" => { "items" => { "type" => "array" } },
         "required" => ["items"]
       }
-    }.merge(overrides)
+    }
   end
 
   test ".for should resolve a feed to its assigned credential" do
@@ -82,7 +88,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_response(client)
 
     Thread.current[:llm_detection_phase] = true
-    assert_raises(LlmClient::DetectionForbidden) { client.call(**call_args) }
+    assert_raises(LlmClient::DetectionForbidden) { client.call(default_ctx, **call_opts) }
   ensure
     Thread.current[:llm_detection_phase] = false
   end
@@ -92,7 +98,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_response(client)
 
     assert_difference("LlmUsage.count", 1) do
-      result = client.call(**call_args)
+      result = client.call(default_ctx, **call_opts)
 
       assert_kind_of LlmClient::Result, result
       assert_equal({ "items" => [{ "title" => "Post 1" }] }, result.payload)
@@ -107,6 +113,64 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 100_000, usage.input_tokens
     assert_equal 5_000, usage.output_tokens
     assert usage.cost_estimate_cents.positive?, "expected non-zero cost for a known model"
+    assert_kind_of Integer, usage.duration_ms
+    assert usage.duration_ms >= 0
+    assert_nil usage.error_message
+  end
+
+  test "#call should populate error_message on provider error" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::ServerError.new("downstream failure"))
+
+    assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
+
+    usage = LlmUsage.last
+    assert_equal "provider_error", usage.outcome
+    assert_not_nil usage.error_message
+    assert_includes usage.error_message, "downstream failure"
+  end
+
+  test "#call should populate error_message and duration_ms on schema error" do
+    client = LlmClient.new(credential)
+    bad_response = LlmClient::ProviderResponse.new(
+      payload: { "wrong" => "shape" },
+      input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    )
+    stub_provider_response(client, bad_response)
+
+    assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
+
+    usage = LlmUsage.last
+    assert_equal "schema_error", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
+    assert_equal 10, usage.input_tokens
+    assert_equal 5, usage.output_tokens
+  end
+
+  test "#call should populate error_message on rate limit" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::RateLimitError.new("rate limit exceeded"))
+
+    assert_raises(LlmClient::RateLimited) { client.call(default_ctx, **call_opts) }
+
+    usage = LlmUsage.last
+    assert_equal "rate_limited", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
+  end
+
+  test "#call should populate error_message and duration_ms on timeout" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, Net::ReadTimeout.new)
+
+    assert_raises(LlmClient::Timeout) { client.call(default_ctx, **call_opts) }
+
+    usage = LlmUsage.last
+    assert_equal "timeout", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
   end
 
   test "#call should raise SchemaError and record a failed usage row when the response violates the schema" do
@@ -119,7 +183,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_response(client, bad_response)
 
     assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::SchemaError) { client.call(**call_args) }
+      assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
     end
 
     assert_equal "schema_error", LlmUsage.last.outcome
@@ -130,7 +194,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_to_raise(client, RubyLLM::RateLimitError.new("429"))
 
     assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::RateLimited) { client.call(**call_args) }
+      assert_raises(LlmClient::RateLimited) { client.call(default_ctx, **call_opts) }
     end
 
     assert_equal "rate_limited", LlmUsage.last.outcome
@@ -141,7 +205,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_to_raise(client, RubyLLM::ServerError.new("500"))
 
     assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::ProviderError) { client.call(**call_args) }
+      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
     end
 
     assert_equal "provider_error", LlmUsage.last.outcome
@@ -152,7 +216,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_to_raise(client, Net::ReadTimeout.new)
 
     assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::Timeout) { client.call(**call_args) }
+      assert_raises(LlmClient::Timeout) { client.call(default_ctx, **call_opts) }
     end
 
     assert_equal "timeout", LlmUsage.last.outcome
@@ -162,7 +226,7 @@ class LlmClientTest < ActiveSupport::TestCase
     client = LlmClient.new(credential)
     stub_provider_response(client)
 
-    client.call(**call_args(feed: nil, purpose: :preview))
+    client.call(default_ctx(feed: nil, purpose: :preview), **call_opts)
 
     usage = LlmUsage.last
     assert_nil usage.feed_id
@@ -195,7 +259,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_to_raise(client, RubyLLM::ModelNotFoundError.new("unknown model"))
 
     assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::ProviderError) { client.call(**call_args) }
+      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
     end
 
     assert_equal "provider_error", LlmUsage.last.outcome
@@ -205,7 +269,7 @@ class LlmClientTest < ActiveSupport::TestCase
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::ConfigurationError.new("misconfigured"))
 
-    assert_raises(LlmClient::ProviderError) { client.call(**call_args) }
+    assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
@@ -214,7 +278,7 @@ class LlmClientTest < ActiveSupport::TestCase
     bad_credential.save(validate: false)
     client = LlmClient.new(bad_credential)
 
-    assert_raises(LlmClient::ProviderError) { client.call(**call_args(feed: nil)) }
+    assert_raises(LlmClient::ProviderError) { client.call(default_ctx(feed: nil), **call_opts) }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 end
