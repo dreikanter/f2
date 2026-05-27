@@ -58,12 +58,12 @@ class FeedProfile
       parameter_schema: {
         "type" => "object",
         "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
+          "url" => { "type" => "string", "minLength" => 2 }
         },
         "required" => ["url"],
         "additionalProperties" => false
       },
-      loader: { class: "Loader::HttpLoader", config: {} },
+      loader: { class: "Loader::RedditLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::RedditNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor",

@@ -38,6 +38,14 @@ class ProfileMatcher::RedditProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://old.reddit.com/r/ruby/").match?
   end
 
+  test "#match? should match short subreddit names like r/worldnews" do
+    assert matcher("r/worldnews").match?
+  end
+
+  test "#match? should match short user names like user/someuser" do
+    assert matcher("user/someuser").match?
+  end
+
   test "#match? should not match reddit.com homepage" do
     assert_not matcher("https://www.reddit.com/").match?
   end
