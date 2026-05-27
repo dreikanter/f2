@@ -19,7 +19,18 @@ class LlmClient
   end
 
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
-  CallContext = Data.define(:feed, :profile_key, :stage, :purpose, :model)
+
+  class CallContext
+    attr_reader :feed, :profile_key, :stage, :model, :purpose
+
+    def initialize(feed:, profile_key:, stage:, model:, purpose: :scheduled_run)
+      @feed = feed
+      @profile_key = profile_key
+      @stage = stage
+      @model = model
+      @purpose = purpose
+    end
+  end
 
   class << self
     def for(target, provider = nil)
@@ -55,14 +66,13 @@ class LlmClient
 
   attr_reader :credential
 
-  def call(feed:, profile_key:, stage:, model:, prompt:, output_schema:, tools: [], purpose: :scheduled_run)
+  def call(ctx, prompt:, output_schema:, tools: [])
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
-    ctx = CallContext.new(feed: feed, profile_key: profile_key, stage: stage, purpose: purpose, model: model)
     started_at = Time.current
 
     begin
-      response = invoke_provider(model: model, prompt: prompt, output_schema: output_schema, tools: tools)
+      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema, tools: tools)
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
@@ -102,19 +112,16 @@ class LlmClient
   # Cheap "credentials usable?" call used by LlmCredentialValidationJob.
   # Returns true on success, raises a known error class otherwise.
   def health_check
-    call(
-      feed: nil,
-      profile_key: nil,
-      stage: nil,
-      purpose: :credential_validation,
-      model: default_model_for(credential.provider),
-      prompt: "Reply with the single word: ok",
-      output_schema: {
-        "type" => "object",
-        "properties" => { "reply" => { "type" => "string" } },
-        "required" => ["reply"]
-      }
-    )
+    ctx = CallContext.new(feed: nil, profile_key: nil, stage: nil,
+                          model: default_model_for(credential.provider),
+                          purpose: :credential_validation)
+    call(ctx,
+         prompt: "Reply with the single word: ok",
+         output_schema: {
+           "type" => "object",
+           "properties" => { "reply" => { "type" => "string" } },
+           "required" => ["reply"]
+         })
     true
   end
 

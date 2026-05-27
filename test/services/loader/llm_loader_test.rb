@@ -20,7 +20,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   def fake_client(payload)
     Class.new do
       def initialize(payload) = (@payload = payload)
-      def call(**_args)
+      def call(_ctx, **_opts)
         LlmClient::Result.new(payload: @payload, usage_id: 42)
       end
     end.new(payload)

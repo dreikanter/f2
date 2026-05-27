@@ -10,16 +10,17 @@ module Loader
   class LlmLoader < Base
     def load
       llm_client = options.fetch(:llm_client) { LlmClient.for(feed) }
-      result = llm_client.call(
+      ctx = LlmClient::CallContext.new(
         feed: feed.persisted? ? feed : nil,
         profile_key: feed.feed_profile_key,
         stage: :loader,
-        purpose: options.fetch(:purpose, :scheduled_run),
         model: config.fetch(:model),
-        prompt: rendered_prompt,
-        output_schema: config.fetch(:output_schema),
-        tools: config.fetch(:tools, [])
+        purpose: options.fetch(:purpose, :scheduled_run)
       )
+      result = llm_client.call(ctx,
+                               prompt: rendered_prompt,
+                               output_schema: config.fetch(:output_schema),
+                               tools: config.fetch(:tools, []))
 
       payload = result.payload
       raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
