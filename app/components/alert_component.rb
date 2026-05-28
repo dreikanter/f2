@@ -9,13 +9,16 @@ class AlertComponent < ViewComponent::Base
 
   BASE_CLASSES = "rounded-lg border px-4 py-3 flex items-start gap-2"
 
-  def initialize(variant: :info, **html_options)
+  def initialize(variant: :info, icon: nil, **html_options)
     @variant = variant
+    @icon = icon
     @html_options = html_options
   end
 
   def call
-    content_tag :div, content, merged_options
+    icon_html = @icon.present? ? helpers.icon(@icon, css_class: "size-5") : "".html_safe
+    body_html = content_tag(:div, content, class: "space-y-1")
+    content_tag(:div, icon_html + body_html, merged_options)
   end
 
   private

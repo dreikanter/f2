@@ -32,11 +32,9 @@
   modal_id: "delete-token-modal"
 ) do %>
   <%= render AlertComponent.new(variant: :warning) do %>
-    <div class="space-y-2">
-      <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
-      <p>Any feeds using this token will be automatically disabled.</p>
-      <p>This can't be undone.</p>
-    </div>
+    <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
+    <p>Any feeds using this token will be automatically disabled.</p>
+    <p>This can't be undone.</p>
   <% end %>
 <% end %>
 
@@ -50,8 +48,7 @@
     </div>
   <% end %>
 <% elsif access_token.active? %>
-  <%= render AlertComponent.new(variant: :success, data: { status: "active" }) do %>
-    <%= icon("circle-check", css_class: "size-5") %>
+  <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
     <span>Token is valid and ready to use</span>
   <% end %>
 
@@ -106,8 +103,7 @@
     <% end %>
   </div>
 <% elsif access_token.inactive? %>
-  <%= render AlertComponent.new(variant: :error, data: { status: "inactive" }) do %>
-    <%= icon("circle-x", css_class: "size-5") %>
+  <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   <% end %>
 
