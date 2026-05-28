@@ -1,12 +1,10 @@
 <%# locals: (remaining_invites_count:, invited_users_count:, unused_invites_count:) %>
 <% if remaining_invites_count.to_i > 0 %>
-  You can send <strong><%= remaining_invites_count %></strong> more <%= "invite".pluralize(remaining_invites_count) %>.
+  You can send <strong><%= remaining_invites_count %></strong> <%= "invite".pluralize(remaining_invites_count) %>.
 <% else %>
   No invites available.
 <% end %>
 <% if invited_users_count.to_i > 0 %>
   <% verb = invited_users_count.to_i == 1 ? "has" : "have" %>
   <%= pluralize(invited_users_count, "person") %> <%= verb %> joined so far.
-<% else %>
-  Nobody's joined yet.
 <% end %>
