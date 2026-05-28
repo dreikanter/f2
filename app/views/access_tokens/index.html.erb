@@ -19,7 +19,7 @@
         method: :delete,
         modal_id: "delete-token-modal-#{access_token.id}"
       ) do %>
-        <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
+        <%= render AlertComponent.new(variant: :warning) do %>
           <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
           <p>Any feeds using this token will be automatically disabled.</p>
           <p>This can't be undone.</p>

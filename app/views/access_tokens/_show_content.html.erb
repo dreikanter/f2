@@ -31,7 +31,7 @@
   method: :delete,
   modal_id: "delete-token-modal"
 ) do %>
-  <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
+  <%= render AlertComponent.new(variant: :warning) do %>
     <p>The token <em><%= access_token.name %></em> will be permanently removed.</p>
     <p>Any feeds using this token will be automatically disabled.</p>
     <p>This can't be undone.</p>
@@ -48,8 +48,7 @@
     </div>
   <% end %>
 <% elsif access_token.active? %>
-  <%= render AlertComponent.new(variant: :success, data: { status: "active" }) do %>
-    <%= icon("circle-check", css_class: "size-5") %>
+  <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
     <span>Token is valid and ready to use</span>
   <% end %>
 
@@ -77,12 +76,17 @@
       <h2 class="text-2xl font-semibold mb-3 text-slate-900">FreeFeed Groups</h2>
       <% access_token.access_token_detail.managed_groups.tap do |groups| %>
         <% if groups.any? %>
-          <p><%= pluralize(groups.count, "groups") %> available for posting:</p>
-          <ul class="list-disc list-inside space-y-1">
-            <% groups.sort_by { _1["username"] }.each do |group| %>
-              <li><%= link_to group["username"], "#{access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
-            <% end %>
-          </ul>
+          <details class="group/groups">
+            <summary class="flex cursor-pointer list-none select-none items-center gap-2 font-medium text-slate-700 hover:text-slate-900">
+              <%= icon("chevron-right", css_class: "size-4 shrink-0 transition-transform group-open/groups:rotate-90") %>
+              <%= pluralize(groups.count, "group") %> available for posting
+            </summary>
+            <ul class="mt-3 list-disc list-inside space-y-1 pl-6">
+              <% groups.sort_by { _1["username"] }.each do |group| %>
+                <li><%= link_to group["username"], "#{access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
+              <% end %>
+            </ul>
+          </details>
         <% else %>
           <%= render EmptyStateComponent.new("No groups available for posting") %>
         <% end %>
@@ -99,8 +103,7 @@
     <% end %>
   </div>
 <% elsif access_token.inactive? %>
-  <%= render AlertComponent.new(variant: :error, data: { status: "inactive" }) do %>
-    <%= icon("circle-x", css_class: "size-5") %>
+  <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   <% end %>
 
