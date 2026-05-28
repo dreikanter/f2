@@ -183,7 +183,7 @@
       <% end %>
 
       <%# Access token validation failed with multiple feeds %>
-      <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
+      <%= render AlertComponent.new(variant: :warning) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "access_token_validation_failed",
@@ -254,7 +254,7 @@
         ) %>
       <% end %>
 
-      <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
+      <%= render AlertComponent.new(variant: :warning) do %>
         <%= render EventDescriptionComponent.new(
           event: Event.new(
             type: "user_suspended",

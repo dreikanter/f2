@@ -7,7 +7,7 @@ class AlertComponent < ViewComponent::Base
     secondary: "border-sky-100 bg-slate-100 text-slate-600"
   }.freeze
 
-  BASE_CLASSES = "rounded-lg border px-4 py-3 space-y-1"
+  BASE_CLASSES = "rounded-lg border px-4 py-3 flex items-start gap-2"
 
   def initialize(variant: :info, **html_options)
     @variant = variant

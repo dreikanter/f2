@@ -4,8 +4,7 @@
   <%= render PageHeaderComponent.new(title: "Change Email for #{@user.email_address}") %>
 
   <%= render AlertComponent.new(variant: :info, class: "max-w-2xl") do %>
-    <strong>How this works:</strong> You can either change the email immediately or send a confirmation email to the new address.
-    If confirmation is required, the user must click the link in the email before the change takes effect.
+    <p><strong>How this works:</strong> You can either change the email immediately or send a confirmation email to the new address. If confirmation is required, the user must click the link in the email before the change takes effect.</p>
   <% end %>
 
   <div class="max-w-2xl">

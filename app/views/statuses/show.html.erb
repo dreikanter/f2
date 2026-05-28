@@ -5,16 +5,18 @@
 
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
-    <%= render AlertComponent.new(variant: :warning, class: "space-y-2") do %>
-      <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
-      <% if @user.can_change_email? %>
-        <p class="text-slate-600">
-          <%= link_to "Update your email address", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
-          to continue receiving notifications.
-        </p>
-      <% else %>
-        <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
-      <% end %>
+    <%= render AlertComponent.new(variant: :warning) do %>
+      <div class="space-y-2">
+        <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
+        <% if @user.can_change_email? %>
+          <p class="text-slate-600">
+            <%= link_to "Update your email address", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+            to continue receiving notifications.
+          </p>
+        <% else %>
+          <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 
