@@ -1,18 +1,8 @@
 <% content_for :title, "UI Elements" %>
 
 <%
-  # Standardized utility strings, mirrored from the app's forms and buttons.
-  btn_primary   = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-  btn_secondary = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-  btn_danger    = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-  input_classes       = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
-  input_error_classes = "w-full rounded-md border border-red-400 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2"
-  label_classes       = "block font-semibold text-slate-800"
-  help_classes        = "mt-1 text-sm text-slate-500"
-  error_classes       = "mt-2 text-sm text-red-600"
-  checkbox_classes    = "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
-  radio_classes       = "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
-  caption_classes     = "text-xs font-medium uppercase tracking-wide text-slate-400"
+  # Reference-page scaffolding only (not part of the copy-pastable specimens below).
+  caption_classes = "text-xs font-medium uppercase tracking-wide text-slate-400"
 
   toc_groups = {
     "Foundations" => [
@@ -60,12 +50,14 @@
     </div>
   </nav>
 
-  <%# Sections %>
+  <%# Sections. Each specimen below is written exactly as a production view would be,
+      so the markup can be copied straight into a new view. %>
   <div class="min-w-0 space-y-12">
     <%= render PageHeaderComponent.new(title: "UI Elements") do |header| %>
       <% header.with_context_paragraph do %>
         A living reference of the building blocks used across Feeder — buttons, form
-        controls, and components — shown in every state with realistic content.
+        controls, and components — shown in every state with realistic content. Each
+        example mirrors production view code so you can copy it into a new view.
       <% end %>
     <% end %>
 
@@ -77,27 +69,27 @@
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary</p>
-          <button type="button" class="<%= btn_primary %>">Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
-          <button type="button" class="<%= btn_secondary %>">Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
-          <button type="button" class="<%= btn_danger %>">Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
-          <button type="button" class="<%= btn_primary %>" disabled>Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
-          <button type="button" class="<%= btn_secondary %>" disabled>Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
-          <button type="button" class="<%= btn_danger %>" disabled>Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
         </div>
       </div>
     </section>
@@ -110,20 +102,20 @@
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Empty (with placeholder)</p>
-          <input type="text" class="<%= input_classes %>" placeholder="e.g. Ruby Weekly">
+          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Filled</p>
-          <input type="text" class="<%= input_classes %>" value="Ruby Weekly">
+          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <input type="text" class="<%= input_classes %>" value="Locked while syncing" disabled>
+          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Error</p>
-          <input type="text" class="<%= input_error_classes %>" value="not-a-valid-url">
-          <p class="<%= error_classes %>">Enter a valid feed URL.</p>
+          <%= text_field_tag :feed_name_error, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-red-600">Enter a valid feed URL.</p>
         </div>
       </div>
     </section>
@@ -136,27 +128,15 @@
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Default</p>
-          <select class="<%= input_classes %>">
-            <option>Every 30 minutes</option>
-            <option>Every hour</option>
-            <option>Every 6 hours</option>
-            <option>Daily at midnight</option>
-          </select>
+          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">With selection</p>
-          <select class="<%= input_classes %>">
-            <option>Every 30 minutes</option>
-            <option selected>Every hour</option>
-            <option>Every 6 hours</option>
-            <option>Daily at midnight</option>
-          </select>
+          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
-          <select class="<%= input_classes %>" disabled>
-            <option>Every hour</option>
-          </select>
+          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
         </div>
       </div>
     </section>
@@ -164,20 +144,20 @@
     <%# Checkbox %>
     <section id="checkbox" class="scroll-mt-6 space-y-4" data-key="section.checkbox">
       <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Checkbox</h2>
-      <p class="text-slate-600">A labeled checkbox for a single on/off choice. The whole label is clickable.</p>
+      <p class="text-slate-600">A labeled checkbox for a single on/off choice. The <code>label_tag</code> targets the checkbox id, so clicking the label toggles it.</p>
 
       <div class="space-y-4">
         <div class="flex items-start gap-3">
-          <input type="checkbox" class="<%= checkbox_classes %>">
-          <label class="text-base text-slate-700">Enable this feed once it's set up</label>
+          <%= check_box_tag :enable_feed, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :enable_feed, "Enable this feed once it's set up", class: "text-base text-slate-700" %>
         </div>
         <div class="flex items-start gap-3">
-          <input type="checkbox" class="<%= checkbox_classes %>" checked>
-          <label class="text-base text-slate-700">Notify me when a refresh fails</label>
+          <%= check_box_tag :notify_failures, "1", true, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :notify_failures, "Notify me when a refresh fails", class: "text-base text-slate-700" %>
         </div>
         <div class="flex items-start gap-3">
-          <input type="checkbox" class="<%= checkbox_classes %>" disabled>
-          <label class="text-base text-slate-400">Cross-post to FreeFeed (connect a token first)</label>
+          <%= check_box_tag :cross_post, "1", false, disabled: true, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :cross_post, "Cross-post to FreeFeed (connect a token first)", class: "text-base text-slate-400" %>
         </div>
       </div>
     </section>
@@ -185,25 +165,25 @@
     <%# Radio group %>
     <section id="radio-group" class="scroll-mt-6 space-y-4" data-key="section.radio-group">
       <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Radio group</h2>
-      <p class="text-slate-600">A set of mutually exclusive options. One is selected by default; unavailable options are disabled.</p>
+      <p class="text-slate-600">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
 
       <fieldset class="space-y-3">
-        <legend class="<%= label_classes %>">Refresh frequency</legend>
+        <legend class="block font-semibold text-slate-800">Refresh frequency</legend>
         <div class="flex items-start gap-3">
-          <input type="radio" name="refresh-frequency" class="<%= radio_classes %>" checked>
-          <label class="text-base text-slate-700">Every 30 minutes</label>
+          <%= radio_button_tag :refresh_frequency, "30m", true, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-slate-700" %>
         </div>
         <div class="flex items-start gap-3">
-          <input type="radio" name="refresh-frequency" class="<%= radio_classes %>">
-          <label class="text-base text-slate-700">Every hour</label>
+          <%= radio_button_tag :refresh_frequency, "1h", false, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_1h, "Every hour", class: "text-base text-slate-700" %>
         </div>
         <div class="flex items-start gap-3">
-          <input type="radio" name="refresh-frequency" class="<%= radio_classes %>">
-          <label class="text-base text-slate-700">Daily at midnight</label>
+          <%= radio_button_tag :refresh_frequency, "daily", false, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_daily, "Daily at midnight", class: "text-base text-slate-700" %>
         </div>
         <div class="flex items-start gap-3">
-          <input type="radio" name="refresh-frequency" class="<%= radio_classes %>" disabled>
-          <label class="text-base text-slate-400">Real-time (Pro plan only)</label>
+          <%= radio_button_tag :refresh_frequency, "realtime", false, disabled: true, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_realtime, "Real-time (Pro plan only)", class: "text-base text-slate-400" %>
         </div>
       </fieldset>
     </section>
@@ -211,29 +191,25 @@
     <%# Form group %>
     <section id="form-group" class="scroll-mt-6 space-y-4" data-key="section.form-group">
       <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Form group</h2>
-      <p class="text-slate-600">The standard composition: a label, a control, and optional help or error text, stacked with consistent spacing.</p>
+      <p class="text-slate-600">The standard composition: a label bound to its control, plus optional help or error text, stacked with consistent spacing.</p>
 
       <div class="max-w-xl space-y-8">
         <div class="space-y-2">
-          <label class="<%= label_classes %>">Feed name</label>
-          <input type="text" class="<%= input_classes %>" placeholder="e.g. Ruby Weekly">
-          <p class="<%= help_classes %>">Shown in your feed list and on FreeFeed posts.</p>
+          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-slate-800" %>
+          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-slate-500">Shown in your feed list and on FreeFeed posts.</p>
         </div>
 
         <div class="space-y-2">
-          <label class="<%= label_classes %>">Refresh frequency</label>
-          <select class="<%= input_classes %>">
-            <option>Every 30 minutes</option>
-            <option selected>Every hour</option>
-            <option>Daily at midnight</option>
-          </select>
-          <p class="<%= help_classes %>">How often Feeder checks the source for new posts.</p>
+          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-slate-800" %>
+          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-slate-500">How often Feeder checks the source for new posts.</p>
         </div>
 
         <div class="space-y-2">
-          <label class="<%= label_classes %>">Source URL</label>
-          <input type="text" class="<%= input_error_classes %>" value="not-a-valid-url">
-          <p class="<%= error_classes %>">Enter a valid feed URL, like https://example.com/feed.xml.</p>
+          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-slate-800" %>
+          <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-red-600">Enter a valid feed URL, like https://example.com/feed.xml.</p>
         </div>
       </div>
     </section>
@@ -252,10 +228,10 @@
                 Manage the sources Feeder reposts to FreeFeed.
               <% end %>
               <% header.with_action_button do %>
-                <button type="button" class="<%= btn_secondary %>">Import</button>
+                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
               <% end %>
               <% header.with_action_button do %>
-                <button type="button" class="<%= btn_primary %>">New feed</button>
+                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
               <% end %>
             <% end %>
 

@@ -22,4 +22,19 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
   end
+
+  test "#show should associate checkbox and radio labels with their controls" do
+    get development_components_path
+
+    # Clickable labels require a matching id/for pair (the production idiom).
+    assert_select "input[type=checkbox]#enable_feed"
+    assert_select "label[for=enable_feed]"
+
+    assert_select "input[type=radio]#refresh_frequency_30m"
+    assert_select "label[for=refresh_frequency_30m]"
+
+    # Form-group label points at its input.
+    assert_select "input[type=text]#group_feed_name"
+    assert_select "label[for=group_feed_name]"
+  end
 end
