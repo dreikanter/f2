@@ -66,4 +66,7 @@ Rails.application.configure do
 
   # See resend initializer for configuration
   config.action_mailer.delivery_method = :resend
+
+  # Keep developer-only tools out of production. Staging re-enables them.
+  config.x.dev_tools.enabled = false
 end

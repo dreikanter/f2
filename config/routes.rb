@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  if Rails.env.development? || Rails.env.test?
+  if Rails.configuration.x.dev_tools.enabled
     namespace :development do
       resource :components, only: :show
 
