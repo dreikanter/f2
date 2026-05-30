@@ -1,29 +1,37 @@
-<%= render(CardComponent.new(id: card_id, class: "space-y-4")) do %>
+<%= render(CardComponent.new(id: card_id)) do |card| %>
   <% if metadata_segments.any? || source_url %>
-    <header class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-slate-200 pb-4 text-xs text-slate-600">
-      <% metadata_segments.each_with_index do |segment, index| %>
-        <% if index.positive? %>
-          <span aria-hidden="true" class="text-slate-300">•</span>
+    <% card.with_section(class: "px-6 py-4") do %>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
+        <% metadata_segments.each_with_index do |segment, index| %>
+          <% if index.positive? %>
+            <span aria-hidden="true" class="text-slate-300">•</span>
+          <% end %>
+          <span><%= segment %></span>
         <% end %>
-        <span><%= segment %></span>
-      <% end %>
-      <% if source_url %>
-        <% if metadata_segments.any? %>
-          <span aria-hidden="true" class="text-slate-300">•</span>
+        <% if source_url %>
+          <% if metadata_segments.any? %>
+            <span aria-hidden="true" class="text-slate-300">•</span>
+          <% end %>
+          <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
         <% end %>
-        <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
-      <% end %>
-    </header>
+      </div>
+    <% end %>
   <% end %>
 
-  <% if formatted_content %>
-    <%= formatted_content %>
-  <% end %>
+  <% if formatted_content || attachments? %>
+    <% card.with_section do %>
+      <div class="space-y-4">
+        <% if formatted_content %>
+          <%= formatted_content %>
+        <% end %>
 
-  <% if attachments? %>
-    <section class="space-y-2">
-      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
-      <%= attachments_list %>
-    </section>
+        <% if attachments? %>
+          <section class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
+            <%= attachments_list %>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 <% end %>
