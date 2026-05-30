@@ -34,11 +34,11 @@
 <div class="grid grid-cols-1 gap-10 lg:grid-cols-[12rem_1fr]">
   <%# Table of contents %>
   <nav class="hidden lg:block" aria-label="On this page" data-key="toc">
-    <div class="sticky top-6 space-y-5 text-sm">
+    <div class="sticky top-6 space-y-8 text-sm">
       <% toc_groups.each do |group, items| %>
-        <div class="space-y-2">
+        <div class="space-y-4">
           <p class="text-xs font-semibold uppercase tracking-wide text-slate-400"><%= group %></p>
-          <ul class="space-y-1">
+          <ul class="space-y-2">
             <% items.each do |anchor, label| %>
               <li>
                 <a href="#<%= anchor %>" class="text-slate-600 transition hover:text-sky-600" data-key="toc.<%= anchor %>"><%= label %></a>
