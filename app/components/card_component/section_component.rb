@@ -1,5 +1,5 @@
 class CardComponent::SectionComponent < ViewComponent::Base
-  BASE_CLASSES = "p-6"
+  DEFAULT_CLASSES = "p-6"
 
   def initialize(**html_options)
     @html_options = html_options
@@ -11,8 +11,9 @@ class CardComponent::SectionComponent < ViewComponent::Base
 
   private
 
+  # An explicit class replaces the default padding rather than merging with it,
+  # so callers stay in full control of a section's spacing.
   def merged_options
-    classes = helpers.class_names(BASE_CLASSES, @html_options[:class])
-    @html_options.merge(class: classes)
+    @html_options.merge(class: @html_options[:class].presence || DEFAULT_CLASSES)
   end
 end

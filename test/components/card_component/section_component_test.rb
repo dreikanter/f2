@@ -11,14 +11,13 @@ class CardComponent::SectionComponentTest < ViewComponent::TestCase
     assert_includes section["class"], "p-6"
   end
 
-  test "#call should merge classes and forward html attributes" do
+  test "#call should let an explicit class override the default padding" do
     result = render_inline(
-      CardComponent::SectionComponent.new(class: "extra", data: { key: "stats" })
+      CardComponent::SectionComponent.new(class: "px-6 py-4", data: { key: "stats" })
     ) { "Body" }
 
     section = result.at_css("div")
-    assert_includes section["class"], "extra"
-    assert_includes section["class"], "p-6"
+    assert_equal "px-6 py-4", section["class"]
     assert_equal "stats", section["data-key"]
   end
 end
