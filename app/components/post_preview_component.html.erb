@@ -1,6 +1,6 @@
 <%= render(CardComponent.new(id: card_id)) do |card| %>
   <% if metadata_segments.any? || source_url %>
-    <% card.with_section do %>
+    <% card.with_section(class: "px-6 py-4") do %>
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
         <% metadata_segments.each_with_index do |segment, index| %>
           <% if index.positive? %>
