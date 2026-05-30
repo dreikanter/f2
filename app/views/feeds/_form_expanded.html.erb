@@ -57,7 +57,7 @@
           <%= hidden_field_tag "feed[params][#{key}]", value %>
         <% end %>
         <% unless multi_candidate %>
-          <p class="text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
+          <p class="text-sm text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
         <% end %>
       </div>
 
@@ -69,9 +69,9 @@
                          class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          data: { key: "form.name" } %>
         <% if feed.name.present? %>
-          <p class="text-slate-500">You can edit this name if you'd like.</p>
+          <p class="text-sm text-slate-500">You can edit this name if you'd like.</p>
         <% else %>
-          <p class="text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
+          <p class="text-sm text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
         <% end %>
         <% if f.object.errors[:name].any? %>
           <p class="text-sm text-red-600"><%= f.object.errors[:name].first %></p>
@@ -157,7 +157,7 @@
           </div>
           <div class="ml-3">
             <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-slate-800 mb-0" %>
-            <p class="text-slate-500 mt-1">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
+            <p class="text-sm text-slate-500">Enabled feeds will automatically check for new posts and publish them to FreeFeed.</p>
           </div>
         </div>
       </div>

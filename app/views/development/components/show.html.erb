@@ -197,13 +197,13 @@
         <div class="space-y-2">
           <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-slate-800" %>
           <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
-          <p class="mt-2 text-sm text-slate-500">Shown in your feed list and on FreeFeed posts.</p>
+          <p class="text-sm text-slate-500">Shown in your feed list and on FreeFeed posts.</p>
         </div>
 
         <div class="space-y-2">
           <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-slate-800" %>
           <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
-          <p class="mt-2 text-sm text-slate-500">How often Feeder checks the source for new posts.</p>
+          <p class="text-sm text-slate-500">How often Feeder checks the source for new posts.</p>
         </div>
 
         <div class="space-y-2">
