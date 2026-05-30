@@ -283,6 +283,19 @@
           <p class="text-slate-700">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
         </div>
       <% end %>
+
+      <p class="text-slate-600">Add sections to split a card into regions divided edge to edge.</p>
+      <%= render CardComponent.new do |card| %>
+        <% card.with_section do %>
+          <p class="text-sm font-medium text-slate-700">Tech News Daily</p>
+        <% end %>
+        <% card.with_section do %>
+          <p class="text-slate-700">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
+        <% end %>
+        <% card.with_section do %>
+          <p class="text-sm text-slate-500">Next refresh in about an hour.</p>
+        <% end %>
+      <% end %>
     </section>
 
     <%# Alert %>

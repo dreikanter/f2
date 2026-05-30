@@ -10,6 +10,22 @@ class CardComponentTest < ViewComponent::TestCase
     assert_equal "Card body", card.text.strip
     assert_includes card["class"], "bg-white"
     assert_includes card["class"], "rounded-lg"
+    assert_includes card["class"], "p-6"
+  end
+
+  test "#call should render sections divided border-to-border" do
+    result = render_inline(CardComponent.new) do |card|
+      card.with_section { "Header" }
+      card.with_section { "Footer" }
+    end
+
+    card = result.at_css("div")
+    assert_includes card["class"], "divide-y"
+    assert_includes card["class"], "overflow-hidden"
+    refute_includes card["class"], "p-6"
+
+    sections = card.css("> div")
+    assert_equal ["Header", "Footer"], sections.map { |section| section.text.strip }
   end
 
   test "#call should merge classes and forward html attributes" do
