@@ -22,11 +22,22 @@ class PostPreviewComponentTest < ViewComponent::TestCase
 
     card = result.at_css("#feed-preview-post-1")
     assert_not_nil card
-    assert_includes card.text, "UID post-123"
+    assert_includes card.text, "UID: post-123"
     assert_includes card.text, "Published about 1 hour ago"
     assert_includes card.text, "Attachments: 1"
     assert_includes card.text, "Hello world"
-    assert_includes card.css("a").map(&:text), "View source"
+
+    source_link = card.css("a").find { |link| link.text.include?("View source") }
+    assert_not_nil source_link
+    assert_not_nil source_link.at_css("svg"), "expected an external-link icon in the source link"
+  end
+
+  test "omits the attachments count when there are none" do
+    post_data = { "content" => "Body", "uid" => "post-1" }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    refute_includes result.text, "Attachments"
   end
 
   test "renders content without a synthesized title heading" do
