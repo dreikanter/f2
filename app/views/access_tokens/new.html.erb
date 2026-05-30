@@ -50,7 +50,7 @@
                               required: true,
                               autocomplete: "off" %>
           <% if @access_token.errors[:token].any? %>
-            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
+            <p class="text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
           <% end %>
         </div>
 
@@ -64,7 +64,7 @@
             Give this token a memorable name. If left blank, a default name will be used.
           </p>
           <% if @access_token.errors[:name].any? %>
-            <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
+            <p class="text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
           <% end %>
         </div>
       </div>
