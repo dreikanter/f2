@@ -29,6 +29,15 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_includes card.css("a").map(&:text), "View source"
   end
 
+  test "renders content without a synthesized title heading" do
+    post_data = { "content" => "Lorem ipsum dolor sit amet, the opening line of the post body" }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data, index: 0))
+
+    assert_empty result.css("h1, h2, h3")
+    assert_equal 1, result.text.scan("Lorem ipsum").size
+  end
+
   test "handles bad published_at values without crashing" do
     post_data = { "published_at" => "not-a-date" }
 

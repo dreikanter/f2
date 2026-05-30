@@ -1,22 +1,20 @@
 <%= render(CardComponent.new(id: card_id, class: "space-y-4")) do %>
-  <header class="space-y-2">
-    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-      <h2 class="text-lg font-semibold text-slate-900"><%= title %></h2>
-      <% if source_url %>
-        <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm" %>
-      <% end %>
-    </div>
-    <% if metadata_segments.any? %>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
-        <% metadata_segments.each_with_index do |segment, index| %>
-          <% if index.positive? %>
-            <span aria-hidden="true" class="text-slate-300">•</span>
-          <% end %>
-          <span><%= segment %></span>
+  <% if metadata_segments.any? || source_url %>
+    <header class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-slate-200 pb-4 text-xs text-slate-600">
+      <% metadata_segments.each_with_index do |segment, index| %>
+        <% if index.positive? %>
+          <span aria-hidden="true" class="text-slate-300">•</span>
         <% end %>
-      </div>
-    <% end %>
-  </header>
+        <span><%= segment %></span>
+      <% end %>
+      <% if source_url %>
+        <% if metadata_segments.any? %>
+          <span aria-hidden="true" class="text-slate-300">•</span>
+        <% end %>
+        <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+      <% end %>
+    </header>
+  <% end %>
 
   <% if formatted_content %>
     <%= formatted_content %>

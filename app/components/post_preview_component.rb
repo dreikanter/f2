@@ -4,14 +4,6 @@ class PostPreviewComponent < ViewComponent::Base
     @index = index
   end
 
-  def title
-    explicit_title = post_data["title"].presence
-    return explicit_title if explicit_title
-
-    preview = helpers.truncate(helpers.strip_tags(content), length: 80, omission: "...")
-    preview.presence || default_title
-  end
-
   def source_url
     post_data["source_url"].presence
   end
@@ -67,10 +59,6 @@ class PostPreviewComponent < ViewComponent::Base
   private
 
   attr_reader :post_data, :index
-
-  def default_title
-    index ? "Post #{index + 1}" : "Feed Preview Post"
-  end
 
   def valid_attachments
     @valid_attachments ||= raw_attachments.filter_map do |attachment|
