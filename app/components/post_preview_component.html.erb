@@ -12,7 +12,10 @@
           <% if metadata_segments.any? %>
             <span aria-hidden="true" class="text-slate-300">•</span>
           <% end %>
-          <%= link_to "View source", source_url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+          <%= link_to source_url, target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 font-medium text-sky-600 transition hover:text-sky-500" do %>
+            <span class="underline underline-offset-4">View source</span>
+            <%= helpers.icon("external-link", css_class: "size-3.5", aria_label: "Opens in a new window") %>
+          <% end %>
         <% end %>
       </div>
     <% end %>

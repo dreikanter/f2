@@ -20,7 +20,7 @@ class PostPreviewComponent < ViewComponent::Base
 
   def metadata_segments
     [].tap do |segments|
-      segments << "UID #{post_data["uid"]}" if post_data["uid"].present?
+      segments << "UID: #{post_data["uid"]}" if post_data["uid"].present?
 
       if published_at
         segments << "Published #{helpers.time_ago_in_words(published_at)} ago"
