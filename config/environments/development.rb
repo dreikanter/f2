@@ -70,4 +70,7 @@ Rails.application.configure do
 
   # Use filesystem storage for captured emails in development
   config.email_storage_adapter = :file_system
+
+  # Expose developer-only tools (component reference, captured emails).
+  config.x.dev_tools.enabled = true
 end

@@ -54,4 +54,7 @@ Rails.application.configure do
 
   # Use in-memory storage for captured emails in tests
   config.email_storage_adapter = :in_memory
+
+  # Expose developer-only tools (component reference, captured emails).
+  config.x.dev_tools.enabled = true
 end

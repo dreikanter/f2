@@ -29,7 +29,7 @@
                               class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                               placeholder: "Paste a new token here to replace the current one",
                               autocomplete: "off" %>
-          <p class="text-slate-500">Leave blank to keep the existing token. Entering a new value will trigger re-validation.</p>
+          <p class="text-sm text-slate-500">Leave blank to keep the existing token. Entering a new value will trigger re-validation.</p>
           <% if @access_token.errors[:token].any? %>
             <p class="mt-2 text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
           <% end %>

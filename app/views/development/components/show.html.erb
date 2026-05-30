@@ -1,267 +1,398 @@
-<% content_for :title, "Component Reference" %>
+<% content_for :title, "UI Elements" %>
 
-<div class="space-y-12">
-  <%= render PageHeaderComponent.new(title: "Component Reference") do |header| %>
-    <% header.with_context_paragraph do %>
-      Visual reference of all UI components in the application.
+<%
+  # Reference-page scaffolding only (not part of the copy-pastable specimens below).
+  caption_classes = "text-xs font-medium uppercase tracking-wide text-slate-400"
+
+  toc_groups = {
+    "Foundations" => [
+      ["buttons", "Buttons"],
+      ["text-input", "Text input"],
+      ["select", "Select"],
+      ["checkbox", "Checkbox"],
+      ["radio-group", "Radio group"],
+      ["form-group", "Form group"]
+    ],
+    "Page structure" => [
+      ["page-header", "Page header"]
+    ],
+    "Components" => [
+      ["badge", "Badge"],
+      ["card", "Card"],
+      ["alert", "Alert"],
+      ["empty-state", "Empty state"],
+      ["spinner", "Spinner"],
+      ["stats-bar", "Stats bar"],
+      ["list", "List"],
+      ["pagination", "Pagination"],
+      ["confirmation-modal", "Confirmation modal"],
+      ["event-description", "Event description"]
+    ]
+  }
+%>
+
+<div class="grid grid-cols-1 gap-10 lg:grid-cols-[12rem_1fr]">
+  <%# Table of contents %>
+  <nav class="hidden lg:block" aria-label="On this page" data-key="toc">
+    <div class="sticky top-6 space-y-8 text-sm">
+      <% toc_groups.each do |group, items| %>
+        <div class="space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400"><%= group %></p>
+          <ul class="space-y-2">
+            <% items.each do |anchor, label| %>
+              <li>
+                <a href="#<%= anchor %>" class="text-slate-600 transition hover:text-sky-600" data-key="toc.<%= anchor %>"><%= label %></a>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  </nav>
+
+  <%# Sections. Each specimen below is written exactly as a production view would be,
+      so the markup can be copied straight into a new view. %>
+  <div class="min-w-0 space-y-12">
+    <%= render PageHeaderComponent.new(title: "UI Elements") do |header| %>
+      <% header.with_context_paragraph do %>
+        A living reference of the building blocks used across Feeder — buttons, form
+        controls, and components — shown in every state with realistic content. Each
+        example mirrors production view code so you can copy it into a new view.
+      <% end %>
     <% end %>
-  <% end %>
 
-  <%# Badge Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Badge Component</h2>
-    <div class="space-y-2">
+    <%# Buttons %>
+    <section id="buttons" class="scroll-mt-6 space-y-4" data-key="section.buttons">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Buttons</h2>
+      <p class="text-slate-600">Used for primary actions, secondary choices, and destructive operations. Disabled buttons keep their shape but drop their emphasis.</p>
+
+      <div class="flex flex-wrap items-start gap-6">
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Primary</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Secondary</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Danger</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Primary disabled</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Secondary disabled</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Danger disabled</p>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
+        </div>
+      </div>
+    </section>
+
+    <%# Text input %>
+    <section id="text-input" class="scroll-mt-6 space-y-4" data-key="section.text-input">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Text input</h2>
+      <p class="text-slate-600">The standard single-line field. Shown empty, filled, disabled, and in an error state.</p>
+
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Empty (with placeholder)</p>
+          <%= text_field_tag :feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Filled</p>
+          <%= text_field_tag :feed_name_filled, "Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Disabled</p>
+          <%= text_field_tag :feed_name_disabled, "Locked while syncing", disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Error</p>
+          <%= text_field_tag :feed_name_error, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-red-600">Enter a valid feed URL.</p>
+        </div>
+      </div>
+    </section>
+
+    <%# Select %>
+    <section id="select" class="scroll-mt-6 space-y-4" data-key="section.select">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Select</h2>
+      <p class="text-slate-600">A dropdown for choosing one option from a known set.</p>
+
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Default</p>
+          <%= select_tag :frequency, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"]), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">With selection</p>
+          <%= select_tag :frequency_selected, options_for_select(["Every 30 minutes", "Every hour", "Every 6 hours", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Disabled</p>
+          <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+      </div>
+    </section>
+
+    <%# Checkbox %>
+    <section id="checkbox" class="scroll-mt-6 space-y-4" data-key="section.checkbox">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Checkbox</h2>
+      <p class="text-slate-600">A labeled checkbox for a single on/off choice. The <code>label_tag</code> targets the checkbox id, so clicking the label toggles it.</p>
+
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <%= check_box_tag :enable_feed, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :enable_feed, "Enable this feed once it's set up", class: "text-base text-slate-700" %>
+        </div>
+        <div class="flex items-start gap-3">
+          <%= check_box_tag :notify_failures, "1", true, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :notify_failures, "Notify me when a refresh fails", class: "text-base text-slate-700" %>
+        </div>
+        <div class="flex items-start gap-3">
+          <%= check_box_tag :cross_post, "1", false, disabled: true, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :cross_post, "Cross-post to FreeFeed (connect a token first)", class: "text-base text-slate-400" %>
+        </div>
+      </div>
+    </section>
+
+    <%# Radio group %>
+    <section id="radio-group" class="scroll-mt-6 space-y-4" data-key="section.radio-group">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Radio group</h2>
+      <p class="text-slate-600">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
+
+      <fieldset class="space-y-3">
+        <legend class="block font-semibold text-slate-800">Refresh frequency</legend>
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :refresh_frequency, "30m", true, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-slate-700" %>
+        </div>
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :refresh_frequency, "1h", false, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_1h, "Every hour", class: "text-base text-slate-700" %>
+        </div>
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :refresh_frequency, "daily", false, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_daily, "Daily at midnight", class: "text-base text-slate-700" %>
+        </div>
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :refresh_frequency, "realtime", false, disabled: true, class: "mt-1 h-4 w-4 border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
+          <%= label_tag :refresh_frequency_realtime, "Real-time (Pro plan only)", class: "text-base text-slate-400" %>
+        </div>
+      </fieldset>
+    </section>
+
+    <%# Form group %>
+    <section id="form-group" class="scroll-mt-6 space-y-4" data-key="section.form-group">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Form group</h2>
+      <p class="text-slate-600">The standard composition: a label bound to its control, plus optional help or error text, stacked with consistent spacing.</p>
+
+      <div class="max-w-xl space-y-8">
+        <div class="space-y-2">
+          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-slate-800" %>
+          <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          <p class="text-sm text-slate-500">Shown in your feed list and on FreeFeed posts.</p>
+        </div>
+
+        <div class="space-y-2">
+          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-slate-800" %>
+          <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          <p class="text-sm text-slate-500">How often Feeder checks the source for new posts.</p>
+        </div>
+
+        <div class="space-y-2">
+          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-slate-800" %>
+          <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
+          <p class="mt-2 text-sm text-red-600">Enter a valid feed URL, like https://example.com/feed.xml.</p>
+        </div>
+      </div>
+    </section>
+
+    <%# Page header %>
+    <section id="page-header" class="scroll-mt-6 space-y-4" data-key="section.page-header">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Page header</h2>
+      <p class="text-slate-600">Opens a page with a title and optional context and actions. Pair it with <code>space-y-8</code> to keep a steady gap before the page content.</p>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">With context and actions</p>
+        <div class="rounded-lg border border-slate-200 p-6">
+          <div class="space-y-8">
+            <%= render PageHeaderComponent.new(title: "Your feeds") do |header| %>
+              <% header.with_context_paragraph do %>
+                Manage the sources Feeder reposts to FreeFeed.
+              <% end %>
+              <% header.with_action_button do %>
+                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+              <% end %>
+              <% header.with_action_button do %>
+                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+              <% end %>
+            <% end %>
+
+            <%= render CardComponent.new do %>
+              <p class="text-slate-700">Page content sits here. The header keeps a consistent gap above it, so pages feel aligned no matter what's inside.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">Title only (no actions)</p>
+        <div class="rounded-lg border border-slate-200 p-6">
+          <div class="space-y-8">
+            <%= render PageHeaderComponent.new(title: "Settings") %>
+
+            <%= render CardComponent.new do %>
+              <p class="text-slate-700">Without actions, the title stretches full width and the same spacing applies before the content below.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%# Badge %>
+    <section id="badge" class="scroll-mt-6 space-y-4" data-key="section.badge">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Badge</h2>
+      <p class="text-slate-600">Small status labels. Color carries meaning — green for healthy, red for problems, gray for neutral.</p>
       <div class="flex flex-wrap gap-2">
-        <%= render BadgeComponent.new(text: "Blue", color: :blue) %>
-        <%= render BadgeComponent.new(text: "Gray", color: :gray) %>
-        <%= render BadgeComponent.new(text: "Red", color: :red) %>
-        <%= render BadgeComponent.new(text: "Green", color: :green) %>
-        <%= render BadgeComponent.new(text: "Yellow", color: :yellow) %>
-        <%= render BadgeComponent.new(text: "Orange", color: :orange) %>
+        <%= render BadgeComponent.new(text: "Active", color: :green) %>
+        <%= render BadgeComponent.new(text: "Paused", color: :gray) %>
+        <%= render BadgeComponent.new(text: "Error", color: :red) %>
+        <%= render BadgeComponent.new(text: "Syncing", color: :blue) %>
+        <%= render BadgeComponent.new(text: "Pending", color: :yellow) %>
+        <%= render BadgeComponent.new(text: "Beta", color: :orange) %>
         <%= render BadgeComponent.new(text: "Indigo", color: :indigo) %>
         <%= render BadgeComponent.new(text: "Purple", color: :purple) %>
         <%= render BadgeComponent.new(text: "Pink", color: :pink) %>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <%# Card Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Card Component</h2>
-    <%= render CardComponent.new do %>
-      <p class="text-slate-700">This is a card component with default styling. It provides a clean container for content.</p>
-    <% end %>
-  </section>
-
-  <%# Empty State Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Empty State Component</h2>
-    <%= render EmptyStateComponent.new("No items to show yet") %>
-  </section>
-
-  <%# Spinner Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Spinner Component</h2>
-    <%= render SpinnerComponent.new %>
-  </section>
-
-  <%# Stats Bar Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Stats Bar Component</h2>
-    <% stats_bar = StatsBarComponent.new %>
-    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Total Feeds", value: "42")) %>
-    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Active", value: "38")) %>
-    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Posts", value: "1,234")) %>
-    <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Last Updated", value: "2h ago")) %>
-    <%= render stats_bar %>
-  </section>
-
-  <%# List Group Component with Feed Items %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">List Group Component (Feed Items)</h2>
-    <% list = ListComponent.new %>
-    <% list.with_item(
-         ListComponent::ItemComponent.new(
-           title: "Tech News Daily",
-           title_url: "#",
-           metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]
-         )
-       ) %>
-    <% list.with_item(
-         ListComponent::ItemComponent.new(
-           title: "Design Inspiration",
-           title_url: "#",
-           metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]
-         )
-       ) %>
-    <% list.with_item(
-         ListComponent::ItemComponent.new(
-           title: "Ruby Weekly",
-           title_url: "#",
-           metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]
-         )
-       ) %>
-    <%= render list %>
-  </section>
-
-  <%# List Group Component with Stat Items %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">List Group Component (Stat Items)</h2>
-    <% stat_list = ListComponent.new %>
-    <% stat_list.with_item(
-         ListComponent::StatItemComponent.new(
-           label: "Total Feeds",
-           value: "42"
-         )
-       ) %>
-    <% stat_list.with_item(
-         ListComponent::StatItemComponent.new(
-           label: "Total Posts",
-           value: "1,234"
-         )
-       ) %>
-    <% stat_list.with_item(
-         ListComponent::StatItemComponent.new(
-           label: "Active Feeds",
-           value: "38"
-         )
-       ) %>
-    <%= render stat_list %>
-  </section>
-
-  <%# Pagination Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Pagination Component</h2>
-    <%= render PaginationComponent.new(
-         collection_name: "posts",
-         path_helper: ->(page) { "#page-#{page}" },
-         current_page: 3,
-         total_pages: 10
-       ) %>
-  </section>
-
-  <%# Page Header Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Page Header Component</h2>
-    <%= render PageHeaderComponent.new(title: "Example Page Title") do |header| %>
-      <% header.with_context_paragraph do %>
-        This is a context paragraph that provides additional information about the page.
+    <%# Card %>
+    <section id="card" class="scroll-mt-6 space-y-4" data-key="section.card">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Card</h2>
+      <p class="text-slate-600">A padded container that groups related content on a clean surface.</p>
+      <%= render CardComponent.new do %>
+        <div class="space-y-2">
+          <h3 class="text-lg font-semibold text-slate-900">Tech News Daily</h3>
+          <p class="text-slate-700">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
+        </div>
       <% end %>
-      <% header.with_action_button do %>
-        <a href="#" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">Primary Action</a>
-      <% end %>
-      <% header.with_action_button do %>
-        <a href="#" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">Secondary Action</a>
-      <% end %>
-    <% end %>
-  </section>
+    </section>
 
-  <%# Confirmation Modal Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Confirmation Modal Component</h2>
-    <p class="text-sm text-slate-600">Modal is hidden by default. Add trigger button to show it.</p>
-    <%= render ConfirmationModalComponent.new(
-         title: "Delete Item",
-         action: "Delete",
-         url: "#",
-         method: :delete
-       ) do %>
-      Are you sure you want to delete this item? This action cannot be undone.
-    <% end %>
-  </section>
+    <%# Alert %>
+    <section id="alert" class="scroll-mt-6 space-y-4" data-key="section.alert">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Alert</h2>
+      <p class="text-slate-600">Inline messages that call out information, success, warnings, or errors.</p>
+      <div class="space-y-3">
+        <%= render AlertComponent.new(variant: :info) do %>
+          <p>Your feed will start publishing within the next few minutes.</p>
+        <% end %>
+        <%= render AlertComponent.new(variant: :success) do %>
+          <p>Feed created. We'll keep it in sync from here on.</p>
+        <% end %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <p>This source hasn't updated in over a month. It may be inactive.</p>
+        <% end %>
+        <%= render AlertComponent.new(variant: :error) do %>
+          <p>We couldn't reach the source. Check the URL and try again.</p>
+        <% end %>
+        <%= render AlertComponent.new(variant: :secondary) do %>
+          <p>Tip: connect a FreeFeed token to start cross-posting automatically.</p>
+        <% end %>
+      </div>
+    </section>
 
-  <%# Event Description Component %>
-  <section class="space-y-4">
-    <h2 class="text-xl font-semibold text-slate-900">Event Description Component</h2>
-    <div class="space-y-2">
+    <%# Empty state %>
+    <section id="empty-state" class="scroll-mt-6 space-y-4" data-key="section.empty-state">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Empty state</h2>
+      <p class="text-slate-600">Shown when there's nothing to display yet.</p>
+      <%= render EmptyStateComponent.new("No feeds yet — add your first source to get started") %>
+    </section>
+
+    <%# Spinner %>
+    <section id="spinner" class="scroll-mt-6 space-y-4" data-key="section.spinner">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Spinner</h2>
+      <p class="text-slate-600">Indicates a short, indeterminate wait.</p>
+      <%= render SpinnerComponent.new %>
+    </section>
+
+    <%# Stats bar %>
+    <section id="stats-bar" class="scroll-mt-6 space-y-4" data-key="section.stats-bar">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Stats bar</h2>
+      <p class="text-slate-600">A compact row of headline numbers.</p>
+      <% stats_bar = StatsBarComponent.new %>
+      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Total feeds", value: "42")) %>
+      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Active", value: "38")) %>
+      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Posts", value: "1,234")) %>
+      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Last updated", value: "2h ago")) %>
+      <%= render stats_bar %>
+    </section>
+
+    <%# List %>
+    <section id="list" class="scroll-mt-6 space-y-4" data-key="section.list">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">List</h2>
+      <p class="text-slate-600">A grouped list for collections of items, with linked titles and metadata, or simple label/value rows.</p>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">With feed items</p>
+        <% list = ListComponent.new %>
+        <% list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"])) %>
+        <% list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"])) %>
+        <% list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"])) %>
+        <%= render list %>
+      </div>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">With stat items</p>
+        <% stat_list = ListComponent.new %>
+        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42")) %>
+        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234")) %>
+        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38")) %>
+        <%= render stat_list %>
+      </div>
+    </section>
+
+    <%# Pagination %>
+    <section id="pagination" class="scroll-mt-6 space-y-4" data-key="section.pagination">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Pagination</h2>
+      <p class="text-slate-600">Moves between pages of a long collection.</p>
+      <%= render PaginationComponent.new(collection_name: "posts", path_helper: ->(page) { "#page-#{page}" }, current_page: 3, total_pages: 10) %>
+    </section>
+
+    <%# Confirmation modal %>
+    <section id="confirmation-modal" class="scroll-mt-6 space-y-4" data-key="section.confirmation-modal">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Confirmation modal</h2>
+      <p class="text-slate-600">Asks the user to confirm a destructive action. It stays hidden until a trigger opens it, so nothing shows here by default.</p>
+      <%= render ConfirmationModalComponent.new(title: "Delete feed", action: "Delete", url: "#", method: :delete) do %>
+        Are you sure you want to delete this feed? This can't be undone.
+      <% end %>
+    </section>
+
+    <%# Event description %>
+    <section id="event-description" class="scroll-mt-6 space-y-4" data-key="section.event-description">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Event description</h2>
+      <p class="text-slate-600">Renders a human-readable summary of a system event, usually inside an alert that matches its severity.</p>
+
       <% sample_feed = Feed.first || Feed.new(id: 1, name: "Sample Feed") %>
       <% sample_token = AccessToken.first || AccessToken.new(id: 1, name: "Sample Token") %>
-      <% sample_post = Post.first || Post.new(id: 1) %>
 
-      <%# Feed refresh success %>
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "feed_refresh",
-            level: :info,
-            subject: sample_feed
-          )
-        ) %>
-      <% end %>
-
-      <%# Feed refresh error %>
-      <%= render AlertComponent.new(variant: :error) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "feed_refresh_error",
-            level: :error,
-            subject: sample_feed,
-            message: "Connection timeout",
-            metadata: { error: { stage: "load_feed_contents" } }
-          )
-        ) %>
-      <% end %>
-
-      <%# Access token validation failed with multiple feeds %>
-      <%= render AlertComponent.new(variant: :warning) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "access_token_validation_failed",
-            level: :warning,
-            subject: sample_token,
-            metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) }
-          )
-        ) %>
-      <% end %>
-
-      <%# Group purge started %>
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "group_purge_started",
-            level: :info,
-            subject: sample_feed
-          )
-        ) %>
-      <% end %>
-
-      <%# Post withdrawn %>
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "post_withdrawn",
-            level: :info,
-            subject: sample_post
-          )
-        ) %>
-      <% end %>
-
-      <%# Email events %>
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "resend.email.email_sent",
-            level: :info
-          )
-        ) %>
-      <% end %>
-
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "resend.email.email_delivered",
-            level: :info
-          )
-        ) %>
-      <% end %>
-
-      <%= render AlertComponent.new(variant: :error) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "resend.email.email_bounced",
-            level: :error
-          )
-        ) %>
-      <% end %>
-
-      <%# User events %>
-      <%= render AlertComponent.new(variant: :info) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "email_changed",
-            level: :info
-          )
-        ) %>
-      <% end %>
-
-      <%= render AlertComponent.new(variant: :warning) do %>
-        <%= render EventDescriptionComponent.new(
-          event: Event.new(
-            type: "user_suspended",
-            level: :warning
-          )
-        ) %>
-      <% end %>
-    </div>
-  </section>
+      <div class="space-y-3">
+        <%= render AlertComponent.new(variant: :info) do %>
+          <%= render EventDescriptionComponent.new(event: Event.new(type: "feed_refresh", level: :info, subject: sample_feed)) %>
+        <% end %>
+        <%= render AlertComponent.new(variant: :error) do %>
+          <%= render EventDescriptionComponent.new(event: Event.new(type: "feed_refresh_error", level: :error, subject: sample_feed, message: "Connection timeout", metadata: { error: { stage: "load_feed_contents" } })) %>
+        <% end %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <%= render EventDescriptionComponent.new(event: Event.new(type: "access_token_validation_failed", level: :warning, subject: sample_token, metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) })) %>
+        <% end %>
+      </div>
+    </section>
+  </div>
 </div>
