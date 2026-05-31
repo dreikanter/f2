@@ -33,7 +33,10 @@
     <%= render UserStatsComponent.new(user: @user) %>
 
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Recent Activity</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
+        <%= link_to "View all", events_path, class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "recent_events.view_all" } %>
+      </div>
       <%= render(EventLogComponent.new(
         events: @recent_events,
         endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence)

@@ -52,6 +52,72 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#index should render an HTML page of the user's events" do
+    sign_in_as user
+    create(:event, type: "my_event", user: user)
+    create(:event, type: "someone_elses", user: other_user)
+
+    get events_path
+
+    assert_response :success
+    assert_select "h1", "Events"
+    assert_select "#events_log"
+    assert_select '[data-key="events.type"]', text: "my_event"
+    assert_select '[data-key="events.type"]', text: "someone_elses", count: 0
+  end
+
+  test "#index should browse older user events with a stable cursor" do
+    with_page_size(2) do
+      sign_in_as user
+      events = Array.new(5) { |i| create(:event, type: "Event#{i}", user: user) }
+      oldest_on_first_page = events[3]
+
+      get events_path, params: { before: oldest_on_first_page.id }
+
+      assert_response :success
+      assert_select "#events_log[data-controller='polling']", count: 0
+      assert_select "[data-key='events.newer']"
+      assert_select "[data-key='events.older']"
+      assert_select '[data-key="events.type"]', count: 2
+    end
+  end
+
+  test "#index should poll on the first page only" do
+    with_page_size(2) do
+      sign_in_as user
+      3.times { |i| create(:event, type: "Event#{i}", user: user) }
+
+      get events_path
+
+      assert_response :success
+      assert_select "#events_log[data-controller='polling']"
+      assert_select "[data-key='events.older']"
+      assert_select "[data-key='events.newer']", count: 0
+    end
+  end
+
+  test "#index should not expose another user's events through a cursor" do
+    sign_in_as user
+    mine = create(:event, type: "mine", user: user)
+    theirs = create(:event, type: "theirs", user: other_user)
+
+    get events_path, params: { before: theirs.id + 1 }
+
+    assert_response :success
+    assert_select '[data-key="events.type"]', text: "mine"
+    assert_select '[data-key="events.type"]', text: "theirs", count: 0
+    assert_not_nil mine
+  end
+
+  test "#index should redirect to the latest page when a cursor matches no events" do
+    sign_in_as user
+    event = create(:event, user: user)
+
+    get events_path, params: { before: event.id }
+
+    assert_redirected_to events_path
+  end
+
   test "#index should filter user events by type" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: user)

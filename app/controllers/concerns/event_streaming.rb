@@ -30,9 +30,4 @@ module EventStreaming
     end
     render turbo_stream: turbo_stream.replace(EventLogComponent::DOM_ID, body)
   end
-
-  # Controllers prepare the first page (and any first-page chrome) for a poll.
-  def load_stream_page
-    @events = first_page_events
-  end
 end

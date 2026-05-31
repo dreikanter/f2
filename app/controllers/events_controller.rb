@@ -1,11 +1,11 @@
 class EventsController < ApplicationController
   include EventFiltering
-  include EventStreaming
+  include EventCursorPagination
 
   def index
     respond_to do |format|
+      format.html { render_events_page }
       format.turbo_stream { render_events_stream }
-      format.html { redirect_to status_path }
     end
   end
 
@@ -23,14 +23,11 @@ class EventsController < ApplicationController
     apply_filters(owned_events)
   end
 
-  def event_log_component
-    EventLogComponent.new(
-      events: @events,
-      endpoint: events_path(format: :turbo_stream, filter: optional_filter.to_h.presence)
-    )
-  end
-
   def entry_component(event)
     EventLogEntryComponent.new(event: event, href: event_path(event))
+  end
+
+  def events_log_path(**params)
+    events_path(filter: optional_filter.to_h.presence, **params)
   end
 end
