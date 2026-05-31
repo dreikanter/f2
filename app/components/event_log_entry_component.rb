@@ -1,8 +1,7 @@
 class EventLogEntryComponent < ViewComponent::Base
-  def initialize(event:, href:, admin: false)
+  def initialize(event:, href:)
     @event = event
     @href = href
-    @admin = admin
   end
 
   def call
@@ -36,19 +35,20 @@ class EventLogEntryComponent < ViewComponent::Base
 
   def event_context
     parts = []
-    parts << user_label if event.user_id.present? || @admin
+    parts << user_label if show_user_label?
     parts << subject_label
 
     content_tag(:div, helpers.safe_join(parts.compact, " • "), class: "text-xs text-slate-500") if parts.any?
   end
 
+  # Hooks overridden by the admin presentation.
+  def show_user_label?
+    event.user_id.present?
+  end
+
   def user_label
     if event.user_id.present?
-      if @admin
-        helpers.link_to("User ##{event.user_id}", helpers.admin_events_path(filter: { user_id: event.user_id }), class: "hover:text-slate-700", data: { key: "events.user" })
-      else
-        helpers.tag.span("User ##{event.user_id}", data: { key: "events.user" })
-      end
+      helpers.tag.span("User ##{event.user_id}", data: { key: "events.user" })
     else
       helpers.tag.em("System", data: { key: "events.user" })
     end

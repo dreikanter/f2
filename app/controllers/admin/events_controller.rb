@@ -43,7 +43,7 @@ class Admin::EventsController < ApplicationController
   end
 
   def entry_component(event)
-    EventLogEntryComponent.new(event: event, href: admin_event_path(event), admin: true)
+    Admin::EventLogEntryComponent.new(event: event, href: admin_event_path(event))
   end
 
   def previous_event(event)
