@@ -1,10 +1,8 @@
 class EventLogComponent < ViewComponent::Base
-  def initialize(events:, endpoint:, path_builder:, dom_id:, admin: false)
+  def initialize(events:, endpoint:, dom_id:)
     @events = events
     @endpoint = endpoint
-    @path_builder = path_builder
     @dom_id = dom_id
-    @admin = admin
   end
 
   attr_reader :dom_id
@@ -17,7 +15,7 @@ class EventLogComponent < ViewComponent::Base
 
   private
 
-  attr_reader :events, :endpoint, :path_builder
+  attr_reader :events, :endpoint
 
   def host_data
     {
@@ -41,80 +39,21 @@ class EventLogComponent < ViewComponent::Base
   def events_body
     if events.any?
       content_tag(:div, class: "space-y-3", data: { key: "events.list" }) do
-        safe_join(events.map { |event| event_card(event) })
+        safe_join(events.map { |event| render_entry(event) })
       end
     else
       render EmptyStateComponent.new("No events to show yet")
     end
   end
 
-  def event_card(event)
-    render CardComponent.new(href: path_builder.call(event), class: "p-4", data: { key: "events.#{event.id}" }) do
-      content_tag(:div, class: "flex items-start justify-between gap-4") do
-        safe_join([event_summary(event), event_time(event)])
-      end
-    end
-  end
-
-  def event_summary(event)
-    content_tag(:div, class: "min-w-0 space-y-1") do
-      safe_join([
-        content_tag(:div, class: "flex flex-wrap items-center gap-2") do
-          safe_join([
-            render(BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level))),
-            content_tag(:code, event.type, class: "text-sm font-semibold text-slate-800", data: { key: "events.type" })
-          ])
-        end,
-        content_tag(:div, class: "truncate text-sm text-slate-600") do
-          render EventDescriptionComponent.new(event: event)
-        end,
-        event_context(event)
-      ])
-    end
-  end
-
-  def event_context(event)
-    parts = []
-    parts << user_label(event) if event.user_id.present? || @admin
-    parts << subject_label(event)
-
-    content_tag(:div, helpers.safe_join(parts.compact, " • "), class: "text-xs text-slate-500") if parts.any?
-  end
-
-  def user_label(event)
-    if event.user_id.present?
-      if @admin
-        helpers.link_to("User ##{event.user_id}", helpers.admin_events_path(filter: { user_id: event.user_id }), class: "hover:text-slate-700", data: { key: "events.user" })
-      else
-        helpers.tag.span("User ##{event.user_id}", data: { key: "events.user" })
-      end
-    else
-      helpers.tag.em("System", data: { key: "events.user" })
-    end
-  end
-
-  def subject_label(event)
-    return if event.subject_type.blank?
-
-    value = event.subject_id.present? ? "#{event.subject_type} ##{event.subject_id}" : event.subject_type
-    helpers.tag.span(value, data: { key: "events.subject" })
-  end
-
-  def event_time(event)
-    content_tag(:span, helpers.short_time_ago(event.created_at), class: "shrink-0 text-xs font-medium text-slate-500", title: event.created_at.rfc3339, data: { key: "events.timestamp" })
+  # Delegates each entry's presentation to the caller's block, capturing it the
+  # same way ViewComponent's own `content` does, but yielding the event so the
+  # block can render whatever entry component or markup it likes.
+  def render_entry(event)
+    view_context.capture(event, &@__vc_render_in_block)
   end
 
   def last_event_id
     events.map(&:id).max || 0
-  end
-
-  def badge_color(level)
-    case level
-    when "debug" then :gray
-    when "info" then :blue
-    when "warning" then :yellow
-    when "error" then :red
-    else :blue
-    end
   end
 end

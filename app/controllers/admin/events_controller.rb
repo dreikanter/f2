@@ -38,10 +38,12 @@ class Admin::EventsController < ApplicationController
     EventLogComponent.new(
       events: @events,
       endpoint: admin_events_path(format: :turbo_stream, filter: optional_filter.to_h.presence),
-      path_builder: ->(event) { admin_event_path(event) },
-      dom_id: "admin_events_log",
-      admin: true
+      dom_id: "admin_events_log"
     )
+  end
+
+  def entry_component(event)
+    EventLogEntryComponent.new(event: event, href: admin_event_path(event), admin: true)
   end
 
   def previous_event(event)

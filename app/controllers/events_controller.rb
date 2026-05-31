@@ -25,8 +25,11 @@ class EventsController < ApplicationController
     EventLogComponent.new(
       events: @events,
       endpoint: events_path(format: :turbo_stream, filter: optional_filter.to_h.presence),
-      path_builder: ->(event) { event_path(event) },
       dom_id: "user_events_log"
     )
+  end
+
+  def entry_component(event)
+    EventLogEntryComponent.new(event: event, href: event_path(event))
   end
 end
