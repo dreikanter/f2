@@ -13,7 +13,7 @@ class Admin::EventLogEntryComponent < EventLogEntryComponent
     helpers.link_to(
       "User ##{event.user_id}",
       helpers.admin_events_path(filter: { user_id: event.user_id }),
-      class: "hover:text-slate-700",
+      class: "underline decoration-dotted underline-offset-2 hover:text-slate-700",
       data: { key: "events.user" }
     )
   end
