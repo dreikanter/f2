@@ -2,6 +2,24 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Event ##{@event.id}") do |header| %>
+    <% if @previous_event %>
+      <% header.with_action_button do %>
+        <%= link_to "← Previous", event_path(@previous_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">← Previous</span>
+      <% end %>
+    <% end %>
+    <% if @next_event %>
+      <% header.with_action_button do %>
+        <%= link_to "Next →", event_path(@next_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <% end %>
+    <% else %>
+      <% header.with_action_button do %>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-300 shadow-sm cursor-not-allowed">Next →</span>
+      <% end %>
+    <% end %>
     <% header.with_action_button do %>
       <%= link_to "Back to Status", status_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     <% end %>
