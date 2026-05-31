@@ -40,6 +40,34 @@ class EventLogComponentTest < ViewComponent::TestCase
     assert_equal "polling#refresh", refresh["data-action"]
   end
 
+  test "#call should omit polling chrome when no endpoint is given" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event])) { |log| log.with_entry { event.type } }
+
+    assert_empty result.css("[data-controller='polling']")
+    assert_empty result.css("[data-key='events.refresh']")
+  end
+
+  test "#call should render cursor pagination links when urls are given" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event], older_url: "/admin/events?before=5", newer_url: "/admin/events?after=9")) do |log|
+      log.with_entry { event.type }
+    end
+
+    assert_equal "/admin/events?before=5", result.css("a[data-key='events.older']").first["href"]
+    assert_equal "/admin/events?after=9", result.css("a[data-key='events.newer']").first["href"]
+  end
+
+  test "#call should omit pagination nav when no urls are given" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event])) { |log| log.with_entry { event.type } }
+
+    assert_empty result.css("[data-key='events.pagination']")
+  end
+
   test "#call should render the empty state when no entries are added" do
     result = render_inline(EventLogComponent.new(events: [], endpoint: "/events"))
 

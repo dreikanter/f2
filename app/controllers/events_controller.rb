@@ -3,8 +3,6 @@ class EventsController < ApplicationController
   include EventStreaming
 
   def index
-    @events = events_for_log
-
     respond_to do |format|
       format.turbo_stream { render_events_stream }
       format.html { redirect_to status_path }

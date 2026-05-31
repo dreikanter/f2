@@ -40,8 +40,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body
   end
 
-  test "#index should cap turbo stream events at the stream limit" do
-    with_stream_events_limit(2) do
+  test "#index should refresh only the first page when polling" do
+    with_page_size(2) do
       sign_in_as user
       3.times { |i| create(:event, type: "event_#{i}", user: user) }
 
@@ -128,11 +128,11 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def with_stream_events_limit(limit)
-    original_limit = EventsController.stream_events_limit
-    EventsController.stream_events_limit = limit
+  def with_page_size(size)
+    original = EventsController.events_page_size
+    EventsController.events_page_size = size
     yield
   ensure
-    EventsController.stream_events_limit = original_limit
+    EventsController.events_page_size = original
   end
 end

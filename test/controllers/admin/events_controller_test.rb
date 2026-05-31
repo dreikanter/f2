@@ -65,8 +65,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_id%5D=#{subject_user.id}']", text: "User"
   end
 
-  test "should render the most recent events up to the initial limit" do
-    with_event_limits(initial: 2) do
+  test "should render the most recent page of events" do
+    with_page_size(2) do
       login_as(admin_user)
       3.times { |i| create(:event, type: "Event#{i}") }
 
@@ -86,9 +86,57 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select '[data-key="admin.events.table"]', count: 0 # No table should be rendered
     assert_select '[data-key="empty-state"]'
     assert_select "p", "No events to show yet"
+  end
+
+  test "should poll on the first page only" do
+    with_page_size(2) do
+      login_as(admin_user)
+      3.times { |i| create(:event, type: "Event#{i}") }
+
+      get admin_events_path
+      assert_response :success
+      assert_select "#events_log[data-controller='polling']"
+      assert_select "[data-key='events.refresh']"
+      assert_select "[data-key='events.older']"
+      assert_select "[data-key='events.newer']", count: 0
+    end
+  end
+
+  test "should browse older pages with a stable cursor" do
+    with_page_size(2) do
+      login_as(admin_user)
+      events = Array.new(5) { |i| create(:event, type: "Event#{i}") }
+      oldest_on_first_page = events[3]
+
+      get admin_events_path, params: { before: oldest_on_first_page.id }
+      assert_response :success
+      # Older page is static history: no polling, but offers Newer + Older.
+      assert_select "#events_log[data-controller='polling']", count: 0
+      assert_select "[data-key='events.refresh']", count: 0
+      assert_select "[data-key='events.newer']"
+      assert_select "[data-key='events.older']"
+      assert_select '[data-key="events.type"]', count: 2
+    end
+  end
+
+  test "should not drift older pages when new events arrive" do
+    with_page_size(2) do
+      login_as(admin_user)
+      older = [create(:event, type: "Old0"), create(:event, type: "Old1")]
+      boundary = create(:event, type: "Boundary")
+      create(:event, type: "Newer0")
+      create(:event, type: "Newer1")
+
+      # Page anchored before the boundary id stays the same regardless of newer rows.
+      get admin_events_path, params: { before: boundary.id }
+      assert_response :success
+      assert_select '[data-key="events.type"]', text: "Old1", count: 1
+      assert_select '[data-key="events.type"]', text: "Old0", count: 1
+      assert_select '[data-key="events.type"]', text: "Newer0", count: 0
+      assert_equal [older.last.id, older.first.id].max, older.map(&:id).max
+    end
   end
 
   test "should render admin events turbo stream" do
@@ -113,8 +161,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body
   end
 
-  test "should cap admin turbo stream events at the stream limit" do
-    with_event_limits(stream: 2) do
+  test "should refresh only the first page when polling" do
+    with_page_size(2) do
       login_as(admin_user)
       3.times { |i| create(:event, type: "admin_event_#{i}") }
 
@@ -122,6 +170,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_select "[data-key='events.type']", count: 2
+      assert_select "#events_log[data-controller='polling']"
     end
   end
 
@@ -247,15 +296,12 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def with_event_limits(initial: Admin::EventsController.initial_events_limit, stream: Admin::EventsController.stream_events_limit)
-    original_initial = Admin::EventsController.initial_events_limit
-    original_stream = Admin::EventsController.stream_events_limit
-    Admin::EventsController.initial_events_limit = initial
-    Admin::EventsController.stream_events_limit = stream
+  def with_page_size(size)
+    original = Admin::EventsController.events_page_size
+    Admin::EventsController.events_page_size = size
     yield
   ensure
-    Admin::EventsController.initial_events_limit = original_initial
-    Admin::EventsController.stream_events_limit = original_stream
+    Admin::EventsController.events_page_size = original
   end
 
   def login_as(user)

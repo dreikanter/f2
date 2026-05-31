@@ -1,7 +1,7 @@
 class StatusesController < ApplicationController
   include EventFiltering
 
-  class_attribute :initial_events_limit, default: 20
+  class_attribute :initial_events_limit, default: 25
 
   def show
     @user = Current.user

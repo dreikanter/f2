@@ -23,7 +23,9 @@
 
   <%= render(EventLogComponent.new(
     events: @events,
-    endpoint: admin_events_path(format: :turbo_stream, filter: @filter.to_h.presence)
+    endpoint: @log_endpoint,
+    older_url: @older_url,
+    newer_url: @newer_url
   )) do |log| %>
     <% @events.each do |event| %>
       <% log.with_entry do %>
