@@ -1,19 +1,23 @@
-class Admin::EventLogEntryComponent < EventLogEntryComponent
-  private
+class Admin::EventLogEntryComponent < ViewComponent::Base
+  include EventLogEntryPresentation
 
-  # Admins always see who an event belongs to, including system events.
-  def show_user_label?
-    true
+  def initialize(event:, href:)
+    @event = event
+    @href = href
   end
 
-  # The user becomes a link that filters the admin events log.
+  private
+
+  attr_reader :event, :href
+
+  # Admins see who an event belongs to; the user links to a filtered log.
   def user_label
-    return super if event.user_id.blank?
+    return helpers.tag.em("System", data: { key: "events.user" }) if event.user_id.blank?
 
     helpers.link_to(
       "User ##{event.user_id}",
       helpers.admin_events_path(filter: { user_id: event.user_id }),
-      class: "underline decoration-dotted underline-offset-2 hover:text-slate-700",
+      class: "underline underline-offset-2 hover:text-slate-700",
       data: { key: "events.user" }
     )
   end

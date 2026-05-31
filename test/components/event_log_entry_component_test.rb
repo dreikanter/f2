@@ -38,17 +38,8 @@ class EventLogEntryComponentTest < ViewComponent::TestCase
     assert_equal "Feed ##{feed.id}", result.css("[data-key='events.subject']").first.text
   end
 
-  test "#call should render the user as plain text" do
+  test "#call should never show an owner (entries belong to the current user)" do
     event = create(:event, user: user)
-
-    result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
-
-    assert_not_nil result.css("span[data-key='events.user']").first
-    assert_empty result.css("a[data-key='events.user']")
-  end
-
-  test "#call should omit the user label for system events" do
-    event = create(:event, user: nil)
 
     result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
