@@ -25,7 +25,11 @@
     events: @events,
     endpoint: admin_events_path(format: :turbo_stream, filter: @filter.to_h.presence),
     dom_id: "admin_events_log"
-  )) do |event| %>
-    <%= render EventLogEntryComponent.new(event: event, href: admin_event_path(event), admin: true) %>
+  )) do |log| %>
+    <% @events.each do |event| %>
+      <% log.with_entry do %>
+        <%= render EventLogEntryComponent.new(event: event, href: admin_event_path(event), admin: true) %>
+      <% end %>
+    <% end %>
   <% end %>
 </div>

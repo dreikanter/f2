@@ -5,22 +5,24 @@ class EventLogComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  test "#call should yield each event to the block" do
+  test "#call should render each entry slot" do
     event1 = create(:event, type: "first_event", user: user)
     event2 = create(:event, type: "second_event", user: user)
+    events = [event1, event2]
 
-    result = render_inline(EventLogComponent.new(events: [event1, event2], endpoint: "/events", dom_id: "log")) do |event|
-      "entry-#{event.type}"
+    result = render_inline(EventLogComponent.new(events: events, endpoint: "/events", dom_id: "log")) do |log|
+      events.each { |event| log.with_entry { "entry-#{event.type}" } }
     end
 
     assert_includes result.text, "entry-first_event"
     assert_includes result.text, "entry-second_event"
+    assert_not_nil result.css("[data-key='events.list']").first
   end
 
   test "#call should expose the polling host and threshold" do
     event = create(:event, user: user)
 
-    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events", dom_id: "log")) { |e| e.type }
+    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events", dom_id: "log")) { |log| log.with_entry { event.type } }
 
     host = result.css("#log").first
     assert_not_nil host
@@ -30,17 +32,16 @@ class EventLogComponentTest < ViewComponent::TestCase
   end
 
   test "#call should render a refresh control" do
-    result = render_inline(EventLogComponent.new(events: [create(:event, user: user)], endpoint: "/events", dom_id: "log")) { |e| e.type }
+    event = create(:event, user: user)
+    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events", dom_id: "log")) { |log| log.with_entry { event.type } }
 
     refresh = result.css("[data-key='events.refresh']").first
     assert_not_nil refresh
     assert_equal "polling#refresh", refresh["data-action"]
   end
 
-  test "#call should render the empty state without invoking the block" do
-    result = render_inline(EventLogComponent.new(events: [], endpoint: "/events", dom_id: "log")) do |_event|
-      raise "block should not be called when there are no events"
-    end
+  test "#call should render the empty state when no entries are added" do
+    result = render_inline(EventLogComponent.new(events: [], endpoint: "/events", dom_id: "log"))
 
     assert_not_nil result.css("[data-key='empty-state']").first
     assert_empty result.css("[data-key='events.list']")

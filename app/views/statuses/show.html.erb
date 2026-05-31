@@ -38,8 +38,12 @@
         events: @recent_events,
         endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence),
         dom_id: "user_events_log"
-      )) do |event| %>
-        <%= render EventLogEntryComponent.new(event: event, href: event_path(event)) %>
+      )) do |log| %>
+        <% @recent_events.each do |event| %>
+          <% log.with_entry do %>
+            <%= render EventLogEntryComponent.new(event: event, href: event_path(event)) %>
+          <% end %>
+        <% end %>
       <% end %>
     </section>
   <% end %>

@@ -1,4 +1,6 @@
 class EventLogComponent < ViewComponent::Base
+  renders_many :entries
+
   def initialize(events:, endpoint:, dom_id:)
     @events = events
     @endpoint = endpoint
@@ -37,20 +39,13 @@ class EventLogComponent < ViewComponent::Base
   end
 
   def events_body
-    if events.any?
+    if entries.any?
       content_tag(:div, class: "space-y-3", data: { key: "events.list" }) do
-        safe_join(events.map { |event| render_entry(event) })
+        safe_join(entries)
       end
     else
       render EmptyStateComponent.new("No events to show yet")
     end
-  end
-
-  # Delegates each entry's presentation to the caller's block, capturing it the
-  # same way ViewComponent's own `content` does, but yielding the event so the
-  # block can render whatever entry component or markup it likes.
-  def render_entry(event)
-    view_context.capture(event, &@__vc_render_in_block)
   end
 
   def last_event_id
