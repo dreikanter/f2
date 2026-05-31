@@ -1,0 +1,21 @@
+<%# Card is a div, not a link: entries contain their own links (feed, and the %>
+<%# admin user/subject filters), and nested <a> elements are invalid HTML. The %>
+<%# timestamp is the link to the event's detail page. %>
+<%= render CardComponent.new(class: "p-4") do %>
+  <div class="flex items-start justify-between gap-4" data-key="events.<%= event.id %>">
+    <div class="min-w-0 space-y-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <%= render BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level)) %>
+        <code class="text-sm font-semibold text-slate-800" data-key="events.type"><%= event.type %></code>
+      </div>
+      <div class="truncate text-sm text-slate-600">
+        <%= render EventDescriptionComponent.new(event: event) %>
+      </div>
+      <%= event_context %>
+    </div>
+    <%= link_to helpers.short_time_ago(event.created_at), href,
+                class: "shrink-0 text-xs font-medium text-slate-500 hover:text-slate-700",
+                title: event.created_at.rfc3339,
+                data: { key: "events.timestamp" } %>
+  </div>
+<% end %>

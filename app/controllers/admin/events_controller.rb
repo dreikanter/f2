@@ -1,11 +1,16 @@
 class Admin::EventsController < ApplicationController
-  include Pagination
+  include EventFiltering
+  include EventCursorPagination
 
   def index
     authorize Event
 
     @filter = optional_filter
-    @events = paginate_scope.includes(:user, :subject)
+
+    respond_to do |format|
+      format.html { render_events_page }
+      format.turbo_stream { render_events_stream }
+    end
   end
 
   def show
@@ -17,8 +22,12 @@ class Admin::EventsController < ApplicationController
 
   private
 
-  def pagination_scope
-    events_scope.order(created_at: :desc)
+  def entry_component(event)
+    Admin::EventLogEntryComponent.new(event: event, href: admin_event_path(event))
+  end
+
+  def events_log_path(**params)
+    admin_events_path(filter: optional_filter.to_h.presence, **params)
   end
 
   def previous_event(event)
@@ -33,13 +42,7 @@ class Admin::EventsController < ApplicationController
     apply_filters(policy_scope(Event))
   end
 
-  def apply_filters(scope)
-    optional_filter.blank? ? scope : scope.where(**optional_filter)
-  end
-
-  # TBD: Consider supporting array values for any filtering parameter
-  # TBD: Consider extracting filtering logic into a concern
-  def optional_filter
-    @optional_filter ||= params.fetch(:filter, {}).permit(:user_id, :subject_type, :subject_id, :level, type: [])
+  def permitted_filter_keys
+    super + [:user_id]
   end
 end

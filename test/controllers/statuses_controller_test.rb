@@ -146,17 +146,18 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select "h2", "Recent Activity"
-    assert_not_nil css_select('[data-key="recent_events.%d"]' % event1.id).first
-    assert_not_nil css_select('[data-key="recent_events.%d"]' % event2.id).first
+    assert_not_nil css_select('[data-key="events.%d"]' % event1.id).first
+    assert_not_nil css_select('[data-key="events.%d"]' % event2.id).first
   end
 
-  test "#show should hide recent events section when no events" do
+  test "#show should display empty recent events section when no events" do
     sign_in_as user
     create(:feed, user: user)
 
     get status_path
     assert_response :success
-    assert_select "h2", { text: "Recent Activity", count: 0 }
+    assert_select "h2", "Recent Activity"
+    assert_select '[data-key="empty-state"]'
   end
 
   test "#show should only display user's own events" do
@@ -168,8 +169,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="recent_events.%d"]' % user_event.id).first
-    assert css_select('[data-key="recent_events.%d"]' % other_event.id).empty?
+    assert_not_nil css_select('[data-key="events.%d"]' % user_event.id).first
+    assert css_select('[data-key="events.%d"]' % other_event.id).empty?
   end
 
   test "#show should exclude debug level events" do
@@ -180,8 +181,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="recent_events.%d"]' % info_event.id).first
-    assert css_select('[data-key="recent_events.%d"]' % debug_event.id).empty?
+    assert_not_nil css_select('[data-key="events.%d"]' % info_event.id).first
+    assert css_select('[data-key="events.%d"]' % debug_event.id).empty?
   end
 
   test "#show should exclude expired events" do
@@ -192,20 +193,53 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="recent_events.%d"]' % active_event.id).first
-    assert css_select('[data-key="recent_events.%d"]' % expired_event.id).empty?
+    assert_not_nil css_select('[data-key="events.%d"]' % active_event.id).first
+    assert css_select('[data-key="events.%d"]' % expired_event.id).empty?
   end
 
-  test "#show should limit to 10 recent events" do
+  test "#show should limit recent events to the initial limit" do
+    with_initial_events_limit(2) do
+      sign_in_as user
+      create(:feed, user: user)
+      3.times do |i|
+        Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user)
+      end
+
+      get status_path
+      assert_response :success
+      assert_select '[data-key="events.type"]', count: 2
+    end
+  end
+
+  test "#show should filter recent events by type" do
     sign_in_as user
     create(:feed, user: user)
-    15.times do |i|
-      Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user, created_at: i.minutes.ago)
-    end
+    refresh_event = Event.create!(type: "feed_refresh", level: :info, message: "", user: user)
+    withdrawn_event = Event.create!(type: "post_withdrawn", level: :info, message: "", user: user)
 
-    get status_path
+    get status_path, params: { filter: { type: ["feed_refresh"] } }
     assert_response :success
-    events_in_page = css_select('[data-key^="recent_events."]:not([data-key$=".label"]):not([data-key$=".value"])')
-    assert_equal 10, events_in_page.size
+    assert_not_nil css_select('[data-key="events.%d"]' % refresh_event.id).first
+    assert css_select('[data-key="events.%d"]' % withdrawn_event.id).empty?
+  end
+
+  test "#show should carry the active filter into the polling endpoint" do
+    sign_in_as user
+    create(:feed, user: user)
+    Event.create!(type: "feed_refresh", level: :info, message: "", user: user)
+
+    get status_path, params: { filter: { type: ["feed_refresh"] } }
+    assert_response :success
+    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
+  end
+
+  private
+
+  def with_initial_events_limit(limit)
+    original_limit = StatusesController.initial_events_limit
+    StatusesController.initial_events_limit = limit
+    yield
+  ensure
+    StatusesController.initial_events_limit = original_limit
   end
 end
