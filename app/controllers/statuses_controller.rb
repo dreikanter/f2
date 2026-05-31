@@ -14,7 +14,7 @@ class StatusesController < ApplicationController
   def recent_events
     apply_filters(Event.where(user: @user).user_relevant)
       .includes(:user, :subject)
-      .order(id: :desc)
+      .order(created_at: :desc, id: :desc)
       .limit(initial_events_limit)
   end
 end

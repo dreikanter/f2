@@ -23,18 +23,28 @@ module EventCursorPagination
     build_page(events: first_page_events)
   end
 
-  # Cursor-based page: ordered by id desc, scoped by an optional `before`/`after`
-  # event id so page boundaries stay stable as new events arrive.
+  # Cursor-based page: ordered chronologically (newest first) by `created_at`,
+  # with `id` breaking ties. The cursor is an event id, but boundaries compare
+  # the whole `(created_at, id)` tuple so a backdated event can't reorder pages.
   def events_page
     scope = events_scope.includes(:user, :subject)
 
     if before_cursor.positive?
-      scope.where("events.id < ?", before_cursor).order(id: :desc).limit(events_page_size)
+      scope.where(cursor_condition("<", before_cursor)).order(created_at: :desc, id: :desc).limit(events_page_size)
     elsif after_cursor.positive?
-      scope.where("events.id > ?", after_cursor).order(id: :asc).limit(events_page_size).reverse
+      scope.where(cursor_condition(">", after_cursor)).order(created_at: :asc, id: :asc).limit(events_page_size).reverse
     else
-      scope.order(id: :desc).limit(events_page_size)
+      scope.order(created_at: :desc, id: :desc).limit(events_page_size)
     end
+  end
+
+  # Compares each row's `(created_at, id)` against the cursor event's tuple, so
+  # ordering is consistent even when id order diverges from created_at order.
+  def cursor_condition(operator, cursor_id)
+    Event.sanitize_sql_array([
+      "(events.created_at, events.id) #{operator} (SELECT created_at, id FROM events WHERE id = ?)",
+      cursor_id
+    ])
   end
 
   # A page is "live" (and therefore polls) when nothing newer exists past its
@@ -57,8 +67,9 @@ module EventCursorPagination
   def older_page_url
     return if @events.blank?
 
-    oldest_id = @events.map(&:id).min
-    return unless events_scope.where("events.id < ?", oldest_id).exists?
+    # The oldest row on the page is the last one in created_at-desc order.
+    oldest_id = @events.last.id
+    return unless events_scope.where(cursor_condition("<", oldest_id)).exists?
 
     events_log_path(before: oldest_id)
   end
@@ -66,8 +77,8 @@ module EventCursorPagination
   def newer_page_url
     return if @events.blank?
 
-    newest_id = @events.map(&:id).max
-    return unless events_scope.where("events.id > ?", newest_id).exists?
+    newest_id = @events.first.id
+    return unless events_scope.where(cursor_condition(">", newest_id)).exists?
 
     events_log_path(after: newest_id)
   end

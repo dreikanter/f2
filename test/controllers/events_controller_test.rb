@@ -66,6 +66,41 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="events.type"]', text: "someone_elses", count: 0
   end
 
+  test "#index should order by created_at, not insertion id" do
+    sign_in_as user
+    # Insertion (id) order deliberately differs from chronological order.
+    create(:event, type: "middle", user: user, created_at: 2.days.ago)
+    create(:event, type: "newest", user: user, created_at: 1.hour.ago)
+    create(:event, type: "oldest", user: user, created_at: 5.days.ago)
+
+    get events_path
+    body = response.body
+
+    assert body.index("newest") < body.index("middle"), "newest should precede middle"
+    assert body.index("middle") < body.index("oldest"), "middle should precede oldest"
+  end
+
+  test "#index should keep cursor pages chronological across a backdated event" do
+    with_page_size(2) do
+      sign_in_as user
+      newest = create(:event, type: "newest", user: user, created_at: 1.hour.ago)
+      second = create(:event, type: "second", user: user, created_at: 2.hours.ago)
+      # Higher id but older timestamp: must land on a later page, not the first.
+      create(:event, type: "backdated", user: user, created_at: 10.days.ago)
+
+      get events_path
+      body = response.body
+      assert_includes body, "newest"
+      assert_includes body, "second"
+      assert_not_includes body, "backdated"
+
+      # Older page (before the oldest shown) surfaces the backdated event.
+      get events_path, params: { before: second.id }
+      assert_includes response.body, "backdated"
+      assert_not_nil newest
+    end
+  end
+
   test "#index should browse older user events with a stable cursor" do
     with_page_size(2) do
       sign_in_as user
@@ -98,15 +133,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should not expose another user's events through a cursor" do
     sign_in_as user
-    mine = create(:event, type: "mine", user: user)
+    create(:event, type: "mine", user: user)
     theirs = create(:event, type: "theirs", user: other_user)
 
-    get events_path, params: { before: theirs.id + 1 }
+    # A cursor pointing at another user's (newer) event must not leak it; only
+    # the current user's older events surface.
+    get events_path, params: { before: theirs.id }
 
     assert_response :success
     assert_select '[data-key="events.type"]', text: "mine"
     assert_select '[data-key="events.type"]', text: "theirs", count: 0
-    assert_not_nil mine
   end
 
   test "#index should redirect to the latest page when a cursor matches no events" do
