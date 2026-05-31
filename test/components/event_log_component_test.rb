@@ -29,9 +29,10 @@ class EventLogComponentTest < ViewComponent::TestCase
     assert_equal "polling", host["data-controller"]
     assert_equal "/events", host["data-polling-endpoint-value"]
     assert_equal event.id.to_s, host["data-last-event-id"]
-    # Must stay interactive while polling (aria-busy would disable pointer events).
+    # Opt out of the busy indicator so the live log stays interactive while it
+    # polls (the JS controller would otherwise set aria-busy, which globally
+    # disables pointer events).
     assert_equal "false", host["data-polling-indicate-busy-value"]
-    assert_nil host["aria-busy"]
   end
 
   test "#call should render a refresh control" do
