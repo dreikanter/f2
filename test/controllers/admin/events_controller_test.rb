@@ -121,6 +121,32 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should resume polling when newer navigation reaches the head" do
+    with_page_size(2) do
+      login_as(admin_user)
+      events = Array.new(4) { |i| create(:event, type: "Event#{i}") }
+
+      # after the 2nd-oldest id returns the newest two events (the head)
+      get admin_events_path, params: { after: events[1].id }
+
+      assert_response :success
+      assert_select "#events_log[data-controller='polling']"
+      assert_select "[data-key='events.refresh']"
+      assert_select "[data-key='events.newer']", count: 0
+    end
+  end
+
+  test "should redirect to the latest page when a cursor matches no events" do
+    with_page_size(2) do
+      login_as(admin_user)
+      event = create(:event)
+
+      get admin_events_path, params: { before: event.id }
+
+      assert_redirected_to admin_events_path
+    end
+  end
+
   test "should not drift older pages when new events arrive" do
     with_page_size(2) do
       login_as(admin_user)

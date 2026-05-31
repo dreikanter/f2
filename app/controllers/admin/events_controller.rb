@@ -8,7 +8,7 @@ class Admin::EventsController < ApplicationController
     @filter = optional_filter
 
     respond_to do |format|
-      format.html { build_page(events: events_page, first_page: first_page?) }
+      format.html { render_events_page }
       format.turbo_stream { render_events_stream }
     end
   end
@@ -23,7 +23,19 @@ class Admin::EventsController < ApplicationController
   private
 
   def load_stream_page
-    build_page(events: first_page_events, first_page: true)
+    build_page(events: first_page_events)
+  end
+
+  # A stale or hand-edited cursor can land on an empty page; send the admin back
+  # to the latest page instead of stranding them with no navigation.
+  def render_events_page
+    events = events_page
+
+    if events.empty? && cursor_present?
+      redirect_to admin_events_path(filter: optional_filter.to_h.presence)
+    else
+      build_page(events: events)
+    end
   end
 
   # Cursor-based page: ordered by id desc, scoped by an optional `before`/`after`
@@ -40,11 +52,13 @@ class Admin::EventsController < ApplicationController
     end
   end
 
-  def build_page(events:, first_page:)
+  # A page is "live" (and therefore polls) when nothing newer exists past its
+  # top row, regardless of how the admin arrived there.
+  def build_page(events:)
     @events = events
-    @log_endpoint = first_page ? polling_endpoint : nil
     @older_url = older_page_url
-    @newer_url = first_page ? nil : newer_page_url
+    @newer_url = newer_page_url
+    @log_endpoint = @newer_url.nil? ? polling_endpoint : nil
   end
 
   def event_log_component
@@ -77,8 +91,8 @@ class Admin::EventsController < ApplicationController
     admin_events_path(filter: optional_filter.to_h.presence, after: newest_id)
   end
 
-  def first_page?
-    before_cursor.zero? && after_cursor.zero?
+  def cursor_present?
+    before_cursor.positive? || after_cursor.positive?
   end
 
   def before_cursor
