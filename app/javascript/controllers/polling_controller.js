@@ -6,6 +6,7 @@ export default class extends Controller {
     interval: { type: Number, default: 2000 },
     initialDelay: { type: Number, default: 0 },
     maxPolls: { type: Number, default: 30 },
+    indicateBusy: { type: Boolean, default: true },
     stopCondition: String,
     scope: { type: String, default: "element" }
   }
@@ -22,7 +23,7 @@ export default class extends Controller {
     if (this._running) return
     this._running = true
     this._pollCount = 0
-    this.element.setAttribute("aria-busy", "true")
+    if (this.indicateBusyValue) this.element.setAttribute("aria-busy", "true")
     this._scheduleNext(this.initialDelayValue)
   }
 
@@ -38,7 +39,7 @@ export default class extends Controller {
     this._timerId = null
     if (this._abort) this._abort.abort()
     this._abort = null
-    this.element.setAttribute("aria-busy", "false")
+    if (this.indicateBusyValue) this.element.setAttribute("aria-busy", "false")
   }
 
   _scheduleNext(delayMs) {

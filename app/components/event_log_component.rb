@@ -38,6 +38,9 @@ class EventLogComponent < ViewComponent::Base
       polling_interval_value: 10_000,
       polling_initial_delay_value: 10_000,
       polling_max_polls_value: 0,
+      # The log stays interactive while it polls, so it must not be marked
+      # aria-busy (which globally disables pointer events).
+      polling_indicate_busy_value: false,
       last_event_id: last_event_id
     )
   end
