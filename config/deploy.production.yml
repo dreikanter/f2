@@ -6,6 +6,10 @@ servers:
     hosts:
       - fffeeder.com
     cmd: bin/jobs
+  cron:
+    hosts:
+      - fffeeder.com
+    cmd: supercronic config/crontab
 
 # Configure proxy for web role.
 proxy:

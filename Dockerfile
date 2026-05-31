@@ -19,6 +19,20 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# Install Supercronic for container-friendly cron jobs.
+ARG TARGETARCH=amd64
+ARG SUPERCRONIC_VERSION=v0.2.46
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) SUPERCRONIC_SHA256="5adff01c5a797663948e656d2b61d10932369ee437eb5cb54fa872b2960f222b" ;; \
+      arm64) SUPERCRONIC_SHA256="c0576a8eb092e3f79108ed0a2155a25c7766af78456e5a6070e54757ef513bfe" ;; \
+      *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSLo /usr/local/bin/supercronic \
+      "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-${TARGETARCH}"; \
+    echo "${SUPERCRONIC_SHA256}  /usr/local/bin/supercronic" | sha256sum -c -; \
+    chmod +x /usr/local/bin/supercronic
+
 # Set production environment
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \

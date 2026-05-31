@@ -1,0 +1,5 @@
+# Supercronic schedule for production/staging scheduled jobs.
+# Times are evaluated in the container timezone (UTC by default).
+
+*/5 * * * * bin/rails runner "FeedSchedulerJob.perform_later"
+0 0 * * * bin/rails runner "PurgeExpiredEventsJob.perform_later"
