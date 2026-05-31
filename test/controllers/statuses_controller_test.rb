@@ -230,7 +230,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path, params: { filter: { type: ["feed_refresh"] } }
     assert_response :success
-    assert_select "#user_events_log[data-polling-endpoint-value*='feed_refresh']"
+    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
   end
 
   private

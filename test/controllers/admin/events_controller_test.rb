@@ -73,7 +73,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       get admin_events_path
 
       assert_response :success
-      assert_select "#admin_events_log"
+      assert_select "#events_log"
       assert_select '[data-key="events.timestamp"]', count: 2
       assert_select '[data-key="events.type"]', count: 2
     end
@@ -99,7 +99,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
-    assert_includes response.body, "admin_events_log"
+    assert_includes response.body, "events_log"
     assert_includes response.body, "NewAdminEvent"
   end
 
@@ -241,8 +241,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 4
-    assert_select "#admin_events_log[data-polling-endpoint-value*='filter']"
-    assert_select "#admin_events_log[data-polling-endpoint-value*='TypeA']"
+    assert_select "#events_log[data-polling-endpoint-value*='filter']"
+    assert_select "#events_log[data-polling-endpoint-value*='TypeA']"
   end
 
   private

@@ -1,16 +1,17 @@
 class EventLogComponent < ViewComponent::Base
+  # Stable id used as the Turbo Stream replace target. The log is never rendered
+  # more than once per page, so a constant is enough.
+  DOM_ID = "events_log".freeze
+
   renders_many :entries
 
-  def initialize(events:, endpoint:, dom_id:)
+  def initialize(events:, endpoint:)
     @events = events
     @endpoint = endpoint
-    @dom_id = dom_id
   end
 
-  attr_reader :dom_id
-
   def call
-    content_tag(:div, class: "space-y-3", id: dom_id, data: host_data) do
+    content_tag(:div, class: "space-y-3", id: DOM_ID, data: host_data) do
       safe_join([refresh_button, events_body])
     end
   end
@@ -22,6 +23,7 @@ class EventLogComponent < ViewComponent::Base
   def host_data
     {
       controller: "polling",
+      key: "events.log",
       polling_endpoint_value: endpoint,
       polling_interval_value: 10_000,
       polling_initial_delay_value: 10_000,

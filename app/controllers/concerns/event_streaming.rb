@@ -50,10 +50,9 @@ module EventStreaming
   def render_events_stream
     return head :ok unless params[:force].present? || new_events?
 
-    component = event_log_component
-    body = helpers.render(component) do |log|
+    body = helpers.render(event_log_component) do |log|
       @events.each { |event| log.with_entry { helpers.render(entry_component(event)) } }
     end
-    render turbo_stream: turbo_stream.replace(component.dom_id, body)
+    render turbo_stream: turbo_stream.replace(EventLogComponent::DOM_ID, body)
   end
 end

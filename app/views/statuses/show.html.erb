@@ -36,8 +36,7 @@
       <h2 class="text-2xl font-semibold mb-3 text-slate-900">Recent Activity</h2>
       <%= render(EventLogComponent.new(
         events: @recent_events,
-        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence),
-        dom_id: "user_events_log"
+        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence)
       )) do |log| %>
         <% @recent_events.each do |event| %>
           <% log.with_entry do %>

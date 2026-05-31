@@ -37,8 +37,7 @@ class Admin::EventsController < ApplicationController
   def event_log_component
     EventLogComponent.new(
       events: @events,
-      endpoint: admin_events_path(format: :turbo_stream, filter: optional_filter.to_h.presence),
-      dom_id: "admin_events_log"
+      endpoint: admin_events_path(format: :turbo_stream, filter: optional_filter.to_h.presence)
     )
   end
 

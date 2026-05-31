@@ -23,8 +23,7 @@
 
   <%= render(EventLogComponent.new(
     events: @events,
-    endpoint: admin_events_path(format: :turbo_stream, filter: @filter.to_h.presence),
-    dom_id: "admin_events_log"
+    endpoint: admin_events_path(format: :turbo_stream, filter: @filter.to_h.presence)
   )) do |log| %>
     <% @events.each do |event| %>
       <% log.with_entry do %>

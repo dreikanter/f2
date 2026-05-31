@@ -10,7 +10,7 @@ class EventLogComponentTest < ViewComponent::TestCase
     event2 = create(:event, type: "second_event", user: user)
     events = [event1, event2]
 
-    result = render_inline(EventLogComponent.new(events: events, endpoint: "/events", dom_id: "log")) do |log|
+    result = render_inline(EventLogComponent.new(events: events, endpoint: "/events")) do |log|
       events.each { |event| log.with_entry { "entry-#{event.type}" } }
     end
 
@@ -22,9 +22,9 @@ class EventLogComponentTest < ViewComponent::TestCase
   test "#call should expose the polling host and threshold" do
     event = create(:event, user: user)
 
-    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events", dom_id: "log")) { |log| log.with_entry { event.type } }
+    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events")) { |log| log.with_entry { event.type } }
 
-    host = result.css("#log").first
+    host = result.css("[data-key='events.log']").first
     assert_not_nil host
     assert_equal "polling", host["data-controller"]
     assert_equal "/events", host["data-polling-endpoint-value"]
@@ -33,7 +33,7 @@ class EventLogComponentTest < ViewComponent::TestCase
 
   test "#call should render a refresh control" do
     event = create(:event, user: user)
-    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events", dom_id: "log")) { |log| log.with_entry { event.type } }
+    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events")) { |log| log.with_entry { event.type } }
 
     refresh = result.css("[data-key='events.refresh']").first
     assert_not_nil refresh
@@ -41,7 +41,7 @@ class EventLogComponentTest < ViewComponent::TestCase
   end
 
   test "#call should render the empty state when no entries are added" do
-    result = render_inline(EventLogComponent.new(events: [], endpoint: "/events", dom_id: "log"))
+    result = render_inline(EventLogComponent.new(events: [], endpoint: "/events"))
 
     assert_not_nil result.css("[data-key='empty-state']").first
     assert_empty result.css("[data-key='events.list']")

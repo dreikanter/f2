@@ -25,7 +25,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
-    assert_includes response.body, "user_events_log"
+    assert_includes response.body, "events_log"
     assert_includes response.body, "new_event"
     assert_not_includes response.body, "other_event"
   end
@@ -93,7 +93,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: ["feed_refresh"] } }
 
     assert_response :success
-    assert_select "#user_events_log[data-polling-endpoint-value*='feed_refresh']"
+    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
   end
 
   test "#show should render owned event" do
