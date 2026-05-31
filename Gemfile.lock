@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/rails/rails.git
-  revision: adc396511ecad0f35548db8d114165a89ded50ba
+  revision: f77b6c295c9a3dde113e7fbc0a046ce6ef9fd2d8
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -159,7 +159,7 @@ GEM
       faraday (>= 1, < 3)
     faraday-multipart (1.2.0)
       multipart-post (~> 2.0)
-    faraday-net_http (3.4.2)
+    faraday-net_http (3.4.3)
       net-http (~> 0.5)
     faraday-retry (2.4.0)
       faraday (~> 2.0)
@@ -174,7 +174,7 @@ GEM
       activesupport (>= 6.1)
     hana (1.3.7)
     hashdiff (1.2.1)
-    honeybadger (6.6.1)
+    honeybadger (6.6.2)
       logger
       ostruct
     httparty (0.24.2)
@@ -243,7 +243,7 @@ GEM
       railties (>= 7.1)
       stimulus-rails
       turbo-rails
-    msgpack (1.8.0)
+    msgpack (1.8.1)
     multi_xml (0.9.1)
       bigdecimal (>= 3.1, < 5)
     multipart-post (2.4.1)
@@ -351,7 +351,7 @@ GEM
     rexml (3.4.4)
     rouge (5.0.0)
       strscan (~> 3.1)
-    rubocop (1.86.2)
+    rubocop (1.87.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -369,7 +369,7 @@ GEM
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.47.1, < 2.0)
-    rubocop-rails (2.35.0)
+    rubocop-rails (2.35.3)
       activesupport (>= 4.2.0)
       lint_roller (~> 1.1)
       rack (>= 1.1)
@@ -394,7 +394,7 @@ GEM
       marcel (~> 1)
       ruby_llm-schema (~> 0)
       zeitwerk (~> 2)
-    ruby_llm-schema (0.3.0)
+    ruby_llm-schema (0.4.0)
     sax-machine (1.3.2)
     securerandom (0.4.1)
     simplecov (0.22.0)
@@ -502,7 +502,7 @@ GEM
     with_advisory_lock (7.5.0)
       activerecord (>= 7.2)
       zeitwerk (>= 2.7)
-    yard (0.9.43)
+    yard (0.9.44)
     yard-activesupport-concern (0.0.1)
       yard (>= 0.8)
     yard-solargraph (0.1.0)
