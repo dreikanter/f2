@@ -118,6 +118,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to events_path
   end
 
+  test "#index should ignore a malformed filter param" do
+    sign_in_as user
+    create(:event, type: "my_event", user: user)
+
+    get events_path, params: { filter: "bad" }
+
+    assert_response :success
+    assert_select '[data-key="events.type"]', text: "my_event"
+  end
+
   test "#index should filter user events by type" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: user)

@@ -10,7 +10,14 @@ module EventFiltering
   end
 
   def optional_filter
-    @optional_filter ||= params.fetch(:filter, {}).permit(*permitted_filter_keys)
+    @optional_filter ||= filter_params.permit(*permitted_filter_keys)
+  end
+
+  # `filter` may arrive malformed (e.g. `?filter=bad`); only a nested hash is
+  # permittable, anything else is treated as no filter.
+  def filter_params
+    filter = params[:filter]
+    filter.is_a?(ActionController::Parameters) ? filter : ActionController::Parameters.new
   end
 
   # Controllers override this to expose additional filters (e.g. admins can
