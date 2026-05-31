@@ -34,16 +34,12 @@ class Admin::EventsController < ApplicationController
     streaming? ? stream_events_limit : initial_events_limit
   end
 
-  def event_log_dom_id
-    "admin_events_log"
-  end
-
   def event_log_component
     EventLogComponent.new(
       events: @events,
       endpoint: admin_events_path(format: :turbo_stream, filter: optional_filter.to_h.presence),
       path_builder: ->(event) { admin_event_path(event) },
-      dom_id: event_log_dom_id,
+      dom_id: "admin_events_log",
       admin: true
     )
   end

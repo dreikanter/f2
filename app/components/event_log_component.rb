@@ -7,6 +7,8 @@ class EventLogComponent < ViewComponent::Base
     @admin = admin
   end
 
+  attr_reader :dom_id
+
   def call
     content_tag(:div, class: "space-y-3", id: dom_id, data: host_data) do
       safe_join([refresh_button, events_body])
@@ -15,7 +17,7 @@ class EventLogComponent < ViewComponent::Base
 
   private
 
-  attr_reader :events, :endpoint, :path_builder, :dom_id
+  attr_reader :events, :endpoint, :path_builder
 
   def host_data
     {
