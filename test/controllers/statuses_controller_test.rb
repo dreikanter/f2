@@ -150,13 +150,14 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil css_select('[data-key="recent_events.%d"]' % event2.id).first
   end
 
-  test "#show should hide recent events section when no events" do
+  test "#show should display empty recent events section when no events" do
     sign_in_as user
     create(:feed, user: user)
 
     get status_path
     assert_response :success
-    assert_select "h2", { text: "Recent Activity", count: 0 }
+    assert_select "h2", "Recent Activity"
+    assert_select '[data-key="empty-state"]'
   end
 
   test "#show should only display user's own events" do
@@ -196,16 +197,27 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="recent_events.%d"]' % expired_event.id).empty?
   end
 
-  test "#show should limit to 10 recent events" do
-    sign_in_as user
-    create(:feed, user: user)
-    15.times do |i|
-      Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user, created_at: i.minutes.ago)
-    end
+  test "#show should limit recent events to the initial limit" do
+    with_initial_events_limit(2) do
+      sign_in_as user
+      create(:feed, user: user)
+      3.times do |i|
+        Event.create!(type: "event_#{i}", level: :info, message: "Event #{i}", user: user)
+      end
 
-    get status_path
-    assert_response :success
-    events_in_page = css_select('[data-key^="recent_events."]:not([data-key$=".label"]):not([data-key$=".value"])')
-    assert_equal 10, events_in_page.size
+      get status_path
+      assert_response :success
+      assert_select '[data-key="recent_events.type"]', count: 2
+    end
+  end
+
+  private
+
+  def with_initial_events_limit(limit)
+    original_limit = StatusesController.initial_events_limit
+    StatusesController.initial_events_limit = limit
+    yield
+  ensure
+    StatusesController.initial_events_limit = original_limit
   end
 end
