@@ -14,6 +14,8 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_not_nil link
     assert_equal "User ##{user.id}", link.text
     assert_includes link["href"], "filter%5Buser_id%5D=#{user.id}"
+    assert_includes link["class"], "underline"
+    assert_not_includes link["class"], "decoration-dotted"
   end
 
   test "#call should show System for events without a user" do
