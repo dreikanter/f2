@@ -48,7 +48,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path(format: :turbo_stream), params: { after_id: 0 }
 
       assert_response :success
-      assert_select "[data-key='recent_events.type']", count: 2
+      assert_select "[data-key='events.type']", count: 2
     end
   end
 

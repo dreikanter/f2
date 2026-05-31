@@ -37,8 +37,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events"
-    assert_select '[data-key="admin.events.type"]', "TestEvent"
-    assert_select 'a[data-key="admin.events.user"]', "User ##{user.id}"
+    assert_select '[data-key="events.type"]', "TestEvent"
+    assert_select 'a[data-key="events.user"]', "User ##{user.id}"
   end
 
   test "should allow admin users to view event details" do
@@ -74,8 +74,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_select "#admin_events_log"
-      assert_select '[data-key="admin.events.timestamp"]', count: 2
-      assert_select '[data-key="admin.events.type"]', count: 2
+      assert_select '[data-key="events.timestamp"]', count: 2
+      assert_select '[data-key="events.type"]', count: 2
     end
   end
 
@@ -121,7 +121,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       get admin_events_path(format: :turbo_stream), params: { after_id: 0 }
 
       assert_response :success
-      assert_select "[data-key='admin.events.type']", count: 2
+      assert_select "[data-key='events.type']", count: 2
     end
   end
 
@@ -133,7 +133,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select '[data-key="admin.events.subject"]', text: "Post #42"
+    assert_select '[data-key="events.subject"]', text: "Post #42"
   end
 
   test "should filter events by subject_type" do
@@ -148,9 +148,9 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { subject_type: "User" } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 2
-    assert_select '[data-key="admin.events.subject"]', text: /User #/, count: 2
-    assert_select '[data-key="admin.events.subject"]', text: /Feed #/, count: 0
+    assert_select '[data-key="events.type"]', count: 2
+    assert_select '[data-key="events.subject"]', text: /User #/, count: 2
+    assert_select '[data-key="events.subject"]', text: /Feed #/, count: 0
   end
 
   test "should filter events by subject_id" do
@@ -166,7 +166,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { subject_type: "Feed", subject_id: feed1.id } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 2
+    assert_select '[data-key="events.type"]', count: 2
   end
 
   test "should handle invalid filter parameter gracefully" do
@@ -176,7 +176,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { invalid_field: "value" } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 1 # Should show all events
+    assert_select '[data-key="events.type"]', count: 1 # Should show all events
   end
 
   test "should filter events by multiple types" do
@@ -190,10 +190,10 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { type: %w[TypeA TypeB] } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 3
-    assert_select '[data-key="admin.events.type"]', text: "TypeA", count: 2
-    assert_select '[data-key="admin.events.type"]', text: "TypeB", count: 1
-    assert_select '[data-key="admin.events.type"]', text: "TypeC", count: 0
+    assert_select '[data-key="events.type"]', count: 3
+    assert_select '[data-key="events.type"]', text: "TypeA", count: 2
+    assert_select '[data-key="events.type"]', text: "TypeB", count: 1
+    assert_select '[data-key="events.type"]', text: "TypeC", count: 0
   end
 
   test "should filter events by user_id" do
@@ -209,7 +209,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { user_id: user1.id } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 2
+    assert_select '[data-key="events.type"]', count: 2
   end
 
   test "should filter events by user_id and multiple types" do
@@ -226,7 +226,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { user_id: user1.id, type: %w[EmailBouncedEvent EmailFailedEvent] } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 2
+    assert_select '[data-key="events.type"]', count: 2
   end
 
   test "should include filter params in polling endpoint" do
@@ -240,7 +240,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path, params: { filter: { type: ["TypeA"] } }
 
     assert_response :success
-    assert_select '[data-key="admin.events.type"]', count: 4
+    assert_select '[data-key="events.type"]', count: 4
     assert_select "#admin_events_log[data-polling-endpoint-value*='filter']"
     assert_select "#admin_events_log[data-polling-endpoint-value*='TypeA']"
   end

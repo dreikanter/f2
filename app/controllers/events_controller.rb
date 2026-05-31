@@ -47,8 +47,7 @@ class EventsController < ApplicationController
         events: @events,
         endpoint: events_path(format: :turbo_stream),
         path_builder: ->(event) { event_path(event) },
-        dom_id: "user_events_log",
-        key_prefix: "recent_events"
+        dom_id: "user_events_log"
       ))
     )
   end

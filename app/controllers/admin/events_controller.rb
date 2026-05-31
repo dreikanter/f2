@@ -61,7 +61,7 @@ class Admin::EventsController < ApplicationController
         endpoint: admin_events_path(format: :turbo_stream, filter: @filter.to_h.presence),
         path_builder: ->(event) { admin_event_path(event) },
         dom_id: "admin_events_log",
-        key_prefix: "admin.events"
+        admin: true
       ))
     )
   end
