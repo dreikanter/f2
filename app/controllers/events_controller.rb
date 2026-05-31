@@ -12,13 +12,17 @@ class EventsController < ApplicationController
   end
 
   def show
-    @event = events_scope.find(params[:id])
+    @event = owned_events.find(params[:id])
   end
 
   private
 
+  def owned_events
+    Event.where(user: Current.user).user_relevant
+  end
+
   def events_scope
-    apply_filters(Event.where(user: Current.user).user_relevant)
+    apply_filters(owned_events)
   end
 
   def event_log_component

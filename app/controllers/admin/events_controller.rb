@@ -1,5 +1,4 @@
 class Admin::EventsController < ApplicationController
-  include Pagination
   include EventFiltering
   include EventStreaming
 
@@ -25,10 +24,6 @@ class Admin::EventsController < ApplicationController
   end
 
   private
-
-  def pagination_scope
-    events_scope.order(created_at: :desc)
-  end
 
   def events_log_limit
     streaming? ? stream_events_limit : initial_events_limit

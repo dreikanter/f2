@@ -107,6 +107,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.type']", "owned_event"
   end
 
+  test "#show should render an owned event even with list filter params" do
+    sign_in_as user
+    event = create(:event, type: "feed_refresh", user: user)
+
+    get event_path(event), params: { filter: { type: ["something_else"] } }
+
+    assert_response :success
+    assert_select "h1", "Event ##{event.id}"
+  end
+
   test "#show should not render another user's event" do
     sign_in_as user
     event = create(:event, user: other_user)
