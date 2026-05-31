@@ -52,6 +52,50 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#index should filter user events by type" do
+    sign_in_as user
+    create(:event, type: "feed_refresh", user: user)
+    create(:event, type: "feed_refresh_error", user: user)
+    create(:event, type: "post_withdrawn", user: user)
+
+    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: %w[feed_refresh feed_refresh_error] } }
+
+    assert_response :success
+    assert_select "[data-key='events.type']", count: 2
+  end
+
+  test "#index should filter user events by subject_type" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    create(:event, type: "feed_refresh", subject: feed, user: user)
+    create(:event, type: "post_withdrawn", user: user)
+
+    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { subject_type: "Feed" } }
+
+    assert_response :success
+    assert_select "[data-key='events.type']", count: 1
+  end
+
+  test "#index should not leak other users' events through filters" do
+    sign_in_as user
+    create(:event, type: "feed_refresh", user: other_user)
+
+    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { user_id: other_user.id } }
+
+    assert_response :success
+    assert_empty response.body
+  end
+
+  test "#index should carry the active filter into the polling endpoint" do
+    sign_in_as user
+    create(:event, type: "feed_refresh", user: user)
+
+    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: ["feed_refresh"] } }
+
+    assert_response :success
+    assert_select "#user_events_log[data-polling-endpoint-value*='feed_refresh']"
+  end
+
   test "#show should render owned event" do
     sign_in_as user
     event = create(:event, type: "owned_event", user: user)

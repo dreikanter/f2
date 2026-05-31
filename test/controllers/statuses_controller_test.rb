@@ -211,6 +211,28 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should filter recent events by type" do
+    sign_in_as user
+    create(:feed, user: user)
+    refresh_event = Event.create!(type: "feed_refresh", level: :info, message: "", user: user)
+    withdrawn_event = Event.create!(type: "post_withdrawn", level: :info, message: "", user: user)
+
+    get status_path, params: { filter: { type: ["feed_refresh"] } }
+    assert_response :success
+    assert_not_nil css_select('[data-key="events.%d"]' % refresh_event.id).first
+    assert css_select('[data-key="events.%d"]' % withdrawn_event.id).empty?
+  end
+
+  test "#show should carry the active filter into the polling endpoint" do
+    sign_in_as user
+    create(:feed, user: user)
+    Event.create!(type: "feed_refresh", level: :info, message: "", user: user)
+
+    get status_path, params: { filter: { type: ["feed_refresh"] } }
+    assert_response :success
+    assert_select "#user_events_log[data-polling-endpoint-value*='feed_refresh']"
+  end
+
   private
 
   def with_initial_events_limit(limit)

@@ -36,7 +36,7 @@
       <h2 class="text-2xl font-semibold mb-3 text-slate-900">Recent Activity</h2>
       <%= render EventLogComponent.new(
         events: @recent_events,
-        endpoint: events_path(format: :turbo_stream),
+        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence),
         path_builder: ->(event) { event_path(event) },
         dom_id: "user_events_log"
       ) %>

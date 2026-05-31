@@ -1,5 +1,6 @@
 class Admin::EventsController < ApplicationController
   include Pagination
+  include EventFiltering
 
   class_attribute :initial_events_limit, default: 20
   class_attribute :stream_events_limit, default: 100
@@ -82,13 +83,7 @@ class Admin::EventsController < ApplicationController
     apply_filters(policy_scope(Event))
   end
 
-  def apply_filters(scope)
-    optional_filter.blank? ? scope : scope.where(**optional_filter)
-  end
-
-  # TBD: Consider supporting array values for any filtering parameter
-  # TBD: Consider extracting filtering logic into a concern
-  def optional_filter
-    @optional_filter ||= params.fetch(:filter, {}).permit(:user_id, :subject_type, :subject_id, :level, type: [])
+  def permitted_filter_keys
+    super + [:user_id]
   end
 end

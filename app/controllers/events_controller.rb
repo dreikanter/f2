@@ -1,4 +1,6 @@
 class EventsController < ApplicationController
+  include EventFiltering
+
   class_attribute :stream_events_limit, default: 100
 
   def index
@@ -17,7 +19,7 @@ class EventsController < ApplicationController
   private
 
   def events_scope
-    Event.where(user: Current.user).user_relevant
+    apply_filters(Event.where(user: Current.user).user_relevant)
   end
 
   def events_for_log
@@ -45,7 +47,7 @@ class EventsController < ApplicationController
       "user_events_log",
       helpers.render(EventLogComponent.new(
         events: @events,
-        endpoint: events_path(format: :turbo_stream),
+        endpoint: events_path(format: :turbo_stream, filter: optional_filter.to_h.presence),
         path_builder: ->(event) { event_path(event) },
         dom_id: "user_events_log"
       ))
