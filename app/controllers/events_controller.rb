@@ -11,12 +11,24 @@ class EventsController < ApplicationController
 
   def show
     @event = owned_events.find(params[:id])
+    @previous_event = adjacent_event(:newer)
+    @next_event = adjacent_event(:older)
   end
 
   private
 
   def owned_events
     Event.where(user: Current.user).user_relevant
+  end
+
+  # Navigates the user's own log in the same chronological order as the list:
+  # "previous" is the next-newer event, "next" is the next-older one.
+  def adjacent_event(direction)
+    if direction == :newer
+      owned_events.where(cursor_condition(">", @event.id)).order(created_at: :asc, id: :asc).first
+    else
+      owned_events.where(cursor_condition("<", @event.id)).order(created_at: :desc, id: :desc).first
+    end
   end
 
   def events_scope

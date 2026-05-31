@@ -238,6 +238,45 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "#show should link to the chronologically adjacent events" do
+    sign_in_as user
+    older = create(:event, type: "older", user: user, created_at: 2.hours.ago)
+    current = create(:event, type: "current", user: user, created_at: 1.hour.ago)
+    newer = create(:event, type: "newer", user: user, created_at: 10.minutes.ago)
+
+    get event_path(current)
+
+    assert_response :success
+    assert_select "a[href='#{event_path(newer)}']", text: "← Previous"
+    assert_select "a[href='#{event_path(older)}']", text: "Next →"
+  end
+
+  test "#show should disable navigation at the ends of the log" do
+    sign_in_as user
+    only = create(:event, type: "only", user: user)
+
+    get event_path(only)
+
+    assert_response :success
+    assert_select "a", text: "← Previous", count: 0
+    assert_select "a", text: "Next →", count: 0
+    assert_select "span.cursor-not-allowed", text: "← Previous"
+    assert_select "span.cursor-not-allowed", text: "Next →"
+  end
+
+  test "#show navigation should ignore another user's events" do
+    sign_in_as user
+    mine = create(:event, type: "mine", user: user, created_at: 1.hour.ago)
+    create(:event, type: "theirs_newer", user: other_user, created_at: 1.minute.ago)
+    create(:event, type: "theirs_older", user: other_user, created_at: 2.hours.ago)
+
+    get event_path(mine)
+
+    assert_response :success
+    assert_select "span.cursor-not-allowed", text: "← Previous"
+    assert_select "span.cursor-not-allowed", text: "Next →"
+  end
+
   private
 
   def with_page_size(size)
