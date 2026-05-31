@@ -4,34 +4,9 @@ class EventLogEntryComponent < ViewComponent::Base
     @href = href
   end
 
-  def call
-    render CardComponent.new(href: @href, class: "p-4", data: { key: "events.#{event.id}" }) do
-      content_tag(:div, class: "flex items-start justify-between gap-4") do
-        safe_join([event_summary, event_time])
-      end
-    end
-  end
-
   private
 
-  attr_reader :event
-
-  def event_summary
-    content_tag(:div, class: "min-w-0 space-y-1") do
-      safe_join([
-        content_tag(:div, class: "flex flex-wrap items-center gap-2") do
-          safe_join([
-            render(BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level))),
-            content_tag(:code, event.type, class: "text-sm font-semibold text-slate-800", data: { key: "events.type" })
-          ])
-        end,
-        content_tag(:div, class: "truncate text-sm text-slate-600") do
-          render EventDescriptionComponent.new(event: event)
-        end,
-        event_context
-      ])
-    end
-  end
+  attr_reader :event, :href
 
   def event_context
     parts = []
@@ -59,10 +34,6 @@ class EventLogEntryComponent < ViewComponent::Base
 
     value = event.subject_id.present? ? "#{event.subject_type} ##{event.subject_id}" : event.subject_type
     helpers.tag.span(value, data: { key: "events.subject" })
-  end
-
-  def event_time
-    content_tag(:span, helpers.short_time_ago(event.created_at), class: "shrink-0 text-xs font-medium text-slate-500", title: event.created_at.rfc3339, data: { key: "events.timestamp" })
   end
 
   def badge_color(level)

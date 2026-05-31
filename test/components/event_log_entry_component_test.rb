@@ -15,6 +15,20 @@ class EventLogEntryComponentTest < ViewComponent::TestCase
     assert_not_nil result.css("a[href='/events/#{event.id}']").first
   end
 
+  test "#call should not wrap the entry in an anchor (no nested links)" do
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", subject: feed, user: user)
+
+    result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    # The detail link is the timestamp only, rendered once...
+    detail = result.css("a[href='/events/#{event.id}']")
+    assert_equal 1, detail.size
+    assert_equal "events.timestamp", detail.first["data-key"]
+    # ...and the feed link in the description is not nested inside it.
+    assert_empty result.css("a[href='/events/#{event.id}'] a")
+  end
+
   test "#call should render subject context when present" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
