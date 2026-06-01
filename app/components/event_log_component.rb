@@ -16,7 +16,7 @@ class EventLogComponent < ViewComponent::Base
 
   def call
     content_tag(:div, class: "space-y-3", id: DOM_ID, data: host_data) do
-      safe_join([refresh_button, events_body, pagination_nav].compact)
+      safe_join([events_body, pagination_nav].compact)
     end
   end
 
@@ -43,20 +43,6 @@ class EventLogComponent < ViewComponent::Base
       polling_indicate_busy_value: false,
       last_event_id: last_event_id
     )
-  end
-
-  def refresh_button
-    return unless polling?
-
-    content_tag(:div, class: "flex justify-end") do
-      button_tag(
-        helpers.icon("refresh-ccw", css_class: "size-4", aria_label: "Refresh"),
-        type: "button",
-        title: "Refresh",
-        class: "inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
-        data: { action: "polling#refresh", key: "events.refresh" }
-      )
-    end
   end
 
   def events_body

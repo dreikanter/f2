@@ -37,16 +37,10 @@
         <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
         <%= link_to "View all", events_path(filter: @filter.to_h.presence), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "recent_events.view_all" } %>
       </div>
-      <%= render(EventLogComponent.new(
+      <%= render(RecentEventsListComponent.new(
         events: @recent_events,
-        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence)
-      )) do |log| %>
-        <% @recent_events.each do |event| %>
-          <% log.with_entry do %>
-            <%= render EventLogEntryComponent.new(event: event, href: event_path(event)) %>
-          <% end %>
-        <% end %>
-      <% end %>
+        endpoint: events_path(format: :turbo_stream, display: :brief, filter: @filter.to_h.presence)
+      )) %>
     </section>
   <% end %>
 </div>
