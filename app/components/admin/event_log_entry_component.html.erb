@@ -1,6 +1,6 @@
 <%= render CardComponent.new(class: "p-4") do %>
   <div class="flex items-start justify-between gap-4" data-key="events.<%= event.id %>">
-    <div class="min-w-0 space-y-1">
+    <div class="min-w-0 space-y-2">
       <div class="flex flex-wrap items-center gap-2">
         <%= render BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level)) %>
         <code class="text-sm font-semibold text-slate-800" data-key="events.type"><%= event.type %></code>
