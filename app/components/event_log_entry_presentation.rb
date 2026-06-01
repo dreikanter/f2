@@ -18,6 +18,19 @@ module EventLogEntryPresentation
     return if event.subject_type.blank?
 
     value = event.subject_id.present? ? "#{event.subject_type} ##{event.subject_id}" : event.subject_type
-    helpers.tag.span(value, data: { key: "events.subject" })
+
+    filter_params = { subject_type: event.subject_type }
+    filter_params[:subject_id] = event.subject_id if event.subject_id.present?
+
+    helpers.link_to(
+      value,
+      subject_filter_path(filter_params),
+      class: "underline underline-offset-2 hover:text-slate-700",
+      data: { key: "events.subject" }
+    )
+  end
+
+  def subject_filter_path(filter_params)
+    helpers.events_path(filter: filter_params)
   end
 end

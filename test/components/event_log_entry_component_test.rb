@@ -35,7 +35,12 @@ class EventLogEntryComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    assert_equal "Feed ##{feed.id}", result.css("[data-key='events.subject']").first.text
+    link = result.css("a[data-key='events.subject']").first
+    assert_not_nil link
+    assert_equal "Feed ##{feed.id}", link.text
+    assert_includes link["href"], "filter%5Bsubject_type%5D=Feed"
+    assert_includes link["href"], "filter%5Bsubject_id%5D=#{feed.id}"
+    assert_not_includes link["href"], "/admin/"
   end
 
   test "#call should never show an owner (entries belong to the current user)" do
