@@ -1,0 +1,51 @@
+require "test_helper"
+require "view_component/test_case"
+
+class AccessTokensListComponentTest < ViewComponent::TestCase
+  def user
+    @user ||= create(:user)
+  end
+
+  def access_token
+    @access_token ||= create(:access_token, :active, user: user, name: "My Token")
+  end
+
+  test "#call should render each token as a list item" do
+    result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
+
+    assert_not_nil result.css("[data-key='settings.access_tokens.#{access_token.id}']").first
+  end
+
+  test "#call should link to the token show page" do
+    result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
+    link = result.css("a").first
+
+    assert_not_nil link
+    assert_includes link["href"], "/access_tokens/#{access_token.id}"
+  end
+
+  test "#call should show owner and host in metadata when owner is present" do
+    result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
+
+    assert_includes result.text, "#{access_token.owner}@#{access_token.host_domain}"
+  end
+
+  test "#call should fall back to host-only metadata when owner is blank" do
+    token = create(:access_token, user: user, owner: nil)
+    result = render_inline(AccessTokensListComponent.new(access_tokens: [token]))
+
+    assert_includes result.text, "Host: #{token.host_domain}"
+  end
+
+  test "#call should show Never for tokens that were never used" do
+    result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
+
+    assert_includes result.text, "Used: Never"
+  end
+
+  test "#call should render nothing for an empty collection" do
+    result = render_inline(AccessTokensListComponent.new(access_tokens: []))
+
+    assert_empty result.css("ul")
+  end
+end

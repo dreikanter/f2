@@ -9,7 +9,7 @@
   <% end %>
 
   <% if @access_tokens.any? %>
-    <%= access_tokens_list(access_tokens: @access_tokens) %>
+    <%= render AccessTokensListComponent.new(access_tokens: @access_tokens) %>
 
     <% @access_tokens.each do |access_token| %>
       <%= render ConfirmationModalComponent.new(
