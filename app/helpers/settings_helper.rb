@@ -1,6 +1,6 @@
 module SettingsHelper
-  def access_tokens_list_component(access_tokens:)
-    ListComponent.new.tap do |list|
+  def access_tokens_list(access_tokens:)
+    render(ListComponent.new) do |list|
       access_tokens.each do |access_token|
         list.with_item(ListComponent::ItemComponent.new(
           title: access_token.name,

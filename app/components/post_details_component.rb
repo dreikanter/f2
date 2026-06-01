@@ -4,18 +4,16 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def call
-    component = ListComponent.new
-
-    add_feed_item(component)
-    add_published_item(component)
-    add_attachments_item(component) if @post.attachment_urls.present?
-    add_comments_item(component) if @post.comments.present?
-    add_source_url_item(component)
-    add_validation_errors_item(component) if @post.validation_errors.present?
-    add_uid_item(component)
-    add_freefeed_post_id_item(component) if @post.freefeed_post_id.present?
-
-    render(component)
+    render(ListComponent.new) do |list|
+      add_feed_item(list)
+      add_published_item(list)
+      add_attachments_item(list) if @post.attachment_urls.present?
+      add_comments_item(list) if @post.comments.present?
+      add_source_url_item(list)
+      add_validation_errors_item(list) if @post.validation_errors.present?
+      add_uid_item(list)
+      add_freefeed_post_id_item(list) if @post.freefeed_post_id.present?
+    end
   end
 
   private

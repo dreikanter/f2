@@ -5,17 +5,11 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def call
-    render render_list
-  end
-
-  def render_list
-    component = ListComponent.new
-
-    @posts.each do |post|
-      component.with_item(self.class.item_component(post:, helpers: helpers, show_feed: @show_feed))
+    render(ListComponent.new) do |list|
+      @posts.each do |post|
+        list.with_item(self.class.item_component(post:, helpers: helpers, show_feed: @show_feed))
+      end
     end
-
-    component
   end
 
   def self.item_component(post:, helpers:, show_feed: false)

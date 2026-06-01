@@ -9,11 +9,11 @@ class RecentEventsListComponent < ViewComponent::Base
   def call
     content_tag(:div, id: DOM_ID, data: host_data) do
       if @events.any?
-        list = ListComponent.new
-        @events.each do |event|
-          list.with_item(RecentEventsEntryComponent.new(event: event, href: helpers.event_path(event)))
+        render(ListComponent.new) do |list|
+          @events.each do |event|
+            list.with_item(RecentEventsEntryComponent.new(event: event, href: helpers.event_path(event)))
+          end
         end
-        render(list)
       else
         render(EmptyStateComponent.new("No events to show yet"))
       end

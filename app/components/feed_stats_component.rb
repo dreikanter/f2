@@ -10,11 +10,15 @@ class FeedStatsComponent < ViewComponent::Base
   private
 
   def mobile_layout
-    render(mobile_list_component)
+    render(DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES))) do |list|
+      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
+    end
   end
 
   def desktop_layout
-    render(desktop_bar_component)
+    render(StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES))) do |bar|
+      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
+    end
   end
 
   def layout_items
@@ -44,18 +48,6 @@ class FeedStatsComponent < ViewComponent::Base
         value: helpers.number_with_delimiter(published_posts_count)
       }
     ]
-  end
-
-  def mobile_list_component
-    DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES)).tap do |list|
-      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
-    end
-  end
-
-  def desktop_bar_component
-    StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES)).tap do |bar|
-      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
-    end
   end
 
   def mobile_stat_cell(item)

@@ -8,19 +8,19 @@ class LlmCredentialsListComponent < ViewComponent::Base
   end
 
   def call
-    component = ListComponent.new
-    @credentials.each do |credential|
-      component.with_item(ListComponent::ItemComponent.new(
-        title: credential.display_name,
-        title_url: helpers.llm_credential_path(credential),
-        badge: default_badge_for(credential),
-        metadata_segments: metadata_segments_for(credential),
-        note: inactive_note_for(credential),
-        actions: actions_for(credential),
-        key: "llm_credential.#{credential.id}"
-      ))
+    render(ListComponent.new) do |list|
+      @credentials.each do |credential|
+        list.with_item(ListComponent::ItemComponent.new(
+          title: credential.display_name,
+          title_url: helpers.llm_credential_path(credential),
+          badge: default_badge_for(credential),
+          metadata_segments: metadata_segments_for(credential),
+          note: inactive_note_for(credential),
+          actions: actions_for(credential),
+          key: "llm_credential.#{credential.id}"
+        ))
+      end
     end
-    render(component)
   end
 
   private

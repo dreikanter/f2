@@ -19,22 +19,21 @@
     <% end %>
   <% else %>
     <%# TBD: Extract to a component %>
-    <% list = ListComponent.new %>
-    <% @emails.each do |email| %>
-      <% subject = email[:subject].presence || "(no subject)" %>
-      <% list.with_item(
-           ListComponent::ItemComponent.new(
-             title: subject,
-             title_url: development_sent_email_path(id: email[:id]),
-             metadata_segments: [
-               email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
-               number_to_human_size(email[:size]),
-               "#{time_ago_in_words(email[:timestamp])} ago"
-             ],
-             key: "development.emails.list.item"
-           )
-         ) %>
+    <%= render(ListComponent.new) do |list| %>
+      <% @emails.each do |email| %>
+        <% list.with_item(
+             ListComponent::ItemComponent.new(
+               title: email[:subject].presence || "(no subject)",
+               title_url: development_sent_email_path(id: email[:id]),
+               metadata_segments: [
+                 email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
+                 number_to_human_size(email[:size]),
+                 "#{time_ago_in_words(email[:timestamp])} ago"
+               ],
+               key: "development.emails.list.item"
+             )
+           ) %>
+      <% end %>
     <% end %>
-    <%= render(list) %>
   <% end %>
 </div>

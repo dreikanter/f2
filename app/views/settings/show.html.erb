@@ -1,46 +1,42 @@
 <% content_for :title, "Settings" %>
 
-<%
-  # TBD: Extract toi a component
-  account_list = DescriptionListComponent.new.tap do |list|
-    list.with_item(ListComponent::StatItemComponent.new(
-      label: "Email",
-      value: tag.span(class: "flex items-center gap-4") {
-        safe_join([
-          @user.email_address,
-          link_to("Change", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
-        ])
-      },
-      key: "settings.email"
-    ))
-
-    list.with_item(ListComponent::StatItemComponent.new(
-      label: "Password",
-      value: tag.span(class: "flex items-center gap-4") {
-        safe_join([
-          "Last updated #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
-          link_to("Change", edit_settings_password_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
-        ])
-      },
-      key: "settings.password"
-    ))
-
-    if @user.permissions.any?
-      list.with_item(ListComponent::StatItemComponent.new(
-        label: "Permissions",
-        value: @user.permissions.map { |permission| permission.name.humanize }.join(", "),
-        key: "settings.permissions"
-      ))
-    end
-  end
-%>
-
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Settings") %>
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Your Account</h2>
-    <%= render(account_list) %>
+    <%# TBD: Extract to a component %>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% list.with_item(ListComponent::StatItemComponent.new(
+        label: "Email",
+        value: tag.span(class: "flex items-center gap-4") {
+          safe_join([
+            @user.email_address,
+            link_to("Change", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
+          ])
+        },
+        key: "settings.email"
+      )) %>
+
+      <% list.with_item(ListComponent::StatItemComponent.new(
+        label: "Password",
+        value: tag.span(class: "flex items-center gap-4") {
+          safe_join([
+            "Last updated #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
+            link_to("Change", edit_settings_password_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
+          ])
+        },
+        key: "settings.password"
+      )) %>
+
+      <% if @user.permissions.any? %>
+        <% list.with_item(ListComponent::StatItemComponent.new(
+          label: "Permissions",
+          value: @user.permissions.map { |permission| permission.name.humanize }.join(", "),
+          key: "settings.permissions"
+        )) %>
+      <% end %>
+    <% end %>
   </section>
 
 </div>
