@@ -68,13 +68,12 @@
                          maxlength: Feed::NAME_MAX_LENGTH,
                          class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          data: { key: "form.name" } %>
-        <% if feed.name.present? %>
+        <% if f.object.errors[:name].any? %>
+          <p class="text-sm text-red-600"><%= f.object.errors[:name].first.capitalize %></p>
+        <% elsif feed.name.present? %>
           <p class="text-sm text-slate-500">You can edit this name if you'd like.</p>
         <% else %>
           <p class="text-sm text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
-        <% end %>
-        <% if f.object.errors[:name].any? %>
-          <p class="text-sm text-red-600"><%= f.object.errors[:name].first %></p>
         <% end %>
       </div>
 
