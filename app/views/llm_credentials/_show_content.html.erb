@@ -55,7 +55,7 @@
       <%= button_to "Make default",
                     llm_credential_default_path(llm_credential),
                     method: :patch,
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer" %>
     <% end %>
     <%= link_to "Edit",
                 edit_llm_credential_path(llm_credential),
@@ -65,6 +65,6 @@
                   llm_credential_path(llm_credential),
                   method: :delete,
                   form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50" %>
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer" %>
   </div>
 </div>
