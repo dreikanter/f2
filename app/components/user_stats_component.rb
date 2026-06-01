@@ -40,10 +40,10 @@ class UserStatsComponent < ViewComponent::Base
         value: number_with_delimiter(user.total_published_posts_count)
       },
       {
-        key: "average_posts_per_day",
-        label: "Average posts per day (last week)",
-        label_short: "Daily",
-        value: user.average_posts_per_day_last_week.present? ? number_with_precision(user.average_posts_per_day_last_week.to_f, precision: 1) : "—"
+        key: "posts_last_week",
+        label: "Posts published last week",
+        label_short: "Last week",
+        value: number_with_delimiter(user.posts_published_last_week_count)
       },
       {
         key: "most_recent_post_publication",

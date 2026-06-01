@@ -204,7 +204,7 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.most_recent_post_published_at
   end
 
-  test "#average_posts_per_day_last_week calculates average correctly" do
+  test "#posts_published_last_week_count should return count of posts from the last 7 days" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
@@ -215,13 +215,13 @@ class UserTest < ActiveSupport::TestCase
     create(:post, feed: feed, feed_entry: entry2, published_at: 1.day.ago)
     create(:post, feed: feed, feed_entry: entry3, published_at: 10.days.ago)
 
-    assert_equal 0.3, user.average_posts_per_day_last_week
+    assert_equal 2, user.posts_published_last_week_count
   end
 
-  test "#average_posts_per_day_last_week returns 0.0 when no posts" do
+  test "#posts_published_last_week_count should return 0 when no posts" do
     user = create(:user)
 
-    assert_equal 0.0, user.average_posts_per_day_last_week
+    assert_equal 0, user.posts_published_last_week_count
   end
 
   test "#deactivate_email! should set email_deactivated_at and reason" do

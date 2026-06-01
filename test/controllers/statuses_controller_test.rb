@@ -86,7 +86,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
   end
 
-  test "#show should display average posts per day for last week" do
+  test "#show should display posts published last week" do
     sign_in_as user
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
@@ -96,16 +96,16 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="stats.average_posts_per_day"]').first
-    assert_equal "0.3", css_select('[data-key="stats.average_posts_per_day.value"]').first.text.strip
+    assert_not_nil css_select('[data-key="stats.posts_last_week"]').first
+    assert_equal "2", css_select('[data-key="stats.posts_last_week.value"]').first.text.strip
   end
 
-  test "#show should hide average posts per day when no posts" do
+  test "#show should hide posts last week when no posts" do
     sign_in_as user
 
     get status_path
     assert_response :success
-    assert css_select('[data-key="stats.average_posts_per_day"]').empty?
+    assert css_select('[data-key="stats.posts_last_week"]').empty?
   end
 
   test "#show should hide post statistics when no posts" do
@@ -116,7 +116,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.total_imported_posts"]').empty?
     assert css_select('[data-key="stats.total_published_posts"]').empty?
     assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
-    assert css_select('[data-key="stats.average_posts_per_day"]').empty?
+    assert css_select('[data-key="stats.posts_last_week"]').empty?
   end
 
   test "#show should render empty state when no feeds" do

@@ -116,13 +116,8 @@ class User < ApplicationRecord
     published_posts.maximum(:published_at)
   end
 
-  # Returns the average number of posts per day for the last week across all user's feeds
-  # @return [Float] average posts per day (0.0 if no posts)
-  def average_posts_per_day_last_week
-    start_date = 1.week.ago.beginning_of_day
-    end_date = Time.current.end_of_day
-    count = imported_posts.where(published_at: start_date..end_date).count
-    (count / 7.0).round(1)
+  def posts_published_last_week_count
+    imported_posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
   def update_password!(new_password)

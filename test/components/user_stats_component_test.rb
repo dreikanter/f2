@@ -22,7 +22,7 @@ class UserStatsComponentTest < ViewComponent::TestCase
     recent = result.css('[data-key="stats.most_recent_post_publication"]').first
     assert_not_nil recent
 
-    average = result.css('[data-key="stats.average_posts_per_day"]').first
+    average = result.css('[data-key="stats.posts_last_week"]').first
     assert_not_nil average
   end
 
