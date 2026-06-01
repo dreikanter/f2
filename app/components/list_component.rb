@@ -9,6 +9,7 @@ class ListComponent < ViewComponent::Base
   end
 
   def call
+    content
     return if @items.empty?
 
     content_tag container_tag, class: @css_class || DEFAULT_CSS_CLASSES do

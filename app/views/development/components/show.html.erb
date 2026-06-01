@@ -354,20 +354,20 @@
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With feed items</p>
-        <% list = ListComponent.new %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"])) %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"])) %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"])) %>
-        <%= render list %>
+        <%= render ListComponent.new do |list|
+          list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]))
+          list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]))
+          list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]))
+        end %>
       </div>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With stat items</p>
-        <% stat_list = ListComponent.new %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42")) %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234")) %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38")) %>
-        <%= render stat_list %>
+        <%= render ListComponent.new do |list|
+          list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42"))
+          list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234"))
+          list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38"))
+        end %>
       </div>
     </section>
 
