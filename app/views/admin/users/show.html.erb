@@ -7,7 +7,6 @@
     <% end %>
   <% end %>
 
-  <%# TBD: Extract higher-level components %>
   <%= render(DescriptionListComponent.new) do |list| %>
     <% list.with_item(ListComponent::StatItemComponent.new(
       label: "Email",

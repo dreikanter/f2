@@ -18,7 +18,6 @@
       No emails captured yet. Emails sent in development mode will appear here.
     <% end %>
   <% else %>
-    <%# TBD: Extract to a component %>
     <%= render(ListComponent.new) do |list| %>
       <% @emails.each do |email| %>
         <% list.with_item(

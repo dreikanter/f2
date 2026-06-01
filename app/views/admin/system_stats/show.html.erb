@@ -73,7 +73,6 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Postgres Table Usage</h2>
-    <%# TBD: Extract component %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:table_usage].each do |row| %>
         <% list.with_item(ListComponent::StatItemComponent.new(
@@ -118,7 +117,6 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Autovacuum Settings</h2>
-    <%# TBD: Extract component %>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:autovacuum_settings].each do |row| %>
         <% list.with_item(ListComponent::StatItemComponent.new(
