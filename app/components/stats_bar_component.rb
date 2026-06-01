@@ -1,32 +1,19 @@
 class StatsBarComponent < ViewComponent::Base
   DEFAULT_CSS_CLASSES = "overflow-hidden md:flex md:divide-x md:divide-slate-200 rounded-lg border border-slate-200 bg-white"
 
-  attr_reader :items
+  # Polymorphic slot: items are pre-built components, so the lambda just
+  # passes them through to be rendered.
+  renders_many :items, ->(item) { item }
 
   def initialize(css_class: nil)
-    @items = []
     @css_class = css_class
   end
 
   def call
-    return if @items.empty?
+    return unless items?
 
     content_tag :dl, class: @css_class || DEFAULT_CSS_CLASSES do
-      safe_join(@items.map { |item| item.render_in(view_context) })
+      safe_join(items)
     end
-  end
-
-  def with_item(component)
-    @items << component
-    component
-  end
-
-  def with_items(components)
-    components.each { |component| @items << component }
-    self
-  end
-
-  def items?
-    items.any?
   end
 end

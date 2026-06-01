@@ -4,17 +4,15 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def call
-    component = ListComponent.new
-
-    add_type_item(component)
-    add_level_item(component)
-    add_user_item(component)
-    add_subject_item(component)
-    add_created_item(component)
-    add_updated_item(component)
-    add_expires_item(component) if @event.expires_at.present?
-
-    render(component)
+    render(ListComponent.new) do |list|
+      add_type_item(list)
+      add_level_item(list)
+      add_user_item(list)
+      add_subject_item(list)
+      add_created_item(list)
+      add_updated_item(list)
+      add_expires_item(list) if @event.expires_at.present?
+    end
   end
 
   private
