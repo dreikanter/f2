@@ -1,6 +1,6 @@
 class LlmCredentialsListComponent < ViewComponent::Base
-  MAKE_DEFAULT_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer".freeze
-  DELETE_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer".freeze
+  MAKE_DEFAULT_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
+  DELETE_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
   DELETE_CONFIRM = "Delete this AI credential? Feeds using it will be disabled.".freeze
 
   def initialize(credentials:)

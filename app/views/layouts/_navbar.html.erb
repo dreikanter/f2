@@ -6,7 +6,7 @@
     <div class="flex items-center gap-3 md:order-2">
       <% if Current.user.present? %>
         <%# User menu button (desktop) %>
-        <button type="button" class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-white text-sm font-semibold cursor-pointer focus:outline-none focus:ring-4 focus:ring-slate-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom-end">
+        <button type="button" class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-white text-sm font-semibold cursor-pointer disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-slate-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom-end">
           <span class="sr-only">Open user menu</span>
           <%= Current.user.email_address[0].upcase %>
         </button>
@@ -38,7 +38,7 @@
         </div>
 
         <%# Mobile menu toggle %>
-        <button data-collapse-toggle="primary-navigation" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-sm text-slate-600 cursor-pointer hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 md:hidden" aria-controls="primary-navigation" aria-expanded="false">
+        <button data-collapse-toggle="primary-navigation" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-sm text-slate-600 cursor-pointer disabled:cursor-not-allowed hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 md:hidden" aria-controls="primary-navigation" aria-expanded="false">
           <span class="sr-only">Toggle navigation</span>
           <%= icon("menu", css_class: "size-5") %>
         </button>
