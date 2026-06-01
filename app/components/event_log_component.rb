@@ -7,11 +7,12 @@ class EventLogComponent < ViewComponent::Base
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
   # cursor pagination links; omit them for an unpaginated log.
-  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
+  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil, show_refresh: true)
     @events = events
     @endpoint = endpoint
     @older_url = older_url
     @newer_url = newer_url
+    @show_refresh = show_refresh
   end
 
   def call
@@ -46,7 +47,7 @@ class EventLogComponent < ViewComponent::Base
   end
 
   def refresh_button
-    return unless polling?
+    return unless polling? && @show_refresh
 
     content_tag(:div, class: "flex justify-end") do
       button_tag(

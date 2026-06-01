@@ -39,7 +39,8 @@
       </div>
       <%= render(EventLogComponent.new(
         events: @recent_events,
-        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence)
+        endpoint: events_path(format: :turbo_stream, filter: @filter.to_h.presence),
+        show_refresh: false
       )) do |log| %>
         <% @recent_events.each do |event| %>
           <% log.with_entry do %>
