@@ -4,7 +4,7 @@ class FeedsListComponent < ViewComponent::Base
   end
 
   CONTINUE_SETUP_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1".freeze
-  DISCARD_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1".freeze
+  DISCARD_CLASSES = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
   DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
 
   def call

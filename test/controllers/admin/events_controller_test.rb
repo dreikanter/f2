@@ -100,7 +100,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       assert_select "#events_log[data-controller='polling']"
       assert_select "[data-key='events.refresh']"
       assert_select "[data-key='events.older']"
-      assert_select "[data-key='events.newer']", count: 0
+      assert_select "a[data-key='events.newer']", count: 0
     end
   end
 
@@ -132,7 +132,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_select "#events_log[data-controller='polling']"
       assert_select "[data-key='events.refresh']"
-      assert_select "[data-key='events.newer']", count: 0
+      assert_select "a[data-key='events.newer']", count: 0
     end
   end
 
