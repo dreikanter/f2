@@ -29,28 +29,24 @@
     <%= render EventDescriptionComponent.new(event: @event) %>
   <% end %>
 
-  <%= render CardComponent.new do %>
-    <dl class="grid gap-4 sm:grid-cols-2">
-      <div>
-        <dt class="text-sm font-medium text-slate-500">Type</dt>
-        <dd><code class="text-sm" data-key="events.type"><%= @event.type %></code></dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-slate-500">Level</dt>
-        <dd><%= @event.level.capitalize %></dd>
-      </div>
-      <div>
-        <dt class="text-sm font-medium text-slate-500">Created</dt>
-        <dd><%= long_time_tag(@event.created_at) %></dd>
-      </div>
-      <% if @event.subject_type.present? %>
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Subject</dt>
-          <dd><%= @event.subject_type %><% if @event.subject_id.present? %> #<%= @event.subject_id %><% end %></dd>
-        </div>
-      <% end %>
-    </dl>
+  <% details = ListComponent.new %>
+  <% details.with_item(ListComponent::StatItemComponent.new(
+    label: "Type",
+    value: tag.code(@event.type, class: "text-sm", data: { key: "events.type" })
+  )) %>
+  <% details.with_item(ListComponent::StatItemComponent.new(
+    label: "Level",
+    value: @event.level.capitalize
+  )) %>
+  <% if @event.subject_type.present? %>
+    <% subject_value = @event.subject_id.present? ? "#{@event.subject_type} ##{@event.subject_id}" : @event.subject_type %>
+    <% details.with_item(ListComponent::StatItemComponent.new(label: "Subject", value: subject_value)) %>
   <% end %>
+  <% details.with_item(ListComponent::StatItemComponent.new(
+    label: "Created",
+    value: safe_join([long_time_tag(@event.created_at), " ", tag.span("(#{short_time_ago(@event.created_at)})", class: "text-slate-500")])
+  )) %>
+  <%= render details %>
 
   <% if @event.metadata.present? && @event.metadata != {} %>
     <section class="space-y-4">
