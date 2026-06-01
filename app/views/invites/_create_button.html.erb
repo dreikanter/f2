@@ -2,6 +2,6 @@
 <%= button_to "Invite a user",
               invites_path,
               method: :post,
-              class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-base font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer", can_create ? "bg-sky-600 text-white hover:bg-sky-500" : "bg-slate-200 text-slate-400 cursor-not-allowed"),
+              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
               disabled: !can_create,
               form: { data: { turbo_frame: "_top" } } %>
