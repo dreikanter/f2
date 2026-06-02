@@ -193,6 +193,42 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "#index should show feed filter dropdown with user's feeds" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "Alpha Feed")
+    create(:feed, user: other_user, name: "Other User Feed")
+
+    get posts_url
+    assert_response :success
+    assert_select "[data-key='feed-filter.dropdown']"
+    assert_select "[data-key='feed-filter.dropdown']", text: /All feeds/
+    assert_select "[data-key='feed-filter.dropdown']", text: /Alpha Feed/
+    assert_no_match(/Other User Feed/, response.body)
+  end
+
+  test "#index should filter posts by feed_id param" do
+    sign_in_as(user)
+    feed_a = create(:feed, user: user, name: "Feed A")
+    feed_b = create(:feed, user: user, name: "Feed B")
+    create(:post, feed: feed_a, content: "From feed A")
+    create(:post, feed: feed_b, content: "From feed B")
+
+    get posts_url(feed_id: feed_a.id)
+    assert_response :success
+    assert_select "li", text: /From feed A/
+    assert_no_match(/From feed B/, response.body)
+  end
+
+  test "#index should show selected feed name in filter button" do
+    sign_in_as(user)
+    filtered_feed = create(:feed, user: user, name: "Filtered Feed")
+    create(:post, feed: filtered_feed)
+
+    get posts_url(feed_id: filtered_feed.id)
+    assert_response :success
+    assert_select "[data-key='feed-filter.button']", text: /Filtered Feed/
+  end
+
   test "#index should sort posts by feed name ascending" do
     sign_in_as(user)
     feed_a = create(:feed, user: user, name: "A Feed")
