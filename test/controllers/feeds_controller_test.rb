@@ -29,7 +29,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "button[data-dropdown-toggle='feed-sort-menu']", 1
     assert_select "#feed-sort-menu a", 5
-    assert_select "ul.divide-y li", minimum: 1
+    assert_select "a[href='#{feed_path(feed)}']", minimum: 1
     assert_select "p", text: "You have 1 inactive feed"
   end
 
