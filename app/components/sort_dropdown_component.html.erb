@@ -18,10 +18,20 @@
     id="<%= menu_id %>"
     class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm"
     role="menu"
-    aria-labelledby="<%= button_id %>">
+    aria-labelledby="<%= button_id %>"
+    data-controller="dropdown-search">
+    <div class="border-b border-slate-100 p-3">
+      <input
+        type="text"
+        data-dropdown-search-target="input"
+        data-action="input->dropdown-search#filter"
+        placeholder="Search..."
+        autocomplete="off"
+        class="w-full rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-500">
+    </div>
     <ul class="py-1 text-base text-slate-600">
       <% presenter.options.each do |option| %>
-        <li>
+        <li data-dropdown-search-target="item">
           <%= link_to option.path, class: option_classes(option) do %>
             <span><%= option.title %></span>
             <% if option.icon_name.present? %>
