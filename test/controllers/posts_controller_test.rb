@@ -44,8 +44,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url
     assert_response :success
-    assert_select "li", text: /User's post/
-    assert_no_match(/Other user's post/, response.body)
+    assert_select "a[href*='/posts/']", text: /User's post/
+    assert_no_match(/Other user&#39;s post/, response.body)
   end
 
   test "#index should paginate posts" do
@@ -155,7 +155,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
     assert_includes response.body, "turbo-stream"
-    assert_includes response.body, "data-key=\"#{dom_id(published_post)}\""
+    assert_includes response.body, "id=\"#{dom_id(published_post)}\""
     assert_includes response.body, "Withdrawn"
     assert_includes response.body, "The post will be withdrawn from FreeFeed"
     refute_includes response.body, "data-bs-toggle"
@@ -215,7 +215,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url(feed_id: feed_a.id)
     assert_response :success
-    assert_select "li", text: /From feed A/
+    assert_match(/From feed A/, response.body)
     assert_no_match(/From feed B/, response.body)
   end
 

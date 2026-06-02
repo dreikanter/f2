@@ -46,7 +46,11 @@ module ApplicationHelper
     "layout-grid"    => '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
     "users"          => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
     # Search
-    "search"         => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'
+    "search"         => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    # Posts
+    "ellipsis"        => '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    "message-circle"  => '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+    "paperclip"       => '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>'
   }.freeze
 
   def icon(name, css_class: nil, title: nil, aria_label: nil)
