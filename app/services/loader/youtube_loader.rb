@@ -30,7 +30,7 @@ module Loader
       return nil unless youtube_domain?(uri.host)
 
       case uri.path
-      when %r{\A/channel/(UC[\w-]+)\z}
+      when %r{\A/channel/([\w-]+)\z}
         "#{FEED_BASE_URL}?channel_id=#{$1}"
       when %r{\A/user/([\w.-]+)\z}
         "#{FEED_BASE_URL}?user=#{$1}"
