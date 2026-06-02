@@ -74,15 +74,7 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
   end
 
   test "#title should extract title from YouTube Atom feed" do
-    body = <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"
-            xmlns:media="http://search.yahoo.com/mrss/"
-            xmlns="http://www.w3.org/2005/Atom">
-        <title>Some YouTube Channel</title>
-        <id>yt:channel:UC1234</id>
-      </feed>
-    XML
-    assert_equal "Some YouTube Channel", extractor(body).title
+    body = file_fixture("feeds/youtube/feed.xml").read
+    assert_equal "Sample Tech Channel", extractor(body).title
   end
 end
