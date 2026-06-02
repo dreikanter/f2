@@ -1,14 +1,32 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  navigate() {
-    const url = new URL(window.location)
-    url.searchParams.delete("page")
-    if (this.element.value) {
-      url.searchParams.set("feed_id", this.element.value)
-    } else {
-      url.searchParams.delete("feed_id")
-    }
-    window.location = url
+  static targets = ["search", "item"]
+
+  connect() {
+    this._observer = new MutationObserver(() => {
+      if (this.element.classList.contains("hidden")) {
+        this.reset()
+      } else {
+        this.searchTarget.focus()
+      }
+    })
+    this._observer.observe(this.element, { attributes: true, attributeFilter: ["class"] })
+  }
+
+  disconnect() {
+    this._observer?.disconnect()
+  }
+
+  filter() {
+    const query = this.searchTarget.value.toLowerCase()
+    this.itemTargets.forEach(item => {
+      item.hidden = !item.textContent.toLowerCase().includes(query)
+    })
+  }
+
+  reset() {
+    this.searchTarget.value = ""
+    this.itemTargets.forEach(item => { item.hidden = false })
   }
 }

@@ -200,9 +200,9 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get posts_url
     assert_response :success
-    assert_select "select[data-controller='feed-filter']"
-    assert_select "option[value='']", text: "All feeds"
-    assert_select "option", text: "Alpha Feed"
+    assert_select "[data-key='feed-filter.dropdown']"
+    assert_select "[data-key='feed-filter.dropdown']", text: /All feeds/
+    assert_select "[data-key='feed-filter.dropdown']", text: /Alpha Feed/
     assert_no_match(/Other User Feed/, response.body)
   end
 
@@ -219,14 +219,14 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/From feed B/, response.body)
   end
 
-  test "#index should pre-select active feed in filter dropdown" do
+  test "#index should show selected feed name in filter button" do
     sign_in_as(user)
     filtered_feed = create(:feed, user: user, name: "Filtered Feed")
     create(:post, feed: filtered_feed)
 
     get posts_url(feed_id: filtered_feed.id)
     assert_response :success
-    assert_select "option[value='#{filtered_feed.id}'][selected]"
+    assert_select "[data-key='feed-filter.button']", text: /Filtered Feed/
   end
 
   test "#index should sort posts by feed name ascending" do

@@ -10,11 +10,12 @@
     <% end %>
     <% if @feeds.any? %>
       <% header.with_action_button do %>
-        <%= select_tag :feed_id,
-              options_for_select([["All feeds", ""]] + @feeds.map { |f| [f.display_name, f.id.to_s] }, params[:feed_id].to_s),
-              aria: { label: "Filter by feed" },
-              class: "rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer",
-              data: { controller: "feed-filter", action: "change->feed-filter#navigate" } %>
+        <%= render FeedFilterDropdownComponent.new(
+              feeds: @feeds,
+              selected_feed: @feed,
+              sort_params: params.permit(:sort, :direction),
+              menu_id: "posts-feed-menu"
+            ) %>
       <% end %>
     <% end %>
     <% if @posts.any? %>
