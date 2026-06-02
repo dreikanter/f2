@@ -81,4 +81,27 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
 
     assert_equal [], post.attachment_urls
   end
+
+  test "#normalize should work with raw_data produced directly by YoutubeProcessor" do
+    feed = create(:feed, url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCabc123")
+    sample_feed_xml = file_fixture("feeds/youtube/feed.xml").read
+
+    processor = Processor::YoutubeProcessor.new(feed, sample_feed_xml)
+    processor_entry = processor.process.first
+
+    temp_entry = FeedEntry.new(
+      uid: processor_entry.uid,
+      published_at: processor_entry.published_at,
+      raw_data: processor_entry.raw_data,
+      feed: feed
+    )
+
+    normalizer = Normalizer::YoutubeNormalizer.new(temp_entry)
+    post = normalizer.normalize
+
+    assert_includes post.content, "Getting Started with Ruby on Rails"
+    assert_equal ["https://i.ytimg.com/vi/aAbBcCdDeEf/hqdefault.jpg"], post.attachment_urls
+    assert_equal 1, post.comments.length
+    assert_includes post.comments.first, "beginner-friendly introduction"
+  end
 end

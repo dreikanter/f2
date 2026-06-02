@@ -98,6 +98,56 @@ class Loader::YoutubeLoaderTest < ActiveSupport::TestCase
     assert_equal "Connection refused", error.message
   end
 
+  test "#load should resolve /channel/UCxxx URL to feed URL without fetching channel page" do
+    channel_url = "https://www.youtube.com/channel/UCabc123def456ghi789jkl"
+    expected_feed_url = "https://www.youtube.com/feeds/videos.xml?channel_id=UCabc123def456ghi789jkl"
+    feed = feed_with_url(channel_url)
+    mock_client = MockHttpClient.new(responses: { expected_feed_url => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [expected_feed_url], mock_client.requested_urls
+  end
+
+  test "#load should resolve /user/Username URL to feed URL without fetching channel page" do
+    user_url = "https://www.youtube.com/user/SampleTechChannel"
+    expected_feed_url = "https://www.youtube.com/feeds/videos.xml?user=SampleTechChannel"
+    feed = feed_with_url(user_url)
+    mock_client = MockHttpClient.new(responses: { expected_feed_url => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [expected_feed_url], mock_client.requested_urls
+  end
+
+  test "#load should resolve playlist URL to feed URL without fetching channel page" do
+    playlist_url = "https://www.youtube.com/playlist?list=PLabc123def456"
+    expected_feed_url = "https://www.youtube.com/feeds/videos.xml?playlist_id=PLabc123def456"
+    feed = feed_with_url(playlist_url)
+    mock_client = MockHttpClient.new(responses: { expected_feed_url => ok(FEED_BODY) })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [expected_feed_url], mock_client.requested_urls
+  end
+
+  test "#load should fall back to HTML scraping for @handle URLs" do
+    handle_url = "https://www.youtube.com/@SampleChannel"
+    feed = feed_with_url(handle_url)
+    mock_client = MockHttpClient.new(responses: {
+      handle_url => ok(CHANNEL_PAGE_WITH_RSS),
+      FEED_URL => ok(FEED_BODY)
+    })
+
+    loader = Loader::YoutubeLoader.new(feed, { http_client: mock_client })
+
+    assert_equal FEED_BODY, loader.load
+    assert_equal [handle_url, FEED_URL], mock_client.requested_urls
+  end
+
   private
 
   def ok(body)
