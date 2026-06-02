@@ -10,6 +10,13 @@
       <p class="text-sm text-slate-500">
         The FreeFeed group where posts will be published. Groups are like channels or communities.
       </p>
+      <p class="text-sm text-slate-500">
+        Need a new group?
+        <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
+                    class: "inline-flex items-center gap-1 font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" do %>
+          Create one on FreeFeed <%= icon("external-link", css_class: "size-3") %>
+        <% end %>
+      </p>
     <% else %>
       <%= select_tag "feed[target_group]",
                      options_for_select([[feed.target_group.presence || "Select a group", ""]]),
@@ -24,6 +31,10 @@
           Unable to load groups. Please select a different access token or add a new one.
         <% elsif defined?(token_error) && token_error == :empty %>
           This account doesn't manage any groups yet.
+          <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
+                      class: "inline-flex items-center gap-1 font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" do %>
+            Create a new group on FreeFeed <%= icon("external-link", css_class: "size-3") %>
+          <% end %>
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
                       class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
