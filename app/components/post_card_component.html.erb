@@ -18,7 +18,7 @@
       <div class="flex items-center gap-3 text-sm text-slate-400">
         <% if group_label %>
           <%= link_to group_label, group_url, title: group_hint,
-                class: "underline underline-offset-4 transition hover:text-slate-600" %>
+                class: "transition hover:text-slate-600" %>
         <% end %>
         <% if attachment_count > 0 %>
           <span class="flex items-center gap-1">
@@ -37,12 +37,12 @@
       <div class="flex items-center gap-3">
         <% if source_url %>
           <%= link_to "Source", source_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 underline underline-offset-4 transition hover:text-slate-600" %>
+                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
         <% end %>
 
         <% if freefeed_url %>
           <%= link_to "FreeFeed", freefeed_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 underline underline-offset-4 transition hover:text-slate-600" %>
+                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
         <% end %>
 
         <% if withdraw_allowed? %>
