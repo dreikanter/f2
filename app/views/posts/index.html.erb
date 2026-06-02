@@ -4,7 +4,9 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: page_title) do |header| %>
     <% if @feed %>
-      <% header.with_context_paragraph("Showing posts from #{@feed.display_name}.") %>
+      <% group = @feed.target_group.presence %>
+      <% label = @feed.display_name + (group ? " (@#{group})" : "") %>
+      <% header.with_context_paragraph("Showing posts from #{label}.") %>
     <% else %>
       <% header.with_context_paragraph("All posts from your feeds") %>
     <% end %>
