@@ -44,4 +44,13 @@ class Processor::YoutubeProcessorTest < ActiveSupport::TestCase
 
     assert_equal "https://www.youtube.com/watch?v=#{FIRST_VIDEO_ID}", entry.raw_data["url"]
   end
+
+  test "#process should store raw_data with string keys accessible without saving" do
+    processor = Processor::YoutubeProcessor.new(feed, sample_feed_xml)
+    entry = processor.process.first
+
+    assert_equal "Getting Started with Ruby on Rails", entry.raw_data["title"]
+    assert_equal "https://www.youtube.com/watch?v=#{FIRST_VIDEO_ID}", entry.raw_data["url"]
+    assert_equal "https://i.ytimg.com/vi/#{FIRST_VIDEO_ID}/hqdefault.jpg", entry.raw_data["thumbnail"]
+  end
 end
