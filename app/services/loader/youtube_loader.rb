@@ -2,6 +2,7 @@ module Loader
   class YoutubeLoader < Base
     FEED_URL_PATH = "/feeds/videos.xml"
     FEED_BASE_URL = "https://www.youtube.com/feeds/videos.xml"
+    YOUTUBE_DOMAINS = %w[youtube.com www.youtube.com].freeze
     DEFAULT_MAX_REDIRECTS = 3
 
     def load
@@ -50,7 +51,7 @@ module Loader
     end
 
     def youtube_domain?(host)
-      %w[youtube.com www.youtube.com].include?(host)
+      YOUTUBE_DOMAINS.include?(host)
     end
 
     def youtube_feed_url?(url)
