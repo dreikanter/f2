@@ -2,25 +2,24 @@
   <div class="flex items-start justify-between gap-4 px-5 py-4">
     <div class="flex min-w-0 items-center gap-2">
       <%= link_to title, post_url,
-            class: "truncate text-base font-semibold text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
+            class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
       <% if withdrawn? %>
         <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
       <% end %>
     </div>
 
-    <div class="flex shrink-0 items-center gap-2 text-sm text-slate-400">
-      <% if group_label %>
-        <%= link_to group_label, group_url, title: group_hint,
-              class: "font-medium text-slate-500 transition hover:text-slate-700" %>
-        <span aria-hidden="true">·</span>
-      <% end %>
+    <div class="flex shrink-0 items-center text-sm text-slate-400">
       <%= published_time_tag %>
     </div>
   </div>
 
   <% if footer? %>
     <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-3">
-      <div class="flex items-center gap-3 text-xs text-slate-400">
+      <div class="flex items-center gap-3 text-sm text-slate-400">
+        <% if group_label %>
+          <%= link_to group_label, group_url, title: group_hint,
+                class: "underline underline-offset-4 transition hover:text-slate-600" %>
+        <% end %>
         <% if attachment_count > 0 %>
           <span class="flex items-center gap-1">
             <%= helpers.icon("paperclip", css_class: "size-3.5") %>
@@ -37,19 +36,13 @@
 
       <div class="flex items-center gap-3">
         <% if source_url %>
-          <%= link_to source_url, target: "_blank", rel: "noopener",
-                class: "inline-flex items-center gap-1 text-sm font-medium text-sky-600 transition hover:text-sky-500" do %>
-            <span class="underline underline-offset-4">Source</span>
-            <%= helpers.icon("external-link", css_class: "size-3.5") %>
-          <% end %>
+          <%= link_to "Source", source_url, target: "_blank", rel: "noopener",
+                class: "text-sm text-slate-400 underline underline-offset-4 transition hover:text-slate-600" %>
         <% end %>
 
         <% if freefeed_url %>
-          <%= link_to freefeed_url, target: "_blank", rel: "noopener",
-                class: "inline-flex items-center gap-1 text-sm font-medium text-sky-600 transition hover:text-sky-500" do %>
-            <span class="underline underline-offset-4">FreeFeed</span>
-            <%= helpers.icon("external-link", css_class: "size-3.5") %>
-          <% end %>
+          <%= link_to "FreeFeed", freefeed_url, target: "_blank", rel: "noopener",
+                class: "text-sm text-slate-400 underline underline-offset-4 transition hover:text-slate-600" %>
         <% end %>
 
         <% if withdraw_allowed? %>
