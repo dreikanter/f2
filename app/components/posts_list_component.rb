@@ -5,7 +5,7 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, class: "space-y-3") do
+    content_tag(:div, class: "space-y-4") do
       safe_join(@posts.map { |post| render(PostCardComponent.new(post: post, show_feed: @show_feed)) })
     end
   end

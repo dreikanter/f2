@@ -9,7 +9,7 @@ class PostCardComponent < ViewComponent::Base
   attr_reader :post, :show_feed
 
   def title
-    helpers.post_content_preview(post.content, 80)
+    helpers.post_content_preview(post.content, 160)
   end
 
   def post_url
