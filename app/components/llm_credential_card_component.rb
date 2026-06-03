@@ -1,6 +1,4 @@
 class LlmCredentialCardComponent < ViewComponent::Base
-  DELETE_CONFIRM = "Delete this AI credential? Feeds using it will be disabled.".freeze
-
   def initialize(credential:)
     @credential = credential
   end
