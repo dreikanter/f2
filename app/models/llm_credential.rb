@@ -3,8 +3,6 @@
 # stores provider-specific fields (e.g. `{ "api_key" => "..." }`) and is
 # encrypted at rest.
 class LlmCredential < ApplicationRecord
-  include LlmCredentialWords
-
   DISPLAY_NAME_MAX_LENGTH = 80
 
   belongs_to :user
@@ -68,30 +66,7 @@ class LlmCredential < ApplicationRecord
   def generate_unique_name
     label = provider.capitalize
     existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).to_set
-
-    pair = lazy_shuffle(ADJECTIVES).flat_map { |adj|
-      lazy_shuffle(NOUNS).map { |noun| [adj, noun] }
-    }.find { |adj, noun| !existing.include?("#{label} #{adj.capitalize} #{noun.capitalize}") }
-
-    if pair
-      adj, noun = pair
-      "#{label} #{adj.capitalize} #{noun.capitalize}"
-    else
-      n = 1
-      n += 1 while existing.include?("#{label} #{n}")
-      "#{label} #{n}"
-    end
-  end
-
-  def lazy_shuffle(arr)
-    Enumerator.new do |y|
-      a = arr.dup
-      a.size.times do |i|
-        j = rand(i...a.size)
-        a[i], a[j] = a[j], a[i]
-        y << a[i]
-      end
-    end.lazy
+    NameGenerator.new(label, existing).generate
   end
 
   def api_key_present

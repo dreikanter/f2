@@ -1,4 +1,4 @@
-module LlmCredentialWords
+class LlmCredential::NameGenerator
   ADJECTIVES = %w[
     aged
     agile
@@ -204,4 +204,37 @@ module LlmCredentialWords
     walnut
     willow
   ].freeze
+
+  def initialize(label, existing)
+    @label = label
+    @existing = existing
+  end
+
+  def generate
+    pair = lazy_shuffle(ADJECTIVES).flat_map { |adj|
+      lazy_shuffle(NOUNS).map { |noun| [adj, noun] }
+    }.find { |adj, noun| !@existing.include?("#{@label} #{adj.capitalize} #{noun.capitalize}") }
+
+    if pair
+      adj, noun = pair
+      "#{@label} #{adj.capitalize} #{noun.capitalize}"
+    else
+      n = 1
+      n += 1 while @existing.include?("#{@label} #{n}")
+      "#{@label} #{n}"
+    end
+  end
+
+  private
+
+  def lazy_shuffle(arr)
+    Enumerator.new do |y|
+      a = arr.dup
+      a.size.times do |i|
+        j = rand(i...a.size)
+        a[i], a[j] = a[j], a[i]
+        y << a[i]
+      end
+    end.lazy
+  end
 end
