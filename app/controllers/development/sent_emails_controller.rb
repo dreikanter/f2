@@ -1,5 +1,5 @@
 class Development::SentEmailsController < ApplicationController
-  allow_unauthenticated_access unless Rails.application.config.x.dev_tools.require_auth
+  allow_unauthenticated_access
 
   def index
     @emails = email_storage.ordered_list
