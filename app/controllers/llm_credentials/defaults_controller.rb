@@ -10,7 +10,7 @@ class LlmCredentials::DefaultsController < ApplicationController
   private
 
   def provider_name
-    @provider_name ||= LlmProvider.find(credential.provider)&.display_name
+    @provider_name ||= LlmProvider.find(credential.provider).display_name
   end
 
   def credential

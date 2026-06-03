@@ -12,7 +12,7 @@ class LlmCredentialCardComponent < ViewComponent::Base
   end
 
   def provider_name
-    LlmProvider.find(credential.provider)&.display_name
+    LlmProvider.find(credential.provider).display_name
   end
 
   def status_label

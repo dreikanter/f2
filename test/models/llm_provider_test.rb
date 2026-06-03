@@ -45,9 +45,9 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "openrouter", LlmProvider.find(:openrouter).name
   end
 
-  test "#find should return nil for unknown providers" do
-    assert_nil LlmProvider.find("does-not-exist")
-    assert_nil LlmProvider.find(nil)
+  test "#find should raise KeyError for unknown providers" do
+    assert_raises(KeyError) { LlmProvider.find("does-not-exist") }
+    assert_raises(KeyError) { LlmProvider.find(nil) }
   end
 
   test "instances should be frozen" do
