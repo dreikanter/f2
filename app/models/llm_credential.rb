@@ -64,9 +64,9 @@ class LlmCredential < ApplicationRecord
   end
 
   def generate_unique_name
-    label = provider.capitalize
-    existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).to_set
-    NameGenerator.new(label, existing).generate
+    label = provider
+    existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).map(&:downcase).to_set
+    NameGenerator.new(label, existing).generate.split.map(&:capitalize).join(" ")
   end
 
   def api_key_present

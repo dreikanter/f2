@@ -213,11 +213,11 @@ class LlmCredential::NameGenerator
   def generate
     pair = lazy_shuffle(ADJECTIVES).flat_map { |adj|
       lazy_shuffle(NOUNS).map { |noun| [adj, noun] }
-    }.find { |adj, noun| !@existing.include?("#{@label} #{adj.capitalize} #{noun.capitalize}") }
+    }.find { |adj, noun| !@existing.include?("#{@label} #{adj} #{noun}") }
 
     if pair
       adj, noun = pair
-      "#{@label} #{adj.capitalize} #{noun.capitalize}"
+      "#{@label} #{adj} #{noun}"
     else
       n = 1
       n += 1 while @existing.include?("#{@label} #{n}")
