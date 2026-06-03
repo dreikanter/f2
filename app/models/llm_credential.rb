@@ -27,6 +27,7 @@ class LlmCredential < ApplicationRecord
 
   validate :api_key_present
 
+  before_validation :assign_name_if_blank, on: :create
   before_save :clear_other_defaults_if_promoting
   before_destroy :disable_dependent_feeds
 
@@ -55,6 +56,18 @@ class LlmCredential < ApplicationRecord
   end
 
   private
+
+  def assign_name_if_blank
+    return if display_name.present? || provider.blank?
+
+    self.display_name = generate_unique_name
+  end
+
+  def generate_unique_name
+    label = provider
+    existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).map(&:downcase).to_set
+    NameGenerator.new(label, existing).generate.split.map(&:capitalize).join(" ")
+  end
 
   def api_key_present
     return if provider.blank?
