@@ -260,7 +260,6 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.health_check }
   end
 
-
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("401"))
@@ -268,6 +267,7 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
+
 
   test "#call should raise AuthError for RubyLLM::ForbiddenError" do
     client = LlmClient.new(credential)
