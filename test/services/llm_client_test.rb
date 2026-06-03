@@ -268,7 +268,6 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
-
   test "#call should raise AuthError for RubyLLM::ForbiddenError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::ForbiddenError.new("403"))

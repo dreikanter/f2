@@ -26,7 +26,7 @@ class FreefeedPublisher
     update_post_with_freefeed_id(freefeed_post_id)
     freefeed_post_id
   rescue FreefeedClient::UnauthorizedError
-    raise
+    raise # propagate so the workflow can disable the token and related feeds
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
   end

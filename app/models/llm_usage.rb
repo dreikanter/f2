@@ -7,7 +7,7 @@ class LlmUsage < ApplicationRecord
   belongs_to :llm_credential, optional: true
 
   enum :stage, { loader: 0, processor: 1, normalizer: 2 }
-  enum :purpose, { scheduled_run: 0, preview: 1, credential_validation: 2 }
+  enum :purpose, { scheduled_run: 0, preview: 1, credential_validation: 2 } # credential_validation no longer written; kept for existing rows
   enum :outcome, {
     success: 0,
     schema_error: 1,
