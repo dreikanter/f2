@@ -5,6 +5,9 @@
 class LlmCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
 
+  ADJECTIVES = %w[bold brave bright calm cool dark deep fair free grand keen pure rare rich sharp swift vast warm wild wise].freeze
+  NOUNS = %w[banana cedar comet coral crystal ember falcon glacier harbor lantern lotus maple meadow pebble river salmon summit thunder walnut willow].freeze
+
   belongs_to :user
   # `dependent` is handled manually by `disable_dependent_feeds` so we can
   # both nullify the reference and pull any feed left enabled out of the
@@ -27,6 +30,7 @@ class LlmCredential < ApplicationRecord
 
   validate :api_key_present
 
+  before_validation :assign_name_if_blank, on: :create
   before_save :clear_other_defaults_if_promoting
   before_destroy :disable_dependent_feeds
 
@@ -55,6 +59,24 @@ class LlmCredential < ApplicationRecord
   end
 
   private
+
+  def assign_name_if_blank
+    return if display_name.present? || provider.blank?
+
+    self.display_name = generate_unique_name
+  end
+
+  def generate_unique_name
+    label = provider.capitalize
+    existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).to_set
+
+    200.times do
+      candidate = "#{label} #{ADJECTIVES.sample.capitalize} #{NOUNS.sample.capitalize}"
+      return candidate unless existing.include?(candidate)
+    end
+
+    "#{label} #{SecureRandom.hex(4)}"
+  end
 
   def api_key_present
     return if provider.blank?
