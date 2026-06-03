@@ -58,7 +58,7 @@ class FreefeedPublisher
       attachment = client.create_attachment_from_io(io, content_type: content_type)
       attachment[:id]
     end
-  rescue FreefeedClient::Error
+  rescue FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
     raise PublishError, "Failed to upload attachments: #{e.message}"
@@ -72,7 +72,7 @@ class FreefeedPublisher
       feeds: [post.feed.target_group],
       attachment_ids: attachment_ids
     )
-  rescue FreefeedClient::Error
+  rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
@@ -89,7 +89,7 @@ class FreefeedPublisher
         body: comment_text
       )
     end
-  rescue FreefeedClient::Error
+  rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
     raise PublishError, "Failed to create comments: #{e.message}"
