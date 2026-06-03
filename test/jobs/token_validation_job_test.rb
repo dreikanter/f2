@@ -32,21 +32,21 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test ".perform_now should mark token as inactive when HTTP error occurs" do
-    # Mock HTTP error
+  test ".perform_now should raise and not disable token on transient HTTP error" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_raise(StandardError.new("Connection failed"))
 
     assert access_token.pending?
 
-    TokenValidationJob.perform_now(access_token)
+    assert_raises(StandardError) do
+      TokenValidationJob.perform_now(access_token)
+    end
 
     access_token.reload
-    assert access_token.inactive?
+    assert access_token.validating?
   end
 
-  test ".perform_now should mark token as inactive when JSON parsing fails" do
-    # Mock response with invalid JSON
+  test ".perform_now should raise and not disable token when JSON parsing fails" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -58,10 +58,12 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
     assert access_token.pending?
 
-    TokenValidationJob.perform_now(access_token)
+    assert_raises(FreefeedClient::Error) do
+      TokenValidationJob.perform_now(access_token)
+    end
 
     access_token.reload
-    assert access_token.inactive?
+    assert access_token.validating?
   end
 
   test ".perform_now should validate token using the token's host" do
@@ -122,8 +124,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.inactive?
   end
 
-  test ".perform_now should mark token as inactive when response format is invalid" do
-    # Mock response with missing username field
+  test ".perform_now should raise and not disable token when response format is invalid" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -139,22 +140,26 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
     assert access_token.pending?
 
-    TokenValidationJob.perform_now(access_token)
+    assert_raises(FreefeedClient::Error) do
+      TokenValidationJob.perform_now(access_token)
+    end
 
     access_token.reload
-    assert access_token.inactive?
+    assert access_token.validating?
   end
 
-  test ".perform_now should handle general exceptions in validation and broadcast errors" do
+  test ".perform_now should raise and not disable token on timeout" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout
 
     assert access_token.pending?
 
-    TokenValidationJob.perform_now(access_token)
+    assert_raises(StandardError) do
+      TokenValidationJob.perform_now(access_token)
+    end
 
     access_token.reload
-    assert access_token.inactive?
+    assert access_token.validating?
   end
 
   test ".perform_later should enqueue asynchronously" do
@@ -165,8 +170,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     end
   end
 
-  test ".perform_now should resume after failure" do
-    # First attempt fails with timeout
+  test ".perform_now should succeed on retry after transient failure" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout.times(1)
       .then.to_return(
@@ -194,15 +198,14 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
-    # First run fails
-    TokenValidationJob.perform_now(access_token)
+    # First run raises — token stays validating
+    assert_raises(StandardError) do
+      TokenValidationJob.perform_now(access_token)
+    end
     access_token.reload
-    assert access_token.inactive?
+    assert access_token.validating?
 
-    # Reset to validating state to simulate retry
-    access_token.update!(status: :validating)
-
-    # Second run succeeds
+    # Second run (retry) succeeds
     TokenValidationJob.perform_now(access_token)
     access_token.reload
     assert access_token.active?
@@ -255,7 +258,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
       )
       .to_return(
         status: 401,
-        body: { error: "Unauthorized" }.to_json,
+        body: { err: "inactive or expired token" }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
   end
