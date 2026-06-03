@@ -39,6 +39,8 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
   end
 
   test "#perform should move credential to inactive and record the error on provider failure" do
+    feed = create(:feed, :enabled, user: user, llm_credential: credential)
+
     stub_health_check(LlmClient::ProviderError.new("invalid api key")) do
       LlmCredentialValidationJob.perform_now(credential)
     end
@@ -47,6 +49,8 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal "inactive", credential.state
     assert_equal "invalid api key", credential.last_error
     assert_not_nil credential.last_validated_at
+    assert_equal "disabled", feed.reload.state
+    assert Event.exists?(subject: credential, type: "llm_credential_deactivated")
   end
 
   test "#perform should move credential to inactive on rate-limit during validation" do

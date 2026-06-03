@@ -39,6 +39,21 @@ class LlmCredential < ApplicationRecord
     end
   end
 
+  def ruby_llm_context
+    RubyLLM.context do |config|
+      config.public_send("#{provider}_api_key=", credential_data["api_key"])
+    end
+  end
+
+  def disable_credential_and_feeds(last_error: nil)
+    with_lock do
+      update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
+      Event.create!(type: "llm_credential_deactivated", level: :warning,
+                    subject: self, user: user, message: "")
+      feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
+    end
+  end
+
   private
 
   def api_key_present

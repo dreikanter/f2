@@ -362,6 +362,15 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_not_requested(:post, "#{access_token.host}/v4/posts")
   end
 
+  test "#publish should propagate FreefeedClient::UnauthorizedError" do
+    post = post_with_content("Test content")
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return(status: 401)
+
+    assert_raises(FreefeedClient::UnauthorizedError) do
+      FreefeedPublisher.new(post).publish
+    end
+  end
+
   test "#publish should raise error when FreeFeed API fails" do
     post = post_with_content("Test content")
 

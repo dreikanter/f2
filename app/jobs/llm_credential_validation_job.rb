@@ -11,6 +11,6 @@ class LlmCredentialValidationJob < ApplicationJob
     LlmClient.for(credential).health_check
     credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
   rescue LlmClient::Error => e
-    credential.update!(state: :inactive, last_validated_at: Time.current, last_error: e.message)
+    credential.disable_credential_and_feeds(last_error: e.message)
   end
 end

@@ -143,6 +143,9 @@ class FeedRefreshWorkflow
         freefeed_post_id = publisher.publish
         post.update!(status: :published, freefeed_post_id: freefeed_post_id)
         published_count += 1
+      rescue FreefeedClient::UnauthorizedError
+        feed.access_token&.disable_token_and_feeds
+        break
       rescue => e
         post.update!(status: :failed)
         failed_count += 1
@@ -204,15 +207,7 @@ class FeedRefreshWorkflow
     return unless error.is_a?(LlmClient::AuthError)
     return unless feed.llm_credential
 
-    credential = feed.llm_credential
-    credential.update!(state: :inactive, last_validated_at: Time.current, last_error: error.message)
-    Event.create!(
-      type: "llm_credential_deactivated",
-      level: :warning,
-      subject: credential,
-      user: feed.user,
-      message: error.message
-    )
+    feed.llm_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
   def create_feed_refresh_error_event(error)

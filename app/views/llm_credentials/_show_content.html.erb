@@ -30,7 +30,11 @@
          data-credential-state="inactive"
          data-key="llm_credential.inactive">
       <p class="font-semibold text-red-900">This key didn't work</p>
-      <p class="text-sm text-red-800">Double-check you copied the whole key from your provider's dashboard, then add it again.</p>
+      <% if llm_credential.last_error.present? %>
+        <p class="text-sm text-red-800"><%= llm_credential.last_error %></p>
+      <% else %>
+        <p class="text-sm text-red-700">Grab a fresh key from your provider's dashboard and add it again.</p>
+      <% end %>
     </div>
   <% end %>
 
