@@ -49,4 +49,10 @@ class LlmCredentialsListComponentTest < ViewComponent::TestCase
 
     assert_not_includes result.text, "This key didn't work"
   end
+
+  test "#call should show capitalized status" do
+    result = render_inline(LlmCredentialsListComponent.new(credentials: [credential]))
+
+    assert_includes result.text, "Status: Active"
+  end
 end
