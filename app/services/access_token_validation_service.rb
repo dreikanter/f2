@@ -15,9 +15,11 @@ class AccessTokenValidationService
       access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
       access_token_detail.update!(data: { user_info: user_info, managed_groups: managed_groups })
     end
-  rescue StandardError => e
-    # TBD: Use more robust approach to handle errorhere
+  rescue FreefeedClient::UnauthorizedError
     access_token.disable_token_and_feeds
+  rescue StandardError => e
+    Rails.error.report(e, context: { access_token_id: access_token.id })
+    raise
   end
 
   private

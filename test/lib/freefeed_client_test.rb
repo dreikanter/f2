@@ -53,7 +53,27 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "test@example.com", result[:email]
   end
 
-  test "whoami raises UnauthorizedError on 401" do
+  test "whoami raises InvalidTokenError on 401 with inactive or expired token body" do
+    stub_request(:get, "#{@host}/v4/users/whoami")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
+
+    assert_raises(FreefeedClient::InvalidTokenError) do
+      @client.whoami
+    end
+  end
+
+  test "whoami raises UnauthorizedError on 401 with malformed token body" do
+    stub_request(:get, "#{@host}/v4/users/whoami")
+      .to_return(status: 401, body: { err: "invalid JWT payload format" }.to_json)
+
+    error = assert_raises(FreefeedClient::UnauthorizedError) do
+      @client.whoami
+    end
+    assert_not_kind_of FreefeedClient::InvalidTokenError, error
+    assert_equal "invalid JWT payload format", error.message
+  end
+
+  test "whoami raises UnauthorizedError on 401 with non-JSON body" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 401, body: "Unauthorized")
 
@@ -64,7 +84,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
 
   test "whoami raises UnauthorizedError on 403" do
     stub_request(:get, "#{@host}/v4/users/whoami")
-      .to_return(status: 403, body: "Forbidden")
+      .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
 
     assert_raises(FreefeedClient::UnauthorizedError) do
       @client.whoami
@@ -168,11 +188,11 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal false, second_group[:is_restricted]
   end
 
-  test "managed_groups raises UnauthorizedError on 401" do
+  test "managed_groups raises InvalidTokenError on 401 with inactive or expired token body" do
     stub_request(:get, "#{@host}/v4/managedGroups")
-      .to_return(status: 401, body: "Unauthorized")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    assert_raises(FreefeedClient::UnauthorizedError) do
+    assert_raises(FreefeedClient::InvalidTokenError) do
       @client.managed_groups
     end
   end
@@ -268,13 +288,13 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal true, result
   end
 
-  test "delete_post raises UnauthorizedError on 401" do
+  test "delete_post raises InvalidTokenError on 401 with inactive or expired token body" do
     post_id = "post123"
 
     stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
-      .to_return(status: 401)
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
-    assert_raises(FreefeedClient::UnauthorizedError) do
+    assert_raises(FreefeedClient::InvalidTokenError) do
       @client.delete_post(post_id)
     end
   end

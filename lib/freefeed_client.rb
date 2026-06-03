@@ -5,6 +5,7 @@
 class FreefeedClient
   class Error < StandardError; end
   class UnauthorizedError < Error; end
+  class InvalidTokenError < UnauthorizedError; end
   class NotFoundError < Error; end
 
   USER_AGENT = "FreeFeed-Rails-Client".freeze
@@ -165,7 +166,12 @@ class FreefeedClient
     when 200, 201
       response
     when 401, 403
-      raise UnauthorizedError, "Invalid or expired token"
+      err = (JSON.parse(response.body)["err"] rescue nil)
+      if err == "inactive or expired token"
+        raise InvalidTokenError, err
+      else
+        raise UnauthorizedError, err || "Unauthorized"
+      end
     when 404
       raise NotFoundError, "Resource not found"
     else
