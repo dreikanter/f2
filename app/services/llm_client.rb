@@ -57,7 +57,6 @@ class LlmClient
 
   def call(ctx, prompt:, output_schema:, tools: [])
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
-    raise AuthError, "AI credential is inactive — update your API key." unless credential.active?
 
     started_at = Time.current
 

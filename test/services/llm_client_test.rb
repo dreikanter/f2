@@ -260,14 +260,6 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.health_check }
   end
 
-  test "#call should raise AuthError without a network request when credential is inactive" do
-    inactive_credential = create(:llm_credential, :inactive, user: user)
-    client = LlmClient.new(inactive_credential)
-
-    assert_no_difference("LlmUsage.count") do
-      assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
-    end
-  end
 
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
     client = LlmClient.new(credential)
@@ -310,8 +302,8 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
-  test "#call should raise ProviderError immediately when an active credential has no api_key" do
-    bad_credential = build(:llm_credential, :active, user: user, credential_data: {})
+  test "#call should raise ProviderError immediately when the credential has no api_key" do
+    bad_credential = build(:llm_credential, user: user, credential_data: {})
     bad_credential.save(validate: false)
     client = LlmClient.new(bad_credential)
 
