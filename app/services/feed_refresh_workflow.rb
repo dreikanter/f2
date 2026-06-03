@@ -26,6 +26,7 @@ class FeedRefreshWorkflow
 
   def on_error(error)
     record_error_stats(error, current_step: current_step)
+    disable_credential_on_auth_error(error)
     create_feed_refresh_error_event(error)
   end
 
@@ -196,6 +197,21 @@ class FeedRefreshWorkflow
       user: feed.user,
       message: "",
       metadata: { stats: stats }
+    )
+  end
+
+  def disable_credential_on_auth_error(error)
+    return unless error.is_a?(LlmClient::AuthError)
+    return unless feed.llm_credential
+
+    credential = feed.llm_credential
+    credential.update!(state: :inactive, last_validated_at: Time.current, last_error: error.message)
+    Event.create!(
+      type: "llm_credential_deactivated",
+      level: :warning,
+      subject: credential,
+      user: feed.user,
+      message: error.message
     )
   end
 
