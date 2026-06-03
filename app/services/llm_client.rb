@@ -118,22 +118,16 @@ class LlmClient
 
   # Single seam tests stub. Calls the provider's models listing endpoint.
   def fetch_provider_models
-    api_key = credential.credential_data["api_key"]
-    raise RubyLLM::ConfigurationError, "credential missing api_key" if api_key.blank?
-
     context = RubyLLM.context do |config|
-      config.public_send("#{credential.provider}_api_key=", api_key)
+      config.public_send("#{credential.provider}_api_key=", credential.credential_data["api_key"])
     end
     RubyLLM::Provider.resolve(credential.provider.to_sym).new(context.config).list_models
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(model:, prompt:, output_schema:, tools:)
-    api_key = credential.credential_data["api_key"]
-    raise RubyLLM::ConfigurationError, "credential missing api_key" if api_key.blank?
-
     context = RubyLLM.context do |config|
-      config.public_send("#{credential.provider}_api_key=", api_key)
+      config.public_send("#{credential.provider}_api_key=", credential.credential_data["api_key"])
     end
     chat = context.chat(model: model, provider: LlmProvider.find(credential.provider).ruby_llm_provider)
     chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)

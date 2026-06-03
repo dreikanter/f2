@@ -546,7 +546,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "#publish_posts should disable the access token and re-raise on UnauthorizedError" do
+  test "#publish_posts should disable the access token and stop publishing on UnauthorizedError" do
     pub_user = create(:user)
     token = create(:access_token, :active, user: pub_user)
     test_feed = create(:feed, user: pub_user, access_token: token,
@@ -556,10 +556,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     stub_request(:post, "#{token.host}/v4/posts").to_return(status: 401)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-
-    assert_raises(FreefeedClient::UnauthorizedError) do
-      workflow.send(:publish_posts, Post.where(id: post.id))
-    end
+    workflow.send(:publish_posts, Post.where(id: post.id))
 
     assert_equal "inactive", token.reload.status
   end

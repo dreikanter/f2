@@ -274,15 +274,6 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "#health_check should raise ProviderError when api_key is missing from credential_data" do
-    bad_credential = build(:llm_credential, :active, credential_data: {})
-    bad_credential.save(validate: false)
-    client = LlmClient.new(bad_credential)
-
-    assert_raises(LlmClient::ProviderError) { client.health_check }
-    assert_equal 0, LlmUsage.count
-  end
-
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("401"))
@@ -321,15 +312,6 @@ class LlmClientTest < ActiveSupport::TestCase
     stub_provider_to_raise(client, RubyLLM::ConfigurationError.new("misconfigured"))
 
     assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
-    assert_equal "provider_error", LlmUsage.last.outcome
-  end
-
-  test "#call should raise ProviderError immediately when the credential has no api_key" do
-    bad_credential = build(:llm_credential, user: user, credential_data: {})
-    bad_credential.save(validate: false)
-    client = LlmClient.new(bad_credential)
-
-    assert_raises(LlmClient::ProviderError) { client.call(default_ctx(feed: nil), **call_opts) }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 end

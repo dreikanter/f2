@@ -42,15 +42,9 @@ class LlmCredential < ApplicationRecord
   def disable_credential_and_feeds(last_error: nil)
     with_lock do
       update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
-      count = feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
-      return if count.zero?
-      Event.create!(
-        type: "llm_credential_deactivated",
-        level: :warning,
-        subject: self,
-        user: user,
-        message: ""
-      )
+      Event.create!(type: "llm_credential_deactivated", level: :warning,
+                    subject: self, user: user, message: "")
+      feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
     end
   end
 

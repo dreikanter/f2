@@ -143,9 +143,9 @@ class FeedRefreshWorkflow
         freefeed_post_id = publisher.publish
         post.update!(status: :published, freefeed_post_id: freefeed_post_id)
         published_count += 1
-      rescue FreefeedClient::UnauthorizedError => e
+      rescue FreefeedClient::UnauthorizedError
         feed.access_token&.disable_token_and_feeds
-        raise
+        break
       rescue => e
         post.update!(status: :failed)
         failed_count += 1
