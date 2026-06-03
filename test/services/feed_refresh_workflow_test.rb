@@ -249,8 +249,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "inactive", credential.reload.state
     assert_equal "Unauthorized", credential.last_error
 
-    error_events = Event.where(subject: test_feed, type: "feed_refresh_error")
-    assert_equal 1, error_events.count
+    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh_error").count
+    deactivated_event = Event.find_by(subject: credential, type: "llm_credential_deactivated")
+    assert_not_nil deactivated_event
+    assert_equal "warning", deactivated_event.level
+    assert_equal llm_user, deactivated_event.user
   end
 
   test "#execute should not disable the credential for non-auth LLM errors" do

@@ -37,6 +37,9 @@ en:
     feed_refresh_error:
       name: "Feed refresh failed"
       description_html: "Feed %{subject_link} refresh failed at %{stage}: %{message}"
+    llm_credential_deactivated:
+      name: "AI credential deactivated"
+      description_html: "AI credential %{subject_link} was deactivated — the key may be invalid or expired. Update it to resume AI-backed feeds."
     post_withdrawn:
       name: "Post withdrawn"
       description_html: "Post withdrawn from FreeFeed"

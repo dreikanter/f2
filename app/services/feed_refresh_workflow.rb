@@ -204,7 +204,15 @@ class FeedRefreshWorkflow
     return unless error.is_a?(LlmClient::AuthError)
     return unless feed.llm_credential
 
-    feed.llm_credential.update!(state: :inactive, last_validated_at: Time.current, last_error: error.message)
+    credential = feed.llm_credential
+    credential.update!(state: :inactive, last_validated_at: Time.current, last_error: error.message)
+    Event.create!(
+      type: "llm_credential_deactivated",
+      level: :warning,
+      subject: credential,
+      user: feed.user,
+      message: error.message
+    )
   end
 
   def create_feed_refresh_error_event(error)
