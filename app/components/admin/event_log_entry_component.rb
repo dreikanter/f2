@@ -10,6 +10,10 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
 
   attr_reader :event, :href
 
+  def subject_filter_path(filter_params)
+    helpers.admin_events_path(filter: filter_params)
+  end
+
   # Admins see who an event belongs to; the user links to a filtered log.
   def user_label
     return helpers.tag.em("System", data: { key: "events.user" }) if event.user_id.blank?

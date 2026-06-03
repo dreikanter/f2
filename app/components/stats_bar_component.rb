@@ -1,32 +1,9 @@
-class StatsBarComponent < ViewComponent::Base
+class StatsBarComponent < SlotListComponent
   DEFAULT_CSS_CLASSES = "overflow-hidden md:flex md:divide-x md:divide-slate-200 rounded-lg border border-slate-200 bg-white"
 
-  attr_reader :items
+  private
 
-  def initialize(css_class: nil)
-    @items = []
-    @css_class = css_class
-  end
-
-  def call
-    return if @items.empty?
-
-    content_tag :dl, class: @css_class || DEFAULT_CSS_CLASSES do
-      safe_join(@items.map { |item| item.render_in(view_context) })
-    end
-  end
-
-  def with_item(component)
-    @items << component
-    component
-  end
-
-  def with_items(components)
-    components.each { |component| @items << component }
-    self
-  end
-
-  def items?
-    items.any?
+  def container_tag
+    :dl
   end
 end

@@ -4,7 +4,7 @@
     type="button"
     data-dropdown-toggle="<%= menu_id %>"
     data-dropdown-placement="bottom-end"
-    class="<%= trigger_classes %>"
+    class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 gap-2"
     aria-haspopup="true"
     aria-expanded="false">
     <%= icon(direction_icon, css_class: "size-4 text-slate-500") %>
@@ -16,7 +16,7 @@
   </button>
   <div
     id="<%= menu_id %>"
-    class="<%= panel_classes %>"
+    class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm"
     role="menu"
     aria-labelledby="<%= button_id %>">
     <ul class="py-1 text-base text-slate-600">

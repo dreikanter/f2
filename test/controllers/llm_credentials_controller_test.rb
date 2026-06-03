@@ -144,6 +144,24 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to llm_credential_path(saved, feed_id: draft.id)
   end
 
+  test "#create should generate a name when display_name is blank" do
+    sign_in_as(user)
+
+    assert_difference("LlmCredential.count", 1) do
+      post llm_credentials_url, params: {
+        llm_credential: {
+          provider: "anthropic",
+          display_name: "",
+          credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
+        }
+      }
+    end
+
+    saved = LlmCredential.last
+    assert saved.display_name.start_with?("Anthropic ")
+    assert_equal 3, saved.display_name.split.count
+  end
+
   test "#create should render :new with errors on invalid input" do
     sign_in_as(user)
 
@@ -151,8 +169,8 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
       post llm_credentials_url, params: {
         llm_credential: {
           provider: "anthropic",
-          display_name: "",
-          credential_data: { api_key: "x" }
+          display_name: "My Key",
+          credential_data: { api_key: "" }
         }
       }
     end

@@ -8,56 +8,6 @@
   postgres_percentage = @disk_usage[:postgres_percentage]
   other_used_percentage = @disk_usage[:other_used_percentage]
   free_percentage = @disk_usage[:free_percentage]
-
-  revision_value = if @release_info[:revision_short].present?
-    tag.code(@release_info[:revision_short], title: @release_info[:revision])
-  else
-    "—"
-  end
-
-  deployed_at_value = if @release_info[:deployed_at]
-    tag.code(long_time_tag(@release_info[:deployed_at]))
-  else
-    "—"
-  end
-
-  release_info_list = DescriptionListComponent.new.tap do |list|
-    list.with_item(ListComponent::StatItemComponent.new(
-      label: "Revision",
-      value: revision_value,
-      key: "release.revision"
-    ))
-    list.with_item(ListComponent::StatItemComponent.new(
-      label: "Deployed at",
-      value: deployed_at_value,
-      key: "release.deployed_at"
-    ))
-    list.with_item(ListComponent::StatItemComponent.new(
-      label: "Environment",
-      value: tag.code(Rails.env),
-      key: "release.environment"
-    ))
-  end
-
-  # TBD: Extract component
-  table_usage_list = DescriptionListComponent.new.tap do |list|
-    @disk_usage[:table_usage].each do |row|
-      list.with_item(ListComponent::StatItemComponent.new(
-        label: tag.code(row["table_name"]),
-        value: row["total_size"]
-      ))
-    end
-  end
-
-  # TBD: Extract component
-  autovacuum_settings_list = DescriptionListComponent.new.tap do |list|
-    @disk_usage[:autovacuum_settings].each do |row|
-      list.with_item(ListComponent::StatItemComponent.new(
-        label: tag.code(row["name"]),
-        value: row["setting"]
-      ))
-    end
-  end
 %>
 
 <div class="space-y-8">
@@ -69,7 +19,23 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Deployed Version</h2>
-    <%= render(release_info_list) %>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% list.with_item(ListComponent::StatItemComponent.new(
+        label: "Revision",
+        value: @release_info[:revision_short].present? ? tag.code(@release_info[:revision_short], title: @release_info[:revision]) : "—",
+        key: "release.revision"
+      )) %>
+      <% list.with_item(ListComponent::StatItemComponent.new(
+        label: "Deployed at",
+        value: @release_info[:deployed_at] ? tag.code(long_time_tag(@release_info[:deployed_at])) : "—",
+        key: "release.deployed_at"
+      )) %>
+      <% list.with_item(ListComponent::StatItemComponent.new(
+        label: "Environment",
+        value: tag.code(Rails.env),
+        key: "release.environment"
+      )) %>
+    <% end %>
   </section>
 
   <section class="space-y-4">
@@ -107,7 +73,14 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Postgres Table Usage</h2>
-    <%= render(table_usage_list) %>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% @disk_usage[:table_usage].each do |row| %>
+        <% list.with_item(ListComponent::StatItemComponent.new(
+          label: tag.code(row["table_name"]),
+          value: row["total_size"]
+        )) %>
+      <% end %>
+    <% end %>
   </section>
 
   <section class="space-y-4">
@@ -144,6 +117,13 @@
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Autovacuum Settings</h2>
-    <%= render(autovacuum_settings_list) %>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% @disk_usage[:autovacuum_settings].each do |row| %>
+        <% list.with_item(ListComponent::StatItemComponent.new(
+          label: tag.code(row["name"]),
+          value: row["setting"]
+        )) %>
+      <% end %>
+    <% end %>
   </section>
 </div>

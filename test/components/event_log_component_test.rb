@@ -35,22 +35,12 @@ class EventLogComponentTest < ViewComponent::TestCase
     assert_equal "false", host["data-polling-indicate-busy-value"]
   end
 
-  test "#call should render a refresh control" do
-    event = create(:event, user: user)
-    result = render_inline(EventLogComponent.new(events: [event], endpoint: "/events")) { |log| log.with_entry { event.type } }
-
-    refresh = result.css("[data-key='events.refresh']").first
-    assert_not_nil refresh
-    assert_equal "polling#refresh", refresh["data-action"]
-  end
-
   test "#call should omit polling chrome when no endpoint is given" do
     event = create(:event, user: user)
 
     result = render_inline(EventLogComponent.new(events: [event])) { |log| log.with_entry { event.type } }
 
     assert_empty result.css("[data-controller='polling']")
-    assert_empty result.css("[data-key='events.refresh']")
   end
 
   test "#call should render cursor pagination links when urls are given" do

@@ -14,6 +14,16 @@ class ListComponentTest < ViewComponent::TestCase
     assert_equal "Trailing slot", result.css('[data-key="stats.custom.value"]').first.text.strip
   end
 
+  test "#render should support block-based slot population" do
+    result = render_inline(ListComponent.new) do |list|
+      list.with_item StubItemComponent.new(body_text: "Block item", value: "Block value", key: "stats.block")
+    end
+
+    assert_not_nil result.at_css("ul")
+    assert_equal "Block item", result.css('[data-key="stats.block.label"]').first.text.strip
+    assert_equal "Block value", result.css('[data-key="stats.block.value"]').first.text.strip
+  end
+
   class StubItemComponent < ViewComponent::Base
     def initialize(body_text:, value:, key:)
       @body_text = body_text

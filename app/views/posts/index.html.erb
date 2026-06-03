@@ -1,17 +1,27 @@
-<% page_title = @feed ? "#{@feed.display_name} posts" : "Posts" %>
+<% page_title = "Posts" %>
 <% content_for :title, page_title %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: page_title) do |header| %>
     <% if @feed %>
-      <% header.with_context_paragraph("Posts imported from this feed.") %>
+      <% group = @feed.target_group.presence %>
+      <% label = @feed.display_name + (group ? " (@#{group})" : "") %>
+      <% header.with_context_paragraph("Showing posts from #{label}.") %>
     <% else %>
       <% header.with_context_paragraph("All posts from your feeds") %>
     <% end %>
-    <% if @posts.any? %>
+    <% if @feeds.any? %>
       <% header.with_action_button do %>
-        <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "posts-sort-menu") %>
+        <%= render FeedFilterDropdownComponent.new(
+              feeds: @feeds,
+              selected_feed: @feed,
+              sort_params: params.permit(:sort, :direction),
+              menu_id: "posts-feed-menu"
+            ) %>
       <% end %>
+    <% end %>
+    <% header.with_action_button do %>
+      <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "posts-sort-menu") %>
     <% end %>
   <% end %>
 

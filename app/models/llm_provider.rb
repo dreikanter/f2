@@ -16,8 +16,13 @@ class LlmProvider
   PROVIDERS = {
     "anthropic" => new(
       name: "anthropic",
-      display_name: "Anthropic (Claude)",
+      display_name: "Anthropic",
       ruby_llm_provider: :anthropic
+    ),
+    "openrouter" => new(
+      name: "openrouter",
+      display_name: "OpenRouter",
+      ruby_llm_provider: :openrouter
     )
   }.freeze
 

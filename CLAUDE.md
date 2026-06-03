@@ -79,6 +79,10 @@ When writing instructions or explanations:
 
 - Follow standard Rails conventions.
 
+## Specs
+
+Specs in `specs/` are historical records committed **together with their implementation**. A spec directory appears in the repo only when the described work has shipped. They are ordered chronologically (`001-`, `002-`, …). If the codebase diverges from a spec's text, a later spec or PR evolved the design — the code is the source of truth, the spec is the rationale record.
+
 ## Error Reporting
 
 Report handled exceptions through `Rails.error`.

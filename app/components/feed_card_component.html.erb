@@ -1,0 +1,45 @@
+<div id="<%= helpers.dom_id(feed) %>" class="w-full rounded-lg border border-slate-200 bg-white shadow-xs">
+  <div class="flex items-start justify-between gap-4 px-5 py-4">
+    <div class="flex min-w-0 items-center gap-2">
+      <%= link_to title, feed_url,
+            class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
+      <% if draft? %>
+        <%= render BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge") %>
+      <% end %>
+    </div>
+
+    <% if draft? %>
+      <div class="flex shrink-0 items-center gap-2">
+        <%= link_to "Continue setup", helpers.edit_feed_path(feed),
+              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
+              data: { key: "feed.#{feed.id}.continue_setup" } %>
+        <%= button_to "Discard", helpers.feed_path(feed),
+              method: :delete,
+              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+              data: { key: "feed.#{feed.id}.discard" },
+              form: { data: { turbo_confirm: DISCARD_CONFIRM } } %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex items-center gap-4 border-t border-slate-200 px-5 py-3">
+    <div class="flex items-center gap-3 text-sm text-slate-400">
+      <% if target_group_label %>
+        <% if target_group_url %>
+          <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
+                class: "transition hover:text-slate-600" %>
+        <% else %>
+          <span><%= target_group_label %></span>
+        <% end %>
+      <% end %>
+      <span class="flex items-center gap-1">
+        <%= helpers.icon("refresh-ccw", css_class: "size-3.5") %>
+        <%= last_refreshed_tag %>
+      </span>
+      <span class="flex items-center gap-1">
+        <%= helpers.icon("layers", css_class: "size-3.5") %>
+        <%= most_recent_post_tag %>
+      </span>
+    </div>
+  </div>
+</div>

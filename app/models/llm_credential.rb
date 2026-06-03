@@ -27,6 +27,7 @@ class LlmCredential < ApplicationRecord
 
   validate :api_key_present
 
+  before_validation :assign_name_if_blank, on: :create
   before_save :clear_other_defaults_if_promoting
   before_destroy :disable_dependent_feeds
 
@@ -39,7 +40,34 @@ class LlmCredential < ApplicationRecord
     end
   end
 
+  def ruby_llm_context
+    RubyLLM.context do |config|
+      config.public_send("#{provider}_api_key=", credential_data["api_key"])
+    end
+  end
+
+  def disable_credential_and_feeds(last_error: nil)
+    with_lock do
+      update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
+      Event.create!(type: "llm_credential_deactivated", level: :warning,
+                    subject: self, user: user, message: "")
+      feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
+    end
+  end
+
   private
+
+  def assign_name_if_blank
+    return if display_name.present? || provider.blank?
+
+    self.display_name = generate_unique_name
+  end
+
+  def generate_unique_name
+    label = provider
+    existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).map(&:downcase).to_set
+    NameGenerator.new(label, existing).generate.split.map(&:capitalize).join(" ")
+  end
 
   def api_key_present
     return if provider.blank?

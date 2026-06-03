@@ -30,7 +30,11 @@
          data-credential-state="inactive"
          data-key="llm_credential.inactive">
       <p class="font-semibold text-red-900">This key didn't work</p>
-      <p class="text-sm text-red-800">Double-check you copied the whole key from your provider's dashboard, then add it again.</p>
+      <% if llm_credential.last_error.present? %>
+        <p class="text-sm text-red-800"><%= llm_credential.last_error %></p>
+      <% else %>
+        <p class="text-sm text-red-700">Grab a fresh key from your provider's dashboard and add it again.</p>
+      <% end %>
     </div>
   <% end %>
 
@@ -55,7 +59,7 @@
       <%= button_to "Make default",
                     llm_credential_default_path(llm_credential),
                     method: :patch,
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
     <% end %>
     <%= link_to "Edit",
                 edit_llm_credential_path(llm_credential),
@@ -65,6 +69,6 @@
                   llm_credential_path(llm_credential),
                   method: :delete,
                   form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50" %>
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
   </div>
 </div>

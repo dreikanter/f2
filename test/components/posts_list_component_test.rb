@@ -14,7 +14,7 @@ class PostsListComponentTest < ViewComponent::TestCase
     post = create(:post, feed: feed)
     result = render_inline PostsListComponent.new(posts: [post])
 
-    assert_not_empty result.css(%([data-key="#{ActionView::RecordIdentifier.dom_id(post)}"]))
+    assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(post)}")
   end
 
   test "#render should not render an empty state when there are no posts" do

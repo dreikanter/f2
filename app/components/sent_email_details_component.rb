@@ -4,15 +4,7 @@ class SentEmailDetailsComponent < ViewComponent::Base
   end
 
   def call
-    helpers.render list_group
-  end
-
-  private
-
-  attr_reader :email
-
-  def list_group
-    ListComponent.new.tap do |list|
+    render(ListComponent.new) do |list|
       list.with_item(ListComponent::StatItemComponent.new(
         label: "Message ID",
         value: helpers.content_tag(:code, email[:message_id], class: "break-all")
@@ -34,4 +26,8 @@ class SentEmailDetailsComponent < ViewComponent::Base
       ))
     end
   end
+
+  private
+
+  attr_reader :email
 end

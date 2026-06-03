@@ -18,6 +18,20 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_not_includes link["class"], "decoration-dotted"
   end
 
+  test "#call should link the subject to the admin filter" do
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", subject: feed, user: user)
+
+    result = render_inline(Admin::EventLogEntryComponent.new(event: event, href: "/admin/events/#{event.id}"))
+
+    link = result.css("a[data-key='events.subject']").first
+    assert_not_nil link
+    assert_equal "Feed ##{feed.id}", link.text
+    assert_includes link["href"], "/admin/events"
+    assert_includes link["href"], "filter%5Bsubject_type%5D=Feed"
+    assert_includes link["href"], "filter%5Bsubject_id%5D=#{feed.id}"
+  end
+
   test "#call should show System for events without a user" do
     event = create(:event, user: nil)
 

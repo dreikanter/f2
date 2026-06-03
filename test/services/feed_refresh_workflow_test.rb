@@ -236,6 +236,40 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
+  test "#execute should disable the LLM credential and related feeds on auth failure" do
+    llm_user = create(:user)
+    credential = create(:llm_credential, :active, user: llm_user)
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::AuthError, "Unauthorized" }) do
+      assert_raises(LlmClient::AuthError) { workflow.execute }
+    end
+
+    assert_equal "inactive", credential.reload.state
+    assert_equal "Unauthorized", credential.last_error
+    assert_equal "disabled", test_feed.reload.state
+
+    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh_error").count
+    deactivated_event = Event.find_by(subject: credential, type: "llm_credential_deactivated")
+    assert_not_nil deactivated_event
+    assert_equal "warning", deactivated_event.level
+    assert_equal llm_user, deactivated_event.user
+  end
+
+  test "#execute should not disable the credential for non-auth LLM errors" do
+    llm_user = create(:user)
+    credential = create(:llm_credential, :active, user: llm_user)
+    test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::ProviderError, "server error" }) do
+      assert_raises(LlmClient::ProviderError) { workflow.execute }
+    end
+
+    assert_equal "active", credential.reload.state
+  end
+
   test "#execute should handle normalization errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
@@ -510,5 +544,20 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       metric.reload
       assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
     end
+  end
+
+  test "#publish_posts should disable the access token and stop publishing on UnauthorizedError" do
+    pub_user = create(:user)
+    token = create(:access_token, :active, user: pub_user)
+    test_feed = create(:feed, user: pub_user, access_token: token,
+                               feed_profile_key: "rss", target_group: "group")
+    post = create(:post, :enqueued, feed: test_feed)
+
+    stub_request(:post, "#{token.host}/v4/posts").to_return(status: 401)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    workflow.send(:publish_posts, Post.where(id: post.id))
+
+    assert_equal "inactive", token.reload.status
   end
 end

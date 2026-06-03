@@ -3,7 +3,7 @@ module Processor
     private
 
     def sanitize_feedjira_entry(entry)
-      super.merge(thumbnail: entry.try(:media_thumbnail_url))
+      super.merge("thumbnail" => entry.try(:media_thumbnail_url))
     end
   end
 end

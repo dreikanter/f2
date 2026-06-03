@@ -75,7 +75,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_not_nil css_select('[data-key="stats.most_recent_post_publication"]').first
-    assert_match(/1 day ago/, css_select('[data-key="stats.most_recent_post_publication.value"]').first.text)
+    assert_match(/1d ago/, css_select('[data-key="stats.most_recent_post_publication.value"]').first.text)
   end
 
   test "#show should hide most recent post publication when no published posts" do
@@ -86,7 +86,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
   end
 
-  test "#show should display average posts per day for last week" do
+  test "#show should display posts published last week" do
     sign_in_as user
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
@@ -96,16 +96,16 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="stats.average_posts_per_day"]').first
-    assert_equal "0.3", css_select('[data-key="stats.average_posts_per_day.value"]').first.text.strip
+    assert_not_nil css_select('[data-key="stats.posts_last_week"]').first
+    assert_equal "2", css_select('[data-key="stats.posts_last_week.value"]').first.text.strip
   end
 
-  test "#show should hide average posts per day when no posts" do
+  test "#show should hide posts last week when no posts" do
     sign_in_as user
 
     get status_path
     assert_response :success
-    assert css_select('[data-key="stats.average_posts_per_day"]').empty?
+    assert css_select('[data-key="stats.posts_last_week"]').empty?
   end
 
   test "#show should hide post statistics when no posts" do
@@ -116,7 +116,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert css_select('[data-key="stats.total_imported_posts"]').empty?
     assert css_select('[data-key="stats.total_published_posts"]').empty?
     assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
-    assert css_select('[data-key="stats.average_posts_per_day"]').empty?
+    assert css_select('[data-key="stats.posts_last_week"]').empty?
   end
 
   test "#show should render empty state when no feeds" do
@@ -146,8 +146,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select "h2", "Recent Activity"
-    assert_not_nil css_select('[data-key="events.%d"]' % event1.id).first
-    assert_not_nil css_select('[data-key="events.%d"]' % event2.id).first
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % event1.id).first
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % event2.id).first
   end
 
   test "#show should display empty recent events section when no events" do
@@ -169,8 +169,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="events.%d"]' % user_event.id).first
-    assert css_select('[data-key="events.%d"]' % other_event.id).empty?
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % user_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % other_event.id).empty?
   end
 
   test "#show should exclude debug level events" do
@@ -181,8 +181,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="events.%d"]' % info_event.id).first
-    assert css_select('[data-key="events.%d"]' % debug_event.id).empty?
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % info_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % debug_event.id).empty?
   end
 
   test "#show should exclude expired events" do
@@ -193,8 +193,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="events.%d"]' % active_event.id).first
-    assert css_select('[data-key="events.%d"]' % expired_event.id).empty?
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % active_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % expired_event.id).empty?
   end
 
   test "#show should limit recent events to the initial limit" do
@@ -207,7 +207,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
       get status_path
       assert_response :success
-      assert_select '[data-key="events.type"]', count: 2
+      assert_select 'li[data-key^="recent_events."]', count: 2
     end
   end
 
@@ -219,8 +219,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path, params: { filter: { type: ["feed_refresh"] } }
     assert_response :success
-    assert_not_nil css_select('[data-key="events.%d"]' % refresh_event.id).first
-    assert css_select('[data-key="events.%d"]' % withdrawn_event.id).empty?
+    assert_not_nil css_select('[data-key="recent_events.%d"]' % refresh_event.id).first
+    assert css_select('[data-key="recent_events.%d"]' % withdrawn_event.id).empty?
   end
 
   test "#show should carry the active filter into the polling endpoint" do
@@ -230,7 +230,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path, params: { filter: { type: ["feed_refresh"] } }
     assert_response :success
-    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
+    assert_select "#recent_events_list[data-polling-endpoint-value*='feed_refresh']"
   end
 
   private

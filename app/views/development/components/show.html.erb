@@ -69,27 +69,27 @@
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
         </div>
       </div>
     </section>
@@ -354,20 +354,20 @@
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With feed items</p>
-        <% list = ListComponent.new %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"])) %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"])) %>
-        <% list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"])) %>
-        <%= render list %>
+        <%= render ListComponent.new do |list|
+          list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]))
+          list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]))
+          list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]))
+        end %>
       </div>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With stat items</p>
-        <% stat_list = ListComponent.new %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42")) %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234")) %>
-        <% stat_list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38")) %>
-        <%= render stat_list %>
+        <%= render ListComponent.new do |list|
+          list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42"))
+          list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234"))
+          list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38"))
+        end %>
       </div>
     </section>
 

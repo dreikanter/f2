@@ -12,11 +12,15 @@ class UserStatsComponent < ViewComponent::Base
   attr_reader :user
 
   def mobile_layout
-    render(mobile_list_component)
+    render(DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES))) do |list|
+      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
+    end
   end
 
   def desktop_layout
-    render(desktop_bar_component)
+    render(StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES))) do |bar|
+      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
+    end
   end
 
   def layout_items
@@ -40,30 +44,18 @@ class UserStatsComponent < ViewComponent::Base
         value: number_with_delimiter(user.total_published_posts_count)
       },
       {
-        key: "average_posts_per_day",
-        label: "Average posts per day (last week)",
-        label_short: "Daily",
-        value: user.average_posts_per_day_last_week.present? ? number_with_precision(user.average_posts_per_day_last_week.to_f, precision: 1) : "—"
+        key: "posts_last_week",
+        label: "Posts published last week",
+        label_short: "Last week",
+        value: number_with_delimiter(user.posts_published_last_week_count)
       },
       {
         key: "most_recent_post_publication",
         label: "Most recent post publication",
         label_short: "Recent",
-        value: user.most_recent_post_published_at.present? ? "#{time_ago_in_words(user.most_recent_post_published_at)} ago" : "—"
+        value: user.most_recent_post_published_at.present? ? "#{helpers.short_time_ago(user.most_recent_post_published_at)} ago" : "—"
       }
     ]
-  end
-
-  def mobile_list_component
-    DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES)).tap do |list|
-      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
-    end
-  end
-
-  def desktop_bar_component
-    StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES)).tap do |bar|
-      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
-    end
   end
 
   def mobile_stat_cell(item)
