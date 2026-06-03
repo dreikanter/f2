@@ -51,7 +51,7 @@ class LlmCredential < ApplicationRecord
         level: :warning,
         subject: self,
         user: user,
-        message: last_error.to_s
+        message: ""
       )
     end
   end

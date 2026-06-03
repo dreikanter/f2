@@ -25,7 +25,7 @@ class LlmUsageTest < ActiveSupport::TestCase
   end
 
   test "should expose purpose enum values" do
-    assert_equal({ "scheduled_run" => 0, "preview" => 1, "credential_validation" => 2 }, LlmUsage.purposes)
+    assert_equal({ "scheduled_run" => 0, "preview" => 1 }, LlmUsage.purposes)
   end
 
   test "should expose outcome enum values" do
