@@ -545,4 +545,22 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
     end
   end
+
+  test "#publish_posts should disable the access token and re-raise on UnauthorizedError" do
+    pub_user = create(:user)
+    token = create(:access_token, :active, user: pub_user)
+    test_feed = create(:feed, user: pub_user, access_token: token,
+                               feed_profile_key: "rss", target_group: "group")
+    post = create(:post, :enqueued, feed: test_feed)
+
+    stub_request(:post, "#{token.host}/v4/posts").to_return(status: 401)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+
+    assert_raises(FreefeedClient::UnauthorizedError) do
+      workflow.send(:publish_posts, Post.where(id: post.id))
+    end
+
+    assert_equal "inactive", token.reload.status
+  end
 end

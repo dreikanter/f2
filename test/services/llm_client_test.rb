@@ -260,6 +260,29 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.health_check }
   end
 
+  test "#health_check should call the provider models endpoint with the credential api_key" do
+    client = LlmClient.new(credential)
+
+    fake_provider_class = Class.new do
+      def initialize(_config); end
+      def list_models; []; end
+    end
+
+    RubyLLM::Provider.stub(:resolve, fake_provider_class) do
+      assert_equal true, client.health_check
+      assert_equal 0, LlmUsage.count
+    end
+  end
+
+  test "#health_check should raise ProviderError when api_key is missing from credential_data" do
+    bad_credential = build(:llm_credential, :active, credential_data: {})
+    bad_credential.save(validate: false)
+    client = LlmClient.new(bad_credential)
+
+    assert_raises(LlmClient::ProviderError) { client.health_check }
+    assert_equal 0, LlmUsage.count
+  end
+
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("401"))
