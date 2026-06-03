@@ -236,10 +236,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
-  test "#execute should disable the LLM credential and create an error event on auth failure" do
+  test "#execute should disable the LLM credential and related feeds on auth failure" do
     llm_user = create(:user)
     credential = create(:llm_credential, :active, user: llm_user)
-    test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
     workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::AuthError, "Unauthorized" }) do
@@ -248,6 +248,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_equal "inactive", credential.reload.state
     assert_equal "Unauthorized", credential.last_error
+    assert_equal "disabled", test_feed.reload.state
 
     assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh_error").count
     deactivated_event = Event.find_by(subject: credential, type: "llm_credential_deactivated")
