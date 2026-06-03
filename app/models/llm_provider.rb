@@ -31,9 +31,7 @@ class LlmProvider
     end
 
     def find(name)
-      return nil if name.nil?
-
-      PROVIDERS[name.to_s]
+      PROVIDERS.fetch(name.to_s)
     end
 
     def exists?(name)

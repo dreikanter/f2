@@ -32,7 +32,7 @@ class LlmCredentialsListComponent < ViewComponent::Base
   end
 
   def metadata_segments_for(credential)
-    provider_name = LlmProvider.find(credential.provider)&.display_name
+    provider_name = LlmProvider.find(credential.provider).display_name
     [provider_name, "status: #{credential.state}"].compact
   end
 
