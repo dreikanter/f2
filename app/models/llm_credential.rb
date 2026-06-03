@@ -69,12 +69,29 @@ class LlmCredential < ApplicationRecord
     label = provider.capitalize
     existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).to_set
 
-    200.times do
-      candidate = "#{label} #{ADJECTIVES.sample.capitalize} #{NOUNS.sample.capitalize}"
-      return candidate unless existing.include?(candidate)
-    end
+    pair = lazy_shuffle(ADJECTIVES).flat_map { |adj|
+      lazy_shuffle(NOUNS).map { |noun| [adj, noun] }
+    }.find { |adj, noun| !existing.include?("#{label} #{adj.capitalize} #{noun.capitalize}") }
 
-    "#{label} #{SecureRandom.hex(4)}"
+    if pair
+      adj, noun = pair
+      "#{label} #{adj.capitalize} #{noun.capitalize}"
+    else
+      n = 1
+      n += 1 while existing.include?("#{label} #{n}")
+      "#{label} #{n}"
+    end
+  end
+
+  def lazy_shuffle(arr)
+    Enumerator.new do |y|
+      a = arr.dup
+      a.size.times do |i|
+        j = rand(i...a.size)
+        a[i], a[j] = a[j], a[i]
+        y << a[i]
+      end
+    end.lazy
   end
 
   def api_key_present
