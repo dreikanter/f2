@@ -9,6 +9,7 @@ class LlmClient
 
   Error = Class.new(StandardError)
   ProviderError = Class.new(Error)
+  AuthError = Class.new(ProviderError)
   SchemaError = Class.new(Error)
   Timeout = Class.new(Error)
   DetectionForbidden = Class.new(Error)
@@ -69,6 +70,9 @@ class LlmClient
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
       write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
       raise Timeout, e.message
+    rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise AuthError, e.message
     rescue RubyLLM::Error,
            RubyLLM::ConfigurationError,
            RubyLLM::ModelNotFoundError,

@@ -246,12 +246,34 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_nil LlmUsage.last.stage
   end
 
-  test "#health_check should raise ProviderError when the provider rejects the call" do
+  test "#health_check should raise AuthError when the provider rejects the key" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("invalid key"))
 
-    assert_raises(LlmClient::ProviderError) { client.health_check }
+    assert_raises(LlmClient::AuthError) { client.health_check }
     assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
+  test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("401"))
+
+    assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
+  test "#call should raise AuthError for RubyLLM::ForbiddenError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::ForbiddenError.new("403"))
+
+    assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
+  end
+
+  test "#call should raise AuthError for RubyLLM::PaymentRequiredError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, RubyLLM::PaymentRequiredError.new("402"))
+
+    assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
   end
 
   test "#call should map RubyLLM::ModelNotFoundError to ProviderError" do

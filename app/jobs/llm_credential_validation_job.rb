@@ -11,7 +11,6 @@ class LlmCredentialValidationJob < ApplicationJob
     LlmClient.for(credential).health_check
     credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
   rescue LlmClient::Error => e
-    Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
     credential.update!(state: :inactive, last_validated_at: Time.current, last_error: e.message)
   end
 end
