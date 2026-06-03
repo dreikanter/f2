@@ -24,3 +24,26 @@ anthropic:
     output_per_million: 4.00
     cache_write_per_million: 1.00
     cache_read_per_million: 0.08
+
+openrouter:
+  anthropic/claude-opus-4-7:
+    input_per_million: 15.00
+    output_per_million: 75.00
+  anthropic/claude-sonnet-4-6:
+    input_per_million: 3.00
+    output_per_million: 15.00
+  anthropic/claude-haiku-4-5:
+    input_per_million: 0.80
+    output_per_million: 4.00
+  openai/gpt-4o:
+    input_per_million: 2.50
+    output_per_million: 10.00
+  openai/gpt-4o-mini:
+    input_per_million: 0.15
+    output_per_million: 0.60
+  google/gemini-flash-2.0:
+    input_per_million: 0.10
+    output_per_million: 0.40
+  meta-llama/llama-3.3-70b-instruct:
+    input_per_million: 0.12
+    output_per_million: 0.40
