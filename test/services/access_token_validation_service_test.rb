@@ -137,7 +137,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "newuser", detail.data["user_info"]["username"]
   end
 
-  test "#call should deactivate token on validation failure" do
+  test "#call should deactivate token on invalid token error" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -145,7 +145,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           "Accept" => "application/json"
         }
       )
-      .to_return(status: 401, body: "Unauthorized")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
     service = AccessTokenValidationService.new(access_token)
     service.call
@@ -153,7 +153,26 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "inactive", access_token.reload.status
   end
 
-  test "#call should disable enabled feeds on validation failure" do
+  test "#call should not disable token on transient errors" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{access_token.encrypted_token}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 500, body: "Internal Server Error")
+
+    service = AccessTokenValidationService.new(access_token)
+
+    assert_raises(FreefeedClient::Error) do
+      service.call
+    end
+
+    assert_equal "validating", access_token.reload.status
+  end
+
+  test "#call should disable enabled feeds on invalid token error" do
     feed1 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed2 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
@@ -165,7 +184,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           "Accept" => "application/json"
         }
       )
-      .to_return(status: 500, body: "Internal Server Error")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
     service = AccessTokenValidationService.new(access_token)
 
@@ -198,7 +217,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           "Accept" => "application/json"
         }
       )
-      .to_return(status: 401, body: "Unauthorized")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
     service = AccessTokenValidationService.new(access_token)
 
@@ -209,7 +228,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "inactive", access_token.reload.status
   end
 
-  test "#call should deactivate token when managed_groups fails" do
+  test "#call should deactivate token when managed_groups returns invalid token error" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -235,12 +254,11 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           "Accept" => "application/json"
         }
       )
-      .to_return(status: 500, body: "Internal Server Error")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
 
     service = AccessTokenValidationService.new(access_token)
     service.call
 
-    # Token should be inactive when managed_groups fails during cache_token_details
     assert_equal "inactive", access_token.reload.status
   end
 end
