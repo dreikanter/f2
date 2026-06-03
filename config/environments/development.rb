@@ -73,4 +73,5 @@ Rails.application.configure do
 
   # Expose developer-only tools (component reference, captured emails).
   config.x.dev_tools.enabled = true
+  config.x.dev_tools.require_auth = false
 end
