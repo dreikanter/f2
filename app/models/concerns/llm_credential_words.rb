@@ -1,0 +1,53 @@
+module LlmCredentialWords
+  ADJECTIVES = %w[
+    bold
+    brave
+    bright
+    calm
+    cool
+    crisp
+    dark
+    deep
+    fair
+    free
+    grand
+    keen
+    lush
+    noble
+    pure
+    rare
+    rich
+    sharp
+    swift
+    vast
+    warm
+    wild
+    wise
+  ].freeze
+
+  NOUNS = %w[
+    banana
+    birch
+    canyon
+    cedar
+    comet
+    coral
+    crystal
+    ember
+    falcon
+    glacier
+    harbor
+    jasper
+    lantern
+    lotus
+    maple
+    meadow
+    pebble
+    river
+    salmon
+    summit
+    thunder
+    walnut
+    willow
+  ].freeze
+end

@@ -3,10 +3,9 @@
 # stores provider-specific fields (e.g. `{ "api_key" => "..." }`) and is
 # encrypted at rest.
 class LlmCredential < ApplicationRecord
-  DISPLAY_NAME_MAX_LENGTH = 80
+  include LlmCredentialWords
 
-  ADJECTIVES = %w[bold brave bright calm cool dark deep fair free grand keen pure rare rich sharp swift vast warm wild wise].freeze
-  NOUNS = %w[banana cedar comet coral crystal ember falcon glacier harbor lantern lotus maple meadow pebble river salmon summit thunder walnut willow].freeze
+  DISPLAY_NAME_MAX_LENGTH = 80
 
   belongs_to :user
   # `dependent` is handled manually by `disable_dependent_feeds` so we can
