@@ -57,6 +57,7 @@ class LlmClient
 
   def call(ctx, prompt:, output_schema:, tools: [])
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
+    raise AuthError, "AI credential is inactive — update your API key." unless credential.active?
 
     started_at = Time.current
 
@@ -101,23 +102,31 @@ class LlmClient
     Result.new(payload: response.payload, usage_id: usage.id)
   end
 
-  # Cheap "credentials usable?" call used by LlmCredentialValidationJob.
+  # Token-free credential check used by LlmCredentialValidationJob.
+  # Hits the provider's models endpoint (no inference, no usage row).
   # Returns true on success, raises a known error class otherwise.
   def health_check
-    ctx = CallContext.new(feed: nil, profile_key: nil, stage: nil,
-                          model: default_model_for(credential.provider),
-                          purpose: :credential_validation)
-    call(ctx,
-         prompt: "Reply with the single word: ok",
-         output_schema: {
-           "type" => "object",
-           "properties" => { "reply" => { "type" => "string" } },
-           "required" => ["reply"]
-         })
+    fetch_provider_models
     true
+  rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
+    raise AuthError, e.message
+  rescue RubyLLM::Error, RubyLLM::ConfigurationError => e
+    Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
+    raise ProviderError, e.message
   end
 
   private
+
+  # Single seam tests stub. Calls the provider's models listing endpoint.
+  def fetch_provider_models
+    api_key = credential.credential_data["api_key"]
+    raise RubyLLM::ConfigurationError, "credential missing api_key" if api_key.blank?
+
+    context = RubyLLM.context do |config|
+      config.public_send("#{credential.provider}_api_key=", api_key)
+    end
+    RubyLLM::Provider.resolve(credential.provider.to_sym).new(context.config).list_models
+  end
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(model:, prompt:, output_schema:, tools:)
@@ -195,13 +204,6 @@ class LlmClient
       duration_ms: ((finished_at - started_at) * 1000).round,
       error_message: error_message
     )
-  end
-
-  def default_model_for(provider)
-    case provider.to_s
-    when "anthropic" then "claude-haiku-4-5"
-    else "default"
-    end
   end
 
   def error_context(ctx)
