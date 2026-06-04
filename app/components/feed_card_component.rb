@@ -21,6 +21,18 @@ class FeedCardComponent < ViewComponent::Base
     feed.draft?
   end
 
+  def status_badge
+    case feed.state.to_sym
+    when :draft    then BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge")
+    when :disabled then BadgeComponent.new(text: "Disabled", color: :yellow, key: "feed.#{feed.id}.disabled_badge")
+    when :enabled  then BadgeComponent.new(text: "Active", color: :green, key: "feed.#{feed.id}.enabled_badge")
+    end
+  end
+
+  def menu_id
+    "feed-menu-#{feed.id}"
+  end
+
   def target_group_label
     "@#{feed.target_group}" if feed.target_group.present?
   end
