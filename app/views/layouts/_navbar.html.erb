@@ -52,8 +52,11 @@
           <%
             # Desktop classes
             desktop_link_classes = class_names(
-              "inline-flex items-center rounded-sm px-3 py-2 transition md:px-2 md:py-1",
-              { "bg-slate-900 text-white md:bg-slate-100 md:text-slate-600 md:ring-2 md:ring-slate-600" => item[:active] },
+              "inline-flex items-center rounded-sm px-3 py-2 transition-colors duration-150 md:px-2 md:py-1",
+              {
+                "bg-slate-900 text-white" => item[:active],
+                "text-slate-600 hover:bg-slate-100 hover:text-slate-900" => !item[:active]
+              },
               "outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             )
           %>
@@ -72,7 +75,7 @@
             mobile_link_classes = class_names(
               "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900",
               {
-                "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => item[:active],
+                "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:text-white" => item[:active],
                 "text-slate-700" => !item[:active],
                 "rounded-t-lg" => index == 0,
                 "rounded-b-lg" => index == navbar_items.length - 1,
@@ -93,7 +96,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 rounded-t-lg border-b border-slate-200",
                 {
-                  "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(settings_path),
+                  "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:text-white" => current_page?(settings_path),
                   "text-slate-700" => !current_page?(settings_path)
                 }
               ),
@@ -102,7 +105,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 border-b border-slate-200",
                 {
-                  "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(access_tokens_path),
+                  "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:text-white" => current_page?(access_tokens_path),
                   "text-slate-700" => !current_page?(access_tokens_path)
                 }
               ),
@@ -111,7 +114,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 border-b border-slate-200",
                 {
-                  "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(llm_credentials_path),
+                  "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:text-white" => current_page?(llm_credentials_path),
                   "text-slate-700" => !current_page?(llm_credentials_path)
                 }
               ),
@@ -120,7 +123,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:text-slate-900 rounded-b-lg",
                 {
-                  "bg-slate-600 text-white hover:bg-slate-700 hover:text-white focus:text-white" => current_page?(invites_path),
+                  "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:text-white" => current_page?(invites_path),
                   "text-slate-700" => !current_page?(invites_path)
                 }
               ),
