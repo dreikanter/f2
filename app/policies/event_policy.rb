@@ -9,17 +9,11 @@ class EventPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
+      if user&.admin?
         scope.all
       else
         scope.none
       end
-    end
-
-    private
-
-    def admin?
-      user&.permissions&.exists?(name: "admin")
     end
   end
 end

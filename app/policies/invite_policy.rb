@@ -18,7 +18,7 @@ class InvitePolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
+      if user&.admin?
         scope.all
       elsif user
         scope.where(created_by_user: user)

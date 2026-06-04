@@ -47,14 +47,6 @@ class ApplicationPolicy
     private
 
     attr_reader :user, :scope
-
-    def admin?
-      user&.permissions&.exists?(name: "admin")
-    end
-
-    def dev?
-      user&.permissions&.exists?(name: "dev")
-    end
   end
 
   private
@@ -63,11 +55,7 @@ class ApplicationPolicy
     user.present?
   end
 
-  def admin?
-    user&.permissions&.exists?(name: "admin")
-  end
+  def admin? = user&.admin?
 
-  def dev?
-    user&.permissions&.exists?(name: "dev")
-  end
+  def dev? = user&.dev?
 end
