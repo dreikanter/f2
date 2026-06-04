@@ -18,6 +18,9 @@
           <% disabled = perm == Permission::ADMIN && @last_admin %>
           <div class="flex items-start gap-3">
             <div class="flex h-6 items-center">
+              <% if disabled %>
+                <%= hidden_field_tag "permissions[]", perm %>
+              <% end %>
               <%= check_box_tag "permissions[]", perm,
                 @user.permission?(perm),
                 id: "permission_#{perm}",

@@ -79,6 +79,17 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
     assert admin_user.reload.permission?(Permission::ADMIN)
   end
 
+  test "#update should succeed when only admin submits form with admin permission included" do
+    permissions(:admin_permission).destroy
+    sign_in_as admin_user
+
+    patch admin_user_permissions_path(admin_user), params: { permissions: [Permission::ADMIN] }
+
+    assert_redirected_to admin_user_path(admin_user)
+    assert_equal "Permissions updated.", flash[:notice]
+    assert admin_user.reload.permission?(Permission::ADMIN)
+  end
+
   test "#update should allow removing admin when multiple admins exist" do
     sign_in_as admin_user
     second_admin = create(:user, :admin)
