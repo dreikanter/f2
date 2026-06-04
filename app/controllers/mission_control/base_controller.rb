@@ -5,7 +5,7 @@ module MissionControl
     private
 
     def authorize_admin
-      authorize :admin, :show?
+      authorize :access, :admin?
     end
 
     def request_authentication
