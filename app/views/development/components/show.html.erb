@@ -284,7 +284,57 @@
         </div>
       <% end %>
 
-      <p class="text-slate-600">Add sections to split a card into regions divided edge to edge.</p>
+      <p class="text-slate-600">Two-section cards are the standard shape for item listings — a header on top, compact metadata below.</p>
+      <%= render CardComponent.new do |card| %>
+        <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4") do %>
+          <p class="text-base text-slate-900">Tech News Daily</p>
+          <p class="shrink-0 text-sm text-slate-400">5 min ago</p>
+        <% end %>
+        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-slate-400") do %>
+          <span>rss.technews.io</span>
+          <span>142 posts</span>
+          <span>Active</span>
+        <% end %>
+      <% end %>
+
+      <p class="text-slate-600">A three-dot menu tucks item actions into the header without crowding the layout.</p>
+      <%= render CardComponent.new do |card| %>
+        <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4") do %>
+          <p class="text-base text-slate-900">Tech News Daily</p>
+          <div class="relative">
+            <button type="button"
+                    id="card-demo-menu-button"
+                    data-dropdown-toggle="card-demo-menu"
+                    data-dropdown-placement="bottom-end"
+                    class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                    aria-haspopup="true"
+                    aria-expanded="false">
+              <%= helpers.icon("ellipsis", css_class: "size-4") %>
+              <span class="sr-only">More options</span>
+            </button>
+            <div id="card-demo-menu"
+                 class="z-20 hidden w-40 rounded-lg border border-slate-200 bg-white shadow-sm"
+                 role="menu"
+                 aria-labelledby="card-demo-menu-button">
+              <ul class="py-1">
+                <li>
+                  <a href="#" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50" role="menuitem">Edit</a>
+                </li>
+                <li>
+                  <a href="#" class="block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50" role="menuitem">Delete</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-slate-400") do %>
+          <span>rss.technews.io</span>
+          <span>142 posts</span>
+          <span>Active</span>
+        <% end %>
+      <% end %>
+
+      <p class="text-slate-600">Add more sections to split a card into further regions divided edge to edge.</p>
       <%= render CardComponent.new do |card| %>
         <% card.with_section do %>
           <p class="text-sm font-medium text-slate-700">Tech News Daily</p>
