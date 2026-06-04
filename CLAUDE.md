@@ -107,7 +107,7 @@ is usually enough.
 Structure:
 - `Changes:` bullet list at the top describing what was done
 - Optional prose paragraph explaining the rationale
-- `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`)
+- `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`); omit entirely if there are none
 - Do **not** include session links or any `https://claude.ai/...` URLs
 
 ## Tooling Notes

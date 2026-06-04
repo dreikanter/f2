@@ -4,6 +4,4 @@ Changes:
 - Change 2
 - ...
 
-References:
-
-- Closes #...
+<!-- Add "References:" section with related issues/PRs only if applicable, e.g. "Closes #123". Remove this section otherwise. -->
