@@ -62,13 +62,13 @@ class EventPolicyTest < ActiveSupport::TestCase
     assert_equal 2, scope.count
   end
 
-  test "scope returns no events for regular users" do
+  test "scope returns only owned events for regular users" do
     create(:event, type: "Event1")
-    create(:event, type: "Event2")
+    owned = create(:event, type: "Event2", user: regular_user)
 
     scope = EventPolicy::Scope.new(regular_user, Event).resolve
 
-    assert_equal 0, scope.count
+    assert_equal [ owned ], scope.to_a
   end
 
   test "scope returns no events for unauthenticated users" do

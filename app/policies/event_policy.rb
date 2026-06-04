@@ -11,6 +11,8 @@ class EventPolicy < ApplicationPolicy
     def resolve
       if user&.admin?
         scope.all
+      elsif user
+        scope.where(user: user)
       else
         scope.none
       end
