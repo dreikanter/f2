@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :permission do
     user
-    name { "admin" }
+    name { Permission::ADMIN }
   end
 end
