@@ -48,6 +48,7 @@ class Feed < ApplicationRecord
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
+  after_update :create_state_change_event
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -323,5 +324,19 @@ class Feed < ApplicationRecord
     return if feed_schedule.present?
 
     reset_schedule!
+  end
+
+  def create_state_change_event
+    return unless saved_change_to_state?
+
+    type = if enabled?
+      "feed_enabled"
+    elsif disabled?
+      "feed_disabled"
+    end
+
+    return unless type
+
+    Event.create!(type: type, level: :info, subject: self, user: user, message: "")
   end
 end

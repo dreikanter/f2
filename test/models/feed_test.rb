@@ -761,4 +761,46 @@ class FeedTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :draft?
     assert_not_empty feed.errors
   end
+
+  test "#create_state_change_event should create feed_enabled event when feed is enabled" do
+    feed = create(:feed, :disabled)
+
+    assert_difference("Event.where(type: 'feed_enabled').count", 1) do
+      feed.update!(state: :enabled)
+    end
+
+    event = Event.where(type: "feed_enabled").last
+    assert_equal feed, event.subject
+    assert_equal feed.user, event.user
+    assert_equal "info", event.level
+  end
+
+  test "#create_state_change_event should create feed_disabled event when feed is disabled" do
+    feed = create(:feed, :enabled)
+
+    assert_difference("Event.where(type: 'feed_disabled').count", 1) do
+      feed.update!(state: :disabled)
+    end
+
+    event = Event.where(type: "feed_disabled").last
+    assert_equal feed, event.subject
+    assert_equal feed.user, event.user
+    assert_equal "info", event.level
+  end
+
+  test "#create_state_change_event should not create event when state is unchanged" do
+    feed = create(:feed, :disabled)
+
+    assert_no_difference("Event.count") do
+      feed.update!(name: "new-name")
+    end
+  end
+
+  test "#create_state_change_event should not create event when transitioning to draft" do
+    feed = create(:feed, :disabled)
+
+    assert_no_difference("Event.count") do
+      feed.update!(state: :draft)
+    end
+  end
 end
