@@ -65,7 +65,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def footer?
-    group_label.present? || attachment_count > 0 || comment_count > 0 || source_url || freefeed_url || withdraw_allowed?
+    published_time_tag || group_label.present? || attachment_count > 0 || comment_count > 0 || source_url || freefeed_url || withdraw_allowed?
   end
 
   def menu_id
