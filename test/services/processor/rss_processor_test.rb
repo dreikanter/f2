@@ -51,6 +51,30 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_equal [], entries
   end
 
+  test "#process should capture enclosure image URL" do
+    rss_with_enclosure = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Photo Feed</title>
+          <item>
+            <title>Photo of the Day</title>
+            <link>https://example.com/photo</link>
+            <guid>https://example.com/photo</guid>
+            <pubDate>Thu, 12 Sep 2024 09:00:00 +0000</pubDate>
+            <enclosure url="https://example.com/photo.jpg" length="12345" type="image/jpeg" />
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    processor = Processor::RssProcessor.new(feed, rss_with_enclosure)
+    entries = processor.process
+
+    assert_equal 1, entries.length
+    assert_equal "https://example.com/photo.jpg", entries.first.raw_data["image"]
+  end
+
   test "#process should handle entries without id or url" do
     minimal_rss = <<~RSS
       <?xml version="1.0" encoding="UTF-8"?>

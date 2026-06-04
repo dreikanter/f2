@@ -34,7 +34,7 @@ module Processor
         "updated" => entry.updated&.rfc3339,
         "author" => entry.author,
         "categories" => entry.categories,
-        "enclosures" => entry.try(:enclosures) || []
+        "image" => entry.try(:image)
       }
     end
   end

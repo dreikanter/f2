@@ -20,6 +20,20 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
+  test "#normalize should include enclosure image in attachment_urls" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Photo of the day.",
+      "link" => "https://example.com/photo",
+      "image" => "https://example.com/photo.jpg"
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal ["https://example.com/photo.jpg"], post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
+
   test "#normalize should accept post with URL even when text content is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "",
