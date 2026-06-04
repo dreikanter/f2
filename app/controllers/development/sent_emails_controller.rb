@@ -1,11 +1,11 @@
 class Development::SentEmailsController < ApplicationController
   def index
-    authorize :admin, :dev?
+    authorize :dev, :show?
     @emails = email_storage.ordered_list
   end
 
   def show
-    authorize :admin, :dev?
+    authorize :dev, :show?
     id = params[:id]
 
     unless id =~ /\A[0-9a-f-]{36}\z/
@@ -29,7 +29,7 @@ class Development::SentEmailsController < ApplicationController
   end
 
   def purge
-    authorize :admin, :dev?
+    authorize :dev, :show?
     email_storage.purge
     redirect_to development_sent_emails_path, notice: "All emails purged"
   rescue => e

@@ -1,6 +1,6 @@
 class Admin::SystemStatsController < ApplicationController
   def show
-    authorize :admin, :dev?
+    authorize :dev, :show?
     @release_info = release_info
     @disk_usage = Rails.cache.fetch("admin/system_stats/v3", expires_in: 5.minutes) do
       DiskUsageService.new.call

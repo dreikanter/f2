@@ -1,5 +1,5 @@
 class Development::ComponentsController < ApplicationController
   def show
-    authorize :admin, :dev?
+    authorize :dev, :show?
   end
 end
