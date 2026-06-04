@@ -39,6 +39,13 @@ class Post < ApplicationRecord
     withdrawn: 5
   }
 
+  def freefeed_url
+    token = feed&.access_token
+    return unless token && feed.target_group.present? && freefeed_post_id.present?
+
+    "#{token.host}/#{feed.target_group}/#{freefeed_post_id}"
+  end
+
   def normalized_attributes
     as_json(only: NORMALIZED_ATTRIBUTES)
   end

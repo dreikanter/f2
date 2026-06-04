@@ -117,9 +117,21 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_freefeed_post_id_item(component)
+    url = @post.freefeed_url
+    value = if url
+      helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center gap-1") do
+        safe_join([
+          content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
+          helpers.icon("external-link", css_class: "size-3")
+        ])
+      end
+    else
+      content_tag(:code, @post.freefeed_post_id, class: "text-sm")
+    end
+
     component.with_item(ListComponent::StatItemComponent.new(
       label: "FreeFeed Post ID",
-      value: content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
+      value: value,
       key: "post.freefeed_post_id"
     ))
   end
