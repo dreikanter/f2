@@ -39,7 +39,7 @@ class UserPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user&.admin?
+      if admin?
         scope.all
       elsif user
         scope.where(id: user.id)

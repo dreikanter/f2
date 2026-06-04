@@ -1,5 +1,5 @@
 class DevPolicy < ApplicationPolicy
   def show?
-    user&.dev?
+    dev?
   end
 end

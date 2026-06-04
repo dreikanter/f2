@@ -21,7 +21,7 @@ class FeedProfilePolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user&.admin?
+      if admin?
         scope.all
       else
         scope.none

@@ -27,7 +27,7 @@ class LlmCredentialPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user&.admin?
+      if admin?
         scope.all
       elsif user
         scope.where(user: user)
