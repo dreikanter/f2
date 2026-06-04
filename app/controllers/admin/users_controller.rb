@@ -42,9 +42,10 @@ class Admin::UsersController < ApplicationController
   end
 
   def show
-    @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites).find(params[:id])
+    @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites, :permissions).find(params[:id])
     authorize @user
     @stats = UserStats.new(@user)
+    @last_admin = @user.admin? && User.joins(:permissions).where(permissions: { name: Permission::ADMIN }).count == 1
   end
 
   private
