@@ -1,5 +1,5 @@
 class AdminsController < ApplicationController
   def show
-    authorize :admin, :show?
+    authorize :access, :admin?
   end
 end

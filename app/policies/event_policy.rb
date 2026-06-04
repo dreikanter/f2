@@ -11,15 +11,11 @@ class EventPolicy < ApplicationPolicy
     def resolve
       if admin?
         scope.all
+      elsif user
+        scope.where(user: user)
       else
         scope.none
       end
-    end
-
-    private
-
-    def admin?
-      user&.permissions&.exists?(name: "admin")
     end
   end
 end

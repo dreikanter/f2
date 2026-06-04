@@ -49,11 +49,11 @@ class User < ApplicationRecord
   end
 
   def admin?
-    permission?("admin")
+    permission?(Permission::ADMIN)
   end
 
   def dev?
-    permission?("dev")
+    permission?(Permission::DEV)
   end
 
   def suspend!

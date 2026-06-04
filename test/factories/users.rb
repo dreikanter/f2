@@ -7,13 +7,13 @@ FactoryBot.define do
 
     trait :admin do
       after(:create) do |user|
-        create(:permission, user: user, name: "admin")
+        create(:permission, user: user, name: Permission::ADMIN)
       end
     end
 
     trait :dev do
       after(:create) do |user|
-        create(:permission, user: user, name: "dev")
+        create(:permission, user: user, name: Permission::DEV)
       end
     end
 

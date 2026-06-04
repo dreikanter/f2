@@ -1,11 +1,11 @@
 class Development::SentEmailsController < ApplicationController
-  before_action :authorize_dev_access
-
   def index
+    authorize :access, :dev?
     @emails = email_storage.ordered_list
   end
 
   def show
+    authorize :access, :dev?
     id = params[:id]
 
     unless id =~ /\A[0-9a-f-]{36}\z/
@@ -29,6 +29,7 @@ class Development::SentEmailsController < ApplicationController
   end
 
   def purge
+    authorize :access, :dev?
     email_storage.purge
     redirect_to development_sent_emails_path, notice: "All emails purged"
   rescue => e
@@ -36,10 +37,6 @@ class Development::SentEmailsController < ApplicationController
   end
 
   private
-
-  def authorize_dev_access
-    authorize :admin, :dev?
-  end
 
   def email_storage
     @email_storage ||= EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)

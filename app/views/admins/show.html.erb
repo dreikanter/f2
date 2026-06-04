@@ -24,7 +24,7 @@
       </div>
     <% end %>
 
-    <% if policy(:admin).dev? %>
+    <% if policy(:access).dev? %>
       <%= render CardComponent.new(href: admin_system_stats_path) do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
