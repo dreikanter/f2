@@ -104,6 +104,12 @@ change accomplishes and why. Don't enumerate every technical detail in
 the diff; reviewers can read the diff. A few bullets or a short paragraph
 is usually enough.
 
+Structure:
+- `Changes:` bullet list at the top describing what was done
+- Optional prose paragraph explaining the rationale
+- `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`)
+- Do **not** include session links or any `https://claude.ai/...` URLs
+
 ## Tooling Notes
 
 - Use mise for managing Ruby and Node runtimes (local dev).
