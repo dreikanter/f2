@@ -52,6 +52,10 @@ class User < ApplicationRecord
     permission?("admin")
   end
 
+  def dev?
+    permission?("dev")
+  end
+
   def suspend!
     update!(state: :suspended, suspended_at: Time.current)
   end
