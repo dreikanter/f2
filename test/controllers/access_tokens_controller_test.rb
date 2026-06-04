@@ -41,11 +41,11 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should display host when token owner is not set" do
     sign_in_as user
-    create(:access_token, user: user, owner: nil)
+    token = create(:access_token, user: user, owner: nil)
     get access_tokens_path
 
     assert_response :success
-    assert_match(/Host:/, response.body)
+    assert_match(token.host_domain, response.body)
   end
 
   test "#show should redirect to sign in form" do
