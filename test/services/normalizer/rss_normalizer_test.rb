@@ -20,6 +20,53 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_matches_snapshot(post.normalized_attributes, snapshot: "#{fixture_dir}/normalized.json")
   end
 
+  test "#normalize should include RSS enclosure image in attachment_urls" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Photo of the day.",
+      "link" => "https://example.com/photo",
+      "enclosures" => [{ "url" => "https://example.com/photo.jpg", "type" => "image/jpeg" }]
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal ["https://example.com/photo.jpg"], post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
+
+  test "#normalize should include media:thumbnail with nil type in attachment_urls" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Photo of the day.",
+      "link" => "https://example.com/photo",
+      "enclosures" => [{ "url" => "https://example.com/thumb.jpg", "type" => nil }]
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal ["https://example.com/thumb.jpg"], post.attachment_urls
+  end
+
+  test "#normalize should exclude non-image media:content from attachment_urls" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Article with mixed media.",
+      "link" => "https://example.com/article",
+      "enclosures" => [
+        { "url" => "https://example.com/image.jpg", "type" => "image/jpeg" },
+        { "url" => "https://example.com/image-thumb.jpg", "type" => "image/jpeg" },
+        { "url" => "https://example.com/video.mp4", "type" => "video/mp4" }
+      ]
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal [
+      "https://example.com/image.jpg",
+      "https://example.com/image-thumb.jpg"
+    ], post.attachment_urls
+  end
+
   test "#normalize should accept post with URL even when text content is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "",

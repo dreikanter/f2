@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Sample Image Feed</title>
+    <description>A feed with various image reference types</description>
+    <link>https://example.com</link>
+
+    <!-- RSS standard: single enclosure (e.g. NASA Image of the Day style) -->
+    <item>
+      <title>Spiral Galaxy Close-Up</title>
+      <link>https://example.com/image-detail/spiral-galaxy/</link>
+      <description>A detailed observation of a nearby spiral galaxy showing its structure.</description>
+      <enclosure url="https://example.com/uploads/2024/09/spiral-galaxy.jpg" length="1865009" type="image/jpeg" />
+      <guid isPermaLink="false">https://example.com/image-detail/spiral-galaxy/</guid>
+      <pubDate>Thu, 12 Sep 2024 14:00:00 GMT</pubDate>
+    </item>
+
+    <!-- Media RSS: single thumbnail (no type attribute) -->
+    <item>
+      <title>Nebula Formation</title>
+      <link>https://example.com/image-detail/nebula-formation/</link>
+      <description>A stunning view of a nebula in the process of star formation.</description>
+      <media:thumbnail url="https://example.com/uploads/2024/09/nebula-thumb.jpg" />
+      <guid isPermaLink="false">https://example.com/image-detail/nebula-formation/</guid>
+      <pubDate>Wed, 11 Sep 2024 14:00:00 GMT</pubDate>
+    </item>
+
+    <!-- Media RSS: multiple media:content elements including non-image types -->
+    <item>
+      <title>Planetary Surface</title>
+      <link>https://example.com/image-detail/planetary-surface/</link>
+      <description>High resolution imagery of a planetary surface captured by an orbiter.</description>
+      <media:content url="https://example.com/uploads/2024/09/surface-full.jpg" type="image/jpeg" />
+      <media:content url="https://example.com/uploads/2024/09/surface-thumb.jpg" type="image/jpeg" />
+      <media:content url="https://example.com/uploads/2024/09/surface-timelapse.mp4" type="video/mp4" />
+      <guid isPermaLink="false">https://example.com/image-detail/planetary-surface/</guid>
+      <pubDate>Tue, 10 Sep 2024 14:00:00 GMT</pubDate>
+    </item>
+
+    <!-- No image references -->
+    <item>
+      <title>Mission Update</title>
+      <link>https://example.com/updates/mission-update/</link>
+      <description>Latest news on the ongoing exploration mission.</description>
+      <guid isPermaLink="false">https://example.com/updates/mission-update/</guid>
+      <pubDate>Mon, 09 Sep 2024 14:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

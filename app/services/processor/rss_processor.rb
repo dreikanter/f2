@@ -34,8 +34,16 @@ module Processor
         "updated" => entry.updated&.rfc3339,
         "author" => entry.author,
         "categories" => entry.categories,
-        "enclosures" => entry.try(:enclosures) || []
+        "enclosures" => extract_enclosures(entry)
       }
+    end
+
+    def extract_enclosures(entry)
+      [
+        *entry.try(:rss_enclosures),
+        *entry.try(:media_thumbnails),
+        *entry.try(:media_contents)
+      ].compact.map { |e| { "url" => e.url, "type" => e.type } }
     end
   end
 end
