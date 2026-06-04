@@ -117,7 +117,8 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_freefeed_post_id_item(component)
-    value = if (url = freefeed_post_url)
+    url = freefeed_post_url
+    value = if url
       helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center gap-1") do
         safe_join([
           content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
