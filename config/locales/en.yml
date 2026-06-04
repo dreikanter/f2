@@ -31,6 +31,12 @@ en:
   hello: "Hello world"
 
   events:
+    feed_enabled:
+      name: "Feed enabled"
+      description_html: "Feed %{subject_link} was enabled"
+    feed_disabled:
+      name: "Feed disabled"
+      description_html: "Feed %{subject_link} was disabled"
     feed_refresh:
       name: "Feed refreshed"
       description_html: "Feed %{subject_link} refreshed successfully"
