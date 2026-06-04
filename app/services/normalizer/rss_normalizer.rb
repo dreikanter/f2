@@ -53,8 +53,8 @@ module Normalizer
     end
 
     def image_urls
-      url = raw_data.dig("image")
-      url.present? ? [url] : []
+      enclosures = raw_data.dig("enclosures") || []
+      enclosures.filter_map { |e| e["url"] if e["type"].nil? || e["type"].start_with?("image/") }
     end
 
     def content_images

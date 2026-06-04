@@ -51,28 +51,39 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     assert_equal [], entries
   end
 
-  test "#process should capture enclosure image URL" do
-    rss_with_enclosure = <<~RSS
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel>
-          <title>Photo Feed</title>
-          <item>
-            <title>Photo of the Day</title>
-            <link>https://example.com/photo</link>
-            <guid>https://example.com/photo</guid>
-            <pubDate>Thu, 12 Sep 2024 09:00:00 +0000</pubDate>
-            <enclosure url="https://example.com/photo.jpg" length="12345" type="image/jpeg" />
-          </item>
-        </channel>
-      </rss>
-    RSS
+  def image_feed_content
+    @image_feed_content ||= file_fixture("feeds/rss/feed_with_images.xml").read
+  end
 
-    processor = Processor::RssProcessor.new(feed, rss_with_enclosure)
-    entries = processor.process
+  test "#process should extract RSS enclosure as typed enclosure" do
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process
 
-    assert_equal 1, entries.length
-    assert_equal "https://example.com/photo.jpg", entries.first.raw_data["image"]
+    enclosures = entries.find { |e| e.raw_data["title"] == "Spiral Galaxy Close-Up" }.raw_data["enclosures"]
+    assert_equal [{ "url" => "https://example.com/uploads/2024/09/spiral-galaxy.jpg", "type" => "image/jpeg" }], enclosures
+  end
+
+  test "#process should extract media:thumbnail with nil type" do
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+
+    enclosures = entries.find { |e| e.raw_data["title"] == "Nebula Formation" }.raw_data["enclosures"]
+    assert_equal [{ "url" => "https://example.com/uploads/2024/09/nebula-thumb.jpg", "type" => nil }], enclosures
+  end
+
+  test "#process should extract all media:content elements including non-image types" do
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+
+    enclosures = entries.find { |e| e.raw_data["title"] == "Planetary Surface" }.raw_data["enclosures"]
+    assert_equal 3, enclosures.length
+    assert_includes enclosures, { "url" => "https://example.com/uploads/2024/09/surface-full.jpg", "type" => "image/jpeg" }
+    assert_includes enclosures, { "url" => "https://example.com/uploads/2024/09/surface-thumb.jpg", "type" => "image/jpeg" }
+    assert_includes enclosures, { "url" => "https://example.com/uploads/2024/09/surface-timelapse.mp4", "type" => "video/mp4" }
+  end
+
+  test "#process should store empty enclosures for entries with no media" do
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+
+    enclosures = entries.find { |e| e.raw_data["title"] == "Mission Update" }.raw_data["enclosures"]
+    assert_equal [], enclosures
   end
 
   test "#process should handle entries without id or url" do
