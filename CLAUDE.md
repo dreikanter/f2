@@ -110,6 +110,8 @@ Structure:
 - `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`); omit entirely if there are none
 - Do **not** include session links or any `https://claude.ai/...` URLs
 
+After creating a PR, check the body for any harness-injected session URLs (e.g. `https://claude.ai/code/session_...`) and remove them by updating the PR.
+
 ## Tooling Notes
 
 - Use mise for managing Ruby and Node runtimes (local dev).
