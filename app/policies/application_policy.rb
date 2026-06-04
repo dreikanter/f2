@@ -55,7 +55,11 @@ class ApplicationPolicy
     user.present?
   end
 
-  def admin? = user&.admin?
+  def admin?
+    user&.admin?
+  end
 
-  def dev? = user&.dev?
+  def dev?
+    user&.dev?
+  end
 end
