@@ -1,17 +1,20 @@
 Rails.application.routes.draw do
-  if Rails.configuration.x.dev_tools.enabled
-    namespace :development do
-      resource :components, only: :show
+  namespace :development do
+    resource :components, only: :show
 
-      resources :sent_emails, only: [:index, :show], format: false do
-        collection do
-          delete :purge
-        end
+    resources :sent_emails, only: [:index, :show], format: false do
+      collection do
+        delete :purge
       end
     end
   end
 
-  mount MissionControl::Jobs::Engine, at: "/jobs"
+  constraints ->(req) {
+    session = Session.find_by(id: req.cookie_jar.signed[:session_id])
+    session&.user&.dev?
+  } do
+    mount MissionControl::Jobs::Engine, at: "/jobs"
+  end
 
   resource :session
   resource :status, only: :show, controller: "statuses"

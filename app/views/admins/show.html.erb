@@ -24,27 +24,27 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: admin_system_stats_path) do %>
-      <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= icon("hard-drive", css_class: "size-5") %>
-          <span>System Info</span>
-        </h2>
-        <p class="text-slate-600">View disk usage and other system information</p>
-      </div>
-    <% end %>
+    <% if policy(:admin).dev? %>
+      <%= render CardComponent.new(href: admin_system_stats_path) do %>
+        <div class="space-y-4">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <%= icon("hard-drive", css_class: "size-5") %>
+            <span>System Info</span>
+          </h2>
+          <p class="text-slate-600">View disk usage and other system information</p>
+        </div>
+      <% end %>
 
-    <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
-      <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <%= icon("hard-hat", css_class: "size-5") %>
-          <span>Background Jobs</span>
-        </h2>
-        <p class="text-slate-600">Monitor and manage background job queues</p>
-      </div>
-    <% end %>
+      <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
+        <div class="space-y-4">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <%= icon("hard-hat", css_class: "size-5") %>
+            <span>Background Jobs</span>
+          </h2>
+          <p class="text-slate-600">Monitor and manage background job queues</p>
+        </div>
+      <% end %>
 
-    <% if Rails.configuration.x.dev_tools.enabled %>
       <%= render CardComponent.new(href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer") do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">

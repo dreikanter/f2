@@ -1,5 +1,5 @@
 class Development::SentEmailsController < ApplicationController
-  allow_unauthenticated_access
+  before_action :authorize_dev_access
 
   def index
     @emails = email_storage.ordered_list
@@ -36,6 +36,10 @@ class Development::SentEmailsController < ApplicationController
   end
 
   private
+
+  def authorize_dev_access
+    authorize :admin, :dev?
+  end
 
   def email_storage
     @email_storage ||= EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
