@@ -31,6 +31,10 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  def manage_permissions?
+    admin?
+  end
+
   private
 
   def self_or_admin?
