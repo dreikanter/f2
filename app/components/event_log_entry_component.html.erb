@@ -1,20 +1,20 @@
-<%= render CardComponent.new(class: "p-4") do %>
-  <div class="flex items-start justify-between gap-4" data-key="events.<%= event.id %>">
-    <div class="min-w-0 space-y-2">
-      <div class="flex flex-wrap items-center gap-2">
-        <%= render BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level)) %>
-        <code class="text-sm font-semibold text-slate-800" data-key="events.type"><%= event.type %></code>
-      </div>
-      <div class="truncate text-sm text-slate-600">
-        <%= render EventDescriptionComponent.new(event: event) %>
-      </div>
-      <% if (label = subject_label) %>
-        <div class="text-sm text-slate-500"><%= label %></div>
-      <% end %>
+<div class="w-full rounded-lg border border-slate-200 bg-white shadow-xs" data-key="events.<%= event.id %>">
+  <div class="flex items-start justify-between gap-4 px-5 py-4">
+    <div class="flex min-w-0 flex-wrap items-center gap-2">
+      <%= render BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level)) %>
+      <code class="text-sm font-semibold text-slate-800" data-key="events.type"><%= event.type %></code>
     </div>
     <%= link_to helpers.short_time_ago(event.created_at), href,
-                class: "shrink-0 text-sm font-medium text-slate-500 hover:text-slate-700",
+                class: "shrink-0 text-sm font-medium text-slate-400 hover:text-slate-700",
                 title: event.created_at.rfc3339,
                 data: { key: "events.timestamp" } %>
   </div>
-<% end %>
+  <div class="flex items-center gap-3 border-t border-slate-200 px-5 py-2 text-sm text-slate-500">
+    <div class="min-w-0 truncate text-slate-600">
+      <%= render EventDescriptionComponent.new(event: event) %>
+    </div>
+    <% if (label = subject_label) %>
+      <span class="shrink-0"><%= label %></span>
+    <% end %>
+  </div>
+</div>

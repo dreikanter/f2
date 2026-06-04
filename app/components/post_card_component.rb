@@ -49,11 +49,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def freefeed_url
-    feed = post.feed
-    access_token = feed&.access_token
-    return unless feed && access_token && feed.target_group.present? && post.freefeed_post_id.present?
-
-    "#{access_token.host}/#{feed.target_group}/#{post.freefeed_post_id}"
+    post.freefeed_url
   end
 
   def withdraw_allowed?
@@ -65,7 +61,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def footer?
-    group_label.present? || attachment_count > 0 || comment_count > 0 || source_url || freefeed_url || withdraw_allowed?
+    published_time_tag || group_label.present? || attachment_count > 0 || comment_count > 0 || source_url || freefeed_url || withdraw_allowed?
   end
 
   def menu_id

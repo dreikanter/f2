@@ -7,15 +7,16 @@
         <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
       <% end %>
     </div>
-
-    <div class="flex shrink-0 items-center text-sm text-slate-400">
-      <%= published_time_tag %>
-    </div>
   </div>
 
   <% if footer? %>
-    <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-3">
+    <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
       <div class="flex items-center gap-3 text-sm text-slate-400">
+        <% if published_time_tag %>
+          <div class="flex shrink-0 items-center">
+            <%= published_time_tag %>
+          </div>
+        <% end %>
         <% if group_label %>
           <%= link_to group_label, group_url, title: group_hint,
                 class: "transition hover:text-slate-600" %>
