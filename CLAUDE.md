@@ -110,7 +110,7 @@ Structure:
 - `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`); omit entirely if there are none
 - Do **not** include session links or any `https://claude.ai/...` URLs
 
-After creating a PR, check the body for any harness-injected session URLs (e.g. `https://claude.ai/code/session_...`) and remove them by updating the PR.
+When a PR is created via the Claude Code web UI, the harness auto-generates the description without reading these instructions. After any PR is created — whether by you or the harness — immediately update the title and body to comply with the guidelines above, and remove any injected session URLs.
 
 ## Tooling Notes
 
