@@ -33,10 +33,21 @@ class FeedCardComponentTest < ViewComponent::TestCase
     assert_equal "Draft", badge.text.strip
   end
 
-  test "#render should not show Draft badge for non-draft feeds" do
+  test "#render should show Disabled badge for disabled feeds" do
     result = render_inline FeedCardComponent.new(feed: feed)
 
-    assert_empty result.css("[data-key='feed.#{feed.id}.draft_badge']")
+    badge = result.css("[data-key='feed.#{feed.id}.disabled_badge']").first
+    assert_not_nil badge
+    assert_equal "Disabled", badge.text.strip
+  end
+
+  test "#render should show Active badge for enabled feeds" do
+    enabled_feed = create(:feed, :enabled, user: user)
+    result = render_inline FeedCardComponent.new(feed: enabled_feed)
+
+    badge = result.css("[data-key='feed.#{enabled_feed.id}.enabled_badge']").first
+    assert_not_nil badge
+    assert_equal "Active", badge.text.strip
   end
 
   test "#render should show @group label when target_group present" do
@@ -45,7 +56,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
     assert_includes result.text, "@testgroup"
   end
 
-  test "#render should show Continue setup and Discard for draft feeds" do
+  test "#render should show Continue setup and Discard in dropdown for draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
 
     with_request_url("/feeds") do

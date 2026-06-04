@@ -3,21 +3,40 @@
     <div class="flex min-w-0 items-center gap-2">
       <%= link_to title, feed_url,
             class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
-      <% if draft? %>
-        <%= render BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge") %>
-      <% end %>
+      <%= render status_badge %>
     </div>
 
     <% if draft? %>
-      <div class="flex shrink-0 items-center gap-2">
-        <%= link_to "Continue setup", helpers.edit_feed_path(feed),
-              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
-              data: { key: "feed.#{feed.id}.continue_setup" } %>
-        <%= button_to "Discard", helpers.feed_path(feed),
-              method: :delete,
-              class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
-              data: { key: "feed.#{feed.id}.discard" },
-              form: { data: { turbo_confirm: DISCARD_CONFIRM } } %>
+      <div class="relative shrink-0">
+        <button type="button"
+                id="<%= menu_id %>-button"
+                data-dropdown-toggle="<%= menu_id %>"
+                data-dropdown-placement="bottom-end"
+                class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                aria-haspopup="true"
+                aria-expanded="false">
+          <%= helpers.icon("ellipsis", css_class: "size-4") %>
+          <span class="sr-only">More options</span>
+        </button>
+        <div id="<%= menu_id %>"
+             class="z-20 hidden w-44 rounded-lg border border-slate-200 bg-white shadow-sm"
+             role="menu"
+             aria-labelledby="<%= menu_id %>-button">
+          <ul class="py-1">
+            <li>
+              <%= link_to "Continue setup", helpers.edit_feed_path(feed),
+                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
+                    role: "menuitem",
+                    data: { key: "feed.#{feed.id}.continue_setup" } %>
+            </li>
+            <li>
+              <%= link_to "Discard", helpers.feed_path(feed),
+                    class: "block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50",
+                    role: "menuitem",
+                    data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } %>
+            </li>
+          </ul>
+        </div>
       </div>
     <% end %>
   </div>

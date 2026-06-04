@@ -71,17 +71,13 @@ class FeedsListComponentTest < ViewComponent::TestCase
       assert_equal "Continue setup", continue_link.text.strip
       assert_equal Rails.application.routes.url_helpers.edit_feed_path(feed), continue_link["href"]
 
-      discard_button = result.css(%([data-key="feed.#{feed.id}.discard"])).first
-      assert_not_nil discard_button, "Expected Discard button"
-      assert_equal "Discard", discard_button.text.strip
-
-      discard_form = discard_button.ancestors("form").first
-      assert_not_nil discard_form, "Expected Discard button to be inside a form"
-      assert_equal Rails.application.routes.url_helpers.feed_path(feed), discard_form["action"]
+      discard_link = result.css(%([data-key="feed.#{feed.id}.discard"])).first
+      assert_not_nil discard_link, "Expected Discard link"
+      assert_equal "Discard", discard_link.text.strip
+      assert_equal Rails.application.routes.url_helpers.feed_path(feed), discard_link["href"]
+      assert_equal "delete", discard_link["data-turbo-method"]
       assert_equal "Discard this draft? No data will be lost since it hasn't been activated.",
-                   discard_form["data-turbo-confirm"]
-      assert_equal "post", discard_form["method"]
-      assert_equal "delete", discard_form.css("input[name='_method']").first&.[]("value")
+                   discard_link["data-turbo-confirm"]
     end
   end
 
