@@ -1,19 +1,15 @@
 require "test_helper"
 
 class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
-  def admin_user
-    @admin_user ||= begin
-      user = create(:user)
-      create(:permission, user: user, name: "admin")
-      user
-    end
+  def dev_user
+    @dev_user ||= create(:user, :dev)
   end
 
   def regular_user
     @regular_user ||= create(:user)
   end
 
-  test "should redirect non-admin users" do
+  test "should redirect non-dev users" do
     login_as(regular_user)
 
     get admin_system_stats_path
@@ -28,8 +24,8 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should show system stats for admin users" do
-    login_as(admin_user)
+  test "should show system stats for dev users" do
+    login_as(dev_user)
 
     get admin_system_stats_path
 
@@ -42,7 +38,7 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
       "APP_REVISION_SHORT" => "0123456",
       "APP_DEPLOYED_AT" => "2026-05-09T12:34:56Z"
     ) do
-      login_as(admin_user)
+      login_as(dev_user)
 
       get admin_system_stats_path
     end

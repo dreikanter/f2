@@ -20,9 +20,10 @@ if Rails.env.development?
   User.where(password_updated_at: nil).update_all(password_updated_at: Time.current)
   puts "✅ Development user created: #{user.email_address} / #{dev_password}"
 
-  # Add admin permission to the first user
+  # Add admin and dev permissions to the first user
   user.permissions.find_or_create_by!(name: "admin")
-  puts "✅ Admin permission granted to first user"
+  user.permissions.find_or_create_by!(name: "dev")
+  puts "✅ Admin and dev permissions granted to first user"
 
   # Create fake access tokens
   if AccessToken.count == 0

@@ -3,11 +3,34 @@ require "test_helper"
 class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   setup do
     email_storage.purge
-    Rails.application.reload_routes!
+    login_as(dev_user)
+  end
+
+  def dev_user
+    @dev_user ||= create(:user, :dev)
+  end
+
+  def regular_user
+    @regular_user ||= create(:user)
   end
 
   def email_storage
     EmailStorageResolver.resolve(Rails.application.config.email_storage_adapter)
+  end
+
+  test "#index should require authentication" do
+    delete session_path
+    get development_sent_emails_path
+
+    assert_redirected_to new_session_path
+  end
+
+  test "#index should require dev permission" do
+    login_as(regular_user)
+    get development_sent_emails_path
+
+    assert_redirected_to root_path
+    assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
   test "#index should get with no emails" do
@@ -114,6 +137,10 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def login_as(user)
+    post session_path, params: { email_address: user.email_address, password: "password123" }
+  end
 
   def create_test_email(uuid, subject, body)
     multipart = body.is_a?(Hash)

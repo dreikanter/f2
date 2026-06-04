@@ -1,3 +1,5 @@
 class Development::ComponentsController < ApplicationController
-  allow_unauthenticated_access
+  def show
+    authorize :admin, :dev?
+  end
 end

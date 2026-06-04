@@ -6,11 +6,11 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def admin_user
-    @admin_user ||= begin
-      admin = create(:user)
-      create(:permission, user: admin, name: "admin")
-      admin
-    end
+    @admin_user ||= create(:user, :admin)
+  end
+
+  def admin_dev_user
+    @admin_dev_user ||= create(:user, :admin, :dev)
   end
 
   test "should show admin panel when authenticated as admin" do
@@ -21,8 +21,21 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Admin Panel"
     assert_select "a[href='#{admin_users_path}']", count: 1
     assert_select "a[href='#{admin_events_path}']", count: 1
+    assert_select "a[href='#{admin_system_stats_path}']", count: 0
+    assert_select "a[href='#{development_components_path}']", count: 0
+  end
+
+  test "should show dev cards when authenticated as admin with dev permission" do
+    sign_in_as(admin_dev_user)
+    get admin_url
+
+    assert_response :success
+    assert_select "a[href='#{admin_users_path}']", count: 1
+    assert_select "a[href='#{admin_events_path}']", count: 1
     assert_select "a[href='#{admin_system_stats_path}']", count: 1
     assert_select "a[href='#{mission_control_jobs.root_path}']", count: 1
+    assert_select "a[href='#{development_sent_emails_path}']", count: 1
+    assert_select "a[href='#{development_components_path}']", count: 1
   end
 
   test "should redirect when authenticated as regular user" do

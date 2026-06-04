@@ -51,6 +51,10 @@ class ApplicationPolicy
     def admin?
       user&.permissions&.exists?(name: "admin")
     end
+
+    def dev?
+      user&.permissions&.exists?(name: "dev")
+    end
   end
 
   private
@@ -61,5 +65,9 @@ class ApplicationPolicy
 
   def admin?
     user&.permissions&.exists?(name: "admin")
+  end
+
+  def dev?
+    user&.permissions&.exists?(name: "dev")
   end
 end

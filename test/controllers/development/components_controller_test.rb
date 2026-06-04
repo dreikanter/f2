@@ -1,12 +1,17 @@
 require "test_helper"
 
 class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
-  test "dev tools should be enabled in the test environment" do
-    assert Rails.configuration.x.dev_tools.enabled,
-           "dev tools must be enabled so the component reference route is drawn"
+  def dev_user
+    @dev_user ||= create(:user, :dev)
+  end
+
+  def regular_user
+    @regular_user ||= create(:user)
   end
 
   test "#show should render the UI elements reference" do
+    login_as(dev_user)
+
     get development_components_path
 
     assert_response :success
@@ -17,13 +22,24 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="section.event-description"]'
   end
 
-  test "#show should not require authentication" do
+  test "#show should require authentication" do
     get development_components_path
 
-    assert_response :success
+    assert_redirected_to new_session_path
+  end
+
+  test "#show should require dev permission" do
+    login_as(regular_user)
+
+    get development_components_path
+
+    assert_redirected_to root_path
+    assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
   test "#show should associate checkbox and radio labels with their controls" do
+    login_as(dev_user)
+
     get development_components_path
 
     # Clickable labels require a matching id/for pair (the production idiom).
@@ -36,5 +52,11 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     # Form-group label points at its input.
     assert_select "input[type=text]#group_feed_name"
     assert_select "label[for=group_feed_name]"
+  end
+
+  private
+
+  def login_as(user)
+    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end
