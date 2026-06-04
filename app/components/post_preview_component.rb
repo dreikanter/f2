@@ -4,6 +4,10 @@ class PostPreviewComponent < ViewComponent::Base
     @index = index
   end
 
+  def uid
+    post_data["uid"].presence
+  end
+
   def source_url
     post_data["source_url"].presence
   end
@@ -18,15 +22,22 @@ class PostPreviewComponent < ViewComponent::Base
     end
   end
 
-  def metadata_segments
-    [].tap do |segments|
-      segments << "UID: #{post_data["uid"]}" if post_data["uid"].present?
+  def published_compact
+    return unless published_at
 
-      if published_at
-        segments << "Published #{helpers.time_ago_in_words(published_at)} ago"
-      end
-
-      segments << "Attachments: #{valid_attachments.size}" if valid_attachments.any?
+    diff = (Time.zone.now - published_at).abs.to_i
+    if diff < 60
+      "#{diff}s"
+    elsif diff < 3_600
+      "#{diff / 60}m"
+    elsif diff < 86_400
+      "#{diff / 3_600}h"
+    elsif diff < 604_800
+      "#{diff / 86_400}d"
+    elsif diff < 2_592_000
+      "#{diff / 604_800}w"
+    else
+      helpers.l(published_at.to_date)
     end
   end
 

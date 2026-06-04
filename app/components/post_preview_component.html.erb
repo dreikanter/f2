@@ -1,28 +1,36 @@
 <%= render(CardComponent.new(id: card_id)) do |card| %>
-  <% if metadata_segments.any? || source_url %>
-    <% card.with_section(class: "px-6 py-4") do %>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
-        <% metadata_segments.each_with_index do |segment, index| %>
-          <% if index.positive? %>
-            <span aria-hidden="true" class="text-slate-300">•</span>
-          <% end %>
-          <span><%= segment %></span>
-        <% end %>
-        <% if source_url %>
-          <% if metadata_segments.any? %>
-            <span aria-hidden="true" class="text-slate-300">•</span>
-          <% end %>
-          <%= link_to source_url, target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 font-medium text-sky-600 transition hover:text-sky-500" do %>
-            <span class="underline underline-offset-4">View source</span>
-            <%= helpers.icon("external-link", css_class: "size-3.5", aria_label: "Opens in a new window") %>
-          <% end %>
-        <% end %>
+  <% if uid %>
+    <% card.with_section(class: "px-4 py-2") do %>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="w-20 shrink-0 text-slate-500">UID:</span>
+        <span class="min-w-0 truncate text-slate-900" title="<%= uid %>"><%= uid %></span>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if published_at %>
+    <% card.with_section(class: "px-4 py-2") do %>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="w-20 shrink-0 text-slate-500">Published:</span>
+        <time datetime="<%= published_at.iso8601 %>" title="<%= published_at %>"><%= published_compact %></time>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if source_url %>
+    <% card.with_section(class: "px-4 py-2") do %>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="w-20 shrink-0 text-slate-500">URL:</span>
+        <span class="min-w-0 truncate">
+          <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
+                class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+        </span>
       </div>
     <% end %>
   <% end %>
 
   <% if formatted_content || attachments? %>
-    <% card.with_section do %>
+    <% card.with_section(class: "p-4") do %>
       <div class="space-y-4">
         <% if formatted_content %>
           <%= formatted_content %>
