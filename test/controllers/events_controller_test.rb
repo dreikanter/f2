@@ -60,7 +60,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path
 
     assert_response :success
-    assert_select "h1", "Events"
+    assert_select "h1", "Events Log"
     assert_select "#events_log"
     assert_select '[data-key="events.type"]', text: "my_event"
     assert_select '[data-key="events.type"]', text: "someone_elses", count: 0

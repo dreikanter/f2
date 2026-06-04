@@ -1,7 +1,7 @@
-<% content_for :title, "System Events" %>
+<% content_for :title, "Events Log" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "System Events") do |header| %>
+  <%= render PageHeaderComponent.new(title: "Events Log") do |header| %>
     <% if @filter.present? %>
       <% header.with_context_paragraph do %>
         <span class="text-sm text-slate-500" data-key="admin.events.filter-summary">

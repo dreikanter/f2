@@ -36,7 +36,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select "h1", "System Events"
+    assert_select "h1", "Events Log"
     assert_select '[data-key="events.type"]', "TestEvent"
     assert_select 'a[data-key="events.user"]', "User ##{user.id}"
   end
@@ -85,7 +85,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select "h1", "System Events"
+    assert_select "h1", "Events Log"
     assert_select '[data-key="empty-state"]'
     assert_select "p", "No events to show yet"
   end
