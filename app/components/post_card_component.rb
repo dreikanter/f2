@@ -49,11 +49,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def freefeed_url
-    feed = post.feed
-    access_token = feed&.access_token
-    return unless feed && access_token && feed.target_group.present? && post.freefeed_post_id.present?
-
-    "#{access_token.host}/#{feed.target_group}/#{post.freefeed_post_id}"
+    post.freefeed_url
   end
 
   def withdraw_allowed?

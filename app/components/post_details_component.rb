@@ -117,7 +117,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_freefeed_post_id_item(component)
-    url = freefeed_post_url
+    url = @post.freefeed_url
     value = if url
       helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center gap-1") do
         safe_join([
@@ -134,13 +134,5 @@ class PostDetailsComponent < ViewComponent::Base
       value: value,
       key: "post.freefeed_post_id"
     ))
-  end
-
-  def freefeed_post_url
-    feed = @post.feed
-    token = feed&.access_token
-    return unless token && feed.target_group.present?
-
-    "#{token.host}/#{feed.target_group}/#{@post.freefeed_post_id}"
   end
 end

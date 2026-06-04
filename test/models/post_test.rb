@@ -129,6 +129,25 @@ class PostTest < ActiveSupport::TestCase
     assert_equal ["error1"], post.validation_errors
   end
 
+  test "#freefeed_url should return the full URL when all parts are present" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "abc123")
+
+    assert_equal "#{feed.access_token.host}/testgroup/abc123", post.freefeed_url
+  end
+
+  test "#freefeed_url should return nil when freefeed_post_id is blank" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: nil)
+
+    assert_nil post.freefeed_url
+  end
+
+  test "#freefeed_url should return nil when target_group is blank" do
+    feed_no_group = create(:feed, target_group: "")
+    post = create(:post, :published, feed: feed_no_group, freefeed_post_id: "abc123")
+
+    assert_nil post.freefeed_url
+  end
+
   test "should allow nil freefeed_post_id" do
     post = build(:post, freefeed_post_id: nil)
     assert post.valid?
