@@ -10,11 +10,11 @@
     <% if (status_summary = feed_status_summary(@feed)).present? %>
       <% header.with_context_paragraph(status_summary) %>
     <% end %>
-    <% if @feed.access_token.present? && @feed.target_group.present? %>
+    <% if @feed.target_group_url.present? %>
       <% header.with_context_paragraph do %>
         Target group:
         <%= link_to "#{@feed.access_token.host_domain}/#{@feed.target_group}",
-                    "#{@feed.access_token.host}/#{@feed.target_group}",
+                    @feed.target_group_url,
                     class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
                     target: "_blank", rel: "noopener" %>
       <% end %>
