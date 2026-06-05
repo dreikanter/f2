@@ -6,7 +6,7 @@ class Feeds::RefreshesController < ApplicationController
     FeedRefreshJob.perform_later(@feed.id)
 
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream { render turbo_stream: "" }
       format.html { redirect_to feed_path(@feed), notice: "Feed refresh started" }
     end
   end
