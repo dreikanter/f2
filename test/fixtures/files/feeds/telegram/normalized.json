@@ -1,0 +1,36 @@
+[
+  {
+    "attachment_urls": [],
+    "comments": [],
+    "content": "Hello world 🚀\nSecond line - https://t.me/testchannel/1",
+    "published_at": "2026-06-01T12:00:00.000Z",
+    "source_url": "https://t.me/testchannel/1",
+    "status": "enqueued",
+    "uid": "testchannel/1",
+    "validation_errors": []
+  },
+  {
+    "attachment_urls": [
+      "https://cdn-test.telesco.pe/file/photo2.jpg"
+    ],
+    "comments": [],
+    "content": "https://t.me/testchannel/2",
+    "published_at": "2026-06-01T12:05:00.000Z",
+    "source_url": "https://t.me/testchannel/2",
+    "status": "enqueued",
+    "uid": "testchannel/2",
+    "validation_errors": []
+  },
+  {
+    "attachment_urls": [
+      "https://cdn-test.telesco.pe/file/vthumb3.jpg"
+    ],
+    "comments": [],
+    "content": "Watch this - https://t.me/testchannel/3",
+    "published_at": "2026-06-01T12:10:00.000Z",
+    "source_url": "https://t.me/testchannel/3",
+    "status": "enqueued",
+    "uid": "testchannel/3",
+    "validation_errors": []
+  }
+]

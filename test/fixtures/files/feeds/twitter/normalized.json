@@ -1,0 +1,36 @@
+[
+  {
+    "attachment_urls": [],
+    "comments": [],
+    "content": "Check our docs https://developer.x.com/docs and more - https://twitter.com/testuser/status/1001",
+    "published_at": "2026-06-04T18:00:00.000Z",
+    "source_url": "https://twitter.com/testuser/status/1001",
+    "status": "enqueued",
+    "uid": "1001",
+    "validation_errors": []
+  },
+  {
+    "attachment_urls": [
+      "https://pbs.twimg.com/media/photoB.jpg"
+    ],
+    "comments": [],
+    "content": "Photo time - https://twitter.com/testuser/status/1002",
+    "published_at": "2026-06-04T19:00:00.000Z",
+    "source_url": "https://twitter.com/testuser/status/1002",
+    "status": "enqueued",
+    "uid": "1002",
+    "validation_errors": []
+  },
+  {
+    "attachment_urls": [
+      "https://pbs.twimg.com/tweet_video_thumb/vidD.jpg"
+    ],
+    "comments": [],
+    "content": "Watch - https://twitter.com/testuser/status/1003",
+    "published_at": "2026-06-04T20:00:00.000Z",
+    "source_url": "https://twitter.com/testuser/status/1003",
+    "status": "enqueued",
+    "uid": "1003",
+    "validation_errors": []
+  }
+]

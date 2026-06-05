@@ -163,6 +163,46 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "telegram" => {
+      display_name: "Telegram",
+      description: "Posts from a public Telegram channel, images included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TelegramProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "minLength" => 2 }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::TelegramLoader", config: {} },
+      processor: { class: "Processor::TelegramProcessor", config: {} },
+      normalizer: { class: "Normalizer::TelegramNormalizer", config: {} },
+      title_extractor: "TitleExtractor::TelegramTitleExtractor",
+      output_schema: nil
+    },
+    "twitter" => {
+      display_name: "X / Twitter",
+      description: "Posts from a public X (Twitter) account",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TwitterProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "minLength" => 2 }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::TwitterLoader", config: {} },
+      processor: { class: "Processor::TwitterProcessor", config: {} },
+      normalizer: { class: "Normalizer::TwitterNormalizer", config: {} },
+      title_extractor: "TitleExtractor::TwitterTitleExtractor",
+      output_schema: nil
+    },
     "llm_web_search" => {
       display_name: "AI search",
       description: "Uses AI to follow an account, handle, or search topic as an evergreen subscription",

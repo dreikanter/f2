@@ -1,0 +1,46 @@
+<!-- Trimmed sample of a syndication.twitter.com timeline-profile page. The
+     tweets live in the __NEXT_DATA__ JSON under
+     props.pageProps.timeline.entries[].content.tweet. Covers: a text tweet with
+     a t.co link to expand, a photo tweet, a video tweet (thumbnail), and a
+     tombstone entry with no tweet (skipped). -->
+<!DOCTYPE html>
+<html>
+<head><meta property="og:title" content="Test User (@testuser) / X"></head>
+<body>
+<script id="__NEXT_DATA__" type="application/json">
+{
+  "props": {
+    "pageProps": {
+      "timeline": {
+        "entries": [
+          { "content": { "tweet": {
+            "id_str": "1001",
+            "created_at": "Wed Jun 04 18:00:00 +0000 2026",
+            "full_text": "Check our docs https://t.co/abc and more",
+            "permalink": "/testuser/status/1001",
+            "entities": { "urls": [ { "url": "https://t.co/abc", "expanded_url": "https://developer.x.com/docs" } ] }
+          } } },
+          { "content": { "tweet": {
+            "id_str": "1002",
+            "created_at": "Wed Jun 04 19:00:00 +0000 2026",
+            "full_text": "Photo time https://t.co/img",
+            "permalink": "/testuser/status/1002",
+            "entities": { "media": [ { "type": "photo", "media_url_https": "https://pbs.twimg.com/media/photoB.jpg", "url": "https://t.co/img" } ] },
+            "extended_entities": { "media": [ { "type": "photo", "media_url_https": "https://pbs.twimg.com/media/photoB.jpg", "url": "https://t.co/img" } ] }
+          } } },
+          { "content": { "tweet": {
+            "id_str": "1003",
+            "created_at": "Wed Jun 04 20:00:00 +0000 2026",
+            "full_text": "Watch https://t.co/vid",
+            "permalink": "/testuser/status/1003",
+            "extended_entities": { "media": [ { "type": "video", "media_url_https": "https://pbs.twimg.com/tweet_video_thumb/vidD.jpg", "url": "https://t.co/vid" } ] }
+          } } },
+          { "content": { "tombstone": { "text": "This Tweet is unavailable" } } }
+        ]
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>
