@@ -40,10 +40,10 @@ class Post < ApplicationRecord
   }
 
   def freefeed_url
-    token = feed&.access_token
-    return unless token && feed.target_group.present? && freefeed_post_id.present?
+    group_url = feed&.target_group_url
+    return unless group_url && freefeed_post_id.present?
 
-    "#{token.host}/#{feed.target_group}/#{freefeed_post_id}"
+    "#{group_url}/#{freefeed_post_id}"
   end
 
   def normalized_attributes

@@ -803,4 +803,22 @@ class FeedTest < ActiveSupport::TestCase
       feed.update!(state: :draft)
     end
   end
+
+  test "#target_group_url should return the group URL when token and group are present" do
+    feed = create(:feed, target_group: "testgroup")
+
+    assert_equal "#{feed.access_token.host}/testgroup", feed.target_group_url
+  end
+
+  test "#target_group_url should return nil when target_group is blank" do
+    feed = create(:feed, target_group: "")
+
+    assert_nil feed.target_group_url
+  end
+
+  test "#target_group_url should return nil when access_token is missing" do
+    feed = create(:feed, :without_access_token)
+
+    assert_nil feed.target_group_url
+  end
 end
