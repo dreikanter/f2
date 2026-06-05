@@ -22,15 +22,15 @@ class ProfileMatcher::TelegramProfileMatcherTest < ActiveSupport::TestCase
   end
 
   test "#match? should match a t.me channel URL" do
-    assert matcher("https://t.me/durov").match?
+    assert matcher("https://t.me/examplechannel").match?
   end
 
   test "#match? should match a t.me/s preview URL" do
-    assert matcher("https://t.me/s/durov").match?
+    assert matcher("https://t.me/s/examplechannel").match?
   end
 
   test "#match? should match a telegram.me URL" do
-    assert matcher("https://telegram.me/durov").match?
+    assert matcher("https://telegram.me/examplechannel").match?
   end
 
   test "#match? should not match invite links" do
@@ -47,7 +47,7 @@ class ProfileMatcher::TelegramProfileMatcherTest < ActiveSupport::TestCase
   end
 
   test "#match? should not match non-telegram URLs" do
-    assert_not matcher("https://example.com/durov").match?
+    assert_not matcher("https://example.com/examplechannel").match?
   end
 
   test "#match? should handle blank input" do

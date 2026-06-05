@@ -16,47 +16,47 @@ class Loader::TelegramLoaderTest < ActiveSupport::TestCase
 
   test "#load should fetch the t.me/s preview for a bare channel name" do
     client = mock_client
-    loader("durov", http_client: client).load
-    assert_equal "https://t.me/s/durov", client.last_request_url
+    loader("examplechannel", http_client: client).load
+    assert_equal "https://t.me/s/examplechannel", client.last_request_url
   end
 
   test "#load should strip a leading @ from the channel handle" do
     client = mock_client
-    loader("@durov", http_client: client).load
-    assert_equal "https://t.me/s/durov", client.last_request_url
+    loader("@examplechannel", http_client: client).load
+    assert_equal "https://t.me/s/examplechannel", client.last_request_url
   end
 
   test "#load should accept a schemeless t.me URL" do
     client = mock_client
-    loader("t.me/durov", http_client: client).load
-    assert_equal "https://t.me/s/durov", client.last_request_url
+    loader("t.me/examplechannel", http_client: client).load
+    assert_equal "https://t.me/s/examplechannel", client.last_request_url
   end
 
   test "#load should accept a full t.me channel URL" do
     client = mock_client
-    loader("https://t.me/durov", http_client: client).load
-    assert_equal "https://t.me/s/durov", client.last_request_url
+    loader("https://t.me/examplechannel", http_client: client).load
+    assert_equal "https://t.me/s/examplechannel", client.last_request_url
   end
 
   test "#load should accept a t.me/s preview URL" do
     client = mock_client
-    loader("https://t.me/s/durov", http_client: client).load
-    assert_equal "https://t.me/s/durov", client.last_request_url
+    loader("https://t.me/s/examplechannel", http_client: client).load
+    assert_equal "https://t.me/s/examplechannel", client.last_request_url
   end
 
   test "#load should send a desktop User-Agent header" do
     client = mock_client
-    loader("durov", http_client: client).load
+    loader("examplechannel", http_client: client).load
     assert_match %r{Mozilla/5\.0}, client.last_headers["User-Agent"]
   end
 
   test "#load should return the response body on success" do
-    assert_equal PREVIEW_BODY, loader("durov", http_client: mock_client).load
+    assert_equal PREVIEW_BODY, loader("examplechannel", http_client: mock_client).load
   end
 
   test "#load should raise on HTTP error" do
     client = mock_client(response: HttpClient::Response.new(status: 404, body: ""))
-    error = assert_raises(StandardError) { loader("durov", http_client: client).load }
+    error = assert_raises(StandardError) { loader("examplechannel", http_client: client).load }
     assert_equal "HTTP 404", error.message
   end
 

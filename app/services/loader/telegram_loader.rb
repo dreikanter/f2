@@ -6,8 +6,9 @@ module Loader
   # the MTProto API, which keeps the integration simple and free; the trade-off
   # is that channels which disabled their public web preview return no posts.
   #
-  # Accepts the channel as a full URL (https://t.me/durov, https://t.me/s/durov),
-  # a short form (t.me/durov), an @handle, or a bare username.
+  # Accepts the channel as a full URL (https://t.me/examplechannel,
+  # https://t.me/s/examplechannel), a short form (t.me/examplechannel), an
+  # @handle, or a bare username.
   class TelegramLoader < Base
     PREVIEW_BASE = "https://t.me/s".freeze
     HOSTS = %w[t.me telegram.me www.t.me].freeze
