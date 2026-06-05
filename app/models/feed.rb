@@ -100,6 +100,14 @@ class Feed < ApplicationRecord
     SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
   end
 
+  # Link to the target group on its FreeFeed instance. Post#freefeed_url
+  # builds on top of this to point at individual published posts.
+  def target_group_url
+    return unless access_token && target_group.present?
+
+    "#{access_token.host}/#{target_group}"
+  end
+
   def url
     params&.dig("url")
   end
