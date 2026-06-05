@@ -30,7 +30,7 @@ export default class extends Controller {
   refresh() {
     if (!this._running) this._running = true
     clearTimeout(this._timerId)
-    this._tick({ force: true })
+    return this._tick({ force: true })
   }
 
   stopPolling() {

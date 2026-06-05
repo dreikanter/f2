@@ -1,0 +1,6 @@
+<%= tag.button(**button_attributes) do %>
+  <%= tag.span helpers.icon("refresh-ccw", css_class: "size-4", aria_label: @title),
+               data: { loading_button_target: "default" } %>
+  <%= tag.span helpers.icon("loader-circle", css_class: "size-4 animate-spin", aria_label: "Refreshing"),
+               class: "hidden", data: { loading_button_target: "loading" } %>
+<% end %>
