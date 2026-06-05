@@ -417,6 +417,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
+  test "#show should link to the Freefeed group for an enabled feed" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token, target_group: "testgroup")
+
+    get feed_url(enabled)
+
+    assert_response :success
+    assert_select "a[href='#{access_token.host}/testgroup']",
+                  text: "#{access_token.host_domain}/testgroup"
+  end
+
+  test "#show should not link to the Freefeed group for a disabled feed" do
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "a[href='#{feed.access_token.host}/#{feed.target_group}']", count: 0
+  end
+
   test "#show should not offer a status toggle for a draft feed" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
