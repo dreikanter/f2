@@ -32,7 +32,7 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     assert_includes post.content, "My Video"
   end
 
-  test "#normalize should include thumbnail as attachment" do
+  test "#normalize should not attach thumbnail" do
     entry = create(:feed_entry, raw_data: {
       "title" => "Video",
       "link" => "https://www.youtube.com/watch?v=abc123",
@@ -42,7 +42,7 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     normalizer = Normalizer::YoutubeNormalizer.new(entry)
     post = normalizer.normalize
 
-    assert_equal ["https://i.ytimg.com/vi/abc123/hqdefault.jpg"], post.attachment_urls
+    assert_equal [], post.attachment_urls
   end
 
   test "#normalize should include description as comment" do
@@ -100,7 +100,7 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     post = normalizer.normalize
 
     assert_includes post.content, "Getting Started with Ruby on Rails"
-    assert_equal ["https://i.ytimg.com/vi/aAbBcCdDeEf/hqdefault.jpg"], post.attachment_urls
+    assert_equal [], post.attachment_urls
     assert_equal 1, post.comments.length
     assert_includes post.comments.first, "beginner-friendly introduction"
   end

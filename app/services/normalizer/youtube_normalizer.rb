@@ -7,8 +7,9 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      thumbnail = raw_data.dig("thumbnail")
-      thumbnail.present? ? [thumbnail] : []
+      # Freefeed renders the video preview from the source URL, so attaching
+      # the thumbnail would just duplicate it.
+      []
     end
 
     def normalize_comments
