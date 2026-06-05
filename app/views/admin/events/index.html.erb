@@ -21,14 +21,7 @@
     <% end %>
     <% if @log_endpoint %>
       <% header.with_action_button do %>
-        <button data-controller="refresh-trigger"
-                data-refresh-trigger-target-id-value="<%= EventLogComponent::DOM_ID %>"
-                data-action="click->refresh-trigger#trigger"
-                data-key="events.refresh"
-                title="Refresh"
-                class="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-3 text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
-          <%= icon("refresh-ccw", css_class: "size-4", aria_label: "Refresh") %>
-        </button>
+        <%= render RefreshButtonComponent.new(target_id: EventLogComponent::DOM_ID, key: "events.refresh") %>
       <% end %>
     <% end %>
   <% end %>
