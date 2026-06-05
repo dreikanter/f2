@@ -32,10 +32,10 @@
                         action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
                       }
                     } do %>
-        <span class="inline-flex" data-loading-button-target="default">
+        <span data-loading-button-target="default">
           <%= icon("refresh-ccw", css_class: "size-4", aria_label: "Refresh now") %>
         </span>
-        <span class="hidden inline-flex" data-loading-button-target="loading">
+        <span class="hidden" data-loading-button-target="loading">
           <%= icon("loader-circle", css_class: "size-4 animate-spin", aria_label: "Refreshing") %>
         </span>
       <% end %>
