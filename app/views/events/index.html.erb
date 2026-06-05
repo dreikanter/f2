@@ -8,7 +8,12 @@
     <% end %>
     <% if @log_endpoint %>
       <% header.with_action_button do %>
-        <%= render RefreshButtonComponent.new(target_id: EventLogComponent::DOM_ID, key: "events.refresh") %>
+        <%= render RefreshButtonComponent.new(data: {
+              controller: "refresh-trigger loading-button",
+              refresh_trigger_target_id_value: EventLogComponent::DOM_ID,
+              action: "click->refresh-trigger#trigger",
+              key: "events.refresh"
+            }) %>
       <% end %>
     <% end %>
   <% end %>

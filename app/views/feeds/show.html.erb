@@ -20,7 +20,12 @@
       <% end %>
     <% end %>
     <% header.with_action_button do %>
-      <%= render RefreshButtonComponent.new(url: feed_refresh_path(@feed), title: "Refresh now") %>
+      <%= form_with url: feed_refresh_path(@feed), method: :post, class: "inline-block", data: {
+            controller: "loading-button",
+            action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
+          } do %>
+        <%= render RefreshButtonComponent.new(title: "Refresh now", type: "submit") %>
+      <% end %>
     <% end %>
     <% header.with_action_button do %>
       <%= link_to "Edit", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
