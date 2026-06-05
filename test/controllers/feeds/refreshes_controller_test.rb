@@ -34,4 +34,15 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_path(feed)
     assert_equal "Feed refresh started", flash[:notice]
   end
+
+  test "create responds with turbo stream" do
+    sign_in_as(user)
+
+    assert_enqueued_with(job: FeedRefreshJob, args: [feed.id]) do
+      post feed_refresh_path(feed), as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+  end
 end
