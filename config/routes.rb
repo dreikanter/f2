@@ -38,6 +38,7 @@ Rails.application.routes.draw do
 
   resources :feeds do
     resource :status, only: :update, controller: "feed_statuses"
+    resource :refresh, only: :create, controller: "feeds/refreshes"
     resource :purge, only: :create, controller: "feeds/purges"
   end
 
