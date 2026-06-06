@@ -13,4 +13,16 @@ class PurgeExpiredEventsJobTest < ActiveJob::TestCase
     assert Event.exists?(active.id)
     assert Event.exists?(permanent.id)
   end
+
+  test "#perform should delete references of purged events" do
+    expired = create(:event, expires_at: 1.hour.ago)
+    active = create(:event, expires_at: 1.hour.from_now)
+    expired_reference = create(:event_reference, event: expired)
+    active_reference = create(:event_reference, event: active)
+
+    PurgeExpiredEventsJob.perform_now
+
+    assert_not EventReference.exists?(expired_reference.id)
+    assert EventReference.exists?(active_reference.id)
+  end
 end

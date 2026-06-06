@@ -1,6 +1,7 @@
 class EventsController < ApplicationController
   include EventFiltering
   include EventCursorPagination
+  include EventReferencedPosts
 
   def index
     respond_to do |format|
@@ -11,6 +12,7 @@ class EventsController < ApplicationController
 
   def show
     @event = owned_events.find(params[:id])
+    @referenced_posts = referenced_posts(@event)
     @previous_event = adjacent_event(:newer)
     @next_event = adjacent_event(:older)
   end

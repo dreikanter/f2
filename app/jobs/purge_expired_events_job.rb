@@ -12,6 +12,7 @@ class PurgeExpiredEventsJob < ApplicationJob
     deleted_count = 0
 
     Event.expired.in_batches(of: BATCH_SIZE) do |events|
+      EventReference.where(event_id: events.select(:id)).delete_all
       deleted_count += events.delete_all
       sleep BATCH_PAUSE
     end

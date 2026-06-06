@@ -4,6 +4,8 @@ class Event < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :subject, polymorphic: true, optional: true
 
+  has_many :event_references, dependent: :delete_all
+
   enum :level, { debug: 0, info: 1, warning: 2, error: 3 }
 
   validates :type, presence: true
@@ -19,6 +21,12 @@ class Event < ApplicationRecord
     level == "debug" ? :info : level.to_sym
   end
 
+  # Records this event points at, with deleted ones dropped. Distinct from
+  # #event_references, which are the join rows themselves.
+  def references
+    event_references.includes(:reference).filter_map(&:reference)
+  end
+
   def expired?
     expires_at.present? && expires_at < Time.current
   end
@@ -26,9 +34,5 @@ class Event < ApplicationRecord
   def expires_in(duration)
     update!(expires_at: duration.from_now)
     self
-  end
-
-  def self.purge_expired
-    expired.delete_all
   end
 end

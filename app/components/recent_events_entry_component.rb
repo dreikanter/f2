@@ -9,7 +9,7 @@ class RecentEventsEntryComponent < ViewComponent::Base
   def call
     content_tag(:li, class: "flex items-center gap-3 px-4 py-2.5",
                      data: { key: "recent_events.#{event.id}" }) do
-      safe_join([badge_tag, description_tag, time_tag])
+      safe_join([badge_tag, description_tag, posts_count_tag, time_tag].compact)
     end
   end
 
@@ -25,6 +25,19 @@ class RecentEventsEntryComponent < ViewComponent::Base
     content_tag(:span, render(EventDescriptionComponent.new(event: event)),
                 class: "flex-1 truncate text-sm text-slate-700",
                 data: { key: "recent_events.description" })
+  end
+
+  def posts_count_tag
+    return unless event.type == "feed_refresh"
+
+    # Filter in Ruby, not with .where: event_references is preloaded for the
+    # list, so counting in memory avoids a COUNT query per event row.
+    count = event.event_references.count { |reference| reference.reference_type == "Post" }
+    return if count.zero?
+
+    content_tag(:span, helpers.pluralize(count, "post"),
+                class: "shrink-0 text-slate-400",
+                data: { key: "recent_events.posts_count" })
   end
 
   def time_tag

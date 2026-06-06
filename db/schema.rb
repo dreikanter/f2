@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_04_103046) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_04_103046) do
     t.bigint "user_id", null: false
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
+  end
+
+  create_table "event_references", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "reference_type", null: false
+    t.bigint "reference_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "reference_type", "reference_id"], name: "index_event_references_on_event_and_reference", unique: true
+    t.index ["reference_type", "reference_id"], name: "index_event_references_on_reference"
   end
 
   create_table "events", force: :cascade do |t|
