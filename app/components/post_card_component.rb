@@ -42,7 +42,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def label_with_time(label, time)
-    helpers.safe_join(["#{label} (", helpers.short_time_ago_tag(time), ")"])
+    helpers.safe_join([label, " (", helpers.short_time_ago_tag(time), ")"])
   end
 
   def attachment_count
