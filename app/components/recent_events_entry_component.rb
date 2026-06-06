@@ -30,6 +30,8 @@ class RecentEventsEntryComponent < ViewComponent::Base
   def posts_count_tag
     return unless event.type == "feed_refresh"
 
+    # Filter in Ruby, not with .where: event_references is preloaded for the
+    # list, so counting in memory avoids a COUNT query per event row.
     count = event.event_references.count { |reference| reference.reference_type == "Post" }
     return if count.zero?
 
