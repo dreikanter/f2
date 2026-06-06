@@ -32,6 +32,7 @@ class Event < ApplicationRecord
   # above stays free of Post-specific concerns.
   def referenced_posts
     Post.where(id: event_references.where(reference_type: "Post").select(:reference_id))
+        .includes(:feed)
         .order(created_at: :desc)
   end
 

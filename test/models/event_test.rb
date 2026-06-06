@@ -150,6 +150,13 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [post], event.referenced_posts.to_a
   end
 
+  test "#referenced_posts should eager-load feeds" do
+    event = Event.create!(type: "feed_refresh", subject: feed)
+    create(:event_reference, event: event, reference: create(:post, feed: feed))
+
+    assert event.referenced_posts.first.association(:feed).loaded?
+  end
+
   test "#destroy should delete associated references" do
     event = Event.create!(type: "feed_event", subject: feed)
     reference = create(:event_reference, event: event)
