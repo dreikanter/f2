@@ -19,7 +19,7 @@ class UserStatsComponentTest < ViewComponent::TestCase
     published = result.css('[data-key="stats.total_published_posts"]').first
     assert_not_nil published
 
-    recent = result.css('[data-key="stats.most_recent_post_publication"]').first
+    recent = result.css('[data-key="stats.most_recent_repost"]').first
     assert_not_nil recent
 
     average = result.css('[data-key="stats.posts_last_week"]').first
@@ -50,7 +50,7 @@ class UserStatsComponentTest < ViewComponent::TestCase
 
     result = render_inline(UserStatsComponent.new(user: user_without_posts))
 
-    recent_value = result.css('[data-key="stats.most_recent_post_publication.value"]').first.text
+    recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
     assert_equal "—", recent_value
   end
 end

@@ -114,10 +114,12 @@ class User < ApplicationRecord
     published_posts.count
   end
 
-  # Returns the timestamp of the most recently published post across all user's feeds
-  # @return [Time, nil] most recent publication timestamp or nil if no published posts
-  def most_recent_post_published_at
-    published_posts.maximum(:published_at)
+  # Returns the timestamp of the most recent repost across all user's feeds.
+  # This reflects when a post was published to FreeFeed, not the original
+  # source publication date.
+  # @return [Time, nil] most recent repost timestamp or nil if no published posts
+  def most_recent_repost_at
+    published_posts.maximum(:updated_at)
   end
 
   def posts_published_last_week_count

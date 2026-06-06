@@ -50,10 +50,10 @@ class UserStatsComponent < ViewComponent::Base
         value: number_with_delimiter(user.posts_published_last_week_count)
       },
       {
-        key: "most_recent_post_publication",
-        label: "Most recent post publication",
+        key: "most_recent_repost",
+        label: "Most recent repost",
         label_short: "Recent",
-        value: user.most_recent_post_published_at.present? ? "#{helpers.short_time_ago(user.most_recent_post_published_at)} ago" : "—"
+        value: user.most_recent_repost_at.present? ? "#{helpers.short_time_ago(user.most_recent_repost_at)} ago" : "—"
       }
     ]
   end
