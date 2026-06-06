@@ -53,6 +53,20 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
   end
 
+  test "should list imported posts referenced by the event" do
+    login_as(admin_user)
+    feed = create(:feed)
+    event = create(:event, type: "feed_refresh", subject: feed, user: feed.user)
+    post = create(:post, feed: feed)
+    create(:event_reference, event: event, reference: post)
+
+    get admin_event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.imported_posts']"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
+  end
+
   test "should link user subject to filter by that subject" do
     login_as(admin_user)
     subject_user = create(:user)

@@ -21,6 +21,19 @@ class Event < ApplicationRecord
     level == "debug" ? :info : level.to_sym
   end
 
+  # Posts this event references that still exist. References intentionally
+  # outlive the posts they point at, so deleted posts simply drop out here.
+  def imported_posts
+    Post.where(id: event_references.where(reference_type: "Post").select(:reference_id))
+        .order(published_at: :desc)
+  end
+
+  # Count of referenced posts, including ones the user later deleted. Uses the
+  # loaded association when preloaded to stay cheap inside event lists.
+  def imported_posts_count
+    event_references.count { |reference| reference.reference_type == "Post" }
+  end
+
   def expired?
     expires_at.present? && expires_at < Time.current
   end

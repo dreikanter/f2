@@ -219,6 +219,30 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.type']", "owned_event"
   end
 
+  test "#show should list imported posts referenced by the event" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", user: user, subject: feed)
+    post = create(:post, feed: feed)
+    create(:event_reference, event: event, reference: post)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.imported_posts']"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
+  end
+
+  test "#show should not render the imported posts section without references" do
+    sign_in_as user
+    event = create(:event, type: "feed_refresh", user: user)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.imported_posts']", false
+  end
+
   test "#show should render an owned event even with list filter params" do
     sign_in_as user
     event = create(:event, type: "feed_refresh", user: user)
