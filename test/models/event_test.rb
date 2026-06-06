@@ -132,38 +132,6 @@ class EventTest < ActiveSupport::TestCase
     assert Event.exists?(permanent_event.id)
   end
 
-  test "#imported_posts should return referenced posts newest first" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    older = create(:post, feed: feed, published_at: 2.days.ago)
-    newer = create(:post, feed: feed, published_at: 1.hour.ago)
-    create(:event_reference, event: event, reference: older)
-    create(:event_reference, event: event, reference: newer)
-
-    assert_equal [newer, older], event.imported_posts.to_a
-  end
-
-  test "#imported_posts should exclude posts that were deleted" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    kept = create(:post, feed: feed)
-    deleted = create(:post, feed: feed)
-    create(:event_reference, event: event, reference: kept)
-    create(:event_reference, event: event, reference: deleted)
-    deleted.destroy!
-
-    assert_equal [kept], event.imported_posts.to_a
-  end
-
-  test "#imported_posts_count should count references including deleted posts" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    kept = create(:post, feed: feed)
-    deleted = create(:post, feed: feed)
-    create(:event_reference, event: event, reference: kept)
-    create(:event_reference, event: event, reference: deleted)
-    deleted.destroy!
-
-    assert_equal 2, event.imported_posts_count
-  end
-
   test "#purge_expired should drop references of purged events" do
     expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
     active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)

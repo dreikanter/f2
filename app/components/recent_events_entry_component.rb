@@ -30,7 +30,7 @@ class RecentEventsEntryComponent < ViewComponent::Base
   def posts_count_tag
     return unless event.type == "feed_refresh"
 
-    count = event.imported_posts_count
+    count = event.event_references.size
     return if count.zero?
 
     content_tag(:span, helpers.pluralize(count, "post"),

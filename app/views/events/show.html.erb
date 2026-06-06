@@ -48,11 +48,11 @@
     )) %>
   <% end %>
 
-  <% imported_posts = @event.imported_posts.to_a %>
-  <% if imported_posts.any? %>
+  <% referenced_posts = @event.event_references.includes(:reference).filter_map(&:reference) %>
+  <% if referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
       <h2 class="text-2xl font-semibold mb-3 text-slate-900">Imported Posts</h2>
-      <%= render PostsListComponent.new(posts: imported_posts) %>
+      <%= render PostsListComponent.new(posts: referenced_posts) %>
     </section>
   <% end %>
 
