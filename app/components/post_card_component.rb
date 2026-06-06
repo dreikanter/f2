@@ -61,12 +61,21 @@ class PostCardComponent < ViewComponent::Base
     post.freefeed_url
   end
 
-  def withdraw_allowed?
+  def delete_allowed?
     helpers.policy(post).destroy?
   end
 
   def withdrawn?
     post.status.to_s == "withdrawn"
+  end
+
+  def card_classes
+    base = "w-full rounded-lg border border-slate-200 shadow-xs"
+    "#{base} #{withdrawn? ? 'bg-slate-50' : 'bg-white'}"
+  end
+
+  def delete_modal_id
+    PostDeleteModalComponent.modal_id(post)
   end
 
   def menu_id
