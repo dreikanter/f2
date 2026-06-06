@@ -8,8 +8,6 @@ class PostDetailsComponent < ViewComponent::Base
       add_feed_item(list)
       add_published_item(list)
       add_reposted_item(list) if @post.reposted_at
-      add_attachments_item(list) if @post.attachment_urls.present?
-      add_comments_item(list) if @post.comments.present?
       add_source_url_item(list)
       add_validation_errors_item(list) if @post.validation_errors.present?
       add_uid_item(list)
@@ -41,49 +39,6 @@ class PostDetailsComponent < ViewComponent::Base
       label: "Reposted",
       value: helpers.datetime_with_duration_tag(@post.reposted_at),
       key: "post.reposted"
-    ))
-  end
-
-  def add_attachments_item(component)
-    attachments_html = safe_join(
-      @post.attachment_urls.map do |url|
-        filename = extract_filename(url)
-        helpers.link_to(url, target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center") do
-          safe_join([
-            helpers.icon("file-image", css_class: "size-4"),
-            content_tag(:span, filename, class: "sr-only")
-          ])
-        end
-      end,
-      " "
-    )
-
-    component.with_item(ListComponent::StatItemComponent.new(
-      label: "Attachments (#{@post.attachment_urls.length})",
-      value: attachments_html,
-      key: "post.attachments"
-    ))
-  end
-
-  def extract_filename(url)
-    uri = URI.parse(url)
-    filename = File.basename(uri.path)
-    filename.presence || "Attachment"
-  rescue URI::InvalidURIError
-    "Attachment"
-  end
-
-  def add_comments_item(component)
-    comments_html = safe_join(
-      @post.comments.map do |comment|
-        content_tag(:div, helpers.simple_format(comment), class: "border-l-4 border-slate-300 pl-3 mb-3 last:mb-0")
-      end
-    )
-
-    component.with_item(ListComponent::StatItemComponent.new(
-      label: "Comments (#{@post.comments.length})",
-      value: comments_html,
-      key: "post.comments"
     ))
   end
 
