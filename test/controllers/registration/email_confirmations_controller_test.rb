@@ -8,7 +8,7 @@ class Registration::EmailConfirmationsControllerTest < ActionDispatch::Integrati
     get registration_email_confirmation_url(token)
 
     assert_redirected_to new_session_path
-    assert_equal "Your email is now confirmed. Please sign in to get started.", flash[:notice]
+    assert_equal "Your email is now confirmed. Please sign in to get started.", flash[:success]
     assert inactive_user.reload.onboarding?
   end
 

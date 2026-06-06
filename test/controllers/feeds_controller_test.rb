@@ -87,7 +87,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed.feed_schedule.next_run_at
     assert_not_nil feed.feed_schedule.last_run_at
     assert_redirected_to feed_path(feed)
-    assert_match "Feed created and enabled.", flash[:notice]
+    assert_match "Feed created and enabled.", flash[:success]
   end
 
   test "#create should save as draft with blank name" do
@@ -133,7 +133,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     feed = Feed.last
     assert_predicate feed, :draft?
     assert_redirected_to feed_path(feed)
-    assert_match "Feed saved as draft", flash[:notice]
+    assert_match "Feed saved as draft", flash[:success]
   end
 
   test "#create should enable a feed without any preview" do

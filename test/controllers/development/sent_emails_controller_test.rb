@@ -93,7 +93,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
     delete purge_development_sent_emails_path
     assert_redirected_to development_sent_emails_path
-    assert_equal "All emails purged", flash[:notice]
+    assert_equal "All emails purged", flash[:success]
     assert_equal 0, email_storage.list.count
   end
 

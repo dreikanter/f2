@@ -50,7 +50,7 @@ class AccessTokensController < ApplicationController
 
     if @access_token.update(attrs)
       @access_token.validate_token_async if new_token
-      redirect_to access_token_path(@access_token), notice: "Changes saved."
+      redirect_to access_token_path(@access_token), success: "Changes saved."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -60,7 +60,7 @@ class AccessTokensController < ApplicationController
     access_token = find_access_token
     authorize access_token
     access_token.destroy!
-    redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' deleted."
+    redirect_to access_tokens_path, success: "Access token '#{access_token.name}' deleted."
   end
 
   private
