@@ -36,6 +36,49 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
+  test "#update should respond with turbo stream when enabling" do
+    sign_in_as(user)
+
+    patch feed_status_path(feed), params: { status: "enabled" }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed, :header)
+    assert_includes response.body, ActionView::RecordIdentifier.dom_id(feed)
+    assert_includes response.body, "Feed enabled"
+
+    feed.reload
+    assert_equal "enabled", feed.state
+  end
+
+  test "#update should respond with turbo stream when disabling" do
+    sign_in_as(user)
+    feed.update!(state: :enabled)
+
+    patch feed_status_path(feed), params: { status: "disabled" }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_includes response.body, "Feed disabled"
+
+    feed.reload
+    assert_equal "disabled", feed.state
+  end
+
+  test "#update should respond with turbo stream when enablement fails" do
+    sign_in_as(user)
+    feed_without_token = create(:feed, :without_access_token, user: user)
+
+    patch feed_status_path(feed_without_token), params: { status: "enabled" }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_includes response.body, "Cannot enable feed: missing"
+
+    feed_without_token.reload
+    assert_equal "disabled", feed_without_token.state
+  end
+
   test "#update should reject an unsupported status" do
     sign_in_as(user)
 
