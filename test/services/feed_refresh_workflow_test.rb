@@ -560,4 +560,26 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_equal "inactive", token.reload.status
   end
+
+  test "#publish_posts should report the error when a post fails to publish" do
+    pub_user = create(:user)
+    token = create(:access_token, :active, user: pub_user)
+    test_feed = create(:feed, user: pub_user, access_token: token,
+                               feed_profile_key: "rss", target_group: "group")
+    post = create(:post, :enqueued, feed: test_feed)
+
+    stub_request(:post, "#{token.host}/v4/posts").to_return(status: 500)
+
+    reported = []
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    Rails.error.stub(:report, ->(err, **kwargs) { reported << [err, kwargs] }) do
+      workflow.send(:publish_posts, Post.where(id: post.id))
+    end
+
+    assert_equal "failed", post.reload.status
+    assert_equal 1, reported.size
+    _error, kwargs = reported.first
+    assert_equal post.id, kwargs.dig(:context, :post_id)
+    assert_equal test_feed.id, kwargs.dig(:context, :feed_id)
+  end
 end

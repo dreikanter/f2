@@ -150,6 +150,7 @@ class FeedRefreshWorkflow
         post.update!(status: :failed)
         failed_count += 1
         Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
+        Rails.error.report(e, context: { post_id: post.id, feed_id: feed.id })
       end
     end
 
