@@ -47,18 +47,18 @@ class PostsController < ApplicationController
     @post = load_post
     authorize @post
 
-    @delete_freefeed = boolean_param(:delete_freefeed)
+    @delete_freefeed_post = boolean_param(:delete_freefeed_post)
     @delete_record = boolean_param(:delete_record)
 
-    unless @delete_freefeed || @delete_record
+    unless @delete_freefeed_post || @delete_record
       return respond_to do |format|
         format.html { redirect_to posts_path, alert: "Pick at least one thing to delete." }
         format.turbo_stream { head :no_content }
       end
     end
 
-    if @delete_freefeed && @post.freefeed_post_id.present?
-      PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id)
+    if @delete_freefeed_post && @post.freefeed_post_id.present?
+      PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id, @post.id)
     end
 
     if @delete_record
@@ -71,12 +71,19 @@ class PostsController < ApplicationController
     @notice = destroy_notice
 
     respond_to do |format|
-      format.html { redirect_to posts_path, notice: @notice }
+      format.html { redirect_to destroy_redirect_path, notice: @notice }
       format.turbo_stream
     end
   end
 
   private
+
+  # After a withdrawal the post record stays, so send the user back to the post
+  # page to see its updated status. Once the record itself is gone there is
+  # nothing left to show, so fall back to the index.
+  def destroy_redirect_path
+    @delete_record ? posts_path : post_path(@post)
+  end
 
   def boolean_param(key)
     ActiveModel::Type::Boolean.new.cast(params[key])
@@ -105,7 +112,7 @@ class PostsController < ApplicationController
   end
 
   def destroy_notice
-    if @delete_record && @delete_freefeed
+    if @delete_record && @delete_freefeed_post
       "Post removed from FreeFeed and Feeder. It may be imported again the next time the feed updates."
     elsif @delete_record
       "Post record deleted. It may be imported again the next time the feed updates."
