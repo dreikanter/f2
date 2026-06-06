@@ -1,56 +1,7 @@
 <% content_for :title, @feed.display_name %>
 
 <div class="space-y-10">
-  <%= render PageHeaderComponent.new(title: @feed.display_name) do |header| %>
-    <% header.with_context_paragraph do %>
-      <%= render feed_status_badge(@feed) %>
-    <% end %>
-    <% if @feed.target_group_url.present? %>
-      <% header.with_context_paragraph do %>
-        Target group:
-        <%= link_to "#{@feed.access_token.host_domain}/#{@feed.target_group}",
-                    @feed.target_group_url,
-                    class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
-                    target: "_blank", rel: "noopener" %>
-      <% end %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= form_with url: feed_refresh_path(@feed), method: :post, class: "inline-block", data: {
-            controller: "loading-button",
-            action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
-          } do %>
-        <%= render RefreshButtonComponent.new(title: "Refresh now", type: "submit") %>
-      <% end %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= link_to "Edit", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
-    <% end %>
-    <% if @feed.enabled? %>
-      <% header.with_action_button do %>
-        <%= button_to "Disable",
-                      feed_status_path(@feed),
-                      method: :patch,
-                      params: { status: "disabled" },
-                      data: { turbo_confirm: "Disable this feed?" },
-                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"),
-                      form: { class: "inline-block" } %>
-      <% end %>
-    <% elsif @feed.disabled? && @feed.can_be_enabled? %>
-      <% header.with_action_button do %>
-        <%= button_to "Enable",
-                      feed_status_path(@feed),
-                      method: :patch,
-                      params: { status: "enabled" },
-                      data: { turbo_confirm: "Enable this feed?" },
-                      class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"),
-                      form: { class: "inline-block" } %>
-      <% end %>
-    <% else %>
-      <% header.with_action_button do %>
-        <button type="button" disabled title="Complete setup to enable this feed" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Enable</button>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "header", feed: @feed %>
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">

@@ -1,0 +1,23 @@
+<%# Re-render the feed page heading (feed show) and/or the feed card (feeds
+    index). Targets absent from the current page are ignored by Turbo, so this
+    one template serves both pages. %>
+<%= turbo_stream.replace dom_id(@feed, :header) do %>
+  <%= render "feeds/header", feed: @feed %>
+<% end %>
+
+<%= turbo_stream.replace dom_id(@feed) do %>
+  <%= render FeedCardComponent.new(feed: @feed) %>
+<% end %>
+
+<%= turbo_stream.prepend "flash-messages" do %>
+  <% if flash[:success] %>
+    <%= render AlertComponent.new(variant: :success) do %>
+      <span><%= sanitize(flash[:success]) %></span>
+    <% end %>
+  <% end %>
+  <% if flash[:alert] %>
+    <%= render AlertComponent.new(variant: :error) do %>
+      <span><%= sanitize(flash[:alert]) %></span>
+    <% end %>
+  <% end %>
+<% end %>
