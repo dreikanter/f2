@@ -22,6 +22,26 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     assert_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
   end
 
+  test ".perform_now should drop the FreeFeed post id after deletion" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+    stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
+      .to_return(status: 200)
+
+    PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)
+
+    assert_nil post.reload.freefeed_post_id
+  end
+
+  test ".perform_now should keep the FreeFeed post id when deletion fails" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+    stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)
+
+    assert_equal "test_post_123", post.reload.freefeed_post_id
+  end
+
   test ".perform_now should handle FreeFeed API errors gracefully" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 500, body: "Internal Server Error")

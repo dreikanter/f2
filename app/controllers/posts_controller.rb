@@ -58,7 +58,7 @@ class PostsController < ApplicationController
     end
 
     if @delete_freefeed && @post.freefeed_post_id.present?
-      PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id)
+      PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id, @post.id)
     end
 
     if @delete_record

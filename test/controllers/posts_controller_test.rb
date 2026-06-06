@@ -146,7 +146,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
-    assert_enqueued_with(job: PostWithdrawalJob, args: [feed.id, "test-123"]) do
+    assert_enqueued_with(job: PostWithdrawalJob, args: [feed.id, "test-123", published_post.id]) do
       assert_difference("Event.count", 1) do
         delete post_url(published_post), params: { delete_freefeed: "1" },
                                          headers: { "Accept" => "text/vnd.turbo-stream.html" }

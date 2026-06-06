@@ -1,7 +1,7 @@
 class PostWithdrawalJob < ApplicationJob
   queue_as :default
 
-  def perform(feed_id, freefeed_post_id)
+  def perform(feed_id, freefeed_post_id, post_id = nil)
     return if freefeed_post_id.blank?
 
     feed = Feed.find_by(id: feed_id)
@@ -12,6 +12,8 @@ class PostWithdrawalJob < ApplicationJob
 
     client = access_token.build_client
     client.delete_post(freefeed_post_id)
+
+    Post.where(id: post_id).update_all(freefeed_post_id: nil)
   rescue FreefeedClient::Error => e
     Rails.logger.error("Failed to withdraw FreeFeed post #{freefeed_post_id}: #{e.message}")
   end
