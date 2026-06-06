@@ -4,6 +4,8 @@ class Event < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :subject, polymorphic: true, optional: true
 
+  has_many :event_references, dependent: :delete_all
+
   enum :level, { debug: 0, info: 1, warning: 2, error: 3 }
 
   validates :type, presence: true
@@ -29,6 +31,8 @@ class Event < ApplicationRecord
   end
 
   def self.purge_expired
-    expired.delete_all
+    ids = expired.ids
+    EventReference.where(event_id: ids).delete_all
+    where(id: ids).delete_all
   end
 end

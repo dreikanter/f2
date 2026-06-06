@@ -132,6 +132,27 @@ class EventTest < ActiveSupport::TestCase
     assert Event.exists?(permanent_event.id)
   end
 
+  test "#purge_expired should drop references of purged events" do
+    expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
+    active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
+    expired_reference = create(:event_reference, event: expired_event)
+    active_reference = create(:event_reference, event: active_event)
+
+    Event.purge_expired
+
+    assert_not EventReference.exists?(expired_reference.id)
+    assert EventReference.exists?(active_reference.id)
+  end
+
+  test "#destroy should delete associated references" do
+    event = Event.create!(type: "feed_event", subject: feed)
+    reference = create(:event_reference, event: event)
+
+    event.destroy!
+
+    assert_not EventReference.exists?(reference.id)
+  end
+
   test "should work with polymorphic subjects" do
     feed_event = Event.create!(type: "feed_event", subject: feed)
     user_event = Event.create!(type: "user_event", subject: user)
