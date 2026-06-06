@@ -9,15 +9,6 @@
   <%= render FeedCardComponent.new(feed: @feed) %>
 <% end %>
 
-<%= turbo_stream.prepend "flash-messages" do %>
-  <% if flash[:success] %>
-    <%= render AlertComponent.new(variant: :success) do %>
-      <span><%= sanitize(flash[:success]) %></span>
-    <% end %>
-  <% end %>
-  <% if flash[:alert] %>
-    <%= render AlertComponent.new(variant: :error) do %>
-      <span><%= sanitize(flash[:alert]) %></span>
-    <% end %>
-  <% end %>
-<% end %>
+<%# Replace (not append) so repeated toggles don't stack alerts. The partial
+    renders its own #flash-messages wrapper, so this swaps in the current flash. %>
+<%= turbo_stream.replace "flash-messages", partial: "layouts/flash" %>
