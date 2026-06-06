@@ -124,6 +124,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     assert_equal 2, events.first.metadata["stats"]["new_posts"]
+
+    # Verify each new post is referenced by the refresh event
+    references = events.first.event_references
+    assert_equal 2, references.count
+    assert_equal Post.where(feed: test_feed).order(:id).pluck(:id),
+                 references.where(reference_type: "Post").order(:reference_id).pluck(:reference_id).sort
   end
 
   test "#execute should skip duplicate entries on subsequent runs" do

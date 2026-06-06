@@ -167,7 +167,7 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
-    create_feed_refresh_stats_event
+    create_feed_refresh_stats_event(posts)
 
     # Record daily metrics (sparse data - only if there's activity)
     posts_count = posts.count { |p| p.enqueued? || p.published? }
@@ -192,8 +192,8 @@ class FeedRefreshWorkflow
     record_stats(stats_key => duration)
   end
 
-  def create_feed_refresh_stats_event
-    Event.create!(
+  def create_feed_refresh_stats_event(posts)
+    event = Event.create!(
       type: "feed_refresh",
       level: :info,
       subject: feed,
@@ -201,6 +201,26 @@ class FeedRefreshWorkflow
       message: "",
       metadata: { stats: stats }
     )
+
+    reference_posts(event, posts)
+    event
+  end
+
+  def reference_posts(event, posts)
+    return if posts.empty?
+    current_time = Time.current
+
+    references_data = posts.map do |post|
+      {
+        event_id: event.id,
+        reference_type: "Post",
+        reference_id: post.id,
+        created_at: current_time,
+        updated_at: current_time
+      }
+    end
+
+    EventReference.insert_all(references_data)
   end
 
   def disable_credential_on_auth_error(error)
