@@ -68,8 +68,10 @@ class PostsController < ApplicationController
       log_post_event("post_withdrawn", @post)
     end
 
+    @notice = destroy_notice
+
     respond_to do |format|
-      format.html { redirect_to posts_path, notice: destroy_notice }
+      format.html { redirect_to posts_path, notice: @notice }
       format.turbo_stream
     end
   end
@@ -104,11 +106,11 @@ class PostsController < ApplicationController
 
   def destroy_notice
     if @delete_record && @delete_freefeed
-      "Post removed from FreeFeed and Feeder. It may be imported again later."
+      "Post removed from FreeFeed and Feeder. It may be imported again the next time the feed updates."
     elsif @delete_record
-      "Post record deleted. It may be imported again later."
+      "Post record deleted. It may be imported again the next time the feed updates."
     else
-      "Post withdrawal initiated. It remains visible in the app."
+      "The post will be withdrawn from FreeFeed but stays here so it won't be imported again."
     end
   end
 
