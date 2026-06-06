@@ -24,7 +24,7 @@ class Event < ApplicationRecord
   # Records this event points at, with deleted ones dropped. Distinct from
   # #event_references, which are the join rows themselves.
   def references
-    event_references.referenced_records
+    event_references.includes(:reference).filter_map(&:reference)
   end
 
   def expired?
