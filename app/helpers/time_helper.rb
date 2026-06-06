@@ -84,18 +84,18 @@ module TimeHelper
     )
   end
 
-  def datetime_with_duration(time)
-    return nil unless time
-
-    "#{long_time_format(time)} (#{short_time_ago(time)})"
-  end
-
   def datetime_with_duration_tag(time)
     return nil unless time
 
+    content = safe_join([
+      long_time_format(time),
+      " ",
+      content_tag(:span, "(#{short_time_ago(time)})", class: "text-slate-500")
+    ])
+
     content_tag(
       :time,
-      datetime_with_duration(time),
+      content,
       datetime: time.rfc3339,
       title: "#{time_ago(time)} ago"
     )
