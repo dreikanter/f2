@@ -7,6 +7,7 @@ class PostDetailsComponent < ViewComponent::Base
     render(ListComponent.new) do |list|
       add_feed_item(list)
       add_published_item(list)
+      add_reposted_item(list) if @post.reposted_at
       add_attachments_item(list) if @post.attachment_urls.present?
       add_comments_item(list) if @post.comments.present?
       add_source_url_item(list)
@@ -32,6 +33,14 @@ class PostDetailsComponent < ViewComponent::Base
       label: "Published",
       value: value,
       key: "post.published"
+    ))
+  end
+
+  def add_reposted_item(component)
+    component.with_item(ListComponent::StatItemComponent.new(
+      label: "Reposted",
+      value: helpers.datetime_with_duration_tag(@post.reposted_at),
+      key: "post.reposted"
     ))
   end
 

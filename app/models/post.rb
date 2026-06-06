@@ -46,6 +46,14 @@ class Post < ApplicationRecord
     "#{group_url}/#{freefeed_post_id}"
   end
 
+  # Returns the time the post was reposted to FreeFeed, or nil if it hasn't
+  # been published there. This reflects the repost moment, not the original
+  # source publication date (see #published_at).
+  # @return [Time, nil]
+  def reposted_at
+    updated_at if published?
+  end
+
   def normalized_attributes
     as_json(only: NORMALIZED_ATTRIBUTES)
   end
