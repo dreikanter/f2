@@ -131,32 +131,6 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [kept], event.references
   end
 
-  test "#referenced_posts should return imported posts newest first" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    older = create(:post, feed: feed, created_at: 2.days.ago)
-    newer = create(:post, feed: feed, created_at: 1.hour.ago)
-    create(:event_reference, event: event, reference: older)
-    create(:event_reference, event: event, reference: newer)
-
-    assert_equal [newer, older], event.referenced_posts.to_a
-  end
-
-  test "#referenced_posts should ignore non-post references" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    post = create(:post, feed: feed)
-    create(:event_reference, event: event, reference: post)
-    create(:event_reference, event: event, reference: user)
-
-    assert_equal [post], event.referenced_posts.to_a
-  end
-
-  test "#referenced_posts should eager-load feeds" do
-    event = Event.create!(type: "feed_refresh", subject: feed)
-    create(:event_reference, event: event, reference: create(:post, feed: feed))
-
-    assert event.referenced_posts.first.association(:feed).loaded?
-  end
-
   test "#destroy should delete associated references" do
     event = Event.create!(type: "feed_event", subject: feed)
     reference = create(:event_reference, event: event)

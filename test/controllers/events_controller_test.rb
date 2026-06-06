@@ -233,6 +233,24 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
   end
 
+  test "#show should list imported posts newest first and skip non-post references" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", user: user, subject: feed)
+    older = create(:post, feed: feed, created_at: 2.days.ago)
+    newer = create(:post, feed: feed, created_at: 1.hour.ago)
+    create(:event_reference, event: event, reference: older)
+    create(:event_reference, event: event, reference: newer)
+    create(:event_reference, event: event, reference: user)
+
+    get event_path(event)
+
+    assert_response :success
+    newer_dom = ActionView::RecordIdentifier.dom_id(newer)
+    older_dom = ActionView::RecordIdentifier.dom_id(older)
+    assert_operator response.body.index(newer_dom), :<, response.body.index(older_dom)
+  end
+
   test "#show should not render the imported posts section without references" do
     sign_in_as user
     event = create(:event, type: "feed_refresh", user: user)
