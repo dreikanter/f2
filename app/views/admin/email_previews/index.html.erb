@@ -3,12 +3,15 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Email Previews") %>
 
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <% @previews.each do |preview| %>
       <%= render CardComponent.new(href: admin_email_preview_path(preview[:id])) do %>
-        <div class="space-y-2">
-          <h2 class="text-base font-semibold text-slate-900"><%= preview[:label] %></h2>
-          <p class="text-sm text-slate-500"><%= preview[:description] %></p>
+        <div class="space-y-4">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <%= icon("mail", css_class: "size-5") %>
+            <span><%= preview[:label] %></span>
+          </h2>
+          <p class="text-slate-600"><%= preview[:description] %></p>
         </div>
       <% end %>
     <% end %>
