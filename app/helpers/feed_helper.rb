@@ -35,17 +35,11 @@ module FeedHelper
     end
   end
 
-  def feed_status_summary(feed)
-    missing_parts = feed_missing_enablement_parts(feed)
-
-    if feed.enabled?
-      "This feed is enabled and will continue to import items on its schedule."
-    elsif feed.can_be_enabled?
-      "This feed is ready to enable. Turn it on to start importing posts."
-    elsif missing_parts.any?
-      "This feed is currently disabled. Add #{missing_parts.to_sentence} to finish setup."
-    else
-      "This feed is currently disabled."
+  def feed_status_badge(feed)
+    case feed.state.to_sym
+    when :draft    then BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge")
+    when :disabled then BadgeComponent.new(text: "Disabled", color: :yellow, key: "feed.#{feed.id}.disabled_badge")
+    when :enabled  then BadgeComponent.new(text: "Active", color: :green, key: "feed.#{feed.id}.enabled_badge")
     end
   end
 

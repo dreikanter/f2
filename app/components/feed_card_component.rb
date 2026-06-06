@@ -22,11 +22,7 @@ class FeedCardComponent < ViewComponent::Base
   end
 
   def status_badge
-    case feed.state.to_sym
-    when :draft    then BadgeComponent.new(text: "Draft", color: :gray, key: "feed.#{feed.id}.draft_badge")
-    when :disabled then BadgeComponent.new(text: "Disabled", color: :yellow, key: "feed.#{feed.id}.disabled_badge")
-    when :enabled  then BadgeComponent.new(text: "Active", color: :green, key: "feed.#{feed.id}.enabled_badge")
-    end
+    helpers.feed_status_badge(feed)
   end
 
   def menu_id
