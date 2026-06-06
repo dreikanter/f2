@@ -1,8 +1,8 @@
 <%# locals: () %>
-<div class="<%= 'space-y-3 mb-4' if notice || alert || flash[:success] %>" id="flash-messages">
-  <% if flash[:success] %>
+<div class="<%= 'space-y-3 mb-4' if notice || alert || success %>" id="flash-messages">
+  <% if success %>
     <%= render AlertComponent.new(variant: :success) do %>
-      <span><%= sanitize(flash[:success]) %></span>
+      <span><%= sanitize(success) %></span>
     <% end %>
   <% end %>
 
