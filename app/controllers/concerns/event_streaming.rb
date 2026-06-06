@@ -37,7 +37,7 @@ module EventStreaming
   end
 
   def render_brief_events_stream
-    @events = events_scope.includes(:user, :subject).order(created_at: :desc, id: :desc).limit(brief_events_limit)
+    @events = events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(brief_events_limit)
     body = helpers.render(RecentEventsListComponent.new(events: @events, endpoint: brief_polling_endpoint))
     render turbo_stream: turbo_stream.replace(RecentEventsListComponent::DOM_ID, body)
   end
