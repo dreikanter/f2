@@ -29,7 +29,11 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should expand t.co links in the text" do
-    assert_equal "Check our docs https://developer.x.com/docs and more", entries.first.raw_data["text"]
+    assert_equal "Agency > Intelligence. Check our docs https://developer.x.com/docs and more", entries.first.raw_data["text"]
+  end
+
+  test "#process should decode HTML entities in the text" do
+    assert_includes entries.first.raw_data["text"], "Agency > Intelligence"
   end
 
   test "#process should drop the trailing media link from the text" do
