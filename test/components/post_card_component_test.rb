@@ -70,7 +70,7 @@ class PostCardComponentTest < ViewComponent::TestCase
 
     origin_link = result.at_css("a[href='https://xkcd.com/3250/']")
     assert_not_nil origin_link
-    assert_includes origin_link.text.gsub(/\s+/, " "), "Origin (11h)"
+    assert_includes origin_link.text.gsub(/\s+/, " "), "Source (11h)"
   end
 
   test "#render should link repost time to the freefeed post" do
@@ -88,7 +88,7 @@ class PostCardComponentTest < ViewComponent::TestCase
     result = render_inline PostCardComponent.new(post: draft_post)
 
     text = result.text.gsub(/\s+/, " ")
-    assert_includes text, "Origin (11h)"
+    assert_includes text, "Source (11h)"
     assert_not_includes text, "Repost"
   end
 end

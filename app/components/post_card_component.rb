@@ -33,7 +33,7 @@ class PostCardComponent < ViewComponent::Base
 
   def origin_content
     return unless post.published_at
-    label_with_time("Origin", post.published_at)
+    label_with_time("Source", post.published_at)
   end
 
   def repost_content
