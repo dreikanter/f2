@@ -111,11 +111,11 @@ class FeedHelperTest < ActionView::TestCase
     assert_nil feed_summary_line(active_count: 0, inactive_count: 0, draft_count: 0)
   end
 
-  test "#feed_status_badge should render active badge for enabled feed" do
+  test "#feed_status_badge should render enabled badge for enabled feed" do
     feed = build(:feed, :enabled)
     result = feed_status_badge(feed)
 
-    assert_equal "Active", result.instance_variable_get(:@text)
+    assert_equal "Enabled", result.instance_variable_get(:@text)
     assert_equal :green, result.instance_variable_get(:@color)
   end
 

@@ -41,13 +41,13 @@ class FeedCardComponentTest < ViewComponent::TestCase
     assert_equal "Disabled", badge.text.strip
   end
 
-  test "#render should show Active badge for enabled feeds" do
+  test "#render should show Enabled badge for enabled feeds" do
     enabled_feed = create(:feed, :enabled, user: user)
     result = render_inline FeedCardComponent.new(feed: enabled_feed)
 
     badge = result.css("[data-key='feed.#{enabled_feed.id}.enabled_badge']").first
     assert_not_nil badge
-    assert_equal "Active", badge.text.strip
+    assert_equal "Enabled", badge.text.strip
   end
 
   test "#render should show @group label when target_group present" do
