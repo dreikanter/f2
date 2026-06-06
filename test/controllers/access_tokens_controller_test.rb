@@ -311,7 +311,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to access_token_path(access_token)
     assert_equal "Updated Name", access_token.reload.name
-    assert_equal "Changes saved.", flash[:notice]
+    assert_equal "Changes saved.", flash[:success]
   end
 
   test "#update should not re-validate when only name changes" do
@@ -364,7 +364,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to access_tokens_path
-    assert_equal "Access token '#{access_token.name}' deleted.", flash[:notice]
+    assert_equal "Access token '#{access_token.name}' deleted.", flash[:success]
   end
 
   test "cannot delete other user's token" do

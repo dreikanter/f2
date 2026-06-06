@@ -15,7 +15,7 @@ class Admin::PermissionsController < ApplicationController
     if error
       redirect_to admin_user_path(user), alert: error
     else
-      redirect_to admin_user_path(user), notice: "Permissions updated."
+      redirect_to admin_user_path(user), success: "Permissions updated."
     end
   end
 

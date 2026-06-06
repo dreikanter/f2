@@ -61,7 +61,7 @@ class FeedsController < ApplicationController
       elsif enable_feed?
         enable_and_respond(@feed)
       else
-        redirect_to feed_path(@feed), notice: success_message_for(@feed)
+        redirect_to feed_path(@feed), success: success_message_for(@feed)
       end
     else
       render :new, status: :unprocessable_entity
@@ -108,7 +108,7 @@ class FeedsController < ApplicationController
         promote_and_redirect(@feed, interval_changed)
       else
         @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
-        redirect_to feed_path(@feed), notice: update_message_for(@feed)
+        redirect_to feed_path(@feed), success: update_message_for(@feed)
       end
     else
       render :edit, status: :unprocessable_entity
@@ -119,7 +119,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @feed.destroy!
-    redirect_to feeds_path, notice: "Feed deleted."
+    redirect_to feeds_path, success: "Feed deleted."
   end
 
   private
@@ -138,7 +138,7 @@ class FeedsController < ApplicationController
 
   def enable_and_respond(feed)
     if feed.enable
-      redirect_to feed_path(feed), notice: success_message_for(feed)
+      redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :new, status: :unprocessable_entity
@@ -153,7 +153,7 @@ class FeedsController < ApplicationController
     end
 
     if feed.enabled?
-      redirect_to feed_path(feed), notice: update_message_for(feed)
+      redirect_to feed_path(feed), success: update_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
       render :edit, status: :unprocessable_entity

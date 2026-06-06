@@ -51,7 +51,7 @@ class LlmCredentialsController < ApplicationController
     credential = find_credential
     authorize credential
     credential.destroy!
-    redirect_to llm_credentials_path, notice: "AI credential '#{credential.display_name}' deleted."
+    redirect_to llm_credentials_path, success: "AI credential '#{credential.display_name}' deleted."
   end
 
   private

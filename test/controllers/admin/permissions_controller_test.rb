@@ -31,7 +31,7 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_permissions_path(target_user), params: { permissions: [Permission::DEV] }
 
     assert_redirected_to admin_user_path(target_user)
-    assert_equal "Permissions updated.", flash[:notice]
+    assert_equal "Permissions updated.", flash[:success]
     assert target_user.reload.permission?(Permission::DEV)
   end
 
@@ -86,7 +86,7 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_permissions_path(admin_user), params: { permissions: [Permission::ADMIN] }
 
     assert_redirected_to admin_user_path(admin_user)
-    assert_equal "Permissions updated.", flash[:notice]
+    assert_equal "Permissions updated.", flash[:success]
     assert admin_user.reload.permission?(Permission::ADMIN)
   end
 
@@ -97,7 +97,7 @@ class Admin::PermissionsControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_permissions_path(second_admin), params: { permissions: [] }
 
     assert_redirected_to admin_user_path(second_admin)
-    assert_equal "Permissions updated.", flash[:notice]
+    assert_equal "Permissions updated.", flash[:success]
     assert_not second_admin.reload.permission?(Permission::ADMIN)
   end
 

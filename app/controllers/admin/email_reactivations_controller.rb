@@ -3,6 +3,6 @@ class Admin::EmailReactivationsController < ApplicationController
     @user = User.find(params[:user_id])
     authorize @user, :reactivate_email?
     @user.reactivate_email!
-    redirect_to admin_user_path(@user), notice: "Email reactivated."
+    redirect_to admin_user_path(@user), success: "Email reactivated."
   end
 end

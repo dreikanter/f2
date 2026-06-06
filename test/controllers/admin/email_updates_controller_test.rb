@@ -36,7 +36,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" }, require_confirmation: "0" }
 
     assert_redirected_to admin_user_path(user)
-    assert_equal "Email address updated.", flash[:notice]
+    assert_equal "Email address updated.", flash[:success]
     assert_equal "new@example.com", user.reload.email_address
   end
 

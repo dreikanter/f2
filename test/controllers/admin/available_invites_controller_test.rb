@@ -24,7 +24,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".bg-sky-100", text: /Available invites updated successfully/
+      assert_select ".bg-emerald-100", text: /Available invites updated successfully/
     end
 
     target_user.reload
@@ -86,7 +86,7 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
     assert_select "turbo-stream[action='replace'][target='flash-messages']" do
       assert_select "div[id='flash-messages']"
-      assert_select ".bg-sky-100", text: /Available invites updated successfully/
+      assert_select ".bg-emerald-100", text: /Available invites updated successfully/
     end
 
     target_user.reload

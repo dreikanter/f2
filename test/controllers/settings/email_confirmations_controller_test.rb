@@ -23,7 +23,7 @@ class Settings::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTe
     get settings_email_confirmation_url(token)
 
     assert_redirected_to settings_path
-    assert_equal "Email address updated.", flash[:notice]
+    assert_equal "Email address updated.", flash[:success]
     assert_equal new_email, user.reload.email_address
     assert_nil user.unconfirmed_email
   end
