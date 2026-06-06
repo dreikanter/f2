@@ -63,24 +63,43 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css(".border-t.border-slate-200")
   end
 
-  test "#render should show labeled published and reposted times for published posts" do
-    published_post = create(:post, :published, feed: feed, published_at: 11.hours.ago, updated_at: 10.hours.ago)
+  test "#render should link source time to the original publication" do
+    published_post = create(:post, :published, feed: feed, source_url: "https://xkcd.com/3250/",
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
-    assert_includes result.text, "Published:"
-    assert_includes result.text, "Reposted:"
-    times = result.css("time").map { |t| t.text.strip }
-    assert_includes times, "11h"
-    assert_includes times, "10h"
+    source_link = result.at_css("a[href='https://xkcd.com/3250/']")
+    assert_not_nil source_link
+    assert_includes source_link.text.gsub(/\s+/, " "), "Source (11h)"
   end
 
-  test "#render should not show a reposted time for unpublished posts" do
+  test "#render should link repost time to the freefeed post" do
+    published_post = create(:post, :published, feed: feed,
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: published_post)
+
+    repost_link = result.at_css("a[href='#{published_post.freefeed_url}']")
+    assert_not_nil repost_link
+    assert_includes repost_link.text.gsub(/\s+/, " "), "Repost (10h)"
+  end
+
+  test "#render should show repost time as plain text when freefeed url is missing" do
+    # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
+    purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: purged_post)
+
+    assert_nil purged_post.freefeed_url
+    assert_includes result.text.gsub(/\s+/, " "), "Repost (10h)"
+    assert_empty result.css("a").select { |a| a.text.include?("Repost") }
+  end
+
+  test "#render should not show a repost time for unpublished posts" do
     draft_post = create(:post, feed: feed, status: :draft, published_at: 11.hours.ago)
     result = render_inline PostCardComponent.new(post: draft_post)
 
-    assert_includes result.text, "Published:"
-    assert_not_includes result.text, "Reposted:"
-    times = result.css("time").map { |t| t.text.strip }
-    assert_equal ["11h"], times
+    text = result.text.gsub(/\s+/, " ")
+    assert_includes text, "Source (11h)"
+    assert_not_includes text, "Repost"
   end
 end

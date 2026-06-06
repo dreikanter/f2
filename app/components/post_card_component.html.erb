@@ -9,78 +9,66 @@
     </div>
   </div>
 
-  <% if footer? %>
-    <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
-      <div class="flex items-center gap-3 text-sm text-slate-400">
-        <% if published_time_tag %>
-          <span class="flex shrink-0 items-center gap-1">
-            <span class="text-slate-500">Published:</span>
-            <%= published_time_tag %>
-          </span>
-        <% end %>
-        <% if reposted_time_tag %>
-          <span class="flex shrink-0 items-center gap-1">
-            <span class="text-slate-500">Reposted:</span>
-            <%= reposted_time_tag %>
-          </span>
-        <% end %>
-        <% if group_label %>
-          <%= link_to group_label, group_url, title: group_hint,
-                class: "transition hover:text-slate-600" %>
-        <% end %>
-        <% if attachment_count > 0 %>
-          <span class="flex items-center gap-1">
-            <%= helpers.icon("paperclip", css_class: "size-3.5") %>
-            <%= attachment_count %>
-          </span>
-        <% end %>
-        <% if comment_count > 0 %>
-          <span class="flex items-center gap-1">
-            <%= helpers.icon("message-circle", css_class: "size-3.5") %>
-            <%= comment_count %>
-          </span>
-        <% end %>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <% if source_url %>
-          <%= link_to "Source", source_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
-        <% end %>
-
-        <% if freefeed_url %>
-          <%= link_to "FreeFeed", freefeed_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
-        <% end %>
-
-        <% if withdraw_allowed? %>
-          <div class="relative">
-            <button type="button"
-                    id="<%= menu_id %>-button"
-                    data-dropdown-toggle="<%= menu_id %>"
-                    data-dropdown-placement="bottom-end"
-                    class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                    aria-haspopup="true"
-                    aria-expanded="false">
-              <%= helpers.icon("ellipsis", css_class: "size-4") %>
-              <span class="sr-only">More options</span>
-            </button>
-            <div id="<%= menu_id %>"
-                 class="z-20 hidden w-40 rounded-lg border border-slate-200 bg-white shadow-sm"
-                 role="menu"
-                 aria-labelledby="<%= menu_id %>-button">
-              <ul class="py-1">
-                <li>
-                  <%= link_to "Withdraw", helpers.post_path(post),
-                        data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
-                        class: "block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50",
-                        role: "menuitem" %>
-                </li>
-              </ul>
-            </div>
-          </div>
-        <% end %>
-      </div>
+  <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
+    <div class="flex items-center gap-3 text-sm text-slate-400">
+      <% if group_label %>
+        <%= link_to group_label, group_url, title: group_hint,
+              class: "transition hover:text-slate-600" %>
+      <% end %>
+      <% if attachment_count > 0 %>
+        <span class="flex items-center gap-1">
+          <%= helpers.icon("paperclip", css_class: "size-3.5") %>
+          <%= attachment_count %>
+        </span>
+      <% end %>
+      <% if comment_count > 0 %>
+        <span class="flex items-center gap-1">
+          <%= helpers.icon("message-circle", css_class: "size-3.5") %>
+          <%= comment_count %>
+        </span>
+      <% end %>
     </div>
-  <% end %>
+
+    <div class="flex items-center gap-3">
+      <%= link_to source_label, source_url, target: "_blank", rel: "noopener",
+            class: "text-sm text-slate-400 transition hover:text-slate-600" %>
+
+      <% if repost_label %>
+        <% if freefeed_url %>
+          <%= link_to repost_label, freefeed_url, target: "_blank", rel: "noopener",
+                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
+        <% else %>
+          <span class="text-sm text-slate-400"><%= repost_label %></span>
+        <% end %>
+      <% end %>
+
+      <% if withdraw_allowed? %>
+        <div class="relative">
+          <button type="button"
+                  id="<%= menu_id %>-button"
+                  data-dropdown-toggle="<%= menu_id %>"
+                  data-dropdown-placement="bottom-end"
+                  class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  aria-haspopup="true"
+                  aria-expanded="false">
+            <%= helpers.icon("ellipsis", css_class: "size-4") %>
+            <span class="sr-only">More options</span>
+          </button>
+          <div id="<%= menu_id %>"
+               class="z-20 hidden w-40 rounded-lg border border-slate-200 bg-white shadow-sm"
+               role="menu"
+               aria-labelledby="<%= menu_id %>-button">
+            <ul class="py-1">
+              <li>
+                <%= link_to "Withdraw", helpers.post_path(post),
+                      data: { turbo_method: :delete, turbo_confirm: "Withdraw this post? It will be removed from FreeFeed but remain visible here." },
+                      class: "block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50",
+                      role: "menuitem" %>
+              </li>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
 </div>
