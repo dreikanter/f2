@@ -34,7 +34,7 @@ class RecentEventsEntryComponent < ViewComponent::Base
     return if count.zero?
 
     content_tag(:span, helpers.pluralize(count, "post"),
-                class: "shrink-0 text-xs font-medium text-slate-400",
+                class: "shrink-0 font-medium text-slate-400",
                 data: { key: "recent_events.posts_count" })
   end
 
