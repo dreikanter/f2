@@ -87,15 +87,14 @@ class PostsController < ApplicationController
     feed_entry = post.feed_entry
     uid = post.uid
 
-    log_post_event("post_deleted", post, subject: feed)
-
     ActiveRecord::Base.transaction do
       if feed_entry
-        feed_entry.destroy! # cascades to posts via dependent: :destroy
+        feed_entry.destroy! # cascades to the post via dependent: :destroy
       else
         post.destroy!
       end
       FeedEntryUid.where(feed_id: feed.id, uid: uid).delete_all
+      log_post_event("post_deleted", post, subject: feed)
     end
   end
 
