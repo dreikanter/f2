@@ -26,12 +26,16 @@ separately for each client.
 ## Default limits
 
 Configured in `config.rateLimit` (`config/default.js`). The time window is an
-ISO-8601 duration; default is `PT1M` (1 minute).
+ISO-8601 duration; default is `PT1M` (1 minute). **Each value below is a
+separate per-method bucket — there is no combined cap across methods.** `all`
+is *not* an aggregate; it is the fallback limit for methods without their own
+entry (`DELETE`, `PUT`, `PATCH`…), and each such method still gets its own
+bucket using that value.
 
-| Auth type     | Window | `all` | `GET` | `POST` | Attachments (`GET /vN/attachments/:attId/:type`) |
-|---------------|--------|-------|-------|--------|--------------------------------------------------|
-| Anonymous     | 1 min  | 10    | 100   | —      | 1000                                             |
-| Authenticated | 1 min  | 30    | 200   | 60     | 1000                                             |
+| Auth type     | Window | `all` (fallback) | `GET` | `POST` | Attachments (`GET /vN/attachments/:attId/:type`) |
+|---------------|--------|------------------|-------|--------|--------------------------------------------------|
+| Anonymous     | 1 min  | 10               | 100   | —      | 1000                                             |
+| Authenticated | 1 min  | 30               | 200   | 60     | 1000                                             |
 
 Limit resolution precedence (most to least specific):
 
@@ -72,8 +76,11 @@ message `"Slow down"` (`TooManyRequestsException`, `exceptions.js`).
 
 - Authenticate requests where possible — authenticated limits are ~3× higher
   than anonymous ones (per user, not per shared IP).
-- Stay under ~30 requests/min overall and ~60 POST/min per account; keep a
-  safety margin since the window is a strict 1-minute bucket.
+- Limits are per method, not combined. The one that matters for publishing is
+  ~60 POST/min per account (each post can be several POSTs: attachments + post
+  + comments). `GET` is far more generous at 200/min, and methods without their
+  own entry fall back to 30/min each. Keep a safety margin since each bucket is
+  a strict 1-minute window.
 - On a 429, **back off** rather than retry immediately — repeated breaches
   escalate the block duration and reset the forgiveness window. A clean pause
   of several minutes is the fastest way back to normal.
