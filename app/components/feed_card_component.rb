@@ -1,5 +1,7 @@
 class FeedCardComponent < ViewComponent::Base
   DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
+  ENABLE_CONFIRM = "Enable this feed?".freeze
+  DISABLE_CONFIRM = "Disable this feed?".freeze
 
   def initialize(feed:)
     @feed = feed
@@ -17,8 +19,24 @@ class FeedCardComponent < ViewComponent::Base
     helpers.feed_path(feed)
   end
 
+  def edit_url
+    helpers.edit_feed_path(feed)
+  end
+
+  def status_url
+    helpers.feed_status_path(feed)
+  end
+
   def draft?
     feed.draft?
+  end
+
+  def enabled?
+    feed.enabled?
+  end
+
+  def can_be_enabled?
+    feed.can_be_enabled?
   end
 
   def status_badge

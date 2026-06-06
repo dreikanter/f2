@@ -27,38 +27,74 @@
       </span>
     </div>
 
-    <% if draft? %>
-      <div class="relative shrink-0">
-        <button type="button"
-                id="<%= menu_id %>-button"
-                data-dropdown-toggle="<%= menu_id %>"
-                data-dropdown-placement="top-end"
-                class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                aria-haspopup="true"
-                aria-expanded="false">
-          <%= helpers.icon("ellipsis", css_class: "size-4") %>
-          <span class="sr-only">More options</span>
-        </button>
-        <div id="<%= menu_id %>"
-             class="z-20 hidden w-44 rounded-lg border border-slate-200 bg-white shadow-sm"
-             role="menu"
-             aria-labelledby="<%= menu_id %>-button">
-          <ul class="py-1">
+    <div class="relative shrink-0">
+      <button type="button"
+              id="<%= menu_id %>-button"
+              data-dropdown-toggle="<%= menu_id %>"
+              data-dropdown-placement="top-end"
+              class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              aria-haspopup="true"
+              aria-expanded="false">
+        <%= helpers.icon("ellipsis", css_class: "size-4") %>
+        <span class="sr-only">More options</span>
+      </button>
+      <div id="<%= menu_id %>"
+           class="z-20 hidden w-44 rounded-lg border border-slate-200 bg-white shadow-sm"
+           role="menu"
+           aria-labelledby="<%= menu_id %>-button">
+        <ul class="py-1">
+          <li>
+            <%= link_to "Details", feed_url,
+                  class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
+                  role: "menuitem",
+                  data: { key: "feed.#{feed.id}.details" } %>
+          </li>
+          <% if draft? %>
             <li>
-              <%= link_to "Continue setup", helpers.edit_feed_path(feed),
+              <%= link_to "Continue setup", edit_url,
                     class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
                     role: "menuitem",
                     data: { key: "feed.#{feed.id}.continue_setup" } %>
             </li>
+          <% else %>
             <li>
-              <%= link_to "Discard", helpers.feed_path(feed),
-                    class: "block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50",
+              <%= link_to "Edit", edit_url,
+                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
+                    role: "menuitem",
+                    data: { key: "feed.#{feed.id}.edit" } %>
+            </li>
+            <% if enabled? %>
+              <li>
+                <%= button_to "Disable", status_url,
+                      method: :patch,
+                      params: { status: "disabled" },
+                      class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                      role: "menuitem",
+                      data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM },
+                      form: { class: "block" } %>
+              </li>
+            <% elsif can_be_enabled? %>
+              <li>
+                <%= button_to "Enable", status_url,
+                      method: :patch,
+                      params: { status: "enabled" },
+                      class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                      role: "menuitem",
+                      data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM },
+                      form: { class: "block" } %>
+              </li>
+            <% end %>
+          <% end %>
+          <% if draft? %>
+            <li>
+              <%= link_to "Discard…", feed_url,
+                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
                     role: "menuitem",
                     data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } %>
             </li>
-          </ul>
-        </div>
+          <% end %>
+        </ul>
       </div>
-    <% end %>
+    </div>
   </div>
 </div>

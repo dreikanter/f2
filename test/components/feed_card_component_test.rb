@@ -76,6 +76,59 @@ class FeedCardComponentTest < ViewComponent::TestCase
     end
   end
 
+  test "#render should show Details action for every feed" do
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: feed)
+
+      details = result.css("[data-key='feed.#{feed.id}.details']").first
+      assert_not_nil details
+      assert_equal "Details", details.text.strip
+      assert_includes details["href"], "/feeds/#{feed.id}"
+    end
+  end
+
+  test "#render should show Edit action for non-draft feeds" do
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: feed)
+
+      edit = result.css("[data-key='feed.#{feed.id}.edit']").first
+      assert_not_nil edit
+      assert_includes edit["href"], "/feeds/#{feed.id}/edit"
+    end
+  end
+
+  test "#render should show Enable action for enableable disabled feeds" do
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: feed)
+
+      assert_not_empty result.css("[data-key='feed.#{feed.id}.enable']")
+      assert_empty result.css("[data-key='feed.#{feed.id}.disable']")
+    end
+  end
+
+  test "#render should show Disable action for enabled feeds" do
+    enabled_feed = create(:feed, :enabled, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: enabled_feed)
+
+      assert_not_empty result.css("[data-key='feed.#{enabled_feed.id}.disable']")
+      assert_empty result.css("[data-key='feed.#{enabled_feed.id}.enable']")
+    end
+  end
+
+  test "#render should not show status toggle for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: draft_feed)
+
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.enable']")
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.disable']")
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.edit']")
+    end
+  end
+
   test "#render should show refresh and post time placeholders when never refreshed" do
     result = render_inline FeedCardComponent.new(feed: feed)
 
