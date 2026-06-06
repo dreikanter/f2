@@ -21,12 +21,8 @@
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Configuration</h2>
     <ul class="space-y-2">
       <% @config_checks.each do |check| %>
-        <li class="flex items-center gap-2" data-key="config.<%= check[:key] %>">
-          <% if check[:ok] %>
-            <%= icon("square-check-big", css_class: "size-5 text-green-600", aria_label: "OK") %>
-          <% else %>
-            <%= icon("square", css_class: "size-5 text-red-600", aria_label: "Missing") %>
-          <% end %>
+        <li class="flex items-center gap-2" data-key="config.<%= check[:key] %>" data-status="<%= check[:status] %>">
+          <%= system_check_icon(check[:status]) %>
           <span class="text-slate-700"><%= check[:label] %></span>
         </li>
       <% end %>

@@ -103,6 +103,17 @@ module ApplicationHelper
     end
   end
 
+  def system_check_icon(status)
+    case status.to_sym
+    when :ok
+      icon("square-check-big", css_class: "size-5 text-green-600", aria_label: "OK")
+    when :error
+      icon("square", css_class: "size-5 text-red-600", aria_label: "Problem")
+    else
+      icon("square", css_class: "size-5 text-slate-400", aria_label: "Not set")
+    end
+  end
+
   def highlight_json(json_hash)
     json_string = JSON.pretty_generate(json_hash)
     formatter = Rouge::Formatters::HTML.new(wrap: false)

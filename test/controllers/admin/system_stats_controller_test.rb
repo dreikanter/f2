@@ -39,6 +39,29 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='config.resend_key']", text: /Resend key present/
+    assert_select "[data-key='config.resend_signing_secret']", text: /Resend signing secret/
+    assert_select "[data-key='config.honeybadger_key']", text: /Honeybadger/
+    assert_select "[data-key='config.background_jobs']", text: /Background jobs/
+  end
+
+  test "should flag background jobs as healthy when a process is heartbeating" do
+    SolidQueue::Process.create!(kind: "Worker", name: "worker-test", pid: 999, last_heartbeat_at: Time.current)
+    login_as(dev_user)
+
+    get admin_system_stats_path
+
+    assert_response :success
+    assert_select "[data-key='config.background_jobs'][data-status='ok']"
+  end
+
+  test "should flag background jobs as a problem when no process is heartbeating" do
+    SolidQueue::Process.delete_all
+    login_as(dev_user)
+
+    get admin_system_stats_path
+
+    assert_response :success
+    assert_select "[data-key='config.background_jobs'][data-status='error']"
   end
 
   test "should show deployed version details" do
