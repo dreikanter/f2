@@ -2,13 +2,8 @@
 
 <div class="space-y-10">
   <%= render PageHeaderComponent.new(title: @feed.display_name) do |header| %>
-    <% if @feed.enabled? %>
-      <% header.with_title_icon { icon("play", css_class: "size-9 text-green-600") } %>
-    <% else %>
-      <% header.with_title_icon { icon("pause", css_class: "size-9 text-slate-400") } %>
-    <% end %>
-    <% if (status_summary = feed_status_summary(@feed)).present? %>
-      <% header.with_context_paragraph(status_summary) %>
+    <% header.with_context_paragraph do %>
+      <%= render feed_status_badge(@feed) %>
     <% end %>
     <% if @feed.target_group_url.present? %>
       <% header.with_context_paragraph do %>

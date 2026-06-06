@@ -111,36 +111,28 @@ class FeedHelperTest < ActionView::TestCase
     assert_nil feed_summary_line(active_count: 0, inactive_count: 0, draft_count: 0)
   end
 
-  test "#feed_status_summary should describe enabled feed" do
+  test "#feed_status_badge should render active badge for enabled feed" do
     feed = build(:feed, :enabled)
-    expected = "This feed is enabled and will continue to import items on its schedule."
+    result = feed_status_badge(feed)
 
-    assert_equal expected, feed_status_summary(feed)
+    assert_equal "Active", result.instance_variable_get(:@text)
+    assert_equal :green, result.instance_variable_get(:@color)
   end
 
-  test "#feed_status_summary should describe ready feed" do
-    feed = build(:feed)
-    expected = "This feed is ready to enable. Turn it on to start importing posts."
-
-    assert_equal expected, feed_status_summary(feed)
-  end
-
-  test "#feed_status_summary should list missing parts" do
-    feed = build(:feed, :without_access_token)
-    expected = "This feed is currently disabled. Add active access token and target group to finish setup."
-
-    assert_equal expected, feed_status_summary(feed)
-  end
-
-  test "#feed_status_summary should handle disabled feed without missing parts" do
+  test "#feed_status_badge should render disabled badge for disabled feed" do
     feed = build(:feed, :disabled)
-    feed.define_singleton_method(:can_be_enabled?) { false }
+    result = feed_status_badge(feed)
 
-    expected = "This feed is currently disabled."
+    assert_equal "Disabled", result.instance_variable_get(:@text)
+    assert_equal :yellow, result.instance_variable_get(:@color)
+  end
 
-    self.stub(:feed_missing_enablement_parts, ->(_feed) { [] }) do
-      assert_equal expected, feed_status_summary(feed)
-    end
+  test "#feed_status_badge should render draft badge for draft feed" do
+    feed = build(:feed, :draft)
+    result = feed_status_badge(feed)
+
+    assert_equal "Draft", result.instance_variable_get(:@text)
+    assert_equal :gray, result.instance_variable_get(:@color)
   end
 
   test "#feed_missing_enablement_parts should not report source missing for query-type feed with query" do
