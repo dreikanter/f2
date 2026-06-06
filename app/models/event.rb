@@ -27,6 +27,14 @@ class Event < ApplicationRecord
     event_references.includes(:reference).filter_map(&:reference)
   end
 
+  # Posts this event imported, newest first. A use-case-specific companion to
+  # #references: it deliberately re-runs the lookup so the generic resolver
+  # above stays free of Post-specific concerns.
+  def referenced_posts
+    Post.where(id: event_references.where(reference_type: "Post").select(:reference_id))
+        .order(created_at: :desc)
+  end
+
   def expired?
     expires_at.present? && expires_at < Time.current
   end
