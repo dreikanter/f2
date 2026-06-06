@@ -70,8 +70,11 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def card_classes
-    base = "w-full rounded-lg border border-slate-200 shadow-xs"
-    "#{base} #{withdrawn? ? 'bg-slate-50' : 'bg-white'}"
+    helpers.class_names(
+      "w-full rounded-lg border border-slate-200 shadow-xs",
+      "bg-slate-50" => withdrawn?,
+      "bg-white" => !withdrawn?
+    )
   end
 
   def delete_modal_id
