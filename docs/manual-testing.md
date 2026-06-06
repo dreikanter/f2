@@ -54,7 +54,7 @@ The seed script creates:
 
 **Expected Results:**
 - Page redirects to feed show page (URL pattern: `/feeds/[number]`)
-- Success message appears (green background): "Feed '[name]' was successfully created and is now active. New posts will be checked every 1 hour and published to testgroup."
+- Success message appears (green background): "Feed created and enabled."
 - Page shows feed details with "Edit" button visible
 - "Disable" button is present (feed is enabled)
 

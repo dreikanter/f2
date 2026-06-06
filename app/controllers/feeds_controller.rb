@@ -233,7 +233,7 @@ class FeedsController < ApplicationController
   # disabled state; `#update` doesn't share this helper).
   def success_message_for(feed)
     if feed.enabled?
-      "Feed '#{feed.name}' was successfully created and is now active."
+      "Feed created and enabled."
     elsif feed.disabled?
       "Feed '#{feed.name}' was successfully created but is currently disabled. " \
         "Enable it from the feed page when you're ready to start importing posts."
