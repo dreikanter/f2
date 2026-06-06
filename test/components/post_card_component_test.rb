@@ -63,24 +63,32 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css(".border-t.border-slate-200")
   end
 
-  test "#render should show labeled published and reposted times for published posts" do
-    published_post = create(:post, :published, feed: feed, published_at: 11.hours.ago, updated_at: 10.hours.ago)
+  test "#render should link origin time to the source publication" do
+    published_post = create(:post, :published, feed: feed, source_url: "https://xkcd.com/3250/",
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
-    assert_includes result.text, "Published:"
-    assert_includes result.text, "Reposted:"
-    times = result.css("time").map { |t| t.text.strip }
-    assert_includes times, "11h"
-    assert_includes times, "10h"
+    origin_link = result.at_css("a[href='https://xkcd.com/3250/']")
+    assert_not_nil origin_link
+    assert_includes origin_link.text.gsub(/\s+/, " "), "Origin (11h)"
   end
 
-  test "#render should not show a reposted time for unpublished posts" do
+  test "#render should link repost time to the freefeed post" do
+    published_post = create(:post, :published, feed: feed,
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: published_post)
+
+    repost_link = result.at_css("a[href='#{published_post.freefeed_url}']")
+    assert_not_nil repost_link
+    assert_includes repost_link.text.gsub(/\s+/, " "), "Repost (10h)"
+  end
+
+  test "#render should not show a repost time for unpublished posts" do
     draft_post = create(:post, feed: feed, status: :draft, published_at: 11.hours.ago)
     result = render_inline PostCardComponent.new(post: draft_post)
 
-    assert_includes result.text, "Published:"
-    assert_not_includes result.text, "Reposted:"
-    times = result.css("time").map { |t| t.text.strip }
-    assert_equal ["11h"], times
+    text = result.text.gsub(/\s+/, " ")
+    assert_includes text, "Origin (11h)"
+    assert_not_includes text, "Repost"
   end
 end

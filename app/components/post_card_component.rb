@@ -31,14 +31,18 @@ class PostCardComponent < ViewComponent::Base
     post.feed&.display_name
   end
 
-  def published_time_tag
+  def origin_content
     return unless post.published_at
-    helpers.short_time_ago_tag(post.published_at)
+    label_with_time("Origin", post.published_at)
   end
 
-  def reposted_time_tag
+  def repost_content
     return unless post.reposted_at
-    helpers.short_time_ago_tag(post.reposted_at)
+    label_with_time("Repost", post.reposted_at)
+  end
+
+  def label_with_time(label, time)
+    helpers.safe_join(["#{label} (", helpers.short_time_ago_tag(time), ")"])
   end
 
   def attachment_count
@@ -66,7 +70,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def footer?
-    published_time_tag || group_label.present? || attachment_count > 0 || comment_count > 0 || source_url || freefeed_url || withdraw_allowed?
+    origin_content || repost_content || group_label.present? || attachment_count > 0 || comment_count > 0 || withdraw_allowed?
   end
 
   def menu_id
