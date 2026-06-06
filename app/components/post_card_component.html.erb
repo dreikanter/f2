@@ -31,12 +31,12 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <% if origin_content %>
+        <% if source_content %>
           <% if source_url %>
-            <%= link_to origin_content, source_url, target: "_blank", rel: "noopener",
+            <%= link_to source_content, source_url, target: "_blank", rel: "noopener",
                   class: "text-sm text-slate-400 transition hover:text-slate-600" %>
           <% else %>
-            <span class="text-sm text-slate-400"><%= origin_content %></span>
+            <span class="text-sm text-slate-400"><%= source_content %></span>
           <% end %>
         <% end %>
 

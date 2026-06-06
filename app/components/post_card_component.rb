@@ -31,7 +31,7 @@ class PostCardComponent < ViewComponent::Base
     post.feed&.display_name
   end
 
-  def origin_content
+  def source_content
     return unless post.published_at
     label_with_time("Source", post.published_at)
   end
@@ -70,7 +70,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def footer?
-    origin_content || repost_content || group_label.present? || attachment_count > 0 || comment_count > 0 || withdraw_allowed?
+    source_content || repost_content || group_label.present? || attachment_count > 0 || comment_count > 0 || withdraw_allowed?
   end
 
   def menu_id
