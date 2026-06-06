@@ -34,6 +34,17 @@ class RecentEventsEntryComponentTest < ViewComponent::TestCase
     assert_equal "2 posts", result.css("[data-key='recent_events.posts_count']").first&.text
   end
 
+  test "#call should count only post references" do
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", level: :info, user: user, subject: feed)
+    create(:event_reference, event: event, reference: create(:post, feed: feed))
+    create(:event_reference, event: event, reference: user)
+
+    result = render_inline(RecentEventsEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    assert_equal "1 post", result.css("[data-key='recent_events.posts_count']").first&.text
+  end
+
   test "#call should not show a posts count when there are no references" do
     event = create(:event, type: "feed_refresh", level: :info, user: user)
 
