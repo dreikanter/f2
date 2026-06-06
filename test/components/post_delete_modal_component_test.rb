@@ -17,7 +17,7 @@ class PostDeleteModalComponentTest < ViewComponent::TestCase
   test "#render should check Freefeed deletion by default and leave the record off" do
     result = render_inline PostDeleteModalComponent.new(post: post)
 
-    assert result.at_css("input[name='delete_freefeed']")[:checked]
+    assert result.at_css("input[name='delete_freefeed_post']")[:checked]
     assert_nil result.at_css("input[name='delete_record']")[:checked]
   end
 
@@ -39,7 +39,7 @@ class PostDeleteModalComponentTest < ViewComponent::TestCase
     withdrawn_post = create(:post, feed: feed, status: :withdrawn)
     result = render_inline PostDeleteModalComponent.new(post: withdrawn_post)
 
-    assert_nil result.at_css("input[name='delete_freefeed']")
+    assert_nil result.at_css("input[name='delete_freefeed_post']")
     assert result.at_css("input[name='delete_record']")[:checked]
   end
 

@@ -148,7 +148,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_with(job: PostWithdrawalJob, args: [feed.id, "test-123", published_post.id]) do
       assert_difference("Event.count", 1) do
-        delete post_url(published_post), params: { delete_freefeed: "1" },
+        delete post_url(published_post), params: { delete_freefeed_post: "1" },
                                          headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
     end
@@ -172,7 +172,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
-    delete post_url(published_post), params: { delete_freefeed: "1" }
+    delete post_url(published_post), params: { delete_freefeed_post: "1" }
 
     assert_redirected_to post_path(published_post)
     assert_equal "withdrawn", published_post.reload.status
@@ -182,7 +182,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
-    delete post_url(published_post), params: { delete_freefeed: "1", delete_record: "1" }
+    delete post_url(published_post), params: { delete_freefeed_post: "1", delete_record: "1" }
 
     assert_redirected_to posts_path
     assert_nil Post.find_by(id: published_post.id)
@@ -197,7 +197,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference(["Post.count", "FeedEntry.count", "FeedEntryUid.count"], -1) do
       assert_difference("Event.count", 1) do
-        delete post_url(published_post), params: { delete_freefeed: "1", delete_record: "1" },
+        delete post_url(published_post), params: { delete_freefeed_post: "1", delete_record: "1" },
                                          headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
     end

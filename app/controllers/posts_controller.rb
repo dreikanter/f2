@@ -47,17 +47,17 @@ class PostsController < ApplicationController
     @post = load_post
     authorize @post
 
-    @delete_freefeed = boolean_param(:delete_freefeed)
+    @delete_freefeed_post = boolean_param(:delete_freefeed_post)
     @delete_record = boolean_param(:delete_record)
 
-    unless @delete_freefeed || @delete_record
+    unless @delete_freefeed_post || @delete_record
       return respond_to do |format|
         format.html { redirect_to posts_path, alert: "Pick at least one thing to delete." }
         format.turbo_stream { head :no_content }
       end
     end
 
-    if @delete_freefeed && @post.freefeed_post_id.present?
+    if @delete_freefeed_post && @post.freefeed_post_id.present?
       PostWithdrawalJob.perform_later(@post.feed_id, @post.freefeed_post_id, @post.id)
     end
 
@@ -112,7 +112,7 @@ class PostsController < ApplicationController
   end
 
   def destroy_notice
-    if @delete_record && @delete_freefeed
+    if @delete_record && @delete_freefeed_post
       "Post removed from FreeFeed and Feeder. It may be imported again the next time the feed updates."
     elsif @delete_record
       "Post record deleted. It may be imported again the next time the feed updates."
