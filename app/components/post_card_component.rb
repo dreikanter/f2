@@ -69,10 +69,6 @@ class PostCardComponent < ViewComponent::Base
     post.status.to_s == "withdrawn"
   end
 
-  def footer?
-    source_content || repost_content || group_label.present? || attachment_count > 0 || comment_count > 0 || withdraw_allowed?
-  end
-
   def menu_id
     "post-menu-#{post.id}"
   end
