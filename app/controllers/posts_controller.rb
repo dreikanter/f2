@@ -71,12 +71,19 @@ class PostsController < ApplicationController
     @notice = destroy_notice
 
     respond_to do |format|
-      format.html { redirect_to posts_path, notice: @notice }
+      format.html { redirect_to destroy_redirect_path, notice: @notice }
       format.turbo_stream
     end
   end
 
   private
+
+  # After a withdrawal the post record stays, so send the user back to the post
+  # page to see its updated status. Once the record itself is gone there is
+  # nothing left to show, so fall back to the index.
+  def destroy_redirect_path
+    @delete_record ? posts_path : post_path(@post)
+  end
 
   def boolean_param(key)
     ActiveModel::Type::Boolean.new.cast(params[key])
