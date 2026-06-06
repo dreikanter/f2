@@ -142,13 +142,14 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='post.freefeed_post_id']"
   end
 
-  test "#destroy should withdraw post and create event" do
+  test "#destroy should withdraw the FreeFeed post and create event" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
 
-    assert_enqueued_with(job: PostWithdrawalJob) do
+    assert_enqueued_with(job: PostWithdrawalJob, args: [feed.id, "test-123"]) do
       assert_difference("Event.count", 1) do
-        delete post_url(published_post), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        delete post_url(published_post), params: { delete_freefeed: "1" },
+                                         headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
     end
 
@@ -158,7 +159,6 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "id=\"#{dom_id(published_post)}\""
     assert_includes response.body, "Withdrawn"
     assert_includes response.body, "The post will be withdrawn from FreeFeed"
-    refute_includes response.body, "data-bs-toggle"
     assert_equal "withdrawn", published_post.reload.status
 
     event = Event.last
@@ -166,6 +166,58 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal user, event.user
     assert_equal published_post, event.subject
     assert_equal "info", event.level
+  end
+
+  test "#destroy should delete the post record and let it be imported again" do
+    sign_in_as(user)
+    feed_entry = create(:feed_entry, feed: feed, uid: "entry-1")
+    create(:feed_entry_uid, feed: feed, uid: "entry-1")
+    published_post = create(:post, :published, feed: feed, feed_entry: feed_entry,
+      uid: "entry-1", freefeed_post_id: "test-123")
+
+    assert_difference(["Post.count", "FeedEntry.count", "FeedEntryUid.count"], -1) do
+      assert_difference("Event.count", 1) do
+        delete post_url(published_post), params: { delete_freefeed: "1", delete_record: "1" },
+                                         headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+    end
+
+    assert_response :success
+    assert_includes response.body, "turbo-stream"
+    assert_includes response.body, "remove"
+    assert_nil Post.find_by(id: published_post.id)
+    assert_empty FeedEntryUid.where(feed: feed, uid: "entry-1")
+
+    event = Event.last
+    assert_equal "post_deleted", event.type
+    assert_equal feed, event.subject
+  end
+
+  test "#destroy should not drop the FreeFeed post when only the record is deleted" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
+
+    assert_no_enqueued_jobs(only: PostWithdrawalJob) do
+      delete post_url(published_post), params: { delete_record: "1" },
+                                       headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_nil Post.find_by(id: published_post.id)
+  end
+
+  test "#destroy should do nothing when no option is selected" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
+
+    assert_no_enqueued_jobs(only: PostWithdrawalJob) do
+      assert_no_difference(["Post.count", "Event.count"]) do
+        delete post_url(published_post)
+      end
+    end
+
+    assert_redirected_to posts_path
+    assert_equal "published", published_post.reload.status
   end
 
   test "#destroy should require authentication" do

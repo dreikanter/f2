@@ -1,9 +1,19 @@
-<%= turbo_stream.replace dom_id(@post) do %>
-  <%= render PostCardComponent.new(post: @post, show_feed: true) %>
-<% end %>
+<% if @delete_record %>
+  <%= turbo_stream.remove dom_id(@post) %>
 
-<%= turbo_stream.prepend "flash-messages" do %>
-  <%= render AlertComponent.new(variant: :info) do %>
-    <span>The post will be withdrawn from FreeFeed but will remain here to prevent it from being imported again.</span>
+  <%= turbo_stream.prepend "flash-messages" do %>
+    <%= render AlertComponent.new(variant: :info) do %>
+      <span>Post record deleted. It may be imported again the next time the feed updates.</span>
+    <% end %>
+  <% end %>
+<% else %>
+  <%= turbo_stream.replace dom_id(@post) do %>
+    <%= render PostCardComponent.new(post: @post, show_feed: true) %>
+  <% end %>
+
+  <%= turbo_stream.prepend "flash-messages" do %>
+    <%= render AlertComponent.new(variant: :info) do %>
+      <span>The post will be withdrawn from FreeFeed but will remain here to prevent it from being imported again.</span>
+    <% end %>
   <% end %>
 <% end %>
