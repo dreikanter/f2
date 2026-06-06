@@ -35,10 +35,4 @@ class Event < ApplicationRecord
     update!(expires_at: duration.from_now)
     self
   end
-
-  def self.purge_expired
-    ids = expired.ids
-    EventReference.where(event_id: ids).delete_all
-    where(id: ids).delete_all
-  end
 end

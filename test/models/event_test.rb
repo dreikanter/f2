@@ -120,18 +120,6 @@ class EventTest < ActiveSupport::TestCase
     assert event.expires_at < 2.weeks.from_now
   end
 
-  test "should purge expired events" do
-    expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
-    active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
-    permanent_event = Event.create!(type: "permanent_event")
-
-    Event.purge_expired
-
-    assert_not Event.exists?(expired_event.id)
-    assert Event.exists?(active_event.id)
-    assert Event.exists?(permanent_event.id)
-  end
-
   test "#references should resolve referenced records, skipping deleted ones" do
     event = Event.create!(type: "feed_refresh", subject: feed)
     kept = create(:post, feed: feed)
@@ -141,18 +129,6 @@ class EventTest < ActiveSupport::TestCase
     deleted.destroy!
 
     assert_equal [kept], event.references
-  end
-
-  test "#purge_expired should drop references of purged events" do
-    expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
-    active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
-    expired_reference = create(:event_reference, event: expired_event)
-    active_reference = create(:event_reference, event: active_event)
-
-    Event.purge_expired
-
-    assert_not EventReference.exists?(expired_reference.id)
-    assert EventReference.exists?(active_reference.id)
   end
 
   test "#destroy should delete associated references" do
