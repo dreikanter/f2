@@ -1,9 +1,13 @@
-<%= turbo_stream.replace dom_id(@post) do %>
-  <%= render PostCardComponent.new(post: @post, show_feed: true) %>
+<% if @delete_record %>
+  <%= turbo_stream.remove dom_id(@post) %>
+<% else %>
+  <%= turbo_stream.replace dom_id(@post) do %>
+    <%= render PostCardComponent.new(post: @post, show_feed: true) %>
+  <% end %>
 <% end %>
 
 <%= turbo_stream.prepend "flash-messages" do %>
   <%= render AlertComponent.new(variant: :info) do %>
-    <span>The post will be withdrawn from FreeFeed but will remain here to prevent it from being imported again.</span>
+    <span><%= @notice %></span>
   <% end %>
 <% end %>

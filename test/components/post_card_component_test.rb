@@ -57,6 +57,39 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Withdrawn"
   end
 
+  test "#render should use a gray background for withdrawn posts" do
+    withdrawn_post = create(:post, feed: feed, status: :withdrawn)
+    result = render_inline PostCardComponent.new(post: withdrawn_post)
+
+    assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(withdrawn_post)}.bg-slate-50")
+  end
+
+  test "#render should offer Details and Delete actions for a published post" do
+    Current.session = build(:session, user: user)
+    result = render_inline PostCardComponent.new(post: post)
+
+    menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
+    assert_includes menu_items, "Details"
+    assert_includes menu_items, "Delete…"
+  end
+
+  test "#render should render the delete modal for a published post" do
+    Current.session = build(:session, user: user)
+    result = render_inline PostCardComponent.new(post: post)
+
+    assert_not_empty result.css("##{PostDeleteModalComponent.modal_id(post)}")
+  end
+
+  test "#render should not offer Delete for an unpublished post" do
+    Current.session = build(:session, user: user)
+    draft_post = create(:post, feed: feed, status: :draft)
+    result = render_inline PostCardComponent.new(post: draft_post)
+
+    menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
+    assert_includes menu_items, "Details"
+    assert_not_includes menu_items, "Delete…"
+  end
+
   test "#render should show footer when post has a source url" do
     result = render_inline PostCardComponent.new(post: post)
 

@@ -13,15 +13,11 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, user: user, access_token: access_token)
   end
 
-  def post
-    @post ||= create(:post, feed: feed, freefeed_post_id: "test_post_123", status: :withdrawn)
-  end
-
   test ".perform_now should delete post from FreeFeed" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 200)
 
-    PostWithdrawalJob.perform_now(post.id)
+    PostWithdrawalJob.perform_now(feed.id, "test_post_123")
 
     assert_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
   end
@@ -31,14 +27,20 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
       .to_return(status: 500, body: "Internal Server Error")
 
     assert_nothing_raised do
-      PostWithdrawalJob.perform_now(post.id)
+      PostWithdrawalJob.perform_now(feed.id, "test_post_123")
     end
   end
 
-  test ".perform_now should handle missing post gracefully" do
+  test ".perform_now should handle missing feed gracefully" do
     assert_nothing_raised do
-      PostWithdrawalJob.perform_now(999999)
+      PostWithdrawalJob.perform_now(999999, "test_post_123")
     end
+  end
+
+  test ".perform_now should do nothing without a freefeed post id" do
+    PostWithdrawalJob.perform_now(feed.id, nil)
+
+    assert_not_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
   end
 
   test ".perform_now should handle authorization errors gracefully" do
@@ -46,7 +48,7 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
       .to_return(status: 401, body: "Unauthorized")
 
     assert_nothing_raised do
-      PostWithdrawalJob.perform_now(post.id)
+      PostWithdrawalJob.perform_now(feed.id, "test_post_123")
     end
   end
 end
