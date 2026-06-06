@@ -46,16 +46,12 @@ class FeedCardComponent < ViewComponent::Base
   def last_refreshed_tag
     return "Never" unless feed.last_refreshed_at
 
-    helpers.content_tag(:time, "#{helpers.short_time_ago(feed.last_refreshed_at)} ago",
-                        datetime: feed.last_refreshed_at.rfc3339,
-                        title: helpers.long_time_format(feed.last_refreshed_at))
+    helpers.short_time_ago_tag(feed.last_refreshed_at)
   end
 
   def most_recent_post_tag
     return "None" unless feed.most_recent_post_date
 
-    helpers.content_tag(:time, "#{helpers.short_time_ago(feed.most_recent_post_date)} ago",
-                        datetime: feed.most_recent_post_date.rfc3339,
-                        title: helpers.long_time_format(feed.most_recent_post_date))
+    helpers.short_time_ago_tag(feed.most_recent_post_date)
   end
 end

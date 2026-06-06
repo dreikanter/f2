@@ -66,24 +66,24 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "2", css_select('[data-key="stats.total_published_posts.value"]').first.text.strip
   end
 
-  test "#show should display most recent post publication timestamp" do
+  test "#show should display most recent repost timestamp" do
     sign_in_as user
     feed = create(:feed, user: user)
     entry = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: entry, status: :published, published_at: 1.day.ago)
+    create(:post, feed: feed, feed_entry: entry, status: :published, published_at: 1.year.ago, updated_at: 1.day.ago)
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-key="stats.most_recent_post_publication"]').first
-    assert_match(/1d ago/, css_select('[data-key="stats.most_recent_post_publication.value"]').first.text)
+    assert_not_nil css_select('[data-key="stats.most_recent_repost"]').first
+    assert_match(/1d ago/, css_select('[data-key="stats.most_recent_repost.value"]').first.text)
   end
 
-  test "#show should hide most recent post publication when no published posts" do
+  test "#show should hide most recent repost when no published posts" do
     sign_in_as user
 
     get status_path
     assert_response :success
-    assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
+    assert css_select('[data-key="stats.most_recent_repost"]').empty?
   end
 
   test "#show should display posts published last week" do
@@ -115,7 +115,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert css_select('[data-key="stats.total_imported_posts"]').empty?
     assert css_select('[data-key="stats.total_published_posts"]').empty?
-    assert css_select('[data-key="stats.most_recent_post_publication"]').empty?
+    assert css_select('[data-key="stats.most_recent_repost"]').empty?
     assert css_select('[data-key="stats.posts_last_week"]').empty?
   end
 

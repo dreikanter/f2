@@ -228,6 +228,13 @@ class Feed < ApplicationRecord
     posts.maximum(:published_at)
   end
 
+  # Returns the time of the most recent repost (publication to FreeFeed),
+  # regardless of the original source publication date.
+  # @return [Time, nil] most recent repost time or nil if no published posts
+  def most_recent_repost_at
+    posts.published.maximum(:updated_at)
+  end
+
   # Returns metrics for a date range, filling gaps with zeros
   # @param start_date [Date] start date of the range
   # @param end_date [Date] end date of the range (inclusive)

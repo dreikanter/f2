@@ -62,4 +62,25 @@ class PostCardComponentTest < ViewComponent::TestCase
 
     assert_not_empty result.css(".border-t.border-slate-200")
   end
+
+  test "#render should show labeled published and reposted times for published posts" do
+    published_post = create(:post, :published, feed: feed, published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: published_post)
+
+    assert_includes result.text, "Published:"
+    assert_includes result.text, "Reposted:"
+    times = result.css("time").map { |t| t.text.strip }
+    assert_includes times, "11h"
+    assert_includes times, "10h"
+  end
+
+  test "#render should not show a reposted time for unpublished posts" do
+    draft_post = create(:post, feed: feed, status: :draft, published_at: 11.hours.ago)
+    result = render_inline PostCardComponent.new(post: draft_post)
+
+    assert_includes result.text, "Published:"
+    assert_not_includes result.text, "Reposted:"
+    times = result.css("time").map { |t| t.text.strip }
+    assert_equal ["11h"], times
+  end
 end

@@ -153,6 +153,18 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?
   end
 
+  test "#reposted_at should return the update time for published posts" do
+    post = create(:post, :published, feed: feed, feed_entry: feed_entry, updated_at: 1.hour.ago)
+
+    assert_in_delta 1.hour.ago.to_i, post.reposted_at.to_i, 1
+  end
+
+  test "#reposted_at should return nil for posts that are not published" do
+    post = create(:post, feed: feed, feed_entry: feed_entry, status: :draft)
+
+    assert_nil post.reposted_at
+  end
+
   test "should validate content length within FreeFeed limits" do
     post = build(:post, content: "a" * Post::MAX_CONTENT_LENGTH)
     assert post.valid?

@@ -181,27 +181,28 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 2, user.total_published_posts_count
   end
 
-  test "#most_recent_post_published_at returns timestamp of most recent published post" do
+  test "#most_recent_repost_at returns the most recent repost timestamp regardless of original publication date" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry1 = create(:feed_entry, feed: feed)
     entry2 = create(:feed_entry, feed: feed)
     entry3 = create(:feed_entry, feed: feed)
 
-    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 3.days.ago)
-    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago)
-    create(:post, feed: feed, feed_entry: entry3, status: :draft, published_at: Time.current)
+    # Older original publication date, but reposted most recently.
+    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 10.days.ago, updated_at: 1.hour.ago)
+    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago, updated_at: 2.days.ago)
+    create(:post, feed: feed, feed_entry: entry3, status: :draft, updated_at: Time.current)
 
-    assert_in_delta 1.day.ago.to_i, user.most_recent_post_published_at.to_i, 1
+    assert_in_delta 1.hour.ago.to_i, user.most_recent_repost_at.to_i, 1
   end
 
-  test "#most_recent_post_published_at returns nil when no published posts" do
+  test "#most_recent_repost_at returns nil when no published posts" do
     user = create(:user)
     feed = create(:feed, user: user)
     entry = create(:feed_entry, feed: feed)
     create(:post, feed: feed, feed_entry: entry, status: :draft)
 
-    assert_nil user.most_recent_post_published_at
+    assert_nil user.most_recent_repost_at
   end
 
   test "#posts_published_last_week_count should return count of posts from the last 7 days" do

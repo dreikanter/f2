@@ -36,6 +36,11 @@ class PostCardComponent < ViewComponent::Base
     helpers.short_time_ago_tag(post.published_at)
   end
 
+  def reposted_time_tag
+    return unless post.reposted_at
+    helpers.short_time_ago_tag(post.reposted_at)
+  end
+
   def attachment_count
     Array(post.attachment_urls).size
   end

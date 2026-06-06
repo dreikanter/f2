@@ -82,4 +82,11 @@ class FeedCardComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Never"
     assert_includes result.text, "None"
   end
+
+  test "#render should label the activity times" do
+    result = render_inline FeedCardComponent.new(feed: feed)
+
+    assert_includes result.text, "Updated:"
+    assert_includes result.text, "Post:"
+  end
 end

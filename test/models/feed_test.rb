@@ -821,4 +821,21 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.target_group_url
   end
+
+  test "#most_recent_repost_at should return latest repost time regardless of original publication date" do
+    feed = create(:feed)
+    # Older original publication date, but reposted most recently.
+    create(:post, :published, feed: feed, published_at: 10.days.ago, updated_at: 1.hour.ago)
+    create(:post, :published, feed: feed, published_at: 1.day.ago, updated_at: 2.days.ago)
+    create(:post, feed: feed, status: :draft, updated_at: Time.current)
+
+    assert_in_delta 1.hour.ago.to_i, feed.most_recent_repost_at.to_i, 1
+  end
+
+  test "#most_recent_repost_at should return nil when no published posts" do
+    feed = create(:feed)
+    create(:post, feed: feed, status: :draft)
+
+    assert_nil feed.most_recent_repost_at
+  end
 end
