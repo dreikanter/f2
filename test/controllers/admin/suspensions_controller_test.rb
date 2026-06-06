@@ -84,6 +84,16 @@ class Admin::SuspensionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
+  test "#create should not allow admin to suspend themselves" do
+    sign_in_as admin_user
+
+    post admin_user_suspension_path(admin_user)
+
+    assert_redirected_to root_path
+    assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
+    assert admin_user.reload.active?
+  end
+
   test "#create should record user_suspended event with deactivated feed IDs" do
     sign_in_as admin_user
     feed1 = create(:feed, :enabled, user: target_user)

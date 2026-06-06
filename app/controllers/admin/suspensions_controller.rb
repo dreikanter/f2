@@ -1,7 +1,7 @@
 class Admin::SuspensionsController < ApplicationController
   def create
-    authorize User, :suspend?
     user = find_user
+    authorize user, :suspend?
     suspend_user_and_record_event(user)
     redirect_to admin_user_path(user), success: "User suspended."
   end
