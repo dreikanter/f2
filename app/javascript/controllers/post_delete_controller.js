@@ -9,6 +9,8 @@ export default class extends Controller {
   }
 
   update() {
+    if (!this.hasSubmitTarget) return
+
     const anyChecked = this.checkboxTargets.some((checkbox) => checkbox.checked)
     this.submitTarget.disabled = !anyChecked
   }
