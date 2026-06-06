@@ -130,10 +130,10 @@
       <%= link_to "Reset Password...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "password-reset-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% if @user.suspended? %>
         <%= link_to "Unsuspend user...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "unsuspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
-      <% elsif @user == Current.user %>
-        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-base font-semibold text-slate-400 shadow-sm cursor-not-allowed" title="You can't suspend your own account" data-key="actions.suspend_self_disabled">Suspend user...</span>
-      <% else %>
+      <% elsif policy(@user).suspend? %>
         <%= link_to "Suspend user...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
+      <% else %>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-base font-semibold text-slate-400 shadow-sm cursor-not-allowed" title="You can't suspend your own account" data-key="actions.suspend_self_disabled">Suspend user...</span>
       <% end %>
     </div>
   </section>
@@ -159,7 +159,7 @@
   ) do %>
     <p>This will restore <%= @user.email_address %>'s ability to sign in and access their account.</p>
   <% end %>
-<% elsif @user != Current.user %>
+<% elsif policy(@user).suspend? %>
   <%= render ConfirmationModalComponent.new(
     title: "Suspend User",
     action: "Suspend user",
