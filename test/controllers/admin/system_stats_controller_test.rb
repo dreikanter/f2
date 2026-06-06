@@ -32,6 +32,15 @@ class Admin::SystemStatsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should show configuration checklist" do
+    login_as(dev_user)
+
+    get admin_system_stats_path
+
+    assert_response :success
+    assert_select "[data-key='config.resend_key']", text: /Resend key present/
+  end
+
   test "should show deployed version details" do
     with_release_env(
       "APP_REVISION" => "0123456789abcdef",
