@@ -1,23 +1,31 @@
 <%= render ModalComponent.new(title: "Delete post", modal_id: modal_id) do %>
   <%= form_with url: helpers.post_path(post), method: :delete, data: form_data do |form| %>
     <div class="space-y-6">
-      <p class="text-base text-slate-600">
-        This post lives in two places: as a published post on FreeFeed, and as a record here in Feeder. Choose what you want to remove.
-      </p>
+      <% if freefeed_option? %>
+        <p class="text-base text-slate-600">
+          This post lives in two places: as a published post on FreeFeed, and as a record here in Feeder. Choose what you want to remove.
+        </p>
+      <% else %>
+        <p class="text-base text-slate-600">
+          This post is already gone from FreeFeed. You can still remove Feeder's record of it.
+        </p>
+      <% end %>
 
       <div class="space-y-4">
-        <label class="flex gap-3">
-          <%= check_box_tag "delete_freefeed", "1", true,
-                data: { post_delete_target: "checkbox", action: "post-delete#update" },
-                class: "mt-1 size-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500" %>
-          <span>
-            <span class="block text-base font-medium text-slate-900">Delete the post on FreeFeed</span>
-            <span class="block text-sm text-slate-500">Remove the published post from FreeFeed.</span>
-          </span>
-        </label>
+        <% if freefeed_option? %>
+          <label class="flex gap-3">
+            <%= check_box_tag "delete_freefeed", "1", true,
+                  data: { post_delete_target: "checkbox", action: "post-delete#update" },
+                  class: "mt-1 size-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500" %>
+            <span>
+              <span class="block text-base font-medium text-slate-900">Delete the post on FreeFeed</span>
+              <span class="block text-sm text-slate-500">Remove the published post from FreeFeed.</span>
+            </span>
+          </label>
+        <% end %>
 
         <label class="flex gap-3">
-          <%= check_box_tag "delete_record", "1", false,
+          <%= check_box_tag "delete_record", "1", record_checked_by_default?,
                 data: { post_delete_target: "checkbox", action: "post-delete#update" },
                 class: "mt-1 size-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500" %>
           <span>

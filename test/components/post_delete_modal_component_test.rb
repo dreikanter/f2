@@ -35,6 +35,14 @@ class PostDeleteModalComponentTest < ViewComponent::TestCase
     assert_equal "false", result.at_css("form")["data-turbo"]
   end
 
+  test "#render should offer only the record option for a withdrawn post" do
+    withdrawn_post = create(:post, feed: feed, status: :withdrawn)
+    result = render_inline PostDeleteModalComponent.new(post: withdrawn_post)
+
+    assert_nil result.at_css("input[name='delete_freefeed']")
+    assert result.at_css("input[name='delete_record']")[:checked]
+  end
+
   test "#render should wire the submit button to the post-delete controller" do
     result = render_inline PostDeleteModalComponent.new(post: post)
 

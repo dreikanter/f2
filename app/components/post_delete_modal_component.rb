@@ -16,6 +16,16 @@ class PostDeleteModalComponent < ViewComponent::Base
     self.class.modal_id(post)
   end
 
+  # A withdrawn post is already gone from FreeFeed, so the only thing left to
+  # remove is Feeder's record of it.
+  def freefeed_option?
+    !post.withdrawn?
+  end
+
+  def record_checked_by_default?
+    !freefeed_option?
+  end
+
   def form_data
     data = { controller: "post-delete" }
     data[:turbo] = false unless turbo

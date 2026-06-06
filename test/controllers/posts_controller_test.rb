@@ -206,6 +206,21 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil Post.find_by(id: published_post.id)
   end
 
+  test "#destroy should let a withdrawn post's record be deleted" do
+    sign_in_as(user)
+    feed_entry = create(:feed_entry, feed: feed, uid: "entry-9")
+    create(:feed_entry_uid, feed: feed, uid: "entry-9")
+    withdrawn_post = create(:post, feed: feed, feed_entry: feed_entry, uid: "entry-9", status: :withdrawn)
+
+    assert_difference(["Post.count", "FeedEntryUid.count"], -1) do
+      delete post_url(withdrawn_post), params: { delete_record: "1" },
+                                       headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_nil Post.find_by(id: withdrawn_post.id)
+  end
+
   test "#destroy should do nothing when no option is selected" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")
