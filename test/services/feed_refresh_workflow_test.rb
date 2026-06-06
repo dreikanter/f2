@@ -579,7 +579,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "failed", post.reload.status
     assert_equal 1, reported.size
     _error, kwargs = reported.first
-    assert_equal post.id, kwargs.dig(:context, :post_id)
-    assert_equal test_feed.id, kwargs.dig(:context, :feed_id)
+    post_context = kwargs.dig(:context, :post)
+    feed_context = kwargs.dig(:context, :feed)
+    assert_equal post.attributes.keys.sort, post_context.keys.sort
+    assert_equal post.id, post_context["id"]
+    assert_equal "failed", post_context["status"]
+    assert_equal test_feed.attributes.keys.sort, feed_context.keys.sort
+    assert_equal test_feed.id, feed_context["id"]
   end
 end
