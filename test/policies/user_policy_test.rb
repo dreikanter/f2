@@ -109,6 +109,21 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_equal 0, result.count
   end
 
+  test "#suspend? should allow admin to suspend other users" do
+    policy = policy_for_user(admin_user, other_user)
+    assert policy.suspend?
+  end
+
+  test "#suspend? should deny admin from suspending themselves" do
+    policy = policy_for_user(admin_user, admin_user)
+    assert_not policy.suspend?
+  end
+
+  test "#suspend? should deny regular users" do
+    policy = policy_for_user(user, other_user)
+    assert_not policy.suspend?
+  end
+
   test "self_or_admin? returns true for self" do
     policy = policy_for_user(user, user)
     assert policy.send(:self_or_admin?)

@@ -20,7 +20,7 @@ class UserPolicy < ApplicationPolicy
   end
 
   def suspend?
-    admin?
+    admin? && record != user
   end
 
   def unsuspend?
