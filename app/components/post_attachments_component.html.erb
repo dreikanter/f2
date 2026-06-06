@@ -1,0 +1,12 @@
+<div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm p-4" data-key="post.attachments">
+  <h2 class="text-lg font-semibold text-slate-900 mb-3">Attachments (<%= attachment_urls.length %>)</h2>
+  <div class="flex flex-wrap gap-3">
+    <% attachment_urls.each do |url| %>
+      <%= link_to url, target: "_blank", rel: "noopener",
+            class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center" do %>
+        <%= helpers.icon("file-image", css_class: "size-4") %>
+        <span class="sr-only"><%= extract_filename(url) %></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>
