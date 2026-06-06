@@ -87,7 +87,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed.feed_schedule.next_run_at
     assert_not_nil feed.feed_schedule.last_run_at
     assert_redirected_to feed_path(feed)
-    assert_match "successfully created and is now active", flash[:notice]
+    assert_match "Feed created and enabled.", flash[:notice]
   end
 
   test "#create should save as draft with blank name" do

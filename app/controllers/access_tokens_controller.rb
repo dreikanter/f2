@@ -60,7 +60,7 @@ class AccessTokensController < ApplicationController
     access_token = find_access_token
     authorize access_token
     access_token.destroy!
-    redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' has been deleted."
+    redirect_to access_tokens_path, notice: "Access token '#{access_token.name}' deleted."
   end
 
   private

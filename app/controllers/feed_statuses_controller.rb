@@ -21,7 +21,7 @@ class FeedStatusesController < ApplicationController
     feed.with_lock do
       if feed.can_be_enabled?
         feed.enabled!
-        redirect_to feed, notice: "Feed was successfully enabled."
+        redirect_to feed, notice: "Feed enabled."
       else
         missing_parts = feed_missing_enablement_parts(feed)
         redirect_to feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}."
@@ -32,7 +32,7 @@ class FeedStatusesController < ApplicationController
   def disable(feed)
     feed.with_lock do
       feed.disabled!
-      redirect_to feed, notice: "Feed was successfully disabled."
+      redirect_to feed, notice: "Feed disabled."
     end
   end
 

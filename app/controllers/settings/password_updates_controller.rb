@@ -34,7 +34,7 @@ class Settings::PasswordUpdatesController < ApplicationController
   end
 
   def redirect_with_success
-    redirect_to settings_path, notice: "Password updated successfully."
+    redirect_to settings_path, notice: "Password updated."
   end
 
   def redirect_with_validation_errors

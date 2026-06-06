@@ -16,7 +16,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed
     follow_redirect!
-    assert_includes response.body, "Feed was successfully enabled"
+    assert_includes response.body, "Feed enabled"
 
     feed.reload
     assert_equal "enabled", feed.state
@@ -30,7 +30,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed
     follow_redirect!
-    assert_includes response.body, "Feed was successfully disabled"
+    assert_includes response.body, "Feed disabled"
 
     feed.reload
     assert_equal "disabled", feed.state
@@ -52,7 +52,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to enabled_feed
     follow_redirect!
-    assert_includes response.body, "Feed was successfully disabled"
+    assert_includes response.body, "Feed disabled"
 
     enabled_feed.reload
     assert_equal "disabled", enabled_feed.state
@@ -66,7 +66,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to disabled_feed
     follow_redirect!
-    assert_includes response.body, "Feed was successfully enabled"
+    assert_includes response.body, "Feed enabled"
 
     disabled_feed.reload
     assert_equal "enabled", disabled_feed.state
@@ -131,7 +131,7 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed
     follow_redirect!
-    assert_includes response.body, "Feed was successfully enabled"
+    assert_includes response.body, "Feed enabled"
   end
 
   test "#update should use database transaction for atomic updates" do
