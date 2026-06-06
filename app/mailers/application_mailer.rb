@@ -2,6 +2,14 @@ class ApplicationMailer < ActionMailer::Base
   default from: ENV.fetch("MAILER_FROM", "noreply@frf.im")
   layout "mailer"
 
+  def self.preview_mode=(value)
+    Thread.current[:mailer_preview_mode] = value
+  end
+
+  def self.preview_mode?
+    Thread.current[:mailer_preview_mode]
+  end
+
   private
 
   def set_event_context(level: nil, user_id: nil, subject: nil, details: nil)
@@ -14,6 +22,8 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   def register_event
+    return if self.class.preview_mode?
+
     Event.create!(
       type: event_type,
       level: event_context[:level] || :info,

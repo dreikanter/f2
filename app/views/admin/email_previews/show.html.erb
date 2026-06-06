@@ -1,0 +1,36 @@
+<% content_for :title, @preview[:label] %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: @preview[:label]) %>
+
+  <div class="space-y-6">
+    <div class="rounded-lg border border-slate-200 bg-white p-4 space-y-1">
+      <p class="text-sm text-slate-500"><%= @preview[:description] %></p>
+      <p class="text-sm text-slate-500">
+        <span class="font-medium text-slate-700">Subject:</span>
+        <%= @subject %>
+      </p>
+    </div>
+
+    <% if @html_body.present? %>
+      <div class="space-y-2">
+        <h2 class="text-sm font-medium text-slate-700">HTML</h2>
+        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <iframe srcdoc="<%= h(@html_body) %>"
+                  class="w-full"
+                  style="height: 480px; border: none;"
+                  sandbox="allow-same-origin"></iframe>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @text_body.present? %>
+      <div class="space-y-2">
+        <h2 class="text-sm font-medium text-slate-700">Plain text</h2>
+        <pre class="overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 whitespace-pre-wrap"><%= @text_body %></pre>
+      </div>
+    <% end %>
+
+    <%= link_to "← All email previews", admin_email_previews_path, class: "inline-block text-sm text-slate-500 hover:text-slate-700" %>
+  </div>
+</div>
