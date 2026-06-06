@@ -30,10 +30,10 @@ class FeedStatsComponent < ViewComponent::Base
         value: last_refresh_value
       },
       {
-        key: "most_recent_post",
-        label: "Most recent publication",
+        key: "most_recent_repost",
+        label: "Most recent repost",
         label_short: "Recent",
-        value: most_recent_post_value
+        value: most_recent_repost_value
       },
       {
         key: "imported_posts",
@@ -74,11 +74,11 @@ class FeedStatsComponent < ViewComponent::Base
     end
   end
 
-  def most_recent_post_value
-    if @feed.most_recent_post_date
-      helpers.short_time_ago_tag(@feed.most_recent_post_date)
+  def most_recent_repost_value
+    if @feed.most_recent_repost_at
+      helpers.short_time_ago_tag(@feed.most_recent_repost_at)
     else
-      content_tag(:span, "No posts imported", class: "text-slate-500")
+      content_tag(:span, "No reposts yet", class: "text-slate-500")
     end
   end
 

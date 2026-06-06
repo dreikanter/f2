@@ -12,7 +12,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
   def feed_with_posts
     @feed_with_posts ||= create(:feed).tap do |f|
       create(:feed_entry, feed: f, created_at: 1.hour.ago)
-      create(:post, :published, feed: f, published_at: 2.hours.ago)
+      create(:post, :published, feed: f, published_at: 2.hours.ago, updated_at: 1.hour.ago)
       create(:post, feed: f, published_at: 3.hours.ago)
     end
   end
@@ -24,8 +24,9 @@ class FeedStatsComponentTest < ViewComponent::TestCase
       last_refresh = result.css('[data-key="stats.last_refresh"]').first
       assert_not_nil last_refresh
 
-      most_recent = result.css('[data-key="stats.most_recent_post"]').first
+      most_recent = result.css('[data-key="stats.most_recent_repost"]').first
       assert_not_nil most_recent
+      assert_equal "1h", result.css('[data-key="stats.most_recent_repost.value"]').first.text.strip
 
       imported = result.css('[data-key="stats.imported_posts"]').first
       assert_not_nil imported
@@ -43,7 +44,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     mobile_layout = result.css(".md\\:hidden").first
     assert_not_nil mobile_layout
     assert_equal "Last refresh", result.css(".md\\:hidden [data-key=\"stats.last_refresh.label\"]").first.text
-    assert_equal "Most recent publication", result.css(".md\\:hidden [data-key=\"stats.most_recent_post.label\"]").first.text
+    assert_equal "Most recent repost", result.css(".md\\:hidden [data-key=\"stats.most_recent_repost.label\"]").first.text
     assert_equal "Imported posts", result.css(".md\\:hidden [data-key=\"stats.imported_posts.label\"]").first.text
   end
 
@@ -53,7 +54,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     desktop_layout = result.css(".hidden.md\\:flex").first
     assert_not_nil desktop_layout
     assert_equal "Refreshed", result.css(".hidden.md\\:flex [data-key=\"stats.last_refresh.label\"]").first.text
-    assert_equal "Recent", result.css(".hidden.md\\:flex [data-key=\"stats.most_recent_post.label\"]").first.text
+    assert_equal "Recent", result.css(".hidden.md\\:flex [data-key=\"stats.most_recent_repost.label\"]").first.text
     assert_equal "Imported", result.css(".hidden.md\\:flex [data-key=\"stats.imported_posts.label\"]").first.text
     assert_equal "Published", result.css(".hidden.md\\:flex [data-key=\"stats.published_posts.label\"]").first.text
   end
@@ -66,7 +67,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     last_refresh_value = result.css('[data-key="stats.last_refresh.value"]').first.text
     assert_equal "Never", last_refresh_value
 
-    most_recent_value = result.css('[data-key="stats.most_recent_post.value"]').first.text
-    assert_equal "No posts imported", most_recent_value
+    most_recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
+    assert_equal "No reposts yet", most_recent_value
   end
 end
