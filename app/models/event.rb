@@ -21,6 +21,12 @@ class Event < ApplicationRecord
     level == "debug" ? :info : level.to_sym
   end
 
+  # Records this event points at, with deleted ones dropped. Distinct from
+  # #event_references, which are the join rows themselves.
+  def references
+    event_references.referenced_records
+  end
+
   def expired?
     expires_at.present? && expires_at < Time.current
   end

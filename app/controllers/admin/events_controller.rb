@@ -16,7 +16,7 @@ class Admin::EventsController < ApplicationController
   def show
     authorize Event
     @event = Event.find(params[:id])
-    @referenced_posts = @event.event_references.referenced_records
+    @referenced_posts = @event.references
     @previous_event = previous_event(@event)
     @next_event = next_event(@event)
   end
