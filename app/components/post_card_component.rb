@@ -31,12 +31,12 @@ class PostCardComponent < ViewComponent::Base
     post.feed&.display_name
   end
 
-  def source_content
+  def source_label
     return unless post.published_at
     label_with_time("Source", post.published_at)
   end
 
-  def repost_content
+  def repost_label
     return unless post.reposted_at
     label_with_time("Repost", post.reposted_at)
   end

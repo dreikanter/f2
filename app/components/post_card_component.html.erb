@@ -30,21 +30,15 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <% if source_content %>
-        <% if source_url %>
-          <%= link_to source_content, source_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
-        <% else %>
-          <span class="text-sm text-slate-400"><%= source_content %></span>
-        <% end %>
-      <% end %>
+      <%= link_to source_label, source_url, target: "_blank", rel: "noopener",
+            class: "text-sm text-slate-400 transition hover:text-slate-600" %>
 
-      <% if repost_content %>
+      <% if repost_label %>
         <% if freefeed_url %>
-          <%= link_to repost_content, freefeed_url, target: "_blank", rel: "noopener",
+          <%= link_to repost_label, freefeed_url, target: "_blank", rel: "noopener",
                 class: "text-sm text-slate-400 transition hover:text-slate-600" %>
         <% else %>
-          <span class="text-sm text-slate-400"><%= repost_content %></span>
+          <span class="text-sm text-slate-400"><%= repost_label %></span>
         <% end %>
       <% end %>
 
