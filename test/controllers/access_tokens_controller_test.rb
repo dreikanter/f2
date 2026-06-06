@@ -364,7 +364,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to access_tokens_path
-    assert_equal "Access token '#{access_token.name}' has been deleted.", flash[:notice]
+    assert_equal "Access token '#{access_token.name}' deleted.", flash[:notice]
   end
 
   test "cannot delete other user's token" do

@@ -30,7 +30,7 @@ class Settings::PasswordUpdatesControllerTest < ActionDispatch::IntegrationTest
       }
     }
     assert_redirected_to settings_path
-    assert_equal "Password updated successfully.", flash[:notice]
+    assert_equal "Password updated.", flash[:notice]
   end
 
   test "should not update password with incorrect current password" do

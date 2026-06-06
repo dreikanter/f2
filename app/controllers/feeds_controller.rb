@@ -119,7 +119,7 @@ class FeedsController < ApplicationController
     @feed = load_feed
     authorize @feed
     @feed.destroy!
-    redirect_to feeds_path, notice: "Feed was successfully deleted."
+    redirect_to feeds_path, notice: "Feed deleted."
   end
 
   private

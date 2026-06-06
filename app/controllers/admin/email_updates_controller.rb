@@ -27,7 +27,7 @@ class Admin::EmailUpdatesController < ApplicationController
       ProfileMailer.email_change_confirmation(user, new_email).deliver_later
       redirect_to admin_user_path(user), notice: "Confirmation email sent to #{new_email}. User must confirm before change takes effect."
     elsif user.update(email_address: new_email)
-      redirect_to admin_user_path(user), notice: "Email address updated successfully."
+      redirect_to admin_user_path(user), notice: "Email address updated."
     else
       redirect_to edit_admin_user_email_update_path(user), alert: "Failed to update email address."
     end
