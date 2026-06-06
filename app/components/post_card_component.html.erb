@@ -13,9 +13,16 @@
     <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
       <div class="flex items-center gap-3 text-sm text-slate-400">
         <% if published_time_tag %>
-          <div class="flex shrink-0 items-center" title="Published / reposted">
-            <%= published_time_tag %><% if reposted_time_tag %><span aria-hidden="true">/</span><%= reposted_time_tag %><% end %>
-          </div>
+          <span class="flex shrink-0 items-center gap-1">
+            <span class="text-slate-500">Published:</span>
+            <%= published_time_tag %>
+          </span>
+        <% end %>
+        <% if reposted_time_tag %>
+          <span class="flex shrink-0 items-center gap-1">
+            <span class="text-slate-500">Reposted:</span>
+            <%= reposted_time_tag %>
+          </span>
         <% end %>
         <% if group_label %>
           <%= link_to group_label, group_url, title: group_hint,
