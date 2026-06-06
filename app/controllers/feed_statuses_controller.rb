@@ -36,9 +36,8 @@ class FeedStatusesController < ApplicationController
     end
   end
 
-  # HTML clients get a redirect to the feed page; Turbo clients get a stream
-  # that re-renders the feed heading (feed page) or the feed card (feeds index)
-  # in place, with the flash surfaced as a toast.
+  # HTML clients redirect to the feed page; Turbo clients get a stream that
+  # re-renders the feed heading (feed page) or the feed card (feeds index).
   def respond_with_status(feed, success: nil, alert: nil)
     respond_to do |format|
       format.html { redirect_to feed, success: success, alert: alert }
