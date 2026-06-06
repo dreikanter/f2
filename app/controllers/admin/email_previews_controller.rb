@@ -61,7 +61,7 @@ class Admin::EmailPreviewsController < ApplicationController
   def sample_user
     user = User.new(
       email_address: "preview@example.com",
-      name: "Alex Preview",
+      name: "Sam Preview",
       password: "previewpassword",
       unconfirmed_email: "new.preview@example.com"
     )
