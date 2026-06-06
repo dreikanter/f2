@@ -208,15 +208,14 @@ class FeedRefreshWorkflow
 
   def reference_posts(event, posts)
     return if posts.empty?
-    current_time = Time.current
 
     references_data = posts.map do |post|
       {
         event_id: event.id,
         reference_type: "Post",
         reference_id: post.id,
-        created_at: current_time,
-        updated_at: current_time
+        created_at: event.created_at,
+        updated_at: event.created_at
       }
     end
 
