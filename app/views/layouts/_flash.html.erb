@@ -1,5 +1,5 @@
 <%# locals: () %>
-<% flash_alerts = capture do %>
+<div class="space-y-3 mb-6 empty:hidden" id="flash-messages">
   <% if success %>
     <%= render AlertComponent.new(variant: :success) do %>
       <span><%= sanitize(success) %></span>
@@ -17,5 +17,4 @@
       <span><%= sanitize(alert) %></span>
     <% end %>
   <% end %>
-<% end %>
-<div class="space-y-3 mb-6 empty:hidden" id="flash-messages"><%= flash_alerts if flash_alerts.present? %></div>
+</div>
