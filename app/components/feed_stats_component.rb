@@ -24,18 +24,6 @@ class FeedStatsComponent < ViewComponent::Base
   def layout_items
     @layout_items ||= [
       {
-        key: "last_refresh",
-        label: "Last refresh",
-        label_short: "Refreshed",
-        value: last_refresh_value
-      },
-      {
-        key: "most_recent_repost",
-        label: "Most recent repost",
-        label_short: "Recent",
-        value: most_recent_repost_value
-      },
-      {
         key: "imported_posts",
         label: "Imported posts",
         label_short: "Imported",
@@ -46,6 +34,24 @@ class FeedStatsComponent < ViewComponent::Base
         label: "Published posts",
         label_short: "Published",
         value: helpers.number_with_delimiter(published_posts_count)
+      },
+      {
+        key: "posts_last_week",
+        label: "Posts published last week",
+        label_short: "Last week",
+        value: helpers.number_with_delimiter(posts_last_week_count)
+      },
+      {
+        key: "last_refresh",
+        label: "Last refresh",
+        label_short: "Refreshed",
+        value: last_refresh_value
+      },
+      {
+        key: "most_recent_repost",
+        label: "Most recent repost",
+        label_short: "Recent",
+        value: most_recent_repost_value
       }
     ]
   end
@@ -76,7 +82,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def most_recent_repost_value
     if @feed.most_recent_repost_at
-      helpers.short_time_ago_tag(@feed.most_recent_repost_at)
+      safe_join([helpers.short_time_ago_tag(@feed.most_recent_repost_at), " ago"])
     else
       content_tag(:span, "No reposts yet", class: "text-slate-500")
     end
@@ -88,5 +94,9 @@ class FeedStatsComponent < ViewComponent::Base
 
   def published_posts_count
     @published_posts_count ||= @feed.posts.published.count
+  end
+
+  def posts_last_week_count
+    @posts_last_week_count ||= @feed.posts_published_last_week_count
   end
 end

@@ -235,6 +235,12 @@ class Feed < ApplicationRecord
     posts.published.maximum(:updated_at)
   end
 
+  # Returns the count of posts published in the last week (by source date)
+  # @return [Integer] number of posts published in the last week
+  def posts_published_last_week_count
+    posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
+  end
+
   # Returns metrics for a date range, filling gaps with zeros
   # @param start_date [Date] start date of the range
   # @param end_date [Date] end date of the range (inclusive)

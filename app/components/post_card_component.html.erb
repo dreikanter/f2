@@ -27,21 +27,21 @@
           <%= comment_count %>
         </span>
       <% end %>
-    </div>
 
-    <div class="flex items-center gap-3">
       <%= link_to source_label, source_url, target: "_blank", rel: "noopener",
-            class: "text-sm text-slate-400 transition hover:text-slate-600" %>
+            class: "transition hover:text-slate-600" %>
 
       <% if repost_label %>
         <% if freefeed_url %>
           <%= link_to repost_label, freefeed_url, target: "_blank", rel: "noopener",
-                class: "text-sm text-slate-400 transition hover:text-slate-600" %>
+                class: "transition hover:text-slate-600" %>
         <% else %>
-          <span class="text-sm text-slate-400"><%= repost_label %></span>
+          <span><%= repost_label %></span>
         <% end %>
       <% end %>
+    </div>
 
+    <div class="flex items-center gap-3">
       <% if withdraw_allowed? %>
         <div class="relative">
           <button type="button"

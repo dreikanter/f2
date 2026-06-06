@@ -838,4 +838,13 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.most_recent_repost_at
   end
+
+  test "#posts_published_last_week_count should count posts published within the last week" do
+    feed = create(:feed)
+    create(:post, feed: feed, published_at: 2.days.ago)
+    create(:post, feed: feed, published_at: 6.days.ago)
+    create(:post, feed: feed, published_at: 10.days.ago)
+
+    assert_equal 2, feed.posts_published_last_week_count
+  end
 end
