@@ -50,15 +50,16 @@ module Processor
       permalink.presence || "https://twitter.com/i/web/status/#{tweet['id_str']}"
     end
 
-    # Rebuilds readable text: expand t.co links to their targets and drop the
-    # trailing t.co link that points to attached media.
+    # Rebuilds readable text: expand t.co links to their targets, drop the
+    # trailing t.co link that points to attached media, and decode the HTML
+    # entities (&amp;, &lt;, &gt;) that the syndication API encodes.
     def tweet_text(tweet)
       text = tweet["full_text"].to_s
       Array(tweet.dig("entities", "urls")).each do |url|
         text = text.gsub(url["url"], url["expanded_url"]) if url["url"].present? && url["expanded_url"].present?
       end
       media(tweet).each { |item| text = text.gsub(item["url"], "") if item["url"].present? }
-      text.strip
+      CGI.unescapeHTML(text).strip
     end
 
     def media_urls(tweet)
