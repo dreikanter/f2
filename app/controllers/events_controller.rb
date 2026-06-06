@@ -11,7 +11,7 @@ class EventsController < ApplicationController
 
   def show
     @event = owned_events.find(params[:id])
-    @referenced_posts = @event.event_references.includes(:reference).filter_map(&:reference)
+    @referenced_posts = @event.event_references.referenced_records
     @previous_event = adjacent_event(:newer)
     @next_event = adjacent_event(:older)
   end

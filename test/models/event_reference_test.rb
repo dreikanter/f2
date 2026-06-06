@@ -41,4 +41,14 @@ class EventReferenceTest < ActiveSupport::TestCase
     assert_equal "Post", reference.reference_type
     assert_nil reference.reference
   end
+
+  test ".referenced_records should resolve the referenced records, skipping deleted ones" do
+    kept = create(:post)
+    deleted = create(:post)
+    EventReference.create!(event: event, reference: kept)
+    EventReference.create!(event: event, reference: deleted)
+    deleted.destroy!
+
+    assert_equal [kept], event.event_references.referenced_records
+  end
 end
