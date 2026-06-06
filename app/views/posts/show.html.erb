@@ -35,4 +35,8 @@
       <%= format_post_content(@post.content) %>
     </div>
   </div>
+
+  <%= render PostAttachmentsComponent.new(post: @post) %>
+
+  <%= render PostCommentsComponent.new(post: @post) %>
 </div>

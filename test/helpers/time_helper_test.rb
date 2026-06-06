@@ -112,6 +112,20 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "#datetime_with_duration_tag should return nil for nil input" do
+    assert_nil datetime_with_duration_tag(nil)
+  end
+
+  test "#datetime_with_duration_tag should render the duration as muted text" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+
+    travel_to Time.zone.parse("2025-01-15 17:45:30") do
+      result = datetime_with_duration_tag(time)
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="2 hours ago">15 Jan 2025, 15:45 <span class="text-slate-500">(2h)</span></time>'
+      assert_equal expected, result
+    end
+  end
+
   test "#time_distance should return nil for nil input" do
     assert_nil time_distance(nil)
   end

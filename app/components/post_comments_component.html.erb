@@ -1,0 +1,6 @@
+<div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm p-4" data-key="post.comments">
+  <h2 class="text-lg font-semibold text-slate-900 mb-3">Comments (<%= comments.length %>)</h2>
+  <% comments.each do |comment| %>
+    <div class="border-l-4 border-slate-300 pl-3 mb-3 last:mb-0"><%= simple_format(comment) %></div>
+  <% end %>
+</div>
