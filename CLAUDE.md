@@ -107,10 +107,19 @@ is usually enough.
 Structure:
 - `Changes:` bullet list at the top describing what was done
 - Optional prose paragraph explaining the rationale
-- `References:` section at the bottom listing related issues/PRs (e.g. `Closes #123`); omit entirely if there are none
+- `References:` section at the bottom listing related issues/PRs; omit entirely if there are none
 - Do **not** include session links or any `https://claude.ai/...` URLs
 
-When a PR is created via the Claude Code web UI, the harness auto-generates the description without reading these instructions. After any PR is created — whether by you or the harness — immediately update the title and body to comply with the guidelines above, and remove any injected session URLs.
+The `References:` section must be a bullet list, one reference per line — not a prose sentence. Each bullet states the relationship followed by the issue/PR number.
+
+```
+References:
+
+- Related PR: #609
+- Closes #611
+```
+
+**This is mandatory, not optional.** When a PR is created via the Claude Code web UI, the harness auto-generates the description without reading these instructions. After any PR is created — whether by you or the harness — you MUST immediately update the title and body to comply with the guidelines above, including reformatting the `References:` section into the bullet-list form shown, and removing any injected session URLs. Do not skip this step even when the PR "looks fine".
 
 ## Tooling Notes
 
