@@ -119,6 +119,25 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
+  test "#publish should persist the post id before comments so a comment 429 can't duplicate the post" do
+    post = post_with_content("Post with comment", comments: ["hello"])
+    post_stub = stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 201, body: { posts: { id: "freefeed_post_123" } }.to_json)
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    RateLimit.stub(:penalize, ->(*, **) { }) do
+      assert_raises(RateLimit::Throttled) { FreefeedPublisher.new(post).publish }
+    end
+
+    # The post was recorded despite the throttle, so it won't be re-created.
+    assert_equal "freefeed_post_123", post.reload.freefeed_post_id
+    assert_predicate post, :published?
+
+    # A retry (already published) makes no further create-post call.
+    assert_equal "freefeed_post_123", FreefeedPublisher.new(post).publish
+    assert_requested post_stub, times: 1
+  end
+
   test "#publish should create post without attachments or comments" do
     post = post_with_content("Test post content")
 

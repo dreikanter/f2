@@ -21,9 +21,13 @@ class FreefeedPublisher
     attachment_ids = upload_attachments
     freefeed_post = create_freefeed_post(attachment_ids)
     freefeed_post_id = freefeed_post[:id]
+
+    # Persist the id before creating comments so a later failure (e.g. a 429 on
+    # a comment) can't make a retry re-create the post. Comments are
+    # best-effort once the post exists.
+    update_post_with_freefeed_id(freefeed_post_id)
     create_comments(freefeed_post_id)
 
-    update_post_with_freefeed_id(freefeed_post_id)
     freefeed_post_id
   rescue FreefeedClient::UnauthorizedError
     raise # propagate so the workflow can disable the token and related feeds
