@@ -77,6 +77,20 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal "enqueued", post.reload.status
   end
 
+  test ".perform_now should skip without publishing when a chain is already running" do
+    create(:post, :enqueued, feed: feed)
+    stub_publish_success
+
+    Feed.stub(:with_advisory_lock, ->(*, **) { raise WithAdvisoryLock::FailedToAcquireLock.new("post_publish") }) do
+      assert_no_enqueued_jobs(only: PostPublishJob) do
+        assert_nothing_raised { PostPublishJob.perform_now(feed.id) }
+      end
+    end
+
+    assert_equal "enqueued", feed.posts.first.reload.status
+    assert_not_requested :post, "#{access_token.host}/v4/posts"
+  end
+
   test ".perform_now should do nothing when there are no enqueued posts" do
     assert_no_enqueued_jobs(only: PostPublishJob) do
       PostPublishJob.perform_now(feed.id)
