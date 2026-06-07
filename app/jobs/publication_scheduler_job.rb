@@ -9,7 +9,7 @@ class PublicationSchedulerJob < ApplicationJob
   queue_as :default
 
   def perform
-    Feed.where(state: :enabled, id: feeds_with_enqueued_posts).find_each do |feed|
+    Feed.enabled.where(id: feeds_with_enqueued_posts).find_each do |feed|
       PostPublishJob.perform_later(feed.id)
     end
   end
@@ -17,6 +17,6 @@ class PublicationSchedulerJob < ApplicationJob
   private
 
   def feeds_with_enqueued_posts
-    Post.where(status: :enqueued).select(:feed_id).distinct
+    Post.enqueued.select(:feed_id).distinct
   end
 end
