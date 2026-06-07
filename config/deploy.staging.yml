@@ -27,9 +27,25 @@ accessories:
     directories:
       - data:/var/lib/postgresql
 
+  # Temporary metrics backend for staging. VictoriaMetrics with its built-in
+  # web UI (vmui at :8428/vmui). Bound to localhost — the app pushes over the
+  # private Kamal network (see METRICS_URL below); view the UI via an SSH
+  # tunnel: ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com → http://localhost:8428/vmui
+  # Remove with: bin/kamal accessory remove victoriametrics -d staging
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    host: dev.fffeeder.com
+    port: "127.0.0.1:8428:8428"
+    cmd: "-retentionPeriod=1"
+    directories:
+      - vmdata:/victoria-metrics-data
+
 # Environment variables.
 env:
   clear:
     RAILS_ENV: staging
     HOSTS: dev.fffeeder.com
     ACTION_MAILER_HOST: dev.fffeeder.com
+    # Reaches the victoriametrics accessory by container name over the Kamal
+    # network. Unset this (or remove the accessory) to disable metrics.
+    METRICS_URL: http://f2-victoriametrics:8428/api/v1/import/prometheus
