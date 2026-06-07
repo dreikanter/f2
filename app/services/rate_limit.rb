@@ -186,6 +186,16 @@ module RateLimit
       policy(name).buckets_for(dimension => 1).map { |limit, _amount| limit.burst }.min
     end
 
+    # Drop a subject's stored state for a policy. Call this when the subject is
+    # gone for good (e.g. its access token is deleted) — the only definite signal
+    # that a row will never be used again. A later acquire would recreate it.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity whose allowance to forget
+    # @return [void]
+    def forget(name, subject:)
+      Bucket.where(key: "#{name}:#{subject}").delete_all
+    end
+
     private
 
     def registry

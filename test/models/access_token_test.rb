@@ -185,6 +185,16 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "https://beta.freefeed.net", AccessToken::FREEFEED_HOSTS[:beta][:url]
   end
 
+  test "destroying access token forgets its rate limit state" do
+    token = create(:access_token, :active)
+    RateLimit.acquire(:freefeed, subject: token.rate_limit_subject, cost: { get: 1 })
+    assert RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+
+    token.destroy!
+
+    assert_not RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+  end
+
   test "destroying access token disables enabled feeds and nullifies their access_token_id" do
     user = create(:user)
     token = create(:access_token, :active, user: user)
