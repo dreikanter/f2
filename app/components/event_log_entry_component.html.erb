@@ -6,7 +6,7 @@
                 data: { key: "events.timestamp" } %>
     <%= severity_dot %>
     <div class="min-w-0 flex-1 truncate text-slate-700" data-key="events.description">
-      <%= render EventDescriptionComponent.new(event: event) %>
+      <%= render EventDescriptionComponent.for(event) %>
     </div>
     <% if (label = subject_label) %>
       <span class="shrink-0 text-xs text-slate-400"><%= label %></span>

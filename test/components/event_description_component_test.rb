@@ -31,22 +31,16 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed"
   end
 
-  test "#call should append the imported posts count for feed refreshes" do
+  test ".for should pick the feed refresh subclass for refresh events" do
     event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
-    create(:event_reference, event: event, reference: create(:post, feed: feed))
-    create(:event_reference, event: event, reference: create(:post, feed: feed))
 
-    result = render_inline(EventDescriptionComponent.new(event: event))
-
-    assert_equal "(+2)", result.css("[data-key='events.posts_count']").first&.text
+    assert_instance_of FeedRefreshDescriptionComponent, EventDescriptionComponent.for(event)
   end
 
-  test "#call should omit the posts count when a refresh imported nothing" do
-    event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
+  test ".for should fall back to the base component for other event types" do
+    event = Event.create!(type: "email_changed", level: :info, subject: user, user: user, message: "", metadata: {})
 
-    result = render_inline(EventDescriptionComponent.new(event: event))
-
-    assert_nil result.css("[data-key='events.posts_count']").first
+    assert_instance_of EventDescriptionComponent, EventDescriptionComponent.for(event)
   end
 
   test "#call should render links for multiple feeds from metadata" do

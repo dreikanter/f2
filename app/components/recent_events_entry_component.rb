@@ -18,7 +18,7 @@ class RecentEventsEntryComponent < ViewComponent::Base
   attr_reader :event, :href
 
   def description_tag
-    content_tag(:span, render(EventDescriptionComponent.new(event: event)),
+    content_tag(:span, render(EventDescriptionComponent.for(event)),
                 class: "flex-1 truncate text-sm text-slate-700",
                 data: { key: "recent_events.description" })
   end

@@ -447,13 +447,13 @@
 
       <div class="space-y-3">
         <%= render AlertComponent.new(variant: :info) do %>
-          <%= render EventDescriptionComponent.new(event: Event.new(type: "feed_refresh", level: :info, subject: sample_feed)) %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh", level: :info, subject: sample_feed)) %>
         <% end %>
         <%= render AlertComponent.new(variant: :error) do %>
-          <%= render EventDescriptionComponent.new(event: Event.new(type: "feed_refresh_error", level: :error, subject: sample_feed, message: "Connection timeout", metadata: { error: { stage: "load_feed_contents" } })) %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh_error", level: :error, subject: sample_feed, message: "Connection timeout", metadata: { error: { stage: "load_feed_contents" } })) %>
         <% end %>
         <%= render AlertComponent.new(variant: :warning) do %>
-          <%= render EventDescriptionComponent.new(event: Event.new(type: "access_token_validation_failed", level: :warning, subject: sample_token, metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) })) %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "access_token_validation_failed", level: :warning, subject: sample_token, metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) })) %>
         <% end %>
       </div>
     </section>

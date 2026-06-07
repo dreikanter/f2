@@ -1,35 +1,32 @@
-# Renders event descriptions with linked feed names
+# Renders an event's human-readable description from its i18n translation.
 #
-# Usage:
-#   <%= render EventDescriptionComponent.new(event: event) %>
+# Build instances through `.for`, which picks a type-specific subclass when one
+# exists (e.g. feed refreshes append their imported posts count):
+#
+#   <%= render EventDescriptionComponent.for(event) %>
 class EventDescriptionComponent < ViewComponent::Base
   attr_reader :event
+
+  # Maps event types to the subclass that renders them. Types without an entry
+  # fall back to this base component, which renders the plain description.
+  SUBCLASSES = {
+    "feed_refresh" => "FeedRefreshDescriptionComponent"
+  }.freeze
+
+  def self.for(event)
+    klass = SUBCLASSES[event.type]&.constantize || self
+    klass.new(event: event)
+  end
 
   def initialize(event:)
     @event = event
   end
 
   def call
-    suffix = posts_count_tag
-    suffix ? safe_join([body, suffix], " ") : body
-  end
-
-  private
-
-  def body
     html_description || fallback_description
   end
 
-  # Feed refreshes that imported posts read better with the count inline, e.g.
-  # "My Feed refreshed (+2)". Refreshes that brought nothing in stay quiet.
-  def posts_count_tag
-    return unless event.type == "feed_refresh"
-
-    count = event.event_references.count { |reference| reference.reference_type == "Post" }
-    return if count.zero?
-
-    helpers.tag.span("(+#{count})", class: "text-slate-400", data: { key: "events.posts_count" })
-  end
+  private
 
   def html_description
     return unless I18n.exists?(description_key)
