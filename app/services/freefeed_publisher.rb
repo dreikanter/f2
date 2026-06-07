@@ -16,6 +16,9 @@ class FreefeedPublisher
   # Publish the post to FreeFeed
   # @return [String] the FreeFeed post ID
   def publish
+    # Idempotency guard: if the post already has a FreeFeed id it was created on a
+    # previous run, so skip it. This is what stops a 429 raised *after* the post
+    # was created (e.g. on a comment) from re-creating the post when the job retries.
     return post.freefeed_post_id if already_published?
 
     attachment_ids = upload_attachments
