@@ -81,7 +81,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     create(:post, :enqueued, feed: feed)
     stub_publish_success
 
-    Feed.stub(:with_advisory_lock, ->(*, **) { raise WithAdvisoryLock::FailedToAcquireLock.new("post_publish") }) do
+    Feed.stub(:with_advisory_lock!, ->(*, **) { raise WithAdvisoryLock::FailedToAcquireLock.new("post_publish") }) do
       assert_no_enqueued_jobs(only: PostPublishJob) do
         assert_nothing_raised { PostPublishJob.perform_now(feed.id) }
       end

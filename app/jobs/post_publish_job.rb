@@ -19,7 +19,7 @@ class PostPublishJob < ApplicationJob
     # feed pauses publishing, including posts already enqueued.
     return unless feed.enabled?
 
-    Feed.with_advisory_lock("post_publish_#{feed_id}", timeout_seconds: 0) do
+    Feed.with_advisory_lock!("post_publish_#{feed_id}", timeout_seconds: 0) do
       publish_next(feed)
     end
   rescue WithAdvisoryLock::FailedToAcquireLock
