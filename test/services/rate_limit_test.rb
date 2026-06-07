@@ -133,6 +133,19 @@ class RateLimitTest < ActiveSupport::TestCase
     assert RateLimit.acquire(:t, subject: "a", cost: cost(tokens: 50)).allowed?
   end
 
+  test ".reconcile should refill before adjusting, so the delta isn't swallowed by the burst cap" do
+    RateLimit.define(:t) { limit :tokens, 60, per: 60, burst: 100 } # 1 token/sec, cap 100
+
+    travel_to Time.current.change(usec: 0)
+    RateLimit.acquire!(:t, subject: "a", cost: cost(tokens: 10)) # 90 left
+    travel_to Time.current + 60.seconds                          # refills, capped at 100
+    RateLimit.reconcile(:t, subject: "a", cost: cost(tokens: 5)) # actually used 5 more
+
+    # refill caps at 100, minus the 5 reconciled => exactly 95 available
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(tokens: 95)).allowed?
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(tokens: 1)).allowed?
+  end
+
   test ".reconcile should do nothing when the subject has no row" do
     RateLimit.define(:t) { limit :tokens, 100, per: 60 }
 

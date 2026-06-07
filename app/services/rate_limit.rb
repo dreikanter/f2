@@ -122,15 +122,17 @@ module RateLimit
     def reconcile(name, subject:, cost:)
       policy = policy(name)
       buckets = policy.buckets_for(cost)
-      with_locked_row(name, subject, create: false) do |row, _now|
+      with_locked_row(name, subject, create: false) do |row, now|
         next unless row
 
         data = row.data
         buckets.each do |limit, amount|
-          state = data[limit.bucket_key]
-          next unless state
+          next unless data.key?(limit.bucket_key)
 
-          data[limit.bucket_key] = { "tokens" => [state["tokens"] - amount, limit.burst.to_f].min, "refilled_at" => state["refilled_at"] }
+          # Refill to `now` first (same as acquire) so the delta isn't applied
+          # against a stale base or swallowed by the burst cap.
+          available = available_tokens(data[limit.bucket_key], limit, now)
+          data[limit.bucket_key] = { "tokens" => [available - amount, limit.burst.to_f].min, "refilled_at" => now }
         end
         row.update!(data: data)
       end
