@@ -11,6 +11,10 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
+  test "#rate_limit_subject is keyed by the token id" do
+    assert_equal "freefeed:#{access_token.id}", access_token.rate_limit_subject
+  end
+
   test ".build_with_token stores encrypted token and sets pending status" do
     token = AccessToken.build_with_token(
       name: "Test Token",

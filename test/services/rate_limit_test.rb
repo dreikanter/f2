@@ -1,8 +1,13 @@
 require "test_helper"
 
 class RateLimitTest < ActiveSupport::TestCase
-  setup { RateLimit.reset! }
-  teardown { RateLimit.reset! }
+  # Isolate the registry per test, but restore the app's real policies (defined
+  # in an initializer) afterward so other tests still see them.
+  setup do
+    @registry_backup = RateLimit.instance_variable_get(:@registry)
+    RateLimit.reset!
+  end
+  teardown { RateLimit.instance_variable_set(:@registry, @registry_backup) }
 
   def cost(**dims)
     dims
@@ -190,6 +195,7 @@ class RateLimitConcurrencyTest < ActiveSupport::TestCase
   self.use_transactional_tests = false
 
   setup do
+    @registry_backup = RateLimit.instance_variable_get(:@registry)
     RateLimit.reset!
     RateLimit.define(:t) { limit :requests, 5, per: 60 }
     RateLimit::Bucket.delete_all
@@ -197,7 +203,7 @@ class RateLimitConcurrencyTest < ActiveSupport::TestCase
 
   teardown do
     RateLimit::Bucket.delete_all
-    RateLimit.reset!
+    RateLimit.instance_variable_set(:@registry, @registry_backup)
   end
 
   test "parallel acquire on the same subject does not over-admit" do

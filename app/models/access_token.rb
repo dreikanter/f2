@@ -63,6 +63,14 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token)
   end
 
+  # Identity used for rate limiting FreeFeed API calls. Keyed per token: FreeFeed
+  # actually meters per account, so multiple tokens for the same FreeFeed user
+  # share its real bucket, but that rare over-count is covered by the 429
+  # backstop. A token id is stable and always present. See docs/rate-limiting.md.
+  def rate_limit_subject
+    "freefeed:#{id}"
+  end
+
   def host_domain
     URI.parse(host).host
   end
