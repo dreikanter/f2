@@ -120,7 +120,7 @@ module RateLimit
           state = data[limit.bucket_key]
           next unless state
 
-          data[limit.bucket_key] = { "t" => [state["t"] - amount, limit.burst.to_f].min, "r" => state["r"] }
+          data[limit.bucket_key] = { "tokens" => [state["tokens"] - amount, limit.burst.to_f].min, "refilled_at" => state["refilled_at"] }
         end
         row.update!(data: data)
       end
@@ -163,7 +163,7 @@ module RateLimit
       buckets.each do |limit, amount|
         available = available_tokens(data[limit.bucket_key], limit, now)
         if available >= amount
-          new_states[limit.bucket_key] = { "t" => available - amount, "r" => now }
+          new_states[limit.bucket_key] = { "tokens" => available - amount, "refilled_at" => now }
         else
           shortfalls << (amount - available) / limit.rate_per_sec
         end
@@ -180,9 +180,9 @@ module RateLimit
     end
 
     def available_tokens(state, limit, now)
-      state ||= { "t" => limit.burst.to_f, "r" => now }
-      elapsed = now - state["r"]
-      [limit.burst.to_f, state["t"] + (elapsed * limit.rate_per_sec)].min
+      state ||= { "tokens" => limit.burst.to_f, "refilled_at" => now }
+      elapsed = now - state["refilled_at"]
+      [limit.burst.to_f, state["tokens"] + (elapsed * limit.rate_per_sec)].min
     end
   end
 end
