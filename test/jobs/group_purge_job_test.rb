@@ -28,6 +28,35 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_nil post3.reload.freefeed_post_id
   end
 
+  test ".perform_now should reserve a delete per post" do
+    create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
+    stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
+
+    captured = []
+    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+      captured << [subject, cost]
+    }) do
+      GroupPurgeJob.perform_now(feed.id)
+    end
+
+    assert_equal [[access_token.rate_limit_subject, { delete: 1 }]] * 2, captured
+  end
+
+  test ".perform_now should reschedule when throttled" do
+    create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+
+    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+      assert_enqueued_with(job: GroupPurgeJob) do
+        GroupPurgeJob.perform_now(feed.id)
+      end
+    end
+
+    assert_not_requested :delete, "#{access_token.host}/v4/posts/post1"
+  end
+
   test ".perform_now should continue on error and log failure" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
