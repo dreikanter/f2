@@ -4,7 +4,9 @@ class RateLimitTest < ActiveSupport::TestCase
   setup { RateLimit.reset! }
   teardown { RateLimit.reset! }
 
-  def cost(**dims) = dims
+  def cost(**dims)
+    dims
+  end
 
   test ".acquire should allow up to burst then throttle" do
     RateLimit.define(:t) { limit :requests, 5, per: 60 }

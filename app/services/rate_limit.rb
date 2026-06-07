@@ -20,15 +20,21 @@ module RateLimit
 
   # Outcome of an acquire attempt.
   Result = Data.define(:allowed, :retry_after) do
-    def allowed? = allowed
+    def allowed?
+      allowed
+    end
   end
 
   # A single token-bucket rule on one dimension over one window (seconds).
   # `burst` is the bucket capacity; it defaults to the per-window rate.
   Limit = Data.define(:dimension, :window, :rate, :burst) do
-    def rate_per_sec = rate.to_f / window
+    def rate_per_sec
+      rate.to_f / window
+    end
 
-    def bucket_key = "#{dimension}/#{window}"
+    def bucket_key
+      "#{dimension}/#{window}"
+    end
   end
 
   # A named provider profile: its limits (grouped by dimension) and how it
@@ -50,9 +56,13 @@ module RateLimit
     end
 
     # DSL: fail open (allow) or closed (throttle) on a limiter storage error.
-    def fail_open(value = true) = @fail_open = value
+    def fail_open(value = true)
+      @fail_open = value
+    end
 
-    def fail_open? = @fail_open
+    def fail_open?
+      @fail_open
+    end
 
     # All limits touched by the given cost, as [limit, amount] pairs. Dimensions
     # without a declared limit are unlimited and contribute nothing.
