@@ -35,16 +35,6 @@
         </div>
       <% end %>
 
-      <%= render CardComponent.new(href: admin_rate_limits_path) do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("gauge", css_class: "size-5") %>
-            <span>Rate Limits</span>
-          </h2>
-          <p class="text-slate-600">See how much of each external API's allowance we've used</p>
-        </div>
-      <% end %>
-
       <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">

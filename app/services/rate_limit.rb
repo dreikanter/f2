@@ -25,31 +25,6 @@ module RateLimit
     end
   end
 
-  # Read-only view of one (policy, subject, limit) bucket, with tokens refilled
-  # to the moment the snapshot was taken. Powers the admin rate-limit dashboard.
-  # See RateLimit.snapshot and issue #622.
-  Snapshot = Data.define(:policy, :subject, :dimension, :window, :available, :burst, :blocked_until) do
-    # Share of the bucket spent right now, 0.0 (idle) to 1.0 (empty).
-    def fraction_consumed
-      return 1.0 if burst.zero?
-
-      (1.0 - available / burst).clamp(0.0, 1.0)
-    end
-
-    def percent_consumed
-      (fraction_consumed * 100).round
-    end
-
-    def blocked?
-      blocked_until.present? && blocked_until.future?
-    end
-
-    # Seconds left on a server-imposed cooldown, or 0 when not blocked.
-    def blocked_for
-      blocked? ? (blocked_until - Time.current) : 0.0
-    end
-  end
-
   # A single token-bucket rule on one dimension over one window (seconds).
   # `burst` is the bucket capacity; it defaults to the per-window rate.
   Limit = Data.define(:dimension, :window, :rate, :burst) do
@@ -87,11 +62,6 @@ module RateLimit
 
     def fail_open?
       @fail_open
-    end
-
-    # Every declared limit, across all dimensions and windows (read side).
-    def all_limits
-      @limits.values.flatten
     end
 
     # All limits touched by the given cost, as [limit, amount] pairs. Dimensions
@@ -231,32 +201,6 @@ module RateLimit
     # @return [void]
     def forget(name, subject:)
       Bucket.where(key: "#{name}:#{subject}").delete_all
-    end
-
-    # Current state of every bucket, for observability. A plain read of the
-    # buckets table (no locking); tokens are refilled to now so the numbers match
-    # what the next acquire would see. One Snapshot per (policy, subject, limit);
-    # subjects with a stored row but no declared policy are skipped.
-    # @return [Array<Snapshot>] ordered by bucket key
-    def snapshot
-      now = Time.current.to_f
-      Bucket.order(:key).flat_map do |row|
-        name, subject = row.key.split(":", 2)
-        policy = registry[name.to_sym]
-        next [] unless policy
-
-        policy.all_limits.map do |limit|
-          Snapshot.new(
-            policy: name,
-            subject: subject,
-            dimension: limit.dimension,
-            window: limit.window,
-            available: available_tokens(row.data[limit.bucket_key], limit, now),
-            burst: limit.burst.to_f,
-            blocked_until: row.blocked_until
-          )
-        end
-      end
     end
 
     private

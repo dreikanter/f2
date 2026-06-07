@@ -115,9 +115,6 @@ RateLimit.reconcile(:openai, subject: key_id, cost: { tokens: actual - estimated
 
 # Feed the provider's own verdict back in (e.g. on a real 429)
 RateLimit.penalize(:openai, subject: key_id, retry_after: 30)
-
-# Read-only view of current state for observability (admin dashboard)
-RateLimit.snapshot   # => [Snapshot(policy, subject, dimension, window, available, burst, blocked_until), ...]
 ```
 
 ### Configuration (sketch)
@@ -258,18 +255,19 @@ multi-call publishing, not introduced by the limiter.
 
 ## Observability
 
-The buckets table already holds live state, so the current picture is a free
-read — no extra instrumentation needed for it.
+Observability is **event-based and lives outside the app**, not a dump of the
+buckets table (which scales with the number of subjects). `acquire` and
+`penalize` are the interesting moments:
 
-- **Live headroom.** `RateLimit.snapshot` refills every bucket to *now* and
-  returns one row per `(policy, subject, dimension/window)` with `available`,
-  `burst`, percent consumed, and any active `blocked_until` cooldown. The admin
-  dashboard (`/admin/rate_limits`, dev-only) renders this — it answers "how
-  close are we to the limit right now."
-- **Events over time.** A snapshot misses past spikes, so `acquire` logs a line
-  when a call is throttled and `penalize` logs when the provider hands us a
-  cooldown (429). Cheap to grep; a counter table for charts is a later add only
-  if needed.
+- `acquire` logs and emits a `rate_limit.throttled` event when a call is denied.
+- `penalize` logs and emits a `rate_limit.penalized` event on a server cooldown (429).
+
+Both go to **Honeybadger Insights** via `Honeybadger.event`, where they can be
+charted, queried (by `policy`/`subject`), and alerted on — history, "current
+load", and "who's throttled right now" all come from the recent event stream.
+The DB row's `blocked_until` remains the authoritative cooldown state, but we
+don't surface it through a bespoke admin view. A local counter table for charts
+is a possible later add only if Insights is dropped.
 
 ## Principles
 

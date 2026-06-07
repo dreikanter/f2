@@ -258,66 +258,6 @@ class RateLimitTest < ActiveSupport::TestCase
     assert_includes events.map(&:first), "rate_limit.penalized"
   end
 
-  test ".snapshot should report headroom per limit with tokens refilled to now" do
-    RateLimit.define(:t) { limit :requests, 10, per: 60 }
-
-    travel_to Time.current.change(usec: 0)
-    4.times { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
-
-    entry = RateLimit.snapshot.find { |s| s.subject == "a" }
-    assert_equal "t", entry.policy
-    assert_equal :requests, entry.dimension
-    assert_equal 60, entry.window
-    assert_in_delta 6.0, entry.available, 0.001
-    assert_equal 10.0, entry.burst
-    assert_equal 40, entry.percent_consumed
-    refute entry.blocked?
-  end
-
-  test ".snapshot should emit one entry per declared limit" do
-    RateLimit.define(:t) do
-      limit :requests, 100, per: 60
-      limit :requests, 1000, per: 3600
-      limit :tokens, 50, per: 60
-    end
-    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
-
-    entries = RateLimit.snapshot.select { |s| s.subject == "a" }
-    assert_equal 3, entries.size
-    assert_equal [[:requests, 60], [:requests, 3600], [:tokens, 60]].sort,
-                 entries.map { |s| [s.dimension, s.window] }.sort
-  end
-
-  test ".snapshot should surface a server-imposed cooldown" do
-    RateLimit.define(:t) { limit :requests, 10, per: 60 }
-    RateLimit.penalize(:t, subject: "a", retry_after: 30)
-
-    entry = RateLimit.snapshot.find { |s| s.subject == "a" }
-    assert entry.blocked?
-    assert_in_delta 30.0, entry.blocked_for, 1.0
-  end
-
-  test ".snapshot should skip subjects whose policy is no longer registered" do
-    RateLimit.define(:t) { limit :requests, 10, per: 60 }
-    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
-    RateLimit::Bucket.create!(key: "gone:x")
-
-    policies = RateLimit.snapshot.map(&:policy).uniq
-    assert_equal ["t"], policies
-  end
-
-  test ".snapshot should report a full bucket for an untouched limit" do
-    RateLimit.define(:t) do
-      limit :post, 10, per: 60
-      limit :get, 20, per: 60
-    end
-    RateLimit.acquire(:t, subject: "a", cost: cost(post: 5))
-
-    get_entry = RateLimit.snapshot.find { |s| s.subject == "a" && s.dimension == :get }
-    assert_equal 20.0, get_entry.available
-    assert_equal 0, get_entry.percent_consumed
-  end
-
   test ".acquire should fail open by default on a storage error" do
     RateLimit.define(:t) { limit :requests, 1, per: 60 }
 
