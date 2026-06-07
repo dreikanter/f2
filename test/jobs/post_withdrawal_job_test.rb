@@ -13,6 +13,23 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, user: user, access_token: access_token)
   end
 
+  test ".perform_now should reserve a delete and reschedule when throttled" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+
+    captured = nil
+    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+      captured = [subject, cost]
+      raise RateLimit::Throttled.new(retry_after: 2)
+    }) do
+      assert_enqueued_with(job: PostWithdrawalJob) do
+        PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)
+      end
+    end
+
+    assert_equal [access_token.rate_limit_subject, { delete: 1 }], captured
+    assert_not_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
+  end
+
   test ".perform_now should delete post from FreeFeed" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 200)

@@ -10,6 +10,8 @@
 # off again and it resumes from the earliest remaining post. It also recovers
 # feeds that were disabled and later re-enabled.
 class PostPublishJob < ApplicationJob
+  include RateLimited
+
   queue_as :default
 
   def perform(feed_id)
@@ -38,8 +40,13 @@ class PostPublishJob < ApplicationJob
   end
 
   def publish(feed, post)
+    reserve(feed, post)
     FreefeedPublisher.new(post).publish
     schedule_next(feed)
+  rescue RateLimit::Throttled
+    # No capacity: reschedule the whole job (RateLimited) for the same post.
+    # Must precede the generic rescue so it isn't recorded as a failure.
+    raise
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
     feed.access_token&.disable_token_and_feeds
@@ -49,6 +56,13 @@ class PostPublishJob < ApplicationJob
     Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
     Rails.error.report(e, context: { post: post.attributes, feed: feed.attributes })
     schedule_next(feed)
+  end
+
+  # Reserve every POST the publish will make (the post, each comment, and each
+  # attachment upload) against the FreeFeed POST bucket, up front and atomically.
+  def reserve(feed, post)
+    posts = 1 + post.comments.to_a.count(&:present?) + post.attachment_urls.to_a.size
+    RateLimit.acquire!(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
   end
 
   def schedule_next(feed)
