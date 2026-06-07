@@ -40,12 +40,15 @@ class PostPublishJob < ApplicationJob
   end
 
   def publish(feed, post)
-    reserve(feed, post)
+    posts = post_cost(post)
+    return reject_oversized(feed, post, posts) unless within_capacity?(posts)
+
+    RateLimit.acquire!(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     FreefeedPublisher.new(post).publish
     schedule_next(feed)
   rescue RateLimit::Throttled
-    # No capacity: reschedule the whole job (RateLimited) for the same post.
-    # Must precede the generic rescue so it isn't recorded as a failure.
+    # No capacity right now: reschedule the whole job (RateLimited) for the same
+    # post. Must precede the generic rescue so it isn't recorded as a failure.
     raise
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
@@ -58,11 +61,23 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  # Reserve every POST the publish will make (the post, each comment, and each
-  # attachment upload) against the FreeFeed POST bucket, up front and atomically.
-  def reserve(feed, post)
-    posts = 1 + post.comments.to_a.count(&:present?) + post.attachment_urls.to_a.size
-    RateLimit.acquire!(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
+  # Every POST the publish will make: the post, each comment, and each
+  # attachment upload (all hit FreeFeed's POST bucket).
+  def post_cost(post)
+    1 + post.comments.to_a.count(&:present?) + post.attachment_urls.to_a.size
+  end
+
+  def within_capacity?(posts)
+    capacity = RateLimit.capacity(:freefeed, :post)
+    capacity.nil? || posts <= capacity
+  end
+
+  # A post needing more POSTs than the bucket can ever hold would throttle
+  # forever and block the queue, so fail it and move on.
+  def reject_oversized(feed, post, posts)
+    post.update!(status: :failed)
+    Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
+    schedule_next(feed)
   end
 
   def schedule_next(feed)

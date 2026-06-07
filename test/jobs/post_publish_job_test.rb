@@ -124,6 +124,22 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal [:freefeed, access_token.rate_limit_subject, { post: 6 }], captured
   end
 
+  test ".perform_now should fail an oversized post and advance the chain" do
+    oversized = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago,
+                                         attachment_urls: Array.new(60) { |i| "https://example.com/#{i}.jpg" })
+
+    # No acquire and no publish happen for an impossible post; the chain advances.
+    captured_acquire = false
+    RateLimit.stub(:acquire!, ->(*, **) { captured_acquire = true }) do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+        PostPublishJob.perform_now(feed.id)
+      end
+    end
+
+    assert_equal "failed", oversized.reload.status
+    refute captured_acquire, "should not try to reserve capacity it can never get"
+  end
+
   test ".perform_now should reschedule and keep the post enqueued when throttled" do
     post = create(:post, :enqueued, feed: feed)
 

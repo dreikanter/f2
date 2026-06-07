@@ -171,6 +171,21 @@ class RateLimitTest < ActiveSupport::TestCase
     end
   end
 
+  test ".capacity should return the smallest bucket capacity for a dimension" do
+    RateLimit.define(:t) do
+      limit :requests, 100, per: 60
+      limit :requests, 5, per: 3600
+    end
+
+    assert_equal 5, RateLimit.capacity(:t, :requests)
+  end
+
+  test ".capacity should be nil for a dimension with no declared limit" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    assert_nil RateLimit.capacity(:t, :other)
+  end
+
   test ".acquire should fail open by default on a storage error" do
     RateLimit.define(:t) { limit :requests, 1, per: 60 }
 
