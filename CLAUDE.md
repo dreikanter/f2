@@ -119,12 +119,6 @@ References:
 - Closes #611
 ```
 
-Not like this:
-
-```
-References: Part of #609. Closes #611.
-```
-
 **This is mandatory, not optional.** When a PR is created via the Claude Code web UI, the harness auto-generates the description without reading these instructions. After any PR is created — whether by you or the harness — you MUST immediately update the title and body to comply with the guidelines above, including reformatting the `References:` section into the bullet-list form shown, and removing any injected session URLs. Do not skip this step even when the PR "looks fine".
 
 ## Tooling Notes
