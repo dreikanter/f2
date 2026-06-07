@@ -18,7 +18,7 @@ should be:
 ### Motivating use cases
 
 - **Posting to FreeFeed** — per-account, per-method limits with escalating
-  server-side blocks (see [`freefeed-rate-limiting.md`](freefeed-rate-limiting.md)).
+  server-side blocks (see [`rate-limiting-freefeed.md`](rate-limiting-freefeed.md)).
 - **LLM APIs** — used mainly during content loading and initial processing
   (e.g. fetching web/search results, normalizing content). These limit on more
   than one axis at once: requests-per-minute *and* tokens-per-minute.
@@ -137,5 +137,5 @@ Two patterns cover essentially everything:
 
 ## References
 
-- [`freefeed-rate-limiting.md`](freefeed-rate-limiting.md) — the first intended
+- [`rate-limiting-freefeed.md`](rate-limiting-freefeed.md) — the first intended
   consumer; FreeFeed becomes one policy under this design.
