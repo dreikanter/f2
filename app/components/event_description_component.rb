@@ -10,10 +10,26 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def call
-    html_description || fallback_description
+    suffix = posts_count_tag
+    suffix ? safe_join([body, suffix], " ") : body
   end
 
   private
+
+  def body
+    html_description || fallback_description
+  end
+
+  # Feed refreshes that imported posts read better with the count inline, e.g.
+  # "My Feed refreshed (+2)". Refreshes that brought nothing in stay quiet.
+  def posts_count_tag
+    return unless event.type == "feed_refresh"
+
+    count = event.event_references.count { |reference| reference.reference_type == "Post" }
+    return if count.zero?
+
+    helpers.tag.span("(+#{count})", class: "text-slate-400", data: { key: "events.posts_count" })
+  end
 
   def html_description
     return unless I18n.exists?(description_key)

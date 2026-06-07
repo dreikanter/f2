@@ -14,6 +14,24 @@ module EventLogEntryPresentation
     end
   end
 
+  # A small colored dot flags entries that need attention. Routine "info"
+  # events carry no dot — the text alone is enough, and a badge saying "Info"
+  # tells the reader nothing.
+  def severity_dot
+    color = case event.level
+    when "warning" then "bg-amber-400"
+    when "error" then "bg-red-500"
+    end
+    return unless color
+
+    helpers.tag.span(
+      "",
+      class: "inline-block h-2 w-2 shrink-0 rounded-full #{color}",
+      aria: { hidden: true },
+      data: { key: "events.severity" }
+    )
+  end
+
   def subject_label
     return if event.subject_type.blank?
 

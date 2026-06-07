@@ -5,14 +5,25 @@ class EventLogEntryComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  test "#call should render the event type, level badge and link" do
+  test "#call should render a description, timestamp link and type hook" do
     event = create(:event, type: "feed_refresh", level: :info, user: user)
 
     result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    assert_not_nil result.css("[data-key='events.#{event.id}']").first
-    assert_equal "feed_refresh", result.css("[data-key='events.type']").first.text
+    entry = result.css("[data-key='events.entry']").first
+    assert_not_nil entry
+    assert_equal "feed_refresh", entry["data-event-type"]
+    assert_not_nil result.css("[data-key='events.description']").first
     assert_not_nil result.css("a[href='/events/#{event.id}']").first
+  end
+
+  test "#call should not render the level badge or raw type text" do
+    event = create(:event, type: "feed_refresh", level: :info, user: user)
+
+    result = render_inline(EventLogEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    assert_not_includes result.text, "Info"
+    assert_empty result.css("code")
   end
 
   test "#call should not wrap the entry in an anchor (no nested links)" do
