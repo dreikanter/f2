@@ -115,6 +115,9 @@ RateLimit.reconcile(:openai, subject: key_id, cost: { tokens: actual - estimated
 
 # Feed the provider's own verdict back in (e.g. on a real 429)
 RateLimit.penalize(:openai, subject: key_id, retry_after: 30)
+
+# Read-only view of current state for observability (admin dashboard)
+RateLimit.snapshot   # => [Snapshot(policy, subject, dimension, window, available, burst, blocked_until), ...]
 ```
 
 ### Configuration (sketch)
@@ -252,6 +255,21 @@ multi-call publishing, not introduced by the limiter.
   rescue the throttle error and reschedule.
 - FreeFeed cost is a request count known up front, so **no `reconcile`** is
   needed for it (reconcile is for token/byte costs).
+
+## Observability
+
+The buckets table already holds live state, so the current picture is a free
+read — no extra instrumentation needed for it.
+
+- **Live headroom.** `RateLimit.snapshot` refills every bucket to *now* and
+  returns one row per `(policy, subject, dimension/window)` with `available`,
+  `burst`, percent consumed, and any active `blocked_until` cooldown. The admin
+  dashboard (`/admin/rate_limits`, dev-only) renders this — it answers "how
+  close are we to the limit right now."
+- **Events over time.** A snapshot misses past spikes, so `acquire` logs a line
+  when a call is throttled and `penalize` logs when the provider hands us a
+  cooldown (429). Cheap to grep; a counter table for charts is a later add only
+  if needed.
 
 ## Principles
 
