@@ -6,8 +6,9 @@
 # original order and are never published concurrently.
 #
 # The chain is self-healing: if a run dies before scheduling the next one, the
-# feed's next refresh kicks it off again and it resumes from the earliest
-# remaining post.
+# recurring PublicationSchedulerJob (the primary watchdog, every minute) kicks it
+# off again and it resumes from the earliest remaining post. It also recovers
+# feeds that were disabled and later re-enabled.
 class PostPublishJob < ApplicationJob
   queue_as :default
 
