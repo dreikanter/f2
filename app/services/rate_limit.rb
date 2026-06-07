@@ -77,12 +77,19 @@ module RateLimit
   FAIL_CLOSED_COOLDOWN = 60.0
 
   class << self
+    # Register a policy from a configuration block (see Policy DSL).
+    # @param name [Symbol, String] the policy name (e.g. :freefeed)
+    # @yield evaluated in the Policy instance to declare `limit`s and `fail_open`
     def define(name, &block)
       policy = Policy.new(name.to_sym)
       policy.instance_eval(&block)
       registry[name.to_sym] = policy
     end
 
+    # Look up a registered policy.
+    # @param name [Symbol, String] the policy name
+    # @return [Policy]
+    # @raise [ArgumentError] if the policy is not registered
     def policy(name)
       registry.fetch(name.to_sym) { raise ArgumentError, "Unknown rate limit policy: #{name}" }
     end
@@ -92,7 +99,11 @@ module RateLimit
       @registry = {}
     end
 
-    # Try to reserve `cost`. Returns a Result; never raises for being over limit.
+    # Try to reserve `cost`. Never raises for being over limit.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity that owns the allowance (e.g. "freefeed:7")
+    # @param cost [Hash{Symbol=>Numeric}] tokens to spend per dimension
+    # @return [Result] allowed? and retry_after (seconds) when not allowed
     def acquire(name, subject:, cost:)
       policy = policy(name)
       buckets = policy.buckets_for(cost)
@@ -102,7 +113,12 @@ module RateLimit
       policy.fail_open? ? Result.new(allowed: true, retry_after: 0.0) : Result.new(allowed: false, retry_after: FAIL_CLOSED_COOLDOWN)
     end
 
-    # Like acquire, but raises Throttled when not allowed.
+    # Like acquire, but raises when not allowed.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity that owns the allowance
+    # @param cost [Hash{Symbol=>Numeric}] tokens to spend per dimension
+    # @return [Result]
+    # @raise [Throttled] with retry_after (seconds) when over limit
     def acquire!(name, subject:, cost:)
       result = acquire(name, subject: subject, cost: cost)
       raise Throttled.new(retry_after: result.retry_after) unless result.allowed?
@@ -110,15 +126,25 @@ module RateLimit
       result
     end
 
-    # Reserve `cost` and run the block, raising Throttled if there's no room.
+    # Reserve `cost`, then run the block. Raises if there's no room.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity that owns the allowance
+    # @param cost [Hash{Symbol=>Numeric}] tokens to spend per dimension
+    # @yield runs only when the reservation succeeds
+    # @raise [Throttled] when over limit (the block does not run)
     def throttle(name, subject:, cost:)
       acquire!(name, subject: subject, cost: cost)
       yield
     end
 
     # Adjust buckets after the fact, when the real cost differs from the
-    # estimate (LLM output tokens, actual bytes). A positive amount consumes
-    # more; a negative amount credits tokens back (capped at burst).
+    # estimate (LLM output tokens, actual bytes). No-op if the subject has no
+    # state yet.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity that owns the allowance
+    # @param cost [Hash{Symbol=>Numeric}] per-dimension adjustment; positive
+    #   consumes more, negative credits tokens back (capped at burst)
+    # @return [void]
     def reconcile(name, subject:, cost:)
       policy = policy(name)
       buckets = policy.buckets_for(cost)
@@ -140,6 +166,10 @@ module RateLimit
 
     # Record a server-imposed cooldown (e.g. on a real 429). Until it passes,
     # acquire short-circuits to throttled for this subject.
+    # @param name [Symbol, String] the policy name
+    # @param subject [String] identity that owns the allowance
+    # @param retry_after [Numeric] seconds to block the subject for
+    # @return [void]
     def penalize(name, subject:, retry_after:)
       with_locked_row(name, subject) do |row, _now|
         row.update!(blocked_until: retry_after.seconds.from_now)
