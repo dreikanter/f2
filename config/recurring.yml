@@ -15,6 +15,11 @@ development:
     queue: default
     schedule: every minute
 
+  publication_scheduler:
+    class: PublicationSchedulerJob
+    queue: default
+    schedule: every minute
+
   prune_feed_previews:
     class: PruneFeedPreviewsJob
     queue: default
@@ -23,6 +28,11 @@ development:
 staging:
   feed_scheduler:
     class: FeedSchedulerJob
+    queue: default
+    schedule: every minute
+
+  publication_scheduler:
+    class: PublicationSchedulerJob
     queue: default
     schedule: every minute
 
@@ -38,6 +48,11 @@ staging:
 production:
   feed_scheduler:
     class: FeedSchedulerJob
+    queue: default
+    schedule: every minute
+
+  publication_scheduler:
+    class: PublicationSchedulerJob
     queue: default
     schedule: every minute
 

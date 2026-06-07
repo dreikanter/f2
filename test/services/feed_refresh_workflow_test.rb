@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedRefreshWorkflowTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def feed
     @feed ||= create(:feed, feed_profile_key: "rss")
   end
@@ -42,7 +44,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :persist_entries,
       :normalize_entries,
       :persist_posts,
-      :publish_posts,
+      :enqueue_publication,
       :finalize_workflow
     ]
 
@@ -59,7 +61,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should process real RSS data and create posts" do
     # Create feed with proper configuration
-    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
@@ -91,20 +93,20 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Use real HTTP loader with stubbed network call
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
-    result = workflow.execute
+    result = perform_enqueued_jobs { workflow.execute }
 
     assert_equal 2, result.length, "Should return 2 posts"
 
-    published_posts = result.select(&:published?)
-    assert_equal 2, published_posts.length, "Should have 2 published posts"
+    # Publishing is async now; the chain runs within perform_enqueued_jobs.
+    published_posts = test_feed.posts.where(status: :published).order(:published_at)
+    assert_equal 2, published_posts.count, "Should have 2 published posts"
 
-    # Posts are ordered by published_at, so second entry comes first
+    # Posts are published in published_at order, so the older entry comes first
     first_post = published_posts.first
     assert_equal test_feed, first_post.feed
     assert_not_nil first_post.feed_entry
     assert_match(/Another test entry/, first_post.content)
     assert_equal "https://example.com/entry-456", first_post.source_url
-    assert_equal "published", first_post.status
     assert_not_nil first_post.freefeed_post_id
 
     assert_equal 2, FeedEntry.where(feed: test_feed).count
@@ -248,7 +250,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, :enabled, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::AuthError, "Unauthorized" }) do
+    loader = Object.new
+    loader.define_singleton_method(:load) { raise LlmClient::AuthError, "Unauthorized" }
+    test_feed.stub(:loader_instance, loader) do
       assert_raises(LlmClient::AuthError) { workflow.execute }
     end
 
@@ -269,7 +273,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::ProviderError, "server error" }) do
+    loader = Object.new
+    loader.define_singleton_method(:load) { raise LlmClient::ProviderError, "server error" }
+    test_feed.stub(:loader_instance, loader) do
       assert_raises(LlmClient::ProviderError) { workflow.execute }
     end
 
@@ -297,13 +303,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
-    # Override normalizer_instance to pass nil instead of the feed_entry
-    test_feed.define_singleton_method(:normalizer_instance) do |feed_entry|
-      normalizer_class.new(nil)  # Pass nil instead of feed_entry to trigger error
-    end
+    # Make normalization fail at the collaborator boundary
+    normalizer = Object.new
+    normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
 
-    error = assert_raises(StandardError) do
-      workflow.execute
+    test_feed.stub(:normalizer_instance, normalizer) do
+      assert_raises(StandardError) { workflow.execute }
     end
 
     # Should fail during normalize step
@@ -377,7 +382,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
-    result = workflow.execute
+    # No enqueued posts means the publish chain must not be kicked
+    result = nil
+    assert_no_enqueued_jobs(only: PostPublishJob) { result = workflow.execute }
 
     # Should complete successfully with no posts
     assert_equal 0, result.length
@@ -550,47 +557,5 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       metric.reload
       assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
     end
-  end
-
-  test "#publish_posts should disable the access token and stop publishing on UnauthorizedError" do
-    pub_user = create(:user)
-    token = create(:access_token, :active, user: pub_user)
-    test_feed = create(:feed, user: pub_user, access_token: token,
-                               feed_profile_key: "rss", target_group: "group")
-    post = create(:post, :enqueued, feed: test_feed)
-
-    stub_request(:post, "#{token.host}/v4/posts").to_return(status: 401)
-
-    workflow = FeedRefreshWorkflow.new(test_feed)
-    workflow.send(:publish_posts, Post.where(id: post.id))
-
-    assert_equal "inactive", token.reload.status
-  end
-
-  test "#publish_posts should report the error when a post fails to publish" do
-    pub_user = create(:user)
-    token = create(:access_token, :active, user: pub_user)
-    test_feed = create(:feed, user: pub_user, access_token: token,
-                               feed_profile_key: "rss", target_group: "group")
-    post = create(:post, :enqueued, feed: test_feed)
-
-    stub_request(:post, "#{token.host}/v4/posts").to_return(status: 500)
-
-    reported = []
-    workflow = FeedRefreshWorkflow.new(test_feed)
-    Rails.error.stub(:report, ->(err, **kwargs) { reported << [err, kwargs] }) do
-      workflow.send(:publish_posts, Post.where(id: post.id))
-    end
-
-    assert_equal "failed", post.reload.status
-    assert_equal 1, reported.size
-    _error, kwargs = reported.first
-    post_context = kwargs.dig(:context, :post)
-    feed_context = kwargs.dig(:context, :feed)
-    assert_equal post.attributes.keys.sort, post_context.keys.sort
-    assert_equal post.id, post_context["id"]
-    assert_equal "failed", post_context["status"]
-    assert_equal test_feed.attributes.keys.sort, feed_context.keys.sort
-    assert_equal test_feed.id, feed_context["id"]
   end
 end

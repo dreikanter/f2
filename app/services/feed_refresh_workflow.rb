@@ -9,7 +9,7 @@ class FeedRefreshWorkflow
   step :persist_entries
   step :normalize_entries
   step :persist_posts
-  step :publish_posts
+  step :enqueue_publication
   step :finalize_workflow
 
   attr_reader :feed
@@ -130,41 +130,16 @@ class FeedRefreshWorkflow
     persisted_posts
   end
 
-  def publish_posts(persisted_posts)
-    enqueued_posts = persisted_posts.select(&:enqueued?).sort_by(&:published_at)
-    return persisted_posts if enqueued_posts.empty?
-
-    published_count = 0
-    failed_count = 0
-
-    enqueued_posts.each do |post|
-      begin
-        publisher = FreefeedPublisher.new(post)
-        freefeed_post_id = publisher.publish
-        post.update!(status: :published, freefeed_post_id: freefeed_post_id)
-        published_count += 1
-      rescue FreefeedClient::UnauthorizedError
-        feed.access_token&.disable_token_and_feeds
-        break
-      rescue => e
-        post.update!(status: :failed)
-        failed_count += 1
-        Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
-        Rails.error.report(e, context: { post: post.attributes, feed: feed.attributes })
-      end
-    end
-
-    record_stats(
-      published_posts: published_count,
-      failed_posts: failed_count
-    )
-
+  # Hands publishing off to the async FIFO chain (see PostPublishJob) instead of
+  # publishing inline. Kicking it on every refresh also restarts a chain that
+  # may have stalled, so it doubles as the chain's watchdog.
+  def enqueue_publication(persisted_posts)
+    PostPublishJob.perform_later(feed.id) if persisted_posts.any?(&:enqueued?)
     persisted_posts
   end
 
   def finalize_workflow(posts)
-    published_posts_count = posts.count(&:published?)
-    failed_posts_count = posts.count(&:failed?)
+    enqueued_posts_count = posts.count(&:enqueued?)
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
@@ -180,8 +155,7 @@ class FeedRefreshWorkflow
     )
 
     Rails.logger.info "Feed refresh completed for feed #{feed.id}: " \
-                      "#{published_posts_count} published, " \
-                      "#{failed_posts_count} failed, " \
+                      "#{enqueued_posts_count} queued for publishing, " \
                       "#{rejected_posts_count} rejected"
 
     posts
