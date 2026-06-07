@@ -13,6 +13,16 @@ class RateLimitTest < ActiveSupport::TestCase
     dims
   end
 
+  def capture_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original
+  end
+
   test ".forget should delete only the named subject's stored state" do
     RateLimit.define(:t) { limit :requests, 5, per: 60 }
     RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
@@ -195,6 +205,28 @@ class RateLimitTest < ActiveSupport::TestCase
     RateLimit.define(:t) { limit :requests, 1, per: 60 }
 
     assert_nil RateLimit.capacity(:t, :other)
+  end
+
+  test ".acquire should log a throttled call" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+
+    out = capture_log { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    assert_match(/RateLimit throttled t:a/, out)
+  end
+
+  test ".acquire should not log an allowed call" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    out = capture_log { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    refute_match(/RateLimit throttled/, out)
+  end
+
+  test ".penalize should log the cooldown" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    out = capture_log { RateLimit.penalize(:t, subject: "a", retry_after: 30) }
+    assert_match(/RateLimit cooldown t:a blocked for 30s/, out)
   end
 
   test ".snapshot should report headroom per limit with tokens refilled to now" do
