@@ -25,7 +25,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
-    assert_includes response.body, "events_log"
+    assert_includes response.body, "events_list"
     assert_includes response.body, "new_event"
     assert_not_includes response.body, "other_event"
   end
@@ -61,7 +61,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events Log"
-    assert_select "#events_log"
+    assert_select "#events_list"
     assert_select '[data-event-type="my_event"]'
     assert_select '[data-event-type="someone_elses"]', count: 0
   end
@@ -120,7 +120,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path, params: { before: oldest_on_first_page.id }
 
       assert_response :success
-      assert_select "#events_log[data-controller='polling']", count: 0
+      assert_select "#events_list[data-controller='polling']", count: 0
       assert_select "[data-key='events.newer']"
       assert_select "[data-key='events.older']"
       assert_select '[data-key="events.entry"]', count: 2
@@ -135,7 +135,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path
 
       assert_response :success
-      assert_select "#events_log[data-controller='polling']"
+      assert_select "#events_list[data-controller='polling']"
       assert_select "[data-key='events.older']"
       assert_select "a[data-key='events.newer']", count: 0
     end
@@ -215,7 +215,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: ["feed_refresh"] } }
 
     assert_response :success
-    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
+    assert_select "#events_list[data-polling-endpoint-value*='feed_refresh']"
   end
 
   test "#show should render owned event" do

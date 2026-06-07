@@ -35,8 +35,7 @@
     events: @events,
     endpoint: @log_endpoint,
     older_url: @older_url,
-    newer_url: @newer_url,
-    list: false
+    newer_url: @newer_url
   )) do |log| %>
     <% @events.each do |event| %>
       <% log.with_entry do %>

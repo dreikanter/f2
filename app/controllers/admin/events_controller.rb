@@ -32,9 +32,16 @@ class Admin::EventsController < ApplicationController
     admin_events_path(filter: optional_filter.to_h.presence, **params)
   end
 
-  # The admin log keeps its denser card layout instead of the bordered list.
-  def event_log_list?
-    false
+  # The admin log keeps its denser card layout (EventLogComponent) instead of the
+  # bordered list used on the status page and the user-facing events log.
+  def events_log_dom_id
+    EventLogComponent::DOM_ID
+  end
+
+  def events_log_stream_body
+    helpers.render(event_log_component) do |log|
+      @events.each { |event| log.with_entry { helpers.render(entry_component(event)) } }
+    end
   end
 
   def previous_event(event)

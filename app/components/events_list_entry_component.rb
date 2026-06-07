@@ -1,4 +1,4 @@
-class EventLogEntryComponent < ViewComponent::Base
+class EventsListEntryComponent < ViewComponent::Base
   include EventLogEntryPresentation
 
   def initialize(event:, href:)
@@ -8,7 +8,7 @@ class EventLogEntryComponent < ViewComponent::Base
 
   def call
     content_tag(:li, class: "flex items-center gap-3 px-4 py-2.5",
-                     data: { key: "events.entry", event_type: event.type }) do
+                     data: { key: "events.entry", event_type: event.type, event_id: event.id }) do
       safe_join([time_tag, severity_dot, description_tag, subject_tag].compact)
     end
   end

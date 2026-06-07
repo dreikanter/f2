@@ -37,10 +37,6 @@ class EventsController < ApplicationController
     apply_filters(owned_events)
   end
 
-  def entry_component(event)
-    EventLogEntryComponent.new(event: event, href: event_path(event))
-  end
-
   def events_log_path(**params)
     events_path(filter: optional_filter.to_h.presence, **params)
   end
