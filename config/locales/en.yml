@@ -42,10 +42,10 @@ en:
       description_html: "%{subject_link} refreshed"
     feed_refresh_error:
       name: "Feed refresh failed"
-      description_html: "%{subject_link} couldn't refresh — %{message}"
+      description_html: "%{subject_link} couldn't refresh; %{message}"
     llm_credential_deactivated:
       name: "AI credential deactivated"
-      description_html: "AI credential %{subject_link} stopped working — update the key to resume its feeds."
+      description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."
     post_withdrawn:
       name: "Post withdrawn"
       description_html: "Post removed from FreeFeed"
@@ -54,7 +54,7 @@ en:
       description_html: "Post deleted from %{subject_link}"
     access_token_validation_failed:
       name: "Token validation failed"
-      description_html: "FreeFeed token stopped working — disabled %{feed_links}"
+      description_html: "FreeFeed token stopped working; disabled %{feed_links}"
     group_purge_started:
       name: "Feed purge started"
       description_html: "Clearing out %{subject_link}"

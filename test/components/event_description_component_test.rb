@@ -145,7 +145,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    assert_equal "FreeFeed token stopped working — disabled 2 deleted feeds", result.to_html
+    assert_equal "FreeFeed token stopped working; disabled 2 deleted feeds", result.to_html
   end
 
   test "#call should render links and deleted feed counts without escaping HTML" do
