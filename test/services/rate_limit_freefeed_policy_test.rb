@@ -9,6 +9,20 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
+  test "the :freefeed policy limits gets under FreeFeed's GET ceiling" do
+    limit = RateLimit.policy(:freefeed).buckets_for(get: 1).map(&:first).sole
+
+    assert_equal 150, limit.rate
+    assert_equal 60, limit.window
+  end
+
+  test "the :freefeed policy limits deletes under FreeFeed's fallback ceiling" do
+    limit = RateLimit.policy(:freefeed).buckets_for(delete: 1).map(&:first).sole
+
+    assert_equal 25, limit.rate
+    assert_equal 60, limit.window
+  end
+
   test "the :freefeed policy fails open" do
     assert RateLimit.policy(:freefeed).fail_open?
   end

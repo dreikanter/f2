@@ -286,7 +286,7 @@ buckets keyed per `(dimension, window)`:
 
 | Provider    | Buckets                                                    |
 |-------------|-----------------------------------------------------------|
-| FreeFeed    | `post/1m` (post + comments + attachment uploads are all POSTs) |
+| FreeFeed    | `post/1m` (post + comments + uploads), `get/1m`, `delete/1m` |
 | Anthropic   | `requests/1m`, `input_tokens/1m`, `output_tokens/1m`      |
 | OpenAI      | `requests/1m`, `requests/1d`, `tokens/1m`, `tokens/1d`    |
 | OpenRouter  | `requests/1m`, `requests/1d`                              |
