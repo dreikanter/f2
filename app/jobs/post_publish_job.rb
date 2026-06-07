@@ -15,6 +15,10 @@ class PostPublishJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
+    # Stop the chain if the feed was disabled after it was kicked. Disabling a
+    # feed pauses publishing, including posts already enqueued.
+    return unless feed.enabled?
+
     Feed.with_advisory_lock("post_publish_#{feed_id}", timeout_seconds: 0) do
       publish_next(feed)
     end

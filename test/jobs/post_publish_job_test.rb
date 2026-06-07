@@ -10,7 +10,7 @@ class PostPublishJobTest < ActiveJob::TestCase
   end
 
   def feed
-    @feed ||= create(:feed, user: user, access_token: access_token, target_group: "group")
+    @feed ||= create(:feed, :enabled, user: user, access_token: access_token, target_group: "group")
   end
 
   def stub_publish_success
@@ -89,6 +89,24 @@ class PostPublishJobTest < ActiveJob::TestCase
 
     assert_equal "enqueued", feed.posts.first.reload.status
     assert_not_requested :post, "#{access_token.host}/v4/posts"
+  end
+
+  test ".perform_now should stop publishing when the feed was disabled mid-chain" do
+    first = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago)
+    second = create(:post, :enqueued, feed: feed, published_at: 1.hour.ago)
+    stub_publish_success
+
+    PostPublishJob.perform_now(feed.id)
+    assert_equal "published", first.reload.status
+
+    feed.update!(state: :disabled)
+
+    assert_no_enqueued_jobs(only: PostPublishJob) do
+      PostPublishJob.perform_now(feed.id)
+    end
+
+    assert_equal "enqueued", second.reload.status
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
   end
 
   test ".perform_now should do nothing when there are no enqueued posts" do

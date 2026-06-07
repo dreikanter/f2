@@ -61,7 +61,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test "#execute should process real RSS data and create posts" do
     # Create feed with proper configuration
-    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
 
