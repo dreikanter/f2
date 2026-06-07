@@ -54,6 +54,7 @@ Rails.application.routes.draw do
 
     resources :events, only: [:index, :show]
     resource :system_stats, only: :show
+    resource :rate_limits, only: :show
     resources :email_previews, only: [:index, :show]
   end
 
