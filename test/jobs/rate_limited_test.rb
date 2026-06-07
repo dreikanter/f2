@@ -9,6 +9,22 @@ class RateLimitedTest < ActiveJob::TestCase
     end
   end
 
+  class HookJob < ApplicationJob
+    include RateLimited
+
+    cattr_accessor :exhausted_with
+
+    def perform
+      raise RateLimit::Throttled.new(retry_after: 3)
+    end
+
+    private
+
+    def on_rate_limit_exhausted(error)
+      self.class.exhausted_with = error
+    end
+  end
+
   test "reschedules the job when throttled within the attempt cap" do
     assert_enqueued_with(job: ThrottledJob) do
       ThrottledJob.perform_now
@@ -26,5 +42,17 @@ class RateLimitedTest < ActiveJob::TestCase
 
     assert_equal 1, reported.size
     assert_instance_of RateLimit::Throttled, reported.first
+  end
+
+  test "invokes on_rate_limit_exhausted once the attempt cap is reached" do
+    HookJob.exhausted_with = nil
+    job = HookJob.new
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    Rails.error.stub(:report, ->(*, **) { }) do
+      assert_no_enqueued_jobs { job.perform_now }
+    end
+
+    assert_instance_of RateLimit::Throttled, HookJob.exhausted_with
   end
 end
