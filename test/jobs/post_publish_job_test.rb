@@ -96,17 +96,18 @@ class PostPublishJobTest < ActiveJob::TestCase
     second = create(:post, :enqueued, feed: feed, published_at: 1.hour.ago)
     stub_publish_success
 
+    # Publish the first post; this enqueues the chained job for the next one.
     PostPublishJob.perform_now(feed.id)
     assert_equal "published", first.reload.status
+    assert_enqueued_jobs 1, only: PostPublishJob
 
+    # Disable the feed, then let the already-enqueued chained job run.
     feed.update!(state: :disabled)
-
-    assert_no_enqueued_jobs(only: PostPublishJob) do
-      PostPublishJob.perform_now(feed.id)
-    end
+    perform_enqueued_jobs(only: PostPublishJob)
 
     assert_equal "enqueued", second.reload.status
     assert_requested :post, "#{access_token.host}/v4/posts", times: 1
+    assert_no_enqueued_jobs(only: PostPublishJob)
   end
 
   test ".perform_now should do nothing when there are no enqueued posts" do

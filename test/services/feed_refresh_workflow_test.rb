@@ -379,7 +379,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
-    result = workflow.execute
+    # No enqueued posts means the publish chain must not be kicked
+    result = nil
+    assert_no_enqueued_jobs(only: PostPublishJob) { result = workflow.execute }
 
     # Should complete successfully with no posts
     assert_equal 0, result.length
@@ -551,26 +553,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
       metric.reload
       assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
-    end
-  end
-
-  test "#enqueue_publication should kick the publish chain when there are enqueued posts" do
-    test_feed = create(:feed, feed_profile_key: "rss")
-    post = create(:post, :enqueued, feed: test_feed)
-
-    workflow = FeedRefreshWorkflow.new(test_feed)
-    assert_enqueued_with(job: PostPublishJob, args: [test_feed.id]) do
-      workflow.send(:enqueue_publication, Post.where(id: post.id))
-    end
-  end
-
-  test "#enqueue_publication should not kick the chain when nothing is enqueued" do
-    test_feed = create(:feed, feed_profile_key: "rss")
-    post = create(:post, :rejected, feed: test_feed)
-
-    workflow = FeedRefreshWorkflow.new(test_feed)
-    assert_no_enqueued_jobs(only: PostPublishJob) do
-      workflow.send(:enqueue_publication, Post.where(id: post.id))
     end
   end
 end
