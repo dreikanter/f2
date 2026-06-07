@@ -9,6 +9,20 @@ class TokenValidationJobTest < ActiveJob::TestCase
     @access_token ||= create(:access_token, user: user)
   end
 
+  test ".perform_now should reserve two GETs and reschedule when throttled" do
+    captured = nil
+    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+      captured = [subject, cost]
+      raise RateLimit::Throttled.new(retry_after: 2)
+    }) do
+      assert_enqueued_with(job: TokenValidationJob) do
+        TokenValidationJob.perform_now(access_token)
+      end
+    end
+
+    assert_equal [access_token.rate_limit_subject, { get: 2 }], captured
+  end
+
   test ".perform_now should mark token as active when validation succeeds" do
     stub_successful_freefeed_response
 

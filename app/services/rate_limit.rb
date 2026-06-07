@@ -176,6 +176,16 @@ module RateLimit
       end
     end
 
+    # Largest cost a single acquire could ever satisfy for a dimension — the
+    # smallest bucket capacity (burst) across its windows. A cost above this can
+    # never be granted, so callers can reject it instead of throttling forever.
+    # @param name [Symbol, String] the policy name
+    # @param dimension [Symbol, String] the dimension to check
+    # @return [Numeric, nil] the capacity, or nil if the dimension is unlimited
+    def capacity(name, dimension)
+      policy(name).buckets_for(dimension => 1).map { |limit, _amount| limit.burst }.min
+    end
+
     private
 
     def registry
