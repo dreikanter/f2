@@ -89,6 +89,15 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "Post feed access token is inactive", error.message
   end
 
+  test "#publish should re-raise RateLimit::Throttled instead of wrapping it" do
+    post = post_with_content("Test post content")
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    RateLimit.stub(:penalize, ->(*, **) { }) do
+      assert_raises(RateLimit::Throttled) { FreefeedPublisher.new(post).publish }
+    end
+  end
+
   test "#publish should create post without attachments or comments" do
     post = post_with_content("Test post content")
 

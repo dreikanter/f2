@@ -58,6 +58,8 @@ class FreefeedPublisher
       attachment = client.create_attachment_from_io(io, content_type: content_type)
       attachment[:id]
     end
+  rescue RateLimit::Throttled
+    raise # let the job reschedule; don't bury it as a publish failure
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
@@ -72,6 +74,8 @@ class FreefeedPublisher
       feeds: [post.feed.target_group],
       attachment_ids: attachment_ids
     )
+  rescue RateLimit::Throttled
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
@@ -89,6 +93,8 @@ class FreefeedPublisher
         body: comment_text
       )
     end
+  rescue RateLimit::Throttled
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
