@@ -32,6 +32,11 @@ class Admin::EventsController < ApplicationController
     admin_events_path(filter: optional_filter.to_h.presence, **params)
   end
 
+  # The admin log keeps its denser card layout instead of the bordered list.
+  def event_log_list?
+    false
+  end
+
   def previous_event(event)
     events_scope.where("id > ?", event.id).order(id: :asc).first
   end

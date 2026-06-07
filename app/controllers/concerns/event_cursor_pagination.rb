@@ -57,7 +57,12 @@ module EventCursorPagination
   end
 
   def event_log_component
-    EventLogComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url)
+    EventLogComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url, list: event_log_list?)
+  end
+
+  # The user-facing log uses the bordered list layout; admin overrides this.
+  def event_log_list?
+    true
   end
 
   def polling_endpoint
