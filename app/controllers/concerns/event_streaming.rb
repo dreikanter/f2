@@ -3,15 +3,17 @@ module EventStreaming
 
   included do
     class_attribute :events_page_size, default: 25
-    class_attribute :brief_events_limit, default: 5
+    class_attribute :brief_events_limit, default: 15
   end
 
   private
 
   # The most recent page of events. Polling always refreshes this first page;
   # older history is reached through cursor pagination, never by polling.
+  # Preload event_references so feed refresh descriptions can count imported
+  # posts without an extra query per row.
   def first_page_events
-    events_scope.includes(:user, :subject).order(created_at: :desc, id: :desc).limit(events_page_size)
+    events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(events_page_size)
   end
 
   def new_events?
@@ -30,16 +32,23 @@ module EventStreaming
 
   def render_full_events_stream
     load_stream_page
-    body = helpers.render(event_log_component) do |log|
-      @events.each { |event| log.with_entry { helpers.render(entry_component(event)) } }
-    end
-    render turbo_stream: turbo_stream.replace(EventLogComponent::DOM_ID, body)
+    render turbo_stream: turbo_stream.replace(events_log_dom_id, events_log_stream_body)
+  end
+
+  # The user-facing log renders as a bordered list; admin overrides both to keep
+  # its card layout (EventLogComponent).
+  def events_log_dom_id
+    EventsListComponent::DOM_ID
+  end
+
+  def events_log_stream_body
+    helpers.render(EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
   def render_brief_events_stream
     @events = events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(brief_events_limit)
-    body = helpers.render(RecentEventsListComponent.new(events: @events, endpoint: brief_polling_endpoint))
-    render turbo_stream: turbo_stream.replace(RecentEventsListComponent::DOM_ID, body)
+    body = helpers.render(EventsListComponent.new(events: @events, endpoint: brief_polling_endpoint))
+    render turbo_stream: turbo_stream.replace(EventsListComponent::DOM_ID, body)
   end
 
   def brief_display?

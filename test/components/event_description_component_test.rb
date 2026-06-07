@@ -28,7 +28,19 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     assert_includes result.to_html, "Test Feed"
     assert_includes result.to_html, "/feeds/#{feed.id}"
-    assert_includes result.to_html, "refreshed successfully"
+    assert_includes result.to_html, "refreshed"
+  end
+
+  test ".for should pick the feed refresh subclass for refresh events" do
+    event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
+
+    assert_instance_of FeedRefreshDescriptionComponent, EventDescriptionComponent.for(event)
+  end
+
+  test ".for should fall back to the base component for other event types" do
+    event = Event.create!(type: "email_changed", level: :info, subject: user, user: user, message: "", metadata: {})
+
+    assert_instance_of EventDescriptionComponent, EventDescriptionComponent.for(event)
   end
 
   test "#call should render links for multiple feeds from metadata" do
@@ -48,11 +60,11 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Other Feed"
     assert_includes result.to_html, "/feeds/#{feed.id}"
     assert_includes result.to_html, "/feeds/#{other_feed.id}"
-    assert_includes result.to_html, "Feeds disabled:"
+    assert_includes result.to_html, "stopped working"
     assert_not_includes result.to_html, "2 feeds"
   end
 
-  test "#call should include error message and stage for refresh errors" do
+  test "#call should include the error message for refresh errors" do
     event = Event.create!(
       type: "feed_refresh_error",
       level: :error,
@@ -65,7 +77,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(EventDescriptionComponent.new(event: event))
 
     assert_includes result.to_html, "Test Feed"
-    assert_includes result.to_html, "refresh failed at load feed contents"
+    assert_includes result.to_html, "couldn't refresh"
     assert_includes result.to_html, "Connection timeout"
   end
 
@@ -81,7 +93,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    assert_includes result.to_html, "Email address changed"
+    assert_includes result.to_html, "Email address updated"
   end
 
   test "#call should fall back to stored message when present" do
@@ -133,7 +145,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    assert_equal "Token validation failed. Feeds disabled: 2 deleted feeds", result.to_html
+    assert_equal "FreeFeed token stopped working; disabled 2 deleted feeds", result.to_html
   end
 
   test "#call should render links and deleted feed counts without escaping HTML" do

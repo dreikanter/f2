@@ -27,7 +27,7 @@ module EventCursorPagination
   # with `id` breaking ties. The cursor is an event id, but boundaries compare
   # the whole `(created_at, id)` tuple so a backdated event can't reorder pages.
   def events_page
-    scope = events_scope.includes(:user, :subject)
+    scope = events_scope.includes(:user, :subject, :event_references)
 
     if before_cursor.positive?
       scope.where(cursor_condition("<", before_cursor)).order(created_at: :desc, id: :desc).limit(events_page_size)

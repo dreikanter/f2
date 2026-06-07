@@ -19,6 +19,15 @@ class EventLogComponentTest < ViewComponent::TestCase
     assert_not_nil result.css("[data-key='events.list']").first
   end
 
+  test "#call should render entries in a card container, not a list" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event])) { |log| log.with_entry { "entry" } }
+
+    assert_not_nil result.css("div[data-key='events.list']").first
+    assert_empty result.css("ul[data-key='events.list']")
+  end
+
   test "#call should expose the polling host and threshold" do
     event = create(:event, user: user)
 

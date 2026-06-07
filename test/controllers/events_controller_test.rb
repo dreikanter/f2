@@ -25,7 +25,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
-    assert_includes response.body, "events_log"
+    assert_includes response.body, "events_list"
     assert_includes response.body, "new_event"
     assert_not_includes response.body, "other_event"
   end
@@ -48,7 +48,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path(format: :turbo_stream), params: { after_id: 0 }
 
       assert_response :success
-      assert_select "[data-key='events.type']", count: 2
+      assert_select "[data-key='events.entry']", count: 2
     end
   end
 
@@ -61,9 +61,19 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Events Log"
-    assert_select "#events_log"
-    assert_select '[data-key="events.type"]', text: "my_event"
-    assert_select '[data-key="events.type"]', text: "someone_elses", count: 0
+    assert_select "#events_list"
+    assert_select '[data-event-type="my_event"]'
+    assert_select '[data-event-type="someone_elses"]', count: 0
+  end
+
+  test "#index should nest entry list items inside a list element" do
+    sign_in_as user
+    create(:event, type: "feed_refresh", user: user)
+
+    get events_path
+
+    assert_response :success
+    assert_select "ul[data-key='events.list'] > li[data-key='events.entry']"
   end
 
   test "#index should order by created_at, not insertion id" do
@@ -110,10 +120,10 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path, params: { before: oldest_on_first_page.id }
 
       assert_response :success
-      assert_select "#events_log[data-controller='polling']", count: 0
+      assert_select "#events_list[data-controller='polling']", count: 0
       assert_select "[data-key='events.newer']"
       assert_select "[data-key='events.older']"
-      assert_select '[data-key="events.type"]', count: 2
+      assert_select '[data-key="events.entry"]', count: 2
     end
   end
 
@@ -125,7 +135,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       get events_path
 
       assert_response :success
-      assert_select "#events_log[data-controller='polling']"
+      assert_select "#events_list[data-controller='polling']"
       assert_select "[data-key='events.older']"
       assert_select "a[data-key='events.newer']", count: 0
     end
@@ -141,8 +151,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path, params: { before: theirs.id }
 
     assert_response :success
-    assert_select '[data-key="events.type"]', text: "mine"
-    assert_select '[data-key="events.type"]', text: "theirs", count: 0
+    assert_select '[data-event-type="mine"]'
+    assert_select '[data-event-type="theirs"]', count: 0
   end
 
   test "#index should redirect to the latest page when a cursor matches no events" do
@@ -161,7 +171,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path, params: { filter: "bad" }
 
     assert_response :success
-    assert_select '[data-key="events.type"]', text: "my_event"
+    assert_select '[data-event-type="my_event"]'
   end
 
   test "#index should filter user events by type" do
@@ -173,7 +183,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: %w[feed_refresh feed_refresh_error] } }
 
     assert_response :success
-    assert_select "[data-key='events.type']", count: 2
+    assert_select "[data-key='events.entry']", count: 2
   end
 
   test "#index should filter user events by subject_type" do
@@ -185,7 +195,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path(format: :turbo_stream), params: { after_id: 0, filter: { subject_type: "Feed" } }
 
     assert_response :success
-    assert_select "[data-key='events.type']", count: 1
+    assert_select "[data-key='events.entry']", count: 1
   end
 
   test "#index should not leak other users' events through filters" do
@@ -205,7 +215,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: ["feed_refresh"] } }
 
     assert_response :success
-    assert_select "#events_log[data-polling-endpoint-value*='feed_refresh']"
+    assert_select "#events_list[data-polling-endpoint-value*='feed_refresh']"
   end
 
   test "#show should render owned event" do
@@ -319,7 +329,33 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "span.cursor-not-allowed", text: "Next →"
   end
 
+  test "#index should preload imported post counts for the full polling stream" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    3.times do
+      refresh = create(:event, type: "feed_refresh", user: user, subject: feed)
+      create(:event_reference, event: refresh, reference: create(:post, feed: feed))
+    end
+
+    queries = count_queries(/\bevent_references\b/) do
+      get events_path(format: :turbo_stream), params: { after_id: 0 }
+    end
+
+    assert_response :success
+    assert_operator queries, :<=, 1, "event_references should be preloaded in a single query, not one per row"
+  end
+
   private
+
+  # Counts the application SQL queries matching pattern run during the block.
+  def count_queries(pattern)
+    count = 0
+    counter = ->(_name, _start, _finish, _id, payload) do
+      count += 1 if payload[:sql] =~ pattern && !payload[:name].to_s.include?("SCHEMA")
+    end
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
+    count
+  end
 
   def with_page_size(size)
     original = EventsController.events_page_size

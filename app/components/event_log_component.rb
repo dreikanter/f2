@@ -6,7 +6,9 @@ class EventLogComponent < ViewComponent::Base
   renders_many :entries
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
-  # cursor pagination links; omit them for an unpaginated log.
+  # cursor pagination links; omit them for an unpaginated log. Renders entries as
+  # a stack of cards; this is the admin events log. The user-facing log uses
+  # EventsListComponent instead.
   def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
     @events = events
     @endpoint = endpoint
@@ -46,12 +48,10 @@ class EventLogComponent < ViewComponent::Base
   end
 
   def events_body
-    if entries.any?
-      content_tag(:div, class: "space-y-3", data: { key: "events.list" }) do
-        safe_join(entries)
-      end
-    else
-      render EmptyStateComponent.new("No events to show yet")
+    return render(EmptyStateComponent.new("No events to show yet")) unless entries.any?
+
+    content_tag(:div, class: "space-y-3", data: { key: "events.list" }) do
+      safe_join(entries)
     end
   end
 
