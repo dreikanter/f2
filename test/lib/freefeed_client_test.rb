@@ -357,4 +357,27 @@ class FreefeedClientTest < ActiveSupport::TestCase
 
     refute penalized
   end
+
+  test "429 on a GET (whoami) raises Throttled rather than a generic Error" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:get, "#{@host}/v4/users/whoami").to_return(status: 429, headers: { "Retry-After" => "20" })
+
+    RateLimit.stub(:penalize, ->(*, **) { }) do
+      error = assert_raises(RateLimit::Throttled) { client.whoami }
+      assert_equal 20, error.retry_after
+    end
+  end
+
+  test "429 on a DELETE (delete_post) raises Throttled and penalizes" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:delete, "#{@host}/v4/posts/p1").to_return(status: 429, headers: { "Retry-After" => "15" })
+
+    penalized = nil
+    RateLimit.stub(:penalize, ->(_name, subject:, retry_after:) { penalized = [subject, retry_after] }) do
+      error = assert_raises(RateLimit::Throttled) { client.delete_post("p1") }
+      assert_equal 15, error.retry_after
+    end
+
+    assert_equal ["freefeed:1", 15], penalized
+  end
 end
