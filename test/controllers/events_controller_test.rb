@@ -319,7 +319,33 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "span.cursor-not-allowed", text: "Next →"
   end
 
+  test "#index should preload imported post counts for the full polling stream" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    3.times do
+      refresh = create(:event, type: "feed_refresh", user: user, subject: feed)
+      create(:event_reference, event: refresh, reference: create(:post, feed: feed))
+    end
+
+    queries = count_queries(/\bevent_references\b/) do
+      get events_path(format: :turbo_stream), params: { after_id: 0 }
+    end
+
+    assert_response :success
+    assert_operator queries, :<=, 1, "event_references should be preloaded in a single query, not one per row"
+  end
+
   private
+
+  # Counts the application SQL queries matching pattern run during the block.
+  def count_queries(pattern)
+    count = 0
+    counter = ->(_name, _start, _finish, _id, payload) do
+      count += 1 if payload[:sql] =~ pattern && !payload[:name].to_s.include?("SCHEMA")
+    end
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
+    count
+  end
 
   def with_page_size(size)
     original = EventsController.events_page_size

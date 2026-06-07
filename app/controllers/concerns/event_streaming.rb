@@ -10,8 +10,10 @@ module EventStreaming
 
   # The most recent page of events. Polling always refreshes this first page;
   # older history is reached through cursor pagination, never by polling.
+  # Preload event_references so feed refresh descriptions can count imported
+  # posts without an extra query per row.
   def first_page_events
-    events_scope.includes(:user, :subject).order(created_at: :desc, id: :desc).limit(events_page_size)
+    events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(events_page_size)
   end
 
   def new_events?
