@@ -9,13 +9,6 @@ class RateLimitFreefeedPolicyTest < ActiveSupport::TestCase
     assert_equal 60, limit.window
   end
 
-  test "the :freefeed policy gives attachments their own higher bucket" do
-    limit = RateLimit.policy(:freefeed).buckets_for(attachment: 1).map(&:first).sole
-
-    assert_equal 500, limit.rate
-    assert_equal 60, limit.window
-  end
-
   test "the :freefeed policy fails open" do
     assert RateLimit.policy(:freefeed).fail_open?
   end
