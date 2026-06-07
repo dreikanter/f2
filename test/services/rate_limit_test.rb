@@ -13,6 +13,17 @@ class RateLimitTest < ActiveSupport::TestCase
     dims
   end
 
+  test ".forget should delete only the named subject's stored state" do
+    RateLimit.define(:t) { limit :requests, 5, per: 60 }
+    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+    RateLimit.acquire(:t, subject: "b", cost: cost(requests: 1))
+
+    RateLimit.forget(:t, subject: "a")
+
+    assert_not RateLimit::Bucket.exists?(key: "t:a")
+    assert RateLimit::Bucket.exists?(key: "t:b")
+  end
+
   test ".acquire should allow up to burst then throttle" do
     RateLimit.define(:t) { limit :requests, 5, per: 60 }
 

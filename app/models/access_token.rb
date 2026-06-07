@@ -11,6 +11,7 @@ class AccessToken < ApplicationRecord
 
   before_validation :generate_default_name, if: -> { name.blank? }
   before_destroy :disable_associated_feeds
+  after_destroy :forget_rate_limit_state
 
   encrypts :encrypted_token
 
@@ -82,6 +83,10 @@ class AccessToken < ApplicationRecord
 
   def disable_associated_feeds
     feeds.update_all(state: :disabled, access_token_id: nil)
+  end
+
+  def forget_rate_limit_state
+    RateLimit.forget(:freefeed, subject: rate_limit_subject)
   end
 
   def disable_token_and_feeds
