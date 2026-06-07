@@ -13,6 +13,23 @@ class RateLimitTest < ActiveSupport::TestCase
     dims
   end
 
+  def capture_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original
+  end
+
+  # Records [event_type, payload] for every Honeybadger.event call in the block.
+  def capture_honeybadger_events
+    events = []
+    Honeybadger.stub(:event, ->(type, payload = {}) { events << [type, payload] }) { yield }
+    events
+  end
+
   test ".forget should delete only the named subject's stored state" do
     RateLimit.define(:t) { limit :requests, 5, per: 60 }
     RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
@@ -195,6 +212,50 @@ class RateLimitTest < ActiveSupport::TestCase
     RateLimit.define(:t) { limit :requests, 1, per: 60 }
 
     assert_nil RateLimit.capacity(:t, :other)
+  end
+
+  test ".acquire should log a throttled call" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+
+    out = capture_log { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    assert_match(/RateLimit throttled t:a/, out)
+  end
+
+  test ".acquire should not log an allowed call" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    out = capture_log { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    refute_match(/RateLimit throttled/, out)
+  end
+
+  test ".penalize should log the cooldown" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    out = capture_log { RateLimit.penalize(:t, subject: "a", retry_after: 30) }
+    assert_match(/RateLimit cooldown t:a blocked for 30s/, out)
+  end
+
+  test ".acquire should emit a Honeybadger event when throttled" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+
+    events = capture_honeybadger_events { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    assert_includes events.map(&:first), "rate_limit.throttled"
+  end
+
+  test ".acquire should not emit a Honeybadger event when allowed" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    events = capture_honeybadger_events { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    refute_includes events.map(&:first), "rate_limit.throttled"
+  end
+
+  test ".penalize should emit a Honeybadger event" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    events = capture_honeybadger_events { RateLimit.penalize(:t, subject: "a", retry_after: 30) }
+    assert_includes events.map(&:first), "rate_limit.penalized"
   end
 
   test ".acquire should fail open by default on a storage error" do

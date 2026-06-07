@@ -253,6 +253,22 @@ multi-call publishing, not introduced by the limiter.
 - FreeFeed cost is a request count known up front, so **no `reconcile`** is
   needed for it (reconcile is for token/byte costs).
 
+## Observability
+
+Observability is **event-based and lives outside the app**, not a dump of the
+buckets table (which scales with the number of subjects). `acquire` and
+`penalize` are the interesting moments:
+
+- `acquire` logs and emits a `rate_limit.throttled` event when a call is denied.
+- `penalize` logs and emits a `rate_limit.penalized` event on a server cooldown (429).
+
+Both go to **Honeybadger Insights** via `Honeybadger.event`, where they can be
+charted, queried (by `policy`/`subject`), and alerted on — history, "current
+load", and "who's throttled right now" all come from the recent event stream.
+The DB row's `blocked_until` remains the authoritative cooldown state, but we
+don't surface it through a bespoke admin view. A local counter table for charts
+is a possible later add only if Insights is dropped.
+
 ## Principles
 
 - **The provider's response is the source of truth.** Local limits are a
