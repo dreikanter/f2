@@ -1,8 +1,9 @@
 # Generalized Request Rate Limiting (Working Draft)
 
-> **Status:** working draft — design agreed, not yet implemented. Captures the
-> concepts, public API, storage, and integration plan for a shared
-> rate-limiting mechanism.
+> **Status:** being implemented (tracked in #609). The `RateLimit` service and
+> storage, the `:freefeed` policy, and async publishing have shipped; FreeFeed
+> call/job wiring is in progress. This doc captures the concepts, public API,
+> storage, and integration plan.
 
 ## Goal
 
@@ -59,7 +60,7 @@ behalf of a subject. That single shape covers every use case:
 
 | Use case            | Policy       | Subject              | Dimensions (cost)               |
 |---------------------|--------------|----------------------|---------------------------------|
-| Post to FreeFeed    | `:freefeed`  | `freefeed:<token id>`| `post: N`, `attachment: M`      |
+| Post to FreeFeed    | `:freefeed`  | `freefeed:<token id>`| `post: N` (post + comments + uploads) |
 | LLM fetch/processing| `:openai`    | api-key id           | `requests: 1`, `tokens: ~1500`  |
 | Web fetch (loader)  | `:web_fetch` | domain               | `requests: 1`                   |
 
@@ -122,8 +123,9 @@ Policies are declared up front, in plain, readable terms:
 
 ```ruby
 RateLimit.define :freefeed do
-  limit :requests, 25, per: 1.minute   # stay under the provider's ceiling
-  limit :posts,    50, per: 1.minute
+  limit :post,   50, per: 1.minute   # post + comments + attachment uploads (POSTs)
+  limit :get,   150, per: 1.minute   # whoami, managedGroups
+  limit :delete, 25, per: 1.minute   # withdrawal / group purge
 end
 
 RateLimit.define :openai do
@@ -176,7 +178,7 @@ subject's buckets live in one **JSONB** column; only mutable state is persisted
 
 ```
 key          text   -- "policy:subject", e.g. "freefeed:7"
-data         jsonb  -- { "post/1m": {tokens, refilled_at}, "attachment/1m": {...} }
+data         jsonb  -- { "post/1m": {tokens, refilled_at}, ... }
 blocked_until timestamptz  -- set by penalize() on a real 429; short-circuits acquire
 ```
 
@@ -221,7 +223,7 @@ reschedule rather than a blocked worker. The flow:
 
 1. **Reserve the whole job's cost up front**, in one `acquire!`, *before* any
    API call. A job computes its total cost ahead of time (for FreeFeed publish:
-   `{ post: 1 + comments, attachment: attachments }`).
+   `{ post: 1 + comments + attachments }` — attachment uploads are POSTs too).
 2. **Throttled → reschedule** the job with `wait: retry_after` (+ jitter).
    Nothing was sent, so there's no partial work.
 3. **Granted → run all calls straight through** without re-consulting the
@@ -286,7 +288,7 @@ buckets keyed per `(dimension, window)`:
 
 | Provider    | Buckets                                                    |
 |-------------|-----------------------------------------------------------|
-| FreeFeed    | `post/1m`, `attachment/1m` (per-method)                    |
+| FreeFeed    | `post/1m` (post + comments + uploads), `get/1m`, `delete/1m` |
 | Anthropic   | `requests/1m`, `input_tokens/1m`, `output_tokens/1m`      |
 | OpenAI      | `requests/1m`, `requests/1d`, `tokens/1m`, `tokens/1d`    |
 | OpenRouter  | `requests/1m`, `requests/1d`                              |
