@@ -16,14 +16,21 @@ class FreefeedPublisher
   # Publish the post to FreeFeed
   # @return [String] the FreeFeed post ID
   def publish
+    # Idempotency guard: if the post already has a FreeFeed id it was created on a
+    # previous run, so skip it. This is what stops a 429 raised *after* the post
+    # was created (e.g. on a comment) from re-creating the post when the job retries.
     return post.freefeed_post_id if already_published?
 
     attachment_ids = upload_attachments
     freefeed_post = create_freefeed_post(attachment_ids)
     freefeed_post_id = freefeed_post[:id]
+
+    # Persist the id before creating comments so a later failure (e.g. a 429 on
+    # a comment) can't make a retry re-create the post. Comments are
+    # best-effort once the post exists.
+    update_post_with_freefeed_id(freefeed_post_id)
     create_comments(freefeed_post_id)
 
-    update_post_with_freefeed_id(freefeed_post_id)
     freefeed_post_id
   rescue FreefeedClient::UnauthorizedError
     raise # propagate so the workflow can disable the token and related feeds
@@ -58,6 +65,8 @@ class FreefeedPublisher
       attachment = client.create_attachment_from_io(io, content_type: content_type)
       attachment[:id]
     end
+  rescue RateLimit::Throttled
+    raise # let the job reschedule; don't bury it as a publish failure
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
@@ -72,6 +81,8 @@ class FreefeedPublisher
       feeds: [post.feed.target_group],
       attachment_ids: attachment_ids
     )
+  rescue RateLimit::Throttled
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
@@ -89,6 +100,8 @@ class FreefeedPublisher
         body: comment_text
       )
     end
+  rescue RateLimit::Throttled
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e

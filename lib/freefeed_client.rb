@@ -18,9 +18,13 @@ class FreefeedClient
 
   attr_reader :host, :http_client
 
-  def initialize(host:, token:, http_client: nil, options: {})
+  # Used as the cooldown when a 429 response carries no usable Retry-After.
+  DEFAULT_RETRY_AFTER = 60
+
+  def initialize(host:, token:, http_client: nil, rate_limit_subject: nil, options: {})
     @host = host.chomp("/")
     @token = token
+    @rate_limit_subject = rate_limit_subject
     @http_client = http_client || HttpClient.build(DEFAULT_OPTIONS.merge(options))
   end
 
@@ -174,9 +178,24 @@ class FreefeedClient
       end
     when 404
       raise NotFoundError, "Resource not found"
+    when 429
+      handle_too_many_requests(response)
     else
       raise Error, "HTTP #{response.status}: #{response.body}"
     end
+  end
+
+  # FreeFeed throttled us. Record the cooldown so later acquires short-circuit,
+  # then raise Throttled so the job reschedules (handled by RateLimited).
+  def handle_too_many_requests(response)
+    retry_after = retry_after_seconds(response)
+    RateLimit.penalize(:freefeed, subject: @rate_limit_subject, retry_after: retry_after) if @rate_limit_subject
+    raise RateLimit::Throttled.new(retry_after: retry_after)
+  end
+
+  def retry_after_seconds(response)
+    seconds = response.headers["retry-after"].to_i
+    seconds.positive? ? seconds : DEFAULT_RETRY_AFTER
   end
 
   # TBD: Consider simplifying response processing. Probably keep the keys

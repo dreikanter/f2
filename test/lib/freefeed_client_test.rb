@@ -322,4 +322,62 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Failed to delete post"
     assert_includes error.message, "Connection failed"
   end
+
+  # 429 handling
+  test "429 raises Throttled and penalizes the subject using Retry-After" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:post, "#{@host}/v4/posts").to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    penalized = nil
+    RateLimit.stub(:penalize, ->(name, subject:, retry_after:) { penalized = [name, subject, retry_after] }) do
+      error = assert_raises(RateLimit::Throttled) { client.create_post(body: "hi", feeds: ["g"]) }
+      assert_equal 30, error.retry_after
+    end
+
+    assert_equal [:freefeed, "freefeed:1", 30], penalized
+  end
+
+  test "429 without Retry-After uses the default cooldown" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:post, "#{@host}/v4/posts").to_return(status: 429)
+
+    RateLimit.stub(:penalize, ->(*, **) { }) do
+      error = assert_raises(RateLimit::Throttled) { client.create_post(body: "hi", feeds: ["g"]) }
+      assert_equal FreefeedClient::DEFAULT_RETRY_AFTER, error.retry_after
+    end
+  end
+
+  test "429 without a rate_limit_subject raises Throttled but does not penalize" do
+    stub_request(:post, "#{@host}/v4/posts").to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    penalized = false
+    RateLimit.stub(:penalize, ->(*, **) { penalized = true }) do
+      assert_raises(RateLimit::Throttled) { @client.create_post(body: "hi", feeds: ["g"]) }
+    end
+
+    refute penalized
+  end
+
+  test "429 on a GET (whoami) raises Throttled rather than a generic Error" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:get, "#{@host}/v4/users/whoami").to_return(status: 429, headers: { "Retry-After" => "20" })
+
+    RateLimit.stub(:penalize, ->(*, **) { }) do
+      error = assert_raises(RateLimit::Throttled) { client.whoami }
+      assert_equal 20, error.retry_after
+    end
+  end
+
+  test "429 on a DELETE (delete_post) raises Throttled and penalizes" do
+    client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
+    stub_request(:delete, "#{@host}/v4/posts/p1").to_return(status: 429, headers: { "Retry-After" => "15" })
+
+    penalized = nil
+    RateLimit.stub(:penalize, ->(_name, subject:, retry_after:) { penalized = [subject, retry_after] }) do
+      error = assert_raises(RateLimit::Throttled) { client.delete_post("p1") }
+      assert_equal 15, error.retry_after
+    end
+
+    assert_equal ["freefeed:1", 15], penalized
+  end
 end

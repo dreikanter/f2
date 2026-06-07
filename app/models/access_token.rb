@@ -60,7 +60,7 @@ class AccessToken < ApplicationRecord
   end
 
   def build_client
-    FreefeedClient.new(host: host, token: encrypted_token)
+    FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
   end
 
   # Identity used for rate limiting FreeFeed API calls. Keyed per token: FreeFeed
