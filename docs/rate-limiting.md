@@ -25,15 +25,27 @@ should be:
 - **Arbitrary content loaders** — politeness limits when fetching from the web,
   typically per-domain.
 
+> **Scope:** this mechanism handles **time-windowed rate limiting** only —
+> "may I make this call right now?". Two related concerns are deliberately
+> *out of scope*: depletable **quotas/budgets** that don't reset on a clock
+> (API credits, monthly op counts, proxy bandwidth — usually best read from the
+> provider's own balance endpoint), and **scheduling** (feed refresh intervals
+> belong to the scheduler, not here).
+
 ## Core concepts
 
-The whole model is three ideas:
+The whole model is a few ideas:
 
 - **Policy** — a named profile for one provider (`:freefeed`, `:openai`,
   `:web_fetch`). A policy declares one or more limits.
-- **Limit (dimension)** — a single rate rule within a policy (a rate over a
-  time window). A policy can have several, because one logical call may be
-  constrained on multiple axes simultaneously.
+- **Dimension** — the axis being metered (`requests`, `tokens`, `posts`). Cost
+  is charged per dimension.
+- **Limit** — a single rule on a dimension: a `rate` over a `window`, with an
+  optional `burst` capacity (the bucket size, which can exceed the per-window
+  rate to allow short bursts / averaging windows). A policy can have several
+  limits, because one call may be constrained on multiple axes **and** on
+  multiple windows of the *same* axis — e.g. requests per-minute *and*
+  per-day.
 - **Subject** — the identity *within* a provider that owns the allowance
   (a FreeFeed `host:owner`, an LLM API key, a domain). Each subject is metered
   independently.
@@ -49,7 +61,14 @@ behalf of a subject. That single shape covers every use case:
 
 The dimension idea is what makes the LLM case work: a single request draws from
 both a requests bucket and a tokens bucket, with different costs, and is allowed
-only if *all* of its dimensions have room.
+only if *every* limit it touches has room (across all dimensions and all of
+their windows).
+
+Some costs aren't fully known until *after* the call — LLM output tokens, or
+bytes actually transferred. For those, the caller charges an **estimate** up
+front and **reconciles** the difference once the real figure is known (see the
+API below). This keeps fast-moving dimensions like output-tokens-per-minute
+from drifting.
 
 ## Choosing the granularity
 
@@ -79,6 +98,10 @@ RateLimit.acquire!(:openai, subject: key_id, cost: { ... })   # raises RateLimit
 # Block form — for inline (non-job) call sites
 RateLimit.throttle(:web_fetch, subject: domain) { http.get(url) }
 
+# True up a dimension after the fact, when the real cost is only known
+# post-call (LLM output tokens, actual bytes). Adjusts the earlier estimate.
+RateLimit.reconcile(:openai, subject: key_id, cost: { tokens: actual - estimated })
+
 # Feed the provider's own verdict back in (e.g. on a real 429)
 RateLimit.penalize(:openai, subject: key_id, retry_after: 30)
 ```
@@ -94,10 +117,19 @@ RateLimit.define :freefeed do
 end
 
 RateLimit.define :openai do
-  limit :requests,   500,     per: 1.minute
-  limit :tokens,     200_000, per: 1.minute
+  limit :requests, 500,     per: 1.minute   # the same dimension can carry
+  limit :requests, 10_000,  per: 1.day      # more than one window
+  limit :tokens,   200_000, per: 1.minute
+end
+
+RateLimit.define :reddit do
+  # burst > rate models an averaging window: 100/min averaged over ~10 min
+  limit :requests, 100, per: 1.minute, burst: 1_000
 end
 ```
+
+`burst` defaults to the per-window `rate` when omitted (a strict window with no
+slack).
 
 ## Usage patterns
 
@@ -122,16 +154,32 @@ Two patterns cover essentially everything:
   rate-limit headers.
 - **Set local limits below the provider's real limits** to leave a safety
   margin.
+- **Estimate up front, reconcile after** for costs that aren't known until the
+  response arrives (output tokens, bytes). The estimate prevents overshoot; the
+  reconciliation prevents drift.
 - **Behavior under the limiter's own failure is a deliberate choice** per
   policy: fail *open* for politeness limits (the remote still protects itself),
   more conservative for cost-bearing calls like LLMs.
 
+## Known limitations (acceptable for a first version)
+
+- **Reacts to `429`, doesn't pre-sync from headers.** Providers return live
+  `remaining`/`reset` headers; the limiter ignores them and relies on
+  conservative local limits plus `penalize` on a real `429`. Ingesting those
+  headers to correct local state is a possible later refinement, not required
+  for correctness.
+- **Per-IP limits under proxy rotation.** When egress IPs rotate (a residential
+  proxy pool), provider limits scoped *per IP* no longer map to a stable
+  subject. Such limits would need the current IP as part of the subject, or to
+  be left to the remote's `429`.
+
 ## Open questions (to resolve before implementation)
 
 - Storage backend (Feeder is all-PostgreSQL via the Solid stack; no Redis).
-- Limiting algorithm and exact semantics of a "window".
-- How LLM token costs are estimated up front and reconciled against actual
-  usage afterward.
+- Limiting algorithm and exact "window" semantics — must support sub-minute
+  windows (e.g. 1/sec) and `burst` capacity distinct from refill rate.
+- The per-provider heuristic for the up-front cost *estimate* (e.g. how to
+  predict LLM output tokens before the call).
 - Whether to also lean on Solid Queue concurrency controls as a complementary
   mechanism.
 
