@@ -1,8 +1,8 @@
 # Generalized Request Rate Limiting (Working Draft)
 
-> **Status:** working draft — conceptual design, not yet implemented.
-> Captures the intended shape of a shared rate-limiting mechanism so we can
-> agree on the concepts and public API before writing code.
+> **Status:** working draft — design agreed, not yet implemented. Captures the
+> concepts, public API, storage, and integration plan for a shared
+> rate-limiting mechanism.
 
 ## Goal
 
@@ -47,17 +47,21 @@ The whole model is a few ideas:
   multiple windows of the *same* axis — e.g. requests per-minute *and*
   per-day.
 - **Subject** — the identity *within* a provider that owns the allowance
-  (a FreeFeed `host:owner`, an LLM API key, a domain). Each subject is metered
-  independently.
+  (a FreeFeed access-token id, an LLM API key, a domain). Each subject is
+  metered independently.
+- **Bucket** — the unit of persisted state: one token bucket per
+  `(dimension, window)`. Multiple windows on the same dimension (e.g. requests
+  per-minute *and* per-day) are just separate buckets. Single-dimension is the
+  special case of one bucket; multi-dimension is the general case.
 
 A call consumes some **cost** from one or more dimensions of a policy, on
 behalf of a subject. That single shape covers every use case:
 
-| Use case            | Policy       | Subject        | Dimensions (cost)               |
-|---------------------|--------------|----------------|---------------------------------|
-| Post to FreeFeed    | `:freefeed`  | `host:owner`   | `posts: 1` (per method)         |
-| LLM fetch/processing| `:openai`    | api-key id     | `requests: 1`, `tokens: ~1500`  |
-| Web fetch (loader)  | `:web_fetch` | domain         | `requests: 1`                   |
+| Use case            | Policy       | Subject              | Dimensions (cost)               |
+|---------------------|--------------|----------------------|---------------------------------|
+| Post to FreeFeed    | `:freefeed`  | `freefeed:<token id>`| `post: N`, `attachment: M`      |
+| LLM fetch/processing| `:openai`    | api-key id           | `requests: 1`, `tokens: ~1500`  |
+| Web fetch (loader)  | `:web_fetch` | domain               | `requests: 1`                   |
 
 The dimension idea is what makes the LLM case work: a single request draws from
 both a requests bucket and a tokens bucket, with different costs, and is allowed
@@ -80,6 +84,12 @@ local accounting mirrors theirs:
   too strict and too loose.
 - **Not too fine** — several feeds under the same FreeFeed token share one
   remote bucket, so the subject is the token's identity, not the feed.
+
+For FreeFeed the subject is the **access-token id** (`freefeed:<id>`). FreeFeed
+actually meters per account, so multiple tokens for the same FreeFeed user share
+its real bucket; keying per token over-counts in that rare case, but the `429`
+backstop covers it. A token id is stable and always present (unlike `owner`,
+which is unknown until validation), so it avoids a shifting subject.
 
 ## Public API (sketch)
 
@@ -131,6 +141,65 @@ end
 `burst` defaults to the per-window `rate` when omitted (a strict window with no
 slack).
 
+## Algorithm: token bucket
+
+Each bucket holds `tokens`, refilling at `rate = limit / window` (tokens/sec) up
+to a cap of `burst`. A call spends `cost` tokens; if a bucket lacks them, the
+call is throttled.
+
+Refill is **lazy and continuous** — no timer, no scheduled reset. It's computed
+on each acquire from the time elapsed since the bucket was last touched:
+
+```
+available   = min(burst, tokens + (now - refilled_at) * rate)
+if available >= cost:
+    tokens      = available - cost
+    refilled_at = now
+    → allow
+else:
+    → throttle, retry_after = (cost - available) / rate
+```
+
+This gives a rolling limit (not a fixed-window reset): a bucket regains
+`rate` tokens/sec and saturates at `burst`. Set `burst = rate*window` for a
+plain "N per window"; set `burst` higher to allow spikes / averaging windows.
+
+Units are normalized to **seconds** (`window` in seconds, `rate` in
+tokens/sec) to avoid unit bugs; config sugar like `per: 1.minute` is converted
+on load.
+
+## Storage
+
+A **single PostgreSQL table**, one row per `(policy, subject)`. All of that
+subject's buckets live in one **JSONB** column; only mutable state is persisted
+(`rate`/`burst`/`window` stay in config).
+
+```
+key          text   -- "policy:subject", e.g. "freefeed:7"
+data         jsonb  -- { "post/1m": {tokens, refilled_at}, "attachment/1m": {...} }
+blocked_until timestamptz  -- set by penalize() on a real 429; short-circuits acquire
+```
+
+One JSONB row per subject (rather than a row per bucket) keeps a multi-dimension
+acquire to a **single row** — one lock, atomic all-or-nothing, no deadlock
+ordering. At Feeder's scale (<10 users) Postgres is more than sufficient; no
+Redis.
+
+## Concurrency & atomicity
+
+`acquire` must be atomic against parallel jobs sharing a subject, or two jobs
+race and over-admit. Atomicity comes from the database, not an app-level lock:
+
+- **Single dimension** — one `UPDATE … WHERE available >= cost RETURNING …`.
+  Postgres serializes concurrent writers to the same row; 0 rows back =
+  throttled.
+- **Multi-dimension (all-or-nothing)** — a short transaction: `SELECT … FOR
+  UPDATE` the subject's row, compute every bucket in Ruby, then update all of
+  them or none. One row = one lock.
+
+Different subjects are different rows, so they never contend — serialization
+happens only per subject, which is exactly where it's wanted.
+
 ## Usage patterns
 
 Two patterns cover essentially everything:
@@ -144,6 +213,43 @@ Two patterns cover essentially everything:
    job should *defer itself* (re-enqueue with a wait) rather than sleep and hold
    a worker. This turns rate limiting into natural backpressure: the producer's
    effective rate self-adjusts to what the provider will accept.
+
+## Integration model
+
+All external API interaction happens **from jobs**, so throttling becomes a
+reschedule rather than a blocked worker. The flow:
+
+1. **Reserve the whole job's cost up front**, in one `acquire!`, *before* any
+   API call. A job computes its total cost ahead of time (for FreeFeed publish:
+   `{ post: 1 + comments, attachment: attachments }`).
+2. **Throttled → reschedule** the job with `wait: retry_after` (+ jitter).
+   Nothing was sent, so there's no partial work.
+3. **Granted → run all calls straight through** without re-consulting the
+   limiter; capacity is already reserved. No mid-job throttling.
+4. **Real `429` → `penalize`** sets `blocked_until` for the subject; subsequent
+   `acquire!`s short-circuit until then, so jobs reschedule.
+
+Add a **retry cap** (max attempts / total delay) so a job can't reschedule
+forever — give up to the error reporter instead.
+
+### Why reserve up front (no resumability)
+
+Multi-call jobs (publish = attachments + post + comments) must not be throttled
+mid-sequence, because re-running from the top would duplicate work, and there's
+no resumable/draft state. Reserving the full cost atomically up front avoids
+this without resumability. **Accepted for now:** if FreeFeed itself returns a
+`429` mid-sequence (despite our local limit sitting under theirs), a partially
+published post may remain. That's a pre-existing property of non-transactional
+multi-call publishing, not introduced by the limiter.
+
+### Where it hooks into FreeFeed services
+
+- **`FreefeedClient`** — single chokepoint; the job reserves cost before driving
+  the client. The client translates a `429` into `penalize` + a throttle error.
+- **Jobs** (`PostWithdrawalJob`, `TokenValidationJob`, and the publish path) —
+  rescue the throttle error and reschedule.
+- FreeFeed cost is a request count known up front, so **no `reconcile`** is
+  needed for it (reconcile is for token/byte costs).
 
 ## Principles
 
@@ -173,11 +279,27 @@ Two patterns cover essentially everything:
   subject. Such limits would need the current IP as part of the subject, or to
   be left to the remote's `429`.
 
+## Provider coverage
+
+The model was checked against the providers Feeder may integrate. Each maps to
+buckets keyed per `(dimension, window)`:
+
+| Provider    | Buckets                                                    |
+|-------------|-----------------------------------------------------------|
+| FreeFeed    | `post/1m`, `attachment/1m` (per-method)                    |
+| Anthropic   | `requests/1m`, `input_tokens/1m`, `output_tokens/1m`      |
+| OpenAI      | `requests/1m`, `requests/1d`, `tokens/1m`, `tokens/1d`    |
+| OpenRouter  | `requests/1m`, `requests/1d`                              |
+| Reddit      | `requests/1m` with `burst ≈ 1000` (10-min averaging)      |
+| HN-Algolia  | `requests/1h`                                             |
+| rss.app     | `requests/1s`                                             |
+
+Token-based dimensions (Anthropic/OpenAI) additionally use `reconcile` for
+post-call truing-up. Depletable quotas (credits, monthly ops, proxy bandwidth)
+are **out of scope** — see Scope above.
+
 ## Open questions (to resolve before implementation)
 
-- Storage backend (Feeder is all-PostgreSQL via the Solid stack; no Redis).
-- Limiting algorithm and exact "window" semantics — must support sub-minute
-  windows (e.g. 1/sec) and `burst` capacity distinct from refill rate.
 - The per-provider heuristic for the up-front cost *estimate* (e.g. how to
   predict LLM output tokens before the call).
 - Whether to also lean on Solid Queue concurrency controls as a complementary
