@@ -1,8 +1,9 @@
 # Generalized Request Rate Limiting (Working Draft)
 
-> **Status:** working draft — design agreed, not yet implemented. Captures the
-> concepts, public API, storage, and integration plan for a shared
-> rate-limiting mechanism.
+> **Status:** being implemented (tracked in #609). The `RateLimit` service and
+> storage, the `:freefeed` policy, and async publishing have shipped; FreeFeed
+> call/job wiring is in progress. This doc captures the concepts, public API,
+> storage, and integration plan.
 
 ## Goal
 
@@ -122,8 +123,9 @@ Policies are declared up front, in plain, readable terms:
 
 ```ruby
 RateLimit.define :freefeed do
-  limit :requests, 25, per: 1.minute   # stay under the provider's ceiling
-  limit :posts,    50, per: 1.minute
+  limit :post,   50, per: 1.minute   # post + comments + attachment uploads (POSTs)
+  limit :get,   150, per: 1.minute   # whoami, managedGroups
+  limit :delete, 25, per: 1.minute   # withdrawal / group purge
 end
 
 RateLimit.define :openai do
