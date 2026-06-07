@@ -250,7 +250,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, :enabled, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::AuthError, "Unauthorized" }) do
+    loader = Object.new
+    loader.define_singleton_method(:load) { raise LlmClient::AuthError, "Unauthorized" }
+    test_feed.stub(:loader_instance, loader) do
       assert_raises(LlmClient::AuthError) { workflow.execute }
     end
 
@@ -271,7 +273,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, feed_profile_key: "rss", user: llm_user, llm_credential: credential)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    workflow.stub(:load_feed_contents, ->(_) { raise LlmClient::ProviderError, "server error" }) do
+    loader = Object.new
+    loader.define_singleton_method(:load) { raise LlmClient::ProviderError, "server error" }
+    test_feed.stub(:loader_instance, loader) do
       assert_raises(LlmClient::ProviderError) { workflow.execute }
     end
 
@@ -299,13 +303,12 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
-    # Override normalizer_instance to pass nil instead of the feed_entry
-    test_feed.define_singleton_method(:normalizer_instance) do |feed_entry|
-      normalizer_class.new(nil)  # Pass nil instead of feed_entry to trigger error
-    end
+    # Make normalization fail at the collaborator boundary
+    normalizer = Object.new
+    normalizer.define_singleton_method(:normalize) { raise "normalization failed" }
 
-    error = assert_raises(StandardError) do
-      workflow.execute
+    test_feed.stub(:normalizer_instance, normalizer) do
+      assert_raises(StandardError) { workflow.execute }
     end
 
     # Should fail during normalize step
