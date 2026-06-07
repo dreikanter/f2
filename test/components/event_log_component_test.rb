@@ -19,6 +19,23 @@ class EventLogComponentTest < ViewComponent::TestCase
     assert_not_nil result.css("[data-key='events.list']").first
   end
 
+  test "#call should wrap entries in a ul list by default" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event])) { |log| log.with_entry { "entry" } }
+
+    assert_not_nil result.css("ul[data-key='events.list']").first
+  end
+
+  test "#call should use a card container when list is disabled" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventLogComponent.new(events: [event], list: false)) { |log| log.with_entry { "entry" } }
+
+    assert_not_nil result.css("div[data-key='events.list']").first
+    assert_empty result.css("ul[data-key='events.list']")
+  end
+
   test "#call should expose the polling host and threshold" do
     event = create(:event, user: user)
 

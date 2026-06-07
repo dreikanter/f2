@@ -66,6 +66,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-event-type="someone_elses"]', count: 0
   end
 
+  test "#index should nest entry list items inside a list element" do
+    sign_in_as user
+    create(:event, type: "feed_refresh", user: user)
+
+    get events_path
+
+    assert_response :success
+    assert_select "ul[data-key='events.list'] > li[data-key='events.entry']"
+  end
+
   test "#index should order by created_at, not insertion id" do
     sign_in_as user
     # Insertion (id) order deliberately differs from chronological order.
