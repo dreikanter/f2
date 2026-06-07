@@ -45,7 +45,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_equal [[access_token.rate_limit_subject, { delete: 1 }]] * 2, captured
   end
 
-  test ".perform_now should re-enqueue itself for the feed when throttled" do
+  test ".perform_now should reschedule itself when throttled" do
     create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
 
     RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
