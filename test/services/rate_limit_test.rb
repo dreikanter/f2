@@ -1,0 +1,200 @@
+require "test_helper"
+
+class RateLimitTest < ActiveSupport::TestCase
+  setup { RateLimit.reset! }
+  teardown { RateLimit.reset! }
+
+  def cost(**dims) = dims
+
+  test ".acquire should allow up to burst then throttle" do
+    RateLimit.define(:t) { limit :requests, 5, per: 60 }
+
+    5.times { assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed? }
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should meter subjects independently" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+    assert RateLimit.acquire(:t, subject: "b", cost: cost(requests: 1)).allowed?
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should refill continuously over time" do
+    RateLimit.define(:t) { limit :requests, 60, per: 60 } # 1 token/sec
+
+    # travel_to truncates sub-second precision; a usec-zero base keeps elapsed exact
+    travel_to Time.current.change(usec: 0)
+    60.times { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+
+    travel_to Time.current + 10.seconds
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 10)).allowed?
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should cap accumulation at burst, not rate times idle" do
+    RateLimit.define(:t) { limit :requests, 5, per: 60 }
+
+    travel_to Time.current.change(usec: 0)
+    5.times { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+
+    travel_to Time.current + 1.hour
+    5.times { assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed? }
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should support sub-second windows" do
+    RateLimit.define(:t) { limit :requests, 1, per: 1 }
+
+    travel_to Time.current.change(usec: 0)
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+
+    travel_to Time.current + 1.second
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should be all-or-nothing across dimensions" do
+    RateLimit.define(:llm) do
+      limit :requests, 10, per: 60
+      limit :tokens, 100, per: 60
+    end
+
+    assert RateLimit.acquire(:llm, subject: "a", cost: cost(requests: 1, tokens: 100)).allowed?
+    # tokens are exhausted; this call must be denied AND must not consume a request
+    refute RateLimit.acquire(:llm, subject: "a", cost: cost(requests: 1, tokens: 1)).allowed?
+    # proof the request token was not consumed by the denied call
+    assert RateLimit.acquire(:llm, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should enforce multiple windows on the same dimension" do
+    RateLimit.define(:t) do
+      limit :requests, 100, per: 60   # generous per minute
+      limit :requests, 3, per: 3600   # tight per hour
+    end
+
+    3.times { assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed? }
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+  end
+
+  test ".acquire should allow dimensions without a declared limit" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(other: 999)).allowed?
+  end
+
+  test ".acquire should raise for an unknown policy" do
+    assert_raises(ArgumentError) do
+      RateLimit.acquire(:nope, subject: "a", cost: cost(requests: 1))
+    end
+  end
+
+  test ".acquire! should raise Throttled with a positive retry_after" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    RateLimit.acquire!(:t, subject: "a", cost: cost(requests: 1))
+    error = assert_raises(RateLimit::Throttled) do
+      RateLimit.acquire!(:t, subject: "a", cost: cost(requests: 1))
+    end
+    assert error.retry_after > 0
+  end
+
+  test ".throttle should yield when allowed and raise when not" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    ran = false
+    RateLimit.throttle(:t, subject: "a", cost: cost(requests: 1)) { ran = true }
+    assert ran
+
+    assert_raises(RateLimit::Throttled) do
+      RateLimit.throttle(:t, subject: "a", cost: cost(requests: 1)) { flunk "should not run" }
+    end
+  end
+
+  test ".reconcile should consume additional tokens for an under-estimate" do
+    RateLimit.define(:t) { limit :tokens, 100, per: 60 }
+
+    RateLimit.acquire!(:t, subject: "a", cost: cost(tokens: 10)) # estimated 10
+    RateLimit.reconcile(:t, subject: "a", cost: cost(tokens: 90)) # actual was 100
+
+    refute RateLimit.acquire(:t, subject: "a", cost: cost(tokens: 1)).allowed?
+  end
+
+  test ".reconcile should credit tokens back for an over-estimate" do
+    RateLimit.define(:t) { limit :tokens, 100, per: 60 }
+
+    RateLimit.acquire!(:t, subject: "a", cost: cost(tokens: 100)) # drains the bucket
+    RateLimit.reconcile(:t, subject: "a", cost: cost(tokens: -50)) # actual was only 50
+
+    assert RateLimit.acquire(:t, subject: "a", cost: cost(tokens: 50)).allowed?
+  end
+
+  test ".reconcile should do nothing when the subject has no row" do
+    RateLimit.define(:t) { limit :tokens, 100, per: 60 }
+
+    assert_nothing_raised { RateLimit.reconcile(:t, subject: "missing", cost: cost(tokens: 5)) }
+  end
+
+  test ".penalize should block acquire until the cooldown passes" do
+    RateLimit.define(:t) { limit :requests, 100, per: 60 }
+
+    RateLimit.penalize(:t, subject: "a", retry_after: 30)
+
+    result = RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+    refute result.allowed?
+    assert_in_delta 30, result.retry_after, 2
+
+    travel 31.seconds do
+      assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+    end
+  end
+
+  test ".acquire should fail open by default on a storage error" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    RateLimit::Bucket.stub(:transaction, ->(*) { raise ActiveRecord::StatementInvalid, "boom" }) do
+      assert RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+    end
+  end
+
+  test ".acquire should fail closed when the policy is configured to" do
+    RateLimit.define(:t) do
+      limit :requests, 1, per: 60
+      fail_open false
+    end
+
+    RateLimit::Bucket.stub(:transaction, ->(*) { raise ActiveRecord::StatementInvalid, "boom" }) do
+      refute RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)).allowed?
+    end
+  end
+end
+
+class RateLimitConcurrencyTest < ActiveSupport::TestCase
+  self.use_transactional_tests = false
+
+  setup do
+    RateLimit.reset!
+    RateLimit.define(:t) { limit :requests, 5, per: 60 }
+    RateLimit::Bucket.delete_all
+  end
+
+  teardown do
+    RateLimit::Bucket.delete_all
+    RateLimit.reset!
+  end
+
+  test "parallel acquire on the same subject does not over-admit" do
+    threads = 20.times.map do
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          RateLimit.acquire(:t, subject: "shared", cost: { requests: 1 }).allowed?
+        end
+      end
+    end
+
+    allowed = threads.map(&:value).count(true)
+    assert_equal 5, allowed, "burst is 5, so exactly 5 of 20 concurrent calls should be allowed"
+  end
+end
