@@ -23,6 +23,13 @@ class RateLimitTest < ActiveSupport::TestCase
     Rails.logger = original
   end
 
+  # Records [event_type, payload] for every Honeybadger.event call in the block.
+  def capture_honeybadger_events
+    events = []
+    Honeybadger.stub(:event, ->(type, payload = {}) { events << [type, payload] }) { yield }
+    events
+  end
+
   test ".forget should delete only the named subject's stored state" do
     RateLimit.define(:t) { limit :requests, 5, per: 60 }
     RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
@@ -227,6 +234,28 @@ class RateLimitTest < ActiveSupport::TestCase
 
     out = capture_log { RateLimit.penalize(:t, subject: "a", retry_after: 30) }
     assert_match(/RateLimit cooldown t:a blocked for 30s/, out)
+  end
+
+  test ".acquire should emit a Honeybadger event when throttled" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+    RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1))
+
+    events = capture_honeybadger_events { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    assert_includes events.map(&:first), "rate_limit.throttled"
+  end
+
+  test ".acquire should not emit a Honeybadger event when allowed" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    events = capture_honeybadger_events { RateLimit.acquire(:t, subject: "a", cost: cost(requests: 1)) }
+    refute_includes events.map(&:first), "rate_limit.throttled"
+  end
+
+  test ".penalize should emit a Honeybadger event" do
+    RateLimit.define(:t) { limit :requests, 1, per: 60 }
+
+    events = capture_honeybadger_events { RateLimit.penalize(:t, subject: "a", retry_after: 30) }
+    assert_includes events.map(&:first), "rate_limit.penalized"
   end
 
   test ".snapshot should report headroom per limit with tokens refilled to now" do
