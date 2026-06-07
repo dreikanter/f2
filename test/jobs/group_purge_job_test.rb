@@ -45,16 +45,36 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_equal [[access_token.rate_limit_subject, { delete: 1 }]] * 2, captured
   end
 
-  test ".perform_now should reschedule when throttled" do
+  test ".perform_now should re-enqueue itself for the feed when throttled" do
     create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
 
     RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
-      assert_enqueued_with(job: GroupPurgeJob) do
+      assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
         GroupPurgeJob.perform_now(feed.id)
       end
     end
 
     assert_not_requested :delete, "#{access_token.host}/v4/posts/post1"
+  end
+
+  test ".perform_now should keep progress and reschedule the rest when throttled mid-batch" do
+    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
+
+    calls = 0
+    RateLimit.stub(:acquire!, lambda { |*, **|
+      calls += 1
+      raise RateLimit::Throttled.new(retry_after: 5) if calls > 1
+    }) do
+      assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
+        GroupPurgeJob.perform_now(feed.id)
+      end
+    end
+
+    assert_nil post1.reload.freefeed_post_id
+    assert_equal "post2", post2.reload.freefeed_post_id
   end
 
   test ".perform_now should continue on error and log failure" do
