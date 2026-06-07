@@ -16,7 +16,15 @@ module RateLimited
         retry_job(wait: error.retry_after + rand(0.0..JITTER_SECONDS))
       else
         Rails.error.report(error, context: { job: self.class.name, arguments: arguments })
+        on_rate_limit_exhausted(error)
       end
     end
+  end
+
+  private
+
+  # Hook for jobs to clean up any in-progress state left behind when the
+  # throttle retries are exhausted. Default is a no-op.
+  def on_rate_limit_exhausted(error)
   end
 end

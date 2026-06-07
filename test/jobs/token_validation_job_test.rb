@@ -23,6 +23,22 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert_equal [access_token.rate_limit_subject, { get: 2 }], captured
   end
 
+  test ".perform_now should reset token to pending when throttle retries are exhausted" do
+    access_token.validating!
+
+    job = TokenValidationJob.new(access_token)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+      Rails.error.stub(:report, ->(*, **) { }) do
+        assert_no_enqueued_jobs { job.perform_now }
+      end
+    end
+
+    access_token.reload
+    assert access_token.pending?
+  end
+
   test ".perform_now should mark token as active when validation succeeds" do
     stub_successful_freefeed_response
 
