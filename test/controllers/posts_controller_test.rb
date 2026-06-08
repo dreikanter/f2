@@ -241,6 +241,23 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil Post.find_by(id: withdrawn_post.id)
   end
 
+  test "#destroy should let a failed post's record be deleted" do
+    sign_in_as(user)
+    feed_entry = create(:feed_entry, feed: feed, uid: "entry-fail")
+    create(:feed_entry_uid, feed: feed, uid: "entry-fail")
+    failed_post = create(:post, :failed, feed: feed, feed_entry: feed_entry, uid: "entry-fail")
+
+    assert_no_enqueued_jobs(only: PostWithdrawalJob) do
+      assert_difference(["Post.count", "FeedEntryUid.count"], -1) do
+        delete post_url(failed_post), params: { delete_record: "1" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+    end
+
+    assert_response :success
+    assert_nil Post.find_by(id: failed_post.id)
+  end
+
   test "#destroy should do nothing when no option is selected" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")

@@ -53,7 +53,7 @@ Rails.application.routes.draw do
     end
 
     resources :events, only: [:index, :show]
-    resource :system_stats, only: :show
+    resource :system_status, only: :show, controller: "system_status"
     resources :email_previews, only: [:index, :show]
   end
 

@@ -46,8 +46,8 @@ reviewed:
   app/views/onboarding/feeds/show.html.erb: ef841f73c86c1517f85521aa70aaf0b41a643cfc
   test/controllers/onboarding/access_token_validations_controller_test.rb: 8120d0d50c8b624100e711265df81b1560cfd695
   test/controllers/onboarding/access_tokens_controller_test.rb: 7c3fba894ca329bf58615e2a599f6724517a19f3
-  app/controllers/admin/system_stats_controller.rb: f5f1ea0666ea35b29925eaa0e353bd385d1c2257
+  app/controllers/admin/system_status_controller.rb: f5f1ea0666ea35b29925eaa0e353bd385d1c2257
   app/helpers/time_helper.rb: c88da2961eea22381bfbc506eb2e024de40184a4
   app/services/disk_usage_service.rb: 4e7162e70f8ab4601323af0207f3db5cc9790eff
-  app/views/admin/system_stats/show.html.erb: 0a7bbc1d0aa01a8530f656fdef261e713cb997f4
+  app/views/admin/system_status/show.html.erb: 0a7bbc1d0aa01a8530f656fdef261e713cb997f4
   app/views/admins/show.html.erb: 5b79fdff9f4fd1a85d46fc225fb4f8f6be570e15

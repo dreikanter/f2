@@ -69,6 +69,11 @@ class PostPolicyTest < ActiveSupport::TestCase
     assert PostPolicy.new(user, withdrawn_post).destroy?
   end
 
+  test "#destroy? should allow owner for failed post" do
+    failed_post = create(:post, :failed, feed: feed)
+    assert PostPolicy.new(user, failed_post).destroy?
+  end
+
   test "#destroy? should deny owner for non-published post" do
     draft_post = create(:post, :draft, feed: feed)
     assert_not PostPolicy.new(user, draft_post).destroy?

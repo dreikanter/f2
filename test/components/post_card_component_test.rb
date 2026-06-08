@@ -28,18 +28,33 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "Flag Design"
   end
 
-  test "#render should show @group label with display name title when show_feed is true" do
+  test "#render should show the group as a labeled item linking to the feed when show_feed is true" do
     result = render_inline PostCardComponent.new(post: post, show_feed: true)
 
-    group_link = result.at_css("a[href*='/feeds/']")
-    assert_not_nil group_link
-    assert_equal "@xkcd", group_link.text.strip
-    assert_equal feed.display_name, group_link["title"]
+    group = result.at_css('[data-key="post.group"]')
+    assert_not_nil group
+    assert_includes group.text.gsub(/\s+/, " "), "Group: @xkcd"
+    assert_includes group.at_css("a")["href"], "/feeds/"
+    assert_equal feed.display_name, group.at_css("a")["title"]
   end
 
-  test "#render should hide group label when show_feed is false" do
+  test "#render should label the group the same way for unpublished posts" do
+    draft_post = create(:post, :draft, feed: feed)
+    result = render_inline PostCardComponent.new(post: draft_post, show_feed: true)
+
+    assert_includes result.at_css('[data-key="post.group"]').text.gsub(/\s+/, " "), "Group: @xkcd"
+  end
+
+  test "#render should keep the group out of the status label" do
+    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+
+    assert_not_includes result.at_css('[data-key="post.status"]').text, "@xkcd"
+  end
+
+  test "#render should hide the group when show_feed is false" do
     result = render_inline PostCardComponent.new(post: post, show_feed: false)
 
+    assert_nil result.at_css('[data-key="post.group"]')
     assert_nil result.at_css("a[href*='/feeds/']")
   end
 
@@ -55,6 +70,17 @@ class PostCardComponentTest < ViewComponent::TestCase
     result = render_inline PostCardComponent.new(post: post_with_comments)
 
     assert_equal "1 comment", result.at_css('[data-key="post.comments"]').text.strip
+  end
+
+  test "#render should separate footer items with middots" do
+    post_with_attachments = create(:post, :published, :with_attachments, feed: feed,
+      source_url: "https://xkcd.com/3250/")
+    result = render_inline PostCardComponent.new(post: post_with_attachments)
+
+    # status · Source · attachments => two separators, hidden from assistive tech.
+    middots = result.css("span").select { |span| span.text.strip == "·" }
+    assert_equal 2, middots.size
+    assert(middots.all? { |middot| middot["aria-hidden"] == "true" })
   end
 
   test "#render should not show attachment or comment counts when none" do
@@ -101,6 +127,15 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css("##{PostDeleteModalComponent.modal_id(post)}")
   end
 
+  test "#render should offer Delete for a failed post" do
+    Current.session = build(:session, user: user)
+    failed_post = create(:post, :failed, feed: feed)
+    result = render_inline PostCardComponent.new(post: failed_post)
+
+    menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
+    assert_includes menu_items, "Delete…"
+  end
+
   test "#render should not offer Delete for an unpublished post" do
     Current.session = build(:session, user: user)
     draft_post = create(:post, feed: feed, status: :draft)
@@ -136,6 +171,18 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_nil status_link
     assert_includes status_link.text.gsub(/\s+/, " "), "Reposted (10h)"
     assert_not_empty status_link.css("svg.text-green-600")
+  end
+
+  test "#render should keep the duration tight against its parentheses" do
+    published_post = create(:post, :published, feed: feed,
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: published_post)
+
+    # The label, parens and time tag share one inline wrapper that carries no
+    # flex gap, so the duration cannot drift away from its parentheses.
+    wrapper = result.at_css('[data-key="post.status"] time').parent
+    assert_equal "Reposted (10h)", wrapper.text.strip
+    assert_not_includes wrapper["class"].to_s, "gap"
   end
 
   test "#render should show the reposted status as plain text when freefeed url is missing" do

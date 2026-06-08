@@ -49,8 +49,12 @@ class PostCardComponent < ViewComponent::Base
     helpers.icon(status_display[:icon], css_class: "size-3.5 #{status_display[:color]}")
   end
 
+  # Group the label, parens and the time tag inside a single inline wrapper so
+  # the surrounding flex gap only spaces the icon from the text. Without the
+  # wrapper the parens become separate flex items and the duration drifts away
+  # from them, e.g. "Reposted ( 1d )" instead of "Reposted (1d)".
   def status_label_with_time
-    helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"])
+    helpers.content_tag(:span, helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"]))
   end
 
   # The status badge reports when the post reached its current state. For a
@@ -62,6 +66,13 @@ class PostCardComponent < ViewComponent::Base
 
   def reposted?
     post.published?
+  end
+
+  # The target group rides alongside the status as its own labeled item
+  # ("Group: @name") whenever the list spans feeds, keeping the status itself
+  # uncluttered and reading the same for every status.
+  def show_group?
+    group_label.present?
   end
 
   # Attachment and comment counts describe what made it onto FreeFeed, so they
@@ -124,5 +135,11 @@ class PostCardComponent < ViewComponent::Base
 
   def menu_id
     "post-menu-#{post.id}"
+  end
+
+  # Decorative separator between footer items. Hidden from assistive tech so the
+  # status, source and counts read as distinct items rather than "dot".
+  def middot
+    helpers.content_tag(:span, "·", class: "text-slate-300", aria: { hidden: true })
   end
 end
