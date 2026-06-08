@@ -89,7 +89,10 @@
 
         <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
           <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
-            <p class="text-slate-500">Your preview will show up here.</p>
+            <%# Shown right away when the modal opens so the spinner is visible
+                before the frame's first response lands (the JS controller
+                re-injects this markup on each open). %>
+            <%= render "feed_previews/processing" %>
           <% end %>
         <% end %>
       </div>

@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 
 // Drives the manual feed preview:
 // - keeps the button enabled only when a profile is selected and a source is present
-// - on click, points the modal's feed-preview frame at the preview endpoint for
-//   the currently selected profile + source, then opens the modal
+// - on click, paints the loading spinner, points the modal's feed-preview frame
+//   at the preview endpoint for the selected profile + source, then opens the modal
 // - on modal close, clears the frame so the polling host unmounts (stops polling)
 export default class extends Controller {
   static targets = ["button", "frame"]
@@ -15,6 +15,10 @@ export default class extends Controller {
   }
 
   connect() {
+    // Snapshot the frame's initial loading markup so we can paint the spinner
+    // instantly on every open, instead of waiting for the first server response.
+    if (this.hasFrameTarget) this._loadingHTML = this.frameTarget.innerHTML
+
     this._onHide = this._clearFrame.bind(this)
     this._modal = document.getElementById(this.modalIdValue)
     this._modal?.addEventListener("modal:hide", this._onHide)
@@ -40,6 +44,10 @@ export default class extends Controller {
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
     url.searchParams.set(`params[${shape}]`, this.sourceValue)
+
+    // Paint the spinner before kicking off the fetch so the modal never opens
+    // empty while the first response is in flight.
+    if (this._loadingHTML != null) this.frameTarget.innerHTML = this._loadingHTML
     this.frameTarget.setAttribute("src", url.toString())
 
     this._modal?.dispatchEvent(new CustomEvent("modal:show"))
