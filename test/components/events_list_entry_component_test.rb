@@ -57,6 +57,15 @@ class EventsListEntryComponentTest < ViewComponent::TestCase
     assert_not_includes description["class"], "text-sm"
   end
 
+  test "#call should place the timestamp after the message" do
+    event = create(:event, type: "feed_refresh", level: :info, user: user)
+
+    result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    keys = result.css("[data-key='events.entry'] > *").map { |node| node["data-key"] }
+    assert_operator keys.index("events.description"), :<, keys.index("events.timestamp")
+  end
+
   test "#call should flag warning and error events with a severity dot" do
     event = create(:event, type: "error_event", level: :error, user: user)
 
