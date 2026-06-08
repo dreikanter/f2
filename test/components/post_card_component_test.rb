@@ -28,28 +28,33 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "Flag Design"
   end
 
-  test "#render should show @group chip for an unpublished post when show_feed is true" do
+  test "#render should show the group as a labeled item linking to the feed when show_feed is true" do
+    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+
+    group = result.at_css('[data-key="post.group"]')
+    assert_not_nil group
+    assert_includes group.text.gsub(/\s+/, " "), "Group: @xkcd"
+    assert_includes group.at_css("a")["href"], "/feeds/"
+    assert_equal feed.display_name, group.at_css("a")["title"]
+  end
+
+  test "#render should label the group the same way for unpublished posts" do
     draft_post = create(:post, :draft, feed: feed)
     result = render_inline PostCardComponent.new(post: draft_post, show_feed: true)
 
-    group_link = result.at_css("a[href*='/feeds/']")
-    assert_not_nil group_link
-    assert_equal "@xkcd", group_link.text.strip
-    assert_equal feed.display_name, group_link["title"]
+    assert_includes result.at_css('[data-key="post.group"]').text.gsub(/\s+/, " "), "Group: @xkcd"
   end
 
-  test "#render should weave the group into a reposted status when show_feed is true" do
+  test "#render should keep the group out of the status label" do
     result = render_inline PostCardComponent.new(post: post, show_feed: true)
 
-    status = result.at_css('[data-key="post.status"]')
-    assert_includes status.text.gsub(/\s+/, " "), "Reposted to @xkcd"
-    # The group reads as plain text inside the status, not a separate feed link.
-    assert_nil result.at_css("a[href*='/feeds/']")
+    assert_not_includes result.at_css('[data-key="post.status"]').text, "@xkcd"
   end
 
-  test "#render should hide group label when show_feed is false" do
+  test "#render should hide the group when show_feed is false" do
     result = render_inline PostCardComponent.new(post: post, show_feed: false)
 
+    assert_nil result.at_css('[data-key="post.group"]')
     assert_nil result.at_css("a[href*='/feeds/']")
   end
 
