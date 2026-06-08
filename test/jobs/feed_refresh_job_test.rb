@@ -63,12 +63,11 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
-  test "handles advisory lock failure gracefully" do
+  test ".perform_now should skip without raising when the feed is already being refreshed" do
     feed = create(:feed, feed_profile_key: "rss")
 
-    # Mock the advisory lock to always fail
-    Feed.stub(:with_advisory_lock, ->(*args) { raise WithAdvisoryLock::FailedToAcquireLock.new("Could not acquire lock") }) do
-      # Should not raise an exception
+    # with_advisory_lock! raises on contention; the job rescues it and skips.
+    Feed.stub(:with_advisory_lock!, ->(*, **) { raise WithAdvisoryLock::FailedToAcquireLock.new("feed_refresh") }) do
       assert_nothing_raised do
         FeedRefreshJob.perform_now(feed.id)
       end

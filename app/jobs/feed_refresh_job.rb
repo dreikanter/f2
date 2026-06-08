@@ -6,7 +6,7 @@ class FeedRefreshJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    Feed.with_advisory_lock("feed_refresh_#{feed.id}", timeout_seconds: 0) do
+    Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
       FeedRefreshWorkflow.new(feed).execute
     end
   rescue WithAdvisoryLock::FailedToAcquireLock
