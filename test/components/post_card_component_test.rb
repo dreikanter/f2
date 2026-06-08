@@ -28,13 +28,23 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "Flag Design"
   end
 
-  test "#render should show @group label with display name title when show_feed is true" do
-    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+  test "#render should show @group chip for an unpublished post when show_feed is true" do
+    draft_post = create(:post, :draft, feed: feed)
+    result = render_inline PostCardComponent.new(post: draft_post, show_feed: true)
 
     group_link = result.at_css("a[href*='/feeds/']")
     assert_not_nil group_link
     assert_equal "@xkcd", group_link.text.strip
     assert_equal feed.display_name, group_link["title"]
+  end
+
+  test "#render should weave the group into a reposted status when show_feed is true" do
+    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+
+    status = result.at_css('[data-key="post.status"]')
+    assert_includes status.text.gsub(/\s+/, " "), "Reposted to @xkcd"
+    # The group reads as plain text inside the status, not a separate feed link.
+    assert_nil result.at_css("a[href*='/feeds/']")
   end
 
   test "#render should hide group label when show_feed is false" do
