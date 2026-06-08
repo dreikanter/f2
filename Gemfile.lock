@@ -522,6 +522,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  addressable
   bcrypt (~> 3.1.7)
   bootsnap
   brakeman

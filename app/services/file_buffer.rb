@@ -63,13 +63,11 @@ class FileBuffer
     [io, content_type]
   end
 
-  # Percent-encode any non-ASCII characters so the URL can be handled by
-  # Ruby's URI/Net::HTTP, which reject non-ASCII input. Existing percent-encoded
-  # sequences and ASCII reserved characters are left untouched.
+  # Normalize the URL so it can be handled by Ruby's URI/Net::HTTP, which reject
+  # non-ASCII input. Addressable percent-encodes non-ASCII characters in the path
+  # and query and converts non-ASCII hosts to punycode, leaving valid URLs intact.
   def normalize_url(url)
-    url.gsub(/[^[:ascii:]]+/) do |chunk|
-      chunk.b.bytes.map { |byte| format("%%%02X", byte) }.join
-    end
+    Addressable::URI.parse(url).normalize.to_s
   end
 
   def local_file_content_type(path)

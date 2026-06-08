@@ -46,6 +46,19 @@ class FileBufferTest < ActiveSupport::TestCase
     assert_equal response_body, io.string
   end
 
+  test "#load should convert a non-ASCII host to punycode before downloading" do
+    url = "https://café.com/image.jpg"
+    encoded_url = "https://xn--caf-dma.com/image.jpg"
+    response_body = file_fixture("test_image.jpg").binread
+
+    stub_request(:get, encoded_url).to_return(status: 200, body: response_body)
+
+    io, content_type = FileBuffer.new.load(url)
+
+    assert_equal "image/jpeg", content_type
+    assert_equal response_body, io.string
+  end
+
   test "#load should detect content type from file content when URL has no extension" do
     url = "https://example.com/unknown"
     response_body = file_fixture("test_image.jpg").binread
