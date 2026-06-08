@@ -101,6 +101,15 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css("##{PostDeleteModalComponent.modal_id(post)}")
   end
 
+  test "#render should offer Delete for a failed post" do
+    Current.session = build(:session, user: user)
+    failed_post = create(:post, :failed, feed: feed)
+    result = render_inline PostCardComponent.new(post: failed_post)
+
+    menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
+    assert_includes menu_items, "Delete…"
+  end
+
   test "#render should not offer Delete for an unpublished post" do
     Current.session = build(:session, user: user)
     draft_post = create(:post, feed: feed, status: :draft)

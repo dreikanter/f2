@@ -1,15 +1,9 @@
 <%= render ModalComponent.new(title: "Delete post", modal_id: modal_id) do %>
   <%= form_with url: helpers.post_path(post), method: :delete, data: form_data do |form| %>
     <div class="space-y-6">
-      <% if freefeed_option? %>
-        <p class="text-base text-slate-600">
-          This post lives in two places: as a published post on FreeFeed, and as a record here in Feeder. Choose what you want to remove.
-        </p>
-      <% else %>
-        <p class="text-base text-slate-600">
-          This post is already gone from FreeFeed. You can still remove Feeder's record of it.
-        </p>
-      <% end %>
+      <p class="text-base text-slate-600">
+        <%= intro_message %>
+      </p>
 
       <div class="space-y-4">
         <% if freefeed_option? %>

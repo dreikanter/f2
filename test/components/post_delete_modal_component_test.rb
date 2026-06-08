@@ -43,6 +43,15 @@ class PostDeleteModalComponentTest < ViewComponent::TestCase
     assert result.at_css("input[name='delete_record']")[:checked]
   end
 
+  test "#render should offer only the record option for a failed post" do
+    failed_post = create(:post, :failed, feed: feed)
+    result = render_inline PostDeleteModalComponent.new(post: failed_post)
+
+    assert_nil result.at_css("input[name='delete_freefeed_post']")
+    assert result.at_css("input[name='delete_record']")[:checked]
+    assert_includes result.text, "never made it to FreeFeed"
+  end
+
   test "#render should wire the submit button to the post-delete controller" do
     result = render_inline PostDeleteModalComponent.new(post: post)
 
