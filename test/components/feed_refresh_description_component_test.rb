@@ -21,7 +21,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
     assert_includes result.to_html, "refreshed"
-    assert_equal "(+2)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(+2 posts)", result.css("[data-key='events.posts_count']").first&.text
   end
 
   test "#call should count only post references" do
@@ -30,7 +30,7 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
 
-    assert_equal "(+1)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(+1 post)", result.css("[data-key='events.posts_count']").first&.text
   end
 
   test "#call should omit the count when the refresh imported nothing" do

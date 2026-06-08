@@ -39,31 +39,54 @@ class EventsListEntryComponentTest < ViewComponent::TestCase
     assert_empty result.css("a[href='/events/#{event.id}'] a")
   end
 
-  test "#call should render the subject filter chip when a subject is present" do
+  test "#call should not repeat the subject reference, which the description already links" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    link = result.css("a[data-key='events.subject']").first
-    assert_not_nil link
-    assert_equal "Feed ##{feed.id}", link.text
-    assert_includes link["href"], "filter%5Bsubject_type%5D=Feed"
-    assert_includes link["href"], "filter%5Bsubject_id%5D=#{feed.id}"
-    assert_not_includes link["href"], "/admin/"
+    assert_nil result.css("[data-key='events.subject']").first
   end
 
-  test "#call should flag warning and error events with a severity dot" do
+  test "#call should render the description at the default text size" do
+    event = create(:event, type: "feed_refresh", level: :info, user: user)
+
+    result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    description = result.css("[data-key='events.description']").first
+    assert_not_includes description["class"], "text-sm"
+  end
+
+  test "#call should place the timestamp after the message" do
+    event = create(:event, type: "feed_refresh", level: :info, user: user)
+
+    result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    keys = result.css("[data-key='events.entry'] > *").map { |node| node["data-key"] }
+    assert_operator keys.index("events.description"), :<, keys.index("events.timestamp")
+  end
+
+  test "#call should flag error events with a red cross icon" do
     event = create(:event, type: "error_event", level: :error, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    dot = result.css("[data-key='events.severity']").first
-    assert_not_nil dot
-    assert_includes dot["class"], "bg-red-500"
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_not_nil icon
+    assert_includes icon["class"], "text-red-500"
   end
 
-  test "#call should not flag routine info events with a severity dot" do
+  test "#call should flag warning events with an amber triangle icon" do
+    event = create(:event, type: "warning_event", level: :warning, user: user)
+
+    result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_not_nil icon
+    assert_includes icon["class"], "text-amber-500"
+  end
+
+  test "#call should not flag routine info events with a severity icon" do
     event = create(:event, type: "feed_refresh", level: :info, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))

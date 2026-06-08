@@ -14,22 +14,17 @@ module EventLogEntryPresentation
     end
   end
 
-  # A small colored dot flags entries that need attention. Routine "info"
-  # events carry no dot — the text alone is enough, and a badge saying "Info"
-  # tells the reader nothing.
-  def severity_dot
-    color = case event.level
-    when "warning" then "bg-amber-400"
-    when "error" then "bg-red-500"
+  # An icon flags entries that need attention: a warning triangle or an error
+  # cross. Routine "info" events carry nothing — the text alone is enough, and a
+  # badge saying "Info" tells the reader nothing.
+  def severity_icon
+    name, color = case event.level
+    when "warning" then ["triangle-alert", "text-amber-500"]
+    when "error" then ["circle-x", "text-red-500"]
     end
-    return unless color
+    return unless name
 
-    helpers.tag.span(
-      "",
-      class: "inline-block h-2 w-2 shrink-0 rounded-full #{color}",
-      aria: { hidden: true },
-      data: { key: "events.severity" }
-    )
+    helpers.icon(name, css_class: "size-4 #{color}", aria_label: event.level.capitalize)
   end
 
   def subject_label
