@@ -111,6 +111,7 @@ module RateLimit
       unless result.allowed?
         Rails.logger.info("RateLimit throttled #{name}:#{subject} cost=#{cost.inspect} retry_after=#{result.retry_after.round(2)}s")
         Honeybadger.event("rate_limit.throttled", policy: name.to_s, subject: subject, cost: cost, retry_after: result.retry_after)
+        Metrics.increment("rate_limit_throttled_total", policy: name.to_s)
       end
       result
     rescue ActiveRecord::ActiveRecordError => e
@@ -181,6 +182,7 @@ module RateLimit
       end
       Rails.logger.warn("RateLimit cooldown #{name}:#{subject} blocked for #{retry_after}s (server throttled us)")
       Honeybadger.event("rate_limit.penalized", policy: name.to_s, subject: subject, retry_after: retry_after)
+      Metrics.increment("rate_limit_penalized_total", policy: name.to_s)
     end
 
     # Largest cost a single acquire could ever satisfy for a dimension — the

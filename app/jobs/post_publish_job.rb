@@ -45,6 +45,7 @@ class PostPublishJob < ApplicationJob
 
     RateLimit.acquire!(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     FreefeedPublisher.new(post).publish
+    Metrics.increment("posts_published_total", status: "published")
     schedule_next(feed)
   rescue RateLimit::Throttled
     # No capacity right now: reschedule the whole job (RateLimited) for the same
@@ -56,6 +57,7 @@ class PostPublishJob < ApplicationJob
   rescue => e
     # Poison post: mark it failed and move on so the queue isn't blocked.
     post.update!(status: :failed)
+    Metrics.increment("posts_published_total", status: "failed")
     Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
     Rails.error.report(e, context: { post: post.attributes, feed: feed.attributes })
     schedule_next(feed)
@@ -76,6 +78,7 @@ class PostPublishJob < ApplicationJob
   # forever and block the queue, so fail it and move on.
   def reject_oversized(feed, post, posts)
     post.update!(status: :failed)
+    Metrics.increment("posts_published_total", status: "rejected")
     Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
     schedule_next(feed)
   end
