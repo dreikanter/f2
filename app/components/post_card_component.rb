@@ -49,8 +49,12 @@ class PostCardComponent < ViewComponent::Base
     helpers.icon(status_display[:icon], css_class: "size-3.5 #{status_display[:color]}")
   end
 
+  # Group the label, parens and the time tag inside a single inline wrapper so
+  # the surrounding flex gap only spaces the icon from the text. Without the
+  # wrapper the parens become separate flex items and the duration drifts away
+  # from them, e.g. "Reposted ( 1d )" instead of "Reposted (1d)".
   def status_label_with_time
-    helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"])
+    helpers.content_tag(:span, helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"]))
   end
 
   # The status badge reports when the post reached its current state. For a

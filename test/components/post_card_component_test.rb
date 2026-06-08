@@ -138,6 +138,18 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty status_link.css("svg.text-green-600")
   end
 
+  test "#render should keep the duration tight against its parentheses" do
+    published_post = create(:post, :published, feed: feed,
+      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: published_post)
+
+    # The label, parens and time tag share one inline wrapper that carries no
+    # flex gap, so the duration cannot drift away from its parentheses.
+    wrapper = result.at_css('[data-key="post.status"] time').parent
+    assert_equal "Reposted (10h)", wrapper.text.strip
+    assert_not_includes wrapper["class"].to_s, "gap"
+  end
+
   test "#render should show the reposted status as plain text when freefeed url is missing" do
     # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
     purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
