@@ -57,6 +57,17 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_equal "1 comment", result.at_css('[data-key="post.comments"]').text.strip
   end
 
+  test "#render should separate footer items with middots" do
+    post_with_attachments = create(:post, :published, :with_attachments, feed: feed,
+      source_url: "https://xkcd.com/3250/")
+    result = render_inline PostCardComponent.new(post: post_with_attachments)
+
+    # status · Source · attachments => two separators, hidden from assistive tech.
+    middots = result.css("span").select { |span| span.text.strip == "·" }
+    assert_equal 2, middots.size
+    assert(middots.all? { |middot| middot["aria-hidden"] == "true" })
+  end
+
   test "#render should not show attachment or comment counts when none" do
     result = render_inline PostCardComponent.new(post: post)
 
