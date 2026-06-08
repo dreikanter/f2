@@ -18,9 +18,11 @@ class EventsListEntryComponent < ViewComponent::Base
   attr_reader :event, :href
 
   # A fixed-width gutter keeps the message left edge aligned whether or not the
-  # entry carries a severity dot.
+  # entry carries a severity icon.
   def severity_tag
-    content_tag(:span, severity_dot, class: "flex w-2 shrink-0 justify-center")
+    icon = severity_icon
+    content_tag(:span, icon, class: "flex w-4 shrink-0 items-center justify-center",
+                             data: icon ? { key: "events.severity" } : {})
   end
 
   def description_tag

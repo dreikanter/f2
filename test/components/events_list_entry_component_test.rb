@@ -66,17 +66,27 @@ class EventsListEntryComponentTest < ViewComponent::TestCase
     assert_operator keys.index("events.description"), :<, keys.index("events.timestamp")
   end
 
-  test "#call should flag warning and error events with a severity dot" do
+  test "#call should flag error events with a red cross icon" do
     event = create(:event, type: "error_event", level: :error, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    dot = result.css("[data-key='events.severity']").first
-    assert_not_nil dot
-    assert_includes dot["class"], "bg-red-500"
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_not_nil icon
+    assert_includes icon["class"], "text-red-500"
   end
 
-  test "#call should not flag routine info events with a severity dot" do
+  test "#call should flag warning events with an amber triangle icon" do
+    event = create(:event, type: "warning_event", level: :warning, user: user)
+
+    result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
+
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_not_nil icon
+    assert_includes icon["class"], "text-amber-500"
+  end
+
+  test "#call should not flag routine info events with a severity icon" do
     event = create(:event, type: "feed_refresh", level: :info, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
