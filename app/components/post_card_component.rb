@@ -1,4 +1,13 @@
 class PostCardComponent < ViewComponent::Base
+  STATUS_DISPLAY = {
+    "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
+    "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
+    "rejected"  => { icon: "circle-x",     color: "text-orange-500", label: "Rejected" },
+    "published" => { icon: "circle-check", color: "text-green-600",  label: "Reposted" },
+    "failed"    => { icon: "circle-x",     color: "text-red-600",    label: "Failed" },
+    "withdrawn" => { icon: "trash-2",      color: "text-slate-400",  label: "Withdrawn" }
+  }.freeze
+
   def initialize(post:, show_feed: false)
     @post = post
     @show_feed = show_feed
@@ -31,18 +40,46 @@ class PostCardComponent < ViewComponent::Base
     post.feed&.display_name
   end
 
-  def source_label
-    return unless post.published_at
-    label_with_time("Source", post.published_at)
+  def status_display
+    STATUS_DISPLAY[post.status.to_s] ||
+      { icon: "file", color: "text-slate-400", label: post.status.to_s.capitalize }
   end
 
-  def repost_label
-    return unless post.reposted_at
-    label_with_time("Repost", post.reposted_at)
+  def status_icon
+    helpers.icon(status_display[:icon], css_class: "size-3.5 #{status_display[:color]}")
   end
 
-  def label_with_time(label, time)
-    helpers.safe_join([label, " (", helpers.short_time_ago_tag(time), ")"])
+  def status_label_with_time
+    helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"])
+  end
+
+  # The status badge reports when the post reached its current state. For a
+  # published post that is the repost moment (see Post#reposted_at); for every
+  # other state it is the last transition, which updated_at tracks.
+  def status_time
+    post.reposted_at || post.updated_at
+  end
+
+  def reposted?
+    post.published?
+  end
+
+  # Attachment and comment counts describe what made it onto FreeFeed, so they
+  # only make sense once the post is actually reposted.
+  def show_attachment_count?
+    reposted? && attachment_count.positive?
+  end
+
+  def show_comment_count?
+    reposted? && comment_count.positive?
+  end
+
+  def attachment_label
+    helpers.pluralize(attachment_count, "attachment")
+  end
+
+  def comment_label
+    helpers.pluralize(comment_count, "comment")
   end
 
   def attachment_count
@@ -59,6 +96,10 @@ class PostCardComponent < ViewComponent::Base
 
   def freefeed_url
     post.freefeed_url
+  end
+
+  def status_links_to_freefeed?
+    reposted? && freefeed_url.present?
   end
 
   def delete_allowed?

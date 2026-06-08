@@ -43,11 +43,32 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_nil result.at_css("a[href*='/feeds/']")
   end
 
-  test "#render should show attachment count icon when attachments present" do
-    post_with_attachments = create(:post, :with_attachments, feed: feed)
+  test "#render should show attachment count for reposted posts with attachments" do
+    post_with_attachments = create(:post, :published, :with_attachments, feed: feed)
     result = render_inline PostCardComponent.new(post: post_with_attachments)
 
-    assert_not_empty result.css("span.flex.items-center.gap-1")
+    assert_equal "2 attachments", result.at_css('[data-key="post.attachments"]').text.strip
+  end
+
+  test "#render should show comment count for reposted posts with comments" do
+    post_with_comments = create(:post, :published, :with_comments, feed: feed)
+    result = render_inline PostCardComponent.new(post: post_with_comments)
+
+    assert_equal "1 comment", result.at_css('[data-key="post.comments"]').text.strip
+  end
+
+  test "#render should not show attachment or comment counts when none" do
+    result = render_inline PostCardComponent.new(post: post)
+
+    assert_nil result.at_css('[data-key="post.attachments"]')
+    assert_nil result.at_css('[data-key="post.comments"]')
+  end
+
+  test "#render should not show counts for failed posts even with attachments" do
+    failed_post = create(:post, :failed, :with_attachments, feed: feed)
+    result = render_inline PostCardComponent.new(post: failed_post)
+
+    assert_nil result.at_css('[data-key="post.attachments"]')
   end
 
   test "#render should show Withdrawn badge for withdrawn posts" do
@@ -96,43 +117,45 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css(".border-t.border-slate-200")
   end
 
-  test "#render should link source time to the original publication" do
+  test "#render should link the source without a timestamp" do
     published_post = create(:post, :published, feed: feed, source_url: "https://xkcd.com/3250/",
       published_at: 11.hours.ago, updated_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
     source_link = result.at_css("a[href='https://xkcd.com/3250/']")
     assert_not_nil source_link
-    assert_includes source_link.text.gsub(/\s+/, " "), "Source (11h)"
+    assert_equal "Source", source_link.text.strip
   end
 
-  test "#render should link repost time to the freefeed post" do
+  test "#render should label published posts as reposted and link to the freefeed post" do
     published_post = create(:post, :published, feed: feed,
       published_at: 11.hours.ago, updated_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
-    repost_link = result.at_css("a[href='#{published_post.freefeed_url}']")
-    assert_not_nil repost_link
-    assert_includes repost_link.text.gsub(/\s+/, " "), "Repost (10h)"
+    status_link = result.at_css("a[href='#{published_post.freefeed_url}']")
+    assert_not_nil status_link
+    assert_includes status_link.text.gsub(/\s+/, " "), "Reposted (10h)"
+    assert_not_empty status_link.css("svg.text-green-600")
   end
 
-  test "#render should show repost time as plain text when freefeed url is missing" do
+  test "#render should show the reposted status as plain text when freefeed url is missing" do
     # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
     purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
       published_at: 11.hours.ago, updated_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: purged_post)
 
     assert_nil purged_post.freefeed_url
-    assert_includes result.text.gsub(/\s+/, " "), "Repost (10h)"
-    assert_empty result.css("a").select { |a| a.text.include?("Repost") }
+    status = result.at_css('[data-key="post.status"]')
+    assert_includes status.text.gsub(/\s+/, " "), "Reposted (10h)"
+    assert_equal "span", status.name
   end
 
-  test "#render should not show a repost time for unpublished posts" do
-    draft_post = create(:post, feed: feed, status: :draft, published_at: 11.hours.ago)
-    result = render_inline PostCardComponent.new(post: draft_post)
+  test "#render should label failed posts as failed with a red icon" do
+    failed_post = create(:post, :failed, feed: feed, updated_at: 10.hours.ago)
+    result = render_inline PostCardComponent.new(post: failed_post)
 
-    text = result.text.gsub(/\s+/, " ")
-    assert_includes text, "Source (11h)"
-    assert_not_includes text, "Repost"
+    status = result.at_css('[data-key="post.status"]')
+    assert_includes status.text.gsub(/\s+/, " "), "Failed (10h)"
+    assert_not_empty status.css("svg.text-red-600")
   end
 end
