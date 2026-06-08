@@ -48,7 +48,8 @@ class FileBuffer
   end
 
   def url_to_io(url)
-    response = http_client.get(url)
+    normalized_url = normalize_url(url)
+    response = http_client.get(normalized_url)
 
     unless response.success?
       raise Error, "Failed to download attachment from #{url}: HTTP #{response.status}"
@@ -57,9 +58,16 @@ class FileBuffer
     io = StringIO.new(response.body)
     io.set_encoding(Encoding::BINARY)
 
-    content_type = url_content_type(url, response.body)
+    content_type = url_content_type(normalized_url, response.body)
 
     [io, content_type]
+  end
+
+  # Normalize the URL so it can be handled by Ruby's URI/Net::HTTP, which reject
+  # non-ASCII input. Addressable percent-encodes non-ASCII characters in the path
+  # and query and converts non-ASCII hosts to punycode, leaving valid URLs intact.
+  def normalize_url(url)
+    Addressable::URI.parse(url).normalize.to_s
   end
 
   def local_file_content_type(path)

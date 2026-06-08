@@ -70,6 +70,7 @@ group :development do
   gem "web-console"
 end
 
+gem "addressable"
 gem "dotenv"
 gem "faraday"
 gem "faraday-follow_redirects"
