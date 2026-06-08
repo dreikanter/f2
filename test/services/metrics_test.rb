@@ -76,12 +76,16 @@ class MetricsTest < ActiveSupport::TestCase
     end
   end
 
-  test "#flush! should swallow transport errors" do
+  test "#flush! should log transport errors without reporting to error tracker" do
     enable!
     stub_request(:post, "https://vm.test/api/v1/import/prometheus").to_raise(Errno::ECONNREFUSED)
     Metrics.increment("job_executions_total", status: "ok")
 
-    assert_nothing_raised { Metrics.flush! }
+    reported = []
+    Rails.error.stub(:report, ->(err, **) { reported << err }) do
+      assert_nothing_raised { Metrics.flush! }
+    end
+    assert_empty reported, "transport errors must not reach the error tracker"
   end
 
   test "ApplicationJob should record job runs by outcome" do

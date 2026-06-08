@@ -64,8 +64,8 @@ module Metrics
       "#{lines.join("\n")}\n"
     end
 
-    # Push the current snapshot. Best-effort: errors are reported, never raised,
-    # so a metrics outage can't take down the app.
+    # Push the current snapshot. Best-effort: transport errors are logged,
+    # never raised, so a metrics outage can't take down the app.
     def flush!
       return unless enabled?
 
@@ -73,6 +73,8 @@ module Metrics
       return if body.strip.empty?
 
       post(body)
+    rescue SocketError, SystemCallError, Timeout::Error, EOFError => e
+      Rails.logger.warn { "Metrics: transport error: #{e.message}" }
     rescue => e
       Rails.error.report(e, context: { component: "metrics" })
     end
