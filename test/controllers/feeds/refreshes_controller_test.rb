@@ -45,4 +45,28 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
   end
+
+  test "create throttles repeated refreshes for the same feed" do
+    sign_in_as(user)
+
+    with_rate_limit_cache do
+      10.times do
+        post feed_refresh_path(feed), as: :turbo_stream
+        assert_response :success
+      end
+
+      assert_no_enqueued_jobs do
+        post feed_refresh_path(feed), as: :turbo_stream
+      end
+      assert_response :too_many_requests
+    end
+  end
+
+  # rate_limit counts in Rails.cache, which is the no-op :null_store in tests.
+  # Delegate the captured store's increment to a real MemoryStore so the limit
+  # actually engages for the duration of the block.
+  def with_rate_limit_cache(&block)
+    store = ActiveSupport::Cache::MemoryStore.new
+    ActionController::Base.cache_store.stub(:increment, ->(*args, **kwargs) { store.increment(*args, **kwargs) }, &block)
+  end
 end
