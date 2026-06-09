@@ -51,6 +51,13 @@ module Metrics
       gauges << [name.to_s, normalize_labels(labels), block]
     end
 
+    # Register a labeled gauge family sampled at push time; the block returns a
+    # hash mapping label sets to values, e.g. { { table: "users" } => 123 }.
+    # Use when the label values themselves are only known at sample time.
+    def gauge_set(name, &block)
+      gauge_sets << [name.to_s, block]
+    end
+
     # Everything currently known, as Prometheus exposition text.
     def render
       lines = []
@@ -60,6 +67,11 @@ module Metrics
       gauges.each do |name, labels, block|
         value = sample(block)
         lines << line(name, labels, value) unless value.nil?
+      end
+      gauge_sets.each do |name, block|
+        (sample(block) || {}).each do |labels, value|
+          lines << line(name, normalize_labels(labels), value)
+        end
       end
       "#{lines.join("\n")}\n"
     end
@@ -101,6 +113,7 @@ module Metrics
     def reset!
       mutex.synchronize { counters.clear }
       gauges.clear
+      gauge_sets.clear
       @instance_label = nil
     end
 
@@ -112,6 +125,10 @@ module Metrics
 
     def gauges
       @gauges ||= []
+    end
+
+    def gauge_sets
+      @gauge_sets ||= []
     end
 
     def mutex

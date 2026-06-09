@@ -36,9 +36,21 @@ accessories:
     image: victoriametrics/victoria-metrics:latest
     host: dev.fffeeder.com
     port: "127.0.0.1:8428:8428"
-    cmd: "-retentionPeriod=1"
+    cmd: "-retentionPeriod=1 -promscrape.config=/etc/victoriametrics/scrape.yml"
+    files:
+      - config/victoriametrics/scrape.yml:/etc/victoriametrics/scrape.yml
     directories:
       - vmdata:/victoria-metrics-data
+
+  # Host-level OS metrics (disk space, RAM, CPU). Reads the host root through
+  # a read-only mount; scraped by VictoriaMetrics over the Kamal network
+  # (see config/victoriametrics/scrape.yml), so no published port.
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    host: dev.fffeeder.com
+    cmd: "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
 
 # Environment variables.
 env:

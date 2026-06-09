@@ -54,6 +54,30 @@ class MetricsTest < ActiveSupport::TestCase
     assert_includes Metrics.render, "feeder_feeds_enabled 9"
   end
 
+  test "#gauge_set should render a line per label set sampled at render time" do
+    enable!
+    sizes = { { table: "users" } => 100, { table: "feeds" } => 200 }
+    Metrics.gauge_set("pg_table_size_bytes") { sizes }
+
+    out = Metrics.render
+    assert_includes out, %(feeder_pg_table_size_bytes{table="users"} 100)
+    assert_includes out, %(feeder_pg_table_size_bytes{table="feeds"} 200)
+
+    sizes = { { table: "users" } => 150 }
+    assert_includes Metrics.render, %(feeder_pg_table_size_bytes{table="users"} 150)
+  end
+
+  test "#gauge_set should report sampling errors and emit nothing for that set" do
+    enable!
+    Metrics.gauge_set("pg_table_size_bytes") { raise "db down" }
+
+    reported = []
+    out = Rails.error.stub(:report, ->(err, **) { reported << err }) { Metrics.render }
+
+    refute_includes out, "pg_table_size_bytes"
+    assert_equal 1, reported.size
+  end
+
   test "#render should escape quotes in label values" do
     enable!
     Metrics.increment("job_executions_total", job: 'a"b')
