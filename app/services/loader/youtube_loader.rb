@@ -7,10 +7,10 @@ module Loader
 
     def load
       response = http_client.get(feed_url)
-      raise StandardError, "HTTP #{response.status}" unless response.success?
+      raise Loader::Error, "HTTP #{response.status}" unless response.success?
       response.body
     rescue HttpClient::Error => e
-      raise StandardError, e.message
+      raise Loader::Error, e.message
     end
 
     private
@@ -45,9 +45,9 @@ module Loader
 
     def fetch_feed_url_from_html(url)
       response = http_client.get(url)
-      raise StandardError, "HTTP #{response.status}" unless response.success?
+      raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
-      extract_feed_url(response.body) or raise StandardError, "Could not find YouTube RSS feed link"
+      extract_feed_url(response.body) or raise Loader::Error, "Could not find YouTube RSS feed link"
     end
 
     def youtube_domain?(host)

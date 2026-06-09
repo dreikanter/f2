@@ -25,7 +25,7 @@ class FeedRefreshWorkflow
   end
 
   def on_error(error)
-    Metrics.increment("feed_refresh_total", status: "error")
+    Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(error, current_step: current_step)
     disable_credential_on_auth_error(error)
     create_feed_refresh_error_event(error)
@@ -144,7 +144,7 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
-    Metrics.increment("feed_refresh_total", status: "ok")
+    Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     create_feed_refresh_stats_event(posts)
 
     # Record daily metrics (sparse data - only if there's activity)
