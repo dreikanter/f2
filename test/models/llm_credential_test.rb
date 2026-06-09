@@ -77,8 +77,14 @@ class LlmCredentialTest < ActiveSupport::TestCase
   end
 
   test "should allow defaults in different providers for the same user" do
-    create(:llm_credential, :default, user: user, provider: "anthropic", display_name: "Anthropic default")
     skip "no second provider registered yet" unless LlmProvider.all.size > 1
+
+    second_provider = (LlmProvider.names - ["anthropic"]).first
+    anthropic = create(:llm_credential, :default, user: user, provider: "anthropic", display_name: "Anthropic default")
+    other = create(:llm_credential, :default, user: user, provider: second_provider, display_name: "Other default")
+
+    assert anthropic.reload.is_default?
+    assert other.reload.is_default?
   end
 
   test "#make_default! should atomically promote one credential and un-default siblings" do
