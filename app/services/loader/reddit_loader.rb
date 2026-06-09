@@ -9,11 +9,11 @@ module Loader
 
     def load
       response = http_client.get(rss_url)
-      raise StandardError, "HTTP #{response.status}" unless response.success?
+      raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
       response.body
     rescue HttpClient::Error => e
-      raise StandardError, e.message
+      raise Loader::Error, e.message
     end
 
     private

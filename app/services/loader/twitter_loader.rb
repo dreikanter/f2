@@ -19,17 +19,17 @@ module Loader
 
     def load
       handle = screen_name
-      raise StandardError, "Could not determine X/Twitter handle from #{feed.url.inspect}" unless handle.match?(HANDLE)
+      raise Loader::Error, "Could not determine X/Twitter handle from #{feed.url.inspect}" unless handle.match?(HANDLE)
 
       response = http_client.get(
         "#{SYNDICATION_BASE}/#{handle}",
         headers: { "User-Agent" => USER_AGENT, "Accept" => "text/html" }
       )
-      raise StandardError, "HTTP #{response.status}" unless response.success?
+      raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
       response.body
     rescue HttpClient::Error => e
-      raise StandardError, e.message
+      raise Loader::Error, e.message
     end
 
     private

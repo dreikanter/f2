@@ -7,7 +7,9 @@ class FeedRefreshJob < ApplicationJob
     return unless feed
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
-      FeedRefreshWorkflow.new(feed).execute
+      Rails.error.handle(Loader::Error, context: { feed_id: feed.id }) do
+        FeedRefreshWorkflow.new(feed).execute
+      end
     end
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"

@@ -21,14 +21,14 @@ module Loader
 
     def load
       name = channel_name
-      raise StandardError, "Could not determine Telegram channel from #{feed.url.inspect}" unless name.match?(USERNAME)
+      raise Loader::Error, "Could not determine Telegram channel from #{feed.url.inspect}" unless name.match?(USERNAME)
 
       response = http_client.get("#{PREVIEW_BASE}/#{name}", headers: { "User-Agent" => USER_AGENT })
-      raise StandardError, "HTTP #{response.status}" unless response.success?
+      raise Loader::Error, "HTTP #{response.status}" unless response.success?
 
       response.body
     rescue HttpClient::Error => e
-      raise StandardError, e.message
+      raise Loader::Error, e.message
     end
 
     private

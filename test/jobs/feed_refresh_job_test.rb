@@ -63,6 +63,14 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
+  test "does not raise when the loader raises Loader::Error" do
+    WebMock.stub_request(:get, feed.url).to_return(status: 500)
+
+    assert_nothing_raised do
+      FeedRefreshJob.perform_now(feed.id)
+    end
+  end
+
   test ".perform_now should skip without raising when the feed is already being refreshed" do
     feed = create(:feed, feed_profile_key: "rss")
 

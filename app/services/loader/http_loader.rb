@@ -6,12 +6,12 @@ module Loader
       response = http_client.get(feed.url)
 
       unless response.success?
-        raise StandardError, "HTTP #{response.status}"
+        raise Loader::Error, "HTTP #{response.status}"
       end
 
       response.body
     rescue HttpClient::Error => e
-      raise StandardError, e.message
+      raise Loader::Error, e.message
     end
 
     private
