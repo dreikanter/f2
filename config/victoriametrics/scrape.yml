@@ -1,0 +1,7 @@
+# Scrape targets for the VictoriaMetrics accessory (-promscrape.config).
+# Targets are reached by container name over the Kamal docker network,
+# so no exporter needs a published port.
+scrape_configs:
+  - job_name: node
+    static_configs:
+      - targets: ["f2-node-exporter:9100"]
