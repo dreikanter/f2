@@ -196,7 +196,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Stub network request to timeout
     WebMock.stub_request(:get, test_feed.url).to_timeout
 
-    error = assert_raises(StandardError) do
+    error = assert_raises(Loader::Error) do
       workflow.execute
     end
 
@@ -212,7 +212,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     error_event = events.first
     assert_equal "error", error_event.level
     assert_match(/execution expired/, error_event.message)
-    assert_equal "StandardError", error_event.metadata["error"]["class"]
+    assert_equal "Loader::Error", error_event.metadata["error"]["class"]
   end
 
   test "#execute should handle RSS processing errors gracefully" do
