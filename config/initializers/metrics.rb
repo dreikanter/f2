@@ -10,4 +10,8 @@ Rails.application.config.after_initialize do
   Metrics.gauge("jobs_ready") { SolidQueue::ReadyExecution.count }
 
   Metrics.start!
+
+  # SolidQueue forks worker processes; threads don't survive fork, so the flush
+  # thread must be restarted inside each worker after the fork.
+  SolidQueue.on_worker_start { Metrics.start! }
 end
