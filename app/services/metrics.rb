@@ -74,6 +74,9 @@ module Metrics
 
       post(body)
     rescue SocketError, SystemCallError, Timeout::Error, EOFError => e
+      # Transport failures are logged, not reported: a metrics outage is an
+      # infrastructure event, not a bug. Reporting every flush attempt (every
+      # 15s) while VM is down would flood the error tracker with noise.
       Rails.logger.warn { "Metrics: transport error: #{e.message}" }
     rescue => e
       Rails.error.report(e, context: { component: "metrics" })
