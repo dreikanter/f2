@@ -11,6 +11,7 @@ class FeedRefreshJob < ApplicationJob
     end
   rescue Loader::Error => e
     Rails.logger.error "Feed #{feed_id} load failed: #{e.message}"
+    Metrics.increment("loader_errors_total")
     Rails.error.report(e, context: { feed_id: feed_id })
   rescue WithAdvisoryLock::FailedToAcquireLock
     Rails.logger.info "Feed #{feed_id} is already being processed, skipping"
