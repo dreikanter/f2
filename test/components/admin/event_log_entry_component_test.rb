@@ -141,6 +141,39 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_not_includes result.text, "Target:"
   end
 
+  test "#call should tint warning cards with the alert palette" do
+    event = create(:event, level: :warning, user: user)
+
+    result = render_entry(event)
+
+    card = result.css("[data-key='events.#{event.id}']").first
+    assert_includes card["class"], "bg-amber-100"
+    assert_includes card["class"], "border-amber-200"
+  end
+
+  test "#call should tint error cards with the alert palette" do
+    event = create(:event, level: :error, user: user)
+
+    result = render_entry(event)
+
+    card = result.css("[data-key='events.#{event.id}']").first
+    assert_includes card["class"], "bg-red-100"
+    assert_includes card["class"], "border-red-200"
+
+    footer = result.css("a[data-key='events.timestamp']").first.parent
+    assert_includes footer["class"], "border-red-200"
+  end
+
+  test "#call should keep routine cards neutral" do
+    event = create(:event, level: :info, user: user)
+
+    result = render_entry(event)
+
+    card = result.css("[data-key='events.#{event.id}']").first
+    assert_includes card["class"], "bg-white"
+    assert_includes card["class"], "border-slate-200"
+  end
+
   test "#call should truncate the footer on narrow screens" do
     event = create(:event, user: user)
 

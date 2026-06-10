@@ -1,6 +1,16 @@
 class Admin::EventLogEntryComponent < ViewComponent::Base
   include EventLogEntryPresentation
 
+  # Warning and error cards reuse the alert palette so problems stand out
+  # while scanning the log; routine events stay neutral. The border picks a
+  # slightly darker shade of the background hue, like AlertComponent does.
+  LEVEL_TINTS = {
+    "warning" => { border: "border-amber-200", background: "bg-amber-100" },
+    "error" => { border: "border-red-200", background: "bg-red-100" }
+  }.freeze
+
+  DEFAULT_TINT = { border: "border-slate-200", background: "bg-white" }.freeze
+
   def initialize(event:, href:)
     @event = event
     @href = href
@@ -9,6 +19,18 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
   private
 
   attr_reader :event, :href
+
+  def card_classes
+    helpers.class_names("w-full rounded-lg border shadow-xs", tint[:border], tint[:background])
+  end
+
+  def divider_border
+    tint[:border]
+  end
+
+  def tint
+    LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
+  end
 
   # The severity gutter doubles as a drill-down: clicking the icon narrows
   # the log to events of the same level.
