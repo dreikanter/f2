@@ -7,7 +7,7 @@ class EventsListEntryComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:li, class: "flex items-center gap-3 px-4 py-2.5",
+    content_tag(:li, class: "flex items-center gap-3 px-4 py-2.5 transition duration-75 hover:bg-slate-50",
                      data: { key: "events.entry", event_type: event.type, event_id: event.id }) do
       safe_join([severity_tag, description_tag, time_tag])
     end
