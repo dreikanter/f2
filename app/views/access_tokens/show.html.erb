@@ -5,10 +5,17 @@
     data-controller="polling"
     data-polling-endpoint-value="<%= access_token_validation_path(@access_token, feed_id: @feed&.id) %>"
     data-polling-interval-value="2000"
+    data-polling-max-polls-value="35"
     data-polling-stop-condition-value="[data-status]"
     aria-busy="true">
     <div id="access-token-show" class="space-y-8">
       <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
+    </div>
+    <div data-polling-target="timeoutMessage" hidden class="mt-4">
+      <%= render AlertComponent.new(variant: :warning) do %>
+        <p class="font-semibold">Validation is taking longer than expected.</p>
+        <p><%= link_to "Refresh the page", request.path, data: { turbo: false }, class: "underline underline-offset-2" %> to check the current status.</p>
+      <% end %>
     </div>
   </div>
 <% else %>

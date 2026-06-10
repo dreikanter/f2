@@ -11,6 +11,8 @@ export default class extends Controller {
     scope: { type: String, default: "element" }
   }
 
+  static targets = ["timeoutMessage", "content"]
+
   connect() {
     if (this.hasEndpointValue) this.startPolling()
   }
@@ -55,7 +57,12 @@ export default class extends Controller {
       return this._scheduleNext(this.intervalValue)
     }
 
-    if (!this._shouldContinuePolling()) {
+    if (this.stopConditionSatisfied()) {
+      return this.stopPolling()
+    }
+
+    if (this.maxPollsValue > 0 && this._pollCount >= this.maxPollsValue) {
+      this._onTimeout()
       return this.stopPolling()
     }
 
@@ -69,10 +76,9 @@ export default class extends Controller {
     }
   }
 
-  _shouldContinuePolling() {
-    if (this.stopConditionSatisfied()) return false
-    if (this.maxPollsValue > 0 && this._pollCount >= this.maxPollsValue) return false
-    return true
+  _onTimeout() {
+    if (this.hasTimeoutMessageTarget) this.timeoutMessageTarget.hidden = false
+    if (this.hasContentTarget) this.contentTarget.hidden = true
   }
 
   async _performPoll(options = {}) {
