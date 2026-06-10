@@ -244,6 +244,22 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "#show should mark a timed-out preview as failed and render the failed partial" do
+    sign_in_as(user)
+    create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                       params: { "url" => "http://example.com/feed.xml" },
+                                       updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+          headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert_match(/data-preview-done/, response.body)
+    assert user.feed_previews.last.failed?
+  end
+
   test "#show should scope previews to the current user" do
     other = create(:user)
     create(:feed_preview, :completed, user: other, feed_profile_key: "rss",

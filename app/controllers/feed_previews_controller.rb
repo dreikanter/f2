@@ -18,6 +18,7 @@ class FeedPreviewsController < ApplicationController
   def show
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
+    preview.timeout! if preview.timed_out?
     render_state(preview)
   end
 
