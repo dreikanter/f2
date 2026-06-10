@@ -10,17 +10,17 @@
   </div>
 
   <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-4 py-2">
-    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400">
+    <div class="min-w-0 flex-1 truncate text-sm text-slate-400">
       <%# The status sits leftmost and is always present, so every following
           item (group, counts) leads with a middot. %>
       <% if status_links_to_freefeed? %>
         <%= link_to freefeed_url, target: "_blank", rel: "noopener",
-              class: "flex items-center gap-1.5 transition hover:text-slate-600",
+              class: "inline-flex items-center gap-1.5 transition hover:text-slate-600",
               data: { key: "post.status" } do %>
           <%= status_icon %><%= status_label_with_time %>
         <% end %>
       <% else %>
-        <span class="flex items-center gap-1.5" data-key="post.status">
+        <span class="inline-flex items-center gap-1.5" data-key="post.status">
           <%= status_icon %><%= status_label_with_time %>
         </span>
       <% end %>
@@ -43,7 +43,7 @@
       <% end %>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex shrink-0 items-center gap-3">
       <div class="relative">
         <button type="button"
                 id="<%= menu_id %>-button"
