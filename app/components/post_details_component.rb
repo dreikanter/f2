@@ -4,7 +4,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def call
-    render(ListComponent.new) do |list|
+    render(ListComponent.new(css_class: class_names(ListComponent::DEFAULT_CSS_CLASSES, "shadow-sm"))) do |list|
       add_feed_item(list)
       add_published_item(list)
       add_reposted_item(list) if @post.reposted_at

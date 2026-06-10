@@ -22,4 +22,12 @@ class PostDetailsComponentTest < ViewComponent::TestCase
 
     assert_nil result.css('[data-key="post.reposted"]').first
   end
+
+  test "#render should apply a shadow to the details list" do
+    post = create(:post, feed: feed)
+
+    result = render_inline(PostDetailsComponent.new(post: post))
+
+    assert_includes result.css("ul").first["class"], "shadow-sm"
+  end
 end
