@@ -1,5 +1,6 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
+  PREVIEW_TIMEOUT_SECONDS = 120
 
   belongs_to :user
   belongs_to :feed, optional: true
@@ -26,6 +27,19 @@ class FeedPreview < ApplicationRecord
   def self.source_input(feed_profile_key, params)
     shape = FeedProfile[feed_profile_key]&.dig(:input_shape) || :url
     (params || {})[shape.to_s]
+  end
+
+  def timed_out?
+    (pending? || processing?) && updated_at < PREVIEW_TIMEOUT_SECONDS.seconds.ago
+  end
+
+  # Transitions to :failed when still in a non-terminal state and timed out.
+  # Uses a conditional UPDATE so a concurrently completing job can't be clobbered.
+  def timeout!
+    updated = self.class
+                  .where(id: id, status: [self.class.statuses[:pending], self.class.statuses[:processing]])
+                  .update_all(status: self.class.statuses[:failed], updated_at: Time.current)
+    reload if updated.positive?
   end
 
   def posts_data
