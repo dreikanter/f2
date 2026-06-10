@@ -33,12 +33,13 @@ class FeedPreview < ApplicationRecord
     (pending? || processing?) && updated_at < PREVIEW_TIMEOUT_SECONDS.seconds.ago
   end
 
-  # Transitions to :failed when still in a non-terminal state and timed out.
-  # Uses a conditional UPDATE so a concurrently completing job can't be clobbered.
+  # Transitions to :failed only if still non-terminal. The status guard in the
+  # UPDATE means a concurrently completing job won't be clobbered.
   def timeout!
     updated = self.class
-                  .where(id: id, status: [self.class.statuses[:pending], self.class.statuses[:processing]])
-                  .update_all(status: self.class.statuses[:failed], updated_at: Time.current)
+                  .where(id: self.id)
+                  .where(status: [:pending, :processing])
+                  .update_all(status: :failed, updated_at: Time.current)
     reload if updated.positive?
   end
 
