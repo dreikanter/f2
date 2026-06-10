@@ -10,19 +10,52 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
 
   attr_reader :event, :href
 
-  def subject_filter_path(filter_params)
-    helpers.admin_events_path(filter: filter_params)
+  # The timestamp sits leftmost so it survives the narrow-screen truncation;
+  # everything after it clips with an ellipsis.
+  def footer_items
+    [timestamp_link, type_link, user_label, target_label].compact
+  end
+
+  def timestamp_link
+    helpers.link_to(helpers.short_time_ago(event.created_at), href,
+                    class: "font-medium transition hover:text-slate-700",
+                    title: event.created_at.rfc3339,
+                    data: { key: "events.timestamp" })
+  end
+
+  def type_link
+    helpers.link_to(event.type,
+                    helpers.admin_events_path(filter: { type: [event.type] }),
+                    class: "font-mono transition hover:text-slate-700",
+                    data: { key: "events.type" })
   end
 
   # Admins see who an event belongs to; the user links to a filtered log.
   def user_label
-    return helpers.tag.em("System", data: { key: "events.user" }) if event.user_id.blank?
+    label = if event.user_id.blank?
+      helpers.tag.em("System", data: { key: "events.user" })
+    else
+      helpers.link_to("##{event.user_id}",
+                      helpers.admin_events_path(filter: { user_id: event.user_id }),
+                      class: "underline underline-offset-2 transition hover:text-slate-700",
+                      data: { key: "events.user" })
+    end
 
-    helpers.link_to(
-      "User ##{event.user_id}",
-      helpers.admin_events_path(filter: { user_id: event.user_id }),
-      class: "underline underline-offset-2 hover:text-slate-700",
-      data: { key: "events.user" }
-    )
+    safe_join(["User: ", label])
+  end
+
+  def target_label
+    return if event.subject_type.blank?
+
+    value = [event.subject_type, event.subject_id].compact.join("#")
+    filter_params = { subject_type: event.subject_type }
+    filter_params[:subject_id] = event.subject_id if event.subject_id.present?
+
+    link = helpers.link_to(value,
+                           helpers.admin_events_path(filter: filter_params),
+                           class: "underline underline-offset-2 transition hover:text-slate-700",
+                           data: { key: "events.subject" })
+
+    safe_join(["Target: ", link])
   end
 end
