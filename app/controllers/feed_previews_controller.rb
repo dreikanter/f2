@@ -49,7 +49,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def needs_run?(preview)
-    preview.new_record? || preview.failed? || stale_ready?(preview)
+    preview.new_record? || stale_ready?(preview)
   end
 
   # Start a fresh run and return the persisted row. If a concurrent request

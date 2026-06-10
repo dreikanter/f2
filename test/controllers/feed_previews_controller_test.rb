@@ -120,6 +120,35 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert user.feed_previews.last.pending?
   end
 
+  test "#show should render the failed state without restarting a run" do
+    sign_in_as(user)
+    create(:feed_preview, :failed, user: user, feed_profile_key: "rss",
+                                   params: { "url" => "http://example.com/feed.xml" })
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+          headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert_match(/data-preview-done/, response.body)
+  end
+
+  test "#create should restart a failed preview and enqueue a job" do
+    sign_in_as(user)
+    create(:feed_preview, :failed, user: user, feed_profile_key: "rss",
+                                   params: { "url" => "http://example.com/feed.xml" })
+
+    assert_no_difference("FeedPreview.count") do
+      assert_enqueued_with(job: FeedPreviewJob) do
+        post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+      end
+    end
+
+    assert_response :success
+    assert user.feed_previews.last.pending?
+  end
+
   test "#create should re-enqueue and reset an existing ready preview" do
     sign_in_as(user)
     preview = create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
