@@ -27,4 +27,13 @@ class FeedPreviewJobTest < ActiveJob::TestCase
       assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, "run-1") }
     end
   end
+
+  test "#perform should swallow workflow errors to prevent retry oscillation" do
+    preview = create(:feed_preview, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-1")
+
+    FeedPreviewWorkflow.stub(:new, ->(*, **) { raise StandardError, "Could not find YouTube RSS feed link" }) do
+      assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, "run-1") }
+    end
+  end
 end
