@@ -15,6 +15,12 @@ module ApplicationHelper
     truncate(content.strip, length: length)
   end
 
+  # Decorative separator between card footer items. Hidden from assistive tech
+  # so the items read as distinct entries rather than "dot".
+  def middot
+    content_tag(:span, "·", class: "mx-1 text-slate-300", aria: { hidden: true })
+  end
+
   ICONS = {
     # Media
     "pause"          => '<rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>',

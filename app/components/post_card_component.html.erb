@@ -26,7 +26,7 @@
       <% end %>
 
       <% if show_group? %>
-        <%= middot %>
+        <%= helpers.middot %>
         <span data-key="post.group">Group:
           <%= link_to group_label, group_url, title: group_hint,
                 class: "transition hover:text-slate-600" %>
@@ -34,11 +34,11 @@
       <% end %>
 
       <% if show_attachment_count? %>
-        <%= middot %>
+        <%= helpers.middot %>
         <span data-key="post.attachments"><%= attachment_label %></span>
       <% end %>
       <% if show_comment_count? %>
-        <%= middot %>
+        <%= helpers.middot %>
         <span data-key="post.comments"><%= comment_label %></span>
       <% end %>
     </div>
