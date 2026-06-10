@@ -8,7 +8,7 @@
   </div>
 
   <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
-    <div class="flex items-center gap-3 text-sm font-normal text-slate-400">
+    <div class="flex items-center gap-3 text-sm text-slate-400">
       <% if target_group_label %>
         <% if target_group_url %>
           <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
@@ -18,11 +18,11 @@
         <% end %>
       <% end %>
       <span class="flex items-center gap-1">
-        <span class="text-slate-500">Updated:</span>
+        Updated:
         <%= last_refreshed_tag %>
       </span>
       <span class="flex items-center gap-1">
-        <span class="text-slate-500">Post:</span>
+        Post:
         <%= most_recent_post_tag %>
       </span>
     </div>
