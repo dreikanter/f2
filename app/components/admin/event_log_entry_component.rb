@@ -38,6 +38,7 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
       helpers.link_to("##{event.user_id}",
                       helpers.admin_events_path(filter: { user_id: event.user_id }),
                       class: "underline underline-offset-2 transition hover:text-slate-700",
+                      title: event.user&.email_address,
                       data: { key: "events.user" })
     end
 
@@ -54,8 +55,18 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
     link = helpers.link_to(value,
                            helpers.admin_events_path(filter: filter_params),
                            class: "underline underline-offset-2 transition hover:text-slate-700",
+                           title: target_title,
                            data: { key: "events.subject" })
 
     safe_join(["Target: ", link])
+  end
+
+  # Resolves the subject to its human name so admins don't have to memorize
+  # ids; deleted subjects render without a hint.
+  def target_title
+    subject = event.subject
+    return unless subject
+
+    subject.try(:display_name) || subject.try(:name) || subject.try(:email_address)
   end
 end

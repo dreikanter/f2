@@ -65,6 +65,15 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_includes result.text, "User:"
   end
 
+  test "#call should reveal the user email on hover" do
+    event = create(:event, user: user)
+
+    result = render_entry(event)
+
+    link = result.css("a[data-key='events.user']").first
+    assert_equal user.email_address, link["title"]
+  end
+
   test "#call should link the subject to the admin filter" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
@@ -78,6 +87,27 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_includes link["href"], "filter%5Bsubject_type%5D=Feed"
     assert_includes link["href"], "filter%5Bsubject_id%5D=#{feed.id}"
     assert_includes result.text, "Target:"
+  end
+
+  test "#call should reveal the subject name on hover" do
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", subject: feed, user: user)
+
+    result = render_entry(event)
+
+    link = result.css("a[data-key='events.subject']").first
+    assert_equal feed.display_name, link["title"]
+  end
+
+  test "#call should omit the subject hover title when the subject is gone" do
+    event = create(:event, user: user)
+    event.update!(subject_type: "Feed", subject_id: 12_345)
+
+    result = render_entry(event)
+
+    link = result.css("a[data-key='events.subject']").first
+    assert_not_nil link
+    assert_nil link["title"]
   end
 
   test "#call should show System for events without a user" do
