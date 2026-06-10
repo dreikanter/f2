@@ -285,6 +285,19 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="events.type"]', text: "TypeC", count: 0
   end
 
+  test "should filter events by level" do
+    login_as(admin_user)
+
+    create(:event, type: "InfoEvent", level: :info)
+    create(:event, type: "WarningEvent", level: :warning)
+
+    get admin_events_path, params: { filter: { level: "warning" } }
+
+    assert_response :success
+    assert_select '[data-key="events.type"]', text: "WarningEvent", count: 1
+    assert_select '[data-key="events.type"]', text: "InfoEvent", count: 0
+  end
+
   test "should filter events by user_id" do
     login_as(admin_user)
 

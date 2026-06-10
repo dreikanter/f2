@@ -10,6 +10,16 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
 
   attr_reader :event, :href
 
+  # The severity gutter doubles as a drill-down: clicking the icon narrows
+  # the log to events of the same level.
+  def severity_link
+    helpers.link_to(severity_icon,
+                    helpers.admin_events_path(filter: { level: event.level }),
+                    class: "flex w-4 shrink-0 items-center justify-center",
+                    title: "Show #{event.level} events",
+                    data: { key: "events.severity" })
+  end
+
   # The timestamp sits leftmost so it survives the narrow-screen truncation;
   # everything after it clips with an ellipsis.
   def footer_items

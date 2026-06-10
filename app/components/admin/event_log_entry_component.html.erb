@@ -1,6 +1,6 @@
 <div class="w-full rounded-lg border border-slate-200 bg-white shadow-xs" data-key="events.<%= event.id %>">
   <div class="flex items-center gap-3 px-5 py-4">
-    <span class="flex w-4 shrink-0 items-center justify-center" data-key="events.severity"><%= severity_icon %></span>
+    <%= severity_link %>
     <div class="min-w-0 flex-1 truncate text-slate-700" data-key="events.description">
       <%= render EventDescriptionComponent.for(event) %>
     </div>

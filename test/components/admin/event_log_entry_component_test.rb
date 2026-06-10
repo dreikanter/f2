@@ -31,6 +31,18 @@ class Admin::EventLogEntryComponentTest < ViewComponent::TestCase
     assert_not_includes result.text, "Warning"
   end
 
+  test "#call should link the severity icon to the level filter" do
+    event = create(:event, level: :error, user: user)
+
+    result = render_entry(event)
+
+    link = result.css("a[data-key='events.severity']").first
+    assert_not_nil link
+    assert_includes link["href"], "/admin/events"
+    assert_includes link["href"], "filter%5Blevel%5D=error"
+    assert_equal "Show error events", link["title"]
+  end
+
   test "#call should link the footer timestamp to the event page" do
     event = create(:event, user: user)
 
