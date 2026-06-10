@@ -14,7 +14,10 @@ class FeedPreviewJob < ApplicationJob
     # marked the preview failed; this is a user-state condition, not a crash.
     Rails.logger.info "FeedPreviewJob: no AI credential for preview #{feed_preview_id}: #{e.message}"
   rescue => e
+    # The workflow already transitioned the preview to :failed. Do not re-raise:
+    # retrying would reset status back to :processing (via initialize_workflow),
+    # causing the status to oscillate and leaving the client polling indefinitely.
     Rails.logger.error "FeedPreviewJob failed for preview #{feed_preview_id}: #{e.message}"
-    raise
+    Rails.error.report(e, context: { feed_preview_id: feed_preview_id })
   end
 end
