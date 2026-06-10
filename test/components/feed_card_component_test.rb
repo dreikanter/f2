@@ -87,6 +87,29 @@ class FeedCardComponentTest < ViewComponent::TestCase
     end
   end
 
+  test "#render should show Source action opening the feed source in a new tab" do
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: feed)
+
+      source = result.css("[data-key='feed.#{feed.id}.source']").first
+      assert_not_nil source
+      assert_equal "Source", source.text.strip
+      assert_equal "https://example.com/feed.xml", source["href"]
+      assert_equal "_blank", source["target"]
+    end
+  end
+
+  test "#render should not show Source for query-shaped feeds" do
+    query_feed = create(:feed, user: user, feed_profile_key: "llm_web_search",
+      params: { "query" => "ruby news" })
+
+    with_request_url("/feeds") do
+      result = render_inline FeedCardComponent.new(feed: query_feed)
+
+      assert_empty result.css("[data-key='feed.#{query_feed.id}.source']")
+    end
+  end
+
   test "#render should show Edit action for non-draft feeds" do
     with_request_url("/feeds") do
       result = render_inline FeedCardComponent.new(feed: feed)

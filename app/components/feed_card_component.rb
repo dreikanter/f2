@@ -47,6 +47,12 @@ class FeedCardComponent < ViewComponent::Base
     "feed-menu-#{feed.id}"
   end
 
+  # Query-shaped profiles (AI search) have no URL to open, so the menu only
+  # offers a source link when the feed's input is an actual URL.
+  def source_url
+    feed.source_input.presence if feed.source_input_shape == "url"
+  end
+
   def target_group_label
     "@#{feed.target_group}" if feed.target_group.present?
   end
