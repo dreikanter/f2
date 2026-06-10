@@ -5,11 +5,11 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
   # while scanning the log; routine events stay neutral. The border picks a
   # slightly darker shade of the background hue, like AlertComponent does.
   LEVEL_TINTS = {
-    "warning" => { border: "border-amber-200", background: "bg-amber-100" },
-    "error" => { border: "border-red-200", background: "bg-red-100" }
+    "warning" => { border: "border-amber-200", background: "bg-amber-100 hover:bg-amber-200" },
+    "error" => { border: "border-red-200", background: "bg-red-100 hover:bg-red-200" }
   }.freeze
 
-  DEFAULT_TINT = { border: "border-slate-200", background: "bg-white" }.freeze
+  DEFAULT_TINT = { border: "border-slate-200", background: "bg-white hover:bg-slate-50" }.freeze
 
   def initialize(event:, href:)
     @event = event
@@ -21,7 +21,7 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
   attr_reader :event, :href
 
   def card_classes
-    helpers.class_names("w-full rounded-lg border shadow-xs", tint[:border], tint[:background])
+    helpers.class_names("w-full rounded-lg border shadow-xs transition duration-75", tint[:border], tint[:background])
   end
 
   def divider_border

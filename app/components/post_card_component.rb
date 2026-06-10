@@ -123,9 +123,9 @@ class PostCardComponent < ViewComponent::Base
 
   def card_classes
     helpers.class_names(
-      "w-full rounded-lg border border-slate-200 shadow-xs",
-      "bg-slate-50" => withdrawn?,
-      "bg-white" => !withdrawn?
+      "w-full rounded-lg border border-slate-200 shadow-xs transition duration-75",
+      "bg-slate-50 hover:bg-slate-100" => withdrawn?,
+      "bg-white hover:bg-slate-50" => !withdrawn?
     )
   end
 
