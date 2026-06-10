@@ -138,7 +138,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   # Decorative separator between footer items. Hidden from assistive tech so the
-  # status, source and counts read as distinct items rather than "dot".
+  # status, group and counts read as distinct items rather than "dot".
   def middot
     helpers.content_tag(:span, "·", class: "text-slate-300", aria: { hidden: true })
   end

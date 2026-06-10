@@ -73,11 +73,10 @@ class PostCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should separate footer items with middots" do
-    post_with_attachments = create(:post, :published, :with_attachments, feed: feed,
-      source_url: "https://xkcd.com/3250/")
+    post_with_attachments = create(:post, :published, :with_attachments, :with_comments, feed: feed)
     result = render_inline PostCardComponent.new(post: post_with_attachments)
 
-    # status · Source · attachments => two separators, hidden from assistive tech.
+    # status · attachments · comments => two separators, hidden from assistive tech.
     middots = result.css("span").select { |span| span.text.strip == "·" }
     assert_equal 2, middots.size
     assert(middots.all? { |middot| middot["aria-hidden"] == "true" })
@@ -111,12 +110,13 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(withdrawn_post)}.bg-slate-50")
   end
 
-  test "#render should offer Details and Delete actions for a published post" do
+  test "#render should offer Details, Source and Delete actions for a published post" do
     Current.session = build(:session, user: user)
     result = render_inline PostCardComponent.new(post: post)
 
     menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
     assert_includes menu_items, "Details"
+    assert_includes menu_items, "Source"
     assert_includes menu_items, "Delete…"
   end
 
@@ -146,20 +146,28 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_includes menu_items, "Delete…"
   end
 
-  test "#render should show footer when post has a source url" do
+  test "#render should render the status footer" do
     result = render_inline PostCardComponent.new(post: post)
 
     assert_not_empty result.css(".border-t.border-slate-200")
   end
 
-  test "#render should link the source without a timestamp" do
-    published_post = create(:post, :published, feed: feed, source_url: "https://xkcd.com/3250/",
-      published_at: 11.hours.ago, updated_at: 10.hours.ago)
-    result = render_inline PostCardComponent.new(post: published_post)
+  test "#render should offer the source as a menu item opening in a new tab" do
+    result = render_inline PostCardComponent.new(post: post)
 
-    source_link = result.at_css("a[href='https://xkcd.com/3250/']")
+    source_link = result.at_css('[data-key="post.source"]')
     assert_not_nil source_link
     assert_equal "Source", source_link.text.strip
+    assert_equal "menuitem", source_link["role"]
+    assert_equal "https://xkcd.com/3250/", source_link["href"]
+    assert_equal "_blank", source_link["target"]
+  end
+
+  test "#render should keep the source link out of the footer metadata" do
+    result = render_inline PostCardComponent.new(post: post)
+
+    source_links = result.css("a[href='https://xkcd.com/3250/']")
+    assert(source_links.all? { |link| link["role"] == "menuitem" })
   end
 
   test "#render should label published posts as reposted and link to the freefeed post" do
