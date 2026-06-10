@@ -8,20 +8,20 @@
   </div>
 
   <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
-    <div class="flex items-center gap-3 text-sm text-slate-400">
+    <div class="min-w-0 flex-1 truncate text-sm text-slate-400">
       <% if target_group_label %>
         <% if target_group_url %>
           <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                class: "transition hover:text-slate-600" %>
+                class: "mr-3 transition hover:text-slate-600" %>
         <% else %>
-          <span><%= target_group_label %></span>
+          <span class="mr-3"><%= target_group_label %></span>
         <% end %>
       <% end %>
-      <span class="flex items-center gap-1">
+      <span class="inline-flex items-center gap-1 mr-3">
         Updated:
         <%= last_refreshed_tag %>
       </span>
-      <span class="flex items-center gap-1">
+      <span class="inline-flex items-center gap-1">
         Post:
         <%= most_recent_post_tag %>
       </span>
