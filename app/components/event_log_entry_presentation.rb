@@ -14,15 +14,15 @@ module EventLogEntryPresentation
     end
   end
 
-  # An icon flags entries that need attention: a warning triangle or an error
-  # cross. Routine "info" events carry nothing — the text alone is enough, and a
-  # badge saying "Info" tells the reader nothing.
+  # Every entry carries a severity icon. Warnings and errors stand out in
+  # amber and red; routine events get a muted info circle so the column reads
+  # as a continuous gutter.
   def severity_icon
     name, color = case event.level
     when "warning" then ["triangle-alert", "text-amber-500"]
     when "error" then ["circle-x", "text-red-500"]
+    else ["info", "text-slate-400"]
     end
-    return unless name
 
     helpers.icon(name, css_class: "size-4 #{color}", aria_label: event.level.capitalize)
   end

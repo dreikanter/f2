@@ -86,11 +86,13 @@ class EventsListEntryComponentTest < ViewComponent::TestCase
     assert_includes icon["class"], "text-amber-500"
   end
 
-  test "#call should not flag routine info events with a severity icon" do
+  test "#call should mark routine info events with a light gray info icon" do
     event = create(:event, type: "feed_refresh", level: :info, user: user)
 
     result = render_inline(EventsListEntryComponent.new(event: event, href: "/events/#{event.id}"))
 
-    assert_nil result.css("[data-key='events.severity']").first
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_not_nil icon
+    assert_includes icon["class"], "text-slate-400"
   end
 end
