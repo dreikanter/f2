@@ -49,6 +49,14 @@
                   role: "menuitem",
                   data: { key: "feed.#{feed.id}.details" } %>
           </li>
+          <% if source_url %>
+            <li>
+              <%= link_to "Source", source_url, target: "_blank", rel: "noopener",
+                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
+                    role: "menuitem",
+                    data: { key: "feed.#{feed.id}.source" } %>
+            </li>
+          <% end %>
           <% if draft? %>
             <li>
               <%= link_to "Continue setup", edit_url,
