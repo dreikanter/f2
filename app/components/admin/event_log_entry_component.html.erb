@@ -1,21 +1,11 @@
-<div class="w-full rounded-lg border border-slate-200 bg-white shadow-xs" data-key="events.<%= event.id %>">
-  <div class="flex items-start justify-between gap-4 px-5 py-4">
-    <div class="flex min-w-0 flex-wrap items-center gap-2">
-      <%= render BadgeComponent.new(text: event.level.humanize, color: badge_color(event.level)) %>
-      <code class="text-sm font-semibold text-slate-800" data-key="events.type"><%= event.type %></code>
-    </div>
-    <%= link_to helpers.short_time_ago(event.created_at), href,
-                class: "shrink-0 text-sm font-medium text-slate-400 hover:text-slate-700",
-                title: event.created_at.rfc3339,
-                data: { key: "events.timestamp" } %>
-  </div>
-  <div class="flex items-center gap-3 border-t border-slate-200 px-5 py-2 text-sm text-slate-500">
-    <div class="min-w-0 truncate text-slate-600">
+<div class="<%= card_classes %>" data-key="events.<%= event.id %>">
+  <div class="flex items-center gap-3 px-5 py-4">
+    <%= severity_link %>
+    <div class="min-w-0 flex-1 truncate text-slate-700" data-key="events.description">
       <%= render EventDescriptionComponent.for(event) %>
     </div>
-    <% meta = safe_join([user_label, subject_label].compact, " • ") %>
-    <% if meta.present? %>
-      <div class="shrink-0"><%= meta %></div>
-    <% end %>
+  </div>
+  <div class="truncate border-t <%= divider_border %> px-5 py-2 text-sm text-slate-400">
+    <%= safe_join(footer_items, helpers.middot) %>
   </div>
 </div>

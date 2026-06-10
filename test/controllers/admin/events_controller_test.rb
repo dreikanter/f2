@@ -38,7 +38,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Events Log"
     assert_select '[data-key="events.type"]', "TestEvent"
-    assert_select 'a[data-key="events.user"]', "User ##{user.id}"
+    assert_select 'a[data-key="events.user"]', "##{user.id}"
   end
 
   test "should allow admin users to view event details" do
@@ -222,7 +222,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select '[data-key="events.subject"]', text: "Post #42"
+    assert_select '[data-key="events.subject"]', text: "Post#42"
   end
 
   test "should filter events by subject_type" do
@@ -238,8 +238,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
-    assert_select '[data-key="events.subject"]', text: /User #/, count: 2
-    assert_select '[data-key="events.subject"]', text: /Feed #/, count: 0
+    assert_select '[data-key="events.subject"]', text: /User#/, count: 2
+    assert_select '[data-key="events.subject"]', text: /Feed#/, count: 0
   end
 
   test "should filter events by subject_id" do
@@ -283,6 +283,19 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="events.type"]', text: "TypeA", count: 2
     assert_select '[data-key="events.type"]', text: "TypeB", count: 1
     assert_select '[data-key="events.type"]', text: "TypeC", count: 0
+  end
+
+  test "should filter events by level" do
+    login_as(admin_user)
+
+    create(:event, type: "InfoEvent", level: :info)
+    create(:event, type: "WarningEvent", level: :warning)
+
+    get admin_events_path, params: { filter: { level: "warning" } }
+
+    assert_response :success
+    assert_select '[data-key="events.type"]', text: "WarningEvent", count: 1
+    assert_select '[data-key="events.type"]', text: "InfoEvent", count: 0
   end
 
   test "should filter events by user_id" do
