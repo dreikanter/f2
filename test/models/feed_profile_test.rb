@@ -5,6 +5,7 @@ class FeedProfileTest < ActiveSupport::TestCase
     expected = [
       "llm_web_search",
       "llm_website_extractor",
+      "lobsters",
       "monkeyuser",
       "reddit",
       "rss",
