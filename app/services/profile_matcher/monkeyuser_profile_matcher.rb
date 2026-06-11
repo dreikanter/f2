@@ -9,7 +9,7 @@ module ProfileMatcher
       return false if input.blank?
 
       uri = URI.parse(input)
-      uri.host&.end_with?(MONKEYUSER_DOMAIN)
+      uri.host == MONKEYUSER_DOMAIN || uri.host&.end_with?(".#{MONKEYUSER_DOMAIN}")
     end
   end
 end
