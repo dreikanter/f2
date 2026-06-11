@@ -1,14 +1,14 @@
 {
   "attachment_urls": [
-    "https://nextbigfuture.s3.amazonaws.com/uploads/2026/06/Screenshot-2026-06-11-at-7.57.24-AM.jpg"
+    "https://example.com/uploads/2025/01/sample-photo.jpg"
   ],
   "comments": [
-    "What must you know before the SpaceX IPO? What many supposed analysts do not understand? They do not understand the AI business. What businesses is SpaceX in and where are they leading? Read more"
+    "This is the first sample article. It contains some introductory text about the topic covered in the post. Read more"
   ],
-  "content": "What Must You Know Before the SpaceX IPO? - https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html",
-  "published_at": "2026-06-11T15:25:21.000Z",
-  "source_url": "https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html",
+  "content": "Sample Article One - https://example.com/2025/01/sample-article-one.html",
+  "published_at": "2025-01-03T10:00:00.000Z",
+  "source_url": "https://example.com/2025/01/sample-article-one.html",
   "status": "enqueued",
-  "uid": "https://www.nextbigfuture.com/?p=210332",
+  "uid": "https://example.com/?p=1001",
   "validation_errors": []
 }

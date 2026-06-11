@@ -12,7 +12,7 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
   end
 
   setup do
-    stub_request(:get, "https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html")
+    stub_request(:get, "https://example.com/2025/01/sample-article-one.html")
       .to_return(status: 200, body: file_fixture("feeds/nextbigfuture/page.html").read)
   end
 
@@ -29,7 +29,7 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
 
-    assert_includes post.content, "What Must You Know Before the SpaceX IPO?"
+    assert_includes post.content, "Sample Article One"
   end
 
   test "#normalize should include stripped summary as a comment" do
@@ -38,7 +38,7 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
     post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
 
     assert_equal 1, post.comments.size
-    assert_includes post.comments.first, "What many supposed analysts do not understand"
+    assert_includes post.comments.first, "introductory text about the topic"
   end
 
   test "#normalize should fetch the featured image from the article page" do
@@ -46,12 +46,12 @@ class Normalizer::NextbigfutureNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::NextbigfutureNormalizer.new(entry).normalize
 
-    assert_equal ["https://nextbigfuture.s3.amazonaws.com/uploads/2026/06/Screenshot-2026-06-11-at-7.57.24-AM.jpg"],
+    assert_equal ["https://example.com/uploads/2025/01/sample-photo.jpg"],
                  post.attachment_urls
   end
 
   test "#normalize should return no attachments when page fetch fails" do
-    stub_request(:get, "https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html")
+    stub_request(:get, "https://example.com/2025/01/sample-article-one.html")
       .to_return(status: 404)
 
     entry = feed_entry(0)
