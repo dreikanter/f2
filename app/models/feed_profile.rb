@@ -129,6 +129,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "smbc" => {
+      display_name: "SMBC Comics",
+      description: "Saturday Morning Breakfast Cereal comics with the hovertext and hidden panel",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::SmbcProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::SmbcNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "llm_website_extractor" => {
       display_name: "AI page reader",
       description: "Uses AI to extract recent posts from a webpage that doesn't expose an RSS feed",

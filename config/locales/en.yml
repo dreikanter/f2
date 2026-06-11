@@ -91,4 +91,3 @@ en:
     resend_email_failed:
       name: "Email failed"
       description_html: "Email delivery failed"
-
