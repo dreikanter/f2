@@ -37,6 +37,10 @@ class ProfileMatcher::LitterboxProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher("https://feeds.feedburner.com/other/litterboxcomics").match?
   end
 
+  test "#match? should not match feedburner.com URLs with litterboxcomics as path prefix of another feed" do
+    assert_not matcher("https://feeds.feedburner.com/litterboxcomicsevil/yS3QAzAMEMP").match?
+  end
+
   test "#match? should not match non-feeds feedburner subdomain" do
     assert_not matcher("https://www.feedburner.com/litterboxcomics/yS3QAzAMEMP").match?
   end

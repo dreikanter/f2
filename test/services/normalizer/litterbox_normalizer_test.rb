@@ -64,18 +64,6 @@ class Normalizer::LitterboxNormalizerTest < ActiveSupport::TestCase
     ], post.attachment_urls
   end
 
-  test "#normalize should reject bonus posts with 'bonus' validation error" do
-    entry = feed_entry(0)
-    entry.raw_data["link"] = "https://www.litterboxcomics.com/sample-comic-one-bonus/"
-    stub_request(:get, "https://www.litterboxcomics.com/sample-comic-one-bonus-bonus/")
-      .to_return(status: 404, body: "")
-
-    post = Normalizer::LitterboxNormalizer.new(entry).normalize
-
-    assert_includes post.validation_errors, "bonus"
-    assert post.rejected?
-  end
-
   test "#normalize should handle bonus page fetch failure gracefully" do
     stub_request(:get, "https://www.litterboxcomics.com/sample-comic-one-bonus/")
       .to_raise(HttpClient::Error)

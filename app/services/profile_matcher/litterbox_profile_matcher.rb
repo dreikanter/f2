@@ -5,7 +5,7 @@ module ProfileMatcher
 
     LITTERBOX_HOSTS = %w[litterboxcomics.com www.litterboxcomics.com].freeze
     FEEDBURNER_HOST = "feeds.feedburner.com"
-    LITTERBOX_FEEDBURNER_PATH = "/litterboxcomics"
+    LITTERBOX_FEEDBURNER_PATH = "/litterboxcomics/"
 
     def match?
       return false if input.blank?

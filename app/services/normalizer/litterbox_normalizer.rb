@@ -25,12 +25,6 @@ module Normalizer
       ["Bonus panel: #{url}"]
     end
 
-    def validate_content
-      errors = super
-      errors << "bonus" if bonus_post?
-      errors
-    end
-
     def fetch_article_page
       @article_page ||= begin
         response = HttpClient.build.get(source_url)
@@ -59,10 +53,6 @@ module Normalizer
 
       base = link.sub(%r{/+\z}, "")
       "#{base}-bonus/"
-    end
-
-    def bonus_post?
-      source_url.to_s.match?(%r{-bonus/?$})
     end
   end
 end
