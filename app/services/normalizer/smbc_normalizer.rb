@@ -11,11 +11,14 @@ module Normalizer
     end
 
     def normalize_comments
-      [hovertext].compact_blank
+      # FreeFeed comments are text-only, so the hidden ("bonus") panel rides
+      # along as a comment whose body is the image URL; FreeFeed renders bare
+      # image URLs inline.
+      [hovertext, hidden_panel_image_url].compact_blank
     end
 
     def normalize_attachment_urls
-      [comic_image_url, hidden_panel_image_url].compact_blank
+      [comic_image_url].compact_blank
     end
 
     def hovertext
