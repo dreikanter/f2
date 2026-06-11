@@ -12,7 +12,7 @@ class Normalizer::SmbcNormalizerTest < ActiveSupport::TestCase
   end
 
   def stub_comic_page
-    stub_request(:get, "https://www.smbc-comics.com/comic/huh-2")
+    stub_request(:get, "https://www.smbc-comics.com/comic/sample-comic-one")
       .to_return(status: 200, body: file_fixture("feeds/smbc/page.html").read)
   end
 
@@ -32,7 +32,7 @@ class Normalizer::SmbcNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::SmbcNormalizer.new(entry).normalize
 
-    assert_equal "Huh - https://www.smbc-comics.com/comic/huh-2", post.content
+    assert_equal "Sample Comic One - https://www.smbc-comics.com/comic/sample-comic-one", post.content
   end
 
   test "#normalize should attach the comic and the hidden panel" do
@@ -42,8 +42,8 @@ class Normalizer::SmbcNormalizerTest < ActiveSupport::TestCase
     post = Normalizer::SmbcNormalizer.new(entry).normalize
 
     expected = [
-      "https://www.smbc-comics.com/comics/1780969506-20260611.png",
-      "https://www.smbc-comics.com/comics/178096959820260611after.png"
+      "https://www.smbc-comics.com/comics/sample-comic-one.png",
+      "https://www.smbc-comics.com/comics/sample-comic-one-after.png"
     ]
     assert_equal expected, post.attachment_urls
   end
@@ -54,27 +54,27 @@ class Normalizer::SmbcNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::SmbcNormalizer.new(entry).normalize
 
-    assert_equal ["Once I realized this, all those inept AI laundry-folding videos became hilarious."], post.comments
+    assert_equal ["Sample hovertext for the first comic."], post.comments
   end
 
   test "#normalize should skip the hidden panel when the page fetch fails" do
-    stub_request(:get, "https://www.smbc-comics.com/comic/huh-2").to_return(status: 404)
+    stub_request(:get, "https://www.smbc-comics.com/comic/sample-comic-one").to_return(status: 404)
     entry = feed_entry(0)
 
     post = Normalizer::SmbcNormalizer.new(entry).normalize
 
-    assert_equal ["https://www.smbc-comics.com/comics/1780969506-20260611.png"], post.attachment_urls
+    assert_equal ["https://www.smbc-comics.com/comics/sample-comic-one.png"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
 
   test "#normalize should skip the hidden panel when the page fetch raises a network error" do
-    stub_request(:get, "https://www.smbc-comics.com/comic/huh-2")
+    stub_request(:get, "https://www.smbc-comics.com/comic/sample-comic-one")
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
 
     post = Normalizer::SmbcNormalizer.new(entry).normalize
 
-    assert_equal ["https://www.smbc-comics.com/comics/1780969506-20260611.png"], post.attachment_urls
+    assert_equal ["https://www.smbc-comics.com/comics/sample-comic-one.png"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
 end
