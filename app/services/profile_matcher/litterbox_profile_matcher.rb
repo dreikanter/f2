@@ -4,8 +4,8 @@ module ProfileMatcher
     match_specificity 100
 
     LITTERBOX_HOSTS = %w[litterboxcomics.com www.litterboxcomics.com].freeze
-    FEEDBURNER_DOMAIN = "feedburner.com"
-    LITTERBOX_PATH_PATTERN = "litterboxcomics"
+    FEEDBURNER_HOST = "feeds.feedburner.com"
+    LITTERBOX_FEEDBURNER_PATH = "/litterboxcomics"
 
     def match?
       return false if input.blank?
@@ -23,8 +23,8 @@ module ProfileMatcher
     end
 
     def feedburner_litterbox?(uri)
-      (uri.host == FEEDBURNER_DOMAIN || uri.host&.end_with?(".#{FEEDBURNER_DOMAIN}")) &&
-        uri.path.to_s.include?(LITTERBOX_PATH_PATTERN)
+      uri.host == FEEDBURNER_HOST &&
+        uri.path.to_s.start_with?(LITTERBOX_FEEDBURNER_PATH)
     end
   end
 end

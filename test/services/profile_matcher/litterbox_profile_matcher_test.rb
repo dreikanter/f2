@@ -25,12 +25,20 @@ class ProfileMatcher::LitterboxProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://litterboxcomics.com/feed/").match?
   end
 
-  test "#match? should match feedburner.com URLs containing litterboxcomics in path" do
+  test "#match? should match feeds.feedburner.com URLs with litterboxcomics path" do
     assert matcher("https://feeds.feedburner.com/litterboxcomics/yS3QAzAMEMP").match?
   end
 
-  test "#match? should not match feedburner.com URLs without litterboxcomics in path" do
+  test "#match? should not match feedburner.com URLs without litterboxcomics path" do
     assert_not matcher("https://feeds.feedburner.com/someotherfeed/abc123").match?
+  end
+
+  test "#match? should not match feedburner.com URLs with litterboxcomics not at path start" do
+    assert_not matcher("https://feeds.feedburner.com/other/litterboxcomics").match?
+  end
+
+  test "#match? should not match non-feeds feedburner subdomain" do
+    assert_not matcher("https://www.feedburner.com/litterboxcomics/yS3QAzAMEMP").match?
   end
 
   test "#match? should not match non-litterbox URLs" do
