@@ -70,7 +70,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
   test "#normalize should reject the post when the comic image src is a malformed URI" do
     stub_request(:get, "https://www.monkeyuser.com/2025/button/")
       .to_return(status: 200, body: <<~HTML)
-        <html><body><img class="comic" src="/bad path/image.png" title="Alt text" /></body></html>
+        <html><body><div class="comic"><img src="/bad path/image.png" title="Alt text" /></div></body></html>
       HTML
     entry = feed_entry(0)
 
