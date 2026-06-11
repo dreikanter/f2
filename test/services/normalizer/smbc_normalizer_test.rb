@@ -66,4 +66,15 @@ class Normalizer::SmbcNormalizerTest < ActiveSupport::TestCase
     assert_equal ["https://www.smbc-comics.com/comics/1780969506-20260611.png"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
+
+  test "#normalize should skip the hidden panel when the page fetch raises a network error" do
+    stub_request(:get, "https://www.smbc-comics.com/comic/huh-2")
+      .to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    entry = feed_entry(0)
+
+    post = Normalizer::SmbcNormalizer.new(entry).normalize
+
+    assert_equal ["https://www.smbc-comics.com/comics/1780969506-20260611.png"], post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
 end
