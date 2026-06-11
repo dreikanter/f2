@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  >
+<channel>
+  <title>NextBigFuture.com</title>
+  <atom:link href="https://www.nextbigfuture.com/feed" rel="self" type="application/rss+xml" />
+  <link>https://www.nextbigfuture.com</link>
+  <description>Coverage of Disruptive Science and Technology</description>
+  <item>
+    <title>What Must You Know Before the SpaceX IPO?</title>
+    <link>https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html</link>
+    <dc:creator><![CDATA[Brian Wang]]></dc:creator>
+    <pubDate>Thu, 11 Jun 2026 15:25:21 +0000</pubDate>
+    <guid isPermaLink="false">https://www.nextbigfuture.com/?p=210332</guid>
+    <description><![CDATA[What must you know before the SpaceX IPO? What many supposed analysts do not understand? They do not understand the AI business. What businesses is SpaceX in and where are they leading? <p class="read-more-container"><a title="What Must You Know Before the SpaceX IPO?" class="read-more button" href="https://www.nextbigfuture.com/2026/06/what-must-you-know-before-the-spacex-ipo.html#more-210332">Read more</a></p>]]></description>
+  </item>
+  <item>
+    <title>Forbes Ranks Elon Musk as First Trillionaire</title>
+    <link>https://www.nextbigfuture.com/2026/06/forbes-ranks-elon-musk-as-first-trillionaire.html</link>
+    <dc:creator><![CDATA[Brian Wang]]></dc:creator>
+    <pubDate>Wed, 10 Jun 2026 23:03:18 +0000</pubDate>
+    <guid isPermaLink="false">https://www.nextbigfuture.com/?p=210316</guid>
+    <description><![CDATA[Forbes ranks Elon Musk as the first trillionaire ever. He is over triple the net worth of Larry Page who is second place.]]></description>
+  </item>
+</channel>
+</rss>
