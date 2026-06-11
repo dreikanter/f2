@@ -3,7 +3,7 @@ module ProfileMatcher
     input_shape :url
     match_specificity 100
 
-    LITTERBOX_DOMAIN = "litterboxcomics.com"
+    LITTERBOX_HOSTS = %w[litterboxcomics.com www.litterboxcomics.com].freeze
     FEEDBURNER_DOMAIN = "feedburner.com"
     LITTERBOX_PATH_PATTERN = "litterboxcomics"
 
@@ -19,7 +19,7 @@ module ProfileMatcher
     private
 
     def litterbox_host?(uri)
-      uri.host == LITTERBOX_DOMAIN || uri.host.end_with?(".#{LITTERBOX_DOMAIN}")
+      LITTERBOX_HOSTS.include?(uri.host)
     end
 
     def feedburner_litterbox?(uri)
