@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xml:base="https://aerostatbg.ru/">
+  <channel>
+    <atom:link href="https://aerostatbg.ru/rss.xml" rel="self" type="application/rss+xml"/>
+    <title>Аэростат – последние выпуски</title>
+    <description><![CDATA[Программа Бориса Гребенщикова. Выходит еженедельно на «Радио России» и радио «Культура».]]></description>
+    <link>https://aerostatbg.ru/rss.xml</link>
+    <language>ru</language>
+    <itunes:image href="https://aerostatbg.ru/themes/custom/aerostat/src/assets/img_rss.png"/>
+    <item>
+      <title>Выпуск №1094. Снежный Лев</title>
+      <pubDate>Sun, 07 Jun 2026 15:00:00 +0300</pubDate>
+      <dc:creator>aerostatbg@mail.ru</dc:creator>
+      <guid isPermaLink="false">1094</guid>
+      <itunes:image href="https://aerostatbg.ru/sites/default/files/styles/rss_image/public/releases/1094.jpg?itok=IpSaPXdB"/>
+      <enclosure url="https://aerostats.getmobileup.com/music/1094.mp3" length="0" type="audio/mpeg"/>
+      <itunes:title>Выпуск №1094. Снежный Лев</itunes:title>
+      <link>https://aerostatbg.ru/release/1094</link>
+      <description><![CDATA[Мне приходят письма с просьбой рассказать про запись альбома «Аквариума» «Снежный Лев». Что ж, с радостью поддамся на ваши уговоры.
+
+Читайте ещё на <a href="https://aerostatbg.ru">https://aerostatbg.ru</a>]]></description>
+      <itunes:author>aerostatbg@mail.ru</itunes:author>
+      <itunes:summary><![CDATA[Мне приходят письма с просьбой рассказать про запись альбома «Аквариума» «Снежный Лев». Что ж, с радостью поддамся на ваши уговоры.
+
+Читайте ещё на <a href="https://aerostatbg.ru">https://aerostatbg.ru</a>]]></itunes:summary>
+    </item>
+    <item>
+      <title>Выпуск №1093. Новые Песни Июня</title>
+      <pubDate>Sun, 31 May 2026 15:00:00 +0300</pubDate>
+      <dc:creator>aerostatbg@mail.ru</dc:creator>
+      <guid isPermaLink="false">1093</guid>
+      <itunes:image href="https://aerostatbg.ru/sites/default/files/styles/rss_image/public/releases/1093.jpg?itok=AJgzTbIU"/>
+      <enclosure url="https://aerostats.getmobileup.com/music/1093.mp3" length="0" type="audio/mpeg"/>
+      <itunes:title>Выпуск №1093. Новые Песни Июня</itunes:title>
+      <link>https://aerostatbg.ru/release/1093</link>
+      <description><![CDATA[Сегодня давайте займемся тайнами бытия в виде новых песен, выходящих в месяце июне.
+
+Читайте ещё на <a href="https://aerostatbg.ru">https://aerostatbg.ru</a>]]></description>
+      <itunes:author>aerostatbg@mail.ru</itunes:author>
+      <itunes:summary><![CDATA[Сегодня давайте займемся тайнами бытия в виде новых песен, выходящих в месяце июне.
+
+Читайте ещё на <a href="https://aerostatbg.ru">https://aerostatbg.ru</a>]]></itunes:summary>
+    </item>
+  </channel>
+</rss>
