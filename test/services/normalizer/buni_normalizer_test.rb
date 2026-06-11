@@ -55,4 +55,62 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
   end
+
+  test "#normalize should reject the post when the comic page fetch raises a network error" do
+    stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    entry = feed_entry(0)
+
+    post = Normalizer::BuniNormalizer.new(entry).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "missing_images"
+  end
+
+  test "#normalize should add a Webtoons comment when the entry links to Webtoons" do
+    webtoons_url = "https://www.webtoons.com/en/comedy/buni/ep-1/viewer"
+    entry = FeedEntry.new(
+      feed: feed,
+      uid: "https://www.bunicomic.com/comic/buni-webtoons/",
+      published_at: 1.hour.ago,
+      status: :pending,
+      raw_data: {
+        "title" => "Buni on Webtoons",
+        "link" => webtoons_url,
+        "url" => webtoons_url,
+        "content" => %(<a href="#{webtoons_url}">Read on Webtoons</a>),
+        "published" => 1.hour.ago.rfc3339
+      }
+    )
+    entry.save!
+    stub_request(:get, webtoons_url)
+      .to_return(status: 200, body: '<html><body><div class="entry"><img srcset="https://cdn.webtoons.com/img.jpg 1x" src="https://cdn.webtoons.com/img.jpg" /></div></body></html>')
+
+    post = Normalizer::BuniNormalizer.new(entry).normalize
+
+    assert_includes post.comments, "Check out today's comic on Webtoons: #{webtoons_url}"
+    assert_equal ["https://cdn.webtoons.com/img.jpg"], post.attachment_urls
+  end
+
+  test "#normalize should treat a malformed link href as non-Webtoons" do
+    entry = FeedEntry.new(
+      feed: feed,
+      uid: "https://www.bunicomic.com/comic/buni-baduri/",
+      published_at: 1.hour.ago,
+      status: :pending,
+      raw_data: {
+        "title" => "Buni",
+        "link" => PAGE_URL,
+        "url" => PAGE_URL,
+        "content" => '<a href="https://тест.example.com/buni">bad link</a>',
+        "published" => 1.hour.ago.rfc3339
+      }
+    )
+    entry.save!
+    stub_request(:get, PAGE_URL)
+      .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
+
+    post = Normalizer::BuniNormalizer.new(entry).normalize
+
+    assert_empty post.comments
+  end
 end
