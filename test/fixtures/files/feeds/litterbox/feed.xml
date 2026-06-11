@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Litterbox Comics</title>
+    <atom:link href="https://www.litterboxcomics.com/feed/" rel="self" type="application/rss+xml"/>
+    <link>https://www.litterboxcomics.com/</link>
+    <description></description>
+    <lastBuildDate>Tue, 09 Jun 2026 16:00:00 +0000</lastBuildDate>
+    <language>en-US</language>
+    <item>
+      <title>Dark Chocolate</title>
+      <link>https://www.litterboxcomics.com/dark-chocolate/</link>
+      <dc:creator><![CDATA[Chesca Hause]]></dc:creator>
+      <pubDate>Tue, 09 Jun 2026 16:00:00 +0000</pubDate>
+      <guid isPermaLink="false">https://www.litterboxcomics.com/?p=33732</guid>
+      <description><![CDATA[<p>BONUS PANEL on Patreon!</p>
+<p>The post <a href="https://www.litterboxcomics.com/dark-chocolate/">Dark Chocolate</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></description>
+      <content:encoded><![CDATA[<div class="wp-block-image">
+<figure class="aligncenter size-full is-resized"><img src="https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/06/dark-chocolate.png?resize=1000%2C1249&ssl=1" alt="" class="wp-image-33733" /></figure>
+</div>
+<p>The post <a href="https://www.litterboxcomics.com/dark-chocolate/">Dark Chocolate</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Cube</title>
+      <link>https://www.litterboxcomics.com/cube/</link>
+      <dc:creator><![CDATA[Chesca Hause]]></dc:creator>
+      <pubDate>Tue, 02 Jun 2026 16:00:00 +0000</pubDate>
+      <guid isPermaLink="false">https://www.litterboxcomics.com/?p=33726</guid>
+      <description><![CDATA[<p>BONUS PANEL on Patreon!</p>
+<p>The post <a href="https://www.litterboxcomics.com/cube/">Cube</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></description>
+      <content:encoded><![CDATA[<div class="wp-block-image">
+<figure class="aligncenter size-full is-resized"><img src="https://i0.wp.com/www.litterboxcomics.com/wp-content/uploads/2026/05/cube.png?resize=1000%2C1249&ssl=1" alt="" class="wp-image-33728" /></figure>
+</div>
+<p>The post <a href="https://www.litterboxcomics.com/cube/">Cube</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>
