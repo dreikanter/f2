@@ -7,8 +7,14 @@ class Permission < ApplicationRecord
   AVAILABLE_PERMISSIONS = [ADMIN, DEV].freeze
 
   LABELS = {
-    ADMIN => { display_name: "Admin", description: "Full admin panel access and user management." },
-    DEV   => { display_name: "Developer Tools", description: "Developer tools and experimental features." }
+    ADMIN => {
+      display_name: "Admin",
+      description: "Full admin panel access and user management."
+    },
+    DEV => {
+      display_name: "Developer Tools",
+      description: "Developer tools and experimental features."
+    }
   }.freeze
 
   validates :name, presence: true, inclusion: { in: AVAILABLE_PERMISSIONS }
