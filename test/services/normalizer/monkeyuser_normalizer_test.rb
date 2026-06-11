@@ -12,7 +12,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
   end
 
   def stub_comic_page
-    stub_request(:get, "https://www.monkeyuser.com/2025/button/")
+    stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/")
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
   end
 
@@ -32,7 +32,7 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
 
-    assert_equal ["https://www.monkeyuser.com/2025/button/justabutton.png"], post.attachment_urls
+    assert_equal ["https://www.monkeyuser.com/2025/sample-one/sample-image.png"], post.attachment_urls
   end
 
   test "#normalize should add the comic hovertext as a comment" do
@@ -41,11 +41,11 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
 
-    assert_equal ["It's not you... it's just a button."], post.comments
+    assert_equal ["Sample hover text."], post.comments
   end
 
   test "#normalize should reject the post when the comic page is unavailable" do
-    stub_request(:get, "https://www.monkeyuser.com/2025/button/").to_return(status: 500)
+    stub_request(:get, "https://www.monkeyuser.com/2025/sample-one/").to_return(status: 500)
     entry = feed_entry(0)
 
     post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
