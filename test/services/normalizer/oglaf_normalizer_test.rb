@@ -50,6 +50,33 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     assert_equal ["Territorial disputes with the God of nipples"], post.comments
   end
 
+  test "#normalize should return no attachments when the first page fetch raises a network error" do
+    stub_request(:get, "https://www.oglaf.com/goat/")
+      .to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    entry = feed_entry(0)
+
+    post = Normalizer::OglafNormalizer.new(entry).normalize
+
+    assert_empty post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
+
+  test "#normalize should stop following pages when the next-page URL is malformed" do
+    stub_request(:get, "https://www.oglaf.com/goat/")
+      .to_return(status: 200, body: <<~HTML)
+        <html>
+        <head><link rel="next" href="/goat story/2/" /></head>
+        <body><img id="strip" src="https://media.oglaf.com/comic/goat1.jpg" title="Alt text" /></body>
+        </html>
+      HTML
+    entry = feed_entry(0)
+
+    post = Normalizer::OglafNormalizer.new(entry).normalize
+
+    assert_equal ["https://media.oglaf.com/comic/goat1.jpg"], post.attachment_urls
+    assert_equal "enqueued", post.status
+  end
+
   test "#normalize should not follow a next link that points at another story" do
     stub_request(:get, "https://www.oglaf.com/lolth/").to_return(status: 200, body: <<~HTML)
       <html>
