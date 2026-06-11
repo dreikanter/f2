@@ -55,4 +55,15 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     assert_empty post.attachment_urls
     assert_empty post.comments
   end
+
+  test "#normalize should reject the post when the comic page fetch raises a network error" do
+    stub_request(:get, "https://www.monkeyuser.com/2025/button/")
+      .to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    entry = feed_entry(0)
+
+    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "missing_images"
+  end
 end
