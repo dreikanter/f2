@@ -33,6 +33,7 @@ Rails.application.routes.draw do
   resources :feed_entries, only: :show
   resource :feed_preview, only: [:show, :create]
   resource :admin, only: :show
+  resource :devtools, only: :show
 
   resource :feed_identifications, only: [:create, :show, :destroy]
 
