@@ -109,6 +109,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "lobsters" => {
+      display_name: "Lobsters",
+      description: "Stories from lobste.rs with a link to the discussion",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::LobstersProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::LobstersNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "llm_website_extractor" => {
       display_name: "AI page reader",
       description: "Uses AI to extract recent posts from a webpage that doesn't expose an RSS feed",
