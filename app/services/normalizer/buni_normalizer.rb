@@ -62,7 +62,8 @@ module Normalizer
     end
 
     def webtoons_url?(url)
-      URI.parse(url).host.to_s.end_with?(WEBTOONS_DOMAIN)
+      host = URI.parse(url).host.to_s
+      host == WEBTOONS_DOMAIN || host.end_with?(".#{WEBTOONS_DOMAIN}")
     rescue URI::InvalidURIError
       false
     end
