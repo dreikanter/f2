@@ -66,4 +66,17 @@ class Normalizer::MonkeyuserNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
   end
+
+  test "#normalize should reject the post when the comic image src is a malformed URI" do
+    stub_request(:get, "https://www.monkeyuser.com/2025/button/")
+      .to_return(status: 200, body: <<~HTML)
+        <html><body><img class="comic" src="/bad path/image.png" title="Alt text" /></body></html>
+      HTML
+    entry = feed_entry(0)
+
+    post = Normalizer::MonkeyuserNormalizer.new(entry).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "missing_images"
+  end
 end
