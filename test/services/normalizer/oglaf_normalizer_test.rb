@@ -12,9 +12,9 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
   end
 
   def stub_story_pages
-    stub_request(:get, "https://www.oglaf.com/goat/")
+    stub_request(:get, "https://www.oglaf.com/sample/")
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
-    stub_request(:get, "https://www.oglaf.com/goat/2/")
+    stub_request(:get, "https://www.oglaf.com/sample/2/")
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page2.html").read)
   end
 
@@ -34,24 +34,24 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
 
     post = Normalizer::OglafNormalizer.new(entry).normalize
 
-    assert_equal ["https://media.oglaf.com/comic/goat1.jpg", "https://media.oglaf.com/comic/goat2.jpg"], post.attachment_urls
-    assert_equal ["Territorial disputes with the God of nipples", "My sacred drink is orange juice. Milk is more a work thing"], post.comments
+    assert_equal ["https://media.oglaf.com/comic/sample1.jpg", "https://media.oglaf.com/comic/sample2.jpg"], post.attachment_urls
+    assert_equal ["Sample image title", "Another sample image title"], post.comments
   end
 
   test "#normalize should keep collected pages when a page fetch fails" do
-    stub_request(:get, "https://www.oglaf.com/goat/")
+    stub_request(:get, "https://www.oglaf.com/sample/")
       .to_return(status: 200, body: file_fixture("#{fixture_dir}/page.html").read)
-    stub_request(:get, "https://www.oglaf.com/goat/2/").to_return(status: 500)
+    stub_request(:get, "https://www.oglaf.com/sample/2/").to_return(status: 500)
     entry = feed_entry(0)
 
     post = Normalizer::OglafNormalizer.new(entry).normalize
 
-    assert_equal ["https://media.oglaf.com/comic/goat1.jpg"], post.attachment_urls
-    assert_equal ["Territorial disputes with the God of nipples"], post.comments
+    assert_equal ["https://media.oglaf.com/comic/sample1.jpg"], post.attachment_urls
+    assert_equal ["Sample image title"], post.comments
   end
 
   test "#normalize should return no attachments when the first page fetch raises a network error" do
-    stub_request(:get, "https://www.oglaf.com/goat/")
+    stub_request(:get, "https://www.oglaf.com/sample/")
       .to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
 
@@ -62,38 +62,38 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
   end
 
   test "#normalize should stop following pages when the next-page URL is malformed" do
-    stub_request(:get, "https://www.oglaf.com/goat/")
+    stub_request(:get, "https://www.oglaf.com/sample/")
       .to_return(status: 200, body: <<~HTML)
         <html>
-        <head><link rel="next" href="/goat story/2/" /></head>
-        <body><img id="strip" src="https://media.oglaf.com/comic/goat1.jpg" title="Alt text" /></body>
+        <head><link rel="next" href="/sample story/2/" /></head>
+        <body><img id="strip" src="https://media.oglaf.com/comic/sample1.jpg" title="Alt text" /></body>
         </html>
       HTML
     entry = feed_entry(0)
 
     post = Normalizer::OglafNormalizer.new(entry).normalize
 
-    assert_equal ["https://media.oglaf.com/comic/goat1.jpg"], post.attachment_urls
+    assert_equal ["https://media.oglaf.com/comic/sample1.jpg"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
 
   test "#normalize should not follow a next link that points at another story" do
-    stub_request(:get, "https://www.oglaf.com/lolth/").to_return(status: 200, body: <<~HTML)
+    stub_request(:get, "https://www.oglaf.com/another/").to_return(status: 200, body: <<~HTML)
       <html>
-      <head><link rel="next" href="/accounting/" /></head>
-      <body><img id="strip" src="https://media.oglaf.com/comic/lolth.jpg" title="two sets of demonweb arms, four demonweb pits" /></body>
+      <head><link rel="next" href="/unrelated/" /></head>
+      <body><img id="strip" src="https://media.oglaf.com/comic/another.jpg" title="Another strip title" /></body>
       </html>
     HTML
     entry = feed_entry(1)
 
     post = Normalizer::OglafNormalizer.new(entry).normalize
 
-    assert_equal ["https://media.oglaf.com/comic/lolth.jpg"], post.attachment_urls
+    assert_equal ["https://media.oglaf.com/comic/another.jpg"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
 
   test "#normalize should report via Rails.error when img#strip is absent on a fetched page" do
-    stub_request(:get, "https://www.oglaf.com/goat/")
+    stub_request(:get, "https://www.oglaf.com/sample/")
       .to_return(status: 200, body: "<html><body><p>No strip here</p></body></html>")
     entry = feed_entry(0)
     reported = []
