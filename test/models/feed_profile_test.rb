@@ -8,6 +8,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "llm_website_extractor",
       "lobsters",
       "monkeyuser",
+      "nextbigfuture",
       "reddit",
       "rss",
       "smbc",
