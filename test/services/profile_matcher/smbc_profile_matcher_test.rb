@@ -30,6 +30,10 @@ class ProfileMatcher::SmbcProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher("https://example.com/feed.xml").match?
   end
 
+  test "#match? should not match arbitrary smbc-comics.com subdomains" do
+    assert_not matcher("https://blog.smbc-comics.com/feed").match?
+  end
+
   test "#match? should not match URLs that just contain smbc-comics.com in path" do
     assert_not matcher("https://example.com/smbc-comics.com/feed.xml").match?
   end

@@ -3,13 +3,12 @@ module ProfileMatcher
     input_shape :url
     match_specificity 100
 
-    SMBC_DOMAIN = "smbc-comics.com"
+    HOSTS = %w[smbc-comics.com www.smbc-comics.com].freeze
 
     def match?
       return false if input.blank?
 
-      uri = URI.parse(input)
-      uri.host == SMBC_DOMAIN || uri.host&.end_with?(".#{SMBC_DOMAIN}")
+      HOSTS.include?(URI.parse(input).host)
     end
   end
 end
