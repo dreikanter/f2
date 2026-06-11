@@ -9,6 +9,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "monkeyuser",
       "reddit",
       "rss",
+      "smbc",
       "telegram",
       "twitter",
       "xkcd",
