@@ -89,6 +89,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "oglaf" => {
+      display_name: "Oglaf",
+      description: "Comic strips from oglaf.com, multi-page stories included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::OglafProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::OglafNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "llm_website_extractor" => {
       display_name: "AI page reader",
       description: "Uses AI to extract recent posts from a webpage that doesn't expose an RSS feed",
