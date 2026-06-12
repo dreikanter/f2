@@ -171,7 +171,7 @@
           "title": "Table sizes",
           "unit": "bytes",
           "expr": [
-            "feeder_pg_table_size_bytes"
+            "feeder_pg_table_size_bytes{table=~\"feed_entries|events|posts|feed_previews|feed_entry_uids\"}"
           ]
         }
       ]
