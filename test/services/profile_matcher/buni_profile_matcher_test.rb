@@ -30,6 +30,10 @@ class ProfileMatcher::BuniProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher("https://example.com/feed.xml").match?
   end
 
+  test "#match? should not match arbitrary subdomains" do
+    assert_not matcher("https://comics.bunicomic.com/feed/").match?
+  end
+
   test "#match? should not match URLs that just contain bunicomic.com in path" do
     assert_not matcher("https://example.com/bunicomic.com/feed.xml").match?
   end
