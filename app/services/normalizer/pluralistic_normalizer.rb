@@ -21,12 +21,20 @@ module Normalizer
     end
 
     def cover_image_url
-      page = fetch_page(raw_data.dig("link") || "")
+      url = raw_data.dig("link") || ""
+      page = fetch_page(url)
       return nil if page.nil?
 
       doc = Nokogiri::HTML(page)
       img = doc.css("img").first
-      return nil if img.nil?
+
+      if img.nil?
+        Rails.error.report(
+          StandardError.new("pluralistic: page #{url} fetched but no <img> found — markup changed?"),
+          context: { profile: "pluralistic", feed_id: feed_entry.feed&.id, entry_uid: feed_entry.uid, entry_url: url }
+        )
+        return nil
+      end
 
       src = img["src"]
       return nil if src.blank?
@@ -42,7 +50,7 @@ module Normalizer
       # First path segment after leading slash is the real hostname.
       segments = uri.path.split("/", 3)
       real_host = segments[1]
-      remaining_path = "/#{segments[2]}"
+      remaining_path = segments[2].present? ? "/#{segments[2]}" : "/"
 
       direct = "https://#{real_host}#{remaining_path}"
       uri.query.present? ? "#{direct}?#{uri.query}" : direct
@@ -52,10 +60,21 @@ module Normalizer
       return nil if url.blank?
 
       response = HttpClient.build.get(url)
-      return nil unless response.success?
+
+      unless response.success?
+        Rails.logger.warn(
+          "pluralistic: page fetch failed (HTTP #{response.status}), skipping images " \
+          "[feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url}]"
+        )
+        return nil
+      end
 
       response.body
-    rescue HttpClient::Error
+    rescue HttpClient::Error => e
+      Rails.logger.warn(
+        "pluralistic: page fetch error (#{e.class}: #{e.message}), skipping images " \
+        "[feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid} url=#{url}]"
+      )
       nil
     end
   end
