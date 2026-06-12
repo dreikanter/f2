@@ -5,7 +5,13 @@
 module PostgresMetrics
   # Only the tables worth charting; pushing every table blows past vmui's
   # rendered-series limit and buries the fast-growing ones in noise.
-  TRACKED_TABLES = %w[feed_entries events posts feed_previews feed_entry_uids].freeze
+  TRACKED_TABLES = %w[
+    feed_entries
+    events
+    posts
+    feed_previews
+    feed_entry_uids
+  ].freeze
 
   module_function
 
