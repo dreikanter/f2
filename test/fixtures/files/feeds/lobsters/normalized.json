@@ -1,0 +1,12 @@
+{
+  "attachment_urls": [],
+  "comments": [
+    "Comments: https://lobste.rs/s/aaaaaa #sample #testing"
+  ],
+  "content": "First Sample Story - https://example.com/first-sample-story",
+  "published_at": "2024-09-12T09:00:00.000Z",
+  "source_url": "https://example.com/first-sample-story",
+  "status": "enqueued",
+  "uid": "https://lobste.rs/s/aaaaaa",
+  "validation_errors": []
+}

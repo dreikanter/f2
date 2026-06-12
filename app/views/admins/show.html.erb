@@ -23,57 +23,5 @@
         <p class="text-slate-600">View system events, logs, and activity</p>
       </div>
     <% end %>
-
-    <% if policy(:access).dev? %>
-      <%= render CardComponent.new(href: admin_system_status_path) do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("hard-drive", css_class: "size-5") %>
-            <span>System Status</span>
-          </h2>
-          <p class="text-slate-600">Check configuration, disk usage, and other system info</p>
-        </div>
-      <% end %>
-
-      <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("hard-hat", css_class: "size-5") %>
-            <span>Background Jobs</span>
-          </h2>
-          <p class="text-slate-600">Monitor and manage background job queues</p>
-        </div>
-      <% end %>
-
-      <%= render CardComponent.new(href: admin_email_previews_path) do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("mail", css_class: "size-5") %>
-            <span>Email Previews</span>
-          </h2>
-          <p class="text-slate-600">Browse rendered previews of all email templates</p>
-        </div>
-      <% end %>
-
-      <%= render CardComponent.new(href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer") do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("inbox", css_class: "size-5") %>
-            <span>Sent Emails</span>
-          </h2>
-          <p class="text-slate-600">Review emails captured in development</p>
-        </div>
-      <% end %>
-
-      <%= render CardComponent.new(href: development_components_path, target: "_blank", rel: "noopener noreferrer") do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("layout-grid", css_class: "size-5") %>
-            <span>UI Reference</span>
-          </h2>
-          <p class="text-slate-600">Reference for all reusable UI components.</p>
-        </div>
-      <% end %>
-    <% end %>
   </div>
 </div>
