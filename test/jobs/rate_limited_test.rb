@@ -31,7 +31,7 @@ class RateLimitedTest < ActiveJob::TestCase
     end
   end
 
-  test "gives up and reports once the attempt cap is reached" do
+  test "gives up and reports RetriesExhausted once the attempt cap is reached" do
     job = ThrottledJob.new
     job.executions = RateLimited::MAX_ATTEMPTS
 
@@ -41,7 +41,8 @@ class RateLimitedTest < ActiveJob::TestCase
     end
 
     assert_equal 1, reported.size
-    assert_instance_of RateLimit::Throttled, reported.first
+    assert_instance_of RateLimited::RetriesExhausted, reported.first
+    assert_includes reported.first.message, "Rate limited"
   end
 
   test "invokes on_rate_limit_exhausted once the attempt cap is reached" do
