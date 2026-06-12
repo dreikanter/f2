@@ -19,7 +19,10 @@ class FreefeedClient
   attr_reader :host, :http_client
 
   # Used as the cooldown when a 429 response carries no usable Retry-After.
-  DEFAULT_RETRY_AFTER = 60
+  # FreeFeed never sends Retry-After, and its blocks escalate from 1 up to
+  # 8 minutes on repeat breaches, so back off for several minutes rather than
+  # retrying into a block that is still in force.
+  DEFAULT_RETRY_AFTER = 300
 
   def initialize(host:, token:, http_client: nil, rate_limit_subject: nil, options: {})
     @host = host.chomp("/")

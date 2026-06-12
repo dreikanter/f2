@@ -337,6 +337,10 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal [:freefeed, "freefeed:1", 30], penalized
   end
 
+  test "default cooldown is several minutes to wait out FreeFeed's escalating blocks" do
+    assert_equal 300, FreefeedClient::DEFAULT_RETRY_AFTER
+  end
+
   test "429 without Retry-After uses the default cooldown" do
     client = FreefeedClient.new(host: @host, token: @token, rate_limit_subject: "freefeed:1")
     stub_request(:post, "#{@host}/v4/posts").to_return(status: 429)
