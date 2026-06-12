@@ -1,6 +1,6 @@
 require "test_helper"
 
-class DevtoolsControllerTest < ActionDispatch::IntegrationTest
+class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
@@ -15,20 +15,20 @@ class DevtoolsControllerTest < ActionDispatch::IntegrationTest
 
   test "should show dev tools when authenticated as dev" do
     sign_in_as(dev_user)
-    get devtools_url
+    get development_url
 
     assert_response :success
     assert_select "h1", "Dev Tools"
-    assert_select "a[href='#{admin_system_status_path}']", count: 1
+    assert_select "a[href='#{development_system_status_path}']", count: 1
     assert_select "a[href='#{mission_control_jobs.root_path}']", count: 1
-    assert_select "a[href='#{admin_email_previews_path}']", count: 1
+    assert_select "a[href='#{development_email_previews_path}']", count: 1
     assert_select "a[href='#{development_sent_emails_path}']", count: 1
     assert_select "a[href='#{development_components_path}']", count: 1
   end
 
   test "should redirect when authenticated as admin without dev permission" do
     sign_in_as(admin_user)
-    get devtools_url
+    get development_url
 
     assert_response :redirect
     assert_redirected_to root_path
@@ -37,7 +37,7 @@ class DevtoolsControllerTest < ActionDispatch::IntegrationTest
 
   test "should redirect when authenticated as regular user" do
     sign_in_as(user)
-    get devtools_url
+    get development_url
 
     assert_response :redirect
     assert_redirected_to root_path
@@ -45,7 +45,7 @@ class DevtoolsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect when not authenticated" do
-    get devtools_url
+    get development_url
 
     assert_response :redirect
   end
