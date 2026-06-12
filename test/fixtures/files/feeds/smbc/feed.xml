@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Saturday Morning Breakfast Cereal</title>
+    <atom:link href="http://www.smbc-comics.com/comic/rss" rel="self" type="application/rss+xml" />
+    <link>https://www.smbc-comics.com/</link>
+    <description>Latest comics and news</description>
+    <language>en-us</language>
+    <item>
+      <title><![CDATA[Saturday Morning Breakfast Cereal - Sample Comic One]]></title>
+      <description><![CDATA[<a href="https://www.smbc-comics.com/comic/sample-comic-one"><img src="https://www.smbc-comics.com/comics/sample-comic-one.png" /><br /><br />Click here to go see the bonus panel!</a><p>Hovertext:<br/>Sample hovertext for the first comic.</p><br />Today's News:<br />]]></description>
+      <link>https://www.smbc-comics.com/comic/sample-comic-one</link>
+      <dc:creator><![CDATA[Sample Author]]></dc:creator>
+      <pubDate>Thu, 11 Jun 2026 11:20:00 -0400</pubDate>
+      <guid>https://www.smbc-comics.com/comic/sample-comic-one</guid>
+    </item>
+    <item>
+      <title><![CDATA[Saturday Morning Breakfast Cereal - Sample Comic Two]]></title>
+      <description><![CDATA[<a href="https://www.smbc-comics.com/comic/sample-comic-two"><img src="https://www.smbc-comics.com/comics/sample-comic-two.png" /><br /><br />Click here to go see the bonus panel!</a><p>Hovertext:<br/>Sample hovertext for the second comic.</p><br />Today's News:<br />]]></description>
+      <link>https://www.smbc-comics.com/comic/sample-comic-two</link>
+      <dc:creator><![CDATA[Sample Author]]></dc:creator>
+      <pubDate>Wed, 10 Jun 2026 11:20:00 -0400</pubDate>
+      <guid>https://www.smbc-comics.com/comic/sample-comic-two</guid>
+    </item>
+  </channel>
+</rss>

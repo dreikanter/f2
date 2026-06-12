@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
+class Development::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   def dev_user
     @dev_user ||= create(:user, :dev)
   end
@@ -10,7 +10,7 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#index should redirect unauthenticated users" do
-    get admin_email_previews_path
+    get development_email_previews_path
 
     assert_redirected_to new_session_path
   end
@@ -18,7 +18,7 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#index should deny users without dev permission" do
     login_as(regular_user)
 
-    get admin_email_previews_path
+    get development_email_previews_path
 
     assert_redirected_to root_path
   end
@@ -26,14 +26,14 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#index should show email list for dev users" do
     login_as(dev_user)
 
-    get admin_email_previews_path
+    get development_email_previews_path
 
     assert_response :success
     assert_select "h1", "Email Previews"
   end
 
   test "#show should redirect unauthenticated users" do
-    get admin_email_preview_path("passwords_mailer-reset")
+    get development_email_preview_path("passwords_mailer-reset")
 
     assert_redirected_to new_session_path
   end
@@ -41,7 +41,7 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#show should deny users without dev permission" do
     login_as(regular_user)
 
-    get admin_email_preview_path("passwords_mailer-reset")
+    get development_email_preview_path("passwords_mailer-reset")
 
     assert_redirected_to root_path
   end
@@ -49,9 +49,9 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#show should redirect for unknown email type" do
     login_as(dev_user)
 
-    get admin_email_preview_path("unknown-mailer")
+    get development_email_preview_path("unknown-mailer")
 
-    assert_redirected_to admin_email_previews_path
+    assert_redirected_to development_email_previews_path
   end
 
   %w[
@@ -63,7 +63,7 @@ class Admin::EmailPreviewsControllerTest < ActionDispatch::IntegrationTest
     test "#show should render preview for #{id}" do
       login_as(dev_user)
 
-      get admin_email_preview_path(id)
+      get development_email_preview_path(id)
 
       assert_response :success
     end

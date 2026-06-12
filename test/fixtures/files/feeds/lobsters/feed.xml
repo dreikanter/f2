@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lobsters: sample - Sample tag</title>
+    <link>https://lobste.rs/</link>
+    <atom:link href="https://lobste.rs/t/sample.rss" rel="self"/>
+    <description>sample - Sample tag</description>
+    <pubDate>Thu, 12 Sep 2024 10:00:00 +0000</pubDate>
+    <ttl>120</ttl>
+    <item>
+      <title>First Sample Story</title>
+      <link>https://example.com/first-sample-story</link>
+      <guid>https://lobste.rs/s/aaaaaa</guid>
+      <author>example.com by sampleuser</author>
+      <pubDate>Thu, 12 Sep 2024 09:00:00 +0000</pubDate>
+      <comments>https://lobste.rs/s/aaaaaa/first_sample_story</comments>
+      <description>&lt;p&gt;&lt;a href="https://lobste.rs/s/aaaaaa/first_sample_story"&gt;Comments&lt;/a&gt;&lt;/p&gt;</description>
+      <category>sample</category>
+      <category>testing</category>
+    </item>
+    <item>
+      <title>Second Sample Story</title>
+      <link>https://example.com/second-sample-story</link>
+      <guid>https://lobste.rs/s/bbbbbb</guid>
+      <author>example.org via anotheruser</author>
+      <pubDate>Wed, 11 Sep 2024 15:30:00 +0000</pubDate>
+      <comments>https://lobste.rs/s/bbbbbb/second_sample_story</comments>
+      <description>&lt;p&gt;&lt;a href="https://lobste.rs/s/bbbbbb/second_sample_story"&gt;Comments&lt;/a&gt;&lt;/p&gt;</description>
+      <category>sample</category>
+    </item>
+  </channel>
+</rss>

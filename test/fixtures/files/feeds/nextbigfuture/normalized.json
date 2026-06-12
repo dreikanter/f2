@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://example.com/uploads/2025/01/sample-photo.jpg"
+  ],
+  "comments": [
+    "This is the first sample article. It contains some introductory text about the topic covered in the post. Read more"
+  ],
+  "content": "Sample Article One - https://example.com/2025/01/sample-article-one.html",
+  "published_at": "2025-01-03T10:00:00.000Z",
+  "source_url": "https://example.com/2025/01/sample-article-one.html",
+  "status": "enqueued",
+  "uid": "https://example.com/?p=1001",
+  "validation_errors": []
+}

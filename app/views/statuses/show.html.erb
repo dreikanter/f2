@@ -31,6 +31,7 @@
   <% else %>
     <%= render PageHeaderComponent.new(title: "Status") %>
     <%= render UserStatsComponent.new(user: @user) %>
+    <%= render PostsHeatmapComponent.new(user: @user) %>
 
     <section class="space-y-4">
       <div class="flex items-center justify-between">
