@@ -7,6 +7,10 @@ class ApplicationHelperTest < ActionView::TestCase
     def index?
       allowed
     end
+
+    def dev?
+      allowed
+    end
   end
 
   def policy(record)
@@ -226,14 +230,34 @@ class ApplicationHelperTest < ActionView::TestCase
 
     self.stub(:current_page?, current_page_stub) do
       self.stub(:controller_path, "admin/dashboard") do
-        self.policy_override = ->(_record) { PolicyStub.new(true) }
+        self.policy_override = ->(record) { PolicyStub.new(record == Event) }
 
         items = navbar_items
-        admin_item = items.last
+        admin_item = items.find { |item| item[:name] == "Admin Panel" }
 
-        assert_equal "Admin Panel", admin_item[:name]
         assert_equal admin_path, admin_item[:path]
         assert_equal true, admin_item[:active]
+        assert_nil items.find { |item| item[:name] == "Dev Tools" }
+      end
+    end
+  end
+
+  test "#navbar_items should include dev tools when allowed" do
+    user = create(:user)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(path, *_args) { path == development_path }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "developments") do
+        self.policy_override = ->(record) { PolicyStub.new(record == :access) }
+
+        items = navbar_items
+        dev_item = items.find { |item| item[:name] == "Dev Tools" }
+
+        assert_equal development_path, dev_item[:path]
+        assert_equal true, dev_item[:active]
+        assert_nil items.find { |item| item[:name] == "Admin Panel" }
       end
     end
   end

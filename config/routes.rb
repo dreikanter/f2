@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
+  resource :development, only: :show
+
   namespace :development do
     resource :components, only: :show
+    resource :system_status, only: :show, controller: "system_status"
+    resources :email_previews, only: [:index, :show]
 
     resources :sent_emails, only: [:index, :show], format: false do
       collection do
@@ -53,8 +57,6 @@ Rails.application.routes.draw do
     end
 
     resources :events, only: [:index, :show]
-    resource :system_status, only: :show, controller: "system_status"
-    resources :email_previews, only: [:index, :show]
   end
 
   resource :settings, only: :show
