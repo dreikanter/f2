@@ -12,8 +12,6 @@ Rails.application.config.after_initialize do
   if ENV["METRICS_GAUGES"].present?
     Metrics.gauge("users_active") { User.where(state: :active).count }
     Metrics.gauge("feeds_enabled") { Feed.where(state: :enabled).count }
-    # "_count", not "_total": the Prometheus "_total" suffix implies a counter,
-    # and these are point-in-time gauges.
     Metrics.gauge_set("posts_count") do
       counts = Post.group(:status).count
       Post.statuses.keys.to_h { |status| [{ status: status }, counts.fetch(status, 0)] }
