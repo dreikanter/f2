@@ -4,6 +4,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
     expected = [
       "buni",
+      "elementy",
       "litterbox",
       "llm_web_search",
       "llm_website_extractor",
