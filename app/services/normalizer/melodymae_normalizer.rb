@@ -20,7 +20,14 @@ module Normalizer
       return [] if image_url.blank?
 
       image_url = rewrite_photon_url(image_url)
-      return [] unless image_downloadable?(image_url)
+
+      unless image_reachable?(image_url)
+        Rails.logger.warn(
+          "[melodymae] Skipping unreachable image: #{image_url.inspect} " \
+          "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid.inspect})"
+        )
+        return []
+      end
 
       [image_url]
     end
@@ -29,10 +36,14 @@ module Normalizer
       url.sub(PHOTON_CDN_PATTERN, "https://")
     end
 
-    def image_downloadable?(url)
+    def image_reachable?(url)
       response = HttpClient.build.get(url)
       response.success?
-    rescue HttpClient::Error
+    rescue HttpClient::Error => e
+      Rails.logger.warn(
+        "[melodymae] Image fetch error: #{e.message} for #{url.inspect} " \
+        "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid.inspect})"
+      )
       false
     end
   end

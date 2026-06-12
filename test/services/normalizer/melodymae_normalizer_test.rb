@@ -19,6 +19,16 @@ class Normalizer::MelodymaeNormalizerTest < ActiveSupport::TestCase
     stub_request(:get, IMAGE_URL).to_return(status: 200, body: "", headers: {})
   end
 
+  def capture_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original
+  end
+
   test "#normalize should match the expected normalization result" do
     entry = feed_entry(0)
 
@@ -59,5 +69,25 @@ class Normalizer::MelodymaeNormalizerTest < ActiveSupport::TestCase
     post = Normalizer::MelodymaeNormalizer.new(entry).normalize
 
     assert_empty post.attachment_urls
+  end
+
+  test "#normalize should warn when rewritten image URL is not reachable" do
+    stub_request(:get, IMAGE_URL).to_return(status: 404)
+
+    entry = feed_entry(0)
+    log = capture_log { Normalizer::MelodymaeNormalizer.new(entry).normalize }
+
+    assert_match(/\[melodymae\].*[Ss]kipping.*unreachable/i, log)
+    assert_match(/melodymae\.co\.uk/, log)
+  end
+
+  test "#normalize should warn when image fetch raises an HTTP error" do
+    stub_request(:get, IMAGE_URL).to_raise(HttpClient::ConnectionError.new("connection refused"))
+
+    entry = feed_entry(0)
+    log = capture_log { Normalizer::MelodymaeNormalizer.new(entry).normalize }
+
+    assert_match(/\[melodymae\].*[Ii]mage fetch error/i, log)
+    assert_match(/melodymae\.co\.uk/, log)
   end
 end
