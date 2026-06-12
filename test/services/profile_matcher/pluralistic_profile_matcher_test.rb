@@ -22,8 +22,12 @@ class ProfileMatcher::PluralisticProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://pluralistic.net/feed/").match?
   end
 
-  test "#match? should match pluralistic.net subdomains" do
+  test "#match? should match www.pluralistic.net" do
     assert matcher("https://www.pluralistic.net/feed/").match?
+  end
+
+  test "#match? should not match arbitrary subdomains of pluralistic.net" do
+    assert_not matcher("https://other.pluralistic.net/feed/").match?
   end
 
   test "#match? should not match non-pluralistic URLs" do
