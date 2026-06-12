@@ -18,12 +18,16 @@ class ProfileMatcher::AerostatProfileMatcherTest < ActiveSupport::TestCase
     assert_equal false, ProfileMatcher::AerostatProfileMatcher.depends_on_ai
   end
 
-  test "#match? should match aerostatbg.ru URLs" do
+  test "#match? should match bare aerostatbg.ru host" do
     assert matcher("https://aerostatbg.ru/rss.xml").match?
   end
 
-  test "#match? should match aerostatbg.ru subdomains" do
+  test "#match? should match www.aerostatbg.ru host" do
     assert matcher("https://www.aerostatbg.ru/rss.xml").match?
+  end
+
+  test "#match? should not match arbitrary aerostatbg.ru subdomains" do
+    assert_not matcher("https://blog.aerostatbg.ru/rss.xml").match?
   end
 
   test "#match? should not match non-aerostat URLs" do

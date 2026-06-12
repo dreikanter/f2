@@ -9,7 +9,7 @@ module ProfileMatcher
       return false if input.blank?
 
       uri = URI.parse(input)
-      uri.host == AEROSTAT_DOMAIN || uri.host&.end_with?(".#{AEROSTAT_DOMAIN}")
+      [AEROSTAT_DOMAIN, "www.#{AEROSTAT_DOMAIN}"].include?(uri.host)
     end
   end
 end
