@@ -24,7 +24,7 @@ The push side is controlled by app env vars (set under `env:` in the deploy conf
 | `METRICS_USERNAME` / `METRICS_PASSWORD` | unset | Basic auth for the import endpoint, if it's ever exposed beyond the private network. |
 | `METRICS_INSTANCE` | `host:pid` | Override for the `instance` label on counter series. |
 
-Only `METRICS_URL` is set on staging; everything else uses defaults. Raising `METRICS_FLUSH_INTERVAL` is the cheapest lever if the sampled gauges ever get expensive (they run their queries once per flush, per process) — the charts just get coarser resolution.
+Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` (the sampled gauges move slowly, so a 60s push loses no visible resolution while quartering the per-process DB sampling); everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
 
 ## Dashboards
 
