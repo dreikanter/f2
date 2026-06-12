@@ -1,5 +1,7 @@
 module Normalizer
   class TomorrowsNormalizer < RssNormalizer
+    PROFILE_KEY = "tomorrows"
+
     private
 
     def normalize_content
@@ -15,18 +17,30 @@ module Normalizer
     end
 
     def story_text
-      page = fetch_page(raw_data.dig("link") || "")
+      url = raw_data.dig("link") || ""
+      page = fetch_page(url)
       if page
-        extract_story_from_page(page)
+        extract_story_from_page(page, url)
       else
+        Rails.logger.warn(
+          "tomorrows: page fetch failed for entry #{feed_entry.uid.inspect}, " \
+          "feed_id=#{feed_entry.feed&.id}, url=#{url.inspect} — falling back to RSS summary"
+        )
         fallback_story_text
       end
     end
 
-    def extract_story_from_page(html)
+    def extract_story_from_page(html, url)
       doc = Nokogiri::HTML(html)
       node = doc.css(".entry-content").first
-      return nil unless node
+
+      unless node
+        Rails.error.report(
+          StandardError.new("tomorrows: page #{url} fetched but .entry-content missing — markup changed?"),
+          context: { profile: PROFILE_KEY, feed_id: feed_entry.feed&.id, uid: feed_entry.uid, url: url }
+        )
+        return nil
+      end
 
       paragraphs = node.css("p").map { |p| p.text.gsub(/[[:space:]]+/, " ").strip }
       paragraphs.reject(&:blank?).join("\n\n")
