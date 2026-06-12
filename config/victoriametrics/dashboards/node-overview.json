@@ -60,13 +60,17 @@
       "title": "Disk",
       "panels": [
         {
-          "title": "Disk space used %",
-          "unit": "%",
+          "title": "Disk space",
+          "unit": "bytes",
           "expr": [
-            "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})"
+            "feeder_pg_database_size_bytes",
+            "node_filesystem_size_bytes{mountpoint=\"/\"} - node_filesystem_avail_bytes{mountpoint=\"/\"}",
+            "node_filesystem_size_bytes{mountpoint=\"/\"}"
           ],
           "alias": [
-            "used"
+            "database",
+            "used",
+            "capacity"
           ]
         },
         {
