@@ -10,6 +10,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "llm_web_search",
       "llm_website_extractor",
       "lobsters",
+      "melodymae",
       "monkeyuser",
       "nextbigfuture",
       "oglaf",

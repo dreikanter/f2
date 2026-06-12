@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  >
+<channel>
+  <title>MelodyMae.co.uk</title>
+  <atom:link href="https://www.melodymae.co.uk/feed/" rel="self" type="application/rss+xml" />
+  <link>https://www.melodymae.co.uk</link>
+  <description>Plus Size Style and Fashion Blog</description>
+  <lastBuildDate>Fri, 25 Feb 2022 23:23:22 +0000</lastBuildDate>
+  <language>en-GB</language>
+  <item>
+    <title>Plus Size Alternative Retro With Belle Poque</title>
+    <link>https://www.melodymae.co.uk/plus-size-alternative-retro/</link>
+    <dc:creator><![CDATA[Melody Mae]]></dc:creator>
+    <pubDate>Sat, 26 Feb 2022 12:00:00 +0000</pubDate>
+    <category><![CDATA[Style]]></category>
+    <guid isPermaLink="false">https://www.melodymae.co.uk/?p=4180</guid>
+    <description><![CDATA[<p>A style post on plus size alternative retro style with Belle Poque written by Andii Melody Mae on MelodyMae.co.uk</p>]]></description>
+    <content:encoded><![CDATA[
+<p>Hello friends! Let&#8217;s talk about some plus size alternative retro courtesy of Belle Poque!</p>
+
+<figure class="wp-block-image"><img src="https://i1.wp.com/www.melodymae.co.uk/wp-content/uploads/2022/02/5372C1A6-11AE-4BCF-B225-DB49D0F928E2_1_201_a.jpeg?resize=819%2C1024&#038;ssl=1" width="819" height="1024" /></figure>
+]]></content:encoded>
+  </item>
+  <item>
+    <title>Plus Size Date Outfits with SHEIN!</title>
+    <link>https://www.melodymae.co.uk/plus-size-date-outfits-with-shein/</link>
+    <dc:creator><![CDATA[Melody Mae]]></dc:creator>
+    <pubDate>Mon, 07 Feb 2022 12:00:00 +0000</pubDate>
+    <category><![CDATA[Style]]></category>
+    <guid isPermaLink="false">https://www.melodymae.co.uk/?p=4139</guid>
+    <description><![CDATA[<p>Plus size date outfits from SHEIN reviewed by Andii Melody Mae.</p>]]></description>
+    <content:encoded><![CDATA[
+<p>Let&#8217;s talk date outfits! I&#8217;ve got some cute options from SHEIN to share.</p>
+
+<figure class="wp-block-image"><img src="https://i0.wp.com/www.melodymae.co.uk/wp-content/uploads/2022/02/IMG_0050-scaled.jpeg?resize=768%2C1024&#038;ssl=1" width="768" height="1024" /></figure>
+]]></content:encoded>
+  </item>
+</channel>
+</rss>

@@ -129,6 +129,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "melodymae" => {
+      display_name: "Melody Mae",
+      description: "Posts from Melody Mae's plus-size fashion blog at melodymae.co.uk",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::MelodymaeProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::MelodymaeNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "nextbigfuture" => {
       display_name: "Next Big Future",
       description: "Technology news from nextbigfuture.com with cover images",
