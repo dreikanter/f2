@@ -121,25 +121,27 @@
         {
           "title": "Queue backlog",
           "expr": [
-            "feeder_posts_total{status=\"enqueued\"}",
-            "feeder_jobs_ready"
+            "feeder_posts_count{status=\"enqueued\"}",
+            "feeder_jobs_ready",
+            "feeder_jobs_failed"
           ],
           "alias": [
             "enqueued posts",
-            "ready jobs"
+            "ready jobs",
+            "failed jobs"
           ]
         },
         {
           "title": "Posts by status",
           "expr": [
-            "feeder_posts_total"
+            "feeder_posts_count"
           ]
         },
         {
-          "title": "Repost activity (per hour)",
+          "title": "Repost activity (15m)",
           "expr": [
-            "sum(increase(feeder_posts_published_total{status=\"published\"}[1h]))",
-            "sum(increase(feeder_posts_published_total{status=\"failed\"}[1h]))"
+            "sum(increase(feeder_posts_published_total{status=\"published\"}[15m]))",
+            "sum(increase(feeder_posts_published_total{status=\"failed\"}[15m]))"
           ],
           "alias": [
             "published",
@@ -147,9 +149,9 @@
           ]
         },
         {
-          "title": "Job failures (per hour)",
+          "title": "Job failures (15m)",
           "expr": [
-            "sum(increase(feeder_job_executions_total{status=\"error\"}[1h]))"
+            "sum(increase(feeder_job_executions_total{status=\"error\"}[15m]))"
           ],
           "alias": [
             "failed jobs"
@@ -159,10 +161,27 @@
           "title": "Metrics push age",
           "unit": "s",
           "expr": [
-            "time() - max(timestamp(feeder_users_active))"
+            "time() - tlast_over_time(feeder_users_active[1d])"
           ],
           "alias": [
             "since last push"
+          ]
+        },
+        {
+          "title": "Feed refreshes (15m)",
+          "expr": [
+            "sum(increase(feeder_feed_refresh_total{status=\"ok\"}[15m]))",
+            "sum(increase(feeder_feed_refresh_total{status=\"error\"}[15m]))"
+          ],
+          "alias": [
+            "ok",
+            "errors"
+          ]
+        },
+        {
+          "title": "Loader errors (15m)",
+          "expr": [
+            "sum(increase(feeder_loader_errors_total[15m])) by (loader)"
           ]
         }
       ]
