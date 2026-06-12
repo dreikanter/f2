@@ -13,6 +13,19 @@ ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
 
 Then open http://localhost:8428/vmui.
 
+## App push configuration
+
+The push side is controlled by app env vars (set under `env:` in the deploy config, applied by a regular `bin/kamal deploy` — no accessory reboot involved):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `METRICS_URL` | unset | VM import endpoint. Unset means metrics are a complete no-op (dev, test). |
+| `METRICS_FLUSH_INTERVAL` | `15` | Seconds between pushes. Each app process runs a flusher thread on this interval; gauge blocks (the DB queries) execute only at flush time, while counters accumulate in memory and cost nothing extra. |
+| `METRICS_USERNAME` / `METRICS_PASSWORD` | unset | Basic auth for the import endpoint, if it's ever exposed beyond the private network. |
+| `METRICS_INSTANCE` | `host:pid` | Override for the `instance` label on counter series. |
+
+Only `METRICS_URL` is set on staging; everything else uses defaults. Raising `METRICS_FLUSH_INTERVAL` is the cheapest lever if the sampled gauges ever get expensive (they run their queries once per flush, per process) — the charts just get coarser resolution.
+
 ## Dashboards
 
 Predefined dashboards live in `config/victoriametrics/dashboards/` as JSON files. Each file becomes its own tab on vmui's Dashboards page; the file's `title` field is the tab label. The accessory mounts each file individually under `files:` and points vmui at the directory with `-vmui.customDashboardsPath`.
