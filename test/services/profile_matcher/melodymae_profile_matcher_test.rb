@@ -25,6 +25,10 @@ class ProfileMatcher::MelodymaeProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://melodymae.co.uk/").match?
   end
 
+  test "#match? should not match arbitrary subdomains of melodymae.co.uk" do
+    assert_not matcher("https://blog.melodymae.co.uk/feed/").match?
+  end
+
   test "#match? should not match non-melodymae URLs" do
     assert_not matcher("https://example.com/feed.xml").match?
   end
