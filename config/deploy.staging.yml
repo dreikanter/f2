@@ -1,7 +1,13 @@
 # Deploy to these servers.
 servers:
   web:
-    - dev.fffeeder.com
+    hosts:
+      - dev.fffeeder.com
+    env:
+      clear:
+        # Gauge sampling lives in the single Puma process; see
+        # config/initializers/metrics.rb.
+        METRICS_GAUGES: "true"
   jobs:
     hosts:
       - dev.fffeeder.com

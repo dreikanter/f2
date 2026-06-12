@@ -23,8 +23,11 @@ The push side is controlled by app env vars (set under `env:` in the deploy conf
 | `METRICS_FLUSH_INTERVAL` | `15` | Seconds between pushes. Each app process runs a flusher thread on this interval; gauge blocks (the DB queries) execute only at flush time, while counters accumulate in memory and cost nothing extra. |
 | `METRICS_USERNAME` / `METRICS_PASSWORD` | unset | Basic auth for the import endpoint, if it's ever exposed beyond the private network. |
 | `METRICS_INSTANCE` | `host:pid` | Override for the `instance` label on counter series. |
+| `METRICS_GAUGES` | unset | Register the DB-sampled gauges in this process. Set on the web role only, so a single process samples them instead of every process repeating the same queries. Counters are unaffected and push from everywhere. |
 
-Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` (the sampled gauges move slowly, so a 60s push loses no visible resolution while quartering the per-process DB sampling); everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
+Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the sampled gauges move slowly, so a 60s push loses no visible resolution), plus `METRICS_GAUGES` on the web role; everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
+
+One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers — so a stale "Metrics push age" panel specifically means the web process isn't pushing.
 
 ## Dashboards
 
