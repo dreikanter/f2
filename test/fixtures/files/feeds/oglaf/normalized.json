@@ -1,16 +1,16 @@
 {
   "attachment_urls": [
-    "https://media.oglaf.com/comic/goat1.jpg",
-    "https://media.oglaf.com/comic/goat2.jpg"
+    "https://media.oglaf.com/comic/sample1.jpg",
+    "https://media.oglaf.com/comic/sample2.jpg"
   ],
   "comments": [
-    "Territorial disputes with the God of nipples",
-    "My sacred drink is orange juice. Milk is more a work thing"
+    "Sample image title",
+    "Another sample image title"
   ],
-  "content": "Goat - https://www.oglaf.com/goat/",
+  "content": "Sample Strip - https://www.oglaf.com/sample/",
   "published_at": "2025-11-30T00:00:00.000Z",
-  "source_url": "https://www.oglaf.com/goat/",
+  "source_url": "https://www.oglaf.com/sample/",
   "status": "enqueued",
-  "uid": "https://oglaf.com/goat/",
+  "uid": "https://oglaf.com/sample/",
   "validation_errors": []
 }
