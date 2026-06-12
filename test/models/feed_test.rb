@@ -847,4 +847,85 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_equal 2, feed.posts_published_last_week_count
   end
+
+  test "#import_after_enabled should default to false when import_after is blank" do
+    feed = build(:feed)
+
+    assert_not feed.import_after_enabled
+  end
+
+  test "#import_after_enabled should be true when import_after is set" do
+    feed = build(:feed, import_after: Time.utc(2026, 1, 15, 10, 30))
+
+    assert feed.import_after_enabled
+    assert_equal "2026-01-15", feed.import_after_date
+    assert_equal "10:30", feed.import_after_time
+  end
+
+  test "#import_after_enabled= should compose import_after from date and time parts" do
+    feed = build(:feed)
+    feed.assign_attributes(
+      import_after_enabled: "1",
+      import_after_date: "2026-01-15",
+      import_after_time: "10:30"
+    )
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal Time.zone.parse("2026-01-15 10:30"), feed.import_after
+  end
+
+  test "#import_after_enabled= should default time to midnight when blank" do
+    feed = build(:feed)
+    feed.assign_attributes(
+      import_after_enabled: "1",
+      import_after_date: "2026-01-15",
+      import_after_time: ""
+    )
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal Time.zone.parse("2026-01-15 00:00"), feed.import_after
+  end
+
+  test "#import_after_enabled= should reset import_after when disabled" do
+    feed = build(:feed, import_after: Time.utc(2026, 1, 15, 10, 30))
+    feed.assign_attributes(
+      import_after_enabled: "0",
+      import_after_date: "2026-01-15",
+      import_after_time: "10:30"
+    )
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_nil feed.import_after
+  end
+
+  test "should require a date when import threshold is enabled" do
+    feed = build(:feed)
+    feed.assign_attributes(import_after_enabled: "1", import_after_date: "", import_after_time: "")
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:import_after], "needs a date"
+    assert_nil feed.import_after
+  end
+
+  test "should reject an unparseable import threshold date" do
+    feed = build(:feed)
+    feed.assign_attributes(import_after_enabled: "1", import_after_date: "not-a-date", import_after_time: "10:30")
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:import_after], "isn't a valid date and time"
+    assert_nil feed.import_after
+  end
+
+  test "#import_after_date should return the submitted value after a failed validation" do
+    feed = build(:feed)
+    feed.assign_attributes(import_after_enabled: "1", import_after_date: "not-a-date")
+
+    assert_equal "not-a-date", feed.import_after_date
+  end
+
+  test "should stay valid when import_after is set directly without parts" do
+    feed = build(:feed, import_after: Time.utc(2026, 1, 15))
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
 end

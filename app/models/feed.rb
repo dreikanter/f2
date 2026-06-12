@@ -63,6 +63,7 @@ class Feed < ApplicationRecord
   normalizes :target_group, with: ->(group) { group.present? ? group.to_s.strip.downcase : nil }
 
   validate :cron_expression_is_valid
+  validate :import_after_parts_are_valid
   validate :params_against_profile_schema
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
@@ -98,6 +99,39 @@ class Feed < ApplicationRecord
 
   def schedule_display
     SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
+  end
+
+  # Form-facing accessors splitting import_after into a checkbox plus
+  # separate date and time inputs. The checkbox drives everything: when it's
+  # off, import_after resets to nil no matter what the date and time fields
+  # contain.
+  def import_after_enabled
+    return @import_after_enabled unless @import_after_enabled.nil?
+
+    import_after.present?
+  end
+
+  def import_after_enabled=(value)
+    @import_after_enabled = ActiveModel::Type::Boolean.new.cast(value) || false
+    recompose_import_after
+  end
+
+  def import_after_date
+    @import_after_date || import_after&.strftime("%Y-%m-%d")
+  end
+
+  def import_after_date=(value)
+    @import_after_date = value.to_s.strip
+    recompose_import_after
+  end
+
+  def import_after_time
+    @import_after_time || import_after&.strftime("%H:%M")
+  end
+
+  def import_after_time=(value)
+    @import_after_time = value.to_s.strip
+    recompose_import_after
   end
 
   # Link to the target group on its FreeFeed instance. Post#freefeed_url
@@ -287,6 +321,30 @@ class Feed < ApplicationRecord
   end
 
   private
+
+  def recompose_import_after
+    self.import_after = compose_import_after
+  end
+
+  def compose_import_after
+    return nil unless import_after_enabled
+    return nil if import_after_date.blank?
+
+    Time.zone.strptime("#{import_after_date} #{import_after_time.presence || '00:00'}", "%Y-%m-%d %H:%M")
+  rescue ArgumentError
+    nil
+  end
+
+  def import_after_parts_are_valid
+    return unless import_after_enabled
+    return if import_after.present?
+
+    if import_after_date.blank?
+      errors.add(:import_after, "needs a date")
+    else
+      errors.add(:import_after, "isn't a valid date and time")
+    end
+  end
 
   def cron_expression_is_valid
     return if cron_expression.blank?
