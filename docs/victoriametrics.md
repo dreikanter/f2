@@ -3,7 +3,7 @@
 Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) with its built-in web UI (vmui). It collects metrics from two directions:
 
 - **Scrape:** VM pulls host OS metrics (CPU, memory, disk, network) from the `node-exporter` accessory, per `config/victoriametrics/scrape.yml`.
-- **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint every ~15 seconds. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.
+- **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint on the configured flush interval — 60 seconds on staging. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.
 
 VM is bound to localhost on the server, so view the UI through an SSH tunnel:
 
