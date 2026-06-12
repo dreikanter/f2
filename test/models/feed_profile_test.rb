@@ -10,6 +10,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "lobsters",
       "monkeyuser",
       "nextbigfuture",
+      "oglaf",
       "reddit",
       "rss",
       "smbc",
