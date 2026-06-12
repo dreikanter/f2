@@ -35,16 +35,6 @@
       "title": "Memory",
       "panels": [
         {
-          "title": "Used memory",
-          "unit": "bytes",
-          "expr": [
-            "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes"
-          ],
-          "alias": [
-            "used"
-          ]
-        },
-        {
           "title": "Memory %",
           "unit": "%",
           "expr": [
@@ -150,6 +140,25 @@
           "alias": [
             "published",
             "failed"
+          ]
+        },
+        {
+          "title": "Job failures (per hour)",
+          "expr": [
+            "sum(increase(feeder_job_executions_total{status=\"error\"}[1h]))"
+          ],
+          "alias": [
+            "failed jobs"
+          ]
+        },
+        {
+          "title": "Metrics push age",
+          "unit": "s",
+          "expr": [
+            "time() - max(timestamp(feeder_users_active))"
+          ],
+          "alias": [
+            "since last push"
           ]
         }
       ]
