@@ -91,7 +91,7 @@ class FeedProfile
     },
     "melodymae" => {
       display_name: "Melody Mae",
-      description: "Melody Mae comics from melodymae.co.uk",
+      description: "Posts from Melody Mae's plus-size fashion blog at melodymae.co.uk",
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::MelodymaeProfileMatcher",
