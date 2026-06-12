@@ -3,8 +3,8 @@ module ProfileMatcher
     input_shape :url
     match_specificity 100
 
-    THEYCANTALK_DOMAIN = "theycantalk.com"
-    FEEDBURNER_DOMAIN = "feedburner.com"
+    THEYCANTALK_HOSTS = ["theycantalk.com", "www.theycantalk.com"].freeze
+    FEEDBURNER_HOST = "feeds.feedburner.com"
 
     def match?
       return false if input.blank?
@@ -16,12 +16,11 @@ module ProfileMatcher
     private
 
     def theycantalk_host?(uri)
-      uri.host == THEYCANTALK_DOMAIN || uri.host&.end_with?(".#{THEYCANTALK_DOMAIN}")
+      THEYCANTALK_HOSTS.include?(uri.host)
     end
 
     def feedburner_theycantalk_host?(uri)
-      (uri.host == FEEDBURNER_DOMAIN || uri.host&.end_with?(".#{FEEDBURNER_DOMAIN}")) &&
-        uri.path.to_s.include?("theycantalk")
+      uri.host == FEEDBURNER_HOST && uri.path.to_s.include?("theycantalk")
     end
   end
 end

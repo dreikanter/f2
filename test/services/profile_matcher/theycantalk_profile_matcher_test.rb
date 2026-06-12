@@ -21,12 +21,20 @@ class ProfileMatcher::TheycantalkProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("http://theycantalk.com/rss").match?
   end
 
-  test "#match? should match theycantalk.com subdomains" do
+  test "#match? should match www.theycantalk.com URLs" do
     assert matcher("https://www.theycantalk.com/feed").match?
   end
 
   test "#match? should match feedburner URLs containing theycantalk in path" do
     assert matcher("https://feeds.feedburner.com/theycantalk/xFcE").match?
+  end
+
+  test "#match? should not match theycantalk subdomains other than www" do
+    assert_not matcher("https://cdn.theycantalk.com/feed").match?
+  end
+
+  test "#match? should not match feedburner subdomains other than feeds" do
+    assert_not matcher("https://other.feedburner.com/theycantalk/xFcE").match?
   end
 
   test "#match? should not match feedburner URLs without theycantalk in path" do
