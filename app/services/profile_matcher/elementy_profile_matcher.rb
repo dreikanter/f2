@@ -9,7 +9,7 @@ module ProfileMatcher
       return false if input.blank?
 
       uri = URI.parse(input)
-      uri.host == ELEMENTY_DOMAIN || uri.host&.end_with?(".#{ELEMENTY_DOMAIN}")
+      [ELEMENTY_DOMAIN, "www.#{ELEMENTY_DOMAIN}"].include?(uri.host)
     end
   end
 end

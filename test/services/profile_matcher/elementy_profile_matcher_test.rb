@@ -17,16 +17,17 @@ class ProfileMatcher::ElementyProfileMatcherTest < ActiveSupport::TestCase
     assert_equal false, ProfileMatcher::ElementyProfileMatcher.depends_on_ai
   end
 
-  test "#match? should match elementy.ru feed URLs" do
+  test "#match? should match bare elementy.ru URLs" do
     assert matcher("https://elementy.ru/rss/news").match?
-  end
-
-  test "#match? should match elementy.ru article URLs" do
     assert matcher("https://elementy.ru/novosti_nauki/434641").match?
   end
 
-  test "#match? should match subdomains of elementy.ru" do
+  test "#match? should match www.elementy.ru URLs" do
     assert matcher("https://www.elementy.ru/rss/news").match?
+  end
+
+  test "#match? should not match arbitrary subdomains of elementy.ru" do
+    assert_not matcher("https://blog.elementy.ru/feed").match?
   end
 
   test "#match? should not match non-elementy URLs" do
