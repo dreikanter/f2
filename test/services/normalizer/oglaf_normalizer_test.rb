@@ -91,4 +91,21 @@ class Normalizer::OglafNormalizerTest < ActiveSupport::TestCase
     assert_equal ["https://media.oglaf.com/comic/lolth.jpg"], post.attachment_urls
     assert_equal "enqueued", post.status
   end
+
+  test "#normalize should report via Rails.error when img#strip is absent on a fetched page" do
+    stub_request(:get, "https://www.oglaf.com/goat/")
+      .to_return(status: 200, body: "<html><body><p>No strip here</p></body></html>")
+    entry = feed_entry(0)
+    reported = []
+
+    Rails.error.stub(:report, ->(err, **kwargs) { reported << [err.message, kwargs] }) do
+      post = Normalizer::OglafNormalizer.new(entry).normalize
+      assert_empty post.attachment_urls
+    end
+
+    assert_equal 1, reported.size
+    assert_match(/img#strip missing/, reported.first[0])
+    assert_equal entry.feed&.id, reported.first[1].dig(:context, :feed_id)
+    assert_equal entry.uid, reported.first[1].dig(:context, :entry_uid)
+  end
 end

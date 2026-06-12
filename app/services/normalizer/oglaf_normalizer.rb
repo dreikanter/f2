@@ -28,7 +28,16 @@ module Normalizer
     end
 
     def strip_images
-      @strip_images ||= story_pages.filter_map { |page| page.at_css("img#strip") }
+      @strip_images ||= story_pages.filter_map do |url, page|
+        img = page.at_css("img#strip")
+        if img.nil?
+          Rails.error.report(
+            StandardError.new("oglaf: page #{url} fetched but img#strip missing — markup changed?"),
+            context: { feed_id: feed_entry.feed&.id, entry_uid: feed_entry.uid }
+          )
+        end
+        img
+      end
     end
 
     def story_pages
@@ -44,7 +53,7 @@ module Normalizer
         break if html.nil?
 
         page = Nokogiri::HTML(html)
-        pages << page
+        pages << [next_url, page]
         next_url = next_page_url(page)
       end
 
@@ -62,10 +71,14 @@ module Normalizer
 
     def fetch_page(url)
       response = HttpClient.build.get(url)
-      return nil unless response.success?
-
-      response.body
-    rescue HttpClient::Error
+      if response.success?
+        response.body
+      else
+        Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — HTTP #{response.status}")
+        nil
+      end
+    rescue HttpClient::Error => e
+      Rails.logger.warn("oglaf: skipping page #{url} for entry #{feed_entry.uid} (feed #{feed_entry.feed&.id}) — #{e.message}")
       nil
     end
   end
