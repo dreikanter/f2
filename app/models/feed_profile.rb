@@ -229,6 +229,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "theycantalk" => {
+      display_name: "They Can Talk",
+      description: "They Can Talk comics about what animals might say",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TheycantalkProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::TheycantalkNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "tomorrows" => {
       display_name: "365 Tomorrows",
       description: "Daily flash science fiction from 365tomorrows.com",
