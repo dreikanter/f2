@@ -1,5 +1,7 @@
 module Normalizer
   class TheycantalkNormalizer < RssNormalizer
+    PROFILE_KEY = "theycantalk"
+
     private
 
     def normalize_content
@@ -16,7 +18,27 @@ module Normalizer
 
       doc = Nokogiri::HTML::DocumentFragment.parse(summary)
       img = doc.css("img").first
-      img ? [img["src"]].compact : []
+
+      if img.nil?
+        if doc.css("figure").any?
+          Rails.logger.warn(
+            "[#{PROFILE_KEY}] No <img> found inside <figure> — skipping attachment. " \
+            "feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid}"
+          )
+        end
+        return []
+      end
+
+      src = img["src"].presence
+      if src.nil?
+        Rails.logger.warn(
+          "[#{PROFILE_KEY}] <img> has blank src — skipping attachment. " \
+          "feed_id=#{feed_entry.feed&.id} uid=#{feed_entry.uid}"
+        )
+        return []
+      end
+
+      [src]
     end
 
     def paragraphs
