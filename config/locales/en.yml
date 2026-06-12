@@ -92,7 +92,3 @@ en:
       name: "Email failed"
       description_html: "Email delivery failed"
 
-  feed_profiles:
-    rss: "RSS Feed"
-    tomorrows: "365 Tomorrows"
-    xkcd: "XKCD Comics"
