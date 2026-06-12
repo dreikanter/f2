@@ -112,12 +112,29 @@
         {
           "title": "Queue backlog",
           "expr": [
-            "feeder_posts_enqueued",
+            "feeder_posts_total{status=\"enqueued\"}",
             "feeder_jobs_ready"
           ],
           "alias": [
             "enqueued posts",
             "ready jobs"
+          ]
+        },
+        {
+          "title": "Posts by status",
+          "expr": [
+            "feeder_posts_total"
+          ]
+        },
+        {
+          "title": "Repost activity (per hour)",
+          "expr": [
+            "sum(increase(feeder_posts_published_total{status=\"published\"}[1h]))",
+            "sum(increase(feeder_posts_published_total{status=\"failed\"}[1h]))"
+          ],
+          "alias": [
+            "published",
+            "failed"
           ]
         }
       ]
