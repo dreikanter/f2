@@ -33,7 +33,7 @@ accessories:
   # tunnel: ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com → http://localhost:8428/vmui
   # Remove with: bin/kamal accessory remove victoriametrics -d staging
   victoriametrics:
-    image: victoriametrics/victoria-metrics:latest
+    image: victoriametrics/victoria-metrics:v1.145.0
     host: dev.fffeeder.com
     port: "127.0.0.1:8428:8428"
     cmd: "-retentionPeriod=1 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
@@ -47,7 +47,7 @@ accessories:
   # a read-only mount; scraped by VictoriaMetrics over the Kamal network
   # (see config/victoriametrics/scrape.yml), so no published port.
   node-exporter:
-    image: quay.io/prometheus/node-exporter:latest
+    image: quay.io/prometheus/node-exporter:v1.11.1
     host: dev.fffeeder.com
     cmd: "--path.rootfs=/host"
     volumes:
@@ -62,3 +62,6 @@ env:
     # Reaches the victoriametrics accessory by container name over the Kamal
     # network. Unset this (or remove the accessory) to disable metrics.
     METRICS_URL: http://f2-victoriametrics:8428/api/v1/import/prometheus
+    # The sampled gauges move on hour scales; a 60s push loses no visible
+    # resolution and quarters the per-process DB sampling.
+    METRICS_FLUSH_INTERVAL: "60"
