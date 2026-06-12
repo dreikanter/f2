@@ -22,12 +22,20 @@ class ProfileMatcher::XkcdProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://xkcd.com/rss.xml").match?
   end
 
-  test "#match? should match xkcd.com subdomains" do
+  test "#match? should match www.xkcd.com URLs" do
     assert matcher("https://www.xkcd.com/rss.xml").match?
   end
 
   test "#match? should not match non-xkcd URLs" do
     assert_not matcher("https://example.com/feed.xml").match?
+  end
+
+  test "#match? should not match arbitrary xkcd.com subdomains" do
+    assert_not matcher("https://blog.xkcd.com/feed.xml").match?
+  end
+
+  test "#match? should not match domains that merely end with xkcd.com" do
+    assert_not matcher("https://notxkcd.com/feed.xml").match?
   end
 
   test "#match? should not match URLs that just contain xkcd in path" do
