@@ -18,18 +18,30 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      page = fetch_page(raw_data.dig("link"))
+      url = raw_data.dig("link")
+      page = fetch_page(url)
       return [] if page.nil?
 
       doc = Nokogiri::HTML(page)
       img = doc.css(".ill_block img").first
-      return [] if img.nil?
+
+      if img.nil?
+        Rails.error.report(
+          StandardError.new("elementy: page #{url} fetched but .ill_block img missing — markup changed?"),
+          context: { profile: "elementy", feed_id: feed_entry.feed&.id, uid: feed_entry.uid, url: url }
+        )
+        return []
+      end
 
       src = img["src"]
       return [] if src.blank?
 
       [URI.join(BASE_URL, src).to_s]
     rescue URI::InvalidURIError
+      Rails.logger.warn(
+        "elementy: skipping cover image — malformed img src #{src.inspect} on #{url} " \
+        "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
+      )
       []
     end
 
@@ -37,10 +49,21 @@ module Normalizer
       return nil if url.blank?
 
       response = HttpClient.build.get(url)
-      return nil unless response.success?
+
+      unless response.success?
+        Rails.logger.warn(
+          "elementy: skipping cover image — HTTP #{response.status} fetching #{url} " \
+          "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
+        )
+        return nil
+      end
 
       response.body
-    rescue HttpClient::Error
+    rescue HttpClient::Error => e
+      Rails.logger.warn(
+        "elementy: skipping cover image — #{e.class}: #{e.message} fetching #{url} " \
+        "(feed_id=#{feed_entry.feed&.id}, uid=#{feed_entry.uid})"
+      )
       nil
     end
   end
