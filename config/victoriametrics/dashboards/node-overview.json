@@ -37,6 +37,65 @@
           "expr": [
             "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100"
           ]
+        },
+        {
+          "title": "Swap used",
+          "unit": "bytes",
+          "expr": [
+            "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Disk",
+      "panels": [
+        {
+          "title": "Disk space used %",
+          "unit": "%",
+          "expr": [
+            "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})"
+          ]
+        },
+        {
+          "title": "Disk I/O",
+          "unit": "bytes/s",
+          "expr": [
+            "sum(rate(node_disk_read_bytes_total{device!~\"loop.*\"}[5m]))",
+            "sum(rate(node_disk_written_bytes_total{device!~\"loop.*\"}[5m]))"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Network",
+      "panels": [
+        {
+          "title": "Network traffic",
+          "unit": "bytes/s",
+          "expr": [
+            "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
+            "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "PostgreSQL",
+      "panels": [
+        {
+          "title": "Database size",
+          "unit": "bytes",
+          "expr": [
+            "feeder_pg_database_size_bytes"
+          ]
+        },
+        {
+          "title": "Table sizes",
+          "unit": "bytes",
+          "expr": [
+            "feeder_pg_table_size_bytes"
+          ]
         }
       ]
     }
