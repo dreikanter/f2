@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pluralistic: Daily links from Cory Doctorow</title>
+    <atom:link href="https://pluralistic.net/feed/" rel="self" type="application/rss+xml"/>
+    <link>https://pluralistic.net</link>
+    <description>No trackers, no ads. Black type, white background.</description>
+    <item>
+      <title>Pluralistic: The world has moved on (11 Jun 2026)</title>
+      <link>https://pluralistic.net/2026/06/11/lapsarianism/</link>
+      <dc:creator><![CDATA[Cory Doctorow]]></dc:creator>
+      <pubDate>Thu, 11 Jun 2026 14:43:06 +0000</pubDate>
+      <guid isPermaLink="false">https://pluralistic.net/?p=12899</guid>
+      <description><![CDATA[<p>Today&#8217;s links&#8230;</p>]]></description>
+      <content:encoded><![CDATA[<p>Douglas Adams wrote, &#8220;Anything that is in the world when you&#8217;re born is normal and ordinary.&#8221;</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Pluralistic: Big Tech wants to abolish fair use (10 Jun 2026)</title>
+      <link>https://pluralistic.net/2026/06/10/fair-use/</link>
+      <dc:creator><![CDATA[Cory Doctorow]]></dc:creator>
+      <pubDate>Wed, 10 Jun 2026 15:00:00 +0000</pubDate>
+      <guid isPermaLink="false">https://pluralistic.net/?p=12890</guid>
+      <description><![CDATA[<p>Today&#8217;s links&#8230;</p>]]></description>
+      <content:encoded><![CDATA[<p>Big Tech wants to gut the fair use doctrine.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>
