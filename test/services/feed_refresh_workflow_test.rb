@@ -188,6 +188,62 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, workflow.stats[:new_posts]
   end
 
+  test "#execute should skip entries published at or before the import threshold" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss", import_after: 3.hours.ago)
+
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <item>
+            <guid>old-entry</guid>
+            <title>Old Entry</title>
+            <description>Published before the threshold</description>
+            <link>https://example.com/old</link>
+            <pubDate>#{5.hours.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>fresh-entry</guid>
+            <title>Fresh Entry</title>
+            <description>Published after the threshold</description>
+            <link>https://example.com/fresh</link>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    result = workflow.execute
+
+    assert_equal 1, result.length
+    assert_equal ["fresh-entry"], FeedEntry.where(feed: test_feed).pluck(:uid)
+
+    # Skipped entries leave no UID record, so they can still import later
+    # if the threshold is cleared.
+    assert_equal ["fresh-entry"], FeedEntryUid.where(feed: test_feed).pluck(:uid)
+
+    assert_equal 2, workflow.stats[:total_entries]
+    assert_equal 1, workflow.stats[:new_entries]
+    assert_equal 1, workflow.stats[:entries_before_threshold]
+  end
+
+  test "#filter_new_entries should keep entries without a published date despite the import threshold" do
+    test_feed = create(:feed, import_after: 1.hour.ago)
+    workflow = FeedRefreshWorkflow.new(test_feed)
+
+    undated_entry = FeedEntry.new(feed: test_feed, uid: "undated-entry", published_at: nil)
+    stale_entry = FeedEntry.new(feed: test_feed, uid: "old-entry", published_at: 2.hours.ago)
+
+    result = workflow.send(:filter_new_entries, [undated_entry, stale_entry])
+
+    assert_equal ["undated-entry"], result.map(&:uid)
+    assert_equal 1, workflow.stats[:entries_before_threshold]
+  end
+
   test "#execute should handle HTTP loading errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
