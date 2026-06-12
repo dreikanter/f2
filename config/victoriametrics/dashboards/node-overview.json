@@ -121,18 +121,20 @@
         {
           "title": "Queue backlog",
           "expr": [
-            "feeder_posts_total{status=\"enqueued\"}",
-            "feeder_jobs_ready"
+            "feeder_posts_count{status=\"enqueued\"}",
+            "feeder_jobs_ready",
+            "feeder_jobs_failed"
           ],
           "alias": [
             "enqueued posts",
-            "ready jobs"
+            "ready jobs",
+            "failed jobs"
           ]
         },
         {
           "title": "Posts by status",
           "expr": [
-            "feeder_posts_total"
+            "feeder_posts_count"
           ]
         },
         {
@@ -159,10 +161,27 @@
           "title": "Metrics push age",
           "unit": "s",
           "expr": [
-            "time() - max(timestamp(feeder_users_active))"
+            "time() - tlast_over_time(feeder_users_active[1d])"
           ],
           "alias": [
             "since last push"
+          ]
+        },
+        {
+          "title": "Feed refreshes (per hour)",
+          "expr": [
+            "sum(increase(feeder_feed_refresh_total{status=\"ok\"}[1h]))",
+            "sum(increase(feeder_feed_refresh_total{status=\"error\"}[1h]))"
+          ],
+          "alias": [
+            "ok",
+            "errors"
+          ]
+        },
+        {
+          "title": "Loader errors (per hour)",
+          "expr": [
+            "sum(increase(feeder_loader_errors_total[1h])) by (loader)"
           ]
         }
       ]
