@@ -89,6 +89,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "buni" => {
+      display_name: "Buni Comic",
+      description: "Wordless Buni comic strips from bunicomic.com",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::BuniProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::BuniNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "nextbigfuture" => {
       display_name: "Next Big Future",
       description: "Technology news from nextbigfuture.com with cover images",
