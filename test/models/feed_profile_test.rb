@@ -3,6 +3,7 @@ require "test_helper"
 class FeedProfileTest < ActiveSupport::TestCase
   test ".all returns list of profile keys" do
     expected = [
+      "aerostat",
       "buni",
       "elementy",
       "litterbox",
