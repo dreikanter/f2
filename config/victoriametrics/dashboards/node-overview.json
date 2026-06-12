@@ -18,6 +18,12 @@
             "node_load5",
             "node_load15",
             "count(count by (cpu) (node_cpu_seconds_total))"
+          ],
+          "alias": [
+            "1m",
+            "5m",
+            "15m",
+            "CPU cores"
           ]
         }
       ]
@@ -64,6 +70,10 @@
           "expr": [
             "sum(rate(node_disk_read_bytes_total{device!~\"loop.*\"}[5m]))",
             "sum(rate(node_disk_written_bytes_total{device!~\"loop.*\"}[5m]))"
+          ],
+          "alias": [
+            "read",
+            "write"
           ]
         }
       ]
@@ -77,6 +87,10 @@
           "expr": [
             "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
             "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))"
+          ],
+          "alias": [
+            "receive",
+            "transmit"
           ]
         }
       ]
@@ -89,6 +103,10 @@
           "expr": [
             "feeder_users_active",
             "feeder_feeds_enabled"
+          ],
+          "alias": [
+            "active users",
+            "enabled feeds"
           ]
         },
         {
@@ -96,6 +114,10 @@
           "expr": [
             "feeder_posts_enqueued",
             "feeder_jobs_ready"
+          ],
+          "alias": [
+            "enqueued posts",
+            "ready jobs"
           ]
         }
       ]
