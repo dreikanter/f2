@@ -9,6 +9,9 @@
           "unit": "%",
           "expr": [
             "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))"
+          ],
+          "alias": [
+            "busy"
           ]
         },
         {
@@ -36,6 +39,9 @@
           "unit": "bytes",
           "expr": [
             "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -43,6 +49,9 @@
           "unit": "%",
           "expr": [
             "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -50,6 +59,9 @@
           "unit": "bytes",
           "expr": [
             "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes"
+          ],
+          "alias": [
+            "used"
           ]
         }
       ]
@@ -62,6 +74,9 @@
           "unit": "%",
           "expr": [
             "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -147,6 +162,9 @@
           "unit": "bytes",
           "expr": [
             "feeder_pg_database_size_bytes"
+          ],
+          "alias": [
+            "total size"
           ]
         },
         {
