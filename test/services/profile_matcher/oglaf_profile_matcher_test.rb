@@ -26,6 +26,10 @@ class ProfileMatcher::OglafProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://oglaf.com/latest/").match?
   end
 
+  test "#match? should not match other oglaf.com subdomains" do
+    assert_not matcher("https://media.oglaf.com/x").match?
+  end
+
   test "#match? should not match non-oglaf URLs" do
     assert_not matcher("https://example.com/feed.xml").match?
   end

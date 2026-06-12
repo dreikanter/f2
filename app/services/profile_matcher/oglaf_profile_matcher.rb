@@ -9,7 +9,7 @@ module ProfileMatcher
       return false if input.blank?
 
       uri = URI.parse(input)
-      uri.host == OGLAF_DOMAIN || uri.host&.end_with?(".#{OGLAF_DOMAIN}")
+      [OGLAF_DOMAIN, "www.#{OGLAF_DOMAIN}"].include?(uri.host)
     end
   end
 end
