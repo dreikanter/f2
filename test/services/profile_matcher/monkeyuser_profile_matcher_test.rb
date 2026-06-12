@@ -22,12 +22,20 @@ class ProfileMatcher::MonkeyuserProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://monkeyuser.com/index.xml").match?
   end
 
-  test "#match? should match monkeyuser.com subdomains" do
+  test "#match? should match www.monkeyuser.com URLs" do
     assert matcher("https://www.monkeyuser.com/index.xml").match?
   end
 
   test "#match? should not match non-monkeyuser URLs" do
     assert_not matcher("https://example.com/feed.xml").match?
+  end
+
+  test "#match? should not match arbitrary monkeyuser.com subdomains" do
+    assert_not matcher("https://blog.monkeyuser.com/feed.xml").match?
+  end
+
+  test "#match? should not match domains that merely end with monkeyuser.com" do
+    assert_not matcher("https://notmonkeyuser.com/feed.xml").match?
   end
 
   test "#match? should not match URLs that just contain monkeyuser in path" do
