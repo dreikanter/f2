@@ -56,6 +56,18 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "missing_images"
   end
 
+  test "#normalize should warn when the comic page returns a non-2xx status" do
+    stub_request(:get, PAGE_URL).to_return(status: 503)
+    entry = feed_entry(0)
+    warned = []
+    Rails.logger.stub(:warn, ->(msg) { warned << msg }) do
+      Normalizer::BuniNormalizer.new(entry).normalize
+    end
+
+    assert warned.any? { |msg| msg.include?("buni") && msg.include?("503") }, \
+      "expected a logger.warn mentioning buni and HTTP 503"
+  end
+
   test "#normalize should reject the post when the comic page fetch raises a network error" do
     stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
     entry = feed_entry(0)
@@ -64,6 +76,30 @@ class Normalizer::BuniNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing_images"
+  end
+
+  test "#normalize should warn when the comic page fetch raises a network error" do
+    stub_request(:get, PAGE_URL).to_raise(Faraday::ConnectionFailed.new("connection refused"))
+    entry = feed_entry(0)
+    warned = []
+    Rails.logger.stub(:warn, ->(msg) { warned << msg }) do
+      Normalizer::BuniNormalizer.new(entry).normalize
+    end
+
+    assert warned.any? { |msg| msg.include?("buni") && msg.include?("network error") }, \
+      "expected a logger.warn mentioning buni and network error"
+  end
+
+  test "#normalize should report to Rails.error when page fetched OK but comic image is absent" do
+    stub_request(:get, PAGE_URL).to_return(status: 200, body: "<html><body><div id='comic'></div></body></html>")
+    entry = feed_entry(0)
+    reported = []
+    Rails.error.stub(:report, ->(err, **) { reported << err }) do
+      Normalizer::BuniNormalizer.new(entry).normalize
+    end
+
+    assert reported.any? { |err| err.message.include?("buni") && err.message.include?("markup changed") }, \
+      "expected Rails.error.report to flag missing comic image as a structural bug"
   end
 
   test "#normalize should add a Webtoons comment when the entry links to Webtoons" do
