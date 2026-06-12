@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  >
+<channel>
+  <title>Example Blog</title>
+  <atom:link href="https://example.com/feed" rel="self" type="application/rss+xml" />
+  <link>https://example.com</link>
+  <description>Sample blog for testing</description>
+  <item>
+    <title>Sample Article One</title>
+    <link>https://example.com/2025/01/sample-article-one.html</link>
+    <dc:creator><![CDATA[Jane Smith]]></dc:creator>
+    <pubDate>Fri, 03 Jan 2025 10:00:00 +0000</pubDate>
+    <guid isPermaLink="false">https://example.com/?p=1001</guid>
+    <description><![CDATA[This is the first sample article. It contains some introductory text about the topic covered in the post. <p class="read-more-container"><a title="Sample Article One" class="read-more button" href="https://example.com/2025/01/sample-article-one.html#more-1001">Read more</a></p>]]></description>
+  </item>
+  <item>
+    <title>Sample Article Two</title>
+    <link>https://example.com/2025/01/sample-article-two.html</link>
+    <dc:creator><![CDATA[Jane Smith]]></dc:creator>
+    <pubDate>Thu, 02 Jan 2025 12:00:00 +0000</pubDate>
+    <guid isPermaLink="false">https://example.com/?p=1002</guid>
+    <description><![CDATA[This is the second sample article with a brief summary of its content.]]></description>
+  </item>
+</channel>
+</rss>

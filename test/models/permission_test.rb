@@ -48,4 +48,14 @@ class PermissionTest < ActiveSupport::TestCase
 
     assert permission.valid?
   end
+
+  test ".display_name should return capitalized display name for a permission" do
+    assert_equal "Admin", Permission.display_name(Permission::ADMIN)
+    assert_equal "Developer Tools", Permission.display_name(Permission::DEV)
+  end
+
+  test "#display_name should return the display name for the record's permission" do
+    permission = build(:permission, name: Permission::DEV)
+    assert_equal "Developer Tools", permission.display_name
+  end
 end

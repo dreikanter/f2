@@ -89,6 +89,86 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "nextbigfuture" => {
+      display_name: "Next Big Future",
+      description: "Technology news from nextbigfuture.com with cover images",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::NextbigfutureProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::NextbigfutureNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "monkeyuser" => {
+      display_name: "MonkeyUser",
+      description: "MonkeyUser comics for developers",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::MonkeyuserProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::MonkeyuserNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "lobsters" => {
+      display_name: "Lobsters",
+      description: "Stories from lobste.rs with a link to the discussion",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::LobstersProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::LobstersNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "litterbox" => {
+      display_name: "Litterbox Comics",
+      description: "Family life comics from Litterbox Comics, bonus panels included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::LitterboxProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::LitterboxNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "pluralistic" => {
       display_name: "Pluralistic",
       description: "Cory Doctorow's Pluralistic linkblog with cover images",
@@ -106,6 +186,26 @@ class FeedProfile
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::PluralisticNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "smbc" => {
+      display_name: "SMBC Comics",
+      description: "Saturday Morning Breakfast Cereal comics with the hovertext and hidden panel",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::SmbcProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::SmbcNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },

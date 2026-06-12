@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Litterbox Comics</title>
+    <atom:link href="https://www.litterboxcomics.com/feed/" rel="self" type="application/rss+xml"/>
+    <link>https://www.litterboxcomics.com/</link>
+    <description></description>
+    <lastBuildDate>Tue, 09 Jun 2026 16:00:00 +0000</lastBuildDate>
+    <language>en-US</language>
+    <item>
+      <title>Sample Comic One</title>
+      <link>https://www.litterboxcomics.com/sample-comic-one/</link>
+      <dc:creator><![CDATA[Sample Author]]></dc:creator>
+      <pubDate>Tue, 09 Jun 2026 16:00:00 +0000</pubDate>
+      <guid isPermaLink="false">https://www.litterboxcomics.com/sample-comic-one/</guid>
+      <description><![CDATA[<p>BONUS PANEL on Patreon!</p>
+<p>The post <a href="https://www.litterboxcomics.com/sample-comic-one/">Sample Comic One</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></description>
+      <content:encoded><![CDATA[<div class="wp-block-image">
+<figure class="aligncenter size-full is-resized"><img src="https://www.litterboxcomics.com/wp-content/uploads/sample-comic-one.png" alt="" class="wp-image-1001" /></figure>
+</div>
+<p>The post <a href="https://www.litterboxcomics.com/sample-comic-one/">Sample Comic One</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></content:encoded>
+    </item>
+    <item>
+      <title>Sample Comic Two</title>
+      <link>https://www.litterboxcomics.com/sample-comic-two/</link>
+      <dc:creator><![CDATA[Sample Author]]></dc:creator>
+      <pubDate>Tue, 02 Jun 2026 16:00:00 +0000</pubDate>
+      <guid isPermaLink="false">https://www.litterboxcomics.com/sample-comic-two/</guid>
+      <description><![CDATA[<p>BONUS PANEL on Patreon!</p>
+<p>The post <a href="https://www.litterboxcomics.com/sample-comic-two/">Sample Comic Two</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></description>
+      <content:encoded><![CDATA[<div class="wp-block-image">
+<figure class="aligncenter size-full is-resized"><img src="https://www.litterboxcomics.com/wp-content/uploads/sample-comic-two.png" alt="" class="wp-image-1002" /></figure>
+</div>
+<p>The post <a href="https://www.litterboxcomics.com/sample-comic-two/">Sample Comic Two</a> appeared first on <a href="https://www.litterboxcomics.com">Litterbox Comics</a>.</p>
+]]></content:encoded>
+    </item>
+  </channel>
+</rss>

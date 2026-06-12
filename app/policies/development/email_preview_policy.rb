@@ -1,4 +1,4 @@
-class Admin::EmailPreviewPolicy < ApplicationPolicy
+class Development::EmailPreviewPolicy < ApplicationPolicy
   def index?
     dev?
   end
