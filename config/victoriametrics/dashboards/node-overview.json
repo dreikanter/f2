@@ -82,6 +82,25 @@
       ]
     },
     {
+      "title": "Application",
+      "panels": [
+        {
+          "title": "Users & feeds",
+          "expr": [
+            "feeder_users_active",
+            "feeder_feeds_enabled"
+          ]
+        },
+        {
+          "title": "Queue backlog",
+          "expr": [
+            "feeder_posts_enqueued",
+            "feeder_jobs_ready"
+          ]
+        }
+      ]
+    },
+    {
       "title": "PostgreSQL",
       "panels": [
         {
