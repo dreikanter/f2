@@ -89,6 +89,46 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "buni" => {
+      display_name: "Buni Comic",
+      description: "Wordless Buni comic strips from bunicomic.com",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::BuniProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::BuniNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "elementy" => {
+      display_name: "Elementy",
+      description: "Science news from elementy.ru with cover images",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::ElementyProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::ElementyNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "melodymae" => {
       display_name: "Melody Mae",
       description: "Posts from Melody Mae's plus-size fashion blog at melodymae.co.uk",
@@ -189,6 +229,46 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "oglaf" => {
+      display_name: "Oglaf",
+      description: "Comic strips from oglaf.com, multi-page stories included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::OglafProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::OglafNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "pluralistic" => {
+      display_name: "Pluralistic",
+      description: "Cory Doctorow's Pluralistic linkblog with cover images",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::PluralisticProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::PluralisticNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "smbc" => {
       display_name: "SMBC Comics",
       description: "Saturday Morning Breakfast Cereal comics with the hovertext and hidden panel",
@@ -206,6 +286,66 @@ class FeedProfile
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::SmbcNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "aerostat" => {
+      display_name: "Aerostat",
+      description: "Boris Grebenshchikov's Aerostat radio show episodes",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::AerostatProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::AerostatProcessor", config: {} },
+      normalizer: { class: "Normalizer::AerostatNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "theycantalk" => {
+      display_name: "They Can Talk",
+      description: "They Can Talk comics about what animals might say",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TheycantalkProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::TheycantalkNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "tomorrows" => {
+      display_name: "365 Tomorrows",
+      description: "Daily flash science fiction from 365tomorrows.com",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TomorrowsProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::TomorrowsNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
