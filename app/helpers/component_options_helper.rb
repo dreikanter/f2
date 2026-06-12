@@ -9,12 +9,6 @@ module ComponentOptionsHelper
     Current.user.access_tokens.active.exists?
   end
 
-  def feed_profile_options
-    FeedProfile.all.map do |key|
-      [t("feed_profiles.#{key}"), key]
-    end
-  end
-
   def human_readable_cron(cron_expression)
     return "not configured" if cron_expression.blank?
 

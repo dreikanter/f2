@@ -1,4 +1,4 @@
-class Admin::EmailPreviewsController < ApplicationController
+class Development::EmailPreviewsController < ApplicationController
   CATALOG = [
     {
       id: "passwords_mailer-reset",
@@ -23,14 +23,14 @@ class Admin::EmailPreviewsController < ApplicationController
   ].freeze
 
   def index
-    authorize [:admin, :email_preview], :index?
+    authorize [:development, :email_preview], :index?
     @previews = CATALOG
   end
 
   def show
-    authorize [:admin, :email_preview], :show?
+    authorize [:development, :email_preview], :show?
     @preview = CATALOG.find { _1[:id] == params[:id] }
-    redirect_to(admin_email_previews_path, alert: "Unknown email type.") and return unless @preview
+    redirect_to(development_email_previews_path, alert: "Unknown email type.") and return unless @preview
 
     message = build_message(params[:id])
     @subject = message.subject
