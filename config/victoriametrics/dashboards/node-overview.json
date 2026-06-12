@@ -9,6 +9,9 @@
           "unit": "%",
           "expr": [
             "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))"
+          ],
+          "alias": [
+            "busy"
           ]
         },
         {
@@ -18,6 +21,12 @@
             "node_load5",
             "node_load15",
             "count(count by (cpu) (node_cpu_seconds_total))"
+          ],
+          "alias": [
+            "1m",
+            "5m",
+            "15m",
+            "CPU cores"
           ]
         }
       ]
@@ -30,6 +39,9 @@
           "unit": "bytes",
           "expr": [
             "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -37,6 +49,9 @@
           "unit": "%",
           "expr": [
             "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -44,6 +59,9 @@
           "unit": "bytes",
           "expr": [
             "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes"
+          ],
+          "alias": [
+            "used"
           ]
         }
       ]
@@ -56,6 +74,9 @@
           "unit": "%",
           "expr": [
             "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})"
+          ],
+          "alias": [
+            "used"
           ]
         },
         {
@@ -64,6 +85,10 @@
           "expr": [
             "sum(rate(node_disk_read_bytes_total{device!~\"loop.*\"}[5m]))",
             "sum(rate(node_disk_written_bytes_total{device!~\"loop.*\"}[5m]))"
+          ],
+          "alias": [
+            "read",
+            "write"
           ]
         }
       ]
@@ -77,6 +102,10 @@
           "expr": [
             "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
             "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))"
+          ],
+          "alias": [
+            "receive",
+            "transmit"
           ]
         }
       ]
@@ -89,13 +118,38 @@
           "expr": [
             "feeder_users_active",
             "feeder_feeds_enabled"
+          ],
+          "alias": [
+            "active users",
+            "enabled feeds"
           ]
         },
         {
           "title": "Queue backlog",
           "expr": [
-            "feeder_posts_enqueued",
+            "feeder_posts_total{status=\"enqueued\"}",
             "feeder_jobs_ready"
+          ],
+          "alias": [
+            "enqueued posts",
+            "ready jobs"
+          ]
+        },
+        {
+          "title": "Posts by status",
+          "expr": [
+            "feeder_posts_total"
+          ]
+        },
+        {
+          "title": "Repost activity (per hour)",
+          "expr": [
+            "sum(increase(feeder_posts_published_total{status=\"published\"}[1h]))",
+            "sum(increase(feeder_posts_published_total{status=\"failed\"}[1h]))"
+          ],
+          "alias": [
+            "published",
+            "failed"
           ]
         }
       ]
@@ -108,6 +162,9 @@
           "unit": "bytes",
           "expr": [
             "feeder_pg_database_size_bytes"
+          ],
+          "alias": [
+            "total size"
           ]
         },
         {

@@ -6,7 +6,10 @@ Rails.application.config.after_initialize do
 
   Metrics.gauge("users_active") { User.where(state: :active).count }
   Metrics.gauge("feeds_enabled") { Feed.where(state: :enabled).count }
-  Metrics.gauge("posts_enqueued") { Post.enqueued.count }
+  Metrics.gauge_set("posts_total") do
+    counts = Post.group(:status).count
+    Post.statuses.keys.to_h { |status| [{ status: status }, counts.fetch(status, 0)] }
+  end
   Metrics.gauge("jobs_ready") { SolidQueue::ReadyExecution.count }
   Metrics.gauge("pg_database_size_bytes") { PostgresMetrics.database_size }
   Metrics.gauge_set("pg_table_size_bytes") { PostgresMetrics.table_sizes }
