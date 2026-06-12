@@ -36,9 +36,10 @@ accessories:
     image: victoriametrics/victoria-metrics:latest
     host: dev.fffeeder.com
     port: "127.0.0.1:8428:8428"
-    cmd: "-retentionPeriod=1 -promscrape.config=/etc/victoriametrics/scrape.yml"
+    cmd: "-retentionPeriod=1 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
     files:
       - config/victoriametrics/scrape.yml:/etc/victoriametrics/scrape.yml
+      - config/victoriametrics/dashboards/node-overview.json:/etc/victoriametrics/dashboards/node-overview.json
     directories:
       - vmdata:/victoria-metrics-data
 
