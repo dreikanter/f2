@@ -100,6 +100,20 @@ class MetricsTest < ActiveSupport::TestCase
     end
   end
 
+  test "#flush! should log non-2xx responses without raising" do
+    enable!
+    stub_request(:post, "https://vm.test/api/v1/import/prometheus").to_return(status: 400, body: "bad exposition")
+    Metrics.increment("job_executions_total", status: "ok")
+
+    logged = []
+    Rails.logger.stub(:warn, ->(*args, &blk) { logged << (blk ? blk.call : args.first) }) do
+      assert_nothing_raised { Metrics.flush! }
+    end
+
+    assert logged.any? { |line| line.include?("400") && line.include?("bad exposition") },
+           "expected a warning with the response code and body, got: #{logged.inspect}"
+  end
+
   test "#flush! should log transport errors without reporting to error tracker" do
     enable!
     stub_request(:post, "https://vm.test/api/v1/import/prometheus").to_raise(Errno::ECONNREFUSED)

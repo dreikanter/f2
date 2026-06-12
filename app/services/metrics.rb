@@ -84,7 +84,12 @@ module Metrics
       body = render
       return if body.strip.empty?
 
-      post(body)
+      response = post(body)
+      return if response.is_a?(Net::HTTPSuccess)
+
+      # VM rejecting the payload (bad exposition, auth drift) raises nothing at
+      # the transport layer; without this the data would vanish silently.
+      Rails.logger.warn { "Metrics: push rejected: #{response.code} #{response.body.to_s.byteslice(0, 200)}" }
     rescue SocketError, SystemCallError, Timeout::Error, EOFError => e
       # Transport failures are logged, not reported: a metrics outage is an
       # infrastructure event, not a bug. Reporting every flush attempt (every
