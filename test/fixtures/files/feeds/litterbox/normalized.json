@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://www.litterboxcomics.com/wp-content/uploads/sample-comic-one.png"
+  ],
+  "comments": [
+    "Bonus panel: https://www.litterboxcomics.com/wp-content/uploads/sample-comic-one-bonus.png"
+  ],
+  "content": "Sample Comic One - https://www.litterboxcomics.com/sample-comic-one/",
+  "published_at": "2026-06-09T16:00:00.000Z",
+  "source_url": "https://www.litterboxcomics.com/sample-comic-one/",
+  "status": "enqueued",
+  "uid": "https://www.litterboxcomics.com/sample-comic-one/",
+  "validation_errors": []
+}

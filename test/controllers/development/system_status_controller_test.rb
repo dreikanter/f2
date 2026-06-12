@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
+class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   def dev_user
     @dev_user ||= create(:user, :dev)
   end
@@ -12,14 +12,14 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   test "should redirect non-dev users" do
     login_as(regular_user)
 
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_redirected_to root_path
     assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
   end
 
   test "should redirect unauthenticated users" do
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_redirected_to new_session_path
   end
@@ -27,7 +27,7 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   test "should show system status for dev users" do
     login_as(dev_user)
 
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_response :success
   end
@@ -35,7 +35,7 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   test "should show configuration checklist" do
     login_as(dev_user)
 
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_response :success
     assert_select "[data-key='config.resend_key']", text: /Resend key present/
@@ -48,7 +48,7 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     SolidQueue::Process.create!(kind: "Worker", name: "worker-test", pid: 999, last_heartbeat_at: Time.current)
     login_as(dev_user)
 
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_response :success
     assert_select "[data-key='config.background_jobs'][data-status='ok']"
@@ -58,7 +58,7 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     SolidQueue::Process.delete_all
     login_as(dev_user)
 
-    get admin_system_status_path
+    get development_system_status_path
 
     assert_response :success
     assert_select "[data-key='config.background_jobs'][data-status='error']"
@@ -72,7 +72,7 @@ class Admin::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     ) do
       login_as(dev_user)
 
-      get admin_system_status_path
+      get development_system_status_path
     end
 
     assert_response :success
