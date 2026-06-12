@@ -152,6 +152,38 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal "enqueued", post.reload.status
   end
 
+  test ".perform_now should keep original publication order across a throttle interruption" do
+    create(:post, :enqueued, feed: feed, published_at: 3.hours.ago, content: "post-1")
+    create(:post, :enqueued, feed: feed, published_at: 2.hours.ago, content: "post-2")
+    create(:post, :enqueued, feed: feed, published_at: 1.hour.ago, content: "post-3")
+
+    published_bodies = []
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return do |request|
+      published_bodies << JSON.parse(request.body).dig("post", "body")
+      {
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: { posts: { id: "freefeed-#{SecureRandom.hex(8)}" } }.to_json
+      }
+    end
+
+    # Throttle the chain once, when it reaches the second post; the retried
+    # job must pick that same post up again before touching later ones.
+    acquire_calls = 0
+    acquire = lambda do |*, **|
+      acquire_calls += 1
+      raise RateLimit::Throttled.new(retry_after: 1) if acquire_calls == 2
+    end
+
+    RateLimit.stub(:acquire!, acquire) do
+      perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+    end
+
+    assert_equal %w[post-1 post-2 post-3], published_bodies
+    assert_equal 0, feed.posts.where(status: :enqueued).count
+    assert_equal 4, acquire_calls, "expected three grants plus one throttled attempt"
+  end
+
   test ".perform_now should do nothing when there are no enqueued posts" do
     assert_no_enqueued_jobs(only: PostPublishJob) do
       PostPublishJob.perform_now(feed.id)
