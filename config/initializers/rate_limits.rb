@@ -12,12 +12,19 @@
 #   GET            200/min  — whoami, managedGroups (token validation)
 #   DELETE (`all`)  30/min  — post withdrawal / group purge (1 DELETE per post)
 #
+# FreeFeed counts each ceiling over a *rolling* one-minute window, so the most a
+# token bucket can legally spend in any single window is burst + rate (a full
+# bucket plus a minute of refill). Each burst below is therefore capped so that
+# burst + rate stays under the ceiling with margin to spare — the same account
+# may also be used by a human or other clients, and breaching gets the whole
+# account blocked for 1–8 minutes (escalating), including the FreeFeed UI.
+#
 # FreeFeed also allows GET /vN/attachments/:attId/:type 1000/min, but that's the
 # attachment-download route, which Feeder never calls — so it gets no bucket.
 Rails.application.config.to_prepare do
   RateLimit.define :freefeed do
-    limit :post, 50, per: 1.minute   # under FreeFeed POST 60/min
-    limit :get, 150, per: 1.minute   # under FreeFeed GET 200/min
-    limit :delete, 25, per: 1.minute # under FreeFeed `all` fallback 30/min
+    limit :post, 30, per: 1.minute, burst: 20   # worst window 50, under FreeFeed POST 60/min
+    limit :get, 100, per: 1.minute, burst: 30   # worst window 130, under FreeFeed GET 200/min
+    limit :delete, 15, per: 1.minute, burst: 10 # worst window 25, under FreeFeed `all` fallback 30/min
   end
 end
