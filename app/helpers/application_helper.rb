@@ -163,6 +163,14 @@ module ApplicationHelper
       }
     end
 
+    if policy(:access).dev?
+      items << {
+        name: "Dev Tools",
+        path: development_path,
+        active: current_page?(development_path) || controller_path.start_with?("development")
+      }
+    end
+
     items
   end
 end

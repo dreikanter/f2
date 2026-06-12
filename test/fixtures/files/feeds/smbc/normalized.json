@@ -1,0 +1,15 @@
+{
+  "attachment_urls": [
+    "https://www.smbc-comics.com/comics/sample-comic-one.png"
+  ],
+  "comments": [
+    "Sample hovertext for the first comic.",
+    "https://www.smbc-comics.com/comics/sample-comic-one-after.png"
+  ],
+  "content": "Sample Comic One - https://www.smbc-comics.com/comic/sample-comic-one",
+  "published_at": "2026-06-11T15:20:00.000Z",
+  "source_url": "https://www.smbc-comics.com/comic/sample-comic-one",
+  "status": "enqueued",
+  "uid": "https://www.smbc-comics.com/comic/sample-comic-one",
+  "validation_errors": []
+}
