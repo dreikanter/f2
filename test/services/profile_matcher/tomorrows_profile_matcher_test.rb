@@ -22,8 +22,12 @@ class ProfileMatcher::TomorrowsProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://365tomorrows.com/feed/").match?
   end
 
-  test "#match? should match 365tomorrows.com subdomains" do
+  test "#match? should match www.365tomorrows.com feed URL" do
     assert matcher("https://www.365tomorrows.com/feed/").match?
+  end
+
+  test "#match? should not match arbitrary subdomains" do
+    assert_not matcher("https://other.365tomorrows.com/feed/").match?
   end
 
   test "#match? should not match non-tomorrows URLs" do
