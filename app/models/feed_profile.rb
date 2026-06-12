@@ -89,6 +89,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "buni" => {
+      display_name: "Buni Comic",
+      description: "Wordless Buni comic strips from bunicomic.com",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::BuniProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::BuniNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "nextbigfuture" => {
       display_name: "Next Big Future",
       description: "Technology news from nextbigfuture.com with cover images",
@@ -169,6 +189,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "oglaf" => {
+      display_name: "Oglaf",
+      description: "Comic strips from oglaf.com, multi-page stories included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::OglafProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::OglafNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
     "smbc" => {
       display_name: "SMBC Comics",
       description: "Saturday Morning Breakfast Cereal comics with the hovertext and hidden panel",
@@ -206,6 +246,26 @@ class FeedProfile
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::TheycantalkNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor",
+      output_schema: nil
+    },
+    "tomorrows" => {
+      display_name: "365 Tomorrows",
+      description: "Daily flash science fiction from 365tomorrows.com",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::TomorrowsProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::RssProcessor", config: {} },
+      normalizer: { class: "Normalizer::TomorrowsNormalizer", config: {} },
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },

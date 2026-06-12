@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>365tomorrows</title>
+    <atom:link href="https://365tomorrows.com/feed/" rel="self" type="application/rss+xml"/>
+    <link>https://365tomorrows.com/</link>
+    <description>A New Flash of Science Fiction Every Day</description>
+    <item>
+      <title>The Black Cube</title>
+      <link>https://365tomorrows.com/2026/06/10/the-black-cube/</link>
+      <dc:creator><![CDATA[submission]]></dc:creator>
+      <pubDate>Wed, 10 Jun 2026 14:54:57 +0000</pubDate>
+      <category><![CDATA[Story]]></category>
+      <guid isPermaLink="false">https://365tomorrows.com/?p=219944</guid>
+      <description><![CDATA[<p>Author: Bill Cox There was a moment, in his dream, when he realised that he was no longer alone.</p>
+<p>The post <a href="https://365tomorrows.com/2026/06/10/the-black-cube/">The Black Cube</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
+]]></description>
+    </item>
+    <item>
+      <title>Live! From Elvis Centauri</title>
+      <link>https://365tomorrows.com/2026/06/10/live-from-elvis-centauri/</link>
+      <dc:creator><![CDATA[submission]]></dc:creator>
+      <pubDate>Wed, 10 Jun 2026 07:55:17 +0000</pubDate>
+      <category><![CDATA[Story]]></category>
+      <guid isPermaLink="false">https://365tomorrows.com/?p=219590</guid>
+      <description><![CDATA[<p>Author: Hillary Lyon The entire planet watched the otherworldly broadcast.</p>
+<p>The post <a href="https://365tomorrows.com/2026/06/10/live-from-elvis-centauri/">Live! From Elvis Centauri</a> appeared first on <a href="https://365tomorrows.com">365tomorrows</a>.</p>
+]]></description>
+    </item>
+  </channel>
+</rss>
