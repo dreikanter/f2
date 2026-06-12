@@ -246,16 +246,16 @@ class ApplicationHelperTest < ActionView::TestCase
     user = create(:user)
     Current.session = create(:session, user: user)
 
-    current_page_stub = ->(path, *_args) { path == devtools_path }
+    current_page_stub = ->(path, *_args) { path == development_path }
 
     self.stub(:current_page?, current_page_stub) do
-      self.stub(:controller_path, "devtools") do
+      self.stub(:controller_path, "developments") do
         self.policy_override = ->(record) { PolicyStub.new(record == :access) }
 
         items = navbar_items
         dev_item = items.find { |item| item[:name] == "Dev Tools" }
 
-        assert_equal devtools_path, dev_item[:path]
+        assert_equal development_path, dev_item[:path]
         assert_equal true, dev_item[:active]
         assert_nil items.find { |item| item[:name] == "Admin Panel" }
       end
