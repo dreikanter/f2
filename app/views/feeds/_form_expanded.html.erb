@@ -163,6 +163,71 @@
           </div>
         </div>
       </div>
+
+      <details class="group rounded-md border border-slate-200"
+               <%= "open" if feed.import_after_enabled || f.object.errors[:import_after].any? %>
+               data-key="form.advanced-options">
+        <summary class="flex cursor-pointer select-none items-center justify-between gap-2 px-4 py-3 font-semibold text-slate-800 marker:content-none [&::-webkit-details-marker]:hidden">
+          Advanced options
+          <%= icon("chevron-down", css_class: "size-5 text-slate-400 transition group-open:rotate-180") %>
+        </summary>
+
+        <div class="space-y-6 border-t border-slate-200 px-4 py-4" data-controller="field-toggle">
+          <div class="flex items-start">
+            <div class="flex h-6 items-center">
+              <%= f.check_box :import_after_enabled,
+                              data: {
+                                field_toggle_target: "checkbox",
+                                action: "change->field-toggle#toggle",
+                                key: "form.import-after-enabled"
+                              } %>
+            </div>
+            <div class="ml-3">
+              <%= f.label :import_after_enabled, "Skip older posts", class: "block font-semibold text-slate-800 mb-0" %>
+              <p class="text-sm text-slate-500">Only import posts published after a date you pick.</p>
+            </div>
+          </div>
+
+          <div class="space-y-2 <%= "hidden" unless feed.import_after_enabled %>"
+               data-field-toggle-target="panel"
+               data-key="form.import-after-fields">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+                  <%= icon("calendar", css_class: "size-5 text-slate-400") %>
+                </div>
+                <%= f.text_field :import_after_date,
+                                 placeholder: "Pick a date",
+                                 autocomplete: "off",
+                                 class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                                 aria: { label: "Import posts published after this date" },
+                                 data: {
+                                   controller: "datepicker",
+                                   field_toggle_target: "input",
+                                   key: "form.import-after-date"
+                                 } %>
+              </div>
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+                  <%= icon("clock", css_class: "size-5 text-slate-400") %>
+                </div>
+                <%= f.time_field :import_after_time,
+                                 class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                                 aria: { label: "Import posts published after this time" },
+                                 data: {
+                                   field_toggle_target: "input",
+                                   key: "form.import-after-time"
+                                 } %>
+              </div>
+            </div>
+            <% if f.object.errors[:import_after].any? %>
+              <p class="text-sm text-red-600"><%= f.object.errors[:import_after].to_sentence.capitalize %></p>
+            <% else %>
+              <p class="text-sm text-slate-500">Posts published before this moment will be skipped. Time is UTC.</p>
+            <% end %>
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">

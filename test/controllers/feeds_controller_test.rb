@@ -545,6 +545,101 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "2h", feed.schedule_interval
   end
 
+  test "#edit should render collapsed advanced options when no import threshold is set" do
+    sign_in_as(user)
+
+    get edit_feed_url(feed)
+
+    assert_response :success
+    assert_select 'details[data-key="form.advanced-options"]:not([open])'
+    assert_select '[data-key="form.import-after-fields"].hidden'
+    assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]', false
+  end
+
+  test "#edit should expand advanced options when an import threshold is set" do
+    sign_in_as(user)
+    feed.update!(import_after: Time.utc(2026, 1, 15, 10, 30))
+
+    get edit_feed_url(feed)
+
+    assert_response :success
+    assert_select 'details[data-key="form.advanced-options"][open]'
+    assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]'
+    assert_select 'input[data-key="form.import-after-date"][value="2026-01-15"]'
+    assert_select 'input[data-key="form.import-after-time"][value="10:30"]'
+  end
+
+  test "#update should set import_after from threshold params" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
+      feed: {
+        import_after_enabled: "1",
+        import_after_date: "2026-01-15",
+        import_after_time: "10:30"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    assert_equal Time.zone.parse("2026-01-15 10:30"), feed.reload.import_after
+  end
+
+  test "#update should clear import_after when threshold checkbox is unchecked" do
+    sign_in_as(user)
+    feed.update!(import_after: Time.utc(2026, 1, 15, 10, 30))
+
+    patch feed_url(feed), params: {
+      feed: {
+        import_after_enabled: "0",
+        import_after_date: "2026-01-15",
+        import_after_time: "10:30"
+      }
+    }
+
+    assert_redirected_to feed_path(feed)
+    assert_nil feed.reload.import_after
+  end
+
+  test "#update should rerender with an error for an invalid threshold date" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: {
+      feed: {
+        import_after_enabled: "1",
+        import_after_date: "not-a-date",
+        import_after_time: ""
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select 'details[data-key="form.advanced-options"][open]'
+    assert_match "Isn&#39;t a valid date and time", response.body
+    assert_nil feed.reload.import_after
+  end
+
+  test "#create should accept import threshold params" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h",
+      import_after_enabled: "1",
+      import_after_date: "2026-01-15",
+      import_after_time: "10:30"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    assert_equal Time.zone.parse("2026-01-15 10:30"), Feed.last.import_after
+  end
+
   test "#update should show additional message for enabled feeds" do
     sign_in_as(user)
     enabled_feed = create(:feed, user: user, state: :enabled, access_token: access_token)
