@@ -16,7 +16,8 @@
           "expr": [
             "node_load1",
             "node_load5",
-            "node_load15"
+            "node_load15",
+            "count(count by (cpu) (node_cpu_seconds_total))"
           ]
         }
       ]
