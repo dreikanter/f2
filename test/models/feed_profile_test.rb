@@ -15,6 +15,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "rss",
       "smbc",
       "telegram",
+      "tomorrows",
       "twitter",
       "xkcd",
       "youtube"
