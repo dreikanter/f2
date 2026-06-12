@@ -2,6 +2,26 @@
   "title": "Node overview",
   "rows": [
     {
+      "title": "CPU",
+      "panels": [
+        {
+          "title": "CPU usage %",
+          "unit": "%",
+          "expr": [
+            "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))"
+          ]
+        },
+        {
+          "title": "Load average",
+          "expr": [
+            "node_load1",
+            "node_load5",
+            "node_load15"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Memory",
       "panels": [
         {
