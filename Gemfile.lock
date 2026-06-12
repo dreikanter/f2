@@ -1,4 +1,10 @@
 GIT
+  remote: https://github.com/dreikanter/heatmap-builder.git
+  revision: cac010a963b737f73848b8eb51698576de8ad9bb
+  specs:
+    heatmap-builder (0.4.0)
+
+GIT
   remote: https://github.com/rails/rails.git
   revision: dd638903abd641892dab8729f06b279a3749af2d
   branch: main
@@ -535,6 +541,7 @@ DEPENDENCIES
   faraday-multipart
   feedjira
   fugit
+  heatmap-builder!
   honeybadger
   importmap-rails
   json_schemer
