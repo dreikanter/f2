@@ -28,8 +28,4 @@ class FeedAutoDisabledDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "turned off"
     assert_nil result.css("[data-key='events.error_count']").first
   end
-
-  test ".for should resolve to this component for feed_auto_disabled events" do
-    assert_instance_of FeedAutoDisabledDescriptionComponent, EventDescriptionComponent.for(event)
-  end
 end

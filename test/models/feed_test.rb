@@ -906,6 +906,7 @@ class FeedTest < ActiveSupport::TestCase
 
     event = Event.find_by(subject: feed, type: "feed_auto_disabled")
     assert_not_nil event
+    assert_equal "warning", event.level
     assert_equal Feed::MAX_CONSECUTIVE_FAILURES, event.metadata["error_count"]
     assert_nil Event.find_by(subject: feed, type: "feed_disabled")
   end
