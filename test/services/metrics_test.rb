@@ -49,11 +49,11 @@ class MetricsTest < ActiveSupport::TestCase
   test "#gauge should be sampled at render time and carry no instance label" do
     enable!
     value = 5
-    Metrics.gauge("feeds_enabled") { value }
+    Metrics.gauge("jobs_ready") { value }
 
-    assert_includes Metrics.render, "feeder_feeds_enabled 5"
+    assert_includes Metrics.render, "feeder_jobs_ready 5"
     value = 9
-    assert_includes Metrics.render, "feeder_feeds_enabled 9"
+    assert_includes Metrics.render, "feeder_jobs_ready 9"
   end
 
   test "#gauge_set should render a line per label set sampled at render time" do
