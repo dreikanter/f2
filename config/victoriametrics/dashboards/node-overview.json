@@ -190,11 +190,11 @@
       "title": "Rate limiting",
       "panels": [
         {
-          "title": "Publishing (15m)",
+          "title": "Publishing (5m)",
           "expr": [
-            "sum(increase(feeder_posts_published_total{status=\"published\"}[15m]))",
-            "sum(increase(feeder_posts_published_total{status=\"failed\"}[15m]))",
-            "sum(increase(feeder_posts_published_total{status=\"rejected\"}[15m]))"
+            "sum(increase(feeder_posts_published_total{status=\"published\"}[5m]))",
+            "sum(increase(feeder_posts_published_total{status=\"failed\"}[5m]))",
+            "sum(increase(feeder_posts_published_total{status=\"rejected\"}[5m]))"
           ],
           "alias": [
             "published",
@@ -203,11 +203,11 @@
           ]
         },
         {
-          "title": "Job outcomes (15m)",
+          "title": "Job outcomes (5m)",
           "expr": [
-            "sum(increase(feeder_job_executions_total{status=\"ok\"}[15m]))",
-            "sum(increase(feeder_job_executions_total{status=\"throttled\"}[15m]))",
-            "sum(increase(feeder_job_executions_total{status=\"error\"}[15m]))"
+            "sum(increase(feeder_job_executions_total{status=\"ok\"}[5m]))",
+            "sum(increase(feeder_job_executions_total{status=\"throttled\"}[5m]))",
+            "sum(increase(feeder_job_executions_total{status=\"error\"}[5m]))"
           ],
           "alias": [
             "ok",
@@ -216,10 +216,10 @@
           ]
         },
         {
-          "title": "Throttles & blocks (15m)",
+          "title": "Throttles & blocks (5m)",
           "expr": [
-            "sum(increase(feeder_rate_limit_throttled_total{policy=\"freefeed\"}[15m]))",
-            "sum(increase(feeder_rate_limit_penalized_total{policy=\"freefeed\"}[15m]))"
+            "sum(increase(feeder_rate_limit_throttled_total{policy=\"freefeed\"}[5m]))",
+            "sum(increase(feeder_rate_limit_penalized_total{policy=\"freefeed\"}[5m]))"
           ],
           "alias": [
             "throttled",
