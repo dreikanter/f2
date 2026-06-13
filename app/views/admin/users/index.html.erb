@@ -1,11 +1,7 @@
 <% content_for :title, "Users" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Users") do |header| %>
-    <% header.with_action_button do %>
-      <%= link_to "Back to Admin", admin_path, class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
-    <% end %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: "Users") %>
 
   <% if @users.any? %>
     <div class="overflow-x-auto rounded-lg border border-slate-200">
