@@ -2,9 +2,9 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Events Log") do |header| %>
-    <% if @filter.present? %>
-      <% header.with_context_paragraph do %>
-        <span class="text-sm text-slate-500" data-key="admin.events.filter-summary">
+    <% header.with_context_paragraph do %>
+      <% if @filter.present? %>
+        <span data-key="admin.events.filter-summary">
           <% filter_parts = [] %>
           <% @filter.to_h.each do |key, value| %>
             <% filter_parts << (value.is_a?(Array) ? "#{key}: #{value.join(', ')}" : "#{key}: #{value}") %>
@@ -12,12 +12,12 @@
           Filtering by <%= filter_parts.join(" • ") %>.
         </span>
       <% end %>
+      <span data-key="events.offset"><%= events_offset_summary(@offset) %></span>
+    <% end %>
+    <% if @filter.present? %>
       <% header.with_action_button do %>
         <%= link_to "Reset Filter", admin_events_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       <% end %>
-    <% end %>
-    <% header.with_context_paragraph do %>
-      <span data-key="events.offset"><%= events_offset_summary(@offset) %></span>
     <% end %>
     <% if @log_endpoint %>
       <% header.with_action_button do %>
