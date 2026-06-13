@@ -928,4 +928,43 @@ class FeedTest < ActiveSupport::TestCase
 
     assert feed.valid?, feed.errors.full_messages.inspect
   end
+
+  test "#record_refresh_failure! should bump the streak without disabling below the threshold" do
+    feed = create(:feed, :enabled, consecutive_failures: 2)
+
+    assert_not feed.record_refresh_failure!
+    assert_equal 3, feed.reload.consecutive_failures
+    assert feed.enabled?
+  end
+
+  test "#record_refresh_failure! should disable the feed and record the count at the threshold" do
+    feed = create(:feed, :enabled, consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+
+    assert feed.record_refresh_failure!
+
+    feed.reload
+    assert feed.disabled?
+    assert_equal 0, feed.consecutive_failures
+
+    event = Event.find_by(subject: feed, type: "feed_auto_disabled")
+    assert_not_nil event
+    assert_equal Feed::MAX_CONSECUTIVE_FAILURES, event.metadata["error_count"]
+    assert_nil Event.find_by(subject: feed, type: "feed_disabled")
+  end
+
+  test "#record_refresh_failure! should not disable a feed already disabled elsewhere" do
+    feed = create(:feed, :enabled, consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+    Feed.where(id: feed.id).update_all(state: Feed.states[:disabled])
+
+    assert_not feed.record_refresh_failure!
+    assert_nil Event.find_by(subject: feed, type: "feed_auto_disabled")
+  end
+
+  test "#reset_refresh_failures! should clear the streak" do
+    feed = create(:feed, :enabled, consecutive_failures: 4)
+
+    feed.reset_refresh_failures!
+
+    assert_equal 0, feed.reload.consecutive_failures
+  end
 end

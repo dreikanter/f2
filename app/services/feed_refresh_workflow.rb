@@ -29,6 +29,7 @@ class FeedRefreshWorkflow
     record_error_stats(error, current_step: current_step)
     disable_credential_on_auth_error(error)
     create_feed_refresh_error_event(error)
+    feed.record_refresh_failure!
   end
 
   def initialize_workflow(*)
@@ -161,6 +162,7 @@ class FeedRefreshWorkflow
     rejected_posts_count = posts.count(&:rejected?)
 
     record_completed_at
+    feed.reset_refresh_failures!
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     create_feed_refresh_stats_event(posts)
 

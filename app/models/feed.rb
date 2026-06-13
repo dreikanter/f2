@@ -29,6 +29,11 @@ class Feed < ApplicationRecord
   # feed has no schedule yet. Must be a key in SCHEDULE_INTERVALS.
   DEFAULT_SCHEDULE_INTERVAL = "2h"
 
+  # Consecutive refresh failures that trip the auto-disable. A reachable source
+  # resets the streak, so this only fires for a source that's broken run after
+  # run (dead URL, persistent 5xx, etc.), not the occasional hiccup.
+  MAX_CONSECUTIVE_FAILURES = 10
+
   belongs_to :user
   belongs_to :access_token, optional: true
   belongs_to :llm_credential, optional: true
@@ -319,7 +324,50 @@ class Feed < ApplicationRecord
     end
   end
 
+  # Bumps the failure streak after a failed refresh and, once it hits the
+  # threshold, turns the feed off. Returns true when this call disabled it.
+  # No-op past the threshold for a feed already disabled elsewhere (e.g. a
+  # credential auth error in the same run), so we never double-disable.
+  def record_refresh_failure!
+    increment!(:consecutive_failures)
+    return false if consecutive_failures < MAX_CONSECUTIVE_FAILURES
+    return false unless reload.enabled?
+
+    disable_after_repeated_failures!
+    true
+  end
+
+  # Clears the streak after a successful refresh. Skips the write on the common
+  # path where there's nothing to clear.
+  def reset_refresh_failures!
+    return if consecutive_failures.zero?
+
+    update_column(:consecutive_failures, 0)
+  end
+
   private
+
+  # Pulls the feed out of the enabled state and records why, stamping the event
+  # with the streak length so the activity log can tell the user how many
+  # failures it took. Resets the counter so a later re-enable starts fresh.
+  # update_columns skips the generic feed_disabled state-change event in favor
+  # of this richer feed_auto_disabled one, mirroring the credential/token
+  # disable paths that emit their own aggregate events.
+  def disable_after_repeated_failures!
+    failure_count = consecutive_failures
+
+    transaction do
+      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      Event.create!(
+        type: "feed_auto_disabled",
+        level: :warning,
+        subject: self,
+        user: user,
+        message: "",
+        metadata: { error_count: failure_count }
+      )
+    end
+  end
 
   def recompose_import_after
     self.import_after = compose_import_after
