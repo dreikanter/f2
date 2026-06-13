@@ -90,6 +90,42 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Feed created and enabled.", flash[:success]
   end
 
+  test "#create should enqueue a refresh when the feed is enabled" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_enqueued_with(job: FeedRefreshJob) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+  end
+
+  test "#create should not enqueue a refresh when the feed is saved as draft" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+  end
+
   test "#create should save as draft with blank name" do
     sign_in_as(user)
     access_token
