@@ -11,6 +11,15 @@ module Normalizer
       body.present? ? "#{title}\n\n#{body}" : title
     end
 
+    # Reddit's RSS only exposes images through its preview CDN
+    # (*.redd.it), which serves a block page with HTTP 403 to non-browser
+    # clients. There's no reliable way to download these, so we skip image
+    # attachments for Reddit posts entirely. The permalink in the content
+    # still links back to the original post with its media.
+    def normalize_attachment_urls
+      []
+    end
+
     def extract_post_body
       summary = raw_data.dig("summary") || ""
       return "" if summary.blank?
