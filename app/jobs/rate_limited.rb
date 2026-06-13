@@ -1,16 +1,13 @@
 # Throttle handling for jobs that reserve RateLimit capacity.
 #
-# Rate limiting here is control flow, not failure: "no capacity right now, come
-# back later". So jobs ask RateLimit.acquire (the non-raising variant) and, when
-# it's not allowed, call reschedule_for_rate_limit to defer themselves. The rare
-# case where FreeFeed itself returns a 429 mid-call still arrives as a raised
-# RateLimit::Throttled; jobs rescue it locally and route it through the same
-# helper. Either way the deferral is handled inside `perform`, so it never
-# surfaces to the error reporter as a fault — only a genuine give-up does.
+# Throttling is control flow, not failure: "no capacity now, come back later".
+# Jobs call the non-raising RateLimit.acquire and, when denied, defer via
+# reschedule_for_rate_limit. A real mid-call 429 still raises RateLimit::Throttled;
+# jobs rescue it locally and route it through the same helper. Handled inside
+# `perform`, a deferral never reaches the error reporter — only a give-up does.
 #
-# Reschedules wait the limiter's retry_after (plus jitter to avoid stampedes),
-# up to MAX_ATTEMPTS. After that it reports once and stops; the recurring
-# schedulers re-kick the work later, so giving up is not permanent.
+# Reschedules wait retry_after (plus jitter), up to MAX_ATTEMPTS, then report
+# once and stop. The recurring schedulers re-kick later, so giving up isn't final.
 module RateLimited
   MAX_ATTEMPTS = 10
   JITTER_SECONDS = 5

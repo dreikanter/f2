@@ -64,11 +64,10 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
   end
 
-  # Identity used for rate limiting FreeFeed API calls. FreeFeed meters per
-  # authenticated account (the JWT user id), shared across all of that account's
-  # tokens, so the subject is keyed by FreeFeed instance + user id to collapse
-  # sibling tokens onto one bucket. The user id is only known after validation;
-  # until then (e.g. validation's own GETs) we fall back to a per-token subject.
+  # Rate-limit identity for FreeFeed calls. FreeFeed meters per authenticated
+  # account (the JWT user id), shared across that account's tokens, so we key on
+  # instance + user id to collapse sibling tokens onto one bucket. The user id is
+  # known only after validation; until then we fall back to a per-token subject.
   # See docs/rate-limiting.md.
   def rate_limit_subject
     if freefeed_user_id.present?
@@ -78,12 +77,9 @@ class AccessToken < ApplicationRecord
     end
   end
 
-  # Stable identifier for the FreeFeed instance this token targets. Prefers the
-  # known-host key (production/staging/beta) so different spellings of the same
-  # host — or a bare IP — don't fragment the subject; falls back to the host's
-  # domain for custom instances. The domain is canonicalized (case- and
-  # trailing-dot-insensitive, since DNS is) so equivalent hosts collapse onto one
-  # FreeFeed account bucket.
+  # Stable id for the targeted FreeFeed instance: the known-host key
+  # (production/staging/beta), else the host domain. Canonicalized (DNS is
+  # case-insensitive) so equivalent spellings don't fragment the account bucket.
   def freefeed_instance
     domain = host_domain.to_s.downcase.delete_suffix(".")
     known = FREEFEED_HOSTS.find { |_key, config| config[:domain] == domain }

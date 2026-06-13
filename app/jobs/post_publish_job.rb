@@ -50,11 +50,9 @@ class PostPublishJob < ApplicationJob
     count_published(post)
     schedule_next(feed)
   rescue RateLimit::Throttled => e
-    # FreeFeed throttled us mid-publish despite our reservation. Defer the same
-    # post; the idempotency guard in FreefeedPublisher keeps the retry safe. Must
-    # precede the generic rescue so it isn't recorded as a failure. A throttle on
-    # a comment still left a real published post, so count it (the retry skips
-    # it, so it's counted once).
+    # Defer the same post (the idempotency guard keeps the retry safe). Before
+    # the generic rescue so a throttle isn't recorded as a failure. count_published
+    # still fires if a comment throttle had already created the post.
     count_published(post)
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError
@@ -89,10 +87,8 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  # Count a post as published once it actually exists on FreeFeed. Guarded on the
-  # record's status so the upfront-reservation throttle (post never created)
-  # doesn't count, while a mid-comment throttle (post created, comments cut short)
-  # does.
+  # Count a post once it's actually on FreeFeed. Guarded on status: an upfront
+  # throttle (post never created) doesn't count; a mid-comment one does.
   def count_published(post)
     Metrics.increment("posts_published_total", status: "published") if post.published?
   end
