@@ -210,8 +210,11 @@ class PostPublishJobTest < ActiveJob::TestCase
       .to_return(status: 429, headers: { "Retry-After" => "30" })
 
     reported = []
-    Rails.error.stub(:report, ->(*args, **) { reported << args }) do
-      perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+    increments = []
+    Metrics.stub(:increment, ->(name, **tags) { increments << [name, tags] }) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+      end
     end
 
     post.reload
@@ -222,6 +225,9 @@ class PostPublishJobTest < ActiveJob::TestCase
     # Comment creation stops at the throttled comment; the rest are dropped.
     assert_requested :post, "#{access_token.host}/v4/comments", times: 1
     assert_empty reported, "a handled mid-comment throttle must not be reported as a fault"
+
+    published = increments.count { |name, tags| name == "posts_published_total" && tags[:status] == "published" }
+    assert_equal 1, published, "a created post is counted once even when a comment throttles"
   end
 
   test ".perform_now should keep original publication order across a throttle interruption" do

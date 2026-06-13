@@ -47,12 +47,15 @@ class PostPublishJob < ApplicationJob
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
     FreefeedPublisher.new(post).publish
-    Metrics.increment("posts_published_total", status: "published")
+    count_published(post)
     schedule_next(feed)
   rescue RateLimit::Throttled => e
     # FreeFeed throttled us mid-publish despite our reservation. Defer the same
     # post; the idempotency guard in FreefeedPublisher keeps the retry safe. Must
-    # precede the generic rescue so it isn't recorded as a failure.
+    # precede the generic rescue so it isn't recorded as a failure. A throttle on
+    # a comment still left a real published post, so count it (the retry skips
+    # it, so it's counted once).
+    count_published(post)
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
@@ -84,6 +87,14 @@ class PostPublishJob < ApplicationJob
     Metrics.increment("posts_published_total", status: "rejected")
     Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
     schedule_next(feed)
+  end
+
+  # Count a post as published once it actually exists on FreeFeed. Guarded on the
+  # record's status so the upfront-reservation throttle (post never created)
+  # doesn't count, while a mid-comment throttle (post created, comments cut short)
+  # does.
+  def count_published(post)
+    Metrics.increment("posts_published_total", status: "published") if post.published?
   end
 
   def schedule_next(feed)
