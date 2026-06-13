@@ -9,6 +9,7 @@
       ["buttons", "Buttons"],
       ["text-input", "Text input"],
       ["select", "Select"],
+      ["date-time", "Date & time"],
       ["checkbox", "Checkbox"],
       ["radio-group", "Radio group"],
       ["form-group", "Form group"]
@@ -137,6 +138,51 @@
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Disabled</p>
           <%= select_tag :frequency_disabled, options_for_select(["Every hour"]), disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+        </div>
+      </div>
+    </section>
+
+    <%# Date & time %>
+    <section id="date-time" class="scroll-mt-6 space-y-4" data-key="section.date-time">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Date & time</h2>
+      <p class="text-slate-600">A calendar picker for dates and the native time input for clock times. The date input mounts the Flowbite datepicker through the <code>datepicker</code> Stimulus controller, so it also works in markup injected via Turbo Streams.</p>
+
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Date picker</p>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+              <%= icon("calendar", css_class: "size-5 text-slate-400") %>
+            </div>
+            <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Date picker (filled)</p>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+              <%= icon("calendar", css_class: "size-5 text-slate-400") %>
+            </div>
+            <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Time picker</p>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+              <%= icon("clock", css_class: "size-5 text-slate-400") %>
+            </div>
+            <%= time_field_tag :demo_time, "09:30", class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <p class="<%= caption_classes %>">Time picker (disabled)</p>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+              <%= icon("clock", css_class: "size-5 text-slate-400") %>
+            </div>
+            <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed" %>
+          </div>
         </div>
       </div>
     </section>

@@ -17,6 +17,9 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="toc"]'
     assert_select '[data-key="section.buttons"]'
+    assert_select '[data-key="section.date-time"]'
+    assert_select '[data-key="section.date-time"] input[data-controller="datepicker"]'
+    assert_select '[data-key="section.date-time"] input[type="time"]'
     assert_select '[data-key="section.form-group"]'
     assert_select '[data-key="section.page-header"]'
     assert_select '[data-key="section.event-description"]'

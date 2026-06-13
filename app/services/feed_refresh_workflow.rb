@@ -56,7 +56,24 @@ class FeedRefreshWorkflow
 
     uids = processed_entries.map(&:uid)
     existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
-    processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
+    new_entries = processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
+    reject_entries_before_threshold(new_entries)
+  end
+
+  # Entries at or before the feed's import threshold are dropped without
+  # recording their UIDs, so clearing the threshold later lets them import
+  # on a subsequent refresh. Entries without a published date pass through:
+  # we can't tell how old they are, and silently losing them is worse.
+  def reject_entries_before_threshold(entries)
+    threshold = feed.import_after
+    return entries if threshold.blank?
+
+    fresh_entries, stale_entries = entries.partition do |entry|
+      entry.published_at.nil? || entry.published_at > threshold
+    end
+
+    record_stats(entries_before_threshold: stale_entries.size) if stale_entries.any?
+    fresh_entries
   end
 
   def persist_entries(new_entries)

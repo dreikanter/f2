@@ -200,6 +200,9 @@ class FeedsController < ApplicationController
       :llm_credential_id,
       :cron_expression,
       :schedule_interval,
+      :import_after_enabled,
+      :import_after_date,
+      :import_after_time,
       # Only the known input-shape keys are accepted. Anything
       # else inside the params hash would otherwise persist into
       # `feeds.params` jsonb undetected. See the profile schemas.
@@ -217,7 +220,10 @@ class FeedsController < ApplicationController
   # lock in for the rest of the feed's lifetime regardless of later
   # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
-    always_permitted = %i[name description target_group access_token_id llm_credential_id schedule_interval]
+    always_permitted = %i[
+      name description target_group access_token_id llm_credential_id schedule_interval
+      import_after_enabled import_after_date import_after_time
+    ]
     draft_only_permitted = [:url, :feed_profile_key, { params: %i[url query] }]
 
     permitted_keys = @feed&.draft? ? always_permitted + draft_only_permitted : always_permitted
