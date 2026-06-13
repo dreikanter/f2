@@ -43,6 +43,15 @@ class Normalizer::RedditNormalizerTest < ActiveSupport::TestCase
     assert_not_includes post.content, "/u/techuser"
   end
 
+  test "#normalize should skip preview-CDN image attachments" do
+    entry = feed_entry(2)
+
+    normalizer = Normalizer::RedditNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal [], post.attachment_urls
+  end
+
   test "#normalize should include Reddit permalink as source URL" do
     entry = feed_entry(0)
 
