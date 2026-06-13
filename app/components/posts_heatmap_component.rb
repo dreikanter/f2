@@ -40,7 +40,7 @@ class PostsHeatmapComponent < ViewComponent::Base
     @metrics_by_date ||= base_scope
       .for_date_range(@start_date, @end_date)
       .group(:date)
-      .sum(:posts_count)
+      .sum(:published_posts_count)
       .transform_values(&:to_i)
   end
 
