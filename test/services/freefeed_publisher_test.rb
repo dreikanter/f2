@@ -536,6 +536,16 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
+  test "#publish should raise SourceContentError when an attachment cannot be downloaded" do
+    image_url = "https://example.com/missing.jpg"
+    post = post_with_content("Post with missing image", attachment_urls: [image_url])
+    stub_request(:get, image_url).to_return(status: 404, body: "Not Found")
+
+    assert_raises(FreefeedPublisher::SourceContentError) do
+      FreefeedPublisher.new(post).publish
+    end
+  end
+
   test "#publish should handle local file attachment" do
     # Create a temporary file
     temp_file = Tempfile.new(["test_image", ".jpg"])

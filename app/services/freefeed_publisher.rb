@@ -5,6 +5,10 @@ class FreefeedPublisher
   class Error < StandardError; end
   class ValidationError < Error; end
   class PublishError < Error; end
+  # Source content couldn't be fetched (e.g. an attachment URL returns 404). An
+  # expected external condition, not an app fault: the job fails the post and
+  # moves on without paging error tracking. See PostPublishJob.
+  class SourceContentError < PublishError; end
 
   attr_reader :post
 
@@ -75,7 +79,7 @@ class FreefeedPublisher
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
-    raise PublishError, "Failed to upload attachments: #{e.message}"
+    raise SourceContentError, "Failed to upload attachments: #{e.message}"
   rescue => e
     raise PublishError, "Failed to upload attachments: #{e.message}"
   end
