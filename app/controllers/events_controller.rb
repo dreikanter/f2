@@ -3,6 +3,8 @@ class EventsController < ApplicationController
   include EventCursorPagination
   include EventReferencedPosts
 
+  MAX_RECENT_POSTS = 10
+
   def index
     respond_to do |format|
       format.html { render_events_page }
@@ -12,7 +14,7 @@ class EventsController < ApplicationController
 
   def show
     @event = owned_events.find(params[:id])
-    @referenced_posts = referenced_posts(@event)
+    @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
     @previous_event = adjacent_event(:newer)
     @next_event = adjacent_event(:older)
   end
