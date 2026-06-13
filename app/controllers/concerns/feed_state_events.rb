@@ -8,17 +8,17 @@ module FeedStateEvents
   private
 
   def record_feed_enabled(feed)
-    record_feed_state_event(feed, "feed_enabled")
+    record_feed_state_event(feed, "feed_enabled", :info)
   end
 
   def record_feed_disabled(feed)
-    record_feed_state_event(feed, "feed_disabled")
+    record_feed_state_event(feed, "feed_disabled", :warning)
   end
 
-  def record_feed_state_event(feed, type)
+  def record_feed_state_event(feed, type, level)
     Event.create!(
       type: type,
-      level: :info,
+      level: level,
       subject: feed,
       user: feed.user,
       message: ""
