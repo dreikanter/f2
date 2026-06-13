@@ -23,4 +23,16 @@ class TitleExtractor::YoutubeTitleExtractorTest < ActiveSupport::TestCase
   test "#title should return nil when nothing can be derived" do
     assert_nil extractor("https://www.youtube.com/channel/UCabc123def456ghi789jkl").title
   end
+
+  test "#title should swallow parse errors from the page body" do
+    body = '<html><head><meta property="og:title" content="Sample Tech Channel"></head></html>'
+
+    Nokogiri::HTML.stub(:parse, ->(*) { raise "boom" }) do
+      assert_nil extractor("https://www.youtube.com/channel/UCabc123def456ghi789jkl", body).title
+    end
+  end
+
+  test "#title should swallow invalid URI errors when deriving a handle" do
+    assert_nil extractor("https://www.youtube.com/ bad handle").title
+  end
 end
