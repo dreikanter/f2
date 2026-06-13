@@ -70,6 +70,19 @@ class FileBufferTest < ActiveSupport::TestCase
     assert_equal "image/png", content_type
   end
 
+  test "#load should send a browser-like User-Agent when downloading" do
+    url = "https://example.com/image.jpg"
+    response_body = file_fixture("test_image.jpg").binread
+
+    stub = stub_request(:get, url)
+      .with(headers: { "User-Agent" => FileBuffer::USER_AGENT })
+      .to_return(status: 200, body: response_body)
+
+    FileBuffer.new.load(url)
+
+    assert_requested(stub)
+  end
+
   test "#load should raise error when HTTP request fails" do
     url = "https://example.com/image.jpg"
 
