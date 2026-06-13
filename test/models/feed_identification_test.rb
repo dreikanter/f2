@@ -78,6 +78,15 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     refute_predicate identification, :timed_out?
   end
 
+  test "POLLING_MAX_POLLS should keep the client polling past the server timeout" do
+    client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * FeedIdentification::POLLING_INTERVAL_MS
+
+    assert_operator(
+      client_coverage_ms, :>, FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS * 1000,
+      "client must outlast the server timeout so the friendly error renders before it gives up"
+    )
+  end
+
   test "should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(
       user: user,
