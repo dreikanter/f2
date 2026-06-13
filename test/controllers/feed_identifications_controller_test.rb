@@ -157,7 +157,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#show should return processing state when status is processing" do
+  test "#show should return no content while still processing" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
@@ -167,8 +167,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # Check status while still processing (don't perform jobs)
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    assert_response :success
-    assert_includes response.body, "Checking this feed"
+    assert_response :no_content
+    assert_empty response.body
   end
 
   test "#show should return invalid session error when started_at is missing" do

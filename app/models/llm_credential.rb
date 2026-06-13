@@ -4,6 +4,8 @@
 # encrypted at rest.
 class LlmCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
+  VALIDATION_POLLING_INTERVAL_MS = 2000
+  VALIDATION_POLLING_MAX_POLLS = 35
 
   belongs_to :user
   # `dependent` is handled manually by `disable_dependent_feeds` so we can

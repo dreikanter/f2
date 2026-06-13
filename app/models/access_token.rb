@@ -1,4 +1,7 @@
 class AccessToken < ApplicationRecord
+  VALIDATION_POLLING_INTERVAL_MS = 2000
+  VALIDATION_POLLING_MAX_POLLS = 35
+
   belongs_to :user
   has_many :feeds
   has_one :access_token_detail, dependent: :destroy

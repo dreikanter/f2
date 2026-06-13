@@ -19,10 +19,11 @@ class FeedPreviewsController < ApplicationController
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
     preview.timeout! if preview.timed_out?
-    render_state(preview)
+    render_state(preview, inert_while_running: true)
   end
 
-  # POST /feed_preview — explicit refresh: always start a fresh run.
+  # POST /feed_preview — explicit refresh: always start a fresh run. Renders the
+  # processing pane (never inert) so the refresh shows the spinner restarting.
   def create
     render_state(start_run(locate_preview))
   end
@@ -93,13 +94,21 @@ class FeedPreviewsController < ApplicationController
     !Current.user.llm_credentials.active.exists?
   end
 
-  def render_state(preview)
+  def render_state(preview, inert_while_running: false)
     respond_to do |format|
       format.html { render :show, locals: { preview: preview } }
       # Swap only the inner body so the polling host (rendered by `show`) stays
       # mounted across polls; ready/failed bodies carry `data-preview-done`,
-      # which trips the poller's stop-condition.
-      format.turbo_stream { render turbo_stream: turbo_stream.update("feed-preview-body", **state_partial(preview)) }
+      # which trips the poller's stop-condition. While a run is still in flight
+      # the poll stays silent so the spinner keeps its animation instead of
+      # being redrawn every cycle.
+      format.turbo_stream do
+        if inert_while_running && (preview.pending? || preview.processing?)
+          head :no_content
+        else
+          render turbo_stream: turbo_stream.update("feed-preview-body", **state_partial(preview))
+        end
+      end
     end
   end
 

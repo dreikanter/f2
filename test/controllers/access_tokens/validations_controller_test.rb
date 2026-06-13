@@ -14,7 +14,8 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#show should respond with turbo_stream format" do
+  test "#show should respond with turbo_stream format once validation resolves" do
+    access_token.update!(status: :active)
     sign_in_as user
     get access_token_validation_path(access_token)
 
@@ -22,12 +23,21 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
   end
 
-  test "#show should update access-token-show div" do
+  test "#show should update access-token-show div once validation resolves" do
+    access_token.update!(status: :active)
     sign_in_as user
     get access_token_validation_path(access_token)
 
     assert_response :success
     assert_match /turbo-stream.*action="update".*target="access-token-show"/, response.body
+  end
+
+  test "#show should return no content while pending" do
+    sign_in_as user
+    get access_token_validation_path(access_token)
+
+    assert_response :no_content
+    assert_empty response.body
   end
 
   test "#show should not render for other user's token" do
@@ -38,13 +48,13 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "#show should show validating state" do
+  test "#show should return no content while validating" do
     access_token.update!(status: :validating)
     sign_in_as user
     get access_token_validation_path(access_token)
 
-    assert_response :success
-    assert_match /Validating token/, response.body
+    assert_response :no_content
+    assert_empty response.body
   end
 
   test "#show should show active state with data-status attribute" do

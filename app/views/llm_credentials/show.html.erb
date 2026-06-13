@@ -4,8 +4,8 @@
   <div
     data-controller="polling"
     data-polling-endpoint-value="<%= llm_credential_validation_path(@llm_credential, feed_id: @feed&.id) %>"
-    data-polling-interval-value="2000"
-    data-polling-max-polls-value="35"
+    data-polling-interval-value="<%= LlmCredential::VALIDATION_POLLING_INTERVAL_MS %>"
+    data-polling-max-polls-value="<%= LlmCredential::VALIDATION_POLLING_MAX_POLLS %>"
     data-polling-stop-condition-value="[data-credential-state]"
     aria-busy="true">
     <div id="llm-credential-show" class="space-y-8">

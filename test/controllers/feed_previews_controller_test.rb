@@ -120,6 +120,30 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert user.feed_previews.last.pending?
   end
 
+  test "#show should return no content while the preview is still processing" do
+    sign_in_as(user)
+    create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
+                                       params: { "url" => "http://example.com/feed.xml" })
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+          headers: TURBO_STREAM
+    end
+
+    assert_response :no_content
+    assert_empty response.body
+  end
+
+  test "#create should render the processing pane even though show polls stay silent" do
+    sign_in_as(user)
+
+    post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
+         headers: TURBO_STREAM
+
+    assert_response :success
+    assert_match(/data-key="preview.processing"/, response.body)
+  end
+
   test "#show should render the failed state without restarting a run" do
     sign_in_as(user)
     create(:feed_preview, :failed, user: user, feed_profile_key: "rss",

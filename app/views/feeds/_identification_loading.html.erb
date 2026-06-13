@@ -3,8 +3,8 @@
      role="status"
      data-controller="polling"
      data-polling-endpoint-value="<%= feed_identifications_path(input: input) %>"
-     data-polling-interval-value="<%= Feed::IDENTIFICATION_POLLING_INTERVAL_MS %>"
-     data-polling-max-polls-value="<%= FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS / 2 %>"
+     data-polling-interval-value="<%= FeedIdentification::POLLING_INTERVAL_MS %>"
+     data-polling-max-polls-value="<%= FeedIdentification::POLLING_MAX_POLLS %>"
      data-polling-stop-condition-value="[data-identification-state='complete'], [data-identification-state='error']">
   <div class="flex-shrink-0">
     <%= render SpinnerComponent.new %>
