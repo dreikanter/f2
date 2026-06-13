@@ -1,12 +1,12 @@
 GIT
   remote: https://github.com/dreikanter/heatmap-builder.git
-  revision: cac010a963b737f73848b8eb51698576de8ad9bb
+  revision: 9f8c8627b5ce9f6caf82b32c227d766da9cb6743
   specs:
-    heatmap-builder (0.4.0)
+    heatmap-builder (0.4.1)
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 361b2271c35ab44bfc28770003f99276f9e6d026
+  revision: b771269b60f63f2c55a4cdaa5a241a6ac18851a9
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -249,7 +249,7 @@ GEM
       railties (>= 7.1)
       stimulus-rails
       turbo-rails
-    msgpack (1.8.1)
+    msgpack (1.8.3)
     multi_xml (0.9.1)
       bigdecimal (>= 3.1, < 5)
     multipart-post (2.4.1)
@@ -375,7 +375,7 @@ GEM
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.47.1, < 2.0)
-    rubocop-rails (2.35.3)
+    rubocop-rails (2.35.4)
       activesupport (>= 4.2.0)
       lint_roller (~> 1.1)
       rack (>= 1.1)
