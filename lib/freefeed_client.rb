@@ -24,6 +24,11 @@ class FreefeedClient
   # retrying into a block that is still in force.
   DEFAULT_RETRY_AFTER = 300
 
+  # Padding added to a parsed Retry-After. The header reflects the start of the
+  # server's window; a little extra keeps the retry clear of clock skew and the
+  # window's edge so it doesn't land back inside a still-active block.
+  RETRY_AFTER_BUFFER = 10
+
   def initialize(host:, token:, http_client: nil, rate_limit_subject: nil, options: {})
     @host = host.chomp("/")
     @token = token
@@ -198,7 +203,7 @@ class FreefeedClient
 
   def retry_after_seconds(response)
     seconds = response.headers["retry-after"].to_i
-    seconds.positive? ? seconds : DEFAULT_RETRY_AFTER
+    seconds.positive? ? seconds + RETRY_AFTER_BUFFER : DEFAULT_RETRY_AFTER
   end
 
   # TBD: Consider simplifying response processing. Probably keep the keys
