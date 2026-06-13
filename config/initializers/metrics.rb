@@ -10,8 +10,6 @@ Rails.application.config.after_initialize do
   # would run identical queries every flush and overwrite the same series.
   # Counters are per-process and register/push everywhere regardless.
   if ENV["METRICS_GAUGES"].present?
-    Metrics.gauge("users_active") { User.where(state: :active).count }
-    Metrics.gauge("feeds_enabled") { Feed.where(state: :enabled).count }
     Metrics.gauge_set("posts_count") do
       counts = Post.group(:status).count
       Post.statuses.keys.to_h { |status| [{ status: status }, counts.fetch(status, 0)] }
