@@ -14,4 +14,12 @@ class SpinnerComponentTest < ViewComponent::TestCase
 
     assert_includes svg["class"], "test"
   end
+
+  test "should render intrinsic width and height so it stays sized without CSS" do
+    result = render_inline(SpinnerComponent.new)
+    svg = result.css("svg").first
+
+    assert_equal "32", svg["width"]
+    assert_equal "32", svg["height"]
+  end
 end
