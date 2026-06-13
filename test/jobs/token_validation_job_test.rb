@@ -11,9 +11,9 @@ class TokenValidationJobTest < ActiveJob::TestCase
 
   test ".perform_now should reserve two GETs and reschedule when throttled" do
     captured = nil
-    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+    RateLimit.stub(:acquire, lambda { |_policy, subject:, cost:|
       captured = [subject, cost]
-      raise RateLimit::Throttled.new(retry_after: 2)
+      RateLimit::Result.new(allowed: false, retry_after: 2)
     }) do
       assert_enqueued_with(job: TokenValidationJob) do
         TokenValidationJob.perform_now(access_token)
@@ -29,7 +29,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     job = TokenValidationJob.new(access_token)
     job.executions = RateLimited::MAX_ATTEMPTS
 
-    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 2) }) do
       Rails.error.stub(:report, ->(*, **) { }) do
         assert_no_enqueued_jobs { job.perform_now }
       end

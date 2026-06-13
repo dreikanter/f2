@@ -5,7 +5,7 @@ class RateLimitedTest < ActiveJob::TestCase
     include RateLimited
 
     def perform
-      raise RateLimit::Throttled.new(retry_after: 3)
+      reschedule_for_rate_limit(3)
     end
   end
 
@@ -15,7 +15,7 @@ class RateLimitedTest < ActiveJob::TestCase
     cattr_accessor :exhausted_with
 
     def perform
-      raise RateLimit::Throttled.new(retry_after: 3)
+      reschedule_for_rate_limit(3)
     end
 
     private
@@ -25,13 +25,34 @@ class RateLimitedTest < ActiveJob::TestCase
     end
   end
 
-  test "reschedules the job when throttled within the attempt cap" do
+  test "#reschedule_for_rate_limit reschedules the job within the attempt cap" do
     assert_enqueued_with(job: ThrottledJob) do
       ThrottledJob.perform_now
     end
   end
 
-  test "gives up and reports RetriesExhausted once the attempt cap is reached" do
+  test "#reschedule_for_rate_limit marks the run as rate limited" do
+    job = ThrottledJob.new
+    job.perform_now
+
+    assert job.rate_limited?
+  end
+
+  test "#rate_limited? should be false for a run that was not throttled" do
+    assert_not ThrottledJob.new.rate_limited?
+  end
+
+  test "a throttled run is counted as throttled rather than ok" do
+    increments = []
+    Metrics.stub(:increment, ->(name, **tags) { increments << [name, tags] }) do
+      ThrottledJob.perform_now
+    end
+
+    statuses = increments.select { |name, _| name == "job_executions_total" }.map { |_, tags| tags[:status] }
+    assert_equal ["throttled"], statuses
+  end
+
+  test "#reschedule_for_rate_limit reports a throttle once the attempt cap is reached" do
     job = ThrottledJob.new
     job.executions = RateLimited::MAX_ATTEMPTS
 
@@ -41,11 +62,10 @@ class RateLimitedTest < ActiveJob::TestCase
     end
 
     assert_equal 1, reported.size
-    assert_instance_of RateLimited::RetriesExhausted, reported.first
-    assert_includes reported.first.message, "Rate limited"
+    assert_instance_of RateLimit::Throttled, reported.first
   end
 
-  test "invokes on_rate_limit_exhausted once the attempt cap is reached" do
+  test "#reschedule_for_rate_limit invokes on_rate_limit_exhausted once the attempt cap is reached" do
     HookJob.exhausted_with = nil
     job = HookJob.new
     job.executions = RateLimited::MAX_ATTEMPTS

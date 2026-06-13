@@ -43,14 +43,17 @@ class PostPublishJob < ApplicationJob
     posts = post_cost(post)
     return reject_oversized(feed, post, posts) unless within_capacity?(posts)
 
-    RateLimit.acquire!(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
+    result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
+    return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
+
     FreefeedPublisher.new(post).publish
     Metrics.increment("posts_published_total", status: "published")
     schedule_next(feed)
-  rescue RateLimit::Throttled
-    # No capacity right now: reschedule the whole job (RateLimited) for the same
-    # post. Must precede the generic rescue so it isn't recorded as a failure.
-    raise
+  rescue RateLimit::Throttled => e
+    # FreeFeed throttled us mid-publish despite our reservation. Defer the same
+    # post; the idempotency guard in FreefeedPublisher keeps the retry safe. Must
+    # precede the generic rescue so it isn't recorded as a failure.
+    reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
     feed.access_token&.disable_token_and_feeds

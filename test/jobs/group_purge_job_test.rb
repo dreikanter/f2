@@ -36,8 +36,9 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
 
     captured = []
-    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+    RateLimit.stub(:acquire, lambda { |_policy, subject:, cost:|
       captured << [subject, cost]
+      RateLimit::Result.new(allowed: true, retry_after: 0.0)
     }) do
       GroupPurgeJob.perform_now(feed.id)
     end
@@ -48,7 +49,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   test ".perform_now should reschedule itself when throttled" do
     create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
 
-    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 2) }) do
       assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
         GroupPurgeJob.perform_now(feed.id)
       end
@@ -64,9 +65,9 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
     calls = 0
-    RateLimit.stub(:acquire!, lambda { |*, **|
+    RateLimit.stub(:acquire, lambda { |*, **|
       calls += 1
-      raise RateLimit::Throttled.new(retry_after: 5) if calls > 1
+      RateLimit::Result.new(allowed: calls == 1, retry_after: calls == 1 ? 0.0 : 5)
     }) do
       assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
         GroupPurgeJob.perform_now(feed.id)

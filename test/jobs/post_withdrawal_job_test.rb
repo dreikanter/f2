@@ -17,9 +17,9 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
 
     captured = nil
-    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
+    RateLimit.stub(:acquire, lambda { |_policy, subject:, cost:|
       captured = [subject, cost]
-      raise RateLimit::Throttled.new(retry_after: 2)
+      RateLimit::Result.new(allowed: false, retry_after: 2)
     }) do
       assert_enqueued_with(job: PostWithdrawalJob) do
         PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)

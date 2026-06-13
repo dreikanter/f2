@@ -5,9 +5,12 @@ class TokenValidationJob < ApplicationJob
 
   def perform(access_token)
     # Validation makes two GETs: whoami and managedGroups.
-    RateLimit.acquire!(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 2 })
+    result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 2 })
+    return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
     AccessTokenValidationService.new(access_token).call
+  rescue RateLimit::Throttled => e
+    reschedule_for_rate_limit(e.retry_after)
   end
 
   private

@@ -114,9 +114,9 @@ class PostPublishJobTest < ActiveJob::TestCase
     create(:post, :enqueued, feed: feed, comments: ["a", "b"], attachment_urls: ["u1", "u2", "u3"])
 
     captured = nil
-    RateLimit.stub(:acquire!, lambda { |policy, subject:, cost:|
+    RateLimit.stub(:acquire, lambda { |policy, subject:, cost:|
       captured = [policy, subject, cost]
-      raise RateLimit::Throttled.new(retry_after: 1)
+      RateLimit::Result.new(allowed: false, retry_after: 1)
     }) do
       PostPublishJob.perform_now(feed.id)
     end
@@ -130,7 +130,10 @@ class PostPublishJobTest < ActiveJob::TestCase
 
     # No acquire and no publish happen for an impossible post; the chain advances.
     captured_acquire = false
-    RateLimit.stub(:acquire!, ->(*, **) { captured_acquire = true }) do
+    RateLimit.stub(:acquire, lambda { |*, **|
+      captured_acquire = true
+      RateLimit::Result.new(allowed: true, retry_after: 0.0)
+    }) do
       assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
@@ -143,13 +146,29 @@ class PostPublishJobTest < ActiveJob::TestCase
   test ".perform_now should reschedule and keep the post enqueued when throttled" do
     post = create(:post, :enqueued, feed: feed)
 
-    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 2) }) do
       assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
     end
 
     assert_equal "enqueued", post.reload.status
+  end
+
+  test ".perform_now should reschedule without failing when FreeFeed throttles mid-publish" do
+    post = create(:post, :enqueued, feed: feed)
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        PostPublishJob.perform_now(feed.id)
+      end
+    end
+
+    assert_equal "enqueued", post.reload.status, "the throttled post must stay enqueued for the retry"
+    assert_empty reported, "a handled mid-publish throttle must not be reported as a fault"
   end
 
   test ".perform_now should keep original publication order across a throttle interruption" do
@@ -172,10 +191,11 @@ class PostPublishJobTest < ActiveJob::TestCase
     acquire_calls = 0
     acquire = lambda do |*, **|
       acquire_calls += 1
-      raise RateLimit::Throttled.new(retry_after: 1) if acquire_calls == 2
+      allowed = acquire_calls != 2
+      RateLimit::Result.new(allowed: allowed, retry_after: allowed ? 0.0 : 1)
     end
 
-    RateLimit.stub(:acquire!, acquire) do
+    RateLimit.stub(:acquire, acquire) do
       perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
     end
 

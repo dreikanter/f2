@@ -2,8 +2,10 @@ require "test_helper"
 
 # A throwaway job used to exercise the ApplicationJob metrics hook.
 class MetricsProbeJob < ApplicationJob
+  include RateLimited
+
   def perform(mode)
-    raise RateLimit::Throttled.new(retry_after: 1) if mode == :throttle
+    reschedule_for_rate_limit(1) if mode == :throttle
     raise "boom" if mode == :error
   end
 end
@@ -130,7 +132,7 @@ class MetricsTest < ActiveSupport::TestCase
     enable!
 
     MetricsProbeJob.perform_now(:ok)
-    assert_raises(RateLimit::Throttled) { MetricsProbeJob.perform_now(:throttle) }
+    MetricsProbeJob.perform_now(:throttle)
     assert_raises(RuntimeError) { MetricsProbeJob.perform_now(:error) }
 
     out = Metrics.render
