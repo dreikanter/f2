@@ -55,4 +55,29 @@ class LlmCredentialsListComponentTest < ViewComponent::TestCase
 
     assert_includes result.text, "Status: Active"
   end
+
+  test "#call should render a Details menu item linking to the show page" do
+    result = render_inline(LlmCredentialsListComponent.new(credentials: [credential]))
+    item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Details" }
+
+    assert_not_nil item
+    assert_includes item["href"], "/llm_credentials/#{credential.id}"
+  end
+
+  test "#call should render an Edit menu item linking to the edit page" do
+    result = render_inline(LlmCredentialsListComponent.new(credentials: [credential]))
+    item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Edit" }
+
+    assert_not_nil item
+    assert_includes item["href"], "/llm_credentials/#{credential.id}/edit"
+  end
+
+  test "#call should render the Delete menu item with default text color" do
+    result = render_inline(LlmCredentialsListComponent.new(credentials: [credential]))
+    item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Delete" }
+
+    assert_not_nil item
+    assert_includes item["class"], "text-slate-700"
+    assert_not_includes item["class"], "text-red-600"
+  end
 end

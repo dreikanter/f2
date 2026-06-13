@@ -11,6 +11,10 @@ class LlmCredentialCardComponent < ViewComponent::Base
     helpers.llm_credential_path(credential)
   end
 
+  def edit_url
+    helpers.edit_llm_credential_path(credential)
+  end
+
   def provider_name
     LlmProvider.find(credential.provider).display_name
   end
