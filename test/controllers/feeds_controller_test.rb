@@ -470,6 +470,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Stats", count: 1
   end
 
+  test "#show should render a recent activity section with the feed's events" do
+    create(:event, type: "feed_auto_disabled", subject: feed, user: user, level: :warning,
+                   message: "", metadata: { error_count: Feed::MAX_CONSECUTIVE_FAILURES })
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent activity", count: 1
+    assert_select "[data-key='events.entry'][data-event-type='feed_auto_disabled']"
+    assert_select "[data-key='events.error_count']", text: "(10 failures in a row)"
+  end
+
   test "#show should return not found for other user's feed" do
     sign_in_as(user)
     get feed_url(other_feed)
