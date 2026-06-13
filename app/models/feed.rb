@@ -265,7 +265,7 @@ class Feed < ApplicationRecord
   # regardless of the original source publication date.
   # @return [Time, nil] most recent repost time or nil if no published posts
   def most_recent_repost_at
-    posts.published.maximum(:updated_at)
+    posts.published.maximum(:reposted_at)
   end
 
   # Returns the count of posts published in the last week (by source date)

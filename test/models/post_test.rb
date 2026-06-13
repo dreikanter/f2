@@ -153,13 +153,13 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?
   end
 
-  test "#reposted_at should return the update time for published posts" do
-    post = create(:post, :published, feed: feed, feed_entry: feed_entry, updated_at: 1.hour.ago)
+  test "#reposted_at should hold the repost moment for published posts" do
+    post = create(:post, :published, feed: feed, feed_entry: feed_entry, reposted_at: 1.hour.ago)
 
     assert_in_delta 1.hour.ago.to_i, post.reposted_at.to_i, 1
   end
 
-  test "#reposted_at should return nil for posts that are not published" do
+  test "#reposted_at should be nil for posts that have not been reposted" do
     post = create(:post, feed: feed, feed_entry: feed_entry, status: :draft)
 
     assert_nil post.reposted_at

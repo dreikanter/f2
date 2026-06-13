@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_13_145500) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_13_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -238,7 +238,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_13_145500) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.text "validation_errors", default: [], null: false, array: true
+    t.datetime "reposted_at"
     t.index ["feed_entry_id"], name: "index_posts_on_feed_entry_id"
+    t.index ["feed_id", "reposted_at"], name: "index_posts_on_feed_id_and_reposted_at"
     t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_posts_on_feed_id"
     t.index ["status"], name: "index_posts_on_status"

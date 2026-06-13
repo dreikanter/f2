@@ -172,7 +172,7 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should label published posts as reposted and link to the freefeed post" do
     published_post = create(:post, :published, feed: feed,
-      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+      published_at: 11.hours.ago, reposted_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
     status_link = result.at_css("a[href='#{published_post.freefeed_url}']")
@@ -183,7 +183,7 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should keep the duration tight against its parentheses" do
     published_post = create(:post, :published, feed: feed,
-      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+      published_at: 11.hours.ago, reposted_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: published_post)
 
     # The label, parens and time tag share one inline wrapper that carries no
@@ -196,7 +196,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   test "#render should show the reposted status as plain text when freefeed url is missing" do
     # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
     purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
-      published_at: 11.hours.ago, updated_at: 10.hours.ago)
+      published_at: 11.hours.ago, reposted_at: 10.hours.ago)
     result = render_inline PostCardComponent.new(post: purged_post)
 
     assert_nil purged_post.freefeed_url
