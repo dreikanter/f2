@@ -1,6 +1,8 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
   PREVIEW_TIMEOUT_SECONDS = 120
+  POLLING_INTERVAL_MS = 2000
+  POLLING_MAX_POLLS = 75
 
   belongs_to :user
   belongs_to :feed, optional: true
