@@ -19,6 +19,19 @@ class PublicationSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
+  test ".perform_now should skip feeds whose publish chain is already running" do
+    feed = create(:feed, :enabled)
+    create(:post, :enqueued, feed: feed)
+
+    # Hold the chain's lock to simulate a live PostPublishJob; the watchdog must
+    # not pile a duplicate kick onto it.
+    Feed.with_advisory_lock("post_publish_#{feed.id}") do
+      assert_no_enqueued_jobs(only: PostPublishJob) do
+        PublicationSchedulerJob.perform_now
+      end
+    end
+  end
+
   test ".perform_now should skip disabled feeds even with enqueued posts" do
     feed = create(:feed, :disabled)
     create(:post, :enqueued, feed: feed)
