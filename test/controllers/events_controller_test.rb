@@ -66,6 +66,28 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-event-type="someone_elses"]', count: 0
   end
 
+  test "#index should describe the latest page with a zero offset" do
+    sign_in_as user
+    create(:event, user: user)
+
+    get events_path
+
+    assert_response :success
+    assert_select "[data-key='events.offset']", "Showing the most recent events."
+  end
+
+  test "#index should describe the offset when paging into older events" do
+    with_page_size(2) do
+      sign_in_as user
+      events = Array.new(5) { |i| create(:event, type: "Event#{i}", user: user) }
+
+      get events_path, params: { before: events[3].id }
+
+      assert_response :success
+      assert_select "[data-key='events.offset']", "2 newer events above what's shown here."
+    end
+  end
+
   test "#index should nest entry list items inside a list element" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: user)

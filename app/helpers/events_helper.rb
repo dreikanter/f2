@@ -16,6 +16,16 @@ module EventsHelper
     content_tag(:span, level.humanize, class: badge[:class])
   end
 
+  # Explains where the current page sits in the log without leaning on page
+  # numbers: the offset is how many newer events come before what's shown.
+  def events_offset_summary(offset)
+    if offset.zero?
+      "Showing the most recent events."
+    else
+      "#{pluralize(offset, 'newer event')} above what's shown here."
+    end
+  end
+
   def mail_event_types
     ResendWebhooksController::EMAIL_EVENT_HANDLERS.values.pluck(:type) + %w[
       mail.profile_mailer.account_confirmation

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_12_212655) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_13_145500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,6 +57,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_12_212655) do
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.index ["created_at", "id"], name: "index_events_on_created_at_and_id"
     t.index ["expires_at"], name: "index_events_on_expires_at", where: "(expires_at IS NOT NULL)"
     t.index ["level", "created_at"], name: "index_events_on_level_and_created_at"
     t.index ["subject_type", "subject_id"], name: "index_events_on_subject_type_and_subject_id"
