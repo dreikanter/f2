@@ -6,7 +6,7 @@ module TimeHelper
 
     case diff
     when 0..59
-      "#{diff.to_i}s"
+      "now"
     when 60..3599
       "#{(diff / 60).to_i}m"
     when 3600..86399
