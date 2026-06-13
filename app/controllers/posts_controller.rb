@@ -66,6 +66,7 @@ class PostsController < ApplicationController
     else
       @post.withdrawn!
       log_post_event("post_withdrawn", @post)
+      refresh_published_metric(@post.feed, @post.reposted_at)
     end
 
     @notice = destroy_notice
@@ -95,6 +96,7 @@ class PostsController < ApplicationController
     feed = post.feed
     feed_entry = post.feed_entry
     uid = post.uid
+    reposted_at = post.reposted_at
 
     ActiveRecord::Base.transaction do
       if feed_entry
@@ -105,6 +107,16 @@ class PostsController < ApplicationController
       FeedEntryUid.where(feed_id: feed.id, uid: uid).delete_all
       log_post_event("post_deleted", post, subject: feed)
     end
+
+    refresh_published_metric(feed, reposted_at)
+  end
+
+  # Refresh the cached daily published count after a post leaves the published
+  # set. Only published posts carry a reposted_at, so a nil means nothing to do.
+  def refresh_published_metric(feed, reposted_at)
+    return if reposted_at.nil?
+
+    FeedMetric.recompute_published(feed: feed, date: reposted_at.to_date)
   end
 
   def log_post_event(type, post, subject: post)

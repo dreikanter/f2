@@ -168,6 +168,30 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "info", event.level
   end
 
+  test "#destroy should refresh the daily published metric after withdrawing" do
+    sign_in_as(user)
+    create(:post, :published, feed: feed, reposted_at: Time.current)
+    withdrawing = create(:post, :published, feed: feed, freefeed_post_id: "test-123", reposted_at: Time.current)
+
+    delete post_url(withdrawing), params: { delete_freefeed_post: "1" }
+
+    metric = FeedMetric.find_by(feed: feed, date: Date.current)
+    assert_equal 1, metric.published_posts_count
+  end
+
+  test "#destroy should refresh the daily published metric after deleting the record" do
+    sign_in_as(user)
+    create(:post, :published, feed: feed, reposted_at: Time.current)
+    feed_entry = create(:feed_entry, feed: feed, uid: "entry-1")
+    deleting = create(:post, :published, feed: feed, feed_entry: feed_entry,
+      uid: "entry-1", freefeed_post_id: "test-123", reposted_at: Time.current)
+
+    delete post_url(deleting), params: { delete_freefeed_post: "1", delete_record: "1" }
+
+    metric = FeedMetric.find_by(feed: feed, date: Date.current)
+    assert_equal 1, metric.published_posts_count
+  end
+
   test "#destroy should reload the post page after withdrawing it" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")

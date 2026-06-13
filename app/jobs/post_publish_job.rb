@@ -90,7 +90,10 @@ class PostPublishJob < ApplicationJob
   # Count a post once it's actually on FreeFeed. Guarded on status: an upfront
   # throttle (post never created) doesn't count; a mid-comment one does.
   def count_published(post)
-    Metrics.increment("posts_published_total", status: "published") if post.published?
+    return unless post.published?
+
+    Metrics.increment("posts_published_total", status: "published")
+    FeedMetric.recompute_published(feed: post.feed, date: post.reposted_at.to_date)
   end
 
   def schedule_next(feed)

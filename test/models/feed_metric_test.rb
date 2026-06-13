@@ -54,6 +54,55 @@ class FeedMetricTest < ActiveSupport::TestCase
     assert metric.errors.of_kind?(:invalid_posts_count, :greater_than_or_equal_to)
   end
 
+  test "should validate published_posts_count is non-negative" do
+    metric = build(:feed_metric, published_posts_count: -1)
+    assert_not metric.valid?
+    assert metric.errors.of_kind?(:published_posts_count, :greater_than_or_equal_to)
+  end
+
+  test "#recompute_published should count published reposts for the day" do
+    create_list(:post, 2, :published, feed: feed, reposted_at: Date.current.noon)
+
+    FeedMetric.recompute_published(feed: feed, date: Date.current)
+
+    assert_equal 2, FeedMetric.find_by(feed: feed, date: Date.current).published_posts_count
+  end
+
+  test "#recompute_published should overwrite a stale count" do
+    create(:feed_metric, feed: feed, date: Date.current, published_posts_count: 9)
+    create(:post, :published, feed: feed, reposted_at: Date.current.noon)
+
+    FeedMetric.recompute_published(feed: feed, date: Date.current)
+
+    assert_equal 1, FeedMetric.find_by(feed: feed, date: Date.current).published_posts_count
+  end
+
+  test "#recompute_published should preserve other counts on the row" do
+    create(:feed_metric, feed: feed, date: Date.current, posts_count: 7, invalid_posts_count: 2)
+    create(:post, :published, feed: feed, reposted_at: Date.current.noon)
+
+    FeedMetric.recompute_published(feed: feed, date: Date.current)
+
+    metric = FeedMetric.find_by(feed: feed, date: Date.current)
+    assert_equal 7, metric.posts_count
+    assert_equal 2, metric.invalid_posts_count
+    assert_equal 1, metric.published_posts_count
+  end
+
+  test "#recompute_published should set the count to zero when reposts are gone" do
+    create(:feed_metric, feed: feed, date: Date.current, published_posts_count: 3)
+
+    FeedMetric.recompute_published(feed: feed, date: Date.current)
+
+    assert_equal 0, FeedMetric.find_by(feed: feed, date: Date.current).published_posts_count
+  end
+
+  test "#recompute_published should not create an empty row when there is no activity" do
+    assert_no_difference "FeedMetric.count" do
+      FeedMetric.recompute_published(feed: feed, date: Date.current)
+    end
+  end
+
   test "should have default values of zero" do
     metric = build(:feed_metric)
     assert_equal 0, metric.posts_count

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_13_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_13_190100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -110,6 +110,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_13_190000) do
     t.integer "invalid_posts_count", default: 0, null: false
     t.integer "posts_count", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.integer "published_posts_count", default: 0, null: false
     t.index ["date"], name: "index_feed_metrics_on_date"
     t.index ["feed_id", "date"], name: "index_feed_metrics_on_feed_id_and_date", unique: true
   end
