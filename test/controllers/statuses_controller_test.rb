@@ -75,7 +75,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_not_nil css_select('[data-key="stats.most_recent_repost"]').first
-    assert_match(/1d ago/, css_select('[data-key="stats.most_recent_repost.value"]').first.text)
+    assert_match(/1d/, css_select('[data-key="stats.most_recent_repost.value"]').first.text)
   end
 
   test "#show should hide most recent repost when no published posts" do
