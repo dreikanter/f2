@@ -10,26 +10,31 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should reserve two GETs and reschedule when throttled" do
-    captured = nil
-    RateLimit.stub(:acquire, lambda { |_policy, subject:, cost:|
-      captured = [subject, cost]
-      RateLimit::Result.new(allowed: false, retry_after: 2)
-    }) do
+    subject = access_token.rate_limit_subject
+
+    freeze_time do
+      # Leave one GET token — short of validation's cost of 2, so it throttles
+      # before either GET goes out.
+      drain_freefeed(subject, :get, remaining: 1)
+
       assert_enqueued_with(job: TokenValidationJob) do
         TokenValidationJob.perform_now(access_token)
       end
     end
 
-    assert_equal [access_token.rate_limit_subject, { get: 2 }], captured
+    assert_not_requested :get, "#{access_token.host}/v4/users/whoami"
   end
 
   test ".perform_now should reset token to pending when throttle retries are exhausted" do
     access_token.validating!
+    subject = access_token.rate_limit_subject
 
     job = TokenValidationJob.new(access_token)
     job.executions = RateLimited::MAX_ATTEMPTS
 
-    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 2) }) do
+    freeze_time do
+      drain_freefeed(subject, :get, remaining: 0)
+
       Rails.error.stub(:report, ->(*, **) { }) do
         assert_no_enqueued_jobs { job.perform_now }
       end
