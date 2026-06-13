@@ -30,6 +30,39 @@ class PostWithdrawalJobTest < ActiveJob::TestCase
     assert_not_requested :delete, "#{access_token.host}/v4/posts/test_post_123"
   end
 
+  test ".perform_now should reschedule without failing when the DELETE is throttled mid-call" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+    stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: PostWithdrawalJob) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        PostWithdrawalJob.perform_now(feed.id, "test_post_123", post.id)
+      end
+    end
+
+    assert_empty reported, "a handled throttle must not be reported as a fault"
+    assert_equal "test_post_123", post.reload.freefeed_post_id, "the post id must survive a throttled withdrawal"
+  end
+
+  test ".perform_now should report and stop when throttle retries are exhausted" do
+    post = create(:post, :published, feed: feed, freefeed_post_id: "test_post_123")
+    job = PostWithdrawalJob.new(feed.id, "test_post_123", post.id)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    reported = []
+    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 5) }) do
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        assert_no_enqueued_jobs(only: PostWithdrawalJob) { job.perform_now }
+      end
+    end
+
+    assert_equal 1, reported.size
+    assert_instance_of RateLimit::Throttled, reported.first
+    assert_equal "test_post_123", post.reload.freefeed_post_id
+  end
+
   test ".perform_now should delete post from FreeFeed" do
     stub_request(:delete, "#{access_token.host}/v4/posts/test_post_123")
       .to_return(status: 200)

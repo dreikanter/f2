@@ -39,6 +39,21 @@ class TokenValidationJobTest < ActiveJob::TestCase
     assert access_token.pending?
   end
 
+  test ".perform_now should reschedule without failing when validation is throttled mid-call" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: TokenValidationJob) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        TokenValidationJob.perform_now(access_token)
+      end
+    end
+
+    assert_empty reported, "a handled throttle must not be reported as a fault"
+    assert_not access_token.reload.inactive?, "a throttle must not disable the token"
+  end
+
   test ".perform_now should mark token as active when validation succeeds" do
     stub_successful_freefeed_response
 

@@ -17,6 +17,11 @@ class AccessTokenValidationService
     end
   rescue FreefeedClient::UnauthorizedError
     access_token.disable_token_and_feeds
+  rescue RateLimit::Throttled
+    # Throttling is control flow, not a validation failure: let it propagate so
+    # the job reschedules. Reporting it here would surface a fault on every
+    # deferred run.
+    raise
   rescue StandardError => e
     Rails.error.report(e, context: { access_token_id: access_token.id })
     raise

@@ -78,6 +78,39 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_equal "post2", post2.reload.freefeed_post_id
   end
 
+  test ".perform_now should reschedule without failing when FreeFeed throttles a DELETE" do
+    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        GroupPurgeJob.perform_now(feed.id)
+      end
+    end
+
+    assert_empty reported, "a handled mid-batch throttle must not be reported as a fault"
+    assert_equal "post1", post1.reload.freefeed_post_id, "a throttled DELETE must leave the post untouched"
+  end
+
+  test ".perform_now should report and stop when throttle retries are exhausted" do
+    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    job = GroupPurgeJob.new(feed.id)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    reported = []
+    RateLimit.stub(:acquire, ->(*, **) { RateLimit::Result.new(allowed: false, retry_after: 5) }) do
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        assert_no_enqueued_jobs(only: GroupPurgeJob) { job.perform_now }
+      end
+    end
+
+    assert_equal 1, reported.size
+    assert_instance_of RateLimit::Throttled, reported.first
+    assert_equal "post1", post1.reload.freefeed_post_id, "nothing is deleted when out of capacity"
+  end
+
   test ".perform_now should continue on error and log failure" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
