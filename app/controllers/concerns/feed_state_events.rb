@@ -1,8 +1,7 @@
-# Records the user-facing event when a controller flips a feed between the
-# enabled and disabled states. These transitions are all interactive, so the
-# events are logged here rather than via a model callback; system-driven
-# disables (token/credential failures, repeated refresh errors) emit their own
-# events at their own call sites.
+# Logs the feed_enabled/feed_disabled event when a controller flips a feed's
+# state. These transitions are interactive, so they're recorded here rather
+# than in a model callback; system-driven disables (token/credential failures,
+# repeated refresh errors) emit their own events.
 module FeedStateEvents
   extend ActiveSupport::Concern
 

@@ -1,7 +1,5 @@
 # Appends the failure count to an auto-disable description, e.g.
 # "My Feed was turned off after repeated errors (10 failures in a row)".
-# The threshold is a constant, but spelling it out tells the user how much
-# patience the system had before giving up.
 class FeedAutoDisabledDescriptionComponent < EventDescriptionComponent
   def call
     suffix = error_count_tag

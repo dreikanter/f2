@@ -323,10 +323,10 @@ class Feed < ApplicationRecord
     end
   end
 
-  # Bumps the failure streak after a failed refresh and, once it hits the
-  # threshold, turns the feed off. Returns true when this call disabled it.
-  # No-op past the threshold for a feed already disabled elsewhere (e.g. a
-  # credential auth error in the same run), so we never double-disable.
+  # Bumps the failure streak after a failed refresh and turns the feed off once
+  # it hits the threshold. Returns true when this call disabled it. Skips the
+  # disable if the feed was already disabled elsewhere this run (e.g. a
+  # credential auth error), so we never disable twice.
   def record_refresh_failure!
     increment!(:consecutive_failures)
     return false if consecutive_failures < MAX_CONSECUTIVE_FAILURES
@@ -336,8 +336,7 @@ class Feed < ApplicationRecord
     true
   end
 
-  # Clears the streak after a successful refresh. Skips the write on the common
-  # path where there's nothing to clear.
+  # Clears the streak after a successful refresh.
   def reset_refresh_failures!
     return if consecutive_failures.zero?
 
@@ -346,12 +345,10 @@ class Feed < ApplicationRecord
 
   private
 
-  # Pulls the feed out of the enabled state and records why, stamping the event
-  # with the streak length so the activity log can tell the user how many
-  # failures it took. Resets the counter so a later re-enable starts fresh.
-  # update_columns writes the state flip and counter reset in one statement and
-  # skips validations they don't need; the feed_auto_disabled event carries the
-  # reason, mirroring the credential/token disable paths and their own events.
+  # Disables the feed and records a feed_auto_disabled event stamped with the
+  # streak length, so the activity log shows how many failures it took. Resets
+  # the counter so a re-enable starts clean. update_columns flips the state and
+  # zeroes the counter in one write, skipping validations neither needs.
   def disable_after_repeated_failures!
     failure_count = consecutive_failures
 
