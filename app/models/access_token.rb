@@ -81,10 +81,13 @@ class AccessToken < ApplicationRecord
   # Stable identifier for the FreeFeed instance this token targets. Prefers the
   # known-host key (production/staging/beta) so different spellings of the same
   # host — or a bare IP — don't fragment the subject; falls back to the host's
-  # domain for custom instances.
+  # domain for custom instances. The domain is canonicalized (case- and
+  # trailing-dot-insensitive, since DNS is) so equivalent hosts collapse onto one
+  # FreeFeed account bucket.
   def freefeed_instance
-    known = FREEFEED_HOSTS.find { |_key, config| config[:domain] == host_domain }
-    known ? known.first.to_s : host_domain
+    domain = host_domain.to_s.downcase.delete_suffix(".")
+    known = FREEFEED_HOSTS.find { |_key, config| config[:domain] == domain }
+    known ? known.first.to_s : domain
   end
 
   def host_domain

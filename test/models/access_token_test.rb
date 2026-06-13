@@ -36,6 +36,16 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "my.freefeed.example", create(:access_token, host: "https://my.freefeed.example").freefeed_instance
   end
 
+  test "#rate_limit_subject is stable across equivalent host spellings" do
+    a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-7")
+    b = create(:access_token, host: "https://FREEFEED.NET", freefeed_user_id: "u-7")
+    c = create(:access_token, host: "https://Custom.Example.COM", freefeed_user_id: "u-7")
+
+    assert_equal "freefeed:production:u-7", a.rate_limit_subject
+    assert_equal a.rate_limit_subject, b.rate_limit_subject, "case must not split the account bucket"
+    assert_equal "freefeed:custom.example.com:u-7", c.rate_limit_subject
+  end
+
   test ".build_with_token stores encrypted token and sets pending status" do
     token = AccessToken.build_with_token(
       name: "Test Token",
