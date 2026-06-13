@@ -64,11 +64,11 @@ module Sortable
     config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
-  # The SQL order clause for the current sort field and direction, honouring an
+  # The Arel ordering for the current sort field and direction, honouring an
   # optional :nulls placement. Intended for use in the "index" action that
   # outputs the ordered records.
   #
-  # @return [Arel::Nodes::SqlLiteral]
+  # @return [Arel::Nodes::Ordering]
   def sortable_order
     field_name = sortable_field.to_sym
     config = sortable_fields.fetch(field_name, {})
@@ -78,9 +78,14 @@ module Sortable
       raise ArgumentError, "Sortable field #{field_name.inspect} must define :order_by SQL"
     end
 
-    clause = "#{field_sql} #{sortable_direction == 'asc' ? 'ASC' : 'DESC'}"
-    clause += " NULLS #{config[:nulls].to_s.upcase}" if config[:nulls].present?
-    Arel.sql(clause)
+    arel_field = Arel.sql(field_sql)
+    ordering = sortable_direction == "asc" ? arel_field.asc : arel_field.desc
+
+    case config[:nulls]
+    when :first then ordering.nulls_first
+    when :last then ordering.nulls_last
+    else ordering
+    end
   end
 
   # Returns the configuration hash describing available sort fields.
