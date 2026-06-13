@@ -172,7 +172,7 @@
           "title": "Metrics push age",
           "unit": "s",
           "expr": [
-            "time() - tlast_over_time(feeder_pg_database_size_bytes[1d])"
+            "lag(feeder_pg_database_size_bytes[1d])"
           ],
           "alias": [
             "since last push"
