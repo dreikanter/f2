@@ -26,7 +26,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
       most_recent = result.css('[data-key="stats.most_recent_repost"]').first
       assert_not_nil most_recent
-      assert_equal "1h ago", result.css('[data-key="stats.most_recent_repost.value"]').first.text.strip
+      assert_equal "1h", result.css('[data-key="stats.most_recent_repost.value"]').first.text.strip
 
       imported = result.css('[data-key="stats.imported_posts"]').first
       assert_not_nil imported

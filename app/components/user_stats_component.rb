@@ -53,7 +53,7 @@ class UserStatsComponent < ViewComponent::Base
         key: "most_recent_repost",
         label: "Most recent repost",
         label_short: "Recent",
-        value: user.most_recent_repost_at.present? ? "#{helpers.short_time_ago(user.most_recent_repost_at)} ago" : "—"
+        value: user.most_recent_repost_at.present? ? helpers.short_time_ago(user.most_recent_repost_at) : "—"
       }
     ]
   end
