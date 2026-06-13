@@ -4,8 +4,10 @@ How the FreeFeed server limits API requests. Useful as a reference when
 deciding how Feeder should pace its requests to avoid HTTP 429 responses.
 
 > Source: [FreeFeed/freefeed-server](https://github.com/FreeFeed/freefeed-server)
-> at commit `35b39a6` (2026-05-13). Key files: `app/support/rateLimiter.ts`,
-> `config/default.js`, `app/routes.js`, `app/support/exceptions.js`.
+> at commit `35b39a6` (2026-05-13). The counting algorithm lives in the
+> [`async-ratelimiter`](https://github.com/microlinkhq/async-ratelimiter) package
+> that FreeFeed pins at `~1.6.4`. See [Source references](#source-references) at
+> the bottom for the specific files and symbols behind each claim below.
 
 ## Where it runs
 
@@ -43,6 +45,41 @@ Limit resolution precedence (most to least specific):
    normalized to `/vN`).
 2. HTTP method (`GET`, `POST`, …). `HEAD` counts as `GET`.
 3. Fallback `all`.
+
+## How the window is counted (sliding window log)
+
+This is the part that matters most when pacing our own requests, and it is easy
+to get wrong by assuming a fixed window.
+
+`async-ratelimiter` is a **sliding window log**, not a fixed-window counter and
+not a token bucket. Each allowed request is stored as one member in a Redis
+sorted set, scored by its timestamp. On every call it:
+
+1. drops members older than `now - duration` (`ZREMRANGEBYSCORE`),
+2. counts what remains (`ZCARD`),
+3. allows the request iff `count < max`, recording it (`ZADD`).
+
+So the rule is exact and unforgiving: **at most `max` requests in any rolling
+`duration`** — measured continuously, not reset on a clock boundary. There is no
+separate "burst" allowance on top of the rate; `max` *is* the burst and the rate
+at once.
+
+Two consequences that drive our client config:
+
+- You **can** legally fire all 60 POSTs in one instant, but then you must wait
+  until the oldest of them ages out of the trailing minute before the next one
+  is admitted. There is no steady "60/min drip" assumption to lean on.
+- Because the window slides, a limiter on our side that allows `burst + rate`
+  tokens within one window (a token bucket) can exceed `max` even when each of
+  `burst` and `rate` looks safe. That is exactly why Feeder caps each dimension
+  so that `burst + rate` stays under the FreeFeed ceiling — see
+  [`docs/rate-limiting.md`](rate-limiting.md) and
+  `config/initializers/rate_limits.rb`.
+
+> Caveat: subjects differ between the two sides. FreeFeed keys per **account**
+> (user id); Feeder keys per **access-token**. Multiple tokens for one FreeFeed
+> user share one server-side sliding window but get independent buckets on our
+> side, so exact parity is impossible — keep headroom under the ceiling.
 
 ## What happens when you exceed the limit
 
@@ -86,3 +123,21 @@ message `"Slow down"` (`TooManyRequestsException`, `exceptions.js`).
   of several minutes is the fastest way back to normal.
 - Bulk attachment fetches (`GET /vN/attachments/:attId/:type`) get a much
   higher cap (1000/min).
+
+## Source references
+
+Each claim above was confirmed against source at the pinned versions, not
+inferred. Links are permalinks at FreeFeed commit `35b39a6` and
+`async-ratelimiter` tag `v1.6.4`.
+
+| Claim | Where to confirm |
+|-------|------------------|
+| Limit values (auth POST 60, GET 200, `all` 30; anon GET 100, `all` 10; attachments 1000), window `PT1M`, `blockDuration PT1M`, `repeatBlockMultiplier 2`, `repeatBlockCounterDuration PT10M` | [`config/default.js`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/config/default.js) → `rateLimit` |
+| Middleware, per-`clientId + method` keying, block check before counting, escalation on repeat breaches | [`app/support/rateLimiter.ts`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/support/rateLimiter.ts) |
+| Route/method/`all` precedence; `/vN` version normalization | [`app/routes.js`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/routes.js), [`rateLimiter.ts`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/support/rateLimiter.ts) |
+| HTTP 429 with body `"Slow down"` (`TooManyRequestsException`) | [`app/support/exceptions.js`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/support/exceptions.js) |
+| Sliding-window-log algorithm: sorted set, `ZREMRANGEBYSCORE` → `ZCARD` → `ZADD`, `remaining = max - count`, no burst-on-top | [`async-ratelimiter` `src/index.js`](https://github.com/microlinkhq/async-ratelimiter/blob/v1.6.4/src/index.js), pinned in FreeFeed [`package.json`](https://github.com/FreeFeed/freefeed-server/blob/35b39a6/package.json) (`~1.6.4`) |
+
+Verified 2026-06-13. The only thing not read line-by-line is FreeFeed's exact
+`repeat`-block arithmetic; the `1 → 2 → 4 → 6 → 8 min` ladder above is the
+illustrative result of `2 × prior blocks`, not a literal table in the source.
