@@ -64,9 +64,9 @@ module Sortable
     config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
-  # The Arel ordering for the current sort field and direction, honouring an
-  # optional :nulls placement. Intended for use in the "index" action that
-  # outputs the ordered records.
+  # The Arel ordering for the current sort field and direction. A field may
+  # request `nulls: :last` to keep rows with a NULL value out of the way.
+  # Intended for use in the "index" action that outputs the ordered records.
   #
   # @return [Arel::Nodes::Ordering]
   def sortable_order
@@ -80,12 +80,7 @@ module Sortable
 
     arel_field = Arel.sql(field_sql)
     ordering = sortable_direction == "asc" ? arel_field.asc : arel_field.desc
-
-    case config[:nulls]
-    when :first then ordering.nulls_first
-    when :last then ordering.nulls_last
-    else ordering
-    end
+    config[:nulls] == :last ? ordering.nulls_last : ordering
   end
 
   # Returns the configuration hash describing available sort fields.
