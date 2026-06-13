@@ -9,6 +9,10 @@
 class FileBuffer
   DEFAULT_CONTENT_TYPE = "application/octet-stream"
 
+  # Some image hosts (notably Reddit's CDN, *.redd.it) reject requests without a
+  # User-Agent with HTTP 403. Net::HTTP sends none by default, so we set one.
+  USER_AGENT = "Feeder".freeze
+
   class Error < StandardError; end
 
   # Initialize a new FileBuffer
@@ -49,7 +53,7 @@ class FileBuffer
 
   def url_to_io(url)
     normalized_url = normalize_url(url)
-    response = http_client.get(normalized_url)
+    response = http_client.get(normalized_url, headers: { "User-Agent" => USER_AGENT })
 
     unless response.success?
       raise Error, "Failed to download attachment from #{url}: HTTP #{response.status}"
