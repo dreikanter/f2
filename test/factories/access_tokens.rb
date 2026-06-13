@@ -19,6 +19,7 @@ FactoryBot.define do
     trait :active do
       status { :active }
       owner { "testuser" }
+      sequence(:freefeed_user_id) { |n| "ff-user-#{n}" }
     end
 
     trait :inactive do

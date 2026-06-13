@@ -83,14 +83,18 @@ local accounting mirrors theirs:
 - **Per provider identity, not global** — e.g. FreeFeed limits per account, so
   one busy account must not throttle unrelated ones. A global cap would be both
   too strict and too loose.
-- **Not too fine** — several feeds under the same FreeFeed token share one
-  remote bucket, so the subject is the token's identity, not the feed.
+- **Match the remote's granularity** — FreeFeed meters per authenticated account
+  (the JWT user id), shared across every token and feed of that account, so the
+  subject must be the account, not the token or feed.
 
-For FreeFeed the subject is the **access-token id** (`freefeed:<id>`). FreeFeed
-actually meters per account, so multiple tokens for the same FreeFeed user share
-its real bucket; keying per token over-counts in that rare case, but the `429`
-backstop covers it. A token id is stable and always present (unlike `owner`,
-which is unknown until validation), so it avoids a shifting subject.
+For FreeFeed the subject is **instance + account**:
+`freefeed:<instance>:<freefeed_user_id>`, where `<instance>` is the known-host
+key (`production`/`staging`/`beta`, falling back to the host domain). This keeps
+all of one account's tokens on a single bucket, matching the server's own
+counter. The FreeFeed user id is only known after a token is validated, so until
+then we fall back to a per-token subject (`freefeed:token:<id>`) — acceptable
+because the only pre-validation traffic is validation's own GETs, and the POST
+and DELETE paths always run on already-validated tokens.
 
 ## Public API (sketch)
 

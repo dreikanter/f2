@@ -65,9 +65,10 @@ This shapes how Feeder paces itself:
   can exceed `max` even when `burst` and `rate` each look safe. Feeder caps each
   dimension so `burst + rate` stays under the FreeFeed ceiling — see
   [`rate-limiting.md`](rate-limiting.md) and `config/initializers/rate_limits.rb`.
-- FreeFeed keys per account; Feeder keys per access-token. Multiple tokens for one
-  account share one server-side window but get separate buckets here, so Feeder
-  keeps headroom under the ceiling rather than matching it exactly.
+- FreeFeed keys its counter on the authenticated account (the JWT user id), shared
+  across all of that account's tokens. Feeder keys its subject the same way once a
+  token is validated (`freefeed:<instance>:<user_id>`), so sibling tokens for one
+  account share a single local bucket and can't each spend a separate allowance.
 
 ## Exceeding the limit
 

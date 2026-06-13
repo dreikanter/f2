@@ -32,6 +32,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_13_145500) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "freefeed_user_id"
+    t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
   end

@@ -64,12 +64,27 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
   end
 
-  # Identity used for rate limiting FreeFeed API calls. Keyed per token: FreeFeed
-  # actually meters per account, so multiple tokens for the same FreeFeed user
-  # share its real bucket, but that rare over-count is covered by the 429
-  # backstop. A token id is stable and always present. See docs/rate-limiting.md.
+  # Identity used for rate limiting FreeFeed API calls. FreeFeed meters per
+  # authenticated account (the JWT user id), shared across all of that account's
+  # tokens, so the subject is keyed by FreeFeed instance + user id to collapse
+  # sibling tokens onto one bucket. The user id is only known after validation;
+  # until then (e.g. validation's own GETs) we fall back to a per-token subject.
+  # See docs/rate-limiting.md.
   def rate_limit_subject
-    "freefeed:#{id}"
+    if freefeed_user_id.present?
+      "freefeed:#{freefeed_instance}:#{freefeed_user_id}"
+    else
+      "freefeed:token:#{id}"
+    end
+  end
+
+  # Stable identifier for the FreeFeed instance this token targets. Prefers the
+  # known-host key (production/staging/beta) so different spellings of the same
+  # host — or a bare IP — don't fragment the subject; falls back to the host's
+  # domain for custom instances.
+  def freefeed_instance
+    known = FREEFEED_HOSTS.find { |_key, config| config[:domain] == host_domain }
+    known ? known.first.to_s : host_domain
   end
 
   def host_domain
@@ -85,8 +100,16 @@ class AccessToken < ApplicationRecord
     feeds.update_all(state: :disabled, access_token_id: nil)
   end
 
+  # Drop the limiter bucket when this token is gone. Account-scoped subjects can
+  # be shared by sibling tokens, so only forget once no sibling still uses it.
   def forget_rate_limit_state
-    RateLimit.forget(:freefeed, subject: rate_limit_subject)
+    subject = rate_limit_subject
+    return if freefeed_user_id.present? &&
+              AccessToken.where(freefeed_user_id: freefeed_user_id)
+                         .where.not(id: id)
+                         .any? { |sibling| sibling.rate_limit_subject == subject }
+
+    RateLimit.forget(:freefeed, subject: subject)
   end
 
   def disable_token_and_feeds
