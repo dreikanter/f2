@@ -10,10 +10,10 @@ class TimeHelperTest < ActiveSupport::TestCase
     assert_nil short_time_ago(nil)
   end
 
-  test "#short_time_ago should return seconds for recent time" do
+  test "#short_time_ago should return now for recent time" do
     travel_to Time.zone.parse("2025-01-15 15:45:30") do
       time = 30.seconds.ago
-      assert_equal "30s", short_time_ago(time)
+      assert_equal "now", short_time_ago(time)
     end
   end
 
