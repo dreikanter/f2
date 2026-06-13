@@ -82,7 +82,7 @@ class FeedStatsComponent < ViewComponent::Base
 
   def most_recent_repost_value
     if @feed.most_recent_repost_at
-      safe_join([helpers.short_time_ago_tag(@feed.most_recent_repost_at), " ago"])
+      helpers.short_time_ago_tag(@feed.most_recent_repost_at)
     else
       content_tag(:span, "No reposts yet", class: "text-slate-500")
     end
