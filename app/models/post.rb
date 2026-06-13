@@ -25,9 +25,13 @@ class Post < ApplicationRecord
   validates :uid, uniqueness: { scope: :feed_id }
   validates :published_at, presence: true
   validates :source_url, presence: true
-  validates :content, length: { maximum: MAX_CONTENT_LENGTH }
+  # Length limits gate enqueueing only. Once a post leaves the queue (published,
+  # failed, withdrawn) these must not block the status transition, or a post that
+  # slipped past with over-long content would wedge the publish chain: the rescue
+  # that marks it failed would itself fail to save. See PostPublishJob.
+  validates :content, length: { maximum: MAX_CONTENT_LENGTH }, if: :enqueued?
 
-  validate :validate_comments_length
+  validate :validate_comments_length, if: :enqueued?
   validate :validate_enqueued_status
 
   enum :status, {
