@@ -11,12 +11,29 @@ class AccessTokenValidationService
     managed_groups = fetch_managed_groups
 
     access_token.with_lock do
-      access_token.update!(status: :active, owner: user_info[:username], last_used_at: Time.current)
+      access_token.update!(
+        status: :active,
+        owner: user_info[:username],
+        freefeed_user_id: user_info[:id],
+        last_used_at: Time.current
+      )
+
       access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
-      access_token_detail.update!(data: { user_info: user_info, managed_groups: managed_groups })
+
+      access_token_detail.update!(
+        data: {
+          user_info: user_info,
+          managed_groups: managed_groups
+        }
+      )
     end
   rescue FreefeedClient::UnauthorizedError
     access_token.disable_token_and_feeds
+  rescue RateLimit::Throttled
+    # Throttling is control flow, not a validation failure: let it propagate so
+    # the job reschedules. Reporting it here would surface a fault on every
+    # deferred run.
+    raise
   rescue StandardError => e
     Rails.error.report(e, context: { access_token_id: access_token.id })
     raise

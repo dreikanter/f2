@@ -331,10 +331,18 @@ class FreefeedClientTest < ActiveSupport::TestCase
     penalized = nil
     RateLimit.stub(:penalize, ->(name, subject:, retry_after:) { penalized = [name, subject, retry_after] }) do
       error = assert_raises(RateLimit::Throttled) { client.create_post(body: "hi", feeds: ["g"]) }
-      assert_equal 30, error.retry_after
+      assert_equal 30 + FreefeedClient::RETRY_AFTER_BUFFER, error.retry_after
     end
 
-    assert_equal [:freefeed, "freefeed:1", 30], penalized
+    assert_equal [:freefeed, "freefeed:1", 30 + FreefeedClient::RETRY_AFTER_BUFFER], penalized
+  end
+
+  test "Retry-After is padded with a buffer to stay clear of the server window" do
+    assert_equal 10, FreefeedClient::RETRY_AFTER_BUFFER
+  end
+
+  test "default cooldown is several minutes to wait out FreeFeed's escalating blocks" do
+    assert_equal 300, FreefeedClient::DEFAULT_RETRY_AFTER
   end
 
   test "429 without Retry-After uses the default cooldown" do
@@ -364,7 +372,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
 
     RateLimit.stub(:penalize, ->(*, **) { }) do
       error = assert_raises(RateLimit::Throttled) { client.whoami }
-      assert_equal 20, error.retry_after
+      assert_equal 20 + FreefeedClient::RETRY_AFTER_BUFFER, error.retry_after
     end
   end
 
@@ -375,9 +383,9 @@ class FreefeedClientTest < ActiveSupport::TestCase
     penalized = nil
     RateLimit.stub(:penalize, ->(_name, subject:, retry_after:) { penalized = [subject, retry_after] }) do
       error = assert_raises(RateLimit::Throttled) { client.delete_post("p1") }
-      assert_equal 15, error.retry_after
+      assert_equal 15 + FreefeedClient::RETRY_AFTER_BUFFER, error.retry_after
     end
 
-    assert_equal ["freefeed:1", 15], penalized
+    assert_equal ["freefeed:1", 15 + FreefeedClient::RETRY_AFTER_BUFFER], penalized
   end
 end

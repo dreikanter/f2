@@ -17,7 +17,8 @@ class GroupPurgeJob < ApplicationJob
     posts = feed.posts.where.not(freefeed_post_id: [nil, ""])
 
     posts.find_each do |post|
-      RateLimit.acquire!(:freefeed, subject: access_token.rate_limit_subject, cost: { delete: 1 })
+      result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { delete: 1 })
+      return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
       begin
         client.delete_post(post.freefeed_post_id)
@@ -27,5 +28,9 @@ class GroupPurgeJob < ApplicationJob
         # Continue with next post even if one fails
       end
     end
+  rescue RateLimit::Throttled => e
+    # FreeFeed throttled a DELETE mid-batch; defer the rest. Cleared posts have
+    # dropped out of the scope, so the rescheduled run resumes with the remainder.
+    reschedule_for_rate_limit(e.retry_after)
   end
 end

@@ -110,46 +110,164 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs(only: PostPublishJob)
   end
 
-  test ".perform_now should reserve one POST per post, comment, and attachment" do
+  test ".perform_now should count the post, its comments, and its attachments in the reserved cost" do
     create(:post, :enqueued, feed: feed, comments: ["a", "b"], attachment_urls: ["u1", "u2", "u3"])
+    subject = access_token.rate_limit_subject
 
-    captured = nil
-    RateLimit.stub(:acquire!, lambda { |policy, subject:, cost:|
-      captured = [policy, subject, cost]
-      raise RateLimit::Throttled.new(retry_after: 1)
-    }) do
-      PostPublishJob.perform_now(feed.id)
-    end
+    freeze_time do
+      # Leave 5 POST tokens — one short of this post's true cost of 6
+      # (1 post + 2 comments + 3 attachments). A run that counted only the post
+      # would publish; counting the extras throttles it before any HTTP call.
+      drain_freefeed(subject, :post, remaining: 5)
 
-    assert_equal [:freefeed, access_token.rate_limit_subject, { post: 6 }], captured
-  end
-
-  test ".perform_now should fail an oversized post and advance the chain" do
-    oversized = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago,
-                                         attachment_urls: Array.new(60) { |i| "https://example.com/#{i}.jpg" })
-
-    # No acquire and no publish happen for an impossible post; the chain advances.
-    captured_acquire = false
-    RateLimit.stub(:acquire!, ->(*, **) { captured_acquire = true }) do
       assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
     end
 
-    assert_equal "failed", oversized.reload.status
-    refute captured_acquire, "should not try to reserve capacity it can never get"
+    assert_equal "enqueued", feed.posts.first.reload.status
+    assert_not_requested :post, "#{access_token.host}/v4/posts"
+  end
+
+  test ".perform_now should fail an oversized post and advance the chain" do
+    oversized = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago,
+                                         attachment_urls: Array.new(60) { |i| "https://example.com/#{i}.jpg" })
+    subject = access_token.rate_limit_subject
+
+    freeze_time do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+        PostPublishJob.perform_now(feed.id)
+      end
+
+      assert_equal "failed", oversized.reload.status
+      assert_equal RateLimit.capacity(:freefeed, :post), freefeed_tokens_left(subject, :post),
+        "an impossible post must be rejected before reserving any capacity"
+    end
   end
 
   test ".perform_now should reschedule and keep the post enqueued when throttled" do
     post = create(:post, :enqueued, feed: feed)
+    subject = access_token.rate_limit_subject
 
-    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+    freeze_time do
+      drain_freefeed(subject, :post, remaining: 0)
+
       assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
     end
 
     assert_equal "enqueued", post.reload.status
+    assert_not_requested :post, "#{access_token.host}/v4/posts"
+  end
+
+  test ".perform_now should report and keep the post enqueued when throttle retries are exhausted" do
+    post = create(:post, :enqueued, feed: feed)
+    subject = access_token.rate_limit_subject
+    job = PostPublishJob.new(feed.id)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    reported = []
+    freeze_time do
+      drain_freefeed(subject, :post, remaining: 0)
+
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        assert_no_enqueued_jobs(only: PostPublishJob) { job.perform_now }
+      end
+    end
+
+    assert_equal 1, reported.size
+    assert_instance_of RateLimit::Throttled, reported.first
+    assert_equal "enqueued", post.reload.status, "the post must stay enqueued for a later run to pick up"
+  end
+
+  test ".perform_now should reschedule without failing when FreeFeed throttles mid-publish" do
+    post = create(:post, :enqueued, feed: feed)
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        PostPublishJob.perform_now(feed.id)
+      end
+    end
+
+    assert_equal "enqueued", post.reload.status, "the throttled post must stay enqueued for the retry"
+    assert_empty reported, "a handled mid-publish throttle must not be reported as a fault"
+  end
+
+  # Best-effort publishing: once the post is created its id is persisted, so a
+  # 429 on a later comment leaves the post published with an incomplete comment
+  # set rather than re-creating it. Documents the accepted behaviour (see
+  # FreefeedPublisher#publish) so it stays predictable and safe.
+  test ".perform_now should leave the post published and not duplicated when a comment is throttled" do
+    post = create(:post, :enqueued, feed: feed, content: "body", comments: ["c1", "c2"])
+
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 200, headers: { "Content-Type" => "application/json" },
+                 body: { posts: { id: "ff-post-1" } }.to_json)
+    # FreeFeed throttles the first comment, after the post itself was created.
+    stub_request(:post, "#{access_token.host}/v4/comments")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    increments = []
+    Metrics.stub(:increment, ->(name, **tags) { increments << [name, tags] }) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+      end
+    end
+
+    post.reload
+    assert_equal "published", post.status, "the created post is recorded as published"
+    assert_equal "ff-post-1", post.freefeed_post_id
+    # The post is created exactly once and never re-created on the retry chain.
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
+    # Comment creation stops at the throttled comment; the rest are dropped.
+    assert_requested :post, "#{access_token.host}/v4/comments", times: 1
+    assert_empty reported, "a handled mid-comment throttle must not be reported as a fault"
+
+    published = increments.count { |name, tags| name == "posts_published_total" && tags[:status] == "published" }
+    assert_equal 1, published, "a created post is counted once even when a comment throttles"
+  end
+
+  test ".perform_now should keep original publication order across a throttle interruption" do
+    create(:post, :enqueued, feed: feed, published_at: 3.hours.ago, content: "post-1")
+    create(:post, :enqueued, feed: feed, published_at: 2.hours.ago, content: "post-2")
+    create(:post, :enqueued, feed: feed, published_at: 1.hour.ago, content: "post-3")
+
+    published_bodies = []
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return do |request|
+      published_bodies << JSON.parse(request.body).dig("post", "body")
+      {
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: { posts: { id: "freefeed-#{SecureRandom.hex(8)}" } }.to_json
+      }
+    end
+
+    subject = access_token.rate_limit_subject
+
+    freeze_time do
+      # One POST token: enough for the first post, then the real bucket is dry.
+      drain_freefeed(subject, :post, remaining: 1)
+
+      PostPublishJob.perform_now(feed.id) # publishes post-1, bucket -> 0
+      PostPublishJob.perform_now(feed.id) # post-2: no tokens, throttles and stays enqueued
+
+      assert_equal ["post-1"], published_bodies
+      assert_equal %w[post-2 post-3], feed.posts.enqueued.order(:published_at).pluck(:content),
+        "the throttled post and its successor must remain, in order"
+
+      travel(2.seconds)                   # refills one token (post rate is 0.5/s)
+      PostPublishJob.perform_now(feed.id) # post-2 resumes — the same post, before post-3
+      travel(2.seconds)
+      PostPublishJob.perform_now(feed.id) # post-3
+    end
+
+    assert_equal %w[post-1 post-2 post-3], published_bodies
+    assert_equal 0, feed.posts.enqueued.count
   end
 
   test ".perform_now should do nothing when there are no enqueued posts" do

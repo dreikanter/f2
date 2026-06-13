@@ -11,8 +11,39 @@ class AccessTokenTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  test "#rate_limit_subject is keyed by the token id" do
-    assert_equal "freefeed:#{access_token.id}", access_token.rate_limit_subject
+  test "#rate_limit_subject is keyed by FreeFeed instance and user id once validated" do
+    token = create(:access_token, :active, host: "https://freefeed.net", freefeed_user_id: "u-42")
+    assert_equal "freefeed:production:u-42", token.rate_limit_subject
+  end
+
+  test "#rate_limit_subject collapses sibling tokens of the same account onto one subject" do
+    a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-42")
+    b = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-42")
+    assert_equal a.rate_limit_subject, b.rate_limit_subject
+  end
+
+  test "#rate_limit_subject falls back to the token id before validation" do
+    token = create(:access_token) # pending, no freefeed_user_id yet
+    assert_equal "freefeed:token:#{token.id}", token.rate_limit_subject
+  end
+
+  test "#freefeed_instance uses the known-host key" do
+    assert_equal "staging", create(:access_token, host: "https://candy.freefeed.net").freefeed_instance
+    assert_equal "production", create(:access_token, host: "https://freefeed.net").freefeed_instance
+  end
+
+  test "#freefeed_instance falls back to the domain for a custom host" do
+    assert_equal "my.freefeed.example", create(:access_token, host: "https://my.freefeed.example").freefeed_instance
+  end
+
+  test "#rate_limit_subject is stable across equivalent host spellings" do
+    a = create(:access_token, host: "https://freefeed.net", freefeed_user_id: "u-7")
+    b = create(:access_token, host: "https://FREEFEED.NET", freefeed_user_id: "u-7")
+    c = create(:access_token, host: "https://Custom.Example.COM", freefeed_user_id: "u-7")
+
+    assert_equal "freefeed:production:u-7", a.rate_limit_subject
+    assert_equal a.rate_limit_subject, b.rate_limit_subject, "case must not split the account bucket"
+    assert_equal "freefeed:custom.example.com:u-7", c.rate_limit_subject
   end
 
   test ".build_with_token stores encrypted token and sets pending status" do
@@ -186,13 +217,37 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "destroying access token forgets its rate limit state" do
-    token = create(:access_token, :active)
-    RateLimit.acquire(:freefeed, subject: token.rate_limit_subject, cost: { get: 1 })
-    assert RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+    freeze_time do
+      token = create(:access_token, :active)
+      subject = token.rate_limit_subject
+      drain_freefeed(subject, :get, remaining: 0)
+      assert_not RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?
 
-    token.destroy!
+      token.destroy!
 
-    assert_not RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+      assert RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "a forgotten subject starts fresh"
+    end
+  end
+
+  test "destroying one token keeps the shared bucket while a sibling still uses it" do
+    freeze_time do
+      shared = { host: "https://freefeed.net", freefeed_user_id: "u-99" }
+      a = create(:access_token, :active, **shared)
+      b = create(:access_token, :active, **shared)
+      subject = a.rate_limit_subject
+      assert_equal subject, b.rate_limit_subject
+
+      drain_freefeed(subject, :get, remaining: 0)
+
+      a.destroy!
+      assert_not RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "the shared bucket survives while sibling b still uses it"
+
+      b.destroy!
+      assert RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "the bucket is forgotten once the last token is gone"
+    end
   end
 
   test "destroying access token disables enabled feeds and nullifies their access_token_id" do

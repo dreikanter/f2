@@ -28,27 +28,30 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     assert_nil post3.reload.freefeed_post_id
   end
 
-  test ".perform_now should reserve a delete per post" do
+  test ".perform_now should reserve one delete per post" do
     create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+    subject = access_token.rate_limit_subject
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
 
-    captured = []
-    RateLimit.stub(:acquire!, lambda { |_policy, subject:, cost:|
-      captured << [subject, cost]
-    }) do
+    freeze_time do
       GroupPurgeJob.perform_now(feed.id)
-    end
 
-    assert_equal [[access_token.rate_limit_subject, { delete: 1 }]] * 2, captured
+      capacity = RateLimit.capacity(:freefeed, :delete)
+      assert_equal capacity - 2, freefeed_tokens_left(subject, :delete),
+        "two withdrawals must spend exactly two delete tokens"
+    end
   end
 
   test ".perform_now should reschedule itself when throttled" do
     create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    subject = access_token.rate_limit_subject
 
-    RateLimit.stub(:acquire!, ->(*, **) { raise RateLimit::Throttled.new(retry_after: 2) }) do
+    freeze_time do
+      drain_freefeed(subject, :delete, remaining: 0)
+
       assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
         GroupPurgeJob.perform_now(feed.id)
       end
@@ -60,14 +63,14 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   test ".perform_now should keep progress and reschedule the rest when throttled mid-batch" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+    subject = access_token.rate_limit_subject
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
-    calls = 0
-    RateLimit.stub(:acquire!, lambda { |*, **|
-      calls += 1
-      raise RateLimit::Throttled.new(retry_after: 5) if calls > 1
-    }) do
+    freeze_time do
+      # One delete token: the first withdrawal spends it, the second throttles.
+      drain_freefeed(subject, :delete, remaining: 1)
+
       assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
         GroupPurgeJob.perform_now(feed.id)
       end
@@ -75,6 +78,42 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
     assert_nil post1.reload.freefeed_post_id
     assert_equal "post2", post2.reload.freefeed_post_id
+  end
+
+  test ".perform_now should reschedule without failing when FreeFeed throttles a DELETE" do
+    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        GroupPurgeJob.perform_now(feed.id)
+      end
+    end
+
+    assert_empty reported, "a handled mid-batch throttle must not be reported as a fault"
+    assert_equal "post1", post1.reload.freefeed_post_id, "a throttled DELETE must leave the post untouched"
+  end
+
+  test ".perform_now should report and stop when throttle retries are exhausted" do
+    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    subject = access_token.rate_limit_subject
+    job = GroupPurgeJob.new(feed.id)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    reported = []
+    freeze_time do
+      drain_freefeed(subject, :delete, remaining: 0)
+
+      Rails.error.stub(:report, ->(error, **) { reported << error }) do
+        assert_no_enqueued_jobs(only: GroupPurgeJob) { job.perform_now }
+      end
+    end
+
+    assert_equal 1, reported.size
+    assert_instance_of RateLimit::Throttled, reported.first
+    assert_equal "post1", post1.reload.freefeed_post_id, "nothing is deleted when out of capacity"
   end
 
   test ".perform_now should continue on error and log failure" do

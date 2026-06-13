@@ -49,6 +49,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     assert_equal "active", access_token.reload.status
     assert_equal "testuser", access_token.owner
+    assert_equal "user123", access_token.freefeed_user_id
     assert_not_nil access_token.last_used_at
   end
 

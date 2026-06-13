@@ -1,88 +1,112 @@
 # FreeFeed Server API Rate Limiting
 
-How the FreeFeed server limits API requests. Useful as a reference when
-deciding how Feeder should pace its requests to avoid HTTP 429 responses.
+How the FreeFeed server limits API requests — a reference for pacing Feeder's
+requests to avoid HTTP 429s.
 
 > Source: [FreeFeed/freefeed-server](https://github.com/FreeFeed/freefeed-server)
-> at commit `35b39a6` (2026-05-13). Key files: `app/support/rateLimiter.ts`,
-> `config/default.js`, `app/routes.js`, `app/support/exceptions.js`.
+> at commit `35b39a6` (2026-05-13); the counting algorithm is the
+> [`async-ratelimiter`][async-ratelimiter] package it pins at `~1.6.4`
+> ([`package.json`][package.json]). Inline file links are permalinks at those
+> versions.
 
 ## Where it runs
 
-A single Koa middleware (`rateLimiterMiddleware`) backed by Redis, applied to
-every public and admin API route. It runs after JWT decoding, so it knows the
-caller's identity. Counters use the `async-ratelimiter` package.
+A single Koa middleware (`rateLimiterMiddleware`, [`rateLimiter.ts`][ratelimiter])
+backed by Redis, applied to every public and admin API route. It runs after JWT
+decoding, so it knows the caller's identity.
 
 ## How a client is identified
 
-- **Authenticated** request → keyed by **user ID**, uses the `authenticated`
-  limits.
-- **Anonymous** request → keyed by **IP address** (`ctx.ip`), uses the
-  `anonymous` limits.
+- **Authenticated** → keyed by **user ID**, uses the `authenticated` limits
+  (~3× the anonymous ones).
+- **Anonymous** → keyed by **IP address** (`ctx.ip`), uses the `anonymous` limits.
 
-Counters are per `clientId + HTTP method`, so each method is tracked
-separately for each client.
+Counters are per `clientId + HTTP method`: each method is tracked separately for
+each client.
 
 ## Default limits
 
-Configured in `config.rateLimit` (`config/default.js`). The time window is an
-ISO-8601 duration; default is `PT1M` (1 minute). **Each value below is a
-separate per-method bucket — there is no combined cap across methods.** `all`
-is *not* an aggregate; it is the fallback limit for methods without their own
-entry (`DELETE`, `PUT`, `PATCH`…), and each such method still gets its own
-bucket using that value.
+From `config.rateLimit` ([`config/default.js`][default]). Each value is a
+separate per-method bucket — there is no combined cap across methods. `all` is
+the fallback for methods without their own entry (`DELETE`, `PUT`, `PATCH`…);
+each such method still gets its own bucket at that value.
 
 | Auth type     | Window | `all` (fallback) | `GET` | `POST` | Attachments (`GET /vN/attachments/:attId/:type`) |
 |---------------|--------|------------------|-------|--------|--------------------------------------------------|
 | Anonymous     | 1 min  | 10               | 100   | —      | 1000                                             |
 | Authenticated | 1 min  | 30               | 200   | 60     | 1000                                             |
 
-Limit resolution precedence (most to least specific):
+Resolution precedence, most to least specific ([`routes.js`][routes],
+[`rateLimiter.ts`][ratelimiter]):
 
 1. Exact route (e.g. `GET /vN/attachments/:attId/:type`; the version prefix is
    normalized to `/vN`).
-2. HTTP method (`GET`, `POST`, …). `HEAD` counts as `GET`.
+2. HTTP method (`HEAD` counts as `GET`).
 3. Fallback `all`.
 
-## What happens when you exceed the limit
+## How the window is counted
 
-Going over the allowance does **not** just throttle the next request — the
-client gets **blocked**, and repeat offenders are punished progressively
-(`rateLimiter.ts`):
+`async-ratelimiter` ([`src/index.js`][async-ratelimiter]) is a **sliding window
+log**. Each allowed request is stored as one member in a Redis sorted set, scored
+by timestamp. On every call it drops members older than `now - duration`
+(`ZREMRANGEBYSCORE`), counts the rest (`ZCARD`), and allows the request only if
+`count < max`, recording it (`ZADD`).
 
-- **First breach:** blocked for `blockDuration` (default `PT1M`, 1 min).
-- **Repeat breaches within the memory window:** block duration is multiplied
-  (`repeatBlockMultiplier` = 2 × number of previous blocks). Block times grow
-  roughly 1 → 2 → 4 → 6 → 8 minutes.
-- The "memory" of past breaches (`repeatBlockCounterDuration`, default `PT10M`)
-  is extended with each breach (≈11 → 12 → 14 → 16 minutes). Behave for the
-  full window and all past breaches are forgiven.
-- While blocked, every request is rejected immediately without consulting the
-  per-method counters.
+The rule is therefore **at most `max` requests in any rolling `duration`** (window
+default `PT1M`, 1 min), measured continuously rather than reset on a clock
+boundary. `max` is the only parameter: there is no separate burst allowance on
+top of a rate.
 
-### Response
+This shapes how Feeder paces itself:
 
-Exceeding the limit (or being blocked) returns **HTTP 429** with the body
-message `"Slow down"` (`TooManyRequestsException`, `exceptions.js`).
+- All `max` requests may go out at once, but the next is admitted only once the
+  oldest ages out of the trailing window.
+- A token bucket on our side admits up to `burst + rate` within one window, which
+  can exceed `max` even when `burst` and `rate` each look safe. Feeder caps each
+  dimension so `burst + rate` stays under the FreeFeed ceiling — see
+  [`rate-limiting.md`](rate-limiting.md) and `config/initializers/rate_limits.rb`.
+- FreeFeed keys its counter on the authenticated account (the JWT user id), shared
+  across all of that account's tokens. Feeder keys its subject the same way once a
+  token is validated (`freefeed:<instance>:<user_id>`), so sibling tokens for one
+  account share a single local bucket and can't each spend a separate allowance.
+
+## Exceeding the limit
+
+Going over does not just delay the next request — the client is **blocked**, and
+repeat breaches escalate ([`rateLimiter.ts`][ratelimiter]):
+
+- The first breach blocks for `blockDuration` (1 min).
+- The Nth consecutive breach blocks for `blockDuration × repeatBlockMultiplier ×
+  (N − 1)`; with `repeatBlockMultiplier = 2` that is 2, 4, 6, 8 min for the 2nd
+  through 5th.
+- Each breach extends the memory window (`repeatBlockCounterDuration`, 10 min)
+  that decides what counts as "consecutive"; stay clean for its full length and
+  the count resets.
+- While blocked, every request is rejected without consulting the per-method
+  counters.
+
+A blocked or over-limit request returns **HTTP 429** with body `"Slow down"`
+(`TooManyRequestsException`, [`exceptions.js`][exceptions]) and no `Retry-After`.
+Because breaches escalate and reset the forgiveness window, back off for minutes
+after a 429 rather than retrying immediately.
 
 ## Bypasses and toggles
 
-- **Disabled by default** (`config.rateLimit.enabled = false`). A deployment
-  must opt in.
+- **Disabled by default** (`config.rateLimit.enabled = false`); a deployment must
+  opt in.
 - **Allowlist** (`config.rateLimit.allowlist`, default `['::ffff:127.0.0.1']`)
-  skips all limiting. Entries can be IP addresses or user IDs.
+  skips limiting; entries are IPs or user IDs.
 
-## Practical implications for Feeder
+## What this means for publishing
 
-- Authenticate requests where possible — authenticated limits are ~3× higher
-  than anonymous ones (per user, not per shared IP).
-- Limits are per method, not combined. The one that matters for publishing is
-  ~60 POST/min per account (each post can be several POSTs: attachments + post
-  + comments). `GET` is far more generous at 200/min, and methods without their
-  own entry fall back to 30/min each. Keep a safety margin since each bucket is
-  a strict 1-minute window.
-- On a 429, **back off** rather than retry immediately — repeated breaches
-  escalate the block duration and reset the forgiveness window. A clean pause
-  of several minutes is the fastest way back to normal.
-- Bulk attachment fetches (`GET /vN/attachments/:attId/:type`) get a much
-  higher cap (1000/min).
+Each publish is several POSTs (the post, each comment, each attachment upload), so
+the **60 POST/min** authenticated bucket is the binding constraint; `GET`
+(200/min) and the `all` fallback (30/min) are rarely close. Authenticate so these
+higher per-user limits apply.
+
+[default]: https://github.com/FreeFeed/freefeed-server/blob/35b39a6/config/default.js
+[ratelimiter]: https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/support/rateLimiter.ts
+[routes]: https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/routes.js
+[exceptions]: https://github.com/FreeFeed/freefeed-server/blob/35b39a6/app/support/exceptions.js
+[package.json]: https://github.com/FreeFeed/freefeed-server/blob/35b39a6/package.json
+[async-ratelimiter]: https://github.com/microlinkhq/async-ratelimiter/blob/v1.6.4/src/index.js
