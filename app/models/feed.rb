@@ -52,7 +52,6 @@ class Feed < ApplicationRecord
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
-  after_update :create_state_change_event
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -350,9 +349,9 @@ class Feed < ApplicationRecord
   # Pulls the feed out of the enabled state and records why, stamping the event
   # with the streak length so the activity log can tell the user how many
   # failures it took. Resets the counter so a later re-enable starts fresh.
-  # update_columns skips the generic feed_disabled state-change event in favor
-  # of this richer feed_auto_disabled one, mirroring the credential/token
-  # disable paths that emit their own aggregate events.
+  # update_columns writes the state flip and counter reset in one statement and
+  # skips validations they don't need; the feed_auto_disabled event carries the
+  # reason, mirroring the credential/token disable paths and their own events.
   def disable_after_repeated_failures!
     failure_count = consecutive_failures
 
@@ -450,19 +449,5 @@ class Feed < ApplicationRecord
     return if feed_schedule.present?
 
     reset_schedule!
-  end
-
-  def create_state_change_event
-    return unless saved_change_to_state?
-
-    type = if enabled?
-      "feed_enabled"
-    elsif disabled?
-      "feed_disabled"
-    end
-
-    return unless type
-
-    Event.create!(type: type, level: :info, subject: self, user: user, message: "")
   end
 end

@@ -1,6 +1,7 @@
 class FeedsController < ApplicationController
   include Pagination
   include Sortable
+  include FeedStateEvents
 
   MAX_RECENT_POSTS = 5
   MAX_RECENT_EVENTS = 10
@@ -100,6 +101,7 @@ class FeedsController < ApplicationController
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression?
+      record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.url) if @feed.url
 
       if require_llm_credentials?
@@ -140,6 +142,7 @@ class FeedsController < ApplicationController
 
   def enable_and_respond(feed)
     if feed.enable
+      record_feed_enabled(feed)
       redirect_to feed_path(feed), success: success_message_for(feed)
     else
       flash.now[:alert] = "Couldn't enable. See issues below."
@@ -150,6 +153,7 @@ class FeedsController < ApplicationController
   def promote_and_redirect(feed, interval_changed)
     feed.transaction do
       if feed.enable
+        record_feed_enabled(feed)
         feed.reset_schedule! if interval_changed && feed.feed_schedule.present?
       end
     end

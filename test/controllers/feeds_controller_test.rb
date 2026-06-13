@@ -835,6 +835,44 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Paused Feed", enabled_feed.name
   end
 
+  test "#update should record a feed_enabled event when promoting a draft" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user, access_token: access_token,
+                                  target_group: "tg",
+                                  feed_profile_key: "rss",
+                                  params: { "url" => "http://example.com/feed.xml" })
+
+    assert_difference("Event.where(type: 'feed_enabled', subject: draft).count", 1) do
+      patch feed_url(draft), params: { feed: { name: "Promoted Feed" }, enable_feed: "1" }
+    end
+  end
+
+  test "#update should record a feed_disabled event when pausing a feed" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, :enabled, user: user, access_token: access_token)
+
+    assert_difference("Event.where(type: 'feed_disabled', subject: enabled_feed).count", 1) do
+      patch feed_url(enabled_feed), params: { feed: { name: "Paused Feed" } }
+    end
+  end
+
+  test "#create should record a feed_enabled event when enabling on creation" do
+    sign_in_as(user)
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "New Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Event.where(type: 'feed_enabled').count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
+  end
+
   test "#update should save and redirect to token setup when commit signals token gate" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)

@@ -1,5 +1,6 @@
 class FeedStatusesController < ApplicationController
   include FeedHelper
+  include FeedStateEvents
 
   def update
     @feed = load_feed
@@ -21,6 +22,7 @@ class FeedStatusesController < ApplicationController
     feed.with_lock do
       if feed.can_be_enabled?
         feed.enabled!
+        record_feed_enabled(feed)
         respond_with_status(feed, success: "Feed enabled.")
       else
         missing_parts = feed_missing_enablement_parts(feed)
@@ -32,6 +34,7 @@ class FeedStatusesController < ApplicationController
   def disable(feed)
     feed.with_lock do
       feed.disabled!
+      record_feed_disabled(feed)
       respond_with_status(feed, success: "Feed disabled.")
     end
   end
