@@ -53,7 +53,16 @@ module EventCursorPagination
     @events = events
     @older_url = older_page_url
     @newer_url = newer_page_url
+    @offset = page_offset
     @log_endpoint = @newer_url.nil? ? polling_endpoint : nil
+  end
+
+  # How many newer events sit before the top of the current page, i.e. how far
+  # into the log the user has paged. Zero on the latest (first) page.
+  def page_offset
+    return 0 if @events.blank?
+
+    events_scope.where(cursor_condition(">", @events.first.id)).count
   end
 
   def event_log_component

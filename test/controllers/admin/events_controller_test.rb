@@ -53,6 +53,28 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
   end
 
+  test "should describe the latest page with a zero offset" do
+    login_as(admin_user)
+    create(:event, user: create(:user))
+
+    get admin_events_path
+
+    assert_response :success
+    assert_select "[data-key='events.offset']", "Showing the most recent events."
+  end
+
+  test "should describe the offset when paging into older events" do
+    with_page_size(2) do
+      login_as(admin_user)
+      events = Array.new(5) { create(:event, user: create(:user)) }
+
+      get admin_events_path, params: { before: events[3].id }
+
+      assert_response :success
+      assert_select "[data-key='events.offset']", "2 newer events above what's shown here."
+    end
+  end
+
   test "should list imported posts referenced by the event" do
     login_as(admin_user)
     feed = create(:feed)
