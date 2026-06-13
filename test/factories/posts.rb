@@ -23,6 +23,7 @@ FactoryBot.define do
     trait :published do
       status { :published }
       freefeed_post_id { "freefeed-#{SecureRandom.uuid}" }
+      reposted_at { Time.current }
     end
 
     trait :failed do

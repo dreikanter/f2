@@ -189,8 +189,8 @@ class UserTest < ActiveSupport::TestCase
     entry3 = create(:feed_entry, feed: feed)
 
     # Older original publication date, but reposted most recently.
-    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 10.days.ago, updated_at: 1.hour.ago)
-    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago, updated_at: 2.days.ago)
+    create(:post, feed: feed, feed_entry: entry1, status: :published, published_at: 10.days.ago, reposted_at: 1.hour.ago)
+    create(:post, feed: feed, feed_entry: entry2, status: :published, published_at: 1.day.ago, reposted_at: 2.days.ago)
     create(:post, feed: feed, feed_entry: entry3, status: :draft, updated_at: Time.current)
 
     assert_in_delta 1.hour.ago.to_i, user.most_recent_repost_at.to_i, 1

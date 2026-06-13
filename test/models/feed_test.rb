@@ -825,8 +825,8 @@ class FeedTest < ActiveSupport::TestCase
   test "#most_recent_repost_at should return latest repost time regardless of original publication date" do
     feed = create(:feed)
     # Older original publication date, but reposted most recently.
-    create(:post, :published, feed: feed, published_at: 10.days.ago, updated_at: 1.hour.ago)
-    create(:post, :published, feed: feed, published_at: 1.day.ago, updated_at: 2.days.ago)
+    create(:post, :published, feed: feed, published_at: 10.days.ago, reposted_at: 1.hour.ago)
+    create(:post, :published, feed: feed, published_at: 1.day.ago, reposted_at: 2.days.ago)
     create(:post, feed: feed, status: :draft, updated_at: Time.current)
 
     assert_in_delta 1.hour.ago.to_i, feed.most_recent_repost_at.to_i, 1

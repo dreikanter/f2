@@ -47,6 +47,16 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal 0, feed.posts.where(status: :enqueued).count
   end
 
+  test ".perform_now should record the daily published metric" do
+    create(:post, :enqueued, feed: feed, published_at: 1.hour.ago)
+    stub_publish_success
+
+    perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+
+    metric = FeedMetric.find_by(feed: feed, date: Date.current)
+    assert_equal 1, metric.published_posts_count
+  end
+
   test ".perform_now should mark a failing post as failed, report it, and continue" do
     post = create(:post, :enqueued, feed: feed)
     stub_request(:post, "#{access_token.host}/v4/posts").to_return(status: 500)

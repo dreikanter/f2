@@ -177,6 +177,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     assert_equal "freefeed_post_123", freefeed_post_id
     assert_equal "freefeed_post_123", post.reload.freefeed_post_id
     assert_equal "published", post.status
+    assert_not_nil post.reposted_at
   end
 
   test "#publish should upload attachments before publishing" do

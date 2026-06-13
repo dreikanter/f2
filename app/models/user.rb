@@ -119,7 +119,7 @@ class User < ApplicationRecord
   # source publication date.
   # @return [Time, nil] most recent repost timestamp or nil if no published posts
   def most_recent_repost_at
-    published_posts.maximum(:updated_at)
+    published_posts.maximum(:reposted_at)
   end
 
   def posts_published_last_week_count

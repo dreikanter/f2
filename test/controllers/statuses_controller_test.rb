@@ -70,7 +70,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     feed = create(:feed, user: user)
     entry = create(:feed_entry, feed: feed)
-    create(:post, feed: feed, feed_entry: entry, status: :published, published_at: 1.year.ago, updated_at: 1.day.ago)
+    create(:post, feed: feed, feed_entry: entry, status: :published, published_at: 1.year.ago, reposted_at: 1.day.ago)
 
     get status_path
     assert_response :success
