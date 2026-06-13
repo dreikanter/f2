@@ -187,6 +187,48 @@
       ]
     },
     {
+      "title": "Rate limiting",
+      "panels": [
+        {
+          "title": "Publishing (15m)",
+          "expr": [
+            "sum(increase(feeder_posts_published_total{status=\"published\"}[15m]))",
+            "sum(increase(feeder_posts_published_total{status=\"failed\"}[15m]))",
+            "sum(increase(feeder_posts_published_total{status=\"rejected\"}[15m]))"
+          ],
+          "alias": [
+            "published",
+            "failed",
+            "rejected"
+          ]
+        },
+        {
+          "title": "Job outcomes (15m)",
+          "expr": [
+            "sum(increase(feeder_job_executions_total{status=\"ok\"}[15m]))",
+            "sum(increase(feeder_job_executions_total{status=\"throttled\"}[15m]))",
+            "sum(increase(feeder_job_executions_total{status=\"error\"}[15m]))"
+          ],
+          "alias": [
+            "ok",
+            "throttled",
+            "error"
+          ]
+        },
+        {
+          "title": "Throttles & blocks (15m)",
+          "expr": [
+            "sum(increase(feeder_rate_limit_throttled_total{policy=\"freefeed\"}[15m]))",
+            "sum(increase(feeder_rate_limit_penalized_total{policy=\"freefeed\"}[15m]))"
+          ],
+          "alias": [
+            "throttled",
+            "blocked (429)"
+          ]
+        }
+      ]
+    },
+    {
       "title": "PostgreSQL",
       "panels": [
         {
