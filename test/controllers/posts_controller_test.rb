@@ -459,10 +459,52 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert pos_with < pos_without, "Expected post with comments to appear first"
   end
 
-  test "#index should use default sort when no sort parameter provided" do
+  test "#index should sort posts by reposted date ascending" do
     sign_in_as(user)
-    old_post = create(:post, feed: feed, content: "Old post", published_at: 2.days.ago)
-    new_post = create(:post, feed: feed, content: "New post", published_at: 1.day.ago)
+    old_post = create(:post, :published, feed: feed, content: "Old post", reposted_at: 2.days.ago)
+    new_post = create(:post, :published, feed: feed, content: "New post", reposted_at: 1.day.ago)
+
+    get posts_url(sort: "reposted", direction: "asc")
+    assert_response :success
+
+    response_body = response.body
+    pos_old = response_body.index("Old post")
+    pos_new = response_body.index("New post")
+    assert pos_old < pos_new, "Expected old post to appear before new post"
+  end
+
+  test "#index should sort posts by reposted date descending" do
+    sign_in_as(user)
+    old_post = create(:post, :published, feed: feed, content: "Old post", reposted_at: 2.days.ago)
+    new_post = create(:post, :published, feed: feed, content: "New post", reposted_at: 1.day.ago)
+
+    get posts_url(sort: "reposted", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_old = response_body.index("Old post")
+    pos_new = response_body.index("New post")
+    assert pos_new < pos_old, "Expected new post to appear before old post"
+  end
+
+  test "#index should sort unreposted posts last when sorting by reposted date" do
+    sign_in_as(user)
+    reposted_post = create(:post, :published, feed: feed, content: "Reposted post", reposted_at: 1.day.ago)
+    draft_post = create(:post, feed: feed, content: "Draft post", reposted_at: nil)
+
+    get posts_url(sort: "reposted", direction: "desc")
+    assert_response :success
+
+    response_body = response.body
+    pos_reposted = response_body.index("Reposted post")
+    pos_draft = response_body.index("Draft post")
+    assert pos_reposted < pos_draft, "Expected reposted post to appear before the one without a repost date"
+  end
+
+  test "#index should default to sorting by reposted date when no sort parameter provided" do
+    sign_in_as(user)
+    old_post = create(:post, :published, feed: feed, content: "Old post", reposted_at: 2.days.ago)
+    new_post = create(:post, :published, feed: feed, content: "New post", reposted_at: 1.day.ago)
 
     get posts_url
     assert_response :success

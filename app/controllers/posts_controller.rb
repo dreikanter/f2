@@ -3,6 +3,12 @@ class PostsController < ApplicationController
   include Sortable
 
   SORTABLE_FIELDS = {
+    reposted: {
+      title: "Reposted",
+      order_by: "posts.reposted_at",
+      direction: :desc,
+      nulls: :last
+    },
     published: {
       title: "Published",
       order_by: "posts.published_at",
