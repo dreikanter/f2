@@ -37,6 +37,12 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_instance_of FeedRefreshDescriptionComponent, EventDescriptionComponent.for(event)
   end
 
+  test ".for should pick the auto-disable subclass for feed_auto_disabled events" do
+    event = Event.create!(type: "feed_auto_disabled", level: :warning, subject: feed, user: user, message: "", metadata: {})
+
+    assert_instance_of FeedAutoDisabledDescriptionComponent, EventDescriptionComponent.for(event)
+  end
+
   test ".for should fall back to the base component for other event types" do
     event = Event.create!(type: "email_changed", level: :info, subject: user, user: user, message: "", metadata: {})
 

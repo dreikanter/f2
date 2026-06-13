@@ -556,6 +556,30 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  test "#execute should increment the failure streak on error" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    WebMock.stub_request(:get, test_feed.url).to_timeout
+
+    assert_raises(Loader::Error) { FeedRefreshWorkflow.new(test_feed).execute }
+
+    assert_equal 1, test_feed.reload.consecutive_failures
+    assert test_feed.enabled?
+  end
+
+  test "#execute should reset the failure streak after a successful refresh" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml",
+                                         feed_profile_key: "rss", consecutive_failures: 3)
+    empty_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Empty</title></channel></rss>
+    RSS
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal 0, test_feed.reload.consecutive_failures
+  end
+
   test "#execute should aggregate feed metrics for multiple refreshes on same day" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 

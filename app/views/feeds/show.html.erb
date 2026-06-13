@@ -19,6 +19,16 @@
   <% end %>
 
   <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-semibold text-slate-900">Recent activity</h2>
+      <% if @recent_events.any? %>
+        <%= link_to "View all", events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "feed.events.view_all" } %>
+      <% end %>
+    </div>
+    <%= render EventsListComponent.new(events: @recent_events) %>
+  </section>
+
+  <section class="space-y-4">
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent posts</h2>
       <% if @recent_posts.any? %>

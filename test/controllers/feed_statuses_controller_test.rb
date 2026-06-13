@@ -36,6 +36,25 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
+  test "#update should record a feed_enabled event when enabling" do
+    sign_in_as(user)
+
+    assert_difference("Event.where(type: 'feed_enabled', subject: feed).count", 1) do
+      patch feed_status_path(feed), params: { status: "enabled" }
+    end
+  end
+
+  test "#update should record a warning feed_disabled event when disabling" do
+    sign_in_as(user)
+    feed.update!(state: :enabled)
+
+    assert_difference("Event.where(type: 'feed_disabled', subject: feed).count", 1) do
+      patch feed_status_path(feed), params: { status: "disabled" }
+    end
+
+    assert_equal "warning", Event.where(type: "feed_disabled", subject: feed).last.level
+  end
+
   test "#update should respond with turbo stream when enabling" do
     sign_in_as(user)
 

@@ -470,6 +470,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Stats", count: 1
   end
 
+  test "#show should render a recent activity section with the feed's events" do
+    create(:event, type: "feed_auto_disabled", subject: feed, user: user, level: :warning,
+                   message: "", metadata: { error_count: Feed::MAX_CONSECUTIVE_FAILURES })
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent activity", count: 1
+    assert_select "[data-key='events.entry'][data-event-type='feed_auto_disabled']"
+    assert_select "[data-key='events.error_count']", text: "(10 failures in a row)"
+  end
+
   test "#show should return not found for other user's feed" do
     sign_in_as(user)
     get feed_url(other_feed)
@@ -820,6 +833,44 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     enabled_feed.reload
     assert_predicate enabled_feed, :disabled?
     assert_equal "Paused Feed", enabled_feed.name
+  end
+
+  test "#update should record a feed_enabled event when promoting a draft" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user, access_token: access_token,
+                                  target_group: "tg",
+                                  feed_profile_key: "rss",
+                                  params: { "url" => "http://example.com/feed.xml" })
+
+    assert_difference("Event.where(type: 'feed_enabled', subject: draft).count", 1) do
+      patch feed_url(draft), params: { feed: { name: "Promoted Feed" }, enable_feed: "1" }
+    end
+  end
+
+  test "#update should record a feed_disabled event when pausing a feed" do
+    sign_in_as(user)
+    enabled_feed = create(:feed, :enabled, user: user, access_token: access_token)
+
+    assert_difference("Event.where(type: 'feed_disabled', subject: enabled_feed).count", 1) do
+      patch feed_url(enabled_feed), params: { feed: { name: "Paused Feed" } }
+    end
+  end
+
+  test "#create should record a feed_enabled event when enabling on creation" do
+    sign_in_as(user)
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "New Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_difference("Event.where(type: 'feed_enabled').count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "1" }
+    end
   end
 
   test "#update should save and redirect to token setup when commit signals token gate" do

@@ -29,6 +29,11 @@ class Feed < ApplicationRecord
   # feed has no schedule yet. Must be a key in SCHEDULE_INTERVALS.
   DEFAULT_SCHEDULE_INTERVAL = "2h"
 
+  # Consecutive refresh failures that trip the auto-disable. A reachable source
+  # resets the streak, so this only fires for a source that's broken run after
+  # run (dead URL, persistent 5xx, etc.), not the occasional hiccup.
+  MAX_CONSECUTIVE_FAILURES = 10
+
   belongs_to :user
   belongs_to :access_token, optional: true
   belongs_to :llm_credential, optional: true
@@ -47,7 +52,6 @@ class Feed < ApplicationRecord
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   after_update :create_schedule_on_enable
-  after_update :create_state_change_event
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -319,7 +323,47 @@ class Feed < ApplicationRecord
     end
   end
 
+  # Bumps the failure streak after a failed refresh and turns the feed off once
+  # it hits the threshold. Returns true when this call disabled it. Skips the
+  # disable if the feed was already disabled elsewhere this run (e.g. a
+  # credential auth error), so we never disable twice.
+  def record_refresh_failure!
+    increment!(:consecutive_failures)
+    return false if consecutive_failures < MAX_CONSECUTIVE_FAILURES
+    return false unless reload.enabled?
+
+    disable_after_repeated_failures!
+    true
+  end
+
+  # Clears the streak after a successful refresh.
+  def reset_refresh_failures!
+    return if consecutive_failures.zero?
+
+    update_column(:consecutive_failures, 0)
+  end
+
   private
+
+  # Disables the feed and records a feed_auto_disabled event stamped with the
+  # streak length, so the activity log shows how many failures it took. Resets
+  # the counter so a re-enable starts clean. update_columns flips the state and
+  # zeroes the counter in one write, skipping validations neither needs.
+  def disable_after_repeated_failures!
+    failure_count = consecutive_failures
+
+    transaction do
+      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      Event.create!(
+        type: "feed_auto_disabled",
+        level: :warning,
+        subject: self,
+        user: user,
+        message: "",
+        metadata: { error_count: failure_count }
+      )
+    end
+  end
 
   def recompose_import_after
     self.import_after = compose_import_after
@@ -402,19 +446,5 @@ class Feed < ApplicationRecord
     return if feed_schedule.present?
 
     reset_schedule!
-  end
-
-  def create_state_change_event
-    return unless saved_change_to_state?
-
-    type = if enabled?
-      "feed_enabled"
-    elsif disabled?
-      "feed_disabled"
-    end
-
-    return unless type
-
-    Event.create!(type: type, level: :info, subject: self, user: user, message: "")
   end
 end

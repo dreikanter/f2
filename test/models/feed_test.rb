@@ -762,48 +762,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_not_empty feed.errors
   end
 
-  test "#create_state_change_event should create feed_enabled event when feed is enabled" do
-    feed = create(:feed, :disabled)
-
-    assert_difference("Event.where(type: 'feed_enabled').count", 1) do
-      feed.update!(state: :enabled)
-    end
-
-    event = Event.where(type: "feed_enabled").last
-    assert_equal feed, event.subject
-    assert_equal feed.user, event.user
-    assert_equal "info", event.level
-  end
-
-  test "#create_state_change_event should create feed_disabled event when feed is disabled" do
-    feed = create(:feed, :enabled)
-
-    assert_difference("Event.where(type: 'feed_disabled').count", 1) do
-      feed.update!(state: :disabled)
-    end
-
-    event = Event.where(type: "feed_disabled").last
-    assert_equal feed, event.subject
-    assert_equal feed.user, event.user
-    assert_equal "info", event.level
-  end
-
-  test "#create_state_change_event should not create event when state is unchanged" do
-    feed = create(:feed, :disabled)
-
-    assert_no_difference("Event.count") do
-      feed.update!(name: "new-name")
-    end
-  end
-
-  test "#create_state_change_event should not create event when transitioning to draft" do
-    feed = create(:feed, :disabled)
-
-    assert_no_difference("Event.count") do
-      feed.update!(state: :draft)
-    end
-  end
-
   test "#target_group_url should return the group URL when token and group are present" do
     feed = create(:feed, target_group: "testgroup")
 
@@ -927,5 +885,45 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed, import_after: Time.utc(2026, 1, 15))
 
     assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#record_refresh_failure! should bump the streak without disabling below the threshold" do
+    feed = create(:feed, :enabled, consecutive_failures: 2)
+
+    assert_not feed.record_refresh_failure!
+    assert_equal 3, feed.reload.consecutive_failures
+    assert feed.enabled?
+  end
+
+  test "#record_refresh_failure! should disable the feed and record the count at the threshold" do
+    feed = create(:feed, :enabled, consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+
+    assert feed.record_refresh_failure!
+
+    feed.reload
+    assert feed.disabled?
+    assert_equal 0, feed.consecutive_failures
+
+    event = Event.find_by(subject: feed, type: "feed_auto_disabled")
+    assert_not_nil event
+    assert_equal "warning", event.level
+    assert_equal Feed::MAX_CONSECUTIVE_FAILURES, event.metadata["error_count"]
+    assert_nil Event.find_by(subject: feed, type: "feed_disabled")
+  end
+
+  test "#record_refresh_failure! should not disable a feed already disabled elsewhere" do
+    feed = create(:feed, :enabled, consecutive_failures: Feed::MAX_CONSECUTIVE_FAILURES - 1)
+    Feed.where(id: feed.id).update_all(state: Feed.states[:disabled])
+
+    assert_not feed.record_refresh_failure!
+    assert_nil Event.find_by(subject: feed, type: "feed_auto_disabled")
+  end
+
+  test "#reset_refresh_failures! should clear the streak" do
+    feed = create(:feed, :enabled, consecutive_failures: 4)
+
+    feed.reset_refresh_failures!
+
+    assert_equal 0, feed.reload.consecutive_failures
   end
 end
