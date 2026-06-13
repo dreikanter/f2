@@ -45,11 +45,11 @@ class Admin::EventsController < ApplicationController
   end
 
   def previous_event(event)
-    events_scope.where("id > ?", event.id).order(id: :asc).first
+    events_scope.where("id < ?", event.id).order(id: :desc).first
   end
 
   def next_event(event)
-    events_scope.where("id < ?", event.id).order(id: :desc).first
+    events_scope.where("id > ?", event.id).order(id: :asc).first
   end
 
   def events_scope

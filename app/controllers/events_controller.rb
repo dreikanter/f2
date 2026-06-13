@@ -15,8 +15,8 @@ class EventsController < ApplicationController
   def show
     @event = owned_events.find(params[:id])
     @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
-    @previous_event = adjacent_event(:newer)
-    @next_event = adjacent_event(:older)
+    @previous_event = adjacent_event(:older)
+    @next_event = adjacent_event(:newer)
   end
 
   private
@@ -25,8 +25,8 @@ class EventsController < ApplicationController
     Event.where(user: Current.user).user_relevant
   end
 
-  # Navigates the user's own log in the same chronological order as the list:
-  # "previous" is the next-newer event, "next" is the next-older one.
+  # Navigates the user's own log along the natural timeline direction:
+  # "previous" is the next-older event, "next" is the next-newer one.
   def adjacent_event(direction)
     if direction == :newer
       owned_events.where(cursor_condition(">", @event.id)).order(created_at: :asc, id: :asc).first

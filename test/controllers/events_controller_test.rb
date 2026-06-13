@@ -335,8 +335,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(current)
 
     assert_response :success
-    assert_select "a[href='#{event_path(newer)}']", text: "← Previous"
-    assert_select "a[href='#{event_path(older)}']", text: "Next →"
+    assert_select "a[href='#{event_path(older)}']", text: "← Previous"
+    assert_select "a[href='#{event_path(newer)}']", text: "Next →"
   end
 
   test "#show should disable navigation at the ends of the log" do
