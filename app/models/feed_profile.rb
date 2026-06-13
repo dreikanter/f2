@@ -420,7 +420,7 @@ class FeedProfile
       loader: { class: "Loader::YoutubeLoader", config: {} },
       processor: { class: "Processor::YoutubeProcessor", config: {} },
       normalizer: { class: "Normalizer::YoutubeNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
+      title_extractor: "TitleExtractor::YoutubeTitleExtractor",
       output_schema: nil
     },
     "telegram" => {
