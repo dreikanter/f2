@@ -27,10 +27,11 @@ class FreefeedPublisher
 
     # Persist the id (and mark the post published) before creating comments so a
     # retry can never re-create the post. Comments are therefore best-effort: if
-    # FreeFeed throttles (429) or errors part-way through, the post is already
-    # published, the publish chain advances, and the remaining comments are
-    # dropped rather than retried. The result is predictable and never
-    # duplicated, but the comment set may be incomplete.
+    # FreeFeed throttles (429) on a comment, the post is already published, the
+    # publish chain advances, and the remaining comments are dropped rather than
+    # retried. The result is predictable and never duplicated, but the comment
+    # set may be incomplete. (A non-throttle comment error is wrapped as a
+    # PublishError and marks the already-created post failed — see PostPublishJob.)
     #
     # NOTE: accepted best-effort behaviour for now; full atomic or comment-level
     # resumable publishing is a future improvement (revisit). It is also why a

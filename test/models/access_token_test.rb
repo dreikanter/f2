@@ -217,31 +217,37 @@ class AccessTokenTest < ActiveSupport::TestCase
   end
 
   test "destroying access token forgets its rate limit state" do
-    token = create(:access_token, :active)
-    RateLimit.acquire(:freefeed, subject: token.rate_limit_subject, cost: { get: 1 })
-    assert RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+    freeze_time do
+      token = create(:access_token, :active)
+      subject = token.rate_limit_subject
+      drain_freefeed(subject, :get, remaining: 0)
+      assert_not RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?
 
-    token.destroy!
+      token.destroy!
 
-    assert_not RateLimit::Bucket.exists?(key: "freefeed:#{token.rate_limit_subject}")
+      assert RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "a forgotten subject starts fresh"
+    end
   end
 
   test "destroying one token keeps the shared bucket while a sibling still uses it" do
-    shared = { host: "https://freefeed.net", freefeed_user_id: "u-99" }
-    a = create(:access_token, :active, **shared)
-    b = create(:access_token, :active, **shared)
-    assert_equal a.rate_limit_subject, b.rate_limit_subject
+    freeze_time do
+      shared = { host: "https://freefeed.net", freefeed_user_id: "u-99" }
+      a = create(:access_token, :active, **shared)
+      b = create(:access_token, :active, **shared)
+      subject = a.rate_limit_subject
+      assert_equal subject, b.rate_limit_subject
 
-    RateLimit.acquire(:freefeed, subject: a.rate_limit_subject, cost: { get: 1 })
-    bucket_key = "freefeed:#{a.rate_limit_subject}"
+      drain_freefeed(subject, :get, remaining: 0)
 
-    a.destroy!
+      a.destroy!
+      assert_not RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "the shared bucket survives while sibling b still uses it"
 
-    assert RateLimit::Bucket.exists?(key: bucket_key), "sibling b still uses the account bucket"
-
-    b.destroy!
-
-    assert_not RateLimit::Bucket.exists?(key: bucket_key), "last token gone, bucket forgotten"
+      b.destroy!
+      assert RateLimit.acquire(:freefeed, subject: subject, cost: { get: 1 }).allowed?,
+        "the bucket is forgotten once the last token is gone"
+    end
   end
 
   test "destroying access token disables enabled feeds and nullifies their access_token_id" do

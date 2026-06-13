@@ -134,13 +134,15 @@ class PostPublishJobTest < ActiveJob::TestCase
                                          attachment_urls: Array.new(60) { |i| "https://example.com/#{i}.jpg" })
     subject = access_token.rate_limit_subject
 
-    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-      PostPublishJob.perform_now(feed.id)
-    end
+    freeze_time do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+        PostPublishJob.perform_now(feed.id)
+      end
 
-    assert_equal "failed", oversized.reload.status
-    assert_not RateLimit::Bucket.exists?(key: "freefeed:#{subject}"),
-      "an impossible post must be rejected before reserving any capacity"
+      assert_equal "failed", oversized.reload.status
+      assert_equal RateLimit.capacity(:freefeed, :post), freefeed_tokens_left(subject, :post),
+        "an impossible post must be rejected before reserving any capacity"
+    end
   end
 
   test ".perform_now should reschedule and keep the post enqueued when throttled" do
