@@ -16,7 +16,6 @@ class DiskUsageService
       other_used_percentage: other_used_percentage,
       free_percentage: free_percentage,
       table_usage: table_usage,
-      vacuum_stats: vacuum_stats,
       autovacuum_settings: autovacuum_settings
     }
   end
@@ -98,24 +97,6 @@ class DiskUsageService
         AND pg_class.relkind = 'r'
       ORDER BY
         pg_total_relation_size(pg_class.oid) DESC;
-    SQL
-    ).to_a
-  end
-
-  def vacuum_stats
-    execute_query(<<-SQL
-      SELECT
-        relname,
-        n_live_tup,
-        n_dead_tup,
-        last_vacuum,
-        last_autovacuum,
-        vacuum_count,
-        autovacuum_count
-      FROM
-        pg_stat_user_tables
-      ORDER BY
-        n_dead_tup DESC;
     SQL
     ).to_a
   end

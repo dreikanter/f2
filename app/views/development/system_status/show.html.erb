@@ -92,38 +92,6 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Vacuum Stats</h2>
-    <div class="overflow-x-auto rounded-lg border border-slate-200">
-      <table class="w-full text-left text-sm text-slate-700">
-        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
-          <tr class="hover:bg-slate-50">
-            <th scope="col" class="px-6 py-3">Table</th>
-            <th scope="col" class="px-6 py-3 text-right">Live Tuples</th>
-            <th scope="col" class="px-6 py-3 text-right">Dead Tuples</th>
-            <th scope="col" class="px-6 py-3">Last Vacuum</th>
-            <th scope="col" class="px-6 py-3">Last Autovacuum</th>
-            <th scope="col" class="px-6 py-3 text-right">Vacuum Count</th>
-            <th scope="col" class="px-6 py-3 text-right">Autovacuum Count</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 bg-white">
-          <% @disk_usage[:vacuum_stats].each do |row| %>
-            <tr class="hover:bg-slate-50">
-              <td class="px-6 py-4 whitespace-nowrap font-mono text-sm"><%= row["relname"] %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-right"><%= number_with_delimiter(row["n_live_tup"]) %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-right"><%= number_with_delimiter(row["n_dead_tup"]) %></td>
-              <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago_tag(row["last_vacuum"]) %></td>
-              <td class="px-6 py-4 whitespace-nowrap"><%= short_time_ago_tag(row["last_autovacuum"]) %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-right"><%= row["vacuum_count"] %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-right"><%= row["autovacuum_count"] %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Autovacuum Settings</h2>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:autovacuum_settings].each do |row| %>
