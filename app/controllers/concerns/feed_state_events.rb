@@ -16,6 +16,12 @@ module FeedStateEvents
   end
 
   def record_feed_state_event(feed, type)
-    Event.create!(type: type, level: :info, subject: feed, user: feed.user, message: "")
+    Event.create!(
+      type: type,
+      level: :info,
+      subject: feed,
+      user: feed.user,
+      message: ""
+    )
   end
 end
