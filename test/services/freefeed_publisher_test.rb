@@ -444,6 +444,28 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
+  test "#publish should truncate an over-long comment before sending it to FreeFeed" do
+    long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 100)
+    post = post_with_content("body", comments: [long_comment])
+
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 201, headers: { "Content-Type" => "application/json" },
+                 body: { posts: { id: "ff1" } }.to_json)
+
+    sent_bodies = []
+    stub_request(:post, "#{access_token.host}/v4/comments").to_return do |request|
+      sent_bodies << JSON.parse(request.body).dig("comment", "body")
+      { status: 201, headers: { "Content-Type" => "application/json" },
+        body: { comments: { id: "c1" } }.to_json }
+    end
+
+    FreefeedPublisher.new(post).publish
+
+    assert_equal 1, sent_bodies.length
+    assert_equal Post::MAX_COMMENT_LENGTH, sent_bodies.first.length
+    assert sent_bodies.first.end_with?("…")
+  end
+
   test "#publish should raise error when comment creation fails" do
     post = post_with_content("Post with comments", comments: ["Test comment"])
 
@@ -533,6 +555,16 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     assert_raises(FreefeedPublisher::PublishError, /Failed to download attachment from #{Regexp.escape(image_url)}/) do
       service.publish
+    end
+  end
+
+  test "#publish should raise SourceContentError when an attachment cannot be downloaded" do
+    image_url = "https://example.com/missing.jpg"
+    post = post_with_content("Post with missing image", attachment_urls: [image_url])
+    stub_request(:get, image_url).to_return(status: 404, body: "Not Found")
+
+    assert_raises(FreefeedPublisher::SourceContentError) do
+      FreefeedPublisher.new(post).publish
     end
   end
 

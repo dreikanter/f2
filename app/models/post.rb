@@ -25,9 +25,13 @@ class Post < ApplicationRecord
   validates :uid, uniqueness: { scope: :feed_id }
   validates :published_at, presence: true
   validates :source_url, presence: true
-  validates :content, length: { maximum: MAX_CONTENT_LENGTH }
+  # Length limits gate enqueueing only. Once a post leaves the queue (published,
+  # failed, withdrawn) these must not block the status transition, or a post that
+  # slipped past with over-long content would wedge the publish chain: the rescue
+  # that marks it failed would itself fail to save. See PostPublishJob.
+  validates :content, length: { maximum: MAX_CONTENT_LENGTH }, if: :enqueued?
 
-  validate :validate_comments_length
+  validate :validate_comments_length, if: :enqueued?
   validate :validate_enqueued_status
 
   enum :status, {
@@ -48,6 +52,16 @@ class Post < ApplicationRecord
 
   def normalized_attributes
     as_json(only: NORMALIZED_ATTRIBUTES)
+  end
+
+  # Trim a comment to FreeFeed's hard limit so publishing never fails on length.
+  # Truncates rather than dropping, so as much of the text as possible survives.
+  # Applied both when normalizing (clean stored data) and when publishing (the
+  # last line of defense for posts enqueued before truncation existed).
+  def self.clamp_comment(text)
+    return text unless text.is_a?(String) && text.length > MAX_COMMENT_LENGTH
+
+    text.truncate(MAX_COMMENT_LENGTH, omission: "…")
   end
 
   private

@@ -58,12 +58,22 @@ class PostPublishJob < ApplicationJob
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
     feed.access_token&.disable_token_and_feeds
+  rescue FreefeedPublisher::SourceContentError => e
+    # Source content is gone (e.g. an attachment 404s). Expected external
+    # condition: fail the post and move on, but don't page error tracking.
+    fail_post(feed, post, e)
   rescue => e
     # Poison post: mark it failed and move on so the queue isn't blocked.
+    fail_post(feed, post, e, report: true)
+  end
+
+  # Mark a post failed and advance the chain. Reports to error tracking only for
+  # unexpected faults; expected external failures are logged and skipped.
+  def fail_post(feed, post, error, report: false)
     post.update!(status: :failed)
     Metrics.increment("posts_published_total", status: "failed")
-    Rails.logger.error "Failed to publish post #{post.id}: #{e.message}"
-    Rails.error.report(e, context: { post: post.attributes, feed: feed.attributes })
+    Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
+    Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes }) if report
     schedule_next(feed)
   end
 

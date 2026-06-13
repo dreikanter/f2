@@ -165,38 +165,66 @@ class PostTest < ActiveSupport::TestCase
     assert_nil post.reposted_at
   end
 
-  test "should validate content length within FreeFeed limits" do
-    post = build(:post, content: "a" * Post::MAX_CONTENT_LENGTH)
+  test "should validate content length within FreeFeed limits when enqueued" do
+    post = build(:post, :enqueued, content: "a" * Post::MAX_CONTENT_LENGTH)
     assert post.valid?
 
-    post = build(:post, content: "a" * (Post::MAX_CONTENT_LENGTH + 1))
+    post = build(:post, :enqueued, content: "a" * (Post::MAX_CONTENT_LENGTH + 1))
     assert_not post.valid?
     assert post.errors.of_kind?(:content, :too_long)
   end
 
-  test "should validate comments length within FreeFeed limits" do
+  test "should validate comments length within FreeFeed limits when enqueued" do
     valid_comment = "a" * Post::MAX_COMMENT_LENGTH
-    post = build(:post, comments: [valid_comment])
+    post = build(:post, :enqueued, comments: [valid_comment])
     assert post.valid?
 
     long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
-    post = build(:post, comments: [long_comment])
+    post = build(:post, :enqueued, comments: [long_comment])
     assert_not post.valid?
     assert_includes post.errors[:comments], "Comment 1 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
   end
 
-  test "should validate multiple comments length" do
+  test "should validate multiple comments length when enqueued" do
     valid_comment = "a" * Post::MAX_COMMENT_LENGTH
     long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
 
-    post = build(:post, comments: [valid_comment, long_comment, valid_comment])
+    post = build(:post, :enqueued, comments: [valid_comment, long_comment, valid_comment])
     assert_not post.valid?
     assert_includes post.errors[:comments], "Comment 2 exceeds maximum length of #{Post::MAX_COMMENT_LENGTH} characters"
   end
 
   test "should handle non-string comments gracefully" do
-    post = build(:post, comments: ["valid", nil, 123, "also valid"])
+    post = build(:post, :enqueued, comments: ["valid", nil, 123, "also valid"])
     assert post.valid?
+  end
+
+  test "should not enforce length limits when leaving the queue" do
+    over_content = "a" * (Post::MAX_CONTENT_LENGTH + 1)
+    over_comment = "a" * (Post::MAX_COMMENT_LENGTH + 1)
+
+    %i[published failed withdrawn].each do |status|
+      post = build(:post, status: status, content: over_content, comments: [over_comment])
+      assert post.valid?, "expected #{status} post to skip length limits, got: #{post.errors.full_messages}"
+    end
+  end
+
+  test ".clamp_comment should truncate text over the FreeFeed limit" do
+    long = "a" * (Post::MAX_COMMENT_LENGTH + 100)
+    clamped = Post.clamp_comment(long)
+
+    assert_equal Post::MAX_COMMENT_LENGTH, clamped.length
+    assert clamped.end_with?("…")
+  end
+
+  test ".clamp_comment should leave text within the limit untouched" do
+    text = "a" * Post::MAX_COMMENT_LENGTH
+    assert_equal text, Post.clamp_comment(text)
+  end
+
+  test ".clamp_comment should pass non-string values through unchanged" do
+    assert_nil Post.clamp_comment(nil)
+    assert_equal 123, Post.clamp_comment(123)
   end
 
   test "#normalized_attributes should include only normalized fields" do

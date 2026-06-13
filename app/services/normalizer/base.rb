@@ -75,7 +75,7 @@ module Normalizer
     end
 
     def comments
-      @comments ||= normalize_comments
+      @comments ||= normalize_comments.map { |comment| Post.clamp_comment(comment) }
     end
 
     def normalize_source_url

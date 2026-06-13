@@ -58,6 +58,23 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     assert_equal ["This is a description."], post.comments
   end
 
+  test "#normalize should truncate a description that exceeds the comment limit" do
+    long_description = "a" * (Post::MAX_COMMENT_LENGTH + 100)
+    entry = create(:feed_entry, raw_data: {
+      "title" => "Video",
+      "link" => "https://www.youtube.com/watch?v=abc123",
+      "content" => long_description
+    })
+
+    normalizer = Normalizer::YoutubeNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal 1, post.comments.length
+    assert_equal Post::MAX_COMMENT_LENGTH, post.comments.first.length
+    assert post.comments.first.end_with?("…")
+    assert post.enqueued?, "a truncated comment must still let the post enqueue"
+  end
+
   test "#normalize should produce empty comments when description is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "Video",

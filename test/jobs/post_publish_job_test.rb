@@ -75,6 +75,35 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal feed.id, kwargs.dig(:context, :feed)["id"]
   end
 
+  test ".perform_now should fail a post with an unfetchable attachment without reporting it" do
+    post = create(:post, :enqueued, feed: feed, attachment_urls: ["https://example.com/missing.png"])
+    stub_request(:get, "https://example.com/missing.png").to_return(status: 404, body: "Not Found")
+
+    reported = []
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        PostPublishJob.perform_now(feed.id)
+      end
+    end
+
+    assert_equal "failed", post.reload.status
+    assert_empty reported, "an expected attachment 404 must not be reported as a fault"
+  end
+
+  test ".perform_now should publish a post whose comment exceeds the length limit without wedging" do
+    # Regression: a post that slipped into the queue (via bulk insert) with an
+    # over-long comment used to crash the chain — marking it published, and the
+    # fallback to failed, both re-ran the comment-length validation and raised.
+    post = build(:post, :enqueued, feed: feed, comments: ["a" * (Post::MAX_COMMENT_LENGTH + 1)])
+    post.save!(validate: false)
+    stub_publish_success
+    stub_request(:post, "#{access_token.host}/v4/comments")
+      .to_return(status: 201, headers: { "Content-Type" => "application/json" }, body: { comments: { id: "c1" } }.to_json)
+
+    assert_nothing_raised { PostPublishJob.perform_now(feed.id) }
+    assert_equal "published", post.reload.status
+  end
+
   test ".perform_now should disable the token and stop the chain on UnauthorizedError" do
     post = create(:post, :enqueued, feed: feed)
     stub_request(:post, "#{access_token.host}/v4/posts").to_return(status: 401)
