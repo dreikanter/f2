@@ -106,7 +106,7 @@ class FreefeedPublisher
 
       client.create_comment(
         post_id: freefeed_post_id,
-        body: comment_text
+        body: Post.clamp_comment(comment_text)
       )
     end
   rescue RateLimit::Throttled

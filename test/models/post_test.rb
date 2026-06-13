@@ -209,6 +209,24 @@ class PostTest < ActiveSupport::TestCase
     end
   end
 
+  test ".clamp_comment should truncate text over the FreeFeed limit" do
+    long = "a" * (Post::MAX_COMMENT_LENGTH + 100)
+    clamped = Post.clamp_comment(long)
+
+    assert_equal Post::MAX_COMMENT_LENGTH, clamped.length
+    assert clamped.end_with?("…")
+  end
+
+  test ".clamp_comment should leave text within the limit untouched" do
+    text = "a" * Post::MAX_COMMENT_LENGTH
+    assert_equal text, Post.clamp_comment(text)
+  end
+
+  test ".clamp_comment should pass non-string values through unchanged" do
+    assert_nil Post.clamp_comment(nil)
+    assert_equal 123, Post.clamp_comment(123)
+  end
+
   test "#normalized_attributes should include only normalized fields" do
     post = build(:post,
       uid: "test-uid",

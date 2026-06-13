@@ -75,15 +75,7 @@ module Normalizer
     end
 
     def comments
-      @comments ||= normalize_comments.map { |comment| truncate_comment(comment) }
-    end
-
-    # FreeFeed rejects comments over the limit. Trim instead of dropping the whole
-    # post, so a long source text (e.g. a YouTube description) still gets reposted.
-    def truncate_comment(comment)
-      return comment unless comment.is_a?(String) && comment.length > Post::MAX_COMMENT_LENGTH
-
-      comment.truncate(Post::MAX_COMMENT_LENGTH, omission: "…")
+      @comments ||= normalize_comments.map { |comment| Post.clamp_comment(comment) }
     end
 
     def normalize_source_url

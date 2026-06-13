@@ -54,6 +54,16 @@ class Post < ApplicationRecord
     as_json(only: NORMALIZED_ATTRIBUTES)
   end
 
+  # Trim a comment to FreeFeed's hard limit so publishing never fails on length.
+  # Truncates rather than dropping, so as much of the text as possible survives.
+  # Applied both when normalizing (clean stored data) and when publishing (the
+  # last line of defense for posts enqueued before truncation existed).
+  def self.clamp_comment(text)
+    return text unless text.is_a?(String) && text.length > MAX_COMMENT_LENGTH
+
+    text.truncate(MAX_COMMENT_LENGTH, omission: "…")
+  end
+
   private
 
   def validate_comments_length
