@@ -39,6 +39,21 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     assert_equal [], result
   end
 
+  test "#comments should truncate entries longer than the FreeFeed limit" do
+    long_comment = "a" * (Post::MAX_COMMENT_LENGTH + 50)
+    subclass = Class.new(Normalizer::Base) do
+      def self.name = "Normalizer::LongCommentNormalizer"
+      def normalize_comments = raw_data["comments"]
+    end
+    entry = create(:feed_entry, raw_data: { "comments" => [long_comment, "short"] })
+
+    result = subclass.new(entry).send(:comments)
+
+    assert_equal Post::MAX_COMMENT_LENGTH, result.first.length
+    assert result.first.end_with?("…")
+    assert_equal "short", result.last
+  end
+
   test "#normalize should raise MissingUidError when the subclass produces a blank uid" do
     subclass = Class.new(Normalizer::Base) do
       def self.name = "Normalizer::NoUidNormalizer"
