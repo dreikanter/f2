@@ -25,9 +25,19 @@ class FreefeedPublisher
     freefeed_post = create_freefeed_post(attachment_ids)
     freefeed_post_id = freefeed_post[:id]
 
-    # Persist the id before creating comments so a later failure (e.g. a 429 on
-    # a comment) can't make a retry re-create the post. Comments are
-    # best-effort once the post exists.
+    # Persist the id (and mark the post published) before creating comments so a
+    # retry can never re-create the post. Comments are therefore best-effort: if
+    # FreeFeed throttles (429) or errors part-way through, the post is already
+    # published, the publish chain advances, and the remaining comments are
+    # dropped rather than retried. The result is predictable and never
+    # duplicated, but the comment set may be incomplete.
+    #
+    # NOTE: accepted best-effort behaviour for now; full atomic or comment-level
+    # resumable publishing is a future improvement (revisit). It is also why a
+    # post is capped at the POST bucket's burst (see PostPublishJob#within_capacity?):
+    # the whole cost is reserved up front so our own limiter never throttles
+    # mid-publish, leaving only a rare server-side 429 to land here, which this
+    # path tolerates safely.
     update_post_with_freefeed_id(freefeed_post_id)
     create_comments(freefeed_post_id)
 

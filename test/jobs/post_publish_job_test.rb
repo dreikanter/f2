@@ -195,6 +195,35 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_empty reported, "a handled mid-publish throttle must not be reported as a fault"
   end
 
+  # Best-effort publishing: once the post is created its id is persisted, so a
+  # 429 on a later comment leaves the post published with an incomplete comment
+  # set rather than re-creating it. Documents the accepted behaviour (see
+  # FreefeedPublisher#publish) so it stays predictable and safe.
+  test ".perform_now should leave the post published and not duplicated when a comment is throttled" do
+    post = create(:post, :enqueued, feed: feed, content: "body", comments: ["c1", "c2"])
+
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 200, headers: { "Content-Type" => "application/json" },
+                 body: { posts: { id: "ff-post-1" } }.to_json)
+    # FreeFeed throttles the first comment, after the post itself was created.
+    stub_request(:post, "#{access_token.host}/v4/comments")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    reported = []
+    Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+      perform_enqueued_jobs { PostPublishJob.perform_now(feed.id) }
+    end
+
+    post.reload
+    assert_equal "published", post.status, "the created post is recorded as published"
+    assert_equal "ff-post-1", post.freefeed_post_id
+    # The post is created exactly once and never re-created on the retry chain.
+    assert_requested :post, "#{access_token.host}/v4/posts", times: 1
+    # Comment creation stops at the throttled comment; the rest are dropped.
+    assert_requested :post, "#{access_token.host}/v4/comments", times: 1
+    assert_empty reported, "a handled mid-comment throttle must not be reported as a fault"
+  end
+
   test ".perform_now should keep original publication order across a throttle interruption" do
     create(:post, :enqueued, feed: feed, published_at: 3.hours.ago, content: "post-1")
     create(:post, :enqueued, feed: feed, published_at: 2.hours.ago, content: "post-2")
