@@ -25,6 +25,11 @@ development:
     queue: default
     schedule: every day at 4am
 
+  purge_expired_events:
+    class: PurgeExpiredEventsJob
+    queue: default
+    schedule: every day at 5am
+
 staging:
   feed_scheduler:
     class: FeedSchedulerJob
@@ -40,6 +45,11 @@ staging:
     class: PruneFeedPreviewsJob
     queue: default
     schedule: every day at 4am
+
+  purge_expired_events:
+    class: PurgeExpiredEventsJob
+    queue: default
+    schedule: every day at 5am
 
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
@@ -60,6 +70,11 @@ production:
     class: PruneFeedPreviewsJob
     queue: default
     schedule: every day at 4am
+
+  purge_expired_events:
+    class: PurgeExpiredEventsJob
+    queue: default
+    schedule: every day at 5am
 
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
