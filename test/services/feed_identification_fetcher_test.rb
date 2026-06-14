@@ -160,6 +160,28 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_includes stream.to_html, 'data-identification-state="error"'
   end
 
+  test "#identify should fail and broadcast the error pane when no profile matches" do
+    input = "nothing matches this query"
+    empty_result = FeedProfileDetector::DetectionResult.new(input_shape: :query, candidates: [])
+    feed_identification = FeedIdentification.create!(user: user, input: input, status: :processing, started_at: Time.current)
+
+    broadcasts = capture_turbo_stream_broadcasts(feed_identification) do
+      FeedProfileDetector.stub(:call, empty_result) do
+        FeedIdentificationFetcher.new(user: user, input: input, logger: @logger).identify
+      end
+    end
+
+    feed_identification.reload
+    assert_equal "failed", feed_identification.status
+    assert_equal "Unsupported feed profile", feed_identification.error
+
+    assert_equal 1, broadcasts.size
+    stream = broadcasts.first
+    assert_equal "replace", stream["action"]
+    assert_equal "feed-form", stream["target"]
+    assert_includes stream.to_html, 'data-identification-state="error"'
+  end
+
   test "#identify should handle network errors gracefully" do
     url = "http://example.com/timeout.xml"
 
