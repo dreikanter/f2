@@ -110,18 +110,31 @@ class EventTest < ActiveSupport::TestCase
     assert_includes not_expired_events, permanent_event
   end
 
-  test "#purgeable should scope expired events and stale unexpiring events" do
+  test "#expired should also scope unexpiring events past the default retention" do
     expired = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
     active = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
-    stale = Event.create!(type: "stale_event", created_at: 2.months.ago)
+    stale = Event.create!(type: "stale_event", created_at: (Event::DEFAULT_RETENTION + 1.day).ago)
     recent = Event.create!(type: "recent_event")
 
-    purgeable = Event.purgeable(1.month)
+    expired_events = Event.expired
+    not_expired_events = Event.not_expired
 
-    assert_includes purgeable, expired
-    assert_includes purgeable, stale
-    assert_not_includes purgeable, active
-    assert_not_includes purgeable, recent
+    assert_includes expired_events, expired
+    assert_includes expired_events, stale
+    assert_not_includes expired_events, active
+    assert_not_includes expired_events, recent
+
+    assert_not_includes not_expired_events, stale
+    assert_includes not_expired_events, active
+    assert_includes not_expired_events, recent
+  end
+
+  test "#expired? should be true for unexpiring events past the default retention" do
+    stale = Event.create!(type: "stale_event", created_at: (Event::DEFAULT_RETENTION + 1.day).ago)
+    recent = Event.create!(type: "recent_event")
+
+    assert stale.expired?
+    assert_not recent.expired?
   end
 
   test "should set expiration time" do
