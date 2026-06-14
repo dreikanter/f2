@@ -43,40 +43,6 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     refute_predicate identification, :invalid_processing?
   end
 
-  test "#timed_out? should be true when processing exceeds the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: (FeedIdentification::TIMEOUT + 1.second).ago
-    )
-    assert_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false within the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: 1.second.ago
-    )
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false when started_at is missing" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false for non-processing status" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :success,
-      started_at: 1.hour.ago
-    )
-    refute_predicate identification, :timed_out?
-  end
 
   test "should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(

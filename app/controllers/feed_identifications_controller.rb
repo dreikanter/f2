@@ -1,11 +1,11 @@
 class FeedIdentificationsController < ApplicationController
   include StatePolling
 
-  # Poll a couple of cycles past the server-side timeout so a request lands
-  # inside the timed_out? window and renders the friendly error. Matching the
+  # Poll a couple of cycles past the ~30s server-side timeout so a request
+  # lands inside the timeout window and renders the friendly error. Matching the
   # timeout exactly lets the client hit its poll cap first and freeze the
   # spinner with no message.
-  self.polling_max_polls = (FeedIdentification::TIMEOUT.in_milliseconds / polling_interval_ms) + 2
+  self.polling_max_polls = 17
 
   before_action :require_authentication
 
@@ -81,7 +81,9 @@ class FeedIdentificationsController < ApplicationController
       return render(identification_error(error: "Identification session is invalid. Please try again."))
     end
 
-    if feed_identification.timed_out?
+    # Past the ~30s server-side timeout: drop the row and show the friendly
+    # error so the spinner stops with a message instead of spinning forever.
+    if feed_identification.started_at < 30.seconds.ago
       feed_identification.destroy
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end

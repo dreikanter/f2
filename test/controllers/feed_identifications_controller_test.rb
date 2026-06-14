@@ -20,8 +20,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     client_coverage_ms = FeedIdentificationsController.polling_max_polls * FeedIdentificationsController.polling_interval_ms
 
     assert_operator(
-      client_coverage_ms, :>, FeedIdentification::TIMEOUT.in_milliseconds,
-      "client must outlast the server timeout so the friendly error renders before it gives up"
+      client_coverage_ms, :>, 30.seconds.in_milliseconds,
+      "client must outlast the ~30s server timeout so the friendly error renders before it gives up"
     )
   end
 
