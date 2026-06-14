@@ -79,7 +79,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   end
 
   test "POLLING_MAX_POLLS should keep the client polling past the server timeout" do
-    client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * FeedIdentification::POLLING_INTERVAL_MS
+    client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * StatePolling::POLLING_INTERVAL_MS
 
     assert_operator(
       client_coverage_ms, :>, FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS * 1000,

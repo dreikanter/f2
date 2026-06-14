@@ -1,4 +1,6 @@
 class FeedPreviewsController < ApplicationController
+  include StatePolling
+
   before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
 
@@ -26,6 +28,10 @@ class FeedPreviewsController < ApplicationController
   # processing pane (never inert) so the refresh shows the spinner restarting.
   def create
     render_state(start_run(locate_preview))
+  end
+
+  def polling_max_polls
+    FeedPreview::POLLING_MAX_POLLS
   end
 
   private

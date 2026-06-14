@@ -1,4 +1,6 @@
 class FeedIdentificationsController < ApplicationController
+  include StatePolling
+
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
@@ -48,6 +50,10 @@ class FeedIdentificationsController < ApplicationController
     when "failed"
       handle_failed_status
     end
+  end
+
+  def polling_max_polls
+    FeedIdentification::POLLING_MAX_POLLS
   end
 
   def destroy
