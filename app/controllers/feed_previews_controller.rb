@@ -11,13 +11,13 @@ class FeedPreviewsController < ApplicationController
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
     preview.timeout! if preview.timed_out?
-    render :show, formats: [:html], locals: { preview: preview }
+    render :show, locals: { preview: preview }
   end
 
   # POST /feed_preview — explicit refresh: always start a fresh run and re-render
   # the frame so the spinner restarts.
   def create
-    render :show, formats: [:html], locals: { preview: start_run(locate_preview) }
+    render :show, locals: { preview: start_run(locate_preview) }
   end
 
   private
