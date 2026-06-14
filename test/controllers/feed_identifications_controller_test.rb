@@ -194,7 +194,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "identify this feed because something went wrong"
+    assert_includes response.body, "Error identifying feed"
     assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
   end
 
