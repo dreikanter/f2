@@ -1,10 +1,6 @@
 class FeedPreviewsController < ApplicationController
   include StatePolling
 
-  # Previews can take a while (the run fetches and renders remote content), so
-  # the client keeps polling well past the shared default before giving up.
-  self.polling_max_polls = 75
-
   before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
 
