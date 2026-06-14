@@ -1,4 +1,5 @@
-# Deletes events whose explicit expiration time has passed.
+# Deletes expired events: those whose explicit expiration has passed, plus
+# events with no explicit expiration once they age past Event::DEFAULT_RETENTION.
 #
 # This job intentionally deletes in small batches so a daily cron run does not
 # hold locks on the events table for one long operation.
