@@ -92,10 +92,6 @@ production:
     <<: *primary_production
     database: f2_production_queue
     migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: f2_production_cable
-    migrations_paths: db/cable_migrate
 
 staging:
   primary: &primary_staging
@@ -112,7 +108,3 @@ staging:
     <<: *primary_staging
     database: f2_staging_queue
     migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_staging
-    database: f2_staging_cable
-    migrations_paths: db/cable_migrate
