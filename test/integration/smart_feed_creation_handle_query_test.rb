@@ -19,7 +19,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "llm_web_search"
   end
@@ -30,7 +30,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
     assert_includes response.body, "llm_web_search"
   end
@@ -41,7 +41,7 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
-    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     # Multi-candidate would render the chooser; single-candidate renders the
     # source caption. Either way the user's input appears in the form copy.
     assert_includes response.body, "@alice"

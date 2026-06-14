@@ -79,7 +79,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       with_memory_cache do
         detect(ai_url)
 
-      get feed_identifications_path, params: { input: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { input: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "AI page reader"
 

@@ -42,7 +42,7 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
     Rails.cache = previous
   end
 
-  test "#get should not re-enqueue detection when the feed_identification is already success" do
+  test "#create should not re-enqueue detection when the feed_identification is already success" do
     sign_in_as(user)
     stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
 
@@ -50,7 +50,7 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
     perform_enqueued_jobs
 
     assert_no_enqueued_jobs do
-      get feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
   end
 
