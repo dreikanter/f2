@@ -72,7 +72,7 @@ class FeedIdentificationsController < ApplicationController
   def handle_processing_status
     if feed_identification.invalid_processing?
       feed_identification.destroy
-      return render(identification_error(error: "We couldn't identify this feed because something went wrong. Please try again."))
+      return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
     # Past the ~30s server-side timeout: drop the row and show the friendly
