@@ -114,6 +114,15 @@ module Metrics
       @thread
     end
 
+    # Stop this process from sampling gauges, while leaving counters intact.
+    # Gauges are global DB snapshots, so only one process per host samples them
+    # (the Puma master). Forked web workers call this so they push just their
+    # own per-process counters instead of re-sampling the same global series.
+    def skip_gauges!
+      gauges.clear
+      gauge_sets.clear
+    end
+
     # Test seam: drop all recorded state.
     def reset!
       mutex.synchronize { counters.clear }

@@ -36,8 +36,19 @@ workers ENV.fetch("WEB_CONCURRENCY", 1)
 
 # Preload the application before forking workers so they share memory via
 # copy-on-write, reducing total memory footprint. Active Record reconnects
-# automatically in each forked worker.
-preload_app!
+# automatically in each forked worker. Skipped in development and test, where
+# preloading would break code reloading.
+preload_app! if %w[production staging].include?(ENV.fetch("RAILS_ENV", "development"))
+
+# With preloading, the metrics flusher thread starts in the master and does not
+# survive the fork, so each worker restarts its own. Gauges are global DB
+# snapshots sampled once by the master process; workers skip them and push only
+# their per-process counters. All a no-op unless metrics are enabled
+# (METRICS_URL). See config/initializers/metrics.rb.
+on_worker_boot do
+  Metrics.skip_gauges!
+  Metrics.start!
+end
 
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 port ENV.fetch("PORT", 3000)
