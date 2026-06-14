@@ -33,7 +33,19 @@ class FeedPreviewWorkflow
 
     logger.error "FeedPreviewWorkflow error at #{current_step}: #{error.message}"
 
-    transition!(status: FeedPreview.statuses[:failed])
+    broadcast_state if transition!(status: FeedPreview.statuses[:failed])
+  end
+
+  # Push the terminal pane to the preview frame (subscribed via
+  # turbo_stream_from) so the result lands the moment the run resolves. Only the
+  # winning run reaches here — a stale run's transition! updates no rows.
+  #
+  # The pane partials use strict locals (preview:), so we render the HTML
+  # ourselves rather than let broadcast_update_to inject its default local.
+  def broadcast_state
+    partial = feed_preview.ready? ? "feed_previews/ready" : "feed_previews/failed"
+    html = ApplicationController.render(partial: partial, locals: { preview: feed_preview })
+    feed_preview.broadcast_update_to(feed_preview, target: "feed-preview-body", html: html)
   end
 
   def initialize_workflow(_input)
@@ -101,7 +113,7 @@ class FeedPreviewWorkflow
 
   def finalize_workflow(posts)
     record_completed_at
-    transition!(
+    broadcast_state if transition!(
       status: FeedPreview.statuses[:ready],
       ready_at: Time.current,
       data: { posts: posts, stats: stats }

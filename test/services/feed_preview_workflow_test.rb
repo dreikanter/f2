@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedPreviewWorkflowTest < ActiveSupport::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   def user
     @user ||= create(:user)
   end
@@ -107,12 +109,30 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, preview.posts_count
   end
 
+  test "#execute should broadcast the ready pane to the preview frame" do
+    preview = create(:feed_preview, feed_profile_key: "rss",
+                     params: { "url" => "https://example.com/feed.xml" }, run_id: "run-1")
+    stub_rss_loader_returning_one_item
+
+    broadcasts = capture_turbo_stream_broadcasts(preview) do
+      FeedPreviewWorkflow.new(preview, run_id: "run-1").execute
+    end
+
+    assert_equal 1, broadcasts.size
+    stream = broadcasts.first
+    assert_equal "update", stream["action"]
+    assert_equal "feed-preview-body", stream["target"]
+    assert_includes stream.to_html, "preview.success"
+  end
+
   test "#execute should not finalize when the run_id is stale" do
     preview = create(:feed_preview, feed_profile_key: "rss",
                      params: { "url" => "https://example.com/feed.xml" }, run_id: "run-2")
     stub_rss_loader_returning_one_item
 
-    FeedPreviewWorkflow.new(preview, run_id: "run-1").execute # superseded run
+    assert_no_turbo_stream_broadcasts(preview) do
+      FeedPreviewWorkflow.new(preview, run_id: "run-1").execute # superseded run
+    end
 
     preview.reload
     refute preview.ready?
