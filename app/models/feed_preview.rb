@@ -1,7 +1,8 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
   PREVIEW_TIMEOUT_SECONDS = 120
-  POLLING_INTERVAL_MS = 2000
+  # Preview fetches run longer than the generic StatePolling default, so the
+  # client polls further before giving up.
   POLLING_MAX_POLLS = 75
 
   belongs_to :user

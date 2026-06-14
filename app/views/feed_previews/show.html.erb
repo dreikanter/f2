@@ -2,23 +2,13 @@
 <%= turbo_frame_tag "feed-preview" do %>
   <%# Stable polling host: polls the preview endpoint and swaps only the inner
       body, so the controller element is never torn down mid-poll. Polling stops
-      once a terminal (ready/failed) body marks itself done. %>
-  <div data-controller="polling"
-       data-polling-endpoint-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, format: :turbo_stream) %>"
-       data-polling-stop-condition-value="[data-preview-done]"
-       data-polling-interval-value="<%= FeedPreview::POLLING_INTERVAL_MS %>"
-       data-polling-max-polls-value="<%= FeedPreview::POLLING_MAX_POLLS %>">
-    <div id="feed-preview-body" data-polling-target="content">
-      <% case preview.status %>
-      <% when "ready" %>
-        <%= render "feed_previews/ready", preview: preview %>
-      <% when "failed" %>
-        <%= render "feed_previews/failed", preview: preview %>
-      <% else %>
-        <%= render "feed_previews/processing", preview: preview %>
-      <% end %>
-    </div>
-    <div data-polling-target="timeoutMessage" hidden>
+      once a terminal (ready/failed) body marks itself data-polling-done. %>
+  <%= render PollingShellComponent.new(
+        endpoint: feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, format: :turbo_stream),
+        content_id: "feed-preview-body",
+        content_target: true,
+        max_polls: FeedPreview::POLLING_MAX_POLLS) do |shell| %>
+    <% shell.with_timeout_message do %>
       <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 space-y-3"
            role="alert"
            data-key="preview.timeout"
@@ -35,6 +25,14 @@
           Try again
         </button>
       </div>
-    </div>
-  </div>
+    <% end %>
+    <% case preview.status %>
+    <% when "ready" %>
+      <%= render "feed_previews/ready", preview: preview %>
+    <% when "failed" %>
+      <%= render "feed_previews/failed", preview: preview %>
+    <% else %>
+      <%= render "feed_previews/processing", preview: preview %>
+    <% end %>
+  <% end %>
 <% end %>

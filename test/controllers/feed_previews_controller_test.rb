@@ -155,7 +155,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_match(/data-preview-done/, response.body)
+    assert_match(/data-polling-done/, response.body)
   end
 
   test "#create should restart a failed preview and enqueue a job" do
@@ -280,7 +280,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_match(/data-preview-done/, response.body)
+    assert_match(/data-polling-done/, response.body)
     assert user.feed_previews.last.failed?
   end
 
