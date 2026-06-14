@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AccessTokenValidationServiceTest < ActiveSupport::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   def user
     @user ||= create(:user)
   end
@@ -171,6 +173,46 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     end
 
     assert_equal "validating", access_token.reload.status
+  end
+
+  test "#call should broadcast a refresh to the token stream when it resolves to inactive" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
+
+    assert_turbo_stream_broadcasts(access_token, count: 1) do
+      AccessTokenValidationService.new(access_token).call
+    end
+  end
+
+  test "#call should broadcast a refresh to the token stream when it resolves to active" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [].to_json)
+
+    assert_turbo_stream_broadcasts(access_token, count: 1) do
+      AccessTokenValidationService.new(access_token).call
+    end
+
+    assert_equal "active", access_token.reload.status
+  end
+
+  test "#call should not broadcast while a transient error keeps validation in flight" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    assert_no_turbo_stream_broadcasts(access_token) do
+      assert_raises(FreefeedClient::Error) { AccessTokenValidationService.new(access_token).call }
+    end
+  end
+
+  test "#call should not broadcast when throttled so the rescheduled run can resolve it" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+
+    assert_no_turbo_stream_broadcasts(access_token) do
+      assert_raises(RateLimit::Throttled) { AccessTokenValidationService.new(access_token).call }
+    end
   end
 
   test "#call should disable enabled feeds on invalid token error" do

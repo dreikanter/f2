@@ -69,14 +69,12 @@ Rails.application.routes.draw do
 
   resources :access_tokens do
     scope module: :access_tokens do
-      resource :validation, only: :show
       resources :groups, only: :index
     end
   end
 
   resources :llm_credentials do
     scope module: :llm_credentials do
-      resource :validation, only: :show
       resource :default, only: :update
     end
   end

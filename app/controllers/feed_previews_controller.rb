@@ -2,30 +2,22 @@ class FeedPreviewsController < ApplicationController
   before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
 
-  # Maps each FeedPreview status to the pane partial that renders it. `fetch`
-  # makes an unexpected status fail loudly rather than silently fall through.
-  STATE_PARTIALS = {
-    "pending" => "processing",
-    "processing" => "processing",
-    "ready" => "ready",
-    "failed" => "failed"
-  }.freeze
-
   # GET /feed_preview?profile_key=…&params[…]=…
-  # Workhorse for the lazy turbo-frame and polling: find or create the row for
+  # Workhorse for the lazy turbo-frame: find or create the row for
   # (user, profile_key, params_digest), start a run when it has no fresh result,
-  # and render the current state.
+  # and render the current state. The preview workflow pushes the terminal state
+  # over Action Cable when its background job finishes.
   def show
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
     preview.timeout! if preview.timed_out?
-    render_state(preview, inert_while_running: true)
+    render :show, locals: { preview: preview }
   end
 
-  # POST /feed_preview — explicit refresh: always start a fresh run. Renders the
-  # processing pane (never inert) so the refresh shows the spinner restarting.
+  # POST /feed_preview — explicit refresh: always start a fresh run and re-render
+  # the frame so the spinner restarts.
   def create
-    render_state(start_run(locate_preview))
+    render :show, locals: { preview: start_run(locate_preview) }
   end
 
   private
@@ -92,28 +84,6 @@ class FeedPreviewsController < ApplicationController
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
     !Current.user.llm_credentials.active.exists?
-  end
-
-  def render_state(preview, inert_while_running: false)
-    respond_to do |format|
-      format.html { render :show, locals: { preview: preview } }
-      # Swap only the inner body so the polling host (rendered by `show`) stays
-      # mounted across polls; ready/failed bodies carry `data-preview-done`,
-      # which trips the poller's stop-condition. While a run is still in flight
-      # the poll stays silent so the spinner keeps its animation instead of
-      # being redrawn every cycle.
-      format.turbo_stream do
-        if inert_while_running && (preview.pending? || preview.processing?)
-          head :no_content
-        else
-          render turbo_stream: turbo_stream.update("feed-preview-body", **state_partial(preview))
-        end
-      end
-    end
-  end
-
-  def state_partial(preview)
-    { partial: "feed_previews/#{STATE_PARTIALS.fetch(preview.status)}", locals: { preview: preview } }
   end
 
   def render_cleared

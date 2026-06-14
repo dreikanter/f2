@@ -1,6 +1,8 @@
 require "test_helper"
 
 class LlmCredentialValidationJobTest < ActiveJob::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   def user
     @user ||= create(:user)
   end
@@ -36,6 +38,14 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal "active", credential.state
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
+  end
+
+  test "#perform should broadcast a refresh to the credential stream when it resolves" do
+    assert_turbo_stream_broadcasts(credential, count: 1) do
+      stub_health_check(true) do
+        LlmCredentialValidationJob.perform_now(credential)
+      end
+    end
   end
 
   test "#perform should move credential to inactive and record the error on provider failure" do

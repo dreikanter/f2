@@ -1,5 +1,5 @@
-<%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
-<% active_tokens = Current.user.access_tokens.active.order(:host) %>
+<%# locals: (edit_mode: false, feed: @feed, candidates: [], user: nil) %>
+<% active_tokens = (user || Current.user).access_tokens.active.order(:host) %>
 <% multi_candidate = !edit_mode && candidates.size > 1 %>
 <%
   preview_shapes =

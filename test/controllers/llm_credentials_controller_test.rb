@@ -186,25 +186,25 @@ class LlmCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='llm_credential.show']"
   end
 
-  test "#show should render the polling shell for a pending credential" do
+  test "#show should subscribe to the credential stream for a pending credential" do
     sign_in_as(user)
     pending = create(:llm_credential, user: user, state: :pending)
 
     get llm_credential_url(pending)
 
     assert_response :success
-    assert_select "[data-controller='polling']"
+    assert_select "turbo-cable-stream-source"
     assert_select "[data-key='llm_credential.validating']"
   end
 
-  test "#show should render the active state without polling for an active credential" do
+  test "#show should render the active state without a stream subscription" do
     sign_in_as(user)
     active = create(:llm_credential, :active, user: user)
 
     get llm_credential_url(active)
 
     assert_response :success
-    assert_select "[data-controller='polling']", false
+    assert_select "turbo-cable-stream-source", false
     assert_select "[data-key='llm_credential.active']"
   end
 

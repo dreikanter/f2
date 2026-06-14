@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // - keeps the button enabled only when a profile is selected and a source is present
 // - on click, paints the loading spinner, points the modal's feed-preview frame
 //   at the preview endpoint for the selected profile + source, then opens the modal
-// - on modal close, clears the frame so the polling host unmounts (stops polling)
+// - on modal close, clears the frame so its stream subscription is torn down
 export default class extends Controller {
   static targets = ["button", "frame"]
   static values = {
@@ -69,9 +69,9 @@ export default class extends Controller {
   _clearFrame() {
     if (!this.hasFrameTarget) return
 
-    // Removing src alone won't clear the frame's children, so the inner polling
-    // host would keep running. Emptying innerHTML removes it from the DOM, which
-    // fires its disconnect() and stops polling. Reopening re-sets src and reloads.
+    // Removing src alone won't clear the frame's children, so the stream source
+    // would stay subscribed. Emptying innerHTML removes it from the DOM, tearing
+    // down the subscription. Reopening re-sets src and reloads.
     this.frameTarget.removeAttribute("src")
     this.frameTarget.innerHTML = ""
   }

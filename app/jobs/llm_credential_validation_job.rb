@@ -8,9 +8,15 @@ class LlmCredentialValidationJob < ApplicationJob
   def perform(credential)
     credential.validating!
 
-    LlmClient.for(credential).health_check
-    credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
-  rescue LlmClient::Error => e
-    credential.disable_credential_and_feeds(last_error: e.message)
+    begin
+      LlmClient.for(credential).health_check
+      credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
+    rescue LlmClient::Error => e
+      credential.disable_credential_and_feeds(last_error: e.message)
+    end
+
+    # Tell the credential's show page (subscribed via turbo_stream_from) to
+    # refresh now that validation has resolved.
+    credential.broadcast_refresh
   end
 end

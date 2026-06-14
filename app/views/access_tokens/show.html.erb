@@ -1,25 +1,12 @@
 <% content_for :title, "Access Token" %>
 
+<%# While validation is in flight, subscribe to the token's stream. The
+    validation job broadcasts a page refresh when it resolves, so the result
+    lands the instant the job finishes — no client-side polling. %>
 <% if @access_token.pending? || @access_token.validating? %>
-  <div
-    data-controller="polling"
-    data-polling-endpoint-value="<%= access_token_validation_path(@access_token, feed_id: @feed&.id) %>"
-    data-polling-interval-value="<%= AccessToken::VALIDATION_POLLING_INTERVAL_MS %>"
-    data-polling-max-polls-value="<%= AccessToken::VALIDATION_POLLING_MAX_POLLS %>"
-    data-polling-stop-condition-value="[data-status]"
-    aria-busy="true">
-    <div id="access-token-show" class="space-y-8">
-      <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
-    </div>
-    <div data-polling-target="timeoutMessage" hidden class="mt-4">
-      <%= render AlertComponent.new(variant: :warning) do %>
-        <p class="font-semibold">Validation is taking longer than expected.</p>
-        <p><%= link_to "Refresh the page", request.path, data: { turbo: false }, class: "underline underline-offset-2" %> to check the current status.</p>
-      <% end %>
-    </div>
-  </div>
-<% else %>
-  <div id="access-token-show" class="space-y-8">
-    <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
-  </div>
+  <%= turbo_stream_from @access_token %>
 <% end %>
+
+<div id="access-token-show" class="space-y-8">
+  <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
+</div>

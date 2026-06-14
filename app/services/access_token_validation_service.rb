@@ -27,8 +27,11 @@ class AccessTokenValidationService
         }
       )
     end
+
+    broadcast_resolution
   rescue FreefeedClient::UnauthorizedError
     access_token.disable_token_and_feeds
+    broadcast_resolution
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
     # the job reschedules. Reporting it here would surface a fault on every
@@ -40,6 +43,12 @@ class AccessTokenValidationService
   end
 
   private
+
+  # Tell the token's show page (subscribed via turbo_stream_from) to refresh
+  # now that validation has resolved to active or inactive.
+  def broadcast_resolution
+    access_token.broadcast_refresh
+  end
 
   def freefeed_client
     @freefeed_client ||= access_token.build_client

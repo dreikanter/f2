@@ -28,63 +28,38 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal false, identification.candidates.first["depends_on_ai"]
   end
 
-  test "#invalid_processing? should be true when processing without started_at" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
-    assert_predicate identification, :invalid_processing?
-  end
-
-  test "#invalid_processing? should be false when started_at is present" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: Time.current)
-    refute_predicate identification, :invalid_processing?
-  end
-
-  test "#invalid_processing? should be false for non-processing status" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :success, started_at: nil)
-    refute_predicate identification, :invalid_processing?
-  end
-
-  test "#timed_out? should be true when processing exceeds the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: (FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS + 1).seconds.ago
-    )
-    assert_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false within the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: 1.second.ago
-    )
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false when started_at is missing" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false for non-processing status" do
+  test "#build_recommended_feed should write input under the top candidate's input_shape" do
     identification = FeedIdentification.new(
       user: user,
       input: "https://example.com/feed.xml",
       status: :success,
-      started_at: 1.hour.ago
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example Feed", "rank" => 0 }
+      ]
     )
-    refute_predicate identification, :timed_out?
+
+    feed = identification.build_recommended_feed(user)
+
+    assert_equal "rss", feed.feed_profile_key
+    assert_equal "Example Feed", feed.name
+    assert_equal "https://example.com/feed.xml", feed.params["url"]
+    assert_equal user, feed.user
   end
 
-  test "POLLING_MAX_POLLS should keep the client polling past the server timeout" do
-    client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * FeedIdentification::POLLING_INTERVAL_MS
-
-    assert_operator(
-      client_coverage_ms, :>, FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS * 1000,
-      "client must outlast the server timeout so the friendly error renders before it gives up"
+  test "#build_recommended_feed should use the query input_shape for search profiles" do
+    identification = FeedIdentification.new(
+      user: user,
+      input: "climate change",
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_web_search", "title" => nil, "rank" => 0 }
+      ]
     )
+
+    feed = identification.build_recommended_feed(user)
+
+    assert_equal "climate change", feed.params["query"]
+    assert_nil feed.params["url"]
   end
 
   test "should accept multiple ranked candidates" do

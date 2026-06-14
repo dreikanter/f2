@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 
 // Forces a fresh preview run from inside the feed-preview frame (the "Refresh
 // preview" / "Try again" buttons). POSTs to the preview endpoint (which busts
-// the cached run) and reloads the enclosing turbo-frame so the polling host
-// remounts and resumes polling.
+// the cached run) and reloads the enclosing turbo-frame so it re-subscribes to
+// the preview stream and shows the spinner while the new run is in flight.
 export default class extends Controller {
   static values = { refreshUrl: String }
 

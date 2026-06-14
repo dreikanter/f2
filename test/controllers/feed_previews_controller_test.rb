@@ -120,25 +120,24 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert user.feed_previews.last.pending?
   end
 
-  test "#show should return no content while the preview is still processing" do
+  test "#show should render the processing pane and subscribe while the preview runs" do
     sign_in_as(user)
     create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
                                        params: { "url" => "http://example.com/feed.xml" })
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-          headers: TURBO_STREAM
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
     end
 
-    assert_response :no_content
-    assert_empty response.body
+    assert_response :success
+    assert_match(/data-key="preview.processing"/, response.body)
+    assert_select "turbo-cable-stream-source"
   end
 
-  test "#create should render the processing pane even though show polls stay silent" do
+  test "#create should render the processing pane while the fresh run is in flight" do
     sign_in_as(user)
 
-    post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-         headers: TURBO_STREAM
+    post feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
 
     assert_response :success
     assert_match(/data-key="preview.processing"/, response.body)
@@ -150,12 +149,11 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                    params: { "url" => "http://example.com/feed.xml" })
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-          headers: TURBO_STREAM
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
     end
 
     assert_response :success
-    assert_match(/data-preview-done/, response.body)
+    assert_match(/data-key="preview.failed"/, response.body)
   end
 
   test "#create should restart a failed preview and enqueue a job" do
@@ -275,12 +273,11 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
                                        updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
 
     assert_no_enqueued_jobs do
-      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),
-          headers: TURBO_STREAM
+      get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
     end
 
     assert_response :success
-    assert_match(/data-preview-done/, response.body)
+    assert_match(/data-key="preview.failed"/, response.body)
     assert user.feed_previews.last.failed?
   end
 
