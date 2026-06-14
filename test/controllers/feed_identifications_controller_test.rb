@@ -180,7 +180,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body
   end
 
-  test "#show should return invalid session error when started_at is missing" do
+  test "#show should return error when started_at is missing" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
@@ -194,7 +194,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Identification session is invalid"
+    assert_includes response.body, "identify this feed because something went wrong"
     assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
   end
 
