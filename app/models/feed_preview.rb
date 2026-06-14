@@ -1,6 +1,5 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
-  PREVIEW_TIMEOUT_SECONDS = 120
 
   belongs_to :user
   belongs_to :feed, optional: true
@@ -27,10 +26,6 @@ class FeedPreview < ApplicationRecord
   def self.source_input(feed_profile_key, params)
     shape = FeedProfile[feed_profile_key]&.dig(:input_shape) || :url
     (params || {})[shape.to_s]
-  end
-
-  def timed_out?
-    (pending? || processing?) && updated_at < PREVIEW_TIMEOUT_SECONDS.seconds.ago
   end
 
   # Transitions to :failed only if still non-terminal. The status guard in the

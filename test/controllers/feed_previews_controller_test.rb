@@ -272,7 +272,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     create(:feed_preview, :processing, user: user, feed_profile_key: "rss",
                                        params: { "url" => "http://example.com/feed.xml" },
-                                       updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
+                                       updated_at: 10.minutes.ago)
 
     assert_no_enqueued_jobs do
       get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" }),

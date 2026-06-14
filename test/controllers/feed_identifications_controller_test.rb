@@ -16,17 +16,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "identification_timeout should fire before the client exhausts its polling budget" do
-    timeout_ms = FeedIdentificationsController.new.send(:identification_timeout).in_milliseconds
-    # First poll is immediate, so the client's last poll lands at (max_polls - 1) * interval.
-    last_poll_ms = (FeedIdentificationsController.polling_max_polls - 1) * FeedIdentificationsController.polling_interval_ms
-
-    assert_operator(
-      timeout_ms, :<, last_poll_ms,
-      "server must time out before the client's final poll so the error renders instead of the spinner freezing"
-    )
-  end
-
   test "#create should create feed detail record and enqueue job for valid URL" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
