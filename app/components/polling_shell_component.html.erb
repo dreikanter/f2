@@ -1,0 +1,6 @@
+<%= tag.div data: host_data, aria: host_aria do %>
+  <%= tag.div content, id: content_id, class: content_class, data: content_data %>
+  <% if timeout_message? %>
+    <%= tag.div timeout_message, class: timeout_class, hidden: true, data: { polling_target: "timeoutMessage" } %>
+  <% end %>
+<% end %>
