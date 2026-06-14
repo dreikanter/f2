@@ -15,6 +15,10 @@ class Event < ApplicationRecord
   scope :for_subject, ->(subject) { where(subject: subject) }
   scope :expired, -> { where("expires_at IS NOT NULL AND expires_at < ?", Time.current) }
   scope :not_expired, -> { where("expires_at IS NULL OR expires_at >= ?", Time.current) }
+  scope :purgeable, ->(retention) {
+    where("expires_at < :now OR (expires_at IS NULL AND created_at < :cutoff)",
+          now: Time.current, cutoff: retention.ago)
+  }
   scope :user_relevant, -> { where.not(level: :debug).not_expired }
 
   def alert_variant

@@ -110,6 +110,20 @@ class EventTest < ActiveSupport::TestCase
     assert_includes not_expired_events, permanent_event
   end
 
+  test "#purgeable should scope expired events and stale unexpiring events" do
+    expired = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
+    active = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
+    stale = Event.create!(type: "stale_event", created_at: 2.months.ago)
+    recent = Event.create!(type: "recent_event")
+
+    purgeable = Event.purgeable(1.month)
+
+    assert_includes purgeable, expired
+    assert_includes purgeable, stale
+    assert_not_includes purgeable, active
+    assert_not_includes purgeable, recent
+  end
+
   test "should set expiration time" do
     event = Event.create!(type: "test_event")
 
