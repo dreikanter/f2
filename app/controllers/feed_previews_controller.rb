@@ -1,4 +1,6 @@
 class FeedPreviewsController < ApplicationController
+  include StatePolling
+
   before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
 
@@ -36,6 +38,12 @@ class FeedPreviewsController < ApplicationController
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
 
     render_credential_gate if needs_credential_gate?
+  end
+
+  # A preview is in flight while pending or processing (it has no validating
+  # state), so the poll stays silent across both.
+  def keep_polling?(preview)
+    preview.pending? || preview.processing?
   end
 
   def previews
@@ -98,12 +106,12 @@ class FeedPreviewsController < ApplicationController
     respond_to do |format|
       format.html { render :show, locals: { preview: preview } }
       # Swap only the inner body so the polling host (rendered by `show`) stays
-      # mounted across polls; ready/failed bodies carry `data-preview-done`,
+      # mounted across polls; ready/failed bodies carry `data-polling-done`,
       # which trips the poller's stop-condition. While a run is still in flight
       # the poll stays silent so the spinner keeps its animation instead of
       # being redrawn every cycle.
       format.turbo_stream do
-        if inert_while_running && (preview.pending? || preview.processing?)
+        if inert_while_running && keep_polling?(preview)
           head :no_content
         else
           render turbo_stream: turbo_stream.update("feed-preview-body", **state_partial(preview))
