@@ -16,15 +16,40 @@ class FeedIdentificationFetcher
         candidates: serialize_candidates(result.candidates),
         error: nil
       )
+      broadcast_success
     else
       feed_identification.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
+      broadcast_failure
     end
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_input_for_logging(@input)}: #{e.class} - #{e.message}")
     feed_identification.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
+    broadcast_failure
   end
 
   private
+
+  # Push the expanded form into #feed-form (subscribed via turbo_stream_from) so
+  # the result lands the instant identification resolves. form_expanded uses
+  # strict locals, so we render the HTML ourselves rather than let
+  # broadcast_replace_to inject its default local.
+  def broadcast_success
+    feed = feed_identification.build_recommended_feed(@user)
+    html = ApplicationController.render(
+      partial: "feeds/form_expanded",
+      locals: { feed: feed, candidates: feed_identification.candidates, user: @user }
+    )
+    feed_identification.broadcast_replace_to(feed_identification, target: "feed-form", html: html)
+  end
+
+  def broadcast_failure
+    error = feed_identification.error.presence || "We couldn't identify a feed profile for this URL."
+    html = ApplicationController.render(
+      partial: "feeds/identification_error",
+      locals: { input: @input, error: error }
+    )
+    feed_identification.broadcast_replace_to(feed_identification, target: "feed-form", html: html)
+  end
 
   # Fetch the URL body for inspection by URL matchers; skip the fetch
   # entirely for query inputs since structured URL detection

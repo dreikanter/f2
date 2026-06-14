@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FeedIdentificationFetcherTest < ActiveSupport::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     @logger = ActiveSupport::Logger.new(nil) # Silent logger for tests
   end
@@ -121,6 +123,41 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
     assert_includes feed_identification.error, "An error occurred while identifying the feed"
+  end
+
+  test "#identify should broadcast the expanded form into feed-form on success" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url)
+      .to_return(status: 200, body: "<rss version=\"2.0\"><channel><title>Example</title></channel></rss>")
+
+    feed_identification = FeedIdentification.create!(user: user, input: url, status: :processing, started_at: Time.current)
+
+    broadcasts = capture_turbo_stream_broadcasts(feed_identification) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    assert_equal 1, broadcasts.size
+    stream = broadcasts.first
+    assert_equal "replace", stream["action"]
+    assert_equal "feed-form", stream["target"]
+    assert_includes stream.to_html, 'data-identification-state="complete"'
+  end
+
+  test "#identify should broadcast the error pane into feed-form on failure" do
+    url = "http://example.com/error.xml"
+    stub_request(:get, url).to_return(status: 500, body: "Internal Server Error")
+
+    feed_identification = FeedIdentification.create!(user: user, input: url, status: :processing, started_at: Time.current)
+
+    broadcasts = capture_turbo_stream_broadcasts(feed_identification) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    assert_equal 1, broadcasts.size
+    stream = broadcasts.first
+    assert_equal "replace", stream["action"]
+    assert_equal "feed-form", stream["target"]
+    assert_includes stream.to_html, 'data-identification-state="error"'
   end
 
   test "#identify should handle network errors gracefully" do
