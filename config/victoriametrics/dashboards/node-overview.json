@@ -32,8 +32,20 @@
       ]
     },
     {
-      "title": "Memory",
+      "title": "Resources",
       "panels": [
+        {
+          "title": "Disk I/O",
+          "unit": "bytes/s",
+          "expr": [
+            "sum(rate(node_disk_read_bytes_total{device!~\"loop.*\"}[5m]))",
+            "sum(rate(node_disk_written_bytes_total{device!~\"loop.*\"}[5m]))"
+          ],
+          "alias": [
+            "read",
+            "write"
+          ]
+        },
         {
           "title": "Memory %",
           "unit": "%",
@@ -45,13 +57,15 @@
           ]
         },
         {
-          "title": "Swap used",
-          "unit": "bytes",
+          "title": "Network traffic",
+          "unit": "bytes/s",
           "expr": [
-            "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes"
+            "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
+            "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))"
           ],
           "alias": [
-            "used"
+            "receive",
+            "transmit"
           ]
         }
       ]
@@ -65,41 +79,14 @@
           "expr": [
             "feeder_pg_database_size_bytes",
             "node_filesystem_size_bytes{mountpoint=\"/\"} - node_filesystem_avail_bytes{mountpoint=\"/\"}",
-            "node_filesystem_size_bytes{mountpoint=\"/\"}"
+            "node_filesystem_size_bytes{mountpoint=\"/\"}",
+            "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes"
           ],
           "alias": [
             "database",
             "used",
-            "capacity"
-          ]
-        },
-        {
-          "title": "Disk I/O",
-          "unit": "bytes/s",
-          "expr": [
-            "sum(rate(node_disk_read_bytes_total{device!~\"loop.*\"}[5m]))",
-            "sum(rate(node_disk_written_bytes_total{device!~\"loop.*\"}[5m]))"
-          ],
-          "alias": [
-            "read",
-            "write"
-          ]
-        }
-      ]
-    },
-    {
-      "title": "Network",
-      "panels": [
-        {
-          "title": "Network traffic",
-          "unit": "bytes/s",
-          "expr": [
-            "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
-            "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))"
-          ],
-          "alias": [
-            "receive",
-            "transmit"
+            "capacity",
+            "swap"
           ]
         }
       ]
@@ -166,21 +153,6 @@
       ]
     },
     {
-      "title": "Metrics health",
-      "panels": [
-        {
-          "title": "Metrics push age",
-          "unit": "s",
-          "expr": [
-            "min(lag(node_cpu_seconds_total[1d]))"
-          ],
-          "alias": [
-            "since last push"
-          ]
-        }
-      ]
-    },
-    {
       "title": "Rate limiting",
       "panels": [
         {
@@ -226,20 +198,15 @@
       "title": "PostgreSQL",
       "panels": [
         {
-          "title": "Database size",
-          "unit": "bytes",
-          "expr": [
-            "feeder_pg_database_size_bytes"
-          ],
-          "alias": [
-            "total size"
-          ]
-        },
-        {
           "title": "Table sizes",
           "unit": "bytes",
           "expr": [
-            "feeder_pg_table_size_bytes{table=~\"feed_entries|events|posts|feed_previews|feed_entry_uids\"}"
+            "feeder_pg_table_size_bytes{table=~\"feed_entries|events|posts|feed_previews|feed_entry_uids\"}",
+            "feeder_pg_database_size_bytes"
+          ],
+          "alias": [
+            "{{table}}",
+            "total DB size"
           ]
         }
       ]

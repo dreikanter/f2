@@ -29,8 +29,6 @@ Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the samp
 
 One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers.
 
-The "Metrics push age" panel keys off `node_cpu_seconds_total` — a node-exporter series VM scrapes continuously — so it reads the age of the most recent data point VM has, as a liveness signal for the metrics pipeline. `node_cpu_seconds_total` fans out into one series per CPU and mode, so the panel aggregates `lag()` with `min()` to collapse them into a single freshest-sample age rather than drawing a separate line per series.
-
 ## Dashboards
 
 Predefined dashboards live in `config/victoriametrics/dashboards/` as JSON files. Each file becomes its own tab on vmui's Dashboards page; the file's `title` field is the tab label. The accessory mounts each file individually under `files:` and points vmui at the directory with `-vmui.customDashboardsPath`.
