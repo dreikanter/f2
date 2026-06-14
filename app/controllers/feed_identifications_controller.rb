@@ -1,4 +1,6 @@
 class FeedIdentificationsController < ApplicationController
+  include StatePolling
+
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
@@ -70,10 +72,12 @@ class FeedIdentificationsController < ApplicationController
   def handle_processing_status
     if feed_identification.invalid_processing?
       feed_identification.destroy
-      return render(identification_error(error: "Identification session is invalid. Please try again."))
+      return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
-    if feed_identification.timed_out?
+    # Past the deadline: drop the row and show the friendly error so the spinner
+    # stops with a message instead of spinning forever.
+    if feed_identification.started_at < polling_timeout.ago
       feed_identification.destroy
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end

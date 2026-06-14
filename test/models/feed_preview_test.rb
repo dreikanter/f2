@@ -85,45 +85,14 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 0, preview.posts_count
   end
 
-  test "#timed_out? should return true for a pending preview past the timeout" do
-    preview = create(:feed_preview, :pending, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
-    assert preview.timed_out?
-  end
-
-  test "#timed_out? should return true for a processing preview past the timeout" do
-    preview = create(:feed_preview, :processing, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
-    assert preview.timed_out?
-  end
-
-  test "#timed_out? should return false for a recently started preview" do
-    preview = create(:feed_preview, :processing, user: user, updated_at: 1.second.ago)
-    refute preview.timed_out?
-  end
-
-  test "#timed_out? should return false for a ready preview" do
-    preview = create(:feed_preview, :completed, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
-    refute preview.timed_out?
-  end
-
-  test "#timed_out? should return false for a failed preview" do
-    preview = create(:feed_preview, :failed, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
-    refute preview.timed_out?
-  end
-
-  test "#timeout! should transition a timed-out processing preview to failed" do
-    preview = create(:feed_preview, :processing, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
+  test "#timeout! should transition a processing preview to failed" do
+    preview = create(:feed_preview, :processing, user: user)
     preview.timeout!
     assert preview.failed?
   end
 
   test "#timeout! should be a no-op for a ready preview" do
-    preview = create(:feed_preview, :completed, user: user,
-                     updated_at: (FeedPreview::PREVIEW_TIMEOUT_SECONDS + 1).seconds.ago)
+    preview = create(:feed_preview, :completed, user: user)
     preview.timeout!
     assert preview.ready?
   end

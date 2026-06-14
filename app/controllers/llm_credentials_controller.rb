@@ -1,4 +1,6 @@
 class LlmCredentialsController < ApplicationController
+  include StatePolling
+
   def index
     authorize LlmCredential
     @llm_credentials = scope.order(created_at: :desc)

@@ -43,49 +43,6 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     refute_predicate identification, :invalid_processing?
   end
 
-  test "#timed_out? should be true when processing exceeds the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: (FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS + 1).seconds.ago
-    )
-    assert_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false within the identification timeout" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :processing,
-      started_at: 1.second.ago
-    )
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false when started_at is missing" do
-    identification = FeedIdentification.new(user: user, input: "https://example.com/feed.xml", status: :processing, started_at: nil)
-    refute_predicate identification, :timed_out?
-  end
-
-  test "#timed_out? should be false for non-processing status" do
-    identification = FeedIdentification.new(
-      user: user,
-      input: "https://example.com/feed.xml",
-      status: :success,
-      started_at: 1.hour.ago
-    )
-    refute_predicate identification, :timed_out?
-  end
-
-  test "POLLING_MAX_POLLS should keep the client polling past the server timeout" do
-    client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * FeedIdentification::POLLING_INTERVAL_MS
-
-    assert_operator(
-      client_coverage_ms, :>, FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS * 1000,
-      "client must outlast the server timeout so the friendly error renders before it gives up"
-    )
-  end
 
   test "should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(

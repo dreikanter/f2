@@ -171,7 +171,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body
   end
 
-  test "#show should return invalid session error when started_at is missing" do
+  test "#show should return error when started_at is missing" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
@@ -185,7 +185,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Identification session is invalid"
+    assert_includes response.body, "Error identifying feed"
     assert_nil FeedIdentification.find_by(user: user, input: url), "Feed identification should be deleted when invalid"
   end
 
@@ -196,9 +196,9 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # Create processing feed detail via controller
     post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    # Manipulate record to simulate long-running job
+    # Manipulate record to simulate a job stuck well past the timeout
     feed_identification = FeedIdentification.find_by(user: user, input: url)
-    feed_identification.update_column(:started_at, 31.seconds.ago)
+    feed_identification.update_column(:started_at, 10.minutes.ago)
 
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 

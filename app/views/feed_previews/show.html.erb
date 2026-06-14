@@ -6,8 +6,8 @@
   <div data-controller="polling"
        data-polling-endpoint-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, format: :turbo_stream) %>"
        data-polling-stop-condition-value="[data-preview-done]"
-       data-polling-interval-value="<%= FeedPreview::POLLING_INTERVAL_MS %>"
-       data-polling-max-polls-value="<%= FeedPreview::POLLING_MAX_POLLS %>">
+       data-polling-interval-value="<%= polling_interval_ms %>"
+       data-polling-max-polls-value="<%= polling_max_polls %>">
     <div id="feed-preview-body" data-polling-target="content">
       <% case preview.status %>
       <% when "ready" %>

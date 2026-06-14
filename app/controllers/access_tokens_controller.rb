@@ -1,4 +1,6 @@
 class AccessTokensController < ApplicationController
+  include StatePolling
+
   def index
     authorize AccessToken
     @access_tokens = scope.order(created_at: :desc)
