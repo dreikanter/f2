@@ -15,6 +15,7 @@ require "rails/test_help"
 require "webmock/minitest"
 require "minitest/mock"
 require "super_diff"
+require "turbo/broadcastable/test_helper"
 
 # Load support modules in deterministic order
 Dir[Rails.root.join("test/support/**/*.rb")].sort.each { |f| require f }
