@@ -27,6 +27,31 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
+# Run in clustered mode only in deployed environments. Workers are forked web
+# server processes; with the GVL, parallelism across CPU cores comes from
+# workers, not threads, so clustering is how the multi-core production host uses
+# both cores. Development and test stay single-process to keep code reloading
+# working and avoid fork overhead. Set WEB_CONCURRENCY to scale the worker count
+# (see config/deploy.production.yml).
+if %w[production staging].include?(ENV.fetch("RAILS_ENV", "development"))
+  workers ENV.fetch("WEB_CONCURRENCY", 1)
+
+  # Preload the application before forking workers so they share memory via
+  # copy-on-write, reducing total memory footprint. Active Record reconnects
+  # automatically in each forked worker.
+  preload_app!
+
+  # The metrics flusher thread starts in the master during preload and does not
+  # survive the fork, so each worker restarts its own. Gauges are global DB
+  # snapshots sampled once by the master process; workers skip them and push
+  # only their per-process counters. All a no-op unless metrics are enabled
+  # (METRICS_URL). See config/initializers/metrics.rb.
+  on_worker_boot do
+    Metrics.skip_gauges!
+    Metrics.start!
+  end
+end
+
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 port ENV.fetch("PORT", 3000)
 

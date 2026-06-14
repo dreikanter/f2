@@ -80,6 +80,20 @@ class MetricsTest < ActiveSupport::TestCase
     assert_equal 1, reported.size
   end
 
+  test "#skip_gauges! should drop gauges while keeping counters" do
+    enable!
+    Metrics.increment("job_executions_total", status: "ok")
+    Metrics.gauge("jobs_ready") { 5 }
+    Metrics.gauge_set("pg_table_size_bytes") { { { table: "users" } => 100 } }
+
+    Metrics.skip_gauges!
+
+    out = Metrics.render
+    assert_includes out, "feeder_job_executions_total"
+    refute_includes out, "feeder_jobs_ready"
+    refute_includes out, "feeder_pg_table_size_bytes"
+  end
+
   test "#render should escape quotes in label values" do
     enable!
     Metrics.increment("job_executions_total", job: 'a"b')

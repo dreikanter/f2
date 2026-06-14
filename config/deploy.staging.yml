@@ -5,7 +5,7 @@ servers:
       - dev.fffeeder.com
     env:
       clear:
-        # Gauge sampling lives in the single Puma process; see
+        # Gauge sampling runs once in the Puma master process; see
         # config/initializers/metrics.rb.
         METRICS_GAUGES: "true"
   jobs:
@@ -65,6 +65,10 @@ env:
     RAILS_ENV: staging
     HOSTS: dev.fffeeder.com
     ACTION_MAILER_HOST: dev.fffeeder.com
+    # Mirror production's clustered Puma (2 workers x 3 threads) so staging
+    # exercises the real multi-worker paths: per-worker counter flushing,
+    # single-master gauge sampling, and cross-worker Solid Cable broadcast.
+    WEB_CONCURRENCY: 2
     # Reaches the victoriametrics accessory by container name over the Kamal
     # network. Unset this (or remove the accessory) to disable metrics.
     METRICS_URL: http://f2-victoriametrics:8428/api/v1/import/prometheus

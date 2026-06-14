@@ -33,3 +33,8 @@ env:
     RAILS_ENV: production
     HOSTS: fffeeder.com
     ACTION_MAILER_HOST: fffeeder.com
+    # Run Puma in clustered mode with 2 workers x 3 threads to use both CPU
+    # cores. Kept conservative because the jobs role and the Postgres accessory
+    # share this 2-core host. If memory becomes the binding constraint, drop
+    # back to 1 worker.
+    WEB_CONCURRENCY: 2
