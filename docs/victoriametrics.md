@@ -27,7 +27,7 @@ The push side is controlled by app env vars (set under `env:` in the deploy conf
 
 Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the sampled gauges move slowly, so a 60s push loses no visible resolution), plus `METRICS_GAUGES` on the web role; everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
 
-One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers — so a stale "Metrics push age" panel specifically means the web process isn't pushing.
+One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers.
 
 ## Dashboards
 
