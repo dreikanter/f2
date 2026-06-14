@@ -152,6 +152,58 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "#show should require authentication" do
+    get feed_identifications_path, params: { input: "http://example.com/feed.xml" }
+    assert_redirected_to new_session_path
+  end
+
+  test "#show should return no content while identification is still processing" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(:feed_identification, user: user, input: url, status: :processing, started_at: Time.current)
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :no_content
+    assert_empty response.body
+  end
+
+  test "#show should return no content when no record exists yet" do
+    sign_in_as(user)
+
+    get feed_identifications_path, params: { input: "http://example.com/none.xml" },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :no_content
+  end
+
+  test "#show should return the expanded form once identification succeeded" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(:feed_identification, user: user, input: url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "title" => "Example", "rank" => 0, "rank_reason" => "specific_match" }])
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'action="replace"'
+    assert_includes response.body, 'target="feed-form"'
+    assert_includes response.body, 'data-identification-state="complete"'
+  end
+
+  test "#show should return the error pane once identification failed" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    create(:feed_identification, user: user, input: url, status: :failed, started_at: Time.current,
+           error: "Unsupported feed profile")
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="error"'
+    assert_includes response.body, "Unsupported feed profile"
+  end
+
   test "#create should return expanded form when status is success" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"

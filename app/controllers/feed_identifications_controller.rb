@@ -35,6 +35,20 @@ class FeedIdentificationsController < ApplicationController
     render(identification_loading)
   end
 
+  # One-shot catch-up for the Action Cable subscription. The loading view fetches
+  # this once when its stream source connects, in case the job finished and
+  # broadcast before the browser started listening. Returns the same turbo
+  # stream the job broadcasts, or no content while the work is still in flight.
+  def show
+    return head :no_content unless feed_identification.persisted?
+
+    case feed_identification.status
+    when "success" then handle_success_status
+    when "failed" then render(identification_error(error: failure_message))
+    else head :no_content
+    end
+  end
+
   def destroy
     original_input = feed_identification.persisted? ? feed_identification.input : feed_input
     feed_identification.destroy if feed_identification.persisted?
@@ -55,6 +69,10 @@ class FeedIdentificationsController < ApplicationController
   def handle_success_status
     feed = feed_identification.build_recommended_feed(Current.user)
     render(identification_success(feed, candidates: feed_identification.candidates))
+  end
+
+  def failure_message
+    feed_identification.error.presence || "We couldn't identify a feed profile for this URL."
   end
 
   def identification_error(error:)
