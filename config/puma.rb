@@ -27,6 +27,18 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
+# Specifies the number of `workers` to boot in clustered mode. Workers are
+# forked web server processes, each running its own threads. With the GVL,
+# parallelism across CPU cores comes from workers, not threads, so clustering
+# is how the multi-core production host actually uses both cores. The default
+# is 1; set WEB_CONCURRENCY to scale up (see config/deploy.production.yml).
+workers ENV.fetch("WEB_CONCURRENCY", 1)
+
+# Preload the application before forking workers so they share memory via
+# copy-on-write, reducing total memory footprint. Active Record reconnects
+# automatically in each forked worker.
+preload_app!
+
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 port ENV.fetch("PORT", 3000)
 
