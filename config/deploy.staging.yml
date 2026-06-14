@@ -5,7 +5,7 @@ servers:
       - dev.fffeeder.com
     env:
       clear:
-        # Gauge sampling lives in the single Puma process; see
+        # Gauge sampling runs once in the Puma master process; see
         # config/initializers/metrics.rb.
         METRICS_GAUGES: "true"
   jobs:
