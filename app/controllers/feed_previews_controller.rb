@@ -3,7 +3,7 @@ class FeedPreviewsController < ApplicationController
 
   # Previews can take a while (the run fetches and renders remote content), so
   # the client keeps polling well past the shared default before giving up.
-  POLLING_MAX_POLLS = 75
+  self.polling_max_polls = 75
 
   before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
@@ -32,10 +32,6 @@ class FeedPreviewsController < ApplicationController
   # processing pane (never inert) so the refresh shows the spinner restarting.
   def create
     render_state(start_run(locate_preview))
-  end
-
-  def polling_max_polls
-    POLLING_MAX_POLLS
   end
 
   private

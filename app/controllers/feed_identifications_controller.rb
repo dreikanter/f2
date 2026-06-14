@@ -1,6 +1,12 @@
 class FeedIdentificationsController < ApplicationController
   include StatePolling
 
+  # Poll a couple of cycles past the server-side timeout so a request lands
+  # inside the timed_out? window and renders the friendly error. Matching the
+  # timeout exactly lets the client hit its poll cap first and freeze the
+  # spinner with no message.
+  self.polling_max_polls = (FeedIdentification::TIMEOUT.in_milliseconds / polling_interval_ms) + 2
+
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
@@ -50,10 +56,6 @@ class FeedIdentificationsController < ApplicationController
     when "failed"
       handle_failed_status
     end
-  end
-
-  def polling_max_polls
-    FeedIdentification::POLLING_MAX_POLLS
   end
 
   def destroy

@@ -16,6 +16,15 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "polling_max_polls should keep the client polling past the server timeout" do
+    client_coverage_ms = FeedIdentificationsController.polling_max_polls * FeedIdentificationsController.polling_interval_ms
+
+    assert_operator(
+      client_coverage_ms, :>, FeedIdentification::TIMEOUT.in_milliseconds,
+      "client must outlast the server timeout so the friendly error renders before it gives up"
+    )
+  end
+
   test "#create should create feed detail record and enqueue job for valid URL" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
