@@ -48,7 +48,7 @@
     </div>
   <% end %>
 <% elsif access_token.active? %>
-  <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
+  <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active", polling_done: true }) do %>
     <span>Token is valid and ready to use</span>
   <% end %>
 
@@ -103,7 +103,7 @@
     <% end %>
   </div>
 <% elsif access_token.inactive? %>
-  <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
+  <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", polling_done: true }) do %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
   <% end %>
 

@@ -1,23 +1,19 @@
 <% content_for :title, "Access Token" %>
 
 <% if @access_token.pending? || @access_token.validating? %>
-  <div
-    data-controller="polling"
-    data-polling-endpoint-value="<%= access_token_validation_path(@access_token, feed_id: @feed&.id) %>"
-    data-polling-interval-value="<%= AccessToken::VALIDATION_POLLING_INTERVAL_MS %>"
-    data-polling-max-polls-value="<%= AccessToken::VALIDATION_POLLING_MAX_POLLS %>"
-    data-polling-stop-condition-value="[data-status]"
-    aria-busy="true">
-    <div id="access-token-show" class="space-y-8">
-      <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
-    </div>
-    <div data-polling-target="timeoutMessage" hidden class="mt-4">
+  <%= render PollingShellComponent.new(
+        endpoint: access_token_validation_path(@access_token, feed_id: @feed&.id),
+        content_id: "access-token-show",
+        content_class: "space-y-8",
+        timeout_class: "mt-4") do |shell| %>
+    <% shell.with_timeout_message do %>
       <%= render AlertComponent.new(variant: :warning) do %>
         <p class="font-semibold">Validation is taking longer than expected.</p>
         <p><%= link_to "Refresh the page", request.path, data: { turbo: false }, class: "underline underline-offset-2" %> to check the current status.</p>
       <% end %>
-    </div>
-  </div>
+    <% end %>
+    <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
+  <% end %>
 <% else %>
   <div id="access-token-show" class="space-y-8">
     <%= render "access_tokens/show_content", access_token: @access_token, feed_id: @feed&.id %>
