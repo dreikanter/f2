@@ -48,7 +48,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       user: user,
       input: "https://example.com/feed.xml",
       status: :processing,
-      started_at: (FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS + 1).seconds.ago
+      started_at: (FeedIdentification::TIMEOUT + 1.second).ago
     )
     assert_predicate identification, :timed_out?
   end
@@ -82,7 +82,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     client_coverage_ms = FeedIdentification::POLLING_MAX_POLLS * StatePolling::POLLING_INTERVAL_MS
 
     assert_operator(
-      client_coverage_ms, :>, FeedIdentification::IDENTIFICATION_TIMEOUT_SECONDS * 1000,
+      client_coverage_ms, :>, FeedIdentification::TIMEOUT.in_milliseconds,
       "client must outlast the server timeout so the friendly error renders before it gives up"
     )
   end
