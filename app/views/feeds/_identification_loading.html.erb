@@ -1,10 +1,14 @@
 <%# locals: (input:, feed_identification:) %>
 <%# Subscribe to the identification's stream. The background job broadcasts the
     expanded form (or an error) into #feed-form when it finishes, so the result
-    lands the instant identification completes — no client-side polling. %>
+    lands the instant identification completes — no client-side polling. The
+    catch-up controller fetches the current state once the subscription connects,
+    in case the job finished before this socket started listening. %>
 <div id="feed-form"
      class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 shadow-xs"
-     role="status">
+     role="status"
+     data-controller="catch-up"
+     data-catch-up-url-value="<%= feed_identifications_path(input: input) %>">
   <%= turbo_stream_from feed_identification %>
   <div class="flex-shrink-0">
     <%= render SpinnerComponent.new %>
