@@ -16,12 +16,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "polling_max_polls should keep the client polling past the server timeout" do
-    client_coverage_ms = FeedIdentificationsController.polling_max_polls * FeedIdentificationsController.polling_interval_ms
+  test "identification_timeout should fire before the client exhausts its polling budget" do
+    timeout_ms = FeedIdentificationsController.new.send(:identification_timeout).in_milliseconds
+    # First poll is immediate, so the client's last poll lands at (max_polls - 1) * interval.
+    last_poll_ms = (FeedIdentificationsController.polling_max_polls - 1) * FeedIdentificationsController.polling_interval_ms
 
     assert_operator(
-      client_coverage_ms, :>, 30.seconds.in_milliseconds,
-      "client must outlast the ~30s server timeout so the friendly error renders before it gives up"
+      timeout_ms, :<, last_poll_ms,
+      "server must time out before the client's final poll so the error renders instead of the spinner freezing"
     )
   end
 
@@ -205,9 +207,9 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # Create processing feed detail via controller
     post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    # Manipulate record to simulate long-running job
+    # Manipulate record to simulate a job stuck well past the timeout
     feed_identification = FeedIdentification.find_by(user: user, input: url)
-    feed_identification.update_column(:started_at, 31.seconds.ago)
+    feed_identification.update_column(:started_at, 10.minutes.ago)
 
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 

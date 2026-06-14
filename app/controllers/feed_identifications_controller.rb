@@ -75,14 +75,23 @@ class FeedIdentificationsController < ApplicationController
       return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
-    # Past the ~30s server-side timeout: drop the row and show the friendly
-    # error so the spinner stops with a message instead of spinning forever.
-    if feed_identification.started_at < 30.seconds.ago
+    # Past the timeout: drop the row and show the friendly error so the spinner
+    # stops with a message instead of spinning forever.
+    if feed_identification.started_at < identification_timeout.ago
       feed_identification.destroy
       return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
     end
 
     head :no_content
+  end
+
+  # The client polls polling_max_polls times every polling_interval_ms, with the
+  # first poll firing immediately. Give up a couple of cycles before it exhausts
+  # that budget so one of the final polls lands in the timed-out window and
+  # renders the message (otherwise the client just stops and the spinner
+  # freezes silently).
+  def identification_timeout
+    ((polling_max_polls - 2) * polling_interval_ms).fdiv(1000).seconds
   end
 
   def handle_success_status
