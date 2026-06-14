@@ -27,7 +27,9 @@ The push side is controlled by app env vars (set under `env:` in the deploy conf
 
 Staging sets `METRICS_URL` and `METRICS_FLUSH_INTERVAL: "60"` globally (the sampled gauges move slowly, so a 60s push loses no visible resolution), plus `METRICS_GAUGES` on the web role; everything else uses defaults. The flush interval is the cheapest lever if the gauges ever get expensive — the charts just get coarser resolution.
 
-One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers — so a stale "Metrics push age" panel specifically means the web process isn't pushing. The panel aggregates `lag()` with `min()` so it tracks the freshest push age: a leftover stale series for the same gauge (e.g. an old instance-labelled one still inside the lookbehind window) would otherwise draw its own ever-climbing line and make the panel look broken while pushes are actually healthy.
+One consequence of web-only gauges: if Puma is down, gauge series stop while counters keep flowing from the workers.
+
+The "Metrics push age" panel keys off `node_cpu_seconds_total` — a node-exporter series VM scrapes continuously — so it reads the age of the most recent data point VM has, as a liveness signal for the metrics pipeline. `node_cpu_seconds_total` fans out into one series per CPU and mode, so the panel aggregates `lag()` with `min()` to collapse them into a single freshest-sample age rather than drawing a separate line per series.
 
 ## Dashboards
 
