@@ -26,28 +26,11 @@
     <%= render EventDescriptionComponent.for(@event) %>
   <% end %>
 
-  <%= render(ListComponent.new) do |details| %>
-    <% details.with_item(ListComponent::StatItemComponent.new(
-      label: "Type",
-      value: tag.code(@event.type, class: "text-sm", data: { key: "events.type" })
-    )) %>
-    <% details.with_item(ListComponent::StatItemComponent.new(
-      label: "Level",
-      value: @event.level.capitalize
-    )) %>
-    <% if @event.subject_type.present? %>
-      <% subject_value = @event.subject_id.present? ? "#{@event.subject_type} ##{@event.subject_id}" : @event.subject_type %>
-      <% details.with_item(ListComponent::StatItemComponent.new(label: "Subject", value: subject_value)) %>
-    <% end %>
-    <% details.with_item(ListComponent::StatItemComponent.new(
-      label: "Created",
-      value: safe_join([long_time_tag(@event.created_at), " ", tag.span("(#{short_time_ago(@event.created_at)})", class: "text-slate-500")])
-    )) %>
-  <% end %>
+  <%= render EventDetailsComponent.for(@event) %>
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Recent Posts</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Posts</h2>
       <%= render PostsListComponent.new(posts: @referenced_posts) %>
     </section>
   <% end %>
