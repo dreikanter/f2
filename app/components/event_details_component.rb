@@ -1,26 +1,52 @@
+# Renders the detail list shown at the top of an event page. The base knows
+# only how to present the fields common to every event; type-specific extras
+# (e.g. feed refresh stats) live in subclasses picked by .for, mirroring
+# EventDescriptionComponent. The base stays oblivious to concrete event types —
+# the SUBCLASSES mapping is the single place that ties a type to a component.
+#
+# The same component serves the user-facing and admin pages; admin: true adds
+# the operator-only rows (user, timestamps, expiry) and the admin filter links.
 class EventDetailsComponent < ViewComponent::Base
-  def initialize(event:)
+  SUBCLASSES = {
+    "feed_refresh" => "FeedRefreshDetailsComponent"
+  }.freeze
+
+  def self.for(event, admin: false)
+    klass = SUBCLASSES[event.type]&.constantize || self
+    klass.new(event: event, admin: admin)
+  end
+
+  def initialize(event:, admin: false)
     @event = event
+    @admin = admin
   end
 
   def call
     render(ListComponent.new) do |list|
       add_type_item(list)
       add_level_item(list)
-      add_user_item(list)
+      add_user_item(list) if @admin
       add_subject_item(list)
       add_created_item(list)
-      add_updated_item(list)
-      add_expires_item(list) if @event.expires_at.present?
+      add_updated_item(list) if @admin
+      add_expires_item(list) if @admin && @event.expires_at.present?
+      extra_items(list)
     end
   end
 
   private
 
+  # Extension point for subclasses to append type-specific rows. No-op here so
+  # the base carries no knowledge of any particular event type.
+  def extra_items(component)
+  end
+
   def add_type_item(component)
+    type_key = @admin ? "admin.events.type" : "events.type"
+
     component.with_item(ListComponent::StatItemComponent.new(
       label: "Type",
-      value: helpers.tag.code(@event.type, class: "text-sm", data: { key: "admin.events.type" })
+      value: helpers.tag.code(@event.type, class: "text-sm", data: { key: type_key })
     ))
   end
 
@@ -48,6 +74,14 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def add_subject_item(component)
+    if @admin
+      add_admin_subject_item(component)
+    else
+      add_plain_subject_item(component)
+    end
+  end
+
+  def add_admin_subject_item(component)
     parts = [subject_link || subject_fallback]
 
     if @event.subject_id.present?
@@ -55,7 +89,20 @@ class EventDetailsComponent < ViewComponent::Base
       parts << helpers.tag.span("##{@event.subject_id}", class: "text-slate-500")
     end
 
-    subject_value = helpers.safe_join(parts)
+    component.with_item(ListComponent::StatItemComponent.new(
+      label: "Subject",
+      value: helpers.safe_join(parts)
+    ))
+  end
+
+  def add_plain_subject_item(component)
+    return unless @event.subject_type.present?
+
+    subject_value = if @event.subject_id.present?
+      "#{@event.subject_type} ##{@event.subject_id}"
+    else
+      @event.subject_type
+    end
 
     component.with_item(ListComponent::StatItemComponent.new(
       label: "Subject",

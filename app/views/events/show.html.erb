@@ -26,7 +26,7 @@
     <%= render EventDescriptionComponent.for(@event) %>
   <% end %>
 
-  <%= render EventStatsComponent.new(event: @event) %>
+  <%= render EventDetailsComponent.for(@event) %>
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
