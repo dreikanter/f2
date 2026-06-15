@@ -28,7 +28,8 @@ class PostsHeatmapComponent < ViewComponent::Base
     HeatmapBuilder.build_calendar(
       values: heatmap_values,
       tooltip: ->(date:, score:, value: nil) { value.to_i.to_s },
-      tooltip_attribute: "data-tippy-content"
+      tooltip_attribute: "data-tippy-content",
+      border_lightness_factor: 1
     )
   end
 

@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/dreikanter/heatmap-builder.git
-  revision: 9f8c8627b5ce9f6caf82b32c227d766da9cb6743
+  revision: 7ed1949343a6f2e60eb22919b1871e14409ddc11
   specs:
-    heatmap-builder (0.4.1)
+    heatmap-builder (0.4.3)
 
 GIT
   remote: https://github.com/rails/rails.git
