@@ -13,8 +13,8 @@ jobs:
 
     env:
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      IMGPROXY_KEY_STAGING: ${{ secrets.IMGPROXY_KEY_STAGING }}
-      IMGPROXY_SALT_STAGING: ${{ secrets.IMGPROXY_SALT_STAGING }}
+      IMGPROXY_KEY: ${{ secrets.IMGPROXY_KEY }}
+      IMGPROXY_SALT: ${{ secrets.IMGPROXY_SALT }}
 
     steps:
       - name: Checkout code
