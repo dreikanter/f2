@@ -41,6 +41,9 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='config.resend_key']", text: /Resend key present/
     assert_select "[data-key='config.resend_signing_secret']", text: /Resend signing secret/
     assert_select "[data-key='config.honeybadger_key']", text: /Honeybadger/
+    assert_select "[data-key='config.imgproxy_endpoint']", text: /imgproxy endpoint/
+    assert_select "[data-key='config.imgproxy_key']", text: /imgproxy signing key/
+    assert_select "[data-key='config.imgproxy_salt']", text: /imgproxy signing salt/
     assert_select "[data-key='config.background_jobs']", text: /Background jobs/
   end
 
