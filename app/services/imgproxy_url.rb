@@ -7,7 +7,7 @@
 # previews still render straight from the source image.
 class ImgproxyUrl
   # Square edge length (px) for attachment preview thumbnails.
-  THUMBNAIL_SIZE = 100
+  THUMBNAIL_SIZE = 96
 
   # @param source_url [String] original image URL
   # @param width [Integer] target width in pixels
