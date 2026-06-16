@@ -39,7 +39,7 @@
   )) do |log| %>
     <% @events.each do |event| %>
       <% log.with_entry do %>
-        <%= render Admin::EventLogEntryComponent.new(event: event, href: admin_event_path(event)) %>
+        <%= render EventCardComponent.new(event: event, href: admin_event_path(event), mode: :extended) %>
       <% end %>
     <% end %>
   <% end %>

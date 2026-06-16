@@ -207,7 +207,7 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
       get status_path
       assert_response :success
-      assert_select 'li[data-key="events.entry"]', count: 2
+      assert_select '[data-key="events.entry"]', count: 2
     end
   end
 

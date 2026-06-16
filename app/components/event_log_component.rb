@@ -17,7 +17,7 @@ class EventLogComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, class: "space-y-3", id: DOM_ID, data: host_data) do
+    content_tag(:div, class: "space-y-2", id: DOM_ID, data: host_data) do
       safe_join([events_body, pagination_nav].compact)
     end
   end
@@ -50,7 +50,7 @@ class EventLogComponent < ViewComponent::Base
   def events_body
     return render(EmptyStateComponent.new("No events to show yet")) unless entries.any?
 
-    content_tag(:div, class: "space-y-3", data: { key: "events.list" }) do
+    content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
       safe_join(entries)
     end
   end

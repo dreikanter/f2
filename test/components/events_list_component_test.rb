@@ -5,14 +5,14 @@ class EventsListComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  test "#call should render each event as a list item inside a ul" do
+  test "#call should render each event as a card inside the list" do
     event1 = create(:event, type: "feed_refresh", level: :info, user: user)
     event2 = create(:event, type: "post_withdrawn", level: :warning, user: user)
 
     result = render_inline(EventsListComponent.new(events: [event1, event2]))
 
-    assert_not_nil result.css("ul[data-key='events.list'] > li[data-event-id='#{event1.id}']").first
-    assert_not_nil result.css("ul[data-key='events.list'] > li[data-event-id='#{event2.id}']").first
+    assert_not_nil result.css("[data-key='events.list'] > [data-event-id='#{event1.id}']").first
+    assert_not_nil result.css("[data-key='events.list'] > [data-event-id='#{event2.id}']").first
   end
 
   test "#call should wire up the polling controller when endpoint is given" do
