@@ -1,4 +1,6 @@
 class PostAttachmentsComponent < ViewComponent::Base
+  THUMBNAIL_SIZE = 100
+
   def initialize(post:)
     @post = post
   end
@@ -9,6 +11,10 @@ class PostAttachmentsComponent < ViewComponent::Base
 
   def attachment_urls
     @post.attachment_urls
+  end
+
+  def thumbnail_url(url)
+    ImgproxyUrl.thumbnail(url, width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE)
   end
 
   def extract_filename(url)
