@@ -12,7 +12,7 @@
           Filtering by <%= filter_parts.join(" • ") %>.
         </span>
       <% end %>
-      <span data-key="events.offset"><%= events_offset_summary(@offset) %></span>
+      <span data-key="events.offset"><%= events_offset_summary(@offset, system_wide: @filter.blank?) %></span>
     <% end %>
     <% if @filter.present? %>
       <% header.with_action_button do %>

@@ -18,9 +18,9 @@ module EventsHelper
 
   # Explains where the current page sits in the log without leaning on page
   # numbers: the offset is how many newer events come before what's shown.
-  def events_offset_summary(offset)
+  def events_offset_summary(offset, system_wide: false)
     if offset.zero?
-      "Showing the most recent events."
+      system_wide ? "Showing system-wide most recent events." : "Showing the most recent events."
     else
       "#{pluralize(offset, 'newer event')} above what's shown here."
     end
