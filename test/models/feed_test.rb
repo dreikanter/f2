@@ -856,25 +856,23 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil feed.import_after
   end
 
-  test "should require a date when import threshold is enabled" do
+  test "should default to the current time when the date is blank" do
     feed = build(:feed)
     feed.assign_attributes(import_after_enabled: "1", import_after_date: "", import_after_time: "")
 
-    assert_not feed.valid?
-    assert_includes feed.errors[:import_after], "needs a date"
-    assert_nil feed.import_after
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_in_delta Time.current, feed.import_after, 5.seconds
   end
 
-  test "should reject an unparseable import threshold date" do
+  test "should fall back to the current time for an unparseable date" do
     feed = build(:feed)
     feed.assign_attributes(import_after_enabled: "1", import_after_date: "not-a-date", import_after_time: "10:30")
 
-    assert_not feed.valid?
-    assert_includes feed.errors[:import_after], "isn't a valid date and time"
-    assert_nil feed.import_after
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_in_delta Time.current, feed.import_after, 5.seconds
   end
 
-  test "#import_after_date should return the submitted value after a failed validation" do
+  test "#import_after_date should return the submitted value" do
     feed = build(:feed)
     feed.assign_attributes(import_after_enabled: "1", import_after_date: "not-a-date")
 

@@ -66,7 +66,6 @@ class Feed < ApplicationRecord
   normalizes :target_group, with: ->(group) { group.present? ? group.to_s.strip.downcase : nil }
 
   validate :cron_expression_is_valid
-  validate :import_after_parts_are_valid
   validate :params_against_profile_schema
   validate :llm_credential_belongs_to_user
   validate :access_token_belongs_to_user
@@ -369,24 +368,15 @@ class Feed < ApplicationRecord
     self.import_after = compose_import_after
   end
 
+  # Builds import_after from the date and time parts. Time defaults to midnight
+  # when omitted. Rather than rejecting a missing or unparseable date, we fall
+  # back to the current moment so the user never has to fix a validation error.
   def compose_import_after
     return nil unless import_after_enabled
-    return nil if import_after_date.blank?
 
     Time.zone.strptime("#{import_after_date} #{import_after_time.presence || '00:00'}", "%Y-%m-%d %H:%M")
   rescue ArgumentError
-    nil
-  end
-
-  def import_after_parts_are_valid
-    return unless import_after_enabled
-    return if import_after.present?
-
-    if import_after_date.blank?
-      errors.add(:import_after, "needs a date")
-    else
-      errors.add(:import_after, "isn't a valid date and time")
-    end
+    Time.current
   end
 
   def cron_expression_is_valid
