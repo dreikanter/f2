@@ -17,7 +17,7 @@ class EventLogComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, class: "space-y-2", id: DOM_ID, data: host_data) do
+    content_tag(:div, id: DOM_ID, data: host_data) do
       safe_join([events_body, pagination_nav].compact)
     end
   end
@@ -58,7 +58,7 @@ class EventLogComponent < ViewComponent::Base
   def pagination_nav
     return if @older_url.blank? && @newer_url.blank?
 
-    content_tag(:nav, class: "flex items-center justify-between gap-3", aria: { label: "Events pagination" }, data: { key: "events.pagination" }) do
+    content_tag(:nav, class: "mt-6 flex items-center justify-between gap-3", aria: { label: "Events pagination" }, data: { key: "events.pagination" }) do
       safe_join([newer_link, older_link])
     end
   end
