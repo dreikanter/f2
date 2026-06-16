@@ -1,0 +1,50 @@
+name: Deploy imgproxy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-imgproxy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      IMGPROXY_KEY_STAGING: ${{ secrets.IMGPROXY_KEY_STAGING }}
+      IMGPROXY_SALT_STAGING: ${{ secrets.IMGPROXY_SALT_STAGING }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan dev.fffeeder.com >> ~/.ssh/known_hosts
+
+      - name: Deploy imgproxy
+        run: bin/kamal deploy -c config/deploy.imgproxy.yml

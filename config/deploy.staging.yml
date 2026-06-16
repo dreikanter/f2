@@ -59,29 +59,6 @@ accessories:
     volumes:
       - "/:/host:ro,rslave"
 
-  # Image proxy/resizer. Served at imgproxy.fffeeder.com, fronted by Cloudflare
-  # for edge caching. The host's 80/443 belong to kamal-proxy, so imgproxy is
-  # published on 8080 (plain HTTP) and Cloudflare terminates TLS:
-  #   - Add imgproxy.fffeeder.com as a proxied (orange-cloud) record on the
-  #     staging IP so Cloudflare caches responses.
-  #   - Add a Cloudflare Origin Rule routing the host to origin port 8080.
-  # URL signing is mandatory (IMGPROXY_KEY/IMGPROXY_SALT), so the public port
-  # only serves URLs the app has signed; unsigned requests get 403.
-  imgproxy:
-    image: ghcr.io/imgproxy/imgproxy:v4.0.5
-    host: dev.fffeeder.com
-    port: "8080:8080"
-    env:
-      clear:
-        IMGPROXY_BIND: ":8080"
-        # Reject unsigned URLs (keys are supplied as secrets below).
-        IMGPROXY_ENABLE_WEBP_DETECTION: "true"
-        # Long Cache-Control so Cloudflare holds each variant on the edge.
-        IMGPROXY_TTL: "31536000"
-      secret:
-        - IMGPROXY_KEY
-        - IMGPROXY_SALT
-
 # Environment variables.
 env:
   clear:
@@ -99,7 +76,7 @@ env:
     # resolution and quarters the per-process DB sampling.
     METRICS_FLUSH_INTERVAL: "60"
   # Shared by the web and jobs roles so the app can sign imgproxy URLs. Same
-  # values the imgproxy accessory verifies against.
+  # values the standalone imgproxy app verifies against.
   secret:
     - IMGPROXY_KEY
     - IMGPROXY_SALT

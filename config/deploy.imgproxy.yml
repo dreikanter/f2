@@ -1,0 +1,49 @@
+# Standalone Kamal app for imgproxy, deployed on demand and independently from
+# the main app:
+#
+#   bin/kamal deploy -c config/deploy.imgproxy.yml
+#
+# It shares the host's kamal-proxy, which routes imgproxy.fffeeder.com to this
+# container and manages its Let's Encrypt certificate. Cloudflare sits in front
+# with Full (strict) TLS for edge caching. URL signing is mandatory
+# (IMGPROXY_KEY/IMGPROXY_SALT); unsigned requests get 403, so the public
+# endpoint only serves URLs the app has signed.
+service: imgproxy
+
+image: dreikanter/imgproxy
+
+registry:
+  server: ghcr.io
+  username: dreikanter
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# imgproxy ships as a prebuilt public image; config/imgproxy/Dockerfile is a
+# thin FROM wrapper so Kamal can retag and push it to our registry.
+builder:
+  arch: amd64
+  dockerfile: config/imgproxy/Dockerfile
+  context: config/imgproxy
+
+servers:
+  web:
+    hosts:
+      - dev.fffeeder.com
+
+proxy:
+  ssl: true
+  host: imgproxy.fffeeder.com
+  app_port: 8080
+  # imgproxy serves its health endpoint at /health, not kamal-proxy's default /up.
+  healthcheck:
+    path: /health
+
+env:
+  clear:
+    IMGPROXY_BIND: ":8080"
+    IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    # Long Cache-Control so Cloudflare holds each variant on the edge.
+    IMGPROXY_TTL: "31536000"
+  secret:
+    - IMGPROXY_KEY
+    - IMGPROXY_SALT
