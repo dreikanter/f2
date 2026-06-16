@@ -85,6 +85,20 @@ class PostPreviewComponentTest < ViewComponent::TestCase
     assert_not_nil section.at_css('a[href="https://example.com/clip.mp4"]')
   end
 
+  test "treats attachments with unparseable urls as non-images" do
+    post_data = {
+      "content" => "Body",
+      "attachments" => ["https://example.com/bad image.jpg"]
+    }
+
+    result = render_inline(PostPreviewComponent.new(post_data: post_data))
+
+    section = result.at_css('[data-key="preview.attachments"]')
+    assert_not_nil section
+    assert_empty section.css("img")
+    assert_includes section.text, "https://example.com/bad image.jpg"
+  end
+
   test "renders content without a synthesized title heading" do
     post_data = { "content" => "Lorem ipsum dolor sit amet, the opening line of the post body" }
 
