@@ -603,6 +603,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'details[data-key="form.advanced-options"]:not([open])'
     assert_select '[data-key="form.import-after-fields"].hidden'
     assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]', false
+    assert_select 'input[data-key="form.import-after-time"][value="00:00"]'
   end
 
   test "#edit should expand advanced options when an import threshold is set" do
@@ -649,7 +650,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_nil feed.reload.import_after
   end
 
-  test "#update should rerender with an error for an invalid threshold date" do
+  test "#update should default to the current time for an invalid threshold date" do
     sign_in_as(user)
 
     patch feed_url(feed), params: {
@@ -660,10 +661,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
-    assert_select 'details[data-key="form.advanced-options"][open]'
-    assert_match "Isn&#39;t a valid date and time", response.body
-    assert_nil feed.reload.import_after
+    assert_redirected_to feed_path(feed)
+    assert_in_delta Time.current, feed.reload.import_after, 5.seconds
   end
 
   test "#create should accept import threshold params" do
