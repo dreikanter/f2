@@ -75,8 +75,14 @@ env:
     # The sampled gauges move on hour scales; a 60s push loses no visible
     # resolution and quarters the per-process DB sampling.
     METRICS_FLUSH_INTERVAL: "60"
-  # Shared by the web and jobs roles so the app can sign imgproxy URLs. Same
-  # values the standalone imgproxy app verifies against.
+  # Kamal deep-merges this destination over config/deploy.yml, and the merge
+  # replaces arrays rather than concatenating them. So this list must repeat
+  # the base secrets (RAILS_MASTER_KEY, POSTGRES_PASSWORD) — otherwise they
+  # never reach the staging container and the app boots without credentials.
+  # IMGPROXY_KEY/SALT are shared by the web and jobs roles so the app can sign
+  # imgproxy URLs, matching what the standalone imgproxy app verifies against.
   secret:
+    - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
     - IMGPROXY_KEY
     - IMGPROXY_SALT
