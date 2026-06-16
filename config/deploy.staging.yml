@@ -75,3 +75,8 @@ env:
     # The sampled gauges move on hour scales; a 60s push loses no visible
     # resolution and quarters the per-process DB sampling.
     METRICS_FLUSH_INTERVAL: "60"
+  # Shared by the web and jobs roles so the app can sign imgproxy URLs. Same
+  # values the standalone imgproxy app verifies against.
+  secret:
+    - IMGPROXY_KEY
+    - IMGPROXY_SALT

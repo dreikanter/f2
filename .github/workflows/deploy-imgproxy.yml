@@ -1,12 +1,10 @@
-name: Deploy Staging
+name: Deploy imgproxy
 
 on:
-  push:
-    branches: [ staging ]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-staging
+  group: deploy-imgproxy
   cancel-in-progress: false
 
 jobs:
@@ -15,21 +13,22 @@ jobs:
 
     env:
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      POSTGRES_PASSWORD_STAGING: ${{ secrets.POSTGRES_PASSWORD_STAGING }}
       IMGPROXY_KEY: ${{ secrets.IMGPROXY_KEY }}
       IMGPROXY_SALT: ${{ secrets.IMGPROXY_SALT }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
+      # imgproxy needs no app code, so skip the bundle and install only Kamal.
+      # Pin to the version in Gemfile.lock.
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+
+      - name: Install Kamal
+        run: gem install kamal -v 2.11.0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -51,13 +50,5 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan dev.fffeeder.com >> ~/.ssh/known_hosts
 
-      - name: Write Rails master key
-        env:
-          RAILS_MASTER_KEY_STAGING: ${{ secrets.RAILS_MASTER_KEY_STAGING }}
-        run: |
-          mkdir -p config/credentials
-          printf '%s' "$RAILS_MASTER_KEY_STAGING" > config/credentials/staging.key
-          chmod 600 config/credentials/staging.key
-
-      - name: Deploy to staging
-        run: bin/kamal deploy -d staging
+      - name: Deploy imgproxy
+        run: kamal deploy -c config/deploy.imgproxy.yml
