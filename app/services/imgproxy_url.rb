@@ -7,7 +7,7 @@
 # previews still render straight from the source image.
 class ImgproxyUrl
   # Square edge length (px) for attachment preview thumbnails.
-  THUMBNAIL_SIZE = 100
+  THUMBNAIL_SIZE = 96
 
   # @param source_url [String] original image URL
   # @param width [Integer] target width in pixels
@@ -23,6 +23,17 @@ class ImgproxyUrl
   # @return [String] signed imgproxy URL, or source_url when unconfigured/blank
   def self.preview(source_url)
     thumbnail(source_url, width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE)
+  end
+
+  # 1x/2x srcset for a square preview, so HiDPI displays get a sharp image
+  # instead of an upscaled THUMBNAIL_SIZE thumbnail.
+  #
+  # @param source_url [String] original image URL
+  # @return [String] srcset value ("<url> 1x, <url> 2x")
+  def self.preview_srcset(source_url)
+    one_x = preview(source_url)
+    two_x = thumbnail(source_url, width: THUMBNAIL_SIZE * 2, height: THUMBNAIL_SIZE * 2)
+    "#{one_x} 1x, #{two_x} 2x"
   end
 
   def initialize(source_url, width:, height:)

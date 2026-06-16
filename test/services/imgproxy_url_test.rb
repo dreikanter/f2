@@ -62,4 +62,18 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
       assert_equal "", ImgproxyUrl.thumbnail(nil, width: 100, height: 100)
     end
   end
+
+  test "#preview_srcset should offer 1x and 2x thumbnails for HiDPI displays" do
+    size = ImgproxyUrl::THUMBNAIL_SIZE
+
+    with_imgproxy_config(endpoint: "https://imgproxy.example.com", key: KEY, salt: SALT) do
+      srcset = ImgproxyUrl.preview_srcset("https://example.com/photo.jpg")
+      one_x, two_x = srcset.split(", ")
+
+      assert_includes one_x, "/rs:fill:#{size}:#{size}/"
+      assert one_x.end_with?(" 1x")
+      assert_includes two_x, "/rs:fill:#{size * 2}:#{size * 2}/"
+      assert two_x.end_with?(" 2x")
+    end
+  end
 end
