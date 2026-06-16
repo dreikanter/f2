@@ -25,6 +25,17 @@ class ImgproxyUrl
     thumbnail(source_url, width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE)
   end
 
+  # 1x/2x srcset for a square preview, so HiDPI displays get a sharp image
+  # instead of an upscaled THUMBNAIL_SIZE thumbnail.
+  #
+  # @param source_url [String] original image URL
+  # @return [String] srcset value ("<url> 1x, <url> 2x")
+  def self.preview_srcset(source_url)
+    one_x = preview(source_url)
+    two_x = thumbnail(source_url, width: THUMBNAIL_SIZE * 2, height: THUMBNAIL_SIZE * 2)
+    "#{one_x} 1x, #{two_x} 2x"
+  end
+
   def initialize(source_url, width:, height:)
     @source_url = source_url
     @width = width

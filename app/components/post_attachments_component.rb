@@ -15,6 +15,10 @@ class PostAttachmentsComponent < ViewComponent::Base
     ImgproxyUrl.preview(url)
   end
 
+  def thumbnail_srcset(url)
+    ImgproxyUrl.preview_srcset(url)
+  end
+
   def thumbnail_size
     ImgproxyUrl::THUMBNAIL_SIZE
   end
