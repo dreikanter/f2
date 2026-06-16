@@ -22,6 +22,7 @@
       ["card", "Card"],
       ["alert", "Alert"],
       ["empty-state", "Empty state"],
+      ["collapsible-section", "Collapsible section"],
       ["spinner", "Spinner"],
       ["stats-bar", "Stats bar"],
       ["list", "List"],
@@ -422,6 +423,26 @@
       <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Empty state</h2>
       <p class="text-slate-600">Shown when there's nothing to display yet.</p>
       <%= render EmptyStateComponent.new("No feeds yet — add your first source to get started") %>
+    </section>
+
+    <%# Collapsible section %>
+    <section id="collapsible-section" class="scroll-mt-6 space-y-4" data-key="section.collapsible-section">
+      <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Collapsible section</h2>
+      <p class="text-slate-600">A borderless expandable region for secondary content. The header toggles a chevron and reveals a body separated by a top border. Built on native <code>&lt;details&gt;</code>, so it works without JavaScript even in markup injected via Turbo Streams.</p>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">Closed by default</p>
+        <%= render CollapsibleSectionComponent.new(title: "Advanced options") do %>
+          <p class="text-slate-700">Settings that most people can safely ignore live here, tucked out of the way until needed.</p>
+        <% end %>
+      </div>
+
+      <div class="space-y-2">
+        <p class="<%= caption_classes %>">Open by default</p>
+        <%= render CollapsibleSectionComponent.new(title: "More actions", open: true) do %>
+          <p class="text-slate-700">Pass <code>open: true</code> to start expanded — handy when the section already has content worth showing.</p>
+        <% end %>
+      </div>
     </section>
 
     <%# Spinner %>

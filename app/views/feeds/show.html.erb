@@ -43,25 +43,15 @@
     <% end %>
   </section>
 
-  <div id="accordion-more-actions" data-accordion="collapse" data-active-classes="text-slate-900" data-inactive-classes="text-slate-600">
-    <h2 id="accordion-more-actions-heading">
-      <button type="button" class="flex items-center justify-between w-full py-5 font-medium text-slate-600 gap-3 cursor-pointer disabled:cursor-not-allowed" data-accordion-target="#accordion-more-actions-body" aria-expanded="false" aria-controls="accordion-more-actions-body">
-        <span>More Actions</span>
-        <svg data-accordion-icon class="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 15 7-7 7 7" /></svg>
-      </button>
-    </h2>
-    <div id="accordion-more-actions-body" class="hidden" aria-labelledby="accordion-more-actions-heading">
-      <div class="py-5 border-t border-slate-200">
-        <h2 class="text-lg font-semibold mb-3 text-slate-900">Danger Zone</h2>
-        <div class="flex gap-2">
-          <% if @feed.target_group.present? %>
-            <%= link_to "Purge feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
-          <% end %>
-          <%= link_to "Delete feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
-        </div>
-      </div>
+  <%= render CollapsibleSectionComponent.new(title: "More Actions", data: { key: "feed.more-actions" }) do %>
+    <h2 class="text-lg font-semibold mb-3 text-slate-900">Danger Zone</h2>
+    <div class="flex gap-2">
+      <% if @feed.target_group.present? %>
+        <%= link_to "Purge feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "purge-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
+      <% end %>
+      <%= link_to "Delete feed...", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-feed-modal-#{@feed.id}", action: "click->modal-trigger#open" } %>
     </div>
-  </div>
+  <% end %>
 </div>
 
 <% if @feed.target_group.present? %>
