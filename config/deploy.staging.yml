@@ -68,7 +68,7 @@ accessories:
   # URL signing is mandatory (IMGPROXY_KEY/IMGPROXY_SALT), so the public port
   # only serves URLs the app has signed; unsigned requests get 403.
   imgproxy:
-    image: ghcr.io/imgproxy/imgproxy:v3.27.2
+    image: ghcr.io/imgproxy/imgproxy:v4.0.5
     host: dev.fffeeder.com
     port: "8080:8080"
     env:
@@ -98,3 +98,8 @@ env:
     # The sampled gauges move on hour scales; a 60s push loses no visible
     # resolution and quarters the per-process DB sampling.
     METRICS_FLUSH_INTERVAL: "60"
+  # Shared by the web and jobs roles so the app can sign imgproxy URLs. Same
+  # values the imgproxy accessory verifies against.
+  secret:
+    - IMGPROXY_KEY
+    - IMGPROXY_SALT
