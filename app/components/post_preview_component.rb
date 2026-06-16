@@ -1,5 +1,4 @@
 class PostPreviewComponent < ViewComponent::Base
-  THUMBNAIL_SIZE = 100
   IMAGE_EXTENSIONS = %w[jpg jpeg png gif webp avif bmp svg].freeze
 
   def initialize(post_data:, index: nil)
@@ -67,7 +66,11 @@ class PostPreviewComponent < ViewComponent::Base
   end
 
   def thumbnail_url(url)
-    ImgproxyUrl.thumbnail(url, width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE)
+    ImgproxyUrl.preview(url)
+  end
+
+  def thumbnail_size
+    ImgproxyUrl::THUMBNAIL_SIZE
   end
 
   def other_attachments_list

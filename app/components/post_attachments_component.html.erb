@@ -4,7 +4,7 @@
       <%= link_to url, target: "_blank", rel: "noopener",
             class: "block overflow-hidden rounded-md border border-slate-200 transition hover:border-sky-400" do %>
         <%= image_tag thumbnail_url(url), alt: extract_filename(url), loading: "lazy",
-              width: 100, height: 100, class: "h-24 w-24 bg-slate-100 object-cover" %>
+              width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-slate-100 object-cover" %>
       <% end %>
     <% end %>
   </div>

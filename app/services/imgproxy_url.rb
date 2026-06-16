@@ -6,12 +6,23 @@
 # development and tests — the original source URL is returned unchanged so
 # previews still render straight from the source image.
 class ImgproxyUrl
+  # Square edge length (px) for attachment preview thumbnails.
+  THUMBNAIL_SIZE = 100
+
   # @param source_url [String] original image URL
   # @param width [Integer] target width in pixels
   # @param height [Integer] target height in pixels
   # @return [String] signed imgproxy URL, or source_url when unconfigured/blank
   def self.thumbnail(source_url, width:, height:)
     new(source_url, width: width, height: height).url
+  end
+
+  # Square preview thumbnail at the standard THUMBNAIL_SIZE.
+  #
+  # @param source_url [String] original image URL
+  # @return [String] signed imgproxy URL, or source_url when unconfigured/blank
+  def self.preview(source_url)
+    thumbnail(source_url, width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE)
   end
 
   def initialize(source_url, width:, height:)
