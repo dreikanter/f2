@@ -82,6 +82,17 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     assert incremented
   end
 
+  test "does not report Loader::Error to the error tracker" do
+    WebMock.stub_request(:get, feed.url).to_return(status: 404)
+
+    reported = false
+    Rails.error.stub(:report, ->(*, **) { reported = true }) do
+      FeedRefreshJob.perform_now(feed.id)
+    end
+
+    assert_not reported
+  end
+
   test ".perform_now should skip without raising when the feed is already being refreshed" do
     feed = create(:feed, feed_profile_key: "rss")
 
