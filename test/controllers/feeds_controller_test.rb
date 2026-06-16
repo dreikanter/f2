@@ -514,7 +514,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(feed)
 
     assert_response :success
-    assert_select "h2", text: "Recent activity", count: 1
+    assert_select "h2", text: "Recent Activity", count: 1
     assert_select "[data-key='events.entry'][data-event-type='feed_auto_disabled']"
     assert_select "[data-key='events.error_count']", text: "(10 failures in a row)"
   end
