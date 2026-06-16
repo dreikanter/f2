@@ -11,6 +11,14 @@ class PostAttachmentsComponent < ViewComponent::Base
     @post.attachment_urls
   end
 
+  def thumbnail_url(url)
+    ImgproxyUrl.preview(url)
+  end
+
+  def thumbnail_size
+    ImgproxyUrl::THUMBNAIL_SIZE
+  end
+
   def extract_filename(url)
     uri = URI.parse(url)
     filename = File.basename(uri.path)

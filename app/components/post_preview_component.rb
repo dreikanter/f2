@@ -1,4 +1,6 @@
 class PostPreviewComponent < ViewComponent::Base
+  IMAGE_EXTENSIONS = %w[jpg jpeg png gif webp avif bmp svg].freeze
+
   def initialize(post_data:, index: nil)
     @post_data = post_data || {}
     @index = index
@@ -55,9 +57,25 @@ class PostPreviewComponent < ViewComponent::Base
     valid_attachments.any?
   end
 
-  def attachments_list
+  def image_attachments
+    @image_attachments ||= valid_attachments.select { |attachment| image_attachment?(attachment) }
+  end
+
+  def other_attachments
+    @other_attachments ||= valid_attachments.reject { |attachment| image_attachment?(attachment) }
+  end
+
+  def thumbnail_url(url)
+    ImgproxyUrl.preview(url)
+  end
+
+  def thumbnail_size
+    ImgproxyUrl::THUMBNAIL_SIZE
+  end
+
+  def other_attachments_list
     helpers.content_tag(:ul, class: "list-disc space-y-2 pl-4") do
-      helpers.safe_join(valid_attachments.map { |attachment| attachment_list_item(attachment) })
+      helpers.safe_join(other_attachments.map { |attachment| attachment_list_item(attachment) })
     end
   end
 
@@ -90,6 +108,19 @@ class PostPreviewComponent < ViewComponent::Base
 
   def attachment_type(attachment)
     attachment.is_a?(Hash) ? attachment["type"].presence : nil
+  end
+
+  # Treat an attachment as an image when its declared type says so, or — when no
+  # type is given — when the URL ends in a known image extension. Only images get
+  # a thumbnail; everything else stays a link to avoid broken previews.
+  def image_attachment?(attachment)
+    type = attachment[:type].to_s.downcase
+    return type.start_with?("image") if type.present?
+
+    extension = File.extname(URI.parse(attachment[:url]).path).delete(".").downcase
+    IMAGE_EXTENSIONS.include?(extension)
+  rescue URI::InvalidURIError
+    false
   end
 
   def attachment_list_item(attachment)

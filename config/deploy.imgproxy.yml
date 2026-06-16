@@ -44,6 +44,15 @@ env:
     IMGPROXY_ENABLE_WEBP_DETECTION: "true"
     # Long Cache-Control so Cloudflare holds each variant on the edge.
     IMGPROXY_TTL: "31536000"
+    # Reject oversized sources before processing to protect CPU/memory.
+    IMGPROXY_MAX_SRC_RESOLUTION: "50"        # megapixels
+    IMGPROXY_MAX_SRC_FILE_SIZE: "10485760"   # 10 MB
+    IMGPROXY_DOWNLOAD_TIMEOUT: "5"           # seconds
+    # Serve a placeholder (resized to the requested size) when the source can't
+    # be fetched or processed: timeouts, oversize rejections, 404s, bad formats.
+    IMGPROXY_FALLBACK_IMAGE_URL: "https://dev.fffeeder.com/imgproxy-fallback.svg"
+    IMGPROXY_FALLBACK_IMAGE_HTTP_CODE: "200"
+    IMGPROXY_FALLBACK_IMAGE_TTL: "86400"
   secret:
     - IMGPROXY_KEY
     - IMGPROXY_SALT

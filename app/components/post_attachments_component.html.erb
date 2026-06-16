@@ -2,9 +2,9 @@
   <div class="flex flex-wrap gap-3">
     <% attachment_urls.each do |url| %>
       <%= link_to url, target: "_blank", rel: "noopener",
-            class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center" do %>
-        <%= helpers.icon("file-image", css_class: "size-4") %>
-        <span class="sr-only"><%= extract_filename(url) %></span>
+            class: "block overflow-hidden rounded-md border border-slate-200 transition hover:border-sky-400" do %>
+        <%= image_tag thumbnail_url(url), alt: extract_filename(url), loading: "lazy",
+              width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-slate-100 object-cover" %>
       <% end %>
     <% end %>
   </div>
