@@ -1,9 +1,9 @@
-class Admin::EventLogEntryComponent < ViewComponent::Base
+class EventCardComponent < ViewComponent::Base
   include EventLogEntryPresentation
 
-  # Warning and error cards reuse the alert palette so problems stand out
-  # while scanning the log; routine events stay neutral. The border picks a
-  # slightly darker shade of the background hue, like AlertComponent does.
+  # Warning and error cards reuse the alert palette so problems stand out while
+  # scanning the log; routine events stay neutral. The border picks a slightly
+  # darker shade of the background hue, like AlertComponent does.
   LEVEL_TINTS = {
     "warning" => { border: "border-amber-200", background: "bg-amber-100 hover:bg-amber-200" },
     "error" => { border: "border-red-200", background: "bg-red-100 hover:bg-red-200" }
@@ -11,14 +11,22 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
 
   DEFAULT_TINT = { border: "border-slate-200", background: "bg-white hover:bg-slate-50" }.freeze
 
-  def initialize(event:, href:)
+  # `:simplified` shows just the severity, description and timestamp (status and
+  # feed pages). `:extended` adds a footer with the event type, user and target
+  # for the admin log.
+  def initialize(event:, href:, mode: :simplified)
     @event = event
     @href = href
+    @mode = mode
   end
 
   private
 
-  attr_reader :event, :href
+  attr_reader :event, :href, :mode
+
+  def extended?
+    mode == :extended
+  end
 
   def card_classes
     helpers.class_names("w-full rounded-lg border shadow-xs transition duration-75", tint[:border], tint[:background])
@@ -32,9 +40,11 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
     LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
   end
 
-  # The severity gutter doubles as a drill-down: clicking the icon narrows
-  # the log to events of the same level.
-  def severity_link
+  # In the admin log the severity icon doubles as a drill-down: clicking it
+  # narrows the log to events of the same level. Elsewhere it is a plain marker.
+  def severity
+    return severity_marker unless extended?
+
     helpers.link_to(severity_icon,
                     helpers.admin_events_path(filter: { level: event.level }),
                     class: "flex w-4 shrink-0 items-center justify-center",
@@ -42,17 +52,21 @@ class Admin::EventLogEntryComponent < ViewComponent::Base
                     data: { key: "events.severity" })
   end
 
-  # The timestamp sits leftmost so it survives the narrow-screen truncation;
-  # everything after it clips with an ellipsis.
-  def footer_items
-    [timestamp_link, type_link, user_label, target_label].compact
+  def severity_marker
+    helpers.content_tag(:span, severity_icon,
+                        class: "flex w-4 shrink-0 items-center justify-center",
+                        data: { key: "events.severity" })
   end
 
   def timestamp_link
     helpers.link_to(helpers.short_time_ago(event.created_at), href,
-                    class: "font-medium transition hover:text-slate-700",
+                    class: "shrink-0 text-sm font-medium tabular-nums text-slate-400 transition hover:text-slate-700",
                     title: event.created_at.rfc3339,
                     data: { key: "events.timestamp" })
+  end
+
+  def footer_items
+    [type_link, user_label, target_label].compact
   end
 
   def type_link

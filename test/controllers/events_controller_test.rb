@@ -88,14 +88,14 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "#index should nest entry list items inside a list element" do
+  test "#index should render each event as a card inside the list" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: user)
 
     get events_path
 
     assert_response :success
-    assert_select "ul[data-key='events.list'] > li[data-key='events.entry']"
+    assert_select "[data-key='events.list'] > [data-key='events.entry']"
   end
 
   test "#index should order by created_at, not insertion id" do

@@ -14,7 +14,7 @@ class EventsListComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, id: DOM_ID, class: "space-y-3", data: host_data) do
+    content_tag(:div, id: DOM_ID, class: "space-y-2", data: host_data) do
       safe_join([events_body, pagination_nav].compact)
     end
   end
@@ -24,8 +24,8 @@ class EventsListComponent < ViewComponent::Base
   def events_body
     return render(EmptyStateComponent.new("No events to show yet")) unless @events.any?
 
-    content_tag(:ul, class: ListComponent::DEFAULT_CSS_CLASSES, data: { key: "events.list" }) do
-      safe_join(@events.map { |event| render(EventsListEntryComponent.new(event: event, href: helpers.event_path(event))) })
+    content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
+      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: helpers.event_path(event))) })
     end
   end
 

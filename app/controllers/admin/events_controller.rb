@@ -25,7 +25,7 @@ class Admin::EventsController < ApplicationController
   private
 
   def entry_component(event)
-    Admin::EventLogEntryComponent.new(event: event, href: admin_event_path(event))
+    EventCardComponent.new(event: event, href: admin_event_path(event), mode: :extended)
   end
 
   def events_log_path(**params)
