@@ -1,13 +1,8 @@
-# Standalone Kamal app for imgproxy, deployed on demand and independently from
-# the main app:
+# Standalone Kamal app for imgproxy, deployed independently from the main app:
 #
 #   bin/kamal deploy -c config/deploy.imgproxy.yml
 #
-# It shares the host's kamal-proxy, which routes imgproxy.fffeeder.com to this
-# container and manages its Let's Encrypt certificate. Cloudflare sits in front
-# with Full (strict) TLS for edge caching. URL signing is mandatory
-# (IMGPROXY_KEY/IMGPROXY_SALT); unsigned requests get 403, so the public
-# endpoint only serves URLs the app has signed.
+# See docs/deployment-imgproxy.md for secrets, DNS, and Cloudflare setup.
 service: imgproxy
 
 image: dreikanter/imgproxy
@@ -27,6 +22,11 @@ builder:
 
 servers:
   web:
+    # The deploy host is the box Kamal SSHes into and where kamal-proxy runs the
+    # ACME challenge, so it must resolve directly to the server. Do NOT use
+    # imgproxy.fffeeder.com here: that name is Cloudflare-proxied (the CDN), so
+    # SSH and Let's Encrypt would hit Cloudflare instead of the origin. The
+    # public CDN name is set as proxy.host below.
     hosts:
       - dev.fffeeder.com
 

@@ -60,9 +60,9 @@ bin/kamal
 - **Committed:** yes
 - **Format:** Kamal secrets file; shell-like assignment
 - **Purpose:** Shared secret mappings for all destinations.
-- **Contains:** `KAMAL_REGISTRY_PASSWORD=$GHCR_TOKEN`.
-- **Depends on:** local `GHCR_TOKEN` environment variable.
-- **Used when:** Kamal logs in to GHCR to push or pull images.
+- **Contains:** `KAMAL_REGISTRY_PASSWORD=$GHCR_TOKEN`, plus `IMGPROXY_KEY` and `IMGPROXY_SALT` shared by the app (URL signing) and the imgproxy deploy.
+- **Depends on:** local `GHCR_TOKEN`, `IMGPROXY_KEY`, and `IMGPROXY_SALT` environment variables.
+- **Used when:** Kamal logs in to GHCR; the app signs image URLs; imgproxy verifies them. See [deployment-imgproxy.md](deployment-imgproxy.md).
 
 ### `.kamal/secrets.staging`
 

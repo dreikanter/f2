@@ -91,11 +91,18 @@ Kamal destination deploys read:
 .kamal/secrets.<destination>  # only if present
 ```
 
-This project keeps the GHCR token mapping in `.kamal/secrets-common`:
+This project keeps the GHCR token and the shared imgproxy signing key/salt in
+`.kamal/secrets-common`:
 
 ```bash
 KAMAL_REGISTRY_PASSWORD=$GHCR_TOKEN
+IMGPROXY_KEY=$IMGPROXY_KEY
+IMGPROXY_SALT=$IMGPROXY_SALT
 ```
+
+The web and jobs roles use `IMGPROXY_KEY`/`IMGPROXY_SALT` to sign image URLs. The
+imgproxy service that verifies them is deployed separately — see
+[deployment-imgproxy.md](deployment-imgproxy.md).
 
 Destination-specific files provide the database password and Rails credentials key. Each destination reads its own shell variable so both can stay exported at once without crossing values:
 
@@ -115,6 +122,8 @@ Before deploying, make sure these are available locally:
 export GHCR_TOKEN=<ghcr-token>
 export POSTGRES_PASSWORD_STAGING=<staging-database-password>
 export POSTGRES_PASSWORD_PRODUCTION=<production-database-password>
+export IMGPROXY_KEY=<imgproxy-signing-key>
+export IMGPROXY_SALT=<imgproxy-signing-salt>
 ```
 
 And make sure the destination credentials key exists locally:
