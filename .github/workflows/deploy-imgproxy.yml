@@ -20,11 +20,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # imgproxy needs no app code, so skip the bundle and install only Kamal.
+      # Pin to the version in Gemfile.lock.
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+
+      - name: Install Kamal
+        run: gem install kamal -v 2.11.0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -47,4 +51,4 @@ jobs:
           ssh-keyscan dev.fffeeder.com >> ~/.ssh/known_hosts
 
       - name: Deploy imgproxy
-        run: bin/kamal deploy -c config/deploy.imgproxy.yml
+        run: kamal deploy -c config/deploy.imgproxy.yml
