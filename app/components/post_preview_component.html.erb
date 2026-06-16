@@ -37,9 +37,22 @@
         <% end %>
 
         <% if attachments? %>
-          <section class="space-y-2">
+          <section class="space-y-2" data-key="preview.attachments">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
-            <%= attachments_list %>
+            <% if image_attachments.any? %>
+              <div class="flex flex-wrap gap-2">
+                <% image_attachments.each do |attachment| %>
+                  <%= link_to attachment[:url], target: "_blank", rel: "noopener",
+                        class: "block overflow-hidden rounded-md border border-slate-200 transition hover:border-sky-400" do %>
+                    <%= image_tag thumbnail_url(attachment[:url]), alt: "", loading: "lazy",
+                          width: 100, height: 100, class: "h-24 w-24 bg-slate-100 object-cover" %>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+            <% if other_attachments.any? %>
+              <%= other_attachments_list %>
+            <% end %>
           </section>
         <% end %>
       </div>
