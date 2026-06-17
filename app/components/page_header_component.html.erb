@@ -1,20 +1,25 @@
-<header class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-  <div class="flex flex-col gap-5">
-    <h1 <%= tag.attributes(class: class_names("text-4xl font-semibold mb-0 text-slate-900", "flex items-center gap-3" => title_icon?), data: @title_data) %>>
-      <%= title_icon if title_icon? %>
-      <%= @title %>
-    </h1>
-    <% if context_paragraphs? %>
-      <% context_paragraphs.each do |paragraph| %>
-        <p class="text-slate-600"><%= paragraph %></p>
-      <% end %>
-    <% end %>
-  </div>
-  <% if action_buttons? %>
-    <div class="flex w-full items-center justify-start gap-3 sm:w-auto sm:justify-end">
-      <% action_buttons.each do |button| %>
-        <%= button %>
+<div class="flex flex-col gap-2">
+  <% if breadcrumb? %>
+    <div><%= breadcrumb %></div>
+  <% end %>
+  <header class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+    <div class="flex flex-col gap-5">
+      <h1 <%= tag.attributes(class: class_names("text-4xl font-semibold mb-0 text-slate-900", "flex items-center gap-3" => title_icon?), data: @title_data) %>>
+        <%= title_icon if title_icon? %>
+        <%= @title %>
+      </h1>
+      <% if context_paragraphs? %>
+        <% context_paragraphs.each do |paragraph| %>
+          <p class="text-slate-600"><%= paragraph %></p>
+        <% end %>
       <% end %>
     </div>
-  <% end %>
-</header>
+    <% if action_buttons? %>
+      <div class="flex w-full items-center justify-start gap-3 sm:w-auto sm:justify-end">
+        <% action_buttons.each do |button| %>
+          <%= button %>
+        <% end %>
+      </div>
+    <% end %>
+  </header>
+</div>
