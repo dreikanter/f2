@@ -21,6 +21,7 @@ class FeedIdentificationFetcher
     end
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_input_for_logging(@input)}: #{e.class} - #{e.message}")
+    Rails.error.report(e, context: { input: sanitize_input_for_logging(@input) })
     feed_identification.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
   end
 
