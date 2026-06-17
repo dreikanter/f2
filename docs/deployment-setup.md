@@ -236,6 +236,12 @@ EDITOR="code --wait" bin/rails credentials:edit --environment production
 
 If staging does not have a valid key, the app still runs, but logs will include Honeybadger `403` warnings.
 
+Reported errors are tagged with the deployed git revision (`APP_REVISION`, set by
+Kamal), so Honeybadger can group errors by release and show when each first
+appeared. After every `bin/kamal deploy`, the `.kamal/hooks/post-deploy` hook
+notifies Honeybadger of the new deploy by running `bin/rails honeybadger:notify_deploy`
+inside the booted container. With no API key configured the notification is a no-op.
+
 ## Troubleshooting
 
 If deploy fails or the target does not become healthy, check the app and accessory logs:
