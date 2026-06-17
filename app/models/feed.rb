@@ -36,7 +36,7 @@ class Feed < ApplicationRecord
 
   belongs_to :user
   belongs_to :access_token, optional: true
-  belongs_to :llm_credential, optional: true
+  belongs_to :ai_credential, optional: true
 
   has_one :feed_schedule, dependent: :destroy
 
@@ -67,9 +67,9 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
-  validate :llm_credential_belongs_to_user
+  validate :ai_credential_belongs_to_user
   validate :access_token_belongs_to_user
-  validate :llm_credential_required_when_enabled_ai_profile, if: :enabled?
+  validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -416,12 +416,12 @@ class Feed < ApplicationRecord
     end
   end
 
-  def llm_credential_belongs_to_user
-    return if llm_credential.nil?
+  def ai_credential_belongs_to_user
+    return if ai_credential.nil?
     return if user_id.nil?
-    return if llm_credential.user_id == user_id
+    return if ai_credential.user_id == user_id
 
-    errors.add(:llm_credential, "must belong to the same user")
+    errors.add(:ai_credential, "must belong to the same user")
   end
 
   def access_token_belongs_to_user
@@ -432,14 +432,14 @@ class Feed < ApplicationRecord
     errors.add(:access_token, "must belong to the same user")
   end
 
-  def llm_credential_required_when_enabled_ai_profile
+  def ai_credential_required_when_enabled_ai_profile
     return unless feed_profile_present?
     return unless FeedProfile.depends_on_ai?(feed_profile_key)
 
-    if llm_credential.nil?
-      errors.add(:llm_credential, "must be selected for AI-backed feeds")
-    elsif !llm_credential.active?
-      errors.add(:llm_credential, "must be active (currently #{llm_credential.state})")
+    if ai_credential.nil?
+      errors.add(:ai_credential, "must be selected for AI-backed feeds")
+    elsif !ai_credential.active?
+      errors.add(:ai_credential, "must be active (currently #{ai_credential.state})")
     end
   end
 

@@ -56,8 +56,8 @@ class FeedsController < ApplicationController
     if @feed.save
       cleanup_feed_identification(@feed.url) if @feed.url
 
-      if require_llm_credentials?
-        redirect_to new_llm_credential_path(feed_id: @feed.id)
+      if require_ai_credentials?
+        redirect_to new_ai_credential_path(feed_id: @feed.id)
       elsif require_access_token?
         redirect_to new_access_token_path(feed_id: @feed.id)
       elsif enable_feed?
@@ -95,7 +95,7 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_llm_credentials? && !require_access_token?
+    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_ai_credentials? && !require_access_token?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
@@ -104,8 +104,8 @@ class FeedsController < ApplicationController
       record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.url) if @feed.url
 
-      if require_llm_credentials?
-        redirect_to new_llm_credential_path(feed_id: @feed.id)
+      if require_ai_credentials?
+        redirect_to new_ai_credential_path(feed_id: @feed.id)
       elsif require_access_token?
         redirect_to new_access_token_path(feed_id: @feed.id)
       elsif enable_feed? && !@feed.enabled?
@@ -128,7 +128,7 @@ class FeedsController < ApplicationController
 
   private
 
-  def require_llm_credentials?
+  def require_ai_credentials?
     params[:commit] == "save_as_draft_and_add_credentials"
   end
 
@@ -208,7 +208,7 @@ class FeedsController < ApplicationController
       :description,
       :target_group,
       :access_token_id,
-      :llm_credential_id,
+      :ai_credential_id,
       :cron_expression,
       :schedule_interval,
       :import_after_enabled,
@@ -232,7 +232,7 @@ class FeedsController < ApplicationController
   # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
     always_permitted = %i[
-      name description target_group access_token_id llm_credential_id schedule_interval
+      name description target_group access_token_id ai_credential_id schedule_interval
       import_after_enabled import_after_date import_after_time
     ]
     draft_only_permitted = [:url, :feed_profile_key, { params: %i[url query] }]

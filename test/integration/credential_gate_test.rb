@@ -27,12 +27,12 @@ class CredentialGateTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "credential gate does not include a stray link to new_llm_credential_path" do
+  test "credential gate does not include a stray link to new_ai_credential_path" do
     sign_in_as(user)
 
     get feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => "https://example.com" })
 
     assert_response :success
-    assert_select "[data-key='credentials.gate'] a[href*='/llm_credentials/new']", false
+    assert_select "[data-key='credentials.gate'] a[href*='/ai_credentials/new']", false
   end
 end

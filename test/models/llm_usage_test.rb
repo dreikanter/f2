@@ -35,8 +35,8 @@ class LlmUsageTest < ActiveSupport::TestCase
     )
   end
 
-  test "should allow feed and llm_credential to be nil for preview / validation calls" do
-    usage = build(:llm_usage, user: user, feed: nil, llm_credential: nil, purpose: :preview)
+  test "should allow feed and ai_credential to be nil for preview / validation calls" do
+    usage = build(:llm_usage, user: user, feed: nil, ai_credential: nil, purpose: :preview)
     assert usage.valid?
   end
 

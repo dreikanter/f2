@@ -93,7 +93,7 @@ class FeedPreviewsController < ApplicationController
     return false unless FeedProfile.exists?(profile_key)
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
-    !Current.user.llm_credentials.active.exists?
+    !Current.user.ai_credentials.active.exists?
   end
 
   def render_state(preview, inert_while_running: false)

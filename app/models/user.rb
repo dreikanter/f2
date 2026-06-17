@@ -13,7 +13,7 @@ class User < ApplicationRecord
   has_many :feed_identifications, dependent: :destroy
   has_many :permissions, dependent: :destroy
   has_many :access_tokens, dependent: :destroy
-  has_many :llm_credentials, dependent: :destroy
+  has_many :ai_credentials, dependent: :destroy
   has_many :llm_usages, dependent: :destroy
   has_many :created_invites, class_name: "Invite", foreign_key: :created_by_user_id, dependent: :destroy
 

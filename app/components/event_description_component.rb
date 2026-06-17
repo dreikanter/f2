@@ -62,8 +62,8 @@ class EventDescriptionComponent < ViewComponent::Base
       helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     when Post
       helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
-    when LlmCredential
-      helpers.link_to(event.subject.display_name, helpers.llm_credential_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+    when AiCredential
+      helpers.link_to(event.subject.display_name, helpers.ai_credential_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     else
       ""
     end

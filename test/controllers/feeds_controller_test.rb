@@ -350,7 +350,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_predicate feed, :draft?
-    assert_redirected_to new_llm_credential_path(feed_id: feed.id)
+    assert_redirected_to new_ai_credential_path(feed_id: feed.id)
   end
 
   test "#create gate-commit should ignore enable_feed=1" do
@@ -376,7 +376,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed = Feed.last
     assert_predicate feed, :draft?, "Gate commit must force draft regardless of enable_feed"
-    assert_redirected_to new_llm_credential_path(feed_id: feed.id)
+    assert_redirected_to new_ai_credential_path(feed_id: feed.id)
   end
 
   test "#create should render form with errors on validation failure" do
@@ -932,7 +932,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
       commit: "save_as_draft_and_add_credentials"
     }
 
-    assert_redirected_to new_llm_credential_path(feed_id: draft.id)
+    assert_redirected_to new_ai_credential_path(feed_id: draft.id)
     draft.reload
     assert_predicate draft, :draft?
     assert_equal "Updated Draft Name", draft.name

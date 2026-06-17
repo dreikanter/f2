@@ -8,7 +8,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
   def feed
     @feed ||= create(:feed,
                      user: user,
-                     llm_credential: create(:llm_credential, :active, user: user),
+                     ai_credential: create(:ai_credential, :active, user: user),
                      feed_profile_key: "llm_website_extractor",
                      params: { "url" => "https://example.com" })
   end

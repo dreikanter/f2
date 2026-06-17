@@ -6,13 +6,13 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   def credential
-    @credential ||= create(:llm_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
   def feed
     @feed ||= create(:feed,
                      user: user,
-                     llm_credential: credential,
+                     ai_credential: credential,
                      feed_profile_key: "rss",
                      params: { "url" => "http://example.com/feed.xml" })
   end
@@ -66,8 +66,8 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   test ".for should resolve a user+provider to the active default credential" do
-    create(:llm_credential, :active, user: user)
-    default = create(:llm_credential, :active, :default, user: user)
+    create(:ai_credential, :active, user: user)
+    default = create(:ai_credential, :active, :default, user: user)
 
     client = LlmClient.for(user, "anthropic")
 
@@ -75,7 +75,7 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   test ".for should raise CredentialMissing when no active credential exists" do
-    create(:llm_credential, :inactive, user: user)
+    create(:ai_credential, :inactive, user: user)
 
     assert_raises(LlmClient::CredentialMissing) do
       LlmClient.for(user, "anthropic")

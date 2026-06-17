@@ -1,0 +1,72 @@
+<%# locals: (ai_credential:, feed_id: nil) %>
+<div class="space-y-6" data-key="ai_credential.show">
+  <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
+  <% end %>
+
+  <% case ai_credential.state %>
+  <% when "pending", "validating" %>
+    <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-xs"
+         data-key="ai_credential.validating">
+      <div class="flex-shrink-0">
+        <%= render SpinnerComponent.new %>
+      </div>
+      <div class="space-y-1">
+        <p class="font-semibold text-slate-800">Checking your credential...</p>
+        <p class="text-slate-600">This usually takes a few seconds.</p>
+      </div>
+    </div>
+  <% when "active" %>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
+                                  data: { credential_state: "active", key: "ai_credential.active" }) do %>
+      <span>Credential is active</span>
+    <% end %>
+
+    <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
+  <% when "inactive" %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
+                                  data: { credential_state: "inactive", key: "ai_credential.inactive" }) do %>
+      <% if ai_credential.last_error.present? %>
+        <span><%= ai_credential.last_error %></span>
+      <% else %>
+        <span>This key didn't work. Grab a fresh key from your provider's dashboard and add it again.</span>
+      <% end %>
+    <% end %>
+
+    <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
+  <% end %>
+
+  <div class="flex flex-wrap gap-3">
+    <% if feed_id.present? %>
+      <% if ai_credential.active? %>
+        <%= link_to "Continue setting up your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500",
+                    data: { key: "ai_credential.return-to" } %>
+      <% else %>
+        <%= link_to "Back to your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50",
+                    data: { key: "ai_credential.return-to" } %>
+      <% end %>
+    <% end %>
+    <%= link_to "Back to credentials",
+                ai_credentials_path,
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+    <% unless ai_credential.is_default? %>
+      <%= button_to "Make default",
+                    ai_credential_default_path(ai_credential),
+                    method: :patch,
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+    <% end %>
+    <%= link_to "Edit",
+                edit_ai_credential_path(ai_credential),
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50",
+                data: { key: "ai_credential.edit" } %>
+    <%= button_to "Delete",
+                  ai_credential_path(ai_credential),
+                  method: :delete,
+                  form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-base font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+  </div>
+</div>

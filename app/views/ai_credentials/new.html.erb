@@ -1,0 +1,63 @@
+<% content_for :title, "New AI Credential" %>
+
+<div class="space-y-8" data-key="ai_credentials.new">
+  <%= render PageHeaderComponent.new(title: "Add an AI Credential") do |header| %>
+    <% header.with_context_paragraph("Add an API key so AI-powered feeds can fetch web content.") %>
+  <% end %>
+
+  <div class="max-w-2xl">
+    <%= form_with model: @ai_credential, url: ai_credentials_path(feed_id: @feed&.id) do |f| %>
+      <% if @ai_credential.errors.any? %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <ul class="list-disc list-inside text-sm">
+            <% @ai_credential.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+
+      <div class="space-y-10">
+        <div class="space-y-2">
+          <%= f.label :provider, "AI Provider", class: "block font-semibold text-slate-800" %>
+          <%= f.select :provider,
+                       LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
+                       {},
+                       class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                       data: { key: "ai_credentials.provider" } %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :display_name, "Name", class: "block font-semibold text-slate-800" %>
+          <%= f.text_field :display_name,
+                           placeholder: "Personal Anthropic key",
+                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                           data: { key: "ai_credentials.display-name" } %>
+          <p class="text-sm text-slate-500">A label so you can tell credentials apart. Leave blank to get one automatically.</p>
+        </div>
+
+        <div class="space-y-2">
+          <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-slate-800" %>
+          <%= password_field_tag "ai_credential[credential_data][api_key]",
+                                 @ai_credential.credential_data&.dig("api_key"),
+                                 id: "ai_credential_credential_data_api_key",
+                                 class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                                 required: true,
+                                 autocomplete: "off",
+                                 data: { key: "ai_credentials.credential-data.api_key" } %>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
+        <%= f.submit "Save Credential",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                     data: { turbo_submits_with: "Saving..." } %>
+        <% if @feed %>
+          <%= link_to "Back to your feed", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50", data: { key: "ai_credentials.back-to-feed" } %>
+        <% else %>
+          <%= link_to "Cancel", ai_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
