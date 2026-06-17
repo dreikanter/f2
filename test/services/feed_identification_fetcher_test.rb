@@ -90,7 +90,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "success", feed_identification.status
-    assert_nil feed_identification.candidates.first["title"]
+    assert_equal "example.com", feed_identification.candidates.first["title"]
   end
 
   test "#identify should fall back to AI extraction when no structured profile matches" do

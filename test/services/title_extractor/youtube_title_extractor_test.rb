@@ -35,4 +35,11 @@ class TitleExtractor::YoutubeTitleExtractorTest < ActiveSupport::TestCase
   test "#title should swallow invalid URI errors when deriving a handle" do
     assert_nil extractor("https://www.youtube.com/ bad handle").title
   end
+
+  test "#title should swallow XML SyntaxError when parsing atom feed" do
+    url = "https://www.youtube.com/channel/UCabc123def456ghi789jkl"
+    Nokogiri.stub(:XML, ->(_) { raise Nokogiri::XML::SyntaxError, "bad xml" }) do
+      assert_nil extractor(url, "<broken").title
+    end
+  end
 end

@@ -32,16 +32,16 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     assert_equal "Padded Title", extractor(body).title
   end
 
-  test "#title should return nil for blank response body" do
-    assert_nil extractor("").title
-    assert_nil extractor(nil).title
+  test "#title should fall back to hostname for blank response body" do
+    assert_equal "example.com", extractor("").title
+    assert_equal "example.com", extractor(nil).title
   end
 
-  test "#title should return nil for invalid XML" do
-    assert_nil extractor("not valid xml").title
+  test "#title should fall back to hostname for invalid XML" do
+    assert_equal "example.com", extractor("not valid xml").title
   end
 
-  test "#title should return nil for XML without title" do
+  test "#title should fall back to hostname when feed has no title" do
     body = <<~XML
       <?xml version="1.0"?>
       <rss version="2.0">
@@ -50,17 +50,42 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
         </channel>
       </rss>
     XML
-    assert_nil extractor(body).title
+    assert_equal "example.com", extractor(body).title
   end
 
-  test "#title should return nil for non-feed XML" do
+  test "#title should fall back to hostname for non-feed XML" do
     body = <<~XML
       <?xml version="1.0"?>
       <document>
         <title>This is not a feed</title>
       </document>
     XML
-    assert_nil extractor(body).title
+    assert_equal "example.com", extractor(body).title
+  end
+
+  test "#title should extract title from RSS 1.0 (RDF) feed" do
+    body = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rdf:RDF
+          xmlns="http://purl.org/rss/1.0/"
+          xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <channel rdf:about="https://example.com/feed">
+          <title>My RDF Feed</title>
+        </channel>
+      </rdf:RDF>
+    XML
+    assert_equal "My RDF Feed", extractor(body).title
+  end
+
+  test "#title should fall back to nil when URL has no hostname" do
+    e = TitleExtractor::RssTitleExtractor.new("not-a-url", nil)
+    assert_nil e.title
+  end
+
+  test "#title should fall back to hostname when XML parser raises SyntaxError" do
+    Nokogiri.stub(:XML, ->(_) { raise Nokogiri::XML::SyntaxError, "bad xml" }) do
+      assert_equal "example.com", extractor("<broken").title
+    end
   end
 
   test "#title should extract title from Atom feed" do

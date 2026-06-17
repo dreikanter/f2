@@ -19,5 +19,14 @@ module TitleExtractor
     def title
       raise NotImplementedError, "Subclasses must implement #title"
     end
+
+    protected
+
+    def hostname_from_url
+      host = URI.parse(input.to_s).host.to_s.sub(/\Awww\./, "")
+      host.presence
+    rescue URI::InvalidURIError
+      nil
+    end
   end
 end
