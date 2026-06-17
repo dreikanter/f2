@@ -82,6 +82,12 @@ class TitleExtractor::RssTitleExtractorTest < ActiveSupport::TestCase
     assert_nil e.title
   end
 
+  test "#title should fall back to hostname when XML parser raises SyntaxError" do
+    Nokogiri.stub(:XML, ->(_) { raise Nokogiri::XML::SyntaxError, "bad xml" }) do
+      assert_equal "example.com", extractor("<broken").title
+    end
+  end
+
   test "#title should extract title from Atom feed" do
     body = <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
