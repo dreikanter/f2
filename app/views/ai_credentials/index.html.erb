@@ -11,9 +11,11 @@
     <% end %>
   <% end %>
 
-  <% if @ai_credentials.any? %>
-    <%= render AiCredentialsListComponent.new(credentials: @ai_credentials) %>
-  <% else %>
-    <%= render EmptyStateComponent.new("No AI credentials yet — add one to use AI-backed feed extraction") %>
-  <% end %>
+  <div id="ai_credentials_list">
+    <% if @ai_credentials.any? %>
+      <%= render AiCredentialsListComponent.new(credentials: @ai_credentials) %>
+    <% else %>
+      <%= render EmptyStateComponent.new("No AI credentials yet — add one to use AI-backed feed extraction") %>
+    <% end %>
+  </div>
 </div>

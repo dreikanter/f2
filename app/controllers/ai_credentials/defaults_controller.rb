@@ -3,8 +3,16 @@ class AiCredentials::DefaultsController < ApplicationController
     authorize credential, :update?
 
     credential.make_default!
-    message = "'#{credential.display_name}' is now the default credential."
-    redirect_to ai_credentials_path, success: message
+
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:success] = "'#{credential.display_name}' is now the default credential."
+        @ai_credentials = policy_scope(AiCredential).order(created_at: :desc)
+      end
+      format.html do
+        redirect_to ai_credentials_path, success: "'#{credential.display_name}' is now the default credential."
+      end
+    end
   end
 
   private
