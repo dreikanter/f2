@@ -30,14 +30,11 @@ export default class extends Controller {
   }
 
   reset() {
-    if (this.picker) {
-      this.picker.setDate(new Date())
-    } else {
-      this.element.value = this.#today()
-    }
+    this.element.value = this.#today()
+    this.picker?.setDate(new Date())
   }
 
   #today() {
-    return new Date().toISOString().slice(0, 10)
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date())
   }
 }
