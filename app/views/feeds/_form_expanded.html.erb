@@ -28,7 +28,7 @@
                   controller: "groups",
                   groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
                   groups_loading_text_value: "Loading groups...",
-                  groups_default_text_value: "The FreeFeed group where posts will be published."
+                  groups_default_text_value: "The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one."
                 } do |f| %>
     <div class="space-y-10">
       <% if multi_candidate %>
