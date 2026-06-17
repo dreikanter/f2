@@ -73,6 +73,6 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     assert_equal "Never", last_refresh_value
 
     most_recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
-    assert_equal "No reposts yet", most_recent_value
+    assert_equal "–", most_recent_value
   end
 end

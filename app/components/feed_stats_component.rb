@@ -84,7 +84,7 @@ class FeedStatsComponent < ViewComponent::Base
     if @feed.most_recent_repost_at
       helpers.short_time_ago_tag(@feed.most_recent_repost_at)
     else
-      content_tag(:span, "No reposts yet", class: "text-slate-500")
+      content_tag(:span, "–", class: "text-slate-500")
     end
   end
 
