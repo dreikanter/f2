@@ -1,8 +1,6 @@
 <%# locals: (llm_credential:, feed_id: nil) %>
 <div class="space-y-6" data-key="llm_credential.show">
-  <%= render PageHeaderComponent.new(title: llm_credential.display_name) do |header| %>
-    <% header.with_context_paragraph(LlmProvider.find(llm_credential.provider).display_name) %>
-  <% end %>
+  <%= render PageHeaderComponent.new(title: llm_credential.display_name) %>
 
   <% case llm_credential.state %>
   <% when "pending", "validating" %>
@@ -17,25 +15,23 @@
       </div>
     </div>
   <% when "active" %>
-    <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-2"
-         data-credential-state="active"
-         data-key="llm_credential.active">
-      <p class="font-semibold text-emerald-900">Credential is active</p>
-      <% if llm_credential.last_validated_at %>
-        <p class="text-sm text-emerald-800">Last checked <%= time_ago_in_words(llm_credential.last_validated_at) %> ago.</p>
-      <% end %>
-    </div>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
+                                  data: { credential_state: "active", key: "llm_credential.active" }) do %>
+      <span>Credential is active</span>
+    <% end %>
+
+    <%= render LlmCredentialDetailsComponent.new(llm_credential: llm_credential) %>
   <% when "inactive" %>
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4 space-y-2"
-         data-credential-state="inactive"
-         data-key="llm_credential.inactive">
-      <p class="font-semibold text-red-900">This key didn't work</p>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
+                                  data: { credential_state: "inactive", key: "llm_credential.inactive" }) do %>
       <% if llm_credential.last_error.present? %>
-        <p class="text-sm text-red-800"><%= llm_credential.last_error %></p>
+        <span><%= llm_credential.last_error %></span>
       <% else %>
-        <p class="text-sm text-red-700">Grab a fresh key from your provider's dashboard and add it again.</p>
+        <span>This key didn't work. Grab a fresh key from your provider's dashboard and add it again.</span>
       <% end %>
-    </div>
+    <% end %>
+
+    <%= render LlmCredentialDetailsComponent.new(llm_credential: llm_credential) %>
   <% end %>
 
   <div class="flex flex-wrap gap-3">
