@@ -56,6 +56,7 @@
       so the markup can be copied straight into a new view. %>
   <div class="min-w-0 space-y-12">
     <%= render PageHeaderComponent.new(title: "UI Elements") do |header| %>
+      <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
       <% header.with_context_paragraph do %>
         A living reference of the building blocks used across Feeder — buttons, form
         controls, and components — shown in every state with realistic content. Each
@@ -368,7 +369,7 @@
                   <a href="#" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50" role="menuitem">Edit</a>
                 </li>
                 <li>
-                  <a href="#" class="block px-4 py-2 text-sm text-red-600 transition hover:bg-slate-50" role="menuitem">Delete</a>
+                  <a href="#" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50" role="menuitem">Delete...</a>
                 </li>
               </ul>
             </div>

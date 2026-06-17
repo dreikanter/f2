@@ -19,6 +19,7 @@
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= icon("hard-hat", css_class: "size-5") %>
           <span>Background Jobs</span>
+          <%= icon("external-link", css_class: "size-4 text-slate-400") %>
         </h2>
         <p class="text-slate-600">Monitor and manage background job queues</p>
       </div>
@@ -48,7 +49,7 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: development_components_path, target: "_blank", rel: "noopener noreferrer") do %>
+    <%= render CardComponent.new(href: development_components_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= icon("layout-grid", css_class: "size-5") %>
