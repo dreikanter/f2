@@ -24,7 +24,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   def permissions_value
     return helpers.tag.span("None", class: "text-slate-500") if @user.permissions.empty?
 
-    @user.permissions.map { |p| Permission.display_name(p.name) }.join(", ")
+    @user.permissions.map(&:display_name).join(", ")
   end
 
   def optional_time(time)
