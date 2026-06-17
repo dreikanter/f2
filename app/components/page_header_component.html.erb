@@ -1,8 +1,8 @@
-<div class="flex flex-col gap-2">
+<header class="flex flex-col gap-2">
   <% if breadcrumb? %>
     <div><%= breadcrumb %></div>
   <% end %>
-  <header class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+  <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
     <div class="flex flex-col gap-5">
       <h1 <%= tag.attributes(class: class_names("text-4xl font-semibold mb-0 text-slate-900", "flex items-center gap-3" => title_icon?), data: @title_data) %>>
         <%= title_icon if title_icon? %>
@@ -21,5 +21,5 @@
         <% end %>
       </div>
     <% end %>
-  </header>
-</div>
+  </div>
+</header>
