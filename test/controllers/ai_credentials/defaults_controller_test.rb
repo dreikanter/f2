@@ -39,6 +39,17 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     assert_nil other_user.reload.default_ai_credential_id
   end
 
+  test "#update should respond with turbo stream when requested" do
+    sign_in_as(user)
+    credential = create(:ai_credential, user: user, provider: "anthropic")
+
+    patch ai_credential_default_url(credential), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :ok
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_equal credential.id, user.reload.default_ai_credential_id
+  end
+
   test "#update should require authentication" do
     credential = create(:ai_credential, user: user)
     patch ai_credential_default_url(credential)
