@@ -1,6 +1,8 @@
 <%# locals: (llm_credential:, feed_id: nil) %>
 <div class="space-y-6" data-key="llm_credential.show">
-  <%= render PageHeaderComponent.new(title: llm_credential.display_name) %>
+  <%= render PageHeaderComponent.new(title: llm_credential.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "AI Credentials", url: llm_credentials_path) %>
+  <% end %>
 
   <% case llm_credential.state %>
   <% when "pending", "validating" %>

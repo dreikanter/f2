@@ -1,6 +1,7 @@
 <%# locals: (feed:) %>
 <div id="<%= dom_id(feed, :header) %>">
   <%= render PageHeaderComponent.new(title: feed.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "Feeds", url: feeds_path) %>
     <% header.with_context_paragraph do %>
       <%= render feed_status_badge(feed) %>
     <% end %>

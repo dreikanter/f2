@@ -2,6 +2,7 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Events Log") do |header| %>
+    <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
     <% header.with_context_paragraph do %>
       <% if @filter.present? %>
         <span data-key="admin.events.filter-summary">

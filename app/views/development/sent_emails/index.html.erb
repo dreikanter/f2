@@ -2,6 +2,7 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Sent Emails") do |header| %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
     <% if @emails.any? %>
       <% header.with_action_button do %>
         <%= button_to "Purge All",
