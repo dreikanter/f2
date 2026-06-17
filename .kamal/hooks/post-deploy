@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Notify Honeybadger of a successful deploy so reported errors are tied to the
+# released revision.
+#
+# Runs on the deploy host after Kamal finishes (the deploy lock is already
+# released at this point). The notification fires inside the freshly booted
+# app container, where Rails credentials hold the Honeybadger API key and
+# APP_REVISION names the deployed git revision. If no key is configured the
+# rake task is a no-op.
+#
+# Best-effort: a failed notification must not fail an otherwise good deploy,
+# so errors are swallowed.
+
+# Only the f2 app reports to Honeybadger. Skip other services (e.g. imgproxy),
+# which share this hooks directory but ship no Rails app.
+[ "$KAMAL_SERVICE" = "f2" ] || exit 0
+
+bin/kamal app exec --reuse -d "$KAMAL_DESTINATION" "bin/rails honeybadger:notify_deploy" || true
