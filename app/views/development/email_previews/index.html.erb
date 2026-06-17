@@ -1,7 +1,9 @@
 <% content_for :title, "Email Previews" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Email Previews") %>
+  <%= render PageHeaderComponent.new(title: "Email Previews") do |header| %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
+  <% end %>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <% @previews.each do |preview| %>

@@ -11,7 +11,9 @@
 %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "System Status") %>
+  <%= render PageHeaderComponent.new(title: "System Status") do |header| %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
+  <% end %>
 
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Configuration</h2>
