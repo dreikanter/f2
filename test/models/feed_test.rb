@@ -182,12 +182,14 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.feed_schedule
 
-    feed.update!(state: :enabled)
+    freeze_time do
+      feed.update!(state: :enabled)
 
-    schedule = feed.reload.feed_schedule
-    assert_not_nil schedule
-    assert_not_nil schedule.next_run_at
-    assert_not_nil schedule.last_run_at
+      schedule = feed.reload.feed_schedule
+      assert_not_nil schedule
+      assert_operator schedule.next_run_at, :>, Time.current, "next_run_at should be in the future so the scheduler does not double-fire"
+      assert_not_nil schedule.last_run_at
+    end
   end
 
   test "should not create duplicate feed_schedule when already exists" do
@@ -923,5 +925,57 @@ class FeedTest < ActiveSupport::TestCase
     feed.reset_refresh_failures!
 
     assert_equal 0, feed.reload.consecutive_failures
+  end
+
+  test "#reset_schedule! should create a schedule with next_run_at = now when none exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    feed.feed_schedule&.destroy
+    feed.reload
+
+    freeze_time do
+      schedule = feed.reset_schedule!
+
+      assert_not_nil schedule
+      assert_equal Time.current, schedule.next_run_at
+      assert_equal Time.current, schedule.last_run_at
+    end
+  end
+
+  test "#reset_schedule! should update next_run_at to now when schedule already exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)
+
+    freeze_time do
+      returned = feed.reset_schedule!
+
+      assert_equal existing_schedule.id, returned.id
+      assert_equal Time.current, returned.reload.next_run_at
+    end
+  end
+
+  test "#defer_schedule! should create a schedule with next_run_at in the future when none exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    feed.feed_schedule&.destroy
+    feed.reload
+
+    freeze_time do
+      schedule = feed.defer_schedule!
+
+      assert_not_nil schedule
+      assert_operator schedule.next_run_at, :>, Time.current
+      assert_not_nil schedule.last_run_at
+    end
+  end
+
+  test "#defer_schedule! should update next_run_at to the future when schedule already exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: Time.current)
+
+    freeze_time do
+      returned = feed.defer_schedule!
+
+      assert_equal existing_schedule.id, returned.id
+      assert_operator returned.reload.next_run_at, :>, Time.current
+    end
   end
 end
