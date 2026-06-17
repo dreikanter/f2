@@ -15,7 +15,9 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
 
   test "should show dev tools when authenticated as dev" do
     sign_in_as(dev_user)
-    get development_url
+    ActionMailer::Base.stub(:delivery_method, :file) do
+      get development_url
+    end
 
     assert_response :success
     assert_select "h1", "Dev Tools"
@@ -24,6 +26,16 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{development_email_previews_path}']", count: 1
     assert_select "a[href='#{development_sent_emails_path}']", count: 1
     assert_select "a[href='#{development_components_path}']", count: 1
+  end
+
+  test "should disable sent emails link when email capture is not configured" do
+    sign_in_as(dev_user)
+    ActionMailer::Base.stub(:delivery_method, :smtp) do
+      get development_url
+    end
+
+    assert_response :success
+    assert_select "a[href='#{development_sent_emails_path}']", count: 0
   end
 
   test "should redirect when authenticated as admin without dev permission" do

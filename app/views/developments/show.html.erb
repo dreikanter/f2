@@ -34,7 +34,11 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer") do %>
+    <%= render CardComponent.new(
+          **(@sent_emails_available \
+            ? { href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer" } \
+            : { class: "opacity-50 cursor-not-allowed", title: "Email capture is not configured" })
+        ) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= icon("inbox", css_class: "size-5") %>
