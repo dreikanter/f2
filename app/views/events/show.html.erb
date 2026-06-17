@@ -36,10 +36,16 @@
     </section>
   <% end %>
 
-  <% if @event.metadata.present? && @event.metadata != {} %>
-    <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Metadata</h2>
-      <pre class="overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-sm"><%= highlight_json(@event.metadata) %></pre>
-    </section>
+  <% if (stats = @event.metadata&.fetch("stats", nil)).present? %>
+    <%= render CollapsibleSectionComponent.new(title: t("events.metadata.stats.section_title")) do %>
+      <%= render ListComponent.new do |list| %>
+        <% stats.each do |key, value| %>
+          <% list.with_item(ListComponent::StatItemComponent.new(
+            label: t("events.metadata.stats.#{key}", default: key.humanize),
+            value: format_stat_value(key, value)
+          )) %>
+        <% end %>
+      <% end %>
+    <% end %>
   <% end %>
 </div>

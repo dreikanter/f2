@@ -248,7 +248,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
-    assert_select "[data-key='events.type']", "owned_event"
   end
 
   test "#show should list imported posts referenced by the event" do

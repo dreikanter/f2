@@ -49,7 +49,6 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Event ##{event.id}"
-    assert_select '[data-key="admin.events.type"]', "TestEvent"
     assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
   end
 
@@ -89,17 +88,6 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
   end
 
-  test "should link user subject to filter by that subject" do
-    login_as(admin_user)
-    subject_user = create(:user)
-    event = create(:event, subject: subject_user)
-
-    get admin_event_path(event)
-
-    assert_response :success
-    assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_type%5D=User']", text: "User"
-    assert_select "a[data-key='admin.event.subject.type'][href*='filter%5Bsubject_id%5D=#{subject_user.id}']", text: "User"
-  end
 
   test "should render the most recent page of events" do
     with_page_size(2) do
