@@ -9,7 +9,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     @other_user ||= create(:user)
   end
 
-  test "#update should set the credential as default and un-default siblings" do
+  test "#update should set the credential as the user's default" do
     sign_in_as(user)
     first = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
     second = create(:ai_credential, user: user, provider: "anthropic", display_name: "second")
@@ -17,8 +17,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     patch ai_credential_default_url(second)
 
     assert_redirected_to ai_credentials_path
-    assert second.reload.is_default?
-    refute first.reload.is_default?
+    assert_equal second.id, user.reload.default_ai_credential_id
   end
 
   test "#update should set default when no other default exists" do
@@ -27,7 +26,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
 
     patch ai_credential_default_url(credential)
 
-    assert credential.reload.is_default?
+    assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
   test "#update should 404 for another user's credential" do
@@ -37,7 +36,7 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     patch ai_credential_default_url(other)
 
     assert_response :not_found
-    refute other.reload.is_default?
+    assert_nil other_user.reload.default_ai_credential_id
   end
 
   test "#update should require authentication" do

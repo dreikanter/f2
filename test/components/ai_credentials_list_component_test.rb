@@ -25,7 +25,7 @@ class AiCredentialsListComponentTest < ViewComponent::TestCase
   end
 
   test "#call should show default badge for the default credential" do
-    credential.make_default!
+    user.update!(default_ai_credential: credential)
     result = render_inline(AiCredentialsListComponent.new(credentials: [credential]))
 
     assert_not_nil result.css("[data-key='ai_credential.default-badge']").first
@@ -37,23 +37,21 @@ class AiCredentialsListComponentTest < ViewComponent::TestCase
     assert_empty result.css("[data-key='ai_credential.default-badge']")
   end
 
-  test "#call should show inactive note for inactive credentials" do
+  test "#call should show inactive status badge for inactive credentials" do
     inactive = create(:ai_credential, :inactive, user: user)
     result = render_inline(AiCredentialsListComponent.new(credentials: [inactive]))
 
-    assert_includes result.text, "This key didn't work"
+    badge = result.css("[data-key='ai_credential.status-badge']").first
+    assert_not_nil badge
+    assert_equal "Inactive", badge.text.strip
   end
 
-  test "#call should not show inactive note for active credentials" do
+  test "#call should show active status badge for active credentials" do
     result = render_inline(AiCredentialsListComponent.new(credentials: [credential]))
 
-    assert_not_includes result.text, "This key didn't work"
-  end
-
-  test "#call should show capitalized status" do
-    result = render_inline(AiCredentialsListComponent.new(credentials: [credential]))
-
-    assert_includes result.text, "Status: Active"
+    badge = result.css("[data-key='ai_credential.status-badge']").first
+    assert_not_nil badge
+    assert_equal "Active", badge.text.strip
   end
 
   test "#call should render a Details menu item linking to the show page" do

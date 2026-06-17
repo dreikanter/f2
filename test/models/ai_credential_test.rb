@@ -53,48 +53,34 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal "sk-ant-secret-12345", credential.reload.credential_data["api_key"]
   end
 
-  test "should un-default sibling credentials when promoting to default" do
-    first = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
-    second = create(:ai_credential, user: user, provider: "anthropic", display_name: "second")
-
-    second.update!(is_default: true)
-
-    assert second.reload.is_default?
-    refute first.reload.is_default?
+  test "#default? should return true for the user's default credential" do
+    credential = create(:ai_credential, :default, user: user)
+    assert credential.default?
   end
 
-  test "the partial unique index should reject two defaults for the same (user, provider)" do
-    create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
+  test "#default? should return false when another credential is default" do
+    first = create(:ai_credential, :default, user: user, display_name: "first")
+    second = create(:ai_credential, user: user, display_name: "second")
 
-    assert_raises(ActiveRecord::RecordNotUnique) do
-      # Bypass the `before_save` un-default callback so we can observe the
-      # index doing its job as the last-line guard.
-      AiCredential.connection.execute(<<~SQL)
-        INSERT INTO ai_credentials (user_id, provider, display_name, credential_data, is_default, state, created_at, updated_at)
-        VALUES (#{user.id}, 'anthropic', 'second', '{}', TRUE, 0, NOW(), NOW())
-      SQL
-    end
+    refute second.default?
+    assert first.default?
   end
 
-  test "should allow defaults in different providers for the same user" do
-    skip "no second provider registered yet" unless LlmProvider.all.size > 1
-
-    second_provider = (LlmProvider.names - ["anthropic"]).first
-    anthropic = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "Anthropic default")
-    other = create(:ai_credential, :default, user: user, provider: second_provider, display_name: "Other default")
-
-    assert anthropic.reload.is_default?
-    assert other.reload.is_default?
-  end
-
-  test "#make_default! should atomically promote one credential and un-default siblings" do
-    first = create(:ai_credential, :default, user: user, provider: "anthropic", display_name: "first")
-    second = create(:ai_credential, user: user, provider: "anthropic", display_name: "second")
+  test "#make_default! should set the user's default credential" do
+    first = create(:ai_credential, :default, user: user, display_name: "first")
+    second = create(:ai_credential, user: user, display_name: "second")
 
     second.make_default!
 
-    assert second.reload.is_default?
-    refute first.reload.is_default?
+    assert_equal second.id, user.reload.default_ai_credential_id
+    refute first.reload.default?
+    assert second.reload.default?
+  end
+
+  test "#make_default! should work when no default exists yet" do
+    credential = create(:ai_credential, user: user)
+    credential.make_default!
+    assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
   test "destroy should be a no-op when no feeds reference the credential" do

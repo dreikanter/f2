@@ -15,6 +15,7 @@ class User < ApplicationRecord
   has_many :access_tokens, dependent: :destroy
   has_many :ai_credentials, dependent: :destroy
   has_many :llm_usages, dependent: :destroy
+  belongs_to :default_ai_credential, class_name: "AiCredential", optional: true
   has_many :created_invites, class_name: "Invite", foreign_key: :created_by_user_id, dependent: :destroy
 
   has_one :invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify

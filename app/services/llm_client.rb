@@ -45,7 +45,10 @@ class LlmClient
     def default_credential_for(user, provider)
       return nil if provider.blank?
 
-      user.ai_credentials.active.where(provider: provider).order(is_default: :desc, id: :asc).first
+      default = user.default_ai_credential
+      return default if default&.active? && default.provider == provider
+
+      user.ai_credentials.active.where(provider: provider).order(:id).first
     end
   end
 

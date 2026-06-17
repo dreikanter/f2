@@ -4,7 +4,6 @@ FactoryBot.define do
     provider { "anthropic" }
     sequence(:display_name) { |n| "Claude credential #{n}" }
     credential_data { { "api_key" => "sk-ant-#{SecureRandom.hex(16)}" } }
-    is_default { false }
     state { :pending }
 
     trait :active do
@@ -18,7 +17,9 @@ FactoryBot.define do
     end
 
     trait :default do
-      is_default { true }
+      after(:create) do |credential|
+        credential.user.update!(default_ai_credential: credential)
+      end
     end
   end
 end
