@@ -3,7 +3,7 @@ class CreateLlmUsages < ActiveRecord::Migration[8.1]
     create_table :llm_usages do |t|
       t.references :user, null: false, foreign_key: true
       t.references :feed, null: true, foreign_key: true
-      t.references :ai_credential, null: true, foreign_key: true
+      t.references :llm_credential, null: true, foreign_key: true
       t.string :profile_key
       t.integer :stage, null: false
       t.string :provider, null: false
