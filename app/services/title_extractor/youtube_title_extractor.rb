@@ -21,8 +21,15 @@ module TitleExtractor
       nil
     end
 
+    ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
+
     def atom_title
-      RssTitleExtractor.new(input, fetched_body).title
+      return nil if fetched_body.blank?
+
+      doc = Nokogiri::XML(fetched_body)
+      doc.at_xpath("//atom:feed/atom:title", ATOM_NS)&.text&.strip&.presence
+    rescue Nokogiri::XML::SyntaxError
+      nil
     end
 
     def handle

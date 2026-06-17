@@ -4,29 +4,27 @@ module TitleExtractor
     # Extracts the feed title from RSS XML
     # @return [String, nil] the feed title or nil if it cannot be extracted
     def title
-      return nil if fetched_body.blank?
+      return hostname_from_url if fetched_body.blank?
 
       doc = Nokogiri::XML(fetched_body)
-      extract_title(doc)
+      extract_title(doc).presence || hostname_from_url
     rescue Nokogiri::XML::SyntaxError
-      nil
+      hostname_from_url
     end
 
     private
 
-    RDF_NS = { "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#" }.freeze
+    RSS1_NS = { "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rss1" => "http://purl.org/rss/1.0/" }.freeze
     ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
 
     def extract_title(doc)
-      # Try RSS 2.0 format
       rss_title = doc.at_xpath("//channel/title")&.text
       return rss_title.strip if rss_title.present?
 
-      # Try RSS 1.0 (RDF) format
-      rdf_title = doc.at_xpath("//rdf:RDF/channel/title", RDF_NS)&.text
+      # RSS 1.0 (RDF): channel and title are in the http://purl.org/rss/1.0/ default namespace
+      rdf_title = doc.at_xpath("//rdf:RDF/rss1:channel/rss1:title", RSS1_NS)&.text
       return rdf_title.strip if rdf_title.present?
 
-      # Try Atom format (e.g. YouTube)
       atom_title = doc.at_xpath("//atom:feed/atom:title", ATOM_NS)&.text
       atom_title&.strip
     end

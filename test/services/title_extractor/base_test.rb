@@ -21,4 +21,19 @@ class TitleExtractor::BaseTest < ActiveSupport::TestCase
     end
     assert_equal "Subclasses must implement #title", error.message
   end
+
+  test "#hostname_from_url should return hostname without www prefix" do
+    e = TitleExtractor::Base.new("https://www.example.com/feed.xml")
+    assert_equal "example.com", e.send(:hostname_from_url)
+  end
+
+  test "#hostname_from_url should return hostname as-is when no www prefix" do
+    e = TitleExtractor::Base.new("https://feeds.example.com/rss")
+    assert_equal "feeds.example.com", e.send(:hostname_from_url)
+  end
+
+  test "#hostname_from_url should return nil for invalid URL" do
+    e = TitleExtractor::Base.new("not a url")
+    assert_nil e.send(:hostname_from_url)
+  end
 end
