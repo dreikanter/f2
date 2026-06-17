@@ -435,6 +435,8 @@ class Feed < ApplicationRecord
     return unless enabled?
     return if feed_schedule.present?
 
-    reset_schedule!
+    schedule = build_feed_schedule(last_run_at: Time.current)
+    schedule.next_run_at = schedule.calculate_next_run_at
+    schedule.save!
   end
 end

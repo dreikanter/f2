@@ -182,12 +182,14 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_nil feed.feed_schedule
 
-    feed.update!(state: :enabled)
+    freeze_time do
+      feed.update!(state: :enabled)
 
-    schedule = feed.reload.feed_schedule
-    assert_not_nil schedule
-    assert_not_nil schedule.next_run_at
-    assert_not_nil schedule.last_run_at
+      schedule = feed.reload.feed_schedule
+      assert_not_nil schedule
+      assert_operator schedule.next_run_at, :>, Time.current, "next_run_at should be in the future so the scheduler does not double-fire"
+      assert_not_nil schedule.last_run_at
+    end
   end
 
   test "should not create duplicate feed_schedule when already exists" do
