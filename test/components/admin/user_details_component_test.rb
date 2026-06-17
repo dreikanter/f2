@@ -29,11 +29,11 @@ class Admin::UserDetailsComponentTest < ViewComponent::TestCase
     assert_includes result.text, "None"
   end
 
-  test "#call should list permission names when present" do
+  test "#call should list permission display names when present" do
     create(:permission, user: user, name: "admin")
     result = render_component
 
-    assert_includes result.text, "admin"
+    assert_includes result.text, "Admin"
   end
 
   test "#call should show Never when the user has never been seen" do
