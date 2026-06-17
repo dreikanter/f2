@@ -20,7 +20,7 @@ class FeedPolicy < ApplicationPolicy
   end
 
   def refresh?
-    owner?
+    owner? && record.enabled?
   end
 
   def purge?

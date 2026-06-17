@@ -14,11 +14,17 @@
       <% end %>
     <% end %>
     <% header.with_action_button do %>
-      <%= form_with url: feed_refresh_path(feed), method: :post, class: "inline-block", data: {
-            controller: "loading-button",
-            action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
-          } do %>
-        <%= render RefreshButtonComponent.new(title: "Refresh now", type: "submit") %>
+      <% if feed.enabled? %>
+        <%= form_with url: feed_refresh_path(feed), method: :post, class: "inline-block", data: {
+              controller: "loading-button",
+              action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
+            } do %>
+          <%= render RefreshButtonComponent.new(title: "Refresh now", type: "submit") %>
+        <% end %>
+      <% elsif feed.draft? %>
+        <%= render RefreshButtonComponent.new(title: "Finish setting up this feed first", disabled: true) %>
+      <% else %>
+        <%= render RefreshButtonComponent.new(title: "Enable this feed to refresh it", disabled: true) %>
       <% end %>
     <% end %>
     <% header.with_action_button do %>

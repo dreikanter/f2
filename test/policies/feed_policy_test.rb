@@ -95,6 +95,29 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.purge?
   end
 
+  test "#refresh? should allow refresh for owner of enabled feed" do
+    enabled_feed = create(:feed, :enabled, user: user)
+    policy = policy_for_user(user, enabled_feed)
+    assert policy.refresh?
+  end
+
+  test "#refresh? should deny refresh for owner of disabled feed" do
+    policy = policy_for_user(user, feed)
+    assert_not policy.refresh?
+  end
+
+  test "#refresh? should deny refresh for owner of draft feed" do
+    draft_feed = create(:feed, :draft, user: user)
+    policy = policy_for_user(user, draft_feed)
+    assert_not policy.refresh?
+  end
+
+  test "#refresh? should deny refresh for non-owner" do
+    enabled_feed = create(:feed, :enabled, user: user)
+    policy = policy_for_user(other_user, enabled_feed)
+    assert_not policy.refresh?
+  end
+
   test "should handle nil user gracefully" do
     policy = FeedPolicy.new(nil, feed)
 
