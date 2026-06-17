@@ -16,7 +16,7 @@ class AlertComponent < ViewComponent::Base
   end
 
   def call
-    icon_html = @icon.present? ? helpers.icon(@icon, css_class: "size-5") : "".html_safe
+    icon_html = @icon.present? ? helpers.icon(@icon, css_class: "size-5 mt-0.5") : "".html_safe
     body_html = content_tag(:div, content, class: "space-y-1")
     content_tag(:div, icon_html + body_html, merged_options)
   end
