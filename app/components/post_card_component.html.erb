@@ -1,6 +1,9 @@
 <div id="<%= helpers.dom_id(post) %>" class="<%= card_classes %>">
-  <div class="flex items-start justify-between gap-4 px-4 py-4">
-    <div class="flex min-w-0 items-center gap-2">
+  <div class="flex items-center gap-3 px-4 py-4">
+    <span class="flex w-4 shrink-0 items-center justify-center" data-key="post.status-icon">
+      <%= status_icon %>
+    </span>
+    <div class="flex min-w-0 flex-1 items-center gap-2">
       <%= link_to title, post_url,
             class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
       <% if withdrawn? %>
@@ -15,14 +18,12 @@
           item (group, counts) leads with a middot. %>
       <% if status_links_to_freefeed? %>
         <%= link_to freefeed_url, target: "_blank", rel: "noopener",
-              class: "inline-flex items-center gap-1.5 transition hover:text-slate-600",
+              class: "transition hover:text-slate-600",
               data: { key: "post.status" } do %>
-          <%= status_icon %><%= status_label_with_time %>
+          <%= status_label_with_time %>
         <% end %>
       <% else %>
-        <span class="inline-flex items-center gap-1.5" data-key="post.status">
-          <%= status_icon %><%= status_label_with_time %>
-        </span>
+        <span data-key="post.status"><%= status_label_with_time %></span>
       <% end %>
 
       <% if show_group? %>

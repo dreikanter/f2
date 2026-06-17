@@ -178,7 +178,7 @@ class PostCardComponentTest < ViewComponent::TestCase
     status_link = result.at_css("a[href='#{published_post.freefeed_url}']")
     assert_not_nil status_link
     assert_includes status_link.text.gsub(/\s+/, " "), "Reposted (10h)"
-    assert_not_empty status_link.css("svg.text-green-600")
+    assert_not_empty result.css('[data-key="post.status-icon"] svg.text-green-600')
   end
 
   test "#render should keep the duration tight against its parentheses" do
@@ -211,6 +211,6 @@ class PostCardComponentTest < ViewComponent::TestCase
 
     status = result.at_css('[data-key="post.status"]')
     assert_includes status.text.gsub(/\s+/, " "), "Failed (10h)"
-    assert_not_empty status.css("svg.text-red-600")
+    assert_not_empty result.css('[data-key="post.status-icon"] svg.text-red-600')
   end
 end

@@ -46,7 +46,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   def status_icon
-    helpers.icon(status_display[:icon], css_class: "size-3.5 #{status_display[:color]}")
+    helpers.icon(status_display[:icon], css_class: "size-4 #{status_display[:color]}")
   end
 
   # Group the label, parens and the time tag inside a single inline wrapper so
