@@ -94,4 +94,12 @@ en:
     resend_email_failed:
       name: "Email failed"
       description_html: "Email delivery failed"
+    metadata:
+      stats:
+        section_title: "Stats"
+        started_at: "Started at"
+        completed_at: "Completed at"
+        total_duration: "Duration"
+        new_entries: "New entries"
+        new_posts: "New posts"
 

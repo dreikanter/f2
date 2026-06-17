@@ -26,6 +26,25 @@ module EventsHelper
     end
   end
 
+  def format_stat_value(key, value)
+    if key.to_s.end_with?("_at")
+      time = Time.zone.parse(value.to_s) rescue nil
+      time ? long_time_tag(time) : value
+    elsif key.to_s == "total_duration"
+      format_event_duration(value.to_f)
+    else
+      value
+    end
+  end
+
+  def format_event_duration(seconds)
+    return "#{seconds.round(1)}s" if seconds < 60
+
+    minutes = (seconds / 60).floor
+    remaining = (seconds % 60).round
+    "#{minutes}m #{remaining}s"
+  end
+
   def mail_event_types
     ResendWebhooksController::EMAIL_EVENT_HANDLERS.values.pluck(:type) + %w[
       mail.profile_mailer.account_confirmation
