@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import "flowbite"
+import { format } from "date-fns/utc"
 
 // Attaches the Flowbite datepicker to its input. Flowbite only auto-inits
 // `datepicker` attributes on turbo:load, which never fires for markup
@@ -10,6 +11,10 @@ export default class extends Controller {
 
   connect() {
     if (!window.Datepicker || this.element.datepicker) return
+
+    if (!this.element.value) {
+      this.element.value = this.#today()
+    }
 
     this.picker = new window.Datepicker(
       this.element,
@@ -23,5 +28,14 @@ export default class extends Controller {
       this.picker.destroyAndRemoveInstance()
       this.picker = null
     }
+  }
+
+  reset() {
+    this.element.value = this.#today()
+    this.picker?.setDate(new Date())
+  }
+
+  #today() {
+    return format(new Date(), "yyyy-MM-dd")
   }
 }

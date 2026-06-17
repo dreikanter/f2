@@ -196,6 +196,7 @@
                                  aria: { label: "Import posts published after this date" },
                                  data: {
                                    controller: "datepicker",
+                                   action: "field-toggle:enabled@window->datepicker#reset",
                                    field_toggle_target: "input",
                                    key: "form.import-after-date"
                                  } %>

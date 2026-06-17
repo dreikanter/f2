@@ -11,6 +11,9 @@ export default class extends Controller {
 
   toggle() {
     this.update({ clearWhenHidden: true })
+    if (this.checkboxTarget.checked) {
+      this.dispatch("enabled", { bubbles: true })
+    }
   }
 
   update({ clearWhenHidden = false } = {}) {
