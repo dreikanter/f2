@@ -11,6 +11,10 @@ export default class extends Controller {
   connect() {
     if (!window.Datepicker || this.element.datepicker) return
 
+    if (!this.element.value) {
+      this.element.value = this.#today()
+    }
+
     this.picker = new window.Datepicker(
       this.element,
       { format: this.formatValue, autohide: true },
@@ -23,5 +27,21 @@ export default class extends Controller {
       this.picker.destroyAndRemoveInstance()
       this.picker = null
     }
+  }
+
+  reset() {
+    if (this.picker) {
+      this.picker.setDate(new Date())
+    } else {
+      this.element.value = this.#today()
+    }
+  }
+
+  #today() {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, "0")
+    const dd = String(d.getDate()).padStart(2, "0")
+    return `${yyyy}-${mm}-${dd}`
   }
 }
