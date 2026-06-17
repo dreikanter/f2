@@ -53,7 +53,7 @@
     <%= link_to "Back to credentials",
                 ai_credentials_path,
                 class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
-    <% unless ai_credential.is_default? %>
+    <% unless ai_credential.default? %>
       <%= button_to "Make default",
                     ai_credential_default_path(ai_credential),
                     method: :patch,

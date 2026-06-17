@@ -28,16 +28,16 @@ class AiCredential < ApplicationRecord
   validate :api_key_present
 
   before_validation :assign_name_if_blank, on: :create
-  before_save :clear_other_defaults_if_promoting
   before_destroy :disable_dependent_feeds
 
   scope :for_provider, ->(provider) { where(provider: provider) }
 
+  def default?
+    user.default_ai_credential_id == id
+  end
+
   def make_default!
-    transaction do
-      self.class.where(user_id: user_id, provider: provider).where.not(id: id).update_all(is_default: false)
-      update!(is_default: true)
-    end
+    user.update!(default_ai_credential: self)
   end
 
   def ruby_llm_context
@@ -73,15 +73,6 @@ class AiCredential < ApplicationRecord
     return if provider.blank?
 
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
-  end
-
-  def clear_other_defaults_if_promoting
-    return unless is_default? && (will_save_change_to_is_default? || new_record?)
-
-    self.class
-      .where(user_id: user_id, provider: provider)
-      .where.not(id: id)
-      .update_all(is_default: false)
   end
 
   # Mirrors AccessToken#disable_associated_feeds: drop the credential

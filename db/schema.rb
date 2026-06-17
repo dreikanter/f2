@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_17_000000) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_17_205938) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,14 +43,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_17_000000) do
     t.string "provider", null: false
     t.string "display_name", null: false
     t.jsonb "credential_data", default: {}, null: false
-    t.boolean "is_default", default: false, null: false
     t.integer "state", default: 0, null: false
     t.datetime "last_validated_at"
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
-    t.index ["user_id", "provider"], name: "index_ai_credentials_on_user_provider_default", unique: true, where: "(is_default = true)"
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
     t.index ["user_id"], name: "index_ai_credentials_on_user_id"
   end
@@ -422,6 +420,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_17_000000) do
     t.datetime "suspended_at"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
+    t.bigint "default_ai_credential_id"
+    t.index ["default_ai_credential_id"], name: "index_users_on_default_ai_credential_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"
     t.index ["state"], name: "index_users_on_state"
@@ -455,4 +455,5 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_17_000000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "users", "ai_credentials", column: "default_ai_credential_id", on_delete: :nullify
 end

@@ -19,16 +19,16 @@ class AiCredentialCardComponent < ViewComponent::Base
     LlmProvider.find(credential.provider).display_name
   end
 
-  def status_label
-    credential.state.to_s.capitalize
-  end
-
   def default?
-    credential.is_default?
+    credential.default?
   end
 
-  def inactive?
-    credential.inactive?
+  def status_badge
+    case credential.state.to_sym
+    when :pending, :validating then BadgeComponent.new(text: "Checking", color: :gray, key: "ai_credential.status-badge")
+    when :active               then BadgeComponent.new(text: "Active", color: :green, key: "ai_credential.status-badge")
+    when :inactive             then BadgeComponent.new(text: "Inactive", color: :red, key: "ai_credential.status-badge")
+    end
   end
 
   def menu_id
