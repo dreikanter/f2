@@ -927,6 +927,32 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 0, feed.reload.consecutive_failures
   end
 
+  test "#reset_schedule! should create a schedule with next_run_at = now when none exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    feed.feed_schedule&.destroy
+    feed.reload
+
+    freeze_time do
+      schedule = feed.reset_schedule!
+
+      assert_not_nil schedule
+      assert_equal Time.current, schedule.next_run_at
+      assert_equal Time.current, schedule.last_run_at
+    end
+  end
+
+  test "#reset_schedule! should update next_run_at to now when schedule already exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)
+
+    freeze_time do
+      returned = feed.reset_schedule!
+
+      assert_equal existing_schedule.id, returned.id
+      assert_equal Time.current, returned.reload.next_run_at
+    end
+  end
+
   test "#defer_schedule! should create a schedule with next_run_at in the future when none exists" do
     feed = create(:feed, :enabled, cron_expression: "0 * * * *")
     feed.feed_schedule&.destroy
