@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import "flowbite"
+import { format } from "date-fns/utc"
 
 // Attaches the Flowbite datepicker to its input. Flowbite only auto-inits
 // `datepicker` attributes on turbo:load, which never fires for markup
@@ -35,6 +36,6 @@ export default class extends Controller {
   }
 
   #today() {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date())
+    return format(new Date(), "yyyy-MM-dd")
   }
 }
