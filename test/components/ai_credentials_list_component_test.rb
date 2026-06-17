@@ -72,7 +72,7 @@ class AiCredentialsListComponentTest < ViewComponent::TestCase
 
   test "#call should render the Delete menu item with default text color" do
     result = render_inline(AiCredentialsListComponent.new(credentials: [credential]))
-    item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Delete" }
+    item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Delete…" }
 
     assert_not_nil item
     assert_includes item["class"], "text-slate-700"
