@@ -503,6 +503,27 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
+  test "#show should truncate detected title to Feed::NAME_MAX_LENGTH" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    long_title = "A" * (Feed::NAME_MAX_LENGTH + 10)
+    feed_identification = FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => long_title, "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "input[name='feed[name]'][value='#{"A" * (Feed::NAME_MAX_LENGTH - 3)}...']", count: 1
+  ensure
+    feed_identification&.destroy
+  end
+
   private
 
   def extract_candidates_payload(body)

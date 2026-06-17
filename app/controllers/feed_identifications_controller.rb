@@ -94,7 +94,7 @@ class FeedIdentificationsController < ApplicationController
     feed = Current.user.feeds.build(
       params: params_for_input,
       feed_profile_key: profile_key,
-      name: recommended["title"]
+      name: recommended["title"]&.truncate(Feed::NAME_MAX_LENGTH)
     )
 
     render(identification_success(feed, candidates: feed_identification.candidates))
