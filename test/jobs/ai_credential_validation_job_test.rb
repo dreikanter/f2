@@ -1,12 +1,12 @@
 require "test_helper"
 
-class LlmCredentialValidationJobTest < ActiveJob::TestCase
+class AiCredentialValidationJobTest < ActiveJob::TestCase
   def user
     @user ||= create(:user)
   end
 
   def credential
-    @credential ||= create(:llm_credential, user: user, state: :pending)
+    @credential ||= create(:ai_credential, user: user, state: :pending)
   end
 
   def stub_health_check(result)
@@ -29,7 +29,7 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
 
   test "#perform should move credential to active on successful health check" do
     stub_health_check(true) do
-      LlmCredentialValidationJob.perform_now(credential)
+      AiCredentialValidationJob.perform_now(credential)
     end
 
     credential.reload
@@ -39,10 +39,10 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
   end
 
   test "#perform should move credential to inactive and record the error on provider failure" do
-    feed = create(:feed, :enabled, user: user, llm_credential: credential)
+    feed = create(:feed, :enabled, user: user, ai_credential: credential)
 
     stub_health_check(LlmClient::ProviderError.new("invalid api key")) do
-      LlmCredentialValidationJob.perform_now(credential)
+      AiCredentialValidationJob.perform_now(credential)
     end
 
     credential.reload
@@ -50,12 +50,12 @@ class LlmCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal "invalid api key", credential.last_error
     assert_not_nil credential.last_validated_at
     assert_equal "disabled", feed.reload.state
-    assert Event.exists?(subject: credential, type: "llm_credential_deactivated")
+    assert Event.exists?(subject: credential, type: "ai_credential_deactivated")
   end
 
   test "#perform should move credential to inactive on rate-limit during validation" do
     stub_health_check(LlmClient::RateLimited.new("429")) do
-      LlmCredentialValidationJob.perform_now(credential)
+      AiCredentialValidationJob.perform_now(credential)
     end
 
     assert_equal "inactive", credential.reload.state

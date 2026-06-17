@@ -19,7 +19,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   def credential
-    @credential ||= create(:llm_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
   def ai_url
@@ -99,7 +99,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
             access_token_id: access_token.id,
             target_group: "testgroup",
             schedule_interval: "1h",
-            llm_credential_id: credential.id
+            ai_credential_id: credential.id
           },
           enable_feed: "1"
         }
@@ -137,7 +137,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
           access_token_id: access_token.id,
           target_group: "testgroup",
           schedule_interval: "1h",
-          llm_credential_id: credential.id
+          ai_credential_id: credential.id
         },
         enable_feed: "0"
       }

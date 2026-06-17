@@ -220,9 +220,9 @@ class FeedRefreshWorkflow
 
   def disable_credential_on_auth_error(error)
     return unless error.is_a?(LlmClient::AuthError)
-    return unless feed.llm_credential
+    return unless feed.ai_credential
 
-    feed.llm_credential.disable_credential_and_feeds(last_error: error.message)
+    feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
   def create_feed_refresh_error_event(error)

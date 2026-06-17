@@ -15,7 +15,7 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
   end
 
   def credential
-    @credential ||= create(:llm_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
   def visible_text(body)
@@ -47,26 +47,26 @@ class SmartFeedCreationVocabularyTest < ActionDispatch::IntegrationTest
     assert_no_banned_vocabulary(response.body, page: "/feeds/new")
   end
 
-  test "#llm_credentials_index should not leak implementation vocabulary" do
+  test "#ai_credentials_index should not leak implementation vocabulary" do
     sign_in_as(user)
     credential
-    get llm_credentials_url
+    get ai_credentials_url
     assert_response :success
-    assert_no_banned_vocabulary(response.body, page: "/llm_credentials")
+    assert_no_banned_vocabulary(response.body, page: "/ai_credentials")
   end
 
-  test "#llm_credentials_new should not leak implementation vocabulary" do
+  test "#ai_credentials_new should not leak implementation vocabulary" do
     sign_in_as(user)
-    get new_llm_credential_url
+    get new_ai_credential_url
     assert_response :success
-    assert_no_banned_vocabulary(response.body, page: "/llm_credentials/new")
+    assert_no_banned_vocabulary(response.body, page: "/ai_credentials/new")
   end
 
-  test "#llm_credentials_show should not leak implementation vocabulary" do
+  test "#ai_credentials_show should not leak implementation vocabulary" do
     sign_in_as(user)
-    get llm_credential_url(credential)
+    get ai_credential_url(credential)
     assert_response :success
-    assert_no_banned_vocabulary(response.body, page: "/llm_credentials/:id")
+    assert_no_banned_vocabulary(response.body, page: "/ai_credentials/:id")
   end
 
   test "feed_identifications success response (form-expanded) should not leak implementation vocabulary" do

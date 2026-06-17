@@ -1,49 +1,49 @@
-class LlmCredentialsController < ApplicationController
+class AiCredentialsController < ApplicationController
   include StatePolling
 
   def index
-    authorize LlmCredential
-    @llm_credentials = scope.order(created_at: :desc)
+    authorize AiCredential
+    @ai_credentials = scope.order(created_at: :desc)
   end
 
   def show
-    @llm_credential = find_credential
+    @ai_credential = find_credential
     @feed = scoped_feed(params[:feed_id])
-    authorize @llm_credential
+    authorize @ai_credential
   end
 
   def new
-    @llm_credential = LlmCredential.new(provider: params[:provider] || LlmProvider.names.first)
+    @ai_credential = AiCredential.new(provider: params[:provider] || LlmProvider.names.first)
     @feed = scoped_feed(params[:feed_id])
-    authorize @llm_credential
+    authorize @ai_credential
   end
 
   def create
-    @llm_credential = build_credential
+    @ai_credential = build_credential
     @feed = scoped_feed(params[:feed_id])
-    authorize @llm_credential
+    authorize @ai_credential
 
-    if @llm_credential.save
-      @feed&.update_column(:llm_credential_id, @llm_credential.id)
-      LlmCredentialValidationJob.perform_later(@llm_credential)
-      redirect_to llm_credential_path(@llm_credential, feed_id: @feed&.id)
+    if @ai_credential.save
+      @feed&.update_column(:ai_credential_id, @ai_credential.id)
+      AiCredentialValidationJob.perform_later(@ai_credential)
+      redirect_to ai_credential_path(@ai_credential, feed_id: @feed&.id)
     else
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @llm_credential = find_credential
-    authorize @llm_credential
+    @ai_credential = find_credential
+    authorize @ai_credential
   end
 
   def update
-    @llm_credential = find_credential
-    authorize @llm_credential
+    @ai_credential = find_credential
+    authorize @ai_credential
 
-    if @llm_credential.update(updated_credential_attrs)
-      LlmCredentialValidationJob.perform_later(@llm_credential)
-      redirect_to llm_credential_path(@llm_credential)
+    if @ai_credential.update(updated_credential_attrs)
+      AiCredentialValidationJob.perform_later(@ai_credential)
+      redirect_to ai_credential_path(@ai_credential)
     else
       render :edit, status: :unprocessable_entity
     end
@@ -53,7 +53,7 @@ class LlmCredentialsController < ApplicationController
     credential = find_credential
     authorize credential
     credential.destroy!
-    redirect_to llm_credentials_path, success: "AI credential '#{credential.display_name}' deleted."
+    redirect_to ai_credentials_path, success: "AI credential '#{credential.display_name}' deleted."
   end
 
   private
@@ -72,7 +72,7 @@ class LlmCredentialsController < ApplicationController
   end
 
   def build_credential
-    Current.user.llm_credentials.build(
+    Current.user.ai_credentials.build(
       provider: credential_params[:provider],
       display_name: credential_params[:display_name],
       credential_data: credential_data_from_params,
@@ -85,11 +85,11 @@ class LlmCredentialsController < ApplicationController
   end
 
   def scope
-    policy_scope(LlmCredential)
+    policy_scope(AiCredential)
   end
 
   def credential_params
-    params.require(:llm_credential).permit(:provider, :display_name, credential_data: {})
+    params.require(:ai_credential).permit(:provider, :display_name, credential_data: {})
   end
 
   def credential_data_from_params

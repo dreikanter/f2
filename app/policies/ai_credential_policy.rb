@@ -1,4 +1,4 @@
-class LlmCredentialPolicy < ApplicationPolicy
+class AiCredentialPolicy < ApplicationPolicy
   def index?
     authenticated?
   end

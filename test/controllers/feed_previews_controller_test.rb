@@ -78,7 +78,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should render the credential gate when only credential is inactive" do
     sign_in_as(user)
-    create(:llm_credential, :inactive, user: user)
+    create(:ai_credential, :inactive, user: user)
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
@@ -96,7 +96,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
   test "#show should proceed for an AI profile with an active credential" do
     sign_in_as(user)
-    create(:llm_credential, :active, user: user)
+    create(:ai_credential, :active, user: user)
 
     assert_difference("FeedPreview.count", 1) do
       assert_enqueued_with(job: FeedPreviewJob) do

@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :llm_credential do
+  factory :ai_credential do
     association :user
     provider { "anthropic" }
     sequence(:display_name) { |n| "Claude credential #{n}" }

@@ -6,13 +6,13 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   def credential
-    @credential ||= create(:llm_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user)
   end
 
   def feed
     @feed ||= create(:feed,
                      user: user,
-                     llm_credential: credential,
+                     ai_credential: credential,
                      feed_profile_key: "llm_website_extractor",
                      params: { "url" => "https://example.com" })
   end

@@ -2,7 +2,7 @@
 # lifecycle (pending → validating → active|inactive). `credential_data`
 # stores provider-specific fields (e.g. `{ "api_key" => "..." }`) and is
 # encrypted at rest.
-class LlmCredential < ApplicationRecord
+class AiCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
 
   belongs_to :user
@@ -49,7 +49,7 @@ class LlmCredential < ApplicationRecord
   def disable_credential_and_feeds(last_error: nil)
     with_lock do
       update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
-      Event.create!(type: "llm_credential_deactivated", level: :warning,
+      Event.create!(type: "ai_credential_deactivated", level: :warning,
                     subject: self, user: user, message: "")
       feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
     end
@@ -92,7 +92,7 @@ class LlmCredential < ApplicationRecord
     affected_feed_ids = feeds.pluck(:id)
     return if affected_feed_ids.empty?
 
-    Feed.where(id: affected_feed_ids).update_all(llm_credential_id: nil)
+    Feed.where(id: affected_feed_ids).update_all(ai_credential_id: nil)
     Feed.where(id: affected_feed_ids, state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
   end
 end

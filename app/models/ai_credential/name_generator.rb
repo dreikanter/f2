@@ -1,4 +1,4 @@
-class LlmCredential::NameGenerator
+class AiCredential::NameGenerator
   ADJECTIVES = %w[
     aged
     agile

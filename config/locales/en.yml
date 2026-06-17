@@ -46,7 +46,7 @@ en:
     feed_refresh_error:
       name: "Feed refresh failed"
       description_html: "%{subject_link} couldn't refresh; %{message}"
-    llm_credential_deactivated:
+    ai_credential_deactivated:
       name: "AI credential deactivated"
       description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."
     post_withdrawn:

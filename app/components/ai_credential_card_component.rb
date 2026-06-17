@@ -1,4 +1,4 @@
-class LlmCredentialCardComponent < ViewComponent::Base
+class AiCredentialCardComponent < ViewComponent::Base
   def initialize(credential:)
     @credential = credential
   end
@@ -8,11 +8,11 @@ class LlmCredentialCardComponent < ViewComponent::Base
   attr_reader :credential
 
   def credential_url
-    helpers.llm_credential_path(credential)
+    helpers.ai_credential_path(credential)
   end
 
   def edit_url
-    helpers.edit_llm_credential_path(credential)
+    helpers.edit_ai_credential_path(credential)
   end
 
   def provider_name
@@ -32,6 +32,6 @@ class LlmCredentialCardComponent < ViewComponent::Base
   end
 
   def menu_id
-    "llm-credential-menu-#{credential.id}"
+    "ai-credential-menu-#{credential.id}"
   end
 end

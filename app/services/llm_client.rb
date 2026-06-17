@@ -33,10 +33,10 @@ class LlmClient
 
     def resolve_credential(target, provider)
       case target
-      when LlmCredential
+      when AiCredential
         target
       when Feed
-        target.llm_credential || default_credential_for(target.user, provider || LlmProvider.names.first)
+        target.ai_credential || default_credential_for(target.user, provider || LlmProvider.names.first)
       when User
         default_credential_for(target, provider)
       end
@@ -45,7 +45,7 @@ class LlmClient
     def default_credential_for(user, provider)
       return nil if provider.blank?
 
-      user.llm_credentials.active.where(provider: provider).order(is_default: :desc, id: :asc).first
+      user.ai_credentials.active.where(provider: provider).order(is_default: :desc, id: :asc).first
     end
   end
 
@@ -101,7 +101,7 @@ class LlmClient
     Result.new(payload: response.payload, usage_id: usage.id)
   end
 
-  # Token-free credential check used by LlmCredentialValidationJob.
+  # Token-free credential check used by AiCredentialValidationJob.
   # Hits the provider's models endpoint (no inference, no usage row).
   # Returns true on success, raises a known error class otherwise.
   def health_check
@@ -176,7 +176,7 @@ class LlmClient
     LlmUsage.create!(
       user: credential.user,
       feed: ctx.feed,
-      llm_credential: credential,
+      ai_credential: credential,
       profile_key: ctx.profile_key,
       stage: ctx.stage,
       purpose: ctx.purpose,

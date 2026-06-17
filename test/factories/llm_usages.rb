@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :llm_usage do
     association :user
     feed { nil }
-    llm_credential { nil }
+    ai_credential { nil }
     profile_key { "llm_website_extractor" }
     stage { :loader }
     provider { "anthropic" }

@@ -3,7 +3,7 @@ require "test_helper"
 # End-to-end integration test covering the headline user flow of the
 # feed-drafts feature (User Stories 1 and 2):
 #
-#   1. Start a feed pointing at an AI-requiring URL with no LLM credentials.
+#   1. Start a feed pointing at an AI-requiring URL with no AI credentials.
 #   2. Submit via the credential-gate commit -> feed persists as draft, user is
 #      sent to credential creation with feed_id pre-attached.
 #   3. Submit the credential form -> credential is created, auto-attached to
@@ -15,7 +15,7 @@ require "test_helper"
 #   6. Feeds index shows the feed in the enabled bucket of the summary line.
 #
 # Validation of the credential is stubbed by toggling the state directly
-# (the controller flow is the focus, not the LlmCredentialValidationJob).
+# (the controller flow is the focus, not the AiCredentialValidationJob).
 class FeedDraftFlowTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
@@ -38,7 +38,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     access_token # ensure user has a usable access token for enabling later
 
     # Step 1+2: submit the new-feed form via the credential gate commit. The
-    # user picked an AI profile but has no LLM credentials, so the gate kicks
+    # user picked an AI profile but has no AI credentials, so the gate kicks
     # in and routes the request to credential setup with the freshly-saved
     # draft pre-attached.
     assert_difference("Feed.count", 1) do
@@ -58,8 +58,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal "llm_website_extractor", draft.feed_profile_key
     assert_equal ai_url, draft.url
     assert_equal "No-RSS Blog", draft.name
-    assert_nil draft.llm_credential_id, "No credential yet at draft-save time"
-    assert_redirected_to new_llm_credential_path(feed_id: draft.id)
+    assert_nil draft.ai_credential_id, "No credential yet at draft-save time"
+    assert_redirected_to new_ai_credential_path(feed_id: draft.id)
 
     # Step 3: follow the redirect and submit the credential form. The
     # controller should create the credential, auto-attach it to the draft,
@@ -67,10 +67,10 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_response :success
 
-    assert_difference("LlmCredential.count", 1) do
-      post llm_credentials_path, params: {
+    assert_difference("AiCredential.count", 1) do
+      post ai_credentials_path, params: {
         feed_id: draft.id,
-        llm_credential: {
+        ai_credential: {
           provider: "anthropic",
           display_name: "My Anthropic key",
           credential_data: { api_key: "sk-ant-#{SecureRandom.hex(16)}" }
@@ -78,12 +78,12 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
       }
     end
 
-    credential = LlmCredential.last
+    credential = AiCredential.last
     assert_equal user.id, credential.user_id
     assert_equal "pending", credential.state
     draft.reload
-    assert_equal credential.id, draft.llm_credential_id, "Credential should be auto-attached to the draft"
-    assert_redirected_to llm_credential_path(credential, feed_id: draft.id)
+    assert_equal credential.id, draft.ai_credential_id, "Credential should be auto-attached to the draft"
+    assert_redirected_to ai_credential_path(credential, feed_id: draft.id)
 
     # Step 4: stub the validation job by flipping the credential state
     # directly. Re-fetch the show page and confirm the "Continue setting up
@@ -91,9 +91,9 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     # editor.
     credential.update!(state: :active, last_validated_at: Time.current)
 
-    get llm_credential_path(credential, feed_id: draft.id)
+    get ai_credential_path(credential, feed_id: draft.id)
     assert_response :success
-    assert_select "[data-key='llm_credential.return-to']" do
+    assert_select "[data-key='ai_credential.return-to']" do
       assert_select "[href=?]", edit_feed_path(draft), text: /Continue setting up your feed/
     end
 
@@ -108,7 +108,7 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
         access_token_id: access_token.id,
         target_group: "testgroup",
         schedule_interval: "1h",
-        llm_credential_id: credential.id
+        ai_credential_id: credential.id
       },
       enable_feed: "1"
     }

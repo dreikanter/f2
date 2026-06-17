@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_17_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -36,6 +36,23 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
+  end
+
+  create_table "ai_credentials", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "provider", null: false
+    t.string "display_name", null: false
+    t.jsonb "credential_data", default: {}, null: false
+    t.boolean "is_default", default: false, null: false
+    t.integer "state", default: 0, null: false
+    t.datetime "last_validated_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
+    t.index ["user_id", "provider"], name: "index_ai_credentials_on_user_provider_default", unique: true, where: "(is_default = true)"
+    t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
+    t.index ["user_id"], name: "index_ai_credentials_on_user_id"
   end
 
   create_table "event_references", force: :cascade do |t|
@@ -154,10 +171,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
     t.string "target_group", limit: 80
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.bigint "llm_credential_id"
+    t.bigint "ai_credential_id"
     t.integer "consecutive_failures", default: 0, null: false
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
-    t.index ["llm_credential_id"], name: "index_feeds_on_llm_credential_id"
+    t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
@@ -170,27 +187,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
     t.index ["invited_user_id"], name: "index_invites_on_invited_user_id"
   end
 
-  create_table "llm_credentials", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.string "provider", null: false
-    t.string "display_name", null: false
-    t.jsonb "credential_data", default: {}, null: false
-    t.boolean "is_default", default: false, null: false
-    t.integer "state", default: 0, null: false
-    t.datetime "last_validated_at"
-    t.text "last_error"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id", "provider", "display_name"], name: "index_llm_credentials_on_user_id_and_provider_and_display_name", unique: true
-    t.index ["user_id", "provider"], name: "index_llm_credentials_on_user_provider_default", unique: true, where: "(is_default = true)"
-    t.index ["user_id", "state"], name: "index_llm_credentials_on_user_id_and_state"
-    t.index ["user_id"], name: "index_llm_credentials_on_user_id"
-  end
-
   create_table "llm_usages", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "feed_id"
-    t.bigint "llm_credential_id"
+    t.bigint "ai_credential_id"
     t.string "profile_key"
     t.integer "stage"
     t.string "provider", null: false
@@ -208,9 +208,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
     t.datetime "updated_at", null: false
     t.integer "duration_ms"
     t.text "error_message"
+    t.index ["ai_credential_id"], name: "index_llm_usages_on_ai_credential_id"
     t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
     t.index ["feed_id"], name: "index_llm_usages_on_feed_id"
-    t.index ["llm_credential_id"], name: "index_llm_usages_on_llm_credential_id"
     t.index ["profile_key", "started_at"], name: "index_llm_usages_on_profile_key_and_started_at"
     t.index ["purpose", "started_at"], name: "index_llm_usages_on_purpose_and_started_at"
     t.index ["user_id", "started_at"], name: "index_llm_usages_on_user_id_and_started_at"
@@ -429,6 +429,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
 
   add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
+  add_foreign_key "ai_credentials", "users"
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade
@@ -437,13 +438,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_14_091900) do
   add_foreign_key "feed_previews", "users"
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
-  add_foreign_key "feeds", "llm_credentials", on_delete: :nullify
+  add_foreign_key "feeds", "ai_credentials", on_delete: :nullify
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id"
-  add_foreign_key "llm_credentials", "users"
+  add_foreign_key "llm_usages", "ai_credentials", on_delete: :nullify
   add_foreign_key "llm_usages", "feeds"
-  add_foreign_key "llm_usages", "llm_credentials", on_delete: :nullify
   add_foreign_key "llm_usages", "users"
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
