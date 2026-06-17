@@ -10,7 +10,15 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
   end
 
   def feed
-    @feed ||= create(:feed, user: user)
+    @feed ||= create(:feed, :enabled, user: user)
+  end
+
+  def disabled_feed
+    @disabled_feed ||= create(:feed, :disabled, user: user)
+  end
+
+  def draft_feed
+    @draft_feed ||= create(:feed, :draft, user: user)
   end
 
   test "create requires authentication" do
@@ -22,6 +30,18 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(other_user)
     post feed_refresh_path(feed)
     assert_response :not_found
+  end
+
+  test "create is not allowed for disabled feeds" do
+    sign_in_as(user)
+    post feed_refresh_path(disabled_feed)
+    assert_redirected_to root_path
+  end
+
+  test "create is not allowed for draft feeds" do
+    sign_in_as(user)
+    post feed_refresh_path(draft_feed)
+    assert_redirected_to root_path
   end
 
   test "create schedules refresh job" do
