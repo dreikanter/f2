@@ -519,7 +519,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "input[name='feed[name]'][value='#{"A" * Feed::NAME_MAX_LENGTH}']", count: 1
+    assert_select "input[name='feed[name]'][value='#{"A" * (Feed::NAME_MAX_LENGTH - 3)}...']", count: 1
   ensure
     feed_identification&.destroy
   end
