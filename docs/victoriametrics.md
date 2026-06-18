@@ -7,10 +7,9 @@ Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) 
 
 VM is bound to localhost on the server. There are two ways to reach vmui:
 
-- **Public endpoint:** https://metrics.fffeeder.com/vmui, behind HTTP basic auth.
-  A standalone Caddy proxy app fronts the accessory — see
-  `docs/deployment-metrics.md`.
-- **SSH tunnel** (no proxy needed):
+- **Tailnet (recommended):** `https://feeder-staging-metrics.<your-tailnet>.ts.net/vmui`,
+  served by the `tailscale` accessory — see `docs/deployment-tailscale.md`.
+- **SSH tunnel** (fallback, no tailnet needed):
 
   ```
   ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
