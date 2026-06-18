@@ -35,8 +35,8 @@ accessories:
 
   # Temporary metrics backend for staging. VictoriaMetrics with its built-in
   # web UI (vmui at :8428/vmui). Bound to localhost — the app pushes over the
-  # private Kamal network (see METRICS_URL below); view the UI via an SSH
-  # tunnel: ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com → http://localhost:8428/vmui
+  # private Kamal network (see METRICS_URL below). Reach vmui over the tailnet
+  # via the `tailscale` accessory below, or an SSH tunnel as a fallback.
   # Remove with: bin/kamal accessory remove victoriametrics -d staging
   victoriametrics:
     image: victoriametrics/victoria-metrics:v1.145.0
@@ -58,6 +58,27 @@ accessories:
     cmd: "--path.rootfs=/host"
     volumes:
       - "/:/host:ro,rslave"
+
+  # Exposes vmui on the tailnet at https://<TS_HOSTNAME>.<tailnet>.ts.net.
+  # `tailscale serve` (configured by serve.json) is the reverse proxy + TLS
+  # terminator, forwarding to the victoriametrics accessory over the Kamal
+  # network — no public port, no cert management, auth is tailnet membership.
+  # Userspace mode avoids needing NET_ADMIN/TUN. See docs/deployment-tailscale.md.
+  tailscale:
+    image: tailscale/tailscale:stable
+    host: dev.fffeeder.com
+    env:
+      clear:
+        TS_USERSPACE: "true"
+        TS_HOSTNAME: f2-metrics
+        TS_STATE_DIR: /var/lib/tailscale
+        TS_SERVE_CONFIG: /config/serve.json
+      secret:
+        - TS_AUTHKEY
+    files:
+      - config/tailscale/serve.json:/config/serve.json
+    directories:
+      - tsdata:/var/lib/tailscale
 
 # Environment variables.
 env:
