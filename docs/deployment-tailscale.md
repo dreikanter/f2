@@ -46,7 +46,7 @@ bin/kamal accessory reboot tailscale -d staging    # after serve.json changes
 
 ## Access
 
-Open `https://f2-metrics.<your-tailnet>.ts.net/vmui` from any device on the
+Open `https://feeder-staging-metrics.<your-tailnet>.ts.net/vmui` from any device on the
 tailnet. (The exact host is `TS_HOSTNAME` + your tailnet's MagicDNS suffix.)
 
 ## Notes

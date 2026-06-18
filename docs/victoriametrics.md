@@ -7,7 +7,7 @@ Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) 
 
 VM is bound to localhost on the server. There are two ways to reach vmui:
 
-- **Tailnet (recommended):** `https://f2-metrics.<your-tailnet>.ts.net/vmui`,
+- **Tailnet (recommended):** `https://feeder-staging-metrics.<your-tailnet>.ts.net/vmui`,
   served by the `tailscale` accessory — see `docs/deployment-tailscale.md`.
 - **SSH tunnel** (fallback, no tailnet needed):
 

@@ -70,7 +70,7 @@ accessories:
     env:
       clear:
         TS_USERSPACE: "true"
-        TS_HOSTNAME: f2-metrics
+        TS_HOSTNAME: feeder-staging-metrics
         TS_STATE_DIR: /var/lib/tailscale
         TS_SERVE_CONFIG: /config/serve.json
       secret:
