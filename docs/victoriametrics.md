@@ -5,17 +5,13 @@ Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) 
 - **Scrape:** VM pulls host OS metrics (CPU, memory, disk, network) from the `node-exporter` accessory, per `config/victoriametrics/scrape.yml`.
 - **Push:** the app sends its own `feeder_*` metrics (counters and gauges, including PostgreSQL sizes) to VM's import endpoint on the configured flush interval — 60 seconds on staging. See `app/services/metrics.rb` and `config/initializers/metrics.rb`.
 
-VM is bound to localhost on the server. There are two ways to reach vmui:
+VM is bound to localhost on the server, so view the UI through an SSH tunnel:
 
-- **Tailnet (recommended):** `https://feeder-staging-metrics.<your-tailnet>.ts.net/vmui`,
-  served by the `tailscale` accessory — see `docs/deployment-tailscale.md`.
-- **SSH tunnel** (fallback, no tailnet needed):
+```
+ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
+```
 
-  ```
-  ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
-  ```
-
-  Then open http://localhost:8428/vmui.
+Then open http://localhost:8428/vmui.
 
 ## App push configuration
 
