@@ -18,8 +18,17 @@ class Development::SystemStatusController < ApplicationController
       credential_check("imgproxy_endpoint", "imgproxy endpoint present", :imgproxy, :endpoint),
       credential_check("imgproxy_key", "imgproxy signing key present", :imgproxy, :key),
       credential_check("imgproxy_salt", "imgproxy signing salt present", :imgproxy, :salt),
+      metrics_push_check,
       background_jobs_check
     ]
+  end
+
+  # Metrics push is off until METRICS_URL is set (dev/test do nothing). A missing
+  # endpoint isn't an error — it just means this process isn't pushing — so it
+  # shows as neutral, not red.
+  def metrics_push_check
+    status = Metrics.enabled? ? :ok : :neutral
+    { key: "metrics_push", label: "Metrics push enabled", status: status }
   end
 
   # Presence checks for optional credentials. A missing key isn't an error —
