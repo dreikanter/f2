@@ -44,7 +44,30 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='config.imgproxy_endpoint']", text: /imgproxy endpoint/
     assert_select "[data-key='config.imgproxy_key']", text: /imgproxy signing key/
     assert_select "[data-key='config.imgproxy_salt']", text: /imgproxy signing salt/
+    assert_select "[data-key='config.metrics_push']", text: /Metrics push enabled/
     assert_select "[data-key='config.background_jobs']", text: /Background jobs/
+  end
+
+  test "should flag metrics push as healthy when METRICS_URL is set" do
+    Metrics.stub(:enabled?, true) do
+      login_as(dev_user)
+
+      get development_system_status_path
+    end
+
+    assert_response :success
+    assert_select "[data-key='config.metrics_push'][data-status='ok']"
+  end
+
+  test "should flag metrics push as neutral when METRICS_URL is unset" do
+    Metrics.stub(:enabled?, false) do
+      login_as(dev_user)
+
+      get development_system_status_path
+    end
+
+    assert_response :success
+    assert_select "[data-key='config.metrics_push'][data-status='neutral']"
   end
 
   test "should flag background jobs as healthy when a process is heartbeating" do
