@@ -44,4 +44,7 @@ env:
     # Basic-auth username is not sensitive; only the password hash is a secret.
     METRICS_USER: admin
   secret:
-    - METRICS_PASSWORD_HASH
+    # The bcrypt hash is shipped base64-encoded and decoded by the container
+    # command — bcrypt's '$' chars get mangled by Kamal's dotenv secrets layer
+    # otherwise. See config/metrics-proxy/Dockerfile.
+    - METRICS_PASSWORD_HASH_B64

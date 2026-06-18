@@ -21,7 +21,8 @@ unlike imgproxy, which is safe to expose because it only serves signed URLs.
 
 - `config/deploy.metrics.yml` — Kamal config for the standalone proxy app.
 - `config/metrics-proxy/Dockerfile` — thin `FROM caddy:<tag>` wrapper that bakes
-  in the Caddyfile.
+  in the Caddyfile; its `CMD` decodes the base64 password hash (see Secret below)
+  into the env var Caddy reads, then execs Caddy.
 - `config/metrics-proxy/Caddyfile` — basic auth + reverse proxy to
   `f2-victoriametrics:8428`; serves `/up` unauthenticated for kamal-proxy's
   health check.
@@ -34,17 +35,25 @@ the stored value is never the plaintext password. The username isn't sensitive
 and lives in `config/deploy.metrics.yml` as a clear env var (`METRICS_USER`,
 default `admin`).
 
-Generate the hash:
+The hash is transported **base64-encoded**. This isn't cosmetic: a bcrypt hash
+contains `$`, and Kamal's dotenv-based secrets layer interpolates `$...`
+sequences, which silently empties the hash before it reaches the container.
+Base64 has no `$`, so it survives; the container command (in
+`config/metrics-proxy/Dockerfile`) decodes it before Caddy reads it.
+
+Generate the base64-encoded hash:
 
 ```bash
-docker run --rm caddy:2.10-alpine caddy hash-password --plaintext <password>
+HASH=$(docker run --rm caddy:2.10-alpine caddy hash-password --plaintext <password>)
+printf '%s' "$HASH" | base64 -w0    # macOS: use `base64` (no -w0)
 ```
 
-Store the result as the GitHub Actions repository secret `METRICS_PASSWORD_HASH`
-(the deploy workflow passes it through). For local deploys, export it first:
+Store the result as the GitHub Actions repository secret
+`METRICS_PASSWORD_HASH_B64` (the deploy workflow passes it through). For local
+deploys, export it first:
 
 ```bash
-export METRICS_PASSWORD_HASH='<hash>'
+export METRICS_PASSWORD_HASH_B64='<base64 string>'
 ```
 
 `.kamal/secrets-common` reads it, so it's available to the proxy app without a
