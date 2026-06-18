@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 43876ee3ebc9475da03681d49bd312a220708680
+  revision: d2301ce07b82beb8aba7c010bd3098ff06be2671
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -190,7 +190,7 @@ GEM
       csv
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
-    i18n (1.15.0)
+    i18n (1.15.1)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.2.3)
       actionpack (>= 6.0.0)
