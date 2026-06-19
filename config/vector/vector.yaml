@@ -1,0 +1,59 @@
+# Vector reads the web/jobs container stdout through the Docker API and ships
+# the JSON lines emitted by rails_semantic_logger to the VictoriaLogs accessory.
+# Booted by Kamal as the `vector` accessory (config/deploy.staging.yml).
+# See docs/victorialogs.md.
+
+sources:
+  app:
+    type: docker_logs
+    # Kamal names app containers "<service>-<role>-<destination>-<version>", so
+    # these prefixes match f2-web-staging-* and f2-jobs-staging-*. Accessory
+    # containers (f2-db, f2-vlogs, f2-vector, …) are intentionally left out.
+    include_containers:
+      - f2-web
+      - f2-jobs
+
+transforms:
+  parse:
+    type: remap
+    inputs:
+      - app
+    source: |
+      # Each stdout line is a JSON document from semantic_logger. Parse it and
+      # merge its fields onto the event, keeping the Docker metadata (notably
+      # container_name). Non-JSON lines — early boot, libraries that bypass the
+      # Rails logger — pass through unchanged with .message as the raw text.
+      parsed, err = parse_json(string!(.message))
+      if err == null && is_object(parsed) {
+        . = merge(., object!(parsed))
+
+        # semantic_logger nests request/job details (controller, action, status,
+        # duration, …) under .payload. Hoist them to the top level so they are
+        # directly queryable in VictoriaLogs, e.g. `status:>=500`.
+        if is_object(.payload) {
+          . = merge(., object!(.payload))
+          del(.payload)
+        }
+      }
+
+sinks:
+  vlogs:
+    type: elasticsearch
+    inputs:
+      - parse
+    # Same Kamal docker network, so the VictoriaLogs accessory resolves by name.
+    endpoints:
+      - http://f2-vlogs:9428/insert/elasticsearch/
+    mode: bulk
+    # VictoriaLogs emulates the ES bulk API but not its version handshake, so
+    # pin the version and skip the health probe.
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    # Tell VictoriaLogs which fields hold the message and timestamp, and which
+    # low-cardinality fields identify a log stream.
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      _stream_fields: container_name,level

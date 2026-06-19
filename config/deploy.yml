@@ -27,6 +27,14 @@ env:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
 
+# Cap the json-file log driver so container stdout can't fill the host disk.
+# On staging the vector accessory ships these lines to VictoriaLogs (see
+# config/vector and docs/victorialogs.md); the on-disk copy is just a buffer.
+logging:
+  options:
+    max-size: 100m
+    max-file: 3
+
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal logs -r jobs" will tail logs from the first server in the jobs section.
 aliases:
