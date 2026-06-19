@@ -70,6 +70,15 @@ group :development do
   gem "web-console"
 end
 
+# Structured JSON logging on the deployed environments. The app emits JSON to
+# STDOUT and the Vector accessory ships it to VictoriaLogs (config/vector,
+# docs/victorialogs.md). Scoped to production/staging so local dev and tests
+# keep Rails' default human-readable logger. staging.rb inherits production.rb,
+# and Rails.groups loads the matching group in each environment.
+group :production, :staging do
+  gem "rails_semantic_logger"
+end
+
 gem "addressable"
 gem "dotenv"
 gem "faraday"
