@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # imgproxy needs no app code, so skip the bundle and install only Kamal.
       # Pin to the version in Gemfile.lock.
