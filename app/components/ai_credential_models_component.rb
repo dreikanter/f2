@@ -16,12 +16,14 @@ class AiCredentialModelsComponent < ViewComponent::Base
   end
 
   # Compact one-liner of the facts worth scanning: context size and
-  # whatever capabilities the provider reports.
+  # whatever capabilities the provider reports. Returns nil when there's
+  # nothing to show, so the template can decide with a single call.
   def model_details(model)
     parts = []
     parts << "#{helpers.number_with_delimiter(model['context_window'])} token context" if model["context_window"].present?
-    parts << capabilities(model).join(", ") if capabilities(model).present?
-    parts.join(" · ")
+    capabilities = capabilities(model)
+    parts << capabilities.join(", ") if capabilities.present?
+    parts.join(" · ").presence
   end
 
   private
