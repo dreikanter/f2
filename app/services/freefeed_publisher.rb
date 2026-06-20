@@ -9,6 +9,19 @@ class FreefeedPublisher
   # expected external condition, not an app fault: the job fails the post and
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
+  # The feed's target group can no longer be posted to: the token lost posting
+  # permission (group went private/restricted, user removed) or the group was
+  # deleted/renamed. The token itself is fine, so only this feed is affected; the
+  # job disables it and records why. #message is a user-facing reason;
+  # #server_message keeps FreeFeed's raw text for diagnostics. See PostPublishJob.
+  class TargetGroupUnavailableError < PublishError
+    attr_reader :server_message
+
+    def initialize(message = nil, server_message: nil)
+      super(message)
+      @server_message = server_message
+    end
+  end
 
   attr_reader :post
 
@@ -94,6 +107,16 @@ class FreefeedPublisher
     raise
   rescue FreefeedClient::UnauthorizedError
     raise
+  rescue FreefeedClient::ForbiddenError => e
+    raise TargetGroupUnavailableError.new(
+      "you no longer have permission to post to @#{post.feed.target_group}",
+      server_message: e.message
+    )
+  rescue FreefeedClient::NotFoundError => e
+    raise TargetGroupUnavailableError.new(
+      "the group @#{post.feed.target_group} no longer exists or was renamed",
+      server_message: e.message
+    )
   rescue => e
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
   end

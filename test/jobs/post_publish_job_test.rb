@@ -116,6 +116,26 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal "enqueued", post.reload.status
   end
 
+  test ".perform_now should disable only this feed and record an event when the group is unavailable" do
+    post = create(:post, :enqueued, feed: feed)
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 403, body: { err: "You can not post to some of destinations: group" }.to_json)
+
+    assert_no_enqueued_jobs(only: PostPublishJob) do
+      PostPublishJob.perform_now(feed.id)
+    end
+
+    assert_equal "disabled", feed.reload.state
+    assert_equal "active", access_token.reload.status
+    assert_equal "enqueued", post.reload.status
+
+    event = Event.where(type: "feed_target_group_unavailable", subject: feed).last
+    assert_not_nil event
+    assert_equal "warning", event.level
+    assert_equal "you no longer have permission to post to @group", event.message
+    assert_equal "group", event.metadata["target_group"]
+  end
+
   test ".perform_now should skip without publishing when a chain is already running" do
     create(:post, :enqueued, feed: feed)
     stub_publish_success
