@@ -8,6 +8,7 @@ class FeedRefreshWorkflow
   step :filter_new_entries
   step :persist_entries
   step :normalize_entries
+  step :reject_posts_without_images
   step :persist_posts
   step :enqueue_publication
   step :finalize_workflow
@@ -125,6 +126,19 @@ class FeedRefreshWorkflow
       feed_entry.update!(status: :processed)
       post
     end
+  end
+
+  # When the feed opts into images-only importing, drop normalized posts that
+  # carry no attachments before they reach persistence, so image-less posts
+  # never publish. Their feed entries and UIDs are already recorded by this
+  # point, so unlike the date threshold this won't re-import them if the option
+  # is later turned off.
+  def reject_posts_without_images(posts)
+    return posts unless feed.images_only?
+
+    with_images, without_images = posts.partition { |post| post.attachment_urls.present? }
+    record_stats(posts_without_images: without_images.size) if without_images.any?
+    with_images
   end
 
   def persist_posts(posts)

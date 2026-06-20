@@ -43,6 +43,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :filter_new_entries,
       :persist_entries,
       :normalize_entries,
+      :reject_posts_without_images,
       :persist_posts,
       :enqueue_publication,
       :finalize_workflow
@@ -242,6 +243,56 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_equal ["undated-entry"], result.map(&:uid)
     assert_equal 1, workflow.stats[:entries_before_threshold]
+  end
+
+  test "#execute should skip posts without images when the feed is images-only" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss", images_only: true)
+
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <item>
+            <guid>with-image</guid>
+            <title>Has an image</title>
+            <description>This entry ships an image</description>
+            <link>https://example.com/with-image</link>
+            <enclosure url="https://example.com/photo.jpg" type="image/jpeg" length="1000"/>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>without-image</guid>
+            <title>No image here</title>
+            <description>This entry has only text</description>
+            <link>https://example.com/without-image</link>
+            <pubDate>#{2.hours.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    result = workflow.execute
+
+    assert_equal ["with-image"], result.map(&:uid)
+    assert_equal ["with-image"], Post.where(feed: test_feed).pluck(:uid)
+    assert_equal 1, workflow.stats[:posts_without_images]
+  end
+
+  test "#reject_posts_without_images should keep all posts when images-only is off" do
+    test_feed = create(:feed, images_only: false)
+    workflow = FeedRefreshWorkflow.new(test_feed)
+
+    with_image = Post.new(uid: "a", attachment_urls: ["https://example.com/a.jpg"])
+    without_image = Post.new(uid: "b", attachment_urls: [])
+
+    result = workflow.send(:reject_posts_without_images, [with_image, without_image])
+
+    assert_equal %w[a b], result.map(&:uid)
+    assert_nil workflow.stats[:posts_without_images]
   end
 
   test "#execute should handle HTTP loading errors gracefully" do
