@@ -44,6 +44,7 @@ module Normalizer
       errors = []
       errors << "missing source_url" if normalize_source_url.blank?
       errors << "missing content" if normalize_content.blank?
+      errors.concat(images_only_errors)
       errors
     end
   end

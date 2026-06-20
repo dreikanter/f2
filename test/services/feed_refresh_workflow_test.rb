@@ -244,6 +244,51 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, workflow.stats[:entries_before_threshold]
   end
 
+  test "#execute should reject image-less posts when the feed is images-only" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss", images_only: true)
+
+    sample_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <item>
+            <guid>with-image</guid>
+            <title>Has an image</title>
+            <description>This entry ships an image</description>
+            <link>https://example.com/with-image</link>
+            <enclosure url="https://example.com/photo.jpg" type="image/jpeg" length="1000"/>
+            <pubDate>#{1.hour.ago.rfc822}</pubDate>
+          </item>
+          <item>
+            <guid>without-image</guid>
+            <title>No image here</title>
+            <description>This entry has only text</description>
+            <link>https://example.com/without-image</link>
+            <pubDate>#{2.hours.ago.rfc822}</pubDate>
+          </item>
+        </channel>
+      </rss>
+    RSS
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
+
+    workflow = FeedRefreshWorkflow.new(test_feed)
+    workflow.execute
+
+    # Both entries persist as posts; the image-less one is rejected rather than
+    # dropped, so its uid stays recorded for normal dedup on later refreshes.
+    with_image = Post.find_by(feed: test_feed, uid: "with-image")
+    without_image = Post.find_by(feed: test_feed, uid: "without-image")
+
+    assert with_image.enqueued?
+    assert without_image.rejected?
+    assert_includes without_image.validation_errors, "no_images"
+
+    assert_equal 1, workflow.stats[:new_posts]
+    assert_equal 1, workflow.stats[:rejected_posts]
+  end
+
   test "#execute should handle HTTP loading errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 

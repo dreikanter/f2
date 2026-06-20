@@ -214,6 +214,7 @@ class FeedsController < ApplicationController
       :import_after_enabled,
       :import_after_date,
       :import_after_time,
+      :images_only,
       # Only the known input-shape keys are accepted. Anything
       # else inside the params hash would otherwise persist into
       # `feeds.params` jsonb undetected. See the profile schemas.
@@ -233,7 +234,7 @@ class FeedsController < ApplicationController
   def update_feed_params
     always_permitted = %i[
       name description target_group access_token_id ai_credential_id schedule_interval
-      import_after_enabled import_after_date import_after_time
+      import_after_enabled import_after_date import_after_time images_only
     ]
     draft_only_permitted = [:url, :feed_profile_key, { params: %i[url query] }]
 

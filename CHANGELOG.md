@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-20
 
+- New feed option to import only posts that include images.
 - Event pages now show stats in a clear, always-visible section.
 - Started keeping a changelog of user-facing changes.
 - New favicon featuring the Feeder mark.

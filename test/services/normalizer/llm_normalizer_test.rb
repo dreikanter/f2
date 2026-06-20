@@ -55,4 +55,12 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "missing content"
   end
+
+  test "#normalize should reject image-less posts when the feed is images-only" do
+    feed.update!(images_only: true)
+    post = Normalizer::LlmNormalizer.new(feed_entry("images" => [])).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "no_images"
+  end
 end
