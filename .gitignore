@@ -34,6 +34,11 @@
 /config/master.key
 /config/credentials/*.key
 
+# Guard against committing a locally-saved Cloudflare Origin Certificate/key.
+# At deploy time these come from the environment, not files. See
+# docs/deployment-setup.md.
+/config/credentials/*.pem
+
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
