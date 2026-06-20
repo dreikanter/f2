@@ -79,8 +79,10 @@ class EventCardComponentTest < ViewComponent::TestCase
     result = render_card(event)
 
     card = result.css("[data-key='events.entry']").first
-    assert_includes card["class"], "bg-amber-100"
-    assert_includes card["class"], "border-amber-200"
+    assert_includes card["class"], "bg-amber-50"
+    assert_includes card["class"], "border-amber-100"
+    assert_includes card["class"], "hover:bg-amber-100"
+    assert_includes card["class"], "hover:border-amber-200"
   end
 
   test "#call should tint error cards with the alert palette" do
