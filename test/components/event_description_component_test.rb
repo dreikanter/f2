@@ -49,6 +49,55 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_instance_of EventDescriptionComponent, EventDescriptionComponent.for(event)
   end
 
+  test ".for should pick the target-group-unavailable subclass" do
+    event = Event.create!(type: "feed_target_group_unavailable", level: :warning, subject: feed, user: user, metadata: {})
+
+    assert_instance_of FeedTargetGroupUnavailableDescriptionComponent, EventDescriptionComponent.for(event)
+  end
+
+  test "#call should render specific copy for a known target-group-unavailable reason" do
+    event = Event.create!(
+      type: "feed_target_group_unavailable",
+      level: :warning,
+      subject: feed,
+      user: user,
+      metadata: { reason: "posting_denied", target_group: "cats", details: "You can not post to some of destinations: cats" }
+    )
+
+    result = render_inline(EventDescriptionComponent.for(event)).to_html
+
+    assert_includes result, "Test Feed"
+    assert_includes result, "lost permission to post to its FreeFeed group"
+  end
+
+  test "#call should render generic copy when the reason is missing or unknown" do
+    event = Event.create!(
+      type: "feed_target_group_unavailable",
+      level: :warning,
+      subject: feed,
+      user: user,
+      metadata: { reason: "something_new" }
+    )
+
+    result = render_inline(EventDescriptionComponent.for(event)).to_html
+
+    assert_includes result, "its FreeFeed group is no longer available"
+  end
+
+  test "#call should never expose the raw API response for target-group-unavailable events" do
+    event = Event.create!(
+      type: "feed_target_group_unavailable",
+      level: :warning,
+      subject: feed,
+      user: user,
+      metadata: { reason: "group_not_found", details: "Account 'cats' was not found" }
+    )
+
+    result = render_inline(EventDescriptionComponent.for(event)).to_html
+
+    assert_not_includes result, "Account 'cats' was not found"
+  end
+
   test "#call should render links for multiple feeds from metadata" do
     event = Event.create!(
       type: "access_token_validation_failed",

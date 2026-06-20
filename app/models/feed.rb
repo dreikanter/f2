@@ -352,9 +352,13 @@ class Feed < ApplicationRecord
   # to (posting permission was revoked, or the group was deleted/renamed). Unlike
   # a dead token this affects only this one feed, so we disable it alone and record
   # a feed_target_group_unavailable event explaining why, letting the user fix the
-  # target and re-enable. Mirrors disable_after_repeated_failures!. The raw FreeFeed
-  # message is kept in metadata for diagnostics only.
-  def disable_due_to_unavailable_target!(reason:, details: nil)
+  # target and re-enable. Mirrors disable_after_repeated_failures!.
+  #
+  # `reason` is a deterministic code the UI maps to safe copy. `details` is the raw
+  # FreeFeed response, stored for diagnostics only and never shown to users.
+  def disable_due_to_unavailable_target!(reason: nil, details: nil)
+    metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
+
     transaction do
       update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
       Event.create!(
@@ -362,8 +366,7 @@ class Feed < ApplicationRecord
         level: :warning,
         subject: self,
         user: user,
-        message: reason,
-        metadata: { target_group: target_group, details: details }.compact
+        metadata: metadata
       )
     end
   end

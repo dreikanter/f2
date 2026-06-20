@@ -1,0 +1,24 @@
+# Renders the reason a feed was turned off when its FreeFeed target group became
+# unavailable. The reason comes from a deterministic code in the event metadata,
+# mapped here to safe copy; an unknown or missing code falls back to a generic
+# line. The raw FreeFeed response (metadata "details") is never rendered.
+class FeedTargetGroupUnavailableDescriptionComponent < EventDescriptionComponent
+  # Reason codes we have specific copy for. Anything else uses the generic line.
+  KNOWN_REASONS = %w[posting_denied group_not_found].freeze
+
+  def call
+    I18n.t(
+      "events.feed_target_group_unavailable.description_html",
+      subject_link: subject_link,
+      reason: reason_text
+    ).html_safe
+  end
+
+  private
+
+  def reason_text
+    code = event.metadata["reason"].to_s
+    key = KNOWN_REASONS.include?(code) ? code : "generic"
+    I18n.t("events.feed_target_group_unavailable.reasons.#{key}")
+  end
+end

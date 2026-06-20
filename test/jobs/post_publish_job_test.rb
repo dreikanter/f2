@@ -132,8 +132,11 @@ class PostPublishJobTest < ActiveJob::TestCase
     event = Event.where(type: "feed_target_group_unavailable", subject: feed).last
     assert_not_nil event
     assert_equal "warning", event.level
-    assert_equal "you no longer have permission to post to @group", event.message
+    assert_equal "posting_denied", event.metadata["reason"]
     assert_equal "group", event.metadata["target_group"]
+    # Raw API text is kept for diagnostics but not in the user-facing message.
+    assert_equal "You can not post to some of destinations: group", event.metadata["details"]
+    assert_equal "", event.message
   end
 
   test ".perform_now should skip without publishing when a chain is already running" do

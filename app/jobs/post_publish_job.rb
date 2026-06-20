@@ -62,7 +62,7 @@ class PostPublishJob < ApplicationJob
     # The target group is gone or no longer accepts our posts. The token is fine,
     # so disable just this feed (with an explanation) and stop the chain; the post
     # stays enqueued and resumes if the user fixes the target and re-enables.
-    feed.disable_due_to_unavailable_target!(reason: e.message, details: e.server_message)
+    feed.disable_due_to_unavailable_target!(reason: e.reason, details: e.server_message)
   rescue FreefeedPublisher::SourceContentError => e
     # Source content is gone (e.g. an attachment 404s). Expected external
     # condition: fail the post and move on, but don't page error tracking.

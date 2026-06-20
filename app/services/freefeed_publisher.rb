@@ -12,14 +12,21 @@ class FreefeedPublisher
   # The feed's target group can no longer be posted to: the token lost posting
   # permission (group went private/restricted, user removed) or the group was
   # deleted/renamed. The token itself is fine, so only this feed is affected; the
-  # job disables it and records why. #message is a user-facing reason;
-  # #server_message keeps FreeFeed's raw text for diagnostics. See PostPublishJob.
+  # job disables it and records why. #reason is a deterministic, UI-safe code (see
+  # REASONS); #server_message keeps FreeFeed's raw text for diagnostics only and
+  # must never be shown to users. See PostPublishJob.
   class TargetGroupUnavailableError < PublishError
-    attr_reader :server_message
+    # Posting was rejected for this destination (lost access / restricted group).
+    POSTING_DENIED = :posting_denied
+    # The destination group no longer exists (deleted or renamed).
+    GROUP_NOT_FOUND = :group_not_found
 
-    def initialize(message = nil, server_message: nil)
-      super(message)
+    attr_reader :reason, :server_message
+
+    def initialize(reason:, server_message: nil)
+      @reason = reason
       @server_message = server_message
+      super("Target group unavailable (#{reason})")
     end
   end
 
@@ -109,12 +116,12 @@ class FreefeedPublisher
     raise
   rescue FreefeedClient::ForbiddenError => e
     raise TargetGroupUnavailableError.new(
-      "you no longer have permission to post to @#{post.feed.target_group}",
+      reason: TargetGroupUnavailableError::POSTING_DENIED,
       server_message: e.message
     )
   rescue FreefeedClient::NotFoundError => e
     raise TargetGroupUnavailableError.new(
-      "the group @#{post.feed.target_group} no longer exists or was renamed",
+      reason: TargetGroupUnavailableError::GROUP_NOT_FOUND,
       server_message: e.message
     )
   rescue => e

@@ -429,7 +429,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     error = assert_raises(FreefeedPublisher::TargetGroupUnavailableError) do
       FreefeedPublisher.new(post).publish
     end
-    assert_equal "you no longer have permission to post to @testgroup", error.message
+    assert_equal FreefeedPublisher::TargetGroupUnavailableError::POSTING_DENIED, error.reason
     assert_equal "You can not post to some of destinations: testgroup", error.server_message
   end
 
@@ -441,7 +441,7 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     error = assert_raises(FreefeedPublisher::TargetGroupUnavailableError) do
       FreefeedPublisher.new(post).publish
     end
-    assert_equal "the group @testgroup no longer exists or was renamed", error.message
+    assert_equal FreefeedPublisher::TargetGroupUnavailableError::GROUP_NOT_FOUND, error.reason
     assert_equal "Account 'testgroup' was not found", error.server_message
   end
 

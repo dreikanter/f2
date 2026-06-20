@@ -919,10 +919,10 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil Event.find_by(subject: feed, type: "feed_auto_disabled")
   end
 
-  test "#disable_due_to_unavailable_target! should disable the feed and record an explanatory event" do
+  test "#disable_due_to_unavailable_target! should disable the feed and record a deterministic reason" do
     feed = create(:feed, :enabled, target_group: "cats", consecutive_failures: 3)
 
-    feed.disable_due_to_unavailable_target!(reason: "you no longer have permission to post to @cats", details: "raw err")
+    feed.disable_due_to_unavailable_target!(reason: :posting_denied, details: "raw err")
 
     feed.reload
     assert feed.disabled?
@@ -931,18 +931,21 @@ class FeedTest < ActiveSupport::TestCase
     event = Event.find_by(subject: feed, type: "feed_target_group_unavailable")
     assert_not_nil event
     assert_equal "warning", event.level
-    assert_equal "you no longer have permission to post to @cats", event.message
+    assert_equal "posting_denied", event.metadata["reason"]
     assert_equal "cats", event.metadata["target_group"]
     assert_equal "raw err", event.metadata["details"]
+    # No free-text/API message on the event itself.
+    assert_equal "", event.message
   end
 
-  test "#disable_due_to_unavailable_target! should omit details from metadata when not given" do
+  test "#disable_due_to_unavailable_target! should omit reason and details from metadata when not given" do
     feed = create(:feed, :enabled, target_group: "cats")
 
-    feed.disable_due_to_unavailable_target!(reason: "gone")
+    feed.disable_due_to_unavailable_target!
 
     event = Event.find_by(subject: feed, type: "feed_target_group_unavailable")
     assert_not event.metadata.key?("details")
+    assert_not event.metadata.key?("reason")
   end
 
   test "#reset_refresh_failures! should clear the streak" do
