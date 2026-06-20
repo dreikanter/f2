@@ -49,6 +49,18 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", feed.display_name
   end
 
+  test "should show another user's feed posts without owner-only links" do
+    login_as(admin_user)
+    feed = create(:feed, user: create(:user))
+    post = create(:post, :published, feed: feed)
+
+    get admin_feed_path(feed)
+
+    assert_response :success
+    assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
+    assert_select "a[href=?]", post_path(post), count: 0
+  end
+
   test "should redirect non-admin users from show" do
     login_as(regular_user)
     feed = create(:feed, user: create(:user))

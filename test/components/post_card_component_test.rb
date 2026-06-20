@@ -28,6 +28,14 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "Flag Design"
   end
 
+  test "#render should omit links and the actions menu when not interactive" do
+    result = render_inline PostCardComponent.new(post: post, interactive: false)
+
+    assert_nil result.at_css("a[href*='/posts/']")
+    assert_includes result.text, "Flag Design"
+    assert_nil result.at_css("[id^='post-menu-']")
+  end
+
   test "#render should show the group as a labeled item linking to the feed when show_feed is true" do
     result = render_inline PostCardComponent.new(post: post, show_feed: true)
 
