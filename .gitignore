@@ -46,6 +46,8 @@
 bun.lock
 bun.lockb
 /coverage
+# cov-loupe writes a log file here by default.
+/cov_loupe.log
 /.claude/claude_settings_local.json
 .env
 !.env.sample

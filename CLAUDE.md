@@ -161,6 +161,23 @@ def feed
 end
 ```
 
+### Coverage
+
+SimpleCov collects coverage on every test run; pass `COVERAGE=1` to disable
+parallelism for accurate numbers. Results land in `coverage/.resultset.json`.
+
+Inspect coverage from the terminal with [cov-loupe](https://keithrbennett.github.io/cov-loupe/):
+
+```sh
+COVERAGE=1 bin/rails test            # generate the resultset
+bundle exec cov-loupe totals         # project-wide totals
+bundle exec cov-loupe list           # per-file percentages
+bundle exec cov-loupe uncovered app/models/feed.rb  # uncovered lines for a file
+```
+
+cov-loupe needs a UTF-8 locale; prefix with `LANG=C.UTF-8` if it reports an
+encoding error.
+
 ### Test naming convention
 
 Use the format `test "#method should ..."` for unit tests:
