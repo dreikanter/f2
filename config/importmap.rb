@@ -11,3 +11,4 @@ pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
 
 pin "tippy.js", to: "https://esm.sh/tippy.js@6"
+pin "date-fns", to: "https://esm.sh/date-fns@4"
