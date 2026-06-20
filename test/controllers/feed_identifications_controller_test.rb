@@ -310,7 +310,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # what the fetcher will write when only the llm_website_extractor matches
     # (the AI matcher itself ships in a later PR, so we construct the payload
     # here as a stand-in to exercise the controller payload contract today).
-    feed_identification = FeedIdentification.create!(
+    FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
@@ -326,14 +326,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "llm_website_extractor", payload.first["profile_key"]
     assert_equal true, payload.first["depends_on_ai"]
     assert_equal "ai_fallback", payload.first["rank_reason"]
-  ensure
-    feed_identification&.destroy
   end
 
   test "#show should show the AI cost notice when a non-recommended candidate is AI" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    feed_identification = FeedIdentification.create!(
+    FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
@@ -347,15 +345,13 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='ai-cost.notice']", count: 1
-  ensure
-    feed_identification&.destroy
   end
 
   test "#show should preselect the default schedule interval with no blank option" do
     sign_in_as(user)
     create(:access_token, :active, user: user)
     url = "http://example.com/feed.xml"
-    feed_identification = FeedIdentification.create!(
+    FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
@@ -371,8 +367,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='feed[schedule_interval]'] option[selected='selected']" do |options|
       assert_equal Feed::DEFAULT_SCHEDULE_INTERVAL, options.first["value"]
     end
-  ensure
-    feed_identification&.destroy
   end
 
   test "#show should preselect the first active access token with no blank option" do
@@ -380,7 +374,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     first_token = create(:access_token, :active, user: user, host: "https://aaa.freefeed.net")
     create(:access_token, :active, user: user, host: "https://zzz.freefeed.net")
     url = "http://example.com/feed.xml"
-    feed_identification = FeedIdentification.create!(
+    FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
@@ -396,8 +390,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='feed[access_token_id]'] option[selected='selected']" do |options|
       assert_equal first_token.id.to_s, options.first["value"]
     end
-  ensure
-    feed_identification&.destroy
   end
 
   test "#show should write the user's input under params[query] for handle inputs" do
@@ -536,7 +528,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     long_title = "A" * (Feed::NAME_MAX_LENGTH + 10)
-    feed_identification = FeedIdentification.create!(
+    FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
@@ -549,8 +541,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "input[name='feed[name]'][value='#{"A" * (Feed::NAME_MAX_LENGTH - 3)}...']", count: 1
-  ensure
-    feed_identification&.destroy
   end
 
   private
