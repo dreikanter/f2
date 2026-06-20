@@ -1,14 +1,11 @@
-# Vector reads the web/jobs container stdout through the Docker API and ships
-# the JSON lines emitted by rails_semantic_logger to the VictoriaLogs accessory.
-# Booted by Kamal as the `vector` accessory (config/deploy.staging.yml).
-# See docs/victorialogs.md.
+# Reads web/jobs container stdout via the Docker API and ships the JSON lines
+# from rails_semantic_logger to the VictoriaLogs accessory. See docs/victorialogs.md.
 
 sources:
   app:
     type: docker_logs
-    # Kamal names app containers "<service>-<role>-<destination>-<version>", so
-    # these prefixes match f2-web-staging-* and f2-jobs-staging-*. Accessory
-    # containers (f2-db, f2-vlogs, f2-vector, …) are intentionally left out.
+    # Kamal names containers "<service>-<role>-<destination>-<version>", so these
+    # prefixes match f2-web-staging-* / f2-jobs-staging-*. Accessories are excluded.
     include_containers:
       - f2-web
       - f2-jobs
@@ -19,17 +16,15 @@ transforms:
     inputs:
       - app
     source: |
-      # Each stdout line is a JSON document from semantic_logger. Parse it and
-      # merge its fields onto the event, keeping the Docker metadata (notably
-      # container_name). Non-JSON lines — early boot, libraries that bypass the
-      # Rails logger — pass through unchanged with .message as the raw text.
+      # Lines are JSON from semantic_logger; merge the parsed fields onto the
+      # event so Docker metadata (container_name) survives. Non-JSON lines pass
+      # through with .message as raw text.
       parsed, err = parse_json(string!(.message))
       if err == null && is_object(parsed) {
         . = merge(., object!(parsed))
 
-        # semantic_logger nests request/job details (controller, action, status,
-        # duration, …) under .payload. Hoist them to the top level so they are
-        # directly queryable in VictoriaLogs, e.g. `status:>=500`.
+        # semantic_logger nests request/job details under .payload; hoist them so
+        # fields like status and controller are queryable directly (status:>=500).
         if is_object(.payload) {
           . = merge(., object!(.payload))
           del(.payload)
@@ -41,7 +36,7 @@ sinks:
     type: elasticsearch
     inputs:
       - parse
-    # Same Kamal docker network, so the VictoriaLogs accessory resolves by name.
+    # Resolves by name over the shared Kamal docker network.
     endpoints:
       - http://f2-vlogs:9428/insert/elasticsearch/
     mode: bulk
@@ -51,8 +46,7 @@ sinks:
     compression: gzip
     healthcheck:
       enabled: false
-    # Tell VictoriaLogs which fields hold the message and timestamp, and which
-    # low-cardinality fields identify a log stream.
+    # _stream_fields must stay low-cardinality.
     query:
       _msg_field: message
       _time_field: timestamp

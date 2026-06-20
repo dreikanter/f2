@@ -30,10 +30,9 @@ Rails.application.configure do
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  # Emit structured JSON logs to STDOUT via rails_semantic_logger so the Vector
-  # accessory can ship them to VictoriaLogs (see docs/victorialogs.md). Kamal
-  # captures STDOUT, so the on-disk file appender is disabled — nothing reads a
-  # log file inside the container. The request id rides along as a named tag.
+  # Structured JSON logs to STDOUT for the Vector accessory to ship to
+  # VictoriaLogs (docs/victorialogs.md). The file appender is off since Kamal
+  # only captures STDOUT; request_id becomes a named tag.
   config.log_tags = [:request_id]
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info").to_sym
   config.rails_semantic_logger.format = :json

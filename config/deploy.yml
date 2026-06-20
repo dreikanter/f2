@@ -27,9 +27,8 @@ env:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
 
-# Cap the json-file log driver so container stdout can't fill the host disk.
-# On staging the vector accessory ships these lines to VictoriaLogs (see
-# config/vector and docs/victorialogs.md); the on-disk copy is just a buffer.
+# Cap the json-file driver so container logs can't fill the host disk. On staging
+# Vector ships these to VictoriaLogs (docs/victorialogs.md); the file is a buffer.
 logging:
   options:
     max-size: 100m
