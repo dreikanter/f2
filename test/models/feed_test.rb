@@ -943,6 +943,7 @@ class FeedTest < ActiveSupport::TestCase
     feed.disable_due_to_unavailable_target!
 
     event = Event.find_by(subject: feed, type: "feed_target_group_unavailable")
+    assert_equal "cats", event.metadata["target_group"]
     assert_not event.metadata.key?("details")
     assert_not event.metadata.key?("reason")
   end

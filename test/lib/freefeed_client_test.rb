@@ -277,39 +277,7 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal false, group[:is_restricted]  # Default when field is missing
   end
 
-  # delete_post method tests
-  test "delete_post returns true on success" do
-    post_id = "post123"
-
-    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
-      .to_return(status: 200)
-
-    result = @client.delete_post(post_id)
-    assert_equal true, result
-  end
-
-  test "delete_post raises InvalidTokenError on 401 with inactive or expired token body" do
-    post_id = "post123"
-
-    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
-      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
-
-    assert_raises(FreefeedClient::InvalidTokenError) do
-      @client.delete_post(post_id)
-    end
-  end
-
-  test "delete_post raises NotFoundError on 404" do
-    post_id = "post123"
-
-    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
-      .to_return(status: 404)
-
-    assert_raises(FreefeedClient::NotFoundError) do
-      @client.delete_post(post_id)
-    end
-  end
-
+  # create_post method tests
   test "create_post raises ForbiddenError on 403 when the destination rejects the post" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: { err: "You can not post to some of destinations: cats" }.to_json)
@@ -341,6 +309,39 @@ class FreefeedClientTest < ActiveSupport::TestCase
       @client.create_post(body: "hi", feeds: ["cats"])
     end
     assert_equal "Account 'cats' was not found", error.message
+  end
+
+  # delete_post method tests
+  test "delete_post returns true on success" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 200)
+
+    result = @client.delete_post(post_id)
+    assert_equal true, result
+  end
+
+  test "delete_post raises InvalidTokenError on 401 with inactive or expired token body" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
+
+    assert_raises(FreefeedClient::InvalidTokenError) do
+      @client.delete_post(post_id)
+    end
+  end
+
+  test "delete_post raises NotFoundError on 404" do
+    post_id = "post123"
+
+    stub_request(:delete, "#{@host}/v4/posts/#{post_id}")
+      .to_return(status: 404)
+
+    assert_raises(FreefeedClient::NotFoundError) do
+      @client.delete_post(post_id)
+    end
   end
 
   test "delete_post raises Error on HTTP client errors" do
