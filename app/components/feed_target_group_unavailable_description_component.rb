@@ -2,7 +2,10 @@
 # event metadata. Unknown or missing codes fall back to generic copy.
 class FeedTargetGroupUnavailableDescriptionComponent < EventDescriptionComponent
   # Reason codes we have specific copy for. Anything else uses the default line.
-  KNOWN_REASONS = %w[posting_denied group_not_found].freeze
+  KNOWN_REASONS = %w[
+    group_not_found
+    posting_denied
+  ].freeze
 
   def call
     I18n.t(
