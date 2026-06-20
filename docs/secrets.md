@@ -31,7 +31,7 @@ In dev and test these return `nil`. Every call site must tolerate that:
 - **Tests** — stub the credential per-test:
 
   ```ruby
-  Rails.application.credentials.stub(:resend_signing_secret, "test_secret") do
+  Rails.application.credentials.stub(:dig, "test_secret") do
     # ...
   end
   ```
