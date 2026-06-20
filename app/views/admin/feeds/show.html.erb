@@ -25,7 +25,7 @@
         <%= link_to "View all", admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "feed.events.view_all" } %>
       <% end %>
     </div>
-    <%= render EventsListComponent.new(events: @recent_events, admin: true) %>
+    <%= render Admin::EventsListComponent.new(events: @recent_events) %>
   </section>
 
   <section class="space-y-4">

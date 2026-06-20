@@ -6,12 +6,11 @@ class EventsListComponent < ViewComponent::Base
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
   # cursor pagination links; omit them for an unpaginated list (the status page).
-  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil, admin: false)
+  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
     @events = events
     @endpoint = endpoint
     @older_url = older_url
     @newer_url = newer_url
-    @admin = admin
   end
 
   def call
@@ -30,8 +29,10 @@ class EventsListComponent < ViewComponent::Base
     end
   end
 
+  # Events link to the user-facing event page. Admin::EventsListComponent
+  # overrides this to point at the operator-facing event page.
   def event_href(event)
-    @admin ? helpers.admin_event_path(event) : helpers.event_path(event)
+    helpers.event_path(event)
   end
 
   def pagination_nav
