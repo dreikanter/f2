@@ -181,13 +181,6 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal expected, result
   end
 
-  test "#highlight_json wraps output in highlight div" do
-    json_hash = { "test" => "value" }
-    result = highlight_json(json_hash)
-
-    assert_includes result, "<div class=\"highlight\">"
-  end
-
   test "#navbar_items should return empty array when user is missing" do
     assert_equal [], navbar_items
   end

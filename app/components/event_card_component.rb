@@ -13,21 +13,29 @@ class EventCardComponent < ViewComponent::Base
 
   DEFAULT_TINT = { border: "border-slate-200", background: "bg-white hover:bg-slate-50" }.freeze
 
-  # `:simplified` shows just the severity, description and timestamp (status and
-  # feed pages). `:extended` adds a footer with the event type, user and target
-  # for the admin log.
-  def initialize(event:, href:, mode: :simplified)
+  # Shows the severity, description and timestamp. Admin::EventCardComponent
+  # adds a footer with the event type, user and target for the operator log.
+  def initialize(event:, href:)
     @event = event
     @href = href
-    @mode = mode
   end
 
   private
 
-  attr_reader :event, :href, :mode
+  attr_reader :event, :href
 
-  def extended?
-    mode == :extended
+  def description
+    description_component_class.for(event)
+  end
+
+  def description_component_class
+    EventDescriptionComponent
+  end
+
+  # Whether to render the footer (type/user/target). Admin::EventCardComponent
+  # enables it for the operator log.
+  def show_footer?
+    false
   end
 
   def card_classes
@@ -42,19 +50,9 @@ class EventCardComponent < ViewComponent::Base
     LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
   end
 
-  # In the admin log the severity icon doubles as a drill-down: clicking it
-  # narrows the log to events of the same level. Elsewhere it is a plain marker.
+  # A plain marker by default. Admin::EventCardComponent turns it into a
+  # drill-down link that narrows the log to events of the same level.
   def severity
-    return severity_marker unless extended?
-
-    helpers.link_to(severity_icon,
-                    helpers.admin_events_path(filter: { level: event.level }),
-                    class: "flex w-4 shrink-0 items-center justify-center",
-                    title: "Show #{event.level} events",
-                    data: { key: "events.severity" })
-  end
-
-  def severity_marker
     helpers.content_tag(:span, severity_icon,
                         class: "flex w-4 shrink-0 items-center justify-center",
                         data: { key: "events.severity" })
@@ -72,10 +70,12 @@ class EventCardComponent < ViewComponent::Base
   end
 
   def type_link
-    helpers.link_to(event.type,
-                    helpers.admin_events_path(filter: { type: [event.type] }),
-                    class: "font-mono transition hover:text-slate-700",
-                    data: { key: "events.type" })
+    link = helpers.link_to(event.type,
+                           helpers.admin_events_path(filter: { type: [event.type] }),
+                           class: "transition hover:text-slate-700",
+                           data: { key: "events.type" })
+
+    safe_join(["Type: ", link])
   end
 
   # Admins see who an event belongs to; the user links to a filtered log.

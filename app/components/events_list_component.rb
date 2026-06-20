@@ -25,8 +25,14 @@ class EventsListComponent < ViewComponent::Base
     return render(EmptyStateComponent.new("No events to show yet")) unless @events.any?
 
     content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
-      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: helpers.event_path(event))) })
+      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: event_href(event))) })
     end
+  end
+
+  # Events link to the user-facing event page. Admin::EventsListComponent
+  # overrides this to point at the operator-facing event page.
+  def event_href(event)
+    helpers.event_path(event)
   end
 
   def pagination_nav

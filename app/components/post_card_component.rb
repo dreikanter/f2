@@ -21,6 +21,19 @@ class PostCardComponent < ViewComponent::Base
     helpers.post_content_preview(post.content, 160)
   end
 
+  # The title links to the post page. ReadonlyPostCardComponent overrides this
+  # with plain text where those owner-scoped routes aren't reachable.
+  def title_element
+    helpers.link_to(title, post_url,
+                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+  end
+
+  # Whether to render the actions menu (Details/Source/Delete). Disabled by
+  # ReadonlyPostCardComponent.
+  def show_actions?
+    true
+  end
+
   def post_url
     helpers.post_path(post)
   end

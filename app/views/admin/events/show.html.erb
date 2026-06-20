@@ -24,7 +24,7 @@
   <% end %>
 
   <%= render AlertComponent.new(variant: @event.alert_variant) do %>
-    <%= render EventDescriptionComponent.for(@event) %>
+    <%= render Admin::EventDescriptionComponent.for(@event) %>
   <% end %>
 
   <%= render EventDetailsComponent.for(@event, admin: true) %>
@@ -36,10 +36,17 @@
     </section>
   <% end %>
 
-  <% if @event.metadata.present? && @event.metadata != {} %>
-    <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Metadata</h2>
-      <pre class="overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-sm"><%= highlight_json(@event.metadata) %></pre>
+  <% if (stats = @event.metadata&.fetch("stats", nil)).present? %>
+    <section class="space-y-4" data-key="events.stats">
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900"><%= t("events.metadata.stats.section_title") %></h2>
+      <%= render ListComponent.new do |list| %>
+        <% stats.each do |key, value| %>
+          <% list.with_item(ListComponent::StatItemComponent.new(
+            label: t("events.metadata.stats.#{key}", default: key.humanize),
+            value: format_stat_value(key, value)
+          )) %>
+        <% end %>
+      <% end %>
     </section>
   <% end %>
 </div>

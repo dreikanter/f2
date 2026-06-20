@@ -124,14 +124,6 @@ module ApplicationHelper
     end
   end
 
-  def highlight_json(json_hash)
-    json_string = JSON.pretty_generate(json_hash)
-    formatter = Rouge::Formatters::HTML.new(wrap: false)
-    lexer = Rouge::Lexers::JSON.new
-    highlighted_code = formatter.format(lexer.lex(json_string))
-    content_tag(:div, highlighted_code.html_safe, class: "highlight")
-  end
-
   def navbar_items
     return [] unless Current.user
 

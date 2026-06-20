@@ -15,6 +15,22 @@ class EventsListComponentTest < ViewComponent::TestCase
     assert_not_nil result.css("[data-key='events.list'] > [data-event-id='#{event2.id}']").first
   end
 
+  test "#call should link events to the user-facing event page" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventsListComponent.new(events: [event]))
+
+    assert_not_nil result.at_css("a[href='#{Rails.application.routes.url_helpers.event_path(event)}']")
+  end
+
+  test "Admin variant should link events to the admin event page" do
+    event = create(:event, user: user)
+
+    result = render_inline(Admin::EventsListComponent.new(events: [event]))
+
+    assert_not_nil result.at_css("a[href='#{Rails.application.routes.url_helpers.admin_event_path(event)}']")
+  end
+
   test "#call should wire up the polling controller when endpoint is given" do
     event = create(:event, user: user)
 

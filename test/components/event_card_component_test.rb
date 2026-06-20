@@ -5,9 +5,9 @@ class EventCardComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  def render_card(event, mode: :simplified, href: nil)
+  def render_card(event, href: nil)
     href ||= "/events/#{event.id}"
-    render_inline(EventCardComponent.new(event: event, href: href, mode: mode))
+    render_inline(EventCardComponent.new(event: event, href: href))
   end
 
   # --- Shared presentation (both modes) ---
@@ -140,7 +140,7 @@ class EventCardComponentTest < ViewComponent::TestCase
   # --- Extended (admin) mode ---
 
   def render_admin_card(event)
-    render_card(event, mode: :extended, href: "/admin/events/#{event.id}")
+    render_inline(Admin::EventCardComponent.new(event: event, href: "/admin/events/#{event.id}"))
   end
 
   test "#call should render a footer with type, user and target in extended mode" do
@@ -187,6 +187,7 @@ class EventCardComponentTest < ViewComponent::TestCase
     link = result.css("a[data-key='events.type']").first
     assert_equal "custom_event", link.text
     assert_includes link["href"], "filter%5Btype%5D%5B%5D=custom_event"
+    assert_includes result.css("[data-key='events.footer']").text, "Type: custom_event"
   end
 
   test "#call should link the user to the admin filter and reveal the email on hover" do

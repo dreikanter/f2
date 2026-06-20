@@ -58,7 +58,7 @@ class EventDescriptionComponent < ViewComponent::Base
   def subject_link
     case event.subject
     when Feed
-      helpers.link_to(event.subject.display_name, helpers.feed_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     when AccessToken
       helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     when Post
@@ -68,6 +68,12 @@ class EventDescriptionComponent < ViewComponent::Base
     else
       ""
     end
+  end
+
+  # Feeds link to the owner-facing page. Admin::EventDescriptionComponent
+  # overrides this to point at the operator-facing feed page instead.
+  def feed_link_path(feed)
+    helpers.feed_path(feed)
   end
 
   def escaped_message
@@ -87,7 +93,7 @@ class EventDescriptionComponent < ViewComponent::Base
     return "" if disabled_feed_ids.blank?
 
     links = disabled_feeds.map do |feed|
-      helpers.link_to(feed.display_name, helpers.feed_path(feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(feed.display_name, feed_link_path(feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     end
 
     linked_feeds = helpers.safe_join(links, ", ")

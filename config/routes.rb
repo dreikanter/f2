@@ -57,6 +57,7 @@ Rails.application.routes.draw do
     end
 
     resources :events, only: [:index, :show]
+    resources :feeds, only: [:index, :show]
   end
 
   resource :settings, only: :show
