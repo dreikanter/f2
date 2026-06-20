@@ -506,9 +506,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   test "#show should render a locked single-option chooser when one candidate exists" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
-    feed_identification = FeedIdentification.create!(
+    create(
+      :feed_identification,
       user: user,
       input: url,
+      started_at: Time.current,
       status: :success,
       candidates: [
         { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
@@ -528,8 +530,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm_website_extractor']", count: 1
     # No "Recommended" badge when there's nothing to compare against.
     assert_select "[data-key='candidate.recommended-badge']", count: 0
-  ensure
-    feed_identification&.destroy
   end
 
   test "#show should truncate detected title to Feed::NAME_MAX_LENGTH" do
