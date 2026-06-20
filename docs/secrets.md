@@ -21,7 +21,6 @@
 ## Reading credentials in code
 
 ```ruby
-Rails.application.credentials.dig(:resend_api_token)
 Rails.application.credentials.dig(:honeybadger, :api_key)
 ```
 
@@ -80,7 +79,6 @@ Make the key available wherever the app boots in that environment:
 2. Add the key. Use nesting for grouped values:
 
    ```yaml
-   resend_api_token: re_xxxxxxxxxxxxxxxx
    honeybadger:
      api_key: hbp_xxxxxxxxxxxxxxxx
    ```
@@ -94,7 +92,7 @@ Make the key available wherever the app boots in that environment:
 4. Read the value in code with a nil-safe call:
 
    ```ruby
-   Rails.application.credentials.dig(:resend_api_token)
+   Rails.application.credentials.dig(:honeybadger, :api_key)
    ```
 
 5. Commit the encrypted file:
