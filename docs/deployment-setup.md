@@ -105,14 +105,24 @@ header, so host routing and Rails host authorization still match).
 Setup:
 
 1. Cloudflare → **SSL/TLS → Origin Server → Create Certificate**. Hostnames
-   `dev.fffeeder.com` (or `*.fffeeder.com`), validity 15 years. Save the cert as
-   `config/credentials/cf-origin.pem` and the private key as
-   `config/credentials/cf-origin.key` (both gitignored; share via the team
-   password manager).
-2. Cloudflare → **SSL/TLS → Overview** → set mode **Full (strict)**, and make the
+   `dev.fffeeder.com` (or `*.fffeeder.com`), validity 15 years. Keep the
+   certificate (PEM) and private key blobs handy for the next step.
+2. Provide the cert/key through the environment as multi-line PEM values —
+   the same flow as `IMGPROXY_KEY` and friends. kamal-proxy reads them from the
+   `CERTIFICATE_PEM` / `PRIVATE_KEY_PEM` secrets, which pull from
+   `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` (see `.kamal/secrets.staging`):
+   - **CI:** add `CF_ORIGIN_CERT` and `CF_ORIGIN_KEY` as GitHub Actions
+     repository secrets (paste the full PEM, including the BEGIN/END lines). The
+     **Deploy Staging** workflow passes them through.
+   - **Local deploys:** export them first, reading from your saved files:
+
+     ```bash
+     export CF_ORIGIN_CERT="$(cat cf-origin.pem)"
+     export CF_ORIGIN_KEY="$(cat cf-origin.key)"
+     ```
+3. Cloudflare → **SSL/TLS → Overview** → set mode **Full (strict)**, and make the
    `dev.fffeeder.com` DNS record **Proxied (orange)**. Keep `dev-origin` grey.
-3. Deploy. kamal-proxy reads the PEMs from the `CERTIFICATE_PEM` /
-   `PRIVATE_KEY_PEM` secrets (see `.kamal/secrets.staging`).
+4. Deploy:
 
 ```bash
 bin/kamal proxy reboot -d staging
