@@ -421,6 +421,30 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
+  test "#publish should raise TargetGroupUnavailableError when the group rejects the post" do
+    post = post_with_content("Test content")
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 403, body: { err: "You can not post to some of destinations: testgroup" }.to_json)
+
+    error = assert_raises(FreefeedPublisher::TargetGroupUnavailableError) do
+      FreefeedPublisher.new(post).publish
+    end
+    assert_equal FreefeedPublisher::TargetGroupUnavailableError::POSTING_DENIED, error.reason
+    assert_equal "You can not post to some of destinations: testgroup", error.server_message
+  end
+
+  test "#publish should raise TargetGroupUnavailableError when the group no longer exists" do
+    post = post_with_content("Test content")
+    stub_request(:post, "#{access_token.host}/v4/posts")
+      .to_return(status: 404, body: { err: "Account 'testgroup' was not found" }.to_json)
+
+    error = assert_raises(FreefeedPublisher::TargetGroupUnavailableError) do
+      FreefeedPublisher.new(post).publish
+    end
+    assert_equal FreefeedPublisher::TargetGroupUnavailableError::GROUP_NOT_FOUND, error.reason
+    assert_equal "Account 'testgroup' was not found", error.server_message
+  end
+
   test "#publish should raise error when FreeFeed API fails" do
     post = post_with_content("Test content")
 

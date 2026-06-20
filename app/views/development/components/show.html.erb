@@ -523,6 +523,9 @@
         <%= render AlertComponent.new(variant: :warning) do %>
           <%= render EventDescriptionComponent.for(Event.new(type: "access_token_validation_failed", level: :warning, subject: sample_token, metadata: { disabled_feed_ids: Feed.limit(3).pluck(:id) })) %>
         <% end %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "feed_target_group_unavailable", level: :warning, subject: sample_feed, metadata: { reason: "posting_denied", target_group: "cats" })) %>
+        <% end %>
       </div>
     </section>
   </div>

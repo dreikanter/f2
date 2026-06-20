@@ -11,7 +11,8 @@ class EventDescriptionComponent < ViewComponent::Base
   # fall back to this base component, which renders the plain description.
   SUBCLASSES = {
     "feed_refresh" => "FeedRefreshDescriptionComponent",
-    "feed_auto_disabled" => "FeedAutoDisabledDescriptionComponent"
+    "feed_auto_disabled" => "FeedAutoDisabledDescriptionComponent",
+    "feed_target_group_unavailable" => "FeedTargetGroupUnavailableDescriptionComponent"
   }.freeze
 
   def self.for(event)

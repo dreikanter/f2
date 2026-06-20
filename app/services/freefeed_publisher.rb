@@ -9,6 +9,24 @@ class FreefeedPublisher
   # expected external condition, not an app fault: the job fails the post and
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
+  # The target group rejected the post (lost access, restricted, or deleted), but
+  # the token still works — so the job disables only this feed, not the token.
+  # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
+  # #server_message is FreeFeed's raw text, for diagnostics only.
+  class TargetGroupUnavailableError < PublishError
+    # Posting was rejected for this destination (lost access / restricted group).
+    POSTING_DENIED = :posting_denied
+    # The destination group no longer exists (deleted or renamed).
+    GROUP_NOT_FOUND = :group_not_found
+
+    attr_reader :reason, :server_message
+
+    def initialize(reason:, server_message: nil)
+      @reason = reason
+      @server_message = server_message
+      super("Target group unavailable (#{reason})")
+    end
+  end
 
   attr_reader :post
 
@@ -94,6 +112,16 @@ class FreefeedPublisher
     raise
   rescue FreefeedClient::UnauthorizedError
     raise
+  rescue FreefeedClient::ForbiddenError => e
+    raise TargetGroupUnavailableError.new(
+      reason: TargetGroupUnavailableError::POSTING_DENIED,
+      server_message: e.message
+    )
+  rescue FreefeedClient::NotFoundError => e
+    raise TargetGroupUnavailableError.new(
+      reason: TargetGroupUnavailableError::GROUP_NOT_FOUND,
+      server_message: e.message
+    )
   rescue => e
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
   end
