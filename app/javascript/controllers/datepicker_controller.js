@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import "flowbite"
-import { format } from "date-fns/utc"
+import { format } from "date-fns"
 
 // Attaches the Flowbite datepicker to its input. Flowbite only auto-inits
 // `datepicker` attributes on turbo:load, which never fires for markup
