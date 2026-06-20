@@ -9,7 +9,13 @@ class ResendWebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   def post_webhook(payload)
-    Rails.application.credentials.stub(:resend_signing_secret, WEBHOOK_SECRET) do
+    credentials = Rails.application.credentials
+    original_dig = credentials.method(:dig)
+    signing_secret_dig = lambda do |*keys|
+      keys == [:resend, :signing_secret] ? WEBHOOK_SECRET : original_dig.call(*keys)
+    end
+
+    credentials.stub(:dig, signing_secret_dig) do
       payload_json = payload.to_json
       timestamp = Time.now.to_i
       msg_id = "msg_#{SecureRandom.hex(12)}"

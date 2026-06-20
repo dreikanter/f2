@@ -1,4 +1,5 @@
 require "test_helper"
+require "mail"
 
 class FileDeliveryTest < ActiveSupport::TestCase
   def email_storage

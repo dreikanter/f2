@@ -1,1 +1,1 @@
-Resend.api_key = Rails.application.credentials.dig(:resend_api_token)
+Resend.api_key = Rails.application.credentials.dig(:resend, :api_key)
