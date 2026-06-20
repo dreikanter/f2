@@ -348,6 +348,26 @@ class Feed < ApplicationRecord
     true
   end
 
+  # Turns the feed off because its FreeFeed target group can no longer be posted
+  # to (posting permission was revoked, or the group was deleted/renamed). Unlike
+  # a dead token this affects only this one feed, so we disable it alone and record
+  # a feed_target_group_unavailable event explaining why, letting the user fix the
+  # target and re-enable. Mirrors disable_after_repeated_failures!. The raw FreeFeed
+  # message is kept in metadata for diagnostics only.
+  def disable_due_to_unavailable_target!(reason:, details: nil)
+    transaction do
+      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      Event.create!(
+        type: "feed_target_group_unavailable",
+        level: :warning,
+        subject: self,
+        user: user,
+        message: reason,
+        metadata: { target_group: target_group, details: details }.compact
+      )
+    end
+  end
+
   # Clears the streak after a successful refresh.
   def reset_refresh_failures!
     return if consecutive_failures.zero?

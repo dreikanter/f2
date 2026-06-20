@@ -40,6 +40,9 @@ en:
     feed_auto_disabled:
       name: "Feed turned off"
       description_html: "%{subject_link} was turned off after repeated errors"
+    feed_target_group_unavailable:
+      name: "Group unavailable"
+      description_html: "%{subject_link} was turned off because %{message}"
     feed_refresh:
       name: "Feed refreshed"
       description_html: "%{subject_link} refreshed"
