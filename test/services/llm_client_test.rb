@@ -237,30 +237,59 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "preview", usage.purpose
   end
 
-  test "#health_check should return true when provider models are accessible" do
+  def fake_model(**attrs)
+    defaults = {
+      id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", family: "claude",
+      context_window: 200_000, max_output_tokens: 8_192, capabilities: ["function_calling"]
+    }
+    Struct.new(*defaults.keys, keyword_init: true).new(**defaults.merge(attrs))
+  end
+
+  test "#available_models should return the provider models as compact hashes" do
+    client = LlmClient.new(credential)
+    model = fake_model
+    stub_provider_models(client) { [model] }
+
+    models = client.available_models
+
+    assert_equal(
+      [{
+        "id" => "claude-sonnet-4-6",
+        "name" => "Claude Sonnet 4.6",
+        "family" => "claude",
+        "context_window" => 200_000,
+        "max_output_tokens" => 8_192,
+        "capabilities" => ["function_calling"]
+      }],
+      models
+    )
+    assert_equal 0, LlmUsage.count
+  end
+
+  test "#available_models should return an empty array when the provider lists no models" do
     client = LlmClient.new(credential)
     stub_provider_models(client) { [] }
 
-    assert_equal true, client.health_check
+    assert_equal [], client.available_models
     assert_equal 0, LlmUsage.count
   end
 
-  test "#health_check should raise AuthError when the provider rejects the key" do
+  test "#available_models should raise AuthError when the provider rejects the key" do
     client = LlmClient.new(credential)
     stub_provider_models(client) { raise RubyLLM::UnauthorizedError, "invalid key" }
 
-    assert_raises(LlmClient::AuthError) { client.health_check }
+    assert_raises(LlmClient::AuthError) { client.available_models }
     assert_equal 0, LlmUsage.count
   end
 
-  test "#health_check should raise ProviderError on other provider failures" do
+  test "#available_models should raise ProviderError on other provider failures" do
     client = LlmClient.new(credential)
     stub_provider_models(client) { raise RubyLLM::ServerError, "upstream error" }
 
-    assert_raises(LlmClient::ProviderError) { client.health_check }
+    assert_raises(LlmClient::ProviderError) { client.available_models }
   end
 
-  test "#health_check should call the provider models endpoint with the credential api_key" do
+  test "#available_models should call the provider models endpoint with the credential api_key" do
     client = LlmClient.new(credential)
 
     fake_provider_class = Class.new do
@@ -269,7 +298,7 @@ class LlmClientTest < ActiveSupport::TestCase
     end
 
     RubyLLM::Provider.stub(:resolve, fake_provider_class) do
-      assert_equal true, client.health_check
+      assert_equal [], client.available_models
       assert_equal 0, LlmUsage.count
     end
   end
