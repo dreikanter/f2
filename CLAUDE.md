@@ -21,6 +21,22 @@ Practice atomic commits: each commit should be one meaningful, complete change.
 - Keep unrelated cleanup, formatting, and feature work in separate commits.
 - Review `git status`, `git diff`, and `git log --oneline` before pushing.
 
+## Changelog
+
+`CHANGELOG.md` is a log of **user-facing** changes, since we don't track releases.
+Entries are grouped under a date heading (`## YYYY-MM-DD`), newest first.
+
+When a change affects users, add an entry in the same commit:
+
+- Keep it to **one line, two at most**.
+- Describe only **user-facing** changes: new features, bugfixes, performance
+  improvements, UI changes.
+- Write for users, not developers — match the UI Text Writing tone below.
+- Add bullets under today's date heading, creating the heading if it's missing.
+
+Do **not** add entries for internal/technical changes: refactors, test changes,
+dependency bumps, build/CI tweaks, or anything users won't notice.
+
 ## Code style
 
 File formatting:
