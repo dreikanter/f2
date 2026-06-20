@@ -292,7 +292,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(event)
 
     assert_response :success
-    rendered = posts.count { |post| response.body.include?(ActionView::RecordIdentifier.dom_id(post)) }
+    rendered = posts.count { |post| css_select("##{ActionView::RecordIdentifier.dom_id(post)}").any? }
     assert_equal EventsController::MAX_RECENT_POSTS, rendered
   end
 
