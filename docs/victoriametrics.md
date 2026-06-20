@@ -8,7 +8,7 @@ Staging runs VictoriaMetrics as a Kamal accessory (`config/deploy.staging.yml`) 
 VM is bound to localhost on the server, so view the UI through an SSH tunnel:
 
 ```
-ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com
+ssh -L 8428:127.0.0.1:8428 dev-origin.fffeeder.com
 ```
 
 Then open http://localhost:8428/vmui.

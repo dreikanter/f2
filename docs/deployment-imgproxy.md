@@ -52,16 +52,16 @@ Two records with different jobs:
 
 | Record | Cloudflare | Points at | Used for |
 | --- | --- | --- | --- |
-| Deploy host (`dev.fffeeder.com`) | DNS-only (grey) | server IP | Kamal SSH + Let's Encrypt |
+| Deploy host (`dev-origin.fffeeder.com`) | DNS-only (grey) | server IP | Kamal SSH + Let's Encrypt |
 | `imgproxy.fffeeder.com` | Proxied (orange) | the origin | public CDN endpoint |
 
 The deploy host (`servers.web.hosts`) is the box Kamal SSHes into and where
 kamal-proxy runs the ACME challenge, so it must resolve **directly** to the
-server. Don't use `imgproxy.fffeeder.com` as the deploy host: it's
-Cloudflare-proxied, so it resolves to Cloudflare's IPs — SSH (port 22) and the
-Let's Encrypt challenge would hit Cloudflare instead of the origin and fail.
-`proxy.host` is set to `imgproxy.fffeeder.com` (the public name); the deploy host
-stays `dev.fffeeder.com`.
+server. Don't use a Cloudflare-proxied name like `imgproxy.fffeeder.com` (or
+`dev.fffeeder.com`) as the deploy host: it resolves to Cloudflare's IPs — SSH
+(port 22) and the Let's Encrypt challenge would hit Cloudflare instead of the
+origin and fail. `proxy.host` is set to `imgproxy.fffeeder.com` (the public
+name); the deploy host is the shared grey origin record `dev-origin.fffeeder.com`.
 
 To move imgproxy to its own server later without touching this config, give it a
 dedicated grey origin record (e.g. `imgproxy-origin.fffeeder.com`), use that as

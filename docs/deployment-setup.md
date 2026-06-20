@@ -42,12 +42,15 @@ Run those commands after changing deploy config to catch syntax or merge issues.
 
 The server names in `servers` and `accessories.db.host` must be reachable over SSH from your workstation. Domain names are fine as long as they resolve directly to the server.
 
-For staging:
+Staging splits the deploy host from the public host so `dev.fffeeder.com` can sit behind Cloudflare's orange proxy:
+
+- `dev-origin.fffeeder.com` — DNS-only (grey), points straight at the server. Kamal SSHes into it and kamal-proxy runs the ACME challenge there, so it must resolve directly. Used in `servers` and every `accessories.*.host`.
+- `dev.fffeeder.com` — the public name users hit. Set as `proxy.host` (and in `HOSTS`/`ACTION_MAILER_HOST`). This is the record you put behind Cloudflare's orange proxy.
 
 ```yaml
 servers:
   web:
-    - dev.fffeeder.com
+    - dev-origin.fffeeder.com
 
 proxy:
   ssl: true
@@ -69,17 +72,26 @@ proxy:
 Before the first setup, confirm DNS points to the server so Let's Encrypt can issue certificates:
 
 ```bash
-dig +short dev.fffeeder.com
+dig +short dev-origin.fffeeder.com   # must return the server IP, not Cloudflare's
 dig +short fffeeder.com
 ```
 
-If a domain is proxied by Cloudflare and SSH does not work through it, use a direct DNS name or the server IP in `servers` and `accessories.db.host`. Keep `proxy.host` set to the public app domain.
+If a domain is proxied by Cloudflare and SSH does not work through it, use a direct DNS name or the server IP in `servers` and `accessories.db.host`. Keep `proxy.host` set to the public app domain. This is exactly why staging deploys against the grey `dev-origin.fffeeder.com` while serving the orange `dev.fffeeder.com`.
+
+### Let's Encrypt behind Cloudflare
+
+kamal-proxy issues a Let's Encrypt certificate for `proxy.host` (`dev.fffeeder.com`) via an HTTP-01 challenge on port 80. If that record is already proxied (orange), the challenge lands on Cloudflare instead of the origin and fails. So before enabling the orange proxy:
+
+- Deploy with `dev.fffeeder.com` **DNS-only (grey)** first so the cert is issued, then switch it to **proxied (orange)** with SSL mode **Full (strict)**. Renewals need the same grey window.
+- Or skip Let's Encrypt and install a **Cloudflare Origin Certificate** on kamal-proxy (via Kamal's custom-cert secrets) with SSL mode **Full (strict)**. This avoids the renewal dance and is the better long-term setup.
+
+Keep `dev-origin.fffeeder.com` grey at all times — it's the SSH and ACME path. See [deployment-imgproxy.md](deployment-imgproxy.md) for the same pattern applied to the imgproxy CDN host.
 
 Confirm the host architecture matches the configured builder architecture:
 
 ```bash
-ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
-ssh root@fffeeder.com "uname -m"       # expected: x86_64
+ssh root@dev-origin.fffeeder.com "uname -m"   # expected: x86_64
+ssh root@fffeeder.com "uname -m"              # expected: x86_64
 ```
 
 ## Secrets
@@ -159,7 +171,7 @@ test -n "$GHCR_TOKEN" && echo "GHCR_TOKEN set"
 test -n "$POSTGRES_PASSWORD_STAGING" && echo "POSTGRES_PASSWORD_STAGING set"
 test -f config/credentials/staging.key
 
-ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
+ssh root@dev-origin.fffeeder.com "uname -m"   # expected: x86_64
 bin/kamal config -d staging
 ```
 
@@ -256,8 +268,8 @@ bin/kamal accessory details db -d staging
 If the app container exited before Kamal can find it, inspect containers directly on the host:
 
 ```bash
-ssh root@dev.fffeeder.com 'docker ps -a --filter label=service=f2 --filter label=destination=staging'
-ssh root@dev.fffeeder.com 'docker logs --timestamps --tail 200 <container-id-or-name>'
+ssh root@dev-origin.fffeeder.com 'docker ps -a --filter label=service=f2 --filter label=destination=staging'
+ssh root@dev-origin.fffeeder.com 'docker logs --timestamps --tail 200 <container-id-or-name>'
 ```
 
 Common issues:

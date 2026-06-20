@@ -23,12 +23,13 @@ builder:
 servers:
   web:
     # The deploy host is the box Kamal SSHes into and where kamal-proxy runs the
-    # ACME challenge, so it must resolve directly to the server. Do NOT use
-    # imgproxy.fffeeder.com here: that name is Cloudflare-proxied (the CDN), so
-    # SSH and Let's Encrypt would hit Cloudflare instead of the origin. The
-    # public CDN name is set as proxy.host below.
+    # ACME challenge, so it must resolve directly to the server. Use the grey
+    # dev-origin.fffeeder.com record, not a Cloudflare-proxied name like
+    # imgproxy.fffeeder.com or dev.fffeeder.com: a proxied name resolves to
+    # Cloudflare, so SSH and Let's Encrypt would hit Cloudflare, not the origin.
+    # The public CDN name is set as proxy.host below.
     hosts:
-      - dev.fffeeder.com
+      - dev-origin.fffeeder.com
 
 proxy:
   ssl: true

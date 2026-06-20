@@ -26,7 +26,7 @@ VictoriaLogs is bound to localhost on the server, so reach the UI through an SSH
 tunnel:
 
 ```
-ssh -L 9428:127.0.0.1:9428 dev.fffeeder.com
+ssh -L 9428:127.0.0.1:9428 dev-origin.fffeeder.com
 ```
 
 Then open http://localhost:9428/select/vmui/.

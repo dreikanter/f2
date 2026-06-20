@@ -1,8 +1,12 @@
 # Deploy to these servers.
 servers:
   web:
+    # Deploy host: the box Kamal SSHes into and where kamal-proxy runs the ACME
+    # challenge, so it must resolve directly to the server. dev.fffeeder.com is
+    # Cloudflare-proxied (the public name set as proxy.host below); use the grey
+    # dev-origin.fffeeder.com record here so SSH and Let's Encrypt hit the origin.
     hosts:
-      - dev.fffeeder.com
+      - dev-origin.fffeeder.com
     env:
       clear:
         # Gauge sampling runs once in the Puma master process; see
@@ -10,7 +14,7 @@ servers:
         METRICS_GAUGES: "true"
   jobs:
     hosts:
-      - dev.fffeeder.com
+      - dev-origin.fffeeder.com
     cmd: bin/jobs
 
 # Configure proxy for web role.
@@ -22,7 +26,7 @@ proxy:
 accessories:
   db:
     image: postgres:18
-    host: dev.fffeeder.com
+    host: dev-origin.fffeeder.com
     port: "127.0.0.1:5432:5432"
     env:
       clear:
@@ -36,11 +40,11 @@ accessories:
   # Temporary metrics backend for staging. VictoriaMetrics with its built-in
   # web UI (vmui at :8428/vmui). Bound to localhost — the app pushes over the
   # private Kamal network (see METRICS_URL below); view the UI via an SSH
-  # tunnel: ssh -L 8428:127.0.0.1:8428 dev.fffeeder.com → http://localhost:8428/vmui
+  # tunnel: ssh -L 8428:127.0.0.1:8428 dev-origin.fffeeder.com → http://localhost:8428/vmui
   # Remove with: bin/kamal accessory remove victoriametrics -d staging
   victoriametrics:
     image: victoriametrics/victoria-metrics:v1.145.0
-    host: dev.fffeeder.com
+    host: dev-origin.fffeeder.com
     port: "127.0.0.1:8428:8428"
     cmd: "-retentionPeriod=1 -promscrape.config=/etc/victoriametrics/scrape.yml -vmui.customDashboardsPath=/etc/victoriametrics/dashboards"
     files:
@@ -54,7 +58,7 @@ accessories:
   # (see config/victoriametrics/scrape.yml), so no published port.
   node-exporter:
     image: quay.io/prometheus/node-exporter:v1.11.1
-    host: dev.fffeeder.com
+    host: dev-origin.fffeeder.com
     cmd: "--path.rootfs=/host"
     volumes:
       - "/:/host:ro,rslave"
@@ -64,7 +68,7 @@ accessories:
   # Remove with: bin/kamal accessory remove vlogs -d staging
   vlogs:
     image: victoriametrics/victoria-logs:v1.51.0
-    host: dev.fffeeder.com
+    host: dev-origin.fffeeder.com
     port: "127.0.0.1:9428:9428"
     cmd: "-retentionPeriod=2d -storageDataPath=/vlogs"
     directories:
@@ -75,7 +79,7 @@ accessories:
   # Remove with: bin/kamal accessory remove vector -d staging
   vector:
     image: timberio/vector:0.56.0-alpine
-    host: dev.fffeeder.com
+    host: dev-origin.fffeeder.com
     cmd: "--config /etc/vector/vector.yaml"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
