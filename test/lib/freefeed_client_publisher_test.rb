@@ -136,11 +136,11 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     assert_equal "post123", result[:id]
   end
 
-  test "create_post handles API error" do
+  test "create_post raises ForbiddenError on 403" do
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 403, body: "Forbidden")
 
-    assert_raises(FreefeedClient::UnauthorizedError) do
+    assert_raises(FreefeedClient::ForbiddenError) do
       @client.create_post(body: "Test", feeds: ["testgroup"])
     end
   end
