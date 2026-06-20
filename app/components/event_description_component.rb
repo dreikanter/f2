@@ -15,13 +15,14 @@ class EventDescriptionComponent < ViewComponent::Base
     "feed_target_group_unavailable" => "FeedTargetGroupUnavailableDescriptionComponent"
   }.freeze
 
-  def self.for(event)
+  def self.for(event, admin: false)
     klass = SUBCLASSES[event.type]&.constantize || self
-    klass.new(event: event)
+    klass.new(event: event, admin: admin)
   end
 
-  def initialize(event:)
+  def initialize(event:, admin: false)
     @event = event
+    @admin = admin
   end
 
   def call
@@ -58,7 +59,7 @@ class EventDescriptionComponent < ViewComponent::Base
   def subject_link
     case event.subject
     when Feed
-      helpers.link_to(event.subject.display_name, helpers.feed_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     when AccessToken
       helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     when Post
@@ -68,6 +69,12 @@ class EventDescriptionComponent < ViewComponent::Base
     else
       ""
     end
+  end
+
+  # Admin event pages link feeds to the operator-facing feed page so admins can
+  # inspect any user's feed; user-facing pages stay on the owner route.
+  def feed_link_path(feed)
+    @admin ? helpers.admin_feed_path(feed) : helpers.feed_path(feed)
   end
 
   def escaped_message
@@ -87,7 +94,7 @@ class EventDescriptionComponent < ViewComponent::Base
     return "" if disabled_feed_ids.blank?
 
     links = disabled_feeds.map do |feed|
-      helpers.link_to(feed.display_name, helpers.feed_path(feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(feed.display_name, feed_link_path(feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
     end
 
     linked_feeds = helpers.safe_join(links, ", ")

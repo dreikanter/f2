@@ -24,7 +24,7 @@
   <% end %>
 
   <%= render AlertComponent.new(variant: @event.alert_variant) do %>
-    <%= render EventDescriptionComponent.for(@event) %>
+    <%= render EventDescriptionComponent.for(@event, admin: true) %>
   <% end %>
 
   <%= render EventDetailsComponent.for(@event, admin: true) %>

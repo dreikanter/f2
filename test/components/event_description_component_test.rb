@@ -31,6 +31,22 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed"
   end
 
+  test "#call should link the feed to the admin path in admin mode" do
+    event = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: feed,
+      user: user,
+      message: "",
+      metadata: {}
+    )
+
+    result = render_inline(EventDescriptionComponent.for(event, admin: true))
+
+    assert_includes result.to_html, "/admin/feeds/#{feed.id}"
+    assert_not_includes result.css("a").map { |a| a["href"] }, "/feeds/#{feed.id}"
+  end
+
   test ".for should pick the feed refresh subclass for refresh events" do
     event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
 

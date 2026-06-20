@@ -6,11 +6,12 @@ class EventsListComponent < ViewComponent::Base
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
   # cursor pagination links; omit them for an unpaginated list (the status page).
-  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
+  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil, admin: false)
     @events = events
     @endpoint = endpoint
     @older_url = older_url
     @newer_url = newer_url
+    @admin = admin
   end
 
   def call
@@ -25,8 +26,12 @@ class EventsListComponent < ViewComponent::Base
     return render(EmptyStateComponent.new("No events to show yet")) unless @events.any?
 
     content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
-      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: helpers.event_path(event))) })
+      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: event_href(event))) })
     end
+  end
+
+  def event_href(event)
+    @admin ? helpers.admin_event_path(event) : helpers.event_path(event)
   end
 
   def pagination_nav
