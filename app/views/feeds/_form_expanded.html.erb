@@ -220,6 +220,18 @@
             <p class="text-sm text-slate-500">Posts published before this moment will be skipped. We'll use the current date and time if you leave these blank. Time is UTC.</p>
           </div>
         <% end %>
+
+        <%= render PanelComponent.new(class: "mt-6", data: { key: "form.images-only" }) do %>
+          <div class="flex items-start">
+            <div class="flex h-6 items-center">
+              <%= f.check_box :images_only, data: { key: "form.images-only-checkbox" } %>
+            </div>
+            <div class="ml-3">
+              <%= f.label :images_only, "Only posts with images", class: "block font-semibold text-slate-800 mb-0" %>
+              <p class="text-sm text-slate-500">Skip posts that don't include any image attachments.</p>
+            </div>
+          </div>
+        <% end %>
       </div>
 
       <div class="mt-6">

@@ -54,6 +54,37 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     assert_equal "short", result.last
   end
 
+  test "#normalize should reject image-less posts for images-only feeds" do
+    subclass = Class.new(Normalizer::Base) do
+      def self.name = "Normalizer::TextOnlyNormalizer"
+      def normalize_source_url = "https://example.com/post"
+      def normalize_content = "Some text without images"
+    end
+    feed = create(:feed, images_only: true)
+    entry = create(:feed_entry, feed: feed)
+
+    post = subclass.new(entry).normalize
+
+    assert post.rejected?
+    assert_includes post.validation_errors, "no_images"
+  end
+
+  test "#normalize should enqueue posts with images for images-only feeds" do
+    subclass = Class.new(Normalizer::Base) do
+      def self.name = "Normalizer::ImageNormalizer"
+      def normalize_source_url = "https://example.com/post"
+      def normalize_content = "Some text"
+      def normalize_attachment_urls = ["https://example.com/photo.jpg"]
+    end
+    feed = create(:feed, images_only: true)
+    entry = create(:feed_entry, feed: feed)
+
+    post = subclass.new(entry).normalize
+
+    assert post.enqueued?
+    assert_empty post.validation_errors
+  end
+
   test "#normalize should raise MissingUidError when the subclass produces a blank uid" do
     subclass = Class.new(Normalizer::Base) do
       def self.name = "Normalizer::NoUidNormalizer"

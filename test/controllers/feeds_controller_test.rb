@@ -604,6 +604,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="form.import-after-fields"].hidden'
     assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]', false
     assert_select 'input[data-key="form.import-after-time"][value="00:00"]'
+    assert_select 'input[name="feed[images_only]"][type=checkbox][checked]', false
   end
 
   test "#edit should show import threshold fields when one is set" do
@@ -686,6 +687,46 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal Time.zone.parse("2026-01-15 10:30"), Feed.last.import_after
+  end
+
+  test "#update should set images_only from params" do
+    sign_in_as(user)
+
+    patch feed_url(feed), params: { feed: { images_only: "1" } }
+
+    assert_redirected_to feed_path(feed)
+    assert feed.reload.images_only?
+  end
+
+  test "#update should clear images_only when the checkbox is unchecked" do
+    sign_in_as(user)
+    feed.update!(images_only: true)
+
+    patch feed_url(feed), params: { feed: { images_only: "0" } }
+
+    assert_redirected_to feed_path(feed)
+    assert_not feed.reload.images_only?
+  end
+
+  test "#create should accept images_only param" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      url: "http://example.com/feed.xml",
+      name: "Test Feed",
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h",
+      images_only: "1"
+    }
+
+    assert_difference("Feed.count", 1) do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+
+    assert Feed.last.images_only?
   end
 
   test "#update should show additional message for enabled feeds" do
