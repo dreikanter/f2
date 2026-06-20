@@ -43,7 +43,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       :filter_new_entries,
       :persist_entries,
       :normalize_entries,
-      :reject_posts_without_images,
       :persist_posts,
       :enqueue_publication,
       :finalize_workflow
@@ -245,7 +244,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, workflow.stats[:entries_before_threshold]
   end
 
-  test "#execute should skip posts without images when the feed is images-only" do
+  test "#execute should reject image-less posts when the feed is images-only" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss", images_only: true)
 
     sample_rss = <<~RSS
@@ -275,24 +274,19 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     WebMock.stub_request(:get, test_feed.url).to_return(body: sample_rss, status: 200)
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-    result = workflow.execute
+    workflow.execute
 
-    assert_equal ["with-image"], result.map(&:uid)
-    assert_equal ["with-image"], Post.where(feed: test_feed).pluck(:uid)
-    assert_equal 1, workflow.stats[:posts_without_images]
-  end
+    # Both entries persist as posts; the image-less one is rejected rather than
+    # dropped, so its uid stays recorded for normal dedup on later refreshes.
+    with_image = Post.find_by(feed: test_feed, uid: "with-image")
+    without_image = Post.find_by(feed: test_feed, uid: "without-image")
 
-  test "#reject_posts_without_images should keep all posts when images-only is off" do
-    test_feed = create(:feed, images_only: false)
-    workflow = FeedRefreshWorkflow.new(test_feed)
+    assert with_image.enqueued?
+    assert without_image.rejected?
+    assert_includes without_image.validation_errors, "no_images"
 
-    with_image = Post.new(uid: "a", attachment_urls: ["https://example.com/a.jpg"])
-    without_image = Post.new(uid: "b", attachment_urls: [])
-
-    result = workflow.send(:reject_posts_without_images, [with_image, without_image])
-
-    assert_equal %w[a b], result.map(&:uid)
-    assert_nil workflow.stats[:posts_without_images]
+    assert_equal 1, workflow.stats[:new_posts]
+    assert_equal 1, workflow.stats[:rejected_posts]
   end
 
   test "#execute should handle HTTP loading errors gracefully" do

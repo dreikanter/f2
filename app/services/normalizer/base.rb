@@ -97,7 +97,15 @@ module Normalizer
     def validate_content
       errors = []
       errors << "no_content_or_images" if missing_content_and_images?
+      errors << "no_images" if require_images? && attachment_urls.empty? && content.present?
       errors
+    end
+
+    # Feeds can opt into importing only posts that carry images. Image-less
+    # entries are still saved as rejected posts (rather than dropped) so their
+    # uids stay recorded and they're skipped normally on later refreshes.
+    def require_images?
+      feed_entry.feed.images_only?
     end
 
     def normalize_published_at(published_at)
