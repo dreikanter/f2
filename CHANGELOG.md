@@ -1,4 +1,4 @@
-# What's new
+# Changelog
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
