@@ -89,6 +89,17 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
 
+  test "should display stats from event metadata" do
+    login_as(admin_user)
+    event = create(:event, metadata: { "stats" => { "new_posts" => 3 } }, user: create(:user))
+
+    get admin_event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.stats']"
+    assert_select "h2", "Stats"
+  end
+
   test "should render the most recent page of events" do
     with_page_size(2) do
       login_as(admin_user)
