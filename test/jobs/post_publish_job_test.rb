@@ -134,7 +134,7 @@ class PostPublishJobTest < ActiveJob::TestCase
     assert_equal "warning", event.level
     assert_equal "posting_denied", event.metadata["reason"]
     assert_equal "group", event.metadata["target_group"]
-    # Raw API text is kept for diagnostics but not in the user-facing message.
+    # Raw API text is kept in metadata for diagnostics.
     assert_equal "You can not post to some of destinations: group", event.metadata["details"]
     assert_equal "", event.message
   end

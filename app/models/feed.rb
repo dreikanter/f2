@@ -350,8 +350,8 @@ class Feed < ApplicationRecord
 
   # Disables just this feed (not the whole token) and logs why, so the user can
   # fix the target group and re-enable. `reason` is a deterministic code the UI
-  # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics
-  # and never shown. Mirrors disable_after_repeated_failures!.
+  # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics.
+  # Mirrors disable_after_repeated_failures!.
   def disable_due_to_unavailable_target!(reason: nil, details: nil)
     metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
 

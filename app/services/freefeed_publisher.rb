@@ -12,7 +12,7 @@ class FreefeedPublisher
   # The target group rejected the post (lost access, restricted, or deleted), but
   # the token still works — so the job disables only this feed, not the token.
   # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
-  # #server_message is FreeFeed's raw text, for diagnostics only — never shown.
+  # #server_message is FreeFeed's raw text, for diagnostics only.
   class TargetGroupUnavailableError < PublishError
     # Posting was rejected for this destination (lost access / restricted group).
     POSTING_DENIED = :posting_denied

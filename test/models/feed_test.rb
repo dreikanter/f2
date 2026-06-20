@@ -934,7 +934,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "posting_denied", event.metadata["reason"]
     assert_equal "cats", event.metadata["target_group"]
     assert_equal "raw err", event.metadata["details"]
-    # No free-text/API message on the event itself.
     assert_equal "", event.message
   end
 

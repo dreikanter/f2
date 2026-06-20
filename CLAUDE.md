@@ -42,6 +42,7 @@ Comments:
 
 - Comment only when the code can't speak for itself; never restate the obvious.
 - Explain the why (intent, trade-offs, non-obvious constraints), not the what.
+- Don't describe what the code doesn't do.
 - Keep comments compact and focused.
 
 ## UI Text Writing
