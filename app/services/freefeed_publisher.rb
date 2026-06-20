@@ -9,12 +9,10 @@ class FreefeedPublisher
   # expected external condition, not an app fault: the job fails the post and
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
-  # The feed's target group can no longer be posted to: the token lost posting
-  # permission (group went private/restricted, user removed) or the group was
-  # deleted/renamed. The token itself is fine, so only this feed is affected; the
-  # job disables it and records why. #reason is a deterministic, UI-safe code (see
-  # REASONS); #server_message keeps FreeFeed's raw text for diagnostics only and
-  # must never be shown to users. See PostPublishJob.
+  # The target group rejected the post (lost access, restricted, or deleted), but
+  # the token still works — so the job disables only this feed, not the token.
+  # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
+  # #server_message is FreeFeed's raw text, for diagnostics only — never shown.
   class TargetGroupUnavailableError < PublishError
     # Posting was rejected for this destination (lost access / restricted group).
     POSTING_DENIED = :posting_denied

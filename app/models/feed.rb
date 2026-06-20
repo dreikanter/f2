@@ -348,14 +348,10 @@ class Feed < ApplicationRecord
     true
   end
 
-  # Turns the feed off because its FreeFeed target group can no longer be posted
-  # to (posting permission was revoked, or the group was deleted/renamed). Unlike
-  # a dead token this affects only this one feed, so we disable it alone and record
-  # a feed_target_group_unavailable event explaining why, letting the user fix the
-  # target and re-enable. Mirrors disable_after_repeated_failures!.
-  #
-  # `reason` is a deterministic code the UI maps to safe copy. `details` is the raw
-  # FreeFeed response, stored for diagnostics only and never shown to users.
+  # Disables just this feed (not the whole token) and logs why, so the user can
+  # fix the target group and re-enable. `reason` is a deterministic code the UI
+  # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics
+  # and never shown. Mirrors disable_after_repeated_failures!.
   def disable_due_to_unavailable_target!(reason: nil, details: nil)
     metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
 

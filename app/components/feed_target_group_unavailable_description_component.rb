@@ -1,7 +1,6 @@
-# Renders the reason a feed was turned off when its FreeFeed target group became
-# unavailable. The reason comes from a deterministic code in the event metadata,
-# mapped here to safe copy; an unknown or missing code falls back to a generic
-# line. The raw FreeFeed response (metadata "details") is never rendered.
+# Renders why a feed was turned off, from the deterministic reason code in the
+# event metadata. Unknown or missing codes fall back to generic copy; the raw
+# FreeFeed response (metadata "details") is never rendered.
 class FeedTargetGroupUnavailableDescriptionComponent < EventDescriptionComponent
   # Reason codes we have specific copy for. Anything else uses the generic line.
   KNOWN_REASONS = %w[posting_denied group_not_found].freeze
