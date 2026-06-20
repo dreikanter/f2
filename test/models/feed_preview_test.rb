@@ -85,6 +85,33 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert_equal 0, preview.posts_count
   end
 
+  test "#total_entries_count should return recorded total entries" do
+    preview = create(
+      :feed_preview,
+      user: user,
+      status: :ready,
+      data: { "posts" => [{ "uid" => "1" }], "stats" => { "total_entries" => 42 } }
+    )
+
+    assert_equal 42, preview.total_entries_count
+  end
+
+  test "#total_entries_count should fall back to posts_count without stats" do
+    preview = create(
+      :feed_preview,
+      user: user,
+      status: :ready,
+      data: { "posts" => [{ "uid" => "1" }, { "uid" => "2" }] }
+    )
+
+    assert_equal 2, preview.total_entries_count
+  end
+
+  test "#total_entries_count should return 0 when not ready" do
+    preview = create(:feed_preview, user: user, data: nil)
+    assert_equal 0, preview.total_entries_count
+  end
+
   test "#timeout! should transition a processing preview to failed" do
     preview = create(:feed_preview, :processing, user: user)
     preview.timeout!
