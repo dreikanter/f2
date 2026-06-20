@@ -182,28 +182,39 @@ class FreefeedClient
     when 200, 201
       response
     when 401, 403
-      err = (JSON.parse(response.body)["err"] rescue nil)
-      case err
-      when "inactive or expired token"
+      err = parse_error(response)
+      if err == "inactive or expired token"
         raise InvalidTokenError, err
-      when /\AYou can not post to/
-        # FreeFeed rejects the destination, not the token (group went private or
-        # restricted, or the user was removed from it). See PostsController#create
-        # (getDestinationFeeds) in freefeed-server.
-        raise ForbiddenError, err
+      elsif response.status == 403
+        # FreeFeed overloads 403 for both auth problems and "you can't do this
+        # here" (e.g. posting to a group you've lost access to). The token itself
+        # is still valid, so default to ForbiddenError — callers scope the fallout
+        # to the affected resource — rather than UnauthorizedError, which would
+        # disable the whole token and every feed on it.
+        raise ForbiddenError, err || "Forbidden"
       else
         raise UnauthorizedError, err || "Unauthorized"
       end
     when 404
       # Preserve the server's message ("Account '<name>' was not found") so the
       # caller can explain a vanished/renamed target group.
-      err = (JSON.parse(response.body)["err"] rescue nil)
-      raise NotFoundError, err || "Resource not found"
+      raise NotFoundError, parse_error(response) || "Resource not found"
     when 429
       handle_too_many_requests(response)
     else
       raise Error, "HTTP #{response.status}: #{response.body}"
     end
+  end
+
+  # FreeFeed's "err" field from a JSON error body, or nil if the body is absent
+  # or not the expected shape.
+  def parse_error(response)
+    return nil if response.body.blank?
+
+    body = JSON.parse(response.body)
+    body["err"] if body.is_a?(Hash)
+  rescue JSON::ParserError
+    nil
   end
 
   # FreeFeed throttled us. Record the cooldown so later acquires short-circuit,

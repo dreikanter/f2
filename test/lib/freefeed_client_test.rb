@@ -82,11 +82,20 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "whoami raises UnauthorizedError on 403" do
+  test "whoami raises ForbiddenError on 403" do
     stub_request(:get, "#{@host}/v4/users/whoami")
       .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
 
-    assert_raises(FreefeedClient::UnauthorizedError) do
+    assert_raises(FreefeedClient::ForbiddenError) do
+      @client.whoami
+    end
+  end
+
+  test "whoami raises InvalidTokenError on 403 with inactive or expired token body" do
+    stub_request(:get, "#{@host}/v4/users/whoami")
+      .to_return(status: 403, body: { err: "inactive or expired token" }.to_json)
+
+    assert_raises(FreefeedClient::InvalidTokenError) do
       @client.whoami
     end
   end
@@ -292,11 +301,20 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_not FreefeedClient::ForbiddenError.ancestors.include?(FreefeedClient::UnauthorizedError)
   end
 
-  test "create_post raises UnauthorizedError on 403 with other auth failures" do
+  test "create_post raises ForbiddenError on any non-token 403" do
     stub_request(:post, "#{@host}/v4/posts")
-      .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
+      .to_return(status: 403, body: { err: "some unexpected forbidden reason" }.to_json)
 
-    assert_raises(FreefeedClient::UnauthorizedError) do
+    assert_raises(FreefeedClient::ForbiddenError) do
+      @client.create_post(body: "hi", feeds: ["cats"])
+    end
+  end
+
+  test "create_post raises InvalidTokenError on 403 with inactive or expired token body" do
+    stub_request(:post, "#{@host}/v4/posts")
+      .to_return(status: 403, body: { err: "inactive or expired token" }.to_json)
+
+    assert_raises(FreefeedClient::InvalidTokenError) do
       @client.create_post(body: "hi", feeds: ["cats"])
     end
   end
