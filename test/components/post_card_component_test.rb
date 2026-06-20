@@ -28,8 +28,8 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "Flag Design"
   end
 
-  test "#render should omit links and the actions menu when not interactive" do
-    result = render_inline PostCardComponent.new(post: post, interactive: false)
+  test "ReadonlyPostCardComponent should omit links and the actions menu" do
+    result = render_inline ReadonlyPostCardComponent.new(post: post)
 
     assert_nil result.at_css("a[href*='/posts/']")
     assert_includes result.text, "Flag Design"

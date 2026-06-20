@@ -30,6 +30,15 @@ class EventCardComponent < ViewComponent::Base
     mode == :extended
   end
 
+  # The admin log (extended mode) links feeds to the operator-facing feed page.
+  def description
+    description_component_class.for(event)
+  end
+
+  def description_component_class
+    extended? ? Admin::EventDescriptionComponent : EventDescriptionComponent
+  end
+
   def card_classes
     helpers.class_names("w-full rounded-lg border shadow-xs transition duration-75", tint[:border], tint[:hover_border], tint[:background])
   end

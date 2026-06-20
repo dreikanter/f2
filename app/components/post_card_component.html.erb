@@ -4,12 +4,7 @@
       <%= status_icon %>
     </span>
     <div class="flex min-w-0 flex-1 items-center gap-2">
-      <% if interactive %>
-        <%= link_to title, post_url,
-              class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
-      <% else %>
-        <span class="truncate text-base text-slate-900"><%= title %></span>
-      <% end %>
+      <%= title_element %>
       <% if withdrawn? %>
         <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
       <% end %>
@@ -48,7 +43,7 @@
       <% end %>
     </div>
 
-    <% if interactive %>
+    <% if show_actions? %>
     <div class="flex shrink-0 items-center gap-3">
       <div class="relative">
         <button type="button"
@@ -94,7 +89,7 @@
     <% end %>
   </div>
 
-  <% if interactive && delete_allowed? %>
+  <% if show_actions? && delete_allowed? %>
     <%= render PostDeleteModalComponent.new(post: post) %>
   <% end %>
 </div>

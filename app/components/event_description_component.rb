@@ -15,14 +15,13 @@ class EventDescriptionComponent < ViewComponent::Base
     "feed_target_group_unavailable" => "FeedTargetGroupUnavailableDescriptionComponent"
   }.freeze
 
-  def self.for(event, admin: false)
-    klass = SUBCLASSES[event.type]&.constantize || self
-    klass.new(event: event, admin: admin)
+  def self.for(event)
+    klass = self::SUBCLASSES[event.type]&.constantize || self
+    klass.new(event: event)
   end
 
-  def initialize(event:, admin: false)
+  def initialize(event:)
     @event = event
-    @admin = admin
   end
 
   def call
@@ -71,10 +70,10 @@ class EventDescriptionComponent < ViewComponent::Base
     end
   end
 
-  # Admin event pages link feeds to the operator-facing feed page so admins can
-  # inspect any user's feed; user-facing pages stay on the owner route.
+  # Feeds link to the owner-facing page. Admin::EventDescriptionComponent
+  # overrides this to point at the operator-facing feed page instead.
   def feed_link_path(feed)
-    @admin ? helpers.admin_feed_path(feed) : helpers.feed_path(feed)
+    helpers.feed_path(feed)
   end
 
   def escaped_message

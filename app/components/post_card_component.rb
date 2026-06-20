@@ -8,21 +8,30 @@ class PostCardComponent < ViewComponent::Base
     "withdrawn" => { icon: "trash-2",      color: "text-slate-400",  label: "Withdrawn" }
   }.freeze
 
-  # `interactive: false` renders a read-only card without the title/Details
-  # links or the actions menu. Admin pages reuse this for feeds they don't own,
-  # where the owner-scoped post routes would 404.
-  def initialize(post:, show_feed: false, interactive: true)
+  def initialize(post:, show_feed: false)
     @post = post
     @show_feed = show_feed
-    @interactive = interactive
   end
 
   private
 
-  attr_reader :post, :show_feed, :interactive
+  attr_reader :post, :show_feed
 
   def title
     helpers.post_content_preview(post.content, 160)
+  end
+
+  # The title links to the post page. ReadonlyPostCardComponent overrides this
+  # with plain text where those owner-scoped routes aren't reachable.
+  def title_element
+    helpers.link_to(title, post_url,
+                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+  end
+
+  # Whether to render the actions menu (Details/Source/Delete). Disabled by
+  # ReadonlyPostCardComponent.
+  def show_actions?
+    true
   end
 
   def post_url
