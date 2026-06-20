@@ -1,27 +1,7 @@
 <% content_for :title, @feed.display_name %>
 
 <div class="space-y-10">
-  <%= render PageHeaderComponent.new(title: @feed.display_name) do |header| %>
-    <% header.with_breadcrumb(label: "Feeds", url: admin_feeds_path) %>
-    <% header.with_context_paragraph do %>
-      <%= render feed_status_badge(@feed) %>
-    <% end %>
-    <% if @feed.user %>
-      <% header.with_context_paragraph do %>
-        Owner:
-        <%= link_to @feed.user.email_address, admin_user_path(@feed.user), class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
-      <% end %>
-    <% end %>
-    <% if @feed.target_group_url.present? %>
-      <% header.with_context_paragraph do %>
-        Target group:
-        <%= link_to "#{@feed.access_token.host_domain}/#{@feed.target_group}",
-                    @feed.target_group_url,
-                    class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
-                    target: "_blank", rel: "noopener" %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "header", feed: @feed %>
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">
