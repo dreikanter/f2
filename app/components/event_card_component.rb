@@ -72,10 +72,12 @@ class EventCardComponent < ViewComponent::Base
   end
 
   def type_link
-    helpers.link_to(event.type,
-                    helpers.admin_events_path(filter: { type: [event.type] }),
-                    class: "font-mono transition hover:text-slate-700",
-                    data: { key: "events.type" })
+    link = helpers.link_to(event.type,
+                           helpers.admin_events_path(filter: { type: [event.type] }),
+                           class: "transition hover:text-slate-700",
+                           data: { key: "events.type" })
+
+    safe_join(["Type: ", link])
   end
 
   # Admins see who an event belongs to; the user links to a filtered log.

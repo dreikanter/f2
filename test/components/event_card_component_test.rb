@@ -187,6 +187,7 @@ class EventCardComponentTest < ViewComponent::TestCase
     link = result.css("a[data-key='events.type']").first
     assert_equal "custom_event", link.text
     assert_includes link["href"], "filter%5Btype%5D%5B%5D=custom_event"
+    assert_includes result.css("[data-key='events.footer']").text, "Type: custom_event"
   end
 
   test "#call should link the user to the admin filter and reveal the email on hover" do
