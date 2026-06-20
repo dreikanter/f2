@@ -1,0 +1,30 @@
+[
+  {
+    "kind": "Listing",
+    "data": {
+      "children": [
+        {
+          "kind": "t3",
+          "data": {
+            "id": "1abc234",
+            "subreddit": "ruby",
+            "title": "Ruby 3.4 released",
+            "author": "rubydev",
+            "score": 1423,
+            "ups": 1423,
+            "upvote_ratio": 0.97,
+            "num_comments": 218,
+            "permalink": "/r/ruby/comments/1abc234/ruby_34_released/",
+            "url": "https://www.ruby-lang.org/en/news/"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "Listing",
+    "data": {
+      "children": []
+    }
+  }
+]
