@@ -143,6 +143,22 @@ jobs:
           gem install erb_lint --no-document
           erb_lint --lint-all
 
+  # Herb (https://herb-tools.dev) as an HTML-aware ERB linter, complementing
+  # erb_lint. Rule tuning lives in .herb.yml.
+  lint_herb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Lint ERB templates with Herb
+        run: npx --yes @herb-tools/linter "app/**/*.erb"
+
   test:
     runs-on: ubuntu-latest
 
