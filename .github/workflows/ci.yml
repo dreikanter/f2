@@ -144,10 +144,10 @@ jobs:
           erb_lint --lint-all
 
   # Trial run of Herb (https://herb-tools.dev) as a candidate ERB linter.
-  # Non-blocking while we evaluate it against the existing erb_lint job.
+  # Reports findings (log output + inline annotations) without failing the
+  # job, so we can evaluate it against the existing erb_lint job.
   lint_herb:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -158,7 +158,7 @@ jobs:
           node-version: 22
 
       - name: Lint ERB templates with Herb
-        run: npx --yes @herb-tools/linter "app/**/*.erb"
+        run: npx --yes @herb-tools/linter "app/**/*.erb" || true
 
   test:
     runs-on: ubuntu-latest
