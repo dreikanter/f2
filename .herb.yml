@@ -1,0 +1,38 @@
+# Herb configuration (https://herb-tools.dev/configuration).
+# Pinned so upgrades don't silently enable new rules.
+version: 0.10.1
+
+linter:
+  enabled: true
+
+  # Dev-only component style guide and demo pages, not shipped views.
+  exclude:
+    - "app/views/development/**/*"
+
+  rules:
+    # ViewComponent slot setters (`<% list.with_item(value: tag.x(...)) %>`) pass
+    # helper output as an argument, not as discarded output. The rule misreads
+    # this common pattern as a silent helper call.
+    actionview-no-silent-helper:
+      enabled: false
+
+    # Cosmetic: hoisting a shared tag out of if/else branches often hurts
+    # readability more than the duplication it removes.
+    erb-no-duplicate-branch-elements:
+      enabled: false
+
+    # Our `href="#"` anchors are Stimulus modal-trigger buttons with no real
+    # navigation target; there's no meaningful href to require.
+    html-anchor-require-href:
+      enabled: false
+
+    # Rails compiles the `<%# locals: %>` magic comment for every template, not
+    # just partials (ActionView::Template#compiled_source), so these are valid
+    # on action views too. The rule's partial-only assumption is outdated here.
+    actionview-strict-locals-partial-only:
+      enabled: false
+    erb-strict-locals-comment-syntax:
+      enabled: false
+
+formatter:
+  enabled: false
