@@ -154,6 +154,16 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "inactive", access_token.reload.status
   end
 
+  test "#call should deactivate token on forbidden error" do
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
+
+    service = AccessTokenValidationService.new(access_token)
+    service.call
+
+    assert_equal "inactive", access_token.reload.status
+  end
+
   test "#call should not disable token on transient errors" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(

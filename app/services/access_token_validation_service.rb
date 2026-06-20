@@ -27,7 +27,9 @@ class AccessTokenValidationService
         }
       )
     end
-  rescue FreefeedClient::UnauthorizedError
+  rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
+    # A 401/403 on whoami or managedGroups means the token can't even read its
+    # own account, so it's effectively dead — disable it and its feeds.
     access_token.disable_token_and_feeds
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so

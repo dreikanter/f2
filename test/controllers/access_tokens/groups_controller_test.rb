@@ -152,6 +152,19 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Retry/, response.body)
   end
 
+  test "handles forbidden token like unauthorized" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 403, body: { err: "Forbidden" }.to_json)
+
+    get access_token_groups_path(active_token)
+
+    assert_response :success
+    assert_match(/Unable to load groups/, response.body)
+    assert_no_match(/Retry/, response.body)
+  end
+
   test "handles empty groups list with appropriate message" do
     sign_in_as user
 

@@ -25,7 +25,7 @@ class AccessTokens::GroupsController < ApplicationController
     else
       error_locals(:inactive_token)
     end
-  rescue FreefeedClient::UnauthorizedError => e
+  rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError => e
     error_locals(:unauthorized)
   rescue StandardError => e
     error_locals(:api_error)
