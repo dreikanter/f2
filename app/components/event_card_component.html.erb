@@ -6,7 +6,7 @@
     </div>
     <%= timestamp_link %>
   </div>
-  <% if extended? %>
+  <% if show_footer? %>
     <div class="truncate border-t <%= divider_border %> px-5 py-2 text-sm text-slate-400" data-key="events.footer">
       <%= safe_join(footer_items, helpers.middot) %>
     </div>

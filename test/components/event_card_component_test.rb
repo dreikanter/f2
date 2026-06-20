@@ -5,9 +5,9 @@ class EventCardComponentTest < ViewComponent::TestCase
     @user ||= create(:user)
   end
 
-  def render_card(event, mode: :simplified, href: nil)
+  def render_card(event, href: nil)
     href ||= "/events/#{event.id}"
-    render_inline(EventCardComponent.new(event: event, href: href, mode: mode))
+    render_inline(EventCardComponent.new(event: event, href: href))
   end
 
   # --- Shared presentation (both modes) ---
@@ -140,7 +140,7 @@ class EventCardComponentTest < ViewComponent::TestCase
   # --- Extended (admin) mode ---
 
   def render_admin_card(event)
-    render_card(event, mode: :extended, href: "/admin/events/#{event.id}")
+    render_inline(Admin::EventCardComponent.new(event: event, href: "/admin/events/#{event.id}"))
   end
 
   test "#call should render a footer with type, user and target in extended mode" do
