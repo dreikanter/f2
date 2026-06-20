@@ -6,6 +6,10 @@ class FreefeedClient
   class Error < StandardError; end
   class UnauthorizedError < Error; end
   class InvalidTokenError < UnauthorizedError; end
+  # The token is valid but isn't allowed to perform this action — e.g. it lost
+  # permission to post to a target group. Deliberately not a subclass of
+  # UnauthorizedError so callers don't mistake it for a dead token and disable it.
+  class ForbiddenError < Error; end
   class NotFoundError < Error; end
 
   USER_AGENT = "FreeFeed-Rails-Client".freeze
@@ -179,13 +183,22 @@ class FreefeedClient
       response
     when 401, 403
       err = (JSON.parse(response.body)["err"] rescue nil)
-      if err == "inactive or expired token"
+      case err
+      when "inactive or expired token"
         raise InvalidTokenError, err
+      when /\AYou can not post to/
+        # FreeFeed rejects the destination, not the token (group went private or
+        # restricted, or the user was removed from it). See PostsController#create
+        # (getDestinationFeeds) in freefeed-server.
+        raise ForbiddenError, err
       else
         raise UnauthorizedError, err || "Unauthorized"
       end
     when 404
-      raise NotFoundError, "Resource not found"
+      # Preserve the server's message ("Account '<name>' was not found") so the
+      # caller can explain a vanished/renamed target group.
+      err = (JSON.parse(response.body)["err"] rescue nil)
+      raise NotFoundError, err || "Resource not found"
     when 429
       handle_too_many_requests(response)
     else

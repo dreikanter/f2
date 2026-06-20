@@ -310,6 +310,39 @@ class FreefeedClientTest < ActiveSupport::TestCase
     end
   end
 
+  test "create_post raises ForbiddenError on 403 when the destination rejects the post" do
+    stub_request(:post, "#{@host}/v4/posts")
+      .to_return(status: 403, body: { err: "You can not post to some of destinations: cats" }.to_json)
+
+    error = assert_raises(FreefeedClient::ForbiddenError) do
+      @client.create_post(body: "hi", feeds: ["cats"])
+    end
+    assert_equal "You can not post to some of destinations: cats", error.message
+  end
+
+  test "create_post ForbiddenError is not an UnauthorizedError" do
+    assert_not FreefeedClient::ForbiddenError.ancestors.include?(FreefeedClient::UnauthorizedError)
+  end
+
+  test "create_post raises UnauthorizedError on 403 with other auth failures" do
+    stub_request(:post, "#{@host}/v4/posts")
+      .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
+
+    assert_raises(FreefeedClient::UnauthorizedError) do
+      @client.create_post(body: "hi", feeds: ["cats"])
+    end
+  end
+
+  test "create_post raises NotFoundError carrying the server message on 404" do
+    stub_request(:post, "#{@host}/v4/posts")
+      .to_return(status: 404, body: { err: "Account 'cats' was not found" }.to_json)
+
+    error = assert_raises(FreefeedClient::NotFoundError) do
+      @client.create_post(body: "hi", feeds: ["cats"])
+    end
+    assert_equal "Account 'cats' was not found", error.message
+  end
+
   test "delete_post raises Error on HTTP client errors" do
     post_id = "post123"
 
