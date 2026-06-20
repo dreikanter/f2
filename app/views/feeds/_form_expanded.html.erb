@@ -157,7 +157,6 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Advanced options</h3>
 
-        <div class="space-y-6">
         <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
           <div class="flex items-start">
             <div class="flex h-6 items-center">
@@ -222,7 +221,7 @@
           </div>
         <% end %>
 
-        <%= render PanelComponent.new(data: { key: "form.images-only" }) do %>
+        <%= render PanelComponent.new(class: "mt-6", data: { key: "form.images-only" }) do %>
           <div class="flex items-start">
             <div class="flex h-6 items-center">
               <%= f.check_box :images_only, data: { key: "form.images-only-checkbox" } %>
@@ -233,7 +232,6 @@
             </div>
           </div>
         <% end %>
-        </div>
       </div>
 
       <div class="mt-6">
