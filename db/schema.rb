@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_17_205938) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_20_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_17_205938) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "available_models", default: [], null: false
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
     t.index ["user_id"], name: "index_ai_credentials_on_user_id"
