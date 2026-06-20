@@ -1,0 +1,60 @@
+<% content_for :title, @feed.display_name %>
+
+<div class="space-y-10">
+  <%= render PageHeaderComponent.new(title: @feed.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "Feeds", url: admin_feeds_path) %>
+    <% header.with_context_paragraph do %>
+      <%= render feed_status_badge(@feed) %>
+    <% end %>
+    <% if @feed.user %>
+      <% header.with_context_paragraph do %>
+        Owner:
+        <%= link_to @feed.user.email_address, admin_user_path(@feed.user), class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+      <% end %>
+    <% end %>
+    <% if @feed.target_group_url.present? %>
+      <% header.with_context_paragraph do %>
+        Target group:
+        <%= link_to "#{@feed.access_token.host_domain}/#{@feed.target_group}",
+                    @feed.target_group_url,
+                    class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
+                    target: "_blank", rel: "noopener" %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @recent_posts.any? %>
+    <section class="space-y-4">
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Stats</h2>
+      <%= render FeedStatsComponent.new(feed: @feed) %>
+      <%= render PostsHeatmapComponent.new(feed: @feed) %>
+    </section>
+  <% end %>
+
+  <% if @has_llm_usages %>
+    <section class="space-y-4">
+      <h2 class="text-2xl font-semibold mb-3 text-slate-900">AI Usage</h2>
+      <%= render FeedLlmStatsComponent.new(feed: @feed) %>
+    </section>
+  <% end %>
+
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
+      <% if @recent_events.any? %>
+        <%= link_to "View all", admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "feed.events.view_all" } %>
+      <% end %>
+    </div>
+    <%= render EventsListComponent.new(events: @recent_events, admin: true) %>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent Posts</h2>
+
+    <% if @recent_posts.any? %>
+      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false) %>
+    <% else %>
+      <%= render EmptyStateComponent.new("No posts imported yet from this feed") %>
+    <% end %>
+  </section>
+</div>
