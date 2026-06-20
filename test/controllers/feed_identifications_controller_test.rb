@@ -503,6 +503,35 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
+  test "#show should render a locked single-option chooser when one candidate exists" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    feed_identification = FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    # The chooser shows even with a single option, so the user sees what was picked.
+    assert_select "[data-key='candidates']", count: 1
+    assert_select "[data-key='candidate.llm_website_extractor']", count: 1
+    assert_select "[data-key='candidate.single-note']", count: 1
+    # The only option is preselected and locked.
+    assert_select "input[type=radio][name='feed[feed_profile_key]'][checked][disabled]", count: 1
+    # A disabled radio doesn't submit, so a hidden field carries the value.
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm_website_extractor']", count: 1
+    # No "Recommended" badge when there's nothing to compare against.
+    assert_select "[data-key='candidate.recommended-badge']", count: 0
+  ensure
+    feed_identification&.destroy
+  end
+
   test "#show should truncate detected title to Feed::NAME_MAX_LENGTH" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"

@@ -1,4 +1,4 @@
-<%# locals: (candidates: [], input: nil) %>
+<%# locals: (candidates: [], input: nil, single: false) %>
 <% selected_key = candidates.first&.dig("profile_key") %>
 
 <div class="space-y-2"
@@ -12,13 +12,13 @@
       <% description = FeedProfile[profile_key]&.dig(:description) %>
       <% uses_ai = !!candidate["depends_on_ai"] %>
       <% is_first = index.zero? %>
-      <label class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:border-sky-400 transition"
+      <label class="flex items-start gap-3 rounded-lg border px-4 py-3 transition <%= single ? "border-sky-300 bg-sky-50 cursor-default" : "border-slate-200 bg-white cursor-pointer hover:border-sky-400" %>"
              data-key="candidate.<%= profile_key %>">
-        <%= tag.input type: "radio", name: "feed[feed_profile_key]", value: profile_key, checked: is_first, class: "mt-1" %>
+        <%= tag.input type: "radio", name: "feed[feed_profile_key]", value: profile_key, checked: is_first, disabled: single, class: "mt-1" %>
         <span class="flex flex-col gap-1">
           <span class="flex flex-wrap items-center gap-2">
             <span class="font-semibold text-slate-800"><%= display_name %></span>
-            <% if is_first %>
+            <% if is_first && !single %>
               <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
                     data-key="candidate.recommended-badge">Recommended</span>
             <% end %>
@@ -34,4 +34,8 @@
       </label>
     <% end %>
   </div>
+
+  <% if single %>
+    <p class="text-sm text-slate-500" data-key="candidate.single-note">This is the only way we can fetch this source, so it's locked in.</p>
+  <% end %>
 </div>

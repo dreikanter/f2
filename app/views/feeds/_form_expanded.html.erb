@@ -1,9 +1,10 @@
 <%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
-<% multi_candidate = !edit_mode && candidates.size > 1 %>
+<% show_chooser = !edit_mode && candidates.any? %>
+<% single_candidate = show_chooser && candidates.size == 1 %>
 <%
   preview_shapes =
-    if multi_candidate
+    if show_chooser
       candidates.to_h { |c| [c["profile_key"], FeedProfile[c["profile_key"]]&.dig(:input_shape).to_s] }
     else
       { feed.feed_profile_key => feed.source_input_shape }
@@ -31,8 +32,13 @@
                   groups_default_text_value: "The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one."
                 } do |f| %>
     <div class="space-y-10">
-      <% if multi_candidate %>
-        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.url %>
+      <% if show_chooser %>
+        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.url, single: single_candidate %>
+        <%# A disabled radio won't submit its value, so the lone option still
+            needs a hidden field to carry the profile key to the server. %>
+        <% if single_candidate %>
+          <%= f.hidden_field :feed_profile_key %>
+        <% end %>
       <% else %>
         <%= f.hidden_field :feed_profile_key %>
       <% end %>
@@ -56,7 +62,7 @@
         <% feed.params&.each do |key, value| %>
           <%= hidden_field_tag "feed[params][#{key}]", value %>
         <% end %>
-        <% unless multi_candidate %>
+        <% unless show_chooser %>
           <p class="text-sm text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
         <% end %>
       </div>
