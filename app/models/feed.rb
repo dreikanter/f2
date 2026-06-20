@@ -46,7 +46,11 @@ class Feed < ApplicationRecord
   has_many :llm_usages, dependent: :destroy
   has_many :posts, dependent: :destroy
 
-  enum :state, { draft: 0, disabled: 1, enabled: 2 }, default: :draft
+  enum :state, {
+    draft: 0,
+    disabled: 1,
+    enabled: 2
+  }, default: :draft
 
   # How long a ready FeedPreview is reused before a fresh run is forced.
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
@@ -353,7 +357,11 @@ class Feed < ApplicationRecord
   # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics.
   # Mirrors disable_after_repeated_failures!.
   def disable_due_to_unavailable_target!(reason: nil, details: nil)
-    metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
+    metadata = {
+      reason: reason&.to_s,
+      target_group: target_group,
+      details: details
+    }.compact
 
     transaction do
       update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
