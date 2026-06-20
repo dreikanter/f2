@@ -16,7 +16,7 @@ class EventDescriptionComponent < ViewComponent::Base
   }.freeze
 
   def self.for(event)
-    klass = self::SUBCLASSES[event.type]&.constantize || self
+    klass = SUBCLASSES[event.type]&.constantize || self
     klass.new(event: event)
   end
 

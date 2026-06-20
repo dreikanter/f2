@@ -31,10 +31,10 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed"
   end
 
-  test ".for should pick the admin feed refresh subclass in admin mode" do
+  test ".for should preserve the type-specific subclass in admin mode" do
     event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user, message: "", metadata: {})
 
-    assert_instance_of Admin::FeedRefreshDescriptionComponent, Admin::EventDescriptionComponent.for(event)
+    assert_kind_of FeedRefreshDescriptionComponent, Admin::EventDescriptionComponent.for(event)
   end
 
   test "#call should link the feed to the admin path in admin mode" do
