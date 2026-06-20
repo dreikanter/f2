@@ -12,8 +12,7 @@ class Development::SystemStatusController < ApplicationController
 
   def config_checks
     [
-      credential_check("resend_key", "Resend key present", :resend_api_token),
-      credential_check("resend_signing_secret", "Resend signing secret present", :resend_signing_secret),
+      credential_check("resend_api_key", "Resend api key", :resend_api_key),
       credential_check("honeybadger_key", "Honeybadger API key present", :honeybadger, :api_key),
       credential_check("imgproxy_endpoint", "imgproxy endpoint present", :imgproxy, :endpoint),
       credential_check("imgproxy_key", "imgproxy signing key present", :imgproxy, :key),
