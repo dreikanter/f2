@@ -30,12 +30,15 @@ Rails.application.configure do
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  # Log to STDOUT with the current request id as a default log tag.
+  # Structured JSON logs to STDOUT for the Vector accessory to ship to
+  # VictoriaLogs (docs/victorialogs.md). The file appender is off since Kamal
+  # only captures STDOUT; request_id becomes a named tag.
   config.log_tags = [:request_id]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
-
-  # Change to "debug" to log everything (including potentially personally-identifiable information!)
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info").to_sym
+  config.rails_semantic_logger.format = :json
+  config.rails_semantic_logger.semantic = true
+  config.rails_semantic_logger.add_file_appender = false
+  config.semantic_logger.add_appender(io: $stdout, level: config.log_level, formatter: :json)
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"

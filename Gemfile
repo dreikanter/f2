@@ -70,6 +70,14 @@ group :development do
   gem "web-console"
 end
 
+# Structured JSON logging for the deployed environments (docs/victorialogs.md).
+# Scoped to production/staging so dev and test keep Rails' default logger.
+# staging.rb inherits production.rb and Rails loads the matching bundler group
+# per environment, so both deployed envs pick it up.
+group :production, :staging do
+  gem "rails_semantic_logger"
+end
+
 gem "addressable"
 gem "dotenv"
 gem "faraday"

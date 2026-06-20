@@ -59,6 +59,29 @@ accessories:
     volumes:
       - "/:/host:ro,rslave"
 
+  # Self-hosted log storage with a built-in web UI, fed by the vector accessory.
+  # Bound to localhost — reach the UI via an SSH tunnel (see docs/victorialogs.md).
+  # Remove with: bin/kamal accessory remove vlogs -d staging
+  vlogs:
+    image: victoriametrics/victoria-logs:v1.51.0
+    host: dev.fffeeder.com
+    port: "127.0.0.1:9428:9428"
+    cmd: "-retentionPeriod=2d -storageDataPath=/vlogs"
+    directories:
+      - data:/vlogs
+
+  # Reads web/jobs container stdout via the Docker API and forwards the JSON
+  # lines to VictoriaLogs over the Kamal network.
+  # Remove with: bin/kamal accessory remove vector -d staging
+  vector:
+    image: timberio/vector:0.56.0-alpine
+    host: dev.fffeeder.com
+    cmd: "--config /etc/vector/vector.yaml"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    files:
+      - config/vector/vector.yaml:/etc/vector/vector.yaml
+
 # Environment variables.
 env:
   clear:

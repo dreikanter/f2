@@ -1,0 +1,53 @@
+# Reads web/jobs container stdout via the Docker API and ships the JSON lines
+# from rails_semantic_logger to the VictoriaLogs accessory. See docs/victorialogs.md.
+
+sources:
+  app:
+    type: docker_logs
+    # Kamal names containers "<service>-<role>-<destination>-<version>", so these
+    # prefixes match f2-web-staging-* / f2-jobs-staging-*. Accessories are excluded.
+    include_containers:
+      - f2-web
+      - f2-jobs
+
+transforms:
+  parse:
+    type: remap
+    inputs:
+      - app
+    source: |
+      # Lines are JSON from semantic_logger; merge the parsed fields onto the
+      # event so Docker metadata (container_name) survives. Non-JSON lines pass
+      # through with .message as raw text.
+      parsed, err = parse_json(string!(.message))
+      if err == null && is_object(parsed) {
+        . = merge(., object!(parsed))
+
+        # semantic_logger nests request/job details under .payload; hoist them so
+        # fields like status and controller are queryable directly (status:>=500).
+        if is_object(.payload) {
+          . = merge(., object!(.payload))
+          del(.payload)
+        }
+      }
+
+sinks:
+  vlogs:
+    type: elasticsearch
+    inputs:
+      - parse
+    # Resolves by name over the shared Kamal docker network.
+    endpoints:
+      - http://f2-vlogs:9428/insert/elasticsearch/
+    mode: bulk
+    # VictoriaLogs emulates the ES bulk API but not its version handshake, so
+    # pin the version and skip the health probe.
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    # _stream_fields must stay low-cardinality.
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      _stream_fields: container_name,level
