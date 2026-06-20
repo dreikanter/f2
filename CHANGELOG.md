@@ -5,3 +5,4 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-06-20
 
 - Started keeping a changelog of user-facing changes.
+- New favicon featuring the Feeder mark.
