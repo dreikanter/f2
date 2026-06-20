@@ -34,6 +34,10 @@
 /config/master.key
 /config/credentials/*.key
 
+# Cloudflare Origin Certificate + key served by kamal-proxy (kept out of git;
+# shared via the team password manager). See docs/deployment-setup.md.
+/config/credentials/*.pem
+
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
