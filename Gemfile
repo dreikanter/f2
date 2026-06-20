@@ -60,6 +60,8 @@ end
 group :test do
   gem "simplecov", require: false
   gem "simplecov-cobertura", require: false
+  # CLI for inspecting SimpleCov coverage [https://keithrbennett.github.io/cov-loupe/]
+  gem "cov-loupe", require: false
   gem "minitest-rails"
   gem "webmock"
   gem "super_diff"
