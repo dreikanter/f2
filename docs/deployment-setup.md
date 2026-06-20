@@ -82,6 +82,53 @@ ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
 ssh root@fffeeder.com "uname -m"       # expected: x86_64
 ```
 
+## Cloudflare Origin Certificate (staging)
+
+`dev.fffeeder.com` is Cloudflare-proxied (orange), so kamal-proxy can't get a
+Let's Encrypt certificate: the ACME HTTP-01 challenge lands on Cloudflare, not
+the origin. Instead kamal-proxy serves a **Cloudflare Origin Certificate** and
+Cloudflare runs in SSL mode **Full (strict)**, keeping both hops (browser↔edge
+and edge↔origin) encrypted and validated with no renewal dance.
+
+This needs the deploy host split from the public host. Two DNS records:
+
+| Record | Cloudflare | Used for |
+| --- | --- | --- |
+| `dev-origin.fffeeder.com` | DNS-only (grey) → server IP | Kamal SSH, accessories, cert install |
+| `dev.fffeeder.com` | Proxied (orange) | public `proxy.host` |
+
+`servers.*` and `accessories.*.host` point at the grey record (Cloudflare proxies
+only HTTP/S, so SSH must bypass it); `proxy.host`, `HOSTS`, and
+`ACTION_MAILER_HOST` stay the public name (Cloudflare forwards the original Host
+header, so host routing and Rails host authorization still match).
+
+Setup:
+
+1. Cloudflare → **SSL/TLS → Origin Server → Create Certificate**. Hostnames
+   `dev.fffeeder.com` (or `*.fffeeder.com`), validity 15 years. Save the cert as
+   `config/credentials/cf-origin.pem` and the private key as
+   `config/credentials/cf-origin.key` (both gitignored; share via the team
+   password manager).
+2. Cloudflare → **SSL/TLS → Overview** → set mode **Full (strict)**, and make the
+   `dev.fffeeder.com` DNS record **Proxied (orange)**. Keep `dev-origin` grey.
+3. Deploy. kamal-proxy reads the PEMs from the `CERTIFICATE_PEM` /
+   `PRIVATE_KEY_PEM` secrets (see `.kamal/secrets.staging`).
+
+```bash
+bin/kamal proxy reboot -d staging
+bin/kamal deploy -d staging
+```
+
+Verify the origin actually serves the Cloudflare cert (bypassing the edge):
+
+```bash
+curl -kvI --resolve dev.fffeeder.com:443:<ORIGIN_IP> https://dev.fffeeder.com/up 2>&1 \
+  | grep -i "issuer"   # CloudFlare Origin SSL Certificate Authority
+```
+
+The origin cert is trusted only by Cloudflare, so hitting the origin directly
+shows a browser warning — expected, since real traffic flows through the proxy.
+
 ## Secrets
 
 Kamal destination deploys read:
