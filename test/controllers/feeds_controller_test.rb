@@ -594,26 +594,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "2h", feed.schedule_interval
   end
 
-  test "#edit should render collapsed advanced options when no import threshold is set" do
+  test "#edit should hide import threshold fields when none is set" do
     sign_in_as(user)
 
     get edit_feed_url(feed)
 
     assert_response :success
-    assert_select 'details[data-key="form.advanced-options"]:not([open])'
+    assert_select '[data-key="form.advanced-options"]'
     assert_select '[data-key="form.import-after-fields"].hidden'
     assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]', false
     assert_select 'input[data-key="form.import-after-time"][value="00:00"]'
   end
 
-  test "#edit should expand advanced options when an import threshold is set" do
+  test "#edit should show import threshold fields when one is set" do
     sign_in_as(user)
     feed.update!(import_after: Time.utc(2026, 1, 15, 10, 30))
 
     get edit_feed_url(feed)
 
     assert_response :success
-    assert_select 'details[data-key="form.advanced-options"][open]'
+    assert_select '[data-key="form.import-after-fields"]:not(.hidden)'
     assert_select 'input[name="feed[import_after_enabled]"][type=checkbox][checked]'
     assert_select 'input[data-key="form.import-after-date"][value="2026-01-15"]'
     assert_select 'input[data-key="form.import-after-time"][value="10:30"]'

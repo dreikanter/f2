@@ -97,57 +97,61 @@
       <div class="mt-6">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
-        <div class="space-y-10">
-          <div class="space-y-2">
-            <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
-            <% if active_tokens.empty? %>
-              <%= render "feeds/token_gate" %>
-            <% else %>
-              <%= f.select :access_token_id,
-                           options_from_collection_for_select(
-                             active_tokens,
-                             :id,
-                             :display_name,
-                             feed.access_token_id || active_tokens.first&.id
-                           ),
-                           {},
-                           {
-                             class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
-                             data: {
-                               action: "change->groups#refresh",
-                               groups_target: "tokenSelect"
-                             }
-                           } %>
-              <% if f.object.errors[:access_token].any? %>
-                <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
+        <div class="space-y-6">
+          <%= render PanelComponent.new do %>
+            <div class="space-y-2">
+              <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
+              <% if active_tokens.empty? %>
+                <%= render "feeds/token_gate" %>
+              <% else %>
+                <%= f.select :access_token_id,
+                             options_from_collection_for_select(
+                               active_tokens,
+                               :id,
+                               :display_name,
+                               feed.access_token_id || active_tokens.first&.id
+                             ),
+                             {},
+                             {
+                               class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
+                               data: {
+                                 action: "change->groups#refresh",
+                                 groups_target: "tokenSelect"
+                               }
+                             } %>
+                <% if f.object.errors[:access_token].any? %>
+                  <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
+                <% end %>
               <% end %>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
 
-          <%= render "feeds/target_group_selector",
-                     feed: feed,
-                     groups: [],
-                     token: nil %>
-        </div>
-      </div>
+          <%= render PanelComponent.new do %>
+            <%= render "feeds/target_group_selector",
+                       feed: feed,
+                       groups: [],
+                       token: nil %>
+          <% end %>
 
-      <div class="mt-6">
-        <h3 class="text-base font-semibold text-slate-900 mb-4">Refresh Schedule</h3>
-
-        <div class="space-y-2">
-          <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-slate-800" %>
-          <%= f.select :schedule_interval,
-                       Feed.schedule_intervals_for_select,
-                       { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
-                       { class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" } %>
-          <% if f.object.errors[:cron_expression].any? %>
-            <p class="text-sm text-red-600"><%= f.object.errors[:cron_expression].first %></p>
+          <%= render PanelComponent.new do %>
+            <div class="space-y-2">
+              <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-slate-800" %>
+              <%= f.select :schedule_interval,
+                           Feed.schedule_intervals_for_select,
+                           { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
+                           { class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" } %>
+              <% if f.object.errors[:cron_expression].any? %>
+                <p class="text-sm text-red-600"><%= f.object.errors[:cron_expression].first %></p>
+              <% end %>
+            </div>
           <% end %>
         </div>
       </div>
 
-      <%= render CollapsibleSectionComponent.new(title: "Advanced options", open: feed.import_after_enabled, data: { key: "form.advanced-options" }) do %>
-        <div class="space-y-6" data-controller="field-toggle">
+      <div class="mt-6">
+        <h3 class="text-base font-semibold text-slate-900 mb-4">Advanced options</h3>
+
+        <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
           <div class="flex items-start">
             <div class="flex h-6 items-center">
               <%= f.check_box :import_after_enabled,
@@ -163,7 +167,10 @@
             </div>
           </div>
 
-          <div class="space-y-2 <%= "hidden" unless feed.import_after_enabled %>"
+          <%# mt-6 lives on the toggled panel (not a wrapper space-y) so the gap
+              only appears when the fields are shown — a hidden element renders
+              no margin. %>
+          <div class="mt-6 space-y-2 <%= "hidden" unless feed.import_after_enabled %>"
                data-field-toggle-target="panel"
                data-key="form.import-after-fields">
             <div class="grid gap-4 sm:grid-cols-2">
@@ -206,8 +213,8 @@
             </div>
             <p class="text-sm text-slate-500">Posts published before this moment will be skipped. We'll use the current date and time if you leave these blank. Time is UTC.</p>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
       <div class="mt-6">
         <div class="flex items-start">
