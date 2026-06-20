@@ -78,14 +78,11 @@
       </div>
 
       <div class="mt-2" data-key="form.preview">
-        <button type="button"
-                <%= "disabled" unless feed.can_be_previewed? %>
-                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                data-preview-button-target="button"
-                data-action="click->preview-button#open"
-                data-key="preview.open">
-          Preview feed contents
-        </button>
+        <%= tag.button "Preview feed contents",
+              type: "button",
+              disabled: !feed.can_be_previewed?,
+              class: "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+              data: { preview_button_target: "button", action: "click->preview-button#open", key: "preview.open" } %>
 
         <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
           <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
