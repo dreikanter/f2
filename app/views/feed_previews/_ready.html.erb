@@ -8,7 +8,7 @@
     <div class="space-y-1">
       <p class="font-semibold text-slate-800">Here's what we'd post</p>
       <p class="text-sm text-slate-500" data-key="preview.summary">
-        This feed has <%= preview.total_entries_count %> <%= "post".pluralize(preview.total_entries_count) %> ready to enqueue.<% if preview.total_entries_count > preview.posts_count %> Here's a peek at the <%= preview.posts_count %> most recent.<% end %>
+        We found <%= preview.total_entries_count %> <%= "post".pluralize(preview.total_entries_count) %> in this feed.<% if preview.total_entries_count > preview.posts_count %> Here's a peek at the <%= preview.posts_count %> most recent.<% end %>
       </p>
     </div>
     <button type="button"

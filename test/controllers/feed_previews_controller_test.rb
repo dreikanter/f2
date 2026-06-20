@@ -46,6 +46,34 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "#show should summarize the total post count for a ready preview" do
+    sign_in_as(user)
+    create(:feed_preview, :completed, user: user, feed_profile_key: "rss",
+                                      params: { "url" => "http://example.com/feed.xml" })
+
+    get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+
+    assert_response :success
+    summary = css_select('[data-key="preview.summary"]').text
+    assert_match "We found 1 post in this feed", summary
+    assert_no_match(/peek/, summary)
+  end
+
+  test "#show should note the preview is a subset when total exceeds shown posts" do
+    sign_in_as(user)
+    posts = 10.times.map { |i| { "uid" => "uid-#{i}", "content" => "post #{i}" } }
+    create(:feed_preview, user: user, status: :ready, ready_at: 1.minute.ago,
+                          feed_profile_key: "rss", params: { "url" => "http://example.com/feed.xml" },
+                          data: { "posts" => posts, "stats" => { "total_entries" => 25 } })
+
+    get feed_preview_url(profile_key: "rss", "params" => { url: "http://example.com/feed.xml" })
+
+    assert_response :success
+    summary = css_select('[data-key="preview.summary"]').text
+    assert_match "We found 25 posts in this feed", summary
+    assert_match "peek at the 10 most recent", summary
+  end
+
   test "#show should clear the pane and create nothing when source is blank" do
     sign_in_as(user)
 
