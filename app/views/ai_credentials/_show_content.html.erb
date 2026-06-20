@@ -23,6 +23,8 @@
     <% end %>
 
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
+
+    <%= render AiCredentialModelsComponent.new(ai_credential: ai_credential) %>
   <% when "inactive" %>
     <%= render AlertComponent.new(variant: :error, icon: "circle-x",
                                   data: { credential_state: "inactive", key: "ai_credential.inactive" }) do %>
