@@ -70,7 +70,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result, "lost permission to post to its FreeFeed group"
   end
 
-  test "#call should render generic copy when the reason is missing or unknown" do
+  test "#call should render default copy when the reason is missing or unknown" do
     event = Event.create!(
       type: "feed_target_group_unavailable",
       level: :warning,
