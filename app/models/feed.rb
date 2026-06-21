@@ -180,6 +180,13 @@ class Feed < ApplicationRecord
     (FeedProfile[feed_profile_key]&.dig(:input_shape) || :url).to_s
   end
 
+  # Whether the user's source is a URL rather than a free-text prompt.
+  # Decided purely by parsing the input (no profile lookup, no LLM), so the
+  # label stays accurate even when an AI profile is chosen for a URL source.
+  def source_input_url?
+    InputClassifier.classify(source_input) == :url
+  end
+
   def display_name
     name.presence || "Untitled feed"
   end

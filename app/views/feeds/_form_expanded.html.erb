@@ -32,8 +32,28 @@
                   groups_default_text_value: "The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one."
                 } do |f| %>
     <div class="space-y-10">
+      <%# Source stays anchored at the top so the expansion reads as the
+          "What do you want to follow?" field staying put while the rest of
+          the form appears below it. %>
+      <% source_label = feed.source_input_url? ? "Source URL" : "Source prompt" %>
+      <div class="space-y-2">
+        <%= f.label :url, source_label, class: "block font-semibold text-slate-800" %>
+        <%= f.text_field :url_display,
+                         value: feed.source_input,
+                         disabled: true,
+                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                         aria: { label: "#{source_label} (cannot be changed)" },
+                         data: { key: "form.source-display" } %>
+        <% feed.params&.each do |key, value| %>
+          <%= hidden_field_tag "feed[params][#{key}]", value %>
+        <% end %>
+        <% unless show_chooser %>
+          <p class="text-sm text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
+        <% end %>
+      </div>
+
       <% if show_chooser %>
-        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.url, single: single_candidate %>
+        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate %>
         <%# A disabled radio won't submit its value, so the lone option still
             needs a hidden field to carry the profile key to the server. %>
         <% if single_candidate %>
@@ -50,22 +70,6 @@
           AI fetches cost tokens. Previewing or refreshing a preview spends some too — you'll see your spend on the feed page.
         <% end %>
       <% end %>
-
-      <div class="space-y-2">
-        <%= f.label :url, "Source", class: "block font-semibold text-slate-800" %>
-        <%= f.text_field :url_display,
-                         value: feed.source_input,
-                         disabled: true,
-                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
-                         aria: { label: "Source (cannot be changed)" },
-                         data: { key: "form.source-display" } %>
-        <% feed.params&.each do |key, value| %>
-          <%= hidden_field_tag "feed[params][#{key}]", value %>
-        <% end %>
-        <% unless show_chooser %>
-          <p class="text-sm text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
-        <% end %>
-      </div>
 
       <div class="space-y-2">
         <%= f.label :name, "Feed Name", class: "block font-semibold text-slate-800" %>

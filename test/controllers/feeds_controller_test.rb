@@ -529,8 +529,18 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
-    assert_select "label", text: "Source"
+    assert_select "label", text: "Source URL"
     assert_select "p.text-slate-500", text: "Source and type can't be changed after creation. Start a new feed to follow a different source."
+  end
+
+  test "#edit should label the source as a prompt for a query-shaped feed" do
+    sign_in_as(user)
+    prompt_feed = create(:feed, user: user, feed_profile_key: "llm_web_search", params: { "query" => "cat pictures" })
+
+    get edit_feed_url(prompt_feed)
+
+    assert_response :success
+    assert_select "label", text: "Source prompt"
   end
 
   test "#edit should render Save feed button and unchecked always-interactable Enable checkbox for a draft" do
