@@ -135,12 +135,12 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal "llm_website_extractor", draft.feed_profile_key, "Profile key should be locked after promotion"
 
     # Step 6: feeds index should show the feed in the enabled bucket of the
-    # 3-bucket summary line, and the row itself should not carry the Draft
-    # badge or draft-only inline actions anymore.
+    # 3-bucket summary line, and the row itself should carry the enabled
+    # status icon rather than draft-only inline actions.
     get feeds_path
     assert_response :success
     assert_select "p", text: /1 active feed/
-    assert_select "[data-key=?]", "feed.#{draft.id}.draft_badge", false
+    assert_select "[data-key=?] svg[aria-label=?]", "feed.#{draft.id}.status_icon", "Enabled"
     assert_select "[data-key=?]", "feed.#{draft.id}.continue_setup", false
     assert_select "a[href=?]", feed_path(draft), text: "No-RSS Blog"
   end

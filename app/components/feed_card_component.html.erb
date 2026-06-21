@@ -1,30 +1,32 @@
-<div id="<%= helpers.dom_id(feed) %>" class="w-full rounded-lg border border-slate-200 bg-white shadow-xs transition duration-75 hover:bg-slate-50">
-  <div class="flex items-start gap-4 px-5 py-4">
-    <div class="flex min-w-0 items-center gap-2">
-      <%= link_to title, feed_url,
-            class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
-      <%= render status_badge %>
-    </div>
-  </div>
-
-  <div class="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-2">
-    <div class="min-w-0 flex-1 truncate text-sm text-slate-400">
-      <% if target_group_label %>
-        <% if target_group_url %>
-          <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                class: "mr-3 transition hover:text-slate-600" %>
-        <% else %>
-          <span class="mr-3"><%= target_group_label %></span>
+<div id="<%= helpers.dom_id(feed) %>" class="w-full rounded-lg border border-slate-200 bg-white px-5 py-3 shadow-xs transition duration-75 hover:bg-slate-50">
+  <div class="flex items-start gap-3">
+    <div class="min-w-0 flex-1 space-y-1">
+      <div class="flex items-baseline gap-2">
+        <%= link_to title, feed_url,
+              class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
+        <% if target_group_label %>
+          <% if target_group_url %>
+            <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
+                  class: "truncate text-sm text-slate-400 transition hover:text-slate-600" %>
+          <% else %>
+            <span class="truncate text-sm text-slate-400"><%= target_group_label %></span>
+          <% end %>
         <% end %>
-      <% end %>
-      <span class="inline-flex items-center gap-1 mr-3">
-        Updated:
-        <%= last_refreshed_tag %>
-      </span>
-      <span class="inline-flex items-center gap-1">
-        Post:
-        <%= most_recent_post_tag %>
-      </span>
+      </div>
+
+      <div class="truncate text-sm text-slate-400">
+        <span class="inline-flex align-middle" data-key="feed.<%= feed.id %>.status_icon"><%= status_icon %></span>
+        <%= helpers.middot %>
+        <span data-key="feed.<%= feed.id %>.last_refreshed">Latest updated: <%= last_refreshed_tag %></span>
+        <%= helpers.middot %>
+        <span data-key="feed.<%= feed.id %>.most_recent_post">Latest post: <%= most_recent_post_tag %></span>
+        <% if owner %>
+          <%= helpers.middot %>
+          <span data-key="feed.<%= feed.id %>.owner">Owner:
+            <%= link_to owner.email_address, owner_url, class: "transition hover:text-slate-600" %>
+          </span>
+        <% end %>
+      </div>
     </div>
 
     <div class="relative shrink-0">
@@ -57,49 +59,51 @@
                     data: { key: "feed.#{feed.id}.source" } %>
             </li>
           <% end %>
-          <% if draft? %>
-            <li>
-              <%= link_to "Continue setup", edit_url,
-                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
-                    role: "menuitem",
-                    data: { key: "feed.#{feed.id}.continue_setup" } %>
-            </li>
-          <% else %>
-            <li>
-              <%= link_to "Edit", edit_url,
-                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
-                    role: "menuitem",
-                    data: { key: "feed.#{feed.id}.edit" } %>
-            </li>
-            <% if enabled? %>
+          <% if management_actions? %>
+            <% if draft? %>
               <li>
-                <%= button_to "Disable", status_url,
-                      method: :patch,
-                      params: { status: "disabled" },
-                      class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                <%= link_to "Continue setup", edit_url,
+                      class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
                       role: "menuitem",
-                      data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM },
-                      form: { class: "block" } %>
+                      data: { key: "feed.#{feed.id}.continue_setup" } %>
               </li>
-            <% elsif can_be_enabled? %>
+            <% else %>
               <li>
-                <%= button_to "Enable", status_url,
-                      method: :patch,
-                      params: { status: "enabled" },
-                      class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                <%= link_to "Edit", edit_url,
+                      class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
                       role: "menuitem",
-                      data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM },
-                      form: { class: "block" } %>
+                      data: { key: "feed.#{feed.id}.edit" } %>
+              </li>
+              <% if enabled? %>
+                <li>
+                  <%= button_to "Disable", status_url,
+                        method: :patch,
+                        params: { status: "disabled" },
+                        class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                        role: "menuitem",
+                        data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM },
+                        form: { class: "block" } %>
+                </li>
+              <% elsif can_be_enabled? %>
+                <li>
+                  <%= button_to "Enable", status_url,
+                        method: :patch,
+                        params: { status: "enabled" },
+                        class: "block w-full px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50",
+                        role: "menuitem",
+                        data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM },
+                        form: { class: "block" } %>
+                </li>
+              <% end %>
+            <% end %>
+            <% if draft? %>
+              <li>
+                <%= link_to "Discard…", feed_url,
+                      class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
+                      role: "menuitem",
+                      data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } %>
               </li>
             <% end %>
-          <% end %>
-          <% if draft? %>
-            <li>
-              <%= link_to "Discard…", feed_url,
-                    class: "block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50",
-                    role: "menuitem",
-                    data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } %>
-            </li>
           <% end %>
         </ul>
       </div>

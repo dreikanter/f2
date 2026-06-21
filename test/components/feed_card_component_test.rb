@@ -24,30 +24,30 @@ class FeedCardComponentTest < ViewComponent::TestCase
     assert_includes link.text, "My Feed"
   end
 
-  test "#render should show Draft badge for draft feeds" do
+  test "#render should show draft status icon for draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
     result = render_inline FeedCardComponent.new(feed: draft_feed)
 
-    badge = result.css("[data-key='feed.#{draft_feed.id}.draft_badge']").first
-    assert_not_nil badge
-    assert_equal "Draft", badge.text.strip
+    icon = result.at_css("[data-key='feed.#{draft_feed.id}.status_icon'] svg")
+    assert_not_nil icon
+    assert_equal "Draft", icon["aria-label"]
   end
 
-  test "#render should show Disabled badge for disabled feeds" do
+  test "#render should show disabled status icon for disabled feeds" do
     result = render_inline FeedCardComponent.new(feed: feed)
 
-    badge = result.css("[data-key='feed.#{feed.id}.disabled_badge']").first
-    assert_not_nil badge
-    assert_equal "Disabled", badge.text.strip
+    icon = result.at_css("[data-key='feed.#{feed.id}.status_icon'] svg")
+    assert_not_nil icon
+    assert_equal "Disabled", icon["aria-label"]
   end
 
-  test "#render should show Enabled badge for enabled feeds" do
+  test "#render should show enabled status icon for enabled feeds" do
     enabled_feed = create(:feed, :enabled, user: user)
     result = render_inline FeedCardComponent.new(feed: enabled_feed)
 
-    badge = result.css("[data-key='feed.#{enabled_feed.id}.enabled_badge']").first
-    assert_not_nil badge
-    assert_equal "Enabled", badge.text.strip
+    icon = result.at_css("[data-key='feed.#{enabled_feed.id}.status_icon'] svg")
+    assert_not_nil icon
+    assert_equal "Enabled", icon["aria-label"]
   end
 
   test "#render should show @group label when target_group present" do
@@ -162,7 +162,41 @@ class FeedCardComponentTest < ViewComponent::TestCase
   test "#render should label the activity times" do
     result = render_inline FeedCardComponent.new(feed: feed)
 
-    assert_includes result.text, "Updated:"
-    assert_includes result.text, "Post:"
+    assert_includes result.text, "Latest updated:"
+    assert_includes result.text, "Latest post:"
+  end
+
+  test "#render should link title to admin feed page in admin mode" do
+    result = render_inline FeedCardComponent.new(feed: feed, admin: true)
+
+    link = result.at_css("a[href*='/admin/feeds/']")
+    assert_not_nil link
+    assert_includes link.text, "My Feed"
+  end
+
+  test "#render should show owner in admin mode" do
+    result = render_inline FeedCardComponent.new(feed: feed, admin: true)
+
+    owner = result.css("[data-key='feed.#{feed.id}.owner']").first
+    assert_not_nil owner
+    assert_includes owner.text, user.email_address
+  end
+
+  test "#render should not show owner outside admin mode" do
+    result = render_inline FeedCardComponent.new(feed: feed)
+
+    assert_empty result.css("[data-key='feed.#{feed.id}.owner']")
+  end
+
+  test "#render should not show management actions in admin mode" do
+    enabled_feed = create(:feed, :enabled, user: user)
+
+    with_request_url("/admin/feeds") do
+      result = render_inline FeedCardComponent.new(feed: enabled_feed, admin: true)
+
+      assert_empty result.css("[data-key='feed.#{enabled_feed.id}.edit']")
+      assert_empty result.css("[data-key='feed.#{enabled_feed.id}.disable']")
+      assert_not_empty result.css("[data-key='feed.#{enabled_feed.id}.details']")
+    end
   end
 end
