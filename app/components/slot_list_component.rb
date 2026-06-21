@@ -4,14 +4,15 @@ class SlotListComponent < ViewComponent::Base
   # and a DEFAULT_CSS_CLASSES constant.
   renders_many :items, ->(item) { item }
 
-  def initialize(css_class: nil)
+  def initialize(css_class: nil, data: {})
     @css_class = css_class
+    @data = data
   end
 
   def call
     return unless items?
 
-    content_tag container_tag, class: @css_class || self.class::DEFAULT_CSS_CLASSES do
+    content_tag container_tag, class: @css_class || self.class::DEFAULT_CSS_CLASSES, data: @data do
       safe_join(items)
     end
   end
