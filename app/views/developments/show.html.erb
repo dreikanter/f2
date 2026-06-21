@@ -37,7 +37,7 @@
 
     <%= render CardComponent.new(
           **(@sent_emails_available \
-            ? { href: development_sent_emails_path, target: "_blank", rel: "noopener noreferrer" } \
+            ? { href: development_sent_emails_path } \
             : { class: "opacity-50 cursor-not-allowed", title: "Email capture is not configured" })
         ) do %>
       <div class="space-y-4">
