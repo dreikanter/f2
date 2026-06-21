@@ -5,7 +5,9 @@ module EmailStorage
     end
 
     def ordered_list
-      list.sort_by { |e| e[:timestamp] }.reverse
+      # Fall back to the epoch so emails with a missing timestamp (legacy or
+      # malformed files) sort last instead of raising on a nil comparison.
+      list.sort_by { |e| e[:timestamp] || Time.at(0) }.reverse
     end
 
     def load_email(id)

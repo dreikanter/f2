@@ -34,7 +34,7 @@ module EmailStorage
         {
           id: uuid,
           subject: metadata["subject"],
-          timestamp: metadata["timestamp"],
+          timestamp: metadata["timestamp"] || File.mtime(yml_path),
           size: File.size(yml_path)
         }
       end.compact
