@@ -43,5 +43,9 @@ module F2Rails
 
     # Configure ActiveJob to use SolidQueue
     config.active_job.queue_adapter = :solid_queue
+
+    # Default storage for captured emails. Defined here so the attribute exists
+    # in every environment; environments may override it.
+    config.email_storage_adapter = :file_system
   end
 end
