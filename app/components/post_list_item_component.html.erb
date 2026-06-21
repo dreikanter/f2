@@ -1,15 +1,20 @@
 <li id="<%= helpers.dom_id(post) %>" class="<%= row_classes %>">
   <div class="flex items-start gap-3">
-    <span class="flex h-6 w-4 shrink-0 items-center justify-center" data-key="post.status-icon"><%= status_icon %></span>
-    <div class="min-w-0 flex-1 space-y-1">
-      <div class="flex items-baseline gap-2">
-        <%= title_element %>
-        <% if withdrawn? %>
-          <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
-        <% end %>
+    <div class="min-w-0 flex-1">
+      <%# Leading icon shares the first row and is vertically centered with it;
+          the second row hangs indented (pl-7 = icon w-4 + gap-3) so it lines up
+          under the first row's text. %>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex shrink-0" data-key="post.status-icon"><%= status_icon %></span>
+        <div class="flex min-w-0 flex-1 items-baseline gap-2">
+          <%= title_element %>
+          <% if withdrawn? %>
+            <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
+          <% end %>
+        </div>
       </div>
 
-      <div class="truncate text-sm text-slate-400">
+      <div class="mt-1 truncate pl-7 text-sm text-slate-400">
         <%# The status sits leftmost and is always present, so every following
             item (group, counts) leads with a middot. %>
         <% if status_links_to_freefeed? %>
