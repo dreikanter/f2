@@ -1,4 +1,4 @@
-class PostCardComponent < ViewComponent::Base
+class PostListItemComponent < ViewComponent::Base
   STATUS_DISPLAY = {
     "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
     "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
@@ -21,7 +21,7 @@ class PostCardComponent < ViewComponent::Base
     helpers.post_content_preview(post.content, 160)
   end
 
-  # The title links to the post page. ReadonlyPostCardComponent overrides this
+  # The title links to the post page. ReadonlyPostListItemComponent overrides this
   # with plain text where those owner-scoped routes aren't reachable.
   def title_element
     helpers.link_to(title, post_url,
@@ -29,7 +29,7 @@ class PostCardComponent < ViewComponent::Base
   end
 
   # Whether to render the actions menu (Details/Source/Delete). Disabled by
-  # ReadonlyPostCardComponent.
+  # ReadonlyPostListItemComponent.
   def show_actions?
     true
   end

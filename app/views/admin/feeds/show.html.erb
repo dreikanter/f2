@@ -32,7 +32,7 @@
     <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent Posts</h2>
 
     <% if @recent_posts.any? %>
-      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, card_component: ReadonlyPostCardComponent) %>
+      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, item_component: ReadonlyPostListItemComponent) %>
     <% else %>
       <%= render EmptyStateComponent.new("No posts imported yet from this feed") %>
     <% end %>

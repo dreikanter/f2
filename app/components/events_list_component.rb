@@ -25,12 +25,12 @@ class EventsListComponent < ViewComponent::Base
     return render(EmptyStateComponent.new("No events to show yet")) unless @events.any?
 
     render(ListComponent.new(data: { key: "events.list" })) do |list|
-      @events.each { |event| list.with_item(card_component(event)) }
+      @events.each { |event| list.with_item(item_component(event)) }
     end
   end
 
-  def card_component(event)
-    EventCardComponent.new(event: event, href: event_href(event))
+  def item_component(event)
+    EventListItemComponent.new(event: event, href: event_href(event))
   end
 
   # Events link to the user-facing event page. Admin::EventsListComponent

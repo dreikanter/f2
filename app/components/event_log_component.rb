@@ -7,8 +7,9 @@ class EventLogComponent < ViewComponent::Base
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
   # cursor pagination links; omit them for an unpaginated log. Renders entries as
-  # a stack of cards; this is the admin events log. The user-facing log uses
-  # EventsListComponent instead.
+  # rows in a bordered list; this is the admin events log, whose caller supplies
+  # the richer Admin::EventListItemComponent through the entries slot. The
+  # user-facing log builds its own rows via EventsListComponent instead.
   def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
     @events = events
     @endpoint = endpoint

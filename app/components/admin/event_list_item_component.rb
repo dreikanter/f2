@@ -1,8 +1,8 @@
 module Admin
-  # Admin variant of EventCardComponent for the operator log: links feeds and
+  # Admin variant of EventListItemComponent for the operator log: links feeds and
   # events to the admin pages, adds the type/user/target footer, and turns the
   # severity icon into a level drill-down.
-  class EventCardComponent < ::EventCardComponent
+  class EventListItemComponent < ::EventListItemComponent
     private
 
     def description_component_class

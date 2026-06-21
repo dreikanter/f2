@@ -1,4 +1,4 @@
-class EventCardComponent < ViewComponent::Base
+class EventListItemComponent < ViewComponent::Base
   include EventLogEntryPresentation
 
   # Warning and error rows lean on the alert palette so problems stand out while
@@ -12,7 +12,7 @@ class EventCardComponent < ViewComponent::Base
 
   DEFAULT_TINT = "bg-white hover:bg-slate-50".freeze
 
-  # Shows the severity, description and timestamp. Admin::EventCardComponent
+  # Shows the severity, description and timestamp. Admin::EventListItemComponent
   # adds a footer with the event type, user and target for the operator log.
   def initialize(event:, href:)
     @event = event
@@ -31,13 +31,13 @@ class EventCardComponent < ViewComponent::Base
     EventDescriptionComponent
   end
 
-  # Whether to render the footer (type/user/target). Admin::EventCardComponent
+  # Whether to render the footer (type/user/target). Admin::EventListItemComponent
   # enables it for the operator log.
   def show_footer?
     false
   end
 
-  def card_classes
+  def row_classes
     helpers.class_names("transition duration-75", tint)
   end
 
@@ -45,7 +45,7 @@ class EventCardComponent < ViewComponent::Base
     LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
   end
 
-  # A plain marker by default. Admin::EventCardComponent turns it into a
+  # A plain marker by default. Admin::EventListItemComponent turns it into a
   # drill-down link that narrows the log to events of the same level.
   def severity
     helpers.content_tag(:span, severity_icon,

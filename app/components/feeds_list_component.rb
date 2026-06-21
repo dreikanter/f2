@@ -6,7 +6,7 @@ class FeedsListComponent < ViewComponent::Base
 
   def call
     render(ListComponent.new) do |list|
-      @feeds.each { |feed| list.with_item(FeedCardComponent.new(feed: feed, admin: @admin)) }
+      @feeds.each { |feed| list.with_item(FeedListItemComponent.new(feed: feed, admin: @admin)) }
     end
   end
 end

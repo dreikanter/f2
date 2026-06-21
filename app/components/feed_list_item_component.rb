@@ -1,4 +1,4 @@
-class FeedCardComponent < ViewComponent::Base
+class FeedListItemComponent < ViewComponent::Base
   DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
   ENABLE_CONFIRM = "Enable this feed?".freeze
   DISABLE_CONFIRM = "Disable this feed?".freeze
