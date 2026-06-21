@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-06-21
 
 - Fixed RSS posts attaching the same image twice when it appeared as both a cover and inline image.
+- Improve New feed form layout: keeps source input on top, and labels it "Source URL" or "Source prompt" to match user entry.
 - Refreshed the favicon with a bold fff ligature on Freefeed-orange tile.
 
 ## 2026-06-20

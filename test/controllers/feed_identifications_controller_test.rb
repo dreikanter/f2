@@ -495,6 +495,28 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
+  test "#show should label a query source as a prompt and pass it to the chooser" do
+    sign_in_as(user)
+    query = "climate change"
+    create(
+      :feed_identification,
+      user: user,
+      input: query,
+      started_at: Time.current,
+      status: :success,
+      candidates: [
+        { "profile_key" => "llm_web_search", "title" => "Climate", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "label", text: "Source prompt"
+    assert_select "[data-key='candidate.llm_web_search']",
+                  text: /Follow AI search results for "#{query}"/
+  end
+
   test "#show should render a locked single-option chooser when one candidate exists" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
