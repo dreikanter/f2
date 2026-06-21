@@ -14,7 +14,7 @@ class RefreshButtonComponent < ViewComponent::Base
   #
   #   render RefreshButtonComponent.new(data: {
   #     controller: "refresh-trigger loading-button",
-  #     refresh_trigger_target_id_value: EventLogComponent::DOM_ID,
+  #     refresh_trigger_target_id_value: EventsListComponent::DOM_ID,
   #     action: "click->refresh-trigger#trigger"
   #   })
   #

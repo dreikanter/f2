@@ -67,10 +67,6 @@ module EventCursorPagination
     events_scope.where(cursor_condition(">", @events.first.id)).count
   end
 
-  def event_log_component
-    EventLogComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url)
-  end
-
   def polling_endpoint
     events_log_path(format: :turbo_stream)
   end
