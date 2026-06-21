@@ -53,6 +53,19 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal time1, emails[1][:timestamp]
   end
 
+  test "#ordered_list handles emails with a missing timestamp" do
+    uuid = SecureRandom.uuid
+    metadata = { "subject" => "Legacy", "multipart" => false }
+    File.write(storage_dir.join("legacy_#{uuid}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("legacy_#{uuid}.txt"), "Body")
+
+    emails = storage.ordered_list
+    assert_equal 1, emails.size
+    assert_equal "Legacy", emails.first[:subject]
+    # Falls back to the file mtime so the listing can still render a date.
+    assert_kind_of Time, emails.first[:timestamp]
+  end
+
   test "#ordered_list skips files with invalid filenames" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Valid")
