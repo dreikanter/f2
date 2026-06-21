@@ -10,7 +10,7 @@ class AccessTokensListComponentTest < ViewComponent::TestCase
     @access_token ||= create(:access_token, :active, user: user, name: "My Token")
   end
 
-  test "#call should render each token as a card" do
+  test "#call should render each token as a list item" do
     result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
 
     assert_not_nil result.css("[data-key='settings.access_tokens.#{access_token.id}']").first
@@ -26,7 +26,7 @@ class AccessTokensListComponentTest < ViewComponent::TestCase
   test "#call should show owner and host in metadata when owner is present" do
     result = render_inline(AccessTokensListComponent.new(access_tokens: [access_token]))
 
-    assert_includes result.text, "#{access_token.owner}@#{access_token.host_domain}"
+    assert_includes result.text, "@#{access_token.owner} at #{access_token.host_domain}"
   end
 
   test "#call should fall back to host domain when owner is blank" do
