@@ -63,7 +63,6 @@ class PostListItemComponentTest < ViewComponent::TestCase
     result = render_inline PostListItemComponent.new(post: post, show_feed: false)
 
     assert_nil result.at_css('[data-key="post.group"]')
-    assert_nil result.at_css("a[href*='/feeds/']")
   end
 
   test "#render should show attachment count for reposted posts with attachments" do
@@ -180,39 +179,29 @@ class PostListItemComponentTest < ViewComponent::TestCase
     assert(source_links.all? { |link| link["role"] == "menuitem" })
   end
 
-  test "#render should label published posts as reposted and link to the freefeed post" do
+  test "#render should label published posts as reposted and link to the feed page" do
     published_post = create(:post, :published, feed: feed,
       published_at: 11.hours.ago, reposted_at: 10.hours.ago)
     result = render_inline PostListItemComponent.new(post: published_post)
 
-    status_link = result.at_css("a[href='#{published_post.freefeed_url}']")
-    assert_not_nil status_link
-    assert_includes status_link.text.gsub(/\s+/, " "), "Reposted (10h)"
+    status_link = result.at_css('[data-key="post.status"]')
+    assert_equal "a", status_link.name
+    assert_equal "/feeds/#{feed.id}", status_link["href"]
+    assert_nil status_link["target"]
+    assert_includes status_link.text.gsub(/\s+/, " "), "Reposted: 10h"
     assert_not_empty result.css('[data-key="post.status-icon"] svg.text-green-600')
   end
 
-  test "#render should keep the duration tight against its parentheses" do
+  test "#render should keep the duration tight against its label" do
     published_post = create(:post, :published, feed: feed,
       published_at: 11.hours.ago, reposted_at: 10.hours.ago)
     result = render_inline PostListItemComponent.new(post: published_post)
 
-    # The label, parens and time tag share one inline wrapper that carries no
-    # flex gap, so the duration cannot drift away from its parentheses.
+    # The label, colon and time tag share one inline wrapper that carries no
+    # flex gap, so the duration cannot drift away from its label.
     wrapper = result.at_css('[data-key="post.status"] time').parent
-    assert_equal "Reposted (10h)", wrapper.text.strip
+    assert_equal "Reposted: 10h", wrapper.text.strip
     assert_not_includes wrapper["class"].to_s, "gap"
-  end
-
-  test "#render should show the reposted status as plain text when freefeed url is missing" do
-    # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
-    purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
-      published_at: 11.hours.ago, reposted_at: 10.hours.ago)
-    result = render_inline PostListItemComponent.new(post: purged_post)
-
-    assert_nil purged_post.freefeed_url
-    status = result.at_css('[data-key="post.status"]')
-    assert_includes status.text.gsub(/\s+/, " "), "Reposted (10h)"
-    assert_equal "span", status.name
   end
 
   test "#render should label failed posts as failed with a red icon" do
@@ -220,7 +209,17 @@ class PostListItemComponentTest < ViewComponent::TestCase
     result = render_inline PostListItemComponent.new(post: failed_post)
 
     status = result.at_css('[data-key="post.status"]')
-    assert_includes status.text.gsub(/\s+/, " "), "Failed (10h)"
+    assert_includes status.text.gsub(/\s+/, " "), "Failed: 10h"
     assert_not_empty result.css('[data-key="post.status-icon"] svg.text-red-600')
+  end
+
+  test "#render should show the status as plain text in the readonly variant" do
+    published_post = create(:post, :published, feed: feed,
+      published_at: 11.hours.ago, reposted_at: 10.hours.ago)
+    result = render_inline ReadonlyPostListItemComponent.new(post: published_post)
+
+    status = result.at_css('[data-key="post.status"]')
+    assert_equal "span", status.name
+    assert_includes status.text.gsub(/\s+/, " "), "Reposted: 10h"
   end
 end

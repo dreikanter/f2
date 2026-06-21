@@ -28,22 +28,10 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{development_components_path}']", count: 1
   end
 
-  test "should enable sent emails link when resend delivery is configured" do
+  test "should disable sent emails link when delivery does not capture locally" do
     sign_in_as(dev_user)
     ActionMailer::Base.stub(:delivery_method, :resend) do
       Resend.stub(:api_key, "re_test_key") do
-        get development_url
-      end
-    end
-
-    assert_response :success
-    assert_select "a[href='#{development_sent_emails_path}']", count: 1
-  end
-
-  test "should disable sent emails link when resend delivery is not configured" do
-    sign_in_as(dev_user)
-    ActionMailer::Base.stub(:delivery_method, :resend) do
-      Resend.stub(:api_key, nil) do
         get development_url
       end
     end

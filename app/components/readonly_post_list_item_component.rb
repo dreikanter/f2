@@ -8,6 +8,10 @@ class ReadonlyPostListItemComponent < PostListItemComponent
     helpers.content_tag(:span, title, class: "truncate text-base text-slate-900")
   end
 
+  def status_url
+    nil
+  end
+
   def show_actions?
     false
   end
