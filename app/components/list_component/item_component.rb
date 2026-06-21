@@ -10,6 +10,10 @@
 # under the primary text. The trailing element is top-aligned with the primary
 # line. The component owns the layout; callers style their own slot content.
 # Sized for size-4 leading icons.
+#
+# Use it directly with slots, or subclass it for a record-backed row: populate
+# the slots in #before_render and override #li_id / #li_data / #row_css_class to
+# derive the <li> attributes from the record.
 class ListComponent::ItemComponent < ViewComponent::Base
   renders_one :icon
   renders_one :primary
@@ -26,8 +30,20 @@ class ListComponent::ItemComponent < ViewComponent::Base
 
   private
 
+  def li_id
+    @id
+  end
+
+  def li_data
+    @data
+  end
+
+  def row_css_class
+    @css_class
+  end
+
   def li_class
-    helpers.class_names("px-5 py-3", @css_class)
+    helpers.class_names("px-5 py-3", row_css_class)
   end
 
   # The second line only hangs under the primary text when there is a leading

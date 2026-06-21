@@ -1,4 +1,4 @@
-class EventListItemComponent < ViewComponent::Base
+class EventListItemComponent < ListComponent::ItemComponent
   include EventLogEntryPresentation
 
   # Warning and error rows lean on the alert palette so problems stand out while
@@ -15,13 +15,43 @@ class EventListItemComponent < ViewComponent::Base
   # Shows the severity, description and timestamp. Admin::EventListItemComponent
   # adds a footer with the event type, user and target for the operator log.
   def initialize(event:, href:)
+    super()
     @event = event
     @href = href
+  end
+
+  def before_render
+    with_icon { severity }
+    with_primary { primary_element }
+    with_secondary { footer } if show_footer?
   end
 
   private
 
   attr_reader :event, :href
+
+  def li_data
+    { key: "events.entry", event_type: event.type, event_id: event.id }
+  end
+
+  def row_css_class
+    helpers.class_names("transition duration-75", tint)
+  end
+
+  def primary_element
+    helpers.tag.div(
+      helpers.safe_join([
+        helpers.tag.div(render(description), class: "min-w-0 flex-1 truncate text-slate-700", data: { key: "events.description" }),
+        timestamp_link
+      ]),
+      class: "flex min-w-0 flex-1 items-baseline gap-3"
+    )
+  end
+
+  def footer
+    helpers.tag.div(helpers.safe_join(footer_items, helpers.middot),
+                    class: "truncate text-sm text-slate-400", data: { key: "events.footer" })
+  end
 
   def description
     description_component_class.for(event)
@@ -37,18 +67,13 @@ class EventListItemComponent < ViewComponent::Base
     false
   end
 
-  def row_classes
-    helpers.class_names("transition duration-75", tint)
-  end
-
   def tint
     LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
   end
 
   # A plain marker by default. Admin::EventListItemComponent turns it into a
-  # drill-down link that narrows the log to events of the same level.
-  # The icon sits in the first row and is centered with it by the row's
-  # items-center; the footer hangs indented to line up under the description.
+  # drill-down link that narrows the log to events of the same level. The icon
+  # sits in the first row and is centered with it by the row's items-center.
   def severity
     helpers.content_tag(:span, severity_icon,
                         class: "inline-flex shrink-0",

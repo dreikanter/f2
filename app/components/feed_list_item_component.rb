@@ -1,16 +1,106 @@
-class FeedListItemComponent < ViewComponent::Base
+class FeedListItemComponent < ListComponent::ItemComponent
   DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
   ENABLE_CONFIRM = "Enable this feed?".freeze
   DISABLE_CONFIRM = "Disable this feed?".freeze
 
   def initialize(feed:, admin: false)
+    super()
     @feed = feed
     @admin = admin
+  end
+
+  def before_render
+    with_icon { icon_element }
+    with_primary { primary_element }
+    with_secondary { secondary_element }
+    with_trailing { menu }
   end
 
   private
 
   attr_reader :feed, :admin
+
+  def li_id
+    helpers.dom_id(feed)
+  end
+
+  def row_css_class
+    "transition duration-75 hover:bg-slate-50"
+  end
+
+  def icon_element
+    helpers.tag.span(status_icon, class: "inline-flex shrink-0", data: { key: "feed.#{feed.id}.status_icon" })
+  end
+
+  def primary_element
+    helpers.tag.div(helpers.safe_join([title_link, group_element].compact),
+                    class: "flex min-w-0 flex-1 items-baseline gap-2")
+  end
+
+  def secondary_element
+    helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
+                    class: "truncate text-sm text-slate-400")
+  end
+
+  def title_link
+    helpers.link_to(title, feed_url,
+                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+  end
+
+  def group_element
+    return unless target_group_label
+
+    if target_group_url
+      helpers.link_to(target_group_label, target_group_url, target: "_blank", rel: "noopener",
+                      class: "truncate text-sm text-slate-400 transition hover:text-slate-600")
+    else
+      helpers.tag.span(target_group_label, class: "truncate text-sm text-slate-400")
+    end
+  end
+
+  def meta_segments
+    segments = [
+      helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" }),
+      helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
+    ]
+    segments << owner_segment if owner
+    segments
+  end
+
+  def owner_segment
+    helpers.tag.span(helpers.safe_join(["Owner: ", helpers.link_to(owner.email_address, owner_url, class: "transition hover:text-slate-600")]),
+                     data: { key: "feed.#{feed.id}.owner" })
+  end
+
+  def menu
+    render(DropdownMenuComponent.new(menu_id: menu_id, items: menu_items, width: "w-44"))
+  end
+
+  def menu_items
+    items = [{ label: "Details", href: feed_url, data: { key: "feed.#{feed.id}.details" } }]
+    items << { label: "Source", href: source_url, target: "_blank", rel: "noopener", data: { key: "feed.#{feed.id}.source" } } if source_url
+
+    if management_actions?
+      if draft?
+        items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }
+      else
+        items << { label: "Edit", href: edit_url, data: { key: "feed.#{feed.id}.edit" } }
+        if enabled?
+          items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
+                     data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
+        elsif can_be_enabled?
+          items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
+                     data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
+        end
+      end
+
+      if draft?
+        items << { label: "Discard…", href: feed_url, data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } }
+      end
+    end
+
+    items
+  end
 
   def title
     feed.display_name

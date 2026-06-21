@@ -1,4 +1,4 @@
-class PostListItemComponent < ViewComponent::Base
+class PostListItemComponent < ListComponent::ItemComponent
   STATUS_DISPLAY = {
     "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
     "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
@@ -9,20 +9,106 @@ class PostListItemComponent < ViewComponent::Base
   }.freeze
 
   def initialize(post:, show_feed: false)
+    super()
     @post = post
     @show_feed = show_feed
+  end
+
+  def before_render
+    with_icon { icon_element }
+    with_primary { primary_element }
+    with_secondary { secondary_element }
+    with_trailing { trailing_element } if show_actions?
   end
 
   private
 
   attr_reader :post, :show_feed
 
+  def li_id
+    helpers.dom_id(post)
+  end
+
+  # Rows live inside a single bordered list, so they carry no border or shadow of
+  # their own; withdrawn posts get a muted background to read as inactive.
+  def row_css_class
+    helpers.class_names(
+      "transition duration-75",
+      "bg-slate-50 hover:bg-slate-100" => withdrawn?,
+      "hover:bg-slate-50" => !withdrawn?
+    )
+  end
+
+  def icon_element
+    helpers.tag.span(status_icon, class: "inline-flex shrink-0", data: { key: "post.status-icon" })
+  end
+
+  def primary_element
+    helpers.tag.div(helpers.safe_join([title_element, withdrawn_badge].compact),
+                    class: "flex min-w-0 flex-1 items-baseline gap-2")
+  end
+
+  def withdrawn_badge
+    render(BadgeComponent.new(text: "Withdrawn", color: :gray)) if withdrawn?
+  end
+
+  # The status sits leftmost and is always present, so every following item
+  # (group, counts) leads with a middot.
+  def secondary_element
+    helpers.tag.div(helpers.safe_join(status_segments, helpers.middot),
+                    class: "truncate text-sm text-slate-400")
+  end
+
+  def status_segments
+    segments = [status_element]
+    segments << group_segment if show_group?
+    segments << helpers.tag.span(attachment_label, data: { key: "post.attachments" }) if show_attachment_count?
+    segments << helpers.tag.span(comment_label, data: { key: "post.comments" }) if show_comment_count?
+    segments
+  end
+
+  def status_element
+    if status_links_to_freefeed?
+      helpers.link_to(freefeed_url, target: "_blank", rel: "noopener",
+                      class: "transition hover:text-slate-600", data: { key: "post.status" }) { status_label_with_time }
+    else
+      helpers.tag.span(status_label_with_time, data: { key: "post.status" })
+    end
+  end
+
+  def group_segment
+    helpers.tag.span(helpers.safe_join(["Group: ", helpers.link_to(group_label, group_url, title: group_hint, class: "transition hover:text-slate-600")]),
+                     data: { key: "post.group" })
+  end
+
+  def trailing_element
+    helpers.safe_join([menu, delete_modal].compact)
+  end
+
+  def menu
+    render(DropdownMenuComponent.new(menu_id: menu_id, items: menu_items, width: "w-40"))
+  end
+
+  def delete_modal
+    render(PostDeleteModalComponent.new(post: post)) if delete_allowed?
+  end
+
+  def menu_items
+    items = [{ label: "Details", href: post_url }]
+    items << { label: "Source", href: source_url, target: "_blank", rel: "noopener", data: { key: "post.source" } } if source_url
+    if delete_allowed?
+      items << { label: "Delete…", href: "#",
+                 data: { controller: "modal-trigger", modal_trigger_modal_id_value: delete_modal_id, action: "click->modal-trigger#open" } }
+    end
+    items
+  end
+
   def title
     helpers.post_content_preview(post.content, 160)
   end
 
-  # The title links to the post page. ReadonlyPostListItemComponent overrides this
-  # with plain text where those owner-scoped routes aren't reachable.
+  # The title links to the post page. ReadonlyPostListItemComponent overrides
+  # this with plain text where those owner-scoped routes aren't reachable.
   def title_element
     helpers.link_to(title, post_url,
                     class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
@@ -132,16 +218,6 @@ class PostListItemComponent < ViewComponent::Base
 
   def withdrawn?
     post.status.to_s == "withdrawn"
-  end
-
-  # Rows live inside a single bordered list, so they carry no border or shadow of
-  # their own; withdrawn posts get a muted background to read as inactive.
-  def row_classes
-    helpers.class_names(
-      "px-5 py-3 transition duration-75",
-      "bg-slate-50 hover:bg-slate-100" => withdrawn?,
-      "hover:bg-slate-50" => !withdrawn?
-    )
   end
 
   def delete_modal_id
