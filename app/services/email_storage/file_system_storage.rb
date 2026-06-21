@@ -1,14 +1,12 @@
-require "active_support/time"
+require "json"
+require "time"
 
 module EmailStorage
   class FileSystemStorage < Base
-    YAML_PERMITTED_CLASSES = [
-      Time,
-      Date,
-      DateTime,
-      ActiveSupport::TimeWithZone,
-      ActiveSupport::TimeZone
-    ].freeze
+    # Times are stored as ISO8601 strings; everything else is a plain JSON
+    # scalar. JSON.parse can only produce basic types, so the writer and reader
+    # are locked to the same format with no allow-list to keep in sync.
+    TIME_KEYS = %w[timestamp date].freeze
 
     def initialize(base_dir = nil)
       @base_dir = base_dir || Rails.root.join("tmp", "sent_emails")
@@ -18,24 +16,19 @@ module EmailStorage
     def list
       return [] unless Dir.exist?(base_dir)
 
-      Dir.glob(base_dir.join("*.yml")).map do |yml_path|
-        filename = File.basename(yml_path, ".yml")
+      Dir.glob(base_dir.join("*.json")).map do |json_path|
+        filename = File.basename(json_path, ".json")
         match = filename.match(/_([0-9a-f\-]+)$/)
         next unless match
 
-        uuid = match[1]
-
-        begin
-          metadata = YAML.safe_load_file(yml_path, permitted_classes: YAML_PERMITTED_CLASSES, aliases: true) || {}
-        rescue Psych::SyntaxError
-          next
-        end
+        metadata = read_metadata(json_path)
+        next unless metadata
 
         {
-          id: uuid,
+          id: match[1],
           subject: metadata["subject"],
-          timestamp: metadata["timestamp"] || File.mtime(yml_path),
-          size: File.size(yml_path)
+          timestamp: parse_time(metadata["timestamp"]) || File.mtime(json_path),
+          size: File.size(json_path)
         }
       end.compact
     end
@@ -44,7 +37,7 @@ module EmailStorage
       filename = find_filename(uuid)
       return nil unless filename
 
-      metadata = load_metadata(filename)
+      metadata = read_metadata(base_dir.join("#{filename}.json"))
       return nil unless metadata
 
       text_content = load_text_content(filename)
@@ -55,7 +48,7 @@ module EmailStorage
         from: metadata["from"],
         to: metadata["to"],
         subject: metadata["subject"],
-        date: metadata["date"],
+        date: parse_time(metadata["date"]),
         multipart: metadata["multipart"] || false,
         body: metadata["multipart"] ? "" : text_content,
         text_part: metadata["multipart"] ? text_content : nil,
@@ -70,7 +63,7 @@ module EmailStorage
       filename = filename_for(uuid, metadata["timestamp"])
       base_path = base_dir.join(filename)
 
-      File.write("#{base_path}.yml", metadata.to_yaml)
+      File.write("#{base_path}.json", JSON.generate(serialize(metadata)))
       File.write("#{base_path}.txt", text_content)
       File.write("#{base_path}.html", html_content) if html_content
 
@@ -81,6 +74,8 @@ module EmailStorage
       find_filename(uuid).present?
     end
 
+    # Wipes the whole directory, so any leftover files (including legacy YAML
+    # captures) are removed regardless of format.
     def purge
       FileUtils.rm_rf(base_dir)
       FileUtils.mkdir_p(base_dir)
@@ -90,6 +85,27 @@ module EmailStorage
 
     attr_reader :base_dir
 
+    def serialize(metadata)
+      metadata.to_h do |key, value|
+        [key, TIME_KEYS.include?(key) ? format_time(value) : value]
+      end
+    end
+
+    def format_time(value)
+      return value unless value.respond_to?(:iso8601)
+      value.iso8601(3)
+    rescue ArgumentError
+      # Date#iso8601 takes no precision argument; fall back to its bare form.
+      value.iso8601
+    end
+
+    def parse_time(value)
+      return if value.blank?
+      Time.iso8601(value.to_s)
+    rescue ArgumentError
+      nil
+    end
+
     def filename_for(uuid, timestamp)
       timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
       "#{timestamp_str}_#{uuid}"
@@ -98,18 +114,16 @@ module EmailStorage
     def find_filename(uuid)
       return nil unless Dir.exist?(base_dir)
 
-      pattern = base_dir.join("*_#{uuid}.yml")
-      matches = Dir.glob(pattern)
+      matches = Dir.glob(base_dir.join("*_#{uuid}.json"))
       return nil if matches.empty?
 
-      File.basename(matches.first, ".yml")
+      File.basename(matches.first, ".json")
     end
 
-    def load_metadata(id)
-      path = base_dir.join("#{id}.yml")
-      return unless File.exist?(path)
-      YAML.safe_load_file(path, permitted_classes: YAML_PERMITTED_CLASSES, aliases: true) || {}
-    rescue Psych::SyntaxError, Errno::ENOENT, IOError => e
+    def read_metadata(path)
+      parsed = JSON.parse(File.read(path))
+      parsed if parsed.is_a?(Hash)
+    rescue JSON::ParserError, Errno::ENOENT, IOError => e
       Rails.logger.error "Failed to load email metadata from #{path}: #{e.message}"
       nil
     end

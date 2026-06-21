@@ -55,8 +55,7 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
 
   test "#ordered_list handles emails with a missing timestamp" do
     uuid = SecureRandom.uuid
-    metadata = { "subject" => "Legacy", "multipart" => false }
-    File.write(storage_dir.join("legacy_#{uuid}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("legacy_#{uuid}.json"), JSON.generate("subject" => "Legacy", "multipart" => false))
     File.write(storage_dir.join("legacy_#{uuid}.txt"), "Body")
 
     emails = storage.ordered_list
@@ -66,28 +65,60 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_kind_of Time, emails.first[:timestamp]
   end
 
+  test "#ordered_list falls back to file mtime for an unparseable timestamp" do
+    uuid = SecureRandom.uuid
+    File.write(
+      storage_dir.join("20250101_120000_123_#{uuid}.json"),
+      JSON.generate("subject" => "Bad TS", "timestamp" => "not-a-date")
+    )
+
+    email = storage.ordered_list.first
+    assert_equal "Bad TS", email[:subject]
+    assert_kind_of Time, email[:timestamp]
+  end
+
   test "#ordered_list skips files with invalid filenames" do
     uuid = SecureRandom.uuid
     create_test_email(uuid, "Valid")
-    File.write(storage_dir.join("invalid.yml"), "data")
+    File.write(storage_dir.join("invalid.json"), JSON.generate("subject" => "Nope"))
 
     emails = storage.ordered_list
     assert_equal 1, emails.size
     assert_equal "Valid", emails.first[:subject]
   end
 
-  test "#ordered_list skips files with corrupted YAML" do
+  test "#ordered_list skips files with corrupted JSON" do
     valid_uuid = SecureRandom.uuid
     corrupt_uuid = SecureRandom.uuid
-    valid_id = "20250101_120000_123_#{valid_uuid}"
-    corrupt_id = "20250102_120000_456_#{corrupt_uuid}"
-
-    create_test_email(valid_id, "Valid")
-    File.write(storage_dir.join("#{corrupt_id}.yml"), "invalid: yaml: [")
+    create_test_email("20250101_120000_123_#{valid_uuid}", "Valid")
+    File.write(storage_dir.join("20250102_120000_456_#{corrupt_uuid}.json"), "{not json")
 
     emails = storage.ordered_list
     assert_equal 1, emails.size
     assert_equal "Valid", emails.first[:subject]
+  end
+
+  test "#ordered_list skips JSON files that are not objects" do
+    valid_uuid = SecureRandom.uuid
+    array_uuid = SecureRandom.uuid
+    create_test_email("20250101_120000_123_#{valid_uuid}", "Valid")
+    File.write(storage_dir.join("20250102_120000_456_#{array_uuid}.json"), "[1,2,3]")
+
+    emails = storage.ordered_list
+    assert_equal 1, emails.size
+    assert_equal "Valid", emails.first[:subject]
+  end
+
+  test "#ordered_list ignores legacy YAML files" do
+    json_uuid = SecureRandom.uuid
+    yaml_uuid = SecureRandom.uuid
+    create_test_email("20250101_120000_123_#{json_uuid}", "Current")
+    # A leftover YAML capture from the previous format must not be read.
+    File.write(storage_dir.join("20250102_120000_456_#{yaml_uuid}.yml"), { "subject" => "Old" }.to_yaml)
+
+    emails = storage.ordered_list
+    assert_equal 1, emails.size
+    assert_equal "Current", emails.first[:subject]
   end
 
   test "#load_email returns nil for non-existent email" do
@@ -106,6 +137,14 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_nil email[:text_part]
   end
 
+  test "#load_email parses the date into a time" do
+    uuid = SecureRandom.uuid
+    create_test_email("20250101_120000_123_#{uuid}", "Test")
+
+    email = storage.load_email(uuid)
+    assert_kind_of Time, email[:date]
+  end
+
   test "#load_email loads multipart email" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
@@ -119,10 +158,19 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     assert_equal "", email[:body]
   end
 
-  test "#load_email returns nil for corrupted YAML" do
+  test "#load_email returns nil for corrupted JSON" do
     uuid = SecureRandom.uuid
     full_id = "20250101_120000_123_#{uuid}"
-    File.write(storage_dir.join("#{full_id}.yml"), "invalid: yaml: [")
+    File.write(storage_dir.join("#{full_id}.json"), "{not json")
+    File.write(storage_dir.join("#{full_id}.txt"), "Content")
+
+    assert_nil storage.load_email(uuid)
+  end
+
+  test "#load_email returns nil for JSON that is not an object" do
+    uuid = SecureRandom.uuid
+    full_id = "20250101_120000_123_#{uuid}"
+    File.write(storage_dir.join("#{full_id}.json"), "[1,2,3]")
     File.write(storage_dir.join("#{full_id}.txt"), "Content")
 
     assert_nil storage.load_email(uuid)
@@ -133,20 +181,17 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     full_id = "20250101_120000_123_#{uuid}"
     metadata = {
       "message_id" => "<test@example.com>",
-      "from" => "sender@example.com",
-      "to" => "recipient@example.com",
       "subject" => "Test",
-      "date" => Time.now,
-      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00").iso8601(3),
       "multipart" => false
     }
-    File.write(storage_dir.join("#{full_id}.yml"), metadata.to_yaml)
+    File.write(storage_dir.join("#{full_id}.json"), JSON.generate(metadata))
 
     email = storage.load_email(uuid)
     assert_equal "Test", email[:subject]
   end
 
-  test "#save_email creates metadata and text files" do
+  test "#save_email creates JSON metadata and text files" do
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
@@ -164,12 +209,52 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     files = Dir.glob(storage_dir.join("*_#{uuid}.*"))
     assert_equal 2, files.size
 
-    yml_file = files.find { |f| f.end_with?(".yml") }
+    json_file = files.find { |f| f.end_with?(".json") }
     txt_file = files.find { |f| f.end_with?(".txt") }
 
-    assert yml_file
+    assert json_file
     assert txt_file
     assert_equal "Body", File.read(txt_file)
+  end
+
+  test "#save_email stores times as ISO8601 strings" do
+    metadata = {
+      "subject" => "Test",
+      "date" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "timestamp" => Time.parse("2025-01-02T12:00:00+00:00"),
+      "multipart" => false
+    }
+
+    uuid = storage.save_email(metadata: metadata, text_content: "Body")
+    raw = JSON.parse(File.read(Dir.glob(storage_dir.join("*_#{uuid}.json")).first))
+
+    assert_equal "2025-01-01T12:00:00.000+00:00", raw["date"]
+    assert_equal "2025-01-02T12:00:00.000+00:00", raw["timestamp"]
+  end
+
+  test "#save_email does not raise on a Date value" do
+    metadata = {
+      "subject" => "Test",
+      "date" => Date.new(2025, 1, 1),
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "multipart" => false
+    }
+
+    assert_nothing_raised do
+      storage.save_email(metadata: metadata, text_content: "Body")
+    end
+  end
+
+  test "#save_email persists metadata that can be read back" do
+    metadata = {
+      "subject" => "Round trip",
+      "timestamp" => Time.parse("2025-01-01T12:00:00+00:00"),
+      "multipart" => false
+    }
+
+    uuid = storage.save_email(metadata: metadata, text_content: "Body")
+
+    assert_equal "Round trip", storage.ordered_list.find { |e| e[:id] == uuid }[:subject]
   end
 
   test "#save_email creates HTML file for multipart" do
@@ -206,52 +291,45 @@ class EmailStorage::FileSystemStorageTest < ActiveSupport::TestCase
     refute storage.email_exists?("nonexistent-uuid")
   end
 
-  test "#purge deletes all emails" do
+  test "#purge deletes all emails regardless of format" do
     uuid1 = SecureRandom.uuid
     uuid2 = SecureRandom.uuid
     create_test_email("20250101_120000_123_#{uuid1}", "First")
-    create_test_email("20250102_120000_456_#{uuid2}", "Second")
-
-    assert_equal 2, storage.ordered_list.size
+    # A leftover YAML capture must be wiped too.
+    File.write(storage_dir.join("20250102_120000_456_#{uuid2}.yml"), { "subject" => "Old" }.to_yaml)
 
     storage.purge
 
     assert_equal 0, storage.ordered_list.size
+    assert_empty Dir.glob(storage_dir.join("*"))
     assert Dir.exist?(storage_dir)
   end
 
   private
 
   def create_test_email(uuid, subject, body = "Body", timestamp: Time.parse("2025-01-01T12:00:00+00:00"))
-    metadata = {
-      "message_id" => "<test@example.com>",
-      "from" => "sender@example.com",
-      "to" => "recipient@example.com",
-      "subject" => subject,
-      "date" => Time.now,
-      "timestamp" => timestamp,
-      "multipart" => false
-    }
-    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
-    filename = "#{timestamp_str}_#{uuid}"
-    File.write(storage_dir.join("#{filename}.yml"), metadata.to_yaml)
+    filename = write_metadata(uuid, subject, timestamp: timestamp, multipart: false)
     File.write(storage_dir.join("#{filename}.txt"), body)
   end
 
   def create_multipart_email(uuid, subject, text, html, timestamp: Time.parse("2025-01-01T12:00:00+00:00"))
+    filename = write_metadata(uuid, subject, timestamp: timestamp, multipart: true)
+    File.write(storage_dir.join("#{filename}.txt"), text)
+    File.write(storage_dir.join("#{filename}.html"), html)
+  end
+
+  def write_metadata(uuid, subject, timestamp:, multipart:)
     metadata = {
       "message_id" => "<test@example.com>",
       "from" => "sender@example.com",
       "to" => "recipient@example.com",
       "subject" => subject,
-      "date" => Time.now,
-      "timestamp" => timestamp,
-      "multipart" => true
+      "date" => timestamp.iso8601(3),
+      "timestamp" => timestamp.iso8601(3),
+      "multipart" => multipart
     }
-    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%L")
-    filename = "#{timestamp_str}_#{uuid}"
-    File.write(storage_dir.join("#{filename}.yml"), metadata.to_yaml)
-    File.write(storage_dir.join("#{filename}.txt"), text)
-    File.write(storage_dir.join("#{filename}.html"), html)
+    filename = "#{timestamp.strftime("%Y%m%d_%H%M%S_%L")}_#{uuid}"
+    File.write(storage_dir.join("#{filename}.json"), JSON.generate(metadata))
+    filename
   end
 end

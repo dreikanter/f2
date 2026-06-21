@@ -12,7 +12,7 @@ module EmailStorage
             id: email[:id],
             subject: email[:metadata]["subject"],
             timestamp: email[:metadata]["timestamp"],
-            size: email[:metadata].to_yaml.bytesize
+            size: JSON.generate(email[:metadata]).bytesize
           }
         end
       end
