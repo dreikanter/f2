@@ -16,7 +16,7 @@ module Admin
     def severity
       helpers.link_to(severity_icon,
                       helpers.admin_events_path(filter: { level: event.level }),
-                      class: "flex w-4 shrink-0 items-center justify-center",
+                      class: "flex h-6 w-4 shrink-0 items-center justify-center",
                       title: "Show #{event.level} events",
                       data: { key: "events.severity" })
     end

@@ -47,9 +47,12 @@ class EventListItemComponent < ViewComponent::Base
 
   # A plain marker by default. Admin::EventListItemComponent turns it into a
   # drill-down link that narrows the log to events of the same level.
+  # The icon sits in a leading column sized to the first text line (h-6 matches
+  # the text-base line height) so it centers on the first row rather than
+  # floating above a multi-line entry.
   def severity
     helpers.content_tag(:span, severity_icon,
-                        class: "flex w-4 shrink-0 items-center justify-center",
+                        class: "flex h-6 w-4 shrink-0 items-center justify-center",
                         data: { key: "events.severity" })
   end
 

@@ -1,5 +1,6 @@
 <li id="<%= helpers.dom_id(post) %>" class="<%= row_classes %>">
   <div class="flex items-start gap-3">
+    <span class="flex h-6 w-4 shrink-0 items-center justify-center" data-key="post.status-icon"><%= status_icon %></span>
     <div class="min-w-0 flex-1 space-y-1">
       <div class="flex items-baseline gap-2">
         <%= title_element %>
@@ -9,9 +10,8 @@
       </div>
 
       <div class="truncate text-sm text-slate-400">
-        <%# The status sits leftmost, led by its icon, and is always present, so
-            every following item (group, counts) leads with a middot. %>
-        <span class="inline-flex align-middle" data-key="post.status-icon"><%= status_icon %></span>
+        <%# The status sits leftmost and is always present, so every following
+            item (group, counts) leads with a middot. %>
         <% if status_links_to_freefeed? %>
           <%= link_to freefeed_url, target: "_blank", rel: "noopener",
                 class: "transition hover:text-slate-600",
