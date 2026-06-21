@@ -68,9 +68,6 @@ Rails.application.configure do
   config.active_record.encryption.deterministic_key = "KztQVQFifzXvAVzYZRpYhb4IpbB3LbsN"
   config.active_record.encryption.key_derivation_salt = "VsCuex5mmS3GP4Qu28NpLFEw99NgMVM5"
 
-  # Use filesystem storage for captured emails in development
-  config.email_storage_adapter = :file_system
-
   # Expose developer-only tools (component reference, captured emails).
   config.x.dev_tools.enabled = true
 end
