@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_20_230000) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "available_models", default: [], null: false
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
     t.index ["user_id"], name: "index_ai_credentials_on_user_id"

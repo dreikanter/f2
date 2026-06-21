@@ -9,7 +9,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     @credential ||= create(:ai_credential, user: user, state: :pending)
   end
 
-  def stub_health_check(result)
+  def stub_available_models(result)
     LlmClient.stub(:for, ->(_) { fake_client(result) }) do
       yield
     end
@@ -18,7 +18,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   def fake_client(result)
     Class.new do
       def initialize(result) = (@result = result)
-      define_method(:health_check) do
+      define_method(:available_models) do
         case @result
         when Exception then raise @result
         else @result
@@ -27,13 +27,16 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     end.new(result)
   end
 
-  test "#perform should move credential to active on successful health check" do
-    stub_health_check(true) do
+  test "#perform should move credential to active and persist models on success" do
+    models = [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }]
+
+    stub_available_models(models) do
       AiCredentialValidationJob.perform_now(credential)
     end
 
     credential.reload
     assert_equal "active", credential.state
+    assert_equal models, credential.available_models
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
   end
@@ -41,7 +44,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   test "#perform should move credential to inactive and record the error on provider failure" do
     feed = create(:feed, :enabled, user: user, ai_credential: credential)
 
-    stub_health_check(LlmClient::ProviderError.new("invalid api key")) do
+    stub_available_models(LlmClient::ProviderError.new("invalid api key")) do
       AiCredentialValidationJob.perform_now(credential)
     end
 
@@ -54,7 +57,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
   end
 
   test "#perform should move credential to inactive on rate-limit during validation" do
-    stub_health_check(LlmClient::RateLimited.new("429")) do
+    stub_available_models(LlmClient::RateLimited.new("429")) do
       AiCredentialValidationJob.perform_now(credential)
     end
 

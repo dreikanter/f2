@@ -104,12 +104,14 @@ class LlmClient
     Result.new(payload: response.payload, usage_id: usage.id)
   end
 
-  # Token-free credential check used by AiCredentialValidationJob.
-  # Hits the provider's models endpoint (no inference, no usage row).
-  # Returns true on success, raises a known error class otherwise.
-  def health_check
-    fetch_provider_models
-    true
+  # The provider's available models, as an array of plain hashes ready to
+  # persist on the credential. Doubles as the token-free credential check
+  # used by AiCredentialValidationJob: hitting the models endpoint (no
+  # inference, no usage row) proves the key works, and a successful fetch
+  # is exactly what makes the credential active. Raises a known error
+  # class otherwise.
+  def available_models
+    fetch_provider_models.map { |model| serialize_model(model) }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
     raise AuthError, e.message
   rescue RubyLLM::Error, RubyLLM::ConfigurationError => e
@@ -124,6 +126,21 @@ class LlmClient
     RubyLLM::Provider.resolve(credential.provider.to_sym)
                      .new(credential.ruby_llm_context.config)
                      .list_models
+  end
+
+  # Map RubyLLM's Model::Info to a compact, stable hash. We keep only the
+  # fields worth showing or selecting on later; provider-specific noise
+  # (metadata warnings, timestamps) is dropped. String keys so the shape
+  # round-trips through jsonb unchanged.
+  def serialize_model(model)
+    {
+      "id" => model.id,
+      "name" => model.name,
+      "family" => model.family,
+      "context_window" => model.context_window,
+      "max_output_tokens" => model.max_output_tokens,
+      "capabilities" => Array(model.capabilities)
+    }
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
