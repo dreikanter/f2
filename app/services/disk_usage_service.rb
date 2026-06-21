@@ -15,8 +15,7 @@ class DiskUsageService
       postgres_percentage: postgres_percentage,
       other_used_percentage: other_used_percentage,
       free_percentage: free_percentage,
-      table_usage: table_usage,
-      autovacuum_settings: autovacuum_settings
+      table_usage: table_usage
     }
   end
 
@@ -99,10 +98,6 @@ class DiskUsageService
         pg_total_relation_size(pg_class.oid) DESC;
     SQL
     ).to_a
-  end
-
-  def autovacuum_settings
-    execute_query("SELECT name, setting FROM pg_settings WHERE name LIKE 'autovacuum%';").to_a
   end
 
   def execute_query(sql)

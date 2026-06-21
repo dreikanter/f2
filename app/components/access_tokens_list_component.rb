@@ -1,13 +1,10 @@
-class AccessTokensListComponent < ViewComponent::Base
+class AccessTokensListComponent < ListComponent
   def initialize(access_tokens:)
+    super()
     @access_tokens = access_tokens
   end
 
-  def call
-    return "" if @access_tokens.empty?
-
-    content_tag(:div, class: "space-y-4") do
-      safe_join(@access_tokens.map { |at| render(AccessTokenCardComponent.new(access_token: at)) })
-    end
+  def before_render
+    @access_tokens.each { |access_token| with_item(AccessTokenListItemComponent.new(access_token: access_token)) }
   end
 end

@@ -1,11 +1,10 @@
-class AiCredentialsListComponent < ViewComponent::Base
+class AiCredentialsListComponent < ListComponent
   def initialize(credentials:)
+    super()
     @credentials = credentials
   end
 
-  def call
-    content_tag(:div, class: "space-y-4") do
-      safe_join(@credentials.map { |credential| render(AiCredentialCardComponent.new(credential: credential)) })
-    end
+  def before_render
+    @credentials.each { |credential| with_item(AiCredentialListItemComponent.new(credential: credential)) }
   end
 end

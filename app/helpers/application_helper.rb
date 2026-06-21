@@ -97,6 +97,20 @@ module ApplicationHelper
     content_tag(:svg, path_data.html_safe, **options)
   end
 
+  # Status icon for records sharing the pending/validating/active/inactive
+  # lifecycle (access tokens, AI credentials). Mirrors feed_status_icon's role
+  # as the leading glyph in a list row.
+  def credential_status_icon(status)
+    case status.to_s
+    when "active"
+      icon("circle-check", css_class: "size-4 text-emerald-500", title: "Active", aria_label: "Active")
+    when "inactive"
+      icon("circle-x", css_class: "size-4 text-red-500", title: "Inactive", aria_label: "Inactive")
+    else
+      icon("loader-circle", css_class: "size-4 text-slate-400", title: "Checking", aria_label: "Checking")
+    end
+  end
+
   def post_status_icon(status)
     case status.to_s
     when "draft"
