@@ -14,6 +14,14 @@ class ListComponentTest < ViewComponent::TestCase
     assert_equal "Trailing slot", result.css('[data-key="stats.custom.value"]').first.text.strip
   end
 
+  test "#render should not clip row dropdowns with overflow-hidden" do
+    component = ListComponent.new
+    component.with_item StubItemComponent.new(body_text: "Body", value: "Value", key: "stats.custom")
+    result = render_inline(component)
+
+    assert_not_includes result.at_css("ul")["class"], "overflow-hidden"
+  end
+
   test "#render should support block-based slot population" do
     result = render_inline(ListComponent.new) do |list|
       list.with_item StubItemComponent.new(body_text: "Block item", value: "Block value", key: "stats.block")

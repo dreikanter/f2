@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-21
 
+- Fixed row action menus getting cut off at the bottom of feed, post, access token, and AI credential lists.
 - Access tokens and AI credentials now use the same compact list layout as feeds.
 - Fixed RSS posts attaching the same image twice when it appeared as both a cover and inline image.
 - Improve New feed form layout: keeps source input on top, and labels it "Source URL" or "Source prompt" to match user entry.

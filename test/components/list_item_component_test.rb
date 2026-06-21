@@ -14,6 +14,16 @@ class ListItemComponentTest < ViewComponent::TestCase
     assert_includes li["class"], "px-5 py-3"
   end
 
+  test "#call should round the first and last row corners" do
+    result = render_inline(ListItemComponent.new(id: "row-1")) do |item|
+      item.with_primary { "Primary".html_safe }
+    end
+
+    li = result.at_css("li#row-1")
+    assert_includes li["class"], "first:rounded-t-lg"
+    assert_includes li["class"], "last:rounded-b-lg"
+  end
+
   test "#call should render every slot when provided" do
     result = render_inline(ListItemComponent.new) do |item|
       item.with_icon { "<svg></svg>".html_safe }

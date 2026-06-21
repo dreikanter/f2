@@ -42,8 +42,10 @@ class ListItemComponent < ViewComponent::Base
     @css_class
   end
 
+  # Round the outer corners so tinted/hover row backgrounds match the list's
+  # rounded container, which no longer clips them with overflow-hidden.
   def li_class
-    helpers.class_names("px-5 py-3", row_css_class)
+    helpers.class_names("px-5 py-3 first:rounded-t-lg last:rounded-b-lg", row_css_class)
   end
 
   # The second line only hangs under the primary text when there is a leading
