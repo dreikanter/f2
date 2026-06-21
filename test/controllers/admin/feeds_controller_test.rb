@@ -70,6 +70,40 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "should render the sort dropdown on index" do
+    login_as(admin_user)
+    create(:feed, user: create(:user))
+
+    get admin_feeds_path
+
+    assert_response :success
+    assert_select "button[data-dropdown-toggle='admin-feed-sort-menu']", 1
+    assert_select "#admin-feed-sort-menu a", Admin::FeedsController::SORTABLE_FIELDS.size
+  end
+
+  test "should sort feeds by name" do
+    login_as(admin_user)
+    create(:feed, user: create(:user), name: "Z Feed")
+    create(:feed, user: create(:user), name: "A Feed")
+
+    get admin_feeds_path(sort: "name", direction: "asc")
+
+    assert_response :success
+    assert response.body.index("A Feed") < response.body.index("Z Feed"),
+      "Expected A Feed to appear before Z Feed"
+  end
+
+  test "should preserve sort parameters in pagination" do
+    login_as(admin_user)
+    3.times { |i| create(:feed, user: create(:user), name: "Feed #{i}") }
+
+    get admin_feeds_path(sort: "name", direction: "desc", per_page: 2)
+
+    assert_response :success
+    assert_select "nav a[href*='sort=name']"
+    assert_select "nav a[href*='direction=desc']"
+  end
+
   def login_as(user)
     post session_path, params: { email_address: user.email_address, password: "password123" }
   end
