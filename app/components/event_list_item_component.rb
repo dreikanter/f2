@@ -31,7 +31,11 @@ class EventListItemComponent < ListItemComponent
   attr_reader :event, :href
 
   def li_data
-    { key: "events.entry", event_type: event.type, event_id: event.id }
+    {
+      key: "events.entry",
+      event_type: event.type,
+      event_id: event.id
+    }
   end
 
   def row_css_class
