@@ -49,8 +49,8 @@ class FeedCardComponent < ViewComponent::Base
     !admin
   end
 
-  def status_badge
-    helpers.feed_status_badge(feed)
+  def status_icon
+    helpers.feed_status_icon(feed)
   end
 
   def menu_id

@@ -44,20 +44,22 @@ class FeedsListComponentTest < ViewComponent::TestCase
     assert_match "Untitled feed", result.text
   end
 
-  test "#call renders draft badge for draft feeds" do
+  test "#call renders draft status icon for draft feeds" do
     feed = create(:feed, :draft, user: user, name: "Draft Feed")
     result = render_inline(FeedsListComponent.new(feeds: [feed]))
 
-    badge = result.css(%([data-key="feed.#{feed.id}.draft_badge"])).first
-    assert_not_nil badge, "Expected to find a draft badge for draft feed"
-    assert_equal "Draft", badge.text.strip
+    icon = result.at_css(%([data-key="feed.#{feed.id}.status_icon"] svg))
+    assert_not_nil icon, "Expected to find a draft status icon for draft feed"
+    assert_equal "Draft", icon["aria-label"]
   end
 
-  test "#call does not render draft badge for non-draft feeds" do
+  test "#call does not render draft status icon for non-draft feeds" do
     feed = create(:feed, :disabled, user: user, name: "Inactive Feed")
     result = render_inline(FeedsListComponent.new(feeds: [feed]))
 
-    assert_empty result.css(%([data-key="feed.#{feed.id}.draft_badge"]))
+    icon = result.at_css(%([data-key="feed.#{feed.id}.status_icon"] svg))
+    assert_not_nil icon
+    assert_equal "Disabled", icon["aria-label"]
   end
 
   test "#call should render Continue setup and Discard affordances for draft rows" do
