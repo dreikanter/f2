@@ -24,9 +24,13 @@ class EventsListComponent < ViewComponent::Base
   def events_body
     return render(EmptyStateComponent.new("No events to show yet")) unless @events.any?
 
-    content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
-      safe_join(@events.map { |event| render(EventCardComponent.new(event: event, href: event_href(event))) })
+    render(ListComponent.new(data: { key: "events.list" })) do |list|
+      @events.each { |event| list.with_item(card_component(event)) }
     end
+  end
+
+  def card_component(event)
+    EventCardComponent.new(event: event, href: event_href(event))
   end
 
   # Events link to the user-facing event page. Admin::EventsListComponent

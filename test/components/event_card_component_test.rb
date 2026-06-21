@@ -30,7 +30,8 @@ class EventCardComponentTest < ViewComponent::TestCase
 
     result = render_card(event)
 
-    keys = result.css("[data-key='events.entry'] > div:first-child > *").map { |node| node["data-key"] }
+    row = result.at_css("[data-key='events.description']").parent
+    keys = row.css("> *").map { |node| node["data-key"] }
     assert_operator keys.index("events.description"), :<, keys.index("events.timestamp")
   end
 
@@ -73,36 +74,33 @@ class EventCardComponentTest < ViewComponent::TestCase
     assert_includes icon["class"], "text-slate-400"
   end
 
-  test "#call should tint warning cards with the alert palette" do
+  test "#call should tint warning rows with the alert palette" do
     event = create(:event, level: :warning, user: user)
 
     result = render_card(event)
 
     card = result.css("[data-key='events.entry']").first
     assert_includes card["class"], "bg-amber-50"
-    assert_includes card["class"], "border-amber-100"
     assert_includes card["class"], "hover:bg-amber-100"
-    assert_includes card["class"], "hover:border-amber-200"
   end
 
-  test "#call should tint error cards with the alert palette" do
+  test "#call should tint error rows with the alert palette" do
     event = create(:event, level: :error, user: user)
 
     result = render_card(event)
 
     card = result.css("[data-key='events.entry']").first
     assert_includes card["class"], "bg-red-100"
-    assert_includes card["class"], "border-red-200"
+    assert_includes card["class"], "hover:bg-red-200"
   end
 
-  test "#call should keep routine cards neutral" do
+  test "#call should keep routine rows neutral" do
     event = create(:event, level: :info, user: user)
 
     result = render_card(event)
 
     card = result.css("[data-key='events.entry']").first
     assert_includes card["class"], "bg-white"
-    assert_includes card["class"], "border-slate-200"
   end
 
   # --- Simplified mode ---
@@ -243,12 +241,13 @@ class EventCardComponentTest < ViewComponent::TestCase
     assert_not_includes result.text, "Target:"
   end
 
-  test "#call should tint the extended footer divider to match the level" do
+  test "#call should render the extended footer as a borderless muted line" do
     event = create(:event, level: :error, user: user)
 
     result = render_admin_card(event)
 
     footer = result.css("[data-key='events.footer']").first
-    assert_includes footer["class"], "border-red-200"
+    assert_not_nil footer
+    assert_not_includes footer["class"].to_s, "border-t"
   end
 end

@@ -50,7 +50,7 @@ class EventLogComponent < ViewComponent::Base
   def events_body
     return render(EmptyStateComponent.new("No events to show yet")) unless entries.any?
 
-    content_tag(:div, class: "space-y-2", data: { key: "events.list" }) do
+    content_tag(:ul, class: ListComponent::DEFAULT_CSS_CLASSES, data: { key: "events.list" }) do
       safe_join(entries)
     end
   end
