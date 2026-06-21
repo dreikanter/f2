@@ -148,10 +148,6 @@ class PostListItemComponent < ListItemComponent
     helpers.icon(status_display[:icon], css_class: "size-4 #{status_display[:color]}")
   end
 
-  # Group the label, colon and the time tag inside a single inline wrapper so
-  # the surrounding flex gap only spaces the icon from the text. Without the
-  # wrapper the time becomes a separate flex item and drifts away from the
-  # label, e.g. "Reposted: 1d" splitting apart.
   def status_label_with_time
     helpers.content_tag(:span, helpers.safe_join([status_display[:label], ": ", helpers.short_time_ago_tag(status_time)]))
   end
