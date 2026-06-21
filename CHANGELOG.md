@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-21
+
+- Refreshed the favicon with a bolder Feeder mark on a red tile.
+
 ## 2026-06-20
 
 - AI credential pages now list the models each key can use.
