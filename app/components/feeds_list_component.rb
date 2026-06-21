@@ -5,8 +5,8 @@ class FeedsListComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, class: "space-y-4") do
-      safe_join(@feeds.map { |feed| render(FeedCardComponent.new(feed: feed, admin: @admin)) })
+    render(ListComponent.new) do |list|
+      @feeds.each { |feed| list.with_item(FeedCardComponent.new(feed: feed, admin: @admin)) }
     end
   end
 end
