@@ -3,20 +3,23 @@ class FeedCardComponent < ViewComponent::Base
   ENABLE_CONFIRM = "Enable this feed?".freeze
   DISABLE_CONFIRM = "Disable this feed?".freeze
 
-  def initialize(feed:)
+  def initialize(feed:, admin: false)
     @feed = feed
+    @admin = admin
   end
 
   private
 
-  attr_reader :feed
+  attr_reader :feed, :admin
 
   def title
     feed.display_name
   end
 
+  # The admin list points at the operator-facing feed page so admins can open
+  # any user's feed; the regular list stays in the user's own namespace.
   def feed_url
-    helpers.feed_path(feed)
+    admin ? helpers.admin_feed_path(feed) : helpers.feed_path(feed)
   end
 
   def edit_url
@@ -37,6 +40,13 @@ class FeedCardComponent < ViewComponent::Base
 
   def can_be_enabled?
     feed.can_be_enabled?
+  end
+
+  # The admin list spans every user's feeds, where the management actions
+  # (edit, enable/disable, discard) don't apply, so only the read-only links
+  # are offered there.
+  def management_actions?
+    !admin
   end
 
   def status_badge
@@ -61,6 +71,14 @@ class FeedCardComponent < ViewComponent::Base
     return unless feed.access_token && feed.target_group.present?
 
     "#{feed.access_token.host}/#{feed.target_group}"
+  end
+
+  def owner
+    feed.user if admin
+  end
+
+  def owner_url
+    helpers.admin_user_path(owner) if owner
   end
 
   def last_refreshed_tag
