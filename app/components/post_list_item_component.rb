@@ -204,8 +204,6 @@ class PostListItemComponent < ListItemComponent
     post.source_url.presence
   end
 
-  # The status links to the post's feed page in Feeder, so it's easy to jump
-  # from a post back to the feed that reposted it.
   def status_url
     helpers.feed_path(post.feed) if post.feed
   end

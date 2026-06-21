@@ -8,8 +8,6 @@ class ReadonlyPostListItemComponent < PostListItemComponent
     helpers.content_tag(:span, title, class: "truncate text-base text-slate-900")
   end
 
-  # The owner-scoped feed route isn't reachable here, so the status stays plain
-  # text rather than linking to it.
   def status_url
     nil
   end
