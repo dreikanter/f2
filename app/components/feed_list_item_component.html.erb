@@ -1,38 +1,38 @@
-<li id="<%= helpers.dom_id(feed) %>" class="px-5 py-3 transition duration-75 hover:bg-slate-50">
-  <div class="flex items-start gap-3">
-    <div class="min-w-0 flex-1">
-      <%# Leading icon shares the first row and is vertically centered with it;
-          the second row hangs indented (pl-7 = icon w-4 + gap-3) so it lines up
-          under the first row's text. %>
-      <div class="flex items-center gap-3">
-        <span class="inline-flex shrink-0" data-key="feed.<%= feed.id %>.status_icon"><%= status_icon %></span>
-        <div class="flex min-w-0 flex-1 items-baseline gap-2">
-          <%= link_to title, feed_url,
-                class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
-          <% if target_group_label %>
-            <% if target_group_url %>
-              <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                    class: "truncate text-sm text-slate-400 transition hover:text-slate-600" %>
-            <% else %>
-              <span class="truncate text-sm text-slate-400"><%= target_group_label %></span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
+<%= render ListItemComponent.new(id: helpers.dom_id(feed), css_class: "transition duration-75 hover:bg-slate-50") do |row| %>
+  <% row.with_icon do %>
+    <span class="inline-flex shrink-0" data-key="feed.<%= feed.id %>.status_icon"><%= status_icon %></span>
+  <% end %>
 
-      <div class="mt-1 truncate pl-7 text-sm text-slate-400">
-        <span data-key="feed.<%= feed.id %>.last_refreshed">Latest updated: <%= last_refreshed_tag %></span>
-        <%= helpers.middot %>
-        <span data-key="feed.<%= feed.id %>.most_recent_post">Latest post: <%= most_recent_post_tag %></span>
-        <% if owner %>
-          <%= helpers.middot %>
-          <span data-key="feed.<%= feed.id %>.owner">Owner:
-            <%= link_to owner.email_address, owner_url, class: "transition hover:text-slate-600" %>
-          </span>
+  <% row.with_primary do %>
+    <div class="flex min-w-0 flex-1 items-baseline gap-2">
+      <%= link_to title, feed_url,
+            class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
+      <% if target_group_label %>
+        <% if target_group_url %>
+          <%= link_to target_group_label, target_group_url, target: "_blank", rel: "noopener",
+                class: "truncate text-sm text-slate-400 transition hover:text-slate-600" %>
+        <% else %>
+          <span class="truncate text-sm text-slate-400"><%= target_group_label %></span>
         <% end %>
-      </div>
+      <% end %>
     </div>
+  <% end %>
 
+  <% row.with_secondary do %>
+    <div class="truncate text-sm text-slate-400">
+      <span data-key="feed.<%= feed.id %>.last_refreshed">Latest updated: <%= last_refreshed_tag %></span>
+      <%= helpers.middot %>
+      <span data-key="feed.<%= feed.id %>.most_recent_post">Latest post: <%= most_recent_post_tag %></span>
+      <% if owner %>
+        <%= helpers.middot %>
+        <span data-key="feed.<%= feed.id %>.owner">Owner:
+          <%= link_to owner.email_address, owner_url, class: "transition hover:text-slate-600" %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% row.with_trailing do %>
     <div class="relative shrink-0">
       <button type="button"
               id="<%= menu_id %>-button"
@@ -112,5 +112,5 @@
         </ul>
       </div>
     </div>
-  </div>
-</li>
+  <% end %>
+<% end %>

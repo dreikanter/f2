@@ -21,18 +21,19 @@
   <% else %>
     <%= render(ListComponent.new) do |list| %>
       <% @emails.each do |email| %>
-        <% list.with_item(
-             ListComponent::ItemComponent.new(
-               title: email[:subject].presence || "(no subject)",
-               title_url: development_sent_email_path(id: email[:id]),
-               metadata_segments: [
-                 email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
-                 number_to_human_size(email[:size]),
-                 "#{time_ago_in_words(email[:timestamp])} ago"
-               ],
-               key: "development.emails.list.item"
-             )
-           ) %>
+        <% item = ListItemComponent.new(data: { key: "development.emails.list.item" }) %>
+        <% item.with_primary do %>
+          <%= link_to email[:subject].presence || "(no subject)", development_sent_email_path(id: email[:id]),
+                class: "min-w-0 flex-1 truncate text-base text-slate-900 transition hover:text-slate-700" %>
+        <% end %>
+        <% item.with_secondary do %>
+          <span class="text-sm text-slate-500"><%= safe_join([
+            email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
+            number_to_human_size(email[:size]),
+            "#{time_ago_in_words(email[:timestamp])} ago"
+          ].map { |segment| tag.span(segment) }, middot) %></span>
+        <% end %>
+        <% list.with_item(item) %>
       <% end %>
     <% end %>
   <% end %>

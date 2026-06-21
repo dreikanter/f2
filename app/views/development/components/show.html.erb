@@ -485,11 +485,22 @@
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With feed items</p>
-        <%= render ListComponent.new do |list|
-          list.with_item(ListComponent::ItemComponent.new(title: "Tech News Daily", title_url: "#", metadata_segments: ["Updated 5 min ago", "142 posts", "Active"]))
-          list.with_item(ListComponent::ItemComponent.new(title: "Design Inspiration", title_url: "#", metadata_segments: ["Updated 1 hour ago", "89 posts", "Active"]))
-          list.with_item(ListComponent::ItemComponent.new(title: "Ruby Weekly", title_url: "#", metadata_segments: ["Updated 2 days ago", "23 posts", "Paused"]))
-        end %>
+        <%= render ListComponent.new do |list| %>
+          <% [
+               ["Tech News Daily", ["Updated 5 min ago", "142 posts", "Active"]],
+               ["Design Inspiration", ["Updated 1 hour ago", "89 posts", "Active"]],
+               ["Ruby Weekly", ["Updated 2 days ago", "23 posts", "Paused"]]
+             ].each do |title, segments| %>
+            <% item = ListItemComponent.new %>
+            <% item.with_primary do %>
+              <%= link_to title, "#", class: "min-w-0 flex-1 truncate text-base text-slate-900 transition hover:text-slate-700" %>
+            <% end %>
+            <% item.with_secondary do %>
+              <span class="text-sm text-slate-500"><%= safe_join(segments.map { |segment| tag.span(segment) }, middot) %></span>
+            <% end %>
+            <% list.with_item(item) %>
+          <% end %>
+        <% end %>
       </div>
 
       <div class="space-y-2">

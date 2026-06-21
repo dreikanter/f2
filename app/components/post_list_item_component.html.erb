@@ -1,52 +1,52 @@
-<li id="<%= helpers.dom_id(post) %>" class="<%= row_classes %>">
-  <div class="flex items-start gap-3">
-    <div class="min-w-0 flex-1">
-      <%# Leading icon shares the first row and is vertically centered with it;
-          the second row hangs indented (pl-7 = icon w-4 + gap-3) so it lines up
-          under the first row's text. %>
-      <div class="flex items-center gap-3">
-        <span class="inline-flex shrink-0" data-key="post.status-icon"><%= status_icon %></span>
-        <div class="flex min-w-0 flex-1 items-baseline gap-2">
-          <%= title_element %>
-          <% if withdrawn? %>
-            <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
-          <% end %>
-        </div>
-      </div>
+<%= render ListItemComponent.new(id: helpers.dom_id(post), css_class: row_classes) do |row| %>
+  <% row.with_icon do %>
+    <span class="inline-flex shrink-0" data-key="post.status-icon"><%= status_icon %></span>
+  <% end %>
 
-      <div class="mt-1 truncate pl-7 text-sm text-slate-400">
-        <%# The status sits leftmost and is always present, so every following
-            item (group, counts) leads with a middot. %>
-        <% if status_links_to_freefeed? %>
-          <%= link_to freefeed_url, target: "_blank", rel: "noopener",
-                class: "transition hover:text-slate-600",
-                data: { key: "post.status" } do %>
-            <%= status_label_with_time %>
-          <% end %>
-        <% else %>
-          <span data-key="post.status"><%= status_label_with_time %></span>
-        <% end %>
-
-        <% if show_group? %>
-          <%= helpers.middot %>
-          <span data-key="post.group">Group:
-            <%= link_to group_label, group_url, title: group_hint,
-                  class: "transition hover:text-slate-600" %>
-          </span>
-        <% end %>
-
-        <% if show_attachment_count? %>
-          <%= helpers.middot %>
-          <span data-key="post.attachments"><%= attachment_label %></span>
-        <% end %>
-        <% if show_comment_count? %>
-          <%= helpers.middot %>
-          <span data-key="post.comments"><%= comment_label %></span>
-        <% end %>
-      </div>
+  <% row.with_primary do %>
+    <div class="flex min-w-0 flex-1 items-baseline gap-2">
+      <%= title_element %>
+      <% if withdrawn? %>
+        <%= render BadgeComponent.new(text: "Withdrawn", color: :gray) %>
+      <% end %>
     </div>
+  <% end %>
 
-    <% if show_actions? %>
+  <% row.with_secondary do %>
+    <div class="truncate text-sm text-slate-400">
+      <%# The status sits leftmost and is always present, so every following
+          item (group, counts) leads with a middot. %>
+      <% if status_links_to_freefeed? %>
+        <%= link_to freefeed_url, target: "_blank", rel: "noopener",
+              class: "transition hover:text-slate-600",
+              data: { key: "post.status" } do %>
+          <%= status_label_with_time %>
+        <% end %>
+      <% else %>
+        <span data-key="post.status"><%= status_label_with_time %></span>
+      <% end %>
+
+      <% if show_group? %>
+        <%= helpers.middot %>
+        <span data-key="post.group">Group:
+          <%= link_to group_label, group_url, title: group_hint,
+                class: "transition hover:text-slate-600" %>
+        </span>
+      <% end %>
+
+      <% if show_attachment_count? %>
+        <%= helpers.middot %>
+        <span data-key="post.attachments"><%= attachment_label %></span>
+      <% end %>
+      <% if show_comment_count? %>
+        <%= helpers.middot %>
+        <span data-key="post.comments"><%= comment_label %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if show_actions? %>
+    <% row.with_trailing do %>
       <div class="relative shrink-0">
         <button type="button"
                 id="<%= menu_id %>-button"
@@ -86,11 +86,10 @@
             <% end %>
           </ul>
         </div>
+        <% if delete_allowed? %>
+          <%= render PostDeleteModalComponent.new(post: post) %>
+        <% end %>
       </div>
     <% end %>
-  </div>
-
-  <% if show_actions? && delete_allowed? %>
-    <%= render PostDeleteModalComponent.new(post: post) %>
   <% end %>
-</li>
+<% end %>

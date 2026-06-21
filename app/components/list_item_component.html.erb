@@ -1,0 +1,14 @@
+<%= tag.li id: @id, class: li_class, data: @data do %>
+  <div class="flex items-start gap-3">
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-3">
+        <%= icon if icon? %>
+        <%= primary if primary? %>
+      </div>
+      <% if secondary? %>
+        <div class="<%= secondary_class %>"><%= secondary %></div>
+      <% end %>
+    </div>
+    <%= trailing if trailing? %>
+  </div>
+<% end %>

@@ -1,21 +1,22 @@
-<li class="<%= row_classes %>" data-key="events.entry" data-event-type="<%= event.type %>" data-event-id="<%= event.id %>">
-  <div class="px-5 py-3">
-    <%# Leading icon shares the first row and is vertically centered with it; the
-        footer hangs indented (pl-7 = icon w-4 + gap-3) so it lines up under the
-        first row's text. %>
-    <div class="flex items-center gap-3">
-      <%= severity %>
-      <div class="flex min-w-0 flex-1 items-baseline gap-3">
-        <div class="min-w-0 flex-1 truncate text-slate-700" data-key="events.description">
-          <%= render description %>
-        </div>
-        <%= timestamp_link %>
+<%= render ListItemComponent.new(css_class: row_classes, data: { key: "events.entry", event_type: event.type, event_id: event.id }) do |row| %>
+  <% row.with_icon do %>
+    <%= severity %>
+  <% end %>
+
+  <% row.with_primary do %>
+    <div class="flex min-w-0 flex-1 items-baseline gap-3">
+      <div class="min-w-0 flex-1 truncate text-slate-700" data-key="events.description">
+        <%= render description %>
       </div>
+      <%= timestamp_link %>
     </div>
-    <% if show_footer? %>
-      <div class="mt-1 truncate pl-7 text-sm text-slate-400" data-key="events.footer">
+  <% end %>
+
+  <% if show_footer? %>
+    <% row.with_secondary do %>
+      <div class="truncate text-sm text-slate-400" data-key="events.footer">
         <%= safe_join(footer_items, helpers.middot) %>
       </div>
     <% end %>
-  </div>
-</li>
+  <% end %>
+<% end %>
