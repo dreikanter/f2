@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-21
 
-- Refreshed the favicon with a bolder Feeder mark on a red tile.
+- Refreshed the favicon with a bold fff ligature on Freefeed-orange tile.
 
 ## 2026-06-20
 
