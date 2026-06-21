@@ -24,7 +24,7 @@
       <% header.with_action_button do %>
         <%= render RefreshButtonComponent.new(data: {
               controller: "refresh-trigger loading-button",
-              refresh_trigger_target_id_value: EventLogComponent::DOM_ID,
+              refresh_trigger_target_id_value: EventsListComponent::DOM_ID,
               action: "click->refresh-trigger#trigger",
               key: "events.refresh"
             }) %>
@@ -32,16 +32,10 @@
     <% end %>
   <% end %>
 
-  <%= render(EventLogComponent.new(
+  <%= render(Admin::EventsListComponent.new(
     events: @events,
     endpoint: @log_endpoint,
     older_url: @older_url,
     newer_url: @newer_url
-  )) do |log| %>
-    <% @events.each do |event| %>
-      <% log.with_entry do %>
-        <%= render Admin::EventCardComponent.new(event: event, href: admin_event_path(event)) %>
-      <% end %>
-    <% end %>
-  <% end %>
+  )) %>
 </div>

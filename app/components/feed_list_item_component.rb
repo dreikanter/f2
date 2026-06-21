@@ -1,0 +1,185 @@
+class FeedListItemComponent < ListItemComponent
+  DISCARD_CONFIRM = "Discard this draft? No data will be lost since it hasn't been activated.".freeze
+  ENABLE_CONFIRM = "Enable this feed?".freeze
+  DISABLE_CONFIRM = "Disable this feed?".freeze
+
+  def initialize(feed:, admin: false)
+    super()
+    @feed = feed
+    @admin = admin
+  end
+
+  def before_render
+    with_icon { icon_element }
+    with_primary { primary_element }
+    with_secondary { secondary_element }
+    with_trailing { menu }
+  end
+
+  private
+
+  attr_reader :feed, :admin
+
+  def li_id
+    helpers.dom_id(feed)
+  end
+
+  def row_css_class
+    "transition duration-75 hover:bg-slate-50"
+  end
+
+  def icon_element
+    helpers.tag.span(status_icon, class: "inline-flex shrink-0", data: { key: "feed.#{feed.id}.status_icon" })
+  end
+
+  def primary_element
+    helpers.tag.div(helpers.safe_join([title_link, group_element].compact),
+                    class: "flex min-w-0 flex-1 items-baseline gap-2")
+  end
+
+  def secondary_element
+    helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
+                    class: "truncate text-sm text-slate-400")
+  end
+
+  def title_link
+    helpers.link_to(title, feed_url,
+                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+  end
+
+  def group_element
+    return unless target_group_label
+
+    if target_group_url
+      helpers.link_to(target_group_label, target_group_url, target: "_blank", rel: "noopener",
+                      class: "truncate text-sm text-slate-400 transition hover:text-slate-600")
+    else
+      helpers.tag.span(target_group_label, class: "truncate text-sm text-slate-400")
+    end
+  end
+
+  def meta_segments
+    segments = [
+      helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" }),
+      helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
+    ]
+    segments << owner_segment if owner
+    segments
+  end
+
+  def owner_segment
+    helpers.tag.span(helpers.safe_join(["Owner: ", helpers.link_to(owner.email_address, owner_url, class: "transition hover:text-slate-600")]),
+                     data: { key: "feed.#{feed.id}.owner" })
+  end
+
+  def menu
+    render(DropdownMenuComponent.new(menu_id: menu_id, items: menu_items, width: "w-44"))
+  end
+
+  def menu_items
+    items = [{ label: "Details", href: feed_url, data: { key: "feed.#{feed.id}.details" } }]
+    items << { label: "Source", href: source_url, target: "_blank", rel: "noopener", data: { key: "feed.#{feed.id}.source" } } if source_url
+
+    if management_actions?
+      if draft?
+        items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }
+      else
+        items << { label: "Edit", href: edit_url, data: { key: "feed.#{feed.id}.edit" } }
+        if enabled?
+          items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
+                     data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
+        elsif can_be_enabled?
+          items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
+                     data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
+        end
+      end
+
+      if draft?
+        items << { label: "Discard…", href: feed_url, data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } }
+      end
+    end
+
+    items
+  end
+
+  def title
+    feed.display_name
+  end
+
+  # The admin list points at the operator-facing feed page so admins can open
+  # any user's feed; the regular list stays in the user's own namespace.
+  def feed_url
+    admin ? helpers.admin_feed_path(feed) : helpers.feed_path(feed)
+  end
+
+  def edit_url
+    helpers.edit_feed_path(feed)
+  end
+
+  def status_url
+    helpers.feed_status_path(feed)
+  end
+
+  def draft?
+    feed.draft?
+  end
+
+  def enabled?
+    feed.enabled?
+  end
+
+  def can_be_enabled?
+    feed.can_be_enabled?
+  end
+
+  # The admin list spans every user's feeds, where the management actions
+  # (edit, enable/disable, discard) don't apply, so only the read-only links
+  # are offered there.
+  def management_actions?
+    !admin
+  end
+
+  def status_icon
+    helpers.feed_status_icon(feed)
+  end
+
+  def menu_id
+    "feed-menu-#{feed.id}"
+  end
+
+  # Query-shaped profiles (AI search) have no URL to open, so the menu only
+  # offers a source link when the feed's input is an actual URL.
+  def source_url
+    feed.source_input.presence if feed.source_input_shape == "url"
+  end
+
+  def target_group_label
+    "@#{feed.target_group}" if feed.target_group.present?
+  end
+
+  def target_group_url
+    return unless feed.access_token && feed.target_group.present?
+
+    "#{feed.access_token.host}/#{feed.target_group}"
+  end
+
+  def owner
+    feed.user if admin
+  end
+
+  def owner_url
+    helpers.admin_user_path(owner) if owner
+  end
+
+  def last_refreshed_tag
+    return "Never" unless feed.last_refreshed_at
+
+    helpers.short_time_ago_tag(feed.last_refreshed_at)
+  end
+
+  def most_recent_post_tag
+    return "None" unless feed.most_recent_post_date
+
+    helpers.short_time_ago_tag(feed.most_recent_post_date)
+  end
+end

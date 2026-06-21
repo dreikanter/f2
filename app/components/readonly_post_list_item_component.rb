@@ -1,7 +1,7 @@
-# A non-interactive PostCardComponent: renders the post as plain text with no
+# A non-interactive PostListItemComponent: renders the post as plain text with no
 # title link or actions menu. Used where the owner-scoped post routes aren't
 # reachable, such as the admin feed page showing another user's posts.
-class ReadonlyPostCardComponent < PostCardComponent
+class ReadonlyPostListItemComponent < PostListItemComponent
   private
 
   def title_element

@@ -119,7 +119,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       get admin_events_path
 
       assert_response :success
-      assert_select "#events_log"
+      assert_select "#events_list"
       assert_select '[data-key="events.timestamp"]', count: 2
       assert_select '[data-key="events.type"]', count: 2
     end
@@ -143,7 +143,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
       get admin_events_path
       assert_response :success
-      assert_select "#events_log[data-controller='polling']"
+      assert_select "#events_list[data-controller='polling']"
       assert_select "[data-key='events.refresh']"
       assert_select "[data-key='events.older']"
       assert_select "a[data-key='events.newer']", count: 0
@@ -159,7 +159,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       get admin_events_path, params: { before: oldest_on_first_page.id }
       assert_response :success
       # Older page is static history: no polling, but offers Newer + Older.
-      assert_select "#events_log[data-controller='polling']", count: 0
+      assert_select "#events_list[data-controller='polling']", count: 0
       assert_select "[data-key='events.refresh']", count: 0
       assert_select "[data-key='events.newer']"
       assert_select "[data-key='events.older']"
@@ -176,7 +176,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
       get admin_events_path, params: { after: events[1].id }
 
       assert_response :success
-      assert_select "#events_log[data-controller='polling']"
+      assert_select "#events_list[data-controller='polling']"
       assert_select "[data-key='events.refresh']"
       assert_select "a[data-key='events.newer']", count: 0
     end
@@ -219,7 +219,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
-    assert_includes response.body, "events_log"
+    assert_includes response.body, "events_list"
     assert_includes response.body, "NewAdminEvent"
   end
 
@@ -242,7 +242,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_select "[data-key='events.type']", count: 2
-      assert_select "#events_log[data-controller='polling']"
+      assert_select "#events_list[data-controller='polling']"
     end
   end
 
@@ -375,8 +375,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 4
-    assert_select "#events_log[data-polling-endpoint-value*='filter']"
-    assert_select "#events_log[data-polling-endpoint-value*='TypeA']"
+    assert_select "#events_list[data-polling-endpoint-value*='filter']"
+    assert_select "#events_list[data-polling-endpoint-value*='TypeA']"
   end
 
   private

@@ -24,24 +24,14 @@ class Admin::EventsController < ApplicationController
 
   private
 
-  def entry_component(event)
-    Admin::EventCardComponent.new(event: event, href: admin_event_path(event))
-  end
-
   def events_log_path(**params)
     admin_events_path(filter: optional_filter.to_h.presence, **params)
   end
 
-  # The admin log keeps its denser card layout (EventLogComponent) instead of the
-  # bordered list used on the status page and the user-facing events log.
-  def events_log_dom_id
-    EventLogComponent::DOM_ID
-  end
-
+  # The admin log renders the richer Admin::EventListItemComponent rows; the
+  # shared streaming defaults to the user-facing EventsListComponent.
   def events_log_stream_body
-    helpers.render(event_log_component) do |log|
-      @events.each { |event| log.with_entry { helpers.render(entry_component(event)) } }
-    end
+    helpers.render(Admin::EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
   def previous_event(event)

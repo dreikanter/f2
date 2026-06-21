@@ -1,7 +1,7 @@
 require "test_helper"
 require "view_component/test_case"
 
-class FeedCardComponentTest < ViewComponent::TestCase
+class FeedListItemComponentTest < ViewComponent::TestCase
   def user
     @user ||= create(:user)
   end
@@ -11,13 +11,13 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should use dom_id as element id" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(feed)}")
   end
 
   test "#render should link title to feed detail page" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     link = result.at_css("a[href*='/feeds/']")
     assert_not_nil link
@@ -26,7 +26,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show draft status icon for draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
-    result = render_inline FeedCardComponent.new(feed: draft_feed)
+    result = render_inline FeedListItemComponent.new(feed: draft_feed)
 
     icon = result.at_css("[data-key='feed.#{draft_feed.id}.status_icon'] svg")
     assert_not_nil icon
@@ -34,7 +34,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show disabled status icon for disabled feeds" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     icon = result.at_css("[data-key='feed.#{feed.id}.status_icon'] svg")
     assert_not_nil icon
@@ -43,7 +43,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show enabled status icon for enabled feeds" do
     enabled_feed = create(:feed, :enabled, user: user)
-    result = render_inline FeedCardComponent.new(feed: enabled_feed)
+    result = render_inline FeedListItemComponent.new(feed: enabled_feed)
 
     icon = result.at_css("[data-key='feed.#{enabled_feed.id}.status_icon'] svg")
     assert_not_nil icon
@@ -51,7 +51,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show @group label when target_group present" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_includes result.text, "@testgroup"
   end
@@ -60,7 +60,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
     draft_feed = create(:feed, :draft, user: user)
 
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: draft_feed)
+      result = render_inline FeedListItemComponent.new(feed: draft_feed)
 
       assert_not_empty result.css("[data-key='feed.#{draft_feed.id}.continue_setup']")
       assert_not_empty result.css("[data-key='feed.#{draft_feed.id}.discard']")
@@ -69,7 +69,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should not show draft actions for non-draft feeds" do
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: feed)
+      result = render_inline FeedListItemComponent.new(feed: feed)
 
       assert_empty result.css("[data-key='feed.#{feed.id}.continue_setup']")
       assert_empty result.css("[data-key='feed.#{feed.id}.discard']")
@@ -78,7 +78,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show Details action for every feed" do
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: feed)
+      result = render_inline FeedListItemComponent.new(feed: feed)
 
       details = result.css("[data-key='feed.#{feed.id}.details']").first
       assert_not_nil details
@@ -89,7 +89,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show Source action opening the feed source in a new tab" do
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: feed)
+      result = render_inline FeedListItemComponent.new(feed: feed)
 
       source = result.css("[data-key='feed.#{feed.id}.source']").first
       assert_not_nil source
@@ -104,7 +104,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
       params: { "query" => "ruby news" })
 
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: query_feed)
+      result = render_inline FeedListItemComponent.new(feed: query_feed)
 
       assert_empty result.css("[data-key='feed.#{query_feed.id}.source']")
     end
@@ -112,7 +112,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show Edit action for non-draft feeds" do
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: feed)
+      result = render_inline FeedListItemComponent.new(feed: feed)
 
       edit = result.css("[data-key='feed.#{feed.id}.edit']").first
       assert_not_nil edit
@@ -122,7 +122,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
 
   test "#render should show Enable action for enableable disabled feeds" do
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: feed)
+      result = render_inline FeedListItemComponent.new(feed: feed)
 
       assert_not_empty result.css("[data-key='feed.#{feed.id}.enable']")
       assert_empty result.css("[data-key='feed.#{feed.id}.disable']")
@@ -133,7 +133,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
     enabled_feed = create(:feed, :enabled, user: user)
 
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: enabled_feed)
+      result = render_inline FeedListItemComponent.new(feed: enabled_feed)
 
       assert_not_empty result.css("[data-key='feed.#{enabled_feed.id}.disable']")
       assert_empty result.css("[data-key='feed.#{enabled_feed.id}.enable']")
@@ -144,7 +144,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
     draft_feed = create(:feed, :draft, user: user)
 
     with_request_url("/feeds") do
-      result = render_inline FeedCardComponent.new(feed: draft_feed)
+      result = render_inline FeedListItemComponent.new(feed: draft_feed)
 
       assert_empty result.css("[data-key='feed.#{draft_feed.id}.enable']")
       assert_empty result.css("[data-key='feed.#{draft_feed.id}.disable']")
@@ -153,21 +153,21 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show refresh and post time placeholders when never refreshed" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_includes result.text, "Never"
     assert_includes result.text, "None"
   end
 
   test "#render should label the activity times" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_includes result.text, "Latest updated:"
     assert_includes result.text, "Latest post:"
   end
 
   test "#render should link title to admin feed page in admin mode" do
-    result = render_inline FeedCardComponent.new(feed: feed, admin: true)
+    result = render_inline FeedListItemComponent.new(feed: feed, admin: true)
 
     link = result.at_css("a[href*='/admin/feeds/']")
     assert_not_nil link
@@ -175,7 +175,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show owner in admin mode" do
-    result = render_inline FeedCardComponent.new(feed: feed, admin: true)
+    result = render_inline FeedListItemComponent.new(feed: feed, admin: true)
 
     owner = result.css("[data-key='feed.#{feed.id}.owner']").first
     assert_not_nil owner
@@ -183,7 +183,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should not show owner outside admin mode" do
-    result = render_inline FeedCardComponent.new(feed: feed)
+    result = render_inline FeedListItemComponent.new(feed: feed)
 
     assert_empty result.css("[data-key='feed.#{feed.id}.owner']")
   end
@@ -192,7 +192,7 @@ class FeedCardComponentTest < ViewComponent::TestCase
     enabled_feed = create(:feed, :enabled, user: user)
 
     with_request_url("/admin/feeds") do
-      result = render_inline FeedCardComponent.new(feed: enabled_feed, admin: true)
+      result = render_inline FeedListItemComponent.new(feed: enabled_feed, admin: true)
 
       assert_empty result.css("[data-key='feed.#{enabled_feed.id}.edit']")
       assert_empty result.css("[data-key='feed.#{enabled_feed.id}.disable']")

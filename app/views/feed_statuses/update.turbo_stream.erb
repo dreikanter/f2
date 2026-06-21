@@ -6,7 +6,7 @@
 <% end %>
 
 <%= turbo_stream.replace dom_id(@feed) do %>
-  <%= render FeedCardComponent.new(feed: @feed) %>
+  <%= render FeedListItemComponent.new(feed: @feed) %>
 <% end %>
 
 <%# Replace so repeated toggles don't stack alerts; the partial renders its

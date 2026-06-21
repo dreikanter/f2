@@ -1,7 +1,7 @@
 require "test_helper"
 require "view_component/test_case"
 
-class PostCardComponentTest < ViewComponent::TestCase
+class PostListItemComponentTest < ViewComponent::TestCase
   def user
     @user ||= create(:user)
   end
@@ -15,21 +15,21 @@ class PostCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should use dom_id as element id for turbo targeting" do
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(post)}")
   end
 
   test "#render should link title to post detail page" do
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     link = result.at_css("a[href*='/posts/']")
     assert_not_nil link
     assert_includes link.text, "Flag Design"
   end
 
-  test "ReadonlyPostCardComponent should omit links and the actions menu" do
-    result = render_inline ReadonlyPostCardComponent.new(post: post)
+  test "ReadonlyPostListItemComponent should omit links and the actions menu" do
+    result = render_inline ReadonlyPostListItemComponent.new(post: post)
 
     assert_nil result.at_css("a[href*='/posts/']")
     assert_includes result.text, "Flag Design"
@@ -37,7 +37,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should show the group as a labeled item linking to the feed when show_feed is true" do
-    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+    result = render_inline PostListItemComponent.new(post: post, show_feed: true)
 
     group = result.at_css('[data-key="post.group"]')
     assert_not_nil group
@@ -48,19 +48,19 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should label the group the same way for unpublished posts" do
     draft_post = create(:post, :draft, feed: feed)
-    result = render_inline PostCardComponent.new(post: draft_post, show_feed: true)
+    result = render_inline PostListItemComponent.new(post: draft_post, show_feed: true)
 
     assert_includes result.at_css('[data-key="post.group"]').text.gsub(/\s+/, " "), "Group: @xkcd"
   end
 
   test "#render should keep the group out of the status label" do
-    result = render_inline PostCardComponent.new(post: post, show_feed: true)
+    result = render_inline PostListItemComponent.new(post: post, show_feed: true)
 
     assert_not_includes result.at_css('[data-key="post.status"]').text, "@xkcd"
   end
 
   test "#render should hide the group when show_feed is false" do
-    result = render_inline PostCardComponent.new(post: post, show_feed: false)
+    result = render_inline PostListItemComponent.new(post: post, show_feed: false)
 
     assert_nil result.at_css('[data-key="post.group"]')
     assert_nil result.at_css("a[href*='/feeds/']")
@@ -68,21 +68,21 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should show attachment count for reposted posts with attachments" do
     post_with_attachments = create(:post, :published, :with_attachments, feed: feed)
-    result = render_inline PostCardComponent.new(post: post_with_attachments)
+    result = render_inline PostListItemComponent.new(post: post_with_attachments)
 
     assert_equal "2 attachments", result.at_css('[data-key="post.attachments"]').text.strip
   end
 
   test "#render should show comment count for reposted posts with comments" do
     post_with_comments = create(:post, :published, :with_comments, feed: feed)
-    result = render_inline PostCardComponent.new(post: post_with_comments)
+    result = render_inline PostListItemComponent.new(post: post_with_comments)
 
     assert_equal "1 comment", result.at_css('[data-key="post.comments"]').text.strip
   end
 
   test "#render should separate footer items with middots" do
     post_with_attachments = create(:post, :published, :with_attachments, :with_comments, feed: feed)
-    result = render_inline PostCardComponent.new(post: post_with_attachments)
+    result = render_inline PostListItemComponent.new(post: post_with_attachments)
 
     # status · attachments · comments => two separators, hidden from assistive tech.
     middots = result.css("span").select { |span| span.text.strip == "·" }
@@ -91,7 +91,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should not show attachment or comment counts when none" do
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     assert_nil result.at_css('[data-key="post.attachments"]')
     assert_nil result.at_css('[data-key="post.comments"]')
@@ -99,28 +99,28 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should not show counts for failed posts even with attachments" do
     failed_post = create(:post, :failed, :with_attachments, feed: feed)
-    result = render_inline PostCardComponent.new(post: failed_post)
+    result = render_inline PostListItemComponent.new(post: failed_post)
 
     assert_nil result.at_css('[data-key="post.attachments"]')
   end
 
   test "#render should show Withdrawn badge for withdrawn posts" do
     withdrawn_post = create(:post, feed: feed, status: :withdrawn)
-    result = render_inline PostCardComponent.new(post: withdrawn_post)
+    result = render_inline PostListItemComponent.new(post: withdrawn_post)
 
     assert_includes result.text, "Withdrawn"
   end
 
   test "#render should use a gray background for withdrawn posts" do
     withdrawn_post = create(:post, feed: feed, status: :withdrawn)
-    result = render_inline PostCardComponent.new(post: withdrawn_post)
+    result = render_inline PostListItemComponent.new(post: withdrawn_post)
 
     assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(withdrawn_post)}.bg-slate-50")
   end
 
   test "#render should offer Details, Source and Delete actions for a published post" do
     Current.session = build(:session, user: user)
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
     assert_includes menu_items, "Details"
@@ -130,7 +130,7 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should render the delete modal for a published post" do
     Current.session = build(:session, user: user)
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     assert_not_empty result.css("##{PostDeleteModalComponent.modal_id(post)}")
   end
@@ -138,7 +138,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   test "#render should offer Delete for a failed post" do
     Current.session = build(:session, user: user)
     failed_post = create(:post, :failed, feed: feed)
-    result = render_inline PostCardComponent.new(post: failed_post)
+    result = render_inline PostListItemComponent.new(post: failed_post)
 
     menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
     assert_includes menu_items, "Delete…"
@@ -147,21 +147,23 @@ class PostCardComponentTest < ViewComponent::TestCase
   test "#render should not offer Delete for an unpublished post" do
     Current.session = build(:session, user: user)
     draft_post = create(:post, feed: feed, status: :draft)
-    result = render_inline PostCardComponent.new(post: draft_post)
+    result = render_inline PostListItemComponent.new(post: draft_post)
 
     menu_items = result.css('[role="menuitem"]').map { |item| item.text.strip }
     assert_includes menu_items, "Details"
     assert_not_includes menu_items, "Delete…"
   end
 
-  test "#render should render the status footer" do
-    result = render_inline PostCardComponent.new(post: post)
+  test "#render should render the status line as a borderless muted row" do
+    result = render_inline PostListItemComponent.new(post: post)
 
-    assert_not_empty result.css(".border-t.border-slate-200")
+    status = result.at_css('[data-key="post.status"]')
+    assert_not_nil status
+    assert_empty result.css(".border-t")
   end
 
   test "#render should offer the source as a menu item opening in a new tab" do
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     source_link = result.at_css('[data-key="post.source"]')
     assert_not_nil source_link
@@ -172,7 +174,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   end
 
   test "#render should keep the source link out of the footer metadata" do
-    result = render_inline PostCardComponent.new(post: post)
+    result = render_inline PostListItemComponent.new(post: post)
 
     source_links = result.css("a[href='https://xkcd.com/3250/']")
     assert(source_links.all? { |link| link["role"] == "menuitem" })
@@ -181,7 +183,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   test "#render should label published posts as reposted and link to the freefeed post" do
     published_post = create(:post, :published, feed: feed,
       published_at: 11.hours.ago, reposted_at: 10.hours.ago)
-    result = render_inline PostCardComponent.new(post: published_post)
+    result = render_inline PostListItemComponent.new(post: published_post)
 
     status_link = result.at_css("a[href='#{published_post.freefeed_url}']")
     assert_not_nil status_link
@@ -192,7 +194,7 @@ class PostCardComponentTest < ViewComponent::TestCase
   test "#render should keep the duration tight against its parentheses" do
     published_post = create(:post, :published, feed: feed,
       published_at: 11.hours.ago, reposted_at: 10.hours.ago)
-    result = render_inline PostCardComponent.new(post: published_post)
+    result = render_inline PostListItemComponent.new(post: published_post)
 
     # The label, parens and time tag share one inline wrapper that carries no
     # flex gap, so the duration cannot drift away from its parentheses.
@@ -205,7 +207,7 @@ class PostCardComponentTest < ViewComponent::TestCase
     # A purged post stays published but loses its freefeed_post_id (see GroupPurgeJob)
     purged_post = create(:post, :published, feed: feed, freefeed_post_id: nil,
       published_at: 11.hours.ago, reposted_at: 10.hours.ago)
-    result = render_inline PostCardComponent.new(post: purged_post)
+    result = render_inline PostListItemComponent.new(post: purged_post)
 
     assert_nil purged_post.freefeed_url
     status = result.at_css('[data-key="post.status"]')
@@ -215,7 +217,7 @@ class PostCardComponentTest < ViewComponent::TestCase
 
   test "#render should label failed posts as failed with a red icon" do
     failed_post = create(:post, :failed, feed: feed, updated_at: 10.hours.ago)
-    result = render_inline PostCardComponent.new(post: failed_post)
+    result = render_inline PostListItemComponent.new(post: failed_post)
 
     status = result.at_css('[data-key="post.status"]')
     assert_includes status.text.gsub(/\s+/, " "), "Failed (10h)"

@@ -2,7 +2,7 @@
   <%= turbo_stream.remove dom_id(@post) %>
 <% else %>
   <%= turbo_stream.replace dom_id(@post) do %>
-    <%= render PostCardComponent.new(post: @post, show_feed: true) %>
+    <%= render PostListItemComponent.new(post: @post, show_feed: true) %>
   <% end %>
 <% end %>
 
