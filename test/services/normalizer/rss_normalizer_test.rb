@@ -67,6 +67,20 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     ], post.attachment_urls
   end
 
+  test "#normalize should dedupe enclosure and content images differing only by query string" do
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Photo of the day.",
+      "link" => "https://example.com/photo",
+      "content" => '<div class="image"><img src="https://media.example.com/photo.jpg?t=1781356253"/></div>',
+      "enclosures" => [{ "url" => "https://media.example.com/photo.jpg", "type" => "image/jpeg" }]
+    })
+
+    normalizer = Normalizer::RssNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert_equal ["https://media.example.com/photo.jpg"], post.attachment_urls
+  end
+
   test "#normalize should accept post with URL even when text content is blank" do
     entry = create(:feed_entry, raw_data: {
       "title" => "",

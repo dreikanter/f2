@@ -49,7 +49,15 @@ module Normalizer
     end
 
     def normalize_attachment_urls
-      (image_urls + content_images).uniq
+      dedup_attachment_urls(image_urls + content_images)
+    end
+
+    # The same image often arrives both as an <enclosure> and as an inline
+    # <img>, differing only by a cache-busting query string (e.g. Beehiiv
+    # appends `?t=123` to the in-content copy). Dedupe on the path so it
+    # isn't attached twice; the first-seen URL wins.
+    def dedup_attachment_urls(urls)
+      urls.uniq { |url| url.split("?").first }
     end
 
     def image_urls
