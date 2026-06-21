@@ -491,7 +491,7 @@
                ["Design Inspiration", ["Updated 1 hour ago", "89 posts", "Active"]],
                ["Ruby Weekly", ["Updated 2 days ago", "23 posts", "Paused"]]
              ].each do |title, segments| %>
-            <% item = ListComponent::ItemComponent.new %>
+            <% item = ListItemComponent.new %>
             <% item.with_primary do %>
               <%= link_to title, "#", class: "min-w-0 flex-1 truncate text-base text-slate-900 transition hover:text-slate-700" %>
             <% end %>

@@ -1,4 +1,4 @@
-class PostListItemComponent < ListComponent::ItemComponent
+class PostListItemComponent < ListItemComponent
   STATUS_DISPLAY = {
     "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
     "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },

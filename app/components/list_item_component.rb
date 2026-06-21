@@ -14,7 +14,7 @@
 # Use it directly with slots, or subclass it for a record-backed row: populate
 # the slots in #before_render and override #li_id / #li_data / #row_css_class to
 # derive the <li> attributes from the record.
-class ListComponent::ItemComponent < ViewComponent::Base
+class ListItemComponent < ViewComponent::Base
   renders_one :icon
   renders_one :primary
   renders_one :secondary

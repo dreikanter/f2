@@ -1,4 +1,4 @@
-class EventListItemComponent < ListComponent::ItemComponent
+class EventListItemComponent < ListItemComponent
   include EventLogEntryPresentation
 
   # Warning and error rows lean on the alert palette so problems stand out while
