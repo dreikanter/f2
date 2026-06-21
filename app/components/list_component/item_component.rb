@@ -10,7 +10,7 @@
 # under the primary text. The trailing element is top-aligned with the primary
 # line. The component owns the layout; callers style their own slot content.
 # Sized for size-4 leading icons.
-class ListItemComponent < ViewComponent::Base
+class ListComponent::ItemComponent < ViewComponent::Base
   renders_one :icon
   renders_one :primary
   renders_one :secondary

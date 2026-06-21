@@ -1,4 +1,4 @@
-<%= render ListItemComponent.new(id: helpers.dom_id(feed), css_class: "transition duration-75 hover:bg-slate-50") do |row| %>
+<%= render ListComponent::ItemComponent.new(id: helpers.dom_id(feed), css_class: "transition duration-75 hover:bg-slate-50") do |row| %>
   <% row.with_icon do %>
     <span class="inline-flex shrink-0" data-key="feed.<%= feed.id %>.status_icon"><%= status_icon %></span>
   <% end %>

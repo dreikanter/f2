@@ -1,4 +1,4 @@
-<%= render ListItemComponent.new(id: helpers.dom_id(post), css_class: row_classes) do |row| %>
+<%= render ListComponent::ItemComponent.new(id: helpers.dom_id(post), css_class: row_classes) do |row| %>
   <% row.with_icon do %>
     <span class="inline-flex shrink-0" data-key="post.status-icon"><%= status_icon %></span>
   <% end %>

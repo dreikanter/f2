@@ -1,9 +1,9 @@
 require "test_helper"
 require "view_component/test_case"
 
-class ListItemComponentTest < ViewComponent::TestCase
+class ListComponent::ItemComponentTest < ViewComponent::TestCase
   test "#call should render an li carrying id, data and css_class" do
-    result = render_inline(ListItemComponent.new(id: "row-1", css_class: "bg-amber-50", data: { key: "list.row" })) do |item|
+    result = render_inline(ListComponent::ItemComponent.new(id: "row-1", css_class: "bg-amber-50", data: { key: "list.row" })) do |item|
       item.with_primary { "Primary".html_safe }
     end
 
@@ -15,7 +15,7 @@ class ListItemComponentTest < ViewComponent::TestCase
   end
 
   test "#call should render every slot when provided" do
-    result = render_inline(ListItemComponent.new) do |item|
+    result = render_inline(ListComponent::ItemComponent.new) do |item|
       item.with_icon { "<svg></svg>".html_safe }
       item.with_primary { "<span>Title</span>".html_safe }
       item.with_secondary { "<span>Meta</span>".html_safe }
@@ -29,7 +29,7 @@ class ListItemComponentTest < ViewComponent::TestCase
   end
 
   test "#call should hang the second line under the primary text when an icon is present" do
-    result = render_inline(ListItemComponent.new) do |item|
+    result = render_inline(ListComponent::ItemComponent.new) do |item|
       item.with_icon { "<svg></svg>".html_safe }
       item.with_primary { "Title".html_safe }
       item.with_secondary { "Meta".html_safe }
@@ -39,7 +39,7 @@ class ListItemComponentTest < ViewComponent::TestCase
   end
 
   test "#call should not indent the second line without an icon" do
-    result = render_inline(ListItemComponent.new) do |item|
+    result = render_inline(ListComponent::ItemComponent.new) do |item|
       item.with_primary { "Title".html_safe }
       item.with_secondary { "Meta".html_safe }
     end
@@ -48,7 +48,7 @@ class ListItemComponentTest < ViewComponent::TestCase
   end
 
   test "#call should omit optional slots that are not provided" do
-    result = render_inline(ListItemComponent.new) do |item|
+    result = render_inline(ListComponent::ItemComponent.new) do |item|
       item.with_primary { "Only primary".html_safe }
     end
 
@@ -59,7 +59,7 @@ class ListItemComponentTest < ViewComponent::TestCase
 
   test "#call should integrate with ListComponent as a list item" do
     result = render_inline(ListComponent.new) do |list|
-      item = ListItemComponent.new(id: "row-9")
+      item = ListComponent::ItemComponent.new(id: "row-9")
       item.with_primary { "In a list".html_safe }
       list.with_item(item)
     end

@@ -1,4 +1,4 @@
-<%= render ListItemComponent.new(css_class: row_classes, data: { key: "events.entry", event_type: event.type, event_id: event.id }) do |row| %>
+<%= render ListComponent::ItemComponent.new(css_class: row_classes, data: { key: "events.entry", event_type: event.type, event_id: event.id }) do |row| %>
   <% row.with_icon do %>
     <%= severity %>
   <% end %>
