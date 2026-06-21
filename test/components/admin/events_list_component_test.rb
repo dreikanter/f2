@@ -1,7 +1,7 @@
 require "test_helper"
 
 module Admin
-  class EventsLogComponentTest < ViewComponent::TestCase
+  class EventsListComponentTest < ViewComponent::TestCase
     def user
       @user ||= create(:user)
     end
@@ -9,7 +9,7 @@ module Admin
     test "#call should render events as rows in the bordered list" do
       event = create(:event, type: "feed_refresh", user: user)
 
-      result = render_inline(Admin::EventsLogComponent.new(events: [event]))
+      result = render_inline(Admin::EventsListComponent.new(events: [event]))
 
       assert_not_nil result.at_css("ul[data-key='events.list'] > [data-event-id='#{event.id}']")
     end
@@ -17,7 +17,7 @@ module Admin
     test "#call should link events to the operator-facing event page" do
       event = create(:event, user: user)
 
-      result = render_inline(Admin::EventsLogComponent.new(events: [event]))
+      result = render_inline(Admin::EventsListComponent.new(events: [event]))
 
       assert_not_nil result.at_css("a[href='#{Rails.application.routes.url_helpers.admin_event_path(event)}']")
     end
@@ -26,7 +26,7 @@ module Admin
       feed = create(:feed, user: user)
       event = create(:event, type: "feed_refresh", subject: feed, user: user)
 
-      result = render_inline(Admin::EventsLogComponent.new(events: [event]))
+      result = render_inline(Admin::EventsListComponent.new(events: [event]))
 
       assert_not_nil result.at_css("[data-key='events.footer']")
       assert_not_nil result.at_css("[data-key='events.type']")
@@ -35,13 +35,13 @@ module Admin
     test "#call should expose the shared list DOM id" do
       event = create(:event, user: user)
 
-      result = render_inline(Admin::EventsLogComponent.new(events: [event], endpoint: "/admin/events"))
+      result = render_inline(Admin::EventsListComponent.new(events: [event], endpoint: "/admin/events"))
 
       assert_not_nil result.at_css("##{EventsListComponent::DOM_ID}[data-controller='polling']")
     end
 
     test "#call should render the empty state when there are no events" do
-      result = render_inline(Admin::EventsLogComponent.new(events: []))
+      result = render_inline(Admin::EventsListComponent.new(events: []))
 
       assert_not_nil result.at_css("[data-key='empty-state']")
       assert_empty result.css("li")

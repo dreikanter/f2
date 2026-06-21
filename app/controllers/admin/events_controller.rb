@@ -31,7 +31,7 @@ class Admin::EventsController < ApplicationController
   # The admin log renders the richer Admin::EventListItemComponent rows; the
   # shared streaming defaults to the user-facing EventsListComponent.
   def events_log_stream_body
-    helpers.render(Admin::EventsLogComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
+    helpers.render(Admin::EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
   def previous_event(event)

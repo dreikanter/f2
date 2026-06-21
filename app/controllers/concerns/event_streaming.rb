@@ -36,7 +36,7 @@ module EventStreaming
   end
 
   # Both logs share the bordered-list DOM id; admin overrides only the stream
-  # body to render its richer Admin::EventsLogComponent rows.
+  # body to render its richer Admin::EventsListComponent rows.
   def events_log_dom_id
     EventsListComponent::DOM_ID
   end
