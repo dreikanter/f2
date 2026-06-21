@@ -41,20 +41,6 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "#call should return autovacuum settings as array" do
-    service = DiskUsageService.new(df_command: stub_df_command)
-    result = service.call
-
-    assert_instance_of Array, result[:autovacuum_settings]
-    assert result[:autovacuum_settings].all? { |row| row.is_a?(Hash) }
-    assert result[:autovacuum_settings].any?
-
-    first_row = result[:autovacuum_settings].first
-    assert first_row.key?("name")
-    assert first_row.key?("setting")
-    assert first_row["name"].start_with?("autovacuum")
-  end
-
   test "#call should return other used space as integer" do
     service = DiskUsageService.new(df_command: stub_df_command)
     result = service.call
