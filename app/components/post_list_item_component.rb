@@ -68,9 +68,9 @@ class PostListItemComponent < ListItemComponent
   end
 
   def status_element
-    if status_links_to_freefeed?
-      helpers.link_to(freefeed_url, target: "_blank", rel: "noopener",
-                      class: "transition hover:text-slate-600", data: { key: "post.status" }) { status_label_with_time }
+    if status_url
+      helpers.link_to(status_label_with_time, status_url,
+                      class: "transition hover:text-slate-600", data: { key: "post.status" })
     else
       helpers.tag.span(status_label_with_time, data: { key: "post.status" })
     end
@@ -148,12 +148,12 @@ class PostListItemComponent < ListItemComponent
     helpers.icon(status_display[:icon], css_class: "size-4 #{status_display[:color]}")
   end
 
-  # Group the label, parens and the time tag inside a single inline wrapper so
+  # Group the label, colon and the time tag inside a single inline wrapper so
   # the surrounding flex gap only spaces the icon from the text. Without the
-  # wrapper the parens become separate flex items and the duration drifts away
-  # from them, e.g. "Reposted ( 1d )" instead of "Reposted (1d)".
+  # wrapper the time becomes a separate flex item and drifts away from the
+  # label, e.g. "Reposted: 1d" splitting apart.
   def status_label_with_time
-    helpers.content_tag(:span, helpers.safe_join([status_display[:label], " (", helpers.short_time_ago_tag(status_time), ")"]))
+    helpers.content_tag(:span, helpers.safe_join([status_display[:label], ": ", helpers.short_time_ago_tag(status_time)]))
   end
 
   # The status badge reports when the post reached its current state. For a
@@ -204,12 +204,10 @@ class PostListItemComponent < ListItemComponent
     post.source_url.presence
   end
 
-  def freefeed_url
-    post.freefeed_url
-  end
-
-  def status_links_to_freefeed?
-    reposted? && freefeed_url.present?
+  # The status links to the post's feed page in Feeder, so it's easy to jump
+  # from a post back to the feed that reposted it.
+  def status_url
+    helpers.feed_path(post.feed) if post.feed
   end
 
   def delete_allowed?
