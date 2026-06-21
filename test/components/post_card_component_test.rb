@@ -154,10 +154,12 @@ class PostCardComponentTest < ViewComponent::TestCase
     assert_not_includes menu_items, "Delete…"
   end
 
-  test "#render should render the status footer" do
+  test "#render should render the status line as a borderless muted row" do
     result = render_inline PostCardComponent.new(post: post)
 
-    assert_not_empty result.css(".border-t.border-slate-200")
+    status = result.at_css('[data-key="post.status"]')
+    assert_not_nil status
+    assert_empty result.css(".border-t")
   end
 
   test "#render should offer the source as a menu item opening in a new tab" do

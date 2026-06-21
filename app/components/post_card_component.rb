@@ -134,11 +134,13 @@ class PostCardComponent < ViewComponent::Base
     post.status.to_s == "withdrawn"
   end
 
-  def card_classes
+  # Rows live inside a single bordered list, so they carry no border or shadow of
+  # their own; withdrawn posts get a muted background to read as inactive.
+  def row_classes
     helpers.class_names(
-      "w-full rounded-lg border border-slate-200 shadow-xs transition duration-75",
+      "px-5 py-3 transition duration-75",
       "bg-slate-50 hover:bg-slate-100" => withdrawn?,
-      "bg-white hover:bg-slate-50" => !withdrawn?
+      "hover:bg-slate-50" => !withdrawn?
     )
   end
 

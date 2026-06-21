@@ -6,8 +6,8 @@ class PostsListComponent < ViewComponent::Base
   end
 
   def call
-    content_tag(:div, class: "space-y-4") do
-      safe_join(@posts.map { |post| render(@card_component.new(post: post, show_feed: @show_feed)) })
+    render(ListComponent.new) do |list|
+      @posts.each { |post| list.with_item(@card_component.new(post: post, show_feed: @show_feed)) }
     end
   end
 end
