@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-22
+
+- Delete actions now consistently end with "…" to signal they'll ask you to confirm first.
+
 ## 2026-06-21
 
 - Access tokens and AI credentials now use the same compact list layout as feeds.
