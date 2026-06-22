@@ -166,6 +166,42 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     assert_includes result.text, "Latest post:"
   end
 
+  test "#render should show plain text status for disabled feeds" do
+    result = render_inline FeedListItemComponent.new(feed: feed)
+
+    status = result.at_css("[data-key='feed.#{feed.id}.status']")
+    assert_not_nil status
+    assert_equal "Disabled", status.text.strip
+  end
+
+  test "#render should show plain text status for enabled feeds" do
+    enabled_feed = create(:feed, :enabled, user: user)
+    result = render_inline FeedListItemComponent.new(feed: enabled_feed)
+
+    status = result.at_css("[data-key='feed.#{enabled_feed.id}.status']")
+    assert_not_nil status
+    assert_equal "Enabled", status.text.strip
+  end
+
+  test "#render should show plain text status for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+    result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+    status = result.at_css("[data-key='feed.#{draft_feed.id}.status']")
+    assert_not_nil status
+    assert_equal "Draft", status.text.strip
+  end
+
+  test "#render should not show activity times for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+    result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+    assert_empty result.css("[data-key='feed.#{draft_feed.id}.last_refreshed']")
+    assert_empty result.css("[data-key='feed.#{draft_feed.id}.most_recent_post']")
+    assert_not_includes result.text, "Latest updated:"
+    assert_not_includes result.text, "Latest post:"
+  end
+
   test "#render should link title to admin feed page in admin mode" do
     result = render_inline FeedListItemComponent.new(feed: feed, admin: true)
 
