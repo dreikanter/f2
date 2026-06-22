@@ -28,24 +28,15 @@ class Feeds::PurgesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "create schedules job and creates event" do
+  test "create schedules job and redirects" do
     sign_in_as(user)
     feed.update!(access_token: access_token)
 
-    assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
-      assert_difference("Event.count", 1) do
-        post feed_purge_path(feed)
-      end
+    assert_enqueued_with(job: WithdrawAllPostsJob, args: [feed.id, user.id]) do
+      post feed_purge_path(feed)
     end
 
     assert_redirected_to feed_path(feed)
     assert_equal "Feed purge started for testgroup", flash[:notice]
-
-    event = Event.last
-    assert_equal "group_purge_started", event.type
-    assert_equal user, event.user
-    assert_equal feed, event.subject
-    assert_equal "info", event.level
-    assert_equal "testgroup", event.metadata["target_group"]
   end
 end
