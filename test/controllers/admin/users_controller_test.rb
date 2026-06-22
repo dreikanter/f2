@@ -73,7 +73,18 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(user)
 
     assert_response :success
-    assert_select "[data-key='actions.confirm_email']", text: "Confirm Email"
+    assert_select "[data-key='actions.confirm_email']", text: "Confirm Email…"
+  end
+
+  test "should confirm email behind a confirmation dialog" do
+    login_as(admin_user)
+    user = create(:user, :inactive)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='actions.confirm_email'][data-modal-trigger-modal-id-value='confirm-email-modal-#{user.id}']"
+    assert_select "#confirm-email-modal-#{user.id} form[action='#{admin_user_email_confirmation_path(user)}']"
   end
 
   test "should hide confirm email button once the email is confirmed" do
@@ -84,6 +95,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='actions.confirm_email']", count: 0
+    assert_select "#confirm-email-modal-#{user.id}", count: 0
   end
 
   test "should redirect non-admin users from show" do
