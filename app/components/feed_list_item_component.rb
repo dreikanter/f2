@@ -59,12 +59,24 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def meta_segments
-    segments = [
-      helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" }),
-      helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
-    ]
+    segments = [status_segment]
+
+    # Drafts have never run, so their activity times and counts are meaningless.
+    unless draft?
+      segments << helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
+      segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
+    end
+
     segments << owner_segment if owner
     segments
+  end
+
+  def status_segment
+    helpers.tag.span(status_label, data: { key: "feed.#{feed.id}.status" })
+  end
+
+  def status_label
+    feed.state.capitalize
   end
 
   def owner_segment

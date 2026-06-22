@@ -4,7 +4,9 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-22
 
+- Feed list rows now show each feed's status, and hide activity times for drafts.
 - Settings now has quick links to Access Tokens, AI Credentials, and Invites, and each of those pages links back to Settings.
+- Settings page now shows clearer permission names, like "Developer Tools" instead of "Dev".
 - AI credential pages list available models in alphabetical order by provider and name.
 
 ## 2026-06-21
