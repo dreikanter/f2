@@ -45,75 +45,56 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     end
   end
 
-  test ".perform_now should reschedule itself when throttled" do
-    create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    subject = access_token.rate_limit_subject
-
-    freeze_time do
-      drain_freefeed(subject, :delete, remaining: 0)
-
-      assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
-        GroupPurgeJob.perform_now(feed.id)
-      end
-    end
-
-    assert_not_requested :delete, "#{access_token.host}/v4/posts/post1"
-  end
-
-  test ".perform_now should keep progress and reschedule the rest when throttled mid-batch" do
+  test ".perform_now should sleep and continue instead of rescheduling when throttled" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
-    subject = access_token.rate_limit_subject
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
-    freeze_time do
-      # One delete token: the first withdrawal spends it, the second throttles.
-      drain_freefeed(subject, :delete, remaining: 1)
+    # Simulate one denied acquire followed by an allowed one.
+    acquire_call = 0
+    acquire_stub = ->(*args, **kwargs) {
+      acquire_call += 1
+      acquire_call == 1 ? RateLimit::Result.new(allowed: false, retry_after: 5.0)
+                        : RateLimit::Result.new(allowed: true, retry_after: 0.0)
+    }
 
-      assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
-        GroupPurgeJob.perform_now(feed.id)
+    slept = []
+    job = GroupPurgeJob.new(feed.id)
+
+    RateLimit.stub(:acquire, acquire_stub) do
+      job.stub(:sleep, ->(n) { slept << n }) do
+        assert_no_enqueued_jobs(only: GroupPurgeJob) do
+          job.perform_now
+        end
       end
     end
 
-    assert_nil post1.reload.freefeed_post_id
-    assert_equal "post2", post2.reload.freefeed_post_id
+    assert_equal [5.0], slept, "should sleep for the retry_after period"
+    assert_nil post1.reload.freefeed_post_id, "post should be deleted after sleeping for capacity"
   end
 
-  test ".perform_now should reschedule without failing when FreeFeed throttles a DELETE" do
+  test ".perform_now should sleep and retry instead of rescheduling when FreeFeed throttles a DELETE" do
     post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
     stub_request(:delete, "#{access_token.host}/v4/posts/post1")
       .to_return(status: 429, headers: { "Retry-After" => "30" })
+      .then.to_return(status: 200)
 
+    slept = []
     reported = []
-    assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
-      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
-        GroupPurgeJob.perform_now(feed.id)
-      end
-    end
-
-    assert_empty reported, "a handled mid-batch throttle must not be reported as a fault"
-    assert_equal "post1", post1.reload.freefeed_post_id, "a throttled DELETE must leave the post untouched"
-  end
-
-  test ".perform_now should report and stop when throttle retries are exhausted" do
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    subject = access_token.rate_limit_subject
     job = GroupPurgeJob.new(feed.id)
-    job.executions = RateLimited::MAX_ATTEMPTS
 
-    reported = []
-    freeze_time do
-      drain_freefeed(subject, :delete, remaining: 0)
-
-      Rails.error.stub(:report, ->(error, **) { reported << error }) do
-        assert_no_enqueued_jobs(only: GroupPurgeJob) { job.perform_now }
+    # Advance time inside sleep so the penalty block expires before the retry acquire.
+    job.stub(:sleep, ->(n) { slept << n; travel(n.ceil.seconds + 1) }) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        assert_no_enqueued_jobs(only: GroupPurgeJob) do
+          job.perform_now
+        end
       end
     end
 
-    assert_equal 1, reported.size
-    assert_instance_of RateLimit::Throttled, reported.first
-    assert_equal "post1", post1.reload.freefeed_post_id, "nothing is deleted when out of capacity"
+    assert_empty reported, "throttling must not be reported as a fault"
+    assert_not_empty slept, "should sleep when FreeFeed throttles a DELETE"
+    assert_nil post1.reload.freefeed_post_id, "post should be deleted after sleeping and retrying"
   end
 
   test ".perform_now should continue on error and log failure" do
