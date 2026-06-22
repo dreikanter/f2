@@ -18,7 +18,7 @@ class Post < ApplicationRecord
     validation_errors
   ].freeze
 
-  belongs_to :feed
+  belongs_to :feed, counter_cache: :imported_posts_count
   belongs_to :feed_entry
 
   validates :uid, presence: true
@@ -42,6 +42,10 @@ class Post < ApplicationRecord
     failed: 4,
     withdrawn: 5
   }
+
+  after_create :increment_published_posts_count, if: :published?
+  before_destroy :decrement_published_posts_count, if: :published?
+  after_update :update_published_posts_count, if: :saved_change_to_status?
 
   def freefeed_url
     group_url = feed&.target_group_url
@@ -73,6 +77,23 @@ class Post < ApplicationRecord
       next unless comment.is_a?(String) && comment.length > MAX_COMMENT_LENGTH
 
       errors.add(:comments, "Comment #{index + 1} exceeds maximum length of #{MAX_COMMENT_LENGTH} characters")
+    end
+  end
+
+  def increment_published_posts_count
+    Feed.increment_counter(:published_posts_count, feed_id)
+  end
+
+  def decrement_published_posts_count
+    Feed.decrement_counter(:published_posts_count, feed_id)
+  end
+
+  def update_published_posts_count
+    was_published, now_published = saved_change_to_status
+    if now_published == "published"
+      Feed.increment_counter(:published_posts_count, feed_id)
+    elsif was_published == "published"
+      Feed.decrement_counter(:published_posts_count, feed_id)
     end
   end
 

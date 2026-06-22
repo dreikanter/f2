@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-22
 
+- Feed list rows now show the number of published posts per feed.
 - Feed list rows now show each feed's status, and hide activity times for drafts.
 - Settings page now shows clearer permission names, like "Developer Tools" instead of "Dev".
 

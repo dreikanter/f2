@@ -270,4 +270,70 @@ class PostTest < ActiveSupport::TestCase
 
     assert post.valid?
   end
+
+  test "#imported_posts_count should increment on create" do
+    assert_difference -> { feed.reload.imported_posts_count }, +1 do
+      create(:post, feed: feed)
+    end
+  end
+
+  test "#imported_posts_count should decrement on destroy" do
+    post = create(:post, feed: feed)
+
+    assert_difference -> { feed.reload.imported_posts_count }, -1 do
+      post.destroy
+    end
+  end
+
+  test "#published_posts_count should increment when created with published status" do
+    assert_difference -> { feed.reload.published_posts_count }, +1 do
+      create(:post, :published, feed: feed)
+    end
+  end
+
+  test "#published_posts_count should not change when created with non-published status" do
+    assert_no_difference -> { feed.reload.published_posts_count } do
+      create(:post, feed: feed)
+    end
+  end
+
+  test "#published_posts_count should increment when status transitions to published" do
+    post = create(:post, feed: feed, status: :enqueued)
+
+    assert_difference -> { feed.reload.published_posts_count }, +1 do
+      post.update!(status: :published, reposted_at: Time.current)
+    end
+  end
+
+  test "#published_posts_count should decrement when status transitions away from published" do
+    post = create(:post, :published, feed: feed)
+
+    assert_difference -> { feed.reload.published_posts_count }, -1 do
+      post.update!(status: :withdrawn)
+    end
+  end
+
+  test "#published_posts_count should not change when status transitions between non-published statuses" do
+    post = create(:post, feed: feed, status: :enqueued)
+
+    assert_no_difference -> { feed.reload.published_posts_count } do
+      post.update!(status: :failed)
+    end
+  end
+
+  test "#published_posts_count should decrement when a published post is destroyed" do
+    post = create(:post, :published, feed: feed)
+
+    assert_difference -> { feed.reload.published_posts_count }, -1 do
+      post.destroy
+    end
+  end
+
+  test "#published_posts_count should not change when a non-published post is destroyed" do
+    post = create(:post, feed: feed)
+
+    assert_no_difference -> { feed.reload.published_posts_count } do
+      post.destroy
+    end
+  end
 end

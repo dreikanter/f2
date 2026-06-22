@@ -224,6 +224,22 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     assert_empty result.css("[data-key='feed.#{feed.id}.owner']")
   end
 
+  test "#render should show published posts count for non-draft feeds" do
+    feed_with_posts = create(:feed, :disabled, user: user, published_posts_count: 3)
+    result = render_inline FeedListItemComponent.new(feed: feed_with_posts)
+
+    posts_count = result.at_css("[data-key='feed.#{feed_with_posts.id}.published_posts_count']")
+    assert_not_nil posts_count
+    assert_includes posts_count.text, "Posts: 3"
+  end
+
+  test "#render should not show published posts count for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+    result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+    assert_empty result.css("[data-key='feed.#{draft_feed.id}.published_posts_count']")
+  end
+
   test "#render should not show management actions in admin mode" do
     enabled_feed = create(:feed, :enabled, user: user)
 
