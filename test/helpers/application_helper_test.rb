@@ -84,7 +84,7 @@ class ApplicationHelperTest < ActionView::TestCase
     long_content = "a" * 200
     result = post_content_preview(long_content)
     assert result.length < 200
-    assert result.end_with?("...")
+    assert result.end_with?("…")
   end
 
   test "#post_content_preview returns content as-is when short" do

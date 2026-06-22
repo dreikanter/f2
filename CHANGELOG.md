@@ -4,9 +4,13 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-22
 
+- Delete actions now consistently end with "…" to signal they'll ask you to confirm first.
+- Removed a redundant "back" button from the access token page — the breadcrumb already links back.
 - Feed list rows now show each feed's status, and hide activity times for drafts.
+- Settings now has quick links to Access Tokens, AI Credentials, and Invites, and each of those pages links back to Settings.
 - Settings page now shows clearer permission names, like "Developer Tools" instead of "Dev".
 - Feed pages now always show the Stats section, dimming zero and empty values until there's data.
+- AI credential pages list available models in alphabetical order by provider and name.
 
 ## 2026-06-21
 

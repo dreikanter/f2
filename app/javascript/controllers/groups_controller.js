@@ -77,7 +77,7 @@ export default class extends Controller {
     if (!this.hasSelectTarget) return
 
     this.selectTarget.disabled = true
-    this.selectTarget.innerHTML = '<option value="">Choose target group...</option>'
+    this.selectTarget.innerHTML = '<option value="">Choose target group…</option>'
     if (this.hasHelpTextTarget) {
       this.helpTextTarget.textContent = this.defaultTextValue
       this.helpTextTarget.classList.remove('text-muted')
@@ -88,7 +88,7 @@ export default class extends Controller {
     if (!this.hasSelectTarget) return
 
     this.selectTarget.disabled = true
-    this.selectTarget.innerHTML = '<option value="">Loading...</option>'
+    this.selectTarget.innerHTML = '<option value="">Loading…</option>'
     if (this.hasHelpTextTarget) {
       this.helpTextTarget.textContent = this.loadingTextValue
       this.helpTextTarget.classList.add('text-muted')
