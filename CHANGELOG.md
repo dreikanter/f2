@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-22
+
+- AI credential pages list available models in alphabetical order by provider and name.
+
 ## 2026-06-21
 
 - Access tokens and AI credentials now use the same compact list layout as feeds.
