@@ -100,11 +100,11 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def imported_posts_count
-    @imported_posts_count ||= @feed.posts.count
+    @feed.imported_posts_count
   end
 
   def published_posts_count
-    @published_posts_count ||= @feed.posts.published.count
+    @feed.published_posts_count
   end
 
   def posts_last_week_count

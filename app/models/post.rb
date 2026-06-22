@@ -43,6 +43,12 @@ class Post < ApplicationRecord
     withdrawn: 5
   }
 
+  after_create :recount_imported_posts
+  after_create :recount_published_posts, if: :published?
+  after_destroy :recount_imported_posts
+  after_destroy :recount_published_posts, if: :published?
+  after_update :recount_published_posts, if: :saved_change_to_status?
+
   def freefeed_url
     group_url = feed&.target_group_url
     return unless group_url && freefeed_post_id.present?
@@ -74,6 +80,16 @@ class Post < ApplicationRecord
 
       errors.add(:comments, "Comment #{index + 1} exceeds maximum length of #{MAX_COMMENT_LENGTH} characters")
     end
+  end
+
+  def recount_imported_posts
+    count = Post.where(feed_id: feed_id).count
+    Feed.where(id: feed_id).update_all(imported_posts_count: count)
+  end
+
+  def recount_published_posts
+    count = Post.where(feed_id: feed_id).published.count
+    Feed.where(id: feed_id).update_all(published_posts_count: count)
   end
 
   def validate_enqueued_status

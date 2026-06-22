@@ -65,6 +65,7 @@ class FeedListItemComponent < ListItemComponent
     unless draft?
       segments << helpers.tag.span(helpers.safe_join(["Latest updated: ", last_refreshed_tag]), data: { key: "feed.#{feed.id}.last_refreshed" })
       segments << helpers.tag.span(helpers.safe_join(["Latest post: ", most_recent_post_tag]), data: { key: "feed.#{feed.id}.most_recent_post" })
+      segments << helpers.tag.span(helpers.safe_join(["Posts: ", published_posts_count_tag]), data: { key: "feed.#{feed.id}.published_posts_count" })
     end
 
     segments << owner_segment if owner
@@ -193,5 +194,9 @@ class FeedListItemComponent < ListItemComponent
     return "None" unless feed.most_recent_post_date
 
     helpers.short_time_ago_tag(feed.most_recent_post_date)
+  end
+
+  def published_posts_count_tag
+    helpers.number_with_delimiter(feed.published_posts_count)
   end
 end

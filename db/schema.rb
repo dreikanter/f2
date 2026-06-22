@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_20_230000) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_22_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -173,6 +173,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_20_230000) do
     t.bigint "ai_credential_id"
     t.integer "consecutive_failures", default: 0, null: false
     t.boolean "images_only", default: false, null: false
+    t.integer "imported_posts_count", default: 0, null: false
+    t.integer "published_posts_count", default: 0, null: false
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
@@ -243,6 +245,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_20_230000) do
     t.datetime "reposted_at"
     t.index ["feed_entry_id"], name: "index_posts_on_feed_entry_id"
     t.index ["feed_id", "reposted_at"], name: "index_posts_on_feed_id_and_reposted_at"
+    t.index ["feed_id", "status"], name: "index_posts_on_feed_id_and_status"
     t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_posts_on_feed_id"
     t.index ["reposted_at"], name: "index_posts_on_reposted_at", order: "DESC NULLS LAST"

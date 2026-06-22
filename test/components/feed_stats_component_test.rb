@@ -10,10 +10,13 @@ class FeedStatsComponentTest < ViewComponent::TestCase
   end
 
   def feed_with_posts
-    @feed_with_posts ||= create(:feed).tap do |f|
-      create(:feed_entry, feed: f, created_at: 1.hour.ago)
-      create(:post, :published, feed: f, published_at: 2.hours.ago, reposted_at: 1.hour.ago)
-      create(:post, feed: f, published_at: 3.hours.ago)
+    @feed_with_posts ||= begin
+      f = create(:feed).tap do |feed|
+        create(:feed_entry, feed: feed, created_at: 1.hour.ago)
+        create(:post, :published, feed: feed, published_at: 2.hours.ago, reposted_at: 1.hour.ago)
+        create(:post, feed: feed, published_at: 3.hours.ago)
+      end
+      f.reload
     end
   end
 
