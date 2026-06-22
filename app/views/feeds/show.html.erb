@@ -55,15 +55,16 @@
 <% if @feed.target_group.present? %>
   <%= render ConfirmationModalComponent.new(
     title: "Confirm Purge",
-    action: "Purge all posts",
+    action: "Purge feed",
     url: feed_purge_path(@feed),
     method: :post,
     modal_id: "purge-modal-#{@feed.id}"
   ) do %>
     <%= render AlertComponent.new(variant: :warning) do %>
-      <p>Every published post in <%= @feed.target_group %> will be withdrawn on FreeFeed.</p>
-      <p>They'll remain visible in Feeder import history, and will not be re-imported during the next feed refresh.</p>
-      <p>This operation can't be undone.</p>
+      <p>This removes only the posts this feed published to <strong><%= @feed.target_group %></strong> on FreeFeed.</p>
+      <p>Other posts in the group, including anything added by other people, aren't affected.</p>
+      <p>Feeder keeps its own record of the removed posts, so they'll still show up here and won't be posted again the next time this feed refreshes.</p>
+      <p>This can't be undone.</p>
     <% end %>
   <% end %>
 <% end %>
