@@ -27,31 +27,36 @@ class FeedStatsComponent < ViewComponent::Base
         key: "imported_posts",
         label: "Imported posts",
         label_short: "Imported",
-        value: helpers.number_with_delimiter(imported_posts_count)
+        value: helpers.number_with_delimiter(imported_posts_count),
+        muted: imported_posts_count.zero?
       },
       {
         key: "published_posts",
         label: "Published posts",
         label_short: "Published",
-        value: helpers.number_with_delimiter(published_posts_count)
+        value: helpers.number_with_delimiter(published_posts_count),
+        muted: published_posts_count.zero?
       },
       {
         key: "posts_last_week",
         label: "Posts published last week",
         label_short: "Last week",
-        value: helpers.number_with_delimiter(posts_last_week_count)
+        value: helpers.number_with_delimiter(posts_last_week_count),
+        muted: posts_last_week_count.zero?
       },
       {
         key: "last_refresh",
         label: "Last refresh",
         label_short: "Refreshed",
-        value: last_refresh_value
+        value: last_refresh_value,
+        muted: last_refreshed_at.nil?
       },
       {
         key: "most_recent_repost",
         label: "Most recent repost",
         label_short: "Recent",
-        value: most_recent_repost_value
+        value: most_recent_repost_value,
+        muted: most_recent_repost_at.nil?
       }
     ]
   end
@@ -60,7 +65,8 @@ class FeedStatsComponent < ViewComponent::Base
     ListComponent::StatItemComponent.new(
       label: item[:label],
       value: item[:value],
-      key: "stats.#{item[:key]}"
+      key: "stats.#{item[:key]}",
+      muted: item[:muted]
     )
   end
 
@@ -68,24 +74,29 @@ class FeedStatsComponent < ViewComponent::Base
     StatsBarComponent::StatItemComponent.new(
       label: item[:label_short],
       value: item[:value],
-      key: "stats.#{item[:key]}"
+      key: "stats.#{item[:key]}",
+      muted: item[:muted]
     )
   end
 
   def last_refresh_value
-    if @feed.last_refreshed_at
-      helpers.short_time_ago_tag(@feed.last_refreshed_at)
-    else
-      content_tag(:span, "Never", class: "text-slate-500")
-    end
+    last_refreshed_at ? helpers.short_time_ago_tag(last_refreshed_at) : "Never"
   end
 
   def most_recent_repost_value
-    if @feed.most_recent_repost_at
-      helpers.short_time_ago_tag(@feed.most_recent_repost_at)
-    else
-      content_tag(:span, "–", class: "text-slate-500")
-    end
+    most_recent_repost_at ? helpers.short_time_ago_tag(most_recent_repost_at) : "–"
+  end
+
+  def last_refreshed_at
+    return @last_refreshed_at if defined?(@last_refreshed_at)
+
+    @last_refreshed_at = @feed.last_refreshed_at
+  end
+
+  def most_recent_repost_at
+    return @most_recent_repost_at if defined?(@most_recent_repost_at)
+
+    @most_recent_repost_at = @feed.most_recent_repost_at
   end
 
   def imported_posts_count

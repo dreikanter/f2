@@ -1,12 +1,13 @@
 class ListComponent::StatItemComponent < ViewComponent::Base
   DEFAULT_ITEM_CLASS = "flex items-baseline justify-between gap-4 p-4"
   LABEL_CLASSES = "text-base text-slate-900 whitespace-nowrap"
-  VALUE_CLASSES = "text-base text-slate-900"
+  VALUE_CLASSES = "text-base"
 
-  def initialize(label:, value:, key: nil)
+  def initialize(label:, value:, key: nil, muted: false)
     @label = label
     @value = value
     @key = key
+    @muted = muted
   end
 
   def call
@@ -22,7 +23,7 @@ class ListComponent::StatItemComponent < ViewComponent::Base
   end
 
   def value_element
-    content_tag(:dd, @value, class: VALUE_CLASSES, data: value_data)
+    content_tag(:dd, @value, class: class_names(VALUE_CLASSES, @muted ? "text-slate-500" : "text-slate-900"), data: value_data)
   end
 
   def label_data
