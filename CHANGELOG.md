@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-22
 
+- Clarified the feed Purge confirmation: it only removes posts this feed published, not the whole group.
 - Feed list rows now show the number of published posts per feed.
 - Delete actions now consistently end with "…" to signal they'll ask you to confirm first.
 - Removed a redundant "back" button from the access token page — the breadcrumb already links back.
