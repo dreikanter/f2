@@ -23,15 +23,19 @@ class WithdrawAllPostsJob < ApplicationJob
 
         begin
           client.delete_post(post.freefeed_post_id)
-          affected_dates << post.reposted_at.to_date if post.reposted_at
-          post.update!(freefeed_post_id: nil, status: :withdrawn)
-          break
         rescue RateLimit::Throttled => e
           sleep(e.retry_after)
+          next
+        rescue FreefeedClient::NotFoundError
+          # already deleted from FreeFeed — fall through and sync the record
         rescue FreefeedClient::Error => e
           Rails.logger.error("Failed to withdraw post #{post.id} from FreeFeed: #{e.message}")
           break
         end
+
+        affected_dates << post.reposted_at.to_date if post.reposted_at
+        post.update!(freefeed_post_id: nil, status: :withdrawn)
+        break
       end
     end
 

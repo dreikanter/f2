@@ -110,6 +110,16 @@ class WithdrawAllPostsJobTest < ActiveJob::TestCase
     assert_nil post1.reload.freefeed_post_id, "post should be deleted after sleeping and retrying"
   end
 
+  test ".perform_now should sync the record when the FreeFeed post is already gone" do
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 404)
+
+    WithdrawAllPostsJob.perform_now(feed.id)
+
+    assert_nil post1.reload.freefeed_post_id
+    assert_predicate post1.reload, :withdrawn?
+  end
+
   test ".perform_now should continue on error and log failure" do
     post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
     post2 = create(:post, :published, feed: feed, freefeed_post_id: "post2")
