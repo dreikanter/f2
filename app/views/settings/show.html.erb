@@ -31,7 +31,7 @@
       <% if @user.permissions.any? %>
         <% list.with_item(ListComponent::StatItemComponent.new(
           label: "Permissions",
-          value: @user.permissions.map { |permission| permission.name.humanize }.join(", "),
+          value: @user.permissions.map(&:display_name).join(", "),
           key: "settings.permissions"
         )) %>
       <% end %>
