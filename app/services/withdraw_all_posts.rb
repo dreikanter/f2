@@ -6,16 +6,42 @@ class WithdrawAllPosts
   end
 
   def call
+    event = create_event
+    started_at = Time.current
     affected_dates = Set.new
+    deleted_count = 0
 
     @feed.posts.published.find_each do |post|
-      withdraw(post, affected_dates)
+      deleted_count += 1 if withdraw(post, affected_dates)
     end
 
     affected_dates.each { |date| FeedMetric.recompute_published(feed: @feed, date: date) }
+    finalize_event(event, started_at: started_at, deleted_count: deleted_count, affected_dates: affected_dates)
   end
 
   private
+
+  def create_event
+    Event.create!(
+      type: "group_purge_started",
+      user: @feed.user,
+      subject: @feed,
+      level: :info,
+      metadata: { target_group: @feed.target_group }
+    )
+  end
+
+  def finalize_event(event, started_at:, deleted_count:, affected_dates:)
+    stats = {
+      "deleted_count" => deleted_count,
+      "duration_seconds" => (Time.current - started_at).round(1)
+    }
+    if affected_dates.any?
+      stats["dates_from"] = affected_dates.min.iso8601
+      stats["dates_to"] = affected_dates.max.iso8601
+    end
+    event.update!(metadata: event.metadata.merge(stats))
+  end
 
   def withdraw(post, affected_dates)
     loop do
@@ -25,9 +51,9 @@ class WithdrawAllPosts
       when :ok, :not_found
         affected_dates << post.reposted_at.to_date if post.reposted_at
         post.update!(freefeed_post_id: nil, status: :withdrawn)
-        break
+        return true
       when :error
-        break
+        return false
       end
       # :throttled — loop back and re-acquire capacity before retrying
     end

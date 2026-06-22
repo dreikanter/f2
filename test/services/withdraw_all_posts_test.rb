@@ -131,6 +131,37 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
     assert_predicate post2.reload, :withdrawn?
   end
 
+  test "#call should create a group_purge_started event for the feed" do
+    assert_difference("Event.count", 1) do
+      service.call
+    end
+
+    event = Event.last
+    assert_equal "group_purge_started", event.type
+    assert_equal user, event.user
+    assert_equal feed, event.subject
+    assert_equal "info", event.level
+    assert_equal "testgroup", event.metadata["target_group"]
+  end
+
+  test "#call should update the event with completion stats" do
+    date1 = Date.new(2024, 1, 10)
+    date2 = Date.new(2024, 1, 20)
+    create(:post, :published, feed: feed, freefeed_post_id: "post1", reposted_at: date1.to_time)
+    create(:post, :published, feed: feed, freefeed_post_id: "post2", reposted_at: date2.to_time)
+
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
+    stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
+
+    service.call
+
+    event = Event.last
+    assert_equal 2, event.metadata["deleted_count"]
+    assert_not_nil event.metadata["duration_seconds"]
+    assert_equal "2024-01-10", event.metadata["dates_from"]
+    assert_equal "2024-01-20", event.metadata["dates_to"]
+  end
+
   test "#call should only process posts belonging to the given feed" do
     other_feed = create(:feed, user: user, access_token: access_token, target_group: "othergroup")
     post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
