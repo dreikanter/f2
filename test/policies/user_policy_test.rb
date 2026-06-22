@@ -124,6 +124,16 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_not policy.suspend?
   end
 
+  test "#confirm_email? should allow admin users" do
+    policy = policy_for_user(admin_user, other_user)
+    assert policy.confirm_email?
+  end
+
+  test "#confirm_email? should deny regular users" do
+    policy = policy_for_user(user, other_user)
+    assert_not policy.confirm_email?
+  end
+
   test "self_or_admin? returns true for self" do
     policy = policy_for_user(user, user)
     assert policy.send(:self_or_admin?)

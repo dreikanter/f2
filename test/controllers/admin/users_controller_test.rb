@@ -66,6 +66,26 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Suspend user…", count: 0
   end
 
+  test "should show confirm email button for a user with a pending email" do
+    login_as(admin_user)
+    user = create(:user, :inactive)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='actions.confirm_email']", text: "Confirm Email"
+  end
+
+  test "should hide confirm email button once the email is confirmed" do
+    login_as(admin_user)
+    user = create(:user, state: :active)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='actions.confirm_email']", count: 0
+  end
+
   test "should redirect non-admin users from show" do
     login_as(regular_user)
     user = create(:user)
