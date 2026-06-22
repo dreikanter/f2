@@ -22,4 +22,12 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_url
     assert_redirected_to new_session_path
   end
+
+  test "should show permission display name" do
+    @user = create(:user, :dev)
+    sign_in_user
+    get settings_url
+    assert_response :success
+    assert_select "[data-key='settings.permissions.value']", text: "Developer Tools"
+  end
 end
