@@ -13,10 +13,10 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     @feed ||= create(:feed, user: user, access_token: access_token, target_group: "testgroup")
   end
 
-  test ".perform_now should withdraw all posts with freefeed_post_id from feed" do
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
-    post3 = create(:post, feed: feed, freefeed_post_id: nil, status: :withdrawn)
+  test ".perform_now should delete FreeFeed posts and mark them withdrawn" do
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    post2 = create(:post, :published, feed: feed, freefeed_post_id: "post2")
+    post3 = create(:post, feed: feed, freefeed_post_id: nil)
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
@@ -24,8 +24,21 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     GroupPurgeJob.perform_now(feed.id)
 
     assert_nil post1.reload.freefeed_post_id
+    assert_predicate post1.reload, :withdrawn?
     assert_nil post2.reload.freefeed_post_id
-    assert_nil post3.reload.freefeed_post_id
+    assert_predicate post2.reload, :withdrawn?
+    assert_not_predicate post3.reload, :withdrawn?, "posts without a FreeFeed ID are not touched"
+  end
+
+  test ".perform_now should recompute published metrics for affected dates" do
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    metric = create(:feed_metric, :with_published_posts, feed: feed, date: post1.reposted_at.to_date)
+
+    stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
+
+    GroupPurgeJob.perform_now(feed.id)
+
+    assert_equal 0, metric.reload.published_posts_count
   end
 
   test ".perform_now should reserve one delete per post" do
@@ -98,8 +111,8 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should continue on error and log failure" do
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    post2 = create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    post2 = create(:post, :published, feed: feed, freefeed_post_id: "post2")
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 500)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
@@ -107,7 +120,9 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     GroupPurgeJob.perform_now(feed.id)
 
     assert_equal "post1", post1.reload.freefeed_post_id
+    assert_predicate post1.reload, :published?, "status unchanged when DELETE fails"
     assert_nil post2.reload.freefeed_post_id
+    assert_predicate post2.reload, :withdrawn?
   end
 
   test ".perform_now should exit gracefully if feed not found" do

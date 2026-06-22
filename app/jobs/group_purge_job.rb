@@ -11,6 +11,8 @@ class GroupPurgeJob < ApplicationJob
     client = access_token.build_client
     posts = feed.posts.where.not(freefeed_post_id: [nil, ""])
 
+    affected_dates = Set.new
+
     posts.find_each do |post|
       loop do
         result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { delete: 1 })
@@ -21,7 +23,8 @@ class GroupPurgeJob < ApplicationJob
 
         begin
           client.delete_post(post.freefeed_post_id)
-          post.update!(freefeed_post_id: nil)
+          affected_dates << post.reposted_at.to_date if post.reposted_at
+          post.update!(freefeed_post_id: nil, status: :withdrawn)
           break
         rescue RateLimit::Throttled => e
           sleep(e.retry_after)
@@ -31,5 +34,7 @@ class GroupPurgeJob < ApplicationJob
         end
       end
     end
+
+    affected_dates.each { |date| FeedMetric.recompute_published(feed: feed, date: date) }
   end
 end
