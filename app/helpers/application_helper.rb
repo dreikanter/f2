@@ -12,7 +12,7 @@ module ApplicationHelper
   def post_content_preview(content, length = 120)
     return "" unless content.present?
 
-    truncate(content.strip, length: length)
+    truncate(content.strip, length: length, omission: "…")
   end
 
   # Decorative separator between card footer items. Hidden from assistive tech

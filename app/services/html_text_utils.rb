@@ -18,7 +18,7 @@ module HtmlTextUtils
   def truncate_text(text, max_length: Post::MAX_CONTENT_LENGTH)
     return text if text.length <= max_length
 
-    text.truncate(max_length, separator: " ")
+    text.truncate(max_length, separator: " ", omission: "…")
   end
 
   def post_content_with_url(content, url, max_content_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)

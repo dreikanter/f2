@@ -41,7 +41,7 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     long_text = "a" * 100
     result = subject.truncate_text(long_text, max_length: 50)
     assert result.length <= 50
-    assert result.ends_with?("...")
+    assert result.ends_with?("…")
   end
 
   test "#truncate_text should not truncate short text" do

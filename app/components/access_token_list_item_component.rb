@@ -71,7 +71,7 @@ class AccessTokenListItemComponent < ListItemComponent
   def menu_items
     [
       { label: "Edit", href: edit_url },
-      { label: "Delete", href: "#",
+      { label: "Delete…", href: "#",
         data: { controller: "modal-trigger", modal_trigger_modal_id_value: delete_modal_id, action: "click->modal-trigger#open" } }
     ]
   end
