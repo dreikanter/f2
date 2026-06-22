@@ -20,6 +20,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Freefeed Access Tokens"
+    assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
   test "#index should display empty state" do

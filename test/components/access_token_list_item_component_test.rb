@@ -45,7 +45,7 @@ class AccessTokenListItemComponentTest < ViewComponent::TestCase
     delete_link = result.css("a[data-controller='modal-trigger']").first
 
     assert_not_nil delete_link
-    assert_equal "Delete", delete_link.text.strip
+    assert_equal "Delete…", delete_link.text.strip
     assert_equal "delete-token-modal-#{access_token.id}", delete_link["data-modal-trigger-modal-id-value"]
   end
 

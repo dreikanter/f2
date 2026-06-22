@@ -39,6 +39,20 @@ class AiCredentialModelsComponentTest < ViewComponent::TestCase
     assert_includes result.css('[data-key="ai_credential.model.name"]').first.text, "some-model"
   end
 
+  test "#render should order models by provider then model name" do
+    unordered = [
+      { "id" => "z", "name" => "OpenAI: GPT-4" },
+      { "id" => "a", "name" => "Google: Gemini Pro" },
+      { "id" => "b", "name" => "Google: Gemini Flash" }
+    ]
+    credential = create(:ai_credential, :active, available_models: unordered)
+
+    result = render_inline(AiCredentialModelsComponent.new(ai_credential: credential))
+
+    names = result.css('[data-key="ai_credential.model.name"]').map { |node| node.text.strip }
+    assert_equal ["Google: Gemini Flash", "Google: Gemini Pro", "OpenAI: GPT-4"], names
+  end
+
   test "#render should render nothing when there are no models" do
     credential = create(:ai_credential, :active, available_models: [])
 

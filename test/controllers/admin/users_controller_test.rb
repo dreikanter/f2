@@ -52,7 +52,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(other_user)
 
     assert_response :success
-    assert_select "a", text: "Suspend user..."
+    assert_select "a", text: "Suspend user…"
     assert_select "[data-key='actions.suspend_self_disabled']", count: 0
   end
 
@@ -62,8 +62,8 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(admin_user)
 
     assert_response :success
-    assert_select "[data-key='actions.suspend_self_disabled']", text: "Suspend user..."
-    assert_select "a", text: "Suspend user...", count: 0
+    assert_select "[data-key='actions.suspend_self_disabled']", text: "Suspend user…"
+    assert_select "a", text: "Suspend user…", count: 0
   end
 
   test "should redirect non-admin users from show" do

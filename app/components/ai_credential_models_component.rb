@@ -8,7 +8,7 @@ class AiCredentialModelsComponent < ViewComponent::Base
   end
 
   def models
-    @ai_credential.available_models
+    @ai_credential.available_models.sort_by { |model| model_name(model).downcase }
   end
 
   def model_name(model)

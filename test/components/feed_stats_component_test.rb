@@ -78,4 +78,26 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     most_recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
     assert_equal "–", most_recent_value
   end
+
+  test "#render should mute zero counts and fallback values" do
+    feed_without_data = create(:feed)
+
+    result = render_inline(FeedStatsComponent.new(feed: feed_without_data))
+
+    %w[imported_posts published_posts posts_last_week last_refresh most_recent_repost].each do |key|
+      result.css(%([data-key="stats.#{key}.value"])).each do |value|
+        assert_includes value["class"], "text-slate-500", "expected #{key} value to be muted"
+      end
+    end
+  end
+
+  test "#render should not mute non-zero values" do
+    result = render_inline(FeedStatsComponent.new(feed: feed_with_posts))
+
+    %w[imported_posts published_posts posts_last_week most_recent_repost].each do |key|
+      result.css(%([data-key="stats.#{key}.value"])).each do |value|
+        assert_not_includes value["class"], "text-slate-500", "expected #{key} value not to be muted"
+      end
+    end
+  end
 end
