@@ -12,12 +12,13 @@ class WithdrawAllPosts
     affected_dates = Set.new
     deleted_count = 0
 
-    @feed.posts.published.find_each do |post|
+    @feed.posts.published.order(reposted_at: :asc).each do |post|
       deleted_count += 1 if withdraw(post, affected_dates)
     end
 
     affected_dates.each { |date| FeedMetric.recompute_published(feed: @feed, date: date) }
-    finalize_event(event, started_at: started_at, deleted_count: deleted_count, affected_dates: affected_dates)
+    finalize_event(event, started_at: started_at, deleted_count: deleted_count,
+                   dates_from: affected_dates.min, dates_to: affected_dates.max)
   end
 
   private
@@ -32,14 +33,14 @@ class WithdrawAllPosts
     )
   end
 
-  def finalize_event(event, started_at:, deleted_count:, affected_dates:)
+  def finalize_event(event, started_at:, deleted_count:, dates_from:, dates_to:)
     stats = {
       "deleted_count" => deleted_count,
       "duration_seconds" => (Time.current - started_at).round(1)
     }
-    if affected_dates.any?
-      stats["dates_from"] = affected_dates.min.iso8601
-      stats["dates_to"] = affected_dates.max.iso8601
+    if dates_from
+      stats["dates_from"] = dates_from.iso8601
+      stats["dates_to"] = dates_to.iso8601
     end
     event.update!(metadata: event.metadata.merge(stats))
   end
