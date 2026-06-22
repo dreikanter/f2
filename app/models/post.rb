@@ -18,7 +18,7 @@ class Post < ApplicationRecord
     validation_errors
   ].freeze
 
-  belongs_to :feed, counter_cache: :imported_posts_count
+  belongs_to :feed
   belongs_to :feed_entry
 
   validates :uid, presence: true
@@ -43,9 +43,11 @@ class Post < ApplicationRecord
     withdrawn: 5
   }
 
-  after_create :increment_published_posts_count, if: :published?
-  before_destroy :decrement_published_posts_count, if: :published?
-  after_update :update_published_posts_count, if: :saved_change_to_status?
+  after_create :recount_imported_posts
+  after_create :recount_published_posts, if: :published?
+  after_destroy :recount_imported_posts
+  after_destroy :recount_published_posts, if: :published?
+  after_update :recount_published_posts, if: :saved_change_to_status?
 
   def freefeed_url
     group_url = feed&.target_group_url
@@ -80,21 +82,14 @@ class Post < ApplicationRecord
     end
   end
 
-  def increment_published_posts_count
-    Feed.increment_counter(:published_posts_count, feed_id)
+  def recount_imported_posts
+    count = Post.where(feed_id: feed_id).count
+    Feed.where(id: feed_id).update_all(imported_posts_count: count)
   end
 
-  def decrement_published_posts_count
-    Feed.decrement_counter(:published_posts_count, feed_id)
-  end
-
-  def update_published_posts_count
-    was_published, now_published = saved_change_to_status
-    if now_published == "published"
-      Feed.increment_counter(:published_posts_count, feed_id)
-    elsif was_published == "published"
-      Feed.decrement_counter(:published_posts_count, feed_id)
-    end
+  def recount_published_posts
+    count = Post.where(feed_id: feed_id).published.count
+    Feed.where(id: feed_id).update_all(published_posts_count: count)
   end
 
   def validate_enqueued_status

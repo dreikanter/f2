@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_22_000100) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_22_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -245,6 +245,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_22_000100) do
     t.datetime "reposted_at"
     t.index ["feed_entry_id"], name: "index_posts_on_feed_entry_id"
     t.index ["feed_id", "reposted_at"], name: "index_posts_on_feed_id_and_reposted_at"
+    t.index ["feed_id", "status"], name: "index_posts_on_feed_id_and_status"
     t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true
     t.index ["feed_id"], name: "index_posts_on_feed_id"
     t.index ["reposted_at"], name: "index_posts_on_reposted_at", order: "DESC NULLS LAST"
