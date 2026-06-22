@@ -21,6 +21,7 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
     post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
     post2 = create(:post, :published, feed: feed, freefeed_post_id: "post2")
     post3 = create(:post, feed: feed, freefeed_post_id: nil)
+    post4 = create(:post, :published, feed: feed, freefeed_post_id: nil)
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
@@ -31,7 +32,8 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
     assert_predicate post1.reload, :withdrawn?
     assert_nil post2.reload.freefeed_post_id
     assert_predicate post2.reload, :withdrawn?
-    assert_not_predicate post3.reload, :withdrawn?, "posts without a FreeFeed ID are not touched"
+    assert_not_predicate post3.reload, :withdrawn?, "non-published posts without a FreeFeed ID are not touched"
+    assert_not_predicate post4.reload, :withdrawn?, "published posts without a FreeFeed ID are not touched"
   end
 
   test "#call should recompute published metrics for affected dates" do

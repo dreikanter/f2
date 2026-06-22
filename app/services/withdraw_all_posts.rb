@@ -9,8 +9,10 @@ class WithdrawAllPosts
     started_at = Time.current
     affected_dates = Set.new
 
-    deleted_count = published_posts.count do |post|
-      withdraw(post, affected_dates:)
+    deleted_count = 0
+
+    published_posts.each do |post|
+      deleted_count += 1 if withdraw(post, affected_dates:)
     end
 
     recompute_metrics(affected_dates)
@@ -27,7 +29,7 @@ class WithdrawAllPosts
   attr_reader :feed, :user
 
   def published_posts
-    feed.posts.published.order(reposted_at: :asc)
+    feed.posts.published.where.not(freefeed_post_id: [nil, ""]).order(reposted_at: :asc)
   end
 
   def client
