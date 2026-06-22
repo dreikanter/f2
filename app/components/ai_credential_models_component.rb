@@ -7,9 +7,6 @@ class AiCredentialModelsComponent < ViewComponent::Base
     models.present?
   end
 
-  # Provider returns names like "Google: Nano Banana 2 (Gemini 3.1 Flash
-  # Image)", so sorting alphabetically on the displayed title groups by
-  # provider first and then by model name.
   def models
     @ai_credential.available_models.sort_by { |model| model_name(model).downcase }
   end
