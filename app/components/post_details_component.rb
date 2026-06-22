@@ -18,7 +18,7 @@ class PostDetailsComponent < ViewComponent::Base
   private
 
   def add_feed_item(component)
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Feed",
       value: helpers.link_to(@post.feed.display_name, @post.feed, class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
       key: "post.feed"
@@ -27,7 +27,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_published_item(component)
     value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Published",
       value: value,
       key: "post.published"
@@ -35,7 +35,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_reposted_item(component)
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Reposted",
       value: helpers.datetime_with_duration_tag(@post.reposted_at),
       key: "post.reposted"
@@ -49,7 +49,7 @@ class PostDetailsComponent < ViewComponent::Base
       content_tag(:span, "None", class: "text-slate-500")
     end
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Source URL",
       value: value,
       key: "post.source_url"
@@ -65,7 +65,7 @@ class PostDetailsComponent < ViewComponent::Base
       content_tag(:div, @post.validation_errors, class: "text-red-600")
     end
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Validation Errors",
       value: errors_html,
       key: "post.validation_errors"
@@ -73,7 +73,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_uid_item(component)
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "UID",
       value: content_tag(:code, @post.uid, class: "text-sm"),
       key: "post.uid"
@@ -93,7 +93,7 @@ class PostDetailsComponent < ViewComponent::Base
       content_tag(:code, @post.freefeed_post_id, class: "text-sm")
     end
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "FreeFeed Post ID",
       value: value,
       key: "post.freefeed_post_id"

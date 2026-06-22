@@ -62,7 +62,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def mobile_stat_cell(item)
-    ListComponent::StatItemComponent.new(
+    StatListItemComponent.new(
       label: item[:label],
       value: item[:value],
       key: "stats.#{item[:key]}",
@@ -71,7 +71,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def desktop_stat_cell(item)
-    StatsBarComponent::StatItemComponent.new(
+    StatBarItemComponent.new(
       label: item[:label_short],
       value: item[:value],
       key: "stats.#{item[:key]}",

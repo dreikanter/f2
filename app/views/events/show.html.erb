@@ -41,7 +41,7 @@
       <h2 class="text-2xl font-semibold mb-3 text-slate-900"><%= t("events.metadata.stats.section_title") %></h2>
       <%= render ListComponent.new do |list| %>
         <% stats.each do |key, value| %>
-          <% list.with_item(ListComponent::StatItemComponent.new(
+          <% list.with_item(StatListItemComponent.new(
             label: t("events.metadata.stats.#{key}", default: key.humanize),
             value: format_stat_value(key, value)
           )) %>

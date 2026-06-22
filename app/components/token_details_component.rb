@@ -5,7 +5,7 @@ class TokenDetailsComponent < ViewComponent::Base
 
   def call
     render(ListComponent.new) do |list|
-      items.each { list.with_item(ListComponent::StatItemComponent.new(**_1)) }
+      items.each { list.with_item(StatListItemComponent.new(**_1)) }
     end
   end
 

@@ -18,7 +18,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   private
 
   def stat_item(label, value)
-    ListComponent::StatItemComponent.new(label: label, value: value)
+    StatListItemComponent.new(label: label, value: value)
   end
 
   def permissions_value

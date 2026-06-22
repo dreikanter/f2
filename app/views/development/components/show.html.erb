@@ -471,10 +471,10 @@
       <h2 class="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">Stats bar</h2>
       <p class="text-slate-600">A compact row of headline numbers.</p>
       <% stats_bar = StatsBarComponent.new %>
-      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Total feeds", value: "42")) %>
-      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Active", value: "38")) %>
-      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Posts", value: "1,234")) %>
-      <% stats_bar.with_item(StatsBarComponent::StatItemComponent.new(label: "Last updated", value: "2h ago")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Total feeds", value: "42")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Active", value: "38")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Posts", value: "1,234")) %>
+      <% stats_bar.with_item(StatBarItemComponent.new(label: "Last updated", value: "2h ago")) %>
       <%= render stats_bar %>
     </section>
 
@@ -506,9 +506,9 @@
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With stat items</p>
         <%= render ListComponent.new do |list|
-          list.with_item(ListComponent::StatItemComponent.new(label: "Total feeds", value: "42"))
-          list.with_item(ListComponent::StatItemComponent.new(label: "Total posts", value: "1,234"))
-          list.with_item(ListComponent::StatItemComponent.new(label: "Active feeds", value: "38"))
+          list.with_item(StatListItemComponent.new(label: "Total feeds", value: "42"))
+          list.with_item(StatListItemComponent.new(label: "Total posts", value: "1,234"))
+          list.with_item(StatListItemComponent.new(label: "Active feeds", value: "38"))
         end %>
       </div>
     </section>
