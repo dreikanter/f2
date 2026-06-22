@@ -2,6 +2,7 @@
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Invites") do |header| %>
+    <% header.with_breadcrumb(label: "Settings", url: settings_path) %>
     <% header.with_context_paragraph do %>
       <span id="invite-stats"><%= render "summary", **@invite_stats %></span>
     <% end %>

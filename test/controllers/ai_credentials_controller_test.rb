@@ -32,6 +32,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='ai_credentials.index']"
     assert_select "[data-key='ai_credential.#{credential.id}']"
+    assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
   test "#index should show the empty state when the user has no credentials" do
@@ -184,6 +185,17 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     get ai_credential_url(credential)
     assert_response :success
     assert_select "[data-key='ai_credential.show']"
+  end
+
+  test "#show should place edit and delete actions in the header" do
+    sign_in_as(user)
+    get ai_credential_url(credential)
+
+    assert_response :success
+    assert_select "header [data-key='ai_credential.edit']"
+    assert_select "header form[action=?]", ai_credential_path(credential) do
+      assert_select "button", text: /Delete/
+    end
   end
 
   test "#show should render the polling shell for a pending credential" do

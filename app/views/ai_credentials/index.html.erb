@@ -2,6 +2,7 @@
 
 <div class="space-y-8" data-key="ai_credentials.index">
   <%= render PageHeaderComponent.new(title: "AI Credentials") do |header| %>
+    <% header.with_breadcrumb(label: "Settings", url: settings_path) %>
     <% header.with_context_paragraph("Connect your AI provider keys to use AI-backed feed extraction.") %>
     <% header.with_action_button do %>
       <%= link_to "New Credential",

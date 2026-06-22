@@ -26,6 +26,7 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as user
     get invites_url
     assert_response :success
+    assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
   test "should create invite when user has available invites" do
