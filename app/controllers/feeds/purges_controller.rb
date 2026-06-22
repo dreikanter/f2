@@ -3,7 +3,7 @@ class Feeds::PurgesController < ApplicationController
     feed = Current.user.feeds.find(params[:feed_id])
     authorize feed, :purge?
 
-    WithdrawAllPostsJob.perform_later(feed.id)
+    WithdrawAllPostsJob.perform_later(feed.id, Current.user.id)
 
     redirect_to feed_path(feed), notice: "Feed purge started for #{feed.target_group}"
   end

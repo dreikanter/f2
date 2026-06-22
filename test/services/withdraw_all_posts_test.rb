@@ -14,7 +14,7 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
   end
 
   def service
-    @service ||= WithdrawAllPosts.new(feed)
+    @service ||= WithdrawAllPosts.new(feed, user: user)
   end
 
   test "#call should delete FreeFeed posts and mark them withdrawn" do

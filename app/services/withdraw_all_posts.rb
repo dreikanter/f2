@@ -1,6 +1,7 @@
 class WithdrawAllPosts
-  def initialize(feed)
+  def initialize(feed, user:)
     @feed = feed
+    @user = user
     @client = feed.access_token.build_client
     @rate_limit_subject = feed.access_token.rate_limit_subject
   end
@@ -24,7 +25,7 @@ class WithdrawAllPosts
   def create_event
     Event.create!(
       type: "group_purge_started",
-      user: @feed.user,
+      user: @user,
       subject: @feed,
       level: :info,
       metadata: { target_group: @feed.target_group }
