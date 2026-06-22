@@ -27,7 +27,7 @@ class WithdrawAllPostsJob < ApplicationJob
           sleep(e.retry_after)
           next
         rescue FreefeedClient::NotFoundError
-          # already deleted from FreeFeed — fall through and sync the record
+          Rails.logger.warn("FreeFeed post #{post.freefeed_post_id} not found; syncing local record")
         rescue FreefeedClient::Error => e
           Rails.logger.error("Failed to withdraw post #{post.id} from FreeFeed: #{e.message}")
           break
