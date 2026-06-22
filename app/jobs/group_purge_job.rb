@@ -9,7 +9,7 @@ class GroupPurgeJob < ApplicationJob
     return unless access_token&.active?
 
     client = access_token.build_client
-    posts = feed.posts.where.not(freefeed_post_id: [nil, ""])
+    posts = feed.posts.published
 
     affected_dates = Set.new
 

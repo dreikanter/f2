@@ -42,8 +42,8 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should reserve one delete per post" do
-    create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    create(:post, feed: feed, freefeed_post_id: "post2", status: :withdrawn)
+    create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    create(:post, :published, feed: feed, freefeed_post_id: "post2")
     subject = access_token.rate_limit_subject
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
@@ -59,7 +59,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should sleep and continue instead of rescheduling when throttled" do
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
@@ -87,7 +87,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should sleep and retry instead of rescheduling when FreeFeed throttles a DELETE" do
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
     stub_request(:delete, "#{access_token.host}/v4/posts/post1")
       .to_return(status: 429, headers: { "Retry-After" => "30" })
       .then.to_return(status: 200)
@@ -133,8 +133,8 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
   test ".perform_now should process posts for specified feed only" do
     other_feed = create(:feed, user: user, access_token: access_token, target_group: "othergroup")
-    post1 = create(:post, feed: feed, freefeed_post_id: "post1", status: :withdrawn)
-    post2 = create(:post, feed: other_feed, freefeed_post_id: "post2", status: :withdrawn)
+    post1 = create(:post, :published, feed: feed, freefeed_post_id: "post1")
+    post2 = create(:post, :published, feed: other_feed, freefeed_post_id: "post2")
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
