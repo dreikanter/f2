@@ -4,7 +4,7 @@ require "view_component/test_case"
 class DescriptionListComponentTest < ViewComponent::TestCase
   test "#render should render a dl container with stat items" do
     component = DescriptionListComponent.new
-    component.with_item(ListComponent::StatItemComponent.new(label: "Example item", value: "42", key: "stats.example"))
+    component.with_item(StatListItemComponent.new(label: "Example item", value: "42", key: "stats.example"))
     result = render_inline(component)
 
     assert_not_nil result.at_css("dl")

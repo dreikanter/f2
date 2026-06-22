@@ -8,9 +8,9 @@ class Admin::UserInvitationsComponent < ViewComponent::Base
 
   def call
     render(DescriptionListComponent.new) do |list|
-      list.with_item(ListComponent::StatItemComponent.new(label: "Available Invites", value: available_invites_value, key: "invitations.available_invites"))
-      list.with_item(ListComponent::StatItemComponent.new(label: "Created Invites", value: @stats.created_invites_count))
-      list.with_item(ListComponent::StatItemComponent.new(label: "Invited Users", value: @stats.invited_users_count))
+      list.with_item(StatListItemComponent.new(label: "Available Invites", value: available_invites_value, key: "invitations.available_invites"))
+      list.with_item(StatListItemComponent.new(label: "Created Invites", value: @stats.created_invites_count))
+      list.with_item(StatListItemComponent.new(label: "Invited Users", value: @stats.invited_users_count))
     end
   end
 

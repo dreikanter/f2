@@ -30,17 +30,17 @@
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Deployed Version</h2>
     <%= render(DescriptionListComponent.new) do |list| %>
-      <% list.with_item(ListComponent::StatItemComponent.new(
+      <% list.with_item(StatListItemComponent.new(
         label: "Revision",
         value: @release_info[:revision_short].present? ? tag.code(@release_info[:revision_short], title: @release_info[:revision]) : "—",
         key: "release.revision"
       )) %>
-      <% list.with_item(ListComponent::StatItemComponent.new(
+      <% list.with_item(StatListItemComponent.new(
         label: "Deployed at",
         value: @release_info[:deployed_at] ? tag.code(long_time_tag(@release_info[:deployed_at])) : "—",
         key: "release.deployed_at"
       )) %>
-      <% list.with_item(ListComponent::StatItemComponent.new(
+      <% list.with_item(StatListItemComponent.new(
         label: "Environment",
         value: tag.code(Rails.env),
         key: "release.environment"
@@ -85,7 +85,7 @@
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Postgres Table Usage</h2>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:table_usage].each do |row| %>
-        <% list.with_item(ListComponent::StatItemComponent.new(
+        <% list.with_item(StatListItemComponent.new(
           label: tag.code(row["table_name"]),
           value: row["total_size"]
         )) %>

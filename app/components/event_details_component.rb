@@ -31,7 +31,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.em("System", class: "text-slate-500", data: { key: "admin.event.user" })
     end
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "User",
       value: user_value
     ))
@@ -44,7 +44,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.span("(#{helpers.short_time_ago(@event.created_at)})", class: "text-slate-500")
     ])
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Created",
       value: value
     ))
@@ -57,7 +57,7 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.span("(#{helpers.short_time_ago(@event.updated_at)})", class: "text-slate-500")
     ])
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Updated",
       value: value
     ))
@@ -70,7 +70,7 @@ class EventDetailsComponent < ViewComponent::Base
       expires_status_badge
     ])
 
-    component.with_item(ListComponent::StatItemComponent.new(
+    component.with_item(StatListItemComponent.new(
       label: "Expires",
       value: expires_value
     ))

@@ -5,10 +5,10 @@ class Admin::UserStatisticsComponent < ViewComponent::Base
 
   def call
     render(DescriptionListComponent.new) do |list|
-      list.with_item(ListComponent::StatItemComponent.new(label: "Feeds", value: feeds_value, key: "stats.feeds"))
-      list.with_item(ListComponent::StatItemComponent.new(label: "Access Tokens", value: tokens_value, key: "stats.access_tokens"))
-      list.with_item(ListComponent::StatItemComponent.new(label: "Posts", value: @stats.posts_count))
-      list.with_item(ListComponent::StatItemComponent.new(label: "Most Recent Post", value: most_recent_post_value))
+      list.with_item(StatListItemComponent.new(label: "Feeds", value: feeds_value, key: "stats.feeds"))
+      list.with_item(StatListItemComponent.new(label: "Access Tokens", value: tokens_value, key: "stats.access_tokens"))
+      list.with_item(StatListItemComponent.new(label: "Posts", value: @stats.posts_count))
+      list.with_item(StatListItemComponent.new(label: "Most Recent Post", value: most_recent_post_value))
     end
   end
 
