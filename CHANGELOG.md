@@ -6,6 +6,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Feed list rows now show each feed's status, and hide activity times for drafts.
 - Settings page now shows clearer permission names, like "Developer Tools" instead of "Dev".
+- Feed pages now always show the Stats section, dimming zero and empty values until there's data.
 
 ## 2026-06-21
 

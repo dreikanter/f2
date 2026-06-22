@@ -491,11 +491,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='#{feed_preview_path}']", count: 0
   end
 
-  test "#show should hide stats section when feed has no posts" do
+  test "#show should show stats section when feed has no posts" do
     sign_in_as(user)
     get feed_url(feed)
     assert_response :success
-    assert_select "h2", text: "Stats", count: 0
+    assert_select "h2", text: "Stats", count: 1
   end
 
   test "#show should show stats section when feed has posts" do
