@@ -1,3 +1,4 @@
+# Abstract base class — subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
 class StatItemComponent < ViewComponent::Base
   def initialize(label:, value:, key: nil, muted: false)
     @label = label
