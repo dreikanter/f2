@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-22
 
+- Settings now has quick links to Access Tokens, AI Credentials, and Invites, and each of those pages links back to Settings.
 - AI credential pages list available models in alphabetical order by provider and name.
 
 ## 2026-06-21

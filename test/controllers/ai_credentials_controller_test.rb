@@ -32,6 +32,7 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='ai_credentials.index']"
     assert_select "[data-key='ai_credential.#{credential.id}']"
+    assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
   test "#index should show the empty state when the user has no credentials" do

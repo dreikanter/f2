@@ -38,4 +38,35 @@
     <% end %>
   </section>
 
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render CardComponent.new(href: access_tokens_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("key", css_class: "size-5") %>
+          <span>Freefeed Access Tokens</span>
+        </h2>
+        <p class="text-slate-600">Manage the tokens used for reposting to FreeFeed</p>
+      </div>
+    <% end %>
+
+    <%= render CardComponent.new(href: ai_credentials_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("sparkles", css_class: "size-5") %>
+          <span>AI Credentials</span>
+        </h2>
+        <p class="text-slate-600">Connect AI provider keys for AI-backed feed extraction</p>
+      </div>
+    <% end %>
+
+    <%= render CardComponent.new(href: invites_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("mail", css_class: "size-5") %>
+          <span>Invites</span>
+        </h2>
+        <p class="text-slate-600">Invite people to join Feeder</p>
+      </div>
+    <% end %>
+  </div>
 </div>
