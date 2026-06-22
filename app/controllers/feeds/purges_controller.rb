@@ -3,7 +3,7 @@ class Feeds::PurgesController < ApplicationController
     feed = Current.user.feeds.find(params[:feed_id])
     authorize feed, :purge?
 
-    GroupPurgeJob.perform_later(feed.id)
+    WithdrawAllPostsJob.perform_later(feed.id)
 
     Event.create!(
       type: "group_purge_started",

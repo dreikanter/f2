@@ -1,6 +1,6 @@
 require "test_helper"
 
-class GroupPurgeJobTest < ActiveJob::TestCase
+class WithdrawAllPostsJobTest < ActiveJob::TestCase
   def user
     @user ||= create(:user)
   end
@@ -21,7 +21,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
 
-    GroupPurgeJob.perform_now(feed.id)
+    WithdrawAllPostsJob.perform_now(feed.id)
 
     assert_nil post1.reload.freefeed_post_id
     assert_predicate post1.reload, :withdrawn?
@@ -36,7 +36,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
-    GroupPurgeJob.perform_now(feed.id)
+    WithdrawAllPostsJob.perform_now(feed.id)
 
     assert_equal 0, metric.reload.published_posts_count
   end
@@ -50,7 +50,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
 
     freeze_time do
-      GroupPurgeJob.perform_now(feed.id)
+      WithdrawAllPostsJob.perform_now(feed.id)
 
       capacity = RateLimit.capacity(:freefeed, :delete)
       assert_equal capacity - 2, freefeed_tokens_left(subject, :delete),
@@ -72,11 +72,11 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     }
 
     slept = []
-    job = GroupPurgeJob.new(feed.id)
+    job = WithdrawAllPostsJob.new(feed.id)
 
     RateLimit.stub(:acquire, acquire_stub) do
       job.stub(:sleep, ->(n) { slept << n }) do
-        assert_no_enqueued_jobs(only: GroupPurgeJob) do
+        assert_no_enqueued_jobs(only: WithdrawAllPostsJob) do
           job.perform_now
         end
       end
@@ -94,12 +94,12 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
     slept = []
     reported = []
-    job = GroupPurgeJob.new(feed.id)
+    job = WithdrawAllPostsJob.new(feed.id)
 
     # Advance time inside sleep so the penalty block expires before the retry acquire.
     job.stub(:sleep, ->(n) { slept << n; travel(n.ceil.seconds + 1) }) do
       Rails.error.stub(:report, ->(*args, **) { reported << args }) do
-        assert_no_enqueued_jobs(only: GroupPurgeJob) do
+        assert_no_enqueued_jobs(only: WithdrawAllPostsJob) do
           job.perform_now
         end
       end
@@ -117,7 +117,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 500)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
 
-    GroupPurgeJob.perform_now(feed.id)
+    WithdrawAllPostsJob.perform_now(feed.id)
 
     assert_equal "post1", post1.reload.freefeed_post_id
     assert_predicate post1.reload, :published?, "status unchanged when DELETE fails"
@@ -127,7 +127,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
   test ".perform_now should exit gracefully if feed not found" do
     assert_nothing_raised do
-      GroupPurgeJob.perform_now(999999)
+      WithdrawAllPostsJob.perform_now(999999)
     end
   end
 
@@ -138,7 +138,7 @@ class GroupPurgeJobTest < ActiveJob::TestCase
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
 
-    GroupPurgeJob.perform_now(feed.id)
+    WithdrawAllPostsJob.perform_now(feed.id)
 
     assert_nil post1.reload.freefeed_post_id
     assert_equal "post2", post2.reload.freefeed_post_id

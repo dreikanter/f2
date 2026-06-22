@@ -32,7 +32,7 @@ class Feeds::PurgesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed.update!(access_token: access_token)
 
-    assert_enqueued_with(job: GroupPurgeJob, args: [feed.id]) do
+    assert_enqueued_with(job: WithdrawAllPostsJob, args: [feed.id]) do
       assert_difference("Event.count", 1) do
         post feed_purge_path(feed)
       end

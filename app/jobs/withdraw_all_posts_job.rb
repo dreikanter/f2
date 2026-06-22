@@ -1,4 +1,4 @@
-class GroupPurgeJob < ApplicationJob
+class WithdrawAllPostsJob < ApplicationJob
   queue_as :default
 
   def perform(feed_id)
