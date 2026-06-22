@@ -76,6 +76,27 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.suspended_at
   end
 
+  test "#confirm_email! should move an inactive user to onboarding" do
+    user = create(:user, :inactive)
+    user.confirm_email!
+    assert user.onboarding?
+  end
+
+  test "#confirm_email! should not change the state of an already confirmed user" do
+    user = create(:user, state: :active)
+    user.confirm_email!
+    assert user.active?
+  end
+
+  test "#email_confirmed? should return false for an inactive user" do
+    assert_not create(:user, :inactive).email_confirmed?
+  end
+
+  test "#email_confirmed? should return true once the user is past inactive" do
+    assert create(:user, :onboarding).email_confirmed?
+    assert create(:user, state: :active).email_confirmed?
+  end
+
   test "should have many feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)

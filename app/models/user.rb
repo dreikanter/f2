@@ -65,6 +65,14 @@ class User < ApplicationRecord
     update!(state: :active, suspended_at: nil)
   end
 
+  def confirm_email!
+    onboarding! if inactive?
+  end
+
+  def email_confirmed?
+    !inactive?
+  end
+
   def deactivate_email!(reason:)
     update!(
       email_deactivated_at: Time.current,

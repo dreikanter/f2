@@ -31,6 +31,10 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  def confirm_email?
+    admin?
+  end
+
   def manage_permissions?
     admin?
   end

@@ -54,6 +54,7 @@ Rails.application.routes.draw do
       resource :suspension, only: [:create, :destroy]
       resource :available_invites, only: :update
       resource :email_reactivation, only: :create
+      resource :email_confirmation, only: :create
     end
 
     resources :events, only: [:index, :show]
