@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-23
 
+- The actions menu button on feed and post pages now matches the style of the other buttons in the header.
 - Editing a feed now shows its feed type, with a clearer note that the source and type stay fixed once a feed is created.
 - Feed and post pages now keep extra actions in a dropdown menu.
 - Settings now shows your permissions right under the page title.
