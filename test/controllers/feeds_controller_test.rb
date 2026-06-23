@@ -22,13 +22,6 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "#index should be reachable by onboarding users without an access-denied redirect" do
-    onboarding_user = create(:user, :onboarding)
-    sign_in_as(onboarding_user)
-    get feeds_url
-    assert_response :success
-  end
-
   test "#index should render feed list for authenticated user" do
     sign_in_as(user)
     feed

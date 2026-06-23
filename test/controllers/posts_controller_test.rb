@@ -37,13 +37,6 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Posts"
   end
 
-  test "#index should be reachable by onboarding users without an access-denied redirect" do
-    onboarding_user = create(:user, :onboarding)
-    sign_in_as(onboarding_user)
-    get posts_url
-    assert_response :success
-  end
-
   test "#index should nudge users with no feeds toward adding one" do
     sign_in_as(user)
     get posts_url

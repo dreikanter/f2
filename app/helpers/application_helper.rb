@@ -147,7 +147,7 @@ module ApplicationHelper
       }
     ]
 
-    return items unless Current.user.onboarding_or_active?
+    return items unless Current.user.active?
 
     items << {
       name: "Feeds",

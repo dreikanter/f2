@@ -1,6 +1,6 @@
 class FeedPolicy < ApplicationPolicy
   def index?
-    authenticated? && user.onboarding_or_active?
+    authenticated? && user.active?
   end
 
   def show?

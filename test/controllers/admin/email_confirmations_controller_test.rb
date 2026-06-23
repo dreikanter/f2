@@ -12,7 +12,7 @@ class Admin::EmailConfirmationsControllerTest < ActionDispatch::IntegrationTest
     post admin_user_email_confirmation_path(user)
 
     assert_redirected_to admin_user_path(user)
-    assert user.reload.onboarding?
+    assert user.reload.active?
     follow_redirect!
     assert_select "[role=\"alert\"]", text: /Email confirmed/
   end
