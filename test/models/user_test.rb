@@ -97,6 +97,16 @@ class UserTest < ActiveSupport::TestCase
     assert create(:user, state: :active).email_confirmed?
   end
 
+  test "#onboarding_or_active? should return true for onboarding and active users" do
+    assert create(:user, :onboarding).onboarding_or_active?
+    assert create(:user, state: :active).onboarding_or_active?
+  end
+
+  test "#onboarding_or_active? should return false for inactive and suspended users" do
+    assert_not create(:user, :inactive).onboarding_or_active?
+    assert_not create(:user, :suspended).onboarding_or_active?
+  end
+
   test "should have many feeds" do
     user = create(:user)
     feed1 = create(:feed, user: user)

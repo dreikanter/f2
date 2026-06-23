@@ -73,6 +73,14 @@ class User < ApplicationRecord
     !inactive?
   end
 
+  # Signed-in users are always past email confirmation (inactive and suspended
+  # accounts can't start a session). Both onboarding and active users get full
+  # access to their own feeds and posts, so the early experience isn't gated
+  # behind access-denied detours while they finish setting up.
+  def onboarding_or_active?
+    onboarding? || active?
+  end
+
   def deactivate_email!(reason:)
     update!(
       email_deactivated_at: Time.current,

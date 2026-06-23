@@ -221,6 +221,32 @@ class ApplicationHelperTest < ActionView::TestCase
     end
   end
 
+  test "#navbar_items should include feeds and posts for onboarding user" do
+    user = create(:user, :onboarding)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(_path, *_args) { false }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "feeds/index") do
+        assert_equal ["Status", "Feeds", "Posts"], navbar_items.map { |item| item[:name] }
+      end
+    end
+  end
+
+  test "#navbar_items should return only status for suspended user" do
+    user = create(:user, :suspended)
+    Current.session = create(:session, user: user)
+
+    current_page_stub = ->(_path, *_args) { false }
+
+    self.stub(:current_page?, current_page_stub) do
+      self.stub(:controller_path, "dashboard") do
+        assert_equal ["Status"], navbar_items.map { |item| item[:name] }
+      end
+    end
+  end
+
   test "#navbar_items should include admin panel when allowed" do
     user = create(:user)
     Current.session = create(:session, user: user)
