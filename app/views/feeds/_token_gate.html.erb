@@ -1,9 +1,8 @@
 <%# locals: () %>
-<div class="rounded-lg border border-sky-200 bg-sky-50 p-4 space-y-3"
-     data-key="token.gate">
+<div class="space-y-3" data-key="token.gate">
   <div class="flex gap-3">
     <div class="flex-shrink-0 pt-0.5">
-      <%= icon("key", css_class: "size-5 text-sky-500") %>
+      <%= icon("key-square", css_class: "size-5 text-sky-500") %>
     </div>
     <div class="space-y-1">
       <p class="font-semibold text-sky-900">A FreeFeed access token is needed</p>
@@ -14,11 +13,14 @@
   </div>
 
   <div class="space-y-2">
+    <%# turbo_submits_with disables the button (and swaps its label) for the
+        duration of the submission, so a double-click can't post twice. %>
     <button type="submit"
             name="commit"
             value="save_as_draft_and_add_token"
             data-key="token.gate.add"
-            class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500">
+            data-turbo-submits-with="Saving changes…"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed">
       Add FreeFeed token
     </button>
     <p class="text-sky-800 text-sm" data-key="token.gate.help">

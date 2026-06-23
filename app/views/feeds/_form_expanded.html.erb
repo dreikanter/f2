@@ -63,14 +63,6 @@
         <%= f.hidden_field :feed_profile_key %>
       <% end %>
 
-      <%# Show the cost notice whenever an AI path is selectable — including a
-          non-recommended AI candidate — so token spend stays explicit. %>
-      <% if FeedProfile.depends_on_ai?(feed.feed_profile_key) || candidates.any? { |c| c["depends_on_ai"] } %>
-        <%= render AlertComponent.new(variant: :warning, data: { key: "ai-cost.notice" }) do %>
-          AI fetches cost tokens. Previewing or refreshing a preview spends some too — you'll see your spend on the feed page.
-        <% end %>
-      <% end %>
-
       <div class="space-y-2">
         <%= f.label :name, "Feed Name", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :name,
@@ -105,15 +97,20 @@
       </div>
 
       <div class="mt-6">
-        <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Reposting Settings</h2>
 
         <div class="space-y-6">
-          <%= render PanelComponent.new do %>
-            <div class="space-y-2">
-              <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
-              <% if active_tokens.empty? %>
-                <%= render "feeds/token_gate" %>
-              <% else %>
+          <% if active_tokens.empty? %>
+            <%# No usable token yet: the prompt takes over the whole section, so
+                we skip the "Access Token" label and the group picker (which
+                can't load groups without a token) until one is added. %>
+            <%= render PanelComponent.new(variant: :info) do %>
+              <%= render "feeds/token_gate" %>
+            <% end %>
+          <% else %>
+            <%= render PanelComponent.new do %>
+              <div class="space-y-2">
+                <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
                 <%= f.select :access_token_id,
                              options_from_collection_for_select(
                                active_tokens,
@@ -132,15 +129,15 @@
                 <% if f.object.errors[:access_token].any? %>
                   <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
                 <% end %>
-              <% end %>
-            </div>
-          <% end %>
+              </div>
+            <% end %>
 
-          <%= render PanelComponent.new do %>
-            <%= render "feeds/target_group_selector",
-                       feed: feed,
-                       groups: [],
-                       token: nil %>
+            <%= render PanelComponent.new do %>
+              <%= render "feeds/target_group_selector",
+                         feed: feed,
+                         groups: [],
+                         token: nil %>
+            <% end %>
           <% end %>
 
           <%= render PanelComponent.new do %>
@@ -159,7 +156,7 @@
       </div>
 
       <div class="mt-6">
-        <h3 class="text-base font-semibold text-slate-900 mb-4">Advanced options</h3>
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Advanced options</h2>
 
         <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
           <div class="flex items-start">

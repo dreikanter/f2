@@ -14,6 +14,16 @@ class PanelComponentTest < ViewComponent::TestCase
     refute_includes panel["class"], "border"
   end
 
+  test "#call should render the info variant with a blue surface" do
+    result = render_inline(PanelComponent.new(variant: :info)) { "Heads up" }
+
+    panel = result.at_css("div")
+    assert_not_nil panel
+    assert_includes panel["class"], "bg-sky-50"
+    assert_includes panel["class"], "border-sky-200"
+    refute_includes panel["class"], "bg-slate-100"
+  end
+
   test "#call should merge classes and forward html attributes" do
     result = render_inline(
       PanelComponent.new(

@@ -4,6 +4,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-23
 
+- Starting a feed without a FreeFeed token now shows a clear prompt to add one, instead of an empty token field and group picker.
+- The "Add FreeFeed token" button now disables itself while saving, so a double-click can't submit twice.
 - Use cards presentation for Change email and Change password on the Settings page.
 - The access token page now shows an arrow next to the groups list, making it clear you can expand it.
 - After you add a token, the dashboard now points you to create your first feed.
