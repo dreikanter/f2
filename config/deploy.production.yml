@@ -33,6 +33,11 @@ env:
     RAILS_ENV: production
     HOSTS: fffeeder.com
     ACTION_MAILER_HOST: fffeeder.com
+    # Send from a real, monitored mailbox on the fffeeder.com domain rather than
+    # the blackhole noreply@frf.im default, so replies and bounces to
+    # transactional mail reach a person. Matches staging; requires fffeeder.com
+    # verified in this environment's Resend workspace.
+    MAILER_FROM: hello@fffeeder.com
     # Run Puma in clustered mode with 2 workers x 3 threads to use both CPU
     # cores. Kept conservative because the jobs role and the Postgres accessory
     # share this 2-core host. If memory becomes the binding constraint, drop
