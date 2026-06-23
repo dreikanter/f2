@@ -4,7 +4,9 @@ Rails.application.routes.draw do
   namespace :development do
     resource :components, only: :show
     resource :system_status, only: :show, controller: "system_status"
-    resources :email_previews, only: [:index, :show]
+    resources :email_previews, only: [:index, :show] do
+      resource :test_email, only: :create
+    end
 
     resources :sent_emails, only: [:index, :show], format: false do
       collection do

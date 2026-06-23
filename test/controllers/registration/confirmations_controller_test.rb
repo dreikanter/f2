@@ -10,8 +10,10 @@ class Registration::ConfirmationsControllerTest < ActionDispatch::IntegrationTes
   test "#create should send confirmation email for inactive user" do
     inactive_user = create(:user, state: :inactive)
 
-    assert_difference("ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.count", 1) do
-      post registration_confirmations_url, params: { email_address: inactive_user.email_address }
+    assert_difference -> { Event.where(type: "mail.profile_mailer.account_confirmation", user: inactive_user).count }, 1 do
+      assert_difference("ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.count", 1) do
+        post registration_confirmations_url, params: { email_address: inactive_user.email_address }
+      end
     end
 
     job = ActionMailer::MailDeliveryJob.queue_adapter.enqueued_jobs.last

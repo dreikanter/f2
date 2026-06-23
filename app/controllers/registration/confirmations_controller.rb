@@ -6,7 +6,10 @@ class Registration::ConfirmationsController < ApplicationController
   rate_limit to: 5, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_confirmation_path, alert: "Try again later." }
 
   def create
-    ProfileMailer.account_confirmation(user).deliver_later if can_send_confirmation_email?
+    if can_send_confirmation_email?
+      ProfileMailer.account_confirmation(user).deliver_later
+      Event.create!(type: "mail.profile_mailer.account_confirmation", user: user, subject: user, level: :info)
+    end
     redirect_to registration_confirmation_pending_path, notice: "If an account exists with that email, we will send you a confirmation link."
   end
 
