@@ -37,6 +37,22 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Posts"
   end
 
+  test "#index should nudge users with no feeds toward adding one" do
+    sign_in_as(user)
+    get posts_url
+    assert_response :success
+    assert_select "[data-key='empty-state'] a[href=?]", new_feed_path, text: "Add your first feed"
+  end
+
+  test "#index should explain the empty state when feeds exist but no posts" do
+    sign_in_as(user)
+    feed
+    get posts_url
+    assert_response :success
+    assert_select "[data-key='empty-state']", text: /No posts yet/
+    assert_select "[data-key='empty-state'] a", false
+  end
+
   test "#index should show only user's posts" do
     sign_in_as(user)
     create(:post, feed: feed, content: "User's post")
