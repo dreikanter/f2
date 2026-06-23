@@ -1,8 +1,4 @@
 class PanelComponent < ViewComponent::Base
-  # A borderless container on the same light gray surface as the navbar, used to
-  # set a block of related content apart without the weight of a bordered card.
-  # The :info variant swaps in a blue surface to flag a section that needs the
-  # user's attention while keeping the panel's shape and spacing.
   BASE_CLASSES = "w-full rounded-lg p-6"
 
   VARIANT_CLASSES = {
