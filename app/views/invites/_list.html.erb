@@ -1,0 +1,10 @@
+<%# locals: (invites:, new_invite_id: nil) %>
+<% if invites.any? %>
+  <div class="space-y-3">
+    <% invites.each do |invite| %>
+      <%= render "invite", invite: invite, new_invite_id: new_invite_id %>
+    <% end %>
+  </div>
+<% else %>
+  <%= render EmptyStateComponent.new("No invites yet") %>
+<% end %>

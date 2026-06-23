@@ -112,6 +112,28 @@ class TimeHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "#short_time_ago_phrase_tag should return nil for nil input" do
+    assert_nil short_time_ago_phrase_tag(nil)
+  end
+
+  test "#short_time_ago_phrase_tag should append ago for past times" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+
+    travel_to Time.zone.parse("2025-01-25 15:45:30") do
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">10d ago</time>'
+      assert_equal expected, short_time_ago_phrase_tag(time)
+    end
+  end
+
+  test "#short_time_ago_phrase_tag should say just now for the most recent times" do
+    time = Time.zone.parse("2025-01-15 15:45:30")
+
+    travel_to Time.zone.parse("2025-01-15 15:45:50") do
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="15 Jan 2025, 15:45">just now</time>'
+      assert_equal expected, short_time_ago_phrase_tag(time)
+    end
+  end
+
   test "#datetime_with_duration_tag should return nil for nil input" do
     assert_nil datetime_with_duration_tag(nil)
   end
