@@ -392,6 +392,51 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#show should replace the access token field with the token prompt when no token exists" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    # The prompt stands in for the whole Access Token section, and its submit
+    # button disables itself on click to block a double submission.
+    assert_select "[data-key='token.gate']", count: 1
+    assert_select "button[data-key='token.gate.add'][data-turbo-submits-with]", count: 1
+    assert_select "select[name='feed[access_token_id]']", count: 0
+    # The group picker can't load groups without a token, so it stays hidden.
+    assert_select "#target-group-selector", count: 0
+  end
+
+  test "#show should show the group picker once an access token exists" do
+    sign_in_as(user)
+    create(:access_token, :active, user: user)
+    url = "http://example.com/feed.xml"
+    FeedIdentification.create!(
+      user: user,
+      input: url,
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+      ]
+    )
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "select[name='feed[access_token_id]']", count: 1
+    assert_select "#target-group-selector", count: 1
+    assert_select "[data-key='token.gate']", count: 0
+  end
+
   test "#show should write the user's input under params[query] for handle inputs" do
     sign_in_as(user)
     handle = "@alice"
