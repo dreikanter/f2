@@ -43,11 +43,18 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "should show permission display name" do
+  test "should show permission display name in the page header" do
     @user = create(:user, :dev)
     sign_in_user
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.permissions.value']", text: "Developer Tools"
+    assert_select "header [data-key='settings.permissions.value']", text: "Developer Tools"
+  end
+
+  test "should not show permissions when the user has none" do
+    sign_in_user
+    get settings_url
+    assert_response :success
+    assert_select "[data-key='settings.permissions.value']", count: 0
   end
 end
