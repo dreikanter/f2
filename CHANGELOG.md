@@ -2,6 +2,11 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-23
+
+- Use cards presentation for Change email and Change password on the Settings page.
+- The access token page now shows an arrow next to the groups list, making it clear you can expand it.
+
 ## 2026-06-22
 
 - Clarified the feed Purge confirmation: it only removes posts this feed published, not the whole group.

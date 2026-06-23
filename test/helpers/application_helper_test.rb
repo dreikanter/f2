@@ -98,19 +98,19 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "#icon returns svg for known icon" do
-    result = icon("star")
+    result = icon("info")
     assert_includes result, "<svg"
     assert_includes result, 'aria-hidden="true"'
     assert_includes result, 'class="shrink-0"'
   end
 
   test "#icon returns svg with css class" do
-    result = icon("star", css_class: "size-4 text-warning")
+    result = icon("info", css_class: "size-4 text-warning")
     assert_includes result, 'class="shrink-0 size-4 text-warning"'
   end
 
   test "#icon renders intrinsic width and height so it stays sized without CSS" do
-    result = icon("star")
+    result = icon("info")
     assert_includes result, 'width="24"'
     assert_includes result, 'height="24"'
   end
@@ -121,13 +121,13 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "#icon renders title attribute when provided" do
-    result = icon("star", title: "Favorite")
+    result = icon("info", title: "Favorite")
     assert_includes result, 'title="Favorite"'
     assert_includes result, 'aria-hidden="true"'
   end
 
   test "#icon renders aria-label and role when aria_label provided" do
-    result = icon("star", aria_label: "Favorite")
+    result = icon("info", aria_label: "Favorite")
     assert_includes result, 'aria-label="Favorite"'
     assert_includes result, 'role="img"'
     assert_not_includes result, "aria-hidden"
