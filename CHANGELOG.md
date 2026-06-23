@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-23
+
+- Settings makes changing your email or password easy to find, showing your current email and when you last changed your password.
+
 ## 2026-06-22
 
 - Clarified the feed Purge confirmation: it only removes posts this feed published, not the whole group.

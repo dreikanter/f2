@@ -4,37 +4,33 @@
   <%= render PageHeaderComponent.new(title: "Settings") %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Your Account</h2>
-    <%= render(DescriptionListComponent.new) do |list| %>
-      <% list.with_item(StatListItemComponent.new(
-        label: "Email",
-        value: tag.span(class: "flex items-center gap-4") {
-          safe_join([
-            @user.email_address,
-            link_to("Change", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
-          ])
-        },
-        key: "settings.email"
-      )) %>
-
-      <% list.with_item(StatListItemComponent.new(
-        label: "Password",
-        value: tag.span(class: "flex items-center gap-4") {
-          safe_join([
-            "Last updated #{time_ago_in_words(@user.password_updated_at || @user.created_at)} ago",
-            link_to("Change", edit_settings_password_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm")
-          ])
-        },
-        key: "settings.password"
-      )) %>
-
-      <% if @user.permissions.any? %>
-        <% list.with_item(StatListItemComponent.new(
-          label: "Permissions",
-          value: @user.permissions.map(&:display_name).join(", "),
-          key: "settings.permissions"
-        )) %>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <%= render CardComponent.new(href: edit_settings_email_update_path) do %>
+        <div class="space-y-2">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <%= icon("at-sign", css_class: "size-5") %>
+            <span>Change Email</span>
+          </h2>
+          <p class="text-slate-600" data-key="settings.email"><%= @user.email_address %></p>
+        </div>
       <% end %>
+
+      <%= render CardComponent.new(href: edit_settings_password_update_path) do %>
+        <div class="space-y-2">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <%= icon("lock", css_class: "size-5") %>
+            <span>Change Password</span>
+          </h2>
+          <p class="text-slate-600" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @user.permissions.any? %>
+      <p class="text-sm text-slate-500" data-key="settings.permissions">
+        Permissions:
+        <span class="text-slate-700" data-key="settings.permissions.value"><%= @user.permissions.map(&:display_name).join(", ") %></span>
+      </p>
     <% end %>
   </section>
 
