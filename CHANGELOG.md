@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-23
 
-- Settings makes changing your email or password easy to find, showing your current email and when you last changed your password.
+- Use cards presentation for email or password on the Settings page.
 
 ## 2026-06-22
 
