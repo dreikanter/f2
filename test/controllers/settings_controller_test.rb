@@ -23,7 +23,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_user
     get settings_url
     assert_response :success
-    assert_select "[data-key='settings.email']", text: user.email_address
+    assert_select "[data-key='settings.email']", text: /Your current email is #{Regexp.escape(user.email_address)}/
     assert_select "[data-key='settings.password']", text: /Last changed .+ ago/
   end
 

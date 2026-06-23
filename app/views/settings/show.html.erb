@@ -4,19 +4,19 @@
   <%= render PageHeaderComponent.new(title: "Settings") %>
 
   <section class="space-y-4">
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <%= render CardComponent.new(href: edit_settings_email_update_path) do %>
-        <div class="space-y-2">
+        <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("at-sign", css_class: "size-5") %>
+            <%= icon("mail", css_class: "size-5") %>
             <span>Change Email</span>
           </h2>
-          <p class="text-slate-600" data-key="settings.email"><%= @user.email_address %></p>
+          <p class="text-slate-600" data-key="settings.email">Your current email is <%= @user.email_address %></p>
         </div>
       <% end %>
 
       <%= render CardComponent.new(href: edit_settings_password_update_path) do %>
-        <div class="space-y-2">
+        <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <%= icon("lock", css_class: "size-5") %>
             <span>Change Password</span>
