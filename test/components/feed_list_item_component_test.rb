@@ -140,8 +140,19 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should not show status toggle for draft feeds" do
+  test "#render should show Enable action for ready draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+      assert_not_empty result.css("[data-key='feed.#{draft_feed.id}.enable']")
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.disable']")
+    end
+  end
+
+  test "#render should not show status toggle for incomplete draft feeds" do
+    draft_feed = create(:feed, :without_access_token, :draft, user: user)
 
     with_request_url("/feeds") do
       result = render_inline FeedListItemComponent.new(feed: draft_feed)

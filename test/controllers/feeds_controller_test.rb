@@ -496,9 +496,19 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href$='/testgroup']", count: 0
   end
 
-  test "#show should not offer a status toggle for a draft feed" do
+  test "#show should offer an enable toggle for a ready draft feed" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)
+
+    get feed_url(draft)
+
+    assert_response :success
+    assert_select "form[action='#{feed_status_path(draft)}'] button", text: "Enable"
+  end
+
+  test "#show should not offer a status toggle for an incomplete draft feed" do
+    sign_in_as(user)
+    draft = create(:feed, :without_access_token, :draft, user: user)
 
     get feed_url(draft)
 

@@ -98,13 +98,15 @@ class FeedListItemComponent < ListItemComponent
         items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }
       else
         items << { label: "Edit", href: edit_url, data: { key: "feed.#{feed.id}.edit" } }
-        if enabled?
-          items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
-                     data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
-        elsif can_be_enabled?
-          items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
-                     data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
-        end
+      end
+
+      # A ready draft can be enabled straight from the list, same as a paused feed.
+      if enabled?
+        items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
+                   data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
+      elsif can_be_enabled?
+        items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
+                   data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
       end
 
       if draft?
