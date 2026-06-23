@@ -26,6 +26,7 @@ module ApplicationHelper
     "arrow-down"     => '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
     "arrow-up"       => '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
     "chevron-down"   => '<path d="m6 9 6 6 6-6"/>',
+    "chevron-right"  => '<path d="m9 18 6-6-6-6"/>',
     "clipboard"      => '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
     "external-link"  => '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
     "key"            => '<path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/>',
