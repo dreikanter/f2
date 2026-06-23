@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-06-23
 
 - Feed and post pages now keep extra actions behind a "…" button in the header, so it stays tidy.
+- Settings now shows your permissions right under the page title.
 - Starting a feed without a FreeFeed token now shows a clear prompt to add one, instead of an empty token field and group picker.
 - The "Add FreeFeed token" button now disables itself while saving, so a double-click can't submit twice.
 - Use cards presentation for Change email and Change password on the Settings page.

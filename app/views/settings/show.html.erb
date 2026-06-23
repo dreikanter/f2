@@ -1,38 +1,36 @@
 <% content_for :title, "Settings" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Settings") %>
-
-  <section class="space-y-4">
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <%= render CardComponent.new(href: edit_settings_email_update_path) do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("mail", css_class: "size-5") %>
-            <span>Change Email</span>
-          </h2>
-          <p class="text-slate-600" data-key="settings.email">Your current email is <%= @user.email_address %></p>
-        </div>
-      <% end %>
-
-      <%= render CardComponent.new(href: edit_settings_password_update_path) do %>
-        <div class="space-y-4">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= icon("lock", css_class: "size-5") %>
-            <span>Change Password</span>
-          </h2>
-          <p class="text-slate-600" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
-        </div>
-      <% end %>
-    </div>
-
+  <%= render PageHeaderComponent.new(title: "Settings") do |header| %>
     <% if @user.permissions.any? %>
-      <p class="text-sm text-slate-500" data-key="settings.permissions">
+      <% header.with_context_paragraph do %>
         Permissions:
         <span class="text-slate-700" data-key="settings.permissions.value"><%= @user.permissions.map(&:display_name).join(", ") %></span>
-      </p>
+      <% end %>
     <% end %>
-  </section>
+  <% end %>
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render CardComponent.new(href: edit_settings_email_update_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("mail", css_class: "size-5") %>
+          <span>Change Email</span>
+        </h2>
+        <p class="text-slate-600" data-key="settings.email">Your current email is <%= @user.email_address %></p>
+      </div>
+    <% end %>
+
+    <%= render CardComponent.new(href: edit_settings_password_update_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("lock", css_class: "size-5") %>
+          <span>Change Password</span>
+        </h2>
+        <p class="text-slate-600" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
+      </div>
+    <% end %>
+  </div>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render CardComponent.new(href: access_tokens_path) do %>
