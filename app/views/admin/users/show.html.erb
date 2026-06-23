@@ -124,7 +124,9 @@
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-slate-900">Actions</h2>
     <div class="flex gap-2">
-      <% unless @user.email_confirmed? %>
+      <% if @user.email_confirmed? %>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-base font-semibold text-slate-400 shadow-sm cursor-not-allowed" title="This user's email is already confirmed" data-key="actions.confirm_email_disabled">Confirm Email…</span>
+      <% else %>
         <%= link_to "Confirm Email…", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { key: "actions.confirm_email", controller: "modal-trigger", modal_trigger_modal_id_value: "confirm-email-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% end %>
       <%= link_to "Change Email", edit_admin_user_email_update_path(@user), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
