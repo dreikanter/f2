@@ -21,7 +21,7 @@
   <% if suggest_to_add_tokens %>
     <%= render PageHeaderComponent.new(title: "Welcome to Feeder") do |header| %>
       <% header.with_context_paragraph "Feeder helps you automatically share content from your favorite sources to FreeFeed." %>
-      <% header.with_context_paragraph "Getting set up takes two quick steps: first add a FreeFeed access token so Feeder can post for you, then create your first feed to choose what to share." %>
+      <% header.with_context_paragraph "Two quick steps: add a FreeFeed token, then create your first feed." %>
     <% end %>
     <div>
       <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
