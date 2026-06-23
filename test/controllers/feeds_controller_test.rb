@@ -551,8 +551,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
+    assert_select "h2", text: "Source"
     assert_select "label", text: "Source URL"
-    assert_select "p.text-slate-500", text: "Source and type can't be changed after creation. Start a new feed to follow a different source."
+    assert_select "label", text: "Feed type"
+    assert_select "input[data-key='form.feed-type-display'][value=?][disabled]", "RSS Feed"
+    assert_select "[data-key='form.source-locked-note']", text: "The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed."
   end
 
   test "#edit should label the source as a prompt for a query-shaped feed" do

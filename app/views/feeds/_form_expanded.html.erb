@@ -34,34 +34,55 @@
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the
           "What do you want to follow?" field staying put while the rest of
-          the form appears below it. %>
+          the form appears below it. The source and feed type are the feed's
+          fixed identity, so they're grouped under one "Source" heading. %>
       <% source_label = feed.source_input_url? ? "Source URL" : "Source prompt" %>
-      <div class="space-y-2">
-        <%= f.label :url, source_label, class: "block font-semibold text-slate-800" %>
-        <%= f.text_field :url_display,
-                         value: feed.source_input,
-                         disabled: true,
-                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
-                         aria: { label: "#{source_label} (cannot be changed)" },
-                         data: { key: "form.source-display" } %>
-        <% feed.params&.each do |key, value| %>
-          <%= hidden_field_tag "feed[params][#{key}]", value %>
-        <% end %>
-        <% unless show_chooser %>
-          <p class="text-sm text-slate-500"><%= edit_mode ? "Source and type can't be changed after creation. Start a new feed to follow a different source." : FeedProfile.display_name_for(feed.feed_profile_key).to_s %></p>
-        <% end %>
-      </div>
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Source</h2>
 
-      <% if show_chooser %>
-        <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate %>
-        <%# A disabled radio won't submit its value, so the lone option still
-            needs a hidden field to carry the profile key to the server. %>
-        <% if single_candidate %>
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <%= f.label :url, source_label, class: "block font-semibold text-slate-800" %>
+            <%= f.text_field :url_display,
+                             value: feed.source_input,
+                             disabled: true,
+                             class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                             aria: { label: "#{source_label} (cannot be changed)" },
+                             data: { key: "form.source-display" } %>
+            <% feed.params&.each do |key, value| %>
+              <%= hidden_field_tag "feed[params][#{key}]", value %>
+            <% end %>
+          </div>
+
+          <% if show_chooser %>
+            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate %>
+          <% else %>
+            <%# Feed type is fixed once the feed exists, so it's shown read-only
+                as a disabled input matching the source field above it. Like the
+                source field, it's display-only — the controller never reads it. %>
+            <div class="space-y-2">
+              <%= label_tag nil, "Feed type", class: "block font-semibold text-slate-800" %>
+              <%= f.text_field :feed_type_display,
+                               value: candidate_summary(feed.feed_profile_key, feed.source_input),
+                               disabled: true,
+                               class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                               aria: { label: "Feed type (cannot be changed)" },
+                               data: { key: "form.feed-type-display" } %>
+            </div>
+          <% end %>
+        </div>
+
+        <%# A read-only display or a disabled single-option radio won't submit
+            the profile key, so a hidden field carries it whenever the chooser
+            isn't offering a live selection. %>
+        <% if !show_chooser || single_candidate %>
           <%= f.hidden_field :feed_profile_key %>
         <% end %>
-      <% else %>
-        <%= f.hidden_field :feed_profile_key %>
-      <% end %>
+
+        <% if edit_mode %>
+          <p class="mt-3 text-sm text-slate-500" data-key="form.source-locked-note">The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed.</p>
+        <% end %>
+      </div>
 
       <div class="space-y-2">
         <%= f.label :name, "Feed Name", class: "block font-semibold text-slate-800" %>

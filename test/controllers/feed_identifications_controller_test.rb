@@ -537,7 +537,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "data-key=\"candidates\""
     assert_includes response.body, "data-key=\"candidate.rss\""
     assert_includes response.body, "data-key=\"candidate.llm_website_extractor\""
-    assert_includes response.body, "data-key=\"candidate.ai-badge\""
+    # While the user can still pick, the field asks how to fetch; it only
+    # switches to the static "Feed type" label once the choice is frozen.
+    assert_select "label", text: "How should we fetch posts?"
+    # The AI option already names its dependency ("AI page reader"), so there's
+    # no redundant AI badge — the cost note carries that signal instead.
+    assert_not_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
   test "#show should label a query source as a prompt and pass it to the chooser" do
