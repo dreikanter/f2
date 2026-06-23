@@ -17,6 +17,15 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Welcome to Feeder"
   end
 
+  test "#show should guide users with a token but no feeds to add one" do
+    sign_in_as user
+    create(:access_token, :active, user: user)
+    get status_path
+    assert_response :success
+    assert_select "h1", "Status"
+    assert_select "a[href=?]", new_feed_path, text: "Add your first feed"
+  end
+
   test "#show should render status when authenticated with feeds" do
     sign_in_as user
     create(:feed, user: user)
