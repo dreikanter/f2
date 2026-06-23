@@ -108,12 +108,17 @@
         <h3 class="text-base font-semibold text-slate-900 mb-4">Reposting Settings</h3>
 
         <div class="space-y-6">
-          <%= render PanelComponent.new do %>
-            <div class="space-y-2">
-              <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
-              <% if active_tokens.empty? %>
-                <%= render "feeds/token_gate" %>
-              <% else %>
+          <% if active_tokens.empty? %>
+            <%# No usable token yet: the prompt takes over the whole section, so
+                we skip the "Access Token" label and the group picker (which
+                can't load groups without a token) until one is added. %>
+            <%= render PanelComponent.new(variant: :info) do %>
+              <%= render "feeds/token_gate" %>
+            <% end %>
+          <% else %>
+            <%= render PanelComponent.new do %>
+              <div class="space-y-2">
+                <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-slate-800" %>
                 <%= f.select :access_token_id,
                              options_from_collection_for_select(
                                active_tokens,
@@ -132,15 +137,15 @@
                 <% if f.object.errors[:access_token].any? %>
                   <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
                 <% end %>
-              <% end %>
-            </div>
-          <% end %>
+              </div>
+            <% end %>
 
-          <%= render PanelComponent.new do %>
-            <%= render "feeds/target_group_selector",
-                       feed: feed,
-                       groups: [],
-                       token: nil %>
+            <%= render PanelComponent.new do %>
+              <%= render "feeds/target_group_selector",
+                         feed: feed,
+                         groups: [],
+                         token: nil %>
+            <% end %>
           <% end %>
 
           <%= render PanelComponent.new do %>
