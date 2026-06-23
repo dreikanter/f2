@@ -328,7 +328,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ai_fallback", payload.first["rank_reason"]
   end
 
-  test "#show should show the AI cost notice when a non-recommended candidate is AI" do
+  test "#show should note AI token cost only on the AI fetch option" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     FeedIdentification.create!(
@@ -344,7 +344,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "[data-key='ai-cost.notice']", count: 1
+    assert_select "[data-key='candidate.ai-cost']", count: 1
   end
 
   test "#show should preselect the default schedule interval with no blank option" do

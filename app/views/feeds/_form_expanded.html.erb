@@ -63,14 +63,6 @@
         <%= f.hidden_field :feed_profile_key %>
       <% end %>
 
-      <%# Show the cost notice whenever an AI path is selectable — including a
-          non-recommended AI candidate — so token spend stays explicit. %>
-      <% if FeedProfile.depends_on_ai?(feed.feed_profile_key) || candidates.any? { |c| c["depends_on_ai"] } %>
-        <%= render AlertComponent.new(variant: :warning, data: { key: "ai-cost.notice" }) do %>
-          AI fetches cost tokens. Previewing or refreshing a preview spends some too — you'll see your spend on the feed page.
-        <% end %>
-      <% end %>
-
       <div class="space-y-2">
         <%= f.label :name, "Feed Name", class: "block font-semibold text-slate-800" %>
         <%= f.text_field :name,

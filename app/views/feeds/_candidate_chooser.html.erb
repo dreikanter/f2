@@ -29,6 +29,11 @@
           <% if description.present? %>
             <span class="text-slate-600 text-sm"><%= description %></span>
           <% end %>
+          <% if uses_ai %>
+            <span class="text-slate-500 text-xs" data-key="candidate.ai-cost">
+              Fetching costs AI tokens — previews and refreshes do too. You'll see your spend on the feed page.
+            </span>
+          <% end %>
         </span>
       </label>
     <% end %>
