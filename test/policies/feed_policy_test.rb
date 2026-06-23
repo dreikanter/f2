@@ -39,9 +39,9 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.index?
   end
 
-  test "should deny index access to onboarding users" do
-    onboarding_user = create(:user, :onboarding)
-    policy = FeedPolicy.new(onboarding_user, feed)
+  test "should deny index access to suspended users" do
+    suspended_user = create(:user, :suspended)
+    policy = FeedPolicy.new(suspended_user, feed)
     assert_not policy.index?
   end
 

@@ -28,7 +28,7 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     get access_tokens_path
 
     assert_response :success
-    assert_select "h2", "No access tokens yet"
+    assert_select "[data-key='empty-state']", text: /No FreeFeed access tokens yet/
   end
 
   test "#index should display existing tokens" do

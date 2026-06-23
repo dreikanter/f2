@@ -1,7 +1,6 @@
 class Admin::UserDetailsComponent < ViewComponent::Base
   STATUS_BADGES = {
     "inactive" => { label: "Pending confirmation", classes: "bg-amber-50 text-amber-700 ring-amber-600/20" },
-    "onboarding" => { label: "Onboarding", classes: "bg-sky-50 text-sky-700 ring-sky-600/20" },
     "active" => { label: "Active", classes: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" },
     "suspended" => { label: "Suspended", classes: "bg-red-50 text-red-700 ring-red-600/20" }
   }.freeze

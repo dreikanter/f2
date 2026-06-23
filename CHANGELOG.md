@@ -6,6 +6,11 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Use cards presentation for Change email and Change password on the Settings page.
 - The access token page now shows an arrow next to the groups list, making it clear you can expand it.
+- After you add a token, the dashboard now points you to create your first feed.
+- Feeds and Posts are now reachable while you're still setting up, instead of staying hidden until later.
+- The Feeds and Posts pages now explain what they're for right in the header.
+- When you don't have any feeds yet, the Posts page points you to add your first one.
+- Fixed password reset emails not being sent to some confirmed accounts.
 
 ## 2026-06-22
 

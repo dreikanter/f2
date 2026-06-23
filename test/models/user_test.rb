@@ -76,10 +76,10 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.suspended_at
   end
 
-  test "#confirm_email! should move an inactive user to onboarding" do
+  test "#confirm_email! should move an inactive user to active" do
     user = create(:user, :inactive)
     user.confirm_email!
-    assert user.onboarding?
+    assert user.active?
   end
 
   test "#confirm_email! should not change the state of an already confirmed user" do
@@ -93,7 +93,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "#email_confirmed? should return true once the user is past inactive" do
-    assert create(:user, :onboarding).email_confirmed?
+    assert create(:user, :suspended).email_confirmed?
     assert create(:user, state: :active).email_confirmed?
   end
 

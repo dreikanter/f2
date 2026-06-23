@@ -8,7 +8,7 @@
       <% label = @feed.display_name + (group ? " (@#{group})" : "") %>
       <% header.with_context_paragraph("Showing posts from #{label}.") %>
     <% else %>
-      <% header.with_context_paragraph("All posts from your feeds") %>
+      <% header.with_context_paragraph("Everything Feeder imports from your feeds shows up here, along with each post's status on FreeFeed.") %>
     <% end %>
     <% if @feeds.any? %>
       <% header.with_action_button do %>
@@ -27,8 +27,14 @@
 
   <% if @posts.any? %>
     <%= render PostsListComponent.new(posts: @posts, show_feed: @feed.blank?) %>
+  <% elsif @feed %>
+    <%= render EmptyStateComponent.new("No posts imported yet from this feed.") %>
+  <% elsif @feeds.any? %>
+    <%= render EmptyStateComponent.new("No posts yet — they'll show up here as your feeds import new content.") %>
   <% else %>
-    <%= render EmptyStateComponent.new(@feed ? "No posts imported yet from this feed." : "No posts yet.") %>
+    <%= render EmptyStateComponent.new do %>
+      <p class="text-slate-500">No posts yet. <%= link_to "Add your first feed", new_feed_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %> to start importing content.</p>
+    <% end %>
   <% end %>
 
   <% if pagination_total_pages > 1 %>

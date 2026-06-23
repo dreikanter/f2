@@ -21,7 +21,7 @@ class User < ApplicationRecord
   has_one :invite, class_name: "Invite", foreign_key: :invited_user_id, dependent: :nullify
   has_one :invited_by_user, through: :invite, source: :created_by_user
 
-  enum :state, { inactive: 0, onboarding: 1, active: 2, suspended: 3 }, default: :inactive
+  enum :state, { inactive: 0, active: 2, suspended: 3 }, default: :inactive
 
   validates :email_address, presence: true
   validates :password, length: { minimum: PASSWORD_MIN_LENGTH, maximum: PASSWORD_MAX_LENGTH }, allow_nil: true
@@ -66,7 +66,7 @@ class User < ApplicationRecord
   end
 
   def confirm_email!
-    onboarding! if inactive?
+    active! if inactive?
   end
 
   def email_confirmed?

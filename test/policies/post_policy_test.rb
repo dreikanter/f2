@@ -33,9 +33,9 @@ class PostPolicyTest < ActiveSupport::TestCase
     assert_not PostPolicy.new(nil, Post).index?
   end
 
-  test "#index? should deny onboarding users" do
-    onboarding_user = create(:user, :onboarding)
-    assert_not PostPolicy.new(onboarding_user, Post).index?
+  test "#index? should deny suspended users" do
+    suspended_user = create(:user, :suspended)
+    assert_not PostPolicy.new(suspended_user, Post).index?
   end
 
   test "#show? should allow owner" do
