@@ -28,6 +28,7 @@ class RegistrationsController < ApplicationController
     if @user.save
       @invite.update!(invited_user: @user)
       ProfileMailer.account_confirmation(@user).deliver_later
+      Event.create!(type: "mail.profile_mailer.account_confirmation", user: @user, subject: @user, level: :info)
       redirect_to registration_confirmation_pending_path
     else
       render :show, status: :unprocessable_entity

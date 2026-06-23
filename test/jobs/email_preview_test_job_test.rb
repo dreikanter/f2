@@ -28,10 +28,4 @@ class EmailPreviewTestJobTest < ActiveJob::TestCase
       end
     end
   end
-
-  test "#perform should reset sample_mode afterward" do
-    EmailPreviewTestJob.perform_now("passwords_mailer-reset", "dev@example.com")
-
-    assert_not ApplicationMailer.sample_mode?
-  end
 end

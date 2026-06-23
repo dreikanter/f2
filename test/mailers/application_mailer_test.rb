@@ -36,31 +36,6 @@ class ApplicationMailerTest < ActionMailer::TestCase
     end
   end
 
-  test "#wrap_delivery_behavior! should keep the configured backend in sample mode" do
-    with_delivery_method(:resend) do
-      original_api_key = Resend.api_key
-      Resend.api_key = "test"
-      ApplicationMailer.sample_mode = true
-
-      message = ProfileMailer.account_confirmation(user).message
-
-      assert_kind_of Resend::Mailer, message.delivery_method
-    ensure
-      ApplicationMailer.sample_mode = false
-      Resend.api_key = original_api_key
-    end
-  end
-
-  test "#register_event should be skipped in sample mode" do
-    ApplicationMailer.sample_mode = true
-
-    assert_no_difference -> { Event.count } do
-      PasswordsMailer.reset(user).message
-    end
-  ensure
-    ApplicationMailer.sample_mode = false
-  end
-
   private
 
   def with_delivery_method(method)

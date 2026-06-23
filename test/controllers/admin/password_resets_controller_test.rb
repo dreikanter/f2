@@ -22,8 +22,10 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
-    assert_enqueued_emails 1 do
-      post admin_user_password_reset_path(user)
+    assert_difference -> { Event.where(type: "mail.passwords_mailer.reset", user: user).count }, 1 do
+      assert_enqueued_emails 1 do
+        post admin_user_password_reset_path(user)
+      end
     end
 
     assert_redirected_to admin_user_path(user)
