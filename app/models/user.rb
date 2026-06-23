@@ -73,6 +73,17 @@ class User < ApplicationRecord
     !inactive?
   end
 
+  # Masks the local part of the email for display, keeping its first and last
+  # characters alongside the full domain (e.g. "u...r@example.com").
+  def anonymized_email
+    return email_address if email_address.blank?
+
+    local, separator, domain = email_address.rpartition("@")
+    return mask_local_part(email_address) if separator.empty?
+
+    "#{mask_local_part(local)}@#{domain}"
+  end
+
   def deactivate_email!(reason:)
     update!(
       email_deactivated_at: Time.current,
@@ -164,6 +175,14 @@ class User < ApplicationRecord
   end
 
   private
+
+  def mask_local_part(local)
+    case local.length
+    when 0 then "..."
+    when 1 then "#{local}..."
+    else "#{local[0]}...#{local[-1]}"
+    end
+  end
 
   def both_emails_are_globally_unique
     errors.add(:base, "email is already taken") if other_records_with_same_email?

@@ -23,6 +23,21 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.errors[:base], "email is already taken"
   end
 
+  test "#anonymized_email should keep first and last local characters with full domain" do
+    user = build(:user, email_address: "username@gmail.com")
+    assert_equal "u...e@gmail.com", user.anonymized_email
+  end
+
+  test "#anonymized_email should handle a single-character local part" do
+    user = build(:user, email_address: "a@example.com")
+    assert_equal "a...@example.com", user.anonymized_email
+  end
+
+  test "#anonymized_email should mask the whole value when there is no domain" do
+    user = build(:user, email_address: "username")
+    assert_equal "u...e", user.anonymized_email
+  end
+
   test "should authenticate with correct password" do
     user = create(:user)
     assert user.authenticate("password123")
