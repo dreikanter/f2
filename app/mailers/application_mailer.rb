@@ -10,6 +10,18 @@ class ApplicationMailer < ActionMailer::Base
     Thread.current[:mailer_preview_mode]
   end
 
+  def self.sample_mode=(value)
+    Thread.current[:mailer_sample_mode] = value
+  end
+
+  # Messages built from sample data — email previews and the test emails sent
+  # from them — must not register Events, since their sample recipient has no
+  # real user record. Previews additionally suppress delivery (preview_mode);
+  # test sends keep the real backend so the message is actually delivered.
+  def self.sample_mode?
+    Thread.current[:mailer_sample_mode] || preview_mode?
+  end
+
   # Building a message instantiates the configured delivery backend, and the
   # Resend backend raises when no API key is set. Previews only render the
   # message and never deliver it, so swap in the no-op :test backend.
@@ -31,7 +43,7 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   def register_event
-    return if self.class.preview_mode?
+    return if self.class.sample_mode?
 
     Event.create!(
       type: event_type,
