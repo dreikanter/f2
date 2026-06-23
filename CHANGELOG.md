@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-23
 
-- Use cards presentation for email or password on the Settings page.
+- Use cards presentation for Change email and Change password on the Settings page.
 - The access token page now shows an arrow next to the groups list, making it clear you can expand it.
 
 ## 2026-06-22
