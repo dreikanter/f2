@@ -102,6 +102,10 @@ env:
     RAILS_ENV: staging
     HOSTS: dev.fffeeder.com
     ACTION_MAILER_HOST: dev.fffeeder.com
+    # ApplicationMailer defaults the sender to noreply@frf.im, but that domain
+    # isn't verified in staging's Resend workspace, so every send is rejected.
+    # Send from the verified fffeeder.com domain instead.
+    MAILER_FROM: hello@fffeeder.com
     # Mirror production's clustered Puma (2 workers x 3 threads) so staging
     # exercises the real multi-worker paths: per-worker counter flushing,
     # single-master gauge sampling, and cross-worker Solid Cable broadcast.
