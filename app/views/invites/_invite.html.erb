@@ -4,7 +4,7 @@
      class="<%= class_names('w-full rounded-lg border bg-white px-4 py-3 shadow-xs', { 'border-emerald-300 bg-emerald-50': new_invite_id == invite.id, 'border-slate-200': new_invite_id != invite.id }) %>">
   <% if invite.used? %>
     <div class="text-sm text-slate-700" data-key="invites.invited_email"><%= invite.invited_user.anonymized_email %></div>
-    <div class="mt-1 text-xs text-slate-400">Registered <%= short_time_ago_tag(invite.invited_user.created_at) %> ago</div>
+    <div class="mt-1 text-xs text-slate-400">Registered <%= short_time_ago_phrase_tag(invite.invited_user.created_at) %></div>
   <% else %>
     <div class="flex items-center justify-between gap-3">
       <code class="min-w-0 flex-1 truncate font-mono text-sm text-slate-700"><%= registration_url(code: invite.id) %></code>
@@ -32,6 +32,6 @@
         <% end %>
       </div>
     </div>
-    <div class="mt-1 text-xs text-slate-400">Created <%= short_time_ago_tag(invite.created_at) %> ago</div>
+    <div class="mt-1 text-xs text-slate-400">Created <%= short_time_ago_phrase_tag(invite.created_at) %></div>
   <% end %>
 </div>
