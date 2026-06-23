@@ -43,6 +43,26 @@ module FeedHelper
     end
   end
 
+  # Action menu items for the feed page header. Refresh applies only to an
+  # enabled feed; the destructive actions open the confirmation modals rendered
+  # alongside the feed page.
+  def feed_actions_menu_items(feed)
+    items = []
+    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled?
+    items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
+
+    if feed.target_group.present?
+      items << { label: "Purge feed…", href: "#",
+                 data: { key: "feed.#{feed.id}.purge", controller: "modal-trigger",
+                         modal_trigger_modal_id_value: "purge-modal-#{feed.id}", action: "click->modal-trigger#open" } }
+    end
+    items << { label: "Delete feed…", href: "#",
+               data: { key: "feed.#{feed.id}.delete", controller: "modal-trigger",
+                       modal_trigger_modal_id_value: "delete-feed-modal-#{feed.id}", action: "click->modal-trigger#open" } }
+
+    items
+  end
+
   def feed_summary_line(active_count:, inactive_count:, draft_count:)
     active_part = pluralize_count(active_count, "active feed")
     inactive_part = pluralize_count(inactive_count, "inactive feed")

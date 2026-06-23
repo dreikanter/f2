@@ -14,23 +14,6 @@
                     target: "_blank", rel: "noopener" %>
       <% end %>
     <% end %>
-    <% header.with_action_button do %>
-      <% if feed.enabled? %>
-        <%= form_with url: feed_refresh_path(feed), method: :post, class: "inline-block", data: {
-              controller: "loading-button",
-              action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
-            } do %>
-          <%= render RefreshButtonComponent.new(title: "Refresh now", type: "submit") %>
-        <% end %>
-      <% elsif feed.draft? %>
-        <%= render RefreshButtonComponent.new(title: "Finish setting up this feed first", disabled: true) %>
-      <% else %>
-        <%= render RefreshButtonComponent.new(title: "Enable this feed to refresh it", disabled: true) %>
-      <% end %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= link_to "Edit", edit_feed_path(feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
-    <% end %>
     <% if feed.enabled? %>
       <% header.with_action_button do %>
         <%= button_to "Disable",
@@ -55,6 +38,9 @@
       <% header.with_action_button do %>
         <button type="button" disabled title="Complete setup to enable this feed" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Enable</button>
       <% end %>
+    <% end %>
+    <% header.with_action_button do %>
+      <%= render DropdownMenuComponent.new(menu_id: "feed-header-menu-#{feed.id}", items: feed_actions_menu_items(feed), width: "w-44") %>
     <% end %>
   <% end %>
 </div>

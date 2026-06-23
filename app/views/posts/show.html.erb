@@ -11,14 +11,14 @@
       ) %>
     <% end %>
     <% header.with_action_button do %>
-      <%= link_to "Source", feed_entry_path(@post.feed_entry), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
-    <% end %>
-    <% if policy(@post).destroy? %>
-      <% header.with_action_button do %>
-        <%= link_to "Delete…", "#",
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer",
-                    data: { controller: "modal-trigger", modal_trigger_modal_id_value: PostDeleteModalComponent.modal_id(@post), action: "click->modal-trigger#open" } %>
+      <% items = [{ label: "Source", href: feed_entry_path(@post.feed_entry), data: { key: "post.source" } }] %>
+      <% if policy(@post).destroy? %>
+        <% items << { label: "Delete…", href: "#",
+                      data: { key: "post.delete", controller: "modal-trigger",
+                              modal_trigger_modal_id_value: PostDeleteModalComponent.modal_id(@post),
+                              action: "click->modal-trigger#open" } } %>
       <% end %>
+      <%= render DropdownMenuComponent.new(menu_id: "post-header-menu-#{@post.id}", items: items, width: "w-40") %>
     <% end %>
   <% end %>
 

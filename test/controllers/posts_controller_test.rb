@@ -158,6 +158,29 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='post.freefeed_post_id']"
   end
 
+  test "#show should gather post actions in the header menu" do
+    sign_in_as(user)
+    published_post = create(:post, :published, feed: feed)
+
+    get post_url(published_post)
+
+    assert_response :success
+    assert_select "button[data-dropdown-toggle='post-header-menu-#{published_post.id}']"
+    assert_select "#post-header-menu-#{published_post.id} a[data-key='post.source'][href='#{feed_entry_path(published_post.feed_entry)}']", text: "Source"
+    assert_select "#post-header-menu-#{published_post.id} a[data-key='post.delete']", text: "Delete…"
+  end
+
+  test "#show should omit delete from the menu when deletion is not allowed" do
+    sign_in_as(user)
+    draft_post = create(:post, feed: feed)
+
+    get post_url(draft_post)
+
+    assert_response :success
+    assert_select "#post-header-menu-#{draft_post.id} a[data-key='post.source']", text: "Source"
+    assert_select "#post-header-menu-#{draft_post.id} a[data-key='post.delete']", count: 0
+  end
+
   test "#destroy should withdraw the FreeFeed post and create event" do
     sign_in_as(user)
     published_post = create(:post, :published, feed: feed, freefeed_post_id: "test-123")

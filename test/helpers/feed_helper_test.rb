@@ -135,6 +135,42 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal :gray, result.instance_variable_get(:@color)
   end
 
+  test "#feed_actions_menu_items should list refresh, edit, purge, and delete for an enabled feed" do
+    feed = create(:feed, :enabled, target_group: "testgroup")
+
+    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+
+    assert_equal ["Refresh", "Edit", "Purge feed…", "Delete feed…"], labels
+  end
+
+  test "#feed_actions_menu_items should omit refresh for a feed that is not enabled" do
+    feed = create(:feed, :disabled, target_group: "testgroup")
+
+    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+
+    assert_equal ["Edit", "Purge feed…", "Delete feed…"], labels
+  end
+
+  test "#feed_actions_menu_items should omit purge when the feed has no target group" do
+    feed = create(:feed, :enabled, target_group: "testgroup")
+    feed.target_group = nil
+
+    labels = feed_actions_menu_items(feed).map { |item| item[:label] }
+
+    assert_equal ["Refresh", "Edit", "Delete feed…"], labels
+  end
+
+  test "#feed_actions_menu_items should wire refresh to a POST and danger actions to their modals" do
+    feed = create(:feed, :enabled, target_group: "testgroup")
+
+    items = feed_actions_menu_items(feed).index_by { |item| item[:label] }
+
+    assert_equal :post, items["Refresh"][:method]
+    assert_equal feed_refresh_path(feed), items["Refresh"][:href]
+    assert_equal "purge-modal-#{feed.id}", items["Purge feed…"].dig(:data, :modal_trigger_modal_id_value)
+    assert_equal "delete-feed-modal-#{feed.id}", items["Delete feed…"].dig(:data, :modal_trigger_modal_id_value)
+  end
+
   test "#feed_missing_enablement_parts should not report source missing for query-type feed with query" do
     access_token = create(:access_token, :active)
     feed = build(:feed, access_token: access_token, target_group: "testgroup",

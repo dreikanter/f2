@@ -453,6 +453,28 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{edit_feed_path(feed)}']", text: "Edit"
   end
 
+  test "#show should gather feed actions in the header menu" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token, target_group: "testgroup")
+
+    get feed_url(enabled)
+
+    assert_response :success
+    assert_select "button[data-dropdown-toggle='feed-header-menu-#{enabled.id}']"
+    assert_select "#feed-header-menu-#{enabled.id} form[action='#{feed_refresh_path(enabled)}'] button[data-key='feed.#{enabled.id}.refresh']", text: "Refresh"
+    assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.edit'][href='#{edit_feed_path(enabled)}']", text: "Edit"
+    assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.purge']", text: "Purge feed…"
+    assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.delete']", text: "Delete feed…"
+  end
+
+  test "#show should no longer render the More Actions danger zone section" do
+    sign_in_as(user)
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "[data-key='feed.more-actions']", count: 0
+  end
+
   test "#show should link to the Freefeed group regardless of feed state" do
     sign_in_as(user)
     disabled = create(:feed, :disabled, user: user, access_token: access_token, target_group: "testgroup")
