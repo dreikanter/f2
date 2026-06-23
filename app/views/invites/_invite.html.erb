@@ -1,0 +1,51 @@
+<%# locals: (invite:, new_invite_id: nil) %>
+<%
+  # CardComponent's base bg/border/shadow can't be overridden by appending
+  # utilities (Tailwind orders them after ours), so the per-state tint goes on
+  # the section instead, where there's no competing background.
+  section_class =
+    if invite.used?
+      "px-4 py-3 bg-slate-50"
+    elsif new_invite_id == invite.id
+      "px-4 py-3 bg-emerald-50"
+    else
+      "px-4 py-3"
+    end
+  icon_button_class = "inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+%>
+<%= render CardComponent.new(id: dom_id(invite), data: { key: "invites.card" }) do |card| %>
+  <% card.with_section(class: section_class) do %>
+    <% if invite.used? %>
+      <div class="text-sm text-slate-500" data-key="invites.invited_email"><%= invite.invited_user.anonymized_email %></div>
+      <div class="mt-1 text-xs text-slate-400">Registered <%= short_time_ago_phrase_tag(invite.invited_user.created_at) %></div>
+    <% else %>
+      <div class="flex items-center justify-between gap-3">
+        <code class="min-w-0 flex-1 truncate font-mono text-sm text-slate-700"><%= registration_url(code: invite.id) %></code>
+        <div class="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            class="<%= icon_button_class %>"
+            data-controller="clipboard"
+            data-clipboard-text-value="<%= registration_url(code: invite.id) %>"
+            data-action="click->clipboard#copy"
+            data-key="invites.copy"
+            title="Copy invitation link">
+            <%= icon("clipboard", css_class: "size-4") %>
+            <span class="sr-only">Copy invitation link</span>
+          </button>
+          <% if policy(invite).destroy? %>
+            <%= button_to invite_path(invite),
+                          method: :delete,
+                          class: icon_button_class,
+                          data: { key: "invites.delete" },
+                          form: { data: { turbo_confirm: "Are you sure you want to delete this invitation?" } } do %>
+              <%= icon("trash-2", css_class: "size-4") %>
+              <span class="sr-only">Delete invite</span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      <div class="mt-1 text-xs text-slate-400">Created <%= short_time_ago_phrase_tag(invite.created_at) %></div>
+    <% end %>
+  <% end %>
+<% end %>

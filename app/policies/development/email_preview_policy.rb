@@ -6,4 +6,8 @@ class Development::EmailPreviewPolicy < ApplicationPolicy
   def show?
     dev?
   end
+
+  def create?
+    dev?
+  end
 end

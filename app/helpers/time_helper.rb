@@ -84,6 +84,23 @@ module TimeHelper
     )
   end
 
+  # Compact relative time as a natural phrase ("10d ago", or "just now" for the
+  # most recent moments so a freshly created record doesn't read "now ago"),
+  # wrapped in a <time> element with the exact timestamp as a tooltip.
+  def short_time_ago_phrase_tag(time)
+    return nil unless time
+
+    short = short_time_ago(time)
+    phrase = short == "now" ? "just now" : "#{short} ago"
+
+    content_tag(
+      :time,
+      phrase,
+      datetime: time.rfc3339,
+      title: long_time_format(time)
+    )
+  end
+
   def datetime_with_duration_tag(time)
     return nil unless time
 

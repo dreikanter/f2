@@ -14,11 +14,13 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "#create should send email for active user" do
+  test "#create should send email and record an event for active user" do
     user = create(:user, state: :active)
 
-    assert_enqueued_with(job: ActionMailer::MailDeliveryJob) do
-      post passwords_url, params: { email_address: user.email_address }
+    assert_difference -> { Event.where(type: "mail.passwords_mailer.reset", user: user).count }, 1 do
+      assert_enqueued_with(job: ActionMailer::MailDeliveryJob) do
+        post passwords_url, params: { email_address: user.email_address }
+      end
     end
 
     assert_redirected_to new_session_path

@@ -29,6 +29,36 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav[aria-label='Breadcrumb'] a[href=?]", settings_path, text: "Settings"
   end
 
+  test "should show anonymized invited email for a used invite" do
+    invited = create(:user, email_address: "invitee@example.com")
+    create(:invite, created_by_user: user, invited_user: invited)
+    sign_in_as user
+
+    get invites_url
+
+    assert_response :success
+    assert_select '[data-key="invites.invited_email"]', text: "i...e@example.com"
+  end
+
+  test "should not render a copy button for a used invite" do
+    invited = create(:user, email_address: "invitee@example.com")
+    create(:invite, created_by_user: user, invited_user: invited)
+    sign_in_as user
+
+    get invites_url
+
+    assert_select '[data-key="invites.copy"]', count: 0
+  end
+
+  test "should render a copy button for an unused invite" do
+    invite
+    sign_in_as user
+
+    get invites_url
+
+    assert_select '[data-key="invites.copy"]'
+  end
+
   test "should create invite when user has available invites" do
     sign_in_as user
     assert_difference("Invite.count", 1) do

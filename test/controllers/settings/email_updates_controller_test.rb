@@ -16,8 +16,10 @@ class Settings::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "should request email confirmation for valid email change" do
     sign_in_user
-    assert_emails 1 do
-      patch settings_email_update_url, params: { user: { email_address: "newemail@example.com" } }
+    assert_difference -> { Event.where(type: "mail.profile_mailer.email_change_confirmation", user: user).count }, 1 do
+      assert_emails 1 do
+        patch settings_email_update_url, params: { user: { email_address: "newemail@example.com" } }
+      end
     end
     assert_redirected_to settings_path
     assert_match "Email confirmation sent", flash[:notice]
