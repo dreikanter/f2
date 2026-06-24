@@ -6,7 +6,7 @@ module HttpClient
   # Built for a single feed-identification run, where matching and per-candidate
   # testing fetch the same source URLs repeatedly. This adapter allows to reuse
   # downloaded web content multiple times in a row, rather than fetching it again.
-  # 
+  #
   # Do NOT use this adapter when you need HTTP-headers drived cache. It is build
   # for a different use case.
   #
