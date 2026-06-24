@@ -90,26 +90,29 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def menu_items
-    items = [{ label: "Details", href: feed_url, data: { key: "feed.#{feed.id}.details" } }]
-    items << { label: "Source", href: source_url, target: "_blank", rel: "noopener", data: { key: "feed.#{feed.id}.source" } } if source_url
+    items = []
+
+    # An incomplete draft leads with "Continue setup" and drops "Details" —
+    # there's nothing worth showing on the feed page until it has run.
+    if continue_setup?
+      items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }
+    else
+      items << { label: "Details", href: feed_url, data: { key: "feed.#{feed.id}.details" } }
+    end
 
     if management_actions?
-      if draft?
-        items << { label: "Continue setup", href: edit_url, data: { key: "feed.#{feed.id}.continue_setup" } }
-      else
-        items << { label: "Edit", href: edit_url, data: { key: "feed.#{feed.id}.edit" } }
-        if enabled?
-          items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
-                     data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
-        elsif can_be_enabled?
-          items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
-                     data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
-        end
+      items << { label: "Edit", href: edit_url, data: { key: "feed.#{feed.id}.edit" } } unless draft?
+
+      # A ready draft can be enabled straight from the list, same as a paused feed.
+      if enabled?
+        items << { label: "Disable", href: status_url, method: :patch, params: { status: "disabled" },
+                   data: { key: "feed.#{feed.id}.disable", turbo_confirm: DISABLE_CONFIRM } }
+      elsif can_be_enabled?
+        items << { label: "Enable", href: status_url, method: :patch, params: { status: "enabled" },
+                   data: { key: "feed.#{feed.id}.enable", turbo_confirm: ENABLE_CONFIRM } }
       end
 
-      if draft?
-        items << { label: "Discard…", href: feed_url, data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } }
-      end
+      items << { label: "Discard…", href: feed_url, data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } } if draft?
     end
 
     items
@@ -152,18 +155,17 @@ class FeedListItemComponent < ListItemComponent
     !admin
   end
 
+  # A draft still being set up leads with "Continue setup" instead of "Details".
+  def continue_setup?
+    management_actions? && draft?
+  end
+
   def status_icon
     helpers.feed_status_icon(feed)
   end
 
   def menu_id
     "feed-menu-#{feed.id}"
-  end
-
-  # Query-shaped profiles (AI search) have no URL to open, so the menu only
-  # offers a source link when the feed's input is an actual URL.
-  def source_url
-    feed.source_input.presence if feed.source_input_shape == "url"
   end
 
   def target_group_label

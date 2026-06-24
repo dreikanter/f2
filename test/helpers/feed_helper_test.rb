@@ -41,6 +41,14 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal [], result
   end
 
+  test "#feed_missing_enablement_parts should include name when blank" do
+    access_token = create(:access_token, :active)
+    feed = build(:feed, access_token: access_token, target_group: "test_group", name: "")
+    result = feed_missing_enablement_parts(feed)
+
+    assert_includes result, "name"
+  end
+
   test "#feed_status_icon should render enabled icon" do
     feed = build(:feed, :enabled)
 

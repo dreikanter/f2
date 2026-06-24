@@ -333,6 +333,14 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_enabled?
   end
 
+  test "#can_be_enabled? returns false when feed has a blank name" do
+    user = create(:user)
+    access_token = create(:access_token, :active, user: user)
+    feed = create(:feed, user: user, access_token: access_token, target_group: "test_group", name: "")
+
+    assert_not feed.can_be_enabled?
+  end
+
   test "#can_be_enabled? returns false when feed has no access token" do
     feed = create(:feed, :without_access_token)
 
