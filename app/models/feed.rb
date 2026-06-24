@@ -214,7 +214,7 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
+    name.present? && access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If

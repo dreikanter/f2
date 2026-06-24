@@ -22,6 +22,16 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", feed.state
   end
 
+  test "#update should enable a ready draft feed" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    patch feed_status_path(draft), params: { status: "enabled" }
+
+    assert_redirected_to draft
+    assert_equal "enabled", draft.reload.state
+  end
+
   test "#update should disable feed" do
     sign_in_as(user)
     feed.update!(state: :enabled)
