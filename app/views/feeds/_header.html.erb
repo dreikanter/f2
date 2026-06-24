@@ -40,7 +40,7 @@
       <% end %>
     <% end %>
     <% header.with_action_button do %>
-      <%= render DropdownMenuComponent.new(menu_id: "feed-header-menu-#{feed.id}", items: feed_actions_menu_items(feed), width: "w-44", variant: :header) %>
+      <%= render HeaderMenuComponent.new(menu_id: "feed-header-menu-#{feed.id}", items: feed_actions_menu_items(feed), width: "w-44") %>
     <% end %>
   <% end %>
 </div>

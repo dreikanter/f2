@@ -18,7 +18,7 @@
                               modal_trigger_modal_id_value: PostDeleteModalComponent.modal_id(@post),
                               action: "click->modal-trigger#open" } } %>
       <% end %>
-      <%= render DropdownMenuComponent.new(menu_id: "post-header-menu-#{@post.id}", items: items, width: "w-40", variant: :header) %>
+      <%= render HeaderMenuComponent.new(menu_id: "post-header-menu-#{@post.id}", items: items, width: "w-40") %>
     <% end %>
   <% end %>
 
