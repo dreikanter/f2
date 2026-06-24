@@ -186,6 +186,21 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
   end
 
+  test "#identify should fetch the input URL once across repeated runs of one fetcher" do
+    url = "http://example.com/feed.xml"
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Example Feed</title></channel></rss>
+    XML
+    stub_request(:get, url).to_return(status: 200, body: rss_content)
+
+    fetcher = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
+    fetcher.identify
+    fetcher.identify
+
+    assert_requested :get, url, times: 1
+  end
+
   test "#identify should record the AI fallback as the only candidate when no structured profile matches" do
     url = "http://example.com/page.html"
     stub_request(:get, url).to_return(status: 200, body: "<html><body/></html>")

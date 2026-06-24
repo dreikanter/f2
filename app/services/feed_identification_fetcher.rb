@@ -59,8 +59,10 @@ class FeedIdentificationFetcher
     end
   end
 
+  # Cache GETs for the duration of one identification run so matching and
+  # per-candidate testing fetch each source URL at most once.
   def http_client
-    @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
+    @http_client ||= HttpClient::Caching.new(HttpClient.build(timeout: 15, max_redirects: 5))
   end
 
   def serialize_candidates(candidates)
