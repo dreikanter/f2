@@ -36,6 +36,19 @@ class HttpClient::CachingAdapterTest < ActiveSupport::TestCase
     assert_requested :get, "https://example.com/b", times: 1
   end
 
+  test "keys the cache by request headers" do
+    stub_request(:get, "https://example.com/feed")
+      .to_return(status: 200, body: "anon").then
+      .to_return(status: 200, body: "with-ua")
+
+    anon = client.get("https://example.com/feed")
+    with_ua = client.get("https://example.com/feed", headers: { "User-Agent" => "x" })
+
+    assert_equal "anon", anon.body
+    assert_equal "with-ua", with_ua.body
+    assert_requested :get, "https://example.com/feed", times: 2
+  end
+
   test "does not cache non-2xx responses" do
     stub_request(:get, "https://example.com/flaky")
       .to_return(status: 404, body: "missing").then
