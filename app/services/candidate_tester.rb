@@ -56,12 +56,12 @@ class CandidateTester
     feed.processor_instance(raw_data).process
   end
 
-  # One entry's normalization. A raise means this entry can't become a valid
-  # post; while probing compatibility that's an expected outcome, so it's
-  # swallowed and the entry simply doesn't count toward posts_found.
+  # Whether one entry yields a publishable post. The normalizer raises on a
+  # structurally broken entry, and returns a :rejected post when content/URL
+  # validation fails; only an :enqueued post counts as a real post. Both
+  # failures are expected while probing compatibility, so they're swallowed.
   def normalized?(entry)
-    normalize(entry)
-    true
+    normalize(entry).enqueued?
   rescue StandardError
     false
   end

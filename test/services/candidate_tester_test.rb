@@ -16,6 +16,17 @@ class CandidateTesterTest < ActiveSupport::TestCase
     ITEM
   end
 
+  # Valid uid + date so the normalizer doesn't raise, but no content and no URL,
+  # so the post is rejected by validation (status :rejected, not :enqueued).
+  def rss_item_rejected
+    <<~ITEM
+      <item>
+        <guid>https://example.com/x</guid>
+        <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+      </item>
+    ITEM
+  end
+
   def rss_feed(items)
     <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
@@ -67,6 +78,17 @@ class CandidateTesterTest < ActiveSupport::TestCase
     stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item(uid: false)))
 
     assert_equal :failed, result_for(url).status
+  end
+
+  test "#call should fail when entries normalize only into rejected posts" do
+    # Parses fine, but the post fails content/URL validation (status :rejected),
+    # so it is not a real post and the candidate does not pass.
+    url = "https://example.com/rejected.xml"
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item_rejected))
+
+    result = result_for(url)
+    assert_equal :failed, result.status
+    assert_equal 0, result.posts_found
   end
 
   test "#call should be unreachable on a server error" do
