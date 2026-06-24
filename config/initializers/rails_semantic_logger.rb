@@ -5,16 +5,21 @@
 # `require "action_cable/connection/tagged_logger_proxy"` from an after_initialize
 # hook — a LoadError that aborts eager-load boot. Alias the old constant onto the
 # new class so the gem's patch still lands, and seed the stale path into
-# $LOADED_FEATURES so the require is a no-op. The gem loads only on the deployed
+# $LOADED_FEATURES so the require is a no-op. Released Rails still ships the old
+# path, so the shim self-disables there. The gem loads only on the deployed
 # environments (see Gemfile); remove once it targets ActionCable::Server.
 if defined?(RailsSemanticLogger) && defined?(ActionCable)
-  require "action_cable/server/tagged_logger_proxy"
+  begin
+    require "action_cable/server/tagged_logger_proxy"
 
-  module ActionCable
-    module Connection
-      TaggedLoggerProxy = ActionCable::Server::TaggedLoggerProxy unless defined?(TaggedLoggerProxy)
+    module ActionCable
+      module Connection
+        TaggedLoggerProxy = ActionCable::Server::TaggedLoggerProxy unless defined?(TaggedLoggerProxy)
+      end
     end
-  end
 
-  $LOADED_FEATURES << "action_cable/connection/tagged_logger_proxy.rb"
+    $LOADED_FEATURES << "action_cable/connection/tagged_logger_proxy.rb"
+  rescue LoadError
+    # Released Rails keeps ActionCable::Connection::TaggedLoggerProxy; no shim needed.
+  end
 end
