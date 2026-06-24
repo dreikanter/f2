@@ -16,12 +16,14 @@ class CandidateTesterTest < ActiveSupport::TestCase
     ITEM
   end
 
-  # Valid uid + date so the normalizer doesn't raise, but no content and no URL,
-  # so the post is rejected by validation (status :rejected, not :enqueued).
+  # Normalizes without raising (it has a uid and a date) but fails validation:
+  # the only URL is non-HTTP, so the post is rejected (status :rejected, not
+  # :enqueued) for missing_url.
   def rss_item_rejected
     <<~ITEM
       <item>
-        <guid>https://example.com/x</guid>
+        <title>Body here</title>
+        <link>ftp://example.com/x</link>
         <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
       </item>
     ITEM
