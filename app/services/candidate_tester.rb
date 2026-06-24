@@ -36,10 +36,13 @@ class CandidateTester
     posts_found = entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
     status = entries.empty? || posts_found.positive? ? :passed : :failed
     Result.new(status: status, posts_found: posts_found)
-  rescue Loader::Error => e
-    Result.new(status: fetch_failure?(e) ? :unreachable : :failed, posts_found: 0)
   rescue HttpClient::Error
     Result.new(status: :unreachable, posts_found: 0)
+  rescue Loader::Error => e
+    # A wrapped transport error (timeout/connection) is transient → unreachable.
+    # Any other Loader::Error means we fetched but couldn't read the source
+    # (bad status, no feed link, …) → a real failure.
+    Result.new(status: e.cause.is_a?(HttpClient::Error) ? :unreachable : :failed, posts_found: 0)
   rescue StandardError
     Result.new(status: :failed, posts_found: 0)
   end
@@ -74,15 +77,6 @@ class CandidateTester
       feed: feed
     )
     feed.normalizer_instance(feed_entry).normalize
-  end
-
-  # Distinguish a transient fetch problem from a deterministic incompatibility.
-  # Loaders wrap transport errors (timeout/connection), so those surface as the
-  # error's cause; a 5xx is transient too. Everything else a loader raises after
-  # fetching fine (e.g. YouTube's "no feed link") is a real test failure, not an
-  # unreachable source.
-  def fetch_failure?(error)
-    error.cause.is_a?(HttpClient::Error) || error.message.match?(/\bHTTP 5\d\d\b/)
   end
 
   # Non-AI candidates are always URL-shaped (see FeedProfile), so the source

@@ -91,11 +91,11 @@ class CandidateTesterTest < ActiveSupport::TestCase
     assert_equal 0, result.posts_found
   end
 
-  test "#call should be unreachable on a server error" do
+  test "#call should fail on an HTTP error status it could not read" do
     url = "https://example.com/down.xml"
     stub_request(:get, url).to_return(status: 503, body: "boom")
 
-    assert_equal :unreachable, result_for(url).status
+    assert_equal :failed, result_for(url).status
   end
 
   test "#call should be unreachable on a transport timeout" do
