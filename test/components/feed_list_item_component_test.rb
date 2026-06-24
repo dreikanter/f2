@@ -56,14 +56,16 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     assert_includes result.text, "@testgroup"
   end
 
-  test "#render should show Continue setup and Discard in dropdown for draft feeds" do
+  test "#render should lead with Continue setup and hide Details for draft feeds" do
     draft_feed = create(:feed, :draft, user: user)
 
     with_request_url("/feeds") do
       result = render_inline FeedListItemComponent.new(feed: draft_feed)
 
-      assert_not_empty result.css("[data-key='feed.#{draft_feed.id}.continue_setup']")
+      menu_keys = result.css("[role='menuitem']").map { |item| item["data-key"] }
+      assert_equal "feed.#{draft_feed.id}.continue_setup", menu_keys.first
       assert_not_empty result.css("[data-key='feed.#{draft_feed.id}.discard']")
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.details']")
     end
   end
 
@@ -76,7 +78,7 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should show Details action for every feed" do
+  test "#render should show Details action for non-draft feeds" do
     with_request_url("/feeds") do
       result = render_inline FeedListItemComponent.new(feed: feed)
 
@@ -87,26 +89,11 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
-  test "#render should show Source action opening the feed source in a new tab" do
+  test "#render should not show a Source action" do
     with_request_url("/feeds") do
       result = render_inline FeedListItemComponent.new(feed: feed)
 
-      source = result.css("[data-key='feed.#{feed.id}.source']").first
-      assert_not_nil source
-      assert_equal "Source", source.text.strip
-      assert_equal "https://example.com/feed.xml", source["href"]
-      assert_equal "_blank", source["target"]
-    end
-  end
-
-  test "#render should not show Source for query-shaped feeds" do
-    query_feed = create(:feed, user: user, feed_profile_key: "llm_web_search",
-      params: { "query" => "ruby news" })
-
-    with_request_url("/feeds") do
-      result = render_inline FeedListItemComponent.new(feed: query_feed)
-
-      assert_empty result.css("[data-key='feed.#{query_feed.id}.source']")
+      assert_empty result.css("[data-key='feed.#{feed.id}.source']")
     end
   end
 
