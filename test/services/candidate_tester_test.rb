@@ -5,90 +5,101 @@ class CandidateTesterTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
-  def rss_with_item
+  def rss_item(uid: true, published: true)
+    <<~ITEM
+      <item>
+        <title>Hello</title>
+        #{'<link>https://example.com/1</link><guid>https://example.com/1</guid>' if uid}
+        #{'<pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>' if published}
+        <description>Body text</description>
+      </item>
+    ITEM
+  end
+
+  def rss_feed(items)
     <<~XML
       <?xml version="1.0" encoding="UTF-8"?>
       <rss version="2.0">
         <channel>
           <title>Example</title>
-          <item>
-            <title>Hello</title>
-            <link>https://example.com/1</link>
-            <guid>https://example.com/1</guid>
-            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
-            <description>Body text</description>
-          </item>
+          #{items}
         </channel>
       </rss>
     XML
   end
 
-  def empty_rss
-    <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel><title>Brand new</title></channel>
-      </rss>
-    XML
+  # Helper name must not start with `test_`, or Minitest runs it as a test.
+  def result_for(url, profile_key: "rss")
+    CandidateTester.new(user: user, input: url, profile_key: profile_key).call
   end
 
-  # An item with no guid and no link yields a blank uid, which the normalizer
-  # rejects: the source was reachable but the profile can't produce posts.
-  def rss_missing_uid
-    <<~XML
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel>
-          <title>Broken</title>
-          <item>
-            <title>No identifiers</title>
-            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
-          </item>
-        </channel>
-      </rss>
-    XML
-  end
-
-  def test_status_for(url)
-    CandidateTester.new(user: user, input: url, profile_key: "rss").test_status
-  end
-
-  test "#test_status should be passed for a source that yields a valid post" do
+  test "#call should pass and count posts for a source that yields valid posts" do
     url = "https://example.com/feed.xml"
-    stub_request(:get, url).to_return(status: 200, body: rss_with_item)
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item))
 
-    assert_equal :passed, test_status_for(url)
+    result = result_for(url)
+    assert_equal :passed, result.status
+    assert_equal 1, result.posts_found
   end
 
-  test "#test_status should be passed for an empty-but-valid source" do
+  test "#call should pass an empty-but-valid source with zero posts found" do
     url = "https://example.com/new.xml"
-    stub_request(:get, url).to_return(status: 200, body: empty_rss)
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(""))
 
-    assert_equal :passed, test_status_for(url)
+    result = result_for(url)
+    assert_equal :passed, result.status
+    assert_equal 0, result.posts_found
   end
 
-  test "#test_status should be failed when normalization produces nothing valid" do
+  test "#call should pass when at least one entry normalizes even if another fails" do
+    # First item has no uid (normalizer rejects it); the second is valid. A
+    # single bad entry must not fail an otherwise-working feed.
+    url = "https://example.com/mixed.xml"
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item(uid: false) + rss_item))
+
+    result = result_for(url)
+    assert_equal :passed, result.status
+    assert_equal 1, result.posts_found
+  end
+
+  test "#call should fail when no sampled entry normalizes into a valid post" do
     url = "https://example.com/broken.xml"
-    stub_request(:get, url).to_return(status: 200, body: rss_missing_uid)
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item(uid: false)))
 
-    assert_equal :failed, test_status_for(url)
+    assert_equal :failed, result_for(url).status
   end
 
-  test "#test_status should be unreachable when the source can't be fetched" do
+  test "#call should be unreachable on a server error" do
     url = "https://example.com/down.xml"
-    stub_request(:get, url).to_return(status: 500, body: "boom")
+    stub_request(:get, url).to_return(status: 503, body: "boom")
 
-    assert_equal :unreachable, test_status_for(url)
+    assert_equal :unreachable, result_for(url).status
   end
 
-  test "#test_status should reuse a warm http client instead of fetching again" do
+  test "#call should be unreachable on a transport timeout" do
+    url = "https://example.com/slow.xml"
+    stub_request(:get, url).to_raise(HttpClient::TimeoutError.new("timed out"))
+
+    assert_equal :unreachable, result_for(url).status
+  end
+
+  test "#call should fail when the source is reachable but exposes no feed" do
+    # YouTube fetches the page fine, then can't find a feed link — a real
+    # compatibility failure, not an unreachable source.
+    url = "https://www.youtube.com/@handle"
+    stub_request(:get, url).to_return(status: 200, body: "<html><head></head><body>no feed</body></html>")
+
+    assert_equal :failed, result_for(url, profile_key: "youtube").status
+  end
+
+  test "#call should reuse a warm http client instead of fetching again" do
     url = "https://example.com/cached.xml"
-    stub_request(:get, url).to_return(status: 200, body: rss_with_item)
+    stub_request(:get, url).to_return(status: 200, body: rss_feed(rss_item))
 
     client = HttpClient.build(adapter: HttpClient::CachingAdapter)
     client.get(url) # warm the cache, as matching would before testing
 
-    CandidateTester.new(user: user, input: url, profile_key: "rss", http_client: client).test_status
+    CandidateTester.new(user: user, input: url, profile_key: "rss", http_client: client).call
 
     assert_requested :get, url, times: 1
   end
