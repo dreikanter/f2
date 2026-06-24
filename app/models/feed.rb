@@ -234,9 +234,10 @@ class Feed < ApplicationRecord
   end
 
   # Creates and returns a loader instance for this feed
+  # @param options [Hash] loader options (e.g. a shared :http_client)
   # @return [Loader::Base] loader instance
-  def loader_instance
-    loader_class.new(self)
+  def loader_instance(options = {})
+    loader_class.new(self, options)
   end
 
   # Creates and returns a processor instance for this feed

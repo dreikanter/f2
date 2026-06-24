@@ -163,6 +163,34 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal false, candidate["depends_on_ai"]
     assert_equal 0, candidate["rank"]
     assert_equal "specific_match", candidate["rank_reason"]
+
+    # Empty-but-valid source still passes the self-test, flagged with zero posts
+    # found; the AI fallback is skipped (detection stays LLM-free).
+    assert_equal "passed", candidate["test_status"]
+    assert_equal 0, candidate["posts_found"]
+    assert candidate["tested_at"].present?
+
+    ai_candidate = feed_identification.candidates.last
+    assert_equal "llm_website_extractor", ai_candidate["profile_key"]
+    assert_equal "not_tested", ai_candidate["test_status"]
+    assert_nil ai_candidate["tested_at"]
+  end
+
+  test "#identify should fetch each source URL once across matching and testing" do
+    url = "http://example.com/feed.xml"
+
+    rss_content = <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel><title>Example Feed</title></channel>
+      </rss>
+    XML
+
+    stub_request(:get, url).to_return(status: 200, body: rss_content)
+
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+
+    assert_requested :get, url, times: 1
   end
 
   test "#identify should persist multiple candidates ranked when multiple match" do

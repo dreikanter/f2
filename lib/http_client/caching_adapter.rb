@@ -14,8 +14,9 @@ module HttpClient
   # to a live request every time, so a transient blip can't poison the cache or
   # mask a recovery. POST/PUT/DELETE are never cached (inherited unchanged).
   #
-  # Keyed on URL alone, which is lossless here: within one run each URL is
-  # fetched the same way. Not thread-safe, a cache belongs to one run.
+  # Keyed on URL plus request headers, so a header-less matcher fetch and a
+  # loader fetch that sends its own headers (e.g. a User-Agent) don't collide.
+  # Not thread-safe, a cache belongs to one run.
   class CachingAdapter < FaradayAdapter
     DEFAULT_TTL = 60
 
@@ -33,11 +34,12 @@ module HttpClient
     end
 
     def get(url, headers: {}, options: {})
-      entry = @cache[url]
+      key = [url, headers]
+      entry = @cache[key]
       return entry.response if entry && !entry.expired?
 
       response = super
-      @cache[url] = CacheEntry.new(response, monotonic_time + @cache_ttl) if response.success?
+      @cache[key] = CacheEntry.new(response, monotonic_time + @cache_ttl) if response.success?
       response
     end
 

@@ -13,7 +13,7 @@ class FeedIdentificationFetcher
     if result.candidates.any?
       feed_identification.update!(
         status: :success,
-        candidates: result.candidates.as_json,
+        candidates: tested_candidates(result.candidates),
         error: nil
       )
     else
@@ -59,7 +59,35 @@ class FeedIdentificationFetcher
     end
   end
 
+  # Serialize each candidate with its self-test verdict. Non-AI candidates run
+  # the real pipeline; AI candidates are never tested (detection stays LLM-free).
+  def tested_candidates(candidates)
+    candidates.map { |candidate| candidate.as_json.merge(test_result(candidate)) }
+  end
+
+  def test_result(candidate)
+    return { "test_status" => "not_tested" } if candidate.depends_on_ai
+
+    result = CandidateTester.new(
+      user: @user,
+      input: @input,
+      profile_key: candidate.profile_key,
+      http_client: http_client
+    ).call
+
+    {
+      "test_status" => result.status.to_s,
+      "tested_at" => Time.current.iso8601,
+      "posts_found" => result.posts_found
+    }
+  end
+
+  # A per-run cache so matching and per-candidate testing fetch each URL once.
+  # Scoped to this fetcher instance (one identification run); scheduled refreshes
+  # build their own loaders and are unaffected.
   def http_client
-    @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
+    @http_client ||= HttpClient.build(
+      adapter: HttpClient::CachingAdapter, timeout: 15, max_redirects: 5
+    )
   end
 end
