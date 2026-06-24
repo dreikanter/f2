@@ -3,7 +3,7 @@
           id="<%= menu_id %>-button"
           data-dropdown-toggle="<%= menu_id %>"
           data-dropdown-placement="bottom-end"
-          class="inline-flex size-7 items-center justify-center rounded text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          class="<%= trigger_class %>"
           aria-haspopup="true"
           aria-expanded="false">
     <%= helpers.icon("ellipsis", css_class: "size-4") %>

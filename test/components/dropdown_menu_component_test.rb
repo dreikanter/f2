@@ -16,6 +16,12 @@ class DropdownMenuComponentTest < ViewComponent::TestCase
     assert_includes result.at_css("#m")["class"], "w-40"
   end
 
+  test "#render should use the compact ellipsis trigger" do
+    result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: []))
+
+    assert_includes result.at_css("button[data-dropdown-toggle='m']")["class"], "size-7"
+  end
+
   test "#render should render plain items as links carrying their data" do
     result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: [
       { label: "Details", href: "/feeds/1", data: { key: "feed.1.details" } }

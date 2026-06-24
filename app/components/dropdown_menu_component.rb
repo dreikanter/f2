@@ -1,5 +1,6 @@
 # An ellipsis "more options" button that toggles a dropdown of actions. Shared
-# by the feed and post list rows, which differ only in their items.
+# by the feed and post list rows and cards, which differ only in their items.
+# HeaderMenuComponent subclasses it for the bordered trigger used in page headers.
 #
 # Each item is a hash; nils are dropped so callers can build the list with inline
 # conditionals. Items with a `method` render as button_to forms (e.g. enable /
@@ -19,6 +20,14 @@ class DropdownMenuComponent < ViewComponent::Base
   private
 
   attr_reader :menu_id, :items, :width, :label
+
+  # The square, icon-only trigger styling — a subtle borderless ellipsis here.
+  # HeaderMenuComponent overrides it to match the bordered action buttons
+  # (Enable, Refresh) it sits beside in a page header.
+  def trigger_class
+    "inline-flex size-7 items-center justify-center rounded text-slate-400 transition " \
+      "hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+  end
 
   def render_item(item)
     if item[:method]
