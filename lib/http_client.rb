@@ -7,6 +7,7 @@
 #
 require_relative "http_client/base"
 require_relative "http_client/faraday_adapter"
+require_relative "http_client/caching_adapter"
 
 module HttpClient
   class Response
