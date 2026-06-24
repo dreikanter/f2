@@ -140,6 +140,30 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     assert_nil Thread.current[:llm_detection_phase], "flag must be cleared after call"
   end
 
+  # Guards the shape persisted to FeedIdentification#candidates: Rails'
+  # native Data#as_json must keep yielding string keys with rank_reason
+  # stringified, so a future field/type change can't silently break it.
+  test "DetectionCandidate should serialize to the persisted candidate hash" do
+    candidate = FeedProfileDetector::DetectionCandidate.new(
+      profile_key: "rss",
+      title: "Example Blog",
+      depends_on_ai: false,
+      rank: 0,
+      rank_reason: :specific_match
+    )
+
+    assert_equal(
+      {
+        "profile_key" => "rss",
+        "title" => "Example Blog",
+        "depends_on_ai" => false,
+        "rank" => 0,
+        "rank_reason" => "specific_match"
+      },
+      candidate.as_json
+    )
+  end
+
   private
 
   def build_matcher_class(class_name, specificity:, &block)

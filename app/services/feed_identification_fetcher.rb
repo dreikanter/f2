@@ -13,7 +13,7 @@ class FeedIdentificationFetcher
     if result.candidates.any?
       feed_identification.update!(
         status: :success,
-        candidates: serialize_candidates(result.candidates),
+        candidates: result.candidates.as_json,
         error: nil
       )
     else
@@ -61,17 +61,5 @@ class FeedIdentificationFetcher
 
   def http_client
     @http_client ||= HttpClient.build(timeout: 15, max_redirects: 5)
-  end
-
-  def serialize_candidates(candidates)
-    candidates.map do |c|
-      {
-        "profile_key" => c.profile_key,
-        "title" => c.title,
-        "depends_on_ai" => c.depends_on_ai,
-        "rank" => c.rank,
-        "rank_reason" => c.rank_reason.to_s
-      }
-    end
   end
 end
