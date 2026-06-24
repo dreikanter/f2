@@ -3,16 +3,14 @@
 # FeedPreviewWorkflow uses) and discarding the posts. Returns a Result:
 #
 #   status:
-#     :passed      — the source is readable: at least one sampled entry produced
-#                    a valid post, or the source is empty-but-valid (a brand-new
-#                    feed with no posts yet still passes)
+#     :passed      — readable: at least one sampled entry produced a valid post,
+#                    or the source is empty-but-valid (a new feed with no posts)
 #     :failed      — fetched fine, but nothing normalized into a valid post
-#     :unreachable — couldn't fetch the source (timeout / connection / 5xx)
+#     :unreachable — couldn't fetch the source (timeout / connection)
 #   posts_found: number of sampled entries that normalized (0 = "no posts yet")
 #
 # The verdict is gated on parse/normalize failure, not fetch failure: a fetch
-# problem says nothing about whether the profile fits the source. A single
-# malformed entry doesn't fail an otherwise-working feed.
+# problem says nothing about whether the profile fits the source.
 #
 # AI candidates are never tested here — detection is deliberately LLM-free, and
 # an AI profile matches anything — so callers mark those :not_tested without
@@ -36,12 +34,10 @@ class CandidateTester
     posts_found = entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
     status = entries.empty? || posts_found.positive? ? :passed : :failed
     Result.new(status: status, posts_found: posts_found)
-  rescue HttpClient::Error
-    Result.new(status: :unreachable, posts_found: 0)
   rescue Loader::Error => e
-    # A wrapped transport error (timeout/connection) is transient → unreachable.
-    # Any other Loader::Error means we fetched but couldn't read the source
-    # (bad status, no feed link, …) → a real failure.
+    # Loaders wrap transport errors (timeout/connection), so a transient failure
+    # shows up as the cause → unreachable. Any other Loader::Error means we
+    # fetched but couldn't read the source (bad status, no feed link) → failure.
     Result.new(status: e.cause.is_a?(HttpClient::Error) ? :unreachable : :failed, posts_found: 0)
   rescue StandardError
     Result.new(status: :failed, posts_found: 0)
