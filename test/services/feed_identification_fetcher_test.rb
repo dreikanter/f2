@@ -164,9 +164,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal 0, candidate["rank"]
     assert_equal "specific_match", candidate["rank_reason"]
 
-    # Empty-but-valid source still passes the self-test; the AI fallback is
-    # skipped (detection stays LLM-free).
+    # Empty-but-valid source still passes the self-test, flagged with zero posts
+    # found; the AI fallback is skipped (detection stays LLM-free).
     assert_equal "passed", candidate["test_status"]
+    assert_equal 0, candidate["posts_found"]
     assert candidate["tested_at"].present?
 
     ai_candidate = feed_identification.candidates.last

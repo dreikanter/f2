@@ -68,14 +68,18 @@ class FeedIdentificationFetcher
   def test_result(candidate)
     return { "test_status" => "not_tested" } if candidate.depends_on_ai
 
-    status = CandidateTester.new(
+    result = CandidateTester.new(
       user: @user,
       input: @input,
       profile_key: candidate.profile_key,
       http_client: http_client
-    ).test_status
+    ).call
 
-    { "test_status" => status.to_s, "tested_at" => Time.current.iso8601 }
+    {
+      "test_status" => result.status.to_s,
+      "tested_at" => Time.current.iso8601,
+      "posts_found" => result.posts_found
+    }
   end
 
   # A per-run cache so matching and per-candidate testing fetch each URL once.
