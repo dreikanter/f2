@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-25
+
+- Fixed the Cancel button not working while a new feed is being checked.
+
 ## 2026-06-23
 
 - A feed you saved without turning on can now be enabled straight from the feed page or the feeds list.

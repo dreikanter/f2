@@ -1,7 +1,11 @@
+<%# Polling marks its host aria-busy while checking, and the global
+    [aria-busy="true"] rule makes that subtree non-interactive. This card holds
+    the Cancel button, so opt out of the busy state to keep it clickable. %>
 <div id="feed-form"
      class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 shadow-xs"
      role="status"
      data-controller="polling"
+     data-polling-indicate-busy-value="false"
      data-polling-endpoint-value="<%= feed_identifications_path(input: input) %>"
      data-polling-interval-value="<%= polling_interval_ms %>"
      data-polling-max-polls-value="<%= polling_max_polls %>"
