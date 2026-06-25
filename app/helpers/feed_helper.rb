@@ -1,6 +1,4 @@
 module FeedHelper
-  CandidateStatus = Data.define(:label, :color, :note)
-
   # Plain-language label for a detection candidate. URL-based candidates
   # use the profile's display_name; query candidates inject the
   # user's input into a short sentence so the chooser feels natural for
@@ -11,29 +9,6 @@ module FeedHelper
       "Follow AI search results for \"#{input}\""
     else
       FeedProfile.display_name_for(profile_key)
-    end
-  end
-
-  def candidate_status(candidate)
-    if candidate.passed?
-      count = candidate.posts_found
-      label = count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
-      note = "No posts yet — we'll pick up new ones as they're published." if count.zero?
-      CandidateStatus.new(label: label, color: :green, note: note)
-    elsif candidate.unreachable?
-      CandidateStatus.new(
-        label: "Couldn't reach",
-        color: :yellow,
-        note: "We couldn't reach the source just now. Pick this only if you think it's temporary."
-      )
-    elsif candidate.failed?
-      CandidateStatus.new(
-        label: "Won't work",
-        color: :red,
-        note: "We tried, but couldn't read any posts from this source."
-      )
-    elsif candidate.not_tested?
-      CandidateStatus.new(label: "Not tested", color: :gray, note: nil)
     end
   end
 

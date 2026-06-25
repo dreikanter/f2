@@ -6,48 +6,12 @@
 
   <div class="space-y-2">
     <% candidates.each do |attributes| %>
-      <% candidate = FeedIdentification::Candidate.new(attributes) %>
-      <% profile_key = candidate.profile_key %>
-      <% display_name = candidate_summary(profile_key, input) %>
-      <% description = FeedProfile[profile_key]&.dig(:description) %>
-      <% status = candidate_status(candidate) %>
-      <% disabled = single || candidate.failed? %>
-      <% is_selected = profile_key == selected %>
-      <%
-        row_classes =
-          if disabled && !single
-            "border-slate-200 bg-slate-50 opacity-70 cursor-not-allowed"
-          elsif single
-            "border-sky-300 bg-sky-50 cursor-default"
-          else
-            "border-slate-200 bg-white cursor-pointer hover:border-sky-400"
-          end
-      %>
-      <label class="flex items-start gap-3 rounded-lg border px-4 py-3 transition <%= row_classes %>"
-             data-key="candidate.<%= profile_key %>">
-        <%= tag.input type: "radio", name: "feed[feed_profile_key]", value: profile_key, checked: is_selected, disabled: disabled, class: "mt-1" %>
-        <span class="flex flex-col gap-1">
-          <span class="flex flex-wrap items-center gap-2">
-            <span class="font-semibold text-slate-800"><%= display_name %></span>
-            <% if status&.label %>
-              <%= render BadgeComponent.new(text: status.label, color: status.color, key: "candidate.#{profile_key}.status") %>
-            <% end %>
-            <% if is_selected && !single %>
-              <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
-                    data-key="candidate.recommended-badge">Recommended</span>
-            <% end %>
-          </span>
-          <span class="text-slate-600 text-sm"><%= description %></span>
-          <% if status&.note %>
-            <span class="text-slate-600 text-sm" data-key="candidate.<%= profile_key %>.note"><%= status.note %></span>
-          <% end %>
-          <% if candidate.ai? %>
-            <span class="text-slate-600 text-sm" data-key="candidate.ai-cost">
-              Fetching costs AI tokens — previews and refreshes do too. You'll see your spend on the feed page.
-            </span>
-          <% end %>
-        </span>
-      </label>
+      <%= render CandidateOptionComponent.new(
+            candidate: FeedIdentification::Candidate.new(attributes),
+            input: input,
+            selected: selected,
+            single: single
+          ) %>
     <% end %>
   </div>
 
