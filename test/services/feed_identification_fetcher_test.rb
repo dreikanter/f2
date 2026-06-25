@@ -108,7 +108,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "llm_website_extractor", feed_identification.candidates.first["profile_key"]
   end
 
-  test "#identify should report a reachable source that returns an error status" do
+  test "#identify should fail with a generic message when the source returns an error status" do
     url = "http://example.com/error.xml"
 
     stub_request(:get, url)
@@ -120,10 +120,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::StatusError.new(500).message, feed_identification.error
+    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
   end
 
-  test "#identify should report a redirect loop distinctly from an unreachable source" do
+  test "#identify should fail with a generic message on a redirect loop" do
     url = "http://example.com/loop.xml"
 
     stub_request(:get, url)
@@ -134,10 +134,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::RedirectLoopError.new.message, feed_identification.error
+    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
   end
 
-  test "#identify should handle network errors gracefully" do
+  test "#identify should fail with a generic message when the source is unreachable" do
     url = "http://example.com/timeout.xml"
 
     stub_request(:get, url)
@@ -149,7 +149,17 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::UnreachableError.new.message, feed_identification.error
+    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
+  end
+
+  test "#identify should log the fetch-failure class so the cause is diagnosable" do
+    url = "http://example.com/error.xml"
+    stub_request(:get, url).to_return(status: 404, body: "Not Found")
+
+    log = StringIO.new
+    FeedIdentificationFetcher.new(user: user, input: url, logger: ActiveSupport::Logger.new(log)).identify
+
+    assert_match(/StatusError/, log.string)
   end
 
   test "#identify should persist a ranked candidates array on success" do
