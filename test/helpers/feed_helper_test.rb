@@ -217,12 +217,18 @@ class FeedHelperTest < ActionView::TestCase
     FeedIdentification::Candidate.new(attributes)
   end
 
-  test "#candidate_status should mark a passed source as tested" do
+  test "#candidate_status should mark a passed source as tested with its post count" do
     status = candidate_status(candidate("test_status" => "passed", "posts_found" => 3))
 
-    assert_equal "Tested", status.label
+    assert_equal "Tested · 3 posts", status.label
     assert_equal :green, status.color
     assert_nil status.note
+  end
+
+  test "#candidate_status should singularize a single post" do
+    status = candidate_status(candidate("test_status" => "passed", "posts_found" => 1))
+
+    assert_equal "Tested · 1 post", status.label
   end
 
   test "#candidate_status should note when a passed source has no posts yet" do

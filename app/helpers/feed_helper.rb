@@ -16,8 +16,10 @@ module FeedHelper
 
   def candidate_status(candidate)
     if candidate.passed?
-      note = "No posts yet — we'll pick up new ones as they're published." if candidate.posts_found.zero?
-      CandidateStatus.new(label: "Tested", color: :green, note: note)
+      count = candidate.posts_found
+      label = count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
+      note = "No posts yet — we'll pick up new ones as they're published." if count.zero?
+      CandidateStatus.new(label: label, color: :green, note: note)
     elsif candidate.unreachable?
       CandidateStatus.new(
         label: "Couldn't reach",

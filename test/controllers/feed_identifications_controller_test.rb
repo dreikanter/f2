@@ -615,7 +615,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     show_chooser(url)
 
     assert_response :success
-    assert_select "[data-key='candidate.rss.status']", text: "Tested"
+    assert_select "[data-key='candidate.rss.status']", text: "Tested · 5 posts"
     assert_select "input[type=radio][value='rss'][checked]"
     assert_select "input[type=radio][value='rss'][disabled]", count: 0
   end
