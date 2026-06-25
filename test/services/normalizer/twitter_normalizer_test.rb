@@ -7,7 +7,7 @@ class Normalizer::TwitterNormalizerTest < ActiveSupport::TestCase
 
   def posts
     @posts ||= Processor::TwitterProcessor.new(feed, file_fixture("feeds/twitter/timeline.html").read)
-      .process
+      .process.entries
       .map { |entry| Normalizer::TwitterNormalizer.new(entry).normalize }
   end
 

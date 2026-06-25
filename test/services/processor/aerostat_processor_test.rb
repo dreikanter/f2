@@ -14,7 +14,7 @@ class Processor::AerostatProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should parse feed and create FeedEntry objects" do
-    entries = processor.process
+    entries = processor.process.entries
 
     assert_equal 2, entries.length
     assert entries.all? { |e| e.is_a?(FeedEntry) }
@@ -23,7 +23,7 @@ class Processor::AerostatProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should extract itunes_image into raw_data" do
-    entry = processor.process.first
+    entry = processor.process.entries.first
 
     assert_equal(
       "https://aerostatbg.ru/sites/default/files/styles/rss_image/public/releases/1094.jpg?itok=IpSaPXdB",
@@ -32,7 +32,7 @@ class Processor::AerostatProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should extract enclosure_url into raw_data" do
-    entry = processor.process.first
+    entry = processor.process.entries.first
 
     assert_equal "https://aerostats.getmobileup.com/music/1094.mp3", entry.raw_data["enclosure_url"]
   end

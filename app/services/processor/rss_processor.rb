@@ -1,11 +1,18 @@
 module Processor
   class RssProcessor < Base
     def process
-      parsed_feed = Feedjira.parse(raw_data)
+      feed_data = Feedjira.parse(raw_data)
 
-      return [] unless parsed_feed&.entries
+      Result.new(
+        entries: build_entries(feed_data),
+        recognized: recognizable?(feed_data)
+      )
+    end
 
-      parsed_feed.entries.map do |entry|
+    private
+
+    def build_entries(feed_data)
+      Array(feed_data&.entries).map do |entry|
         FeedEntry.new(
           feed: feed,
           uid: extract_uid(entry),
@@ -16,7 +23,13 @@ module Processor
       end
     end
 
-    private
+    # A real feed always carries a title, even when empty; its absence on a
+    # zero-entry result means the textual <rss>/<feed> match hit non-feed content.
+    def recognizable?(feed_data)
+      return false unless feed_data&.entries
+
+      feed_data.entries.any? || feed_data.title.present?
+    end
 
     def extract_uid(entry)
       entry.id || entry.url

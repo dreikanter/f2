@@ -107,6 +107,26 @@ class CandidateTesterTest < ActiveSupport::TestCase
     assert_equal :unreachable, result_for(url).status
   end
 
+  test "#call should fail an RSS page that matched textually but isn't a feed" do
+    # The matcher only checks for a literal `<rss`/`<feed`, so a non-feed page
+    # reaches the RSS processor and parses into an empty, titleless feed.
+    url = "https://example.com/not-really.xml"
+    stub_request(:get, url).to_return(status: 200, body: '<rss version="2.0"><channel></channel></rss>')
+
+    result = result_for(url)
+    assert_equal :failed, result.status
+    assert_equal 0, result.posts_found
+  end
+
+  test "#call should fail a Twitter page with no readable timeline" do
+    # A profile URL whose page has no __NEXT_DATA__ (e.g. a login wall) yields
+    # zero entries but isn't an empty-but-valid timeline.
+    url = "https://syndication.twitter.com/srv/timeline-profile/screen-name/ghost"
+    stub_request(:get, url).to_return(status: 200, body: "<html><body>nothing here</body></html>")
+
+    assert_equal :failed, result_for("ghost", profile_key: "twitter").status
+  end
+
   test "#call should fail when the source is reachable but exposes no feed" do
     # YouTube fetches the page fine, then can't find a feed link — a real
     # compatibility failure, not an unreachable source.

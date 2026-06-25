@@ -104,7 +104,7 @@ class Normalizer::YoutubeNormalizerTest < ActiveSupport::TestCase
     sample_feed_xml = file_fixture("feeds/youtube/feed.xml").read
 
     processor = Processor::YoutubeProcessor.new(feed, sample_feed_xml)
-    processor_entry = processor.process.first
+    processor_entry = processor.process.entries.first
 
     temp_entry = FeedEntry.new(
       uid: processor_entry.uid,

@@ -60,7 +60,7 @@ class FeedPreviewWorkflow
     raw_data = input[:raw_data]
 
     processor = temp_feed.processor_instance(raw_data)
-    entries = processor.process
+    entries = processor.process.entries
 
     # Limit to most recent entries for preview
     limited_entries = entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)

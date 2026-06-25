@@ -10,7 +10,7 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
   end
 
   def entries
-    @entries ||= Processor::TwitterProcessor.new(feed, sample_html).process
+    @entries ||= Processor::TwitterProcessor.new(feed, sample_html).process.entries
   end
 
   test "#process should create a FeedEntry per tweet and skip non-tweet entries" do
@@ -49,6 +49,34 @@ class Processor::TwitterProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should return an empty array when JSON is missing" do
-    assert_equal [], Processor::TwitterProcessor.new(feed, "<html>no data</html>").process
+    assert_equal [], Processor::TwitterProcessor.new(feed, "<html>no data</html>").process.entries
+  end
+
+  def page_with(next_data)
+    %(<html><body><script id="__NEXT_DATA__" type="application/json">#{next_data}</script></body></html>)
+  end
+
+  test "#process should recognize a real timeline page" do
+    assert Processor::TwitterProcessor.new(feed, sample_html).process.recognized?
+  end
+
+  test "#process should recognize a timeline with no tweets" do
+    html = page_with('{"props":{"pageProps":{"timeline":{"entries":[]}}}}')
+    result = Processor::TwitterProcessor.new(feed, html).process
+
+    assert result.recognized?
+    assert_equal [], result.entries
+  end
+
+  test "#process should not recognize a page where __NEXT_DATA__ is missing" do
+    assert_not Processor::TwitterProcessor.new(feed, "<html>no data</html>").process.recognized?
+  end
+
+  test "#process should not recognize a page with invalid JSON" do
+    assert_not Processor::TwitterProcessor.new(feed, page_with("{not json}")).process.recognized?
+  end
+
+  test "#process should not recognize a page with no timeline structure" do
+    assert_not Processor::TwitterProcessor.new(feed, page_with('{"props":{"pageProps":{}}}')).process.recognized?
   end
 end

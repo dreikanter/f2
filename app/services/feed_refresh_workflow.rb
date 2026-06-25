@@ -43,7 +43,7 @@ class FeedRefreshWorkflow
   end
 
   def process_feed_contents(raw_data)
-    processed_entries = feed.processor_instance(raw_data).process
+    processed_entries = feed.processor_instance(raw_data).process.entries
     record_stats(total_entries: processed_entries.size)
 
     unidentified_count = processed_entries.count { |entry| entry.uid.blank? }
