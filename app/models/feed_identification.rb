@@ -8,7 +8,11 @@ class FeedIdentification < ApplicationRecord
   # Order the chooser prefers when preselecting a candidate: a proven one
   # first, then the untested AI fallback, then a reachable-but-untested source.
   # A `failed` candidate is never preselected — its radio is disabled.
-  RECOMMENDED_TEST_STATUSES = %w[passed not_tested unreachable].freeze
+  RECOMMENDED_TEST_STATUSES = %w[
+    passed
+    not_tested
+    unreachable
+  ].freeze
 
   def invalid_processing?
     processing? && started_at.nil?
