@@ -2,7 +2,11 @@ module Processor
   class RssProcessor < Base
     def process
       feed_data = Feedjira.parse(raw_data)
-      Result.new(entries: build_entries(feed_data), recognized: recognizable?(feed_data))
+
+      Result.new(
+        entries: build_entries(feed_data),
+        recognized: recognizable?(feed_data)
+      )
     end
 
     private
