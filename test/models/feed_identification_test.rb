@@ -54,7 +54,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "atom", "test_status" => "passed" }
     ])
 
-    assert_equal "atom", id.recommended_candidate["profile_key"]
+    assert_equal "atom", id.recommended_candidate.profile_key
   end
 
   test "#recommended_candidate should prefer passed over not_tested and unreachable" do
@@ -64,7 +64,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "rss", "test_status" => "passed" }
     ])
 
-    assert_equal "rss", id.recommended_candidate["profile_key"]
+    assert_equal "rss", id.recommended_candidate.profile_key
   end
 
   test "#recommended_candidate should fall back to the AI option when every structured candidate failed" do
@@ -73,7 +73,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "llm_website_extractor", "test_status" => "not_tested" }
     ])
 
-    assert_equal "llm_website_extractor", id.recommended_candidate["profile_key"]
+    assert_equal "llm_website_extractor", id.recommended_candidate.profile_key
   end
 
   test "#recommended_candidate should prefer the AI option over an unreachable source" do
@@ -82,7 +82,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "llm_website_extractor", "test_status" => "not_tested" }
     ])
 
-    assert_equal "llm_website_extractor", id.recommended_candidate["profile_key"]
+    assert_equal "llm_website_extractor", id.recommended_candidate.profile_key
   end
 
   test "#recommended_candidate should never preselect a failed candidate" do
@@ -91,7 +91,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "youtube", "test_status" => "unreachable" }
     ])
 
-    assert_equal "youtube", id.recommended_candidate["profile_key"]
+    assert_equal "youtube", id.recommended_candidate.profile_key
   end
 
   test "#recommended_candidate should fall back to the first candidate when none carry a verdict" do
@@ -100,7 +100,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "llm_website_extractor" }
     ])
 
-    assert_equal "rss", id.recommended_candidate["profile_key"]
+    assert_equal "rss", id.recommended_candidate.profile_key
   end
 
   test "should accept multiple ranked candidates" do

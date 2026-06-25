@@ -5,13 +5,13 @@
   <%= label_tag nil, "How should we fetch posts?", class: "block font-semibold text-slate-800" %>
 
   <div class="space-y-2">
-    <% candidates.each do |candidate| %>
-      <% profile_key = candidate["profile_key"] %>
+    <% candidates.each do |attributes| %>
+      <% candidate = FeedIdentification::Candidate.new(attributes) %>
+      <% profile_key = candidate.profile_key %>
       <% display_name = candidate_summary(profile_key, input) %>
       <% description = FeedProfile[profile_key]&.dig(:description) %>
-      <% uses_ai = !!candidate["depends_on_ai"] %>
       <% status = candidate_status(candidate) %>
-      <% disabled = single || status&.disabled %>
+      <% disabled = single || candidate.failed? %>
       <% is_selected = profile_key == selected %>
       <%
         row_classes =
@@ -41,7 +41,7 @@
           <% if status&.note %>
             <span class="text-slate-600 text-sm" data-key="candidate.<%= profile_key %>.note"><%= status.note %></span>
           <% end %>
-          <% if uses_ai %>
+          <% if candidate.ai? %>
             <span class="text-slate-600 text-sm" data-key="candidate.ai-cost">
               Fetching costs AI tokens — previews and refreshes do too. You'll see your spend on the feed page.
             </span>

@@ -86,15 +86,15 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def handle_success_status
-    recommended = feed_identification.recommended_candidate || {}
-    profile_key = recommended["profile_key"]
+    recommended = feed_identification.recommended_candidate
+    profile_key = recommended&.profile_key
     input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
     params_for_input = { input_shape.to_s => feed_identification.input }
 
     feed = Current.user.feeds.build(
       params: params_for_input,
       feed_profile_key: profile_key,
-      name: recommended["title"]&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
+      name: recommended&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
     )
 
     render(identification_success(feed, candidates: feed_identification.candidates))

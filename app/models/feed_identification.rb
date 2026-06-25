@@ -5,28 +5,26 @@ class FeedIdentification < ApplicationRecord
 
   validates :input, presence: true
 
-  # Order the chooser prefers when preselecting a candidate: a proven one
-  # first, then the untested AI fallback, then a reachable-but-untested source.
-  # A `failed` candidate is never preselected — its radio is disabled.
-  RECOMMENDED_TEST_STATUSES = %w[
-    passed
-    not_tested
-    unreachable
-  ].freeze
-
   def invalid_processing?
     processing? && started_at.nil?
   end
 
   # The candidate the chooser preselects and the new-feed form is built from.
-  # Skips failed/unreachable toward a passed candidate, falling back to the AI
-  # option when nothing structured worked.
+  # Prefers a proven candidate, then the untested AI fallback, then a
+  # reachable-but-untested source; a failed candidate is never preselected
+  # (its radio is disabled).
   def recommended_candidate
-    RECOMMENDED_TEST_STATUSES.each do |test_status|
-      match = candidates.find { |candidate| candidate["test_status"] == test_status }
-      return match if match
-    end
+    detected_candidates.find(&:passed?) || detected_candidates.find(&:not_tested?) ||
+      detected_candidates.find(&:unreachable?) || detected_candidates.reject(&:failed?).first ||
+      detected_candidates.first
+  end
 
-    candidates.find { |candidate| candidate["test_status"] != "failed" } || candidates.first
+  private
+
+  # Candidates wrapped as value objects. Lazy so the recommendation chain stops
+  # wrapping as soon as it finds a match; memoized so the repeated lookups share
+  # one enumerator.
+  def detected_candidates
+    @detected_candidates ||= candidates.lazy.map { |attributes| Candidate.new(attributes) }
   end
 end

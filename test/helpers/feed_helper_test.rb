@@ -213,48 +213,47 @@ class FeedHelperTest < ActionView::TestCase
                  candidate_summary("llm_web_search", "@alice")
   end
 
-  test "#candidate_status should mark a passed source as tested and selectable" do
-    status = candidate_status({ "test_status" => "passed", "posts_found" => 3 })
+  def candidate(attributes)
+    FeedIdentification::Candidate.new(attributes)
+  end
+
+  test "#candidate_status should mark a passed source as tested" do
+    status = candidate_status(candidate("test_status" => "passed", "posts_found" => 3))
 
     assert_equal "Tested", status.label
     assert_equal :green, status.color
     assert_nil status.note
-    assert_not status.disabled
   end
 
   test "#candidate_status should note when a passed source has no posts yet" do
-    status = candidate_status({ "test_status" => "passed", "posts_found" => 0 })
+    status = candidate_status(candidate("test_status" => "passed", "posts_found" => 0))
 
     assert_equal "Tested", status.label
     assert_match(/no posts yet/i, status.note)
-    assert_not status.disabled
   end
 
-  test "#candidate_status should make a failed source non-selectable with an advisory" do
-    status = candidate_status({ "test_status" => "failed" })
+  test "#candidate_status should give a failed source a red badge and advisory" do
+    status = candidate_status(candidate("test_status" => "failed"))
 
-    assert status.disabled
     assert_equal :red, status.color
     assert status.note.present?
   end
 
-  test "#candidate_status should keep an unreachable source selectable with an advisory" do
-    status = candidate_status({ "test_status" => "unreachable" })
+  test "#candidate_status should give an unreachable source a yellow badge and advisory" do
+    status = candidate_status(candidate("test_status" => "unreachable"))
 
-    assert_not status.disabled
     assert_equal :yellow, status.color
     assert_match(/couldn't reach/i, status.note)
   end
 
   test "#candidate_status should label an untested AI candidate as not tested" do
-    status = candidate_status({ "test_status" => "not_tested" })
+    status = candidate_status(candidate("test_status" => "not_tested"))
 
     assert_equal "Not tested", status.label
-    assert_not status.disabled
     assert_nil status.note
   end
 
   test "#candidate_status should return nil when the candidate carries no verdict" do
-    assert_nil candidate_status({ "profile_key" => "rss" })
+    assert_nil candidate_status(candidate("profile_key" => "rss"))
   end
 end

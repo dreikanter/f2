@@ -1,8 +1,8 @@
 module FeedHelper
-  # How a candidate's self-test verdict reads in the chooser: a short badge,
-  # an optional advisory line, and whether the option is selectable. `disabled`
-  # is true only for `failed` — a source we proved yields no posts.
-  CandidateStatus = Data.define(:label, :color, :note, :disabled)
+  # How a candidate's self-test verdict reads in the chooser: a short badge and
+  # an optional advisory line. Selectability is the candidate's own concern
+  # (see Candidate#failed?), so it isn't carried here.
+  CandidateStatus = Data.define(:label, :color, :note)
 
   # Plain-language label for a detection candidate. URL-based candidates
   # use the profile's display_name; query candidates inject the
@@ -20,26 +20,23 @@ module FeedHelper
   # Presentation for a candidate's self-test verdict. Returns nil when the
   # candidate carries no verdict (nothing to show).
   def candidate_status(candidate)
-    case candidate["test_status"]
-    when "passed"
-      note = "No posts yet — we'll pick up new ones as they're published." if candidate["posts_found"].to_i.zero?
-      CandidateStatus.new(label: "Tested", color: :green, note: note, disabled: false)
-    when "unreachable"
+    if candidate.passed?
+      note = "No posts yet — we'll pick up new ones as they're published." if candidate.posts_found.zero?
+      CandidateStatus.new(label: "Tested", color: :green, note: note)
+    elsif candidate.unreachable?
       CandidateStatus.new(
         label: "Couldn't reach",
         color: :yellow,
-        note: "We couldn't reach the source just now. Pick this only if you think it's temporary.",
-        disabled: false
+        note: "We couldn't reach the source just now. Pick this only if you think it's temporary."
       )
-    when "failed"
+    elsif candidate.failed?
       CandidateStatus.new(
         label: "Won't work",
         color: :red,
-        note: "We tried, but couldn't read any posts from this source.",
-        disabled: true
+        note: "We tried, but couldn't read any posts from this source."
       )
-    when "not_tested"
-      CandidateStatus.new(label: "Not tested", color: :gray, note: nil, disabled: false)
+    elsif candidate.not_tested?
+      CandidateStatus.new(label: "Not tested", color: :gray, note: nil)
     end
   end
 
