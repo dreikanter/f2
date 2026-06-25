@@ -1,28 +1,46 @@
-<%# locals: (candidates: [], input: nil, single: false) %>
+<%# locals: (candidates: [], input: nil, single: false, selected: nil) %>
 
 <div class="space-y-2"
      data-key="candidates">
   <%= label_tag nil, "How should we fetch posts?", class: "block font-semibold text-slate-800" %>
 
   <div class="space-y-2">
-    <% candidates.each_with_index do |candidate, index| %>
+    <% candidates.each do |candidate| %>
       <% profile_key = candidate["profile_key"] %>
       <% display_name = candidate_summary(profile_key, input) %>
       <% description = FeedProfile[profile_key]&.dig(:description) %>
       <% uses_ai = !!candidate["depends_on_ai"] %>
-      <% is_first = index.zero? %>
-      <label class="flex items-start gap-3 rounded-lg border px-4 py-3 transition <%= single ? "border-sky-300 bg-sky-50 cursor-default" : "border-slate-200 bg-white cursor-pointer hover:border-sky-400" %>"
+      <% status = candidate_status(candidate) %>
+      <% disabled = single || status&.disabled %>
+      <% is_selected = profile_key == selected %>
+      <%
+        row_classes =
+          if disabled && !single
+            "border-slate-200 bg-slate-50 opacity-70 cursor-not-allowed"
+          elsif single
+            "border-sky-300 bg-sky-50 cursor-default"
+          else
+            "border-slate-200 bg-white cursor-pointer hover:border-sky-400"
+          end
+      %>
+      <label class="flex items-start gap-3 rounded-lg border px-4 py-3 transition <%= row_classes %>"
              data-key="candidate.<%= profile_key %>">
-        <%= tag.input type: "radio", name: "feed[feed_profile_key]", value: profile_key, checked: is_first, disabled: single, class: "mt-1" %>
+        <%= tag.input type: "radio", name: "feed[feed_profile_key]", value: profile_key, checked: is_selected, disabled: disabled, class: "mt-1" %>
         <span class="flex flex-col gap-1">
           <span class="flex flex-wrap items-center gap-2">
             <span class="font-semibold text-slate-800"><%= display_name %></span>
-            <% if is_first && !single %>
+            <% if status&.label %>
+              <%= render BadgeComponent.new(text: status.label, color: status.color, key: "candidate.#{profile_key}.status") %>
+            <% end %>
+            <% if is_selected && !single %>
               <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
                     data-key="candidate.recommended-badge">Recommended</span>
             <% end %>
           </span>
           <span class="text-slate-600 text-sm"><%= description %></span>
+          <% if status&.note %>
+            <span class="text-slate-600 text-sm" data-key="candidate.<%= profile_key %>.note"><%= status.note %></span>
+          <% end %>
           <% if uses_ai %>
             <span class="text-slate-600 text-sm" data-key="candidate.ai-cost">
               Fetching costs AI tokens — previews and refreshes do too. You'll see your spend on the feed page.

@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-25
 
+- When adding a feed, each fetch option now shows its test result — working ones are marked, and ones that can't read the source are switched off with a short note.
 - Fixed the Cancel button not working while a new feed is being checked.
 
 ## 2026-06-23

@@ -596,6 +596,96 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='candidate.recommended-badge']", count: 0
   end
 
+  def success_identification(url, candidates)
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success, candidates: candidates)
+  end
+
+  def show_chooser(url)
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+  end
+
+  test "#show should mark a passed candidate as tested and preselect it" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 5 },
+      { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    assert_select "[data-key='candidate.rss.status']", text: "Tested"
+    assert_select "input[type=radio][value='rss'][checked]"
+    assert_select "input[type=radio][value='rss'][disabled]", count: 0
+  end
+
+  test "#show should note when the preselected candidate has no posts yet" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 0 }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    assert_select "[data-key='candidate.rss.note']", text: /no posts yet/i
+  end
+
+  test "#show should disable a failed candidate and fall back to the AI option" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "failed", "posts_found" => 0 },
+      { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    # Failed is shown but can't be picked, and says why.
+    assert_select "input[type=radio][value='rss'][disabled]"
+    assert_select "input[type=radio][value='rss'][checked]", count: 0
+    assert_select "[data-key='candidate.rss.note']"
+    # Selection falls back to the untested AI option.
+    assert_select "input[type=radio][value='llm_website_extractor'][checked]"
+  end
+
+  test "#show should keep an unreachable candidate selectable with a transient advisory" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 2 },
+      { "profile_key" => "xkcd", "title" => "Example", "depends_on_ai" => false, "rank" => 1, "rank_reason" => "generic_match", "test_status" => "unreachable" }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    # Unreachable stays pickable (it may be a temporary blip) but warns.
+    assert_select "input[type=radio][value='xkcd'][disabled]", count: 0
+    assert_select "[data-key='candidate.xkcd.note']", text: /couldn't reach/i
+    # Default still skips toward the passed candidate.
+    assert_select "input[type=radio][value='rss'][checked]"
+  end
+
+  test "#show should preselect a passed candidate ranked behind a failed one" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "xkcd", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "failed", "posts_found" => 0 },
+      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 1, "rank_reason" => "generic_match", "test_status" => "passed", "posts_found" => 4 }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    assert_select "input[type=radio][value='rss'][checked]"
+    assert_select "input[type=radio][value='xkcd'][checked]", count: 0
+    assert_select "input[type=radio][value='xkcd'][disabled]"
+  end
+
   test "#show should truncate detected title to Feed::NAME_MAX_LENGTH" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
