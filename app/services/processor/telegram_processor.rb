@@ -15,7 +15,8 @@ module Processor
     BACKGROUND_IMAGE = /background-image:\s*url\(['"]?(.*?)['"]?\)/i
 
     def process
-      document.css(MESSAGE_SELECTOR).filter_map { |wrap| build_entry(wrap) }
+      entries = document.css(MESSAGE_SELECTOR).filter_map { |wrap| build_entry(wrap) }
+      Result.new(entries: entries, recognized: true)
     end
 
     private

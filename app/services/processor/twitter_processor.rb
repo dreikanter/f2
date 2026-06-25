@@ -6,20 +6,28 @@ module Processor
     TWITTER_FORMAT = "%a %b %d %H:%M:%S %z %Y".freeze
 
     def process
-      timeline_tweets.filter_map { |tweet| build_entry(tweet) }
+      timeline_entries = timeline
+      tweets = Array(timeline_entries).filter_map { |entry| entry.dig("content", "tweet") }
+      # A real timeline page exposes the entries array via __NEXT_DATA__ (empty
+      # for an account with no tweets); anything else isn't a profile feed.
+      Result.new(
+        entries: tweets.filter_map { |tweet| build_entry(tweet) },
+        recognized: !timeline_entries.nil?
+      )
     end
 
     private
 
-    def timeline_tweets
+    # The timeline entries array, or nil when the payload isn't a syndication page.
+    def timeline
       script = Nokogiri::HTML.parse(raw_data, nil, "UTF-8").at_css("script#__NEXT_DATA__")
-      return [] unless script
+      script && parse_entries(script.text)
+    end
 
-      data = JSON.parse(script.text)
-      entries = data.dig("props", "pageProps", "timeline", "entries") || []
-      entries.filter_map { |entry| entry.dig("content", "tweet") }
+    def parse_entries(json)
+      JSON.parse(json).dig("props", "pageProps", "timeline", "entries")
     rescue JSON::ParserError
-      []
+      nil
     end
 
     def build_entry(tweet)

@@ -7,7 +7,7 @@ class Normalizer::TelegramNormalizerTest < ActiveSupport::TestCase
 
   def posts
     @posts ||= Processor::TelegramProcessor.new(feed, file_fixture("feeds/telegram/channel.html").read)
-      .process
+      .process.entries
       .map { |entry| Normalizer::TelegramNormalizer.new(entry).normalize }
   end
 

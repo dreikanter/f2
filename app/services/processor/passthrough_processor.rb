@@ -5,7 +5,7 @@ module Processor
   class PassthroughProcessor < Base
     def process
       items = Array(raw_data)
-      items.filter_map do |item|
+      entries = items.filter_map do |item|
         next unless item.is_a?(Hash)
 
         uid = item["uid"].presence || item[:uid].presence
@@ -21,6 +21,7 @@ module Processor
           raw_data: item.deep_stringify_keys
         )
       end
+      Result.new(entries: entries, recognized: true)
     end
 
     private

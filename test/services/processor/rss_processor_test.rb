@@ -11,7 +11,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
 
   test "#process should parse RSS feed and create FeedEntry objects" do
     processor = Processor::RssProcessor.new(feed, sample_rss_content)
-    entries = processor.process
+    entries = processor.process.entries
 
     assert_equal 3, entries.length
     assert entries.all? { |entry| entry.is_a?(FeedEntry) }
@@ -46,9 +46,33 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     RSS
 
     processor = Processor::RssProcessor.new(feed, empty_rss)
-    entries = processor.process
+    entries = processor.process.entries
 
     assert_equal [], entries
+  end
+
+  test "#process should recognize a feed with entries" do
+    assert Processor::RssProcessor.new(feed, sample_rss_content).process.recognized?
+  end
+
+  test "#process should recognize an empty feed that carries a title" do
+    titled_empty = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Empty Feed</title>
+        </channel>
+      </rss>
+    RSS
+
+    assert Processor::RssProcessor.new(feed, titled_empty).process.recognized?
+  end
+
+  test "#process should not recognize a titleless payload that only matched textually" do
+    # Matches `<rss` textually but parses into an empty, titleless feed.
+    titleless = '<rss version="2.0"><channel></channel></rss>'
+
+    assert_not Processor::RssProcessor.new(feed, titleless).process.recognized?
   end
 
   def image_feed_content
@@ -56,21 +80,21 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should extract RSS enclosure as typed enclosure" do
-    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process.entries
 
     enclosures = entries.find { |e| e.raw_data["title"] == "Spiral Galaxy Close-Up" }.raw_data["enclosures"]
     assert_equal [{ "url" => "https://example.com/uploads/2024/09/spiral-galaxy.jpg", "type" => "image/jpeg" }], enclosures
   end
 
   test "#process should extract media:thumbnail with nil type" do
-    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process.entries
 
     enclosures = entries.find { |e| e.raw_data["title"] == "Nebula Formation" }.raw_data["enclosures"]
     assert_equal [{ "url" => "https://example.com/uploads/2024/09/nebula-thumb.jpg", "type" => nil }], enclosures
   end
 
   test "#process should extract all media:content elements including non-image types" do
-    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process.entries
 
     enclosures = entries.find { |e| e.raw_data["title"] == "Planetary Surface" }.raw_data["enclosures"]
     assert_equal 3, enclosures.length
@@ -80,7 +104,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
   end
 
   test "#process should store empty enclosures for entries with no media" do
-    entries = Processor::RssProcessor.new(feed, image_feed_content).process
+    entries = Processor::RssProcessor.new(feed, image_feed_content).process.entries
 
     enclosures = entries.find { |e| e.raw_data["title"] == "Mission Update" }.raw_data["enclosures"]
     assert_equal [], enclosures
@@ -100,7 +124,7 @@ class Processor::RssProcessorTest < ActiveSupport::TestCase
     RSS
 
     processor = Processor::RssProcessor.new(feed, minimal_rss)
-    entries = processor.process
+    entries = processor.process.entries
 
     assert_equal 1, entries.length
     entry = entries.first

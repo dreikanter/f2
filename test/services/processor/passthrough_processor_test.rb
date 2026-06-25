@@ -19,7 +19,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
       { "uid" => "https://example.com/b", "title" => "B" }
     ]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process
+    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
 
     assert_equal 2, entries.size
     assert_equal "https://example.com/a", entries[0].uid
@@ -33,7 +33,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
       { "uid" => "https://example.com/ok" }
     ]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process
+    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
 
     assert_equal 1, entries.size
     assert_equal "https://example.com/ok", entries[0].uid
@@ -42,7 +42,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
   test "#process should parse published_at from ISO 8601" do
     items = [{ "uid" => "u1", "published_at" => "2026-04-15T12:30:00Z" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process
+    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
 
     assert_kind_of Time, entries[0].published_at
     assert_equal 2026, entries[0].published_at.year
@@ -51,7 +51,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
   test "#process should default to the current time when published_at is invalid" do
     items = [{ "uid" => "u1", "published_at" => "not a date" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process
+    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
 
     assert_in_delta Time.current.to_f, entries[0].published_at.to_f, 5.0
   end
@@ -59,7 +59,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
   test "#process should accept symbol keys as well as strings" do
     items = [{ uid: "u-sym", title: "Sym" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process
+    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
 
     assert_equal "u-sym", entries[0].uid
     assert_equal "u-sym", entries[0].raw_data["uid"]

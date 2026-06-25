@@ -17,7 +17,7 @@ module FixtureFeedEntries
   end
 
   def feed_entries
-    @feed_entries ||= processor.process
+    @feed_entries ||= processor.process.entries
   end
 
   def feed_entry(index)

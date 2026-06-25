@@ -10,7 +10,7 @@ class Processor::TelegramProcessorTest < ActiveSupport::TestCase
   end
 
   def entries
-    @entries ||= Processor::TelegramProcessor.new(feed, sample_html).process
+    @entries ||= Processor::TelegramProcessor.new(feed, sample_html).process.entries
   end
 
   test "#process should create a FeedEntry per message with a data-post id" do
