@@ -58,5 +58,15 @@
         <p class="text-slate-600">Reference for all reusable UI components.</p>
       </div>
     <% end %>
+
+    <%= render CardComponent.new(href: development_feed_sandbox_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= icon("layers", css_class: "size-5") %>
+          <span>Feed Sandbox</span>
+        </h2>
+        <p class="text-slate-600">Preview add-feed states and serve mock feeds for manual testing</p>
+      </div>
+    <% end %>
   </div>
 </div>
