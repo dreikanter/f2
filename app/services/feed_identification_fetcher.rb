@@ -2,13 +2,12 @@ class FeedIdentificationFetcher
   # A hard fetch failure: the source gave no usable response (no answer, an error
   # status, or a redirect loop), as opposed to a page that loads but fits no
   # structured profile (which falls back to the AI option). The subclass names
-  # the failure for the logs; the user always sees FETCH_FAILED_MESSAGE.
+  # the failure for the logs; all of them persist the "fetch_failed" error code,
+  # which the UI resolves to text through I18n.
   class FetchError < StandardError; end
   class UnreachableError < FetchError; end   # no answer: DNS, refused, or timeout
   class RedirectLoopError < FetchError; end  # redirect limit exhausted
   class StatusError < FetchError; end         # reachable, but a non-2xx response
-
-  FETCH_FAILED_MESSAGE = "We couldn't load this source."
 
   def initialize(user:, input:, logger: Rails.logger)
     @user = user
@@ -28,15 +27,15 @@ class FeedIdentificationFetcher
         error: nil
       )
     else
-      feed_identification.update!(status: :failed, candidates: [], error: "We couldn't find a way to follow this source.")
+      feed_identification.update!(status: :failed, candidates: [], error: "unidentifiable")
     end
   rescue FetchError => e
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class}")
-    feed_identification.update!(status: :failed, candidates: [], error: FETCH_FAILED_MESSAGE)
+    feed_identification.update!(status: :failed, candidates: [], error: "fetch_failed")
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_input_for_logging(@input)}: #{e.class} - #{e.message}")
     Rails.error.report(e, context: { input: sanitize_input_for_logging(@input) })
-    feed_identification.update!(status: :failed, candidates: [], error: "An error occurred while identifying the feed")
+    feed_identification.update!(status: :failed, candidates: [], error: "internal_error")
   end
 
   private

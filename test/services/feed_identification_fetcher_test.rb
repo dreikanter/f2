@@ -120,7 +120,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
+    assert_equal "fetch_failed", feed_identification.error
   end
 
   test "#identify should fail with a generic message on a redirect loop" do
@@ -134,7 +134,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
+    assert_equal "fetch_failed", feed_identification.error
   end
 
   test "#identify should fail with a generic message when the source is unreachable" do
@@ -149,7 +149,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::FETCH_FAILED_MESSAGE, feed_identification.error
+    assert_equal "fetch_failed", feed_identification.error
   end
 
   test "#identify should log the fetch-failure class so the cause is diagnosable" do

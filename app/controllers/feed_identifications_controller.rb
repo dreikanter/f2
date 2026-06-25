@@ -101,8 +101,9 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def handle_failed_status
-    error_message = feed_identification.error.presence || "We couldn't identify a feed profile for this URL."
-    render(identification_error(error: error_message))
+    code = feed_identification.error.presence || "generic"
+    message = t("feed_identifications.failures.#{code}", default: :"feed_identifications.failures.generic")
+    render(identification_error(error: message))
   end
 
   def identification_error(error:)

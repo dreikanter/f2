@@ -256,6 +256,21 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "llm_website_extractor"
   end
 
+  test "#show should render the localized failure message for a fetch failure" do
+    sign_in_as(user)
+    url = "http://example.com/down.xml"
+
+    stub_request(:get, url).to_return(status: 500)
+
+    post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    perform_enqueued_jobs
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="error"'
+    assert_includes response.body, I18n.t("feed_identifications.failures.fetch_failed")
+  end
+
   test "#show should return error when feed detail is missing" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
