@@ -1,7 +1,6 @@
 class FeedIdentification
-  # A persisted detection candidate — the JSONB attributes plus its self-test
-  # verdict — wrapped so callers read intent (passed?/failed?/…) instead of
-  # indexing raw string keys.
+  # Wraps a persisted detection candidate (a JSONB hash) so callers read intent
+  # (passed?/failed?/…) instead of indexing raw string keys.
   class Candidate
     def initialize(attributes)
       @attributes = attributes

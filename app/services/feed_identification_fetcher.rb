@@ -1,7 +1,6 @@
 class FeedIdentificationFetcher
-  # The source URL couldn't be fetched at all (transport failure or an error
-  # status), so there's nothing to detect against — a hard error, distinct from
-  # "fetched fine but no profile fits" (which falls back to the AI option).
+  # The source couldn't be fetched at all — a hard error, distinct from a page
+  # that loads but fits no structured profile (which falls back to the AI option).
   FetchError = Class.new(StandardError)
 
   UNREACHABLE_MESSAGE =

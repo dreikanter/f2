@@ -1,7 +1,4 @@
 module FeedHelper
-  # How a candidate's self-test verdict reads in the chooser: a short badge and
-  # an optional advisory line. Selectability is the candidate's own concern
-  # (see Candidate#failed?), so it isn't carried here.
   CandidateStatus = Data.define(:label, :color, :note)
 
   # Plain-language label for a detection candidate. URL-based candidates
@@ -17,8 +14,6 @@ module FeedHelper
     end
   end
 
-  # Presentation for a candidate's self-test verdict. Returns nil when the
-  # candidate carries no verdict (nothing to show).
   def candidate_status(candidate)
     if candidate.passed?
       note = "No posts yet — we'll pick up new ones as they're published." if candidate.posts_found.zero?

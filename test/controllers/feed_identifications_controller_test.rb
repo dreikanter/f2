@@ -644,11 +644,9 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     show_chooser(url)
 
     assert_response :success
-    # Failed is shown but can't be picked, and says why.
     assert_select "input[type=radio][value='rss'][disabled]"
     assert_select "input[type=radio][value='rss'][checked]", count: 0
     assert_select "[data-key='candidate.rss.note']"
-    # Selection falls back to the untested AI option.
     assert_select "input[type=radio][value='llm_website_extractor'][checked]"
   end
 
@@ -663,10 +661,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     show_chooser(url)
 
     assert_response :success
-    # Unreachable stays pickable (it may be a temporary blip) but warns.
     assert_select "input[type=radio][value='xkcd'][disabled]", count: 0
     assert_select "[data-key='candidate.xkcd.note']", text: /couldn't reach/i
-    # Default still skips toward the passed candidate.
     assert_select "input[type=radio][value='rss'][checked]"
   end
 
