@@ -1,4 +1,12 @@
 class FeedIdentificationFetcher
+  # The source URL couldn't be fetched at all (transport failure or an error
+  # status), so there's nothing to detect against — a hard error, distinct from
+  # "fetched fine but no profile fits" (which falls back to the AI option).
+  FetchError = Class.new(StandardError)
+
+  UNREACHABLE_MESSAGE =
+    "We couldn't reach that source. Double-check the link and make sure the site is up, then try again."
+
   def initialize(user:, input:, logger: Rails.logger)
     @user = user
     @input = input
@@ -17,8 +25,10 @@ class FeedIdentificationFetcher
         error: nil
       )
     else
-      feed_identification.update!(status: :failed, candidates: [], error: "Unsupported feed profile")
+      feed_identification.update!(status: :failed, candidates: [], error: "We couldn't find a way to follow this source.")
     end
+  rescue FetchError => e
+    feed_identification.update!(status: :failed, candidates: [], error: e.message)
   rescue StandardError => e
     @logger.error("Feed identification failed for #{sanitize_input_for_logging(@input)}: #{e.class} - #{e.message}")
     Rails.error.report(e, context: { input: sanitize_input_for_logging(@input) })
@@ -34,9 +44,11 @@ class FeedIdentificationFetcher
     return nil if InputClassifier.classify(@input) != :url
 
     response = http_client.get(@input)
-    raise "HTTP request failed with status #{response.status}" unless response.success?
+    raise FetchError, UNREACHABLE_MESSAGE unless response.success?
 
     response.body
+  rescue HttpClient::Error
+    raise FetchError, UNREACHABLE_MESSAGE
   end
 
   def sanitize_input_for_logging(input)

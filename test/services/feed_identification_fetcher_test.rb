@@ -120,7 +120,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_includes feed_identification.error, "An error occurred while identifying the feed"
+    assert_equal FeedIdentificationFetcher::UNREACHABLE_MESSAGE, feed_identification.error
   end
 
   test "#identify should handle network errors gracefully" do
@@ -135,7 +135,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal "An error occurred while identifying the feed", feed_identification.error
+    assert_equal FeedIdentificationFetcher::UNREACHABLE_MESSAGE, feed_identification.error
   end
 
   test "#identify should persist a ranked candidates array on success" do
