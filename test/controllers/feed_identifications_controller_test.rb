@@ -268,7 +268,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, I18n.t("feed_identifications.failures.fetch_failed")
+    assert_select "p", text: I18n.t("feed_identifications.failures.fetch_failed")
   end
 
   test "#show should return error when feed detail is missing" do
