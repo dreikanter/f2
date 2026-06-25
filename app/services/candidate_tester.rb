@@ -4,8 +4,9 @@
 #
 #   status:
 #     :passed      — readable: at least one sampled entry produced a valid post,
-#                    or the source is empty-but-valid (a new feed with no posts)
-#     :failed      — fetched fine, but nothing normalized into a valid post
+#                    or the processor recognized an empty-but-valid source
+#     :failed      — fetched fine but nothing normalized, or the payload was
+#                    unreadable (the processor didn't recognize it)
 #     :unreachable — couldn't fetch the source (timeout / connection)
 #   posts_found: number of sampled entries that normalized (0 = "no posts yet")
 #
@@ -30,10 +31,9 @@ class CandidateTester
   end
 
   def call
-    entries = process(load)
-    posts_found = entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
-    status = entries.empty? || posts_found.positive? ? :passed : :failed
-    Result.new(status: status, posts_found: posts_found)
+    result = feed.processor_instance(load).process
+    posts_found = result.entries.first(SAMPLE_SIZE).count { |entry| normalized?(entry) }
+    Result.new(status: verdict(result, posts_found), posts_found: posts_found)
   rescue Loader::Error => e
     # Loaders wrap transport errors (timeout/connection), so a transient failure
     # shows up as the cause → unreachable. Any other Loader::Error means we
@@ -51,8 +51,13 @@ class CandidateTester
     feed.loader_instance(loader_options).load
   end
 
-  def process(raw_data)
-    feed.processor_instance(raw_data).process
+  # An empty result passes only if the processor recognized the payload —
+  # otherwise the page was unreadable, not empty-but-valid.
+  def verdict(result, posts_found)
+    return :passed if posts_found.positive?
+    return :passed if result.entries.empty? && result.recognized?
+
+    :failed
   end
 
   # Whether one entry yields a publishable post. The normalizer raises on a
