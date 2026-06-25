@@ -1,10 +1,35 @@
 class FeedIdentificationFetcher
-  # The source couldn't be fetched at all — a hard error, distinct from a page
-  # that loads but fits no structured profile (which falls back to the AI option).
-  FetchError = Class.new(StandardError)
+  # A hard fetch failure, distinct from a page that loads but fits no structured
+  # profile (which falls back to the AI option). Each subclass owns the
+  # user-facing message it carries, so the failure type and its wording stay
+  # together.
+  class FetchError < StandardError; end
 
-  UNREACHABLE_MESSAGE =
-    "We couldn't reach that source. Double-check the link and make sure the site is up, then try again."
+  # The source never answered — DNS failure, refused connection, or timeout.
+  class UnreachableError < FetchError
+    def initialize
+      super("We couldn't reach that source. Double-check the link and make sure the site is up, then try again.")
+    end
+  end
+
+  # The source kept redirecting until the follow limit ran out.
+  class RedirectLoopError < FetchError
+    def initialize
+      super("That link redirects too many times — it may be stuck in a loop. Double-check it, or try the address it points to.")
+    end
+  end
+
+  # A reachable source that answered non-2xx — name the status so it reads as
+  # "responded with an error" rather than "couldn't be reached".
+  class StatusError < FetchError
+    def initialize(status)
+      label = [status, Rack::Utils::HTTP_STATUS_CODES[status]].compact.join(" ")
+      super(
+        "The source is reachable but responded with HTTP #{label}. " \
+        "The page may be missing, private, or down — double-check the link, or try again later."
+      )
+    end
+  end
 
   def initialize(user:, input:, logger: Rails.logger)
     @user = user
@@ -43,11 +68,13 @@ class FeedIdentificationFetcher
     return nil if InputClassifier.classify(@input) != :url
 
     response = http_client.get(@input)
-    raise FetchError, UNREACHABLE_MESSAGE unless response.success?
+    raise StatusError.new(response.status) unless response.success?
 
     response.body
+  rescue HttpClient::TooManyRedirectsError
+    raise RedirectLoopError
   rescue HttpClient::Error
-    raise FetchError, UNREACHABLE_MESSAGE
+    raise UnreachableError
   end
 
   def sanitize_input_for_logging(input)

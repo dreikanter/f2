@@ -31,19 +31,19 @@ class Development::SampleFeedsController < ApplicationController
     },
     "not_found" => {
       summary: "Responds with 404 Not Found",
-      outcome: "Identification fails — the source can't be reached"
+      outcome: "Identification fails — the source responds, but the page is missing"
     },
     "forbidden" => {
       summary: "Responds with 403 Forbidden",
-      outcome: "Identification fails — the source can't be reached"
+      outcome: "Identification fails — the source responds, but denies access"
     },
     "unauthorized" => {
       summary: "Responds with 401 Unauthorized",
-      outcome: "Identification fails — the source can't be reached"
+      outcome: "Identification fails — the source responds, but requires sign-in"
     },
     "server_error" => {
       summary: "Responds with 500 Internal Server Error",
-      outcome: "Identification fails — the source can't be reached"
+      outcome: "Identification fails — the source responds with a server error"
     },
     "slow" => {
       summary: "Hangs well past the fetch timeout (about 20 seconds)",

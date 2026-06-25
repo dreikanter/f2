@@ -108,7 +108,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "llm_website_extractor", feed_identification.candidates.first["profile_key"]
   end
 
-  test "#identify should update record with failed status on HTTP errors" do
+  test "#identify should report a reachable source that returns an error status" do
     url = "http://example.com/error.xml"
 
     stub_request(:get, url)
@@ -120,7 +120,21 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::UNREACHABLE_MESSAGE, feed_identification.error
+    assert_equal FeedIdentificationFetcher::StatusError.new(500).message, feed_identification.error
+  end
+
+  test "#identify should report a redirect loop distinctly from an unreachable source" do
+    url = "http://example.com/loop.xml"
+
+    stub_request(:get, url)
+      .to_raise(HttpClient::TooManyRedirectsError.new("too many redirects"))
+
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
+    service.identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal FeedIdentificationFetcher::RedirectLoopError.new.message, feed_identification.error
   end
 
   test "#identify should handle network errors gracefully" do
@@ -135,7 +149,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal FeedIdentificationFetcher::UNREACHABLE_MESSAGE, feed_identification.error
+    assert_equal FeedIdentificationFetcher::UnreachableError.new.message, feed_identification.error
   end
 
   test "#identify should persist a ranked candidates array on success" do
