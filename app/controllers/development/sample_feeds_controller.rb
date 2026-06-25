@@ -2,6 +2,12 @@ class Development::SampleFeedsController < ApplicationController
   # A mock feed source for exercising the add-feed detection and self-test
   # states by hand. Copy development_sample_feed_url(state:) into the add-feed
   # form to see how each outcome renders; the Feed Sandbox page lists them all.
+  #
+  # Detection fetches this server-side with no session, so it allows
+  # unauthenticated access and is kept out of production (see #show) instead of
+  # behind a user permission an anonymous fetch can't satisfy.
+  allow_unauthenticated_access only: :show
+
   STATES = {
     "ok" => {
       summary: "Valid RSS feed with five recent items",
@@ -57,7 +63,7 @@ class Development::SampleFeedsController < ApplicationController
   MAX_DELAY = 30
 
   def show
-    authorize :access, :dev?
+    return head :not_found if Rails.env.production?
 
     case params[:state]
     when "empty" then render_source(empty_rss)
