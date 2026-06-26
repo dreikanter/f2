@@ -20,12 +20,14 @@ class FeedPreview < ApplicationRecord
   # grows beyond one field, extend this to cover the new user fields (still not
   # the derived ones).
   #
-  # For AI profiles the chosen provider + model are part of the identity too: the
-  # same source previewed with a different model is a genuinely different run, so
-  # it must not reuse a cached result.
+  # For AI profiles the chosen provider + model join the identity, so the same
+  # source previewed with a different model doesn't reuse a cached result.
+  #
+  # JSON-encode the parts before hashing so their boundaries are unambiguous:
+  # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
   def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil)
     parts = [source_input(feed_profile_key, params), ai_credential_id, ai_model]
-    Digest::SHA256.hexdigest(parts.map(&:to_s).join("\x1f"))
+    Digest::SHA256.hexdigest(parts.to_json)
   end
 
   # The user-facing source value for a profile, selected by its input_shape.
