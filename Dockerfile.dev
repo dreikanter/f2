@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1
+# check=error=true
+
+# Development image for Claude Code remote environments (and local container dev).
+# It is prebuilt and published to GHCR by .github/workflows/build-dev-image.yml, so
+# the remote-env setup script can pull it instead of reinstalling dependencies each
+# session. For PRODUCTION images, use the top-level Dockerfile with Kamal instead.
+
+# Keep RUBY_VERSION in sync with .ruby-version.
+ARG RUBY_VERSION=4.0.3
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim
+
+# Build and runtime dependencies for native gems and node modules.
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      build-essential \
+      curl \
+      git \
+      libffi-dev \
+      libpq-dev \
+      libyaml-dev \
+      pkg-config \
+      postgresql-client \
+      python-is-python3 \
+      zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+# Install Node and Yarn. Keep NODE_VERSION in sync with .tool-versions.
+ARG NODE_VERSION=24.15.0
+ARG YARN_VERSION=1.22.21
+ENV PATH=/usr/local/node/bin:$PATH
+RUN ARCH="$(dpkg --print-architecture)" && \
+    case "$ARCH" in \
+      amd64) NODEARCH=x64 ;; \
+      arm64) NODEARCH=arm64 ;; \
+      *) echo "unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac && \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODEARCH}.tar.xz" -o /tmp/node.tar.xz && \
+    mkdir -p /usr/local/node && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/node --strip-components=1 && \
+    rm /tmp/node.tar.xz && \
+    npm install -g "yarn@${YARN_VERSION}"
+
+# Keep gems outside the app directory so the compose bind mount doesn't shadow them.
+ENV BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_JOBS=4 \
+    LANG=C.UTF-8
+
+WORKDIR /rails
+
+# Install gems (all groups, including development and test).
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Install node modules. Baked into the image; compose mounts a named volume over
+# /rails/node_modules so the host bind mount doesn't shadow them. Lenient install
+# (like the production Dockerfile) since the committed yarn.lock can lag package.json.
+COPY package.json yarn.lock ./
+RUN yarn install
+
+CMD ["bash"]

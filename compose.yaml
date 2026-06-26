@@ -1,0 +1,55 @@
+# Development stack for Claude Code remote environments (and local container dev).
+#
+# The `app` image is prebuilt and published to GHCR by
+# .github/workflows/build-dev-image.yml; the remote-env setup script pulls it so
+# dependencies aren't reinstalled each session. See docs/claude-remote-env.md.
+#
+# For PRODUCTION images, use the top-level Dockerfile with Kamal instead.
+name: f2-dev
+
+services:
+  app:
+    image: ghcr.io/dreikanter/f2-dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    # Keep the container alive so commands run via `docker compose exec app ...`.
+    command: sleep infinity
+    tty: true
+    volumes:
+      - .:/rails
+      # Preserve the image's node_modules instead of letting the bind mount shadow them.
+      - node_modules:/rails/node_modules
+    environment:
+      # Standard libpq vars supply host + credentials for the `db` service.
+      # config/database.yml supplies the database names (f2_development, f2_test),
+      # so connections work in every Rails env. RAILS_ENV is intentionally unset so
+      # `bin/rails server` defaults to development and `bin/rails test` to test,
+      # same as a normal dev machine.
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    # Pinned to match CI and the production accessory (config/deploy.yml).
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pg_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  node_modules:
+  pg_data:
