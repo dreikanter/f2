@@ -38,9 +38,9 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_not_nil feed_identification
     assert_equal "success", feed_identification.status
     assert_equal url, feed_identification.input
-    recommended = feed_identification.candidates.first
-    assert_equal "rss", recommended["profile_key"]
-    assert_equal "Test RSS Feed", recommended["title"]
+    suggested = feed_identification.candidates.first
+    assert_equal "rss", suggested["profile_key"]
+    assert_equal "Test RSS Feed", suggested["title"]
   end
 
   test "#identify should successfully identify XKCD feed and update record" do

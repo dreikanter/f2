@@ -299,7 +299,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ai_fallback", payload.last["rank_reason"]
   end
 
-  test "#show should surface a multi-candidate payload ranked recommended first" do
+  test "#show should surface a multi-candidate payload ranked suggested first" do
     sign_in_as(user)
     url = "https://xkcd.com/rss.xml"
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>xkcd.com</title></channel></rss>"
@@ -608,7 +608,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # A disabled radio doesn't submit, so a hidden field carries the value.
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm_website_extractor']", count: 1
     # No "Suggested" badge when there's nothing to compare against.
-    assert_select "[data-key='candidate.recommended-badge']", count: 0
+    assert_select "[data-key='candidate.suggested-badge']", count: 0
   end
 
   def success_identification(url, candidates)

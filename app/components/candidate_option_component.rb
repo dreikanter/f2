@@ -38,7 +38,7 @@ class CandidateOptionComponent < ViewComponent::Base
 
   # Only badge a usable default: a disabled (failed) candidate is never worth
   # flagging even when it's the one preselected.
-  def recommended?
+  def suggested?
     selected? && !disabled?
   end
 
