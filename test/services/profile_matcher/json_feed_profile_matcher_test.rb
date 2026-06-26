@@ -9,8 +9,10 @@ class ProfileMatcher::JsonFeedProfileMatcherTest < ActiveSupport::TestCase
     assert_equal :url, ProfileMatcher::JsonFeedProfileMatcher.input_shape
   end
 
-  test ".match_specificity should be 10" do
-    assert_equal 10, ProfileMatcher::JsonFeedProfileMatcher.match_specificity
+  test ".match_specificity should be 20, above generic RSS" do
+    assert_equal 20, ProfileMatcher::JsonFeedProfileMatcher.match_specificity
+    assert_operator ProfileMatcher::JsonFeedProfileMatcher.match_specificity, :>,
+                    ProfileMatcher::RssProfileMatcher.match_specificity
   end
 
   test ".depends_on_ai should be false" do

@@ -40,6 +40,21 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     assert_equal :specific_match, rss.rank_reason
   end
 
+  test ".call should rank json_feed above rss when a JSON feed contains XML-like markup" do
+    # The RSS matcher scans for `<feed`/`<rss` anywhere in the body, so a JSON
+    # feed whose item HTML mentions `<feed>` trips it too. json_feed's stricter
+    # parse-and-validate match must win the ranking.
+    body = '{"version":"https://jsonfeed.org/version/1.1","title":"Feed",' \
+           '"items":[{"id":"1","url":"https://example.com/1","content_html":"<p>The <feed> element</p>"}]}'
+
+    result = FeedProfileDetector.call(input: "https://example.com/feed.json", fetched_body: body)
+    profile_keys = result.candidates.map(&:profile_key)
+
+    assert_equal "json_feed", profile_keys.first, "json_feed (20) should outrank rss (10)"
+    assert_includes profile_keys, "rss"
+    assert_operator profile_keys.index("json_feed"), :<, profile_keys.index("rss")
+  end
+
   test ".call should rank specific matchers above generic ones, with AI fallback last" do
     result = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
 

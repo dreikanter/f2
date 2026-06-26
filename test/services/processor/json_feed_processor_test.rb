@@ -75,6 +75,22 @@ class Processor::JsonFeedProcessorTest < ActiveSupport::TestCase
     assert_not Processor::JsonFeedProcessor.new(feed, body).process.recognized?
   end
 
+  test "#process should not recognize a version that is not the canonical spec URL" do
+    lookalike = '{"version":"see jsonfeed.org/version/ docs","title":"x","items":[]}'
+    no_scheme = '{"version":"jsonfeed.org/version/1","title":"x","items":[]}'
+
+    assert_not Processor::JsonFeedProcessor.new(feed, lookalike).process.recognized?
+    assert_not Processor::JsonFeedProcessor.new(feed, no_scheme).process.recognized?
+  end
+
+  test "#process should not recognize a feed missing a title or items array" do
+    no_title = '{"version":"https://jsonfeed.org/version/1.1","items":[]}'
+    bad_items = '{"version":"https://jsonfeed.org/version/1.1","title":"x","items":"nope"}'
+
+    assert_not Processor::JsonFeedProcessor.new(feed, no_title).process.recognized?
+    assert_not Processor::JsonFeedProcessor.new(feed, bad_items).process.recognized?
+  end
+
   test "#process should raise on unparseable JSON" do
     assert_raises(JSON::ParserError) do
       Processor::JsonFeedProcessor.new(feed, "not json at all").process
@@ -91,6 +107,8 @@ class Processor::JsonFeedProcessorTest < ActiveSupport::TestCase
     end
   end
 
+  # Pragmatic deviation from the spec (id is required): a permalink is a fine
+  # stable identifier, so we keep id-less items rather than dropping them.
   test "#process should fall back to url when id is missing" do
     body = '{"version":"https://jsonfeed.org/version/1.1","title":"Feed","items":[{"url":"https://example.com/no-id","content_text":"hi"}]}'
 

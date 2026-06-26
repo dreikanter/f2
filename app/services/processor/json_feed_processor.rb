@@ -38,15 +38,18 @@ module Processor
       end
     end
 
-    # A real JSON Feed always declares its version and a title; either an
-    # items array or a title means the payload parsed as a genuine feed
-    # rather than unrelated JSON that happened to mention the marker.
+    # Recognize the same canonical structure the matcher checks, so a
+    # manually chosen profile or a refresh can't treat lookalike JSON as a
+    # genuine feed.
     def recognizable?(feed_data)
-      return false unless feed_data["version"].to_s.include?("jsonfeed.org/version/")
-
-      feed_data["items"].is_a?(Array) || feed_data["title"].present?
+      JsonFeed.feed?(feed_data)
     end
 
+    # The spec requires a string `id` and says readers must coerce a numeric
+    # one to a string. We additionally fall back to `url` when `id` is absent
+    # rather than dropping the item — a permalink is a fine stable identifier,
+    # and this matches RssProcessor. Items with neither are dropped downstream
+    # once their uid comes back blank.
     def extract_uid(item)
       id = item["id"]
       id = id.to_s if id.is_a?(Numeric)
