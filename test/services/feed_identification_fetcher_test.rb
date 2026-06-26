@@ -152,14 +152,14 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "fetch_failed", feed_identification.error
   end
 
-  test "#identify should log the fetch-failure class so the cause is diagnosable" do
+  test "#identify should log the failure class and status for diagnosis" do
     url = "http://example.com/error.xml"
     stub_request(:get, url).to_return(status: 404, body: "Not Found")
 
     log = StringIO.new
     FeedIdentificationFetcher.new(user: user, input: url, logger: ActiveSupport::Logger.new(log)).identify
 
-    assert_match(/StatusError/, log.string)
+    assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
   end
 
   test "#identify should persist a ranked candidates array on success" do
