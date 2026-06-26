@@ -33,9 +33,8 @@ module Loader
 
     private
 
-    # The feed's explicit model override wins; otherwise fall back to the
-    # default model of whichever provider the resolved credential belongs
-    # to, so the model always matches the provider actually being called.
+    # Feed override wins; otherwise the resolved credential's provider default,
+    # so the model always matches the provider actually being called.
     def model_for(credential)
       feed.ai_model.presence || LlmProvider.find(credential.provider).default_model
     end

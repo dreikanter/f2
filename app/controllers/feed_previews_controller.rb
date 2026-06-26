@@ -32,9 +32,6 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  # Shared guard for show/create: clear the pane for a blank or unknown source,
-  # show the credential gate for an AI profile without any active credential,
-  # or clear the pane when an AI profile's provider/model selection is invalid.
   def guard_preview
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
     return render_credential_gate if needs_credential_gate?
@@ -42,10 +39,8 @@ class FeedPreviewsController < ApplicationController
     render_cleared if invalid_ai_selection?
   end
 
-  # AI previews must name an owned, active credential and a model that credential
-  # still offers — the same rule that gates enabling a feed. The Stimulus button
-  # enforces this in the UI; this is the server-side backstop so a direct request
-  # can't preview with the provider default or an arbitrary, unavailable model.
+  # Server-side backstop for the Stimulus button: an AI preview needs an owned,
+  # active credential and a model that credential still offers.
   def invalid_ai_selection?
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
@@ -60,9 +55,8 @@ class FeedPreviewsController < ApplicationController
     @digest ||= FeedPreview.digest_for(profile_key, preview_params, ai_credential&.id, ai_model)
   end
 
-  # Only the user's own active credentials are honoured, so a forged
-  # ai_credential_id can't borrow someone else's key. A missing or unusable id
-  # resolves to nil, which guard_preview treats as an invalid AI selection.
+  # Resolve only from the user's own active credentials, so a forged
+  # ai_credential_id can't borrow someone else's key.
   def ai_credential
     return @ai_credential if defined?(@ai_credential)
 

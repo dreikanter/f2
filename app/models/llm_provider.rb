@@ -4,9 +4,8 @@
 # more fields, add them for that provider specifically rather than
 # generalizing back to a schema.
 #
-# `default_model` is the model a feed falls back to when it carries no
-# explicit override. Provider-specific model names live here and nowhere
-# above this layer, so deprecating a model means editing one line.
+# Provider-specific model names live here and nowhere above: `default_model`
+# is what a feed uses when it carries no explicit override.
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model
 

@@ -1,12 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Drives the AI Settings section of the feed form:
-// - shows the section only when the selected profile is AI-backed, and
-//   disables its selects while hidden so a non-AI feed never submits a
-//   provider/model
-// - keeps the model list in sync with the chosen provider. Every active
-//   credential's models are embedded as a value, so switching providers
-//   needs no server round-trip.
+// Shows the AI Settings section only for AI-backed profiles (disabling its
+// selects while hidden so a non-AI feed submits no provider/model), and
+// rebuilds the model list from the chosen provider's embedded models — no
+// server round-trip.
 export default class extends Controller {
   static targets = ["credentialSelect", "modelSelect"]
   static values = {

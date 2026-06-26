@@ -40,9 +40,6 @@ class AiCredential < ApplicationRecord
     user.update!(default_ai_credential: self)
   end
 
-  # Whether this credential's provider still offers the given model id. The
-  # model list is refreshed on validation, so a model the provider has since
-  # dropped (or an unknown/blank id) is not offered.
   def offers_model?(model_id)
     return false if model_id.blank?
 

@@ -34,7 +34,7 @@ class FeedsController < ApplicationController
     }
   }.freeze
 
-  # Operational fields editable on a feed at any point in its lifetime.
+  # Operational fields, editable on any feed.
   ALWAYS_PERMITTED_PARAMS = %i[
     name
     description
@@ -49,10 +49,8 @@ class FeedsController < ApplicationController
     images_only
   ].freeze
 
-  # Source-side fields, editable only while a feed is still a draft (FR-007).
-  # Once a feed first leaves :draft (FR-008) these lock in for the rest of its
-  # life regardless of later pause/resume, so strong params drops them for
-  # non-drafts.
+  # Source-side fields, editable only while a feed is a draft (FR-007/008);
+  # once it first leaves :draft they lock in for good.
   DRAFT_ONLY_PERMITTED_PARAMS = [
     :url,
     :feed_profile_key,
