@@ -17,13 +17,23 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
                      params: { "url" => "https://example.com" })
   end
 
-  def fake_client(payload)
+  # Captures the CallContext so tests can assert the resolved model, and
+  # exposes a #credential (real LlmClient does too) so the loader can read
+  # the provider for default-model resolution.
+  def fake_client(payload, credential: self.credential)
     Class.new do
-      def initialize(payload) = (@payload = payload)
-      def call(_ctx, **_opts)
+      attr_reader :credential, :last_ctx
+
+      def initialize(payload, credential)
+        @payload = payload
+        @credential = credential
+      end
+
+      def call(ctx, **_opts)
+        @last_ctx = ctx
         LlmClient::Result.new(payload: @payload, usage_id: 42)
       end
-    end.new(payload)
+    end.new(payload, credential)
   end
 
   test "#load should return the items array from the LLM response" do
@@ -48,6 +58,22 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     error = assert_raises(StandardError) { loader.load }
     assert_match(/items/, error.message)
+  end
+
+  test "#load should call the model from the feed override when set" do
+    feed.update!(ai_model: "claude-opus-4-7")
+    client = fake_client({ "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_equal "claude-opus-4-7", client.last_ctx.model
+  end
+
+  test "#load should fall back to the provider default model when no override" do
+    assert_nil feed.ai_model
+    client = fake_client({ "items" => [] }, credential: credential)
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_equal LlmProvider.find(credential.provider).default_model, client.last_ctx.model
   end
 
   test "#rendered_prompt should substitute the source input" do

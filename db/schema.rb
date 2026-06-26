@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_23_134813) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_26_181007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -175,6 +175,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_23_134813) do
     t.boolean "images_only", default: false, null: false
     t.integer "imported_posts_count", default: 0, null: false
     t.integer "published_posts_count", default: 0, null: false
+    t.string "ai_model"
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"

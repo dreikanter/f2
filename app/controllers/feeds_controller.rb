@@ -209,6 +209,7 @@ class FeedsController < ApplicationController
       :target_group,
       :access_token_id,
       :ai_credential_id,
+      :ai_model,
       :cron_expression,
       :schedule_interval,
       :import_after_enabled,
@@ -233,7 +234,7 @@ class FeedsController < ApplicationController
   # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
     always_permitted = %i[
-      name description target_group access_token_id ai_credential_id schedule_interval
+      name description target_group access_token_id ai_credential_id ai_model schedule_interval
       import_after_enabled import_after_date import_after_time images_only
     ]
     draft_only_permitted = [:url, :feed_profile_key, { params: %i[url query] }]
