@@ -159,7 +159,7 @@ References:
 
 ## Testing
 
-> In remote Claude Code environments, prefix every Rails/RuboCop command with `docker compose exec app` (see [Tooling Notes](#tooling-notes)). The bare `bin/rails …` commands below assume local dev.
+In remote Claude Code environments, prefix every Rails/RuboCop command with `docker compose exec app` (see [Tooling Notes](#tooling-notes)). The bare `bin/rails …` commands below assume local dev.
 
 - Keep tests and code changes together.
 - Add or update tests for any code change.
