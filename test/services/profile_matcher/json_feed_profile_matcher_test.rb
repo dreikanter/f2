@@ -60,6 +60,20 @@ class ProfileMatcher::JsonFeedProfileMatcherTest < ActiveSupport::TestCase
     assert_not matcher(body).match?
   end
 
+  test "#match? should not match a lookalike host in the version URL" do
+    embedded = '{"version":"https://evil.com/jsonfeed.org/version/1.1","title":"Feed","items":[]}'
+    suffixed = '{"version":"https://notjsonfeed.org/version/1","title":"Feed","items":[]}'
+
+    assert_not matcher(embedded).match?
+    assert_not matcher(suffixed).match?
+  end
+
+  test "#match? should not match a version without a scheme" do
+    body = '{"version":"jsonfeed.org/version/1.1","title":"Feed","items":[]}'
+
+    assert_not matcher(body).match?
+  end
+
   test "#match? should not match a JSON array" do
     body = '[{"version":"https://jsonfeed.org/version/1.1","title":"Feed","items":[]}]'
 
