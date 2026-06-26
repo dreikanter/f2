@@ -162,6 +162,33 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
   end
 
+  test "#identify should record internal_error and report an unexpected failure" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: "<rss></rss>")
+
+    FeedProfileDetector.stub(:call, proc { raise "boom" }) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "internal_error", feed_identification.error
+  end
+
+  test "#identify should record unidentifiable when no candidates are detected" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: "x")
+
+    empty_result = Struct.new(:candidates).new([])
+    FeedProfileDetector.stub(:call, empty_result) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "unidentifiable", feed_identification.error
+  end
+
   test "#identify should persist a ranked candidates array on success" do
     url = "http://example.com/feed.xml"
 
