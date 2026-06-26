@@ -607,7 +607,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=radio][name='feed[feed_profile_key]'][checked][disabled]", count: 1
     # A disabled radio doesn't submit, so a hidden field carries the value.
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm_website_extractor']", count: 1
-    # No "Recommended" badge when there's nothing to compare against.
+    # No "Suggested" badge when there's nothing to compare against.
     assert_select "[data-key='candidate.recommended-badge']", count: 0
   end
 

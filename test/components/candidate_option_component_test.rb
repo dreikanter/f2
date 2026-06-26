@@ -68,6 +68,13 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
     assert_not_nil result.at_css("[data-key='candidate.recommended-badge']")
   end
 
+  test "#render should not flag a disabled candidate even when it is the selected one" do
+    result = render_option({ "profile_key" => "rss", "test_status" => "failed" }, selected: "rss")
+
+    assert_nil result.at_css("[data-key='candidate.recommended-badge']")
+    assert_not_nil result.at_css("input[type=radio][disabled]")
+  end
+
   test "#render should lock a single candidate with no recommended badge and a disabled radio" do
     result = render_option({ "profile_key" => "rss", "test_status" => "passed", "posts_found" => 2 }, selected: "rss", single: true)
 

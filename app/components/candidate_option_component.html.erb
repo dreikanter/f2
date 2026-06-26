@@ -8,7 +8,7 @@
         <%= render BadgeComponent.new(text: badge_text, color: badge_color, key: "candidate.#{profile_key}.status") %>
       <% end %>
       <% if recommended? %>
-        <%= render BadgeComponent.new(text: "Recommended", color: :blue, key: "candidate.recommended-badge") %>
+        <%= render BadgeComponent.new(text: "Suggested", color: :blue, key: "candidate.recommended-badge") %>
       <% end %>
     </span>
     <span class="text-slate-600 text-sm"><%= description %></span>
