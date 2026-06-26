@@ -36,15 +36,28 @@ class FeedsController < ApplicationController
 
   # Operational fields editable on a feed at any point in its lifetime.
   ALWAYS_PERMITTED_PARAMS = %i[
-    name description target_group access_token_id ai_credential_id ai_model schedule_interval
-    import_after_enabled import_after_date import_after_time images_only
+    name
+    description
+    target_group
+    access_token_id
+    ai_credential_id
+    ai_model
+    schedule_interval
+    import_after_enabled
+    import_after_date
+    import_after_time
+    images_only
   ].freeze
 
   # Source-side fields, editable only while a feed is still a draft (FR-007).
   # Once a feed first leaves :draft (FR-008) these lock in for the rest of its
   # life regardless of later pause/resume, so strong params drops them for
   # non-drafts.
-  DRAFT_ONLY_PERMITTED_PARAMS = [:url, :feed_profile_key, { params: %i[url query] }].freeze
+  DRAFT_ONLY_PERMITTED_PARAMS = [
+    :url,
+    :feed_profile_key,
+    { params: %i[url query] }
+  ].freeze
 
   def index
     authorize Feed
