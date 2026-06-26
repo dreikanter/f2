@@ -253,8 +253,15 @@ class FeedsController < ApplicationController
   end
 
   def update_feed_params
-    permitted_keys = @feed&.draft? ? ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS : ALWAYS_PERMITTED_PARAMS
     params.require(:feed).permit(*permitted_keys)
+  end
+
+  def permitted_keys
+    if @feed&.draft?
+      ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
+    else
+      ALWAYS_PERMITTED_PARAMS
+    end
   end
 
   def cleanup_feed_identification(input)
