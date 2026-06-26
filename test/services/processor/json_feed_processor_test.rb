@@ -111,4 +111,18 @@ class Processor::JsonFeedProcessorTest < ActiveSupport::TestCase
     entry = Processor::JsonFeedProcessor.new(feed, body).process.entries.first
     assert_equal "Solo Author", entry.raw_data["author"]
   end
+
+  test "#process should inherit the top-level author for an item without one (JSON Feed 1.0)" do
+    body = '{"version":"https://jsonfeed.org/version/1","title":"Feed","author":{"name":"Feed Owner"},"items":[{"id":"1","url":"https://example.com/1","content_text":"hi"}]}'
+
+    entry = Processor::JsonFeedProcessor.new(feed, body).process.entries.first
+    assert_equal "Feed Owner", entry.raw_data["author"]
+  end
+
+  test "#process should prefer an item's own author over the feed-level one" do
+    body = '{"version":"https://jsonfeed.org/version/1","title":"Feed","author":{"name":"Feed Owner"},"items":[{"id":"1","url":"https://example.com/1","author":{"name":"Item Author"},"content_text":"hi"}]}'
+
+    entry = Processor::JsonFeedProcessor.new(feed, body).process.entries.first
+    assert_equal "Item Author", entry.raw_data["author"]
+  end
 end

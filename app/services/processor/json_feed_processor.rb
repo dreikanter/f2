@@ -19,7 +19,9 @@ module Processor
     private
 
     def build_entries(feed_data)
-      feed_authors = feed_data["authors"]
+      # JSON Feed 1.1 has a top-level `authors` list; 1.0 a single `author`.
+      # Items without their own author inherit whichever the feed declares.
+      feed_authors = feed_data["authors"].presence || [feed_data["author"]].compact.presence
 
       Array(feed_data["items"]).filter_map do |item|
         next unless item.is_a?(Hash)
