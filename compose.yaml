@@ -30,6 +30,11 @@ services:
       PGPORT: "5432"
       PGUSER: postgres
       PGPASSWORD: postgres
+      # Node deps are baked into the image and kept in the node_modules volume, so the
+      # css:build step that `bin/rails test` and `assets:precompile` trigger must not run
+      # `yarn install` — that network call can't reach the registry from inside the
+      # container. Skip it; `yarn build:css` still runs offline against the baked deps.
+      SKIP_YARN_INSTALL: "1"
     ports:
       - "3000:3000"
     depends_on:
