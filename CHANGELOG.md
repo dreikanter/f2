@@ -4,7 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-26
 
-- JSON feeds are now supported, alongside RSS and Atom.
+- JSON feeds are now supported.
 
 ## 2026-06-25
 
