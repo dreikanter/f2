@@ -233,7 +233,17 @@ class Feed < ApplicationRecord
     return false unless source_input.present? && feed_profile_present?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
 
-    ai_credential&.active? && ai_model.present?
+    ai_credential&.active? && ai_model_available?
+  end
+
+  # Whether the feed's chosen model is still one the credential offers. A model
+  # the provider has since dropped (or a feed left without a credential) is not
+  # available, so the feed must be reconfigured before it can preview or enable.
+  def ai_model_available?
+    return false if ai_model.blank?
+    return false unless ai_credential
+
+    ai_credential.available_models.any? { |model| model["id"] == ai_model }
   end
 
   # Creates and returns a loader instance for this feed
@@ -478,6 +488,10 @@ class Feed < ApplicationRecord
       errors.add(:ai_credential, "must be selected for AI-backed feeds")
     elsif !ai_credential.active?
       errors.add(:ai_credential, "must be active (currently #{ai_credential.state})")
+    elsif ai_model.blank?
+      errors.add(:ai_model, "Choose a model for this feed.")
+    elsif !ai_model_available?
+      errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
     end
   end
 

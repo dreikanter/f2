@@ -19,7 +19,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   def credential
-    @credential ||= create(:ai_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user,
+                           available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
   end
 
   def ai_url
@@ -90,7 +91,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_includes response.body, "AI page reader"
 
-      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
+      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url },
+                             ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
       assert_response :success
       perform_enqueued_jobs
 
@@ -106,7 +108,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
             access_token_id: access_token.id,
             target_group: "testgroup",
             schedule_interval: "1h",
-            ai_credential_id: credential.id
+            ai_credential_id: credential.id,
+            ai_model: "claude-sonnet-4-6"
           },
           enable_feed: "1"
         }

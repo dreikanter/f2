@@ -9,6 +9,7 @@
   section_visible = feed.feed_profile_present? && FeedProfile.depends_on_ai?(feed.feed_profile_key)
   selected_credential_id = (feed.ai_credential_id || Current.user.default_ai_credential_id || active_credentials.first&.id)&.to_s
   selected_models = models_by_credential[selected_credential_id] || []
+  model_unavailable = section_visible && feed.ai_credential&.active? && feed.ai_model.present? && !feed.ai_model_available?
   select_classes = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2"
 %>
 <%= tag.div(
@@ -25,6 +26,15 @@
 
   <div class="space-y-6">
     <% if active_credentials.any? %>
+      <% if model_unavailable %>
+        <%= render PanelComponent.new(variant: :info) do %>
+          <div class="space-y-1" data-key="form.ai-model-unavailable">
+            <p class="font-semibold text-sky-900">Your saved model isn't available anymore</p>
+            <p class="text-sky-800 text-sm">Pick a model below to keep this feed running.</p>
+          </div>
+        <% end %>
+      <% end %>
+
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
           <%= f.label :ai_credential_id, "AI provider", class: "block font-semibold text-slate-800" %>
@@ -52,7 +62,11 @@
                        class: select_classes,
                        disabled: !section_visible,
                        data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>
-          <p class="text-sm text-slate-500">Choose the model this feed uses to fetch posts.</p>
+          <% if f.object.errors[:ai_model].any? %>
+            <p class="text-sm text-red-600"><%= f.object.errors[:ai_model].first %></p>
+          <% else %>
+            <p class="text-sm text-slate-500">Choose the model this feed uses to fetch posts.</p>
+          <% end %>
         </div>
       <% end %>
     <% else %>

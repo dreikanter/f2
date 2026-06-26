@@ -381,8 +381,8 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should be true for an AI profile with an active credential and a model" do
-    credential = create(:ai_credential, :active)
+  test "#can_be_previewed? should be true for an AI profile with an active credential and an available model" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
                         params: { "query" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
 
@@ -393,6 +393,14 @@ class FeedTest < ActiveSupport::TestCase
     credential = create(:ai_credential, :active)
     feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
                         params: { "query" => "ruby news" }, ai_credential: credential, ai_model: nil)
+
+    assert_not feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be false for an AI profile whose model is no longer available" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
+                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
 
     assert_not feed.can_be_previewed?
   end
@@ -735,18 +743,51 @@ class FeedTest < ActiveSupport::TestCase
     assert_includes feed.errors[:ai_credential], "must be active (currently inactive)"
   end
 
-  test "#enabling an AI feed should accept an active ai_credential" do
+  test "#enabling an AI feed should accept an active credential with an available model" do
     user = create(:user)
-    credential = create(:ai_credential, :active, user: user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
                  feed_profile_key: "llm_website_extractor",
                  params: { "url" => "https://example.com" },
-                 ai_credential: credential)
+                 ai_credential: credential,
+                 ai_model: "claude-sonnet-4-6")
     feed.state = :enabled
 
     assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#enabling an AI feed should require a model" do
+    user = create(:user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 ai_credential: credential,
+                 ai_model: nil)
+    feed.state = :enabled
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:ai_model], "Choose a model for this feed."
+  end
+
+  test "#enabling an AI feed should reject a model the provider no longer offers" do
+    user = create(:user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed,
+                 user: user,
+                 access_token: access_token_for(user),
+                 feed_profile_key: "llm_website_extractor",
+                 params: { "url" => "https://example.com" },
+                 ai_credential: credential,
+                 ai_model: "removed-model")
+    feed.state = :enabled
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
   end
 
   test "#enabling a non-AI feed should not require an ai_credential" do

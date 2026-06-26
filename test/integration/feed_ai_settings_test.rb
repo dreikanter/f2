@@ -44,6 +44,21 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.ai-settings'][hidden]", false
     assert_select "select[name='feed[ai_credential_id]'][data-key='form.ai-credential']"
     assert_select "select[name='feed[ai_model]'][data-key='form.ai-model']"
+    assert_select "[data-key='form.ai-model-unavailable']", false
+  end
+
+  test "#edit should warn when the feed's saved model is no longer available" do
+    sign_in_as(user)
+    stale_feed = create(:feed,
+                        user: user,
+                        feed_profile_key: "llm_website_extractor",
+                        ai_credential: credential,
+                        ai_model: "removed-model",
+                        params: { "url" => "https://no-rss.example.com" })
+
+    get edit_feed_path(stale_feed)
+
+    assert_select "[data-key='form.ai-model-unavailable']"
   end
 
   test "#edit should preselect the feed's saved provider and model" do
