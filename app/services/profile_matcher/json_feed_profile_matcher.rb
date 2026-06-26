@@ -3,20 +3,33 @@ module ProfileMatcher
     input_shape :url
     match_specificity 10
 
-    # Every JSON Feed names its spec version, e.g.
-    # "https://jsonfeed.org/version/1.1". JSON may or may not escape the
-    # slashes, so accept both forms. The textual check mirrors how the
-    # RSS matcher sniffs for `<rss`/`<feed`; the processor's recognition
-    # flag is the real gate.
-    JSON_FEED_MARKERS = [
-      "jsonfeed.org/version/",
-      'jsonfeed.org\/version\/'
-    ].freeze
+    # https://jsonfeed.org/version/1.1 — a feed is a JSON object whose
+    # `version` names the spec and which carries the required `title`
+    # (string) and `items` (array) fields. Parsing and checking that
+    # structure rules out HTML pages that merely link to the spec or
+    # unrelated JSON that happens to mention the URL. Parsing also
+    # normalizes any `\/`-escaped slashes, so the marker is matched
+    # against the decoded value.
+    VERSION_MARKER = "jsonfeed.org/version/".freeze
 
     def match?
       return false if fetched_body.blank?
 
-      JSON_FEED_MARKERS.any? { |marker| fetched_body.include?(marker) }
+      feed = parse(fetched_body)
+      return false unless feed.is_a?(Hash)
+
+      version = feed["version"]
+      version.is_a?(String) && version.include?(VERSION_MARKER) &&
+        feed["title"].is_a?(String) &&
+        feed["items"].is_a?(Array)
+    end
+
+    private
+
+    def parse(body)
+      JSON.parse(body)
+    rescue JSON::ParserError
+      nil
     end
   end
 end
