@@ -1,0 +1,79 @@
+[
+  {
+    "uid": "https://example.com/first-post",
+    "status": "pending",
+    "published_at": "2024-09-12T16:00:00.000Z",
+    "raw_data": {
+      "id": "https://example.com/first-post",
+      "title": "First Post",
+      "url": "https://example.com/first-post",
+      "link": "https://example.com/first-post",
+      "external_url": null,
+      "summary": "A short summary of the first post.",
+      "content": "<p>Hello, world! Here is an <img src=\"https://example.com/inline.jpg\"> inline image.</p>",
+      "published": "2024-09-12T09:00:00-07:00",
+      "updated": null,
+      "author": "Jane Author",
+      "categories": [
+        "news",
+        "intro"
+      ],
+      "enclosures": []
+    }
+  },
+  {
+    "uid": "https://example.com/second-post",
+    "status": "pending",
+    "published_at": "2024-09-11T22:30:00.000Z",
+    "raw_data": {
+      "id": "https://example.com/second-post",
+      "title": "Second Post",
+      "url": "https://example.com/second-post",
+      "link": "https://example.com/second-post",
+      "external_url": "https://other.example.org/article",
+      "summary": null,
+      "content": "This is a plain text post with no HTML markup.",
+      "published": "2024-09-11T15:30:00-07:00",
+      "updated": null,
+      "author": "John Writer",
+      "categories": [],
+      "enclosures": []
+    }
+  },
+  {
+    "uid": "https://example.com/photo-post",
+    "status": "pending",
+    "published_at": "2024-09-10T19:00:00.000Z",
+    "raw_data": {
+      "id": "https://example.com/photo-post",
+      "title": "Photo Post",
+      "url": "https://example.com/photo-post",
+      "link": "https://example.com/photo-post",
+      "external_url": null,
+      "summary": null,
+      "content": "<p>Check out this photo.</p>",
+      "published": "2024-09-10T12:00:00-07:00",
+      "updated": null,
+      "author": "Jane Author",
+      "categories": [],
+      "enclosures": [
+        {
+          "url": "https://example.com/main-photo.jpg",
+          "type": null
+        },
+        {
+          "url": "https://example.com/banner.jpg",
+          "type": null
+        },
+        {
+          "url": "https://example.com/audio.m4a",
+          "type": "audio/x-m4a"
+        },
+        {
+          "url": "https://example.com/gallery.png",
+          "type": "image/png"
+        }
+      ]
+    }
+  }
+]
