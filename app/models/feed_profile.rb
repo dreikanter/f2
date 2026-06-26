@@ -49,6 +49,26 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
+    "json_feed" => {
+      display_name: "JSON Feed",
+      description: "Posts from a site's JSON feed (jsonfeed.org)",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::JsonFeedProfileMatcher",
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {
+          "url" => { "type" => "string", "format" => "uri" }
+        },
+        "required" => ["url"],
+        "additionalProperties" => false
+      },
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::JsonFeedProcessor", config: {} },
+      normalizer: { class: "Normalizer::JsonFeedNormalizer", config: {} },
+      title_extractor: "TitleExtractor::JsonFeedTitleExtractor",
+      output_schema: nil
+    },
     "reddit" => {
       display_name: "Reddit",
       description: "Posts from a subreddit or Reddit user page via RSS",
