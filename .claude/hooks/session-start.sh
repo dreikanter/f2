@@ -28,6 +28,10 @@ fi
 # the image on first use.
 docker compose up -d
 
-# Prepare the test database inside the app container.
-docker compose exec -T app bin/rails db:test:prepare ||
-  echo "warning: db:test:prepare failed; run it manually once the stack is up" >&2
+# Prepare the databases inside the app container so `bin/rails test` and
+# `bin/rails server` work without a manual step. With DATABASE_URL unset,
+# db:prepare runs against both development and test, so one call creates,
+# migrates, and seeds the dev DB and also creates and loads the test DB.
+# Idempotent on later sessions since pg_data persists across runs.
+docker compose exec -T app bin/rails db:prepare ||
+  echo "warning: db:prepare failed; run it manually once the stack is up" >&2
