@@ -1,0 +1,54 @@
+name: Build dev image
+
+# Builds the Claude Code remote-env dev image (Dockerfile.dev) and pushes it to
+# GHCR. Triggered when the toolchain or dependencies change, or on demand.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - Dockerfile.dev
+      - Gemfile
+      - Gemfile.lock
+      - package.json
+      - yarn.lock
+      - .github/workflows/build-dev-image.yml
+  workflow_dispatch:
+
+concurrency:
+  group: build-dev-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.dev
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/f2-dev:latest
+            ghcr.io/${{ github.repository_owner }}/f2-dev:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
