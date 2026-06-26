@@ -232,15 +232,16 @@ class Feed < ApplicationRecord
   def can_be_previewed?
     return false unless source_input.present? && feed_profile_present?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
+    return false unless ai_credential&.active?
 
-    ai_credential&.active? && ai_model_available?
+    ai_model_available?
   end
 
   # Whether the feed's chosen model is still one the credential offers. A model
   # the provider has since dropped (or a feed left without a credential) is not
   # available, so the feed must be reconfigured before it can preview or enable.
   def ai_model_available?
-    ai_credential&.offers_model?(ai_model) || false
+    ai_credential.present? && ai_credential.offers_model?(ai_model)
   end
 
   # Creates and returns a loader instance for this feed
