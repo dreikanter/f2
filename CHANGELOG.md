@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-26
+
+- AI-powered feeds now let you pick the AI provider and model right in the feed settings, with the model list updating to match the provider you choose.
+
 ## 2026-06-25
 
 - When adding a feed, each fetch option now shows its test result.

@@ -100,6 +100,8 @@
         <% end %>
       </div>
 
+      <%= render "feeds/ai_settings", f: f, feed: feed %>
+
       <div class="mt-2" data-key="form.preview">
         <%= tag.button "Preview feed contents",
               type: "button",
