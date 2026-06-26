@@ -147,8 +147,15 @@ References:
 ## Tooling Notes
 
 - Use mise for managing Ruby and Node runtimes (local dev).
-- **Remote Claude Code environments** don't have mise. The session-start hook (`.claude/hooks/session-start.sh`) sets up Ruby via rbenv, starts PostgreSQL, and installs gems automatically. Run binstubs directly after that.
-- Run Rails binstubs directly: `bin/rails test`, `bin/rubocop -f github`.
+- Run Rails binstubs directly in local dev: `bin/rails test`, `bin/rubocop -f github`.
+- **Remote Claude Code environments** don't have mise. They run a prebuilt dev
+  container instead: the session-start hook (`.claude/hooks/session-start.sh`)
+  starts the Docker daemon and brings up the `app` + `db` stack from `compose.yaml`.
+  In these environments, run Rails commands **inside the container**, e.g.
+  `docker compose exec app bin/rails test` or
+  `docker compose exec app bin/rubocop -f github`. See
+  [`docs/claude-remote-env.md`](docs/claude-remote-env.md) for the image build,
+  GHCR publishing, and caching setup.
 
 ## Testing
 
