@@ -1,0 +1,12 @@
+{
+  "attachment_urls": [
+    "https://example.com/inline.jpg"
+  ],
+  "comments": [],
+  "content": "Hello, world! Here is an inline image. - https://example.com/first-post",
+  "published_at": "2024-09-12T16:00:00.000Z",
+  "source_url": "https://example.com/first-post",
+  "status": "enqueued",
+  "uid": "https://example.com/first-post",
+  "validation_errors": []
+}

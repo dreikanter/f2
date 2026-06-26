@@ -1,0 +1,45 @@
+{
+  "version": "https://jsonfeed.org/version/1.1",
+  "title": "Example JSON Feed",
+  "home_page_url": "https://example.com/",
+  "feed_url": "https://example.com/feed.json",
+  "authors": [
+    { "name": "Jane Author", "url": "https://example.com/jane" }
+  ],
+  "icon": "https://example.com/icon.png",
+  "items": [
+    {
+      "id": "https://example.com/first-post",
+      "url": "https://example.com/first-post",
+      "title": "First Post",
+      "content_html": "<p>Hello, world! Here is an <img src=\"https://example.com/inline.jpg\"> inline image.</p>",
+      "summary": "A short summary of the first post.",
+      "date_published": "2024-09-12T09:00:00-07:00",
+      "tags": ["news", "intro"]
+    },
+    {
+      "id": "https://example.com/second-post",
+      "url": "https://example.com/second-post",
+      "external_url": "https://other.example.org/article",
+      "title": "Second Post",
+      "content_text": "This is a plain text post with no HTML markup.",
+      "date_published": "2024-09-11T15:30:00-07:00",
+      "authors": [
+        { "name": "John Writer" }
+      ]
+    },
+    {
+      "id": "https://example.com/photo-post",
+      "url": "https://example.com/photo-post",
+      "title": "Photo Post",
+      "content_html": "<p>Check out this photo.</p>",
+      "image": "https://example.com/main-photo.jpg",
+      "banner_image": "https://example.com/banner.jpg",
+      "attachments": [
+        { "url": "https://example.com/audio.m4a", "mime_type": "audio/x-m4a", "size_in_bytes": 12345 },
+        { "url": "https://example.com/gallery.png", "mime_type": "image/png" }
+      ],
+      "date_published": "2024-09-10T12:00:00-07:00"
+    }
+  ]
+}

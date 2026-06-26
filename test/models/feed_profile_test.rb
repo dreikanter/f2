@@ -6,6 +6,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "aerostat",
       "buni",
       "elementy",
+      "json_feed",
       "litterbox",
       "llm_web_search",
       "llm_website_extractor",
