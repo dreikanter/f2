@@ -230,7 +230,10 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    source_input.present? && feed_profile_present?
+    return false unless source_input.present? && feed_profile_present?
+    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    ai_credential&.active? && ai_model.present?
   end
 
   # Creates and returns a loader instance for this feed

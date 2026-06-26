@@ -1,9 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Drives the manual feed preview:
-// - keeps the button enabled only when a profile is selected and a source is present
+// - keeps the button enabled only when a profile is selected and a source is
+//   present (and, for AI profiles, a provider and model are chosen)
 // - on click, paints the loading spinner, points the modal's feed-preview frame
-//   at the preview endpoint for the selected profile + source, then opens the modal
+//   at the preview endpoint for the selected profile + source (plus the chosen
+//   provider + model for AI profiles), then opens the modal
 // - on modal close, clears the frame so the polling host unmounts (stops polling)
 export default class extends Controller {
   static targets = ["button", "frame"]
@@ -11,6 +13,7 @@ export default class extends Controller {
     endpoint: String,
     source: String,
     shapes: Object,
+    aiProfiles: Array,
     modalId: String
   }
 
@@ -44,6 +47,12 @@ export default class extends Controller {
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
     url.searchParams.set(`params[${shape}]`, this.sourceValue)
+    if (this._isAiProfile(profileKey)) {
+      const credential = this._aiCredentialValue()
+      const model = this._aiModelValue()
+      if (credential) url.searchParams.set("ai_credential_id", credential)
+      if (model) url.searchParams.set("ai_model", model)
+    }
 
     // Paint the spinner before kicking off the fetch so the modal never opens
     // empty while the first response is in flight.
@@ -55,7 +64,12 @@ export default class extends Controller {
 
   refreshAvailability() {
     if (!this.hasButtonTarget) return
-    const ready = !!this._selectedProfileKey() && !!this.sourceValue.trim()
+    const profileKey = this._selectedProfileKey()
+    let ready = !!profileKey && !!this.sourceValue.trim()
+    // AI profiles can't preview until a provider and model are picked.
+    if (ready && this._isAiProfile(profileKey)) {
+      ready = !!this._aiCredentialValue() && !!this._aiModelValue()
+    }
     this.buttonTarget.disabled = !ready
   }
 
@@ -64,6 +78,18 @@ export default class extends Controller {
     if (checked) return checked.value
     const hidden = this.element.querySelector("input[type=hidden][name='feed[feed_profile_key]']")
     return hidden ? hidden.value : null
+  }
+
+  _isAiProfile(profileKey) {
+    return this.hasAiProfilesValue && this.aiProfilesValue.includes(profileKey)
+  }
+
+  _aiCredentialValue() {
+    return this.element.querySelector("select[name='feed[ai_credential_id]']")?.value || ""
+  }
+
+  _aiModelValue() {
+    return this.element.querySelector("select[name='feed[ai_model]']")?.value || ""
   }
 
   _clearFrame() {

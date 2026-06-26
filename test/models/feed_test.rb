@@ -375,10 +375,33 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
-  test "#can_be_previewed? should be true for a query-shaped profile with a query" do
-    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "ruby news" })
+  test "#can_be_previewed? should be true for a non-AI profile with a source" do
+    feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
 
     assert feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be true for an AI profile with an active credential and a model" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
+                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    assert feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be false for an AI profile without a model" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
+                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: nil)
+
+    assert_not feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be false for an AI profile without a credential" do
+    feed = build(:feed, feed_profile_key: "llm_web_search",
+                        params: { "query" => "ruby news" }, ai_credential: nil, ai_model: "claude-sonnet-4-6")
+
+    assert_not feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false when the source input is blank" do

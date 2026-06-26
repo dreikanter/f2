@@ -130,4 +130,30 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     preview.reload
     assert preview.pending?, "expected preview to remain pending (not failed), got #{preview.status}"
   end
+
+  test "#execute should run the AI loader with the preview's selected provider and model" do
+    credential = create(:ai_credential, :active, user: user)
+    preview = create(:feed_preview, user: user, feed_profile_key: "llm_web_search",
+                     params: { "query" => "rust async" }, ai_credential: credential,
+                     ai_model: "claude-opus-4-7", status: :pending, run_id: "run-ai")
+
+    captured_feed = nil
+    captured_model = nil
+    fake_client = Class.new do
+      attr_reader :credential
+      def initialize(credential) = (@credential = credential)
+      define_method(:call) do |ctx, **_opts|
+        captured_model = ctx.model
+        LlmClient::Result.new(payload: { "items" => [] }, usage_id: 1)
+      end
+    end
+
+    LlmClient.stub(:for, ->(feed) { captured_feed = feed; fake_client.new(credential) }) do
+      FeedPreviewWorkflow.new(preview, run_id: "run-ai").execute
+    end
+
+    assert_equal credential.id, captured_feed.ai_credential_id
+    assert_equal "claude-opus-4-7", captured_feed.ai_model
+    assert_equal "claude-opus-4-7", captured_model
+  end
 end

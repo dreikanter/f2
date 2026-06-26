@@ -135,6 +135,43 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "#show should store the chosen provider and model on the preview" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+
+    get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+                         ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
+
+    preview = user.feed_previews.last
+    assert_equal credential.id, preview.ai_credential_id
+    assert_equal "claude-opus-4-7", preview.ai_model
+  end
+
+  test "#show should keep separate previews for different models on the same source" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user)
+    source = { query: "anything here" }
+
+    assert_difference("FeedPreview.count", 2) do
+      get feed_preview_url(profile_key: "llm_web_search", "params" => source,
+                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
+      get feed_preview_url(profile_key: "llm_web_search", "params" => source,
+                           ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
+    end
+  end
+
+  test "#show should ignore a credential the user does not own" do
+    sign_in_as(user)
+    create(:ai_credential, :active, user: user)
+    stranger_credential = create(:ai_credential, :active, user: create(:user))
+
+    get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+                         ai_credential_id: stranger_credential.id, ai_model: "claude-opus-4-7")
+
+    preview = user.feed_previews.last
+    assert_nil preview.ai_credential_id
+  end
+
   test "#create should start a fresh run and enqueue a job" do
     sign_in_as(user)
 

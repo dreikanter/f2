@@ -4,7 +4,7 @@
       body, so the controller element is never torn down mid-poll. Polling stops
       once a terminal (ready/failed) body marks itself done. %>
   <div data-controller="polling"
-       data-polling-endpoint-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, format: :turbo_stream) %>"
+       data-polling-endpoint-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, ai_credential_id: preview.ai_credential_id, ai_model: preview.ai_model, format: :turbo_stream) %>"
        data-polling-stop-condition-value="[data-preview-done]"
        data-polling-interval-value="<%= polling_interval_ms %>"
        data-polling-max-polls-value="<%= polling_max_polls %>">
@@ -23,7 +23,7 @@
            role="alert"
            data-key="preview.timeout"
            data-controller="preview"
-           data-preview-refresh-url-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params) %>">
+           data-preview-refresh-url-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params, ai_credential_id: preview.ai_credential_id, ai_model: preview.ai_model) %>">
         <div class="space-y-1">
           <p class="font-semibold text-slate-800">This is taking longer than expected.</p>
           <p class="text-slate-600">The source may be slow or unavailable. Give it another go when you're ready.</p>

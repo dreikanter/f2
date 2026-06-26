@@ -3,6 +3,7 @@ class FeedPreview < ApplicationRecord
 
   belongs_to :user
   belongs_to :feed, optional: true
+  belongs_to :ai_credential, optional: true
 
   enum :status, { pending: 0, processing: 1, ready: 2, failed: 3 }
 
@@ -18,8 +19,13 @@ class FeedPreview < ApplicationRecord
   # hash key-ordering (and jsonb read-ordering) entirely. When user-supplied input
   # grows beyond one field, extend this to cover the new user fields (still not
   # the derived ones).
-  def self.digest_for(feed_profile_key, params)
-    Digest::SHA256.hexdigest(source_input(feed_profile_key, params).to_s)
+  #
+  # For AI profiles the chosen provider + model are part of the identity too: the
+  # same source previewed with a different model is a genuinely different run, so
+  # it must not reuse a cached result.
+  def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil)
+    parts = [source_input(feed_profile_key, params), ai_credential_id, ai_model]
+    Digest::SHA256.hexdigest(parts.map(&:to_s).join("\x1f"))
   end
 
   # The user-facing source value for a profile, selected by its input_shape.
@@ -60,6 +66,6 @@ class FeedPreview < ApplicationRecord
   private
 
   def assign_params_digest
-    self[:params_digest] = self.class.digest_for(feed_profile_key, params)
+    self[:params_digest] = self.class.digest_for(feed_profile_key, params, ai_credential_id, ai_model)
   end
 end

@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-06-26
 
 - AI-powered feeds now let you pick the AI provider and model right in the feed settings, with the model list updating to match the provider you choose.
+- Previewing an AI feed now uses the exact provider and model you picked, and preview stays unavailable until a model is set.
 
 ## 2026-06-25
 

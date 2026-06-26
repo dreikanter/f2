@@ -21,6 +21,7 @@
      data-preview-button-endpoint-value="<%= feed_preview_path %>"
      data-preview-button-source-value="<%= feed.source_input %>"
      data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
+     data-preview-button-ai-profiles-value="<%= FeedProfile.all.select { |key| FeedProfile.depends_on_ai?(key) }.to_json %>"
      data-preview-button-modal-id-value="feed-preview-modal">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),

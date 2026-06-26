@@ -45,7 +45,20 @@ class FeedPreviewsController < ApplicationController
   end
 
   def digest
-    @digest ||= FeedPreview.digest_for(profile_key, preview_params)
+    @digest ||= FeedPreview.digest_for(profile_key, preview_params, ai_credential&.id, ai_model)
+  end
+
+  # Only the user's own active credentials are honoured, so a forged
+  # ai_credential_id can't borrow someone else's key. A missing or unusable
+  # id resolves to nil, and the preview falls back to the default credential.
+  def ai_credential
+    return @ai_credential if defined?(@ai_credential)
+
+    @ai_credential = Current.user.ai_credentials.active.find_by(id: params[:ai_credential_id])
+  end
+
+  def ai_model
+    @ai_model ||= params[:ai_model].to_s.presence
   end
 
   def locate_preview
@@ -60,7 +73,8 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.update!(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    preview.update!(params: preview_params, ai_credential_id: ai_credential&.id, ai_model: ai_model,
+                    status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
     FeedPreviewJob.perform_later(preview.id, preview.run_id)
     preview
   rescue ActiveRecord::RecordNotUnique
