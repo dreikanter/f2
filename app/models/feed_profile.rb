@@ -386,7 +386,6 @@ class FeedProfile
       loader: {
         class: "Loader::LlmLoader",
         config: {
-          model: "claude-sonnet-4-6",
           prompt_template: <<~PROMPT,
             Visit {{input}} and extract up to 10 of the most recent posts or articles.
             For each item, return a stable permalink as `uid`, a title, body text,
@@ -500,7 +499,6 @@ class FeedProfile
       loader: {
         class: "Loader::LlmLoader",
         config: {
-          model: "claude-sonnet-4-6",
           prompt_template: <<~PROMPT,
             Find the most recent posts for `{{input}}` and return the matching articles or
             posts. The input may be an account or handle (e.g. `@someone`), in which case

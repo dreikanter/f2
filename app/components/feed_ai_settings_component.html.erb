@@ -1,0 +1,55 @@
+<%= tag.div(
+      class: "mt-6",
+      hidden: !section_visible?,
+      data: {
+        controller: "ai-settings",
+        ai_settings_models_value: models_by_credential.to_json,
+        ai_settings_ai_profiles_value: ai_profile_keys.to_json,
+        key: "form.ai-settings"
+      }
+    ) do %>
+  <h2 class="text-xl font-semibold text-slate-900 mb-4">AI Settings</h2>
+
+  <div class="space-y-6">
+    <% if credentials? %>
+      <% if model_unavailable? %>
+        <%= render PanelComponent.new(variant: :info) do %>
+          <div class="space-y-1" data-key="form.ai-model-unavailable">
+            <p class="font-semibold text-sky-900">Your saved model isn't available anymore</p>
+            <p class="text-sky-800 text-sm">Pick a model below to keep this feed running.</p>
+          </div>
+        <% end %>
+      <% end %>
+
+      <%= render PanelComponent.new do %>
+        <div class="space-y-2">
+          <%= form.label :ai_credential_id, "AI provider", class: "block font-semibold text-slate-800" %>
+          <%= form.select :ai_credential_id, credential_options, { selected: selected_credential_id },
+                          class: SELECT_CLASSES, disabled: !section_visible?,
+                          data: { ai_settings_target: "credentialSelect", action: "change->ai-settings#refreshModels", key: "form.ai-credential" } %>
+          <% if form.object.errors[:ai_credential].any? %>
+            <p class="text-sm text-red-600"><%= form.object.errors[:ai_credential].first %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= render PanelComponent.new do %>
+        <div class="space-y-2">
+          <%= form.label :ai_model, "Model", class: "block font-semibold text-slate-800" %>
+          <%= form.select :ai_model, model_options, { include_blank: "Select a model…" },
+                          class: SELECT_CLASSES, disabled: !section_visible?,
+                          data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>
+          <% if form.object.errors[:ai_model].any? %>
+            <p class="text-sm text-red-600"><%= form.object.errors[:ai_model].first %></p>
+          <% else %>
+            <p class="text-sm text-slate-500">Choose the model this feed uses to fetch posts.</p>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <%= render PanelComponent.new(variant: :info) do %>
+        <%= render "feed_previews/credential_gate", profile_key: feed.feed_profile_key %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -43,7 +43,9 @@ class FeedPreviewWorkflow
     Feed.new(
       params: feed_preview.params,
       feed_profile_key: feed_preview.feed_profile_key,
-      user: feed_preview.user
+      user: feed_preview.user,
+      ai_credential_id: feed_preview.ai_credential_id,
+      ai_model: feed_preview.ai_model
     )
   end
 

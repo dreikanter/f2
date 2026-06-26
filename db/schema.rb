@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_23_134813) do
+ActiveRecord::Schema[8.2].define(version: 2026_06_26_184639) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_23_134813) do
     t.string "params_digest", null: false
     t.datetime "ready_at"
     t.string "run_id"
+    t.bigint "ai_credential_id"
+    t.string "ai_model"
     t.index ["created_at"], name: "index_feed_previews_on_created_at"
     t.index ["status"], name: "index_feed_previews_on_status"
     t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
@@ -175,6 +177,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_23_134813) do
     t.boolean "images_only", default: false, null: false
     t.integer "imported_posts_count", default: 0, null: false
     t.integer "published_posts_count", default: 0, null: false
+    t.string "ai_model"
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"

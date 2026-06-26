@@ -6,7 +6,9 @@ module Loader
   # into FeedEntry instances downstream.
   #
   # The profile entry must declare `loader: { class: "Loader::LlmLoader",
-  # config: { model:, prompt_template:, output_schema:, tools? } }`.
+  # config: { prompt_template:, output_schema:, tools? } }`. The model is
+  # not part of the profile config: it comes from the feed's override or
+  # the provider default (see `#model_for`).
   class LlmLoader < Base
     def load
       llm_client = options.fetch(:llm_client) { LlmClient.for(feed) }
@@ -14,7 +16,7 @@ module Loader
         feed: feed.persisted? ? feed : nil,
         profile_key: feed.feed_profile_key,
         stage: :loader,
-        model: config.fetch(:model),
+        model: model_for(llm_client.credential),
         purpose: options.fetch(:purpose, :scheduled_run)
       )
       result = llm_client.call(ctx,
@@ -30,6 +32,12 @@ module Loader
     end
 
     private
+
+    # Feed override wins; otherwise the resolved credential's provider default,
+    # so the model always matches the provider actually being called.
+    def model_for(credential)
+      feed.ai_model.presence || LlmProvider.find(credential.provider).default_model
+    end
 
     def config
       @config ||= FeedProfile.config_for(feed.feed_profile_key, :loader).symbolize_keys

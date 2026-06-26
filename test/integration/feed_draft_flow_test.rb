@@ -89,7 +89,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     # directly. Re-fetch the show page and confirm the "Continue setting up
     # your feed" call-to-action is rendered with a link back to the feed
     # editor.
-    credential.update!(state: :active, last_validated_at: Time.current)
+    credential.update!(state: :active, last_validated_at: Time.current,
+                       available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
 
     get ai_credential_path(credential, feed_id: draft.id)
     assert_response :success
@@ -108,7 +109,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
         access_token_id: access_token.id,
         target_group: "testgroup",
         schedule_interval: "1h",
-        ai_credential_id: credential.id
+        ai_credential_id: credential.id,
+        ai_model: "claude-sonnet-4-6"
       },
       enable_feed: "1"
     }

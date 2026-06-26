@@ -19,7 +19,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   def credential
-    @credential ||= create(:ai_credential, :active, user: user)
+    @credential ||= create(:ai_credential, :active, user: user,
+                           available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
   end
 
   def ai_url
@@ -47,11 +48,18 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
   end
 
   # Stubs LlmClient.for so the loader receives a fake client whose #call
-  # returns / raises the prescripted result. Block-scoped, no
+  # returns / raises the prescripted result. Exposes #credential like the
+  # real client so the loader can resolve the model. Block-scoped, no
   # monkey-patching of stage classes.
-  def with_llm_client(result, &block)
+  def with_llm_client(result, credential: self.credential, &block)
     fake_client = Class.new do
-      def initialize(result) = (@result = result)
+      attr_reader :credential
+
+      def initialize(result, credential)
+        @result = result
+        @credential = credential
+      end
+
       def call(_ctx, **_opts)
         case @result
         when Exception then raise @result
@@ -59,7 +67,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
         else raise ArgumentError, "unsupported stub result: #{@result.class}"
         end
       end
-    end.new(result)
+    end.new(result, credential)
 
     LlmClient.stub(:for, ->(*_args) { fake_client }, &block)
   end
@@ -83,7 +91,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       assert_response :success
       assert_includes response.body, "AI page reader"
 
-      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
+      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url },
+                             ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
       assert_response :success
       perform_enqueued_jobs
 
@@ -99,7 +108,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
             access_token_id: access_token.id,
             target_group: "testgroup",
             schedule_interval: "1h",
-            ai_credential_id: credential.id
+            ai_credential_id: credential.id,
+            ai_model: "claude-sonnet-4-6"
           },
           enable_feed: "1"
         }

@@ -230,7 +230,15 @@ class Feed < ApplicationRecord
   end
 
   def can_be_previewed?
-    source_input.present? && feed_profile_present?
+    return false unless source_input.present? && feed_profile_present?
+    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
+    return false unless ai_credential&.active?
+
+    ai_model_available?
+  end
+
+  def ai_model_available?
+    ai_credential.present? && ai_credential.offers_model?(ai_model)
   end
 
   # Creates and returns a loader instance for this feed
@@ -475,6 +483,10 @@ class Feed < ApplicationRecord
       errors.add(:ai_credential, "must be selected for AI-backed feeds")
     elsif !ai_credential.active?
       errors.add(:ai_credential, "must be active (currently #{ai_credential.state})")
+    elsif ai_model.blank?
+      errors.add(:ai_model, "Choose a model for this feed.")
+    elsif !ai_model_available?
+      errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
     end
   end
 

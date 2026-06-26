@@ -21,6 +21,7 @@
      data-preview-button-endpoint-value="<%= feed_preview_path %>"
      data-preview-button-source-value="<%= feed.source_input %>"
      data-preview-button-shapes-value="<%= preview_shapes.to_json %>"
+     data-preview-button-ai-profiles-value="<%= FeedProfile.all.select { |key| FeedProfile.depends_on_ai?(key) }.to_json %>"
      data-preview-button-modal-id-value="feed-preview-modal">
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
@@ -99,6 +100,8 @@
           <p class="text-sm text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
         <% end %>
       </div>
+
+      <%= render FeedAiSettingsComponent.new(feed: feed, form: f) %>
 
       <div class="mt-2" data-key="form.preview">
         <%= tag.button "Preview feed contents",

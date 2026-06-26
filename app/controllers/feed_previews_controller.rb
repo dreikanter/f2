@@ -32,12 +32,19 @@ class FeedPreviewsController < ApplicationController
 
   private
 
-  # Shared guard for show/create: clear the pane for a blank or unknown source,
-  # or show the credential gate for an AI profile without an active credential.
   def guard_preview
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)
+    return render_credential_gate if needs_credential_gate?
 
-    render_credential_gate if needs_credential_gate?
+    render_cleared if invalid_ai_selection?
+  end
+
+  # Server-side backstop for the Stimulus button: an AI preview needs an owned,
+  # active credential and a model that credential still offers.
+  def invalid_ai_selection?
+    return false unless FeedProfile.depends_on_ai?(profile_key)
+
+    ai_credential.blank? || !ai_credential.offers_model?(ai_model)
   end
 
   def previews
@@ -45,7 +52,19 @@ class FeedPreviewsController < ApplicationController
   end
 
   def digest
-    @digest ||= FeedPreview.digest_for(profile_key, preview_params)
+    @digest ||= FeedPreview.digest_for(profile_key, preview_params, ai_credential&.id, ai_model)
+  end
+
+  # Resolve only from the user's own active credentials, so a forged
+  # ai_credential_id can't borrow someone else's key.
+  def ai_credential
+    return @ai_credential if defined?(@ai_credential)
+
+    @ai_credential = Current.user.ai_credentials.active.find_by(id: params[:ai_credential_id])
+  end
+
+  def ai_model
+    @ai_model ||= params[:ai_model].to_s.presence
   end
 
   def locate_preview
@@ -60,7 +79,16 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.update!(params: preview_params, status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    preview.update!(
+      params: preview_params,
+      ai_credential_id: ai_credential&.id,
+      ai_model: ai_model,
+      status: :pending,
+      data: nil,
+      ready_at: nil,
+      run_id: SecureRandom.uuid
+    )
+
     FeedPreviewJob.perform_later(preview.id, preview.run_id)
     preview
   rescue ActiveRecord::RecordNotUnique

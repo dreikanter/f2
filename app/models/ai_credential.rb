@@ -40,6 +40,12 @@ class AiCredential < ApplicationRecord
     user.update!(default_ai_credential: self)
   end
 
+  def offers_model?(model_id)
+    return false if model_id.blank?
+
+    available_models.any? { |model| model["id"] == model_id }
+  end
+
   def ruby_llm_context
     RubyLLM.context do |config|
       config.public_send("#{provider}_api_key=", credential_data["api_key"])

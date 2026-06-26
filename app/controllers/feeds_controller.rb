@@ -34,6 +34,29 @@ class FeedsController < ApplicationController
     }
   }.freeze
 
+  # Operational fields, editable on any feed.
+  ALWAYS_PERMITTED_PARAMS = %i[
+    name
+    description
+    target_group
+    access_token_id
+    ai_credential_id
+    ai_model
+    schedule_interval
+    import_after_enabled
+    import_after_date
+    import_after_time
+    images_only
+  ].freeze
+
+  # Source-side fields, editable only while a feed is a draft (FR-007/008);
+  # once it first leaves :draft they lock in for good.
+  DRAFT_ONLY_PERMITTED_PARAMS = [
+    :url,
+    :feed_profile_key,
+    { params: %i[url query] }
+  ].freeze
+
   def index
     authorize Feed
     scope = policy_scope(Feed)
@@ -209,6 +232,7 @@ class FeedsController < ApplicationController
       :target_group,
       :access_token_id,
       :ai_credential_id,
+      :ai_model,
       :cron_expression,
       :schedule_interval,
       :import_after_enabled,
@@ -226,20 +250,16 @@ class FeedsController < ApplicationController
     feed_params
   end
 
-  # Drafts (per FR-007) may still edit source-side fields (url,
-  # feed_profile_key, params) because they haven't been confirmed yet. Once a
-  # feed transitions out of :draft for the first time (FR-008), those fields
-  # lock in for the rest of the feed's lifetime regardless of later
-  # pause/resume. Strong params silently drops them for non-drafts.
   def update_feed_params
-    always_permitted = %i[
-      name description target_group access_token_id ai_credential_id schedule_interval
-      import_after_enabled import_after_date import_after_time images_only
-    ]
-    draft_only_permitted = [:url, :feed_profile_key, { params: %i[url query] }]
-
-    permitted_keys = @feed&.draft? ? always_permitted + draft_only_permitted : always_permitted
     params.require(:feed).permit(*permitted_keys)
+  end
+
+  def permitted_keys
+    if @feed&.draft?
+      ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
+    else
+      ALWAYS_PERMITTED_PARAMS
+    end
   end
 
   def cleanup_feed_identification(input)
