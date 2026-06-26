@@ -7,13 +7,18 @@ module FixtureFeedEntries
     raise NotImplementedError, "#{self.class} must implement #processor_class"
   end
 
+  # Source payload filename within fixture_dir; override for non-XML feeds.
+  def fixture_file
+    "feed.xml"
+  end
+
   def feed
     @feed ||= create(:feed)
   end
 
   def processor
-    feed_xml = file_fixture("#{fixture_dir}/feed.xml").read
-    processor_class.new(feed, feed_xml)
+    raw = file_fixture("#{fixture_dir}/#{fixture_file}").read
+    processor_class.new(feed, raw)
   end
 
   def feed_entries

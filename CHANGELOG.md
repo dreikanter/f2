@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-06-26
+
+- JSON feeds are now supported.
+
 ## 2026-06-25
 
 - When adding a feed, each fetch option now shows its test result.
