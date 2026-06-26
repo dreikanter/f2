@@ -240,10 +240,7 @@ class Feed < ApplicationRecord
   # the provider has since dropped (or a feed left without a credential) is not
   # available, so the feed must be reconfigured before it can preview or enable.
   def ai_model_available?
-    return false if ai_model.blank?
-    return false unless ai_credential
-
-    ai_credential.available_models.any? { |model| model["id"] == ai_model }
+    ai_credential&.offers_model?(ai_model) || false
   end
 
   # Creates and returns a loader instance for this feed

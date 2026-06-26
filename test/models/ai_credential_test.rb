@@ -113,4 +113,18 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_nil enabled_feed.reload.ai_credential_id
     assert_equal "disabled", enabled_feed.reload.state
   end
+
+  test "#offers_model? should be true only for a model in available_models" do
+    credential = build(:ai_credential, available_models: [{ "id" => "claude-sonnet-4-6" }])
+
+    assert credential.offers_model?("claude-sonnet-4-6")
+    assert_not credential.offers_model?("some-other-model")
+  end
+
+  test "#offers_model? should be false for a blank model id" do
+    credential = build(:ai_credential, available_models: [{ "id" => "claude-sonnet-4-6" }])
+
+    assert_not credential.offers_model?(nil)
+    assert_not credential.offers_model?("")
+  end
 end
