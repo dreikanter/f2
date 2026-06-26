@@ -73,8 +73,16 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
-    preview.update!(params: preview_params, ai_credential_id: ai_credential&.id, ai_model: ai_model,
-                    status: :pending, data: nil, ready_at: nil, run_id: SecureRandom.uuid)
+    preview.update!(
+      params: preview_params,
+      ai_credential_id: ai_credential&.id,
+      ai_model: ai_model,
+      status: :pending,
+      data: nil,
+      ready_at: nil,
+      run_id: SecureRandom.uuid
+    )
+
     FeedPreviewJob.perform_later(preview.id, preview.run_id)
     preview
   rescue ActiveRecord::RecordNotUnique
