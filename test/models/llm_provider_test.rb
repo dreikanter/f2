@@ -30,6 +30,7 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "anthropic", provider.name
     assert_equal "Anthropic", provider.display_name
     assert_equal :anthropic, provider.ruby_llm_provider
+    assert_equal "claude-sonnet-4-6", provider.default_model
   end
 
   test "#find should return the openrouter provider instance" do
@@ -38,6 +39,15 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "openrouter", provider.name
     assert_equal "OpenRouter", provider.display_name
     assert_equal :openrouter, provider.ruby_llm_provider
+    assert_equal "anthropic/claude-sonnet-4-6", provider.default_model
+  end
+
+  test "every provider should declare a default_model with a known rate" do
+    LlmProvider.all.each do |provider|
+      assert provider.default_model.present?, "#{provider.name} must declare a default_model"
+      assert LlmClient::RateTable.rate_for(provider: provider.name, model: provider.default_model),
+             "#{provider.name} default_model #{provider.default_model} must have a rate entry"
+    end
   end
 
   test "#find should accept symbol keys" do
