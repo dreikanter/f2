@@ -27,7 +27,7 @@ class Development::FeedSandboxesController < ApplicationController
       },
       {
         title: "Working source with an AI fallback",
-        note: "A source that passed its test is recommended; the AI reader is offered as a backup.",
+        note: "A source that passed its test is suggested; the AI reader is offered as a backup.",
         candidates: [
           candidate("rss", test_status: "passed", posts_found: 5),
           candidate("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
@@ -43,7 +43,7 @@ class Development::FeedSandboxesController < ApplicationController
       },
       {
         title: "Source failed, AI takes over",
-        note: "The structured source couldn't be read, so it's disabled and the AI reader is recommended.",
+        note: "The structured source couldn't be read, so it's disabled and the AI reader is suggested.",
         candidates: [
           candidate("rss", test_status: "failed", posts_found: 0),
           candidate("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
@@ -51,7 +51,7 @@ class Development::FeedSandboxesController < ApplicationController
       },
       {
         title: "Source couldn't be reached",
-        note: "A working source is recommended; the unreachable one stays pickable in case it was a temporary blip.",
+        note: "A working source is suggested; the unreachable one stays pickable in case it was a temporary blip.",
         candidates: [
           candidate("rss", test_status: "passed", posts_found: 3),
           candidate("xkcd", test_status: "unreachable")

@@ -38,9 +38,9 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_not_nil feed_identification
     assert_equal "success", feed_identification.status
     assert_equal url, feed_identification.input
-    recommended = feed_identification.candidates.first
-    assert_equal "rss", recommended["profile_key"]
-    assert_equal "Test RSS Feed", recommended["title"]
+    suggested = feed_identification.candidates.first
+    assert_equal "rss", suggested["profile_key"]
+    assert_equal "Test RSS Feed", suggested["title"]
   end
 
   test "#identify should successfully identify XKCD feed and update record" do
@@ -108,7 +108,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "llm_website_extractor", feed_identification.candidates.first["profile_key"]
   end
 
-  test "#identify should update record with failed status on HTTP errors" do
+  test "#identify should fail with a generic message when the source returns an error status" do
     url = "http://example.com/error.xml"
 
     stub_request(:get, url)
@@ -120,10 +120,24 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_includes feed_identification.error, "An error occurred while identifying the feed"
+    assert_equal "fetch_failed", feed_identification.error
   end
 
-  test "#identify should handle network errors gracefully" do
+  test "#identify should fail with a generic message on a redirect loop" do
+    url = "http://example.com/loop.xml"
+
+    stub_request(:get, url)
+      .to_raise(HttpClient::TooManyRedirectsError.new("too many redirects"))
+
+    service = FeedIdentificationFetcher.new(user: user, input: url, logger: @logger)
+    service.identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "fetch_failed", feed_identification.error
+  end
+
+  test "#identify should fail with a generic message when the source is unreachable" do
     url = "http://example.com/timeout.xml"
 
     stub_request(:get, url)
@@ -135,7 +149,44 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal "An error occurred while identifying the feed", feed_identification.error
+    assert_equal "fetch_failed", feed_identification.error
+  end
+
+  test "#identify should log the failure class and status for diagnosis" do
+    url = "http://example.com/error.xml"
+    stub_request(:get, url).to_return(status: 404, body: "Not Found")
+
+    log = StringIO.new
+    FeedIdentificationFetcher.new(user: user, input: url, logger: ActiveSupport::Logger.new(log)).identify
+
+    assert_match(/ResponseStatusError \(HTTP 404\)/, log.string)
+  end
+
+  test "#identify should record internal_error and report an unexpected failure" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: "<rss></rss>")
+
+    FeedProfileDetector.stub(:call, proc { raise "boom" }) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "internal_error", feed_identification.error
+  end
+
+  test "#identify should record unidentifiable when no candidates are detected" do
+    url = "http://example.com/feed.xml"
+    stub_request(:get, url).to_return(status: 200, body: "x")
+
+    empty_result = Struct.new(:candidates).new([])
+    FeedProfileDetector.stub(:call, empty_result) do
+      FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+    end
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "unidentifiable", feed_identification.error
   end
 
   test "#identify should persist a ranked candidates array on success" do

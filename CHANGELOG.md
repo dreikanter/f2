@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-06-25
 
+- When adding a feed, each fetch option now shows its test result.
 - Fixed the Cancel button not working while a new feed is being checked.
 
 ## 2026-06-23

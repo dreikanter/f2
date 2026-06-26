@@ -5,22 +5,19 @@ class Development::SampleFeedsControllerTest < ActionDispatch::IntegrationTest
     @dev_user ||= create(:user, :dev)
   end
 
-  def regular_user
-    @regular_user ||= create(:user)
-  end
-
-  test "#show should require authentication" do
+  test "#show should be reachable without authentication so the detector can fetch it" do
     get development_sample_feed_path
 
-    assert_response :redirect
+    assert_response :success
+    assert_equal 5, Feedjira.parse(@response.body).entries.size
   end
 
-  test "#show should require dev permission" do
-    sign_in_as(regular_user)
-    get development_sample_feed_path
+  test "#show should be absent in production" do
+    Rails.env.stub(:production?, true) do
+      get development_sample_feed_path
+    end
 
-    assert_redirected_to root_path
-    assert_equal "Access denied. You don't have permission to perform this action.", flash[:alert]
+    assert_response :not_found
   end
 
   test "#show should serve a parseable RSS feed with posts by default" do

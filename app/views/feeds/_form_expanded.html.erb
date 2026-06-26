@@ -55,7 +55,7 @@
           </div>
 
           <% if show_chooser %>
-            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate %>
+            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate, selected: feed.feed_profile_key %>
           <% else %>
             <%# Feed type is fixed once the feed exists, so it's shown read-only
                 as a disabled input matching the source field above it. Like the

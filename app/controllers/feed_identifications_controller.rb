@@ -86,23 +86,24 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def handle_success_status
-    recommended = feed_identification.candidates.first || {}
-    profile_key = recommended["profile_key"]
+    suggested = feed_identification.suggested_candidate
+    profile_key = suggested&.profile_key
     input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
     params_for_input = { input_shape.to_s => feed_identification.input }
 
     feed = Current.user.feeds.build(
       params: params_for_input,
       feed_profile_key: profile_key,
-      name: recommended["title"]&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
+      name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
     )
 
     render(identification_success(feed, candidates: feed_identification.candidates))
   end
 
   def handle_failed_status
-    error_message = feed_identification.error.presence || "We couldn't identify a feed profile for this URL."
-    render(identification_error(error: error_message))
+    code = feed_identification.error.presence || "generic"
+    message = t("feed_identifications.failures.#{code}", default: :"feed_identifications.failures.generic")
+    render(identification_error(error: message))
   end
 
   def identification_error(error:)
