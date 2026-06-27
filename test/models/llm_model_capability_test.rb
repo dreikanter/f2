@@ -79,4 +79,15 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
              "#{entry.provider}/#{entry.model} does not meet REQUIRED_FOR_AI_FEED"
     end
   end
+
+  test "every curated entry should carry a known tier" do
+    LlmModelCapability.all.each do |entry|
+      assert_includes LlmModelCapability::TIERS, entry.tier,
+                      "#{entry.provider}/#{entry.model} has unknown tier #{entry.tier}"
+    end
+  end
+
+  test "#qualified_for_ai_feed? should include the cheap Haiku option" do
+    assert LlmModelCapability.qualified_for_ai_feed?("anthropic", "claude-haiku-4-5")
+  end
 end

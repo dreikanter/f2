@@ -13,12 +13,6 @@
 # adapter's concern, and entries are meant to be qualified empirically by a
 # smoke probe before they land here rather than trusted from docs alone.
 #
-# `tier` records how reliably the pair honors structured output:
-#   :native    — provider enforces the schema and hosts web access directly
-#                (Anthropic). Most reliable.
-#   :validated — schema and web access work, but enforcement is best-effort
-#                (OpenRouter routes across upstreams); lean on response
-#                healing plus JSONSchemer validation.
 class LlmModelCapability
   STRUCTURED_OUTPUT = :structured_output
   WEB_SEARCH = :web_search
@@ -28,17 +22,43 @@ class LlmModelCapability
   # bonus some models add; web search is the must-have for aggregation.
   REQUIRED_FOR_AI_FEED = [STRUCTURED_OUTPUT, WEB_SEARCH].freeze
 
+  # `tier` records how reliably the pair honors structured output and how far
+  # to trust it:
+  #   :native       — provider enforces the schema directly (Anthropic). Most
+  #                   reliable.
+  #   :validated    — schema and web access work, but enforcement is best-effort
+  #                   (OpenRouter routes across upstreams); lean on response
+  #                   healing plus JSONSchemer validation.
+  #   :experimental — staging test candidate whose slug and/or schema fidelity
+  #                   still needs confirmation. With no production yet, the
+  #                   matrix doubles as the staging test bench, so candidates
+  #                   may land ahead of a qualifying probe.
+  TIERS = %i[native validated experimental].freeze
+
   Entry = Data.define(:provider, :model, :capabilities, :tier)
 
-  # Qualified starter set. OpenRouter currently carries the Anthropic family
-  # only; more upstreams (OpenAI, Gemini) get added once the qualification
-  # probe confirms web + schema together, not from capability flags alone.
+  # Curated set. Anthropic Opus 4.8/4.7 and Sonnet 4.6 carry native structured
+  # output plus dynamic-filtering web search and web fetch. Haiku 4.5 is the
+  # cheap Anthropic option but only has basic web search (no dynamic filtering)
+  # and its web fetch is unconfirmed.
+  #
+  # OpenRouter entries get web access from the `web` plugin; schema enforcement
+  # is best-effort. `:experimental` slugs are cheap staging test candidates to
+  # confirm against the live catalog (Kimi in particular is known to flip to
+  # plain text instead of honoring tools/response_format). The live
+  # intersection with a credential's available_models prunes any slug that
+  # doesn't actually exist for that credential.
   MODELS = [
     { provider: "anthropic", model: "claude-opus-4-8", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
     { provider: "anthropic", model: "claude-opus-4-7", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
     { provider: "anthropic", model: "claude-sonnet-4-6", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
+    { provider: "anthropic", model: "claude-haiku-4-5", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :native }, # basic web search only
     { provider: "openrouter", model: "anthropic/claude-opus-4-8", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
-    { provider: "openrouter", model: "anthropic/claude-sonnet-4-6", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated }
+    { provider: "openrouter", model: "anthropic/claude-sonnet-4-6", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
+    { provider: "openrouter", model: "anthropic/claude-haiku-4-5", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
+    { provider: "openrouter", model: "google/gemini-2.5-flash", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental }, # verify slug
+    { provider: "openrouter", model: "openai/gpt-4o-mini", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental }, # verify slug
+    { provider: "openrouter", model: "moonshotai/kimi-k2", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental } # flaky; staging only
   ].map { |attrs| Entry.new(**attrs.merge(capabilities: attrs[:capabilities].freeze)) }.freeze
 
   INDEX = MODELS.index_by { |entry| [entry.provider, entry.model] }.freeze
