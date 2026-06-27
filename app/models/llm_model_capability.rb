@@ -49,16 +49,66 @@ class LlmModelCapability
   # intersection with a credential's available_models prunes any slug that
   # doesn't actually exist for that credential.
   MODELS = [
-    { provider: "anthropic", model: "claude-opus-4-8", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
-    { provider: "anthropic", model: "claude-opus-4-7", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
-    { provider: "anthropic", model: "claude-sonnet-4-6", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH], tier: :native },
-    { provider: "anthropic", model: "claude-haiku-4-5", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :native }, # basic web search only
-    { provider: "openrouter", model: "anthropic/claude-opus-4-8", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
-    { provider: "openrouter", model: "anthropic/claude-sonnet-4-6", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
-    { provider: "openrouter", model: "anthropic/claude-haiku-4-5", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :validated },
-    { provider: "openrouter", model: "google/gemini-2.5-flash", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental }, # verify slug
-    { provider: "openrouter", model: "openai/gpt-4o-mini", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental }, # verify slug
-    { provider: "openrouter", model: "moonshotai/kimi-k2", capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], tier: :experimental } # flaky; staging only
+    {
+      provider: "anthropic",
+      model: "claude-opus-4-8",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
+      tier: :native
+    },
+    {
+      provider: "anthropic",
+      model: "claude-opus-4-7",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
+      tier: :native
+    },
+    {
+      provider: "anthropic",
+      model: "claude-sonnet-4-6",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
+      tier: :native
+    },
+    {
+      provider: "anthropic",
+      model: "claude-haiku-4-5",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], # basic web search only
+      tier: :native
+    },
+    {
+      provider: "openrouter",
+      model: "anthropic/claude-opus-4-8",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :validated
+    },
+    {
+      provider: "openrouter",
+      model: "anthropic/claude-sonnet-4-6",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :validated
+    },
+    {
+      provider: "openrouter",
+      model: "anthropic/claude-haiku-4-5",
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :validated
+    },
+    {
+      provider: "openrouter",
+      model: "google/gemini-2.5-flash", # verify slug
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :experimental
+    },
+    {
+      provider: "openrouter",
+      model: "openai/gpt-4o-mini", # verify slug
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :experimental
+    },
+    {
+      provider: "openrouter",
+      model: "moonshotai/kimi-k2", # flaky; staging only
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      tier: :experimental
+    }
   ].map { |attrs| Entry.new(**attrs.merge(capabilities: attrs[:capabilities].freeze)) }.freeze
 
   INDEX = MODELS.index_by { |entry| [entry.provider, entry.model] }.freeze
