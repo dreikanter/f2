@@ -104,7 +104,7 @@ When writing instructions or explanations:
 
 ## Specs
 
-Specs in `specs/` are historical records committed **together with their implementation**. A spec directory appears in the repo only when the described work has shipped. They are ordered chronologically (`001-`, `002-`, …). If the codebase diverges from a spec's text, a later spec or PR evolved the design — the code is the source of truth, the spec is the rationale record.
+Specs in `specs/` are design and rationale records, ordered chronologically (`001-`, `002-`, …). A spec may be written before implementation and delivered across **multiple PRs**, so a spec directory can exist ahead of (or alongside) the shipped work. If the codebase diverges from a spec's text, a later spec or PR evolved the design — the code is the source of truth, the spec is the rationale record.
 
 ## Error Reporting
 
