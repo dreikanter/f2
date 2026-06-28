@@ -42,11 +42,12 @@ class LlmModelCapability
   # cheap Anthropic option but only has basic web search (no dynamic filtering)
   # and its web fetch is unconfirmed.
   #
-  # OpenRouter entries get web access from the `web` plugin; schema enforcement
-  # is best-effort. `:experimental` slugs are cheap staging test candidates to
-  # confirm against the live catalog (Kimi in particular is known to flip to
-  # plain text instead of honoring tools/response_format). The live
-  # intersection with a credential's available_models prunes any slug that
+  # OpenRouter entries get web search and web fetch (full page content from any
+  # URL) from OpenRouter's web server tools, available across its catalog;
+  # schema enforcement is best-effort. `:experimental` slugs are cheap staging
+  # test candidates to confirm against the live catalog (Kimi in particular is
+  # known to flip to plain text instead of honoring tools/response_format). The
+  # live intersection with a credential's available_models prunes any slug that
   # doesn't actually exist for that credential.
   MODELS = [
     {
@@ -70,43 +71,43 @@ class LlmModelCapability
     {
       provider: "anthropic",
       model: "claude-haiku-4-5",
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], # basic web search only
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH], # basic web search only; native web fetch unconfirmed
       tier: :native
     },
     {
       provider: "openrouter",
       model: "anthropic/claude-opus-4-8",
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :validated
     },
     {
       provider: "openrouter",
       model: "anthropic/claude-sonnet-4-6",
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :validated
     },
     {
       provider: "openrouter",
       model: "anthropic/claude-haiku-4-5",
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :validated
     },
     {
       provider: "openrouter",
       model: "google/gemini-2.5-flash", # verify slug
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :experimental
     },
     {
       provider: "openrouter",
       model: "openai/gpt-4o-mini", # verify slug
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :experimental
     },
     {
       provider: "openrouter",
       model: "moonshotai/kimi-k2", # flaky; staging only
-      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH],
+      capabilities: [STRUCTURED_OUTPUT, WEB_SEARCH, WEB_FETCH],
       tier: :experimental
     }
   ].map { |attrs| Entry.new(**attrs.merge(capabilities: attrs[:capabilities].freeze)) }.freeze
