@@ -122,39 +122,23 @@ class LlmModelCapability
       INDEX[[provider.to_s, model.to_s]]
     end
 
-    def supported?(provider, model)
-      INDEX.key?([provider.to_s, model.to_s])
-    end
-
     # @return [Array<Symbol>] capabilities for the pair, or [] if unknown
     def capabilities_for(provider, model)
       find(provider, model)&.capabilities || []
     end
 
-    def capable?(provider, model, capability)
-      capabilities_for(provider, model).include?(capability)
+    def tier_for(provider, model)
+      find(provider, model)&.tier
     end
 
-    # True when the pair satisfies every capability in `required`.
-    def meets?(provider, model, required = REQUIRED_FOR_AI_FEED)
-      capabilities = capabilities_for(provider, model)
-      required.all? { |capability| capabilities.include?(capability) }
-    end
-
+    # True when the pair carries every capability an AI feed requires.
     def qualified_for_ai_feed?(provider, model)
-      meets?(provider, model)
-    end
-
-    def models_for(provider)
-      MODELS.select { |entry| entry.provider == provider.to_s }
+      capabilities = capabilities_for(provider, model)
+      REQUIRED_FOR_AI_FEED.all? { |capability| capabilities.include?(capability) }
     end
 
     def qualified_models_for(provider)
-      models_for(provider).select { |entry| qualified_for_ai_feed?(entry.provider, entry.model) }
-    end
-
-    def tier_for(provider, model)
-      find(provider, model)&.tier
+      MODELS.select { |entry| entry.provider == provider.to_s && qualified_for_ai_feed?(entry.provider, entry.model) }
     end
   end
 end
