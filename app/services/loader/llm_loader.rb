@@ -6,7 +6,7 @@ module Loader
   # into FeedEntry instances downstream.
   #
   # The profile entry must declare `loader: { class: "Loader::LlmLoader",
-  # config: { prompt_template:, output_schema:, tools? } }`. The model is
+  # config: { prompt_template:, output_schema: } }`. The model is
   # not part of the profile config: it comes from the feed's override or
   # the provider default (see `#model_for`).
   class LlmLoader < Base
@@ -21,8 +21,7 @@ module Loader
       )
       result = llm_client.call(ctx,
                                prompt: rendered_prompt,
-                               output_schema: config.fetch(:output_schema),
-                               tools: config.fetch(:tools, []))
+                               output_schema: config.fetch(:output_schema))
 
       payload = result.payload
       raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)

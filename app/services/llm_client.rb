@@ -58,13 +58,13 @@ class LlmClient
 
   attr_reader :credential
 
-  def call(ctx, prompt:, output_schema:, tools: [])
+  def call(ctx, prompt:, output_schema:)
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
     started_at = Time.current
 
     begin
-      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema, tools: tools)
+      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema)
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
@@ -144,10 +144,11 @@ class LlmClient
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
-  def invoke_provider(model:, prompt:, output_schema:, tools:)
+  def invoke_provider(model:, prompt:, output_schema:)
     chat = credential.ruby_llm_context.chat(model: model, provider: LlmProvider.find(credential.provider).ruby_llm_provider)
     chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)
-    tools.each { |t| chat.with_tool(t) if chat.respond_to?(:with_tool) }
+    web_params = Adapter.for(credential.provider).web_params(model)
+    chat.with_params(**web_params) if web_params.present? && chat.respond_to?(:with_params)
 
     response = chat.ask(prompt)
     ProviderResponse.new(
