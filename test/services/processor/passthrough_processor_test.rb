@@ -13,55 +13,72 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
                      params: { "url" => "https://example.com" })
   end
 
-  test "#process should build a FeedEntry for each item with a uid" do
-    items = [
-      { "uid" => "https://example.com/a", "title" => "A", "published_at" => "2026-05-01T00:00:00Z" },
-      { "uid" => "https://example.com/b", "title" => "B" }
-    ]
+  def process(items) = Processor::PassthroughProcessor.new(feed, items).process
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
+  test "#process should derive a normalized permalink uid and ignore model-supplied uid" do
+    items = [{ "uid" => "ephemeral-123", "source_url" => "https://Example.com/post/1/?utm_source=x", "title" => "A" }]
 
-    assert_equal 2, entries.size
-    assert_equal "https://example.com/a", entries[0].uid
-    assert_equal "https://example.com/b", entries[1].uid
-    assert_kind_of FeedEntry, entries[0]
-  end
-
-  test "#process should skip items missing a uid" do
-    items = [
-      { "title" => "no uid" },
-      { "uid" => "https://example.com/ok" }
-    ]
-
-    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
+    entries = process(items).entries
 
     assert_equal 1, entries.size
-    assert_equal "https://example.com/ok", entries[0].uid
+    assert_equal "https://example.com/post/1", entries.first.uid
+    assert_kind_of FeedEntry, entries.first
+  end
+
+  test "#process should build an entry per item with a usable permalink" do
+    items = [
+      { "source_url" => "https://example.com/a", "title" => "A", "published_at" => "2026-05-01T00:00:00Z" },
+      { "source_url" => "https://example.com/b", "title" => "B" }
+    ]
+
+    entries = process(items).entries
+
+    assert_equal ["https://example.com/a", "https://example.com/b"], entries.map(&:uid)
+  end
+
+  test "#process should produce identical uids across separate runs" do
+    items = [{ "source_url" => "https://example.com/a", "title" => "x" }]
+
+    first = process(items).entries.first.uid
+    second = process(items).entries.first.uid
+
+    assert_equal first, second
+  end
+
+  test "#process should drop items without a usable permalink" do
+    items = [
+      { "title" => "no url" },
+      { "source_url" => "https://example.com/", "title" => "homepage only" },
+      { "source_url" => "https://example.com/ok", "title" => "good" }
+    ]
+
+    entries = process(items).entries
+
+    assert_equal ["https://example.com/ok"], entries.map(&:uid)
   end
 
   test "#process should parse published_at from ISO 8601" do
-    items = [{ "uid" => "u1", "published_at" => "2026-04-15T12:30:00Z" }]
+    items = [{ "source_url" => "https://example.com/a", "published_at" => "2026-04-15T12:30:00Z" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
+    entries = process(items).entries
 
     assert_kind_of Time, entries[0].published_at
     assert_equal 2026, entries[0].published_at.year
   end
 
   test "#process should default to the current time when published_at is invalid" do
-    items = [{ "uid" => "u1", "published_at" => "not a date" }]
+    items = [{ "source_url" => "https://example.com/a", "published_at" => "not a date" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
+    entries = process(items).entries
 
     assert_in_delta Time.current.to_f, entries[0].published_at.to_f, 5.0
   end
 
-  test "#process should accept symbol keys as well as strings" do
-    items = [{ uid: "u-sym", title: "Sym" }]
+  test "#process should accept symbol keys" do
+    items = [{ source_url: "https://example.com/sym", title: "Sym" }]
 
-    entries = Processor::PassthroughProcessor.new(feed, items).process.entries
+    entries = process(items).entries
 
-    assert_equal "u-sym", entries[0].uid
-    assert_equal "u-sym", entries[0].raw_data["uid"]
+    assert_equal "https://example.com/sym", entries[0].uid
   end
 end
