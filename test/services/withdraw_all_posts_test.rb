@@ -149,8 +149,8 @@ class WithdrawAllPostsTest < ActiveSupport::TestCase
   test "#call should update the event with completion stats" do
     date1 = Date.new(2024, 1, 10)
     date2 = Date.new(2024, 1, 20)
-    create(:post, :published, feed: feed, freefeed_post_id: "post1", reposted_at: date1.to_time)
-    create(:post, :published, feed: feed, freefeed_post_id: "post2", reposted_at: date2.to_time)
+    create(:post, :published, feed: feed, freefeed_post_id: "post1", reposted_at: date1.in_time_zone)
+    create(:post, :published, feed: feed, freefeed_post_id: "post2", reposted_at: date2.in_time_zone)
 
     stub_request(:delete, "#{access_token.host}/v4/posts/post1").to_return(status: 200)
     stub_request(:delete, "#{access_token.host}/v4/posts/post2").to_return(status: 200)
