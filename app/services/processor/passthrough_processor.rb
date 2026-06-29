@@ -8,7 +8,7 @@ module Processor
       entries = items.filter_map do |item|
         next unless item.is_a?(Hash)
 
-        uid = Uid::Resolver.call(item, clock: Time.current)
+        uid = Uid::Resolver.call(item)
         next if uid.blank?
 
         FeedEntry.new(
