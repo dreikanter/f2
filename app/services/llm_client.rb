@@ -58,13 +58,13 @@ class LlmClient
 
   attr_reader :credential
 
-  def call(ctx, prompt:, output_schema:)
+  def call(ctx, prompt:, output_schema:, web: false)
     raise DetectionForbidden if Thread.current[:llm_detection_phase]
 
     started_at = Time.current
 
     begin
-      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema)
+      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema, web: web)
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
@@ -144,20 +144,26 @@ class LlmClient
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
-  def invoke_provider(model:, prompt:, output_schema:)
+  def invoke_provider(model:, prompt:, output_schema:, web:)
     chat = credential.ruby_llm_context.chat(model: model, provider: LlmProvider.find(credential.provider).ruby_llm_provider)
     chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)
-    web_params = Adapter.for(credential.provider).web_params(model)
-    chat.with_params(**web_params) if web_params.present? && chat.respond_to?(:with_params)
+    if web
+      web_params = Adapter.for(credential.provider).web_params(model)
+      chat.with_params(**web_params) if web_params.present? && chat.respond_to?(:with_params)
+    end
 
     response = chat.ask(prompt)
     ProviderResponse.new(
-      payload: parse_payload(response),
+      payload: output_schema.present? ? parse_payload(response) : response_text(response),
       input_tokens: response.try(:input_tokens).to_i,
       output_tokens: response.try(:output_tokens).to_i,
       cache_write_tokens: response.try(:cached_tokens).to_i,
       cache_read_tokens: response.try(:cache_read_tokens).to_i
     )
+  end
+
+  def response_text(response)
+    response.respond_to?(:content) ? response.content.to_s : response.to_s
   end
 
   def parse_payload(response)
