@@ -17,44 +17,64 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
                      params: { "url" => "https://example.com" })
   end
 
-  # Captures the CallContext so tests can assert the resolved model, and
-  # exposes a #credential (real LlmClient does too) so the loader can read
-  # the provider for default-model resolution.
-  def fake_client(payload, credential: self.credential)
+  # Two-call fake: the web call (gather) returns text, the schema call
+  # (structure) returns the items payload. Records each call's opts + model.
+  def fake_client(structured:, gathered: "raw gathered text", credential: self.credential)
     Class.new do
-      attr_reader :credential, :last_ctx
+      attr_reader :credential, :calls
 
-      def initialize(payload, credential)
-        @payload = payload
+      def initialize(structured, gathered, credential)
+        @structured = structured
+        @gathered = gathered
         @credential = credential
+        @calls = []
       end
 
-      def call(ctx, **_opts)
-        @last_ctx = ctx
-        LlmClient::Result.new(payload: @payload, usage_id: 42)
+      def call(ctx, **opts)
+        @calls << opts.merge(model: ctx.model)
+        payload = opts[:web] ? @gathered : @structured
+        LlmClient::Result.new(payload: payload, usage_id: @calls.size)
       end
-    end.new(payload, credential)
+    end.new(structured, gathered, credential)
   end
 
-  test "#load should return the items array from the LLM response" do
+  test "#load should return the items array from the structured response" do
     items = [
-      { "title" => "Post A", "uid" => "https://example.com/a" },
-      { "title" => "Post B", "uid" => "https://example.com/b" }
+      { "title" => "Post A", "source_url" => "https://example.com/a" },
+      { "title" => "Post B", "source_url" => "https://example.com/b" }
     ]
-    loader = Loader::LlmLoader.new(feed, llm_client: fake_client({ "items" => items }))
+    loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "items" => items }))
 
     assert_equal items, loader.load
   end
 
+  test "#load should gather with web first, then structure with the schema" do
+    client = fake_client(structured: { "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_equal 2, client.calls.size
+    assert_equal true, client.calls[0][:web]
+    assert_nil client.calls[0][:output_schema]
+    assert_equal false, client.calls[1][:web]
+    assert client.calls[1][:output_schema].present?
+  end
+
+  test "#load should feed the gathered content into the structuring prompt" do
+    client = fake_client(structured: { "items" => [] }, gathered: "GATHERED-XYZ")
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_match "GATHERED-XYZ", client.calls[1][:prompt]
+  end
+
   test "#load should respect the limit option" do
-    items = (1..10).map { |i| { "title" => "Post #{i}", "uid" => "https://example.com/#{i}" } }
-    loader = Loader::LlmLoader.new(feed, llm_client: fake_client({ "items" => items }), limit: 3)
+    items = (1..10).map { |i| { "title" => "Post #{i}", "source_url" => "https://example.com/#{i}" } }
+    loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "items" => items }), limit: 3)
 
     assert_equal 3, loader.load.size
   end
 
-  test "#load should raise when the payload is missing the items key" do
-    loader = Loader::LlmLoader.new(feed, llm_client: fake_client({ "wrong" => "shape" }))
+  test "#load should raise when the structured payload is missing the items key" do
+    loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "wrong" => "shape" }))
 
     error = assert_raises(StandardError) { loader.load }
     assert_match(/items/, error.message)
@@ -62,18 +82,18 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
   test "#load should call the model from the feed override when set" do
     feed.update!(ai_model: "claude-opus-4-7")
-    client = fake_client({ "items" => [] })
+    client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client).load
 
-    assert_equal "claude-opus-4-7", client.last_ctx.model
+    assert_equal ["claude-opus-4-7", "claude-opus-4-7"], client.calls.map { |c| c[:model] }
   end
 
   test "#load should fall back to the provider default model when no override" do
     assert_nil feed.ai_model
-    client = fake_client({ "items" => [] }, credential: credential)
+    client = fake_client(structured: { "items" => [] }, credential: credential)
     Loader::LlmLoader.new(feed, llm_client: client).load
 
-    assert_equal LlmProvider.find(credential.provider).default_model, client.last_ctx.model
+    assert_equal LlmProvider.find(credential.provider).default_model, client.calls.first[:model]
   end
 
   test "#rendered_prompt should substitute the source input" do
