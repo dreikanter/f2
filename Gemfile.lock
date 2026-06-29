@@ -1,12 +1,12 @@
 GIT
   remote: https://github.com/dreikanter/heatmap-builder.git
-  revision: 7ed1949343a6f2e60eb22919b1871e14409ddc11
+  revision: 08e2f2994b35e3ffefbf3745f508ece94244607f
   specs:
-    heatmap-builder (0.4.3)
+    heatmap-builder (0.4.4)
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 9a475c832e31aa1c80cbfa84ad596f3e18377944
+  revision: 0ee2b066e7d94706583102a56cfa12d4d1fc1810
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -243,7 +243,7 @@ GEM
       net-pop
       net-smtp
     marcel (1.2.1)
-    mcp (0.21.0)
+    mcp (0.22.0)
       json_schemer (>= 2.4)
     mini_mime (1.1.5)
     minitest (5.27.0)
@@ -279,7 +279,7 @@ GEM
       net-ssh (>= 5.0.0, < 8.0.0)
     net-smtp (0.5.1)
       net-protocol
-    net-ssh (7.3.2)
+    net-ssh (7.3.3)
     nio4r (2.7.5)
     nokogiri (1.19.4-aarch64-linux-gnu)
       racc (~> 1.4)
@@ -395,7 +395,7 @@ GEM
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.47.1, < 2.0)
-    rubocop-rails (2.35.4)
+    rubocop-rails (2.35.5)
       activesupport (>= 4.2.0)
       lint_roller (~> 1.1)
       rack (>= 1.1)
@@ -435,7 +435,7 @@ GEM
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
     simpleidn (0.2.3)
-    solargraph (0.60.1)
+    solargraph (0.60.2)
       ast (~> 2.4.3)
       backport (~> 1.2)
       benchmark (~> 0.4)
@@ -451,6 +451,7 @@ GEM
       parser (~> 3.0)
       prism (~> 1.4)
       rbs (>= 3.10.0)
+      rdoc (~> 7.0)
       reverse_markdown (~> 3.0)
       rubocop (~> 1.76)
       sord (~> 7.0)
@@ -475,7 +476,7 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sorbet-runtime (0.6.13309)
+    sorbet-runtime (0.6.13320)
     sord (7.1.0)
       commander (~> 5.0)
       parlour (~> 9.1)
