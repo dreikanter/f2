@@ -122,8 +122,8 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
   `(provider, model)` allowlist where *membership = qualification* (the pair is dev-verified to
   deliver structured output **and** web access together). **Drop tiers.** The two axes the old
   `tier` enum conflated both find better homes: *readiness* → dev-time compatibility testing (a pair
-  enters only once verified; no `:experimental` rows in production); *reliability* (native vs heal)
-  → the per-provider adapter (§6), since it's a provider property.
+  enters only once verified; no `:experimental` rows in production); enforcement reliability is a
+  provider property the adapter already embodies (§6), not a per-model flag.
 - **What the matrix does NOT store** — these are fetched live from the provider (source of truth):
   - **Display names** — Anthropic `display_name`, OpenRouter `name`.
   - **Availability** — intersect the matrix with the credential's live models so a dropped model
@@ -147,34 +147,33 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
 - Follow-up tasks (named in #876): live intersection with `available_models`; display-name join for
   the picker; the dev-time compatibility probe (the gate that replaced the readiness tier).
 
-### 6. Provider seam & response healing
+### 6. Provider seam
 
-RubyLLM 1.16 already normalizes structured output across providers (`with_schema` →
-`providers/anthropic/chat.rb` and `providers/openrouter/chat.rb` render their own shapes) but has
-**no server-tool / web support**. So the seam exists *only* for what RubyLLM doesn't cover — not as
-a layer that re-abstracts structured output.
+RubyLLM 1.16 already normalizes structured output across providers — confirmed: `with_schema`
+renders the current Anthropic mechanism (`output_config.format` / `json_schema`,
+`providers/anthropic/chat.rb`) and OpenRouter's `response_format`. Both providers therefore return
+JSON shaped by the schema. RubyLLM has **no web-access abstraction**, so the seam exists *only* for
+that one gap.
 
-- **Structured output goes straight through RubyLLM `with_schema`.** (Verify at implementation that
-  RubyLLM emits the *current* Anthropic mechanism, `output_config.format`; if it renders a stale
-  shape, the seam must also own schema injection via `with_params`.)
-- **`SchemaHealer`** — extracted, **provider-agnostic** mechanism: given loose text and a schema,
-  recover validated JSON (strip ```` ``` ```` fences, extract the outermost object/array,
-  lenient-parse, validate, trivial safe coercion) or fail as `schema_error`. No second LLM call.
-  Light by design: the dev-verified matrix is the real defense; healing only mops up cosmetic noise
-  from already-verified models.
-- **A thin per-provider seam** ("adapter"), selected by `credential.provider`, owns two things —
-  cut by *provider* (the axis of variation), not by concern:
-  - `web_params(model)` → merged via `with_params`. Anthropic: version-pinned server tools
-    (`web_search_20260209`/`web_fetch_20260209`, model-dependent), citations disabled when a schema
-    is set. OpenRouter: web server tool + `require_parameters`.
-  - `normalize(payload)` → passthrough for Anthropic (native enforcement, trusted); delegate to
-    `SchemaHealer` for OpenRouter (best-effort routing).
+- **Structured output goes straight through RubyLLM `with_schema`.** The adapter does not touch it.
+- **A thin per-provider seam** ("adapter"), selected by `credential.provider`, has a **single
+  responsibility: `web_params(model) -> Hash`**, merged into the request via `with_params`. It builds
+  the raw, provider-specific params RubyLLM won't:
+  - Anthropic: provider-hosted server tools (`web_search_20260209`/`web_fetch_20260209`), citations
+    disabled (they conflict with structured output).
+  - OpenRouter: the web plugin + `require_parameters`.
+  The exact wire-format values are confirmed by a credentialed smoke run, not from this repo.
+- **No response healing.** Because the schema already constrains both providers' output, the
+  required behaviour is just parse-or-fail: `LlmClient` parses the JSON and, on a non-JSON response,
+  records `schema_error` and the refresh retries next cycle. Fenced/prose recovery (`SchemaHealer`)
+  was considered and **dropped as speculative** — Anthropic enforces natively, and the dev-verified
+  matrix already excludes OpenRouter models that don't return clean JSON. Revisit only if a verified
+  model is *observed* wrapping its output in practice.
 - **`LlmClient` stays the orchestrator/bookkeeper**: adapter selection, `CallContext`, `chat.ask`
-  execution, the one-`LlmUsage`-per-call invariant, and the error taxonomy
-  (`schema_error`/`provider_error`/`rate_limited`/`timeout`). It orchestrates
-  `pick adapter → prepare → ask → normalize → record usage`. The `with_tool("web_search")` misuse is
-  removed (web is now `with_params` in `prepare`).
-- Verify Anthropic `pause_turn` / server-tool-loop handling at implementation.
+  execution, JSON parsing + schema validation, the one-`LlmUsage`-per-call invariant, and the error
+  taxonomy (`schema_error`/`provider_error`/`rate_limited`/`timeout`). The `with_tool("web_search")`
+  misuse is removed — web is now `with_params`.
+- Verify Anthropic `pause_turn` / server-tool-loop handling against a live run.
 
 ### 7. Mode A detection & presentation
 
@@ -210,8 +209,8 @@ processor), the same place the uid integrity checks live.
 
 ## Sequencing
 
-- **AI plumbing + integrity first**: `SchemaHealer` + per-provider seam (§6) and the `Uid::Resolver`
-  + ephemeral-uid rejection (§3) are foundational and largely independent.
+- **AI plumbing + integrity first**: the per-provider seam (§6) and the `Uid::Resolver` (§3) are
+  foundational and largely independent.
 - **Single AI profile** (§2) depends on web access via the seam.
 - **Explicit-mode creation** (§1, §7) depends on the single AI profile being what Mode B selects.
 - **Editing/lifecycle** (§4) is largely independent; the prompt-editing win lands once §2 exists.
