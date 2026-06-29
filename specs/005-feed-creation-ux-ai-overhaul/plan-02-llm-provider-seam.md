@@ -1,33 +1,33 @@
-# LLM Provider Seam Implementation Plan (Track 2 of 6)
+# LLM Provider Seam + Two-Step Extraction Plan (Track 2 of 6)
 
-**Goal:** Give `LlmClient` a thin per-provider seam that enables web access via `with_params`, and remove the `with_tool("web_search")` misuse.
-
-**Scope note:** An earlier draft of this plan added a `SchemaHealer` for loose JSON recovery. It was **dropped as speculative** — RubyLLM enforces structured output through both providers (`with_schema`), Anthropic does so natively, and the dev-verified matrix (§5) excludes OpenRouter models that don't return clean JSON. The required behaviour is parse-or-fail, which `LlmClient` already does. Revisit only if a verified model is observed wrapping its output. See spec §6.
+**Goal:** Make AI extraction work through RubyLLM by splitting it into two calls — gather (web, no schema) then structure (schema, no web) — and give `LlmClient` a per-provider web-params seam plus a `web:` flag.
 
 **Spec:** [`spec.md`](./spec.md) §6.
 
-## What shipped (one PR)
+## Why two steps (live findings)
 
-- `LlmClient::Adapter.for(provider)` — factory keyed on `credential.provider`, raises `KeyError` for unknown providers.
-- `LlmClient::Adapter::Anthropic#web_params(model)` — provider-hosted `web_search`/`web_fetch` server tools, citations disabled.
-- `LlmClient::Adapter::OpenRouter#web_params(model)` — web plugin + `require_parameters`.
-- `LlmClient#invoke_provider` — injects `web_params` via `chat.with_params`; structured output still goes through `chat.with_schema`. The `with_tool` loop is gone; `tools:` removed from `#call`.
-- `Loader::LlmLoader` — stops passing `tools:`.
+Verified against real Anthropic calls:
 
-`web_params` wire-format values are `[VERIFY-LIVE]`: the injection mechanism is verified against the RubyLLM source (`with_params` deep-merges into the request payload), but the exact provider strings (Anthropic tool versions, OpenRouter web mechanism) need a credentialed smoke run to confirm.
+- Schema + web tools in **one** call works at the raw API (HTTP 200, clean JSON) but **breaks through RubyLLM** — RubyLLM has no server-tool handling and mishandles the web tool once a schema is set.
+- Web alone and schema alone each work cleanly through RubyLLM.
+- We keep RubyLLM (no raw per-provider clients), so extraction is two calls that never combine the two.
 
-## Verified mechanism
+## What shipped
 
-- `Chat#with_params` sets `@params`, deep-merged into the rendered payload (`provider.rb` `Utils.deep_merge(render_payload(...), params)`). With no function tools, injecting `tools:`/`plugins:` lands cleanly alongside the schema's `output_config`.
-- RubyLLM 1.16 renders Anthropic structured output as the current `output_config.format` / `json_schema` (`providers/anthropic/chat.rb`). The adapter does not own schema injection.
+- **`LlmClient::Adapter`** — `for(provider)` factory; `Anthropic`/`OpenRouter` each expose `web_params(model) -> Hash`. Anthropic: `web_search_20260209`/`web_fetch_20260209` server tools, citations off. OpenRouter: web plugin + `require_parameters`.
+- **`LlmClient#call(ctx, prompt:, output_schema:, web:)`** — injects `web_params` via `with_params` only when `web: true`; returns raw text when `output_schema` is nil, parsed+validated JSON when a schema is given. Keeps usage bookkeeping (one row per call), error taxonomy, adapter selection. `with_tool` misuse removed.
+- **`Loader::LlmLoader`** — two calls: gather (`web: true`, no schema) → structure (schema, `web: false`, gathered text fed in). Returns `items`.
+- **`UNIVERSAL_OUTPUT_SCHEMA`** — `additionalProperties: false` on every object (Anthropic strict requirement, confirmed live).
 
 ## Tests
 
-- `test/services/llm_client/adapter_test.rb` — factory selection (incl. symbol provider, unknown → `KeyError`) and each adapter's `web_params` shape.
-- Existing `llm_client_test` / `llm_loader_test` pass unchanged (they never used `tools:`).
+- `test/services/llm_client/adapter_test.rb` — factory + `web_params` shape.
+- `test/services/loader/llm_loader_test.rb` — two-call order (gather web/no-schema, then structure schema/no-web), gathered text feeds the structuring prompt, limit, missing-items raise, model resolution.
+- `LlmClient`'s `web:`/no-schema-text internals are exercised at the loader seam and proven by live scripts; not separately unit-stubbed (tests deliberately stub at `invoke_provider`, away from RubyLLM).
 
 ## Deferred / [VERIFY-LIVE]
 
-- Confirm Anthropic web tool-version strings and that citations-off is required with a schema.
-- Confirm OpenRouter's live web mechanism (web plugin vs `openrouter:web_search` server tool) and `require_parameters` routing.
-- Anthropic `pause_turn` / server-tool-loop handling.
+- OpenRouter web mechanism + `require_parameters` — not yet run live.
+- Gather/structure prompts are functional placeholders — Track 4 owns the final prompts + system-prompt safeguards.
+- Structure step is a Haiku cost-optimization candidate (separate model per step).
+- Anthropic `pause_turn` handling is moot in the two-step path (gather returns `end_turn`); revisit only if a gather run pauses.

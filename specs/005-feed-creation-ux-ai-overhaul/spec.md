@@ -147,33 +147,43 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
 - Follow-up tasks (named in #876): live intersection with `available_models`; display-name join for
   the picker; the dev-time compatibility probe (the gate that replaced the readiness tier).
 
-### 6. Provider seam
+### 6. Provider seam + two-step extraction
 
-RubyLLM 1.16 already normalizes structured output across providers — confirmed: `with_schema`
-renders the current Anthropic mechanism (`output_config.format` / `json_schema`,
-`providers/anthropic/chat.rb`) and OpenRouter's `response_format`. Both providers therefore return
-JSON shaped by the schema. RubyLLM has **no web-access abstraction**, so the seam exists *only* for
-that one gap.
+Verified against live Anthropic calls (Opus + Sonnet). Findings that shaped the design:
 
-- **Structured output goes straight through RubyLLM `with_schema`.** The adapter does not touch it.
-- **A thin per-provider seam** ("adapter"), selected by `credential.provider`, has a **single
-  responsibility: `web_params(model) -> Hash`**, merged into the request via `with_params`. It builds
-  the raw, provider-specific params RubyLLM won't:
-  - Anthropic: provider-hosted server tools (`web_search_20260209`/`web_fetch_20260209`), citations
-    disabled (they conflict with structured output).
-  - OpenRouter: the web plugin + `require_parameters`.
-  The exact wire-format values are confirmed by a credentialed smoke run, not from this repo.
-- **No response healing.** Because the schema already constrains both providers' output, the
-  required behaviour is just parse-or-fail: `LlmClient` parses the JSON and, on a non-JSON response,
-  records `schema_error` and the refresh retries next cycle. Fenced/prose recovery (`SchemaHealer`)
-  was considered and **dropped as speculative** — Anthropic enforces natively, and the dev-verified
-  matrix already excludes OpenRouter models that don't return clean JSON. Revisit only if a verified
-  model is *observed* wrapping its output in practice.
-- **`LlmClient` stays the orchestrator/bookkeeper**: adapter selection, `CallContext`, `chat.ask`
-  execution, JSON parsing + schema validation, the one-`LlmUsage`-per-call invariant, and the error
-  taxonomy (`schema_error`/`provider_error`/`rate_limited`/`timeout`). The `with_tool("web_search")`
-  misuse is removed — web is now `with_params`.
-- Verify Anthropic `pause_turn` / server-tool-loop handling against a live run.
+- RubyLLM 1.16 renders the current structured-output mechanism (`output_config.format`/`json_schema`
+  for Anthropic, `response_format` for OpenRouter) and `with_params` deep-merges into the request —
+  but RubyLLM has **no server-tool handling**: a web tool injected via `with_params` is mishandled by
+  RubyLLM's function-tool loop the moment a schema is also set (it tries to run the server tool
+  client-side and fails).
+- A **raw** Anthropic call with `output_config.format` **and** web tools in one request **works**
+  (HTTP 200, `end_turn`, clean schema JSON). So schema + web are *not* incompatible at the API — only
+  through RubyLLM. We keep RubyLLM rather than maintain raw per-provider clients.
+- Web alone (no schema) and schema alone (no web) each work cleanly *through* RubyLLM.
+
+So AI extraction is **two RubyLLM calls**, never combining schema + web in one:
+
+1. **Gather** — `web: true`, no schema. The model searches/fetches; `LlmClient` returns the raw text.
+2. **Structure** — schema, `web: false`. The gathered text is fed in; `with_schema` returns clean,
+   native JSON. No healing needed (so `SchemaHealer` stays dropped — §6 earlier rationale holds).
+
+Supporting pieces:
+
+- **Adapter** (`LlmClient::Adapter.for(provider)`), single responsibility `web_params(model) -> Hash`,
+  injected via `with_params` **only on the gather call** (`web: true`):
+  - Anthropic: server tools (`web_search_20260209`/`web_fetch_20260209`), citations off.
+  - OpenRouter: web plugin + `require_parameters`. *(OpenRouter not yet live-verified.)*
+- **`LlmClient#call(ctx, prompt:, output_schema:, web:)`** — injects web only when `web:`; returns the
+  raw text when `output_schema` is nil, parsed+validated JSON when a schema is given. Keeps adapter
+  selection, usage bookkeeping (one row per call → two per extraction), and the error taxonomy.
+- **`UNIVERSAL_OUTPUT_SCHEMA` carries `additionalProperties: false`** on every object — Anthropic
+  strict structured output rejects the schema without it (confirmed live).
+- The `with_tool("web_search")` misuse is removed.
+
+Latency note from live runs: gather dominates (web fetch), and varies widely by model/how much it
+fetches (Opus ~12s, Sonnet ~40–120s); structure is cheap (~12s) and is a good Haiku candidate later.
+The gather/structure prompts here are functional placeholders — Track 4 owns their final form and the
+system-prompt safeguards.
 
 ### 7. Mode A detection & presentation
 
