@@ -93,7 +93,7 @@
                          class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
                          data: { key: "form.name" } %>
         <% if f.object.errors[:name].any? %>
-          <p class="text-sm text-red-600"><%= f.object.errors[:name].to_sentence.capitalize %></p>
+          <p class="text-sm text-danger"><%= f.object.errors[:name].to_sentence.capitalize %></p>
         <% elsif feed.name.present? %>
           <p class="text-sm text-muted">You can edit this name if you'd like.</p>
         <% else %>
@@ -151,7 +151,7 @@
                                }
                              } %>
                 <% if f.object.errors[:access_token].any? %>
-                  <p class="text-sm text-red-600"><%= f.object.errors[:access_token].first %></p>
+                  <p class="text-sm text-danger"><%= f.object.errors[:access_token].first %></p>
                 <% end %>
               </div>
             <% end %>
@@ -172,7 +172,7 @@
                            { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
                            { class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" } %>
               <% if f.object.errors[:cron_expression].any? %>
-                <p class="text-sm text-red-600"><%= f.object.errors[:cron_expression].first %></p>
+                <p class="text-sm text-danger"><%= f.object.errors[:cron_expression].first %></p>
               <% end %>
             </div>
           <% end %>

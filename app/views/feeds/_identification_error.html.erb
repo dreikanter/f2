@@ -1,14 +1,14 @@
 <div id="feed-form"
      data-identification-state="error"
      class="rounded-lg border border-border bg-surface px-6 py-8 shadow-sm space-y-6">
-  <div class="rounded-md bg-red-50 p-4">
+  <div class="rounded-md bg-danger-subtle p-4">
     <div class="flex">
       <div class="flex-shrink-0">
-        <%= icon("triangle-alert", css_class: "size-5 text-red-400") %>
+        <%= icon("triangle-alert", css_class: "size-5 text-danger") %>
       </div>
       <div class="ml-3">
-        <h3 class="text-sm font-medium text-red-800">Feed identification failed</h3>
-        <div class="mt-2 text-sm text-red-700">
+        <h3 class="text-sm font-medium text-danger-strong">Feed identification failed</h3>
+        <div class="mt-2 text-sm text-danger-strong">
           <p><%= error %></p>
         </div>
       </div>

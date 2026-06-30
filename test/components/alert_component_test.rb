@@ -32,6 +32,6 @@ class AlertComponentTest < ViewComponent::TestCase
     assert_equal "alert", alert["role"]
     assert_equal "test", alert["data-key"]
     assert_includes alert["class"], "space-y-2"
-    assert_includes alert["class"], "bg-amber-100"
+    assert_includes alert["class"], "bg-warning-subtle"
   end
 end

@@ -58,11 +58,11 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_validation_errors_item(component)
     errors_html = if @post.validation_errors.is_a?(Array)
-      content_tag(:ul, class: "list-disc list-inside mb-0 text-red-600") do
+      content_tag(:ul, class: "list-disc list-inside mb-0 text-danger") do
         safe_join(@post.validation_errors.map { |error| content_tag(:li, error) })
       end
     else
-      content_tag(:div, @post.validation_errors, class: "text-red-600")
+      content_tag(:div, @post.validation_errors, class: "text-danger")
     end
 
     component.with_item(StatListItemComponent.new(

@@ -25,7 +25,7 @@ module FeedHelper
 
   def feed_status_icon(feed)
     if feed.enabled?
-      icon("circle-play", css_class: "size-4 text-emerald-500",
+      icon("circle-play", css_class: "size-4 text-success",
                   title: "Enabled", aria_label: "Enabled")
     elsif feed.draft?
       icon("circle-dashed", css_class: "size-4 text-muted",

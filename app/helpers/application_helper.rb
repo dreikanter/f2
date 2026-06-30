@@ -99,9 +99,9 @@ module ApplicationHelper
   def credential_status_icon(status)
     case status.to_s
     when "active"
-      icon("circle-check", css_class: "size-4 text-emerald-500", title: "Active", aria_label: "Active")
+      icon("circle-check", css_class: "size-4 text-success", title: "Active", aria_label: "Active")
     when "inactive"
-      icon("circle-x", css_class: "size-4 text-red-500", title: "Inactive", aria_label: "Inactive")
+      icon("circle-x", css_class: "size-4 text-danger", title: "Inactive", aria_label: "Inactive")
     else
       icon("loader-circle", css_class: "size-4 text-muted", title: "Checking", aria_label: "Checking")
     end
@@ -129,9 +129,9 @@ module ApplicationHelper
   def system_check_icon(status)
     case status.to_sym
     when :ok
-      icon("square-check-big", css_class: "size-5 text-emerald-600", aria_label: "OK")
+      icon("square-check-big", css_class: "size-5 text-success", aria_label: "OK")
     when :error
-      icon("square", css_class: "size-5 text-red-600", aria_label: "Problem")
+      icon("square", css_class: "size-5 text-danger", aria_label: "Problem")
     else
       icon("square", css_class: "size-5 text-muted", aria_label: "Not set")
     end

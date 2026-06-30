@@ -3,8 +3,8 @@ class PostListItemComponent < ListItemComponent
     "draft"     => { icon: "file",         color: "text-muted",  label: "Draft" },
     "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
     "rejected"  => { icon: "circle-x",     color: "text-orange-500", label: "Rejected" },
-    "published" => { icon: "circle-check", color: "text-emerald-600",  label: "Reposted" },
-    "failed"    => { icon: "circle-x",     color: "text-red-600",    label: "Failed" },
+    "published" => { icon: "circle-check", color: "text-success",  label: "Reposted" },
+    "failed"    => { icon: "circle-x",     color: "text-danger",    label: "Failed" },
     "withdrawn" => { icon: "trash-2",      color: "text-muted",  label: "Withdrawn" }
   }.freeze
 

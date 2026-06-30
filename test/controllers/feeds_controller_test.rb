@@ -215,7 +215,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate Feed.last, :draft?
     assert_match "Couldn't enable", flash[:alert]
     # Target group error rendered inline by _target_group_selector partial
-    assert_select "#target-group-selector p.text-red-600", text: /can(?:'|&#39;)t be blank/
+    assert_select "#target-group-selector p.text-danger", text: /can(?:'|&#39;)t be blank/
   end
 
   test "#create should fail without persisting when even draft validation fails" do
@@ -420,7 +420,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[url_display]'][disabled]"
 
     # Verify validation errors are shown
-    assert_select "p.text-red-600", text: /lowercase letters/
+    assert_select "p.text-danger", text: /lowercase letters/
   end
 
   test "#create should keep the expanded form for a query-shaped feed on validation failure" do
@@ -442,7 +442,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     # Query-shaped feeds have a blank url; the expanded form must still render
     # (keyed off source_input, not url) so the preview button survives the error.
     assert_select "[data-key='preview.open']", count: 1
-    assert_select "p.text-red-600", text: /lowercase letters/
+    assert_select "p.text-danger", text: /lowercase letters/
   end
 
   test "#show should render feed owned by user" do
@@ -941,7 +941,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     disabled.reload
     assert_predicate disabled, :disabled?, "Disabled feed must not fall back to draft"
     assert_match "Couldn't enable", flash[:alert]
-    assert_select "#target-group-selector p.text-red-600", text: /can(?:'|&#39;)t be blank/
+    assert_select "#target-group-selector p.text-danger", text: /can(?:'|&#39;)t be blank/
   end
 
   test "#update should pause an enabled feed when checkbox unchecked" do

@@ -78,7 +78,7 @@ class EventDetailsComponent < ViewComponent::Base
 
   def expires_status_badge
     if @event.expired?
-      helpers.tag.span("Expired", class: "inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20")
+      helpers.tag.span("Expired", class: "inline-flex items-center rounded-md bg-danger-subtle px-2 py-1 text-xs font-medium text-danger-strong ring-1 ring-inset ring-danger/20")
     else
       helpers.tag.span("(in #{helpers.short_time_ago(@event.expires_at)})", class: "text-muted")
     end

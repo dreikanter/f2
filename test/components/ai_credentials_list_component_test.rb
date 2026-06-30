@@ -76,6 +76,6 @@ class AiCredentialsListComponentTest < ViewComponent::TestCase
 
     assert_not_nil item
     assert_includes item["class"], "text-heading"
-    assert_not_includes item["class"], "text-red-600"
+    assert_not_includes item["class"], "text-danger"
   end
 end

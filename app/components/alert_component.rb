@@ -1,9 +1,9 @@
 class AlertComponent < ViewComponent::Base
   VARIANT_CLASSES = {
     info:      "border-brand-subtle bg-brand-subtle text-brand-strong",
-    success:   "border-emerald-200 bg-emerald-100 text-emerald-800",
-    error:     "border-red-200 bg-red-100 text-red-800",
-    warning:   "border-amber-200 bg-amber-100 text-amber-800",
+    success:   "border-success-subtle bg-success-subtle text-success-strong",
+    error:     "border-danger-subtle bg-danger-subtle text-danger-strong",
+    warning:   "border-warning-subtle bg-warning-subtle text-warning-strong",
     secondary: "border-brand-subtle bg-surface-sunken text-body"
   }.freeze
 

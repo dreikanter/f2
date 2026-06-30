@@ -82,7 +82,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
@@ -94,7 +94,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-danger bg-danger px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger-hover focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
         </div>
       </div>
     </section>
@@ -119,8 +119,8 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Error</p>
-          <%= text_field_tag :feed_name_error, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
-          <p class="text-sm text-red-600">Enter a valid feed URL.</p>
+          <%= text_field_tag :feed_name_error, "not-a-valid-url", class: "w-full rounded-md border border-danger bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-danger-hover transition focus:border-danger-hover focus:outline-none focus:ring-2" %>
+          <p class="text-sm text-danger">Enter a valid feed URL.</p>
         </div>
       </div>
     </section>
@@ -258,8 +258,8 @@
 
         <div class="space-y-2">
           <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-heading" %>
-          <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
-          <p class="text-sm text-red-600">Enter a valid feed URL, like https://example.com/feed.xml.</p>
+          <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-danger bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-danger-hover transition focus:border-danger-hover focus:outline-none focus:ring-2" %>
+          <p class="text-sm text-danger">Enter a valid feed URL, like https://example.com/feed.xml.</p>
         </div>
       </div>
     </section>

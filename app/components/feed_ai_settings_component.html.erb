@@ -28,7 +28,7 @@
                           class: SELECT_CLASSES, disabled: !section_visible?,
                           data: { ai_settings_target: "credentialSelect", action: "change->ai-settings#refreshModels", key: "form.ai-credential" } %>
           <% if form.object.errors[:ai_credential].any? %>
-            <p class="text-sm text-red-600"><%= form.object.errors[:ai_credential].first %></p>
+            <p class="text-sm text-danger"><%= form.object.errors[:ai_credential].first %></p>
           <% end %>
         </div>
       <% end %>
@@ -40,7 +40,7 @@
                           class: SELECT_CLASSES, disabled: !section_visible?,
                           data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>
           <% if form.object.errors[:ai_model].any? %>
-            <p class="text-sm text-red-600"><%= form.object.errors[:ai_model].first %></p>
+            <p class="text-sm text-danger"><%= form.object.errors[:ai_model].first %></p>
           <% else %>
             <p class="text-sm text-muted">Choose the model this feed uses to fetch posts.</p>
           <% end %>

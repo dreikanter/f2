@@ -9,8 +9,8 @@ module EventLogEntryPresentation
   # as a continuous gutter.
   def severity_icon
     name, color = case event.level
-    when "warning" then ["triangle-alert", "text-amber-500"]
-    when "error" then ["circle-x", "text-red-500"]
+    when "warning" then ["triangle-alert", "text-warning"]
+    when "error" then ["circle-x", "text-danger"]
     else ["info", "text-muted"]
     end
 

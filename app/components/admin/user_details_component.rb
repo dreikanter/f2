@@ -1,8 +1,8 @@
 class Admin::UserDetailsComponent < ViewComponent::Base
   STATUS_BADGES = {
-    "inactive" => { label: "Pending confirmation", classes: "bg-amber-50 text-amber-700 ring-amber-600/20" },
-    "active" => { label: "Active", classes: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" },
-    "suspended" => { label: "Suspended", classes: "bg-red-50 text-red-700 ring-red-600/20" }
+    "inactive" => { label: "Pending confirmation", classes: "bg-warning-subtle text-warning-strong ring-warning/20" },
+    "active" => { label: "Active", classes: "bg-success-subtle text-success-strong ring-success/20" },
+    "suspended" => { label: "Suspended", classes: "bg-danger-subtle text-danger-strong ring-danger/20" }
   }.freeze
 
   def initialize(user:, stats:)

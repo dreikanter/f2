@@ -14,7 +14,7 @@
                               autocomplete: "off",
                               autofocus: true %>
           <% if @access_token.errors[:name].any? %>
-            <p class="text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
+            <p class="text-sm text-danger"><%= @access_token.errors[:name].first %></p>
           <% end %>
         </div>
 
@@ -31,7 +31,7 @@
                               autocomplete: "off" %>
           <p class="text-sm text-muted">Leave blank to keep the existing token. Entering a new value will trigger re-validation.</p>
           <% if @access_token.errors[:token].any? %>
-            <p class="text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
+            <p class="text-sm text-danger"><%= @access_token.errors[:token].first %></p>
           <% end %>
         </div>
       </div>

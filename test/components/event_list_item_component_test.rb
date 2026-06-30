@@ -51,7 +51,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
-    assert_includes icon["class"], "text-red-500"
+    assert_includes icon["class"], "text-danger"
   end
 
   test "#call should flag warning events with an amber triangle icon" do
@@ -61,7 +61,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
-    assert_includes icon["class"], "text-amber-500"
+    assert_includes icon["class"], "text-warning"
   end
 
   test "#call should mark routine info events with a light gray info icon" do
@@ -80,8 +80,8 @@ class EventListItemComponentTest < ViewComponent::TestCase
     result = render_item(event)
 
     item = result.css("[data-key='events.entry']").first
-    assert_includes item["class"], "bg-amber-50"
-    assert_includes item["class"], "hover:bg-amber-100"
+    assert_includes item["class"], "bg-warning-subtle"
+    assert_includes item["class"], "hover:bg-warning-subtle"
   end
 
   test "#call should tint error rows with the alert palette" do
@@ -90,8 +90,8 @@ class EventListItemComponentTest < ViewComponent::TestCase
     result = render_item(event)
 
     item = result.css("[data-key='events.entry']").first
-    assert_includes item["class"], "bg-red-100"
-    assert_includes item["class"], "hover:bg-red-200"
+    assert_includes item["class"], "bg-danger-subtle"
+    assert_includes item["class"], "hover:bg-danger-subtle"
   end
 
   test "#call should keep routine rows neutral" do

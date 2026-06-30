@@ -31,12 +31,17 @@
   --color-ring:           var(--color-sky-500);
   --color-on-brand:       var(--color-white);
 
-  /* Status */
+  /* Status — each family: base (solid), strong (text on tint), subtle (tint) */
   --color-danger:         var(--color-red-600);
+  --color-danger-hover:   var(--color-red-500);
+  --color-danger-strong:  var(--color-red-800);
   --color-danger-subtle:  var(--color-red-100);
   --color-warning:        var(--color-amber-500);
+  --color-warning-strong: var(--color-amber-800);
   --color-warning-subtle: var(--color-amber-100);
   --color-success:        var(--color-emerald-600);
+  --color-success-strong: var(--color-emerald-800);
+  --color-success-subtle: var(--color-emerald-100);
   --color-info:           var(--color-cyan-600);
 
   /* Flowbite's datepicker injects its calendar markup at runtime and references

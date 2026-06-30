@@ -6,8 +6,8 @@ class EventListItemComponent < ListItemComponent
   # bordered list, so only the background is tinted — separation comes from the
   # list's dividers rather than per-row borders.
   LEVEL_TINTS = {
-    "warning" => "bg-amber-50 hover:bg-amber-100",
-    "error" => "bg-red-100 hover:bg-red-200"
+    "warning" => "bg-warning-subtle hover:bg-warning-subtle",
+    "error" => "bg-danger-subtle hover:bg-danger-subtle"
   }.freeze
 
   DEFAULT_TINT = "bg-surface hover:bg-surface-muted".freeze
