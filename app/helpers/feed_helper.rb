@@ -28,10 +28,10 @@ module FeedHelper
       icon("circle-play", css_class: "size-4 text-emerald-500",
                   title: "Enabled", aria_label: "Enabled")
     elsif feed.draft?
-      icon("circle-dashed", css_class: "size-4 text-faint",
+      icon("circle-dashed", css_class: "size-4 text-muted",
                   title: "Draft", aria_label: "Draft")
     else
-      icon("circle-pause", css_class: "size-4 text-faint",
+      icon("circle-pause", css_class: "size-4 text-muted",
                   title: "Disabled", aria_label: "Disabled")
     end
   end

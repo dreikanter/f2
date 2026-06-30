@@ -207,7 +207,7 @@
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                  <%= icon("calendar", css_class: "size-5 text-faint") %>
+                  <%= icon("calendar", css_class: "size-5 text-muted") %>
                 </div>
                 <%= f.text_field :import_after_date,
                                  placeholder: "Pick a date",
@@ -223,7 +223,7 @@
               </div>
               <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                  <%= icon("clock", css_class: "size-5 text-faint") %>
+                  <%= icon("clock", css_class: "size-5 text-muted") %>
                 </div>
                 <%# Plain 24-hour text field rather than a native time input: the
                     native control renders 12h or 24h based on the browser locale,

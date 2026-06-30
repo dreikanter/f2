@@ -39,7 +39,7 @@ class AccessTokenListItemComponent < ListItemComponent
 
   def secondary_element
     helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
-                    class: "truncate text-sm text-faint")
+                    class: "truncate text-sm text-muted")
   end
 
   def meta_segments

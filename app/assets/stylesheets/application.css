@@ -22,7 +22,6 @@
   --color-heading:        var(--color-slate-900);
   --color-body:           var(--color-slate-700);
   --color-muted:          var(--color-slate-500);
-  --color-faint:          var(--color-slate-400);
 
   /* Brand / interactive */
   --color-brand:          var(--color-sky-600);
@@ -51,7 +50,7 @@
   --color-neutral-tertiary-medium:  var(--color-surface-sunken);
   --color-neutral-tertiary:         var(--color-border);
   --color-default-medium:           var(--color-border);
-  --color-fg-disabled:              var(--color-faint);
+  --color-fg-disabled:              var(--color-slate-400);
   --color-brand-medium:             var(--color-sky-200);
 
   --radius-base: 0.5rem;

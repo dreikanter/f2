@@ -25,7 +25,7 @@ class DropdownMenuComponent < ViewComponent::Base
   # HeaderMenuComponent overrides it to match the bordered action buttons
   # (Enable, Refresh) it sits beside in a page header.
   def trigger_class
-    "inline-flex size-7 items-center justify-center rounded text-faint transition " \
+    "inline-flex size-7 items-center justify-center rounded text-muted transition " \
       "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
   end
 

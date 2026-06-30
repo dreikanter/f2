@@ -125,7 +125,7 @@
     <h2 class="text-2xl font-semibold mb-3 text-heading">Actions</h2>
     <div class="flex gap-2">
       <% if @user.email_confirmed? %>
-        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface-muted px-4 py-2 text-base font-semibold text-faint shadow-sm cursor-not-allowed" title="This user's email is already confirmed" data-key="actions.confirm_email_disabled">Confirm Email…</span>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface-muted px-4 py-2 text-base font-semibold text-muted shadow-sm cursor-not-allowed" title="This user's email is already confirmed" data-key="actions.confirm_email_disabled">Confirm Email…</span>
       <% else %>
         <%= link_to "Confirm Email…", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { key: "actions.confirm_email", controller: "modal-trigger", modal_trigger_modal_id_value: "confirm-email-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% end %>
@@ -136,7 +136,7 @@
       <% elsif policy(@user).suspend? %>
         <%= link_to "Suspend user…", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { controller: "modal-trigger", modal_trigger_modal_id_value: "suspend-user-modal-#{@user.id}", action: "click->modal-trigger#open" } %>
       <% else %>
-        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface-muted px-4 py-2 text-base font-semibold text-faint shadow-sm cursor-not-allowed" title="You can't suspend your own account" data-key="actions.suspend_self_disabled">Suspend user…</span>
+        <span class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface-muted px-4 py-2 text-base font-semibold text-muted shadow-sm cursor-not-allowed" title="You can't suspend your own account" data-key="actions.suspend_self_disabled">Suspend user…</span>
       <% end %>
     </div>
   </section>

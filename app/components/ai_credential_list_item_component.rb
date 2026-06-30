@@ -51,7 +51,7 @@ class AiCredentialListItemComponent < ListItemComponent
   end
 
   def secondary_element
-    helpers.tag.div(provider_name, class: "truncate text-sm text-faint")
+    helpers.tag.div(provider_name, class: "truncate text-sm text-muted")
   end
 
   def provider_name

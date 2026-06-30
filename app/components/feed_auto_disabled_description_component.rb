@@ -13,6 +13,6 @@ class FeedAutoDisabledDescriptionComponent < EventDescriptionComponent
     return if count.zero?
 
     helpers.tag.span("(#{helpers.pluralize(count, "failure")} in a row)",
-                     class: "text-faint", data: { key: "events.error_count" })
+                     class: "text-muted", data: { key: "events.error_count" })
   end
 end

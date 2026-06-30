@@ -39,7 +39,7 @@ class FeedListItemComponent < ListItemComponent
 
   def secondary_element
     helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
-                    class: "truncate text-sm text-faint")
+                    class: "truncate text-sm text-muted")
   end
 
   def title_link
@@ -52,9 +52,9 @@ class FeedListItemComponent < ListItemComponent
 
     if target_group_url
       helpers.link_to(target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                      class: "truncate text-sm text-faint transition hover:text-body")
+                      class: "truncate text-sm text-muted transition hover:text-body")
     else
-      helpers.tag.span(target_group_label, class: "truncate text-sm text-faint")
+      helpers.tag.span(target_group_label, class: "truncate text-sm text-muted")
     end
   end
 

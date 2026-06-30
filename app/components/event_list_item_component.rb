@@ -54,7 +54,7 @@ class EventListItemComponent < ListItemComponent
 
   def footer
     helpers.tag.div(helpers.safe_join(footer_items, helpers.middot),
-                    class: "truncate text-sm text-faint", data: { key: "events.footer" })
+                    class: "truncate text-sm text-muted", data: { key: "events.footer" })
   end
 
   def description
@@ -86,7 +86,7 @@ class EventListItemComponent < ListItemComponent
 
   def timestamp_link
     helpers.link_to(helpers.short_time_ago(event.created_at), href,
-                    class: "shrink-0 text-sm font-medium tabular-nums text-faint transition hover:text-heading",
+                    class: "shrink-0 text-sm font-medium tabular-nums text-muted transition hover:text-heading",
                     title: event.created_at.rfc3339,
                     data: { key: "events.timestamp" })
   end

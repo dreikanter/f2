@@ -2,7 +2,7 @@
 
 <%
   # Reference-page scaffolding only (not part of the copy-pastable specimens below).
-  caption_classes = "text-xs font-medium uppercase tracking-wide text-faint"
+  caption_classes = "text-xs font-medium uppercase tracking-wide text-muted"
 
   toc_groups = {
     "Foundations" => [
@@ -41,7 +41,7 @@
     <div class="sticky top-6 space-y-8 text-sm">
       <% toc_groups.each do |group, items| %>
         <div class="space-y-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-faint"><%= group %></p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-muted"><%= group %></p>
           <ul class="space-y-2">
             <% items.each do |anchor, label| %>
               <li>
@@ -156,7 +156,7 @@
           <p class="<%= caption_classes %>">Date picker</p>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-              <%= icon("calendar", css_class: "size-5 text-faint") %>
+              <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
             <%= text_field_tag :demo_date, nil, placeholder: "Pick a date", autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
           </div>
@@ -165,7 +165,7 @@
           <p class="<%= caption_classes %>">Date picker (filled)</p>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-              <%= icon("calendar", css_class: "size-5 text-faint") %>
+              <%= icon("calendar", css_class: "size-5 text-muted") %>
             </div>
             <%= text_field_tag :demo_date_filled, Date.current.iso8601, autocomplete: "off", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", data: { controller: "datepicker" } %>
           </div>
@@ -174,7 +174,7 @@
           <p class="<%= caption_classes %>">Time picker</p>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-              <%= icon("clock", css_class: "size-5 text-faint") %>
+              <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
             <%= time_field_tag :demo_time, "09:30", class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
           </div>
@@ -183,7 +183,7 @@
           <p class="<%= caption_classes %>">Time picker (disabled)</p>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-              <%= icon("clock", css_class: "size-5 text-faint") %>
+              <%= icon("clock", css_class: "size-5 text-muted") %>
             </div>
             <%= time_field_tag :demo_time_disabled, "09:30", disabled: true, class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
           </div>
@@ -207,7 +207,7 @@
         </div>
         <div class="flex items-start gap-3">
           <%= check_box_tag :cross_post, "1", false, disabled: true, class: "mt-1 h-4 w-4 rounded border-border-strong text-info focus:ring-ring" %>
-          <%= label_tag :cross_post, "Cross-post to FreeFeed (connect a token first)", class: "text-base text-faint" %>
+          <%= label_tag :cross_post, "Cross-post to FreeFeed (connect a token first)", class: "text-base text-muted" %>
         </div>
       </div>
     </section>
@@ -233,7 +233,7 @@
         </div>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "realtime", false, disabled: true, class: "mt-1 h-4 w-4 border-border-strong text-info focus:ring-ring" %>
-          <%= label_tag :refresh_frequency_realtime, "Real-time (Pro plan only)", class: "text-base text-faint" %>
+          <%= label_tag :refresh_frequency_realtime, "Real-time (Pro plan only)", class: "text-base text-muted" %>
         </div>
       </fieldset>
     </section>
@@ -338,9 +338,9 @@
       <%= render CardComponent.new do |card| %>
         <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4") do %>
           <p class="text-base text-heading">Tech News Daily</p>
-          <p class="shrink-0 text-sm text-faint">5 min ago</p>
+          <p class="shrink-0 text-sm text-muted">5 min ago</p>
         <% end %>
-        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-faint") do %>
+        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-muted") do %>
           <span>rss.technews.io</span>
           <span>142 posts</span>
           <span>Active</span>
@@ -356,7 +356,7 @@
                     id="card-demo-menu-button"
                     data-dropdown-toggle="card-demo-menu"
                     data-dropdown-placement="bottom-end"
-                    class="inline-flex size-7 items-center justify-center rounded text-faint transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    class="inline-flex size-7 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-haspopup="true"
                     aria-expanded="false">
               <%= icon("ellipsis", css_class: "size-4") %>
@@ -377,7 +377,7 @@
             </div>
           </div>
         <% end %>
-        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-faint") do %>
+        <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-muted") do %>
           <span>rss.technews.io</span>
           <span>142 posts</span>
           <span>Active</span>
