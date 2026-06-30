@@ -50,7 +50,7 @@ class PostPreviewComponent < ViewComponent::Base
   def formatted_content
     return if post_content.blank?
 
-    helpers.content_tag(:div, helpers.format_post_content(post_content), class: "rounded-lg text-slate-900")
+    helpers.content_tag(:div, helpers.format_post_content(post_content), class: "rounded-lg text-heading")
   end
 
   def attachments?

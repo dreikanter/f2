@@ -5,7 +5,7 @@
     <% header.with_action_button do %>
       <%= link_to "Edit",
                   edit_ai_credential_path(ai_credential),
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-surface-muted",
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted",
                   data: { key: "ai_credential.edit" } %>
     <% end %>
     <% header.with_action_button do %>
@@ -13,7 +13,7 @@
                     ai_credential_path(ai_credential),
                     method: :delete,
                     form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
     <% end %>
   <% end %>
 
@@ -25,8 +25,8 @@
         <%= render SpinnerComponent.new %>
       </div>
       <div class="space-y-1">
-        <p class="font-semibold text-slate-800">Checking your credential…</p>
-        <p class="text-slate-600">This usually takes a few seconds.</p>
+        <p class="font-semibold text-heading">Checking your credential…</p>
+        <p class="text-body">This usually takes a few seconds.</p>
       </div>
     </div>
   <% when "active" %>
@@ -62,7 +62,7 @@
         <% else %>
           <%= link_to "Back to your feed",
                       edit_feed_path(feed_id),
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted",
+                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted",
                       data: { key: "ai_credential.return-to" } %>
         <% end %>
       <% end %>
@@ -70,7 +70,7 @@
         <%= button_to "Make default",
                       ai_credential_default_path(ai_credential),
                       method: :patch,
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
       <% end %>
     </div>
   <% end %>

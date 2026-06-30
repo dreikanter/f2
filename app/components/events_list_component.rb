@@ -56,7 +56,7 @@ class EventsListComponent < ViewComponent::Base
   end
 
   def nav_link(label, url, key)
-    classes = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition"
+    classes = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-sm font-semibold text-body shadow-sm transition"
 
     if url
       link_to(label, url, class: "#{classes} hover:bg-surface-muted", data: { key: key })

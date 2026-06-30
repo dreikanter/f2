@@ -24,7 +24,7 @@
           <li class="mr-2" role="presentation">
             <button
               type="button"
-              class="inline-block rounded-t-lg border-b-2 border-transparent px-4 py-2 text-muted hover:text-slate-600"
+              class="inline-block rounded-t-lg border-b-2 border-transparent px-4 py-2 text-muted hover:text-body"
               data-action="email-viewer#showHtml"
               data-email-viewer-target="htmlTab"
               data-key="development.emails.tab.html">
@@ -34,7 +34,7 @@
         </ul>
       </div>
       <div class="rounded-lg border border-border bg-surface p-4" data-email-viewer-target="textPanel">
-        <pre class="mb-0 whitespace-pre-wrap overflow-auto text-slate-700" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
+        <pre class="mb-0 whitespace-pre-wrap overflow-auto text-heading" data-key="development.emails.text-part"><%= h @email[:text_part] %></pre>
       </div>
       <div class="hidden rounded-lg border border-border bg-surface" data-email-viewer-target="htmlPanel">
         <iframe srcdoc="<%= ERB::Util.html_escape(@email[:html_part]) %>" sandbox title="Email HTML preview" referrerpolicy="no-referrer" class="h-[400px] w-full rounded-lg"></iframe>
@@ -42,7 +42,7 @@
     </div>
   <% else %>
     <div class="rounded-lg border border-border bg-surface p-4">
-      <pre class="mb-0 whitespace-pre-wrap text-sm text-slate-700" data-key="development.emails.body"><%= h @email[:body] %></pre>
+      <pre class="mb-0 whitespace-pre-wrap text-sm text-heading" data-key="development.emails.body"><%= h @email[:body] %></pre>
     </div>
   <% end %>
 </div>

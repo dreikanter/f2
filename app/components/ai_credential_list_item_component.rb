@@ -41,7 +41,7 @@ class AiCredentialListItemComponent < ListItemComponent
 
   def title_link
     helpers.link_to(credential.display_name, credential_url,
-                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   def default_badge

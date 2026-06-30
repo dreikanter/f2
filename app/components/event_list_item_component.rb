@@ -45,7 +45,7 @@ class EventListItemComponent < ListItemComponent
   def primary_element
     helpers.tag.div(
       helpers.safe_join([
-        helpers.tag.div(render(description), class: "min-w-0 flex-1 truncate text-slate-700", data: { key: "events.description" }),
+        helpers.tag.div(render(description), class: "min-w-0 flex-1 truncate text-heading", data: { key: "events.description" }),
         timestamp_link
       ]),
       class: "flex min-w-0 flex-1 items-baseline gap-3"
@@ -86,7 +86,7 @@ class EventListItemComponent < ListItemComponent
 
   def timestamp_link
     helpers.link_to(helpers.short_time_ago(event.created_at), href,
-                    class: "shrink-0 text-sm font-medium tabular-nums text-faint transition hover:text-slate-700",
+                    class: "shrink-0 text-sm font-medium tabular-nums text-faint transition hover:text-heading",
                     title: event.created_at.rfc3339,
                     data: { key: "events.timestamp" })
   end
@@ -98,7 +98,7 @@ class EventListItemComponent < ListItemComponent
   def type_link
     link = helpers.link_to(event.type,
                            helpers.admin_events_path(filter: { type: [event.type] }),
-                           class: "transition hover:text-slate-700",
+                           class: "transition hover:text-heading",
                            data: { key: "events.type" })
 
     safe_join(["Type: ", link])
@@ -111,7 +111,7 @@ class EventListItemComponent < ListItemComponent
     else
       helpers.link_to("##{event.user_id}",
                       helpers.admin_events_path(filter: { user_id: event.user_id }),
-                      class: "underline underline-offset-2 transition hover:text-slate-700",
+                      class: "underline underline-offset-2 transition hover:text-heading",
                       title: event.user&.email_address,
                       data: { key: "events.user" })
     end
@@ -128,7 +128,7 @@ class EventListItemComponent < ListItemComponent
 
     link = helpers.link_to(value,
                            helpers.admin_events_path(filter: filter_params),
-                           class: "underline underline-offset-2 transition hover:text-slate-700",
+                           class: "underline underline-offset-2 transition hover:text-heading",
                            title: target_title,
                            data: { key: "events.subject" })
 

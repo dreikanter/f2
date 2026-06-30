@@ -70,14 +70,14 @@ class PostListItemComponent < ListItemComponent
   def status_element
     if status_url
       helpers.link_to(status_label_with_time, status_url,
-                      class: "transition hover:text-slate-600", data: { key: "post.status" })
+                      class: "transition hover:text-body", data: { key: "post.status" })
     else
       helpers.tag.span(status_label_with_time, data: { key: "post.status" })
     end
   end
 
   def group_segment
-    helpers.tag.span(helpers.safe_join(["Group: ", helpers.link_to(group_label, group_url, title: group_hint, class: "transition hover:text-slate-600")]),
+    helpers.tag.span(helpers.safe_join(["Group: ", helpers.link_to(group_label, group_url, title: group_hint, class: "transition hover:text-body")]),
                      data: { key: "post.group" })
   end
 
@@ -111,7 +111,7 @@ class PostListItemComponent < ListItemComponent
   # this with plain text where those owner-scoped routes aren't reachable.
   def title_element
     helpers.link_to(title, post_url,
-                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   # Whether to render the actions menu (Details/Source/Delete). Disabled by

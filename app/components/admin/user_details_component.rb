@@ -29,7 +29,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   end
 
   def status_badge
-    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, classes: "bg-surface-muted text-slate-700 ring-slate-600/20" } }
+    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, classes: "bg-surface-muted text-heading ring-slate-600/20" } }
     helpers.tag.span(
       badge[:label],
       class: "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset #{badge[:classes]}",

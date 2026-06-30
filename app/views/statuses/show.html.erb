@@ -6,14 +6,14 @@
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
     <%= render AlertComponent.new(variant: :warning) do %>
-      <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
+      <p class="font-semibold text-heading">Your email address is not receiving our emails.</p>
       <% if @user.can_change_email? %>
-        <p class="text-slate-600">
+        <p class="text-body">
           <%= link_to "Update your email address", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
           to continue receiving notifications.
         </p>
       <% else %>
-        <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <p class="text-body">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
     <% end %>
   <% end %>
@@ -41,7 +41,7 @@
 
     <section class="space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
+        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
         <%= link_to "View all", events_path(filter: @filter.to_h.presence), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "recent_events.view_all" } %>
       </div>
       <%= render(EventsListComponent.new(

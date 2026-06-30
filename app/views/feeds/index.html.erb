@@ -20,7 +20,7 @@
     <%= render FeedsListComponent.new(feeds: @feeds) %>
 
     <% if pagination_total_pages > 1 %>
-      <div class="text-center text-sm text-slate-600">
+      <div class="text-center text-sm text-body">
         Showing <%= @feeds.size %> of <%= pagination_total_count %> feeds
       </div>
     <% end %>

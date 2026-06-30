@@ -34,7 +34,7 @@ class AccessTokenListItemComponent < ListItemComponent
 
   def primary_element
     helpers.link_to(access_token.name, token_url,
-                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   def secondary_element

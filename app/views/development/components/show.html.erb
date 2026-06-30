@@ -45,7 +45,7 @@
           <ul class="space-y-2">
             <% items.each do |anchor, label| %>
               <li>
-                <a href="#<%= anchor %>" class="text-slate-600 transition hover:text-sky-600" data-key="toc.<%= anchor %>"><%= label %></a>
+                <a href="#<%= anchor %>" class="text-body transition hover:text-sky-600" data-key="toc.<%= anchor %>"><%= label %></a>
               </li>
             <% end %>
           </ul>
@@ -68,8 +68,8 @@
 
     <%# Buttons %>
     <section id="buttons" class="scroll-mt-6 space-y-4" data-key="section.buttons">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Buttons</h2>
-      <p class="text-slate-600">Used for primary actions, secondary choices, and destructive operations. Disabled buttons keep their shape but drop their emphasis.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Buttons</h2>
+      <p class="text-body">Used for primary actions, secondary choices, and destructive operations. Disabled buttons keep their shape but drop their emphasis.</p>
 
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
@@ -78,7 +78,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
@@ -90,7 +90,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Cancel</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
@@ -101,8 +101,8 @@
 
     <%# Text input %>
     <section id="text-input" class="scroll-mt-6 space-y-4" data-key="section.text-input">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Text input</h2>
-      <p class="text-slate-600">The standard single-line field. Shown empty, filled, disabled, and in an error state.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Text input</h2>
+      <p class="text-body">The standard single-line field. Shown empty, filled, disabled, and in an error state.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
@@ -127,8 +127,8 @@
 
     <%# Select %>
     <section id="select" class="scroll-mt-6 space-y-4" data-key="section.select">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Select</h2>
-      <p class="text-slate-600">A dropdown for choosing one option from a known set.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Select</h2>
+      <p class="text-body">A dropdown for choosing one option from a known set.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
@@ -148,8 +148,8 @@
 
     <%# Date & time %>
     <section id="date-time" class="scroll-mt-6 space-y-4" data-key="section.date-time">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Date & time</h2>
-      <p class="text-slate-600">A calendar picker for dates and the native time input for clock times. The date input mounts the Flowbite datepicker through the <code>datepicker</code> Stimulus controller, so it also works in markup injected via Turbo Streams.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Date & time</h2>
+      <p class="text-body">A calendar picker for dates and the native time input for clock times. The date input mounts the Flowbite datepicker through the <code>datepicker</code> Stimulus controller, so it also works in markup injected via Turbo Streams.</p>
 
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="space-y-2">
@@ -193,17 +193,17 @@
 
     <%# Checkbox %>
     <section id="checkbox" class="scroll-mt-6 space-y-4" data-key="section.checkbox">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Checkbox</h2>
-      <p class="text-slate-600">A labeled checkbox for a single on/off choice. The <code>label_tag</code> targets the checkbox id, so clicking the label toggles it.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Checkbox</h2>
+      <p class="text-body">A labeled checkbox for a single on/off choice. The <code>label_tag</code> targets the checkbox id, so clicking the label toggles it.</p>
 
       <div class="space-y-4">
         <div class="flex items-start gap-3">
           <%= check_box_tag :enable_feed, "1", false, class: "mt-1 h-4 w-4 rounded border-border-strong text-cyan-600 focus:ring-cyan-500" %>
-          <%= label_tag :enable_feed, "Enable this feed once it's set up", class: "text-base text-slate-700" %>
+          <%= label_tag :enable_feed, "Enable this feed once it's set up", class: "text-base text-heading" %>
         </div>
         <div class="flex items-start gap-3">
           <%= check_box_tag :notify_failures, "1", true, class: "mt-1 h-4 w-4 rounded border-border-strong text-cyan-600 focus:ring-cyan-500" %>
-          <%= label_tag :notify_failures, "Notify me when a refresh fails", class: "text-base text-slate-700" %>
+          <%= label_tag :notify_failures, "Notify me when a refresh fails", class: "text-base text-heading" %>
         </div>
         <div class="flex items-start gap-3">
           <%= check_box_tag :cross_post, "1", false, disabled: true, class: "mt-1 h-4 w-4 rounded border-border-strong text-cyan-600 focus:ring-cyan-500" %>
@@ -214,22 +214,22 @@
 
     <%# Radio group %>
     <section id="radio-group" class="scroll-mt-6 space-y-4" data-key="section.radio-group">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Radio group</h2>
-      <p class="text-slate-600">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Radio group</h2>
+      <p class="text-body">A set of mutually exclusive options sharing one name. One is selected by default; unavailable options are disabled. Each label targets its radio's id.</p>
 
       <fieldset class="space-y-3">
-        <legend class="block font-semibold text-slate-800">Refresh frequency</legend>
+        <legend class="block font-semibold text-heading">Refresh frequency</legend>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "30m", true, class: "mt-1 h-4 w-4 border-border-strong text-cyan-600 focus:ring-cyan-500" %>
-          <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-slate-700" %>
+          <%= label_tag :refresh_frequency_30m, "Every 30 minutes", class: "text-base text-heading" %>
         </div>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "1h", false, class: "mt-1 h-4 w-4 border-border-strong text-cyan-600 focus:ring-cyan-500" %>
-          <%= label_tag :refresh_frequency_1h, "Every hour", class: "text-base text-slate-700" %>
+          <%= label_tag :refresh_frequency_1h, "Every hour", class: "text-base text-heading" %>
         </div>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "daily", false, class: "mt-1 h-4 w-4 border-border-strong text-cyan-600 focus:ring-cyan-500" %>
-          <%= label_tag :refresh_frequency_daily, "Daily at midnight", class: "text-base text-slate-700" %>
+          <%= label_tag :refresh_frequency_daily, "Daily at midnight", class: "text-base text-heading" %>
         </div>
         <div class="flex items-start gap-3">
           <%= radio_button_tag :refresh_frequency, "realtime", false, disabled: true, class: "mt-1 h-4 w-4 border-border-strong text-cyan-600 focus:ring-cyan-500" %>
@@ -240,24 +240,24 @@
 
     <%# Form group %>
     <section id="form-group" class="scroll-mt-6 space-y-4" data-key="section.form-group">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Form group</h2>
-      <p class="text-slate-600">The standard composition: a label bound to its control, plus optional help or error text, stacked with consistent spacing.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Form group</h2>
+      <p class="text-body">The standard composition: a label bound to its control, plus optional help or error text, stacked with consistent spacing.</p>
 
       <div class="max-w-xl space-y-8">
         <div class="space-y-2">
-          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-slate-800" %>
+          <%= label_tag :group_feed_name, "Feed name", class: "block font-semibold text-heading" %>
           <%= text_field_tag :group_feed_name, nil, placeholder: "e.g. Ruby Weekly", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
           <p class="text-sm text-muted">Shown in your feed list and on FreeFeed posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-slate-800" %>
+          <%= label_tag :group_frequency, "Refresh frequency", class: "block font-semibold text-heading" %>
           <%= select_tag :group_frequency, options_for_select(["Every 30 minutes", "Every hour", "Daily at midnight"], "Every hour"), class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
           <p class="text-sm text-muted">How often Feeder checks the source for new posts.</p>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-slate-800" %>
+          <%= label_tag :group_source_url, "Source URL", class: "block font-semibold text-heading" %>
           <%= text_field_tag :group_source_url, "not-a-valid-url", class: "w-full rounded-md border border-red-400 bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-red-500 transition focus:border-red-500 focus:outline-none focus:ring-2" %>
           <p class="text-sm text-red-600">Enter a valid feed URL, like https://example.com/feed.xml.</p>
         </div>
@@ -266,8 +266,8 @@
 
     <%# Page header %>
     <section id="page-header" class="scroll-mt-6 space-y-4" data-key="section.page-header">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Page header</h2>
-      <p class="text-slate-600">Opens a page with a title and optional context and actions. Pair it with <code>space-y-8</code> to keep a steady gap before the page content.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Page header</h2>
+      <p class="text-body">Opens a page with a title and optional context and actions. Pair it with <code>space-y-8</code> to keep a steady gap before the page content.</p>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With context and actions</p>
@@ -278,7 +278,7 @@
                 Manage the sources Feeder reposts to FreeFeed.
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+                <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
               <% end %>
               <% header.with_action_button do %>
                 <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
@@ -286,7 +286,7 @@
             <% end %>
 
             <%= render CardComponent.new do %>
-              <p class="text-slate-700">Page content sits here. The header keeps a consistent gap above it, so pages feel aligned no matter what's inside.</p>
+              <p class="text-heading">Page content sits here. The header keeps a consistent gap above it, so pages feel aligned no matter what's inside.</p>
             <% end %>
           </div>
         </div>
@@ -299,7 +299,7 @@
             <%= render PageHeaderComponent.new(title: "Settings") %>
 
             <%= render CardComponent.new do %>
-              <p class="text-slate-700">Without actions, the title stretches full width and the same spacing applies before the content below.</p>
+              <p class="text-heading">Without actions, the title stretches full width and the same spacing applies before the content below.</p>
             <% end %>
           </div>
         </div>
@@ -308,8 +308,8 @@
 
     <%# Badge %>
     <section id="badge" class="scroll-mt-6 space-y-4" data-key="section.badge">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Badge</h2>
-      <p class="text-slate-600">Small status labels. Color carries meaning — green for healthy, red for problems, gray for neutral.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Badge</h2>
+      <p class="text-body">Small status labels. Color carries meaning — green for healthy, red for problems, gray for neutral.</p>
       <div class="flex flex-wrap gap-2">
         <%= render BadgeComponent.new(text: "Active", color: :green) %>
         <%= render BadgeComponent.new(text: "Paused", color: :gray) %>
@@ -325,19 +325,19 @@
 
     <%# Card %>
     <section id="card" class="scroll-mt-6 space-y-4" data-key="section.card">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Card</h2>
-      <p class="text-slate-600">A padded container that groups related content on a clean surface.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Card</h2>
+      <p class="text-body">A padded container that groups related content on a clean surface.</p>
       <%= render CardComponent.new do %>
         <div class="space-y-2">
-          <h3 class="text-lg font-semibold text-slate-900">Tech News Daily</h3>
-          <p class="text-slate-700">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
+          <h3 class="text-lg font-semibold text-heading">Tech News Daily</h3>
+          <p class="text-heading">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
         </div>
       <% end %>
 
-      <p class="text-slate-600">Two-section cards are the standard shape for item listings — a header on top, compact metadata below.</p>
+      <p class="text-body">Two-section cards are the standard shape for item listings — a header on top, compact metadata below.</p>
       <%= render CardComponent.new do |card| %>
         <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4") do %>
-          <p class="text-base text-slate-900">Tech News Daily</p>
+          <p class="text-base text-heading">Tech News Daily</p>
           <p class="shrink-0 text-sm text-faint">5 min ago</p>
         <% end %>
         <% card.with_section(class: "flex items-center gap-3 px-5 py-2 text-sm text-faint") do %>
@@ -347,16 +347,16 @@
         <% end %>
       <% end %>
 
-      <p class="text-slate-600">A three-dot menu tucks item actions into the header without crowding the layout.</p>
+      <p class="text-body">A three-dot menu tucks item actions into the header without crowding the layout.</p>
       <%= render CardComponent.new do |card| %>
         <% card.with_section(class: "flex items-start justify-between gap-4 px-5 py-4") do %>
-          <p class="text-base text-slate-900">Tech News Daily</p>
+          <p class="text-base text-heading">Tech News Daily</p>
           <div class="relative">
             <button type="button"
                     id="card-demo-menu-button"
                     data-dropdown-toggle="card-demo-menu"
                     data-dropdown-placement="bottom-end"
-                    class="inline-flex size-7 items-center justify-center rounded text-faint transition hover:bg-surface-sunken hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                    class="inline-flex size-7 items-center justify-center rounded text-faint transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                     aria-haspopup="true"
                     aria-expanded="false">
               <%= icon("ellipsis", css_class: "size-4") %>
@@ -368,10 +368,10 @@
                  aria-labelledby="card-demo-menu-button">
               <ul class="py-1">
                 <li>
-                  <a href="#" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-surface-muted" role="menuitem">Edit</a>
+                  <a href="#" class="block px-4 py-2 text-sm text-heading transition hover:bg-surface-muted" role="menuitem">Edit</a>
                 </li>
                 <li>
-                  <a href="#" class="block px-4 py-2 text-sm text-slate-700 transition hover:bg-surface-muted" role="menuitem">Delete…</a>
+                  <a href="#" class="block px-4 py-2 text-sm text-heading transition hover:bg-surface-muted" role="menuitem">Delete…</a>
                 </li>
               </ul>
             </div>
@@ -384,13 +384,13 @@
         <% end %>
       <% end %>
 
-      <p class="text-slate-600">Add more sections to split a card into further regions divided edge to edge.</p>
+      <p class="text-body">Add more sections to split a card into further regions divided edge to edge.</p>
       <%= render CardComponent.new do |card| %>
         <% card.with_section do %>
-          <p class="text-sm font-medium text-slate-700">Tech News Daily</p>
+          <p class="text-sm font-medium text-heading">Tech News Daily</p>
         <% end %>
         <% card.with_section do %>
-          <p class="text-slate-700">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
+          <p class="text-heading">Last refreshed 5 minutes ago · 142 posts published. Everything is running smoothly.</p>
         <% end %>
         <% card.with_section do %>
           <p class="text-sm text-muted">Next refresh in about an hour.</p>
@@ -400,20 +400,20 @@
 
     <%# Panel %>
     <section id="panel" class="scroll-mt-6 space-y-4" data-key="section.panel">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Panel</h2>
-      <p class="text-slate-600">A borderless container on a light gray surface. Use it to set a block of related content apart with less weight than a bordered card.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Panel</h2>
+      <p class="text-body">A borderless container on a light gray surface. Use it to set a block of related content apart with less weight than a bordered card.</p>
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <h3 class="text-lg font-semibold text-slate-900">Skip older posts</h3>
-          <p class="text-slate-700">Group related fields together without competing with the bordered cards around them.</p>
+          <h3 class="text-lg font-semibold text-heading">Skip older posts</h3>
+          <p class="text-heading">Group related fields together without competing with the bordered cards around them.</p>
         </div>
       <% end %>
     </section>
 
     <%# Alert %>
     <section id="alert" class="scroll-mt-6 space-y-4" data-key="section.alert">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Alert</h2>
-      <p class="text-slate-600">Inline messages that call out information, success, warnings, or errors.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Alert</h2>
+      <p class="text-body">Inline messages that call out information, success, warnings, or errors.</p>
       <div class="space-y-3">
         <%= render AlertComponent.new(variant: :info) do %>
           <p>Your feed will start publishing within the next few minutes.</p>
@@ -435,42 +435,42 @@
 
     <%# Empty state %>
     <section id="empty-state" class="scroll-mt-6 space-y-4" data-key="section.empty-state">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Empty state</h2>
-      <p class="text-slate-600">Shown when there's nothing to display yet.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Empty state</h2>
+      <p class="text-body">Shown when there's nothing to display yet.</p>
       <%= render EmptyStateComponent.new("No feeds yet — add your first source to get started") %>
     </section>
 
     <%# Collapsible section %>
     <section id="collapsible-section" class="scroll-mt-6 space-y-4" data-key="section.collapsible-section">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Collapsible section</h2>
-      <p class="text-slate-600">A borderless expandable region for secondary content. The header toggles a chevron and reveals a body separated by a top border. Built on native <code>&lt;details&gt;</code>, so it works without JavaScript even in markup injected via Turbo Streams.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Collapsible section</h2>
+      <p class="text-body">A borderless expandable region for secondary content. The header toggles a chevron and reveals a body separated by a top border. Built on native <code>&lt;details&gt;</code>, so it works without JavaScript even in markup injected via Turbo Streams.</p>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">Closed by default</p>
         <%= render CollapsibleSectionComponent.new(title: "Advanced options") do %>
-          <p class="text-slate-700">Settings that most people can safely ignore live here, tucked out of the way until needed.</p>
+          <p class="text-heading">Settings that most people can safely ignore live here, tucked out of the way until needed.</p>
         <% end %>
       </div>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">Open by default</p>
         <%= render CollapsibleSectionComponent.new(title: "More actions", open: true) do %>
-          <p class="text-slate-700">Pass <code>open: true</code> to start expanded — handy when the section already has content worth showing.</p>
+          <p class="text-heading">Pass <code>open: true</code> to start expanded — handy when the section already has content worth showing.</p>
         <% end %>
       </div>
     </section>
 
     <%# Spinner %>
     <section id="spinner" class="scroll-mt-6 space-y-4" data-key="section.spinner">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Spinner</h2>
-      <p class="text-slate-600">Indicates a short, indeterminate wait.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Spinner</h2>
+      <p class="text-body">Indicates a short, indeterminate wait.</p>
       <%= render SpinnerComponent.new %>
     </section>
 
     <%# Stats bar %>
     <section id="stats-bar" class="scroll-mt-6 space-y-4" data-key="section.stats-bar">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Stats bar</h2>
-      <p class="text-slate-600">A compact row of headline numbers.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Stats bar</h2>
+      <p class="text-body">A compact row of headline numbers.</p>
       <% stats_bar = StatsBarComponent.new %>
       <% stats_bar.with_item(StatBarItemComponent.new(label: "Total feeds", value: "42")) %>
       <% stats_bar.with_item(StatBarItemComponent.new(label: "Active", value: "38")) %>
@@ -481,8 +481,8 @@
 
     <%# List %>
     <section id="list" class="scroll-mt-6 space-y-4" data-key="section.list">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">List</h2>
-      <p class="text-slate-600">A grouped list for collections of items, with linked titles and metadata, or simple label/value rows.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">List</h2>
+      <p class="text-body">A grouped list for collections of items, with linked titles and metadata, or simple label/value rows.</p>
 
       <div class="space-y-2">
         <p class="<%= caption_classes %>">With feed items</p>
@@ -494,7 +494,7 @@
              ].each do |title, segments| %>
             <% item = ListItemComponent.new %>
             <% item.with_primary do %>
-              <%= link_to title, "#", class: "min-w-0 flex-1 truncate text-base text-slate-900 transition hover:text-slate-700" %>
+              <%= link_to title, "#", class: "min-w-0 flex-1 truncate text-base text-heading transition hover:text-heading" %>
             <% end %>
             <% item.with_secondary do %>
               <span class="text-sm text-muted"><%= safe_join(segments.map { |segment| tag.span(segment) }, middot) %></span>
@@ -516,15 +516,15 @@
 
     <%# Pagination %>
     <section id="pagination" class="scroll-mt-6 space-y-4" data-key="section.pagination">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Pagination</h2>
-      <p class="text-slate-600">Moves between pages of a long collection.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Pagination</h2>
+      <p class="text-body">Moves between pages of a long collection.</p>
       <%= render PaginationComponent.new(collection_name: "posts", path_helper: ->(page) { "#page-#{page}" }, current_page: 3, total_pages: 10) %>
     </section>
 
     <%# Confirmation modal %>
     <section id="confirmation-modal" class="scroll-mt-6 space-y-4" data-key="section.confirmation-modal">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Confirmation modal</h2>
-      <p class="text-slate-600">Asks the user to confirm a destructive action. It stays hidden until a trigger opens it, so nothing shows here by default.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Confirmation modal</h2>
+      <p class="text-body">Asks the user to confirm a destructive action. It stays hidden until a trigger opens it, so nothing shows here by default.</p>
       <%= render ConfirmationModalComponent.new(title: "Delete feed", action: "Delete", url: "#", method: :delete) do %>
         Are you sure you want to delete this feed? This can't be undone.
       <% end %>
@@ -532,8 +532,8 @@
 
     <%# Event description %>
     <section id="event-description" class="scroll-mt-6 space-y-4" data-key="section.event-description">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Event description</h2>
-      <p class="text-slate-600">Renders a human-readable summary of a system event, usually inside an alert that matches its severity.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Event description</h2>
+      <p class="text-body">Renders a human-readable summary of a system event, usually inside an alert that matches its severity.</p>
 
       <% sample_feed = Feed.first || Feed.new(id: 1, name: "Sample Feed") %>
       <% sample_token = AccessToken.first || AccessToken.new(id: 1, name: "Sample Token") %>
@@ -556,8 +556,8 @@
 
     <%# Feed profile chooser %>
     <section id="feed-profile-chooser" class="scroll-mt-6 space-y-4" data-key="section.feed-profile-chooser">
-      <h2 class="border-b border-border pb-2 text-xl font-semibold text-slate-900">Feed profile chooser</h2>
-      <p class="text-slate-600">The "How should we fetch posts?" radio group shown once a source is identified. Every option carries its self-test verdict, the suggested default is preselected, and a source that can't be read is disabled.</p>
+      <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Feed profile chooser</h2>
+      <p class="text-body">The "How should we fetch posts?" radio group shown once a source is identified. Every option carries its self-test verdict, the suggested default is preselected, and a source that can't be read is disabled.</p>
 
       <%
         # selected mirrors the option the add-feed flow preselects in production.
@@ -635,7 +635,7 @@
         <% chooser_examples.each_with_index do |example, index| %>
           <div class="rounded-lg border border-border bg-surface p-4 space-y-3" data-key="feed-profile-chooser-example.<%= index %>">
             <div class="space-y-1">
-              <p class="font-medium text-slate-800"><%= example[:title] %></p>
+              <p class="font-medium text-heading"><%= example[:title] %></p>
               <p class="text-sm text-muted"><%= example[:note] %></p>
             </div>
             <%= render "feeds/candidate_chooser",

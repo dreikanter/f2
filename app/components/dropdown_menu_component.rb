@@ -8,7 +8,7 @@
 #
 #   { label:, href:, method:, params:, target:, rel:, data: }
 class DropdownMenuComponent < ViewComponent::Base
-  ITEM_CLASS = "block px-4 py-2 text-sm text-slate-700 transition hover:bg-surface-muted"
+  ITEM_CLASS = "block px-4 py-2 text-sm text-heading transition hover:bg-surface-muted"
 
   def initialize(menu_id:, items:, width: "w-44", label: "More options")
     @menu_id = menu_id
@@ -26,7 +26,7 @@ class DropdownMenuComponent < ViewComponent::Base
   # (Enable, Refresh) it sits beside in a page header.
   def trigger_class
     "inline-flex size-7 items-center justify-center rounded text-faint transition " \
-      "hover:bg-surface-sunken hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+      "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
   end
 
   def render_item(item)

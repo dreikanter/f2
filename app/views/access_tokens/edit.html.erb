@@ -7,7 +7,7 @@
     <%= form_with model: @access_token do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :name, "Token Name", class: "block font-semibold text-slate-800" %>
+          <%= form.label :name, "Token Name", class: "block font-semibold text-heading" %>
           <%= form.text_field :name,
                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                               placeholder: "e.g., My FreeFeed Token",
@@ -19,12 +19,12 @@
         </div>
 
         <div class="space-y-2">
-          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-slate-800" %>
+          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-heading" %>
           <%= form.text_field :host, disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :token, "New Token Value", class: "block font-semibold text-slate-800" %>
+          <%= form.label :token, "New Token Value", class: "block font-semibold text-heading" %>
           <%= form.text_field :token,
                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                               placeholder: "Paste a new token here to replace the current one",
@@ -36,9 +36,9 @@
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
         <%= form.submit "Save Changes", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
-        <%= link_to "Cancel", access_token_path(@access_token), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Cancel", access_token_path(@access_token), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       </div>
     <% end %>
   </div>

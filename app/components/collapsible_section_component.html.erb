@@ -1,5 +1,5 @@
 <%= tag.details(**container_options) do %>
-  <summary class="flex cursor-pointer select-none items-center justify-between gap-3 py-5 font-medium text-slate-600 transition group-open:text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+  <summary class="flex cursor-pointer select-none items-center justify-between gap-3 py-5 font-medium text-body transition group-open:text-heading marker:content-none [&::-webkit-details-marker]:hidden">
     <span><%= @title %></span>
     <%= helpers.icon("chevron-down", css_class: "size-5 text-faint transition group-open:rotate-180") %>
   </summary>

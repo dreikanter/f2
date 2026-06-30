@@ -75,7 +75,7 @@ class AiCredentialsListComponentTest < ViewComponent::TestCase
     item = result.css("a[role='menuitem']").find { |a| a.text.strip == "Delete…" }
 
     assert_not_nil item
-    assert_includes item["class"], "text-slate-700"
+    assert_includes item["class"], "text-heading"
     assert_not_includes item["class"], "text-red-600"
   end
 end

@@ -14,13 +14,13 @@
     <%= render SpinnerComponent.new %>
   </div>
   <div class="space-y-1 flex-1">
-    <p class="font-semibold text-slate-800">Checking this feed…</p>
-    <p class="text-slate-600">This usually takes a few seconds.</p>
+    <p class="font-semibold text-heading">Checking this feed…</p>
+    <p class="text-body">This usually takes a few seconds.</p>
   </div>
   <%= button_to "Cancel",
                 feed_identifications_path(input: input),
                 method: :delete,
                 form: { data: { turbo_frame: "_top" } },
-                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
                 data: { key: "loading.cancel" } %>
 </div>

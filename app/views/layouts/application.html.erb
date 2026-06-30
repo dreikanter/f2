@@ -4,7 +4,7 @@
     <%= render "layouts/head" %>
   </head>
 
-  <body class="min-h-screen text-slate-900 <%= content_for?(:body_class) ? content_for(:body_class) : 'bg-surface' %>">
+  <body class="min-h-screen text-heading <%= content_for?(:body_class) ? content_for(:body_class) : 'bg-surface' %>">
     <% if Current.user %>
       <%= render "layouts/navbar" %>
     <% end %>

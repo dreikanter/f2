@@ -44,7 +44,7 @@ class FeedListItemComponent < ListItemComponent
 
   def title_link
     helpers.link_to(title, feed_url,
-                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   def group_element
@@ -52,7 +52,7 @@ class FeedListItemComponent < ListItemComponent
 
     if target_group_url
       helpers.link_to(target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                      class: "truncate text-sm text-faint transition hover:text-slate-600")
+                      class: "truncate text-sm text-faint transition hover:text-body")
     else
       helpers.tag.span(target_group_label, class: "truncate text-sm text-faint")
     end
@@ -81,7 +81,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def owner_segment
-    helpers.tag.span(helpers.safe_join(["Owner: ", helpers.link_to(owner.email_address, owner_url, class: "transition hover:text-slate-600")]),
+    helpers.tag.span(helpers.safe_join(["Owner: ", helpers.link_to(owner.email_address, owner_url, class: "transition hover:text-body")]),
                      data: { key: "feed.#{feed.id}.owner" })
   end
 

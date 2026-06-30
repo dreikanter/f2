@@ -28,6 +28,6 @@ class StatBarItemComponentTest < ViewComponent::TestCase
     result = render_inline(StatBarItemComponent.new(label: "Active", value: "38", muted: true))
 
     assert_includes result.at_css("dd")["class"], "text-muted"
-    assert_not_includes result.at_css("dd")["class"], "text-slate-900"
+    assert_not_includes result.at_css("dd")["class"], "text-heading"
   end
 end

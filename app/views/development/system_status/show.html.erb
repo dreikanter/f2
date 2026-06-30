@@ -16,19 +16,19 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Configuration</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Configuration</h2>
     <ul class="space-y-2">
       <% @config_checks.each do |check| %>
         <li class="flex items-center gap-2" data-key="config.<%= check[:key] %>" data-status="<%= check[:status] %>">
           <%= system_check_icon(check[:status]) %>
-          <span class="text-slate-700"><%= check[:label] %></span>
+          <span class="text-heading"><%= check[:label] %></span>
         </li>
       <% end %>
     </ul>
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Deployed Version</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Deployed Version</h2>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "Revision",
@@ -49,7 +49,7 @@
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Disk Usage</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Disk Usage</h2>
 
     <%# Visual disk usage bar %>
     <div class="space-y-3">
@@ -66,23 +66,23 @@
         <% if other_used_percentage > 0 %>
           <div class="flex items-center gap-2">
             <div class="h-3 w-3 rounded-sm bg-slate-400"></div>
-            <span class="text-slate-600">Other Used Space (<%= other_used_percentage %>%, <%= number_to_human_size(other_used_size) %>)</span>
+            <span class="text-body">Other Used Space (<%= other_used_percentage %>%, <%= number_to_human_size(other_used_size) %>)</span>
           </div>
         <% end %>
         <div class="flex items-center gap-2">
           <div class="h-3 w-3 rounded-sm bg-blue-500"></div>
-          <span class="text-slate-600">Postgres DB (<%= postgres_percentage %>%, <%= number_to_human_size(postgres_size) %>)</span>
+          <span class="text-body">Postgres DB (<%= postgres_percentage %>%, <%= number_to_human_size(postgres_size) %>)</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="h-3 w-3 rounded-sm bg-surface-sunken border border-border-strong"></div>
-          <span class="text-slate-600">Free Space (<%= free_percentage %>%, <%= number_to_human_size(free_size) %>)</span>
+          <span class="text-body">Free Space (<%= free_percentage %>%, <%= number_to_human_size(free_size) %>)</span>
         </div>
       </div>
     </div>
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Postgres Table Usage</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Postgres Table Usage</h2>
     <%= render(DescriptionListComponent.new) do |list| %>
       <% @disk_usage[:table_usage].each do |row| %>
         <% list.with_item(StatListItemComponent.new(

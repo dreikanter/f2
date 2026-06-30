@@ -19,7 +19,7 @@
 
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= label_tag "ai_credential_provider", "AI Provider", class: "block font-semibold text-slate-800" %>
+          <%= label_tag "ai_credential_provider", "AI Provider", class: "block font-semibold text-heading" %>
           <%= text_field_tag "ai_credential_provider",
                              LlmProvider.find(@ai_credential.provider).display_name,
                              disabled: true,
@@ -27,7 +27,7 @@
         </div>
 
         <div class="space-y-2">
-          <%= f.label :display_name, "Name", class: "block font-semibold text-slate-800" %>
+          <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
           <%= f.text_field :display_name,
                            placeholder: "Personal Anthropic key",
                            class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
@@ -36,7 +36,7 @@
         </div>
 
         <div class="space-y-2">
-          <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-slate-800" %>
+          <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
           <%= password_field_tag "ai_credential[credential_data][api_key]",
                                  nil,
                                  id: "ai_credential_credential_data_api_key",
@@ -51,7 +51,7 @@
         <%= f.submit "Update Credential",
                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
                      data: { turbo_submits_with: "Saving…" } %>
-        <%= link_to "Cancel", ai_credential_path(@ai_credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted" %>
+        <%= link_to "Cancel", ai_credential_path(@ai_credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
       </div>
     <% end %>
   </div>

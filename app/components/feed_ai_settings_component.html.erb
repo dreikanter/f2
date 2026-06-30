@@ -8,7 +8,7 @@
         key: "form.ai-settings"
       }
     ) do %>
-  <h2 class="text-xl font-semibold text-slate-900 mb-4">AI Settings</h2>
+  <h2 class="text-xl font-semibold text-heading mb-4">AI Settings</h2>
 
   <div class="space-y-6">
     <% if credentials? %>
@@ -23,7 +23,7 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :ai_credential_id, "AI provider", class: "block font-semibold text-slate-800" %>
+          <%= form.label :ai_credential_id, "AI provider", class: "block font-semibold text-heading" %>
           <%= form.select :ai_credential_id, credential_options, { selected: selected_credential_id },
                           class: SELECT_CLASSES, disabled: !section_visible?,
                           data: { ai_settings_target: "credentialSelect", action: "change->ai-settings#refreshModels", key: "form.ai-credential" } %>
@@ -35,7 +35,7 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
-          <%= form.label :ai_model, "Model", class: "block font-semibold text-slate-800" %>
+          <%= form.label :ai_model, "Model", class: "block font-semibold text-heading" %>
           <%= form.select :ai_model, model_options, { include_blank: "Select a model…" },
                           class: SELECT_CLASSES, disabled: !section_visible?,
                           data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>

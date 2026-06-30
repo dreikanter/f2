@@ -5,7 +5,7 @@
     <% header.with_breadcrumb(label: "Events Log", url: events_path) %>
     <% if @previous_event %>
       <% header.with_action_button do %>
-        <%= link_to "← Previous", event_path(@previous_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "← Previous", event_path(@previous_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
@@ -14,7 +14,7 @@
     <% end %>
     <% if @next_event %>
       <% header.with_action_button do %>
-        <%= link_to "Next →", event_path(@next_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Next →", event_path(@next_event), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
       <% end %>
     <% else %>
       <% header.with_action_button do %>
@@ -31,14 +31,14 @@
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Posts</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Posts</h2>
       <%= render PostsListComponent.new(posts: @referenced_posts) %>
     </section>
   <% end %>
 
   <% if (stats = @event.metadata&.fetch("stats", nil)).present? %>
     <section class="space-y-4" data-key="events.stats">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900"><%= t("events.metadata.stats.section_title") %></h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.metadata.stats.section_title") %></h2>
       <%= render ListComponent.new do |list| %>
         <% stats.each do |key, value| %>
           <% list.with_item(StatListItemComponent.new(
