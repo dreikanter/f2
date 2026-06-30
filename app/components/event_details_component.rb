@@ -25,7 +25,7 @@ class EventDetailsComponent < ViewComponent::Base
     user_value = if @event.user_id.present?
       helpers.link_to("User ##{@event.user_id}",
                       helpers.admin_events_path(filter: { user_id: @event.user_id }),
-                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
+                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
                       data: { key: "admin.event.user" })
     else
       helpers.tag.em("System", class: "text-muted", data: { key: "admin.event.user" })

@@ -46,9 +46,9 @@ class CandidateOptionComponent < ViewComponent::Base
     if disabled? && !@single
       "border-border bg-surface-muted opacity-70 cursor-not-allowed"
     elsif @single
-      "border-sky-300 bg-sky-50 cursor-default"
+      "border-brand-subtle bg-brand-subtle cursor-default"
     else
-      "border-border bg-surface cursor-pointer hover:border-sky-400"
+      "border-border bg-surface cursor-pointer hover:border-ring"
     end
   end
 

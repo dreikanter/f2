@@ -26,7 +26,7 @@ class DropdownMenuComponent < ViewComponent::Base
   # (Enable, Refresh) it sits beside in a page header.
   def trigger_class
     "inline-flex size-7 items-center justify-center rounded text-faint transition " \
-      "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+      "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
   end
 
   def render_item(item)

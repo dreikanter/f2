@@ -23,7 +23,7 @@
         <span class="w-20 shrink-0 text-muted">URL:</span>
         <span class="min-w-0 truncate">
           <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
-                class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+                class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
         </span>
       </div>
     <% end %>
@@ -43,7 +43,7 @@
               <div class="flex flex-wrap gap-2">
                 <% image_attachments.each do |attachment| %>
                   <%= link_to attachment[:url], target: "_blank", rel: "noopener",
-                        class: "block overflow-hidden rounded-md border border-border transition hover:border-sky-400" do %>
+                        class: "block overflow-hidden rounded-md border border-border transition hover:border-ring" do %>
                     <%= image_tag thumbnail_url(attachment[:url]), alt: "", loading: "lazy", srcset: thumbnail_srcset(attachment[:url]),
                           width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-surface-sunken object-cover" %>
                   <% end %>

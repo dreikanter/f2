@@ -15,8 +15,8 @@
       <% if model_unavailable? %>
         <%= render PanelComponent.new(variant: :info) do %>
           <div class="space-y-1" data-key="form.ai-model-unavailable">
-            <p class="font-semibold text-sky-900">Your saved model isn't available anymore</p>
-            <p class="text-sky-800 text-sm">Pick a model below to keep this feed running.</p>
+            <p class="font-semibold text-brand-strong">Your saved model isn't available anymore</p>
+            <p class="text-brand-strong text-sm">Pick a model below to keep this feed running.</p>
           </div>
         <% end %>
       <% end %>

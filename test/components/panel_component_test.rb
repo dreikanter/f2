@@ -19,8 +19,8 @@ class PanelComponentTest < ViewComponent::TestCase
 
     panel = result.at_css("div")
     assert_not_nil panel
-    assert_includes panel["class"], "bg-sky-50"
-    assert_includes panel["class"], "border-sky-200"
+    assert_includes panel["class"], "bg-brand-subtle"
+    assert_includes panel["class"], "border-brand-subtle"
     refute_includes panel["class"], "bg-surface-sunken"
   end
 

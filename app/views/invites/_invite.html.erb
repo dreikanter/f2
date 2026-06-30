@@ -11,7 +11,7 @@
     else
       "px-4 py-3"
     end
-  icon_button_class = "inline-flex size-7 items-center justify-center rounded text-faint transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+  icon_button_class = "inline-flex size-7 items-center justify-center rounded text-faint transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 %>
 <%= render CardComponent.new(id: dom_id(invite), data: { key: "invites.card" }) do |card| %>
   <% card.with_section(class: section_class) do %>

@@ -20,7 +20,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
       <% if @recent_events.any? %>
-        <%= link_to "View all", events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "feed.events.view_all" } %>
+        <%= link_to "View all", events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "feed.events.view_all" } %>
       <% end %>
     </div>
     <%= render EventsListComponent.new(events: @recent_events) %>
@@ -30,7 +30,7 @@
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <h2 class="text-2xl font-semibold mb-0 text-heading">Recent Posts</h2>
       <% if @recent_posts.any? %>
-        <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm" %>
+        <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover text-sm" %>
       <% end %>
     </div>
 

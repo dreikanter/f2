@@ -1,7 +1,7 @@
 <%# locals: () %>
 <nav class="bg-surface-sunken border-b border-border">
   <div class="flex flex-wrap items-center justify-between mx-auto px-4 py-4">
-    <%= link_to "F2", root_path, class: "inline-flex items-center text-lg font-semibold text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
+    <%= link_to "F2", root_path, class: "inline-flex items-center text-lg font-semibold text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white" %>
 
     <div class="flex items-center gap-3 md:order-2">
       <% if Current.user.present? %>
@@ -59,7 +59,7 @@
                 "bg-slate-600 text-white" => item[:active],
                 "text-body hover:bg-slate-200 hover:text-heading" => !item[:active]
               },
-              "outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             )
           %>
           <li>

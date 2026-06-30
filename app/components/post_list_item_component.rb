@@ -111,7 +111,7 @@ class PostListItemComponent < ListItemComponent
   # this with plain text where those owner-scoped routes aren't reachable.
   def title_element
     helpers.link_to(title, post_url,
-                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   # Whether to render the actions menu (Details/Source/Delete). Disabled by

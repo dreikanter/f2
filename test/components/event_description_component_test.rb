@@ -242,7 +242,7 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
     result = render_inline(EventDescriptionComponent.new(event: event))
 
-    assert_includes result.to_html, %(<a class="font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" href="/feeds/#{feed1.id}">Feed One</a>)
+    assert_includes result.to_html, %(<a class="font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" href="/feeds/#{feed1.id}">Feed One</a>)
     assert_includes result.to_html, "1 deleted feed"
   end
 

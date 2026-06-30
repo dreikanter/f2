@@ -1,10 +1,10 @@
 class AlertComponent < ViewComponent::Base
   VARIANT_CLASSES = {
-    info:      "border-sky-100 bg-sky-100 text-sky-800",
+    info:      "border-brand-subtle bg-brand-subtle text-brand-strong",
     success:   "border-emerald-200 bg-emerald-100 text-emerald-800",
     error:     "border-red-200 bg-red-100 text-red-800",
     warning:   "border-amber-200 bg-amber-100 text-amber-800",
-    secondary: "border-sky-100 bg-surface-sunken text-body"
+    secondary: "border-brand-subtle bg-surface-sunken text-body"
   }.freeze
 
   BASE_CLASSES = "rounded-lg border px-4 py-3 flex items-start gap-2"

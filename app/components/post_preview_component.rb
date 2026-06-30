@@ -130,7 +130,7 @@ class PostPreviewComponent < ViewComponent::Base
   def attachment_list_item(attachment)
     helpers.content_tag(:li) do
       fragments = [
-        helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 break-all")
+        helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover break-all")
       ]
       if attachment[:type]
         fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-muted")

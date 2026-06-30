@@ -3,7 +3,7 @@ class PanelComponent < ViewComponent::Base
 
   VARIANT_CLASSES = {
     default: "bg-surface-sunken",
-    info: "border border-sky-200 bg-sky-50"
+    info: "border border-brand-subtle bg-brand-subtle"
   }.freeze
 
   def initialize(variant: :default, **html_options)

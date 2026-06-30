@@ -22,7 +22,7 @@
           <% @users.each do |user| %>
             <tr class="hover:bg-surface-muted">
               <td class="px-6 py-4 whitespace-nowrap">
-                <%= link_to user.email_address, admin_user_path(user), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+                <%= link_to user.email_address, admin_user_path(user), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
                 <% if user.admin? %>
                   <span class="text-muted">(admin)</span>
                 <% end %>

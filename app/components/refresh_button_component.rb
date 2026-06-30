@@ -1,6 +1,6 @@
 class RefreshButtonComponent < ViewComponent::Base
   BUTTON_CLASSES = "inline-flex items-center justify-center rounded-md border border-border bg-surface p-3 " \
-    "text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 " \
+    "text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring " \
     "focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
 
   # An icon refresh button with a built-in spinner loading state.

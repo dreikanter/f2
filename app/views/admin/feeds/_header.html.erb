@@ -7,7 +7,7 @@
   <% if feed.user %>
     <% header.with_context_paragraph do %>
       Owner:
-      <%= link_to feed.user.email_address, admin_user_path(feed.user), class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+      <%= link_to feed.user.email_address, admin_user_path(feed.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
     <% end %>
   <% end %>
   <% if feed.target_group_url.present? %>
@@ -15,7 +15,7 @@
       Target group:
       <%= link_to "#{feed.access_token.host_domain}/#{feed.target_group}",
                   feed.target_group_url,
-                  class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
+                  class: "text-brand underline underline-offset-4 transition hover:text-brand-hover",
                   target: "_blank", rel: "noopener" %>
     <% end %>
   <% end %>

@@ -17,7 +17,7 @@
     <% end %>
     <% if @filter.present? %>
       <% header.with_action_button do %>
-        <%= link_to "Reset Filter", admin_events_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+        <%= link_to "Reset Filter", admin_events_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
       <% end %>
     <% end %>
     <% if @log_endpoint %>

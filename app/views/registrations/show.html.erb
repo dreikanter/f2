@@ -11,7 +11,7 @@
         <div class="space-y-2">
           <p class="font-semibold text-heading">Already have an account?</p>
           <p class="text-body">
-            <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+            <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
             with your email and password.
           </p>
         </div>
@@ -33,11 +33,11 @@
           <ul class="list-disc space-y-1 ps-5 text-body">
             <li>
               Forgot your password?
-              <%= link_to "Reset it here", new_password_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>.
+              <%= link_to "Reset it here", new_password_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>.
             </li>
             <li>
               Otherwise,
-              <%= link_to "sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+              <%= link_to "sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
               with your email and password.
             </li>
           </ul>
@@ -71,21 +71,21 @@
 
             <div class="space-y-2">
               <%= form.label :email_address, "Email", class: "block font-semibold text-heading" %>
-              <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true, autofocus: true %>
+              <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true, autofocus: true %>
               <p class="text-sm text-muted">Only used for password resets—we don't send marketing emails.</p>
             </div>
 
             <div class="space-y-2">
               <%= form.label :password, class: "block font-semibold text-heading" %>
-              <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true %>
+              <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true %>
               <p class="text-sm text-muted">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
             </div>
           </div>
           <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 w-full sm:w-auto" %>
+            <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
             <span class="text-body">
               Already use Feeder?
-              <%= link_to "Sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+              <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
             </span>
           </div>
         <% end %>
