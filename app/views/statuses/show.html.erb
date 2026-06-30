@@ -24,7 +24,7 @@
       <% header.with_context_paragraph "Two quick steps: add a FreeFeed token, then create your first feed." %>
     <% end %>
     <div>
-      <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
     </div>
   <% elsif suggest_adding_feeds %>
     <%= render PageHeaderComponent.new(title: "Status") do |header| %>
@@ -32,7 +32,7 @@
       <% header.with_context_paragraph "You've got a token set up — now add your first feed and Feeder will start reposting new content to FreeFeed." %>
     <% end %>
     <div>
-      <%= link_to "Add your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= link_to "Add your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
     </div>
   <% else %>
     <%= render PageHeaderComponent.new(title: "Status") %>

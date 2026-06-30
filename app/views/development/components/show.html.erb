@@ -74,7 +74,7 @@
       <div class="flex flex-wrap items-start gap-6">
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary</p>
@@ -82,11 +82,11 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">Delete feed</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Primary disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Save changes</button>
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Secondary disabled</p>
@@ -94,7 +94,7 @@
         </div>
         <div class="space-y-2">
           <p class="<%= caption_classes %>">Danger disabled</p>
-          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
+          <button type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-red-600 bg-red-600 px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" disabled>Delete feed</button>
         </div>
       </div>
     </section>
@@ -281,7 +281,7 @@
                 <%= link_to "Import", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
               <% end %>
               <% header.with_action_button do %>
-                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+                <%= link_to "New feed", "#", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
               <% end %>
             <% end %>
 

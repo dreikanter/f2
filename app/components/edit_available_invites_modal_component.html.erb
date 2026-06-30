@@ -12,7 +12,7 @@
     <%= tag.button "Update",
                    type: "button",
                    form: "available-invites-form-#{@user.id}",
-                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
                    data: { action: "click->modal#confirm" },
                    onclick: "this.form.requestSubmit()" %>
     <%= tag.button "Cancel",
