@@ -18,7 +18,7 @@ module ApplicationHelper
   # Decorative separator between card footer items. Hidden from assistive tech
   # so the items read as distinct entries rather than "dot".
   def middot
-    content_tag(:span, "·", class: "mx-1 text-slate-300", aria: { hidden: true })
+    content_tag(:span, "·", class: "mx-1 text-muted", aria: { hidden: true })
   end
 
   ICONS = {
