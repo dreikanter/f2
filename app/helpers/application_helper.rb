@@ -129,7 +129,7 @@ module ApplicationHelper
   def system_check_icon(status)
     case status.to_sym
     when :ok
-      icon("square-check-big", css_class: "size-5 text-green-600", aria_label: "OK")
+      icon("square-check-big", css_class: "size-5 text-emerald-600", aria_label: "OK")
     when :error
       icon("square", css_class: "size-5 text-red-600", aria_label: "Problem")
     else

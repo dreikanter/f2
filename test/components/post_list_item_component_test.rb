@@ -189,7 +189,7 @@ class PostListItemComponentTest < ViewComponent::TestCase
     assert_equal "/feeds/#{feed.id}", status_link["href"]
     assert_nil status_link["target"]
     assert_includes status_link.text.gsub(/\s+/, " "), "Reposted: 10h"
-    assert_not_empty result.css('[data-key="post.status-icon"] svg.text-green-600')
+    assert_not_empty result.css('[data-key="post.status-icon"] svg.text-emerald-600')
   end
 
   test "#render should keep the duration tight against its label" do
