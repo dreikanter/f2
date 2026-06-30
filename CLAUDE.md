@@ -61,6 +61,23 @@ Comments:
 - Don't describe what the code doesn't do.
 - Keep comments compact and focused.
 
+Colors:
+
+- Use the semantic color tokens, not raw Tailwind palette shades. Write
+  `text-body`, `bg-surface`, `border-border`, `ring-ring`,
+  `hover:bg-brand-hover` — not `text-slate-600`, `bg-white`, `border-slate-200`,
+  `ring-sky-500`.
+- Tokens are defined in the `@theme` block of
+  `app/assets/stylesheets/application.css` and grouped by purpose: surfaces,
+  borders, foreground text, brand/interactive, and status. They generate the
+  full family of color utilities (`bg-`/`text-`/`border-`/`ring-`/… plus
+  `hover:`/`focus:` variants).
+- To change a color (e.g. the accent), edit its token value in one place — don't
+  find-and-replace shades across markup. To add a new semantic color, add a
+  token rather than reaching for a raw shade.
+- Some existing markup still uses hardcoded shades and is being migrated; match
+  the token approach in anything you touch, and don't add new hardcoded colors.
+
 ## UI Text Writing
 
 When writing user-facing text in views, keep it approachable and practical:
