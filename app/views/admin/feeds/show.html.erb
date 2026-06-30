@@ -5,7 +5,7 @@
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Stats</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Stats</h2>
       <%= render FeedStatsComponent.new(feed: @feed) %>
       <%= render PostsHeatmapComponent.new(feed: @feed) %>
     </section>
@@ -13,23 +13,23 @@
 
   <% if @has_llm_usages %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">AI Usage</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">AI Usage</h2>
       <%= render FeedLlmStatsComponent.new(feed: @feed) %>
     </section>
   <% end %>
 
   <section class="space-y-4">
     <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
+      <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
       <% if @recent_events.any? %>
-        <%= link_to "View all", admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "feed.events.view_all" } %>
+        <%= link_to "View all", admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "feed.events.view_all" } %>
       <% end %>
     </div>
     <%= render Admin::EventsListComponent.new(events: @recent_events) %>
   </section>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-0 text-slate-900">Recent Posts</h2>
+    <h2 class="text-2xl font-semibold mb-0 text-heading">Recent Posts</h2>
 
     <% if @recent_posts.any? %>
       <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, item_component: ReadonlyPostListItemComponent) %>

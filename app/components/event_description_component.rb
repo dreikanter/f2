@@ -58,13 +58,13 @@ class EventDescriptionComponent < ViewComponent::Base
   def subject_link
     case event.subject
     when Feed
-      helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when AccessToken
-      helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when Post
-      helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when AiCredential
-      helpers.link_to(event.subject.display_name, helpers.ai_credential_path(event.subject), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(event.subject.display_name, helpers.ai_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     else
       ""
     end
@@ -93,7 +93,7 @@ class EventDescriptionComponent < ViewComponent::Base
     return "" if disabled_feed_ids.blank?
 
     links = disabled_feeds.map do |feed|
-      helpers.link_to(feed.display_name, feed_link_path(feed), class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500")
+      helpers.link_to(feed.display_name, feed_link_path(feed), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     end
 
     linked_feeds = helpers.safe_join(links, ", ")

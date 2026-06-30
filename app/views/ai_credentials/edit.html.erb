@@ -19,39 +19,39 @@
 
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= label_tag "ai_credential_provider", "AI Provider", class: "block font-semibold text-slate-800" %>
+          <%= label_tag "ai_credential_provider", "AI Provider", class: "block font-semibold text-heading" %>
           <%= text_field_tag "ai_credential_provider",
                              LlmProvider.find(@ai_credential.provider).display_name,
                              disabled: true,
-                             class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed" %>
+                             class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
         </div>
 
         <div class="space-y-2">
-          <%= f.label :display_name, "Name", class: "block font-semibold text-slate-800" %>
+          <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
           <%= f.text_field :display_name,
                            placeholder: "Personal Anthropic key",
-                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                           class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                            required: true,
                            data: { key: "ai_credentials.display-name" } %>
         </div>
 
         <div class="space-y-2">
-          <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-slate-800" %>
+          <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
           <%= password_field_tag "ai_credential[credential_data][api_key]",
                                  nil,
                                  id: "ai_credential_credential_data_api_key",
-                                 class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                                  autocomplete: "off",
                                  data: { key: "ai_credentials.credential-data.api_key" } %>
-          <p class="text-sm text-slate-500">Leave blank to keep the current key.</p>
+          <p class="text-sm text-muted">Leave blank to keep the current key.</p>
         </div>
       </div>
 
       <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
         <%= f.submit "Update Credential",
-                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring",
                      data: { turbo_submits_with: "Saving…" } %>
-        <%= link_to "Cancel", ai_credential_path(@ai_credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+        <%= link_to "Cancel", ai_credential_path(@ai_credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
       </div>
     <% end %>
   </div>

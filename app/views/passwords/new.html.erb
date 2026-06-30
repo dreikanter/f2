@@ -2,8 +2,8 @@
 
 <%= render CardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-slate-900">Forgot your password?</h1>
-    <p class="text-slate-600">Enter your email address and we’ll send you a reset link.</p>
+    <h1 class="text-4xl font-semibold mb-6 text-heading">Forgot your password?</h1>
+    <p class="text-body">Enter your email address and we’ll send you a reset link.</p>
 
     <% if flash[:alert] %>
       <%= render AlertComponent.new(variant: :error) do %>
@@ -14,14 +14,14 @@
     <%= form_with url: passwords_path, local: true do |form| %>
       <div class="space-y-6">
         <div class="space-y-2">
-          <%= form.label :email_address, "Email Address", class: "block font-semibold text-slate-800" %>
-          <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+          <%= form.label :email_address, "Email Address", class: "block font-semibold text-heading" %>
+          <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <%= form.submit "Email reset instructions", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 w-full sm:w-auto" %>
-        <%= link_to "Back to sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Email reset instructions", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
+        <%= link_to "Back to sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
       </div>
     <% end %>
   </div>

@@ -8,8 +8,8 @@ class AlertComponentTest < ViewComponent::TestCase
     alert = result.at_css('[role="alert"]')
     assert_not_nil alert
     assert_equal "Heads up", alert.text.strip
-    assert_includes alert["class"], "bg-sky-100"
-    assert_includes alert["class"], "text-sky-800"
+    assert_includes alert["class"], "bg-brand-subtle"
+    assert_includes alert["class"], "text-brand-strong"
   end
 
   test "#call should apply variant classes" do
@@ -32,6 +32,6 @@ class AlertComponentTest < ViewComponent::TestCase
     assert_equal "alert", alert["role"]
     assert_equal "test", alert["data-key"]
     assert_includes alert["class"], "space-y-2"
-    assert_includes alert["class"], "bg-amber-100"
+    assert_includes alert["class"], "bg-warning-subtle"
   end
 end

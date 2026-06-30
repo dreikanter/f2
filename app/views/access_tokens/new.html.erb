@@ -7,12 +7,12 @@
     <%= form_with model: @access_token, url: access_tokens_path(feed_id: @feed&.id), data: { controller: "token-host", token_host_hosts_value: AccessToken::FREEFEED_HOSTS.to_json } do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-slate-800" %>
+          <%= form.label :host, "FreeFeed Instance", class: "block font-semibold text-heading" %>
           <%= form.select :host,
                           AccessToken.host_options_for_select,
                           { selected: AccessToken::FREEFEED_HOSTS[:production][:url] },
                           {
-                            class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                            class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
                             autofocus: true,
                             data: {
                               token_host_target: "hostSelect",
@@ -27,7 +27,7 @@
             <%= link_to AccessToken::FREEFEED_HOSTS[:production][:token_url],
                         target: "_blank",
                         rel: "noopener",
-                        class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
+                        class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
                         data: { token_host_target: "link" } do %>
               <span data-token-host-target="linkText"><%= AccessToken::FREEFEED_HOSTS[:production][:domain] %> settings</span>
             <% end %>
@@ -43,35 +43,35 @@
         <% end %>
 
         <div class="space-y-2">
-          <%= form.label :token, "Access Token", class: "block font-semibold text-slate-800" %>
+          <%= form.label :token, "Access Token", class: "block font-semibold text-heading" %>
           <%= form.text_field :token,
-                              class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
                               placeholder: "Paste your FreeFeed access token here",
                               required: true,
                               autocomplete: "off" %>
           <% if @access_token.errors[:token].any? %>
-            <p class="text-sm text-red-600"><%= @access_token.errors[:token].first %></p>
+            <p class="text-sm text-danger"><%= @access_token.errors[:token].first %></p>
           <% end %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :name, "Token Name (optional)", class: "block font-semibold text-slate-800" %>
+          <%= form.label :name, "Token Name (optional)", class: "block font-semibold text-heading" %>
           <%= form.text_field :name,
-                              class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                              class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
                               placeholder: "e.g., My FreeFeed Token",
                               autocomplete: "off" %>
-          <p class="text-sm text-slate-500">
+          <p class="text-sm text-muted">
             Give this token a memorable name. If left blank, a default name will be used.
           </p>
           <% if @access_token.errors[:name].any? %>
-            <p class="text-sm text-red-600"><%= @access_token.errors[:name].first %></p>
+            <p class="text-sm text-danger"><%= @access_token.errors[:name].first %></p>
           <% end %>
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
-        <%= form.submit "Validate and Save", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
-        <%= link_to "Cancel", (@feed ? edit_feed_path(@feed) : access_tokens_path), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
+        <%= form.submit "Validate and Save", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+        <%= link_to "Cancel", (@feed ? edit_feed_path(@feed) : access_tokens_path), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
       </div>
     <% end %>
   </div>

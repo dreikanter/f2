@@ -3,19 +3,19 @@
   <% header.with_breadcrumb(label: "Access Tokens", url: access_tokens_path) %>
   <% if feed_id.present? %>
     <% header.with_action_button do %>
-      <%= link_to "Back to your feed", edit_feed_path(feed_id), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
+      <%= link_to "Back to your feed", edit_feed_path(feed_id), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
     <% end %>
   <% end %>
 
   <% unless access_token.pending? || access_token.validating? %>
     <% header.with_action_button do %>
-      <%= link_to "Edit", edit_access_token_path(access_token), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
+      <%= link_to "Edit", edit_access_token_path(access_token), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
     <% end %>
 
     <% header.with_action_button do %>
       <%= link_to "Delete…",
                   "#",
-                  class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"),
+                  class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"),
                   data: { controller: "modal-trigger", modal_trigger_modal_id_value: "delete-token-modal", action: "click->modal-trigger#open" } %>
     <% end %>
   <% end %>
@@ -40,7 +40,7 @@
     <div class="space-y-6">
       <div class="flex items-center justify-center py-8">
         <%= render SpinnerComponent.new(css_class: "mr-3") %>
-        <span class="text-lg text-slate-600">Validating token…</span>
+        <span class="text-lg text-body">Validating token…</span>
       </div>
     </div>
   <% end %>
@@ -52,7 +52,7 @@
   <% if feed_id.present? %>
     <%= link_to "Continue setting up your feed",
                 edit_feed_path(feed_id),
-                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
                 data: { key: "access_token.return-to" } %>
   <% end %>
 
@@ -60,27 +60,27 @@
 
   <% if access_token.access_token_detail.present? %>
     <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">Publisher</h2>
-      <p class="text-slate-600 mb-4">
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Publisher</h2>
+      <p class="text-body mb-4">
         Posts created with this token will appear on FreeFeed on behalf of the user who created this token.
       </p>
-      <div class="w-fit min-w-[240px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="w-fit min-w-[240px] rounded-xl border border-border bg-surface p-4 shadow-sm">
         <%= render FreefeedUserComponent.new(user: access_token.access_token_detail.user_info) %>
       </div>
     </div>
 
     <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-slate-900">FreeFeed Groups</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">FreeFeed Groups</h2>
       <% access_token.access_token_detail.managed_groups.tap do |groups| %>
         <% if groups.any? %>
           <details class="group/groups">
-            <summary class="flex cursor-pointer list-none select-none items-center gap-2 font-medium text-slate-700 hover:text-slate-900">
+            <summary class="flex cursor-pointer list-none select-none items-center gap-2 font-medium text-heading hover:text-heading">
               <%= icon("chevron-right", css_class: "size-4 shrink-0 transition-transform group-open/groups:rotate-90") %>
               <%= pluralize(groups.count, "group") %> available for posting
             </summary>
             <ul class="mt-3 list-disc list-inside space-y-1 pl-6">
               <% groups.sort_by { _1["username"] }.each do |group| %>
-                <li><%= link_to group["username"], "#{access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %></li>
+                <li><%= link_to group["username"], "#{access_token.host}/#{group["username"]}", target: "_blank", rel: "noopener noreferrer", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></li>
               <% end %>
             </ul>
           </details>
@@ -92,7 +92,7 @@
   <% end %>
 
   <div class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-slate-900">Associated Feeds</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
     <% if access_token.feeds.any? %>
       <%= render FeedsListComponent.new(feeds: access_token.feeds) %>
     <% else %>

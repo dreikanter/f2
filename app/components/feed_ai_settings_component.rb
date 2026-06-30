@@ -3,8 +3,8 @@
 # so the template stays declarative; the ai-settings Stimulus controller wires
 # up visibility and the dependent model list from `models_by_credential`.
 class FeedAiSettingsComponent < ViewComponent::Base
-  SELECT_CLASSES = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal " \
-                   "shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2".freeze
+  SELECT_CLASSES = "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal " \
+                   "shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2".freeze
 
   def initialize(feed:, form:)
     @feed = feed

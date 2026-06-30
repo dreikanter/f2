@@ -3,14 +3,14 @@ require "view_component/test_case"
 
 class ListItemComponentTest < ViewComponent::TestCase
   test "#call should render an li carrying id, data and css_class" do
-    result = render_inline(ListItemComponent.new(id: "row-1", css_class: "bg-amber-50", data: { key: "list.row" })) do |item|
+    result = render_inline(ListItemComponent.new(id: "row-1", css_class: "bg-warning-subtle", data: { key: "list.row" })) do |item|
       item.with_primary { "Primary".html_safe }
     end
 
     li = result.at_css("li#row-1")
     assert_not_nil li
     assert_equal "list.row", li["data-key"]
-    assert_includes li["class"], "bg-amber-50"
+    assert_includes li["class"], "bg-warning-subtle"
     assert_includes li["class"], "px-5 py-3"
   end
 

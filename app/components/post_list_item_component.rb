@@ -1,11 +1,11 @@
 class PostListItemComponent < ListItemComponent
   STATUS_DISPLAY = {
-    "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
-    "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
-    "rejected"  => { icon: "circle-x",     color: "text-orange-500", label: "Rejected" },
-    "published" => { icon: "circle-check", color: "text-green-600",  label: "Reposted" },
-    "failed"    => { icon: "circle-x",     color: "text-red-600",    label: "Failed" },
-    "withdrawn" => { icon: "trash-2",      color: "text-slate-400",  label: "Withdrawn" }
+    "draft"     => { icon: "file",         color: "text-muted",  label: "Draft" },
+    "enqueued"  => { icon: "clock",        color: "text-info",    label: "Enqueued" },
+    "rejected"  => { icon: "circle-x",     color: "text-warning", label: "Rejected" },
+    "published" => { icon: "circle-check", color: "text-success",  label: "Reposted" },
+    "failed"    => { icon: "circle-x",     color: "text-danger",    label: "Failed" },
+    "withdrawn" => { icon: "trash-2",      color: "text-muted",  label: "Withdrawn" }
   }.freeze
 
   def initialize(post:, show_feed: false)
@@ -34,8 +34,8 @@ class PostListItemComponent < ListItemComponent
   def row_css_class
     helpers.class_names(
       "transition duration-75",
-      "bg-slate-50 hover:bg-slate-100" => withdrawn?,
-      "hover:bg-slate-50" => !withdrawn?
+      "bg-surface-muted hover:bg-surface-sunken" => withdrawn?,
+      "hover:bg-surface-muted" => !withdrawn?
     )
   end
 
@@ -56,7 +56,7 @@ class PostListItemComponent < ListItemComponent
   # (group, counts) leads with a middot.
   def secondary_element
     helpers.tag.div(helpers.safe_join(status_segments, helpers.middot),
-                    class: "truncate text-sm text-slate-400")
+                    class: "truncate text-sm text-muted")
   end
 
   def status_segments
@@ -70,14 +70,14 @@ class PostListItemComponent < ListItemComponent
   def status_element
     if status_url
       helpers.link_to(status_label_with_time, status_url,
-                      class: "transition hover:text-slate-600", data: { key: "post.status" })
+                      class: "transition hover:text-body", data: { key: "post.status" })
     else
       helpers.tag.span(status_label_with_time, data: { key: "post.status" })
     end
   end
 
   def group_segment
-    helpers.tag.span(helpers.safe_join(["Group: ", helpers.link_to(group_label, group_url, title: group_hint, class: "transition hover:text-slate-600")]),
+    helpers.tag.span(helpers.safe_join(["Group: ", helpers.link_to(group_label, group_url, title: group_hint, class: "transition hover:text-body")]),
                      data: { key: "post.group" })
   end
 
@@ -111,7 +111,7 @@ class PostListItemComponent < ListItemComponent
   # this with plain text where those owner-scoped routes aren't reachable.
   def title_element
     helpers.link_to(title, post_url,
-                    class: "truncate text-base text-slate-900 transition hover:text-slate-700 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white")
   end
 
   # Whether to render the actions menu (Details/Source/Delete). Disabled by
@@ -141,7 +141,7 @@ class PostListItemComponent < ListItemComponent
 
   def status_display
     STATUS_DISPLAY[post.status.to_s] ||
-      { icon: "file", color: "text-slate-400", label: post.status.to_s.capitalize }
+      { icon: "file", color: "text-muted", label: post.status.to_s.capitalize }
   end
 
   def status_icon

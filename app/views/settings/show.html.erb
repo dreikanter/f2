@@ -5,7 +5,7 @@
     <% if @user.permissions.any? %>
       <% header.with_context_paragraph do %>
         Permissions:
-        <span class="text-slate-700" data-key="settings.permissions.value"><%= @user.permissions.map(&:display_name).join(", ") %></span>
+        <span class="text-heading" data-key="settings.permissions.value"><%= @user.permissions.map(&:display_name).join(", ") %></span>
       <% end %>
     <% end %>
   <% end %>
@@ -13,21 +13,21 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render CardComponent.new(href: edit_settings_email_update_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("mail", css_class: "size-5") %>
           <span>Change Email</span>
         </h2>
-        <p class="text-slate-600" data-key="settings.email">Your current email is <%= @user.email_address %></p>
+        <p class="text-body" data-key="settings.email">Your current email is <%= @user.email_address %></p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: edit_settings_password_update_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("lock", css_class: "size-5") %>
           <span>Change Password</span>
         </h2>
-        <p class="text-slate-600" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
+        <p class="text-body" data-key="settings.password">Last changed <%= time_ago_in_words(@user.password_updated_at || @user.created_at) %> ago</p>
       </div>
     <% end %>
   </div>
@@ -35,31 +35,31 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render CardComponent.new(href: access_tokens_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("key-square", css_class: "size-5") %>
           <span>Freefeed Access Tokens</span>
         </h2>
-        <p class="text-slate-600">Manage the tokens used for reposting to FreeFeed</p>
+        <p class="text-body">Manage the tokens used for reposting to FreeFeed</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: ai_credentials_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("sparkles", css_class: "size-5") %>
           <span>AI Credentials</span>
         </h2>
-        <p class="text-slate-600">Connect AI provider keys for AI-backed feed extraction</p>
+        <p class="text-body">Connect AI provider keys for AI-backed feed extraction</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: invites_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("mail", css_class: "size-5") %>
           <span>Invites</span>
         </h2>
-        <p class="text-slate-600">Invite people to join Feeder</p>
+        <p class="text-body">Invite people to join Feeder</p>
       </div>
     <% end %>
   </div>

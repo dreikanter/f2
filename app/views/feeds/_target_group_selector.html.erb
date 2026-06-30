@@ -1,28 +1,28 @@
 <div id="target-group-selector">
   <div class="space-y-2">
-    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-slate-800" %>
+    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
 
     <% if groups.present? %>
       <%= select_tag "feed[target_group]",
                      options_for_select(groups.sort, feed.target_group),
-                     class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                     class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
                      required: true %>
-      <p class="text-sm text-slate-500">
+      <p class="text-sm text-muted">
         The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one.
       </p>
-      <p class="text-sm text-slate-500">
+      <p class="text-sm text-muted">
         Need a new group?
         <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
-                    class: "inline-flex items-center gap-1 font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" do %>
+                    class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
           Create one on FreeFeed <%= icon("external-link", css_class: "size-3") %>
         <% end %>
       </p>
     <% else %>
       <%= select_tag "feed[target_group]",
                      options_for_select([[feed.target_group.presence || "Select a group", ""]]),
-                     class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                     class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
                      disabled: true %>
-      <p class="text-sm text-red-600">
+      <p class="text-sm text-danger">
         <% if token.nil? %>
           Unable to load groups. Please select an access token.
         <% elsif !token.active? %>
@@ -32,22 +32,22 @@
         <% elsif defined?(token_error) && token_error == :empty %>
           This account doesn't manage any groups yet.
           <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
-                      class: "inline-flex items-center gap-1 font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" do %>
+                      class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
             Create a new group on FreeFeed <%= icon("external-link", css_class: "size-3") %>
           <% end %>
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
-                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
         <% else %>
           Could not load groups for this account.
           <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
                       data: { turbo_stream: true },
-                      class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
         <% end %>
       </p>
     <% end %>
     <% if feed.errors[:target_group].any? %>
-      <p class="text-sm text-red-600"><%= feed.errors[:target_group].first %></p>
+      <p class="text-sm text-danger"><%= feed.errors[:target_group].first %></p>
     <% end %>
   </div>
 </div>

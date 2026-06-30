@@ -1,8 +1,8 @@
 class CardComponent < ViewComponent::Base
-  BASE_CLASSES = "w-full rounded-lg border border-slate-200 bg-white shadow-xs"
+  BASE_CLASSES = "w-full rounded-lg border border-border bg-surface shadow-xs"
   PADDED_CLASSES = "p-6"
-  SECTIONED_CLASSES = "overflow-hidden divide-y divide-slate-200"
-  LINKED_CLASSES = "block no-underline hover:bg-slate-50 hover:shadow-md transition duration-75"
+  SECTIONED_CLASSES = "overflow-hidden divide-y divide-border"
+  LINKED_CLASSES = "block no-underline hover:bg-surface-muted hover:shadow-md transition duration-75"
 
   renders_many :sections, CardComponent::SectionComponent
 

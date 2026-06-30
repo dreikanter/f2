@@ -65,7 +65,7 @@ module PostHelper
 
       # Escape URL for safe embedding in href attribute and link text
       escaped_url = ERB::Util.html_escape(url)
-      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500">#{escaped_url}</a>)
+      result << %(<a href="#{escaped_url}" target="_blank" rel="noopener" class="font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover">#{escaped_url}</a>)
 
       last_end = match_end
     end

@@ -107,7 +107,7 @@ module TimeHelper
     content = safe_join([
       long_time_format(time),
       " ",
-      content_tag(:span, "(#{short_time_ago(time)})", class: "text-slate-500")
+      content_tag(:span, "(#{short_time_ago(time)})", class: "text-muted")
     ])
 
     content_tag(

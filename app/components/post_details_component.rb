@@ -20,13 +20,13 @@ class PostDetailsComponent < ViewComponent::Base
   def add_feed_item(component)
     component.with_item(StatListItemComponent.new(
       label: "Feed",
-      value: helpers.link_to(@post.feed.display_name, @post.feed, class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500"),
+      value: helpers.link_to(@post.feed.display_name, @post.feed, class: "text-brand underline underline-offset-4 transition hover:text-brand-hover"),
       key: "post.feed"
     ))
   end
 
   def add_published_item(component)
-    value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
+    value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-muted")
     component.with_item(StatListItemComponent.new(
       label: "Published",
       value: value,
@@ -44,9 +44,9 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_source_url_item(component)
     value = if @post.source_url.present?
-      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500 truncate block")
+      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "text-brand underline underline-offset-4 transition hover:text-brand-hover truncate block")
     else
-      content_tag(:span, "None", class: "text-slate-500")
+      content_tag(:span, "None", class: "text-muted")
     end
 
     component.with_item(StatListItemComponent.new(
@@ -58,11 +58,11 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_validation_errors_item(component)
     errors_html = if @post.validation_errors.is_a?(Array)
-      content_tag(:ul, class: "list-disc list-inside mb-0 text-red-600") do
+      content_tag(:ul, class: "list-disc list-inside mb-0 text-danger") do
         safe_join(@post.validation_errors.map { |error| content_tag(:li, error) })
       end
     else
-      content_tag(:div, @post.validation_errors, class: "text-red-600")
+      content_tag(:div, @post.validation_errors, class: "text-danger")
     end
 
     component.with_item(StatListItemComponent.new(
@@ -83,7 +83,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_freefeed_post_id_item(component)
     url = @post.freefeed_url
     value = if url
-      helpers.link_to(url, target: "_blank", rel: "noopener", class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500 inline-flex items-center gap-1") do
+      helpers.link_to(url, target: "_blank", rel: "noopener", class: "text-brand underline underline-offset-4 transition hover:text-brand-hover inline-flex items-center gap-1") do
         safe_join([
           content_tag(:code, @post.freefeed_post_id, class: "text-sm"),
           helpers.icon("external-link", css_class: "size-3")

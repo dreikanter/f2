@@ -12,6 +12,6 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     count = event.event_references.count { |reference| reference.reference_type == "Post" }
     return if count.zero?
 
-    helpers.tag.span("(+#{helpers.pluralize(count, "post")})", class: "text-slate-400", data: { key: "events.posts_count" })
+    helpers.tag.span("(+#{helpers.pluralize(count, "post")})", class: "text-muted", data: { key: "events.posts_count" })
   end
 end

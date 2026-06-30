@@ -11,26 +11,26 @@
     <%= form_with model: @user, url: admin_user_email_update_path(@user), method: :patch do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :current_email, "Current email", class: "block font-semibold text-slate-800" %>
-          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed" %>
+          <%= form.label :current_email, "Current email", class: "block font-semibold text-heading" %>
+          <%= form.text_field :current_email, value: @user.email_address, disabled: true, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :email_address, "New email", class: "block font-semibold text-slate-800" %>
-          <%= form.email_field :email_address, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
+          <%= form.label :email_address, "New email", class: "block font-semibold text-heading" %>
+          <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", placeholder: "Enter new email address", autofocus: true, autocomplete: "email" %>
         </div>
 
         <div class="space-y-2">
           <div class="flex items-start gap-3">
-            <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" %>
-            <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-slate-700" %>
+            <%= check_box_tag :require_confirmation, "1", false, class: "mt-1 h-4 w-4 rounded border-border-strong text-info focus:ring-ring" %>
+            <%= label_tag :require_confirmation, "Require user to confirm new email address before change takes effect", class: "text-base text-heading" %>
           </div>
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
-        <%= form.submit "Update Email", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1", data: { turbo_confirm: "Update email for this user?" } %>
-        <%= link_to "Cancel", admin_user_path(@user), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1") %>
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
+        <%= form.submit "Update Email", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1", data: { turbo_confirm: "Update email for this user?" } %>
+        <%= link_to "Cancel", admin_user_path(@user), class: class_names("inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1") %>
       </div>
     <% end %>
   </div>

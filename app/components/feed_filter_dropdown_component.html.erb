@@ -4,16 +4,16 @@
     type="button"
     data-dropdown-toggle="<%= menu_id %>"
     data-dropdown-placement="bottom-end"
-    class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 gap-2"
+    class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 gap-2"
     data-key="feed-filter.button"
     aria-haspopup="true"
     aria-expanded="false">
     <span><%= button_label %></span>
-    <%= icon("chevron-down", css_class: "size-4 text-slate-400") %>
+    <%= icon("chevron-down", css_class: "size-4 text-muted") %>
   </button>
   <div
     id="<%= menu_id %>"
-    class="z-20 hidden w-60 rounded-lg border border-slate-200 bg-white shadow-sm"
+    class="z-20 hidden w-60 rounded-lg border border-border bg-surface shadow-sm"
     role="menu"
     aria-labelledby="<%= button_id %>"
     data-controller="feed-filter"
@@ -22,19 +22,19 @@
       <label for="<%= menu_id %>-search" class="sr-only">Search feeds</label>
       <div class="relative">
         <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-          <%= icon("search", css_class: "size-4 text-slate-400") %>
+          <%= icon("search", css_class: "size-4 text-muted") %>
         </div>
         <input
           type="text"
           id="<%= menu_id %>-search"
           placeholder="Search feeds"
           autocomplete="off"
-          class="block w-full rounded-lg border border-slate-200 bg-slate-50 p-2.5 ps-9 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          class="block w-full rounded-lg border border-border bg-surface-muted p-2.5 ps-9 text-sm text-heading focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
           data-feed-filter-target="search"
           data-action="input->feed-filter#filter">
       </div>
     </div>
-    <ul class="max-h-48 overflow-y-auto pb-3 text-base text-slate-600" aria-labelledby="<%= button_id %>">
+    <ul class="max-h-48 overflow-y-auto pb-3 text-base text-body" aria-labelledby="<%= button_id %>">
       <li>
         <%= link_to all_feeds_path, class: item_classes(selected_feed.nil?), role: "menuitem" do %>
           All feeds

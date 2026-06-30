@@ -6,24 +6,24 @@
     <% header.with_action_button do %>
       <%= button_to "Test…",
                     development_email_preview_test_email_path(@preview[:id]),
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer",
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer",
                     data: { key: "email_preview.test", turbo_confirm: "Send a test \"#{@preview[:label]}\" email, filled with sample data, to #{Current.user.email_address}?" } %>
     <% end %>
   <% end %>
 
   <div class="space-y-6">
-    <div class="rounded-lg border border-slate-200 bg-white p-4 space-y-1">
-      <p class="text-sm text-slate-500"><%= @preview[:description] %></p>
-      <p class="text-sm text-slate-500">
-        <span class="font-medium text-slate-700">Subject:</span>
+    <div class="rounded-lg border border-border bg-surface p-4 space-y-1">
+      <p class="text-sm text-muted"><%= @preview[:description] %></p>
+      <p class="text-sm text-muted">
+        <span class="font-medium text-heading">Subject:</span>
         <%= @subject %>
       </p>
     </div>
 
     <% if @html_body.present? %>
       <div class="space-y-2">
-        <h2 class="text-sm font-medium text-slate-700">HTML</h2>
-        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <h2 class="text-sm font-medium text-heading">HTML</h2>
+        <div class="overflow-hidden rounded-lg border border-border bg-surface">
           <iframe srcdoc="<%= h(@html_body) %>"
                   class="w-full"
                   style="height: 480px; border: none;"
@@ -34,8 +34,8 @@
 
     <% if @text_body.present? %>
       <div class="space-y-2">
-        <h2 class="text-sm font-medium text-slate-700">Plain text</h2>
-        <pre class="overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 whitespace-pre-wrap"><%= @text_body %></pre>
+        <h2 class="text-sm font-medium text-heading">Plain text</h2>
+        <pre class="overflow-auto rounded-lg border border-border bg-surface-muted p-4 text-sm text-heading whitespace-pre-wrap"><%= @text_body %></pre>
       </div>
     <% end %>
   </div>

@@ -50,7 +50,7 @@ class PostPreviewComponent < ViewComponent::Base
   def formatted_content
     return if post_content.blank?
 
-    helpers.content_tag(:div, helpers.format_post_content(post_content), class: "rounded-lg text-slate-900")
+    helpers.content_tag(:div, helpers.format_post_content(post_content), class: "rounded-lg text-heading")
   end
 
   def attachments?
@@ -130,10 +130,10 @@ class PostPreviewComponent < ViewComponent::Base
   def attachment_list_item(attachment)
     helpers.content_tag(:li) do
       fragments = [
-        helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 break-all")
+        helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover break-all")
       ]
       if attachment[:type]
-        fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-slate-500")
+        fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-muted")
       end
       helpers.safe_join(fragments)
     end

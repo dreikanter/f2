@@ -6,14 +6,14 @@
 <div class="space-y-8">
   <% if @user.email_deactivated? %>
     <%= render AlertComponent.new(variant: :warning) do %>
-      <p class="font-semibold text-slate-800">Your email address is not receiving our emails.</p>
+      <p class="font-semibold text-heading">Your email address is not receiving our emails.</p>
       <% if @user.can_change_email? %>
-        <p class="text-slate-600">
-          <%= link_to "Update your email address", edit_settings_email_update_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+        <p class="text-body">
+          <%= link_to "Update your email address", edit_settings_email_update_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
           to continue receiving notifications.
         </p>
       <% else %>
-        <p class="text-slate-600">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
+        <p class="text-body">You can update your email address in <%= distance_of_time_in_words(@user.time_until_email_change_allowed) %>.</p>
       <% end %>
     <% end %>
   <% end %>
@@ -24,7 +24,7 @@
       <% header.with_context_paragraph "Two quick steps: add a FreeFeed token, then create your first feed." %>
     <% end %>
     <div>
-      <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Add FreeFeed token", new_access_token_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
     </div>
   <% elsif suggest_adding_feeds %>
     <%= render PageHeaderComponent.new(title: "Status") do |header| %>
@@ -32,7 +32,7 @@
       <% header.with_context_paragraph "You've got a token set up — now add your first feed and Feeder will start reposting new content to FreeFeed." %>
     <% end %>
     <div>
-      <%= link_to "Add your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Add your first feed", new_feed_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
     </div>
   <% else %>
     <%= render PageHeaderComponent.new(title: "Status") %>
@@ -41,8 +41,8 @@
 
     <section class="space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-semibold text-slate-900">Recent Activity</h2>
-        <%= link_to "View all", events_path(filter: @filter.to_h.presence), class: "text-sm font-semibold text-sky-600 hover:text-sky-500", data: { key: "recent_events.view_all" } %>
+        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
+        <%= link_to "View all", events_path(filter: @filter.to_h.presence), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "recent_events.view_all" } %>
       </div>
       <%= render(EventsListComponent.new(
         events: @recent_events,

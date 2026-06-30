@@ -1,16 +1,16 @@
 <%# locals: (preview:) %>
-<div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 space-y-3"
+<div class="rounded-lg border border-danger-subtle bg-danger-subtle px-4 py-3 text-danger-strong space-y-3"
      role="alert"
      data-key="preview.failed"
      data-controller="preview"
      data-preview-refresh-url-value="<%= feed_preview_path(profile_key: preview.feed_profile_key, "params" => preview.params) %>"
      data-preview-done>
   <div class="space-y-1">
-    <p class="font-semibold text-slate-800">We couldn't build a preview.</p>
-    <p class="text-slate-600">Something went wrong fetching this source. Double-check it and give it another go.</p>
+    <p class="font-semibold text-heading">We couldn't build a preview.</p>
+    <p class="text-body">Something went wrong fetching this source. Double-check it and give it another go.</p>
   </div>
   <button type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+          class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-heading shadow-sm transition hover:bg-surface-muted"
           data-action="click->preview#refresh"
           data-key="preview.try-again">
     Try again

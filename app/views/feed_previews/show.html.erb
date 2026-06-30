@@ -31,17 +31,17 @@
       <% end %>
     </div>
     <div data-polling-target="timeoutMessage" hidden>
-      <div class="rounded-lg border border-red-200 bg-red-100 px-4 py-3 text-red-800 space-y-3"
+      <div class="rounded-lg border border-danger-subtle bg-danger-subtle px-4 py-3 text-danger-strong space-y-3"
            role="alert"
            data-key="preview.timeout"
            data-controller="preview"
            data-preview-refresh-url-value="<%= feed_preview_path(preview_path_options) %>">
         <div class="space-y-1">
-          <p class="font-semibold text-slate-800">This is taking longer than expected.</p>
-          <p class="text-slate-600">The source may be slow or unavailable. Give it another go when you're ready.</p>
+          <p class="font-semibold text-heading">This is taking longer than expected.</p>
+          <p class="text-body">The source may be slow or unavailable. Give it another go when you're ready.</p>
         </div>
         <button type="button"
-                class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-heading shadow-sm transition hover:bg-surface-muted"
                 data-action="click->preview#refresh"
                 data-key="preview.try-again">
           Try again

@@ -30,7 +30,7 @@ class PostHelperTest < ActionView::TestCase
     assert_equal "https://example.com", link["href"]
     assert_equal "_blank", link["target"]
     assert_equal "noopener", link["rel"]
-    assert_equal "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500", link["class"]
+    assert_equal "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover", link["class"]
     assert_equal "https://example.com", link.text
   end
 

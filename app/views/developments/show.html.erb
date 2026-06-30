@@ -6,32 +6,32 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render CardComponent.new(href: development_system_status_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("hard-drive", css_class: "size-5") %>
           <span>System Status</span>
         </h2>
-        <p class="text-slate-600">Check configuration, disk usage, and other system info</p>
+        <p class="text-body">Check configuration, disk usage, and other system info</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("hard-hat", css_class: "size-5") %>
           <span>Background Jobs</span>
-          <%= icon("external-link", css_class: "size-4 text-slate-400") %>
+          <%= icon("external-link", css_class: "size-4 text-muted") %>
         </h2>
-        <p class="text-slate-600">Monitor and manage background job queues</p>
+        <p class="text-body">Monitor and manage background job queues</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: development_email_previews_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("mail", css_class: "size-5") %>
           <span>Email Previews</span>
         </h2>
-        <p class="text-slate-600">Browse rendered previews of all email templates</p>
+        <p class="text-body">Browse rendered previews of all email templates</p>
       </div>
     <% end %>
 
@@ -41,21 +41,21 @@
             : { class: "opacity-50 cursor-not-allowed", title: "Email capture is not configured" })
         ) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("inbox", css_class: "size-5") %>
           <span>Sent Emails</span>
         </h2>
-        <p class="text-slate-600">Review emails captured in development</p>
+        <p class="text-body">Review emails captured in development</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: development_components_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("layout-grid", css_class: "size-5") %>
           <span>UI Reference</span>
         </h2>
-        <p class="text-slate-600">Reference for all reusable UI components.</p>
+        <p class="text-body">Reference for all reusable UI components.</p>
       </div>
     <% end %>
   </div>

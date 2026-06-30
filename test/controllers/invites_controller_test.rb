@@ -94,7 +94,7 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
   test "should render enabled invite button when invites available" do
     sign_in_as user
     get invites_url
-    assert_select "form[data-turbo-frame='_top'] button:not([disabled])[class*='hover:bg-slate-50']"
+    assert_select "form[data-turbo-frame='_top'] button:not([disabled])[class*='hover:bg-surface-muted']"
   end
 
   test "should render disabled invite button when no invites available" do

@@ -1,5 +1,5 @@
 class Admin::UserInvitationsComponent < ViewComponent::Base
-  EDIT_CLASSES = "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 text-sm".freeze
+  EDIT_CLASSES = "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover text-sm".freeze
 
   def initialize(user:, stats:)
     @user = user

@@ -1,10 +1,10 @@
-<div class="overflow-hidden rounded-lg border border-slate-200 bg-white p-4" data-key="post.attachments">
+<div class="overflow-hidden rounded-lg border border-border bg-surface p-4" data-key="post.attachments">
   <div class="flex flex-wrap gap-3">
     <% attachment_urls.each do |url| %>
       <%= link_to url, target: "_blank", rel: "noopener",
-            class: "block overflow-hidden rounded-md border border-slate-200 transition hover:border-sky-400" do %>
+            class: "block overflow-hidden rounded-md border border-border transition hover:border-ring" do %>
         <%= image_tag thumbnail_url(url), alt: extract_filename(url), loading: "lazy", srcset: thumbnail_srcset(url),
-              width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-slate-100 object-cover" %>
+              width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-surface-sunken object-cover" %>
       <% end %>
     <% end %>
   </div>

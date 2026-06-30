@@ -5,7 +5,7 @@ class ReadonlyPostListItemComponent < PostListItemComponent
   private
 
   def title_element
-    helpers.content_tag(:span, title, class: "truncate text-base text-slate-900")
+    helpers.content_tag(:span, title, class: "truncate text-base text-heading")
   end
 
   def status_url

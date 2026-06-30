@@ -2,8 +2,8 @@
 
 <%= render CardComponent.new do %>
   <div class="space-y-6">
-    <h1 class="text-4xl font-semibold mb-6 text-slate-900">Choose a new password</h1>
-    <p class="text-sm text-slate-600">Enter and confirm a new password to finish resetting your account.</p>
+    <h1 class="text-4xl font-semibold mb-6 text-heading">Choose a new password</h1>
+    <p class="text-sm text-body">Enter and confirm a new password to finish resetting your account.</p>
 
     <% if flash[:alert] %>
       <%= render AlertComponent.new(variant: :error) do %>
@@ -14,30 +14,30 @@
     <%= form_with url: password_path(params[:token]), method: :put, local: true do |form| %>
       <div class="space-y-10">
         <div class="space-y-2">
-          <%= form.label :password, "New password", class: "block font-semibold text-slate-800" %>
+          <%= form.label :password, "New password", class: "block font-semibold text-heading" %>
           <%= form.password_field :password,
                                   required: true,
                                   autofocus: true,
                                   autocomplete: "new-password",
                                   placeholder: "Enter a new password",
                                   maxlength: User::PASSWORD_MAX_LENGTH,
-                                  class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+                                  class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
         </div>
 
         <div class="space-y-2">
-          <%= form.label :password_confirmation, "Confirm password", class: "block font-semibold text-slate-800" %>
+          <%= form.label :password_confirmation, "Confirm password", class: "block font-semibold text-heading" %>
           <%= form.password_field :password_confirmation,
                                   required: true,
                                   autocomplete: "new-password",
                                   placeholder: "Repeat the new password",
                                   maxlength: User::PASSWORD_MAX_LENGTH,
-                                  class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" %>
+                                  class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <%= form.submit "Save password", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 w-full sm:w-auto" %>
-        <%= link_to "Back to sign in", new_session_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <%= form.submit "Save password", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
+        <%= link_to "Back to sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
       </div>
     <% end %>
   </div>

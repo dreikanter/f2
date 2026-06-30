@@ -28,15 +28,15 @@ class StatListItemComponentTest < ViewComponent::TestCase
   test "#render should apply muted style to value when muted is true" do
     result = render_inline(StatListItemComponent.new(label: "Posts", value: "42", muted: true))
 
-    assert_includes result.at_css("dd")["class"], "text-slate-500"
-    assert_not_includes result.at_css("dd")["class"], "text-slate-900"
+    assert_includes result.at_css("dd")["class"], "text-muted"
+    assert_not_includes result.at_css("dd")["class"], "text-heading"
   end
 
   test "#render should apply default style to value when muted is false" do
     result = render_inline(StatListItemComponent.new(label: "Posts", value: "42", muted: false))
 
-    assert_includes result.at_css("dd")["class"], "text-slate-900"
-    assert_not_includes result.at_css("dd")["class"], "text-slate-500"
+    assert_includes result.at_css("dd")["class"], "text-heading"
+    assert_not_includes result.at_css("dd")["class"], "text-muted"
   end
 
   test "#render should use list item CSS classes" do

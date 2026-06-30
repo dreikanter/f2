@@ -6,31 +6,31 @@
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <%= render CardComponent.new(href: admin_users_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("users", css_class: "size-5") %>
           <span>Users</span>
         </h2>
-        <p class="text-slate-600">Manage user accounts and permissions</p>
+        <p class="text-body">Manage user accounts and permissions</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: admin_events_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("calendar", css_class: "size-5") %>
           <span>Events Log</span>
         </h2>
-        <p class="text-slate-600">View system events, logs, and activity</p>
+        <p class="text-body">View system events, logs, and activity</p>
       </div>
     <% end %>
 
     <%= render CardComponent.new(href: admin_feeds_path) do %>
       <div class="space-y-4">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("layers", css_class: "size-5") %>
           <span>Feeds</span>
         </h2>
-        <p class="text-slate-600">Browse feeds across every account</p>
+        <p class="text-body">Browse feeds across every account</p>
       </div>
     <% end %>
   </div>
