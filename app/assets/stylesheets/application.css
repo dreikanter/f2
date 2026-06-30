@@ -20,7 +20,7 @@
 
   /* Foreground text */
   --color-heading:        var(--color-slate-900);
-  --color-body:           var(--color-slate-600);
+  --color-body:           var(--color-slate-700);
   --color-muted:          var(--color-slate-500);
   --color-faint:          var(--color-slate-400);
 
