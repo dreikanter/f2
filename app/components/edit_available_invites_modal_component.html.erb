@@ -3,7 +3,7 @@
     <div class="space-y-2">
       <%= form.label :available_invites, "Available Invites", class: "block font-semibold text-slate-800" %>
       <span id="available-invites-input-wrapper-<%= @user.id %>">
-        <%= form.number_field(:available_invites, min: 0, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", autofocus: true) %>
+        <%= form.number_field(:available_invites, min: 0, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", autofocus: true) %>
       </span>
     </div>
   <% end %>
@@ -17,7 +17,7 @@
                    onclick: "this.form.requestSubmit()" %>
     <%= tag.button "Cancel",
                    type: "button",
-                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
+                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                    data: { action: "modal#close" } %>
   <% end %>
 <% end %>

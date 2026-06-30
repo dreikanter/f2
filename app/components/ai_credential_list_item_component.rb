@@ -26,7 +26,7 @@ class AiCredentialListItemComponent < ListItemComponent
   end
 
   def row_css_class
-    "transition duration-75 hover:bg-slate-50"
+    "transition duration-75 hover:bg-surface-muted"
   end
 
   def icon_element
@@ -51,7 +51,7 @@ class AiCredentialListItemComponent < ListItemComponent
   end
 
   def secondary_element
-    helpers.tag.div(provider_name, class: "truncate text-sm text-slate-400")
+    helpers.tag.div(provider_name, class: "truncate text-sm text-faint")
   end
 
   def provider_name

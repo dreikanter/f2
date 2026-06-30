@@ -28,7 +28,7 @@ class EventDetailsComponent < ViewComponent::Base
                       class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500",
                       data: { key: "admin.event.user" })
     else
-      helpers.tag.em("System", class: "text-slate-500", data: { key: "admin.event.user" })
+      helpers.tag.em("System", class: "text-muted", data: { key: "admin.event.user" })
     end
 
     component.with_item(StatListItemComponent.new(
@@ -41,7 +41,7 @@ class EventDetailsComponent < ViewComponent::Base
     value = helpers.safe_join([
       helpers.long_time_tag(@event.created_at),
       " ",
-      helpers.tag.span("(#{helpers.short_time_ago(@event.created_at)})", class: "text-slate-500")
+      helpers.tag.span("(#{helpers.short_time_ago(@event.created_at)})", class: "text-muted")
     ])
 
     component.with_item(StatListItemComponent.new(
@@ -54,7 +54,7 @@ class EventDetailsComponent < ViewComponent::Base
     value = helpers.safe_join([
       helpers.long_time_tag(@event.updated_at),
       " ",
-      helpers.tag.span("(#{helpers.short_time_ago(@event.updated_at)})", class: "text-slate-500")
+      helpers.tag.span("(#{helpers.short_time_ago(@event.updated_at)})", class: "text-muted")
     ])
 
     component.with_item(StatListItemComponent.new(
@@ -80,7 +80,7 @@ class EventDetailsComponent < ViewComponent::Base
     if @event.expired?
       helpers.tag.span("Expired", class: "inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20")
     else
-      helpers.tag.span("(in #{helpers.short_time_ago(@event.expires_at)})", class: "text-slate-500")
+      helpers.tag.span("(in #{helpers.short_time_ago(@event.expires_at)})", class: "text-muted")
     end
   end
 end

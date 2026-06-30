@@ -2,7 +2,7 @@ class PanelComponent < ViewComponent::Base
   BASE_CLASSES = "w-full rounded-lg p-6"
 
   VARIANT_CLASSES = {
-    default: "bg-slate-100",
+    default: "bg-surface-sunken",
     info: "border border-sky-200 bg-sky-50"
   }.freeze
 

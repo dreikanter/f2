@@ -71,7 +71,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
-    assert_includes icon["class"], "text-slate-400"
+    assert_includes icon["class"], "text-faint"
   end
 
   test "#call should tint warning rows with the alert palette" do
@@ -100,7 +100,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
     result = render_item(event)
 
     item = result.css("[data-key='events.entry']").first
-    assert_includes item["class"], "bg-white"
+    assert_includes item["class"], "bg-surface"
   end
 
   # --- Simplified mode ---

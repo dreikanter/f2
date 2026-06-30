@@ -1,5 +1,5 @@
 <% content_for :title, "Register" %>
-<% content_for :body_class, "sm:bg-slate-100" %>
+<% content_for :body_class, "sm:bg-surface-sunken" %>
 
 <div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
   <% if @invite.nil? %>
@@ -71,14 +71,14 @@
 
             <div class="space-y-2">
               <%= form.label :email_address, "Email", class: "block font-semibold text-slate-800" %>
-              <%= form.email_field :email_address, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true, autofocus: true %>
-              <p class="text-sm text-slate-500">Only used for password resets—we don't send marketing emails.</p>
+              <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true, autofocus: true %>
+              <p class="text-sm text-muted">Only used for password resets—we don't send marketing emails.</p>
             </div>
 
             <div class="space-y-2">
               <%= form.label :password, class: "block font-semibold text-slate-800" %>
-              <%= form.password_field :password, class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true %>
-              <p class="text-sm text-slate-500">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
+              <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2", required: true %>
+              <p class="text-sm text-muted">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
             </div>
           </div>
           <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

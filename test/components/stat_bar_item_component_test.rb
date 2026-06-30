@@ -27,7 +27,7 @@ class StatBarItemComponentTest < ViewComponent::TestCase
   test "#render should apply muted style to value when muted is true" do
     result = render_inline(StatBarItemComponent.new(label: "Active", value: "38", muted: true))
 
-    assert_includes result.at_css("dd")["class"], "text-slate-500"
+    assert_includes result.at_css("dd")["class"], "text-muted"
     assert_not_includes result.at_css("dd")["class"], "text-slate-900"
   end
 end

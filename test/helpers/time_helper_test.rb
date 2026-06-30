@@ -143,7 +143,7 @@ class TimeHelperTest < ActiveSupport::TestCase
 
     travel_to Time.zone.parse("2025-01-15 17:45:30") do
       result = datetime_with_duration_tag(time)
-      expected = '<time datetime="2025-01-15T15:45:30Z" title="2 hours ago">15 Jan 2025, 15:45 <span class="text-slate-500">(2h)</span></time>'
+      expected = '<time datetime="2025-01-15T15:45:30Z" title="2 hours ago">15 Jan 2025, 15:45 <span class="text-muted">(2h)</span></time>'
       assert_equal expected, result
     end
   end

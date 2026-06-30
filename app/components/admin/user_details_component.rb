@@ -29,7 +29,7 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   end
 
   def status_badge
-    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, classes: "bg-slate-50 text-slate-700 ring-slate-600/20" } }
+    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, classes: "bg-surface-muted text-slate-700 ring-slate-600/20" } }
     helpers.tag.span(
       badge[:label],
       class: "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset #{badge[:classes]}",
@@ -38,12 +38,12 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   end
 
   def permissions_value
-    return helpers.tag.span("None", class: "text-slate-500") if @user.permissions.empty?
+    return helpers.tag.span("None", class: "text-muted") if @user.permissions.empty?
 
     @user.permissions.map(&:display_name).join(", ")
   end
 
   def optional_time(time)
-    time.present? ? helpers.datetime_with_duration_tag(time) : helpers.tag.span("Never", class: "text-slate-500")
+    time.present? ? helpers.datetime_with_duration_tag(time) : helpers.tag.span("Never", class: "text-muted")
   end
 end

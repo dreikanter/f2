@@ -67,7 +67,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_icon(feed)
 
     assert_includes result, "<svg"
-    assert_includes result, "text-slate-400"
+    assert_includes result, "text-faint"
     assert_includes result, 'title="Disabled"'
     assert_includes result, 'aria-label="Disabled"'
     assert_includes result, 'role="img"'
@@ -79,7 +79,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_icon(feed)
 
     assert_includes result, "<svg"
-    assert_includes result, "text-slate-400"
+    assert_includes result, "text-faint"
     assert_includes result, 'title="Draft"'
     assert_includes result, 'aria-label="Draft"'
     assert_includes result, 'role="img"'

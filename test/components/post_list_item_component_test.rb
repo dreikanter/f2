@@ -114,7 +114,7 @@ class PostListItemComponentTest < ViewComponent::TestCase
     withdrawn_post = create(:post, feed: feed, status: :withdrawn)
     result = render_inline PostListItemComponent.new(post: withdrawn_post)
 
-    assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(withdrawn_post)}.bg-slate-50")
+    assert_not_empty result.css("##{ActionView::RecordIdentifier.dom_id(withdrawn_post)}.bg-surface-muted")
   end
 
   test "#render should offer Details, Source and Delete actions for a published post" do

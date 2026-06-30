@@ -8,7 +8,7 @@
         <%= button_to "Purge All…",
                       purge_development_sent_emails_path,
                       method: :delete,
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
                       data: { turbo_confirm: "Are you sure you want to delete all emails?" } %>
       <% end %>
     <% end %>
@@ -27,7 +27,7 @@
                 class: "min-w-0 flex-1 truncate text-base text-slate-900 transition hover:text-slate-700" %>
         <% end %>
         <% item.with_secondary do %>
-          <span class="text-sm text-slate-500"><%= safe_join([
+          <span class="text-sm text-muted"><%= safe_join([
             email[:timestamp].strftime("%b %d, %Y at %H:%M:%S"),
             number_to_human_size(email[:size]),
             "#{time_ago_in_words(email[:timestamp])} ago"

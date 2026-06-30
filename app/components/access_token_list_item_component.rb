@@ -24,7 +24,7 @@ class AccessTokenListItemComponent < ListItemComponent
   end
 
   def row_css_class
-    "transition duration-75 hover:bg-slate-50"
+    "transition duration-75 hover:bg-surface-muted"
   end
 
   def icon_element
@@ -39,7 +39,7 @@ class AccessTokenListItemComponent < ListItemComponent
 
   def secondary_element
     helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
-                    class: "truncate text-sm text-slate-400")
+                    class: "truncate text-sm text-faint")
   end
 
   def meta_segments

@@ -1,11 +1,11 @@
 class PostListItemComponent < ListItemComponent
   STATUS_DISPLAY = {
-    "draft"     => { icon: "file",         color: "text-slate-400",  label: "Draft" },
+    "draft"     => { icon: "file",         color: "text-faint",  label: "Draft" },
     "enqueued"  => { icon: "clock",        color: "text-blue-500",   label: "Enqueued" },
     "rejected"  => { icon: "circle-x",     color: "text-orange-500", label: "Rejected" },
     "published" => { icon: "circle-check", color: "text-green-600",  label: "Reposted" },
     "failed"    => { icon: "circle-x",     color: "text-red-600",    label: "Failed" },
-    "withdrawn" => { icon: "trash-2",      color: "text-slate-400",  label: "Withdrawn" }
+    "withdrawn" => { icon: "trash-2",      color: "text-faint",  label: "Withdrawn" }
   }.freeze
 
   def initialize(post:, show_feed: false)
@@ -34,8 +34,8 @@ class PostListItemComponent < ListItemComponent
   def row_css_class
     helpers.class_names(
       "transition duration-75",
-      "bg-slate-50 hover:bg-slate-100" => withdrawn?,
-      "hover:bg-slate-50" => !withdrawn?
+      "bg-surface-muted hover:bg-surface-sunken" => withdrawn?,
+      "hover:bg-surface-muted" => !withdrawn?
     )
   end
 
@@ -56,7 +56,7 @@ class PostListItemComponent < ListItemComponent
   # (group, counts) leads with a middot.
   def secondary_element
     helpers.tag.div(helpers.safe_join(status_segments, helpers.middot),
-                    class: "truncate text-sm text-slate-400")
+                    class: "truncate text-sm text-faint")
   end
 
   def status_segments
@@ -141,7 +141,7 @@ class PostListItemComponent < ListItemComponent
 
   def status_display
     STATUS_DISPLAY[post.status.to_s] ||
-      { icon: "file", color: "text-slate-400", label: post.status.to_s.capitalize }
+      { icon: "file", color: "text-faint", label: post.status.to_s.capitalize }
   end
 
   def status_icon

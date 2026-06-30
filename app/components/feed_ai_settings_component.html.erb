@@ -42,7 +42,7 @@
           <% if form.object.errors[:ai_model].any? %>
             <p class="text-sm text-red-600"><%= form.object.errors[:ai_model].first %></p>
           <% else %>
-            <p class="text-sm text-slate-500">Choose the model this feed uses to fetch posts.</p>
+            <p class="text-sm text-muted">Choose the model this feed uses to fetch posts.</p>
           <% end %>
         </div>
       <% end %>

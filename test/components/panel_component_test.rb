@@ -8,7 +8,7 @@ class PanelComponentTest < ViewComponent::TestCase
     panel = result.at_css("div")
     assert_not_nil panel
     assert_equal "Panel body", panel.text.strip
-    assert_includes panel["class"], "bg-slate-100"
+    assert_includes panel["class"], "bg-surface-sunken"
     assert_includes panel["class"], "rounded-lg"
     assert_includes panel["class"], "p-6"
     refute_includes panel["class"], "border"
@@ -21,7 +21,7 @@ class PanelComponentTest < ViewComponent::TestCase
     assert_not_nil panel
     assert_includes panel["class"], "bg-sky-50"
     assert_includes panel["class"], "border-sky-200"
-    refute_includes panel["class"], "bg-slate-100"
+    refute_includes panel["class"], "bg-surface-sunken"
   end
 
   test "#call should merge classes and forward html attributes" do

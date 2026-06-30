@@ -33,7 +33,7 @@
     <%= render EmptyStateComponent.new("No posts yet — they'll show up here as your feeds import new content.") %>
   <% else %>
     <%= render EmptyStateComponent.new do %>
-      <p class="text-slate-500">No posts yet. <%= link_to "Add your first feed", new_feed_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %> to start importing content.</p>
+      <p class="text-muted">No posts yet. <%= link_to "Add your first feed", new_feed_path, class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %> to start importing content.</p>
     <% end %>
   <% end %>
 

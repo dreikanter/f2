@@ -7,11 +7,11 @@
         <%= f.text_field :input,
                          value: input,
                          placeholder: "Paste a URL or describe what to follow",
-                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                         class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          required: true,
                          autofocus: true,
                          data: { key: "form.entry-input" } %>
-        <p class="text-sm text-slate-500">We'll figure out the best way to fetch posts from it.</p>
+        <p class="text-sm text-muted">We'll figure out the best way to fetch posts from it.</p>
       </div>
     </div>
 
@@ -19,7 +19,7 @@
       <%= f.submit "Continue",
                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1",
                    data: { turbo_submits_with: "Checking…" } %>
-      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>
 </div>

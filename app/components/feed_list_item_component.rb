@@ -25,7 +25,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def row_css_class
-    "transition duration-75 hover:bg-slate-50"
+    "transition duration-75 hover:bg-surface-muted"
   end
 
   def icon_element
@@ -39,7 +39,7 @@ class FeedListItemComponent < ListItemComponent
 
   def secondary_element
     helpers.tag.div(helpers.safe_join(meta_segments, helpers.middot),
-                    class: "truncate text-sm text-slate-400")
+                    class: "truncate text-sm text-faint")
   end
 
   def title_link
@@ -52,9 +52,9 @@ class FeedListItemComponent < ListItemComponent
 
     if target_group_url
       helpers.link_to(target_group_label, target_group_url, target: "_blank", rel: "noopener",
-                      class: "truncate text-sm text-slate-400 transition hover:text-slate-600")
+                      class: "truncate text-sm text-faint transition hover:text-slate-600")
     else
-      helpers.tag.span(target_group_label, class: "truncate text-sm text-slate-400")
+      helpers.tag.span(target_group_label, class: "truncate text-sm text-faint")
     end
   end
 

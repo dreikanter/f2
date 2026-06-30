@@ -133,7 +133,7 @@ class PostPreviewComponent < ViewComponent::Base
         helpers.link_to(attachment[:url], attachment[:url], target: "_blank", rel: "noopener", class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500 break-all")
       ]
       if attachment[:type]
-        fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-slate-500")
+        fragments << helpers.content_tag(:span, "(#{attachment[:type]})", class: "ml-2 text-xs text-muted")
       end
       helpers.safe_join(fragments)
     end

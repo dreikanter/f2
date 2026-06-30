@@ -86,7 +86,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
     %w[imported_posts published_posts posts_last_week last_refresh most_recent_repost].each do |key|
       result.css(%([data-key="stats.#{key}.value"])).each do |value|
-        assert_includes value["class"], "text-slate-500", "expected #{key} value to be muted"
+        assert_includes value["class"], "text-muted", "expected #{key} value to be muted"
       end
     end
   end
@@ -96,7 +96,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
 
     %w[imported_posts published_posts posts_last_week most_recent_repost].each do |key|
       result.css(%([data-key="stats.#{key}.value"])).each do |value|
-        assert_not_includes value["class"], "text-slate-500", "expected #{key} value not to be muted"
+        assert_not_includes value["class"], "text-muted", "expected #{key} value not to be muted"
       end
     end
   end

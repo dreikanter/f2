@@ -2,7 +2,7 @@
     [aria-busy="true"] rule makes that subtree non-interactive. This card holds
     the Cancel button, so opt out of the busy state to keep it clickable. %>
 <div id="feed-form"
-     class="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 shadow-xs"
+     class="flex items-center gap-3 rounded-lg border border-border px-4 py-3 shadow-xs"
      role="status"
      data-controller="polling"
      data-polling-indicate-busy-value="false"
@@ -21,6 +21,6 @@
                 feed_identifications_path(input: input),
                 method: :delete,
                 form: { data: { turbo_frame: "_top" } },
-                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+                class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
                 data: { key: "loading.cancel" } %>
 </div>

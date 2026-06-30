@@ -47,7 +47,7 @@
             <%= f.text_field :url_display,
                              value: feed.source_input,
                              disabled: true,
-                             class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                             class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
                              aria: { label: "#{source_label} (cannot be changed)" },
                              data: { key: "form.source-display" } %>
             <% feed.params&.each do |key, value| %>
@@ -66,7 +66,7 @@
               <%= f.text_field :feed_type_display,
                                value: candidate_summary(feed.feed_profile_key, feed.source_input),
                                disabled: true,
-                               class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
                                aria: { label: "Feed type (cannot be changed)" },
                                data: { key: "form.feed-type-display" } %>
             </div>
@@ -81,7 +81,7 @@
         <% end %>
 
         <% if edit_mode %>
-          <p class="mt-3 text-sm text-slate-500" data-key="form.source-locked-note">The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed.</p>
+          <p class="mt-3 text-sm text-muted" data-key="form.source-locked-note">The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed.</p>
         <% end %>
       </div>
 
@@ -90,14 +90,14 @@
         <%= f.text_field :name,
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
-                         class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                         class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                          data: { key: "form.name" } %>
         <% if f.object.errors[:name].any? %>
           <p class="text-sm text-red-600"><%= f.object.errors[:name].to_sentence.capitalize %></p>
         <% elsif feed.name.present? %>
-          <p class="text-sm text-slate-500">You can edit this name if you'd like.</p>
+          <p class="text-sm text-muted">You can edit this name if you'd like.</p>
         <% else %>
-          <p class="text-sm text-slate-500">We couldn't automatically detect a name. Please enter one.</p>
+          <p class="text-sm text-muted">We couldn't automatically detect a name. Please enter one.</p>
         <% end %>
       </div>
 
@@ -107,7 +107,7 @@
         <%= tag.button "Preview feed contents",
               type: "button",
               disabled: !feed.can_be_previewed?,
-              class: "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+              class: "inline-flex items-center gap-1 rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
               data: { preview_button_target: "button", action: "click->preview-button#open", key: "preview.open" } %>
 
         <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
@@ -144,7 +144,7 @@
                              ),
                              {},
                              {
-                               class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
+                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2 pb-2",
                                data: {
                                  action: "change->groups#refresh",
                                  groups_target: "tokenSelect"
@@ -170,7 +170,7 @@
               <%= f.select :schedule_interval,
                            Feed.schedule_intervals_for_select,
                            { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
-                           { class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" } %>
+                           { class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2" } %>
               <% if f.object.errors[:cron_expression].any? %>
                 <p class="text-sm text-red-600"><%= f.object.errors[:cron_expression].first %></p>
               <% end %>
@@ -194,7 +194,7 @@
             </div>
             <div class="ml-3">
               <%= f.label :import_after_enabled, "Skip older posts", class: "block font-semibold text-slate-800 mb-0" %>
-              <p class="text-sm text-slate-500">Only import posts published after a date you pick.</p>
+              <p class="text-sm text-muted">Only import posts published after a date you pick.</p>
             </div>
           </div>
 
@@ -207,12 +207,12 @@
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                  <%= icon("calendar", css_class: "size-5 text-slate-400") %>
+                  <%= icon("calendar", css_class: "size-5 text-faint") %>
                 </div>
                 <%= f.text_field :import_after_date,
                                  placeholder: "Pick a date",
                                  autocomplete: "off",
-                                 class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                                 class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                                  aria: { label: "Import posts published after this date" },
                                  data: {
                                    controller: "datepicker",
@@ -223,7 +223,7 @@
               </div>
               <div class="relative">
                 <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                  <%= icon("clock", css_class: "size-5 text-slate-400") %>
+                  <%= icon("clock", css_class: "size-5 text-faint") %>
                 </div>
                 <%# Plain 24-hour text field rather than a native time input: the
                     native control renders 12h or 24h based on the browser locale,
@@ -234,7 +234,7 @@
                                  placeholder: "HH:MM",
                                  pattern: "([01][0-9]|2[0-3]):[0-5][0-9]",
                                  maxlength: 5,
-                                 class: "w-full rounded-md border border-slate-300 bg-white py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
+                                 class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-sky-500 transition focus:border-sky-500 focus:outline-none focus:ring-2",
                                  aria: { label: "Import posts published after this time (24-hour HH:MM, UTC)" },
                                  data: {
                                    field_toggle_target: "input",
@@ -242,7 +242,7 @@
                                  } %>
               </div>
             </div>
-            <p class="text-sm text-slate-500">Posts published before this moment will be skipped. We'll use the current date and time if you leave these blank. Time is UTC.</p>
+            <p class="text-sm text-muted">Posts published before this moment will be skipped. We'll use the current date and time if you leave these blank. Time is UTC.</p>
           </div>
         <% end %>
 
@@ -253,7 +253,7 @@
             </div>
             <div class="ml-3">
               <%= f.label :images_only, "Only posts with images", class: "block font-semibold text-slate-800 mb-0" %>
-              <p class="text-sm text-slate-500">Skip posts that don't include any image attachments.</p>
+              <p class="text-sm text-muted">Skip posts that don't include any image attachments.</p>
             </div>
           </div>
         <% end %>
@@ -269,7 +269,7 @@
           </div>
           <div class="ml-3">
             <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-slate-800 mb-0" %>
-            <p class="text-sm text-slate-500">Start checking for new posts and publish them to FreeFeed.</p>
+            <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
           </div>
         </div>
       </div>
@@ -278,7 +278,7 @@
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-slate-600">
       <%= f.submit "Save feed",
                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
-      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
+      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1" %>
     </div>
   <% end %>
 </div>

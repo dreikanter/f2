@@ -20,7 +20,7 @@ class StatItemComponent < ViewComponent::Base
   end
 
   def value_element
-    content_tag(:dd, @value, class: class_names(self.class::VALUE_CLASSES, @muted ? "text-slate-500" : "text-slate-900"), data: value_data)
+    content_tag(:dd, @value, class: class_names(self.class::VALUE_CLASSES, @muted ? "text-muted" : "text-slate-900"), data: value_data)
   end
 
   def label_data

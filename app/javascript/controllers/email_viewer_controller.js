@@ -23,9 +23,9 @@ export default class extends Controller {
 
   activateTab(active, inactive) {
     active.classList.add("text-cyan-600", "border-cyan-600")
-    active.classList.remove("text-slate-500", "border-transparent")
+    active.classList.remove("text-muted", "border-transparent")
 
     inactive.classList.remove("text-cyan-600", "border-cyan-600")
-    inactive.classList.add("text-slate-500", "border-transparent")
+    inactive.classList.add("text-muted", "border-transparent")
   }
 }

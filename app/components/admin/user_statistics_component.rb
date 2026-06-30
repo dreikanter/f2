@@ -34,7 +34,7 @@ class Admin::UserStatisticsComponent < ViewComponent::Base
 
   def most_recent_post_value
     post = @stats.most_recent_post
-    return helpers.tag.span("No posts yet", class: "text-slate-500") unless post
+    return helpers.tag.span("No posts yet", class: "text-muted") unless post
 
     time = post.published_at
     helpers.tag.time(

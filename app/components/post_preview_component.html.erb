@@ -2,7 +2,7 @@
   <% if uid %>
     <% card.with_section(class: "px-4 py-2") do %>
       <div class="flex items-center gap-3 text-xs">
-        <span class="w-20 shrink-0 text-slate-500">UID:</span>
+        <span class="w-20 shrink-0 text-muted">UID:</span>
         <span class="min-w-0 truncate text-slate-900" title="<%= uid %>"><%= uid %></span>
       </div>
     <% end %>
@@ -11,7 +11,7 @@
   <% if published_at %>
     <% card.with_section(class: "px-4 py-2") do %>
       <div class="flex items-center gap-3 text-xs">
-        <span class="w-20 shrink-0 text-slate-500">Published:</span>
+        <span class="w-20 shrink-0 text-muted">Published:</span>
         <time datetime="<%= published_at.iso8601 %>" title="<%= published_at %>"><%= published_compact %></time>
       </div>
     <% end %>
@@ -20,7 +20,7 @@
   <% if source_url %>
     <% card.with_section(class: "px-4 py-2") do %>
       <div class="flex items-center gap-3 text-xs">
-        <span class="w-20 shrink-0 text-slate-500">URL:</span>
+        <span class="w-20 shrink-0 text-muted">URL:</span>
         <span class="min-w-0 truncate">
           <%= link_to source_url, source_url, target: "_blank", rel: "noopener",
                 class: "font-medium text-sky-600 underline underline-offset-4 transition hover:text-sky-500" %>
@@ -38,14 +38,14 @@
 
         <% if attachments? %>
           <section class="space-y-2" data-key="preview.attachments">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Attachments</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Attachments</p>
             <% if image_attachments.any? %>
               <div class="flex flex-wrap gap-2">
                 <% image_attachments.each do |attachment| %>
                   <%= link_to attachment[:url], target: "_blank", rel: "noopener",
-                        class: "block overflow-hidden rounded-md border border-slate-200 transition hover:border-sky-400" do %>
+                        class: "block overflow-hidden rounded-md border border-border transition hover:border-sky-400" do %>
                     <%= image_tag thumbnail_url(attachment[:url]), alt: "", loading: "lazy", srcset: thumbnail_srcset(attachment[:url]),
-                          width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-slate-100 object-cover" %>
+                          width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-surface-sunken object-cover" %>
                   <% end %>
                 <% end %>
               </div>

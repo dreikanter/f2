@@ -10,7 +10,7 @@ class EventListItemComponent < ListItemComponent
     "error" => "bg-red-100 hover:bg-red-200"
   }.freeze
 
-  DEFAULT_TINT = "bg-white hover:bg-slate-50".freeze
+  DEFAULT_TINT = "bg-surface hover:bg-surface-muted".freeze
 
   # Shows the severity, description and timestamp. Admin::EventListItemComponent
   # adds a footer with the event type, user and target for the operator log.
@@ -54,7 +54,7 @@ class EventListItemComponent < ListItemComponent
 
   def footer
     helpers.tag.div(helpers.safe_join(footer_items, helpers.middot),
-                    class: "truncate text-sm text-slate-400", data: { key: "events.footer" })
+                    class: "truncate text-sm text-faint", data: { key: "events.footer" })
   end
 
   def description
@@ -86,7 +86,7 @@ class EventListItemComponent < ListItemComponent
 
   def timestamp_link
     helpers.link_to(helpers.short_time_ago(event.created_at), href,
-                    class: "shrink-0 text-sm font-medium tabular-nums text-slate-400 transition hover:text-slate-700",
+                    class: "shrink-0 text-sm font-medium tabular-nums text-faint transition hover:text-slate-700",
                     title: event.created_at.rfc3339,
                     data: { key: "events.timestamp" })
   end

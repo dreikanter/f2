@@ -103,7 +103,7 @@ module ApplicationHelper
     when "inactive"
       icon("circle-x", css_class: "size-4 text-red-500", title: "Inactive", aria_label: "Inactive")
     else
-      icon("loader-circle", css_class: "size-4 text-slate-400", title: "Checking", aria_label: "Checking")
+      icon("loader-circle", css_class: "size-4 text-faint", title: "Checking", aria_label: "Checking")
     end
   end
 
@@ -133,7 +133,7 @@ module ApplicationHelper
     when :error
       icon("square", css_class: "size-5 text-red-600", aria_label: "Problem")
     else
-      icon("square", css_class: "size-5 text-slate-400", aria_label: "Not set")
+      icon("square", css_class: "size-5 text-faint", aria_label: "Not set")
     end
   end
 

@@ -23,7 +23,7 @@
           <%= f.select :provider,
                        LlmProvider.all.map { |provider| [provider.display_name, provider.name] },
                        {},
-                       class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                       class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
                        data: { key: "ai_credentials.provider" } %>
         </div>
 
@@ -31,9 +31,9 @@
           <%= f.label :display_name, "Name", class: "block font-semibold text-slate-800" %>
           <%= f.text_field :display_name,
                            placeholder: "Personal Anthropic key",
-                           class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                           class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
                            data: { key: "ai_credentials.display-name" } %>
-          <p class="text-sm text-slate-500">A label so you can tell credentials apart. Leave blank to get one automatically.</p>
+          <p class="text-sm text-muted">A label so you can tell credentials apart. Leave blank to get one automatically.</p>
         </div>
 
         <div class="space-y-2">
@@ -41,7 +41,7 @@
           <%= password_field_tag "ai_credential[credential_data][api_key]",
                                  @ai_credential.credential_data&.dig("api_key"),
                                  id: "ai_credential_credential_data_api_key",
-                                 class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
                                  required: true,
                                  autocomplete: "off",
                                  data: { key: "ai_credentials.credential-data.api_key" } %>
@@ -53,9 +53,9 @@
                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500",
                      data: { turbo_submits_with: "Saving…" } %>
         <% if @feed %>
-          <%= link_to "Back to your feed", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50", data: { key: "ai_credentials.back-to-feed" } %>
+          <%= link_to "Back to your feed", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted", data: { key: "ai_credentials.back-to-feed" } %>
         <% else %>
-          <%= link_to "Cancel", ai_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50" %>
+          <%= link_to "Cancel", ai_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:bg-surface-muted" %>
         <% end %>
       </div>
     <% end %>

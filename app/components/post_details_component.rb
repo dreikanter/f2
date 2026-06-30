@@ -26,7 +26,7 @@ class PostDetailsComponent < ViewComponent::Base
   end
 
   def add_published_item(component)
-    value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-slate-500")
+    value = @post.published_at ? helpers.datetime_with_duration_tag(@post.published_at) : content_tag(:span, "Not published", class: "text-muted")
     component.with_item(StatListItemComponent.new(
       label: "Published",
       value: value,
@@ -46,7 +46,7 @@ class PostDetailsComponent < ViewComponent::Base
     value = if @post.source_url.present?
       helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "text-sky-600 underline underline-offset-4 transition hover:text-sky-500 truncate block")
     else
-      content_tag(:span, "None", class: "text-slate-500")
+      content_tag(:span, "None", class: "text-muted")
     end
 
     component.with_item(StatListItemComponent.new(
