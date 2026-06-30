@@ -10,9 +10,11 @@
    shades the UI already uses, so adopting a token is a like-for-like swap. */
 @theme {
   /* Surfaces */
-  --color-surface:        var(--color-white);
-  --color-surface-muted:  var(--color-slate-50);
-  --color-surface-sunken: var(--color-slate-100);
+  --color-surface:                var(--color-white);
+  --color-surface-muted:          var(--color-slate-50);
+  --color-surface-sunken:         var(--color-slate-100);
+  --color-surface-inverted:       var(--color-slate-600);
+  --color-surface-inverted-hover: var(--color-slate-700);
 
   /* Borders & dividers */
   --color-border:         var(--color-slate-200);

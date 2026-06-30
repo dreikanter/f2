@@ -6,7 +6,7 @@
     <div class="flex items-center gap-3 md:order-2">
       <% if Current.user.present? %>
         <%# User menu button (desktop) %>
-        <button type="button" class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-on-brand text-sm font-semibold cursor-pointer disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-ring" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom-end">
+        <button type="button" class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-surface-inverted text-on-brand text-sm font-semibold cursor-pointer disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-ring" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom-end">
           <span class="sr-only">Open user menu</span>
           <%= Current.user.email_address[0].upcase %>
         </button>
@@ -56,8 +56,8 @@
             desktop_link_classes = class_names(
               "inline-flex items-center rounded-sm px-3 py-2 transition-colors duration-150 md:px-3 md:py-1",
               {
-                "bg-slate-600 text-on-brand" => item[:active],
-                "text-body hover:bg-slate-200 hover:text-heading" => !item[:active]
+                "bg-surface-inverted text-on-brand" => item[:active],
+                "text-body hover:bg-surface-sunken hover:text-heading" => !item[:active]
               },
               "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             )
@@ -77,7 +77,7 @@
             mobile_link_classes = class_names(
               "block w-full px-4 py-2 cursor-pointer hover:bg-surface-sunken hover:text-heading focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading",
               {
-                "bg-slate-600 text-on-brand hover:bg-slate-700 hover:text-on-brand focus:text-on-brand" => item[:active],
+                "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => item[:active],
                 "text-heading" => !item[:active],
                 "rounded-t-lg" => index == 0,
                 "rounded-b-lg" => index == navbar_items.length - 1,
@@ -98,7 +98,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-surface-sunken hover:text-heading focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading rounded-t-lg border-b border-border",
                 {
-                  "bg-slate-600 text-on-brand hover:bg-slate-700 hover:text-on-brand focus:text-on-brand" => current_page?(settings_path),
+                  "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => current_page?(settings_path),
                   "text-heading" => !current_page?(settings_path)
                 }
               ),
@@ -107,7 +107,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-surface-sunken hover:text-heading focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading border-b border-border",
                 {
-                  "bg-slate-600 text-on-brand hover:bg-slate-700 hover:text-on-brand focus:text-on-brand" => current_page?(access_tokens_path),
+                  "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => current_page?(access_tokens_path),
                   "text-heading" => !current_page?(access_tokens_path)
                 }
               ),
@@ -116,7 +116,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-surface-sunken hover:text-heading focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading border-b border-border",
                 {
-                  "bg-slate-600 text-on-brand hover:bg-slate-700 hover:text-on-brand focus:text-on-brand" => current_page?(ai_credentials_path),
+                  "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => current_page?(ai_credentials_path),
                   "text-heading" => !current_page?(ai_credentials_path)
                 }
               ),
@@ -125,7 +125,7 @@
               class: class_names(
                 "block w-full px-4 py-2 cursor-pointer hover:bg-surface-sunken hover:text-heading focus:outline-none focus:ring-2 focus:ring-ring focus:text-heading rounded-b-lg",
                 {
-                  "bg-slate-600 text-on-brand hover:bg-slate-700 hover:text-on-brand focus:text-on-brand" => current_page?(invites_path),
+                  "bg-surface-inverted text-on-brand hover:bg-surface-inverted-hover hover:text-on-brand focus:text-on-brand" => current_page?(invites_path),
                   "text-heading" => !current_page?(invites_path)
                 }
               ),
