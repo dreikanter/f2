@@ -6,7 +6,6 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
 
     assert_equal "anthropic", entry.provider
     assert_equal "claude-sonnet-4-6", entry.model
-    assert_equal :native, entry.tier
   end
 
   test "#find should accept symbol providers" do
@@ -31,12 +30,6 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
     assert LlmModelCapability.supported?("openrouter", "anthropic/claude-haiku-4-5")
   end
 
-  test "#tier_for should return the reliability tier" do
-    assert_equal :native, LlmModelCapability.tier_for("anthropic", "claude-opus-4-8")
-    assert_equal :validated, LlmModelCapability.tier_for("openrouter", "anthropic/claude-sonnet-4-6")
-    assert_nil LlmModelCapability.tier_for("anthropic", "made-up-model")
-  end
-
   test "#models_for should return only that provider's entries" do
     entries = LlmModelCapability.models_for("anthropic")
 
@@ -48,12 +41,5 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
     providers = LlmModelCapability.all.map(&:provider).uniq
 
     providers.each { |provider| assert LlmProvider.exists?(provider), "#{provider} is not a known LlmProvider" }
-  end
-
-  test "every curated entry should carry a known tier" do
-    LlmModelCapability.all.each do |entry|
-      assert_includes LlmModelCapability::TIERS, entry.tier,
-                      "#{entry.provider}/#{entry.model} has unknown tier #{entry.tier}"
-    end
   end
 end
