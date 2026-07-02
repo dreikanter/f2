@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: bf13f50eb663a1ad0a6e996634c9e298149f088d
+  revision: b42f3b0085da3394a991872fc45e10efb7e1431b
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -476,7 +476,7 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sorbet-runtime (0.6.13321)
+    sorbet-runtime (0.6.13322)
     sord (7.1.0)
       commander (~> 5.0)
       parlour (~> 9.1)
