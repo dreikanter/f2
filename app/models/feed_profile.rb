@@ -21,11 +21,13 @@ class FeedProfile
             "source_url" => { "type" => "string" },
             "published_at" => { "type" => "string" }
           },
-          "required" => ["uid", "body", "source_url"]
+          "required" => ["uid", "body", "source_url"],
+          "additionalProperties" => false
         }
       }
     },
-    "required" => ["items"]
+    "required" => ["items"],
+    "additionalProperties" => false
   }.freeze
 
   PROFILES = {
