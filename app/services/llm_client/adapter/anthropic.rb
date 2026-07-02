@@ -2,7 +2,7 @@ class LlmClient
   module Adapter
     # Anthropic enables web access through provider-hosted server tools. Citations
     # are disabled because they conflict with structured output.
-    class Anthropic
+    class Anthropic < Base
       def web_params(_model)
         {
           tools: [

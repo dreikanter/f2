@@ -17,6 +17,16 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_raises(KeyError) { LlmClient::Adapter.for("nope") }
   end
 
+  test "every registered adapter should inherit from Base" do
+    LlmClient::Adapter::REGISTRY.each_key do |provider|
+      assert_kind_of LlmClient::Adapter::Base, LlmClient::Adapter.for(provider)
+    end
+  end
+
+  test "Base#web_params should raise NotImplementedError" do
+    assert_raises(NotImplementedError) { LlmClient::Adapter::Base.new.web_params("any-model") }
+  end
+
   test "anthropic #web_params should declare web search and fetch server tools" do
     types = LlmClient::Adapter::Anthropic.new.web_params("claude-opus-4-8").fetch(:tools).map { |t| t[:type] }
 

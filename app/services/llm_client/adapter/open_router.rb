@@ -3,7 +3,7 @@ class LlmClient
     # OpenRouter enables web access through its cross-model web plugin.
     # `require_parameters` routes only to upstreams that honor the request's
     # structured-output parameters.
-    class OpenRouter
+    class OpenRouter < Base
       def web_params(_model)
         {
           plugins: [{ id: "web" }],
