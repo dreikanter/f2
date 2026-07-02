@@ -1,6 +1,6 @@
 class LlmClient
   module Adapter
-    # Interface every provider adapter implements.
+    # Basic abstraction for an LLM provider adapter
     class Base
       # Provider-specific request params that enable web access, deep-merged
       # into the request via `with_params`.
