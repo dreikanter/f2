@@ -1,12 +1,12 @@
-class Development::JobRunsController < ApplicationController
+class Development::RunsController < ApplicationController
   def index
-    authorize [:development, :job_run], :index?
+    authorize [:development, :run], :index?
     @job_class = find_job_class
     @runs = JobRun.where(job_class: @job_class.name).order(created_at: :desc)
   end
 
   def create
-    authorize [:development, :job_run], :create?
+    authorize [:development, :run], :create?
     @job_class = find_job_class
     job_run = JobRun.create!(job_class: @job_class.name)
     JobRunnerJob.perform_later(job_run)

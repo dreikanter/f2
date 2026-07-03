@@ -15,7 +15,7 @@ Rails.application.routes.draw do
     end
 
     resources :jobs, only: :index do
-      resources :runs, only: [:index, :create], controller: "job_runs"
+      resources :runs, only: [:index, :create]
     end
   end
 

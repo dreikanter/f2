@@ -19,7 +19,7 @@
         <% item = ListItemComponent.new(data: { key: "development.job_runs.#{run.id}" }) %>
         <% item.with_primary do %>
           <span class="inline-flex items-center gap-2">
-            <%= job_run_status_badge(run) %>
+            <%= run_status_badge(run) %>
             <span class="text-sm text-muted">Enqueued <%= short_time_ago(run.created_at) %></span>
           </span>
         <% end %>

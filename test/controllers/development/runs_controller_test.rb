@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
+class Development::RunsControllerTest < ActionDispatch::IntegrationTest
   def dev_user
     @dev_user ||= create(:user, :dev)
   end
