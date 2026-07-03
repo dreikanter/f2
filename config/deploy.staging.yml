@@ -124,3 +124,7 @@ env:
     - POSTGRES_PASSWORD
     - IMGPROXY_KEY
     - IMGPROXY_SALT
+    # LLM provider keys for the capability probe job; optional, see
+    # .kamal/secrets.staging.
+    - ANTHROPIC_API_KEY
+    - MOONSHOT_API_KEY
