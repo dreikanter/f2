@@ -394,28 +394,7 @@ class FeedProfile
             an optional list of supplementary comments, an optional list of image URLs,
             the source URL, and the published date in ISO 8601.
           PROMPT
-          output_schema: {
-            "type" => "object",
-            "properties" => {
-              "items" => {
-                "type" => "array",
-                "items" => {
-                  "type" => "object",
-                  "properties" => {
-                    "uid" => { "type" => "string" },
-                    "title" => { "type" => "string" },
-                    "body" => { "type" => "string" },
-                    "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
-                    "images" => { "type" => "array", "items" => { "type" => "string" } },
-                    "source_url" => { "type" => "string" },
-                    "published_at" => { "type" => "string" }
-                  },
-                  "required" => ["uid", "body", "source_url"]
-                }
-              }
-            },
-            "required" => ["items"]
-          },
+          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
           tools: ["web_search", "web_fetch"]
         }
       },
