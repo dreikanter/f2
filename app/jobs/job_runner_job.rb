@@ -1,6 +1,4 @@
-# Runs a registered maintenance job on behalf of a JobRun, driving its status
-# lifecycle (queued -> running -> succeeded/failed). Running through SolidQueue
-# keeps long maintenance work off the web request.
+# Wraps a registered job so each run's status and timing land on its JobRun.
 class JobRunnerJob < ApplicationJob
   queue_as :default
 
@@ -11,6 +9,6 @@ class JobRunnerJob < ApplicationJob
   rescue StandardError => e
     job_run.update!(status: :failed, finished_at: Time.current)
     Rails.error.report(e, context: { job_run_id: job_run.id, job_class: job_run.job_class })
-    raise
+    raise # surface to SolidQueue too, don't swallow
   end
 end

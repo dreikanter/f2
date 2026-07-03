@@ -1,9 +1,6 @@
-# One execution of a registered maintenance job, triggered from the dev area.
-# Runs are enqueued through JobRunnerJob, which drives the status lifecycle.
 class JobRun < ApplicationRecord
-  # Allowlist of jobs that can be run from the browser. Registered jobs take no
-  # arguments by design. Both controllers and the runner resolve names against
-  # this list, so a request can never enqueue an arbitrary class.
+  # Allowlist for job names arriving in params, so a request can't enqueue an
+  # arbitrary class. Registered jobs take no arguments.
   RUNNABLE_JOBS = [
     PurgeExpiredEventsJob
   ].freeze
