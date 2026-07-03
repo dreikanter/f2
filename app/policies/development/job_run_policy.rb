@@ -1,4 +1,4 @@
-class Development::RunPolicy < ApplicationPolicy
+class Development::JobRunPolicy < ApplicationPolicy
   def index?
     dev?
   end

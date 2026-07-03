@@ -4,7 +4,7 @@
   <%= render PageHeaderComponent.new(title: @job_class.name) do |header| %>
     <% header.with_breadcrumb(label: "Maintenance Jobs", url: development_jobs_path) %>
     <% header.with_action_button do %>
-      <%= button_to development_job_runs_path(@job_class.name),
+      <%= button_to development_job_job_runs_path(@job_class.name),
             class: "inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer",
             data: { key: "development.job_runs.run" } do %>
         <%= icon("circle-play", css_class: "size-5") %>
@@ -19,7 +19,7 @@
         <% item = ListItemComponent.new(data: { key: "development.job_runs.#{run.id}" }) %>
         <% item.with_primary do %>
           <span class="inline-flex items-center gap-2">
-            <%= run_status_badge(run) %>
+            <%= job_run_status_badge(run) %>
             <span class="text-sm text-muted">Enqueued <%= short_time_ago(run.created_at) %></span>
           </span>
         <% end %>

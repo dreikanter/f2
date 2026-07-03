@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Development::RunsControllerTest < ActionDispatch::IntegrationTest
+class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
   def dev_user
     @dev_user ||= create(:user, :dev)
   end
@@ -11,7 +11,7 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should require dev permission" do
     sign_in_as(regular_user)
-    get development_job_runs_path("PurgeExpiredEventsJob")
+    get development_job_job_runs_path("PurgeExpiredEventsJob")
 
     assert_redirected_to root_path
   end
@@ -19,7 +19,7 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
   test "#index should list runs for the job" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
     sign_in_as(dev_user)
-    get development_job_runs_path("PurgeExpiredEventsJob")
+    get development_job_job_runs_path("PurgeExpiredEventsJob")
 
     assert_response :success
     assert_select %([data-key="development.job_runs.#{run.id}"])
@@ -27,7 +27,7 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should return not found for an unregistered job" do
     sign_in_as(dev_user)
-    get development_job_runs_path("SomeOtherJob")
+    get development_job_job_runs_path("SomeOtherJob")
 
     assert_response :not_found
   end
@@ -37,11 +37,11 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { JobRun.count }, 1 do
       assert_enqueued_with(job: JobRunnerJob) do
-        post development_job_runs_path("PurgeExpiredEventsJob")
+        post development_job_job_runs_path("PurgeExpiredEventsJob")
       end
     end
 
-    assert_redirected_to development_job_runs_path("PurgeExpiredEventsJob")
+    assert_redirected_to development_job_job_runs_path("PurgeExpiredEventsJob")
     assert_equal "PurgeExpiredEventsJob", JobRun.last.job_class
   end
 
@@ -49,7 +49,7 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(regular_user)
 
     assert_no_difference -> { JobRun.count } do
-      post development_job_runs_path("PurgeExpiredEventsJob")
+      post development_job_job_runs_path("PurgeExpiredEventsJob")
     end
 
     assert_redirected_to root_path
@@ -59,7 +59,7 @@ class Development::RunsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(dev_user)
 
     assert_no_difference -> { JobRun.count } do
-      post development_job_runs_path("SomeOtherJob")
+      post development_job_job_runs_path("SomeOtherJob")
     end
 
     assert_response :not_found
