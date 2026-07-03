@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_06_26_184639) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -190,6 +190,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_26_184639) do
     t.datetime "updated_at", null: false
     t.index ["created_by_user_id"], name: "index_invites_on_created_by_user_id"
     t.index ["invited_user_id"], name: "index_invites_on_invited_user_id"
+  end
+
+  create_table "job_runs", force: :cascade do |t|
+    t.string "job_class", null: false
+    t.string "status", default: "queued", null: false
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_class", "created_at"], name: "index_job_runs_on_job_class_and_created_at"
   end
 
   create_table "llm_usages", force: :cascade do |t|
@@ -423,7 +433,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_06_26_184639) do
     t.string "email_deactivation_reason"
     t.string "name", default: "", null: false
     t.string "password_digest", null: false
-    t.datetime "password_updated_at", precision: nil, null: false
+    t.datetime "password_updated_at", null: false
     t.integer "state", default: 0, null: false
     t.datetime "suspended_at"
     t.string "unconfirmed_email"
