@@ -67,8 +67,7 @@ class FeedRefreshWorkflow
   # drop the rest, so insert_all doesn't hit the unique index and roll back the
   # whole batch. Also enforces the digest regime's one-post-per-period invariant.
   def collapse_duplicate_uids(entries)
-    seen = Set.new
-    unique_entries = entries.select { |entry| seen.add?(entry.uid) }
+    unique_entries = entries.uniq(&:uid)
 
     collapsed_count = entries.size - unique_entries.size
     record_stats(collapsed_duplicate_uids: collapsed_count) if collapsed_count.positive?
