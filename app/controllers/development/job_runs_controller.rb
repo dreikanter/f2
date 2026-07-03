@@ -14,15 +14,15 @@ class Development::JobRunsController < ApplicationController
 
   def create
     authorize [:development, :job_run], :create?
-    @job_class = find_job_class
+    job_class = find_job_class
 
     # Insert the run before enqueuing so the worker can't pick the job up before
     # its JobRun exists; job_id is assigned at instantiation, ahead of enqueue.
-    job = @job_class.new
-    JobRun.create!(job_class: @job_class.name, job_id: job.job_id)
+    job = job_class.new
+    JobRun.create!(job_class: job_class.name, job_id: job.job_id)
     job.enqueue
 
-    redirect_to development_job_job_runs_path(@job_class.name), success: "#{@job_class.name} enqueued."
+    redirect_to development_job_job_runs_path(job_class.name), success: "#{job_class.name} enqueued."
   end
 
   private
