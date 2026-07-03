@@ -20,6 +20,9 @@ jobs:
       IMGPROXY_SALT: ${{ secrets.IMGPROXY_SALT }}
       CF_ORIGIN_CERT: ${{ secrets.CF_ORIGIN_CERT }}
       CF_ORIGIN_KEY: ${{ secrets.CF_ORIGIN_KEY }}
+      # Optional LLM provider keys for the capability probe job.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
 
     steps:
       - name: Checkout code
