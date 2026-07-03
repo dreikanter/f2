@@ -55,10 +55,25 @@ class FeedRefreshWorkflow
   def filter_new_entries(processed_entries)
     return [] if processed_entries.empty?
 
-    uids = processed_entries.map(&:uid)
+    deduped_entries = collapse_duplicate_uids(processed_entries)
+    uids = deduped_entries.map(&:uid)
     existing_uids = FeedEntryUid.where(feed_id: feed.id, uid: uids).pluck(:uid).to_set
-    new_entries = processed_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
+    new_entries = deduped_entries.filter { |entry| existing_uids.exclude?(entry.uid) }
     reject_entries_before_threshold(new_entries)
+  end
+
+  # Two items in one batch can resolve to the same uid (e.g. a utm_ variant and
+  # the clean permalink, both normalized by Uid::Resolver). Keep the first and
+  # drop the rest, so insert_all doesn't hit the unique index and roll back the
+  # whole batch. Also enforces the digest regime's one-post-per-period invariant.
+  def collapse_duplicate_uids(entries)
+    seen = Set.new
+    unique_entries = entries.select { |entry| seen.add?(entry.uid) }
+
+    collapsed_count = entries.size - unique_entries.size
+    record_stats(collapsed_duplicate_uids: collapsed_count) if collapsed_count.positive?
+
+    unique_entries
   end
 
   # Entries at or before the feed's import threshold are dropped without

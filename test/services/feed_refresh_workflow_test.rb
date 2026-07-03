@@ -231,6 +231,35 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, workflow.stats[:entries_before_threshold]
   end
 
+  test "#filter_new_entries should collapse duplicate uids within the batch" do
+    test_feed = create(:feed)
+    workflow = FeedRefreshWorkflow.new(test_feed)
+
+    first = FeedEntry.new(feed: test_feed, uid: "dup", published_at: 1.hour.ago)
+    second = FeedEntry.new(feed: test_feed, uid: "dup", published_at: 2.hours.ago)
+    unique = FeedEntry.new(feed: test_feed, uid: "unique", published_at: 1.hour.ago)
+
+    result = workflow.send(:filter_new_entries, [first, second, unique])
+
+    assert_equal ["dup", "unique"], result.map(&:uid)
+    assert_same first, result.first
+    assert_equal 1, workflow.stats[:collapsed_duplicate_uids]
+  end
+
+  test "#filter_new_entries should not record collapsed count without duplicates" do
+    test_feed = create(:feed)
+    workflow = FeedRefreshWorkflow.new(test_feed)
+
+    entries = [
+      FeedEntry.new(feed: test_feed, uid: "a", published_at: 1.hour.ago),
+      FeedEntry.new(feed: test_feed, uid: "b", published_at: 1.hour.ago)
+    ]
+
+    workflow.send(:filter_new_entries, entries)
+
+    assert_nil workflow.stats[:collapsed_duplicate_uids]
+  end
+
   test "#filter_new_entries should keep entries without a published date despite the import threshold" do
     test_feed = create(:feed, import_after: 1.hour.ago)
     workflow = FeedRefreshWorkflow.new(test_feed)
