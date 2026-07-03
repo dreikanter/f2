@@ -39,7 +39,7 @@ The user picks an **engine** (mechanism), not an input syntax. Two modes:
 |---|---|---|
 | Engine | Deterministic profiles (RSS, YouTube, Reddit, …) | Single AI profile (LLM + web access) |
 | Input | A URL (single-line **"Source link"** field) | Free-form **"What should AI follow?"** textarea |
-| Accepts | A link (scheme auto-fixed) or a deterministic shorthand (`r/x`) | A link, several links, or a description |
+| Accepts | A link (scheme auto-fixed) | A link, several links, or a description |
 
 The **mode toggle** carries the mechanism; the **field label** carries the expected input type.
 There is no auto-detection of input *shape* — the user stays in the engine they chose — but each
@@ -59,16 +59,13 @@ cheaper-engine hint, see §1); a non-URL in Mode A is routed to Mode B via an in
   one that **silent scheme-fix** turns into a parseable URL with a dotted host (`example.com` →
   `https://example.com`). The fix never applies to something that isn't host-shaped — `r/x` must
   not become `https://r/x` (host `r`), which would dead-end in the couldn't-reach state instead of
-  reaching its matcher or the bridge. **Respect an explicit `http://`** for fetching (never force
+  reaching the bridge. **Respect an explicit `http://`** for fetching (never force
   https — some feeds are http-only; uid identity is a separate concern, §3).
-- **Deterministic shorthands stay**: inputs an existing matcher already resolves unambiguously
-  (today: `r/x`, `user/x` → Reddit) enter Mode A detection as-is. Only genuinely ambiguous
-  handles are not expanded — `@name` could be X, Telegram, or YouTube, and can't be resolved
-  deterministically; those belong to the AI bridge. *(Revised: the original decision dropped
-  `r/x` too, on the incorrect claim that it can't be resolved deterministically — the shipped
-  Reddit matcher already does exactly that.)*
+- **No shorthand expansion.** `r/x` and `@handle` are not special-cased: a subreddit is followed by
+  pasting its full URL; ambiguous handles belong to the AI bridge. Reddit doesn't warrant special
+  input treatment — the shipped matcher's bare-`r/x` patterns can go with the old smart input.
 - **Failure taxonomy — two terminal exits, one transient state.** The terminal exits are the same
-  exit: input isn't a URL or known shorthand (client-side, before any fetch), or it is a URL but
+  exit: input isn't a URL (client-side, before any fetch), or it is a URL but
   yields no working feed (after detection). Both route to the **"Follow with AI instead"** bridge,
   carrying the input into Mode B. The transient state is not an exit: every candidate failed on
   network errors → retry state (§7), with retry primary and the bridge available as a secondary
