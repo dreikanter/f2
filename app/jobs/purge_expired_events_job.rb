@@ -4,6 +4,8 @@
 # This job intentionally deletes in small batches so a daily cron run does not
 # hold locks on the events table for one long operation.
 class PurgeExpiredEventsJob < ApplicationJob
+  include RecordsJobRun
+
   queue_as :default
 
   BATCH_SIZE = 500
@@ -17,6 +19,10 @@ class PurgeExpiredEventsJob < ApplicationJob
       deleted_count += events.delete_all
       sleep BATCH_PAUSE
     end
+
+    record_event(type: "job.purge_expired_events.completed",
+                 message: "Purged #{deleted_count} expired events",
+                 deleted_count: deleted_count)
 
     deleted_count
   end

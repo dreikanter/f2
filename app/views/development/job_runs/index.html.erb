@@ -1,0 +1,38 @@
+<% content_for :title, "#{@job_class.name} runs" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: @job_class.name) do |header| %>
+    <% header.with_breadcrumb(label: "Maintenance Jobs", url: development_jobs_path) %>
+    <% header.with_action_button do %>
+      <%= button_to development_job_job_runs_path(@job_class.name),
+            class: "inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer",
+            data: { key: "development.job_runs.run" } do %>
+        <%= icon("circle-play", css_class: "size-5") %>
+        <span>Run</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @runs.any? %>
+    <%= render(ListComponent.new) do |list| %>
+      <% @runs.each do |run| %>
+        <% item = ListItemComponent.new(data: { key: "development.job_runs.#{run.id}" }) %>
+        <% item.with_primary do %>
+          <%= link_to development_job_job_run_path(@job_class.name, run),
+                class: "inline-flex items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" do %>
+            <%= job_run_status_badge(run) %>
+            <span class="text-sm text-muted">Enqueued <%= short_time_ago(run.created_at) %></span>
+          <% end %>
+        <% end %>
+        <% if run.finished_at && run.started_at %>
+          <% item.with_secondary do %>
+            <span class="text-sm text-muted">Ran for <%= distance_of_time_in_words(run.started_at, run.finished_at, include_seconds: true) %></span>
+          <% end %>
+        <% end %>
+        <% list.with_item(item) %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= render EmptyStateComponent.new("This job hasn't run yet") %>
+  <% end %>
+</div>

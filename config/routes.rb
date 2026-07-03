@@ -13,6 +13,10 @@ Rails.application.routes.draw do
         delete :purge
       end
     end
+
+    resources :jobs, only: :index do
+      resources :job_runs, only: [:index, :create, :show]
+    end
   end
 
   constraints ->(req) {

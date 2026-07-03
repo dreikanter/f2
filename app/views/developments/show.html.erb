@@ -25,6 +25,16 @@
       </div>
     <% end %>
 
+    <%= render CardComponent.new(href: development_jobs_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+          <%= icon("circle-play", css_class: "size-5") %>
+          <span>Maintenance Jobs</span>
+        </h2>
+        <p class="text-body">Run maintenance jobs and browse their run history</p>
+      </div>
+    <% end %>
+
     <%= render CardComponent.new(href: development_email_previews_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
