@@ -4,9 +4,16 @@ class JobRun < ApplicationRecord
   # Allowlist of jobs that can be run from the browser. Registered jobs take no
   # arguments by design. Both controllers and the runner resolve names against
   # this list, so a request can never enqueue an arbitrary class.
-  RUNNABLE_JOBS = [PurgeExpiredEventsJob].freeze
+  RUNNABLE_JOBS = [
+    PurgeExpiredEventsJob
+  ].freeze
 
-  enum :status, { queued: "queued", running: "running", succeeded: "succeeded", failed: "failed" }, default: :queued
+  enum :status, {
+    queued: "queued",
+    running: "running",
+    succeeded: "succeeded",
+    failed: "failed"
+  }, default: :queued
 
   validates :job_class, presence: true
 
