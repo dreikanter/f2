@@ -1,0 +1,32 @@
+<% content_for :title, "Maintenance Jobs" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "Maintenance Jobs") do |header| %>
+    <% header.with_breadcrumb(label: "Dev Tools", url: development_path) %>
+    <% header.with_context_paragraph("Run registered maintenance jobs and browse their run history.") %>
+  <% end %>
+
+  <% if @jobs.any? %>
+    <%= render(ListComponent.new) do |list| %>
+      <% @jobs.each do |job| %>
+        <% item = ListItemComponent.new(data: { key: "development.jobs.#{job.name}" }) %>
+        <% item.with_primary do %>
+          <%= link_to job.name, development_job_runs_path(job.name),
+                class: "truncate text-base text-heading transition hover:text-heading" %>
+        <% end %>
+        <% item.with_trailing do %>
+          <%= button_to development_job_runs_path(job.name),
+                class: "inline-flex items-center justify-center rounded-md border border-border bg-surface p-2 text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer",
+                title: "Run #{job.name}",
+                data: { key: "development.jobs.#{job.name}.run" } do %>
+            <%= icon("circle-play", css_class: "size-5") %>
+            <span class="sr-only">Run</span>
+          <% end %>
+        <% end %>
+        <% list.with_item(item) %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= render EmptyStateComponent.new("No runnable jobs registered") %>
+  <% end %>
+</div>

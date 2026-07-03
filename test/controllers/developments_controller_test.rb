@@ -22,6 +22,7 @@ class DevelopmentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Dev Tools"
     assert_select "a[href='#{development_system_status_path}']", count: 1
+    assert_select "a[href='#{development_jobs_path}']", count: 1
     assert_select "a[href='#{mission_control_jobs.root_path}']", count: 1
     assert_select "a[href='#{development_email_previews_path}']", count: 1
     assert_select "a[href='#{development_sent_emails_path}']", count: 1
