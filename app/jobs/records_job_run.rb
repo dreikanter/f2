@@ -22,7 +22,13 @@ module RecordsJobRun
   def record_event(type:, message: "", level: :info, **metadata)
     return unless job_run
 
-    Event.create!(type: type, subject: job_run, level: level, message: message, metadata: metadata)
+    Event.create!(
+      type: type,
+      subject: job_run,
+      level: level,
+      message: message,
+      metadata: metadata
+    )
   end
 
   def track_job_run
