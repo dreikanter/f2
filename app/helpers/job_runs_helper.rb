@@ -13,4 +13,15 @@ module JobRunsHelper
       key: "development.job_runs.#{run.id}.status"
     )
   end
+
+  EVENT_LEVEL_COLORS = {
+    "debug" => :gray,
+    "info" => :blue,
+    "warning" => :orange,
+    "error" => :red
+  }.freeze
+
+  def event_level_badge(event)
+    render BadgeComponent.new(text: event.level, color: EVENT_LEVEL_COLORS.fetch(event.level, :gray))
+  end
 end

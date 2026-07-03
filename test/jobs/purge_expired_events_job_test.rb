@@ -25,6 +25,18 @@ class PurgeExpiredEventsJobTest < ActiveJob::TestCase
     assert Event.exists?(recent.id)
   end
 
+  test "#perform should record a completion event for its JobRun" do
+    create(:event, expires_at: 1.hour.ago)
+    job = PurgeExpiredEventsJob.new
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", job_id: job.job_id)
+
+    job.perform_now
+
+    event = run.events.find_by(type: "job.purge_expired_events.completed")
+    assert_not_nil event
+    assert_equal 1, event.metadata["deleted_count"]
+  end
+
   test "#perform should delete references of purged events" do
     expired = create(:event, expires_at: 1.hour.ago)
     active = create(:event, expires_at: 1.hour.from_now)

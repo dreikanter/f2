@@ -18,10 +18,11 @@
       <% @runs.each do |run| %>
         <% item = ListItemComponent.new(data: { key: "development.job_runs.#{run.id}" }) %>
         <% item.with_primary do %>
-          <span class="inline-flex items-center gap-2">
+          <%= link_to development_job_job_run_path(@job_class.name, run),
+                class: "inline-flex items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" do %>
             <%= job_run_status_badge(run) %>
             <span class="text-sm text-muted">Enqueued <%= short_time_ago(run.created_at) %></span>
-          </span>
+          <% end %>
         <% end %>
         <% if run.finished_at && run.started_at %>
           <% item.with_secondary do %>

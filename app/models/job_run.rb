@@ -12,6 +12,9 @@ class JobRun < ApplicationRecord
     failed: "failed"
   }, default: :queued
 
+  # Structured output recorded by the job while it runs (see RecordsJobRun).
+  has_many :events, as: :subject, dependent: :nullify
+
   validates :job_class, presence: true
 
   def self.runnable_job(name)

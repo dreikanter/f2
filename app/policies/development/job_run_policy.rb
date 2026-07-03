@@ -3,6 +3,10 @@ class Development::JobRunPolicy < ApplicationPolicy
     dev?
   end
 
+  def show?
+    dev?
+  end
+
   def create?
     dev?
   end

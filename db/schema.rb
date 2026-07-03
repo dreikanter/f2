@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_03_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -199,7 +199,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
     t.datetime "finished_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "job_id"
     t.index ["job_class", "created_at"], name: "index_job_runs_on_job_class_and_created_at"
+    t.index ["job_id"], name: "index_job_runs_on_job_id", unique: true
   end
 
   create_table "llm_usages", force: :cascade do |t|
