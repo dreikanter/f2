@@ -47,6 +47,16 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert run.job_id.present?
   end
 
+  test "#create should enqueue a job that finds its run by job_id" do
+    sign_in_as(dev_user)
+
+    perform_enqueued_jobs do
+      post development_job_job_runs_path("PurgeExpiredEventsJob")
+    end
+
+    assert_predicate JobRun.last, :succeeded?
+  end
+
   test "#show should render the run's recorded events" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
     event = create(:event, subject: run, message: "Purged 3 expired events")
