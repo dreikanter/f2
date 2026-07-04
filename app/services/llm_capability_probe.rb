@@ -8,9 +8,10 @@
 #
 # Deliberately independent of LlmProvider/AiCredential so an unwired
 # provider can be qualified before any app code exists for it. Keys come
-# from the environment, not the credentials table. Run via
-# LlmCapabilityProbeJob (dev-area jobs runner) or script/llm_capability_probe.rb.
-# Matrix decisions and raw transcripts feed plan-03-provider-verification.md.
+# from the environment, not the credentials table. Run via the dev-area
+# jobs runner (AnthropicCapabilityProbeJob / KimiCapabilityProbeJob) or
+# script/llm_capability_probe.rb. Results — evidence included — are
+# recorded as JobRun events and feed plan-03-provider-verification.md.
 module LlmCapabilityProbe
   # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape (strict: additionalProperties false
   # everywhere — the Anthropic requirement confirmed live in Track 2).
@@ -152,12 +153,13 @@ module LlmCapabilityProbe
       @results = []
     end
 
-    # Returns { results:, passed:, transcript_path: }. Every check is
-    # attempted; failures are recorded, never raised — the probe's job is to
-    # report what a provider does, not to crash on it.
+    # Returns { results:, passed: }. Every check is attempted; failures are
+    # recorded, never raised — the probe's job is to report what a provider
+    # does, not to crash on it. Evidence rides along in each result so the
+    # caller can persist everything (no separate transcript to chase).
     def run
       @checks.each { |check| record(check) { send("check_#{check}") } }
-      { results: @results, passed: @results.none? { |r| r[:status] == "FAIL" }, transcript_path: write_transcript }
+      { results: @results, passed: @results.none? { |r| r[:status] == "FAIL" } }
     end
 
     private
@@ -227,7 +229,7 @@ module LlmCapabilityProbe
       payload = raw.is_a?(Hash) ? raw : JSON.parse(raw.to_s)
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
       items = payload.is_a?(Hash) ? Array(payload["items"]) : []
-      evidence = { items: items.first(3), gathered_preview: gathered&.slice(0, 500) }.compact
+      evidence = { items: items.first(3), gathered_preview: gathered&.slice(0, 2000) }.compact
       if errors.any?
         { status: "FAIL", note: "schema violation: #{errors.first['error']}", evidence: evidence }
       elsif items.empty?
@@ -240,16 +242,7 @@ module LlmCapabilityProbe
     end
 
     def pass(condition, fail_note, evidence)
-      { status: condition ? "PASS" : "FAIL", note: condition ? yield : fail_note, evidence: evidence.to_s[0, 800] }
-    end
-
-    def write_transcript
-      dir = Rails.root.join("tmp/llm_probe")
-      FileUtils.mkdir_p(dir)
-      path = dir.join("#{@provider.key}-#{@model.tr('/. ', '--_')}-#{Time.current.strftime('%Y%m%d-%H%M%S')}.json")
-      File.write(path, JSON.pretty_generate(provider: @provider.key, model: @model, ran_at: Time.current.utc.iso8601,
-                                            ruby_llm: RubyLLM::VERSION, results: @results))
-      path.to_s
+      { status: condition ? "PASS" : "FAIL", note: condition ? yield : fail_note, evidence: evidence.to_s[0, 2000] }
     end
   end
 end

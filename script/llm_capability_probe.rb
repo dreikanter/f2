@@ -29,5 +29,5 @@ outcome = runner.run
 
 puts "\n#{provider.key} / #{options[:model]}"
 outcome[:results].each { |r| puts format("  %-11s %-4s %5ss  %s", r[:check], r[:status], r[:seconds], r[:note]) }
-puts "\nTranscript: #{outcome[:transcript_path]}"
+puts JSON.pretty_generate(outcome[:results])
 exit(outcome[:passed] ? 0 : 1)

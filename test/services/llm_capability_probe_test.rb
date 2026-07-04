@@ -133,17 +133,6 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_match(/RuntimeError: boom/, outcome[:results].first[:note])
   end
 
-  test "#run should write a JSON transcript" do
-    outcome = run_checks("pong", ["plain"])
-
-    assert File.exist?(outcome[:transcript_path])
-    transcript = JSON.parse(File.read(outcome[:transcript_path]))
-    assert_equal "fake", transcript["provider"]
-    assert_equal 1, transcript["results"].size
-  ensure
-    FileUtils.rm_f(outcome[:transcript_path]) if outcome
-  end
-
   test ".build should raise on an unknown provider" do
     error = assert_raises(ArgumentError) { LlmCapabilityProbe::Provider.build("nope") }
     assert_match(/Unknown provider/, error.message)

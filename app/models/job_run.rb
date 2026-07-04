@@ -2,7 +2,8 @@ class JobRun < ApplicationRecord
   # Allowlist for job names arriving in params, so a request can't enqueue an
   # arbitrary class. Registered jobs take no arguments.
   RUNNABLE_JOBS = [
-    LlmCapabilityProbeJob,
+    AnthropicCapabilityProbeJob,
+    KimiCapabilityProbeJob,
     PurgeExpiredEventsJob
   ].freeze
 
