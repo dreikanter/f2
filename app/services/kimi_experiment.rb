@@ -16,7 +16,6 @@ module KimiExperiment
   DEFAULT_API_BASE = "https://api.moonshot.ai/v1".freeze
   BUILTIN_WEB_SEARCH = { type: "builtin_function", function: { name: "$web_search" } }.freeze
   MAX_HANDSHAKE_ROUNDS = 3
-  FENCE = /\A```(?:json)?\s*(.*?)\s*```\z/m
 
   # Fetches a fixed public page so the model has real retrieval without any
   # model-controlled URL (no SSRF surface). Counts invocations as evidence.
@@ -28,7 +27,7 @@ module KimiExperiment
     def execute
       @invocations = invocations + 1
       html = Net::HTTP.get(URI("https://rubyonrails.org/blog"))
-      html.gsub(%r{<script.*?</script>}mi, " ").gsub(/<[^>]+>/, " ").squish.first(8000)
+      ActionController::Base.helpers.strip_tags(html.first(200_000)).squish.first(8000)
     end
   end
 
@@ -75,7 +74,7 @@ module KimiExperiment
       stripped = text.to_s.strip
       return "clean_json" if parseable?(stripped)
 
-      fenced = stripped[FENCE, 1]
+      fenced = unfence(stripped)
       return "fenced_json" if fenced && parseable?(fenced)
 
       "invalid"
@@ -137,6 +136,14 @@ module KimiExperiment
 
     def structure_prompt
       LlmCapabilityProbe::STRUCTURE_PROMPT_PREFIX + LlmCapabilityProbe::SAMPLE_TEXT
+    end
+
+    # Plain string operations, not a regexp: fence stripping runs on model
+    # output, and a backtracking pattern over it is a ReDoS surface (CodeQL).
+    def unfence(text)
+      return unless text.length > 6 && text.start_with?("```") && text.end_with?("```")
+
+      text.delete_prefix("```").delete_prefix("json").delete_suffix("```").strip
     end
 
     def parseable?(text)
