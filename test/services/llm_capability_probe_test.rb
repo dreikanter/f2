@@ -99,6 +99,15 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "FAIL", outcome[:results].first[:status]
   end
 
+  test "#run should fail the web search check on a refusal that contains URLs" do
+    refusal = "I don't have the ability to browse the live web. Visit https://rubyonrails.org/blog " \
+              "or subscribe to https://rubyonrails.org/feed.xml for updates."
+    outcome = run_checks(refusal, ["web_search"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "model reports no web access", outcome[:results].first[:note]
+  end
+
   test "#run should skip the web fetch check when the provider has no mechanism" do
     outcome = run_checks([], ["web_fetch"])
 

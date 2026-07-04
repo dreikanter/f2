@@ -39,6 +39,15 @@ module LlmCapabilityProbe
 
   GATHER_PROMPT = "Search the web for the latest two posts on the Ruby on Rails official blog " \
                   "(rubyonrails.org/blog). For each, report the title, its full URL, and a one-sentence summary."
+
+  # A reply can contain URLs and still be a refusal ("I cannot browse the
+  # web... visit rubyonrails.org/blog yourself") — grounding checks must
+  # treat that as no web access, not as evidence.
+  REFUSAL_MARKERS = /(?:don't|do not) have the ability|(?:cannot|can't|unable to) (?:browse|access)|no ability to browse/i
+
+  def self.refusal?(text)
+    text.to_s.match?(REFUSAL_MARKERS)
+  end
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
                             "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
   SAMPLE_TEXT = <<~TEXT
@@ -191,6 +200,8 @@ module LlmCapabilityProbe
       @provider.prepare_web(chat)
       chat.with_params(**@provider.web_search_params(@model))
       text = chat.ask(GATHER_PROMPT).content.to_s
+      return { status: "FAIL", note: "model reports no web access", evidence: text[0, 2000] } if LlmCapabilityProbe.refusal?(text)
+
       pass(text.match?(%r{https?://}) && text.length > 80, "no URLs in response", text) { "web search grounding" }
     end
 
