@@ -5,7 +5,7 @@
 <%
   preview_source_keys =
     if show_chooser
-      candidates.to_h { |c| [c["profile_key"], FeedProfile.source_key_for(c["profile_key"])] }
+      candidates.to_h { |c| [c["profile_key"], FeedProfile.source_key_for(c["profile_key"]) || "url"] }
     else
       { feed.feed_profile_key => (FeedProfile.source_key_for(feed.feed_profile_key) || "url") }
     end

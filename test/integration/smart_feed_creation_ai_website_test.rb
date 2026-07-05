@@ -116,6 +116,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       end
 
       assert_equal "enabled", Feed.last.state
+      assert_nil FeedIdentification.find_by(user: user, input: ai_url),
+                 "FeedIdentification should be cleaned up after saving an AI feed from a URL"
       end
     end
   end

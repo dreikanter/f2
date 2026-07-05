@@ -77,7 +77,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     if @feed.save
-      cleanup_feed_identification(@feed.url) if @feed.url
+      cleanup_feed_identification(@feed.source_input) if @feed.source_input
 
       if require_ai_credentials?
         redirect_to new_ai_credential_path(feed_id: @feed.id)
@@ -125,7 +125,7 @@ class FeedsController < ApplicationController
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression?
       record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
-      cleanup_feed_identification(@feed.url) if @feed.url
+      cleanup_feed_identification(@feed.source_input) if @feed.source_input
 
       if require_ai_credentials?
         redirect_to new_ai_credential_path(feed_id: @feed.id)

@@ -2,9 +2,8 @@
 # (matcher + parameter shape + loader/processor/normalizer triple).
 #
 class FeedProfile
-  # Shared output shape for AI-extraction profiles. All AI profiles
-  # converge on this `{ items: [...] }` envelope; only the prompt and
-  # the tools the loader is allowed to use differ.
+  # Shared output shape for AI extraction: the `{ items: [...] }` envelope the
+  # LLM loader returns and PassthroughProcessor unpacks.
   UNIVERSAL_OUTPUT_SCHEMA = {
     "type" => "object",
     "properties" => {
