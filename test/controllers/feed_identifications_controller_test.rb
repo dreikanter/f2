@@ -196,9 +196,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
                                     headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # The prompt is the source, so it stays editable while creating (spec §1).
-    assert_select "textarea[name='feed[params][prompt]']", text: "follow the A24 blog"
+    # The prompt is the source, so it stays editable while creating (spec §1);
+    # exactly one prompt field, and the profile key still submits.
+    assert_select "textarea[name='feed[params][prompt]']", { count: 1, text: "follow the A24 blog" }
     assert_select "input[type=text][name='feed[params][url]']", count: 0
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm']", count: 1
   end
 
   test "#create should default a bridged AI feed to a daily schedule" do
@@ -510,8 +512,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'name="feed[params][prompt]"'
-    assert_includes response.body, "value=\"#{handle}\""
+    assert_select "textarea[name='feed[params][prompt]']", text: handle
     refute_includes response.body, 'name="feed[params][url]"'
   end
 
@@ -532,7 +533,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'name="feed[params][prompt]"'
+    assert_select "textarea[name='feed[params][prompt]']", text: query
     refute_includes response.body, 'name="feed[params][url]"'
   end
 

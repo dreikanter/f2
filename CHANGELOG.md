@@ -9,7 +9,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - New feeds now start with a clear choice: follow a feed or channel by its link, or follow with AI by describing a source or topic in your own words.
 - When a link can't be followed, the next step is clearer: retry if it just couldn't be reached, or follow it with AI (or try a different link) when there's no feed to read.
 - The "how should we fetch posts?" step is tidier: it only asks you to choose when more than one way actually works, and a single working option is just shown to you.
-- Creating an AI feed now lets you tweak the prompt right in the form before saving, and it checks for new posts once a day by default.
+- Creating an AI feed now lets you tweak the prompt before saving, and it checks for new posts once a day by default.
 
 ## 2026-07-03
 
