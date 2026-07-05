@@ -16,7 +16,37 @@ class FeedIdentification < ApplicationRecord
       detected_candidates.first
   end
 
+  # Candidates that can fetch the source (spec §7): the count of these drives how
+  # the result is presented. A candidate counts unless it's known-broken —
+  # tested and failed, or unreachable — so a passed candidate works.
+  def working_candidates
+    candidates.reject do |attributes|
+      candidate = Candidate.new(attributes)
+      candidate.failed? || candidate.unreachable?
+    end
+  end
+
+  # How the detection result should present (spec §7):
+  #   :working     — at least one candidate read the source → the feed form
+  #   :unreachable — nothing connected (couldn't-reach) → the transient retry state
+  #   :no_feed     — reachable, but no candidate yields a feed → the terminal
+  #                  error that offers the AI bridge
+  def outcome
+    return :working if working_candidates.any?
+    return :unreachable if unreachable_only?
+
+    :no_feed
+  end
+
   private
+
+  # Nothing was reachable to judge: the initial fetch never connected, or every
+  # detected candidate failed on the network.
+  def unreachable_only?
+    return true if error == "fetch_failed"
+
+    candidates.present? && candidates.all? { |attributes| Candidate.new(attributes).unreachable? }
+  end
 
   # Lazy so the suggestion chain stops wrapping at the first match; memoized
   # so the repeated lookups share one enumerator.
