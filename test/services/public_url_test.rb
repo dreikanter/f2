@@ -35,6 +35,20 @@ class PublicUrlTest < ActiveSupport::TestCase
     end
   end
 
+  test ".safe? should reject encoded loopback literals that resolve past a naive string check" do
+    # These all resolve to 127.0.0.1 / 0.0.0.0 through the client's resolver.
+    %w[
+      http://2130706433/ http://0x7f000001/ http://0177.0.0.1/ http://0/
+      http://[::ffff:127.0.0.1]/ http://127.0.0.1./
+    ].each do |url|
+      assert_not PublicUrl.safe?(url), "expected #{url} to be refused"
+    end
+  end
+
+  test ".safe? should allow public address literals" do
+    assert PublicUrl.safe?("https://93.184.216.34/ok.png")
+  end
+
   test ".safe? should allow public hosts that merely contain private-looking substrings" do
     assert PublicUrl.safe?("https://10.example.com/")
     assert PublicUrl.safe?("https://localhost.example.com/")
