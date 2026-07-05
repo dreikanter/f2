@@ -30,13 +30,6 @@
 en:
   hello: "Hello world"
 
-  feed_identifications:
-    failures:
-      fetch_failed: "We couldn't load this source."
-      unidentifiable: "We couldn't find a way to follow this source."
-      internal_error: "An error occurred while identifying the feed."
-      generic: "We couldn't identify a feed profile for this URL."
-
   events:
     feed_enabled:
       name: "Feed enabled"

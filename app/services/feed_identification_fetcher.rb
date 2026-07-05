@@ -1,9 +1,9 @@
 class FeedIdentificationFetcher
-  # A hard fetch failure: the source returned no usable response, as opposed to a
-  # page that loads but fits no structured profile (which falls back to the AI
-  # option). Every subclass persists the "fetch_failed" error code (the UI
-  # resolves it to text via I18n); the class and its message exist only for the
-  # logs.
+  # A fetch that yielded no usable response. UnreachableError (couldn't connect)
+  # persists as "unreachable" and reads as a transient retry; every other
+  # FetchError (bad status, redirect loop, a blocked non-public host) persists as
+  # "unreadable" and reads as a terminal "no feed here" (spec §7). The class and
+  # its message exist only for the logs.
   class FetchError < StandardError; end
   class UnreachableError < FetchError; end    # no answer: DNS, refused, or timeout
   class RedirectLimitError < FetchError; end  # followed too many redirects
@@ -38,11 +38,16 @@ class FeedIdentificationFetcher
     else
       feed_identification.update!(status: :failed, candidates: [], error: "unidentifiable")
     end
+  rescue UnreachableError => e
+    # Couldn't connect (DNS, refused, timeout): genuinely transient, so the UI
+    # offers a retry. Expected, so log without reporting it as a bug.
+    @logger.info("Feed identification couldn't reach #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
+    feed_identification.update!(status: :failed, candidates: [], error: "unreachable")
   rescue FetchError => e
-    # Expected (a bad or unreachable source): log with detail for debugging, but
-    # don't report it as a bug. e.message carries the status or underlying cause.
+    # Reached the source but it's unusable (bad status, redirect loop): retrying
+    # won't help, so this reads as a terminal "no feed here".
     @logger.info("Feed identification fetch failed for #{sanitize_input_for_logging(@input)}: #{e.class} (#{e.message})")
-    feed_identification.update!(status: :failed, candidates: [], error: "fetch_failed")
+    feed_identification.update!(status: :failed, candidates: [], error: "unreadable")
   rescue StandardError => e
     # Unexpected: report it as a bug, then surface a neutral code.
     sanitized = sanitize_input_for_logging(@input)
@@ -63,7 +68,7 @@ class FeedIdentificationFetcher
   # loopback, or metadata address must not be dialed. Redirects that hop into a
   # private range are a separate fetch-layer gap tracked in #920.
   def fetch_body_for_input
-    raise UnreachableError, "blocked non-public URL" unless PublicUrl.safe?(@input)
+    raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
     response = http_client.get(@input)
     raise ResponseStatusError.new(response.status) unless response.success?

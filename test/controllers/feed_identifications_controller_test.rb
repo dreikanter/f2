@@ -83,6 +83,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
             <title>Test Post</title>
             <description>Test content</description>
             <link>http://example.com/post1</link>
+            <guid>http://example.com/post1</guid>
+            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
           </item>
         </channel>
       </rss>
@@ -267,8 +269,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'action="replace"'
-    assert_includes response.body, 'target="feed-form"'
+    assert_includes response.body, 'data-identification-state="complete"'
   end
 
   test "#show should return error when status is failed" do
@@ -291,11 +292,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "identification.ai-bridge"
   end
 
-  test "#show should render the localized failure message for a fetch failure" do
+  test "#show should show the transient retry state when the source can't be reached" do
     sign_in_as(user)
     url = "http://example.com/down.xml"
 
-    stub_request(:get, url).to_return(status: 500)
+    stub_request(:get, url).to_timeout
 
     post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
@@ -303,7 +304,37 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_select "p", text: I18n.t("feed_identifications.failures.fetch_failed")
+    assert_select "[data-key='identification.retry']"
+    assert_select "[data-key='identification.ai-bridge']"
+  end
+
+  test "#create should re-run detection when retrying a couldn't-reach success" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    # A success whose only candidate was unreachable: Retry must re-detect rather
+    # than re-render the same couldn't-reach state.
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success,
+                                 candidates: [{ "profile_key" => "youtube", "test_status" => "unreachable" }])
+
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_includes response.body, 'data-controller="polling"'
+  end
+
+  test "#show should show the terminal no-feed error when a reachable link has no working feed" do
+    sign_in_as(user)
+    url = "http://example.com/page.html"
+    create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success,
+                                 candidates: [{ "profile_key" => "rss", "test_status" => "failed" }])
+
+    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="error"'
+    assert_includes response.body, "identification.ai-bridge"
+    assert_includes response.body, "pull any posts"
   end
 
   test "#show should return error when feed detail is missing" do

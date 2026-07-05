@@ -21,9 +21,12 @@ class FeedIdentificationsController < ApplicationController
     # rather than guessing (spec §1) — the user stays in the mode they chose.
     return render(not_a_link_bridge) if source_url.nil?
 
-    return handle_success_status if feed_identification.success?
+    # A settled result — a working feed, or a reachable link with no feed — is
+    # shown as-is. Everything else kicks off a fresh detection, so the retry
+    # state's Retry actually re-checks a couldn't-reach result.
+    return present_outcome if settled_identification?
 
-    if feed_identification.new_record? || feed_identification.failed?
+    if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
       begin
         feed_identification.update!(
           status: :processing,
@@ -47,14 +50,9 @@ class FeedIdentificationsController < ApplicationController
       return render(identification_error(error: "Identification session expired. Please try again."))
     end
 
-    case feed_identification.status
-    when "processing"
-      handle_processing_status
-    when "success"
-      handle_success_status
-    when "failed"
-      handle_failed_status
-    end
+    return handle_processing_status if feed_identification.processing?
+
+    present_outcome
   end
 
   def destroy
@@ -101,6 +99,30 @@ class FeedIdentificationsController < ApplicationController
     head :no_content
   end
 
+  # A finished identification worth showing without re-detecting: a working feed
+  # or a reachable-but-featureless link. A couldn't-reach result is deliberately
+  # excluded so its Retry re-runs detection rather than re-rendering itself.
+  def settled_identification?
+    feed_identification.success? && feed_identification.outcome != :unreachable
+  end
+
+  # A prior success whose candidates were all unreachable — retrying should
+  # re-detect rather than re-render the same couldn't-reach state.
+  def retryable_unreachable?
+    feed_identification.success? && feed_identification.outcome == :unreachable
+  end
+
+  # Present the finished identification by how many candidates actually work
+  # (spec §7): the feed form when at least one does, otherwise the transient
+  # retry state (couldn't reach) or the terminal error that offers the AI bridge.
+  def present_outcome
+    case feed_identification.outcome
+    when :working then handle_success_status
+    when :unreachable then render(couldnt_reach_retry)
+    else render(no_feed_error)
+    end
+  end
+
   def handle_success_status
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
@@ -114,12 +136,6 @@ class FeedIdentificationsController < ApplicationController
     )
 
     render(identification_success(feed, candidates: feed_identification.candidates))
-  end
-
-  def handle_failed_status
-    code = feed_identification.error.presence || "generic"
-    message = t("feed_identifications.failures.#{code}", default: :"feed_identifications.failures.generic")
-    render(identification_error(error: message))
   end
 
   def identification_error(error:, heading: "Feed identification failed")
@@ -137,6 +153,27 @@ class FeedIdentificationsController < ApplicationController
       heading: "That doesn't look like a link",
       error: "Follow it with AI instead, or switch back and paste a link."
     )
+  end
+
+  # Terminal: the link was reachable but no deterministic profile reads it. The
+  # bridge is the way forward (spec §7).
+  def no_feed_error
+    identification_error(
+      heading: "Couldn't pull any posts from that link",
+      error: "We couldn't find a feed there — but AI can still follow it, or you can try a different link."
+    )
+  end
+
+  # Transient: nothing connected. Retrying is the primary path; the bridge is a
+  # secondary escape so the state can't dead-end (spec §7).
+  def couldnt_reach_retry
+    {
+      turbo_stream: turbo_stream.replace(
+        "feed-form",
+        partial: "feeds/identification_retry",
+        locals: { input: raw_input }
+      )
+    }
   end
 
   def identification_loading

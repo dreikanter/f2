@@ -103,6 +103,58 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal "rss", id.suggested_candidate.profile_key
   end
 
+  test "#working_candidates should exclude failed and unreachable candidates" do
+    id = identification([
+      { "profile_key" => "rss", "test_status" => "passed" },
+      { "profile_key" => "atom", "test_status" => "failed" },
+      { "profile_key" => "youtube", "test_status" => "unreachable" }
+    ])
+
+    assert_equal ["rss"], id.working_candidates.map { |c| c["profile_key"] }
+  end
+
+  test "#outcome should be :working when at least one candidate reads the source" do
+    id = identification([
+      { "profile_key" => "rss", "test_status" => "passed" },
+      { "profile_key" => "atom", "test_status" => "failed" }
+    ])
+
+    assert_equal :working, id.outcome
+  end
+
+  test "#outcome should be :no_feed when the source is reachable but no candidate works" do
+    id = identification([{ "profile_key" => "rss", "test_status" => "failed" }])
+
+    assert_equal :no_feed, id.outcome
+  end
+
+  test "#outcome should be :unreachable when every candidate failed on the network" do
+    id = identification([
+      { "profile_key" => "rss", "test_status" => "unreachable" },
+      { "profile_key" => "atom", "test_status" => "unreachable" }
+    ])
+
+    assert_equal :unreachable, id.outcome
+  end
+
+  test "#outcome should be :unreachable when the initial fetch couldn't connect" do
+    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "unreachable", candidates: [])
+
+    assert_equal :unreachable, id.outcome
+  end
+
+  test "#outcome should be :no_feed when the source was reachable but unreadable" do
+    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "unreadable", candidates: [])
+
+    assert_equal :no_feed, id.outcome
+  end
+
+  test "#outcome should be :no_feed when nothing was identified" do
+    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "unidentifiable", candidates: [])
+
+    assert_equal :no_feed, id.outcome
+  end
+
   test "should accept multiple ranked candidates" do
     identification = FeedIdentification.create!(
       user: user,
