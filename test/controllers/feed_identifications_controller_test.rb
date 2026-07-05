@@ -189,6 +189,28 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "https://example.com/page"
   end
 
+  test "#create should give a bridged AI feed an editable prompt" do
+    sign_in_as(user)
+
+    post feed_identifications_path, params: { input: "follow the A24 blog", mode: "ai" },
+                                    headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    # The prompt is the source, so it stays editable while creating (spec §1).
+    assert_select "textarea[name='feed[params][prompt]']", text: "follow the A24 blog"
+    assert_select "input[type=text][name='feed[params][url]']", count: 0
+  end
+
+  test "#create should default a bridged AI feed to a daily schedule" do
+    sign_in_as(user)
+
+    post feed_identifications_path, params: { input: "follow the A24 blog", mode: "ai" },
+                                    headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "select[name='feed[schedule_interval]'] option[value='1d'][selected='selected']"
+  end
+
   test "#show should require authentication" do
     get feed_identifications_path, params: { input: "http://example.com/feed.xml" }
     assert_redirected_to new_session_path

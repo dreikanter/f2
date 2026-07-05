@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 //   provider + model for AI profiles), then opens the modal
 // - on modal close, clears the frame so the polling host unmounts (stops polling)
 export default class extends Controller {
-  static targets = ["button", "frame"]
+  static targets = ["button", "frame", "source"]
   static values = {
     endpoint: String,
     source: String,
@@ -39,14 +39,14 @@ export default class extends Controller {
   open(event) {
     event?.preventDefault()
     const profileKey = this._selectedProfileKey()
-    if (!profileKey || !this.sourceValue.trim() || !this.hasFrameTarget) return
+    if (!profileKey || !this._currentSource().trim() || !this.hasFrameTarget) return
 
     const sourceKey = this.sourceKeysValue[profileKey]
     if (!sourceKey) return
 
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
-    url.searchParams.set(`params[${sourceKey}]`, this.sourceValue)
+    url.searchParams.set(`params[${sourceKey}]`, this._currentSource())
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
       const model = this._aiModelValue()
@@ -65,12 +65,18 @@ export default class extends Controller {
   refreshAvailability() {
     if (!this.hasButtonTarget) return
     const profileKey = this._selectedProfileKey()
-    let ready = !!profileKey && !!this.sourceValue.trim()
+    let ready = !!profileKey && !!this._currentSource().trim()
     // AI profiles can't preview until a provider and model are picked.
     if (ready && this._isAiProfile(profileKey)) {
       ready = !!this._aiCredentialValue() && !!this._aiModelValue()
     }
     this.buttonTarget.disabled = !ready
+  }
+
+  // The source is the static value from detection, unless an editable field (an
+  // AI feed's prompt) is present — then it's whatever the user has typed.
+  _currentSource() {
+    return this.hasSourceTarget ? this.sourceTarget.value : this.sourceValue
   }
 
   _selectedProfileKey() {

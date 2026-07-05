@@ -39,43 +39,61 @@
           source and feed type are the feed's fixed identity, so they're grouped
           under one "Source" heading. %>
       <% source_label = feed.source_input_url? ? "Source URL" : "Source prompt" %>
+      <%# For an AI feed the prompt *is* the source, so while creating it stays an
+          editable textarea (spec §1) — unlike a detected URL, which is read-only. %>
+      <% ai_prompt_editable = !edit_mode && FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
       <div>
         <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
 
         <div class="space-y-6">
-          <div class="space-y-2">
-            <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
-            <%= f.text_field :url_display,
-                             value: feed.source_input,
-                             disabled: true,
-                             class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
-                             aria: { label: "#{source_label} (cannot be changed)" },
-                             data: { key: "form.source-display" } %>
-            <% feed.params&.each do |key, value| %>
-              <%= hidden_field_tag "feed[params][#{key}]", value %>
-            <% end %>
-          </div>
-
-          <% if show_chooser %>
-            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
-          <% else %>
-            <%# Feed type is fixed once the feed exists, so it's shown read-only
-                as a disabled input matching the source field above it. Like the
-                source field, it's display-only — the controller never reads it. %>
+          <% if ai_prompt_editable %>
             <div class="space-y-2">
-              <%= label_tag nil, "Feed type", class: "block font-semibold text-heading" %>
-              <%= f.text_field :feed_type_display,
-                               value: candidate_summary(feed.feed_profile_key, feed.source_input),
+              <%= label_tag "feed_params_prompt", "What should AI follow?", class: "block font-semibold text-heading" %>
+              <%= text_area_tag "feed[params][prompt]", feed.source_input,
+                                id: "feed_params_prompt",
+                                rows: 3,
+                                maxlength: 2000,
+                                required: true,
+                                class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                                data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.ai-prompt" } %>
+              <p class="text-sm text-muted">Describe a source or topic in your own words. You can tweak this before saving.</p>
+            </div>
+          <% else %>
+            <div class="space-y-2">
+              <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
+              <%= f.text_field :url_display,
+                               value: feed.source_input,
                                disabled: true,
                                class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
-                               aria: { label: "Feed type (cannot be changed)" },
-                               data: { key: "form.feed-type-display" } %>
+                               aria: { label: "#{source_label} (cannot be changed)" },
+                               data: { key: "form.source-display" } %>
+              <% feed.params&.each do |key, value| %>
+                <%= hidden_field_tag "feed[params][#{key}]", value %>
+              <% end %>
             </div>
+
+            <% if show_chooser %>
+              <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
+            <% else %>
+              <%# Feed type is fixed once the feed exists, so it's shown read-only
+                  as a disabled input matching the source field above it. Like the
+                  source field, it's display-only — the controller never reads it. %>
+              <div class="space-y-2">
+                <%= label_tag nil, "Feed type", class: "block font-semibold text-heading" %>
+                <%= f.text_field :feed_type_display,
+                                 value: candidate_summary(feed.feed_profile_key, feed.source_input),
+                                 disabled: true,
+                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
+                                 aria: { label: "Feed type (cannot be changed)" },
+                                 data: { key: "form.feed-type-display" } %>
+              </div>
+            <% end %>
           <% end %>
         </div>
 
-        <%# A read-only annotation won't submit the profile key, so a hidden field
-            carries it whenever the chooser isn't offering a live selection. %>
+        <%# A read-only annotation or the editable AI prompt won't submit the
+            profile key, so a hidden field carries it whenever the chooser isn't
+            offering a live selection. %>
         <% unless show_chooser %>
           <%= f.hidden_field :feed_profile_key %>
         <% end %>
