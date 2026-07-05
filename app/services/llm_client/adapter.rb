@@ -6,7 +6,8 @@ class LlmClient
   module Adapter
     REGISTRY = {
       "anthropic" => "Anthropic",
-      "openrouter" => "OpenRouter"
+      "openrouter" => "OpenRouter",
+      "moonshot" => "Moonshot"
     }.freeze
 
     def self.for(provider)

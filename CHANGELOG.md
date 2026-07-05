@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-05
+
+- Added Moonshot (Kimi) as an AI provider — a lower-cost option you can connect with your own API key.
+
 ## 2026-07-03
 
 - Fixed a refresh failure when a feed served the same item twice in one batch, which could wrongly disable the feed.

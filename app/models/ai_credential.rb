@@ -48,7 +48,7 @@ class AiCredential < ApplicationRecord
 
   def ruby_llm_context
     RubyLLM.context do |config|
-      config.public_send("#{provider}_api_key=", credential_data["api_key"])
+      LlmProvider.find(provider).configure(config, credential_data["api_key"])
     end
   end
 

@@ -145,12 +145,12 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(model:, prompt:, output_schema:, web:)
-    chat = credential.ruby_llm_context.chat(model: model, provider: LlmProvider.find(credential.provider).ruby_llm_provider)
+    provider = LlmProvider.find(credential.provider)
+    chat = credential.ruby_llm_context.chat(
+      model: model, provider: provider.ruby_llm_provider, assume_model_exists: provider.assume_model_exists?
+    )
     chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)
-    if web
-      web_params = Adapter.for(credential.provider).web_params(model)
-      chat.with_params(**web_params) if web_params.present? && chat.respond_to?(:with_params)
-    end
+    adapter.apply_web(chat, model) if web
 
     response = chat.ask(prompt)
     ProviderResponse.new(
@@ -162,6 +162,10 @@ class LlmClient
     )
   end
 
+  def adapter
+    @adapter ||= Adapter.for(credential.provider)
+  end
+
   def response_text(response)
     response.respond_to?(:content) ? response.content.to_s : response.to_s
   end
@@ -170,7 +174,7 @@ class LlmClient
     raw = response.respond_to?(:content) ? response.content : response.to_s
     return raw if raw.is_a?(Hash)
 
-    JSON.parse(raw.to_s)
+    JSON.parse(adapter.unwrap_json(raw.to_s))
   rescue JSON::ParserError => e
     raise SchemaError, "non-JSON response from provider: #{e.message}"
   end
