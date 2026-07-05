@@ -122,6 +122,6 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'id="feed-form"'
     assert_includes response.body, feed_url
-    assert_includes response.body, "What do you want to follow?"
+    assert_includes response.body, "Source link"
   end
 end

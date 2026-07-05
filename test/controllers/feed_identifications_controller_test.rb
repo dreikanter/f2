@@ -132,11 +132,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Enter a link"
   end
 
-  test "#create should bridge a free-text query straight to a draft AI feed" do
+  test "#create should bridge a Mode B prompt straight to a draft AI feed" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
-      post feed_identifications_path, params: { input: "ai safety news" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { input: "ai safety news", mode: "ai" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
@@ -144,7 +144,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "ai safety news"
   end
 
-  test "#create should bridge a handle straight to a draft AI feed" do
+  test "#create should offer the AI bridge when a Mode A input isn't a link" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
@@ -152,14 +152,16 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, 'data-identification-state="error"'
+    assert_includes response.body, "identification.ai-bridge"
+    assert_includes response.body, "look like a link"
   end
 
   test "#create should not persist an identification record on the AI bridge" do
     sign_in_as(user)
 
     assert_no_difference("FeedIdentification.count") do
-      post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { input: "climate change", mode: "ai" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
   end
 

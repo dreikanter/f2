@@ -7,7 +7,7 @@
         <%= icon("triangle-alert", css_class: "size-5 text-danger") %>
       </div>
       <div class="ml-3">
-        <h3 class="text-sm font-medium text-danger-strong">Feed identification failed</h3>
+        <h3 class="text-sm font-medium text-danger-strong"><%= local_assigns.fetch(:heading, "Feed identification failed") %></h3>
         <div class="mt-2 text-sm text-danger-strong">
           <p><%= error %></p>
         </div>
@@ -17,8 +17,8 @@
 
   <%= form_with url: feed_identifications_path, method: :post, class: "space-y-4" do |f| %>
     <div class="space-y-2">
-      <%= f.label :input, "What do you want to follow?", class: "block font-semibold text-heading" %>
-      <%= f.text_field :input, value: input, placeholder: "Paste a URL or describe what to follow", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+      <%= f.label :input, "Source link", class: "block font-semibold text-heading" %>
+      <%= f.text_field :input, value: input, placeholder: "https://example.com", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
     </div>
 
     <%= f.submit "Try Again", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
