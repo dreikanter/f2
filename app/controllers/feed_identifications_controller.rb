@@ -74,8 +74,9 @@ class FeedIdentificationsController < ApplicationController
 
   # Build a draft AI feed straight from the carried input — no detection, the AI
   # profile is the destination and the prompt is the source (Mode A→B bridge).
+  # AI feeds default to a daily cadence (spec §1).
   def handle_ai_bridge
-    feed = Current.user.feeds.build(feed_profile_key: "llm", params: { "prompt" => raw_input })
+    feed = Current.user.feeds.build(feed_profile_key: "llm", params: { "prompt" => raw_input }, schedule_interval: "1d")
     render(identification_success(feed, candidates: []))
   end
 
