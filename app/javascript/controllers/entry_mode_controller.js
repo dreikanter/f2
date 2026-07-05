@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // "Follow with AI" (ai) panels, keeping the matching toggle button selected.
 // Each tab and panel carries a data-mode; the inactive panel's fields are
 // disabled so the hidden form neither submits nor blocks required validation.
-// Without JS both panels stay visible, so either mode still works.
+// The app requires JS: without it only the default link panel is reachable.
 export default class extends Controller {
   static targets = ["tab", "panel"]
   static values = { mode: { type: String, default: "link" } }
@@ -30,7 +30,7 @@ export default class extends Controller {
       panel.querySelectorAll("input, textarea").forEach((field) => { field.disabled = !active })
     })
 
-    this.activePanel(mode)?.querySelector("input, textarea")?.focus()
+    this.activePanel(mode)?.querySelector("input:not([type=hidden]), textarea")?.focus()
   }
 
   activePanel(mode) {
