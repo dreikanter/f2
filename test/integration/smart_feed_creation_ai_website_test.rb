@@ -89,9 +89,9 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
 
       get feed_identifications_path, params: { input: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
-      assert_includes response.body, "AI page reader"
+      assert_includes response.body, "Follow with AI"
 
-      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url },
+      post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url },
                              ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
       assert_response :success
       perform_enqueued_jobs
@@ -102,9 +102,9 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       assert_difference("Feed.count", 1) do
         post feeds_path, params: {
           feed: {
-            url: ai_url,
+            params: { prompt: ai_url },
             name: "No-RSS Blog",
-            feed_profile_key: "llm_website_extractor",
+            feed_profile_key: "llm",
             access_token_id: access_token.id,
             target_group: "testgroup",
             schedule_interval: "1h",
@@ -116,6 +116,8 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       end
 
       assert_equal "enabled", Feed.last.state
+      assert_nil FeedIdentification.find_by(user: user, input: ai_url),
+                 "FeedIdentification should be cleaned up after saving an AI feed from a URL"
       end
     end
   end
@@ -125,7 +127,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     # no credential created
 
     with_memory_cache do
-      post feed_preview_path(profile_key: "llm_website_extractor", "params" => { "url" => ai_url })
+      post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url })
 
       assert_response :success
       assert_select "[data-key='credentials.gate']"
@@ -141,9 +143,9 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     assert_difference("Feed.count", 1) do
       post feeds_path, params: {
         feed: {
-          url: ai_url,
+          params: { prompt: ai_url },
           name: "No-RSS Blog",
-          feed_profile_key: "llm_website_extractor",
+          feed_profile_key: "llm",
           access_token_id: access_token.id,
           target_group: "testgroup",
           schedule_interval: "1h",

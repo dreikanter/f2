@@ -2,9 +2,8 @@
 # (matcher + parameter shape + loader/processor/normalizer triple).
 #
 class FeedProfile
-  # Shared output shape for AI-extraction profiles. All AI profiles
-  # converge on this `{ items: [...] }` envelope; only the prompt and
-  # the tools the loader is allowed to use differ.
+  # Shared output shape for AI extraction: the `{ items: [...] }` envelope the
+  # LLM loader returns and PassthroughProcessor unpacks.
   UNIVERSAL_OUTPUT_SCHEMA = {
     "type" => "object",
     "properties" => {
@@ -371,31 +370,39 @@ class FeedProfile
       title_extractor: "TitleExtractor::RssTitleExtractor",
       output_schema: nil
     },
-    "llm_website_extractor" => {
-      display_name: "AI page reader",
-      description: "Uses AI to extract recent posts from a webpage that doesn't expose an RSS feed",
-      input_shape: :url,
+    "llm" => {
+      display_name: "AI",
+      description: "Uses AI to follow and transform web content per a free-form prompt",
+      # Accepts anything (a link, several links, or a description); the prompt
+      # is the source. The params key is `prompt`, not derived from input_shape.
+      input_shape: :any,
       depends_on_ai: true,
-      matcher: "ProfileMatcher::LlmWebsiteExtractorMatcher",
+      matcher: "ProfileMatcher::LlmProfileMatcher",
       parameter_schema: {
         "type" => "object",
         "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
+          "prompt" => { "type" => "string", "minLength" => 1, "maxLength" => 2000 }
         },
-        "required" => ["url"],
+        "required" => ["prompt"],
         "additionalProperties" => false
       },
       loader: {
         class: "Loader::LlmLoader",
         config: {
+          # Functional placeholder; Track 4 (#908) owns the final system prompt
+          # and safeguards. Web access is provided per-provider by the adapter.
           prompt_template: <<~PROMPT,
-            Visit {{input}} and extract up to 10 of the most recent posts or articles.
+            Follow the source or topic below and return its most recent posts. The
+            input may be a link, several links, or a description of what to follow.
+
+            {{input}}
+
             For each item, return a stable permalink as `uid`, a title, body text,
-            an optional list of supplementary comments, an optional list of image URLs,
-            the source URL, and the published date in ISO 8601.
+            an optional list of supplementary comments, an optional list of image
+            URLs, the source URL, and the published date in ISO 8601. Return at
+            most 10 items.
           PROMPT
-          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
-          tools: ["web_search", "web_fetch"]
+          output_schema: UNIVERSAL_OUTPUT_SCHEMA
         }
       },
       processor: { class: "Processor::PassthroughProcessor", config: {} },
@@ -462,40 +469,6 @@ class FeedProfile
       normalizer: { class: "Normalizer::TwitterNormalizer", config: {} },
       title_extractor: "TitleExtractor::TwitterTitleExtractor",
       output_schema: nil
-    },
-    "llm_web_search" => {
-      display_name: "AI search",
-      description: "Uses AI to follow an account, handle, or search topic as an evergreen subscription",
-      input_shape: :query,
-      depends_on_ai: true,
-      matcher: "ProfileMatcher::LlmWebSearchMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "query" => { "type" => "string", "minLength" => 3, "maxLength" => 200 }
-        },
-        "required" => ["query"],
-        "additionalProperties" => false
-      },
-      loader: {
-        class: "Loader::LlmLoader",
-        config: {
-          prompt_template: <<~PROMPT,
-            Find the most recent posts for `{{input}}` and return the matching articles or
-            posts. The input may be an account or handle (e.g. `@someone`), in which case
-            follow that account's posts, or a free-text topic to search for. For each item,
-            return a stable permalink as `uid`, a title, body text, optional supplementary
-            comments, optional image URLs, the source URL, and the published date in ISO 8601.
-            Return at most 10 items.
-          PROMPT
-          output_schema: UNIVERSAL_OUTPUT_SCHEMA,
-          tools: ["web_search"]
-        }
-      },
-      processor: { class: "Processor::PassthroughProcessor", config: {} },
-      normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
-      title_extractor: nil,
-      output_schema: UNIVERSAL_OUTPUT_SCHEMA
     }
   }.freeze
 
@@ -543,6 +516,15 @@ class FeedProfile
     # @return [Hash, nil] the parameter schema (nil if profile not found)
     def parameter_schema_for(key)
       PROFILES.dig(key, :parameter_schema)
+    end
+
+    # The params key holding the feed's source input (e.g. "url", "prompt").
+    # Derived from the profile's single required param, so the storage key is
+    # independent of input_shape (which an `:any` profile can't double as).
+    # @param key [String] the profile key
+    # @return [String, nil] the source params key, or nil if profile not found
+    def source_key_for(key)
+      PROFILES.dig(key, :parameter_schema, "required")&.first
     end
 
     # @param key [String] the profile key

@@ -9,8 +9,8 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     @feed ||= create(:feed,
                      user: user,
                      ai_credential: create(:ai_credential, :active, user: user),
-                     feed_profile_key: "llm_website_extractor",
-                     params: { "url" => "https://example.com" })
+                     feed_profile_key: "llm",
+                     params: { "prompt" => "https://example.com" })
   end
 
   def feed_entry(overrides = {})

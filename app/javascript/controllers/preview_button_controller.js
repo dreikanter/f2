@@ -12,7 +12,7 @@ export default class extends Controller {
   static values = {
     endpoint: String,
     source: String,
-    shapes: Object,
+    sourceKeys: Object,
     aiProfiles: Array,
     modalId: String
   }
@@ -41,12 +41,12 @@ export default class extends Controller {
     const profileKey = this._selectedProfileKey()
     if (!profileKey || !this.sourceValue.trim() || !this.hasFrameTarget) return
 
-    const shape = this.shapesValue[profileKey]
-    if (!shape) return
+    const sourceKey = this.sourceKeysValue[profileKey]
+    if (!sourceKey) return
 
     const url = new URL(this.endpointValue, window.location.origin)
     url.searchParams.set("profile_key", profileKey)
-    url.searchParams.set(`params[${shape}]`, this.sourceValue)
+    url.searchParams.set(`params[${sourceKey}]`, this.sourceValue)
     if (this._isAiProfile(profileKey)) {
       const credential = this._aiCredentialValue()
       const model = this._aiModelValue()

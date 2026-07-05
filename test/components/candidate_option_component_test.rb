@@ -49,10 +49,10 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
   end
 
   test "#render should label an untested AI candidate as not tested with no note" do
-    result = render_option({ "profile_key" => "llm_website_extractor", "test_status" => "not_tested" })
+    result = render_option({ "profile_key" => "llm", "test_status" => "not_tested" })
 
-    assert_equal "Not tested", result.at_css("[data-key='candidate.llm_website_extractor.status']").text.strip
-    assert_nil result.at_css("[data-key='candidate.llm_website_extractor.note']")
+    assert_equal "Not tested", result.at_css("[data-key='candidate.llm.status']").text.strip
+    assert_nil result.at_css("[data-key='candidate.llm.note']")
   end
 
   test "#render should omit the badge when the candidate carries no verdict" do
@@ -83,7 +83,7 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
   end
 
   test "#render should surface the AI token-cost note for AI candidates" do
-    result = render_option({ "profile_key" => "llm_website_extractor", "test_status" => "not_tested", "depends_on_ai" => true })
+    result = render_option({ "profile_key" => "llm", "test_status" => "not_tested", "depends_on_ai" => true })
 
     assert_match(/costs AI tokens/i, result.at_css("[data-key='candidate.ai-cost']").text)
   end

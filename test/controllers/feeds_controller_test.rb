@@ -429,8 +429,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     feed_params = {
       name: "Search Feed",
-      feed_profile_key: "llm_web_search",
-      params: { query: "ruby news" },
+      feed_profile_key: "llm",
+      params: { prompt: "ruby news" },
       access_token_id: access_token.id,
       target_group: "INVALID GROUP!",  # Invalid format (always validated)
       schedule_interval: "1h"
@@ -570,7 +570,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
   test "#edit should label the source as a prompt for a query-shaped feed" do
     sign_in_as(user)
-    prompt_feed = create(:feed, user: user, feed_profile_key: "llm_web_search", params: { "query" => "cat pictures" })
+    prompt_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "cat pictures" })
 
     get edit_feed_url(prompt_feed)
 

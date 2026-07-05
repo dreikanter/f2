@@ -253,7 +253,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     # When no structured profile matches, the AI fallback now fires and the
     # form lands in the complete state instead of the error state.
     assert_includes response.body, 'data-identification-state="complete"'
-    assert_includes response.body, "llm_website_extractor"
+    assert_includes response.body, "candidate.llm"
   end
 
   test "#show should render the localized failure message for a fetch failure" do
@@ -294,7 +294,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     payload = extract_candidates_payload(response.body)
     # RSS plus the AI fallback. RSS ranks first.
-    assert_equal %w[rss llm_website_extractor], payload.map { |c| c["profile_key"] }
+    assert_equal %w[rss llm], payload.map { |c| c["profile_key"] }
     assert_equal "specific_match", payload.first["rank_reason"]
     assert_equal "ai_fallback", payload.last["rank_reason"]
   end
@@ -311,7 +311,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
-    assert_equal %w[xkcd rss llm_website_extractor], payload.map { |c| c["profile_key"] }
+    assert_equal %w[xkcd rss llm], payload.map { |c| c["profile_key"] }
     assert_equal 0, payload.first["rank"]
     assert_equal "specific_match", payload.first["rank_reason"]
     assert_equal "ai_fallback", payload.last["rank_reason"]
@@ -321,16 +321,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    # Stub the feed_identification directly with an AI-only candidate list — simulates
-    # what the fetcher will write when only the llm_website_extractor matches
-    # (the AI matcher itself ships in a later PR, so we construct the payload
-    # here as a stand-in to exercise the controller payload contract today).
+    # Stub the feed_identification directly with an AI-only candidate list —
+    # simulates what the fetcher writes when only the llm matcher fires.
     FeedIdentification.create!(
       user: user,
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
@@ -338,7 +336,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     payload = extract_candidates_payload(response.body)
     assert_equal 1, payload.size
-    assert_equal "llm_website_extractor", payload.first["profile_key"]
+    assert_equal "llm", payload.first["profile_key"]
     assert_equal true, payload.first["depends_on_ai"]
     assert_equal "ai_fallback", payload.first["rank_reason"]
   end
@@ -352,7 +350,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       status: :success,
       candidates: [
         { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" },
-        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
       ]
     )
 
@@ -452,7 +450,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='token.gate']", count: 0
   end
 
-  test "#show should write the user's input under params[query] for handle inputs" do
+  test "#show should write the user's input under params[prompt] for handle inputs" do
     sign_in_as(user)
     handle = "@alice"
     create(
@@ -462,19 +460,19 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_web_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
     get feed_identifications_path, params: { input: handle }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'name="feed[params][query]"'
+    assert_includes response.body, 'name="feed[params][prompt]"'
     assert_includes response.body, "value=\"#{handle}\""
     refute_includes response.body, 'name="feed[params][url]"'
   end
 
-  test "#show should write the user's input under params[query] for query profiles" do
+  test "#show should write the user's input under params[prompt] for free-text queries" do
     sign_in_as(user)
     query = "climate change"
     create(
@@ -484,14 +482,14 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_web_search", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
     get feed_identifications_path, params: { input: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, 'name="feed[params][query]"'
+    assert_includes response.body, 'name="feed[params][prompt]"'
     refute_includes response.body, 'name="feed[params][url]"'
   end
 
@@ -542,7 +540,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       status: :success,
       candidates: [
         { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match" },
-        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
       ]
     )
 
@@ -551,11 +549,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "data-key=\"candidates\""
     assert_includes response.body, "data-key=\"candidate.rss\""
-    assert_includes response.body, "data-key=\"candidate.llm_website_extractor\""
+    assert_includes response.body, "data-key=\"candidate.llm\""
     # While the user can still pick, the field asks how to fetch; it only
     # switches to the static "Feed type" label once the choice is frozen.
     assert_select "label", text: "How should we fetch posts?"
-    # The AI option already names its dependency ("AI page reader"), so there's
+    # The AI option already names its dependency ("AI"), so there's
     # no redundant AI badge — the cost note carries that signal instead.
     assert_not_includes response.body, "data-key=\"candidate.ai-badge\""
   end
@@ -570,7 +568,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_web_search", "title" => "Climate", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => "Climate", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
@@ -578,8 +576,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "label", text: "Source prompt"
-    assert_select "[data-key='candidate.llm_web_search']",
-                  text: /Follow AI search results for "#{query}"/
+    assert_select "[data-key='candidate.llm']",
+                  text: /Follow with AI: "#{query}"/
   end
 
   test "#show should render a locked single-option chooser when one candidate exists" do
@@ -592,7 +590,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
       ]
     )
 
@@ -601,12 +599,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # The chooser shows even with a single option, so the user sees what was picked.
     assert_select "[data-key='candidates']", count: 1
-    assert_select "[data-key='candidate.llm_website_extractor']", count: 1
+    assert_select "[data-key='candidate.llm']", count: 1
     assert_select "[data-key='candidate.single-note']", count: 1
     # The only option is preselected and locked.
     assert_select "input[type=radio][name='feed[feed_profile_key]'][checked][disabled]", count: 1
     # A disabled radio doesn't submit, so a hidden field carries the value.
-    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm_website_extractor']", count: 1
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm']", count: 1
     # No "Suggested" badge when there's nothing to compare against.
     assert_select "[data-key='candidate.suggested-badge']", count: 0
   end
@@ -624,7 +622,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
     success_identification(url, [
       { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 5 },
-      { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+      { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
     ])
 
     show_chooser(url)
@@ -653,7 +651,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     url = "http://example.com/feed.xml"
     success_identification(url, [
       { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "failed", "posts_found" => 0 },
-      { "profile_key" => "llm_website_extractor", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+      { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
     ])
 
     show_chooser(url)
@@ -662,7 +660,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=radio][value='rss'][disabled]"
     assert_select "input[type=radio][value='rss'][checked]", count: 0
     assert_select "[data-key='candidate.rss.note']"
-    assert_select "input[type=radio][value='llm_website_extractor'][checked]"
+    assert_select "input[type=radio][value='llm'][checked]"
   end
 
   test "#show should keep an unreachable candidate selectable with a transient advisory" do

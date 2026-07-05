@@ -88,8 +88,8 @@ class FeedIdentificationsController < ApplicationController
   def handle_success_status
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
-    input_shape = FeedProfile[profile_key]&.dig(:input_shape) || :url
-    params_for_input = { input_shape.to_s => feed_identification.input }
+    source_key = FeedProfile.source_key_for(profile_key) || "url"
+    params_for_input = { source_key => feed_identification.input }
 
     feed = Current.user.feeds.build(
       params: params_for_input,

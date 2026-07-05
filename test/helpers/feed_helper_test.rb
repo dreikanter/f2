@@ -179,11 +179,11 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal "delete-feed-modal-#{feed.id}", items["Delete feed…"].dig(:data, :modal_trigger_modal_id_value)
   end
 
-  test "#feed_missing_enablement_parts should not report source missing for query-type feed with query" do
+  test "#feed_missing_enablement_parts should not report source missing for an AI feed with a prompt" do
     access_token = create(:access_token, :active)
     feed = build(:feed, access_token: access_token, target_group: "testgroup",
-                        feed_profile_key: "llm_web_search",
-                        params: { "query" => "climate change news" })
+                        feed_profile_key: "llm",
+                        params: { "prompt" => "climate change news" })
     result = feed_missing_enablement_parts(feed)
 
     assert_not_includes result, "source"
@@ -200,16 +200,16 @@ class FeedHelperTest < ActionView::TestCase
 
   test "#candidate_summary should fall back to the profile display name for URL profiles" do
     assert_equal "RSS Feed", candidate_summary("rss", "https://example.com/feed.xml")
-    assert_equal "AI page reader", candidate_summary("llm_website_extractor", "https://example.com")
+    assert_equal "Reddit", candidate_summary("reddit", "https://reddit.com/r/ruby/")
   end
 
-  test "#candidate_summary should personalize the web-search profile with the user's input" do
-    assert_equal "Follow AI search results for \"climate change\"",
-                 candidate_summary("llm_web_search", "climate change")
+  test "#candidate_summary should personalize the AI profile with the user's input" do
+    assert_equal "Follow with AI: \"climate change\"",
+                 candidate_summary("llm", "climate change")
   end
 
-  test "#candidate_summary should personalize the web-search profile with a handle input" do
-    assert_equal "Follow AI search results for \"@alice\"",
-                 candidate_summary("llm_web_search", "@alice")
+  test "#candidate_summary should personalize the AI profile with a handle input" do
+    assert_equal "Follow with AI: \"@alice\"",
+                 candidate_summary("llm", "@alice")
   end
 end

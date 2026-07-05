@@ -587,7 +587,7 @@
             selected: "rss",
             candidates: [
               chooser_candidate.call("rss", test_status: "passed", posts_found: 5),
-              chooser_candidate.call("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
             ]
           },
           {
@@ -596,16 +596,16 @@
             selected: "rss",
             candidates: [
               chooser_candidate.call("rss", test_status: "passed", posts_found: 0),
-              chooser_candidate.call("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
             ]
           },
           {
             title: "Source failed, AI takes over",
             note: "The structured source couldn't be read, so it's disabled and the AI reader is suggested.",
-            selected: "llm_website_extractor",
+            selected: "llm",
             candidates: [
               chooser_candidate.call("rss", test_status: "failed", posts_found: 0),
-              chooser_candidate.call("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
             ]
           },
           {
@@ -625,7 +625,7 @@
               chooser_candidate.call("rss", test_status: "passed", posts_found: 4),
               chooser_candidate.call("youtube", test_status: "failed"),
               chooser_candidate.call("xkcd", test_status: "unreachable"),
-              chooser_candidate.call("llm_website_extractor", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
             ]
           }
         ]

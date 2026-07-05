@@ -1,12 +1,11 @@
 module FeedHelper
-  # Plain-language label for a detection candidate. URL-based candidates
-  # use the profile's display_name; query candidates inject the
-  # user's input into a short sentence so the chooser feels natural for
-  # non-URL inputs.
+  # Plain-language label for a detection candidate. Deterministic profiles
+  # show their display_name; the AI profile injects the user's input into a
+  # short sentence so the chooser reads naturally for a free-form prompt.
   def candidate_summary(profile_key, input)
     case profile_key
-    when "llm_web_search"
-      "Follow AI search results for \"#{input}\""
+    when "llm"
+      "Follow with AI: \"#{input}\""
     else
       FeedProfile.display_name_for(profile_key)
     end

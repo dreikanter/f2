@@ -21,7 +21,7 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   def ai_feed(**attrs)
-    build(:feed, user: user, feed_profile_key: "llm_web_search", params: { "query" => "x" }, **attrs)
+    build(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "x" }, **attrs)
   end
 
   def component(feed)
@@ -56,7 +56,7 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
 
   test "#ai_profile_keys should list only AI-backed profiles" do
     keys = component(ai_feed).ai_profile_keys
-    assert_includes keys, "llm_web_search"
+    assert_includes keys, "llm"
     assert_not_includes keys, "rss"
   end
 

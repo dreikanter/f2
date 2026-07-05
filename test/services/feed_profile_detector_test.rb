@@ -26,13 +26,13 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
   test ".call should fall back to AI extraction when no non-AI matcher fires for a URL" do
     result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
     assert_equal :url, result.input_shape
-    assert_equal ["llm_website_extractor"], result.candidates.map(&:profile_key)
+    assert_equal ["llm"], result.candidates.map(&:profile_key)
     assert_equal :ai_fallback, result.candidates.first.rank_reason
   end
 
   test ".call should rank a generic RSS feed above the AI fallback" do
     result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
-    assert_equal ["rss", "llm_website_extractor"], result.candidates.map(&:profile_key)
+    assert_equal ["rss", "llm"], result.candidates.map(&:profile_key)
 
     rss = result.candidates.first
     assert_equal 0, rss.rank
@@ -59,7 +59,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     result = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
 
     profile_keys = result.candidates.map(&:profile_key)
-    assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd (100) > rss (10) > AI (1)"
+    assert_equal %w[xkcd rss llm], profile_keys, "xkcd (100) > rss (10) > AI (1)"
 
     xkcd, rss, ai = result.candidates
     assert_equal 0, xkcd.rank

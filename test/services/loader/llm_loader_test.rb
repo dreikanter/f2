@@ -13,8 +13,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     @feed ||= create(:feed,
                      user: user,
                      ai_credential: credential,
-                     feed_profile_key: "llm_website_extractor",
-                     params: { "url" => "https://example.com" })
+                     feed_profile_key: "llm",
+                     params: { "prompt" => "https://example.com" })
   end
 
   def openrouter_credential
@@ -26,8 +26,8 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     @openrouter_feed ||= create(:feed,
                                 user: user,
                                 ai_credential: openrouter_credential,
-                                feed_profile_key: "llm_website_extractor",
-                                params: { "url" => "https://example.com" })
+                                feed_profile_key: "llm",
+                                params: { "prompt" => "https://example.com" })
   end
 
   # Fake client: a call carrying a schema returns the structured items, a
@@ -120,7 +120,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#rendered_prompt should substitute the source input" do
-    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "rust async" })
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "rust async" })
     loader = Loader::LlmLoader.new(feed)
     loader.stub(:config, { prompt_template: "Find {{input}}" }) do
       assert_equal "Find rust async", loader.send(:rendered_prompt)
@@ -128,7 +128,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
   end
 
   test "#rendered_prompt should treat user input literally (no regex backref expansion)" do
-    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => 'a\0b' })
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => 'a\0b' })
     loader = Loader::LlmLoader.new(feed)
     loader.stub(:config, { prompt_template: "Q: {{input}}" }) do
       assert_equal 'Q: a\0b', loader.send(:rendered_prompt)

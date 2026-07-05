@@ -23,10 +23,10 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   def ai_feed
     @ai_feed ||= create(:feed,
                         user: user,
-                        feed_profile_key: "llm_website_extractor",
+                        feed_profile_key: "llm",
                         ai_credential: credential,
                         ai_model: "claude-sonnet-4-6",
-                        params: { "url" => "https://no-rss.example.com" })
+                        params: { "prompt" => "https://no-rss.example.com" })
   end
 
   def rss_feed
@@ -51,10 +51,10 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     stale_feed = create(:feed,
                         user: user,
-                        feed_profile_key: "llm_website_extractor",
+                        feed_profile_key: "llm",
                         ai_credential: credential,
                         ai_model: "removed-model",
-                        params: { "url" => "https://no-rss.example.com" })
+                        params: { "prompt" => "https://no-rss.example.com" })
 
     get edit_feed_path(stale_feed)
 
@@ -90,7 +90,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_equal models.sort_by { |model| model["name"] }, embedded[credential.id.to_s]
 
     ai_profiles = JSON.parse(section["data-ai-settings-ai-profiles-value"])
-    assert_includes ai_profiles, "llm_website_extractor"
+    assert_includes ai_profiles, "llm"
     assert_not_includes ai_profiles, "rss"
   end
 
@@ -109,9 +109,9 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     feed_without_credential = create(:feed,
                                      user: user,
-                                     feed_profile_key: "llm_website_extractor",
+                                     feed_profile_key: "llm",
                                      ai_credential: nil,
-                                     params: { "url" => "https://no-rss.example.com" })
+                                     params: { "prompt" => "https://no-rss.example.com" })
 
     get edit_feed_path(feed_without_credential)
 

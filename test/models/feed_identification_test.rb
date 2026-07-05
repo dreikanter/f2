@@ -60,7 +60,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   test "#suggested_candidate should prefer passed over not_tested and unreachable" do
     id = identification([
       { "profile_key" => "youtube", "test_status" => "unreachable" },
-      { "profile_key" => "llm_website_extractor", "test_status" => "not_tested" },
+      { "profile_key" => "llm", "test_status" => "not_tested" },
       { "profile_key" => "rss", "test_status" => "passed" }
     ])
 
@@ -70,19 +70,19 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   test "#suggested_candidate should fall back to the AI option when every structured candidate failed" do
     id = identification([
       { "profile_key" => "rss", "test_status" => "failed" },
-      { "profile_key" => "llm_website_extractor", "test_status" => "not_tested" }
+      { "profile_key" => "llm", "test_status" => "not_tested" }
     ])
 
-    assert_equal "llm_website_extractor", id.suggested_candidate.profile_key
+    assert_equal "llm", id.suggested_candidate.profile_key
   end
 
   test "#suggested_candidate should prefer the AI option over an unreachable source" do
     id = identification([
       { "profile_key" => "youtube", "test_status" => "unreachable" },
-      { "profile_key" => "llm_website_extractor", "test_status" => "not_tested" }
+      { "profile_key" => "llm", "test_status" => "not_tested" }
     ])
 
-    assert_equal "llm_website_extractor", id.suggested_candidate.profile_key
+    assert_equal "llm", id.suggested_candidate.profile_key
   end
 
   test "#suggested_candidate should never preselect a failed candidate" do
@@ -97,7 +97,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
   test "#suggested_candidate should fall back to the first candidate when none carry a verdict" do
     id = identification([
       { "profile_key" => "rss" },
-      { "profile_key" => "llm_website_extractor" }
+      { "profile_key" => "llm" }
     ])
 
     assert_equal "rss", id.suggested_candidate.profile_key
@@ -110,12 +110,12 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       status: :success,
       candidates: [
         { "profile_key" => "rss", "rank" => 0, "depends_on_ai" => false },
-        { "profile_key" => "llm_website_extractor", "rank" => 1, "depends_on_ai" => true }
+        { "profile_key" => "llm", "rank" => 1, "depends_on_ai" => true }
       ]
     )
 
     identification.reload
 
-    assert_equal %w[rss llm_website_extractor], identification.candidates.map { |c| c["profile_key"] }
+    assert_equal %w[rss llm], identification.candidates.map { |c| c["profile_key"] }
   end
 end

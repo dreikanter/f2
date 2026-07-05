@@ -13,7 +13,7 @@ class FeedPreview < ApplicationRecord
   before_validation :assign_params_digest
 
   # A preview's identity is the user-provided source input (the value behind the
-  # profile's input_shape) — NOT the whole params hash. User input for a new feed
+  # profile's source key) — NOT the whole params hash. User input for a new feed
   # is intentionally minimal (one field today); params derived later during
   # processing must not change identity. Hashing that single value also sidesteps
   # hash key-ordering (and jsonb read-ordering) entirely. When user-supplied input
@@ -30,10 +30,11 @@ class FeedPreview < ApplicationRecord
     Digest::SHA256.hexdigest(parts.to_json)
   end
 
-  # The user-facing source value for a profile, selected by its input_shape.
+  # The user-facing source value for a profile, selected by its declared
+  # source key (url, prompt, …) — independent of input_shape.
   def self.source_input(feed_profile_key, params)
-    shape = FeedProfile[feed_profile_key]&.dig(:input_shape) || :url
-    (params || {})[shape.to_s]
+    key = FeedProfile.source_key_for(feed_profile_key) || "url"
+    (params || {})[key]
   end
 
   # Transitions to :failed only if still non-terminal. The status guard in the
