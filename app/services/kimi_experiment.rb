@@ -16,6 +16,9 @@ module KimiExperiment
   DEFAULT_API_BASE = "https://api.moonshot.ai/v1".freeze
   BUILTIN_WEB_SEARCH = { type: "builtin_function", function: { name: "$web_search" } }.freeze
   MAX_HANDSHAKE_ROUNDS = 3
+  # kimi-k2.5 rejects any temperature other than 1 with a 400.
+  TEMPERATURE = 1
+  MAX_REDIRECTS = 5
 
   # Fetches a fixed public page so the model has real retrieval without any
   # model-controlled URL (no SSRF surface). Counts invocations as evidence.
@@ -26,7 +29,7 @@ module KimiExperiment
 
     def execute
       @invocations = invocations + 1
-      html = Net::HTTP.get(URI("https://rubyonrails.org/blog"))
+      html = KimiExperiment.get_following_redirects("https://rubyonrails.org/blog")
       ActionController::Base.helpers.strip_tags(html.first(200_000)).squish.first(8000)
     end
   end
@@ -50,7 +53,7 @@ module KimiExperiment
     def structured_output_attempts(repeats: 3)
       response_format_modes.flat_map do |mode, format|
         Array.new(repeats) do |attempt|
-          payload = { model: MODEL, temperature: 0.2,
+          payload = { model: MODEL, temperature: TEMPERATURE,
                       messages: [{ role: "user", content: structure_prompt }] }
           payload[:response_format] = format if format
           result = raw_chat(payload)
@@ -80,8 +83,29 @@ module KimiExperiment
       "invalid"
     end
 
+    # A tool that failed to fetch produces apologetic prose about redirects /
+    # inaccessible pages that still contains the blog URL — treat that family
+    # as not grounded alongside the outright browse refusals.
+    FETCH_FAILURE_MARKERS = /couldn't fetch|could not fetch|unable to (?:fetch|access|read)|
+                             encountered a|redirect|isn't following|knowledge cutoff/xi
+
     def grounded?(text)
-      text.match?(%r{https?://}) && !LlmCapabilityProbe.refusal?(text)
+      return false unless text.match?(%r{https?://})
+      return false if LlmCapabilityProbe.refusal?(text) || text.match?(FETCH_FAILURE_MARKERS)
+
+      true
+    end
+
+    # Fixed-URL fetch (no model-controlled address, no SSRF surface) that
+    # follows redirects — rubyonrails.org/blog answers 301.
+    def get_following_redirects(url, limit: MAX_REDIRECTS)
+      raise "too many redirects" if limit.negative?
+
+      response = Net::HTTP.get_response(URI.parse(url))
+      case response
+      when Net::HTTPRedirection then get_following_redirects(response["location"], limit: limit - 1)
+      else response.body.to_s
+      end
     end
 
     def raw_chat(payload)
@@ -100,7 +124,7 @@ module KimiExperiment
     private
 
     def handshake_payload(messages, force_tool:)
-      payload = { model: MODEL, temperature: 0.6, tools: [BUILTIN_WEB_SEARCH], messages: messages.dup }
+      payload = { model: MODEL, temperature: TEMPERATURE, tools: [BUILTIN_WEB_SEARCH], messages: messages.dup }
       payload[:tool_choice] = { type: "function", function: { name: "$web_search" } } if force_tool
       payload
     end

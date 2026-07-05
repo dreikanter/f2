@@ -30,6 +30,12 @@ class KimiExperimentTest < ActiveSupport::TestCase
     assert_not KimiExperiment.grounded?("no links here")
   end
 
+  test ".grounded? should reject fetch-failure prose that still contains the blog URL" do
+    fetch_failure = "I encountered a 301 redirect when trying to fetch the blog. " \
+                    "Check it directly at https://rubyonrails.org/blog."
+    assert_not KimiExperiment.grounded?(fetch_failure)
+  end
+
   test ".web_search_steps should echo tool-call arguments back and record both rounds" do
     payloads = []
     responses = [tool_call_response, content_response("Found: https://rubyonrails.org/2025/12/26")]
