@@ -52,7 +52,9 @@ class DiskUsageService
   end
 
   def postgres_usage
-    execute_query("SELECT pg_database_size(current_database())").first["pg_database_size"]
+    # Memoized so one #call returns an internally consistent snapshot —
+    # the DB can grow between two live pg_database_size reads.
+    @postgres_usage ||= execute_query("SELECT pg_database_size(current_database())").first["pg_database_size"]
   end
 
   def other_used_space

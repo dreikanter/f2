@@ -11,6 +11,12 @@ class LlmClient
           ]
         }
       end
+
+      # Live-verified (plan-03): a single Anthropic call carrying both the
+      # schema and the web server tools returns grounded, schema-valid JSON.
+      def combined_extraction?
+        true
+      end
     end
   end
 end

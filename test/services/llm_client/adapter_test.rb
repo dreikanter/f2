@@ -40,4 +40,10 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal [{ id: "web" }], params.fetch(:plugins)
     assert params.dig(:provider, :require_parameters)
   end
+
+  test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
+    assert LlmClient::Adapter::Anthropic.new.combined_extraction?
+    assert_not LlmClient::Adapter::OpenRouter.new.combined_extraction?
+    assert_not LlmClient::Adapter::Base.new.combined_extraction?
+  end
 end
