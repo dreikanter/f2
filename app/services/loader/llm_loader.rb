@@ -10,15 +10,14 @@ module Loader
   # not part of the profile config: it comes from the feed's override or
   # the provider default (see `#model_for`).
   class LlmLoader < Base
-    # Two calls, because structured output and web tools can't share one request:
-    # first gather content with web access (no schema), then convert that text
-    # into the structured items (schema, no web).
+    # Extraction is one call where the provider can carry web + schema together
+    # (Anthropic), and two otherwise — gather with web access, then structure
+    # the gathered text under the schema. The adapter owns which (see
+    # `#combined_extraction?`).
     def load
       client = options.fetch(:llm_client) { LlmClient.for(feed) }
       ctx = call_context(client)
-
-      gathered = client.call(ctx, prompt: rendered_prompt, output_schema: nil, web: true).payload
-      payload = client.call(ctx, prompt: structuring_prompt(gathered), output_schema: config.fetch(:output_schema), web: false).payload
+      payload = extract(client, ctx)
 
       raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
 
@@ -28,6 +27,16 @@ module Loader
     end
 
     private
+
+    def extract(client, ctx)
+      schema = config.fetch(:output_schema)
+      if LlmClient::Adapter.for(client.credential.provider).combined_extraction?
+        client.call(ctx, prompt: rendered_prompt, output_schema: schema, web: true).payload
+      else
+        gathered = client.call(ctx, prompt: rendered_prompt, output_schema: nil, web: true).payload
+        client.call(ctx, prompt: structuring_prompt(gathered), output_schema: schema, web: false).payload
+      end
+    end
 
     def call_context(client)
       LlmClient::CallContext.new(
