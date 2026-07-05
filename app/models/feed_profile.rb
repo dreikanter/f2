@@ -375,9 +375,10 @@ class FeedProfile
       description: "Uses AI to follow and transform web content per a free-form prompt",
       # Accepts anything (a link, several links, or a description); the prompt
       # is the source. The params key is `prompt`, not derived from input_shape.
+      # Registers NO matcher: the AI profile is structurally excluded from
+      # detection (spec §7) — Mode B selects it directly, detection never can.
       input_shape: :any,
       depends_on_ai: true,
-      matcher: "ProfileMatcher::LlmProfileMatcher",
       parameter_schema: {
         "type" => "object",
         "properties" => {
@@ -499,6 +500,7 @@ class FeedProfile
     # @return [Array<Class>] matcher classes
     def matchers_for(input_shape)
       PROFILES.filter_map do |_key, entry|
+        next if entry[:matcher].blank?
         next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
 
         entry[:matcher].constantize

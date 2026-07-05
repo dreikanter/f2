@@ -7,7 +7,7 @@
 # flag is set for the duration of #call so LlmClient (when introduced)
 # can enforce that rule.
 class FeedProfileDetector
-  DetectionResult = Data.define(:input_shape, :candidates)
+  DetectionResult = Data.define(:candidates)
   DetectionCandidate = Data.define(:profile_key, :title, :depends_on_ai, :rank, :rank_reason)
 
   def self.call(input:, fetched_body: nil)
@@ -19,15 +19,15 @@ class FeedProfileDetector
     @fetched_body = fetched_body
   end
 
+  # Detection is URL-only and deterministic: the input is always a Mode A source
+  # URL (SourceLink canonicalized it upstream). The AI profile registers no
+  # matcher, so it can never appear here (spec §7).
   def call
-    shape = InputClassifier.classify(@input)
-    return empty_result(shape) if shape == :malformed
-
     Thread.current[:llm_detection_phase] = true
 
-    matches = collect_matches(shape)
+    matches = collect_matches
     ranked = rank(matches)
-    DetectionResult.new(input_shape: shape, candidates: build_candidates(ranked))
+    DetectionResult.new(candidates: build_candidates(ranked))
   ensure
     Thread.current[:llm_detection_phase] = nil
   end
@@ -36,16 +36,12 @@ class FeedProfileDetector
 
   attr_reader :input, :fetched_body
 
-  def empty_result(shape)
-    DetectionResult.new(input_shape: shape, candidates: [])
-  end
-
-  def collect_matches(shape)
-    FeedProfile.matchers_for(shape).each_with_index.filter_map do |matcher_class, registration_index|
+  def collect_matches
+    FeedProfile.matchers_for(:url).each_with_index.filter_map do |matcher_class, registration_index|
       begin
         next nil unless matcher_class.new(input, fetched_body).match?
       rescue StandardError => e
-        Rails.error.report(e, context: { matcher_class: matcher_class.name, input_shape: shape })
+        Rails.error.report(e, context: { matcher_class: matcher_class.name })
         next nil
       end
 

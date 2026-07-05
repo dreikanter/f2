@@ -13,7 +13,6 @@ module FeedProfileValidator
       description
       input_shape
       depends_on_ai
-      matcher
       parameter_schema
       loader
       processor
@@ -58,6 +57,12 @@ module FeedProfileValidator
 
       if entry[:depends_on_ai] && !entry[:output_schema].is_a?(Hash)
         failures << "FeedProfile #{key.inspect}: output_schema is required when depends_on_ai is true"
+      end
+
+      # The AI profile registers no matcher (structural detection exclusion,
+      # spec §7); every deterministic profile must declare one.
+      if !entry[:depends_on_ai] && entry[:matcher].to_s.empty?
+        failures << "FeedProfile #{key.inspect}: matcher is required for non-AI profiles"
       end
     end
 

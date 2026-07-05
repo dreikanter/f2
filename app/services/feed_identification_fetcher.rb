@@ -53,13 +53,11 @@ class FeedIdentificationFetcher
 
   private
 
-  # Fetch the URL body for inspection by URL matchers; skip the fetch entirely for
-  # query inputs since structured URL detection doesn't apply. Translates the HTTP
+  # Fetch the source URL body for inspection by the URL matchers. The input is
+  # always a canonical URL here (Mode A), so we always fetch. Translates the HTTP
   # layer's failures into FetchError subclasses, keeping the original error as the
   # message (and as #cause) for diagnosis.
   def fetch_body_for_input
-    return nil if InputClassifier.classify(@input) != :url
-
     response = http_client.get(@input)
     raise ResponseStatusError.new(response.status) unless response.success?
 

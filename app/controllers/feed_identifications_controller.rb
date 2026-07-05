@@ -12,9 +12,11 @@ class FeedIdentificationsController < ApplicationController
   }
 
   def create
-    if InputClassifier.classify(feed_input) == :malformed
-      return render(identification_error(error: "Please enter a link, handle, or a few words to search for"))
-    end
+    return render(identification_error(error: "Enter a link, or a few words describing what to follow.")) if raw_input.blank?
+
+    # No link to detect — an explicit "Follow with AI" bridge, or an input that
+    # isn't a URL — goes straight to a draft AI feed (Mode A→B bridge, spec §1).
+    return handle_ai_bridge if ai_mode? || source_url.nil?
 
     return handle_success_status if feed_identification.success?
 
@@ -31,7 +33,7 @@ class FeedIdentificationsController < ApplicationController
         feed_identification.reload
       end
 
-      FeedIdentificationJob.perform_later(Current.user.id, feed_input)
+      FeedIdentificationJob.perform_later(Current.user.id, source_url)
     end
 
     render(identification_loading)
@@ -53,7 +55,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def destroy
-    original_input = feed_identification.persisted? ? feed_identification.input : feed_input
+    original_input = feed_identification.persisted? ? feed_identification.input : raw_input
     feed_identification.destroy if feed_identification.persisted?
 
     render turbo_stream: turbo_stream.replace(
@@ -65,8 +67,19 @@ class FeedIdentificationsController < ApplicationController
 
   private
 
+  def ai_mode?
+    params[:mode] == "ai"
+  end
+
+  # Build a draft AI feed straight from the carried input — no detection, the AI
+  # profile is the destination and the prompt is the source (Mode A→B bridge).
+  def handle_ai_bridge
+    feed = Current.user.feeds.build(feed_profile_key: "llm", params: { "prompt" => raw_input })
+    render(identification_success(feed, candidates: []))
+  end
+
   def feed_identification
-    @feed_identification ||= FeedIdentification.find_or_initialize_by(user: Current.user, input: feed_input)
+    @feed_identification ||= FeedIdentification.find_or_initialize_by(user: Current.user, input: identification_input)
   end
 
   def handle_processing_status
@@ -111,7 +124,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { input: feed_input, error: error }
+        locals: { input: raw_input, error: error }
       )
     }
   end
@@ -121,7 +134,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_loading",
-        locals: { input: feed_input }
+        locals: { input: source_url }
       )
     }
   end
@@ -136,7 +149,22 @@ class FeedIdentificationsController < ApplicationController
     }
   end
 
-  def feed_input
-    @feed_input ||= params[:input]
+  def raw_input
+    @raw_input ||= params[:input].to_s
+  end
+
+  # The canonical source URL for detection (silent scheme-fix), or nil when the
+  # input isn't a link — in which case the entry flow bridges to the AI profile.
+  def source_url
+    return @source_url if defined?(@source_url)
+
+    @source_url = SourceLink.canonical(raw_input)
+  end
+
+  # Key the identification by the canonical URL when we have one. The polling
+  # #show requests carry that canonical URL back as `input`, so this stays stable
+  # across the detection lifecycle.
+  def identification_input
+    source_url || raw_input
   end
 end

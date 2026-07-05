@@ -102,4 +102,22 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
       FeedProfileValidator.validate!("sample" => entry)
     end
   end
+
+  test "requires a matcher for non-AI profiles" do
+    entry = valid_entry.except(:matcher)
+
+    error = assert_raises(FeedProfileValidator::Error) do
+      FeedProfileValidator.validate!("sample" => entry)
+    end
+
+    assert_includes error.message, "matcher is required for non-AI profiles"
+  end
+
+  test "accepts an AI profile without a matcher (structural detection exclusion)" do
+    entry = valid_entry.except(:matcher).merge(depends_on_ai: true, output_schema: { "type" => "object" })
+
+    assert_nothing_raised do
+      FeedProfileValidator.validate!("sample" => entry)
+    end
+  end
 end
