@@ -93,6 +93,18 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "example.com", feed_identification.candidates.first["title"]
   end
 
+  test "#identify should refuse a non-public URL without fetching it" do
+    url = "http://127.0.0.1/feed.xml"
+    stub_request(:get, url) # should never be hit
+
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "fetch_failed", feed_identification.error
+    assert_not_requested :get, url
+  end
+
   test "#identify should fail as unidentifiable when no structured profile matches" do
     # The AI profile registers no matcher (spec §7), so a reachable page with no
     # standard feed yields no candidates — the entry flow offers the AI bridge.

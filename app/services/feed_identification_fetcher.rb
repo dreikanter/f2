@@ -57,7 +57,14 @@ class FeedIdentificationFetcher
   # always a canonical URL here (Mode A), so we always fetch. Translates the HTTP
   # layer's failures into FetchError subclasses, keeping the original error as the
   # message (and as #cause) for diagnosis.
+  #
+  # Refuse a non-public target before the GET (SSRF, spec §8): the silent
+  # scheme-fix now lets a bare `169.254.169.254` reach this fetch, so a private,
+  # loopback, or metadata address must not be dialed. Redirects that hop into a
+  # private range are a separate fetch-layer gap tracked in #920.
   def fetch_body_for_input
+    raise UnreachableError, "blocked non-public URL" unless PublicUrl.safe?(@input)
+
     response = http_client.get(@input)
     raise ResponseStatusError.new(response.status) unless response.success?
 
