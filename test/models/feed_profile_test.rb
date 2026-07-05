@@ -59,7 +59,12 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert_kind_of String, entry[:description], "#{key}: description"
       assert_includes %i[url query any], entry[:input_shape], "#{key}: input_shape"
       assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
-      assert_kind_of String, entry[:matcher], "#{key}: matcher"
+      if entry[:depends_on_ai]
+        # The AI profile is structurally excluded from detection (spec §7): no matcher.
+        assert_nil entry[:matcher], "#{key}: AI profile must not register a matcher"
+      else
+        assert_kind_of String, entry[:matcher], "#{key}: matcher"
+      end
       assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
 
       assert_kind_of Hash, entry[:loader], "#{key}: loader entry must be a hash"
@@ -83,8 +88,10 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "every PROFILES entry has a resolvable matcher class" do
+  test "every matcher-bearing PROFILES entry has a resolvable matcher class" do
     FeedProfile::PROFILES.each do |key, entry|
+      next if entry[:matcher].blank?
+
       matcher_class = entry[:matcher].constantize
       assert matcher_class < ProfileMatcher::Base, "#{key}: matcher must subclass ProfileMatcher::Base"
     end
@@ -157,16 +164,18 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers_for returns the AI matcher for the query shape" do
-    # The AI matcher declares input_shape :any, so it surfaces for free-text
-    # query inputs too.
-    assert_includes FeedProfile.matchers_for(:query), ProfileMatcher::LlmProfileMatcher
+  test ".matchers_for never includes the AI profile (structural exclusion)" do
+    # The AI profile registers no matcher, so detection can't select it (spec §7)
+    # — it's reachable only via Mode B, never by auto-detection.
+    keys = FeedProfile.matchers_for(nil).map(&:profile_key)
+    assert_not_includes keys, "llm"
   end
 
-  test ".matchers_for returns every matcher when input_shape is nil or :any" do
+  test ".matchers_for returns every matcher-bearing profile when input_shape is nil or :any" do
     every = FeedProfile.matchers_for(nil)
 
-    assert_equal FeedProfile::PROFILES.size, every.size
+    matcher_bearing = FeedProfile::PROFILES.count { |_key, entry| entry[:matcher].present? }
+    assert_equal matcher_bearing, every.size
     assert_equal every, FeedProfile.matchers_for(:any)
   end
 

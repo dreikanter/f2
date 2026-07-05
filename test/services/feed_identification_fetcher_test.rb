@@ -93,7 +93,21 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "example.com", feed_identification.candidates.first["title"]
   end
 
-  test "#identify should fall back to AI extraction when no structured profile matches" do
+  test "#identify should refuse a non-public URL without fetching it" do
+    url = "http://127.0.0.1/feed.xml"
+    stub_request(:get, url) # should never be hit
+
+    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
+
+    feed_identification = FeedIdentification.find_by(user: user, input: url)
+    assert_equal "failed", feed_identification.status
+    assert_equal "fetch_failed", feed_identification.error
+    assert_not_requested :get, url
+  end
+
+  test "#identify should fail as unidentifiable when no structured profile matches" do
+    # The AI profile registers no matcher (spec §7), so a reachable page with no
+    # standard feed yields no candidates — the entry flow offers the AI bridge.
     url = "http://example.com/unknown.txt"
 
     stub_request(:get, url)
@@ -104,8 +118,8 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
-    assert_equal "success", feed_identification.status
-    assert_equal "llm", feed_identification.candidates.first["profile_key"]
+    assert_equal "failed", feed_identification.status
+    assert_equal "unidentifiable", feed_identification.error
   end
 
   test "#identify should fail with a generic message when the source returns an error status" do
@@ -206,7 +220,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
-    assert_equal %w[rss llm], feed_identification.candidates.map { |c| c["profile_key"] }
+    assert_equal %w[rss], feed_identification.candidates.map { |c| c["profile_key"] }
 
     candidate = feed_identification.candidates.first
     assert_equal "rss", candidate["profile_key"]
@@ -215,16 +229,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal 0, candidate["rank"]
     assert_equal "specific_match", candidate["rank_reason"]
 
-    # Empty-but-valid source still passes the self-test, flagged with zero posts
-    # found; the AI fallback is skipped (detection stays LLM-free).
+    # Empty-but-valid source still passes the self-test, flagged with zero posts found.
     assert_equal "passed", candidate["test_status"]
     assert_equal 0, candidate["posts_found"]
     assert candidate["tested_at"].present?
-
-    ai_candidate = feed_identification.candidates.last
-    assert_equal "llm", ai_candidate["profile_key"]
-    assert_equal "not_tested", ai_candidate["test_status"]
-    assert_nil ai_candidate["tested_at"]
   end
 
   test "#identify should fetch each source URL once across matching and testing" do
@@ -262,18 +270,6 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
-    assert_equal %w[xkcd rss llm], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
-  end
-
-  test "#identify should record the AI fallback as the only candidate when no structured profile matches" do
-    url = "http://example.com/page.html"
-    stub_request(:get, url).to_return(status: 200, body: "<html><body/></html>")
-
-    FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
-
-    feed_identification = FeedIdentification.find_by(user: user, input: url)
-    assert_equal "success", feed_identification.status
-    assert_equal ["llm"], feed_identification.candidates.map { |c| c["profile_key"] }
-    assert_equal true, feed_identification.candidates.first["depends_on_ai"]
+    assert_equal %w[xkcd rss], profile_keys, "xkcd > rss for xkcd.com URLs"
   end
 end

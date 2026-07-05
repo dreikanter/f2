@@ -123,33 +123,66 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Checking this feed"
   end
 
-  test "#create should reject empty or malformed input" do
+  test "#create should ask for input when it is blank" do
     sign_in_as(user)
 
     post feed_identifications_path, params: { input: "" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Please enter a link, handle, or a few words"
+    assert_includes response.body, "Enter a link"
   end
 
-  test "#create should accept a free-text query as input" do
+  test "#create should bridge a free-text query straight to a draft AI feed" do
     sign_in_as(user)
 
-    assert_enqueued_with(job: FeedIdentificationJob) do
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
       post feed_identifications_path, params: { input: "ai safety news" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
+    assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, "ai safety news"
   end
 
-  test "#create should accept a handle as input" do
+  test "#create should bridge a handle straight to a draft AI feed" do
     sign_in_as(user)
 
-    assert_enqueued_with(job: FeedIdentificationJob) do
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
       post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
     assert_response :success
+    assert_includes response.body, 'data-identification-state="complete"'
+  end
+
+  test "#create should not persist an identification record on the AI bridge" do
+    sign_in_as(user)
+
+    assert_no_difference("FeedIdentification.count") do
+      post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+  end
+
+  test "#create should treat whitespace-only input as blank" do
+    sign_in_as(user)
+
+    post feed_identifications_path, params: { input: "   " }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, "Enter a link"
+  end
+
+  test "#create should build a draft AI feed for an explicit AI-bridge request" do
+    sign_in_as(user)
+
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      post feed_identifications_path, params: { input: "https://example.com/page", mode: "ai" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, "https://example.com/page"
   end
 
   test "#show should require authentication" do
@@ -250,10 +283,10 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    # When no structured profile matches, the AI fallback now fires and the
-    # form lands in the complete state instead of the error state.
-    assert_includes response.body, 'data-identification-state="complete"'
-    assert_includes response.body, "candidate.llm"
+    # No structured profile matches and detection can't select AI (spec §7), so
+    # the form lands in the error state and offers the AI bridge.
+    assert_includes response.body, 'data-identification-state="error"'
+    assert_includes response.body, "identification.ai-bridge"
   end
 
   test "#show should render the localized failure message for a fetch failure" do
@@ -293,10 +326,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
-    # RSS plus the AI fallback. RSS ranks first.
-    assert_equal %w[rss llm], payload.map { |c| c["profile_key"] }
+    assert_equal %w[rss], payload.map { |c| c["profile_key"] }
     assert_equal "specific_match", payload.first["rank_reason"]
-    assert_equal "ai_fallback", payload.last["rank_reason"]
   end
 
   test "#show should surface a multi-candidate payload ranked suggested first" do
@@ -311,18 +342,18 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     payload = extract_candidates_payload(response.body)
-    assert_equal %w[xkcd rss llm], payload.map { |c| c["profile_key"] }
+    assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
     assert_equal 0, payload.first["rank"]
     assert_equal "specific_match", payload.first["rank_reason"]
-    assert_equal "ai_fallback", payload.last["rank_reason"]
   end
 
-  test "#show should surface an AI-only fallback payload when only an AI matcher fires" do
+  test "#show should render an AI candidate payload if one is persisted" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    # Stub the feed_identification directly with an AI-only candidate list —
-    # simulates what the fetcher writes when only the llm matcher fires.
+    # Detection can't produce an AI candidate anymore (structural exclusion,
+    # spec §7), so this hand-writes one to guard the view's handling of it —
+    # the AI-candidate presentation is retired with the two-mode UX in #909.
     FeedIdentification.create!(
       user: user,
       input: url,

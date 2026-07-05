@@ -1,9 +1,8 @@
 require "test_helper"
 
-# Integration test for User Story 3 (handle / query inputs).
-# Walks the detection-only paths since both flows are AI-backed and
-# saving a feed isn't materially different from the website-extractor
-# case already covered by smart_feed_creation_ai_website_test.rb.
+# A handle or free-text query isn't a link, so Mode A bridges it straight to a
+# draft AI feed (spec 005 §1) — no detection, no identification job, the prompt
+# is the source.
 class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
@@ -13,37 +12,27 @@ class SmartFeedCreationHandleQueryTest < ActionDispatch::IntegrationTest
     @user ||= create(:user)
   end
 
-  test "#create should detect a handle input and offer the AI candidate" do
+  test "#create should bridge a handle straight to a draft AI feed" do
     sign_in_as(user)
 
-    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    perform_enqueued_jobs
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
 
-    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     assert_response :success
-    assert_includes response.body, "candidate.llm"
-  end
-
-  test "#create should detect a free-text query and offer the AI candidate" do
-    sign_in_as(user)
-
-    post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    perform_enqueued_jobs
-
-    get feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    assert_response :success
-    assert_includes response.body, "candidate.llm"
-  end
-
-  test "#create should render the personalized candidate summary for a handle input" do
-    sign_in_as(user)
-
-    post feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    perform_enqueued_jobs
-
-    get feed_identifications_path, params: { input: "@alice" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-    # Multi-candidate would render the chooser; single-candidate renders the
-    # source caption. Either way the user's input appears in the form copy.
+    assert_includes response.body, 'data-identification-state="complete"'
     assert_includes response.body, "@alice"
+  end
+
+  test "#create should bridge a free-text query straight to a draft AI feed" do
+    sign_in_as(user)
+
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="complete"'
+    assert_includes response.body, "climate change"
   end
 end

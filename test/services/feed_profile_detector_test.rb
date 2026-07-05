@@ -12,27 +12,20 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     XML
   end
 
-  test ".call should return DetectionResult with the InputClassifier shape" do
-    result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
-    assert_equal :url, result.input_shape
+  test ".call should return empty candidates for blank input" do
+    assert_empty FeedProfileDetector.call(input: "").candidates
   end
 
-  test ".call should return empty candidates for malformed input" do
-    result = FeedProfileDetector.call(input: "")
-    assert_equal :malformed, result.input_shape
+  test ".call should return no candidates when no deterministic matcher fires" do
+    # The AI profile registers no matcher, so a page with no standard feed yields
+    # nothing — the entry flow offers the AI bridge, detection never selects it.
+    result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
     assert_empty result.candidates
   end
 
-  test ".call should fall back to AI extraction when no non-AI matcher fires for a URL" do
-    result = FeedProfileDetector.call(input: "https://example.com/page", fetched_body: "<html><body/></html>")
-    assert_equal :url, result.input_shape
-    assert_equal ["llm"], result.candidates.map(&:profile_key)
-    assert_equal :ai_fallback, result.candidates.first.rank_reason
-  end
-
-  test ".call should rank a generic RSS feed above the AI fallback" do
+  test ".call should detect a generic RSS feed" do
     result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
-    assert_equal ["rss", "llm"], result.candidates.map(&:profile_key)
+    assert_equal ["rss"], result.candidates.map(&:profile_key)
 
     rss = result.candidates.first
     assert_equal 0, rss.rank
@@ -55,19 +48,17 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     assert_operator profile_keys.index("json_feed"), :<, profile_keys.index("rss")
   end
 
-  test ".call should rank specific matchers above generic ones, with AI fallback last" do
+  test ".call should rank specific matchers above generic ones" do
     result = FeedProfileDetector.call(input: "https://xkcd.com/rss.xml", fetched_body: rss_feed_body)
 
     profile_keys = result.candidates.map(&:profile_key)
-    assert_equal %w[xkcd rss llm], profile_keys, "xkcd (100) > rss (10) > AI (1)"
+    assert_equal %w[xkcd rss], profile_keys, "xkcd (100) > rss (10)"
 
-    xkcd, rss, ai = result.candidates
+    xkcd, rss = result.candidates
     assert_equal 0, xkcd.rank
     assert_equal 1, rss.rank
-    assert_equal 2, ai.rank
     assert_equal :specific_match, xkcd.rank_reason
     assert_equal :generic_match, rss.rank_reason
-    assert_equal :ai_fallback, ai.rank_reason
   end
 
   test ".call should place AI-backed candidates after non-AI candidates" do

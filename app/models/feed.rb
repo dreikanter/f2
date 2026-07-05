@@ -177,7 +177,7 @@ class Feed < ApplicationRecord
   # Decided purely by parsing the input (no profile lookup, no LLM), so the
   # label stays accurate even when an AI profile is chosen for a URL source.
   def source_input_url?
-    InputClassifier.classify(source_input) == :url
+    SourceLink.url?(source_input)
   end
 
   def display_name

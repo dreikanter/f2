@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-05
 
 - Added Moonshot (Kimi) as an AI provider — a lower-cost option you can connect with your own API key.
+- Paste a bare address like `example.com` and we'll treat it as a link and check it for a feed. When a link has no standard feed, you can now choose to follow it with AI instead.
 
 ## 2026-07-03
 
