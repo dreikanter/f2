@@ -17,17 +17,10 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
     assert_equal 3, candidate("posts_found" => 3).posts_found
   end
 
-  test "#ai? should be true only when depends_on_ai is true" do
-    assert candidate("depends_on_ai" => true).ai?
-    assert_not candidate("depends_on_ai" => false).ai?
-    assert_not candidate({}).ai?
-  end
-
   test "status predicates should reflect test_status" do
     assert candidate("test_status" => "passed").passed?
     assert candidate("test_status" => "failed").failed?
     assert candidate("test_status" => "unreachable").unreachable?
-    assert candidate("test_status" => "not_tested").not_tested?
   end
 
   test "status predicates should be false for a different verdict" do
@@ -35,7 +28,6 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
 
     assert_not subject.failed?
     assert_not subject.unreachable?
-    assert_not subject.not_tested?
   end
 
   test "status predicates should be false when no verdict is present" do
@@ -44,6 +36,5 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
     assert_not subject.passed?
     assert_not subject.failed?
     assert_not subject.unreachable?
-    assert_not subject.not_tested?
   end
 end

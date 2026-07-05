@@ -8,6 +8,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - Paste a bare address like `example.com` and we'll treat it as a link and check it for a feed. When a link has no standard feed, you can now choose to follow it with AI instead.
 - New feeds now start with a clear choice: follow a feed or channel by its link, or follow with AI by describing a source or topic in your own words.
 - When a link can't be followed, the next step is clearer: retry if it just couldn't be reached, or follow it with AI (or try a different link) when there's no feed to read.
+- The "how should we fetch posts?" step is tidier: it only asks you to choose when more than one way actually works, and a single working option is just shown to you.
 
 ## 2026-07-03
 
