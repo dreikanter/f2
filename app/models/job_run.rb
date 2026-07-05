@@ -4,9 +4,6 @@ class JobRun < ApplicationRecord
   RUNNABLE_JOBS = [
     AnthropicCapabilityProbeJob,
     KimiCapabilityProbeJob,
-    KimiWebSearchWireJob,
-    KimiStructuredOutputJob,
-    KimiClientToolJob,
     PurgeExpiredEventsJob
   ].freeze
 
