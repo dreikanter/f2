@@ -380,49 +380,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "specific_match", payload.first["rank_reason"]
   end
 
-  test "#show should render an AI candidate payload if one is persisted" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-
-    # Detection can't produce an AI candidate anymore (structural exclusion,
-    # spec §7), so this hand-writes one to guard the view's handling of it —
-    # the AI-candidate presentation is retired with the two-mode UX in #909.
-    FeedIdentification.create!(
-      user: user,
-      input: url,
-      status: :success,
-      candidates: [
-        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
-      ]
-    )
-
-    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    payload = extract_candidates_payload(response.body)
-    assert_equal 1, payload.size
-    assert_equal "llm", payload.first["profile_key"]
-    assert_equal true, payload.first["depends_on_ai"]
-    assert_equal "ai_fallback", payload.first["rank_reason"]
-  end
-
-  test "#show should note AI token cost only on the AI fetch option" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-    FeedIdentification.create!(
-      user: user,
-      input: url,
-      status: :success,
-      candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" },
-        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
-      ]
-    )
-
-    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_select "[data-key='candidate.ai-cost']", count: 1
-  end
 
   test "#show should preselect the default schedule interval with no blank option" do
     sign_in_as(user)
@@ -622,57 +579,6 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
-  test "#show should label a query source as a prompt and pass it to the chooser" do
-    sign_in_as(user)
-    query = "climate change"
-    create(
-      :feed_identification,
-      user: user,
-      input: query,
-      started_at: Time.current,
-      status: :success,
-      candidates: [
-        { "profile_key" => "llm", "title" => "Climate", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
-      ]
-    )
-
-    get feed_identifications_path, params: { input: query }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    assert_select "label", text: "Source prompt"
-    assert_select "[data-key='candidate.llm']",
-                  text: /Follow with AI: "#{query}"/
-  end
-
-  test "#show should render a locked single-option chooser when one candidate exists" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-    create(
-      :feed_identification,
-      user: user,
-      input: url,
-      started_at: Time.current,
-      status: :success,
-      candidates: [
-        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
-      ]
-    )
-
-    get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-    assert_response :success
-    # The chooser shows even with a single option, so the user sees what was picked.
-    assert_select "[data-key='candidates']", count: 1
-    assert_select "[data-key='candidate.llm']", count: 1
-    assert_select "[data-key='candidate.single-note']", count: 1
-    # The only option is preselected and locked.
-    assert_select "input[type=radio][name='feed[feed_profile_key]'][checked][disabled]", count: 1
-    # A disabled radio doesn't submit, so a hidden field carries the value.
-    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='llm']", count: 1
-    # No "Suggested" badge when there's nothing to compare against.
-    assert_select "[data-key='candidate.suggested-badge']", count: 0
-  end
-
   def success_identification(url, candidates)
     create(:feed_identification, user: user, input: url, started_at: Time.current, status: :success, candidates: candidates)
   end
@@ -681,27 +587,44 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
   end
 
-  test "#show should mark a passed candidate as tested and preselect it" do
+  test "#show should show a single working candidate as an annotation, not a chooser" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     success_identification(url, [
-      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 5 },
-      { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+      { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
     ])
 
     show_chooser(url)
 
     assert_response :success
-    assert_select "[data-key='candidate.rss.status']", text: "Tested · 5 posts"
-    assert_select "input[type=radio][value='rss'][checked]"
-    assert_select "input[type=radio][value='rss'][disabled]", count: 0
+    assert_select "[data-key='candidates']", count: 0
+    assert_select "[data-key='form.feed-type-display']", count: 1
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='rss']", count: 1
   end
 
-  test "#show should note when the preselected candidate has no posts yet" do
+  test "#show should render the chooser and preselect the suggested candidate for two working candidates" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     success_identification(url, [
-      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 0 }
+      { "profile_key" => "xkcd", "title" => "Example", "test_status" => "passed", "posts_found" => 5 },
+      { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
+    ])
+
+    show_chooser(url)
+
+    assert_response :success
+    assert_select "[data-key='candidates']", count: 1
+    assert_select "[data-key='candidate.xkcd.status']", text: "Tested · 5 posts"
+    assert_select "input[type=radio][value='xkcd'][checked]"
+    assert_select "input[type=radio][disabled]", count: 0
+  end
+
+  test "#show should note when a working candidate has no posts yet" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    success_identification(url, [
+      { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 0 },
+      { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 2 }
     ])
 
     show_chooser(url)
@@ -710,53 +633,21 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='candidate.rss.note']", text: /no posts yet/i
   end
 
-  test "#show should disable a failed candidate and fall back to the AI option" do
+  test "#show should drop non-working candidates from the presentation" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     success_identification(url, [
-      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "failed", "posts_found" => 0 },
-      { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback", "test_status" => "not_tested" }
+      { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2 },
+      { "profile_key" => "xkcd", "title" => "Example", "test_status" => "unreachable" }
     ])
 
     show_chooser(url)
 
     assert_response :success
-    assert_select "input[type=radio][value='rss'][disabled]"
-    assert_select "input[type=radio][value='rss'][checked]", count: 0
-    assert_select "[data-key='candidate.rss.note']"
-    assert_select "input[type=radio][value='llm'][checked]"
-  end
-
-  test "#show should keep an unreachable candidate selectable with a transient advisory" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-    success_identification(url, [
-      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "passed", "posts_found" => 2 },
-      { "profile_key" => "xkcd", "title" => "Example", "depends_on_ai" => false, "rank" => 1, "rank_reason" => "generic_match", "test_status" => "unreachable" }
-    ])
-
-    show_chooser(url)
-
-    assert_response :success
-    assert_select "input[type=radio][value='xkcd'][disabled]", count: 0
-    assert_select "[data-key='candidate.xkcd.note']", text: /couldn't reach/i
-    assert_select "input[type=radio][value='rss'][checked]"
-  end
-
-  test "#show should preselect a passed candidate ranked behind a failed one" do
-    sign_in_as(user)
-    url = "http://example.com/feed.xml"
-    success_identification(url, [
-      { "profile_key" => "xkcd", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match", "test_status" => "failed", "posts_found" => 0 },
-      { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 1, "rank_reason" => "generic_match", "test_status" => "passed", "posts_found" => 4 }
-    ])
-
-    show_chooser(url)
-
-    assert_response :success
-    assert_select "input[type=radio][value='rss'][checked]"
-    assert_select "input[type=radio][value='xkcd'][checked]", count: 0
-    assert_select "input[type=radio][value='xkcd'][disabled]"
+    # One candidate works → annotation; the unreachable one isn't offered.
+    assert_select "[data-key='candidates']", count: 0
+    assert_select "[data-key='candidate.xkcd']", count: 0
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='rss']", count: 1
   end
 
   test "#show should truncate detected title to Feed::NAME_MAX_LENGTH" do

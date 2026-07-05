@@ -6,9 +6,9 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
     FeedIdentification::Candidate.new(attributes)
   end
 
-  def render_option(attributes, input: "https://example.com/feed.xml", selected: nil, single: false)
+  def render_option(attributes, input: "https://example.com/feed.xml", selected: nil)
     render_inline CandidateOptionComponent.new(
-      candidate: candidate(attributes), input: input, selected: selected, single: single
+      candidate: candidate(attributes), input: input, selected: selected
     )
   end
 
@@ -33,32 +33,10 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
     assert_match(/no posts yet/i, result.at_css("[data-key='candidate.rss.note']").text)
   end
 
-  test "#render should give a failed source a red badge, an advisory, and a disabled radio" do
-    result = render_option({ "profile_key" => "rss", "test_status" => "failed" })
+  test "#render should render a selectable radio for every option" do
+    result = render_option({ "profile_key" => "rss", "test_status" => "passed", "posts_found" => 2 })
 
-    assert_includes result.at_css("[data-key='candidate.rss.status']")["class"], "red"
-    assert result.at_css("[data-key='candidate.rss.note']").present?
-    assert_not_nil result.at_css("input[type=radio][disabled]")
-  end
-
-  test "#render should give an unreachable source a yellow badge and advisory" do
-    result = render_option({ "profile_key" => "rss", "test_status" => "unreachable" })
-
-    assert_includes result.at_css("[data-key='candidate.rss.status']")["class"], "yellow"
-    assert_match(/couldn't reach/i, result.at_css("[data-key='candidate.rss.note']").text)
-  end
-
-  test "#render should label an untested AI candidate as not tested with no note" do
-    result = render_option({ "profile_key" => "llm", "test_status" => "not_tested" })
-
-    assert_equal "Not tested", result.at_css("[data-key='candidate.llm.status']").text.strip
-    assert_nil result.at_css("[data-key='candidate.llm.note']")
-  end
-
-  test "#render should omit the badge when the candidate carries no verdict" do
-    result = render_option({ "profile_key" => "rss" })
-
-    assert_nil result.at_css("[data-key='candidate.rss.status']")
+    assert_nil result.at_css("input[type=radio][disabled]")
   end
 
   test "#render should flag the selected candidate as suggested and check its radio" do
@@ -68,23 +46,9 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
     assert_not_nil result.at_css("[data-key='candidate.suggested-badge']")
   end
 
-  test "#render should not flag a disabled candidate even when it is the selected one" do
-    result = render_option({ "profile_key" => "rss", "test_status" => "failed" }, selected: "rss")
+  test "#render should not flag an unselected candidate as suggested" do
+    result = render_option({ "profile_key" => "rss", "test_status" => "passed", "posts_found" => 2 }, selected: "xkcd")
 
     assert_nil result.at_css("[data-key='candidate.suggested-badge']")
-    assert_not_nil result.at_css("input[type=radio][disabled]")
-  end
-
-  test "#render should lock a single candidate with no suggested badge and a disabled radio" do
-    result = render_option({ "profile_key" => "rss", "test_status" => "passed", "posts_found" => 2 }, selected: "rss", single: true)
-
-    assert_nil result.at_css("[data-key='candidate.suggested-badge']")
-    assert_not_nil result.at_css("input[type=radio][disabled]")
-  end
-
-  test "#render should surface the AI token-cost note for AI candidates" do
-    result = render_option({ "profile_key" => "llm", "test_status" => "not_tested", "depends_on_ai" => true })
-
-    assert_match(/costs AI tokens/i, result.at_css("[data-key='candidate.ai-cost']").text)
   end
 end

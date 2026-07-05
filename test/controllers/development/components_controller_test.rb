@@ -67,9 +67,8 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-key="section.feed-profile-chooser"]'
     assert_select '[data-key="feed-profile-chooser-example.0"] [data-key="candidates"]'
-    # The states are exercised across the examples: a disabled (failed/locked)
-    # option, a checked default, and the Suggested badge all render.
-    assert_select '[data-key="section.feed-profile-chooser"] input[type=radio][disabled]'
+    # Every option is selectable; the suggested default is checked and badged.
+    assert_select '[data-key="section.feed-profile-chooser"] input[type=radio][disabled]', count: 0
     assert_select '[data-key="section.feed-profile-chooser"] input[type=radio][checked]'
     assert_select '[data-key="section.feed-profile-chooser"] [data-key="candidate.suggested-badge"]'
   end

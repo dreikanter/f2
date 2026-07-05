@@ -1,4 +1,4 @@
-<%# locals: (candidates: [], input: nil, single: false, selected: nil) %>
+<%# locals: (candidates: [], input: nil, selected: nil) %>
 
 <div class="space-y-2"
      data-key="candidates">
@@ -9,13 +9,8 @@
       <%= render CandidateOptionComponent.new(
             candidate: FeedIdentification::Candidate.new(attributes),
             input: input,
-            selected: selected,
-            single: single
+            selected: selected
           ) %>
     <% end %>
   </div>
-
-  <% if single %>
-    <p class="text-sm text-muted" data-key="candidate.single-note">This is the only way we can fetch this source, so it's locked in.</p>
-  <% end %>
 </div>

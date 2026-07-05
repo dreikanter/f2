@@ -557,75 +557,39 @@
     <%# Feed profile chooser %>
     <section id="feed-profile-chooser" class="scroll-mt-6 space-y-4" data-key="section.feed-profile-chooser">
       <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Feed profile chooser</h2>
-      <p class="text-body">The "How should we fetch posts?" radio group shown once a source is identified. Every option carries its self-test verdict, the suggested default is preselected, and a source that can't be read is disabled.</p>
+      <p class="text-body">The "How should we fetch posts?" radio group shown when two or more ways to fetch a source both work. Each option carries its post-count verdict, and the suggested default is preselected. One working option is shown as a read-only annotation instead of a chooser.</p>
 
       <%
         # selected mirrors the option the add-feed flow preselects in production.
-        chooser_candidate = ->(profile_key, depends_on_ai: false, test_status: nil, posts_found: 0) {
+        chooser_candidate = ->(profile_key, posts_found: 0) {
           {
             "profile_key" => profile_key,
             "title" => FeedProfile.display_name_for(profile_key),
-            "depends_on_ai" => depends_on_ai,
-            "test_status" => test_status,
+            "depends_on_ai" => false,
+            "test_status" => "passed",
             "posts_found" => posts_found,
             "rank" => 0,
-            "rank_reason" => depends_on_ai ? "ai_fallback" : "specific_match"
+            "rank_reason" => "specific_match"
           }
         }
 
         chooser_examples = [
           {
-            title: "Single source, locked in",
-            note: "Only one way to fetch this source, so it's preselected and can't be changed.",
-            single: true,
-            selected: "rss",
-            candidates: [chooser_candidate.call("rss", test_status: "passed", posts_found: 5)]
-          },
-          {
-            title: "Working source with an AI fallback",
-            note: "A source that passed its test is suggested; the AI reader is offered as a backup.",
-            selected: "rss",
+            title: "Two working sources",
+            note: "Both fetch the source; the more specific one is suggested.",
+            selected: "xkcd",
             candidates: [
-              chooser_candidate.call("rss", test_status: "passed", posts_found: 5),
-              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("xkcd", posts_found: 5),
+              chooser_candidate.call("rss", posts_found: 3)
             ]
           },
           {
             title: "Works, but nothing to show yet",
-            note: "The test passed but the source has no posts at the moment.",
+            note: "Both passed their test; one has no posts at the moment.",
             selected: "rss",
             candidates: [
-              chooser_candidate.call("rss", test_status: "passed", posts_found: 0),
-              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
-            ]
-          },
-          {
-            title: "Source failed, AI takes over",
-            note: "The structured source couldn't be read, so it's disabled and the AI reader is suggested.",
-            selected: "llm",
-            candidates: [
-              chooser_candidate.call("rss", test_status: "failed", posts_found: 0),
-              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
-            ]
-          },
-          {
-            title: "Source couldn't be reached",
-            note: "A working source is suggested; the unreachable one stays pickable in case it was a temporary blip.",
-            selected: "rss",
-            candidates: [
-              chooser_candidate.call("rss", test_status: "passed", posts_found: 3),
-              chooser_candidate.call("xkcd", test_status: "unreachable")
-            ]
-          },
-          {
-            title: "Every verdict together",
-            note: "Passed, failed, unreachable, and an untested AI option side by side.",
-            selected: "rss",
-            candidates: [
-              chooser_candidate.call("rss", test_status: "passed", posts_found: 4),
-              chooser_candidate.call("youtube", test_status: "failed"),
-              chooser_candidate.call("xkcd", test_status: "unreachable"),
-              chooser_candidate.call("llm", depends_on_ai: true, test_status: "not_tested")
+              chooser_candidate.call("rss", posts_found: 4),
+              chooser_candidate.call("json_feed", posts_found: 0)
             ]
           }
         ]
@@ -641,7 +605,6 @@
             <%= render "feeds/candidate_chooser",
                        candidates: example[:candidates],
                        input: "https://example.com/feed.xml",
-                       single: example.fetch(:single, false),
                        selected: example[:selected] %>
           </div>
         <% end %>

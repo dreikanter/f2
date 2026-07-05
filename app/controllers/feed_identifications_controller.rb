@@ -135,7 +135,7 @@ class FeedIdentificationsController < ApplicationController
       name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
     )
 
-    render(identification_success(feed, candidates: feed_identification.candidates))
+    render(identification_success(feed, candidates: feed_identification.working_candidates))
   end
 
   def identification_error(error:, heading: "Feed identification failed")

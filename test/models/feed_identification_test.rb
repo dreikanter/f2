@@ -48,7 +48,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     FeedIdentification.new(user: user, input: "https://example.com/feed.xml", candidates: candidates)
   end
 
-  test "#suggested_candidate should prefer a passed candidate over a failed one ranked ahead of it" do
+  test "#suggested_candidate should be the highest-ranked working candidate" do
     id = identification([
       { "profile_key" => "rss", "test_status" => "failed" },
       { "profile_key" => "atom", "test_status" => "passed" }
@@ -57,47 +57,29 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal "atom", id.suggested_candidate.profile_key
   end
 
-  test "#suggested_candidate should prefer passed over not_tested and unreachable" do
+  test "#suggested_candidate should skip failed and unreachable candidates" do
     id = identification([
       { "profile_key" => "youtube", "test_status" => "unreachable" },
-      { "profile_key" => "llm", "test_status" => "not_tested" },
-      { "profile_key" => "rss", "test_status" => "passed" }
-    ])
-
-    assert_equal "rss", id.suggested_candidate.profile_key
-  end
-
-  test "#suggested_candidate should fall back to the AI option when every structured candidate failed" do
-    id = identification([
       { "profile_key" => "rss", "test_status" => "failed" },
-      { "profile_key" => "llm", "test_status" => "not_tested" }
+      { "profile_key" => "atom", "test_status" => "passed" }
     ])
 
-    assert_equal "llm", id.suggested_candidate.profile_key
+    assert_equal "atom", id.suggested_candidate.profile_key
   end
 
-  test "#suggested_candidate should prefer the AI option over an unreachable source" do
-    id = identification([
-      { "profile_key" => "youtube", "test_status" => "unreachable" },
-      { "profile_key" => "llm", "test_status" => "not_tested" }
-    ])
-
-    assert_equal "llm", id.suggested_candidate.profile_key
-  end
-
-  test "#suggested_candidate should never preselect a failed candidate" do
+  test "#suggested_candidate should be nil when no candidate works" do
     id = identification([
       { "profile_key" => "rss", "test_status" => "failed" },
       { "profile_key" => "youtube", "test_status" => "unreachable" }
     ])
 
-    assert_equal "youtube", id.suggested_candidate.profile_key
+    assert_nil id.suggested_candidate
   end
 
   test "#suggested_candidate should fall back to the first candidate when none carry a verdict" do
     id = identification([
       { "profile_key" => "rss" },
-      { "profile_key" => "llm" }
+      { "profile_key" => "atom" }
     ])
 
     assert_equal "rss", id.suggested_candidate.profile_key

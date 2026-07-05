@@ -18,10 +18,6 @@ class FeedIdentification
       @attributes["posts_found"].to_i
     end
 
-    def ai?
-      @attributes["depends_on_ai"] == true
-    end
-
     def passed?
       test_status == "passed"
     end
@@ -32,10 +28,6 @@ class FeedIdentification
 
     def unreachable?
       test_status == "unreachable"
-    end
-
-    def not_tested?
-      test_status == "not_tested"
     end
 
     private

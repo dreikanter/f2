@@ -9,11 +9,11 @@ class FeedIdentification < ApplicationRecord
     processing? && started_at.nil?
   end
 
-  # The candidate the chooser preselects and the new-feed form is built from.
+  # The candidate the chooser preselects and the new-feed form is built from: the
+  # highest-ranked one that can fetch the source.
   def suggested_candidate
-    detected_candidates.find(&:passed?) || detected_candidates.find(&:not_tested?) ||
-      detected_candidates.find(&:unreachable?) || detected_candidates.reject(&:failed?).first ||
-      detected_candidates.first
+    attributes = working_candidates.first
+    Candidate.new(attributes) if attributes
   end
 
   # Candidates that can fetch the source (spec §7): the count of these drives how
@@ -46,11 +46,5 @@ class FeedIdentification < ApplicationRecord
     return true if error == "unreachable"
 
     candidates.present? && candidates.all? { |attributes| Candidate.new(attributes).unreachable? }
-  end
-
-  # Lazy so the suggestion chain stops wrapping at the first match; memoized
-  # so the repeated lookups share one enumerator.
-  def detected_candidates
-    @detected_candidates ||= candidates.lazy.map { |attributes| Candidate.new(attributes) }
   end
 end

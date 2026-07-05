@@ -1,7 +1,8 @@
 <%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
-<% show_chooser = !edit_mode && candidates.any? %>
-<% single_candidate = show_chooser && candidates.size == 1 %>
+<%# The chooser is a real choice only with two or more working candidates; one
+    working candidate is shown as a read-only annotation (spec §7). %>
+<% show_chooser = !edit_mode && candidates.size >= 2 %>
 <%
   preview_source_keys =
     if show_chooser
@@ -56,7 +57,7 @@
           </div>
 
           <% if show_chooser %>
-            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, single: single_candidate, selected: feed.feed_profile_key %>
+            <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
           <% else %>
             <%# Feed type is fixed once the feed exists, so it's shown read-only
                 as a disabled input matching the source field above it. Like the
@@ -73,10 +74,9 @@
           <% end %>
         </div>
 
-        <%# A read-only display or a disabled single-option radio won't submit
-            the profile key, so a hidden field carries it whenever the chooser
-            isn't offering a live selection. %>
-        <% if !show_chooser || single_candidate %>
+        <%# A read-only annotation won't submit the profile key, so a hidden field
+            carries it whenever the chooser isn't offering a live selection. %>
+        <% unless show_chooser %>
           <%= f.hidden_field :feed_profile_key %>
         <% end %>
 

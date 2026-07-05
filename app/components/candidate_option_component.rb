@@ -1,11 +1,12 @@
 class CandidateOptionComponent < ViewComponent::Base
-  # Renders one detection candidate as a radio option in the "How should we fetch
-  # posts?" chooser: its name, description, self-test verdict badge, and note.
-  def initialize(candidate:, input:, selected:, single: false)
+  # Renders one working detection candidate as a radio option in the "How should
+  # we fetch posts?" chooser: its name, description, post-count verdict, and a
+  # "Suggested" flag on the preselected default. Only candidates that can fetch
+  # the source reach the chooser (spec §7), so every option is selectable.
+  def initialize(candidate:, input:, selected:)
     @candidate = candidate
     @input = input
     @selected = selected
-    @single = single
   end
 
   def before_render
@@ -14,7 +15,7 @@ class CandidateOptionComponent < ViewComponent::Base
 
   private
 
-  attr_reader :candidate, :input, :badge_text, :badge_color, :note
+  attr_reader :candidate, :input, :badge_text, :note
 
   def profile_key
     candidate.profile_key
@@ -32,45 +33,19 @@ class CandidateOptionComponent < ViewComponent::Base
     profile_key == @selected
   end
 
-  def disabled?
-    @single || candidate.failed?
-  end
-
-  # Only badge a usable default: a disabled (failed) candidate is never worth
-  # flagging even when it's the one preselected.
-  def suggested?
-    selected? && !disabled?
-  end
-
   def row_classes
-    if disabled? && !@single
-      "border-border bg-surface-muted opacity-70 cursor-not-allowed"
-    elsif @single
-      "border-brand-subtle bg-brand-subtle cursor-default"
+    if selected?
+      "border-ring bg-brand-subtle cursor-pointer"
     else
       "border-border bg-surface cursor-pointer hover:border-ring"
     end
   end
 
-  # Resolve the self-test verdict to its badge and note once. A candidate with
-  # no verdict leaves badge_text nil, so the template renders no badge.
+  # Every shown candidate passed its self-test; badge the post count and note an
+  # empty-but-valid source.
   def assign_verdict
-    if candidate.passed?
-      count = candidate.posts_found
-      @badge_text = count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
-      @badge_color = :green
-      @note = "No posts yet. We'll pick up new ones as they're published." if count.zero?
-    elsif candidate.unreachable?
-      @badge_text = "Couldn't reach"
-      @badge_color = :yellow
-      @note = "We couldn't reach the source just now. Pick this only if you think it's temporary."
-    elsif candidate.failed?
-      @badge_text = "Won't work"
-      @badge_color = :red
-      @note = "We tried, but couldn't read any posts from this source."
-    elsif candidate.not_tested?
-      @badge_text = "Not tested"
-      @badge_color = :gray
-    end
+    count = candidate.posts_found
+    @badge_text = count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
+    @note = "No posts yet. We'll pick up new ones as they're published." if count.zero?
   end
 end
