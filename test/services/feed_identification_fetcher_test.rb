@@ -101,7 +101,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "failed", feed_identification.status
-    assert_equal "fetch_failed", feed_identification.error
+    assert_equal "unreadable", feed_identification.error
     assert_not_requested :get, url
   end
 
@@ -122,7 +122,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert_equal "unidentifiable", feed_identification.error
   end
 
-  test "#identify should fail with a generic message when the source returns an error status" do
+  test "#identify should mark a bad response status as unreadable (reachable, no feed)" do
     url = "http://example.com/error.xml"
 
     stub_request(:get, url)
@@ -134,10 +134,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal "fetch_failed", feed_identification.error
+    assert_equal "unreadable", feed_identification.error
   end
 
-  test "#identify should fail with a generic message on a redirect loop" do
+  test "#identify should mark a redirect loop as unreadable" do
     url = "http://example.com/loop.xml"
 
     stub_request(:get, url)
@@ -148,10 +148,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "failed", feed_identification.status
-    assert_equal "fetch_failed", feed_identification.error
+    assert_equal "unreadable", feed_identification.error
   end
 
-  test "#identify should fail with a generic message when the source is unreachable" do
+  test "#identify should mark a connection failure as unreachable (transient)" do
     url = "http://example.com/timeout.xml"
 
     stub_request(:get, url)
@@ -163,7 +163,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "failed", feed_identification.status
-    assert_equal "fetch_failed", feed_identification.error
+    assert_equal "unreachable", feed_identification.error
   end
 
   test "#identify should log the failure class and status for diagnosis" do

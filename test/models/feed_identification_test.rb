@@ -137,10 +137,16 @@ class FeedIdentificationTest < ActiveSupport::TestCase
     assert_equal :unreachable, id.outcome
   end
 
-  test "#outcome should be :unreachable when the initial fetch failed" do
-    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "fetch_failed", candidates: [])
+  test "#outcome should be :unreachable when the initial fetch couldn't connect" do
+    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "unreachable", candidates: [])
 
     assert_equal :unreachable, id.outcome
+  end
+
+  test "#outcome should be :no_feed when the source was reachable but unreadable" do
+    id = FeedIdentification.new(user: user, input: "https://example.com", status: :failed, error: "unreadable", candidates: [])
+
+    assert_equal :no_feed, id.outcome
   end
 
   test "#outcome should be :no_feed when nothing was identified" do

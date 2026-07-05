@@ -43,7 +43,7 @@ class FeedIdentification < ApplicationRecord
   # Nothing was reachable to judge: the initial fetch never connected, or every
   # detected candidate failed on the network.
   def unreachable_only?
-    return true if error == "fetch_failed"
+    return true if error == "unreachable"
 
     candidates.present? && candidates.all? { |attributes| Candidate.new(attributes).unreachable? }
   end

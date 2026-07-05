@@ -21,9 +21,12 @@ class FeedIdentificationsController < ApplicationController
     # rather than guessing (spec §1) — the user stays in the mode they chose.
     return render(not_a_link_bridge) if source_url.nil?
 
-    return present_outcome if feed_identification.success?
+    # A settled result — a working feed, or a reachable link with no feed — is
+    # shown as-is. Everything else kicks off a fresh detection, so the retry
+    # state's Retry actually re-checks a couldn't-reach result.
+    return present_outcome if settled_identification?
 
-    if feed_identification.new_record? || feed_identification.failed?
+    if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
       begin
         feed_identification.update!(
           status: :processing,
@@ -94,6 +97,19 @@ class FeedIdentificationsController < ApplicationController
     end
 
     head :no_content
+  end
+
+  # A finished identification worth showing without re-detecting: a working feed
+  # or a reachable-but-featureless link. A couldn't-reach result is deliberately
+  # excluded so its Retry re-runs detection rather than re-rendering itself.
+  def settled_identification?
+    feed_identification.success? && feed_identification.outcome != :unreachable
+  end
+
+  # A prior success whose candidates were all unreachable — retrying should
+  # re-detect rather than re-render the same couldn't-reach state.
+  def retryable_unreachable?
+    feed_identification.success? && feed_identification.outcome == :unreachable
   end
 
   # Present the finished identification by how many candidates actually work
