@@ -15,12 +15,13 @@
 class LlmModelCapability
   CAPABILITIES = %i[fetch search structured].freeze
 
-  # Verified live: Anthropic Sonnet/Opus do all three in one combined call
-  # (#914); Kimi drives a client-side fetch tool and de-fenced JSON but its
-  # server-side search doesn't engage through RubyLLM, so no :search (#917).
+  # Verified live on staging (plan-03): Anthropic Sonnet does all three in one
+  # combined call (#914); Kimi drives a client-side fetch tool and de-fenced JSON
+  # but its server-side search doesn't engage through RubyLLM, so no :search
+  # (#917). Only pairs actually probed appear here — Opus stays out until it's
+  # verified the same way.
   ENTRIES = [
     { provider: "anthropic", model: "claude-sonnet-4-6", capabilities: %i[fetch search structured] },
-    { provider: "anthropic", model: "claude-opus-4-7", capabilities: %i[fetch search structured] },
     { provider: "moonshot", model: "kimi-k2.5", capabilities: %i[fetch structured] }
   ].freeze
 

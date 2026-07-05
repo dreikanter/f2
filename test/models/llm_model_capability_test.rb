@@ -38,4 +38,11 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
              "#{entry[:model]} declares an unknown capability"
     end
   end
+
+  test "every matrix provider should be a registered LlmProvider" do
+    LlmModelCapability.all.each do |entry|
+      assert_includes LlmProvider.names, entry[:provider],
+                      "#{entry[:provider]} is not a registered LlmProvider"
+    end
+  end
 end
