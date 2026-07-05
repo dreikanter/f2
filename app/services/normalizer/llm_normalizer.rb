@@ -3,15 +3,13 @@ module Normalizer
   # profile's normalizer config:
   #
   # * Passthrough (no `prompt_template`): the raw_data already has all
-  #   universal-post fields; map them straight onto Post. Used by the
-  #   `llm_website_extractor` profile where the AI work happens at the
-  #   loader stage.
+  #   universal-post fields; map them straight onto Post. Used by the `llm`
+  #   profile, where the AI work happens at the loader stage.
   #
   # * LLM rewrite (`prompt_template` present in config): runs raw_data
   #   through `LlmClient` so a second prompt can clean up / translate /
-  #   summarise the content before it lands in Post. Reserved for
-  #   future rewrite profiles; the website-extractor MVP doesn't use
-  #   this branch.
+  #   summarise the content before it lands in Post. Reserved for future
+  #   rewrite profiles; the current `llm` profile doesn't use this branch.
   class LlmNormalizer < Base
     private
 

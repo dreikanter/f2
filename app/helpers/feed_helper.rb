@@ -5,8 +5,8 @@ module FeedHelper
   # non-URL inputs.
   def candidate_summary(profile_key, input)
     case profile_key
-    when "llm_web_search"
-      "Follow AI search results for \"#{input}\""
+    when "llm"
+      "Follow with AI: \"#{input}\""
     else
       FeedProfile.display_name_for(profile_key)
     end

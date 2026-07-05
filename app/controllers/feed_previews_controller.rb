@@ -112,8 +112,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def source_blank?
-    shape = FeedProfile[profile_key]&.dig(:input_shape)
-    key = shape ? shape.to_s : "url"
+    key = FeedProfile.source_key_for(profile_key) || "url"
     preview_params[key].to_s.strip.blank?
   end
 

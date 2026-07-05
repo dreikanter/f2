@@ -54,7 +54,7 @@ class FeedsController < ApplicationController
   DRAFT_ONLY_PERMITTED_PARAMS = [
     :url,
     :feed_profile_key,
-    { params: %i[url query] }
+    { params: %i[url prompt] }
   ].freeze
 
   def index
@@ -239,10 +239,10 @@ class FeedsController < ApplicationController
       :import_after_date,
       :import_after_time,
       :images_only,
-      # Only the known input-shape keys are accepted. Anything
-      # else inside the params hash would otherwise persist into
-      # `feeds.params` jsonb undetected. See the profile schemas.
-      params: [:url, :query]
+      # Only the known source keys are accepted. Anything else inside the
+      # params hash would otherwise persist into `feeds.params` jsonb
+      # undetected. See the profile schemas.
+      params: [:url, :prompt]
     )
   end
 
