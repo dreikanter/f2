@@ -42,6 +42,33 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "anthropic/claude-sonnet-4-6", provider.default_model
   end
 
+  test "#find should return the moonshot provider mapped to the openai runtime" do
+    provider = LlmProvider.find("moonshot")
+    assert_equal "moonshot", provider.name
+    assert_equal :openai, provider.ruby_llm_provider
+    assert_equal "kimi-k2.5", provider.default_model
+    assert_equal "https://api.moonshot.ai/v1", provider.api_base
+    assert provider.assume_model_exists?
+  end
+
+  test "#assume_model_exists? should default to false for native providers" do
+    assert_not LlmProvider.find("anthropic").assume_model_exists?
+    assert_not LlmProvider.find("openrouter").assume_model_exists?
+  end
+
+  test "#configure should set the api key on the ruby_llm-provider key" do
+    config = Struct.new(:anthropic_api_key).new
+    LlmProvider.find("anthropic").configure(config, "sk-ant-x")
+    assert_equal "sk-ant-x", config.anthropic_api_key
+  end
+
+  test "#configure should set the openai key and base for moonshot" do
+    config = Struct.new(:openai_api_key, :openai_api_base).new
+    LlmProvider.find("moonshot").configure(config, "sk-moon-x")
+    assert_equal "sk-moon-x", config.openai_api_key
+    assert_equal "https://api.moonshot.ai/v1", config.openai_api_base
+  end
+
   test "every provider should declare a default_model with a known rate" do
     LlmProvider.all.each do |provider|
       assert provider.default_model.present?, "#{provider.name} must declare a default_model"

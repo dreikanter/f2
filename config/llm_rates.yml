@@ -47,3 +47,10 @@ openrouter:
   meta-llama/llama-3.3-70b-instruct:
     input_per_million: 0.12
     output_per_million: 0.40
+
+# Moonshot (Kimi). Approximate published rates — verify against your billing.
+moonshot:
+  kimi-k2.5:
+    input_per_million: 0.60
+    output_per_million: 2.50
+    cache_read_per_million: 0.15
