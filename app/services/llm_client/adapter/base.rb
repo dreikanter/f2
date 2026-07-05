@@ -8,24 +8,22 @@ class LlmClient
         raise NotImplementedError, "#{self.class} must implement #web_params"
       end
 
-      # Enables web access on a RubyLLM chat however the provider realizes it.
-      # The default is provider-hosted server tools injected as request params;
-      # providers without server web override this (e.g. client-side tools).
+      # Enables web access on a chat, however the provider realizes it. Default
+      # injects server-tool params; providers without server web override
+      # (e.g. client-side tools).
       def apply_web(chat, model)
         params = web_params(model)
         chat.with_params(**params) if params.present? && chat.respond_to?(:with_params)
       end
 
-      # Whether the provider can return grounded, schema-valid JSON from a
-      # single web+schema call through RubyLLM. When false, extraction falls
-      # back to two calls (gather with web, then structure with schema).
+      # True when one web+schema call returns grounded, schema-valid JSON; false
+      # falls back to gather-then-structure (two calls).
       def combined_extraction?
         false
       end
 
-      # Hook to repair a provider's structured-output text before JSON parsing.
-      # The default trusts the provider to return clean JSON; providers that
-      # wrap it (e.g. Moonshot's markdown fences) override this.
+      # Repairs structured-output text before JSON parsing. Default trusts clean
+      # JSON; providers that wrap it (Moonshot fences) override.
       def unwrap_json(text)
         text
       end
