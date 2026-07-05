@@ -39,7 +39,7 @@ class PublicUrlTest < ActiveSupport::TestCase
     # These all resolve to 127.0.0.1 / 0.0.0.0 through the client's resolver.
     %w[
       http://2130706433/ http://0x7f000001/ http://0177.0.0.1/ http://0/
-      http://[::ffff:127.0.0.1]/ http://127.0.0.1./
+      http://[::ffff:127.0.0.1]/ http://127.0.0.1./ http://[::]/
     ].each do |url|
       assert_not PublicUrl.safe?(url), "expected #{url} to be refused"
     end

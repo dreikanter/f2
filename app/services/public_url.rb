@@ -14,9 +14,9 @@ require "socket"
 # resolved here, so a name pointing at a private address is a residual gap best
 # closed at the fetch layer (resolve-and-pin).
 module PublicUrl
-  # Ranges IPAddr's loopback?/private?/link_local? predicates don't cover:
-  # "this host" and carrier-grade NAT.
-  EXTRA_BLOCKED = [IPAddr.new("0.0.0.0/8"), IPAddr.new("100.64.0.0/10")].freeze
+  # Addresses IPAddr's loopback?/private?/link_local? predicates don't cover:
+  # "this host" (v4 0.0.0.0/8 and the v6 unspecified ::) and carrier-grade NAT.
+  EXTRA_BLOCKED = [IPAddr.new("0.0.0.0/8"), IPAddr.new("100.64.0.0/10"), IPAddr.new("::")].freeze
 
   def self.safe?(url)
     uri = URI.parse(url.to_s.strip)

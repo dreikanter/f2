@@ -72,6 +72,14 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_equal "enqueued", post.status
   end
 
+  test "#normalize should reject an images-only post whose images were all dropped as unsafe" do
+    feed.update!(images_only: true)
+    post = Normalizer::LlmNormalizer.new(feed_entry("images" => ["http://127.0.0.1/x.png", "file:///etc/passwd"])).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "no_images"
+  end
+
   test "#normalize should keep only public http(s) attachment URLs" do
     images = [
       "https://cdn.example.com/ok.png",   # public — kept
