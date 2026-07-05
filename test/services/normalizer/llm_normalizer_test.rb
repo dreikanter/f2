@@ -63,4 +63,33 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_equal "rejected", post.status
     assert_includes post.validation_errors, "no_images"
   end
+
+  test "#normalize should truncate an over-long body to the post content limit" do
+    long_body = "word " * 2000 # ~10k chars, well over the 3000 limit
+    post = Normalizer::LlmNormalizer.new(feed_entry("body" => long_body)).normalize
+
+    assert_operator post.content.length, :<=, Post::MAX_CONTENT_LENGTH
+    assert_equal "enqueued", post.status
+  end
+
+  test "#normalize should reject an images-only post whose images were all dropped as unsafe" do
+    feed.update!(images_only: true)
+    post = Normalizer::LlmNormalizer.new(feed_entry("images" => ["http://127.0.0.1/x.png", "file:///etc/passwd"])).normalize
+
+    assert_equal "rejected", post.status
+    assert_includes post.validation_errors, "no_images"
+  end
+
+  test "#normalize should keep only public http(s) attachment URLs" do
+    images = [
+      "https://cdn.example.com/ok.png",   # public — kept
+      "http://127.0.0.1/secret.png",      # loopback — dropped
+      "http://169.254.169.254/meta",      # link-local metadata — dropped
+      "file:///etc/passwd",               # non-http — dropped
+      "/proc/self/environ"                # not a URL — dropped
+    ]
+    post = Normalizer::LlmNormalizer.new(feed_entry("images" => images)).normalize
+
+    assert_equal ["https://cdn.example.com/ok.png"], post.attachment_urls
+  end
 end
