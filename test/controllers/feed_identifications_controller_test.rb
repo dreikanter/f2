@@ -550,7 +550,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, url
   end
 
-  test "#show should render the candidate chooser when multiple candidates exist" do
+  test "#show should render the candidate chooser when multiple candidates work" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     create(
@@ -560,8 +560,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "specific_match" },
-        { "profile_key" => "llm", "title" => "Example", "depends_on_ai" => true, "rank" => 1, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2, "rank" => 0, "rank_reason" => "specific_match" },
+        { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3, "rank" => 1, "rank_reason" => "generic_match" }
       ]
     )
 
@@ -570,13 +570,10 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "data-key=\"candidates\""
     assert_includes response.body, "data-key=\"candidate.rss\""
-    assert_includes response.body, "data-key=\"candidate.llm\""
-    # While the user can still pick, the field asks how to fetch; it only
-    # switches to the static "Feed type" label once the choice is frozen.
+    assert_includes response.body, "data-key=\"candidate.json_feed\""
+    # The chooser asks how to fetch; it only switches to the static "Feed type"
+    # label once the choice is frozen (edit mode).
     assert_select "label", text: "How should we fetch posts?"
-    # The AI option already names its dependency ("AI"), so there's
-    # no redundant AI badge — the cost note carries that signal instead.
-    assert_not_includes response.body, "data-key=\"candidate.ai-badge\""
   end
 
   def success_identification(url, candidates)
