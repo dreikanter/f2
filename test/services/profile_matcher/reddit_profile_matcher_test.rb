@@ -38,12 +38,11 @@ class ProfileMatcher::RedditProfileMatcherTest < ActiveSupport::TestCase
     assert matcher("https://old.reddit.com/r/ruby/").match?
   end
 
-  test "#match? should match short subreddit names like r/worldnews" do
-    assert matcher("r/worldnews").match?
-  end
-
-  test "#match? should match short user names like user/someuser" do
-    assert matcher("user/someuser").match?
+  test "#match? should not match bare r/x shorthand (only full reddit URLs)" do
+    # Shorthand expansion was dropped with the smart input (spec 005 §1); a
+    # subreddit is followed by pasting its full URL.
+    assert_not matcher("r/worldnews").match?
+    assert_not matcher("user/someuser").match?
   end
 
   test "#match? should not match reddit.com homepage" do
