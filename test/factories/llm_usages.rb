@@ -3,7 +3,7 @@ FactoryBot.define do
     association :user
     feed { nil }
     ai_credential { nil }
-    profile_key { "llm_website_extractor" }
+    profile_key { "llm" }
     stage { :loader }
     provider { "anthropic" }
     model { "claude-sonnet-4-6" }

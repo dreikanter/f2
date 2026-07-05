@@ -105,7 +105,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_not_nil feed_identification
     assert_equal "success", feed_identification.status
-    assert_equal "llm_website_extractor", feed_identification.candidates.first["profile_key"]
+    assert_equal "llm", feed_identification.candidates.first["profile_key"]
   end
 
   test "#identify should fail with a generic message when the source returns an error status" do
@@ -206,7 +206,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     FeedIdentificationFetcher.new(user: user, input: url, logger: @logger).identify
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
-    assert_equal %w[rss llm_website_extractor], feed_identification.candidates.map { |c| c["profile_key"] }
+    assert_equal %w[rss llm], feed_identification.candidates.map { |c| c["profile_key"] }
 
     candidate = feed_identification.candidates.first
     assert_equal "rss", candidate["profile_key"]
@@ -222,7 +222,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     assert candidate["tested_at"].present?
 
     ai_candidate = feed_identification.candidates.last
-    assert_equal "llm_website_extractor", ai_candidate["profile_key"]
+    assert_equal "llm", ai_candidate["profile_key"]
     assert_equal "not_tested", ai_candidate["test_status"]
     assert_nil ai_candidate["tested_at"]
   end
@@ -262,7 +262,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     profile_keys = feed_identification.candidates.map { |c| c["profile_key"] }
-    assert_equal %w[xkcd rss llm_website_extractor], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
+    assert_equal %w[xkcd rss llm], profile_keys, "xkcd > rss > AI fallback for xkcd.com URLs"
   end
 
   test "#identify should record the AI fallback as the only candidate when no structured profile matches" do
@@ -273,7 +273,7 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
 
     feed_identification = FeedIdentification.find_by(user: user, input: url)
     assert_equal "success", feed_identification.status
-    assert_equal ["llm_website_extractor"], feed_identification.candidates.map { |c| c["profile_key"] }
+    assert_equal ["llm"], feed_identification.candidates.map { |c| c["profile_key"] }
     assert_equal true, feed_identification.candidates.first["depends_on_ai"]
   end
 end

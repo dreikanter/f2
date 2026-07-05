@@ -8,8 +8,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "elementy",
       "json_feed",
       "litterbox",
-      "llm_web_search",
-      "llm_website_extractor",
+      "llm",
       "lobsters",
       "melodymae",
       "monkeyuser",
@@ -158,8 +157,10 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers_for returns the query matcher for the query shape" do
-    assert_includes FeedProfile.matchers_for(:query), ProfileMatcher::LlmWebSearchMatcher
+  test ".matchers_for returns the AI matcher for the query shape" do
+    # The AI matcher declares input_shape :any, so it surfaces for free-text
+    # query inputs too.
+    assert_includes FeedProfile.matchers_for(:query), ProfileMatcher::LlmProfileMatcher
   end
 
   test ".matchers_for returns every matcher when input_shape is nil or :any" do
@@ -170,7 +171,7 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test ".depends_on_ai? returns true for AI-backed profiles" do
-    assert FeedProfile.depends_on_ai?("llm_website_extractor")
+    assert FeedProfile.depends_on_ai?("llm")
     assert_not FeedProfile.depends_on_ai?("rss")
     assert_not FeedProfile.depends_on_ai?("xkcd")
     assert_not FeedProfile.depends_on_ai?("nonexistent")

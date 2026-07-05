@@ -99,7 +99,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" }),
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
             headers: TURBO_STREAM
       end
     end
@@ -117,7 +117,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" }),
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
             headers: TURBO_STREAM
       end
     end
@@ -135,7 +135,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference("FeedPreview.count", 1) do
       assert_enqueued_with(job: FeedPreviewJob) do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
                              ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
       end
     end
@@ -147,7 +147,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
-    get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+    get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
                          ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
 
     preview = user.feed_previews.last
@@ -158,12 +158,12 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   test "#show should keep separate previews for different models on the same source" do
     sign_in_as(user)
     credential = create(:ai_credential, :active, user: user, available_models: models)
-    source = { query: "anything here" }
+    source = { prompt: "anything here" }
 
     assert_difference("FeedPreview.count", 2) do
-      get feed_preview_url(profile_key: "llm_web_search", "params" => source,
+      get feed_preview_url(profile_key: "llm", "params" => source,
                            ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
-      get feed_preview_url(profile_key: "llm_web_search", "params" => source,
+      get feed_preview_url(profile_key: "llm", "params" => source,
                            ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
     end
   end
@@ -174,7 +174,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" }),
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" }),
             headers: TURBO_STREAM
       end
     end
@@ -186,7 +186,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
                              ai_credential_id: credential.id, ai_model: "made-up-model"),
             headers: TURBO_STREAM
       end
@@ -200,7 +200,7 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("FeedPreview.count") do
       assert_no_enqueued_jobs do
-        get feed_preview_url(profile_key: "llm_web_search", "params" => { query: "anything here" },
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
                              ai_credential_id: stranger_credential.id, ai_model: "claude-opus-4-7"),
             headers: TURBO_STREAM
       end

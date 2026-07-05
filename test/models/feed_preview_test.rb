@@ -137,22 +137,22 @@ class FeedPreviewTest < ActiveSupport::TestCase
   end
 
   test ".digest_for should read the source key for the profile's input_shape" do
-    query_digest = FeedPreview.digest_for("llm_web_search", { "query" => "rust async" })
-    # A url key is ignored for a query-shaped profile; the query value drives it.
-    assert_equal query_digest,
-                 FeedPreview.digest_for("llm_web_search", { "query" => "rust async", "url" => "ignored" })
+    prompt_digest = FeedPreview.digest_for("llm", { "prompt" => "rust async" })
+    # A url key is ignored for the AI profile; the prompt value drives it.
+    assert_equal prompt_digest,
+                 FeedPreview.digest_for("llm", { "prompt" => "rust async", "url" => "ignored" })
   end
 
   test ".digest_for should differ for different models on the same source" do
-    params = { "query" => "rust async" }
-    refute_equal FeedPreview.digest_for("llm_web_search", params, 1, "model-a"),
-                 FeedPreview.digest_for("llm_web_search", params, 1, "model-b")
+    params = { "prompt" => "rust async" }
+    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a"),
+                 FeedPreview.digest_for("llm", params, 1, "model-b")
   end
 
   test ".digest_for should differ for different credentials on the same source" do
-    params = { "query" => "rust async" }
-    refute_equal FeedPreview.digest_for("llm_web_search", params, 1, "model-a"),
-                 FeedPreview.digest_for("llm_web_search", params, 2, "model-a")
+    params = { "prompt" => "rust async" }
+    refute_equal FeedPreview.digest_for("llm", params, 1, "model-a"),
+                 FeedPreview.digest_for("llm", params, 2, "model-a")
   end
 
   test ".digest_for should match the no-selection default when credential and model are nil" do

@@ -20,8 +20,8 @@ class FeedPreviewJobTest < ActiveJob::TestCase
   end
 
   test "#perform should swallow CredentialMissing" do
-    preview = create(:feed_preview, feed_profile_key: "llm_website_extractor",
-                     params: { "url" => "https://example.com" }, run_id: "run-1")
+    preview = create(:feed_preview, feed_profile_key: "llm",
+                     params: { "prompt" => "https://example.com" }, run_id: "run-1")
 
     FeedPreviewWorkflow.stub(:new, ->(*, **) { raise LlmClient::CredentialMissing, "no credential" }) do
       assert_nothing_raised { FeedPreviewJob.perform_now(preview.id, "run-1") }

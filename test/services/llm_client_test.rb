@@ -42,7 +42,7 @@ class LlmClientTest < ActiveSupport::TestCase
   def default_ctx(**overrides)
     LlmClient::CallContext.new(
       feed: feed,
-      profile_key: "llm_website_extractor",
+      profile_key: "llm",
       stage: :loader,
       model: "claude-sonnet-4-6",
       **overrides

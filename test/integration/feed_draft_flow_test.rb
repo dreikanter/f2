@@ -44,9 +44,9 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_difference("Feed.count", 1) do
       post feeds_path, params: {
         feed: {
-          url: ai_url,
+          params: { prompt: ai_url },
           name: "No-RSS Blog",
-          feed_profile_key: "llm_website_extractor"
+          feed_profile_key: "llm"
         },
         commit: "save_as_draft_and_add_credentials"
       }
@@ -55,8 +55,8 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     draft = Feed.last
     assert_predicate draft, :draft?, "Feed should be saved as a draft"
     assert_equal user.id, draft.user_id
-    assert_equal "llm_website_extractor", draft.feed_profile_key
-    assert_equal ai_url, draft.url
+    assert_equal "llm", draft.feed_profile_key
+    assert_equal ai_url, draft.source_input
     assert_equal "No-RSS Blog", draft.name
     assert_nil draft.ai_credential_id, "No credential yet at draft-save time"
     assert_redirected_to new_ai_credential_path(feed_id: draft.id)
@@ -126,15 +126,15 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     # leaves the feed in the enabled state.
     patch feed_path(draft), params: {
       feed: {
-        url: "https://attacker.example/feed.xml",
+        params: { prompt: "https://attacker.example/feed.xml" },
         feed_profile_key: "rss"
       },
       enable_feed: "1"
     }
     draft.reload
     assert_equal "enabled", draft.state, "Feed should stay enabled across the operational-only edit"
-    assert_equal ai_url, draft.url, "Source URL should be locked after promotion"
-    assert_equal "llm_website_extractor", draft.feed_profile_key, "Profile key should be locked after promotion"
+    assert_equal ai_url, draft.source_input, "Source should be locked after promotion"
+    assert_equal "llm", draft.feed_profile_key, "Profile key should be locked after promotion"
 
     # Step 6: feeds index should show the feed in the enabled bucket of the
     # 3-bucket summary line, and the row itself should carry the enabled

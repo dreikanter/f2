@@ -383,37 +383,37 @@ class FeedTest < ActiveSupport::TestCase
 
   test "#can_be_previewed? should be true for an AI profile with an active credential and an available model" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
-                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
 
     assert feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false for an AI profile without a model" do
     credential = create(:ai_credential, :active)
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
-                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: nil)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: nil)
 
     assert_not feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false for an AI profile whose model is no longer available" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
-    feed = build(:feed, user: credential.user, feed_profile_key: "llm_web_search",
-                        params: { "query" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
 
     assert_not feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false for an AI profile without a credential" do
-    feed = build(:feed, feed_profile_key: "llm_web_search",
-                        params: { "query" => "ruby news" }, ai_credential: nil, ai_model: "claude-sonnet-4-6")
+    feed = build(:feed, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: nil, ai_model: "claude-sonnet-4-6")
 
     assert_not feed.can_be_previewed?
   end
 
   test "#can_be_previewed? should be false when the source input is blank" do
-    feed = build(:feed, feed_profile_key: "llm_web_search", params: { "query" => "" })
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "" })
 
     assert_not feed.can_be_previewed?
   end
@@ -719,8 +719,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
+                 feed_profile_key: "llm",
+                 params: { "prompt" => "https://example.com" },
                  ai_credential: nil)
     feed.state = :enabled
 
@@ -734,8 +734,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
+                 feed_profile_key: "llm",
+                 params: { "prompt" => "https://example.com" },
                  ai_credential: credential)
     feed.state = :enabled
 
@@ -749,8 +749,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
+                 feed_profile_key: "llm",
+                 params: { "prompt" => "https://example.com" },
                  ai_credential: credential,
                  ai_model: "claude-sonnet-4-6")
     feed.state = :enabled
@@ -764,8 +764,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
+                 feed_profile_key: "llm",
+                 params: { "prompt" => "https://example.com" },
                  ai_credential: credential,
                  ai_model: nil)
     feed.state = :enabled
@@ -780,8 +780,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed,
                  user: user,
                  access_token: access_token_for(user),
-                 feed_profile_key: "llm_website_extractor",
-                 params: { "url" => "https://example.com" },
+                 feed_profile_key: "llm",
+                 params: { "prompt" => "https://example.com" },
                  ai_credential: credential,
                  ai_model: "removed-model")
     feed.state = :enabled

@@ -9,8 +9,8 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
     @feed ||= create(:feed,
                      user: user,
                      ai_credential: create(:ai_credential, :active, user: user),
-                     feed_profile_key: "llm_website_extractor",
-                     params: { "url" => "https://example.com" })
+                     feed_profile_key: "llm",
+                     params: { "prompt" => "https://example.com" })
   end
 
   def process(items) = Processor::PassthroughProcessor.new(feed, items).process
