@@ -155,6 +155,23 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'data-identification-state="complete"'
   end
 
+  test "#create should not persist an identification record on the AI bridge" do
+    sign_in_as(user)
+
+    assert_no_difference("FeedIdentification.count") do
+      post feed_identifications_path, params: { input: "climate change" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+  end
+
+  test "#create should treat whitespace-only input as blank" do
+    sign_in_as(user)
+
+    post feed_identifications_path, params: { input: "   " }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, "Enter a link"
+  end
+
   test "#create should build a draft AI feed for an explicit AI-bridge request" do
     sign_in_as(user)
 
@@ -330,12 +347,13 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "specific_match", payload.first["rank_reason"]
   end
 
-  test "#show should surface an AI-only fallback payload when only an AI matcher fires" do
+  test "#show should render an AI candidate payload if one is persisted" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
 
-    # Stub the feed_identification directly with an AI-only candidate list —
-    # simulates what the fetcher writes when only the llm matcher fires.
+    # Detection can't produce an AI candidate anymore (structural exclusion,
+    # spec §7), so this hand-writes one to guard the view's handling of it —
+    # the AI-candidate presentation is retired with the two-mode UX in #909.
     FeedIdentification.create!(
       user: user,
       input: url,

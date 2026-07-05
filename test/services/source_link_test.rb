@@ -26,6 +26,11 @@ class SourceLinkTest < ActiveSupport::TestCase
     assert_nil SourceLink.canonical("localhost:3000")
   end
 
+  test ".canonical should reject a host with a leading or trailing dot" do
+    assert_nil SourceLink.canonical(".example.com")
+    assert_nil SourceLink.canonical("example.com.")
+  end
+
   test ".canonical should reject handles and free text" do
     assert_nil SourceLink.canonical("@user")
     assert_nil SourceLink.canonical("@user@mastodon.social")

@@ -150,7 +150,7 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def raw_input
-    @raw_input ||= params[:input].to_s
+    @raw_input ||= params[:input].to_s.strip
   end
 
   # The canonical source URL for detection (silent scheme-fix), or nil when the

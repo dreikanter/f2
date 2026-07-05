@@ -54,6 +54,10 @@ class FeedProfileDetector
     end
   end
 
+  # Ranking stays AI-aware (depends_on_ai sorts last) though no registered
+  # matcher sets that flag today — the AI profile has no matcher (spec §7). It's
+  # a generic guarantee, not a live path: a deterministic AI matcher, if one were
+  # ever added, would still rank below the structured profiles.
   def rank(matches)
     matches.sort_by do |m|
       [m[:depends_on_ai] ? 1 : 0, -m[:match_specificity], m[:registration_index]]

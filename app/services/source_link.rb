@@ -50,10 +50,16 @@ class SourceLink
     uri.scheme.present? && !uri.scheme.include?(".")
   end
 
-  # No usable scheme: prepend https:// and accept only if it yields a dotted host.
+  # No usable scheme: prepend https:// and accept only if it yields a host with an
+  # interior dot — so `example.com` works but `r/x` (host `r`) and malformed
+  # `.example` / `example.` don't.
   def scheme_fixed_url
     fixed = "https://#{@input}"
     uri = safe_parse(fixed)
-    uri.is_a?(URI::HTTP) && uri.host&.include?(".") ? fixed : nil
+    uri.is_a?(URI::HTTP) && dotted_host?(uri.host) ? fixed : nil
+  end
+
+  def dotted_host?(host)
+    host.present? && host.include?(".") && !host.start_with?(".") && !host.end_with?(".")
   end
 end
