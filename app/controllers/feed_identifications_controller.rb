@@ -14,9 +14,12 @@ class FeedIdentificationsController < ApplicationController
   def create
     return render(identification_error(error: "Enter a link, or a few words describing what to follow.")) if raw_input.blank?
 
-    # No link to detect — an explicit "Follow with AI" bridge, or an input that
-    # isn't a URL — goes straight to a draft AI feed (Mode A→B bridge, spec §1).
-    return handle_ai_bridge if ai_mode? || source_url.nil?
+    # Mode B (an explicit "Follow with AI") goes straight to a draft AI feed.
+    return handle_ai_bridge if ai_mode?
+
+    # Mode A input that isn't a link can't be detected: offer the AI bridge
+    # rather than guessing (spec §1) — the user stays in the mode they chose.
+    return render(not_a_link_bridge) if source_url.nil?
 
     return handle_success_status if feed_identification.success?
 
@@ -119,14 +122,21 @@ class FeedIdentificationsController < ApplicationController
     render(identification_error(error: message))
   end
 
-  def identification_error(error:)
+  def identification_error(error:, heading: "Feed identification failed")
     {
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { input: raw_input, error: error }
+        locals: { input: raw_input, error: error, heading: heading }
       )
     }
+  end
+
+  def not_a_link_bridge
+    identification_error(
+      heading: "That doesn't look like a link",
+      error: "Follow it with AI instead, or switch back and paste a link."
+    )
   end
 
   def identification_loading
