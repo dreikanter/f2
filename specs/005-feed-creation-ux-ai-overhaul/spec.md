@@ -187,9 +187,13 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
 
 ### 5. Model selection & capability matrix
 
+*(Live-verified: [`plan-03-provider-verification.md`](./plan-03-provider-verification.md). Anthropic
+Sonnet qualified; Kimi qualified for fetch-only feeds; OpenRouter dropped as unpayable. Verdicts
+below reflect that record.)*
+
 - **Model picker is gated to a curated, dev-verified allowlist** with a sensible default
-  pre-selected and ignorable. Showing a model that can't do web+schema is a silent, async footgun;
-  hiding the picker entirely throws away the per-feed flexibility shipped in #873.
+  pre-selected and ignorable. Showing a model that can't do the capability a feed needs is a silent,
+  async footgun; hiding the picker entirely throws away the per-feed flexibility shipped in #873.
 - **Where validation sits (one rule for every surface)**: `ai_model` membership is validated
   **when it changes** — the form offers only matrix ∩ the credential's model snapshot. A feed
   whose saved model later drops out never blocks unrelated edits, and never hard-fails preview or
@@ -197,29 +201,31 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
   **Event** (the "notice", surfaced on the feed page like other feed events). Today the code does
   three different things — blocks save, blocks preview, silently keeps using the dropped model at
   run time — and §4's unlock would turn the save-block into a trap.
-- **The matrix (`LlmModelCapability`) shrinks to its irreducible core**: a pure
-  `(provider, model)` allowlist where *membership = qualification* — the pair is dev-verified to
-  deliver **the §6 two-step contract: web gather and strict-schema structure as separate calls**
-  (not "together" in one request, a shape §6 abolished). When per-step models land (the Haiku
-  structure candidate), the matrix grows a role dimension; until then a row qualifies a model for
-  both steps. **Drop tiers.** The two axes the old `tier` enum conflated both find better homes:
-  *readiness* → dev-time compatibility testing (a pair enters only once verified; no
-  `:experimental` rows in production); enforcement reliability is a provider property the adapter
-  already embodies (§6), not a per-model flag.
+- **The matrix (`LlmModelCapability`) shrinks to its irreducible core**: a `(provider, model)`
+  allowlist where *membership = qualification*. Verification (plan-03) showed qualification is not a
+  single flag but a **capability set** — a pair is dev-verified for some of {fetch, search,
+  structured-output}, not necessarily all. Kimi qualifies for fetch + structure (via client-side
+  tools, §6) but **not** search; Anthropic Sonnet qualifies for all three. The matrix records which
+  capabilities each pair is verified for, so Mode B can offer a cheap fetch-only provider without
+  pretending it can run discovery feeds. **Drop tiers.** The two axes the old `tier` enum conflated
+  both find better homes: *readiness* → dev-time compatibility testing (a pair enters only once
+  verified; no `:experimental` rows in production); enforcement reliability is a provider property
+  the adapter already embodies (§6), not a per-model flag.
 - **What the matrix does NOT store** — these come from the **credential's models snapshot**
   (captured at credential validation, not a per-render live call):
-  - **Display names** — Anthropic `display_name`, OpenRouter `name`.
+  - **Display names** — Anthropic `display_name`; provider-native model name otherwise.
   - **Availability** — intersect the matrix with the snapshot so a dropped model falls out on its
     own (at snapshot refresh).
-  - **Advertised structured-output support** — Anthropic `capabilities.structured_outputs`,
-    OpenRouter `supported_parameters`.
-- **Why a matrix is still required** (can't go fully dynamic): the two facts that actually gate an
-  AI feed are *not* in either API — Anthropic per-model web-tool support (documented only by model
-  family), and the *reliability of web+schema together* (the "Kimi flips to plain text" failure).
-  Only dev testing reveals these; the matrix encodes exactly that verified set.
-- **Per-provider availability**: a provider without verified matrix rows (OpenRouter, until its
-  web path is live-verified — §6) isn't selectable for AI feeds, stated plainly in the picker.
-  This unblocks the matrix trim landing "anytime" without waiting on OpenRouter verification.
+  - **Advertised structured-output support** — from the provider's model metadata where exposed.
+- **Why a matrix is still required** (can't go fully dynamic): the facts that actually gate an AI
+  feed are *not* in any provider API and only dev testing reveals them — Anthropic per-model
+  web-tool support (documented only by model family); the reliability of structured output itself
+  (Kimi fences its JSON ~⅔ of runs even under `response_format: json_schema`, plan-03); and whether
+  a provider's web tools engage at all through RubyLLM (Kimi's builtin `$web_search` never fires —
+  it imitates the tool as plain text). The matrix encodes exactly that verified capability set.
+- **Per-provider availability**: a provider with no verified rows isn't selectable for AI feeds,
+  stated plainly in the picker — this is why OpenRouter (unpayable, dropped) and any unverified
+  provider simply don't appear, and why the matrix trim can land without waiting on them.
 
 #### `LlmModelCapability` — implementation notes (trims #877 before merge)
 
@@ -234,12 +240,29 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
 - Follow-up tasks (named in #876): intersection with the credential snapshot; display-name join for
   the picker; the dev-time compatibility probe (the gate that replaced the readiness tier).
 
-### 6. Provider seam + two-step extraction
+### 6. Provider seam + retrieval + structured output
 
 *(Shipped as Track 2, #885 — kept as rationale. The gather-empty guard, the usage `step` field,
 the preview budget, and the inline-schema fix below are still open.)*
 
-Verified against live Anthropic calls (Opus + Sonnet). Findings that shaped the design:
+**Update (plan-03, live-verified 2026-07-05).** Two premises below have since been overtaken by
+evidence; kept for the record with the correction inline:
+
+- **Anthropic: schema + web now work *combined* in one RubyLLM call.** The original "never combine"
+  rule was a RubyLLM limitation that no longer holds on RubyLLM 1.16 — a single Anthropic call with
+  a schema *and* server web tools returns grounded, schema-valid JSON. So for Anthropic the two-step
+  split is optional: a single combined call is cheaper (one usage row), faster, and loses no
+  intermediate text. Two-step stays a supported fallback shape; it is no longer the required default.
+- **Retrieval is per-provider, and the seam carries it.** Anthropic uses provider-hosted server
+  tools. **Kimi's builtin `$web_search` does not engage through RubyLLM** (it imitates the tool as
+  plain text; forcing it 400s against thinking mode), and Kimi **fences its JSON ~⅔ of runs** even
+  under `response_format: json_schema`. Kimi is therefore driven with **client-side function tools**
+  (a fetch tool works and grounds; a *search* tool would need an external search API — deferred) plus
+  a deterministic `unfence` on the structure step (a single string op, provider-scoped, **not** LLM
+  healing — the strict no-heal rule holds for providers that don't need it). See §5's capability-set
+  matrix and plan-03 for the fetch-only-vs-search scoping.
+
+Original Anthropic findings that shaped the two-step design (Opus + Sonnet):
 
 - RubyLLM 1.16 renders the current structured-output mechanism (`output_config.format`/`json_schema`
   for Anthropic, `response_format` for OpenRouter) and `with_params` deep-merges into the request —
