@@ -18,11 +18,14 @@ module Normalizer
     end
 
     def normalize_content
-      raw_data["body"].to_s
+      truncate_text(raw_data["body"].to_s)
     end
 
+    # Model-emitted image URLs are fetched server-side at publish time, so a
+    # bad one is a §8 SSRF/local-file risk. Keep only public http(s) URLs and
+    # drop the rest (drop the attachment, never the post).
     def normalize_attachment_urls
-      Array(raw_data["images"]).map(&:to_s)
+      Array(raw_data["images"]).map(&:to_s).select { |url| PublicUrl.safe?(url) }
     end
 
     def normalize_comments
