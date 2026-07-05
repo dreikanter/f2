@@ -45,5 +45,34 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert LlmClient::Adapter::Anthropic.new.combined_extraction?
     assert_not LlmClient::Adapter::OpenRouter.new.combined_extraction?
     assert_not LlmClient::Adapter::Base.new.combined_extraction?
+    assert_not LlmClient::Adapter::Moonshot.new.combined_extraction?
+  end
+
+  test ".for should resolve the moonshot adapter" do
+    assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
+  end
+
+  test "moonshot #apply_web should register the client-side fetch tool" do
+    chat = Class.new do
+      attr_reader :tools
+
+      def initialize = @tools = []
+      def with_tool(tool) = @tools << tool
+    end.new
+
+    LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
+    assert_equal [LlmClient::Tools::WebFetch], chat.tools
+  end
+
+  test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
+    adapter = LlmClient::Adapter::Moonshot.new
+    assert_equal '{"items":[]}', adapter.unwrap_json("```json\n{\"items\":[]}\n```")
+    assert_equal '{"a":1}', adapter.unwrap_json("```\n{\"a\":1}\n```")
+    assert_equal '{"a":1}', adapter.unwrap_json('{"a":1}')
+    assert_equal '{"a":1}', adapter.unwrap_json("  {\"a\":1}  ")
+  end
+
+  test "base #unwrap_json should be identity" do
+    assert_equal "```json\n{}\n```", LlmClient::Adapter::Base.new.unwrap_json("```json\n{}\n```")
   end
 end
