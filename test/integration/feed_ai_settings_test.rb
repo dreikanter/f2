@@ -70,24 +70,25 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[data-key='form.ai-model'] option[selected][value='claude-sonnet-4-6']", text: "Claude Sonnet 4.6"
   end
 
-  test "#edit should list the selected credential's models in the model select" do
+  test "#edit should list only capability-matrix models in the model select" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
     assert_select "select[data-key='form.ai-model'] option", text: "Claude Sonnet 4.6"
-    assert_select "select[data-key='form.ai-model'] option", text: "Claude Opus 4.7"
+    # Opus is offered by the credential but not in the matrix, so it's gated out.
+    assert_select "select[data-key='form.ai-model'] option", text: "Claude Opus 4.7", count: 0
   end
 
-  test "#edit should embed every active credential's models for the dependent dropdown" do
+  test "#edit should embed each credential's capability-matrix models for the dependent dropdown" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
     section = css_select("[data-key='form.ai-settings']").first
     embedded = JSON.parse(section["data-ai-settings-models-value"])
-    # Sorted by display name, matching how the model select lists them.
-    assert_equal models.sort_by { |model| model["name"] }, embedded[credential.id.to_s]
+    # Only the verified Sonnet model survives the capability-matrix gate.
+    assert_equal [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }], embedded[credential.id.to_s]
 
     ai_profiles = JSON.parse(section["data-ai-settings-ai-profiles-value"])
     assert_includes ai_profiles, "llm"

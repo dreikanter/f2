@@ -22,17 +22,30 @@ class FeedAiSettingsComponent < ViewComponent::Base
     @active_credentials ||= @feed.user.ai_credentials.active.order(:display_name)
   end
 
-  def credentials?
-    active_credentials.any?
+  # Active credentials that can actually back a feed: those offering at least one
+  # capability-matrix model. A credential whose provider we haven't verified (no
+  # matrix rows) or whose live snapshot no longer overlaps the matrix would leave
+  # the model picker empty, so we don't offer it as a choice at all.
+  def selectable_credentials
+    @selectable_credentials ||= active_credentials.select { |credential| models_by_credential.key?(credential.id.to_s) }
   end
 
-  # Each active credential's offered models, keyed by id and embedded so the
-  # Stimulus controller can swap the model list on provider change.
+  def credentials?
+    selectable_credentials.any?
+  end
+
+  # Each selectable credential's models, keyed by id and embedded so the Stimulus
+  # controller can swap the model list on provider change. Gated to the capability
+  # matrix ∩ the credential's live snapshot, so only dev-verified web+schema models
+  # are offered (spec §5); credentials left with no models are dropped entirely.
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
-      models = credential.available_models.map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
+      verified = LlmModelCapability.models_for(credential.provider)
+      models = credential.available_models
+                         .select { |model| verified.include?(model["id"]) }
+                         .map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
       [credential.id.to_s, models.sort_by { |model| model["name"].to_s.downcase }]
-    end
+    end.select { |_id, models| models.any? }
   end
 
   def ai_profile_keys
@@ -40,11 +53,13 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def selected_credential_id
-    (@feed.ai_credential_id || @feed.user.default_ai_credential_id || active_credentials.first&.id)&.to_s
+    preferred = [@feed.ai_credential_id, @feed.user.default_ai_credential_id].compact
+    selectable_ids = selectable_credentials.map(&:id)
+    ((preferred & selectable_ids).first || selectable_ids.first)&.to_s
   end
 
   def credential_options
-    active_credentials.map do |credential|
+    selectable_credentials.map do |credential|
       ["#{credential.display_name} · #{LlmProvider.find(credential.provider).display_name}", credential.id]
     end
   end
@@ -53,14 +68,16 @@ class FeedAiSettingsComponent < ViewComponent::Base
     (models_by_credential[selected_credential_id] || []).map { |model| [model["name"], model["id"]] }
   end
 
-  # True when the feed's saved model has dropped out of its (still active)
-  # credential, so the form should nudge the user to re-pick before re-enabling.
+  # True when the feed's saved model can no longer be picked — either it dropped
+  # out of the credential's live snapshot, or it's no longer in the capability
+  # matrix — so the form should nudge the user to re-pick before re-enabling.
   def model_unavailable?
     return false unless section_visible?
     return false unless @feed.ai_credential&.active?
     return false if @feed.ai_model.blank?
 
-    !@feed.ai_model_available?
+    !@feed.ai_model_available? ||
+      !LlmModelCapability.supported?(@feed.ai_credential.provider, @feed.ai_model)
   end
 
   private
