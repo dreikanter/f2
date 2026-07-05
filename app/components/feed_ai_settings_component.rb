@@ -26,11 +26,16 @@ class FeedAiSettingsComponent < ViewComponent::Base
     active_credentials.any?
   end
 
-  # Each active credential's offered models, keyed by id and embedded so the
-  # Stimulus controller can swap the model list on provider change.
+  # Each active credential's selectable models, keyed by id and embedded so the
+  # Stimulus controller can swap the model list on provider change. Gated to the
+  # capability matrix ∩ the credential's live snapshot, so only dev-verified
+  # web+schema models are offered (spec §5).
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
-      models = credential.available_models.map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
+      verified = LlmModelCapability.models_for(credential.provider)
+      models = credential.available_models
+                         .select { |model| verified.include?(model["id"]) }
+                         .map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
       [credential.id.to_s, models.sort_by { |model| model["name"].to_s.downcase }]
     end
   end

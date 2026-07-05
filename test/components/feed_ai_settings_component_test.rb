@@ -50,8 +50,17 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
   end
 
   test "#models_by_credential should fall back to the id when a model has no name" do
-    credential.update!(available_models: [{ "id" => "bare-model" }])
-    assert_equal "bare-model", component(ai_feed).models_by_credential[credential.id.to_s].first["name"]
+    credential.update!(available_models: [{ "id" => "claude-sonnet-4-6" }])
+    assert_equal "claude-sonnet-4-6", component(ai_feed).models_by_credential[credential.id.to_s].first["name"]
+  end
+
+  test "#models_by_credential should drop models not in the capability matrix" do
+    credential.update!(available_models: [
+      { "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" },
+      { "id" => "claude-3-haiku-unverified", "name" => "Unverified" }
+    ])
+    ids = component(ai_feed).models_by_credential[credential.id.to_s].map { |model| model["id"] }
+    assert_equal ["claude-sonnet-4-6"], ids
   end
 
   test "#ai_profile_keys should list only AI-backed profiles" do
