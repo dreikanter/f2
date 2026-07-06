@@ -1,4 +1,4 @@
-<%# locals: (edit_mode: false, feed: @feed, candidates: []) %>
+<%# locals: (edit_mode: false, feed: @feed, candidates: [], source_changed: false, profile_changed: false) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 <%# The chooser is a real choice only with two or more working candidates; one
     working candidate is shown as a read-only annotation (spec §7). In edit mode
@@ -116,6 +116,23 @@
         <% if edit_mode && !ai_prompt_editable && !source_editable %>
           <p class="mt-3 text-sm text-muted" data-key="form.source-locked-note">This feed's source is fixed. To follow a different source, just start a new feed.</p>
         <% end %>
+
+        <%# Duplicate-risk warning for a pending source/profile change (spec §4).
+            A profile change reworks how posts are identified, so it's the louder
+            warning and turns the "skip older posts" threshold on by default. %>
+        <% if source_changed %>
+          <% if profile_changed %>
+            <%= render AlertComponent.new(variant: :warning, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
+              <p class="font-semibold">This changes how posts are identified</p>
+              <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back — pick a start date that suits you. It can't promise zero repeats.</p>
+            <% end %>
+          <% else %>
+            <%= render AlertComponent.new(variant: :info, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
+              <p class="font-semibold">Heads up: you're pointing this feed somewhere new</p>
+              <p class="text-sm">If the same posts live at new addresses there, they might arrive again. To skip ones you've already seen, switch on “Skip older posts” below.</p>
+            <% end %>
+          <% end %>
+        <% end %>
       </div>
 
       <div class="space-y-2">
@@ -219,6 +236,7 @@
           <div class="flex items-start">
             <div class="flex h-6 items-center">
               <%= f.check_box :import_after_enabled,
+                              checked: feed.import_after_enabled || profile_changed,
                               data: {
                                 field_toggle_target: "checkbox",
                                 action: "change->field-toggle#toggle",
@@ -234,7 +252,7 @@
           <%# mt-6 lives on the toggled panel (not a wrapper space-y) so the gap
               only appears when the fields are shown — a hidden element renders
               no margin. %>
-          <div class="mt-6 space-y-2 <%= "hidden" unless feed.import_after_enabled %>"
+          <div class="mt-6 space-y-2 <%= "hidden" unless feed.import_after_enabled || profile_changed %>"
                data-field-toggle-target="panel"
                data-key="form.import-after-fields">
             <div class="grid gap-4 sm:grid-cols-2">
@@ -242,7 +260,10 @@
                 <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
                   <%= icon("calendar", css_class: "size-5 text-muted") %>
                 </div>
+                <%# A profile change defaults the threshold on (spec §4); seed
+                    today so "on" reads as a complete cutoff, not a blank field. %>
                 <%= f.text_field :import_after_date,
+                                 value: feed.import_after_date || (Date.current.iso8601 if profile_changed),
                                  placeholder: "Pick a date",
                                  autocomplete: "off",
                                  class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
