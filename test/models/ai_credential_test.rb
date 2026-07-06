@@ -114,17 +114,61 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal "disabled", enabled_feed.reload.state
   end
 
-  test "#offers_model? should be true only for a model in available_models" do
-    credential = build(:ai_credential, available_models: [{ "id" => "claude-sonnet-4-6" }])
+  test "#supported_models should keep only models the capability matrix verifies" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "claude-sonnet-4-6" }, { "id" => "unverified-model" }])
 
-    assert credential.offers_model?("claude-sonnet-4-6")
-    assert_not credential.offers_model?("some-other-model")
+    assert_equal ["claude-sonnet-4-6"], credential.supported_models.map { |model| model["id"] }
   end
 
-  test "#offers_model? should be false for a blank model id" do
+  test "#supported_models should be empty for a provider with no matrix rows" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "some-model" }])
+    credential.provider = "openrouter"
+
+    assert_empty credential.supported_models
+  end
+
+  test "#supports_model? should be true only for a verified model in the snapshot" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "claude-sonnet-4-6" }])
+
+    assert credential.supports_model?("claude-sonnet-4-6")
+    assert_not credential.supports_model?("some-other-model")
+  end
+
+  test "#supports_model? should be false for a snapshot model missing from the matrix" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "unverified-model" }])
+
+    assert_not credential.supports_model?("unverified-model")
+  end
+
+  test "#supports_model? should be false for a blank model id" do
     credential = build(:ai_credential, available_models: [{ "id" => "claude-sonnet-4-6" }])
 
-    assert_not credential.offers_model?(nil)
-    assert_not credential.offers_model?("")
+    assert_not credential.supports_model?(nil)
+    assert_not credential.supports_model?("")
+  end
+
+  test "#default_supported_model should prefer the provider default when supported" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "claude-sonnet-4-6" }])
+
+    assert_equal "claude-sonnet-4-6", credential.default_supported_model
+  end
+
+  test "#default_supported_model should resolve a moonshot credential to its verified model" do
+    credential = build(:ai_credential, provider: "moonshot",
+                                       available_models: [{ "id" => "kimi-k2.5" }])
+
+    assert_equal "kimi-k2.5", credential.default_supported_model
+  end
+
+  test "#default_supported_model should be nil when nothing is supported" do
+    credential = build(:ai_credential, provider: "anthropic",
+                                       available_models: [{ "id" => "unverified-model" }])
+
+    assert_nil credential.default_supported_model
   end
 end

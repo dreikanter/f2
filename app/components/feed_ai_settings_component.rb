@@ -40,9 +40,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   # are offered (spec §5); credentials left with no models are dropped entirely.
   def models_by_credential
     @models_by_credential ||= active_credentials.to_h do |credential|
-      verified = LlmModelCapability.models_for(credential.provider)
-      models = credential.available_models
-                         .select { |model| verified.include?(model["id"]) }
+      models = credential.supported_models
                          .map { |model| { "id" => model["id"], "name" => model["name"].presence || model["id"] } }
       [credential.id.to_s, models.sort_by { |model| model["name"].to_s.downcase }]
     end.select { |_id, models| models.any? }
@@ -68,16 +66,15 @@ class FeedAiSettingsComponent < ViewComponent::Base
     (models_by_credential[selected_credential_id] || []).map { |model| [model["name"], model["id"]] }
   end
 
-  # True when the feed's saved model can no longer be picked — either it dropped
-  # out of the credential's live snapshot, or it's no longer in the capability
-  # matrix — so the form should nudge the user to re-pick before re-enabling.
+  # True when the feed's saved model can no longer be picked — it dropped out of
+  # the matrix ∩ the credential's live snapshot — so the form should nudge the
+  # user to re-pick before re-enabling.
   def model_unavailable?
     return false unless section_visible?
     return false unless @feed.ai_credential&.active?
     return false if @feed.ai_model.blank?
 
-    !@feed.ai_model_available? ||
-      !LlmModelCapability.supported?(@feed.ai_credential.provider, @feed.ai_model)
+    !@feed.ai_model_supported?
   end
 
   private

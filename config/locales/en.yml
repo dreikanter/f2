@@ -47,6 +47,9 @@ en:
         posting_denied: "it lost permission to post to its FreeFeed group"
         group_not_found: "its FreeFeed group no longer exists or was renamed"
         default: "its FreeFeed group is no longer available"
+    feed_ai_model_unavailable:
+      name: "AI model unavailable"
+      description_html: "%{subject_link}'s AI model is no longer available, so it's running on a fallback for now — pick a new model to keep it accurate."
     feed_refresh:
       name: "Feed refreshed"
       description_html: "%{subject_link} refreshed"

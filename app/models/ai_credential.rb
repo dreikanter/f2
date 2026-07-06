@@ -40,10 +40,30 @@ class AiCredential < ApplicationRecord
     user.update!(default_ai_credential: self)
   end
 
-  def offers_model?(model_id)
+  # Models this credential can actually back a feed with: the dev-verified
+  # capability matrix intersected with the provider's live snapshot (spec §5).
+  # Membership is qualification — a snapshot model absent from the matrix (or a
+  # provider with no matrix rows) yields nothing, so nothing unverified leaks
+  # into the picker or a run.
+  def supported_models
+    verified = LlmModelCapability.models_for(provider)
+    available_models.select { |model| verified.include?(model["id"]) }
+  end
+
+  def supports_model?(model_id)
     return false if model_id.blank?
 
-    available_models.any? { |model| model["id"] == model_id }
+    supported_models.any? { |model| model["id"] == model_id }
+  end
+
+  # The model to fall back to when a chosen model is no longer supported: the
+  # provider's configured default when it's still supported here, otherwise the
+  # first supported model, or nil when the provider has no verified models.
+  def default_supported_model
+    provider_default = LlmProvider.find(provider).default_model
+    return provider_default if supports_model?(provider_default)
+
+    supported_models.first&.fetch("id")
   end
 
   def ruby_llm_context

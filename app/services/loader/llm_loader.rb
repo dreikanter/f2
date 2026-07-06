@@ -58,10 +58,20 @@ module Loader
       PROMPT
     end
 
-    # Feed override wins; otherwise the resolved credential's provider default,
-    # so the model always matches the provider actually being called.
+    # The chosen model when the credential still supports it, otherwise its
+    # default supported model — a dropped model degrades gracefully instead of
+    # failing the run (spec §5). A persisted feed records the fallback once so
+    # the feed page can prompt a re-pick. Falls back to the provider default only
+    # when the credential exposes no verified models at all.
     def model_for(credential)
-      feed.ai_model.presence || LlmProvider.find(credential.provider).default_model
+      chosen = feed.ai_model
+      resolved = feed.effective_ai_model(credential)
+
+      if feed.persisted? && chosen.present? && resolved.present? && resolved != chosen
+        feed.note_ai_model_fallback!(from: chosen, to: resolved)
+      end
+
+      resolved.presence || LlmProvider.find(credential.provider).default_model
     end
 
     def config

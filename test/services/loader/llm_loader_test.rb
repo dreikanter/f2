@@ -103,12 +103,27 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_match(/items/, error.message)
   end
 
-  test "#load should call the model from the feed override when set" do
-    feed.update!(ai_model: "claude-opus-4-7")
-    client = fake_client(structured: { "items" => [] })
-    Loader::LlmLoader.new(feed, llm_client: client).load
+  test "#load should use the feed's chosen model when the credential still supports it" do
+    supported = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    supported_feed = create(:feed, user: user, ai_credential: supported, feed_profile_key: "llm",
+                                   params: { "prompt" => "x" }, ai_model: "claude-sonnet-4-6")
+    client = fake_client(structured: { "items" => [] }, credential: supported)
+    Loader::LlmLoader.new(supported_feed, llm_client: client).load
 
-    assert_equal ["claude-opus-4-7"], client.calls.map { |c| c[:model] }
+    assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
+  end
+
+  test "#load should fall back to a supported model and record a notice when the chosen model dropped" do
+    supported = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    dropped_feed = create(:feed, user: user, ai_credential: supported, feed_profile_key: "llm",
+                                 params: { "prompt" => "x" }, ai_model: "removed-model")
+    client = fake_client(structured: { "items" => [] }, credential: supported)
+
+    assert_difference -> { dropped_feed.events.where(type: "feed_ai_model_unavailable").count }, 1 do
+      Loader::LlmLoader.new(dropped_feed, llm_client: client).load
+    end
+
+    assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
   end
 
   test "#load should fall back to the provider default model when no override" do
