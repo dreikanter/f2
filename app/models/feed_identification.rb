@@ -9,6 +9,15 @@ class FeedIdentification < ApplicationRecord
     processing? && started_at.nil?
   end
 
+  # Reset the row to a fresh in-flight detection. Shared by the creation entry
+  # and the edit-source re-detection so both clear stale candidates/errors the
+  # same way; the caller enqueues FeedIdentificationJob.
+  def restart_detection!
+    update!(status: :processing, started_at: Time.current, candidates: [], error: nil)
+  rescue ActiveRecord::RecordNotUnique
+    reload
+  end
+
   # The candidate the chooser preselects and the new-feed form is built from: the
   # highest-ranked one that can fetch the source.
   def suggested_candidate
@@ -25,6 +34,13 @@ class FeedIdentification < ApplicationRecord
       candidate = Candidate.new(attributes)
       candidate.failed? || candidate.unreachable?
     end
+  end
+
+  # Profile keys of the working candidates, in rank order. An edit's confirming
+  # save (spec §4) only applies a source when the submitted profile is one of
+  # these — a settled, source-reading candidate.
+  def working_candidate_profile_keys
+    working_candidates.map { |attributes| attributes["profile_key"] }
   end
 
   # How the detection result should present (spec §7):

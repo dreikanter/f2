@@ -2,6 +2,7 @@ class FeedsController < ApplicationController
   include Pagination
   include Sortable
   include FeedStateEvents
+  include StatePolling
 
   MAX_RECENT_POSTS = 5
   MAX_RECENT_EVENTS = 10
@@ -106,15 +107,29 @@ class FeedsController < ApplicationController
     authorize @feed
   end
 
-  # Per FR-026/FR-027/FR-028 operational fields (name, target_group, schedule,
-  # access_token) edit freely; source-side fields (url, feed_profile_key,
-  # params) are not editable from this form and stay anchored to the original
-  # detection result. Re-pointing a feed at a different source means creating
-  # a new feed.
+  # Operational fields (name, target_group, schedule, access_token) edit freely.
+  # A live deterministic feed's source can be re-pointed, but only through
+  # detection: a changed source URL re-runs identification and the confirming
+  # save applies it only once a working candidate is verified (spec §4). The
+  # engine stays fixed — deterministic ↔ AI is a new feed.
   def update
     @feed = load_feed
     authorize @feed
+
+    # A changed deterministic source that isn't yet backed by a verified working
+    # candidate hands off to the async detector and paints the §7 states; a
+    # confirmed one falls through to the normal save below (with the source
+    # applied), so enable/pause/schedule bookkeeping stays in one place. Capture
+    # the decision before assign_attributes moves source_input onto the new URL.
+    source_change = mode_a_source_change?
+    if source_change && !source_change_confirmed?
+      return propose_source_redetection(canonical_submitted_url || submitted_source_raw)
+    end
+
     @feed.assign_attributes(update_feed_params)
+    # Overwrite the raw submitted URL with the canonical, verified source and its
+    # detected profile (the confirm path — spec §4).
+    apply_confirmed_source if source_change
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
@@ -190,6 +205,68 @@ class FeedsController < ApplicationController
     end
   end
 
+  # True when a live deterministic feed's submitted source URL differs from the
+  # one it's anchored to — the only case that routes through re-detection.
+  def mode_a_source_change?
+    return false unless @feed.persisted? && !@feed.draft?
+    return false if FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+
+    submitted_source_raw.present? && submitted_source_raw != @feed.source_input.to_s
+  end
+
+  def submitted_source_raw
+    @submitted_source_raw ||= params.dig(:feed, :params, :url).to_s.strip
+  end
+
+  def canonical_submitted_url
+    return @canonical_submitted_url if defined?(@canonical_submitted_url)
+
+    @canonical_submitted_url = SourceLink.canonical(submitted_source_raw)
+  end
+
+  # The settled working identification for the submitted URL, or nil. A source
+  # change is confirmed only when one exists and the submitted profile is one of
+  # its working candidates — a candidate that actually read the source (spec §4).
+  def settled_working_identification
+    return @settled_working_identification if defined?(@settled_working_identification)
+
+    fi = canonical_submitted_url && FeedIdentification.find_by(user: current_user, input: canonical_submitted_url)
+    @settled_working_identification = (fi&.success? && fi.outcome == :working) ? fi : nil
+  end
+
+  def source_change_confirmed?
+    fi = settled_working_identification
+    fi.present? && fi.working_candidate_profile_keys.include?(params.dig(:feed, :feed_profile_key))
+  end
+
+  def apply_confirmed_source
+    @feed.url = canonical_submitted_url
+    @feed.feed_profile_key = params.dig(:feed, :feed_profile_key)
+    @feed.source_verified = true
+  end
+
+  # Persist the operational edits so they survive the async detection gap, then
+  # kick detection and paint the §7 loading state. The source itself waits for a
+  # confirmed working candidate; no state transition happens here, so a live feed
+  # keeps refreshing its verified source until the new one is confirmed.
+  def propose_source_redetection(input)
+    return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
+
+    identification = FeedIdentification.find_or_initialize_by(user: current_user, input: input)
+    identification.restart_detection!
+    FeedIdentificationJob.perform_later(current_user.id, input)
+
+    render turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/identification_loading",
+      locals: { input: input, feed_id: @feed.id, cancel_path: feed_path(@feed), edit_mode: true }
+    )
+  end
+
+  def operational_update_params
+    update_feed_params.except(:params, :feed_profile_key)
+  end
+
   def feeds_scope
     current_user.feeds
   end
@@ -257,6 +334,13 @@ class FeedsController < ApplicationController
   def permitted_keys
     if @feed&.draft?
       ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
+    elsif @feed && !FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+      # A live deterministic feed can move its source, but only through detection
+      # (spec §4). The URL rides operational params; the re-detected profile is
+      # applied explicitly by the confirm path (from a verified chooser pick), so
+      # feed_profile_key stays out of the mass-assignable set here — an unverified
+      # profile switch can't leak in.
+      ALWAYS_PERMITTED_PARAMS + [{ params: [:url] }]
     else
       ALWAYS_PERMITTED_PARAMS
     end

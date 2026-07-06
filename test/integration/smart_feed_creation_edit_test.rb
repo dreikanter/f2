@@ -65,20 +65,82 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed", feed.name
   end
 
-  test "#patch should ignore attempts to mass-assign the params jsonb" do
+  test "#patch should route a source change through detection instead of writing params directly" do
     sign_in_as(user)
     original_params = feed.params
 
-    patch feed_url(feed), params: {
-      feed: {
-        params: { url: "http://attacker.example/feed.xml" },
-        name: "Renamed"
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      patch feed_url(feed), params: {
+        feed: {
+          params: { url: "http://attacker.example/feed.xml" },
+          name: "Renamed"
+        }
       }
-    }
+    end
 
     feed.reload
-    assert_equal original_params, feed.params
+    assert_equal original_params, feed.params, "the source isn't written until detection confirms it"
     assert_equal "Renamed", feed.name
+  end
+
+  test "#patch should hold the source and re-detect when a live feed's URL changes" do
+    sign_in_as(user)
+
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      patch feed_url(feed), params: { feed: { params: { url: "http://example.com/other.xml" }, name: "Renamed" } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_select "[data-controller='polling'][data-polling-endpoint-value*=?]", "feed_id=#{feed.id}"
+    feed.reload
+    assert_equal "http://example.com/feed.xml", feed.url
+    assert_equal "Renamed", feed.name
+  end
+
+  test "#patch should apply a re-detected source once a working candidate confirms it" do
+    sign_in_as(user)
+    new_url = "http://example.com/other.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+
+    patch feed_url(feed), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
+
+    assert_redirected_to feed_path(feed)
+    feed.reload
+    assert_equal new_url, feed.url
+    assert_equal "enabled", feed.state
+  end
+
+  test "#patch should enable a disabled feed when confirming a re-detected source with Enable ticked" do
+    sign_in_as(user)
+    disabled = create(:feed, user: user, access_token: access_token, state: :disabled,
+                             target_group: "testgroup", feed_profile_key: "rss",
+                             params: { "url" => "http://example.com/feed.xml" })
+    new_url = "http://example.com/other.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+
+    patch feed_url(disabled), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
+
+    assert_redirected_to feed_path(disabled)
+    disabled.reload
+    assert_equal new_url, disabled.url
+    assert_equal "enabled", disabled.state
+  end
+
+  test "#patch should re-detect rather than confirm a profile that isn't a working candidate" do
+    sign_in_as(user)
+    new_url = "http://example.com/other.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      patch feed_url(feed), params: { feed: { params: { url: new_url }, feed_profile_key: "xkcd" } }
+    end
+
+    feed.reload
+    assert_equal "http://example.com/feed.xml", feed.url
   end
 
   test "#patch should ignore attempts to mass-assign the feed_profile_key" do

@@ -557,15 +557,18 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "#edit should render for own feed" do
+  test "#edit should render an editable source for a deterministic feed" do
     sign_in_as(user)
     get edit_feed_url(feed)
     assert_response :success
     assert_select "h2", text: "Source"
     assert_select "label", text: "Source URL"
+    assert_select "input[data-key='form.source-edit'][name='feed[params][url]']"
+    assert_select "input[data-key='form.source-edit'][disabled]", count: 0
     assert_select "label", text: "Feed type"
     assert_select "input[data-key='form.feed-type-display'][value=?][disabled]", "RSS Feed"
-    assert_select "[data-key='form.source-locked-note']", text: "The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed."
+    assert_select "[data-key='form.source-edit-note']"
+    assert_select "[data-key='form.source-locked-note']", count: 0
   end
 
   test "#edit should label the source as a prompt for a query-shaped feed" do
@@ -822,27 +825,31 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", enabled_feed.state
   end
 
-  test "#update should not allow changing url or feed_profile_key" do
+  test "#update should route a source change through re-detection, not silent mass-assignment" do
     sign_in_as(user)
     original_url = feed.url
     original_profile = feed.feed_profile_key
     original_params = feed.params
 
-    patch feed_url(feed), params: {
-      feed: {
-        url: "https://evil.com/feed.xml",
-        feed_profile_key: "xkcd",
-        params: { url: "https://evil.com/feed.xml", smuggled: "yes" },
-        name: "Updated Name"
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      patch feed_url(feed), params: {
+        feed: {
+          url: "https://evil.com/feed.xml",
+          feed_profile_key: "xkcd",
+          params: { url: "https://evil.com/feed.xml", smuggled: "yes" },
+          name: "Updated Name"
+        }
       }
-    }
+    end
 
-    assert_redirected_to feed_path(feed)
+    # The source isn't applied until detection confirms a working candidate; the
+    # response is the §7 loading state, and the profile/params can't be forged in.
+    assert_response :success
     feed.reload
     assert_equal original_url, feed.url
     assert_equal original_profile, feed.feed_profile_key
     assert_equal original_params, feed.params, "raw params jsonb must not be mass-assignable on update"
-    assert_equal "Updated Name", feed.name
+    assert_equal "Updated Name", feed.name, "operational edits still persist while detection runs"
   end
 
   test "#update should permit url change when feed is draft" do
@@ -856,12 +863,14 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_equal new_url, draft.url
   end
 
-  test "#update should ignore url change when feed is disabled" do
+  test "#update should not persist a disabled feed's source change until detection confirms it" do
     sign_in_as(user)
     disabled = create(:feed, :disabled, user: user,
                       params: { "url" => "https://original.com/feed.xml" })
 
-    patch feed_url(disabled), params: { feed: { params: { url: "https://attacker.com/feed.xml" } } }
+    assert_enqueued_with(job: FeedIdentificationJob) do
+      patch feed_url(disabled), params: { feed: { params: { url: "https://attacker.com/feed.xml" } } }
+    end
 
     disabled.reload
     assert_equal "https://original.com/feed.xml", disabled.url

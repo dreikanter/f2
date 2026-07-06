@@ -152,4 +152,17 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
     assert_equal %w[rss llm], identification.candidates.map { |c| c["profile_key"] }
   end
+
+  test "#working_candidate_profile_keys should list only candidates that read the source" do
+    identification = FeedIdentification.new(
+      status: :success,
+      candidates: [
+        { "profile_key" => "rss", "test_status" => "passed" },
+        { "profile_key" => "atom", "test_status" => "failed" },
+        { "profile_key" => "xkcd", "test_status" => "unreachable" }
+      ]
+    )
+
+    assert_equal %w[rss], identification.working_candidate_profile_keys
+  end
 end

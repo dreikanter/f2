@@ -7,7 +7,7 @@ class FeedIdentificationsController < ApplicationController
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_error",
-      locals: { input: params[:input], error: "Too many identification attempts. Please wait before trying again." }
+      locals: base_locals.merge(input: params[:input], error: "Too many identification attempts. Please wait before trying again.")
     ), status: :too_many_requests
   }
 
@@ -27,18 +27,7 @@ class FeedIdentificationsController < ApplicationController
     return present_outcome if settled_identification?
 
     if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
-      begin
-        feed_identification.update!(
-          status: :processing,
-          started_at: Time.current,
-          candidates: [],
-          error: nil
-        )
-      rescue ActiveRecord::RecordNotUnique
-        # Race condition: another process created the record, reload and continue
-        feed_identification.reload
-      end
-
+      feed_identification.restart_detection!
       FeedIdentificationJob.perform_later(Current.user.id, source_url)
     end
 
@@ -128,13 +117,24 @@ class FeedIdentificationsController < ApplicationController
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
     source_key = FeedProfile.source_key_for(profile_key) || "url"
-    params_for_input = { source_key => feed_identification.input }
 
-    feed = Current.user.feeds.build(
-      params: params_for_input,
-      feed_profile_key: profile_key,
-      name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
-    )
+    feed =
+      if editing?
+        # Re-render the feed being edited with the proposed source + profile
+        # applied in memory only; the confirming PATCH persists it after the
+        # source-verified guard clears (spec §4). Operational edits were saved
+        # on the propose PATCH, so the reloaded record already carries them.
+        edit_feed.tap do |f|
+          f.feed_profile_key = profile_key
+          f.params = (f.params || {}).merge(source_key => feed_identification.input)
+        end
+      else
+        Current.user.feeds.build(
+          params: { source_key => feed_identification.input },
+          feed_profile_key: profile_key,
+          name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
+        )
+      end
 
     render(identification_success(feed, candidates: feed_identification.working_candidates))
   end
@@ -144,21 +144,28 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_error",
-        locals: { input: raw_input, error: error, heading: heading }
+        locals: base_locals.merge(input: raw_input, error: error, heading: heading)
       )
     }
   end
 
+  # When re-detecting an existing deterministic feed the engine is fixed, so the
+  # AI bridge isn't offered (spec §4) — the copy just points back to a link.
   def not_a_link_bridge
+    return identification_error(heading: "That doesn't look like a link", error: "Enter a feed or page URL to check it.") if editing?
+
     identification_error(
       heading: "That doesn't look like a link",
       error: "Follow it with AI instead, or switch back and paste a link."
     )
   end
 
-  # Terminal: the link was reachable but no deterministic profile reads it. The
-  # bridge is the way forward (spec §7).
+  # Terminal: the link was reachable but no deterministic profile reads it. In
+  # creation the bridge is the way forward (spec §7); in edit the engine is fixed,
+  # so it just invites another link.
   def no_feed_error
+    return identification_error(heading: "Couldn't pull any posts from that link", error: "We couldn't find a feed there — try a different link, or cancel to keep the current one.") if editing?
+
     identification_error(
       heading: "Couldn't pull any posts from that link",
       error: "We couldn't find a feed there — but AI can still follow it, or you can try a different link."
@@ -172,7 +179,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_retry",
-        locals: { input: raw_input }
+        locals: base_locals.merge(input: raw_input)
       )
     }
   end
@@ -182,7 +189,7 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/identification_loading",
-        locals: { input: source_url }
+        locals: base_locals.merge(input: source_url)
       )
     }
   end
@@ -192,9 +199,28 @@ class FeedIdentificationsController < ApplicationController
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/form_expanded",
-        locals: { feed: feed, candidates: candidates }
+        locals: { feed: feed, candidates: candidates, edit_mode: editing? }
       )
     }
+  end
+
+  # The feed being edited (spec §4 source re-detection), or nil in the creation
+  # flow. Scoped to the current user so a forged feed_id can't reach another's.
+  def edit_feed
+    return @edit_feed if defined?(@edit_feed)
+
+    @edit_feed = params[:feed_id].present? ? Current.user.feeds.find_by(id: params[:feed_id]) : nil
+  end
+
+  def editing?
+    edit_feed.present?
+  end
+
+  # Common locals the §7 partials read to route back to the right place: the
+  # feed_id keeps re-detection in the edit context, cancel_path returns to the
+  # feed (not the feeds index), and edit_mode suppresses the AI bridge.
+  def base_locals
+    { feed_id: edit_feed&.id, cancel_path: (editing? ? feed_path(edit_feed) : feeds_path), edit_mode: editing? }
   end
 
   def raw_input

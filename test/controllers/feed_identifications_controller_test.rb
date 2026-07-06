@@ -689,6 +689,53 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[name]'][value='#{"A" * (Feed::NAME_MAX_LENGTH - 1)}…']", count: 1
   end
 
+  test "#show should re-render the edit form for a feed-scoped source re-detection" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    new_url = "http://example.com/new.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+
+    get feed_identifications_path, params: { input: new_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "input[data-key='form.source-edit'][value=?]", new_url
+    assert_select "form[action=?]", feed_path(feed)
+    assert_select "input[type=hidden][name='_method'][value='patch']"
+  end
+
+  test "#show should drop the AI bridge and cancel to the feed when edit re-detection finds no feed" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    new_url = "http://example.com/none.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "failed" }])
+
+    get feed_identifications_path, params: { input: new_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='identification.ai-bridge']", count: 0
+    assert_select "a[data-key='identification.cancel'][href=?]", feed_path(feed)
+  end
+
+  test "#show should keep re-detection in the edit context on a couldn't-reach result" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    new_url = "http://example.com/down.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           error: "unreachable", candidates: [])
+
+    get feed_identifications_path, params: { input: new_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='identification.ai-bridge']", count: 0
+    assert_select "form[action=?] input[type=hidden][name='feed_id'][value=?]", feed_identifications_path, feed.id.to_s
+    assert_select "a[data-key='identification.cancel'][href=?]", feed_path(feed)
+  end
+
   private
 
   def extract_candidates_payload(body)

@@ -55,6 +55,11 @@ class Feed < ApplicationRecord
   # How long a ready FeedPreview is reused before a fresh run is forced.
   PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
+  # Set true by the edit controller only after a settled detection confirmed the
+  # new source (spec §4). Lets `source_change_reverified` reject a Mode A source
+  # move that never passed through identification.
+  attr_accessor :source_verified
+
   after_update :create_schedule_on_enable
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
@@ -74,6 +79,8 @@ class Feed < ApplicationRecord
   validate :ai_credential_belongs_to_user
   validate :access_token_belongs_to_user
   validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
+  validate :engine_fixed_on_edit
+  validate :source_change_reverified
   validates :access_token, presence: true, if: :enabled?
   validates :target_group, presence: true, if: :enabled?
 
@@ -500,6 +507,38 @@ class Feed < ApplicationRecord
     return if access_token.user_id == user_id
 
     errors.add(:access_token, "must belong to the same user")
+  end
+
+  # The engine (deterministic vs AI) is fixed at creation: an existing feed never
+  # switches across the AI boundary in edit — you create a new feed instead (spec
+  # §4). A deterministic → deterministic profile change is fine.
+  def engine_fixed_on_edit
+    return unless persisted? && feed_profile_key_changed?
+    return unless FeedProfile.exists?(feed_profile_key) && FeedProfile.exists?(feed_profile_key_was)
+    return if FeedProfile.depends_on_ai?(feed_profile_key) == FeedProfile.depends_on_ai?(feed_profile_key_was)
+
+    errors.add(:feed_profile_key, "can't switch between AI and non-AI feeds — start a new feed instead")
+  end
+
+  # A deterministic feed's source can only move through identification (spec §4):
+  # the edit controller re-runs detection and sets `source_verified` once a
+  # working candidate confirms the new source. This blocks a forged direct edit
+  # from silently pointing a live feed at an unverified, possibly-broken source.
+  def source_change_reverified
+    return unless persisted?
+    return if draft? || source_verified
+    return if FeedProfile.depends_on_ai?(feed_profile_key)
+    return unless source_input_changed_in_place?
+
+    errors.add(:base, "The source changed — re-check it before saving.")
+  end
+
+  def source_input_changed_in_place?
+    return false unless params_changed?
+
+    key = FeedProfile.source_key_for(feed_profile_key) || "url"
+    before, after = params_change
+    before&.dig(key) != after&.dig(key)
   end
 
   def ai_credential_required_when_enabled_ai_profile
