@@ -875,6 +875,80 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
+  test "#save should reject switching a deterministic feed to the AI engine" do
+    feed = create(:feed, feed_profile_key: "rss", state: :disabled, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.feed_profile_key = "llm"
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:feed_profile_key], "can't switch between AI and non-AI feeds — start a new feed instead"
+  end
+
+  test "#save should reject switching an AI feed to a deterministic engine" do
+    feed = create(:feed, feed_profile_key: "llm", state: :disabled, params: { "prompt" => "follow ruby news" })
+
+    feed.feed_profile_key = "rss"
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:feed_profile_key], "can't switch between AI and non-AI feeds — start a new feed instead"
+  end
+
+  test "#save should allow a deterministic-to-deterministic profile change" do
+    feed = create(:feed, feed_profile_key: "rss", state: :disabled, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.feed_profile_key = "xkcd"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should allow the AI engine on a new record" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "follow ruby news" })
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should reject an unverified source move on a live deterministic feed" do
+    feed = create(:feed, feed_profile_key: "rss", state: :disabled, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.url = "https://other.example.com/feed.xml"
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:base], "The source changed — re-check it before saving."
+  end
+
+  test "#save should allow a source move once detection has verified it" do
+    feed = create(:feed, feed_profile_key: "rss", state: :disabled, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.url = "https://other.example.com/feed.xml"
+    feed.source_verified = true
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should let a draft edit its source freely without re-detection" do
+    feed = create(:feed, feed_profile_key: "rss", state: :draft, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.url = "https://other.example.com/feed.xml"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should not gate an operational-only edit on a live deterministic feed" do
+    feed = create(:feed, feed_profile_key: "rss", state: :disabled, params: { "url" => "https://example.com/feed.xml" })
+
+    feed.name = "Renamed"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#save should not gate an AI feed's prompt edit as a source move" do
+    feed = create(:feed, feed_profile_key: "llm", state: :draft, params: { "prompt" => "follow ruby news" })
+
+    feed.params = { "prompt" => "follow Pitchfork reviews" }
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
   test "#enable should promote a valid draft to enabled state" do
     user = create(:user)
     feed = create(:feed,
