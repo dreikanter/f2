@@ -705,6 +705,36 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=hidden][name='_method'][value='patch']"
   end
 
+  test "#show should warn about repeats and offer the threshold for a same-profile source change" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    new_url = "http://example.com/new.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+
+    get feed_identifications_path, params: { input: new_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='form.dup-risk-warning']"
+    assert_select "input[data-key='form.import-after-enabled'][checked]", count: 0
+  end
+
+  test "#show should default the threshold on when re-detection changes the profile" do
+    sign_in_as(user)
+    feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
+    new_url = "https://xkcd.com/rss.xml"
+    create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
+           candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "xkcd" }])
+
+    get feed_identifications_path, params: { input: new_url, feed_id: feed.id },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "[data-key='form.dup-risk-warning']"
+    assert_select "input[data-key='form.import-after-enabled'][checked]"
+  end
+
   test "#show should drop the AI bridge and cancel to the feed when edit re-detection finds no feed" do
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })

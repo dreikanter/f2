@@ -118,25 +118,29 @@ class FeedIdentificationsController < ApplicationController
     profile_key = suggested&.profile_key
     source_key = FeedProfile.source_key_for(profile_key) || "url"
 
-    feed =
-      if editing?
-        # Re-render the feed being edited with the proposed source + profile
-        # applied in memory only; the confirming PATCH persists it after the
-        # source-verified guard clears (spec §4). Operational edits were saved
-        # on the propose PATCH, so the reloaded record already carries them.
-        edit_feed.tap do |f|
-          f.feed_profile_key = profile_key
-          f.params = (f.params || {}).merge(source_key => feed_identification.input)
-        end
-      else
-        Current.user.feeds.build(
-          params: { source_key => feed_identification.input },
-          feed_profile_key: profile_key,
-          name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
-        )
+    if editing?
+      # Re-render the feed being edited with the proposed source + profile
+      # applied in memory only; the confirming PATCH persists it after the
+      # source-verified guard clears (spec §4). Operational edits were saved
+      # on the propose PATCH, so the reloaded record already carries them.
+      profile_changed = edit_feed.feed_profile_key != profile_key
+      feed = edit_feed.tap do |f|
+        f.feed_profile_key = profile_key
+        f.params = (f.params || {}).merge(source_key => feed_identification.input)
       end
 
-    render(identification_success(feed, candidates: feed_identification.working_candidates))
+      # A source (and possibly profile) change is pending confirmation, so the
+      # form surfaces the matching duplicate-risk warning (spec §4).
+      render(identification_success(feed, candidates: feed_identification.working_candidates,
+                                          source_changed: true, profile_changed: profile_changed))
+    else
+      feed = Current.user.feeds.build(
+        params: { source_key => feed_identification.input },
+        feed_profile_key: profile_key,
+        name: suggested&.title&.truncate(Feed::NAME_MAX_LENGTH, omission: "…")
+      )
+      render(identification_success(feed, candidates: feed_identification.working_candidates))
+    end
   end
 
   def identification_error(error:, heading: "Feed identification failed")
@@ -194,12 +198,13 @@ class FeedIdentificationsController < ApplicationController
     }
   end
 
-  def identification_success(feed, candidates: [])
+  def identification_success(feed, candidates: [], source_changed: false, profile_changed: false)
     {
       turbo_stream: turbo_stream.replace(
         "feed-form",
         partial: "feeds/form_expanded",
-        locals: { feed: feed, candidates: candidates, edit_mode: editing? }
+        locals: { feed: feed, candidates: candidates, edit_mode: editing?,
+                  source_changed: source_changed, profile_changed: profile_changed }
       )
     }
   end
