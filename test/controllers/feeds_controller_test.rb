@@ -1081,6 +1081,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     # button, or it can't read the selected feed_profile_key at click time.
     assert_select "#feed-form[data-controller~='preview-button'] [data-key='preview.open']", count: 1
     assert_select "#feed-form[data-controller~='preview-button'] input[name='feed[feed_profile_key]']", count: 1
+    # The controller fills this hint to say what's missing when Preview is disabled.
+    assert_select "[data-preview-button-target='hint'][data-key='preview.hint']", count: 1
   end
 
   test "#destroy should remove own feed" do
