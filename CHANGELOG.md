@@ -10,6 +10,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - When a link can't be followed, the next step is clearer: retry if it just couldn't be reached, or follow it with AI (or try a different link) when there's no feed to read.
 - The "how should we fetch posts?" step is tidier: it only asks you to choose when more than one way actually works, and a single working option is just shown to you.
 - Creating an AI feed now lets you tweak the prompt before saving, and it checks for new posts once a day by default.
+- You can keep editing an AI feed's prompt while it's still a draft, not just when you first create it.
 
 ## 2026-07-03
 
