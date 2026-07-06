@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-06
 
+- A greyed-out Preview button now tells you what's still missing — a source, an AI provider, or a model — instead of just sitting there.
 - Changing a feed's source or type while editing now flags whether it might repost items you've already seen — and a type change switches on "Skip older posts" by default so recent ones don't flood back in.
 - You can now change a feed's source link when editing it. We re-check the new link for a feed before saving, so a broken link can't quietly slip in — and the feed keeps running on its current source until the new one checks out.
 - If an AI feed's model is no longer available, the feed keeps running on a supported fallback and flags it on the feed page, instead of blocking edits or quietly using the missing one. Pick a new model whenever you're ready.

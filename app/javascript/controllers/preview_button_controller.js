@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 //   provider + model for AI profiles), then opens the modal
 // - on modal close, clears the frame so the polling host unmounts (stops polling)
 export default class extends Controller {
-  static targets = ["button", "frame", "source"]
+  static targets = ["button", "frame", "source", "hint"]
   static values = {
     endpoint: String,
     source: String,
@@ -64,13 +64,31 @@ export default class extends Controller {
 
   refreshAvailability() {
     if (!this.hasButtonTarget) return
+    const reason = this._unavailableReason()
+    this.buttonTarget.disabled = reason != null
+    this._showHint(reason)
+  }
+
+  // What's still missing before a preview can run, phrased for the user, or null
+  // when it's ready. Mirrors the enable checks so the hint never disagrees with
+  // the button (spec §4 nicety).
+  _unavailableReason() {
     const profileKey = this._selectedProfileKey()
-    let ready = !!profileKey && !!this._currentSource().trim()
-    // AI profiles can't preview until a provider and model are picked.
-    if (ready && this._isAiProfile(profileKey)) {
-      ready = !!this._aiCredentialValue() && !!this._aiModelValue()
+    if (!profileKey) return "Pick a feed type to preview."
+    if (!this._currentSource().trim()) {
+      return this._isAiProfile(profileKey) ? "Add a prompt to preview." : "Add a source URL to preview."
     }
-    this.buttonTarget.disabled = !ready
+    if (this._isAiProfile(profileKey)) {
+      if (!this._aiCredentialValue()) return "Choose an AI provider to preview."
+      if (!this._aiModelValue()) return "Choose a model to preview."
+    }
+    return null
+  }
+
+  _showHint(reason) {
+    if (!this.hasHintTarget) return
+    this.hintTarget.textContent = reason || ""
+    this.hintTarget.hidden = reason == null
   }
 
   // The source is the static value from detection, unless an editable field (an

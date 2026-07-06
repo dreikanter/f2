@@ -160,6 +160,12 @@
               class: "inline-flex items-center gap-1 rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
               data: { preview_button_target: "button", action: "click->preview-button#open", key: "preview.open" } %>
 
+        <%# Explains why Preview is disabled instead of leaving it inert (spec §4);
+            the preview-button controller fills and reveals it to match the button. %>
+        <p class="mt-2 text-sm text-muted" hidden
+           data-preview-button-target="hint"
+           data-key="preview.hint"></p>
+
         <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
           <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
             <%# Shown right away when the modal opens so the spinner is visible
