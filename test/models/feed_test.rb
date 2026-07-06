@@ -397,10 +397,18 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_previewed?
   end
 
-  test "#can_be_previewed? should be false for an AI profile whose model is no longer available" do
+  test "#can_be_previewed? should stay true when the saved model dropped but the credential has a fallback" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",
                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "removed-model")
+
+    assert feed.can_be_previewed?
+  end
+
+  test "#can_be_previewed? should be false when the credential has no verified models" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "unverified-model" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "unverified-model")
 
     assert_not feed.can_be_previewed?
   end
@@ -788,6 +796,70 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_not feed.valid?
     assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
+  end
+
+  test "#saving an unrelated edit should not re-validate a saved model that later dropped" do
+    user = create(:user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
+                         target_group: "testgroup", feed_profile_key: "llm",
+                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    credential.update!(available_models: [])
+    feed.name = "Renamed"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "#changing to an unsupported model on an enabled feed should be rejected" do
+    user = create(:user)
+    credential = create(:ai_credential, :active, user: user, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = create(:feed, user: user, access_token: access_token_for(user), state: :enabled,
+                         target_group: "testgroup", feed_profile_key: "llm",
+                         params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    feed.ai_model = "removed-model"
+
+    assert_not feed.valid?
+    assert_includes feed.errors[:ai_model], "This model isn't available anymore. Pick another one."
+  end
+
+  test "#effective_ai_model should return the chosen model when it is still supported" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    assert_equal "claude-sonnet-4-6", feed.effective_ai_model
+  end
+
+  test "#effective_ai_model should fall back to the default supported model when the chosen one dropped" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "removed-model")
+
+    assert_equal "claude-sonnet-4-6", feed.effective_ai_model
+  end
+
+  test "#ai_model_supported? should follow the credential's matrix-intersected snapshot" do
+    credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    assert feed.ai_model_supported?
+    feed.ai_model = "removed-model"
+    assert_not feed.ai_model_supported?
+  end
+
+  test "#note_ai_model_fallback! should record one event and dedupe the same drop" do
+    feed = create(:feed, feed_profile_key: "llm", params: { "prompt" => "x" })
+
+    assert_difference -> { feed.events.where(type: "feed_ai_model_unavailable").count }, 1 do
+      feed.note_ai_model_fallback!(from: "removed-model", to: "claude-sonnet-4-6")
+    end
+
+    assert_no_difference -> { feed.events.where(type: "feed_ai_model_unavailable").count } do
+      feed.note_ai_model_fallback!(from: "removed-model", to: "claude-sonnet-4-6")
+    end
   end
 
   test "#enabling a non-AI feed should not require an ai_credential" do

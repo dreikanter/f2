@@ -551,6 +551,9 @@
         <%= render AlertComponent.new(variant: :warning) do %>
           <%= render EventDescriptionComponent.for(Event.new(type: "feed_target_group_unavailable", level: :warning, subject: sample_feed, metadata: { reason: "posting_denied", target_group: "cats" })) %>
         <% end %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "feed_ai_model_unavailable", level: :warning, subject: sample_feed, metadata: { dropped_model: "claude-opus-4-7", fallback_model: "claude-sonnet-4-6" })) %>
+        <% end %>
       </div>
     </section>
 

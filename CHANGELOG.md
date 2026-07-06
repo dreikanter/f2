@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-06
+
+- If an AI feed's model is no longer available, the feed keeps running on a supported fallback and flags it on the feed page, instead of blocking edits or quietly using the missing one. Pick a new model whenever you're ready.
+
 ## 2026-07-05
 
 - Added Moonshot (Kimi) as an AI provider — a lower-cost option you can connect with your own API key.

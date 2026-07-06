@@ -148,23 +148,25 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     credential = create(:ai_credential, :active, user: user, available_models: models)
 
     get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
-                         ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
+                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
 
     preview = user.feed_previews.last
     assert_equal credential.id, preview.ai_credential_id
-    assert_equal "claude-opus-4-7", preview.ai_model
+    assert_equal "claude-sonnet-4-6", preview.ai_model
   end
 
-  test "#show should keep separate previews for different models on the same source" do
+  test "#show should keep separate previews for different verified models on the same source" do
     sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user, available_models: models)
+    anthropic = create(:ai_credential, :active, user: user, available_models: models)
+    moonshot = create(:ai_credential, :active, user: user, provider: "moonshot",
+                                                available_models: [{ "id" => "kimi-k2.5", "name" => "Kimi K2.5" }])
     source = { prompt: "anything here" }
 
     assert_difference("FeedPreview.count", 2) do
       get feed_preview_url(profile_key: "llm", "params" => source,
-                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
+                           ai_credential_id: anthropic.id, ai_model: "claude-sonnet-4-6")
       get feed_preview_url(profile_key: "llm", "params" => source,
-                           ai_credential_id: credential.id, ai_model: "claude-opus-4-7")
+                           ai_credential_id: moonshot.id, ai_model: "kimi-k2.5")
     end
   end
 
@@ -188,6 +190,19 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
       assert_no_enqueued_jobs do
         get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
                              ai_credential_id: credential.id, ai_model: "made-up-model"),
+            headers: TURBO_STREAM
+      end
+    end
+  end
+
+  test "#show should not preview a model that is offered but not dev-verified" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: models)
+
+    assert_no_difference("FeedPreview.count") do
+      assert_no_enqueued_jobs do
+        get feed_preview_url(profile_key: "llm", "params" => { prompt: "anything here" },
+                             ai_credential_id: credential.id, ai_model: "claude-opus-4-7"),
             headers: TURBO_STREAM
       end
     end

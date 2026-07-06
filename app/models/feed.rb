@@ -227,11 +227,45 @@ class Feed < ApplicationRecord
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
     return false unless ai_credential&.active?
 
-    ai_model_available?
+    # A dropped model no longer blocks preview — a run resolves to the
+    # credential's default supported model, so preview only needs some verified
+    # model to exist (spec §5).
+    ai_credential.supported_models.any?
   end
 
-  def ai_model_available?
-    ai_credential.present? && ai_credential.offers_model?(ai_model)
+  # True when the feed's chosen model is still in the matrix ∩ credential
+  # snapshot. This is the one availability rule every surface reads from.
+  def ai_model_supported?
+    ai_credential.present? && ai_credential.supports_model?(ai_model)
+  end
+
+  # The model an AI run/preview actually uses with `credential`: the chosen one
+  # when still supported, otherwise the credential's default supported model.
+  # Never hard-fails on a dropped model — the caller records the fallback so the
+  # feed page can prompt a re-pick (spec §5).
+  def effective_ai_model(credential = ai_credential)
+    return ai_model if credential.nil?
+    return ai_model if credential.supports_model?(ai_model)
+
+    credential.default_supported_model
+  end
+
+  # Records a one-time notice that the saved model dropped out and a fallback is
+  # in use, so the feed page can nudge a re-pick. Deduped by the dropped→fallback
+  # pair so repeated runs don't spam the activity log.
+  def note_ai_model_fallback!(from:, to:)
+    return if events.where(type: "feed_ai_model_unavailable").not_expired.exists?(
+      ["metadata->>'dropped_model' = ? AND metadata->>'fallback_model' = ?", from.to_s, to.to_s]
+    )
+
+    Event.create!(
+      type: "feed_ai_model_unavailable",
+      level: :warning,
+      subject: self,
+      user: user,
+      message: "",
+      metadata: { dropped_model: from, fallback_model: to }
+    )
   end
 
   # Creates and returns a loader instance for this feed
@@ -478,7 +512,9 @@ class Feed < ApplicationRecord
       errors.add(:ai_credential, "must be active (currently #{ai_credential.state})")
     elsif ai_model.blank?
       errors.add(:ai_model, "Choose a model for this feed.")
-    elsif !ai_model_available?
+    elsif ai_model_changed? && !ai_model_supported?
+      # Membership is enforced only on the change that sets it, so a later-dropped
+      # model never traps an unrelated edit — runs fall back gracefully instead.
       errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
     end
   end
