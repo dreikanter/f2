@@ -39,9 +39,10 @@
           source and feed type are the feed's fixed identity, so they're grouped
           under one "Source" heading. %>
       <% source_label = feed.source_input_url? ? "Source URL" : "Source prompt" %>
-      <%# For an AI feed the prompt *is* the source, so while creating it stays an
-          editable textarea (spec §1) — unlike a detected URL, which is read-only. %>
-      <% ai_prompt_editable = !edit_mode && FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
+      <%# For an AI feed the prompt *is* the source and carries no duplicate risk,
+          so it stays an editable textarea while creating or editing a draft
+          (spec §1, §4) — unlike a detected URL, which is read-only. %>
+      <% ai_prompt_editable = FeedProfile.depends_on_ai?(feed.feed_profile_key) && (!edit_mode || feed.draft?) %>
       <div>
         <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
 
@@ -98,7 +99,7 @@
           <%= f.hidden_field :feed_profile_key %>
         <% end %>
 
-        <% if edit_mode %>
+        <% if edit_mode && !ai_prompt_editable %>
           <p class="mt-3 text-sm text-muted" data-key="form.source-locked-note">The source and feed type are locked in when a feed is created. To follow a different source, just start a new feed.</p>
         <% end %>
       </div>
