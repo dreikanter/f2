@@ -126,6 +126,19 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal ["claude-sonnet-4-6"], client.calls.map { |c| c[:model] }
   end
 
+  test "#load should record a notice and use the provider default when the whole snapshot dropped" do
+    empty = create(:ai_credential, :active, user: user, available_models: [])
+    orphaned = create(:feed, user: user, ai_credential: empty, feed_profile_key: "llm",
+                             params: { "prompt" => "x" }, ai_model: "claude-opus-4-7")
+    client = fake_client(structured: { "items" => [] }, credential: empty)
+
+    assert_difference -> { orphaned.events.where(type: "feed_ai_model_unavailable").count }, 1 do
+      Loader::LlmLoader.new(orphaned, llm_client: client).load
+    end
+
+    assert_equal [LlmProvider.find("anthropic").default_model], client.calls.map { |c| c[:model] }
+  end
+
   test "#load should fall back to the provider default model when no override" do
     assert_nil feed.ai_model
     client = fake_client(structured: { "items" => [] }, credential: credential)
