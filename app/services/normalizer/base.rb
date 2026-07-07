@@ -70,8 +70,13 @@ module Normalizer
       @content ||= normalize_content
     end
 
+    # §8: every attachment URL must be an absolute public http(s) URL or be
+    # dropped (the attachment, not the post). Filtering here — the choke point
+    # every normalizer flows through — keeps a relative or local-path value (e.g.
+    # a feed's `<img src="/etc/passwd">`) from reaching FileBuffer at publish,
+    # where File.exist? would read it off the server (LFI).
     def attachment_urls
-      @attachment_urls ||= normalize_attachment_urls
+      @attachment_urls ||= normalize_attachment_urls.select { |url| PublicUrl.safe?(url) }
     end
 
     def comments
