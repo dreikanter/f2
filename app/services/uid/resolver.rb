@@ -9,6 +9,12 @@ module Uid
   class Resolver
     TRACKING_PARAM = /\A(utm_|fbclid\z|gclid\z|mc_)/
 
+    # The full shape of a period-keyed digest uid: the literal prefix plus an
+    # ISO-8601 date. Kept strict (anchored, exact date shape) so a
+    # source-controlled guid that merely starts with "digest:" can't be
+    # misread as a digest by the refresh workflow's regime check.
+    DIGEST_UID = /\Adigest:(\d{4}-\d{2}-\d{2})\z/
+
     def self.call(item, clock:)
       new(item, clock).call
     end
@@ -23,6 +29,27 @@ module Uid
     # so it never collides with a normalized permalink.
     def self.digest_period_uid(clock)
       "digest:#{digest_period(clock).iso8601}"
+    end
+
+    # True for a uid minted by .digest_period_uid. Lets the refresh workflow
+    # classify a run's regime (digest-only vs feed-style) from its uids alone,
+    # without re-deriving policy.
+    def self.digest_uid?(uid)
+      DIGEST_UID.match?(uid.to_s)
+    end
+
+    # The Date carried by a period-keyed digest uid, or nil if the uid isn't a
+    # well-formed one. The refresh workflow records this — rather than
+    # re-deriving the period from the clock at finalize time — so a run that
+    # mints its uid just before UTC midnight records the period it actually
+    # served, not the next day's (which would skip that day's digest).
+    def self.period_from_uid(uid)
+      match = DIGEST_UID.match(uid.to_s)
+      return unless match
+
+      Date.iso8601(match[1])
+    rescue Date::Error
+      nil
     end
 
     def initialize(item, clock)

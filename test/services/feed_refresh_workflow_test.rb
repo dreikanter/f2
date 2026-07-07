@@ -37,6 +37,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test ".workflow_steps should list expected sequence" do
     expected_steps = [
+      :skip_current_digest_period,
       :initialize_workflow,
       :load_feed_contents,
       :process_feed_contents,
@@ -752,6 +753,109 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
       metric.reload
       assert_equal 1, metric.posts_count, "Metric should reflect only new posts from second refresh"
+    end
+  end
+
+  # --- Digest cadence skip (spec §3) ---
+
+  def digest_feed_with_schedule(last_digest_period: nil)
+    user = create(:user)
+    credential = create(:ai_credential, :active, user: user,
+                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    feed = create(:feed, :enabled, feed_profile_key: "llm", user: user,
+                                   ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                   params: { "prompt" => "daily roundup" })
+    create(:feed_schedule, feed: feed, last_digest_period: last_digest_period)
+    feed
+  end
+
+  # A loader stub that counts its invocations, so a skipped run can assert the
+  # LLM loader never ran.
+  def counting_loader(items)
+    loader = Object.new
+    loads = []
+    loader.define_singleton_method(:load) { loads << true; items }
+    loader.define_singleton_method(:load_count) { loads.size }
+    loader
+  end
+
+  test "#execute should record the period after a digest-only run" do
+    freeze_time do
+      feed = digest_feed_with_schedule
+      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      recorded = feed.feed_schedule.reload.last_digest_period
+      assert_equal Time.current.utc.to_date, recorded
+      # The recorded period is read from the minted uid, not re-derived from the
+      # clock, so it always matches the digest the run actually produced.
+      assert_equal Uid::Resolver.period_from_uid(feed.posts.last.uid), recorded
+    end
+  end
+
+  test "#execute should skip a scheduled run while the digest period is still current" do
+    freeze_time do
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
+      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      assert_equal 0, loader.load_count, "the LLM loader must not run when skipping"
+      assert_equal 0, feed.posts.count
+      assert_equal 1, Event.where(subject: feed, type: "feed_refresh_skipped", level: "debug").count
+    end
+  end
+
+  test "#execute should force a manual run through the cadence skip" do
+    freeze_time do
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
+      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed, manual: true).execute }
+
+      assert_equal 1, loader.load_count, "a manual refresh runs even in the current period"
+      assert_equal 1, feed.posts.count
+      assert_equal 0, Event.where(subject: feed, type: "feed_refresh_skipped").count
+    end
+  end
+
+  test "#execute should not skip when the recorded digest period is stale" do
+    freeze_time do
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
+      loader = counting_loader([{ "source_url" => nil, "body" => "today's roundup" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      assert_equal 1, loader.load_count
+      assert_equal Time.current.utc.to_date, feed.feed_schedule.reload.last_digest_period
+    end
+  end
+
+  test "#execute should clear the recorded period when a run produces feed-style items" do
+    freeze_time do
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
+      loader = counting_loader([{ "source_url" => "https://example.com/post-1", "body" => "a real post" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      assert_nil feed.feed_schedule.reload.last_digest_period
+    end
+  end
+
+  test "#execute should clear the period for a mixed digest/feed-style run" do
+    freeze_time do
+      # Seed a stale period so this proves the mixed run *clears* it, not just a
+      # trivial nil == nil no-write.
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
+      loader = counting_loader([
+        { "source_url" => nil, "body" => "roundup" },
+        { "source_url" => "https://example.com/post-1", "body" => "a real post" }
+      ])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never mark a period"
     end
   end
 end

@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-07
 
+- A daily AI digest feed no longer wastes AI calls re-checking within the same day — once its digest is in, extra scheduled runs are skipped until the next day. Hitting Refresh yourself still runs it right away.
 - AI feeds can now follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
 - AI feeds are steadier about not repeating or dropping posts: a link that only differs by `http`/`https`, `www`, or a port no longer counts as a new post, and posts with non-Latin links (like Cyrillic) come through instead of quietly disappearing.
 - AI-powered previews now get more time to finish — up to about four minutes, since they browse the web — so a slow one no longer gets cut off early, and the progress note says what's happening. A preview that does time out now stays timed out instead of quietly flipping to done after you've moved on.

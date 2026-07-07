@@ -2,12 +2,15 @@ class FeedRefreshJob < ApplicationJob
   queue_as :default
 
   # @param feed_id [Integer] ID of the feed to refresh
-  def perform(feed_id)
+  # @param manual [Boolean] a user-initiated refresh forces through the digest
+  #   cadence skip; scheduled runs (the default) may skip a redundant same-period
+  #   digest before any LLM call.
+  def perform(feed_id, manual: false)
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
-      FeedRefreshWorkflow.new(feed).execute
+      FeedRefreshWorkflow.new(feed, manual: manual).execute
     end
   rescue Loader::Error => e
     # Loader errors reflect the remote feed's health (HTTP 404/500, timeouts,
