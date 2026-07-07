@@ -1,3 +1,5 @@
+require "addressable/uri"
+
 module Uid
   # Derives a stable post uid from an AI-extracted item, anchored to source
   # identity rather than generated content: summaries change every run, so a
@@ -28,18 +30,35 @@ module Uid
       raw = (item["source_url"] || item[:source_url]).to_s.strip
       return if raw.empty?
 
-      uri = URI.parse(raw)
+      uri = parse_http(raw)
       return unless uri.is_a?(URI::HTTP) && uri.host.present?
       return if uri.path.delete_suffix("/").empty? && uri.query.nil? # bare homepage
 
       uri
+    end
+
+    # Non-ASCII/IDN permalinks make URI.parse raise, which used to silently drop
+    # the item. Percent-encode the path and punycode the host via Addressable,
+    # then retry — a Cyrillic URL should yield a stable uid, not vanish (spec §3).
+    def parse_http(raw)
+      URI.parse(raw)
     rescue URI::InvalidURIError
+      parse_encoded(raw)
+    end
+
+    def parse_encoded(raw)
+      URI.parse(Addressable::URI.parse(raw).normalize.to_s)
+    rescue Addressable::URI::InvalidURIError, URI::InvalidURIError
       nil
     end
 
     def normalize(uri)
-      uri.scheme = uri.scheme.downcase
-      uri.host = uri.host.downcase
+      # The uid is an identity key, not a fetch URL. Coerce the scheme to https
+      # and drop a leading www. and default ports, so a model flipping
+      # http/https/www between runs doesn't mint a duplicate repost (spec §3).
+      uri.scheme = "https"
+      uri.host = uri.host.downcase.sub(/\Awww\./, "")
+      uri.port = nil if [80, 443].include?(uri.port)
       uri.fragment = nil
       uri.query = clean_query(uri.query)
       uri.path = uri.path.delete_suffix("/") unless uri.path == "/"
