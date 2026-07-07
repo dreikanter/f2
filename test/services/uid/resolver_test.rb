@@ -87,4 +87,15 @@ class Uid::ResolverTest < ActiveSupport::TestCase
   test ".digest_period should be the clock's UTC date" do
     assert_equal Date.new(2026, 7, 7), Uid::Resolver.digest_period(clock)
   end
+
+  test ".digest_uid? should recognize a period-keyed uid" do
+    assert Uid::Resolver.digest_uid?(Uid::Resolver.digest_period_uid(clock))
+    assert Uid::Resolver.digest_uid?("digest:2026-07-07")
+  end
+
+  test ".digest_uid? should be false for a permalink uid or blank" do
+    assert_not Uid::Resolver.digest_uid?("https://example.com/a")
+    assert_not Uid::Resolver.digest_uid?(nil)
+    assert_not Uid::Resolver.digest_uid?("")
+  end
 end

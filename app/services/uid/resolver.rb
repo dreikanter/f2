@@ -25,6 +25,13 @@ module Uid
       "digest:#{digest_period(clock).iso8601}"
     end
 
+    # True for a uid minted by .digest_period_uid. Lets the refresh workflow
+    # classify a run's regime (digest-only vs feed-style) from its uids alone,
+    # without re-deriving policy.
+    def self.digest_uid?(uid)
+      uid.to_s.start_with?("digest:")
+    end
+
     def initialize(item, clock)
       @item = item.is_a?(Hash) ? item : {}
       @clock = clock
