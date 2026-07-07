@@ -34,6 +34,23 @@ class Normalizer::RssNormalizerTest < ActiveSupport::TestCase
     assert_equal "enqueued", post.status
   end
 
+  test "#normalize should drop a non-public attachment URL and keep the public one" do
+    # A feed-supplied local path or relative URL must not reach FileBuffer, where
+    # File.exist? would read it off the server at publish (§8, LFI).
+    entry = create(:feed_entry, raw_data: {
+      "summary" => "Photo of the day.",
+      "link" => "https://example.com/photo",
+      "enclosures" => [
+        { "url" => "/etc/passwd", "type" => "image/jpeg" },
+        { "url" => "https://example.com/ok.jpg", "type" => "image/jpeg" }
+      ]
+    })
+
+    post = Normalizer::RssNormalizer.new(entry).normalize
+
+    assert_equal ["https://example.com/ok.jpg"], post.attachment_urls
+  end
+
   test "#normalize should include media:thumbnail with nil type in attachment_urls" do
     entry = create(:feed_entry, raw_data: {
       "summary" => "Photo of the day.",
