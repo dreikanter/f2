@@ -53,7 +53,13 @@ class FileBuffer
 
   def url_to_io(url)
     normalized_url = normalize_url(url)
-    response = http_client.get(normalized_url, headers: { "User-Agent" => USER_AGENT })
+    # Attachment URLs are model- or source-supplied: fetch public-only, so a
+    # redirect can't reach a private/internal address at publish time (SSRF).
+    response = http_client.get(
+      normalized_url,
+      headers: { "User-Agent" => USER_AGENT },
+      options: { validate_url: PublicUrl.method(:safe?) }
+    )
 
     unless response.success?
       raise Error, "Failed to download attachment from #{url}: HTTP #{response.status}"

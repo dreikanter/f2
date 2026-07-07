@@ -288,4 +288,86 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
     assert_equal "Success", response.body
     assert response.success?
   end
+
+  # --- public-only mode (SSRF redirect guard) ---
+
+  def public_only
+    { validate_url: PublicUrl.method(:safe?) }
+  end
+
+  test "public-only mode blocks a non-public initial URL before any request" do
+    error = assert_raises(HttpClient::BlockedUrlError) do
+      client.get("http://127.0.0.1/secret", options: public_only)
+    end
+
+    assert_match(/non-public/i, error.message)
+    assert_not_requested :get, "http://127.0.0.1/secret"
+  end
+
+  test "public-only mode blocks a redirect to a private address and never fetches it" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://example.com/redirect", options: public_only)
+    end
+
+    assert_not_requested :get, "http://127.0.0.1/metadata"
+  end
+
+  test "public-only mode allows a redirect between public hosts" do
+    stub_request(:get, "https://example.com/redirect")
+      .to_return(status: 302, headers: { "Location" => "https://example.org/final" })
+    stub_request(:get, "https://example.org/final")
+      .to_return(status: 200, body: "ok")
+
+    response = client.get("https://example.com/redirect", options: public_only)
+
+    assert_equal 200, response.status
+    assert_equal "ok", response.body
+  end
+
+  test "without public-only mode the initial URL is not validated" do
+    stub_request(:get, "http://127.0.0.1/allowed").to_return(status: 200, body: "ok")
+
+    response = client.get("http://127.0.0.1/allowed")
+
+    assert_equal 200, response.status
+  end
+
+  test "public-only mode blocks a private hop at the end of a public chain" do
+    stub_request(:get, "https://a.example/1")
+      .to_return(status: 302, headers: { "Location" => "https://b.example/2" })
+    stub_request(:get, "https://b.example/2")
+      .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/secret" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://a.example/1", options: public_only)
+    end
+
+    assert_not_requested :get, "http://127.0.0.1/secret"
+  end
+
+  test "public-only mode blocks a redirect to the cloud metadata address" do
+    stub_request(:get, "https://example.com/go")
+      .to_return(status: 302, headers: { "Location" => "http://169.254.169.254/latest/meta-data/" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://example.com/go", options: public_only)
+    end
+
+    assert_not_requested :get, "http://169.254.169.254/latest/meta-data/"
+  end
+
+  test "public-only mode blocks a redirect to a private address in encoded (decimal) form" do
+    # 2130706433 == 127.0.0.1; the guard canonicalizes it the way the socket would.
+    stub_request(:get, "https://example.com/go")
+      .to_return(status: 302, headers: { "Location" => "http://2130706433/" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://example.com/go", options: public_only)
+    end
+
+    assert_not_requested :get, "http://2130706433/"
+  end
 end
