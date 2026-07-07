@@ -14,7 +14,10 @@ class LlmClient
       def execute(url:)
         return { error: "Refused: pass one absolute public http(s) URL." } unless PublicUrl.safe?(url)
 
-        response = HttpClient.build(max_redirects: MAX_REDIRECTS).get(url.to_s.strip)
+        # public-only so a redirect can't slip past the check above to an
+        # internal address (SSRF; spec 005 §8).
+        response = HttpClient.build(max_redirects: MAX_REDIRECTS)
+                             .get(url.to_s.strip, options: { validate_url: PublicUrl.method(:safe?) })
         return { error: "HTTP #{response.status}" } unless response.success?
 
         { content: readable_text(response.body) }

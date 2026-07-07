@@ -102,4 +102,12 @@ class FileBufferTest < ActiveSupport::TestCase
       FileBuffer.new.load(url)
     end
   end
+
+  test "#load should refuse an attachment URL that redirects to a private address" do
+    url = "https://example.com/image.jpg"
+    stub_request(:get, url).to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
+
+    assert_raises(FileBuffer::Error) { FileBuffer.new.load(url) }
+    assert_not_requested :get, "http://127.0.0.1/metadata"
+  end
 end

@@ -13,7 +13,7 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
       @requested = []
     end
 
-    def get(url)
+    def get(url, **)
       @requested << url
       @response
     end
@@ -70,10 +70,20 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
 
   test "#execute should surface transport errors as an error result" do
     raising = Object.new
-    def raising.get(_url) = raise(HttpClient::TimeoutError, "timed out")
+    def raising.get(_url, **) = raise(HttpClient::TimeoutError, "timed out")
 
     HttpClient.stub(:build, ->(**) { raising }) do
       assert_equal "timed out", tool.execute(url: "https://example.com/")[:error]
     end
+  end
+
+  test "#execute should refuse a public URL that redirects to a private address" do
+    url = "https://example.com/page"
+    stub_request(:get, url).to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
+
+    result = tool.execute(url: url)
+
+    assert result[:error].present?
+    assert_not_requested :get, "http://127.0.0.1/metadata"
   end
 end
