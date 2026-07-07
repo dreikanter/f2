@@ -571,14 +571,15 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.source-locked-note']", count: 0
   end
 
-  test "#edit should label the source as a prompt for a query-shaped feed" do
+  test "#edit should show the editable prompt for a query-shaped AI feed" do
     sign_in_as(user)
     prompt_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "cat pictures" })
 
     get edit_feed_url(prompt_feed)
 
     assert_response :success
-    assert_select "label", text: "Source prompt"
+    assert_select "label", text: "What should AI follow?"
+    assert_select "textarea[name='feed[params][prompt]']", text: "cat pictures"
   end
 
   test "#edit should render Save feed button and unchecked always-interactable Enable checkbox for a draft" do

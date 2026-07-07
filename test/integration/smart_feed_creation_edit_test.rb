@@ -1,8 +1,8 @@
 require "test_helper"
 
 # Edit semantics: operational fields edit freely; a deterministic feed's source
-# and profile stay anchored after creation. An AI feed's prompt carries no
-# duplicate risk, so it stays editable while the feed is a draft (spec §4).
+# re-runs detection before saving. An AI feed's prompt is its source and the uid
+# scheme never changes, so it stays editable throughout — draft or live (spec §4).
 class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
@@ -178,19 +178,36 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     assert_equal "follow Pitchfork reviews", draft_ai_feed.params["prompt"]
   end
 
-  test "#edit should keep an enabled AI feed's prompt read-only" do
-    sign_in_as(user)
-    credential = create(:ai_credential, :active, user: user,
-                                                 available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
-    enabled_ai = create(:feed, user: user, access_token: access_token, state: :enabled,
-                               target_group: "testgroup", feed_profile_key: "llm",
-                               params: { "prompt" => "follow the A24 blog" },
-                               ai_credential: credential, ai_model: "claude-sonnet-4-6")
+  def enabled_ai_feed
+    @enabled_ai_feed ||= begin
+      credential = create(:ai_credential, :active, user: user,
+                                                   available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
+      create(:feed, user: user, access_token: access_token, state: :enabled,
+                    target_group: "testgroup", feed_profile_key: "llm",
+                    params: { "prompt" => "follow the A24 blog" },
+                    ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    end
+  end
 
-    get edit_feed_url(enabled_ai)
+  test "#edit should keep a live AI feed's prompt editable with a backfill note" do
+    sign_in_as(user)
+
+    get edit_feed_url(enabled_ai_feed)
 
     assert_response :success
-    assert_select "textarea[name='feed[params][prompt]']", count: 0
-    assert_select "[data-key='form.source-display']"
+    assert_select "textarea[name='feed[params][prompt]']", text: "follow the A24 blog"
+    assert_select "[data-key='form.prompt-backfill-note']"
+    assert_select "[data-key='form.source-locked-note']", count: 0
+  end
+
+  test "#patch should update a live AI feed's prompt" do
+    sign_in_as(user)
+
+    patch feed_url(enabled_ai_feed), params: { feed: { params: { prompt: "follow Pitchfork reviews" }, name: enabled_ai_feed.name }, enable_feed: "1" }
+
+    assert_redirected_to feed_path(enabled_ai_feed)
+    enabled_ai_feed.reload
+    assert_equal "follow Pitchfork reviews", enabled_ai_feed.params["prompt"]
+    assert_equal "enabled", enabled_ai_feed.state
   end
 end

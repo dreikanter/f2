@@ -120,21 +120,21 @@ class FeedDraftFlowTest < ActionDispatch::IntegrationTest
     assert_equal "enabled", draft.state
     assert_equal "No-RSS Blog", draft.name
 
-    # Source-side fields stay anchored once the feed leaves the draft envelope:
-    # strong params silently drops url, feed_profile_key, and params on
-    # non-drafts (FR-026/027/028). Keep enable_feed=1 so the operational save
-    # leaves the feed in the enabled state.
+    # The engine stays anchored once the feed leaves the draft envelope — a
+    # forged feed_profile_key is dropped — but an AI feed's prompt is its source
+    # and stays editable on a live feed (spec §4). Keep enable_feed=1 so the save
+    # leaves the feed enabled.
     patch feed_path(draft), params: {
       feed: {
-        params: { prompt: "https://attacker.example/feed.xml" },
+        params: { prompt: "follow a different blog" },
         feed_profile_key: "rss"
       },
       enable_feed: "1"
     }
     draft.reload
-    assert_equal "enabled", draft.state, "Feed should stay enabled across the operational-only edit"
-    assert_equal ai_url, draft.source_input, "Source should be locked after promotion"
-    assert_equal "llm", draft.feed_profile_key, "Profile key should be locked after promotion"
+    assert_equal "enabled", draft.state, "Feed should stay enabled across the edit"
+    assert_equal "follow a different blog", draft.source_input, "AI prompt stays editable on a live feed"
+    assert_equal "llm", draft.feed_profile_key, "Engine stays locked — feed_profile_key can't be mass-assigned"
 
     # Step 6: feeds index should show the feed in the enabled bucket of the
     # 3-bucket summary line, and the row itself should carry the enabled

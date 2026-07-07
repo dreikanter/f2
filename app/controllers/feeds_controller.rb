@@ -342,7 +342,10 @@ class FeedsController < ApplicationController
       # profile switch can't leak in.
       ALWAYS_PERMITTED_PARAMS + [{ params: [:url] }]
     else
-      ALWAYS_PERMITTED_PARAMS
+      # A live AI feed's prompt stays editable (spec §4): the uid scheme is
+      # unchanged, so a prompt edit carries no duplicate risk (just possible
+      # backfill). The url isn't accepted here — an AI feed's source is its prompt.
+      ALWAYS_PERMITTED_PARAMS + [{ params: [:prompt] }]
     end
   end
 
