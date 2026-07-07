@@ -38,8 +38,15 @@ class FeedRefreshWorkflow
 
   def load_feed_contents(*)
     raw_data = feed.loader_instance.load
-    record_stats(content_size: raw_data.bytesize)
+    record_stats(content_size: content_bytesize(raw_data))
     raw_data
+  end
+
+  # RSS/Atom loaders return a String body; AI loaders return an Array of items.
+  # Size both without assuming a String, so a scheduled AI refresh doesn't crash
+  # here before it can process anything.
+  def content_bytesize(raw_data)
+    raw_data.respond_to?(:bytesize) ? raw_data.bytesize : raw_data.to_json.bytesize
   end
 
   def process_feed_contents(raw_data)

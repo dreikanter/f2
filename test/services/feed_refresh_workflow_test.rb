@@ -374,6 +374,48 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
   end
 
+  test "#execute should persist a digest item as a publishable null-source post" do
+    digest_user = create(:user)
+    credential = create(:ai_credential, :active, user: digest_user,
+                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
+                                          ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                          params: { "prompt" => "daily roundup" })
+
+    loader = Object.new
+    loader.define_singleton_method(:load) { [{ "source_url" => nil, "body" => "Today: A, B, C" }] }
+
+    digest_feed.stub(:loader_instance, loader) do
+      FeedRefreshWorkflow.new(digest_feed).execute
+    end
+
+    post = digest_feed.posts.last
+    assert_not_nil post, "a digest item should persist a post"
+    assert_nil post.source_url
+    assert_match(/\Adigest:\d{4}-\d{2}-\d{2}\z/, post.uid)
+    assert_equal "Today: A, B, C", post.content
+  end
+
+  test "#execute should collapse two digest items in one run into a single period post" do
+    digest_user = create(:user)
+    credential = create(:ai_credential, :active, user: digest_user,
+                                                 available_models: [{ "id" => "claude-sonnet-4-6" }])
+    digest_feed = create(:feed, :enabled, feed_profile_key: "llm", user: digest_user,
+                                          ai_credential: credential, ai_model: "claude-sonnet-4-6",
+                                          params: { "prompt" => "daily roundup" })
+
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      [{ "source_url" => nil, "body" => "part one" }, { "source_url" => nil, "body" => "part two" }]
+    end
+
+    digest_feed.stub(:loader_instance, loader) do
+      FeedRefreshWorkflow.new(digest_feed).execute
+    end
+
+    assert_equal 1, digest_feed.posts.count, "same-period digests collapse to one post"
+  end
+
   test "#execute should disable the AI credential and related feeds on auth failure" do
     llm_user = create(:user)
     credential = create(:ai_credential, :active, user: llm_user)

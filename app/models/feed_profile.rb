@@ -12,15 +12,22 @@ class FeedProfile
         "items" => {
           "type" => "object",
           "properties" => {
+            # The model never mints the uid — the processor derives it from
+            # source_url (spec §3). `uid` stays an accepted-but-optional property
+            # only so a stray field from a non-strict provider doesn't fail the
+            # schema; it's ignored downstream.
             "uid" => { "type" => "string" },
             "title" => { "type" => "string" },
             "body" => { "type" => "string" },
             "supplementary" => { "type" => "array", "items" => { "type" => "string" } },
             "images" => { "type" => "array", "items" => { "type" => "string" } },
-            "source_url" => { "type" => "string" },
+            # An explicit null signals the digest/standing-query regime; a real
+            # permalink signals feed-style (spec §3). The key is always required —
+            # a missing key is malformed, not a digest.
+            "source_url" => { "type" => ["string", "null"] },
             "published_at" => { "type" => "string" }
           },
-          "required" => ["uid", "body", "source_url"],
+          "required" => ["body", "source_url"],
           "additionalProperties" => false
         }
       }
@@ -398,10 +405,14 @@ class FeedProfile
 
             {{input}}
 
-            For each item, return a stable permalink as `uid`, a title, body text,
-            an optional list of supplementary comments, an optional list of image
-            URLs, the source URL, and the published date in ISO 8601. Return at
-            most 10 items.
+            For each item return: body text; an optional title; an optional list of
+            supplementary comments; an optional list of image URLs; and the
+            published date in ISO 8601 when the source shows one.
+
+            Set `source_url` to the item's own permalink. When an item summarizes or
+            digests content with no single permalink (a standing query or roundup),
+            set `source_url` to null and cite the sources inline in the body. Do not
+            return a uid. Return at most 10 items.
           PROMPT
           output_schema: UNIVERSAL_OUTPUT_SCHEMA
         }

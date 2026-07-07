@@ -46,10 +46,12 @@ class PostTest < ActiveSupport::TestCase
     assert post.errors.of_kind?(:published_at, :blank)
   end
 
-  test "should require source_url" do
-    post = build(:post, source_url: nil)
-    assert_not post.valid?
-    assert post.errors.of_kind?(:source_url, :blank)
+  test "should allow a null source_url for a digest post but reject a blank string" do
+    assert build(:post, source_url: nil).valid?, "a digest post carries source_url = null (spec §3)"
+
+    blank = build(:post, source_url: "")
+    assert_not blank.valid?
+    assert blank.errors.of_kind?(:source_url, :blank)
   end
 
   test "should allow empty content" do

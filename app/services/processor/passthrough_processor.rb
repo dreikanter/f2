@@ -8,12 +8,13 @@ module Processor
       entries = items.filter_map do |item|
         next unless item.is_a?(Hash)
 
-        uid = Uid::Resolver.call(item)
-        next if uid.blank?
-
         FeedEntry.new(
           feed: feed,
-          uid: uid,
+          # A digest item (source_url: null) gets a period uid; a feed-style
+          # permalink a normalized uid; an unusable permalink resolves to nil and
+          # is dropped-and-counted by the workflow (spec §3), so we no longer
+          # swallow it here.
+          uid: Uid::Resolver.call(item, clock: Time.current),
           # AI-extracted items rarely come with a reliable published_at;
           # fall back to the current time so downstream invariants hold.
           published_at: parse_time(item["published_at"] || item[:published_at]) || Time.current,
