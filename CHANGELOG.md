@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-07
 
+- AI feeds are steadier and safer: they now treat the pages they read as data rather than instructions to follow, and won't invent posts when a source turns up nothing — an empty check just brings in nothing.
 - A daily AI digest feed no longer wastes AI calls re-checking within the same day — once its digest is in, extra scheduled runs are skipped until the next day. Hitting Refresh yourself still runs it right away.
 - AI feeds can now follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
 - AI feeds are steadier about not repeating or dropping posts: a link that only differs by `http`/`https`, `www`, or a port no longer counts as a new post, and posts with non-Latin links (like Cyrillic) come through instead of quietly disappearing.

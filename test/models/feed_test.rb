@@ -862,6 +862,23 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
+  test "#note_ai_gather_empty! should record a debug event for a persisted feed" do
+    feed = create(:feed, feed_profile_key: "llm", params: { "prompt" => "x" })
+
+    assert_difference -> { feed.events.where(type: "feed_refresh_ai_empty").count }, 1 do
+      feed.note_ai_gather_empty!
+    end
+
+    assert_equal "debug", feed.events.find_by(type: "feed_refresh_ai_empty").level
+  end
+
+  test "#note_ai_gather_empty! should be a no-op for an unpersisted (preview) feed" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "x" })
+
+    assert_nothing_raised { feed.note_ai_gather_empty! }
+    assert_equal 0, Event.where(type: "feed_refresh_ai_empty").count
+  end
+
   test "#enabling a non-AI feed should not require an ai_credential" do
     user = create(:user)
     feed = build(:feed,
