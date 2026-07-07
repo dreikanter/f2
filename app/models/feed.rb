@@ -275,6 +275,22 @@ class Feed < ApplicationRecord
     )
   end
 
+  # Records that an AI gather came back empty, so the structure call was skipped
+  # and the run produced nothing (spec §6/§8). Debug level keeps this routine,
+  # expected outcome out of the user event feed while leaving it visible to
+  # operators. No-op for an unpersisted (preview) feed.
+  def note_ai_gather_empty!
+    return unless persisted?
+
+    Event.create!(
+      type: "feed_refresh_ai_empty",
+      level: :debug,
+      subject: self,
+      user: user,
+      message: ""
+    )
+  end
+
   # Creates and returns a loader instance for this feed
   # @param options [Hash] loader options (e.g. a shared :http_client)
   # @return [Loader::Base] loader instance

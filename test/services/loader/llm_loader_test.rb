@@ -89,6 +89,43 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_match "GATHERED-XYZ", client.calls[1][:prompt]
   end
 
+  test "#load should send the combined system prompt on the single call" do
+    client = fake_client(structured: { "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_equal Loader::LlmPrompts::COMBINED_SYSTEM, client.calls[0][:system]
+  end
+
+  test "#load should send the gather then structure system prompts (two-step)" do
+    client = fake_client(structured: { "items" => [] }, credential: openrouter_credential)
+    Loader::LlmLoader.new(openrouter_feed, llm_client: client).load
+
+    assert_equal Loader::LlmPrompts::GATHER_SYSTEM, client.calls[0][:system]
+    assert_equal Loader::LlmPrompts::STRUCTURE_SYSTEM, client.calls[1][:system]
+  end
+
+  test "#load should carry the user's feed prompt as the framed user message" do
+    client = fake_client(structured: { "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    user_prompt = client.calls[0][:prompt]
+    assert_match "https://example.com", user_prompt
+    assert_match(/Feed request/, user_prompt)
+  end
+
+  test "#load should skip the structure call and return no items when the gather is empty" do
+    client = fake_client(structured: { "items" => [{ "body" => "x", "source_url" => "https://e.com/a" }] },
+                         gathered: "   ", credential: openrouter_credential)
+
+    result = nil
+    assert_difference -> { openrouter_feed.events.where(type: "feed_refresh_ai_empty").count }, 1 do
+      result = Loader::LlmLoader.new(openrouter_feed, llm_client: client).load
+    end
+
+    assert_equal [], result
+    assert_equal 1, client.calls.size, "structure call must be skipped on an empty gather"
+  end
+
   test "#load should respect the limit option" do
     items = (1..10).map { |i| { "title" => "Post #{i}", "source_url" => "https://example.com/#{i}" } }
     loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "items" => items }), limit: 3)

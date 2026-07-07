@@ -343,4 +343,52 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
     assert_equal "provider_error", LlmUsage.last.outcome
   end
+
+  # A chat double that records the system prompt and the asked user prompt, so we
+  # can verify the system message travels via with_instructions and the user
+  # prompt via #ask — the injection-defense channel separation (spec §8).
+  class FakeChat
+    attr_reader :instructions, :asked
+
+    def with_instructions(text)
+      @instructions = text
+      self
+    end
+
+    def ask(prompt)
+      @asked = prompt
+      Data.define(:content).new(content: "gathered")
+    end
+  end
+
+  def stub_chat(client, chat)
+    context = Object.new
+    context.define_singleton_method(:chat) { |**_| chat }
+    client.credential.stub(:ruby_llm_context, context) { yield }
+  end
+
+  test "#invoke_provider should set the system prompt as instructions and ask the user prompt" do
+    client = LlmClient.new(credential)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
+                                    output_schema: nil, web: false, system: "SYSTEM PROMPT")
+    end
+
+    assert_equal "SYSTEM PROMPT", chat.instructions
+    assert_equal "user text", chat.asked
+  end
+
+  test "#invoke_provider should not set instructions when no system prompt is given" do
+    client = LlmClient.new(credential)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
+                                    output_schema: nil, web: false, system: nil)
+    end
+
+    assert_nil chat.instructions
+  end
 end
