@@ -334,4 +334,40 @@ class HttpClient::FaradayAdapterTest < ActiveSupport::TestCase
 
     assert_equal 200, response.status
   end
+
+  test "public-only mode blocks a private hop at the end of a public chain" do
+    stub_request(:get, "https://a.example/1")
+      .to_return(status: 302, headers: { "Location" => "https://b.example/2" })
+    stub_request(:get, "https://b.example/2")
+      .to_return(status: 302, headers: { "Location" => "http://127.0.0.1/secret" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://a.example/1", options: public_only)
+    end
+
+    assert_not_requested :get, "http://127.0.0.1/secret"
+  end
+
+  test "public-only mode blocks a redirect to the cloud metadata address" do
+    stub_request(:get, "https://example.com/go")
+      .to_return(status: 302, headers: { "Location" => "http://169.254.169.254/latest/meta-data/" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://example.com/go", options: public_only)
+    end
+
+    assert_not_requested :get, "http://169.254.169.254/latest/meta-data/"
+  end
+
+  test "public-only mode blocks a redirect to a private address in encoded (decimal) form" do
+    # 2130706433 == 127.0.0.1; the guard canonicalizes it the way the socket would.
+    stub_request(:get, "https://example.com/go")
+      .to_return(status: 302, headers: { "Location" => "http://2130706433/" })
+
+    assert_raises(HttpClient::BlockedUrlError) do
+      client.get("https://example.com/go", options: public_only)
+    end
+
+    assert_not_requested :get, "http://2130706433/"
+  end
 end
