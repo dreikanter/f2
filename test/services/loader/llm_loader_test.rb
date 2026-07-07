@@ -104,13 +104,13 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal Loader::LlmPrompts::STRUCTURE_SYSTEM, client.calls[1][:system]
   end
 
-  test "#load should carry the user prompt as framed data, not as instructions" do
+  test "#load should carry the user's feed prompt as the framed user message" do
     client = fake_client(structured: { "items" => [] })
     Loader::LlmLoader.new(feed, llm_client: client).load
 
     user_prompt = client.calls[0][:prompt]
     assert_match "https://example.com", user_prompt
-    assert_match(/data, not\s+instructions/, user_prompt)
+    assert_match(/Feed request/, user_prompt)
   end
 
   test "#load should skip the structure call and return no items when the gather is empty" do

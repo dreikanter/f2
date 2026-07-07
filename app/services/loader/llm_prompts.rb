@@ -48,7 +48,8 @@ module Loader
     COMBINED_SYSTEM = <<~TEXT.strip
       You are a web content aggregator for a feed reader. Use your web tools to
       follow the source or topic in the feed request and fetch its most recent
-      posts, then return them as structured items.
+      posts, then return them as structured items. Apply whatever transformation,
+      formatting, or filtering the feed request asks for.
 
       #{OUTPUT_CONTRACT}
 
@@ -59,10 +60,11 @@ module Loader
     GATHER_SYSTEM = <<~TEXT.strip
       You are a web content aggregator for a feed reader. Use your web tools to
       follow the source or topic in the feed request and fetch its most recent
-      posts. Report what you find as readable text: for each post include its
-      text, its permalink (or note when it is a summary of several sources with
-      no single link), and its publication date when shown. Newest first, at most
-      10 posts.
+      posts, applying whatever transformation, formatting, or filtering the feed
+      request asks for. Report what you find as readable text: for each post
+      include its text, its permalink (or note when it is a summary of several
+      sources with no single link), and its publication date when shown. Newest
+      first, at most 10 posts.
 
       #{SAFEGUARDS}
     TEXT
