@@ -1,4 +1,5 @@
 <%# locals: (preview: nil) %>
+<% ai = preview && FeedProfile.depends_on_ai?(preview.feed_profile_key) %>
 <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
      role="status"
      aria-busy="true"
@@ -7,7 +8,12 @@
     <%= render SpinnerComponent.new %>
   </div>
   <div class="space-y-1">
-    <p class="font-semibold text-heading">Building a preview…</p>
-    <p class="text-body">This usually takes a few seconds while we fetch and format this feed.</p>
+    <% if ai %>
+      <p class="font-semibold text-heading">AI is browsing the web…</p>
+      <p class="text-body">This can take a couple of minutes while it reads sources and pulls posts together.</p>
+    <% else %>
+      <p class="font-semibold text-heading">Building a preview…</p>
+      <p class="text-body">This usually takes a few seconds while we fetch and format this feed.</p>
+    <% end %>
   </div>
 </div>

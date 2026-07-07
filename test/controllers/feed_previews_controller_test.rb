@@ -399,6 +399,52 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     assert user.feed_previews.last.failed?
   end
 
+  test "#show should not time out an AI preview within its longer budget" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: models)
+    create(:feed_preview, :processing, user: user, feed_profile_key: "llm",
+                                       params: { "prompt" => "ruby news" },
+                                       ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
+                                       updated_at: 90.seconds.ago)
+
+    assert_no_enqueued_jobs do
+      get feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
+                           ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+          headers: TURBO_STREAM
+    end
+
+    assert_response :success
+    assert_not user.feed_previews.last.failed?, "an AI preview should survive past the deterministic budget"
+  end
+
+  test "#show should time out an AI preview past its longer budget" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: models)
+    create(:feed_preview, :processing, user: user, feed_profile_key: "llm",
+                                       params: { "prompt" => "ruby news" },
+                                       ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6",
+                                       updated_at: 5.minutes.ago)
+
+    get feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
+                         ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+        headers: TURBO_STREAM
+
+    assert_response :success
+    assert user.feed_previews.last.failed?
+  end
+
+  test "#create should show the AI-browsing copy for an AI preview" do
+    sign_in_as(user)
+    credential = create(:ai_credential, :active, user: user, available_models: models)
+
+    post feed_preview_url(profile_key: "llm", "params" => { prompt: "ruby news" },
+                          ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6"),
+         headers: TURBO_STREAM
+
+    assert_response :success
+    assert_match(/AI is browsing the web/, response.body)
+  end
+
   test "#show should scope previews to the current user" do
     other = create(:user)
     create(:feed_preview, :completed, user: other, feed_profile_key: "rss",
