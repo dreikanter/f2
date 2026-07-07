@@ -1,7 +1,10 @@
 # Feed Creation UX + AI Architecture Overhaul
 
 **Date**: 2026-06-29, revised 2026-07-03 after design review |
-**Status**: Design — Tracks 1–2 shipped (#880, #885); remaining tracks pre-implementation
+**Status**: Implemented — Tracks 1–2 (#880, #885) plus Tracks 3–4 (single AI profile, two-mode
+creation, capability-matrix trim, digest regime + cadence skip, editing unlocks, production prompts +
+safeguards, attachment/SSRF validation) shipped across #903–#942. Deferred: the usage `step`
+discriminator (§6). Dropped: the Mode B→A reverse hint (§1).
 
 **Related**: [`001-smart-feed-creation`](../001-smart-feed-creation/spec.md) (the flow this revises),
 [`002-feed-drafts`](../002-feed-drafts/spec.md), [`003-unify-feed-preview-stack`](../003-unify-feed-preview-stack/spec.md),
@@ -43,8 +46,9 @@ The user picks an **engine** (mechanism), not an input syntax. Two modes:
 
 The **mode toggle** carries the mechanism; the **field label** carries the expected input type.
 There is no auto-detection of input *shape* — the user stays in the engine they chose — but each
-field *validates* form within its mode. A URL pasted into Mode B is fine (AI reads it — with a
-cheaper-engine hint, see §1); a non-URL in Mode A is routed to Mode B via an inline bridge.
+field *validates* form within its mode. A URL pasted into Mode B is fine (AI reads it — a
+cheaper-engine hint was considered and dropped, see §1); a non-URL in Mode A is routed to Mode B via
+an inline bridge.
 
 ## Decisions
 
@@ -78,11 +82,13 @@ cheaper-engine hint, see §1); a non-URL in Mode A is routed to Mode B via an in
   prompt *is* the source and §4 unlocks it anyway. Name stays manual (AI profiles have no title
   extractor; a multi-line prompt is unusable as a default name). Default schedule: daily (§3,
   cadence).
-- **Reverse hint (B→A)**: when a Mode B prompt is exactly one URL, run the LLM-free Mode A
-  detection quietly; if a working deterministic candidate exists, offer a dismissible suggestion
-  to use it instead — deterministic engines are cheaper and more reliable for the same source
-  (001's cost-honesty principle). Never auto-switch, never block. Symmetric with the A→B bridge:
-  each mode offers the other's door; neither silently falls through it.
+- **Reverse hint (B→A) — dropped.** The idea: when a Mode B prompt is exactly one URL, quietly run
+  the LLM-free Mode A detection and, if a working deterministic candidate exists, offer a dismissible
+  "follow it directly instead" suggestion — deterministic engines are cheaper and more reliable for
+  the same source (001's cost-honesty principle), never auto-switching. **Not built**: a correct
+  version needs the async detection job surfaced non-disruptively inside the AI form (RSS detection
+  needs the *fetched page body*, so there's no cheap URL-pattern shortcut), and the payoff didn't
+  justify that machinery. The A→B bridge (§7) ships; this mirror direction does not.
 
 ### 2. AI feed model
 
@@ -140,19 +146,24 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
 - **Placement is load-bearing — all the way down.** `filter_new_entries` (dedup) and the blank-uid
   drop run *after* `process_feed_contents`, so the uid must be final by the end of that step; uid
   minting lives in `PassthroughProcessor` (mirroring `RssProcessor#extract_uid`), delegating
-  policy to the unit-tested `Uid::Resolver` (shipped, Track 1; Track 4 adds the clock + regime
-  input). But the digest regime must also survive the layers *after* the uid guards: today the LLM
+  policy to the unit-tested `Uid::Resolver` (shipped — the clock + regime input landed too:
+  `call(item, clock:)`, `digest?` on an explicit-null `source_url`, and `digest_period_uid`). But
+  the digest regime must also survive the layers *after* the uid guards: today the LLM
   normalizer rejects any item without `source_url`, `Post` validates its presence, and the column
   is `NOT NULL` — a null-permalink digest post would persist its period uid and then land
   permanently `rejected`: the period slot consumed, nothing published, every run "successful".
   **Decision**: digest posts carry `source_url = null` end-to-end — normalizer carve-out for the
   digest regime, `Post` validation made conditional, column made nullable; a digest cites its
-  sources inline in the body (§8). Track 4 owns this alongside the schema change.
+  sources inline in the body (§8). *(Shipped: `LlmNormalizer` carve-out, `validates :source_url,
+  presence: true, allow_nil: true`, and a nullable `posts.source_url`.)*
 - **Run cadence vs period**: a digest feed on the default 2-hourly schedule would pay the full
   gather+structure cost ~12×/day and discard 11 results as same-period dups. Mode B feeds default
   to a **daily** schedule; additionally, when a feed's *previous* run produced only period-keyed
   uids and that period is still current, the scheduled run is **skipped before any LLM call**
-  (recorded as skipped). Mixed or feed-style outputs never skip.
+  (recorded as skipped). Mixed or feed-style outputs never skip. *(Shipped: the skip signal is the
+  feed schedule's `last_digest_period`, recorded from the actually-minted uid — so a run finishing
+  past UTC midnight records the day it served, not the next. A **manual** refresh always forces
+  through.)*
 
 ### 4. Editing & lifecycle
 
@@ -182,8 +193,9 @@ The uid is the one place an AI feed can quietly corrupt itself (duplicate or dro
     displayed one and fall back to first-seen time otherwise, so for dateless items the threshold
     is a no-op, not merely weak — permalink dedup is the real guard. Don't *promise* zero repeats.
 - **Preview is not an enable-gate** — already true in code (`Feed#can_be_enabled?` checks name,
-  active token, target group, profile, cron; not preview). Only leftover nicety: a disabled Preview
-  button could explain what's missing instead of going inert.
+  active token, target group, profile, cron; not preview). The leftover nicety — a disabled Preview
+  button explaining what's missing (a source, an AI provider, or a model) instead of going inert —
+  has since shipped.
 
 ### 5. Model selection & capability matrix
 
@@ -242,8 +254,9 @@ below reflect that record.)*
 
 ### 6. Provider seam + retrieval + structured output
 
-*(Shipped as Track 2, #885 — kept as rationale. The gather-empty guard, the usage `step` field,
-the preview budget, and the inline-schema fix below are still open.)*
+*(Shipped as Track 2, #885 — kept as rationale. Since shipped: the gather-empty guard, the preview
+budget, and the inline-schema fix (obviated by §2's single-profile collapse). Still open: the usage
+`step` discriminator.)*
 
 **Update (plan-03, live-verified 2026-07-05).** Two premises below have since been overtaken by
 evidence; kept for the record with the correction inline:
@@ -274,33 +287,38 @@ Original Anthropic findings that shaped the two-step design (Opus + Sonnet):
   through RubyLLM. We keep RubyLLM rather than maintain raw per-provider clients.
 - Web alone (no schema) and schema alone (no web) each work cleanly *through* RubyLLM.
 
-So AI extraction is **two RubyLLM calls**, never combining schema + web in one:
+So AI extraction **branches per provider** (via `Adapter#combined_extraction?`), reconciling the
+original two-step design with the plan-03 combined-call finding above:
 
-1. **Gather** — `web: true`, no schema. The model searches/fetches; `LlmClient` returns the raw text.
-2. **Structure** — schema, `web: false`. The gathered text is fed in; `with_schema` returns clean,
-   native JSON. No healing needed (so `SchemaHealer` stays dropped — §6 earlier rationale holds).
+1. **Anthropic — combined.** One RubyLLM call carries the system prompt, the schema, *and* web tools
+   together (`combined_extraction? == true`): grounded, schema-valid JSON in a single usage row.
+2. **Moonshot / OpenRouter — two-step.** **Gather** (`web: true`, no schema; `LlmClient` returns raw
+   text) then **Structure** (schema, `web: false`; `with_schema` returns native JSON). No healing
+   needed, so `SchemaHealer` stays dropped.
 
 Supporting pieces:
 
-- **Adapter** (`LlmClient::Adapter.for(provider)`), single responsibility `web_params(model) -> Hash`,
-  injected via `with_params` **only on the gather call** (`web: true`):
-  - Anthropic: server tools (`web_search_20260209`/`web_fetch_20260209`), citations off.
-  - OpenRouter: web plugin + `require_parameters`. *(OpenRouter not yet live-verified.)*
-- **`LlmClient#call(ctx, prompt:, output_schema:, web:)`** — injects web only when `web:`; returns the
-  raw text when `output_schema` is nil, parsed+validated JSON when a schema is given. Keeps adapter
-  selection, usage bookkeeping (one row per call → two per extraction), and the error taxonomy.
-- **Gather-empty guard**: if the gather step returns blank/whitespace, the run yields zero items —
-  the structure step is skipped and an event recorded. Feeding emptiness (or a refusal) into the
-  structure call invites fabricated items, exactly what §8 forbids.
+- **Adapter** (`LlmClient::Adapter.for(provider)`) applies web access on the **web-enabled call**
+  (`web: true` — the combined call for Anthropic, the gather call for two-step providers):
+  - Anthropic: `with_params` server tools (`web_search_20260209`/`web_fetch_20260209`), citations off.
+  - Moonshot: a client-side `WebFetch` function tool (the builtin `$web_search` doesn't engage; §5/plan-03).
+  - OpenRouter: `with_params` web plugin + `require_parameters`. *(OpenRouter not yet live-verified.)*
+- **`LlmClient#call(ctx, prompt:, output_schema:, web:, system:)`** — routes `system:` to the chat as
+  instructions (the §8 safeguards channel), injects web only when `web:`; returns the raw text when
+  `output_schema` is nil, parsed+validated JSON when a schema is given. Keeps adapter selection, usage
+  bookkeeping (one row per call — two per extraction on two-step providers, one on Anthropic combined),
+  and the error taxonomy.
+- **Gather-empty guard** *(shipped)*: if the gather step returns blank/whitespace, the run yields
+  zero items — the structure step is skipped and a `feed_refresh_ai_empty` event recorded. Feeding
+  emptiness (or a refusal) into the structure call invites fabricated items, exactly what §8 forbids.
 - **`UNIVERSAL_OUTPUT_SCHEMA` carries `additionalProperties: false`** on every object — Anthropic
-  strict structured output rejects the schema without it (confirmed live). **Known gap to fix
-  before Track 4**: `llm_website_extractor`'s loader config still embeds its own inline schema
-  *without* the marker, so by this section's own live-verified finding the profile's structure
-  step fails on Anthropic strict. Point it at `UNIVERSAL_OUTPUT_SCHEMA` (one line) now rather than
-  waiting for the collapse.
-- Usage bookkeeping gains a **`step` discriminator** (gather/structure) on `LlmUsage`, and
-  `CallContext` carries the model per call — so the deferred per-step-model optimization won't
-  have to rework accounting, and the two rows per extraction stop being indistinguishable.
+  strict structured output rejects the schema without it (confirmed live). *(The former
+  `llm_website_extractor` inline-schema gap is moot: §2's collapse deleted that profile, and the
+  single `llm` profile's loader config points at `UNIVERSAL_OUTPUT_SCHEMA`.)*
+- Usage bookkeeping is to gain a **`step` discriminator** (gather/structure) on `LlmUsage` so the
+  two rows per extraction stop being indistinguishable — *not yet added* (the one still-open §6
+  item). `CallContext` already carries the model per call, so the deferred per-step-model
+  optimization won't have to rework that half of the accounting.
 - The `with_tool("web_search")` misuse is removed.
 
 Latency note from live runs: gather dominates (web fetch), and varies widely by model/how much it
@@ -309,8 +327,9 @@ fetches (Opus ~12s, Sonnet ~40–120s); structure is cheap (~12s) and is a good 
 below these numbers, so a default-model AI preview can be marked failed while the job is still
 legitimately working — and later flip failed→ready after the user gave up. AI previews get a longer
 budget (~4 minutes), progress copy that says AI is browsing the web, and a timeout that is terminal
-for that run. The gather/structure prompts here are functional placeholders — Track 4 owns their
-final form and the system-prompt safeguards.
+for that run. *(Shipped: the gather/structure/combined prompts now live in production form in
+`Loader::LlmPrompts` — task, output contract, and the §8 safeguards — delivered through the `system:`
+channel above.)*
 
 ### 7. Mode A detection & presentation
 
@@ -329,8 +348,9 @@ final form and the system-prompt safeguards.
 - **"Couldn't reach" ≠ "no feed"**: a transient network failure is a retry state, not a terminal
   verdict.
 - The AI bridge is **discovery, never a silent fallback engine** — Mode A never runs AI on its
-  own; it only *offers* the door to Mode B. (The §1 reverse hint is the mirror image: Mode B never
-  runs the deterministic engine on its own; it may only suggest it.)
+  own; it only *offers* the door to Mode B. (The mirror direction — Mode B suggesting the
+  deterministic engine, §1's reverse hint — was dropped; either way Mode B never runs detection on
+  its own.)
 - **Structural exclusion**: the single AI profile registers no matcher, so detection *cannot*
   select it — "Mode A never runs AI" is enforced by construction, not convention. (Guard against
   `matchers_for`'s `:any`-matches-everything clause sweeping the AI profile in: with no matcher
@@ -360,7 +380,11 @@ owns:
   persistence, every attachment URL must be an absolute http(s) URL pointing at a public host (no
   local paths, no localhost/private ranges) or be dropped. A bad attachment **drops the
   attachment, not the post** — today one hallucinated image URL permanently fails the whole post
-  with its uid already consumed, a §3-style silent drop delivered at the publish stage;
+  with its uid already consumed, a §3-style silent drop delivered at the publish stage. *(Shipped:
+  `Normalizer::Base#attachment_urls` filters through `PublicUrl.safe?` at the shared choke point, so
+  it covers every feed type, not just AI. Two fetch-layer refinements followed from review — HTTP
+  redirect hops are validated per hop, since a public URL can 302 to a private address; the DNS
+  resolve-and-pin residual is tracked in #941.)*;
 - **body length** — Freefeed's 3000-grapheme post limit is enforced by deterministic truncation in
   the LLM normalizer. Both AI regimes (free-form transformation, daily digests) push toward long
   bodies; the structure prompt also asks for brevity, but the prompt is not the guarantee.
@@ -368,10 +392,11 @@ owns:
 ## Sequencing
 
 - **Two immediate fixes ship first, ahead of any track**: intra-batch uid collapse (§3 — the
-  batch-destroying crash is reachable today) and the `llm_website_extractor` inline-schema fix
-  (§6). Both are small and independent.
+  batch-destroying crash is reachable today) and the LLM profile's inline-schema fix (§6 — obviated
+  once §2 collapsed to the single `llm` profile on `UNIVERSAL_OUTPUT_SCHEMA`). Both were small and
+  independent.
 - **AI plumbing + integrity first**: the per-provider seam (§6, shipped) and the `Uid::Resolver`
-  (§3, core shipped; clock + regime input pending) are foundational and largely independent.
+  (§3, shipped including the clock + regime input) are foundational and largely independent.
 - **Single AI profile** (§2) depends on web access via the seam — and ships together with its
   detection exclusion (§7), so it never leaks into the old auto-detect UI during the interim.
 - **Explicit-mode creation** (§1, §7) depends on the single AI profile being what Mode B selects.
@@ -383,7 +408,8 @@ owns:
 
 - Hourly digests (sub-day period granularity for standing queries) — emergent fallback only for now;
   a finer period is a later explicit feature.
-- Per-step models (the Haiku structure candidate) — deferred; accounting is prepared via the usage
-  `step` field and per-call model in `CallContext` (§6).
-- Disabled-Preview-button "what's missing" affordance — optional nicety.
-- Reverse-hint (§1) copy and exact trigger — lightweight; ship with Mode B or just after.
+- Per-step models (the Haiku structure candidate) — deferred. `CallContext` already carries a
+  per-call model; the usage `step` discriminator that would make the two rows distinguishable is
+  **not yet added** (the one still-open §6 item).
+- Reverse-hint (§1, Mode B→A) — **dropped**, not deferred: the async detection a correct version
+  needs isn't worth the payoff (see §1).
