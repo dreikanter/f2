@@ -78,8 +78,19 @@ class FeedRefreshWorkflow
     record_stats(unidentified_entries: unidentified_count) if unidentified_count.positive?
 
     identified_entries = processed_entries.reject { |entry| entry.uid.blank? }
-    @digest_only_run = identified_entries.any? && identified_entries.all? { |entry| Uid::Resolver.digest_uid?(entry.uid) }
+    @digest_period = digest_period_for(identified_entries)
     identified_entries
+  end
+
+  # The period this run committed to, read from the actual minted uids rather
+  # than re-derived from the clock at finalize — a run that mints digest:D just
+  # before UTC midnight must record D, not D+1, or its next-day digest gets
+  # skipped. nil unless every identified entry is a period-keyed digest, so a
+  # mixed or feed-style run never marks a period and thus never skips.
+  def digest_period_for(entries)
+    return nil unless entries.any? && entries.all? { |entry| Uid::Resolver.digest_uid?(entry.uid) }
+
+    Uid::Resolver.period_from_uid(entries.first.uid)
   end
 
   def filter_new_entries(processed_entries)
@@ -290,18 +301,16 @@ class FeedRefreshWorkflow
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant
-  # same-period digest. Only a digest-only run marks a period; anything else
-  # clears it, so a feed that stops producing digests (or produces nothing)
-  # resumes normal cadence. The equality guard avoids a needless write on every
-  # deterministic-feed refresh, where the period stays nil.
+  # same-period digest. Only a digest-only run marks a period (@digest_period);
+  # anything else leaves it nil, so a feed that stops producing digests (or
+  # produces nothing) resumes normal cadence. The equality guard avoids a
+  # needless write on every deterministic-feed refresh, where the period is nil.
   def record_digest_period
     schedule = feed.feed_schedule
     return unless schedule
+    return if schedule.last_digest_period == @digest_period
 
-    period = @digest_only_run ? Uid::Resolver.digest_period(Time.current) : nil
-    return if schedule.last_digest_period == period
-
-    schedule.update!(last_digest_period: period)
+    schedule.update!(last_digest_period: @digest_period)
   end
 
   def record_feed_refresh_skipped

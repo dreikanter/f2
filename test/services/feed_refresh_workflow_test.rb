@@ -786,7 +786,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
       feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
 
-      assert_equal Time.current.utc.to_date, feed.feed_schedule.reload.last_digest_period
+      recorded = feed.feed_schedule.reload.last_digest_period
+      assert_equal Time.current.utc.to_date, recorded
+      # The recorded period is read from the minted uid, not re-derived from the
+      # clock, so it always matches the digest the run actually produced.
+      assert_equal Uid::Resolver.period_from_uid(feed.posts.last.uid), recorded
     end
   end
 
@@ -839,9 +843,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     end
   end
 
-  test "#execute should not mark a period for a mixed digest/feed-style run" do
+  test "#execute should clear the period for a mixed digest/feed-style run" do
     freeze_time do
-      feed = digest_feed_with_schedule
+      # Seed a stale period so this proves the mixed run *clears* it, not just a
+      # trivial nil == nil no-write.
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date - 1)
       loader = counting_loader([
         { "source_url" => nil, "body" => "roundup" },
         { "source_url" => "https://example.com/post-1", "body" => "a real post" }
@@ -849,7 +855,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
       feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
 
-      assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never skip"
+      assert_nil feed.feed_schedule.reload.last_digest_period, "mixed runs never mark a period"
     end
   end
 end

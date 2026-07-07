@@ -98,4 +98,23 @@ class Uid::ResolverTest < ActiveSupport::TestCase
     assert_not Uid::Resolver.digest_uid?(nil)
     assert_not Uid::Resolver.digest_uid?("")
   end
+
+  test ".digest_uid? should reject a loose or malformed digest-prefixed uid" do
+    # A source-controlled guid that merely starts with "digest:" is not a digest.
+    assert_not Uid::Resolver.digest_uid?("digest:foo")
+    assert_not Uid::Resolver.digest_uid?("digest:2026-07-07/extra")
+    assert_not Uid::Resolver.digest_uid?("prefix-digest:2026-07-07")
+  end
+
+  test ".period_from_uid should extract the date carried by a digest uid" do
+    assert_equal Date.new(2026, 7, 7), Uid::Resolver.period_from_uid("digest:2026-07-07")
+    assert_equal Uid::Resolver.digest_period(clock),
+                 Uid::Resolver.period_from_uid(Uid::Resolver.digest_period_uid(clock))
+  end
+
+  test ".period_from_uid should return nil for a non-digest or invalid-date uid" do
+    assert_nil Uid::Resolver.period_from_uid("https://example.com/a")
+    assert_nil Uid::Resolver.period_from_uid("digest:2026-13-01")
+    assert_nil Uid::Resolver.period_from_uid(nil)
+  end
 end
