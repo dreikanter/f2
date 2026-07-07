@@ -66,3 +66,7 @@ jobs:
 
       - name: Deploy to staging
         run: bin/kamal deploy -d staging
+
+      # TEMP (claude/ai-production-prompts): live-verify the production prompts.
+      - name: Verify AI extraction on staging
+        run: bin/kamal app exec --reuse "bin/rails ai:verify_extraction" -d staging
