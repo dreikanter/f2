@@ -45,7 +45,7 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
     assert_equal first, second
   end
 
-  test "#process should drop items without a usable permalink" do
+  test "#process should leave unusable-permalink uids nil for the workflow to drop and count" do
     items = [
       { "title" => "no url" },
       { "source_url" => "https://example.com/", "title" => "homepage only" },
@@ -54,7 +54,16 @@ class Processor::PassthroughProcessorTest < ActiveSupport::TestCase
 
     entries = process(items).entries
 
-    assert_equal ["https://example.com/ok"], entries.map(&:uid)
+    assert_equal [nil, nil, "https://example.com/ok"], entries.map(&:uid)
+  end
+
+  test "#process should mint a period uid for a digest item (null source_url)" do
+    items = [{ "source_url" => nil, "body" => "today's roundup" }]
+
+    entries = process(items).entries
+
+    assert_equal 1, entries.size
+    assert_match(/\Adigest:\d{4}-\d{2}-\d{2}\z/, entries.first.uid)
   end
 
   test "#process should parse published_at from ISO 8601" do

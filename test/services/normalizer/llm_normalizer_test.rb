@@ -49,6 +49,15 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "missing source_url"
   end
 
+  test "#normalize should publish a digest post carrying a null source_url" do
+    entry = feed_entry("source_url" => nil, "uid" => "digest:2026-07-07")
+    post = Normalizer::LlmNormalizer.new(entry).normalize
+
+    assert_equal "enqueued", post.status
+    assert_nil post.source_url
+    assert_not_includes post.validation_errors, "missing source_url"
+  end
+
   test "#normalize should reject when content is missing" do
     post = Normalizer::LlmNormalizer.new(feed_entry("body" => "")).normalize
 

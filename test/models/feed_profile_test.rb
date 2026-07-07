@@ -209,4 +209,13 @@ class FeedProfileTest < ActiveSupport::TestCase
   test "#display_name_for should titleize unknown profile keys" do
     assert_equal "Custom Profile", FeedProfile.display_name_for("custom_profile")
   end
+
+  test "UNIVERSAL_OUTPUT_SCHEMA should accept a null source_url and no uid, but require the key" do
+    schemer = JSONSchemer.schema(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
+
+    assert schemer.valid?({ "items" => [{ "body" => "roundup", "source_url" => nil }] }), "digest item (null source_url, no uid)"
+    assert schemer.valid?({ "items" => [{ "body" => "x", "source_url" => "https://e.com/a" }] }), "feed-style item"
+    assert schemer.valid?({ "items" => [{ "uid" => "z", "body" => "x", "source_url" => nil }] }), "a stray uid is tolerated"
+    assert_not schemer.valid?({ "items" => [{ "body" => "x" }] }), "a missing source_url key is malformed, not a digest"
+  end
 end

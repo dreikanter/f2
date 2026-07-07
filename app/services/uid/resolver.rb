@@ -9,15 +9,30 @@ module Uid
   class Resolver
     TRACKING_PARAM = /\A(utm_|fbclid\z|gclid\z|mc_)/
 
-    def self.call(item)
-      new(item).call
+    def self.call(item, clock:)
+      new(item, clock).call
     end
 
-    def initialize(item)
+    # The system-owned period for a digest run: the UTC date of the run. Shared
+    # with the cadence guard so both agree on "this period" (spec §3).
+    def self.digest_period(clock)
+      clock.utc.to_date
+    end
+
+    # Period-keyed uid for a digest/standing-query item. Non-URL by construction,
+    # so it never collides with a normalized permalink.
+    def self.digest_period_uid(clock)
+      "digest:#{digest_period(clock).iso8601}"
+    end
+
+    def initialize(item, clock)
       @item = item.is_a?(Hash) ? item : {}
+      @clock = clock
     end
 
     def call
+      return self.class.digest_period_uid(@clock) if digest?
+
       uri = deep_link
       uri && normalize(uri)
     end
@@ -25,6 +40,19 @@ module Uid
     private
 
     attr_reader :item
+
+    # The digest regime is signalled only by an explicit null source_url. A
+    # missing key is malformed and an empty/unusable string is dropped — neither
+    # is reinterpreted as a digest (spec §3's "unusable ≠ null").
+    def digest?
+      return false unless item.key?("source_url") || item.key?(:source_url)
+
+      source_url_value.nil?
+    end
+
+    def source_url_value
+      item.key?("source_url") ? item["source_url"] : item[:source_url]
+    end
 
     def deep_link
       raw = (item["source_url"] || item[:source_url]).to_s.strip
