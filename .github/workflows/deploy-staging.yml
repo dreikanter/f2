@@ -66,3 +66,8 @@ jobs:
 
       - name: Deploy to staging
         run: bin/kamal deploy -d staging
+
+      # TEMP (claude/digest-regime): live-verify the nullable source_url schema
+      # against the providers before merging #937. Remove before merge.
+      - name: Verify digest schema on staging
+        run: bin/kamal app exec --reuse "bin/rails ai:verify_digest_schema" -d staging
