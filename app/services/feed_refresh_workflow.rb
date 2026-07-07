@@ -2,6 +2,7 @@ class FeedRefreshWorkflow
   include Workflow
   include StatsRecorder
 
+  step :skip_current_digest_period
   step :initialize_workflow
   step :load_feed_contents
   step :process_feed_contents
@@ -14,8 +15,9 @@ class FeedRefreshWorkflow
 
   attr_reader :feed
 
-  def initialize(feed)
+  def initialize(feed, manual: false)
     @feed = feed
+    @manual = manual
   end
 
   private
@@ -30,6 +32,25 @@ class FeedRefreshWorkflow
     disable_credential_on_auth_error(error)
     create_feed_refresh_error_event(error)
     feed.record_refresh_failure!
+  end
+
+  # A digest feed's period slot is consumed the moment it produces a period-keyed
+  # post; refreshing again in the same period just re-runs the costly gather +
+  # structure only to dedup the result away. Skip such a scheduled run before any
+  # LLM call (spec §3). A manual refresh always forces through — the user asked
+  # for it — and mixed/feed-style runs never mark a period, so they never skip.
+  def skip_current_digest_period(input)
+    return input unless skip_scheduled_digest_run?
+
+    record_feed_refresh_skipped
+    halt!
+  end
+
+  def skip_scheduled_digest_run?
+    return false if @manual
+
+    period = feed.feed_schedule&.last_digest_period
+    period.present? && period == Uid::Resolver.digest_period(Time.current)
   end
 
   def initialize_workflow(*)
@@ -56,7 +77,9 @@ class FeedRefreshWorkflow
     unidentified_count = processed_entries.count { |entry| entry.uid.blank? }
     record_stats(unidentified_entries: unidentified_count) if unidentified_count.positive?
 
-    processed_entries.reject { |entry| entry.uid.blank? }
+    identified_entries = processed_entries.reject { |entry| entry.uid.blank? }
+    @digest_only_run = identified_entries.any? && identified_entries.all? { |entry| Uid::Resolver.digest_uid?(entry.uid) }
+    identified_entries
   end
 
   def filter_new_entries(processed_entries)
@@ -184,6 +207,7 @@ class FeedRefreshWorkflow
 
     record_completed_at
     feed.reset_refresh_failures!
+    record_digest_period
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
     create_feed_refresh_stats_event(posts)
 
@@ -263,5 +287,38 @@ class FeedRefreshWorkflow
         }
       }
     )
+  end
+
+  # Persist this run's regime so the next scheduled run can skip a redundant
+  # same-period digest. Only a digest-only run marks a period; anything else
+  # clears it, so a feed that stops producing digests (or produces nothing)
+  # resumes normal cadence. The equality guard avoids a needless write on every
+  # deterministic-feed refresh, where the period stays nil.
+  def record_digest_period
+    schedule = feed.feed_schedule
+    return unless schedule
+
+    period = @digest_only_run ? Uid::Resolver.digest_period(Time.current) : nil
+    return if schedule.last_digest_period == period
+
+    schedule.update!(last_digest_period: period)
+  end
+
+  def record_feed_refresh_skipped
+    period = feed.feed_schedule.last_digest_period
+    Metrics.increment("feed_refresh_total", status: "skipped", profile: feed.feed_profile_key)
+
+    # Debug level keeps this routine, expected skip out of the user event feed
+    # while leaving it visible to operators.
+    Event.create!(
+      type: "feed_refresh_skipped",
+      level: :debug,
+      subject: feed,
+      user: feed.user,
+      message: "",
+      metadata: { period: period.iso8601 }
+    )
+
+    Rails.logger.info "Feed refresh skipped for feed #{feed.id}: digest period #{period} still current"
   end
 end

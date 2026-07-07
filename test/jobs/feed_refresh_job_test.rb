@@ -103,4 +103,29 @@ class FeedRefreshJobTest < ActiveJob::TestCase
       end
     end
   end
+
+  test ".perform_now should forward manual: true to the workflow" do
+    assert_equal true, captured_manual_flag { FeedRefreshJob.perform_now(feed.id, manual: true) }
+  end
+
+  test ".perform_now should default the workflow to a scheduled (non-manual) run" do
+    assert_equal false, captured_manual_flag { FeedRefreshJob.perform_now(feed.id) }
+  end
+
+  private
+
+  # Stubs the workflow so it doesn't run, capturing the manual: flag the job
+  # hands it. A digest feed's cadence skip hinges on this flag being scheduled
+  # by default and forced through only on a user-initiated refresh.
+  def captured_manual_flag
+    captured = nil
+    fake_workflow = Object.new
+    fake_workflow.define_singleton_method(:execute) { nil }
+
+    FeedRefreshWorkflow.stub(:new, ->(_feed, **kwargs) { captured = kwargs[:manual]; fake_workflow }) do
+      yield
+    end
+
+    captured
+  end
 end
