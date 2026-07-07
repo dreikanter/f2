@@ -37,13 +37,15 @@ class FeedPreview < ApplicationRecord
     (params || {})[key]
   end
 
-  # Transitions to :failed only if still non-terminal. The status guard in the
-  # UPDATE means a concurrently completing job won't be clobbered.
+  # Transitions to :failed only if still non-terminal. Rotating run_id makes the
+  # timeout terminal (spec §6): the still-running job holds the old run_id, so its
+  # run_id-gated transitions now update 0 rows and can't flip the row back to
+  # :ready after the user has already seen the timeout and left.
   def timeout!
     updated = self.class
                   .where(id: self.id)
                   .where(status: [:pending, :processing])
-                  .update_all(status: :failed, updated_at: Time.current)
+                  .update_all(status: :failed, run_id: SecureRandom.uuid, updated_at: Time.current)
     reload if updated.positive?
   end
 

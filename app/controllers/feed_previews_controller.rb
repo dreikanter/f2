@@ -13,6 +13,11 @@ class FeedPreviewsController < ApplicationController
     "failed" => "failed"
   }.freeze
 
+  # AI previews browse the web (Sonnet gather runs 40–120s, plus structuring), so
+  # they need a far longer budget than a deterministic fetch or they'd time out
+  # mid-run (spec §6). ~4 minutes at the shared 2.5s poll interval.
+  AI_PREVIEW_MAX_POLLS = 98
+
   # GET /feed_preview?profile_key=…&params[…]=…
   # Workhorse for the lazy turbo-frame and polling: find or create the row for
   # (user, profile_key, params_digest), start a run when it has no fresh result,
@@ -20,7 +25,7 @@ class FeedPreviewsController < ApplicationController
   def show
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
-    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < polling_timeout.ago
+    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < preview_polling_timeout.ago
     render_state(preview, inert_while_running: true)
   end
 
@@ -30,7 +35,20 @@ class FeedPreviewsController < ApplicationController
     render_state(start_run(locate_preview))
   end
 
+  helper_method :preview_max_polls
+
   private
+
+  # Poll cap for the current preview's profile: the longer AI budget for a
+  # web-browsing run, the shared default otherwise. Drives both the client
+  # poller (view) and the server-side timeout.
+  def preview_max_polls
+    FeedProfile.depends_on_ai?(profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
+  end
+
+  def preview_polling_timeout
+    ((preview_max_polls - 2) * polling_interval_ms).fdiv(1000).seconds
+  end
 
   def guard_preview
     return render_cleared if source_blank? || !FeedProfile.exists?(profile_key)

@@ -124,6 +124,20 @@ class FeedPreviewTest < ActiveSupport::TestCase
     assert preview.ready?
   end
 
+  test "#timeout! should rotate run_id so a stale run can't revive the preview" do
+    preview = create(:feed_preview, :processing, user: user, run_id: "run-1")
+
+    preview.timeout!
+
+    assert preview.failed?
+    assert_not_equal "run-1", preview.run_id
+    # A late completion from the timed-out run holds the old run_id, so its
+    # run_id-gated transition now matches nothing and can't flip it back.
+    revived = FeedPreview.where(id: preview.id, run_id: "run-1").update_all(status: FeedPreview.statuses[:ready])
+    assert_equal 0, revived
+    assert preview.reload.failed?
+  end
+
   test ".digest_for should depend only on the profile's source input" do
     same_source = FeedPreview.digest_for("rss", { "url" => "https://x.test" })
     with_extra = FeedPreview.digest_for("rss", { "url" => "https://x.test", "derived" => "anything" })

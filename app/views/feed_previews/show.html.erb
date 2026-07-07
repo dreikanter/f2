@@ -18,7 +18,7 @@
         polling_endpoint_value: feed_preview_path(preview_path_options.merge(format: :turbo_stream)),
         polling_stop_condition_value: "[data-preview-done]",
         polling_interval_value: polling_interval_ms,
-        polling_max_polls_value: polling_max_polls
+        polling_max_polls_value: preview_max_polls
       }) do %>
     <div id="feed-preview-body" data-polling-target="content">
       <% case preview.status %>

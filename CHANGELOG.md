@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-07
+
+- AI-powered previews now get more time to finish — up to about four minutes, since they browse the web — so a slow one no longer gets cut off early, and the progress note says what's happening. A preview that does time out now stays timed out instead of quietly flipping to done after you've moved on.
+
 ## 2026-07-06
 
 - You can now edit an AI feed's prompt after it's running, not just while it's a draft — with a heads-up that reworking it may pull in some older posts.
