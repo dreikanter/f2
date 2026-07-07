@@ -28,6 +28,9 @@ module HttpClient
   class ConnectionError < Error; end
   class TimeoutError < Error; end
   class TooManyRedirectsError < Error; end
+  # Raised in public-only mode when the initial URL or any redirect hop is not a
+  # public host (SSRF guard; see FaradayAdapter#ensure_public_url!).
+  class BlockedUrlError < Error; end
 
   def self.build(options = {})
     adapter_class = options.delete(:adapter) || default_adapter_class
