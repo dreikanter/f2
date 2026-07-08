@@ -20,8 +20,8 @@
       <%= hidden_field_tag :feed_id, local_assigns[:feed_id] %>
     <% end %>
     <div class="space-y-2">
-      <%= f.label :input, "Source link", class: "block font-semibold text-heading" %>
-      <%= f.text_field :input, value: input, placeholder: "https://example.com", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
+      <%= f.label :url, "Source link", class: "block font-semibold text-heading" %>
+      <%= f.text_field :url, value: url, placeholder: "https://example.com", class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
     </div>
 
     <%= f.submit "Try Again", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
@@ -32,7 +32,7 @@
   <% unless local_assigns.fetch(:edit_mode, false) %>
     <div class="space-y-2" data-key="identification.ai-bridge">
       <%= button_to "Follow with AI instead", feed_identifications_path,
-                    params: { input: input, mode: "ai" },
+                    params: { prompt: url },
                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
       <p class="text-sm text-muted">AI can follow it even when there's no standard feed to read.</p>
     </div>

@@ -53,12 +53,12 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
 
       perform_enqueued_jobs
 
-      get feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, 'data-identification-state="complete"'
       assert_includes response.body, "RSS Feed"
@@ -100,10 +100,10 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
 
     with_memory_cache do
-      post feed_identifications_path, params: { input: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      post feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       perform_enqueued_jobs
 
-      get feed_identifications_path, params: { input: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: xkcd_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "XKCD"
     end
@@ -115,7 +115,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
 
     assert_difference("FeedIdentification.count", -1) do
       delete feed_identifications_path,
-             params: { input: feed_url },
+             params: { url: feed_url },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
