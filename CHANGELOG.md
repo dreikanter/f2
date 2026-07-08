@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-08
 
 - Fixed Moonshot (Kimi) API key checks: they used to fail with an error and leave the key stuck in "validating" — now they go through like the other providers.
+- An API key check that can't reach the provider no longer leaves the key stuck in "validating" — it's marked as failed with the error, so you can try again.
 
 ## 2026-07-07
 

@@ -289,6 +289,20 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.available_models }
   end
 
+  test "#available_models should raise Timeout on a network timeout" do
+    client = LlmClient.new(credential)
+    stub_provider_models(client) { raise Faraday::TimeoutError, "execution expired" }
+
+    assert_raises(LlmClient::Timeout) { client.available_models }
+  end
+
+  test "#available_models should raise ProviderError when the provider is unreachable" do
+    client = LlmClient.new(credential)
+    stub_provider_models(client) { raise Faraday::ConnectionFailed, "connection refused" }
+
+    assert_raises(LlmClient::ProviderError) { client.available_models }
+  end
+
   test "#available_models should call the provider models endpoint with the credential api_key" do
     client = LlmClient.new(credential)
 

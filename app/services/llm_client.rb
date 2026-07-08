@@ -114,7 +114,9 @@ class LlmClient
     fetch_provider_models.map { |model| serialize_model(model) }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
     raise AuthError, e.message
-  rescue RubyLLM::Error, RubyLLM::ConfigurationError => e
+  rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
+    raise Timeout, e.message
+  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed => e
     Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
     raise ProviderError, e.message
   end
