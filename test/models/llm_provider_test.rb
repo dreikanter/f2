@@ -77,6 +77,13 @@ class LlmProviderTest < ActiveSupport::TestCase
     end
   end
 
+  test "every provider's ruby_llm_provider should resolve to a registered RubyLLM provider" do
+    LlmProvider.all.each do |provider|
+      assert_not_nil RubyLLM::Provider.resolve(provider.ruby_llm_provider),
+                     "#{provider.name} maps to unknown RubyLLM provider #{provider.ruby_llm_provider}"
+    end
+  end
+
   test "#find should accept symbol keys" do
     assert_equal "anthropic", LlmProvider.find(:anthropic).name
     assert_equal "openrouter", LlmProvider.find(:openrouter).name

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-08
+
+- Fixed Moonshot (Kimi) API key checks: they used to fail with an error and leave the key stuck in "validating" — now they go through like the other providers.
+
 ## 2026-07-07
 
 - AI feeds are steadier and safer: they now treat the pages they read as data rather than instructions to follow, and won't invent posts when a source turns up nothing — an empty check just brings in nothing.
