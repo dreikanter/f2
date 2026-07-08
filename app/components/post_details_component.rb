@@ -75,7 +75,7 @@ class PostDetailsComponent < ViewComponent::Base
   def add_uid_item(component)
     component.with_item(StatListItemComponent.new(
       label: "UID",
-      value: content_tag(:code, @post.uid, class: "text-sm"),
+      value: content_tag(:code, @post.uid, class: "text-sm truncate block", title: @post.uid),
       key: "post.uid"
     ))
   end

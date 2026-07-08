@@ -46,4 +46,10 @@ class StatListItemComponentTest < ViewComponent::TestCase
     assert_includes result.at_css("div")["class"], "items-baseline"
     assert_includes result.at_css("div")["class"], "justify-between"
   end
+
+  test "#render should let the value shrink so truncated children can ellipsize" do
+    result = render_inline(StatListItemComponent.new(label: "Posts", value: "42"))
+
+    assert_includes result.at_css("dd")["class"], "min-w-0"
+  end
 end

@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-08
 
+- Long source URLs and UIDs on post pages no longer spill outside the page — they're neatly cropped with an ellipsis, and hovering a cropped UID shows the full value.
 - Content size in event stats now uses thousands separators, so big numbers are easier to read at a glance.
 - Choosing between following a link or following with AI on the new-feed page now uses tabs, so each option gets its own address you can bookmark or share.
 - Fixed Moonshot (Kimi) API key checks: they used to fail with an error and leave the key stuck in "validating" — now they go through like the other providers.

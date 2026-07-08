@@ -22,4 +22,23 @@ class PostDetailsComponentTest < ViewComponent::TestCase
 
     assert_nil result.css('[data-key="post.reposted"]').first
   end
+
+  test "#render should truncate the source URL instead of overflowing" do
+    post = create(:post, feed: feed, source_url: "https://example.com/#{'a' * 200}")
+
+    result = render_inline(PostDetailsComponent.new(post: post))
+
+    link = result.css('[data-key="post.source_url.value"] a').first
+    assert_includes link["class"], "truncate"
+  end
+
+  test "#render should truncate the UID and expose the full value in a title" do
+    post = create(:post, feed: feed, uid: "uid-#{'b' * 200}")
+
+    result = render_inline(PostDetailsComponent.new(post: post))
+
+    code = result.css('[data-key="post.uid.value"] code').first
+    assert_includes code["class"], "truncate"
+    assert_equal post.uid, code["title"]
+  end
 end
