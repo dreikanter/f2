@@ -55,7 +55,7 @@ class AiCredentialListItemComponent < ListItemComponent
   end
 
   def provider_name
-    LlmProvider.find(credential.provider).display_name
+    credential.llm_provider.display_name
   end
 
   def menu
