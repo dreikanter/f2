@@ -32,6 +32,8 @@ module EventsHelper
       time ? long_time_tag(time) : value
     elsif key.to_s == "total_duration"
       format_event_duration(value.to_f)
+    elsif key.to_s == "content_size"
+      number_with_delimiter(value)
     else
       value
     end

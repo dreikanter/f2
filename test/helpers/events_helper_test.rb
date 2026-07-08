@@ -97,6 +97,11 @@ class EventsHelperTest < ActionView::TestCase
     assert_equal "1m 35s", format_stat_value("total_duration", 95.0)
   end
 
+  test "#format_stat_value should format content_size with delimiters" do
+    assert_equal "1,234,567", format_stat_value("content_size", 1234567)
+    assert_equal "512", format_stat_value("content_size", 512)
+  end
+
   test "#format_stat_value should return value as-is for other keys" do
     assert_equal 5, format_stat_value("new_posts", 5)
     assert_equal "foo", format_stat_value("some_key", "foo")
