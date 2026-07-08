@@ -7,7 +7,7 @@
     <% if @feed.source_input.present? %>
       <%= render "form_expanded", feed: @feed, edit_mode: false %>
     <% else %>
-      <%= render "form_collapsed" %>
+      <%= render "form_collapsed", mode: params[:mode] %>
     <% end %>
   </div>
 </div>

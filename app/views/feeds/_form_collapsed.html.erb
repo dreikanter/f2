@@ -1,69 +1,77 @@
-<%# locals: (input: nil) %>
+<%# locals: (input: nil, mode: "link") %>
+<% mode = mode == "ai" ? "ai" : "link" %>
 <% field_classes = "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
 <% primary_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
 <% cancel_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-<% tab_classes = "rounded-md px-4 py-2 text-sm font-semibold text-body transition cursor-pointer aria-pressed:bg-surface aria-pressed:text-heading aria-pressed:shadow-sm" %>
+<% active_tab = "inline-block p-4 text-brand border-b border-brand rounded-t-base" %>
+<% inactive_tab = "inline-block p-4 border-b border-transparent rounded-t-base hover:text-brand hover:border-brand" %>
 
-<div id="feed-form" data-controller="entry-mode">
+<div id="feed-form">
   <div class="space-y-6">
-    <div role="group" aria-label="How do you want to follow this?"
-         class="inline-flex rounded-lg border border-border bg-surface-muted p-1">
-      <button type="button" data-mode="link" aria-pressed="true"
-              data-entry-mode-target="tab"
-              data-action="entry-mode#select"
-              class="<%= tab_classes %>"
-              data-key="entry.mode-link">Follow a feed or channel</button>
-      <button type="button" data-mode="ai" aria-pressed="false"
-              data-entry-mode-target="tab"
-              data-action="entry-mode#select"
-              class="<%= tab_classes %>"
-              data-key="entry.mode-ai">Follow with AI</button>
-    </div>
+    <nav class="text-sm font-medium text-body border-b border-border" aria-label="How do you want to follow this?">
+      <ul class="flex flex-wrap -mb-px">
+        <li class="me-2">
+          <%= link_to "Follow a feed or channel", new_feed_path,
+                      class: mode == "link" ? active_tab : inactive_tab,
+                      aria: { current: mode == "link" ? "page" : nil },
+                      data: { key: "entry.mode-link" } %>
+        </li>
+        <li class="me-2">
+          <%= link_to "Follow with AI", new_feed_path(mode: "ai"),
+                      class: mode == "ai" ? active_tab : inactive_tab,
+                      aria: { current: mode == "ai" ? "page" : nil },
+                      data: { key: "entry.mode-ai" } %>
+        </li>
+      </ul>
+    </nav>
 
-    <div data-entry-mode-target="panel" data-mode="link" data-key="entry.panel-link">
-      <%= form_with url: feed_identifications_path, method: :post do |f| %>
-        <div class="space-y-2">
-          <%= f.label :input, "Source link", for: "entry-link-input", class: "block font-semibold text-heading" %>
-          <%= f.text_field :input,
-                           id: "entry-link-input",
-                           value: input,
-                           placeholder: "https://example.com",
-                           class: field_classes,
-                           required: true,
-                           autofocus: true,
-                           data: { key: "form.entry-link" } %>
-          <p class="text-sm text-muted">A blog, YouTube channel, subreddit, or any site with a feed. We'll add <code>https://</code> if you leave it off.</p>
-        </div>
+    <% if mode == "link" %>
+      <div data-key="entry.panel-link">
+        <%= form_with url: feed_identifications_path, method: :post do |f| %>
+          <div class="space-y-2">
+            <%= f.label :input, "Source link", for: "entry-link-input", class: "block font-semibold text-heading" %>
+            <%= f.text_field :input,
+                             id: "entry-link-input",
+                             value: input,
+                             placeholder: "https://example.com",
+                             class: field_classes,
+                             required: true,
+                             autofocus: true,
+                             data: { key: "form.entry-link" } %>
+            <p class="text-sm text-muted">A blog, YouTube channel, subreddit, or any site with a feed. We'll add <code>https://</code> if you leave it off.</p>
+          </div>
 
-        <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-          <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Checking…" } %>
-          <%= link_to "Cancel", feeds_path, class: cancel_button %>
-        </div>
-      <% end %>
-    </div>
+          <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
+            <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Checking…" } %>
+            <%= link_to "Cancel", feeds_path, class: cancel_button %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div data-key="entry.panel-ai">
+        <%= form_with url: feed_identifications_path, method: :post do |f| %>
+          <%= hidden_field_tag :mode, "ai" %>
+          <div class="space-y-2">
+            <%= f.label :input, "What should AI follow?", for: "entry-ai-input", class: "block font-semibold text-heading" %>
+            <%= f.text_area :input,
+                            id: "entry-ai-input",
+                            value: input,
+                            rows: 3,
+                            maxlength: 2000,
+                            placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
+                            class: field_classes,
+                            required: true,
+                            autofocus: true,
+                            data: { key: "form.entry-ai" } %>
+            <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
+          </div>
 
-    <div data-entry-mode-target="panel" data-mode="ai" data-key="entry.panel-ai" hidden>
-      <%= form_with url: feed_identifications_path, method: :post do |f| %>
-        <%= hidden_field_tag :mode, "ai" %>
-        <div class="space-y-2">
-          <%= f.label :input, "What should AI follow?", for: "entry-ai-input", class: "block font-semibold text-heading" %>
-          <%= f.text_area :input,
-                          id: "entry-ai-input",
-                          value: input,
-                          rows: 3,
-                          maxlength: 2000,
-                          placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
-                          class: field_classes,
-                          required: true,
-                          data: { key: "form.entry-ai" } %>
-          <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
-        </div>
-
-        <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-          <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Setting up…" } %>
-          <%= link_to "Cancel", feeds_path, class: cancel_button %>
-        </div>
-      <% end %>
-    </div>
+          <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
+            <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Setting up…" } %>
+            <%= link_to "Cancel", feeds_path, class: cancel_button %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>
