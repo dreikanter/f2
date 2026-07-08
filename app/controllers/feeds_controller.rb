@@ -164,7 +164,14 @@ class FeedsController < ApplicationController
     redirect_to feeds_path, success: "Feed deleted."
   end
 
+  helper_method :mode
+
   private
+
+  # Entry mode on the new-feed page, normalized from the ?mode tab links.
+  def mode
+    params[:mode] == "ai" ? "ai" : "link"
+  end
 
   def require_ai_credentials?
     params[:commit] == "save_as_draft_and_add_credentials"
