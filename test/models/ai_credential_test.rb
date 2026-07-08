@@ -83,6 +83,11 @@ class AiCredentialTest < ActiveSupport::TestCase
     assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
+  test "#llm_provider should return the registry entry for the provider attribute" do
+    credential = create(:ai_credential, user: user, provider: "anthropic")
+    assert_equal LlmProvider.find("anthropic"), credential.llm_provider
+  end
+
   test "destroy should be a no-op when no feeds reference the credential" do
     credential = create(:ai_credential, user: user)
 

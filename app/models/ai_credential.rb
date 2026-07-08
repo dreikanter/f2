@@ -40,6 +40,10 @@ class AiCredential < ApplicationRecord
     user.update!(default_ai_credential: self)
   end
 
+  def llm_provider
+    LlmProvider.find(provider)
+  end
+
   # Models this credential can actually back a feed with: the dev-verified
   # capability matrix intersected with the provider's live snapshot (spec §5).
   # Membership is qualification — a snapshot model absent from the matrix (or a
@@ -60,7 +64,7 @@ class AiCredential < ApplicationRecord
   # provider's configured default when it's still supported here, otherwise the
   # first supported model, or nil when the provider has no verified models.
   def default_supported_model
-    provider_default = LlmProvider.find(provider).default_model
+    provider_default = llm_provider.default_model
     return provider_default if supports_model?(provider_default)
 
     supported_models.first&.fetch("id")
@@ -68,7 +72,7 @@ class AiCredential < ApplicationRecord
 
   def ruby_llm_context
     RubyLLM.context do |config|
-      LlmProvider.find(provider).configure(config, credential_data["api_key"])
+      llm_provider.configure(config, credential_data["api_key"])
     end
   end
 

@@ -128,8 +128,7 @@ class LlmClient
   # RubyLLM's provider keys (Moonshot rides on :openai); resolving the raw
   # name returns nil for those providers.
   def fetch_provider_models
-    provider = LlmProvider.find(credential.provider)
-    RubyLLM::Provider.resolve(provider.ruby_llm_provider)
+    RubyLLM::Provider.resolve(credential.llm_provider.ruby_llm_provider)
                      .new(credential.ruby_llm_context.config)
                      .list_models
   end
@@ -151,7 +150,7 @@ class LlmClient
 
   # Single seam tests stub. Returns a ProviderResponse.
   def invoke_provider(model:, prompt:, output_schema:, web:, system: nil)
-    provider = LlmProvider.find(credential.provider)
+    provider = credential.llm_provider
     chat = credential.ruby_llm_context.chat(
       model: model, provider: provider.ruby_llm_provider, assume_model_exists: provider.assume_model_exists?
     )

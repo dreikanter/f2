@@ -15,7 +15,7 @@ class AiCredentialDetailsComponent < ViewComponent::Base
     result = [
       {
         label: "Provider",
-        value: LlmProvider.find(@ai_credential.provider).display_name,
+        value: @ai_credential.llm_provider.display_name,
         key: "ai_credential.provider"
       },
       {

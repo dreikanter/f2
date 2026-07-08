@@ -77,7 +77,7 @@ module Loader
     # re-pick even when the whole snapshot dropped out.
     def model_for(credential)
       chosen = feed.ai_model
-      resolved = feed.effective_ai_model(credential).presence || LlmProvider.find(credential.provider).default_model
+      resolved = feed.effective_ai_model(credential).presence || credential.llm_provider.default_model
 
       if feed.persisted? && chosen.present? && resolved != chosen
         feed.note_ai_model_fallback!(from: chosen, to: resolved)

@@ -58,7 +58,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
 
   def credential_options
     selectable_credentials.map do |credential|
-      ["#{credential.display_name} · #{LlmProvider.find(credential.provider).display_name}", credential.id]
+      ["#{credential.display_name} · #{credential.llm_provider.display_name}", credential.id]
     end
   end
 
