@@ -114,7 +114,9 @@ class LlmClient
     fetch_provider_models.map { |model| serialize_model(model) }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
     raise AuthError, e.message
-  rescue RubyLLM::Error, RubyLLM::ConfigurationError => e
+  rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
+    raise Timeout, e.message
+  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed => e
     Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
     raise ProviderError, e.message
   end
@@ -122,8 +124,12 @@ class LlmClient
   private
 
   # Single seam tests stub. Calls the provider's models listing endpoint.
+  # Resolves through LlmProvider because registry names don't always match
+  # RubyLLM's provider keys (Moonshot rides on :openai); resolving the raw
+  # name returns nil for those providers.
   def fetch_provider_models
-    RubyLLM::Provider.resolve(credential.provider.to_sym)
+    provider = LlmProvider.find(credential.provider)
+    RubyLLM::Provider.resolve(provider.ruby_llm_provider)
                      .new(credential.ruby_llm_context.config)
                      .list_models
   end

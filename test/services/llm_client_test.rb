@@ -289,6 +289,20 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.available_models }
   end
 
+  test "#available_models should raise Timeout on a network timeout" do
+    client = LlmClient.new(credential)
+    stub_provider_models(client) { raise Faraday::TimeoutError, "execution expired" }
+
+    assert_raises(LlmClient::Timeout) { client.available_models }
+  end
+
+  test "#available_models should raise ProviderError when the provider is unreachable" do
+    client = LlmClient.new(credential)
+    stub_provider_models(client) { raise Faraday::ConnectionFailed, "connection refused" }
+
+    assert_raises(LlmClient::ProviderError) { client.available_models }
+  end
+
   test "#available_models should call the provider models endpoint with the credential api_key" do
     client = LlmClient.new(credential)
 
@@ -301,6 +315,47 @@ class LlmClientTest < ActiveSupport::TestCase
       assert_equal [], client.available_models
       assert_equal 0, LlmUsage.count
     end
+  end
+
+  test "#available_models should resolve providers by their RubyLLM key, not the registry name" do
+    moonshot = create(:ai_credential, :active, user: user, provider: "moonshot",
+                      credential_data: { "api_key" => "sk-#{SecureRandom.hex(16)}" })
+    client = LlmClient.new(moonshot)
+
+    fake_provider_class = Class.new do
+      def initialize(_config); end
+      def list_models; []; end
+    end
+
+    resolved_keys = []
+    resolver = lambda do |key|
+      resolved_keys << key
+      fake_provider_class
+    end
+
+    RubyLLM::Provider.stub(:resolve, resolver) do
+      assert_equal [], client.available_models
+    end
+
+    assert_equal [:openai], resolved_keys
+  end
+
+  test "#available_models should list moonshot models through its OpenAI-compatible endpoint" do
+    moonshot = create(:ai_credential, :active, user: user, provider: "moonshot",
+                      credential_data: { "api_key" => "sk-moon-test" })
+    client = LlmClient.new(moonshot)
+
+    stub_request(:get, "https://api.moonshot.ai/v1/models")
+      .with(headers: { "Authorization" => "Bearer sk-moon-test" })
+      .to_return(
+        status: 200,
+        body: { data: [{ id: "kimi-k2.5", object: "model", owned_by: "moonshot" }] }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    models = client.available_models
+
+    assert_equal ["kimi-k2.5"], models.map { |m| m["id"] }
   end
 
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
