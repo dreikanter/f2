@@ -17,7 +17,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.mode-ai']:not([aria-current])", text: "Follow with AI"
     assert_select "[data-key='entry.mode-ai'][href='#{new_feed_path(mode: "ai")}']"
     assert_select "label[for='entry-link-input']", text: "Source link"
-    assert_select "input#entry-link-input[name='input']"
+    assert_select "input#entry-link-input[name='url']"
     assert_select "textarea#entry-ai-input", false
   end
 
@@ -31,8 +31,8 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.mode-link']:not([aria-current])", text: "Follow a feed or channel"
     assert_select "[data-key='entry.mode-link'][href='#{new_feed_path}']"
     assert_select "label[for='entry-ai-input']", text: "What should AI follow?"
-    assert_select "textarea#entry-ai-input[name='input']"
-    assert_select "input[type='hidden'][name='mode'][value='ai']"
+    assert_select "textarea#entry-ai-input[name='prompt']"
+    assert_select "input[type='hidden'][name='mode']", false
     assert_select "input#entry-link-input", false
   end
 
@@ -43,7 +43,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='entry.mode-link'][aria-current='page']"
-    assert_select "input#entry-link-input[name='input']"
+    assert_select "input#entry-link-input[name='url']"
   end
 
   test "#new should default the AI textarea to the 2000-char prompt ceiling" do

@@ -46,11 +46,11 @@ class SmartFeedCreationReloadTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     stub_request(:get, feed_url).to_return(status: 200, body: rss_body)
 
-    post feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
 
     assert_no_enqueued_jobs do
-      get feed_identifications_path, params: { input: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: feed_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
   end
 

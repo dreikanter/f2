@@ -256,17 +256,17 @@ class FeedsController < ApplicationController
   # kick detection and paint the §7 loading state. The source itself waits for a
   # confirmed working candidate; no state transition happens here, so a live feed
   # keeps refreshing its verified source until the new one is confirmed.
-  def propose_source_redetection(input)
+  def propose_source_redetection(url)
     return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
 
-    identification = FeedIdentification.find_or_initialize_by(user: current_user, input: input)
+    identification = FeedIdentification.find_or_initialize_by(user: current_user, input: url)
     identification.restart_detection!
-    FeedIdentificationJob.perform_later(current_user.id, input)
+    FeedIdentificationJob.perform_later(current_user.id, url)
 
     render turbo_stream: turbo_stream.replace(
       "feed-form",
       partial: "feeds/identification_loading",
-      locals: { input: input, feed_id: @feed.id, cancel_path: feed_path(@feed), edit_mode: true }
+      locals: { url: url, feed_id: @feed.id, cancel_path: feed_path(@feed), edit_mode: true }
     )
   end
 

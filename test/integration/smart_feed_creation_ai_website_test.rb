@@ -74,7 +74,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
 
   def detect(url)
     stub_request(:get, url).to_return(status: 200, body: "<html><body>no rss here</body></html>")
-    post feed_identifications_path, params: { input: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     perform_enqueued_jobs
   end
 
@@ -87,7 +87,7 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
       with_memory_cache do
         detect(ai_url)
 
-      get feed_identifications_path, params: { input: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      get feed_identifications_path, params: { url: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
       assert_response :success
       assert_includes response.body, "Follow with AI"
 

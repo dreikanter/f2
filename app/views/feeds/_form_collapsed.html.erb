@@ -1,4 +1,4 @@
-<%# locals: (input: nil, mode: "link") %>
+<%# locals: (url: nil, mode: "link") %>
 <% field_classes = "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
 <% primary_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
 <% cancel_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
@@ -28,10 +28,10 @@
       <div data-key="entry.panel-link">
         <%= form_with url: feed_identifications_path, method: :post do |f| %>
           <div class="space-y-2">
-            <%= f.label :input, "Source link", for: "entry-link-input", class: "block font-semibold text-heading" %>
-            <%= f.text_field :input,
+            <%= f.label :url, "Source link", for: "entry-link-input", class: "block font-semibold text-heading" %>
+            <%= f.text_field :url,
                              id: "entry-link-input",
-                             value: input,
+                             value: url,
                              placeholder: "https://example.com",
                              class: field_classes,
                              required: true,
@@ -49,12 +49,10 @@
     <% else %>
       <div data-key="entry.panel-ai">
         <%= form_with url: feed_identifications_path, method: :post do |f| %>
-          <%= hidden_field_tag :mode, "ai" %>
           <div class="space-y-2">
-            <%= f.label :input, "What should AI follow?", for: "entry-ai-input", class: "block font-semibold text-heading" %>
-            <%= f.text_area :input,
+            <%= f.label :prompt, "What should AI follow?", for: "entry-ai-input", class: "block font-semibold text-heading" %>
+            <%= f.text_area :prompt,
                             id: "entry-ai-input",
-                            value: input,
                             rows: 3,
                             maxlength: 2000,
                             placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",

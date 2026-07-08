@@ -1,4 +1,4 @@
-<%# locals: (input: nil, feed_id: nil, cancel_path: nil, edit_mode: false) %>
+<%# locals: (url: nil, feed_id: nil, cancel_path: nil, edit_mode: false) %>
 <% feed_id = local_assigns.fetch(:feed_id, nil) %>
 <% edit_mode = local_assigns.fetch(:edit_mode, false) %>
 <%# The transient "couldn't reach" state (spec §7): retrying is the primary
@@ -23,13 +23,13 @@
 
   <div class="flex flex-wrap items-center gap-4">
     <%= button_to "Retry", feed_identifications_path,
-                  params: { input: input, feed_id: feed_id }.compact,
+                  params: { url: url, feed_id: feed_id }.compact,
                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto",
                   data: { key: "identification.retry", turbo_submits_with: "Checking…" } %>
 
     <% unless edit_mode %>
       <%= button_to "Follow with AI instead", feed_identifications_path,
-                    params: { input: input, mode: "ai" },
+                    params: { prompt: url },
                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto",
                     data: { key: "identification.ai-bridge" } %>
     <% end %>
