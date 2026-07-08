@@ -17,4 +17,12 @@ class PageHeaderComponent < ViewComponent::Base
     @title = title
     @title_data = title_data
   end
+
+  private
+
+  # Joined without whitespace so the h1 text has no stray leading/trailing
+  # spaces; the flex gap handles icon spacing.
+  def title_content
+    safe_join([title_icon, @title].compact)
+  end
 end
