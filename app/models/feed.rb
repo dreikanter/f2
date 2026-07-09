@@ -9,10 +9,6 @@ class Feed < ApplicationRecord
     invalid_posts_count
   ].freeze
 
-  # Timezone for all cron expression evaluation
-  # Must match config.time_zone in config/application.rb
-  FEED_CRON_TIMEZONE = "UTC".freeze
-
   SCHEDULE_INTERVALS = {
     "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
     "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
@@ -108,10 +104,6 @@ class Feed < ApplicationRecord
 
   def schedule_interval=(key)
     self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
-  end
-
-  def schedule_display
-    SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
   end
 
   # Form-facing accessors splitting import_after into a checkbox plus

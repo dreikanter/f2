@@ -620,18 +620,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil feed.cron_expression
   end
 
-  test "#schedule_display should return display name for standard interval" do
-    feed = build(:feed, cron_expression: "0 * * * *")
-
-    assert_equal "1 hour", feed.schedule_display
-  end
-
-  test "#schedule_display should return cron expression for non-standard interval" do
-    feed = build(:feed, cron_expression: "15 3 * * *")
-
-    assert_equal "15 3 * * *", feed.schedule_display
-  end
-
   # Preview is optional and does not gate enabling.
   def preview_user
     @preview_user ||= create(:user)
