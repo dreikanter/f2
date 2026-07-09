@@ -70,6 +70,30 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "select[data-key='form.ai-model'] option[selected][value='claude-sonnet-4-6']", text: "Claude Sonnet 4.6"
   end
 
+  test "#edit should render the model placeholder as disabled so a pick can't be cleared" do
+    sign_in_as(user)
+
+    get edit_feed_path(ai_feed)
+
+    assert_select "select[data-key='form.ai-model'] option[value=''][disabled][hidden]", text: "Select a model…"
+    assert_select "select[data-key='form.ai-model'] option[value=''][selected]", false
+  end
+
+  test "#edit should select the placeholder when the saved model is no longer offered" do
+    sign_in_as(user)
+    stale_feed = create(:feed,
+                        user: user,
+                        feed_profile_key: "llm",
+                        ai_credential: credential,
+                        ai_model: "removed-model",
+                        params: { "prompt" => "https://no-rss.example.com" })
+
+    get edit_feed_path(stale_feed)
+
+    assert_select "select[data-key='form.ai-model'] option[value=''][selected][disabled]", text: "Select a model…"
+    assert_select "select[data-key='form.ai-model'] option[selected]", count: 1
+  end
+
   test "#edit should list only capability-matrix models in the model select" do
     sign_in_as(user)
 

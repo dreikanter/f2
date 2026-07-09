@@ -63,6 +63,17 @@ class FeedAiSettingsComponent < ViewComponent::Base
     (models_by_credential[selected_credential_id] || []).map { |model| [model["name"], model["id"]] }
   end
 
+  # The blank row is a placeholder, not a choice: disabled (and hidden from the
+  # open list) so a feed can't be reverted to "no model" once one is picked. It
+  # still shows as the current value while `selected_model_id` is blank.
+  def model_select_options
+    [["Select a model…", "", { disabled: true, hidden: true }]] + model_options
+  end
+
+  def selected_model_id
+    model_options.any? { |_name, id| id == @feed.ai_model } ? @feed.ai_model : ""
+  end
+
   # True when the feed's saved model can no longer be picked — it dropped out of
   # the matrix ∩ the credential's live snapshot — so the form should nudge the
   # user to re-pick before re-enabling.

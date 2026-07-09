@@ -91,6 +91,22 @@ class FeedAiSettingsComponentTest < ViewComponent::TestCase
     assert_equal credential.id.to_s, component(ai_feed(ai_credential: unverified_credential)).selected_credential_id
   end
 
+  test "#model_select_options should lead with a disabled hidden placeholder" do
+    options = component(ai_feed(ai_credential: credential)).model_select_options
+    assert_equal ["Select a model…", "", { disabled: true, hidden: true }], options.first
+    assert_equal [["Claude Sonnet 4.6", "claude-sonnet-4-6"]], options.drop(1)
+  end
+
+  test "#selected_model_id should return the saved model when it's still offered" do
+    feed = ai_feed(ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    assert_equal "claude-sonnet-4-6", component(feed).selected_model_id
+  end
+
+  test "#selected_model_id should be blank when the saved model isn't offered" do
+    feed = ai_feed(ai_credential: credential, ai_model: "claude-opus-4-7")
+    assert_equal "", component(feed).selected_model_id
+  end
+
   test "#model_unavailable? should be true when the saved model is no longer offered" do
     feed = ai_feed(ai_credential: credential, ai_model: "removed-model")
     assert component(feed).model_unavailable?
