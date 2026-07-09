@@ -4,6 +4,7 @@ class JobRun < ApplicationRecord
   RUNNABLE_JOBS = [
     AnthropicCapabilityProbeJob,
     KimiCapabilityProbeJob,
+    RedditRetrievalProbeJob,
     PurgeExpiredEventsJob
   ].freeze
 
