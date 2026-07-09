@@ -2,6 +2,7 @@ class FeedRefreshWorkflow
   include Workflow
   include StatsRecorder
 
+  step :interrupt_abandoned_refresh_events
   step :skip_current_digest_period
   step :initialize_workflow
   step :load_feed_contents
@@ -55,19 +56,23 @@ class FeedRefreshWorkflow
 
   def initialize_workflow(*)
     record_started_at
-    interrupt_abandoned_refresh_events
     @refresh_event = create_refresh_event
   end
 
   # FeedRefreshJob's advisory lock allows one refresh per feed at a time, so
   # an event still "started" when a new run begins belongs to a run whose
-  # process died before finalizing.
-  def interrupt_abandoned_refresh_events
-    Event.where(type: "feed_refresh", subject: feed)
-         .where("metadata ->> 'status' = 'started'")
-         .find_each do |event|
+  # process died before finalizing. Runs as the first step — before the digest
+  # skip — so even runs that halt still sweep.
+  def interrupt_abandoned_refresh_events(input = nil)
+    feed.events.where(type: "feed_refresh")
+        .where("metadata ->> 'status' = 'started'")
+        .find_each do |event|
       event.update!(metadata: event.metadata.merge("status" => "interrupted"))
+      Metrics.increment("feed_refresh_total", status: "interrupted", profile: feed.feed_profile_key)
+      Rails.logger.info "Feed refresh interrupted for feed #{feed.id}: event #{event.id} was abandoned by a dead run"
     end
+
+    input
   end
 
   # Debug level keeps the in-flight record out of the user event feed;
@@ -270,6 +275,7 @@ class FeedRefreshWorkflow
 
   def complete_refresh_event(posts)
     @refresh_event.update!(level: :info, metadata: { status: "completed", stats: stats })
+    @refresh_completed = true
     reference_posts(@refresh_event, posts)
   end
 
@@ -296,10 +302,13 @@ class FeedRefreshWorkflow
     feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
-  # The create fallback covers failures in steps preceding initialize_workflow,
-  # before the started event exists.
+  # A failure after completion (e.g. metrics recording) must not rewrite the
+  # completed run's record; the error still propagates to the job. A nil event
+  # means event persistence itself was failing — nothing to update.
   def fail_refresh_event(error)
-    attributes = {
+    return if @refresh_completed
+
+    @refresh_event&.update!(
       level: :error,
       message: error.message,
       metadata: {
@@ -312,13 +321,7 @@ class FeedRefreshWorkflow
           backtrace: error.backtrace
         }
       }
-    }
-
-    if @refresh_event
-      @refresh_event.update!(attributes)
-    else
-      Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
-    end
+    )
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant
