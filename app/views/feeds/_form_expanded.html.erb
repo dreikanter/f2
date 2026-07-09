@@ -30,9 +30,8 @@
                 method: (edit_mode ? :patch : :post),
                 data: {
                   controller: "groups",
-                  groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
-                  groups_loading_text_value: "Loading groups…",
-                  groups_default_text_value: "The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one."
+                  # feed_id is nil (and dropped from the URL) for an unpersisted feed.
+                  groups_endpoint_value: access_token_groups_path(":access_token_id", feed_id: feed.id)
                 } do |f| %>
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the entry
