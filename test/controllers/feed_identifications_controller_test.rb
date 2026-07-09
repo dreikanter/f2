@@ -371,7 +371,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Identification session expired"
   end
 
-  test "#show should surface a single-candidate payload in the form data-candidates attribute" do
+  test "#show should render a single working candidate as a fixed feed type" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>Example</title></channel></rss>"
@@ -382,12 +382,13 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    payload = extract_candidates_payload(response.body)
-    assert_equal %w[rss], payload.map { |c| c["profile_key"] }
-    assert_equal "passed", payload.first["test_status"]
+    assert_response :success
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value=?]", "rss"
+    assert_select "input[data-key='form.feed-type-display'][value=?]", "RSS Feed"
+    assert_select "[data-key='candidates']", count: 0
   end
 
-  test "#show should surface a multi-candidate payload ranked suggested first" do
+  test "#show should render the chooser with the suggested candidate first" do
     sign_in_as(user)
     url = "https://xkcd.com/rss.xml"
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>xkcd.com</title></channel></rss>"
@@ -398,9 +399,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    payload = extract_candidates_payload(response.body)
-    assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
-    assert_equal "passed", payload.first["test_status"]
+    assert_response :success
+    assert_equal ["candidate.xkcd", "candidate.rss"],
+                 css_select("label[data-key^='candidate.']").map { |node| node["data-key"] }
+    assert_select "label[data-key='candidate.xkcd'] input[type=radio][value=?][checked=checked]", "xkcd"
+    assert_select "label[data-key='candidate.xkcd'] [data-key='candidate.suggested-badge']"
   end
 
   test "#show should preselect the default schedule interval with no blank option" do
@@ -765,15 +768,4 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-
-  def extract_candidates_payload(body)
-    # The form swap puts data-candidates="<json>" on the wrapper. Capybara/
-    # Nokogiri would be overkill; a regex over the escaped JSON works for the
-    # contract here. The view always renders this attribute on
-    # data-identification-state="complete".
-    match = body.match(/data-candidates="(?<json>[^"]*)"/)
-    return [] unless match
-
-    JSON.parse(CGI.unescapeHTML(match[:json]))
-  end
 end
