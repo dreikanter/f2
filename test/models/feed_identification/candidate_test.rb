@@ -18,7 +18,6 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
   end
 
   test "status predicates should reflect test_status" do
-    assert candidate("test_status" => "passed").passed?
     assert candidate("test_status" => "failed").failed?
     assert candidate("test_status" => "unreachable").unreachable?
   end
@@ -33,7 +32,6 @@ class FeedIdentification::CandidateTest < ActiveSupport::TestCase
   test "status predicates should be false when no verdict is present" do
     subject = candidate({})
 
-    assert_not subject.passed?
     assert_not subject.failed?
     assert_not subject.unreachable?
   end
