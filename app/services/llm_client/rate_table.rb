@@ -14,13 +14,6 @@ class LlmClient::RateTable
     :cache_read_per_million
   )
 
-  Usage = Data.define(
-    :input_tokens,
-    :output_tokens,
-    :cache_write_tokens,
-    :cache_read_tokens
-  )
-
   class << self
     def rate_for(provider:, model:)
       entry = table.dig(provider.to_s, model.to_s)
@@ -35,7 +28,8 @@ class LlmClient::RateTable
     end
 
     # Returns the cost of the call in integer cents to match
-    # LlmUsage#cost_estimate_cents. An unknown model returns 0.
+    # LlmUsage#cost_estimate_cents. An unknown model returns 0. `usage` is
+    # anything with the four token-count readers (e.g. a ProviderResponse).
     def cost_for(provider:, model:, usage:)
       rate = rate_for(provider: provider, model: model)
       return 0 unless rate

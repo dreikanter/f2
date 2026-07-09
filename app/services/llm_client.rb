@@ -179,16 +179,7 @@ class LlmClient
     tokens = response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
     )
-    cost = LlmClient::RateTable.cost_for(
-      provider: credential.provider,
-      model: ctx.model,
-      usage: LlmClient::RateTable::Usage.new(
-        input_tokens: tokens.input_tokens,
-        output_tokens: tokens.output_tokens,
-        cache_write_tokens: tokens.cache_write_tokens,
-        cache_read_tokens: tokens.cache_read_tokens
-      )
-    )
+    cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens)
 
     LlmUsage.create!(
       user: credential.user,

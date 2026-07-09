@@ -5,7 +5,8 @@ class LlmClient::RateTableTest < ActiveSupport::TestCase
   teardown { LlmClient::RateTable.reload! }
 
   def usage(input: 0, output: 0, cache_write: 0, cache_read: 0)
-    LlmClient::RateTable::Usage.new(
+    LlmClient::ProviderResponse.new(
+      payload: nil,
       input_tokens: input,
       output_tokens: output,
       cache_write_tokens: cache_write,
