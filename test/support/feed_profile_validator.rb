@@ -28,8 +28,7 @@ module FeedProfileValidator
       "loader" => { "$ref" => "#/$defs/stage_entry" },
       "processor" => { "$ref" => "#/$defs/stage_entry" },
       "normalizer" => { "$ref" => "#/$defs/stage_entry" },
-      "title_extractor" => { "type" => %w[string null] },
-      "output_schema" => { "type" => %w[object null] }
+      "title_extractor" => { "type" => %w[string null] }
     },
     "$defs" => {
       "stage_entry" => {
@@ -55,8 +54,8 @@ module FeedProfileValidator
         failures << "FeedProfile #{key.inspect}#{pointer}: #{err['error']}"
       end
 
-      if entry[:depends_on_ai] && !entry[:output_schema].is_a?(Hash)
-        failures << "FeedProfile #{key.inspect}: output_schema is required when depends_on_ai is true"
+      if entry[:depends_on_ai] && !entry.dig(:loader, :config, :output_schema).is_a?(Hash)
+        failures << "FeedProfile #{key.inspect}: loader.config.output_schema is required when depends_on_ai is true"
       end
 
       # The AI profile registers no matcher (structural detection exclusion,

@@ -80,10 +80,9 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert_kind_of Hash, entry[:normalizer][:config], "#{key}: normalizer.config"
 
       if entry[:depends_on_ai]
-        # AI profiles declare the universal-post output_schema at the
-        # top level or on the loader stage that calls the LLM.
-        schema = entry[:loader][:config][:output_schema] || entry[:output_schema]
-        assert_kind_of Hash, schema, "#{key}: output_schema required for AI profile"
+        # AI profiles declare the universal-post output_schema on the loader
+        # stage that calls the LLM.
+        assert_kind_of Hash, entry[:loader][:config][:output_schema], "#{key}: output_schema required for AI profile"
       end
     end
   end

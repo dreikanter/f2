@@ -16,8 +16,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::RssNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     }
   end
 
@@ -82,20 +81,20 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_includes error.message, "rogue_key"
   end
 
-  test "requires output_schema when depends_on_ai is true" do
-    entry = valid_entry.merge(depends_on_ai: true, output_schema: nil)
+  test "requires a loader output_schema when depends_on_ai is true" do
+    entry = valid_entry.merge(depends_on_ai: true)
 
     error = assert_raises(FeedProfileValidator::Error) do
       FeedProfileValidator.validate!("sample" => entry)
     end
 
-    assert_includes error.message, "output_schema is required when depends_on_ai is true"
+    assert_includes error.message, "loader.config.output_schema is required when depends_on_ai is true"
   end
 
-  test "accepts AI profile with object output_schema" do
+  test "accepts AI profile with a loader output_schema" do
     entry = valid_entry.merge(
       depends_on_ai: true,
-      output_schema: { "type" => "object" }
+      loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } }
     )
 
     assert_nothing_raised do
@@ -114,7 +113,9 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   end
 
   test "accepts an AI profile without a matcher (structural detection exclusion)" do
-    entry = valid_entry.except(:matcher).merge(depends_on_ai: true, output_schema: { "type" => "object" })
+    entry = valid_entry.except(:matcher)
+                       .merge(depends_on_ai: true,
+                              loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
 
     assert_nothing_raised do
       FeedProfileValidator.validate!("sample" => entry)
