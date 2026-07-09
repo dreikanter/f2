@@ -1,6 +1,4 @@
 <%# locals: (url: nil, feed_id: nil, cancel_path: nil, edit_mode: false) %>
-<% feed_id = local_assigns.fetch(:feed_id, nil) %>
-<% edit_mode = local_assigns.fetch(:edit_mode, false) %>
 <%# The transient "couldn't reach" state (spec §7): retrying is the primary
     path, with the AI bridge as a secondary escape so it can't dead-end. Marked
     as an identification state so polling stops here. %>
@@ -35,5 +33,5 @@
     <% end %>
   </div>
 
-  <%= link_to "Cancel", local_assigns.fetch(:cancel_path, feeds_path), class: "inline-block text-sm font-medium text-muted transition hover:text-body", data: { key: "identification.cancel" } %>
+  <%= link_to "Cancel", cancel_path || feeds_path, class: "inline-block text-sm font-medium text-muted transition hover:text-body", data: { key: "identification.cancel" } %>
 </div>

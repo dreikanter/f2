@@ -80,10 +80,8 @@ class FeedsController < ApplicationController
     if @feed.save
       cleanup_feed_identification(@feed.source_input) if @feed.source_input
 
-      if require_ai_credentials?
-        redirect_to new_ai_credential_path(feed_id: @feed.id)
-      elsif require_access_token?
-        redirect_to new_access_token_path(feed_id: @feed.id)
+      if (gate_path = setup_gate_path(@feed))
+        redirect_to gate_path
       elsif enable_feed?
         enable_and_respond(@feed)
       else
@@ -133,7 +131,7 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && !require_ai_credentials? && !require_access_token?
+    @feed.state = :disabled if @feed.enabled? && !enable_feed? && setup_gate_path(@feed).nil?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
@@ -142,10 +140,8 @@ class FeedsController < ApplicationController
       record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
       cleanup_feed_identification(@feed.source_input) if @feed.source_input
 
-      if require_ai_credentials?
-        redirect_to new_ai_credential_path(feed_id: @feed.id)
-      elsif require_access_token?
-        redirect_to new_access_token_path(feed_id: @feed.id)
+      if (gate_path = setup_gate_path(@feed))
+        redirect_to gate_path
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
       else
@@ -183,6 +179,16 @@ class FeedsController < ApplicationController
 
   def enable_feed?
     params[:enable_feed] == "1"
+  end
+
+  # The user clicked one of the "save draft and set up …" buttons: detour to
+  # that setup page instead of finishing on the feed.
+  def setup_gate_path(feed)
+    if require_ai_credentials?
+      new_ai_credential_path(feed_id: feed.id)
+    elsif require_access_token?
+      new_access_token_path(feed_id: feed.id)
+    end
   end
 
   def enable_and_respond(feed)
@@ -307,31 +313,9 @@ class FeedsController < ApplicationController
     policy_scope(Feed).find(params[:id])
   end
 
-  def feed_params
-    params.require(:feed).permit(
-      :url,
-      :name,
-      :feed_profile_key,
-      :description,
-      :target_group,
-      :access_token_id,
-      :ai_credential_id,
-      :ai_model,
-      :cron_expression,
-      :schedule_interval,
-      :import_after_enabled,
-      :import_after_date,
-      :import_after_time,
-      :images_only,
-      # Only the known source keys are accepted. Anything else inside the
-      # params hash would otherwise persist into `feeds.params` jsonb
-      # undetected. See the profile schemas.
-      params: [:url, :prompt]
-    )
-  end
-
+  # A new feed is a draft, so creation accepts the draft-editable set.
   def create_feed_params
-    feed_params
+    params.require(:feed).permit(*ALWAYS_PERMITTED_PARAMS, *DRAFT_ONLY_PERMITTED_PARAMS)
   end
 
   def update_feed_params
@@ -360,15 +344,9 @@ class FeedsController < ApplicationController
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 
-  # `#create` only produces `enabled` or `draft` today (the disabled branch is
-  # kept as a defensive fallback for any future caller that lands here in the
-  # disabled state; `#update` doesn't share this helper).
   def success_message_for(feed)
     if feed.enabled?
       "Feed created and enabled."
-    elsif feed.disabled?
-      "Feed '#{feed.name}' was successfully created but is currently disabled. " \
-        "Enable it from the feed page when you're ready to start importing posts."
     else
       "Feed saved as draft. Continue setup from your feeds list when ready."
     end

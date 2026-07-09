@@ -65,6 +65,21 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
     assert_respond_to workflow, :execute
   end
 
+  test "#load_feed_contents should run the loader with the preview purpose" do
+    captured = nil
+    loader = Object.new
+    loader.define_singleton_method(:load) { [] }
+    temp_feed = Object.new
+    temp_feed.define_singleton_method(:loader_instance) do |options = {}|
+      captured = options
+      loader
+    end
+
+    workflow.send(:load_feed_contents, temp_feed)
+
+    assert_equal({ purpose: :preview }, captured)
+  end
+
   test ".const_get should expose PREVIEW_POSTS_LIMIT constant" do
     assert_equal 10, FeedPreview::PREVIEW_POSTS_LIMIT
   end

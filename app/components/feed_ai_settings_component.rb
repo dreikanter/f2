@@ -47,7 +47,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
   end
 
   def ai_profile_keys
-    FeedProfile.all.select { |key| FeedProfile.depends_on_ai?(key) }
+    FeedProfile.ai_profile_keys
   end
 
   def selected_credential_id

@@ -21,9 +21,7 @@ module Loader
 
       raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
 
-      items = payload["items"]
-      limit = options[:limit]
-      limit ? items.first(limit) : items
+      payload["items"]
     end
 
     private

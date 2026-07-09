@@ -1,3 +1,4 @@
+<%# locals: (url:, error:, heading:, feed_id: nil, cancel_path: nil, edit_mode: false) %>
 <div id="feed-form"
      data-identification-state="error"
      class="rounded-lg border border-border bg-surface px-6 py-8 shadow-sm space-y-6">
@@ -7,7 +8,7 @@
         <%= icon("triangle-alert", css_class: "size-5 text-danger") %>
       </div>
       <div class="ml-3">
-        <h3 class="text-sm font-medium text-danger-strong"><%= local_assigns.fetch(:heading, "Feed identification failed") %></h3>
+        <h3 class="text-sm font-medium text-danger-strong"><%= heading %></h3>
         <div class="mt-2 text-sm text-danger-strong">
           <p><%= error %></p>
         </div>
@@ -16,8 +17,8 @@
   </div>
 
   <%= form_with url: feed_identifications_path, method: :post, class: "space-y-4" do |f| %>
-    <% if local_assigns[:feed_id].present? %>
-      <%= hidden_field_tag :feed_id, local_assigns[:feed_id] %>
+    <% if feed_id.present? %>
+      <%= hidden_field_tag :feed_id, feed_id %>
     <% end %>
     <div class="space-y-2">
       <%= f.label :url, "Source link", class: "block font-semibold text-heading" %>
@@ -29,7 +30,7 @@
 
   <%# Editing a deterministic feed keeps the engine fixed (spec §4), so the AI
       bridge is offered only in the creation flow. %>
-  <% unless local_assigns.fetch(:edit_mode, false) %>
+  <% unless edit_mode %>
     <div class="space-y-2" data-key="identification.ai-bridge">
       <%= button_to "Follow with AI instead", feed_identifications_path,
                     params: { prompt: url },
@@ -38,5 +39,5 @@
     </div>
   <% end %>
 
-  <%= link_to "Cancel", local_assigns.fetch(:cancel_path, feeds_path), class: "inline-block text-sm font-medium text-muted transition hover:text-body", data: { key: "identification.cancel" } %>
+  <%= link_to "Cancel", cancel_path || feeds_path, class: "inline-block text-sm font-medium text-muted transition hover:text-body", data: { key: "identification.cancel" } %>
 </div>

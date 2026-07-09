@@ -70,11 +70,5 @@ class LlmProvider
     def find(name)
       PROVIDERS.fetch(name.to_s)
     end
-
-    def exists?(name)
-      return false if name.nil?
-
-      PROVIDERS.key?(name.to_s)
-    end
   end
 end

@@ -74,10 +74,9 @@ class FeedRefreshWorkflow
     processed_entries = feed.processor_instance(raw_data).process.entries
     record_stats(total_entries: processed_entries.size)
 
-    unidentified_count = processed_entries.count { |entry| entry.uid.blank? }
-    record_stats(unidentified_entries: unidentified_count) if unidentified_count.positive?
+    identified_entries, unidentified_entries = processed_entries.partition { |entry| entry.uid.present? }
+    record_stats(unidentified_entries: unidentified_entries.size) if unidentified_entries.any?
 
-    identified_entries = processed_entries.reject { |entry| entry.uid.blank? }
     @digest_period = digest_period_for(identified_entries)
     identified_entries
   end

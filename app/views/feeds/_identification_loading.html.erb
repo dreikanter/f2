@@ -1,5 +1,4 @@
 <%# locals: (url:, feed_id: nil, cancel_path: nil, edit_mode: false) %>
-<% feed_id = local_assigns.fetch(:feed_id, nil) %>
 <%# Polling marks its host aria-busy while checking, and the global
     [aria-busy="true"] rule makes that subtree non-interactive. This card holds
     the Cancel button, so opt out of the busy state to keep it clickable. %>
@@ -19,10 +18,10 @@
     <p class="font-semibold text-heading">Checking this feed…</p>
     <p class="text-body">This usually takes a few seconds.</p>
   </div>
-  <% if local_assigns.fetch(:edit_mode, false) %>
+  <% if edit_mode %>
     <%# Editing keeps the current source live until a new one is confirmed, so
         Cancel just returns to the feed rather than tearing down the entry flow. %>
-    <%= link_to "Cancel", local_assigns.fetch(:cancel_path, feeds_path),
+    <%= link_to "Cancel", cancel_path || feeds_path,
                 data: { turbo_frame: "_top", key: "loading.cancel" },
                 class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm transition hover:bg-surface-muted cursor-pointer" %>
   <% else %>

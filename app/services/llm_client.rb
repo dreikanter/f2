@@ -22,33 +22,11 @@ class LlmClient
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
 
   class << self
-    def for(target, provider = nil)
-      credential = resolve_credential(target, provider)
+    def for(target)
+      credential = target.is_a?(AiCredential) ? target : target.ai_credential
       raise CredentialMissing, "no active credential found" if credential.nil?
 
       new(credential)
-    end
-
-    private
-
-    def resolve_credential(target, provider)
-      case target
-      when AiCredential
-        target
-      when Feed
-        target.ai_credential || default_credential_for(target.user, provider || LlmProvider.names.first)
-      when User
-        default_credential_for(target, provider)
-      end
-    end
-
-    def default_credential_for(user, provider)
-      return nil if provider.blank?
-
-      default = user.default_ai_credential
-      return default if default&.active? && default.provider == provider
-
-      user.ai_credentials.active.where(provider: provider).order(:id).first
     end
   end
 
@@ -156,8 +134,8 @@ class LlmClient
     )
     # System prompt is the privileged instruction channel; the user prompt sent
     # by #ask travels as a separate user-role message (spec §8).
-    chat.with_instructions(system) if system.present? && chat.respond_to?(:with_instructions)
-    chat.with_schema(output_schema) if output_schema.present? && chat.respond_to?(:with_schema)
+    chat.with_instructions(system) if system.present?
+    chat.with_schema(output_schema) if output_schema.present?
     adapter.apply_web(chat, model) if web
 
     response = chat.ask(prompt)
@@ -201,16 +179,7 @@ class LlmClient
     tokens = response || ProviderResponse.new(
       payload: nil, input_tokens: 0, output_tokens: 0, cache_write_tokens: 0, cache_read_tokens: 0
     )
-    cost = LlmClient::RateTable.cost_for(
-      provider: credential.provider,
-      model: ctx.model,
-      usage: LlmClient::RateTable::Usage.new(
-        input_tokens: tokens.input_tokens,
-        output_tokens: tokens.output_tokens,
-        cache_write_tokens: tokens.cache_write_tokens,
-        cache_read_tokens: tokens.cache_read_tokens
-      )
-    )
+    cost = LlmClient::RateTable.cost_for(provider: credential.provider, model: ctx.model, usage: tokens)
 
     LlmUsage.create!(
       user: credential.user,

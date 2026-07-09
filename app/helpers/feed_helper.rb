@@ -64,23 +64,11 @@ module FeedHelper
   end
 
   def feed_summary_line(active_count:, inactive_count:, draft_count:)
-    active_part = pluralize_count(active_count, "active feed")
-    inactive_part = pluralize_count(inactive_count, "inactive feed")
-    draft_part = pluralize_count(draft_count, "draft feed")
-
-    parts = [active_part, inactive_part, draft_part].compact
+    counts = { "active feed" => active_count, "inactive feed" => inactive_count, "draft feed" => draft_count }
+    parts = counts.reject { |_label, count| count.zero? }
+                  .map { |label, count| pluralize(count, label) }
     return nil if parts.empty?
 
     "You have #{parts.to_sentence}"
-  end
-
-  private
-
-  def pluralize_count(count, label)
-    return nil if count.zero?
-
-    noun = label.split.last
-    base = label.remove(/\sfeed\z/)
-    "#{count} #{base} #{noun.pluralize(count)}"
   end
 end

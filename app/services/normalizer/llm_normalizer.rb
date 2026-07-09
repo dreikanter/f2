@@ -1,15 +1,8 @@
 module Normalizer
-  # Normalizer for AI-backed profiles. Two modes, selected by the
-  # profile's normalizer config:
-  #
-  # * Passthrough (no `prompt_template`): the raw_data already has all
-  #   universal-post fields; map them straight onto Post. Used by the `llm`
-  #   profile, where the AI work happens at the loader stage.
-  #
-  # * LLM rewrite (`prompt_template` present in config): runs raw_data
-  #   through `LlmClient` so a second prompt can clean up / translate /
-  #   summarise the content before it lands in Post. Reserved for future
-  #   rewrite profiles; the current `llm` profile doesn't use this branch.
+  # Normalizer for the AI extraction profile. The AI work happens at the
+  # loader stage, so raw_data already carries the universal-post fields
+  # (FeedProfile::UNIVERSAL_OUTPUT_SCHEMA); this maps them straight onto
+  # Post. No LLM call happens here.
   class LlmNormalizer < Base
     private
 
@@ -30,30 +23,19 @@ module Normalizer
       truncate_text(raw_data["body"].to_s)
     end
 
-    # Model-emitted image URLs are fetched server-side at publish time, so a
-    # bad one is a §8 SSRF/local-file risk. Keep only public http(s) URLs and
-    # drop the rest (drop the attachment, never the post).
+    # Base#attachment_urls filters non-public URLs at the choke point (§8).
     def normalize_attachment_urls
-      Array(raw_data["images"]).map(&:to_s).select { |url| PublicUrl.safe?(url) }
+      Array(raw_data["images"]).map(&:to_s)
     end
 
     def normalize_comments
       Array(raw_data["supplementary"]).map(&:to_s)
     end
 
-    def normalize_published_at(value)
-      return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
-      return Time.current if value.blank?
-
-      Time.parse(value.to_s)
-    rescue ArgumentError
-      Time.current
-    end
-
     def validate_content
       errors = []
-      errors << "missing source_url" if normalize_source_url.blank? && !digest?
-      errors << "missing content" if normalize_content.blank?
+      errors << "missing source_url" if source_url.blank? && !digest?
+      errors << "missing content" if content.blank?
       errors.concat(images_only_errors)
       errors
     end

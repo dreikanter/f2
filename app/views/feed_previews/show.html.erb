@@ -21,14 +21,7 @@
         polling_max_polls_value: preview_max_polls
       }) do %>
     <div id="feed-preview-body" data-polling-target="content">
-      <% case preview.status %>
-      <% when "ready" %>
-        <%= render "feed_previews/ready", preview: preview %>
-      <% when "failed" %>
-        <%= render "feed_previews/failed", preview: preview %>
-      <% else %>
-        <%= render "feed_previews/processing", preview: preview %>
-      <% end %>
+      <%= render(**state_partial(preview)) %>
     </div>
     <div data-polling-target="timeoutMessage" hidden>
       <div class="rounded-lg border border-danger-subtle bg-danger-subtle px-4 py-3 text-danger-strong space-y-3"

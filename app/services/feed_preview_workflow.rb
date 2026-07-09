@@ -50,7 +50,9 @@ class FeedPreviewWorkflow
   end
 
   def load_feed_contents(temp_feed)
-    loader = temp_feed.loader_instance
+    # `purpose` reaches LlmUsage via the loader's call context, so AI spend
+    # from previews is distinguishable from scheduled runs.
+    loader = temp_feed.loader_instance(purpose: :preview)
     raw_data = loader.load
 
     record_stats(content_size: raw_data.size)

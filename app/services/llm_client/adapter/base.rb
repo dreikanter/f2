@@ -13,7 +13,7 @@ class LlmClient
       # (e.g. client-side tools).
       def apply_web(chat, model)
         params = web_params(model)
-        chat.with_params(**params) if params.present? && chat.respond_to?(:with_params)
+        chat.with_params(**params) if params.present?
       end
 
       # True when one web+schema call returns grounded, schema-valid JSON; false

@@ -9,10 +9,6 @@ class Feed < ApplicationRecord
     invalid_posts_count
   ].freeze
 
-  # Timezone for all cron expression evaluation
-  # Must match config.time_zone in config/application.rb
-  FEED_CRON_TIMEZONE = "UTC".freeze
-
   SCHEDULE_INTERVALS = {
     "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
     "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
@@ -110,10 +106,6 @@ class Feed < ApplicationRecord
     self.cron_expression = SCHEDULE_INTERVALS.dig(key, :cron)
   end
 
-  def schedule_display
-    SCHEDULE_INTERVALS.dig(schedule_interval, :display) || cron_expression
-  end
-
   # Form-facing accessors splitting import_after into a checkbox plus
   # separate date and time inputs. The checkbox drives everything: when it's
   # off, import_after resets to nil no matter what the date and time fields
@@ -174,10 +166,7 @@ class Feed < ApplicationRecord
   # the underlying input shape. Driven by the profile's declared source key so
   # smuggled keys in the params jsonb can't disguise the real source.
   def source_input
-    return nil if params.blank?
-
-    key = FeedProfile.source_key_for(feed_profile_key) || "url"
-    params[key]
+    FeedProfile.source_input_for(feed_profile_key, params)
   end
 
   # Whether the user's source is a URL rather than a free-text prompt.
@@ -552,7 +541,7 @@ class Feed < ApplicationRecord
   def source_input_changed_in_place?
     return false unless params_changed?
 
-    key = FeedProfile.source_key_for(feed_profile_key) || "url"
+    key = FeedProfile.source_key_for(feed_profile_key)
     before, after = params_change
     before&.dig(key) != after&.dig(key)
   end

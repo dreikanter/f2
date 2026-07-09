@@ -26,15 +26,8 @@ class FeedPreview < ApplicationRecord
   # JSON-encode the parts before hashing so their boundaries are unambiguous:
   # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
   def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil)
-    parts = [source_input(feed_profile_key, params), ai_credential_id, ai_model]
+    parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model]
     Digest::SHA256.hexdigest(parts.to_json)
-  end
-
-  # The user-facing source value for a profile, selected by its declared
-  # source key (url, prompt, …) — independent of input_shape.
-  def self.source_input(feed_profile_key, params)
-    key = FeedProfile.source_key_for(feed_profile_key) || "url"
-    (params || {})[key]
   end
 
   # Transitions to :failed only if still non-terminal. Rotating run_id makes the

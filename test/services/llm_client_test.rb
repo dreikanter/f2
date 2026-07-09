@@ -65,20 +65,11 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal credential, client.credential
   end
 
-  test ".for should resolve a user+provider to the active default credential" do
-    create(:ai_credential, :active, user: user)
-    default = create(:ai_credential, :active, :default, user: user)
-
-    client = LlmClient.for(user, "anthropic")
-
-    assert_equal default, client.credential
-  end
-
-  test ".for should raise CredentialMissing when no active credential exists" do
-    create(:ai_credential, :inactive, user: user)
+  test ".for should raise CredentialMissing for a feed without a credential" do
+    orphan = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/feed.xml" })
 
     assert_raises(LlmClient::CredentialMissing) do
-      LlmClient.for(user, "anthropic")
+      LlmClient.for(orphan)
     end
   end
 
