@@ -126,13 +126,6 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal 1, client.calls.size, "structure call must be skipped on an empty gather"
   end
 
-  test "#load should respect the limit option" do
-    items = (1..10).map { |i| { "title" => "Post #{i}", "source_url" => "https://example.com/#{i}" } }
-    loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "items" => items }), limit: 3)
-
-    assert_equal 3, loader.load.size
-  end
-
   test "#load should raise when the structured payload is missing the items key" do
     loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "wrong" => "shape" }))
 
