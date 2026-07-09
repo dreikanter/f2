@@ -17,7 +17,7 @@ class CandidateOptionComponentTest < ViewComponent::TestCase
 
     badge = result.at_css("[data-key='candidate.rss.status']")
     assert_equal "Tested · 3 posts", badge.text.strip
-    assert_includes badge["class"], "green"
+    assert_includes badge["class"], "bg-success-subtle"
   end
 
   test "#render should singularize a single post" do

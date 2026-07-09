@@ -1,17 +1,13 @@
 class BadgeComponent < ViewComponent::Base
   COLOR_CLASSES = {
-    blue: "bg-blue-100 text-blue-800",
-    gray: "bg-gray-100 text-gray-800",
-    red: "bg-red-100 text-red-800",
-    green: "bg-green-100 text-green-800",
-    yellow: "bg-yellow-100 text-yellow-800",
-    orange: "bg-orange-100 text-orange-800",
-    indigo: "bg-indigo-100 text-indigo-800",
-    purple: "bg-purple-100 text-purple-800",
-    pink: "bg-pink-100 text-pink-800"
+    neutral: "bg-surface-muted text-heading ring-muted/20",
+    info: "bg-brand-subtle text-brand-strong ring-brand/20",
+    success: "bg-success-subtle text-success-strong ring-success/20",
+    warning: "bg-warning-subtle text-warning-strong ring-warning/20",
+    danger: "bg-danger-subtle text-danger-strong ring-danger/20"
   }.freeze
 
-  def initialize(text:, color: :blue, key: nil)
+  def initialize(text:, color: :neutral, key: nil)
     @text = text
     @color = color
     @key = key
@@ -25,8 +21,8 @@ class BadgeComponent < ViewComponent::Base
 
   def badge_classes
     [
-      "text-xs font-medium px-2.5 py-0.5 rounded",
-      COLOR_CLASSES[@color] || COLOR_CLASSES[:blue]
+      "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
+      COLOR_CLASSES[@color] || COLOR_CLASSES[:neutral]
     ].join(" ")
   end
 

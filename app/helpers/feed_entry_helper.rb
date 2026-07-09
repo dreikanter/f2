@@ -2,11 +2,11 @@ module FeedEntryHelper
   def feed_entry_status_badge_color(status)
     case status.to_s
     when "pending"
-      :blue
+      :info
     when "processed"
-      :green
+      :success
     else
-      :gray
+      :neutral
     end
   end
 end

@@ -49,7 +49,7 @@ class PostListItemComponent < ListItemComponent
   end
 
   def withdrawn_badge
-    render(BadgeComponent.new(text: "Withdrawn", color: :gray)) if withdrawn?
+    render(BadgeComponent.new(text: "Withdrawn", color: :neutral)) if withdrawn?
   end
 
   # The status sits leftmost and is always present, so every following item
