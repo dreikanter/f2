@@ -97,14 +97,11 @@ module LlmCapabilityProbe
 
       def ruby_llm_provider = :anthropic
 
-      # Production shape: LlmClient::Adapter::Anthropic#web_params.
-      def web_params(_model)
-        {
-          tools: [
-            { type: "web_search_20260209", name: "web_search" },
-            { type: "web_fetch_20260209", name: "web_fetch", citations: { enabled: false } }
-          ]
-        }
+      # Delegated so the probe qualifies exactly what production sends; the
+      # search-only/fetch-only variants below stay probe-local (production has
+      # no such split).
+      def web_params(model)
+        LlmClient::Adapter::Anthropic.new.web_params(model)
       end
 
       def web_search_params(_model)
