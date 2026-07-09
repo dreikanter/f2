@@ -20,9 +20,10 @@ class PageHeaderComponent < ViewComponent::Base
 
   private
 
-  # Joined without whitespace so the h1 text has no stray leading/trailing
-  # spaces; the flex gap handles icon spacing.
+  # Compacting before joining keeps the h1 text free of stray leading
+  # whitespace when there is no icon; the single-space separator keeps a
+  # text-node icon readable while flex layout ignores it for element icons.
   def title_content
-    safe_join([title_icon, @title].compact)
+    safe_join([title_icon, @title].compact, " ")
   end
 end

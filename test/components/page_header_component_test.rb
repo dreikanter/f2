@@ -13,7 +13,7 @@ class PageHeaderComponentTest < ViewComponent::TestCase
       component.with_title_icon { "*" }
     end
 
-    assert_equal "*New Feed", result.at_css("h1").text
+    assert_equal "* New Feed", result.at_css("h1").text
     assert_includes result.at_css("h1")["class"], "flex"
   end
 end
