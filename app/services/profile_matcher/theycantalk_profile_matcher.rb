@@ -1,6 +1,5 @@
 module ProfileMatcher
   class TheycantalkProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     THEYCANTALK_HOSTS = ["theycantalk.com", "www.theycantalk.com"].freeze

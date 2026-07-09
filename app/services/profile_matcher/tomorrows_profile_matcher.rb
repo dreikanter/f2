@@ -1,6 +1,5 @@
 module ProfileMatcher
   class TomorrowsProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     TOMORROWS_DOMAIN = "365tomorrows.com"

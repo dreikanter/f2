@@ -147,35 +147,27 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { FeedProfile.config_for("invalid", :loader) }
   end
 
-  test ".matchers_for returns matcher classes for a given input_shape" do
-    matchers = FeedProfile.matchers_for(:url)
-
-    assert_includes matchers, ProfileMatcher::RssProfileMatcher
-    assert_includes matchers, ProfileMatcher::XkcdProfileMatcher
-  end
-
-  test ".matchers_for returns matchers in registration order" do
-    matchers = FeedProfile.matchers_for(:url)
+  test ".matchers returns matcher classes in registration order" do
+    matchers = FeedProfile.matchers
 
     rss_index = matchers.index(ProfileMatcher::RssProfileMatcher)
     xkcd_index = matchers.index(ProfileMatcher::XkcdProfileMatcher)
 
+    assert_not_nil rss_index
+    assert_not_nil xkcd_index
     assert rss_index < xkcd_index, "rss should come before xkcd in registration order"
   end
 
-  test ".matchers_for never includes the AI profile (structural exclusion)" do
+  test ".matchers never includes the AI profile (structural exclusion)" do
     # The AI profile registers no matcher, so detection can't select it (spec §7)
     # — it's reachable only via Mode B, never by auto-detection.
-    keys = FeedProfile.matchers_for(nil).map(&:profile_key)
+    keys = FeedProfile.matchers.map(&:profile_key)
     assert_not_includes keys, "llm"
   end
 
-  test ".matchers_for returns every matcher-bearing profile when input_shape is nil or :any" do
-    every = FeedProfile.matchers_for(nil)
-
+  test ".matchers returns every matcher-bearing profile" do
     matcher_bearing = FeedProfile::PROFILES.count { |_key, entry| entry[:matcher].present? }
-    assert_equal matcher_bearing, every.size
-    assert_equal every, FeedProfile.matchers_for(:any)
+    assert_equal matcher_bearing, FeedProfile.matchers.size
   end
 
   test ".depends_on_ai? returns true for AI-backed profiles" do

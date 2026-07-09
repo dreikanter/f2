@@ -1,6 +1,5 @@
 module ProfileMatcher
   class RedditProfileMatcher < Base
-    input_shape :url
     match_specificity 50
 
     REDDIT_DOMAINS = %w[reddit.com www.reddit.com old.reddit.com].freeze

@@ -1,6 +1,5 @@
 module ProfileMatcher
   class JsonFeedProfileMatcher < Base
-    input_shape :url
     # Ranks above generic RSS (10): parsing and validating the JSON Feed
     # structure is a stronger signal than the RSS matcher's regex scan for
     # XML-like text, which a JSON feed can trip on if an item's HTML body

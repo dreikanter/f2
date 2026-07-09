@@ -1,6 +1,5 @@
 module ProfileMatcher
   class PluralisticProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     PLURALISTIC_DOMAIN = "pluralistic.net"

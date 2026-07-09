@@ -5,17 +5,9 @@ class ProfileMatcher::TomorrowsProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::TomorrowsProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::TomorrowsProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so 365tomorrows.com URLs prefer the Tomorrows profile.
     assert_equal 100, ProfileMatcher::TomorrowsProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::TomorrowsProfileMatcher.depends_on_ai
   end
 
   test "#match? should match 365tomorrows.com feed URL" do

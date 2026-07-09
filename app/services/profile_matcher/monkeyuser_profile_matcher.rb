@@ -1,6 +1,5 @@
 module ProfileMatcher
   class MonkeyuserProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     MONKEYUSER_DOMAIN = "monkeyuser.com"

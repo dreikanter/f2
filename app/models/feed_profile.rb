@@ -359,17 +359,12 @@ class FeedProfile
       PROFILES[key]
     end
 
-    # Returns matcher classes whose input_shape accepts the given shape, in
-    # registration order. Pass nil/:any to get every matcher.
-    # @param input_shape [Symbol, nil] one of :url, :query, :any, nil
+    # Matcher classes for every profile that registers one, in registration
+    # order. The AI profile deliberately registers none (spec 005 §7), so it
+    # can never be detected.
     # @return [Array<Class>] matcher classes
-    def matchers_for(input_shape)
-      PROFILES.filter_map do |_key, entry|
-        next if entry[:matcher].blank?
-        next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
-
-        entry[:matcher].constantize
-      end
+    def matchers
+      PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end
 
     # @param key [String] the profile key

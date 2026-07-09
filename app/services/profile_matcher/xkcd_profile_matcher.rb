@@ -1,6 +1,5 @@
 module ProfileMatcher
   class XkcdProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     XKCD_DOMAIN = "xkcd.com"

@@ -1,6 +1,5 @@
 module ProfileMatcher
   class NextbigfutureProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     NEXTBIGFUTURE_DOMAINS = ["nextbigfuture.com", "www.nextbigfuture.com"].freeze

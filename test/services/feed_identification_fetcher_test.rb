@@ -225,14 +225,10 @@ class FeedIdentificationFetcherTest < ActiveSupport::TestCase
     candidate = feed_identification.candidates.first
     assert_equal "rss", candidate["profile_key"]
     assert_equal "Example Feed", candidate["title"]
-    assert_equal false, candidate["depends_on_ai"]
-    assert_equal 0, candidate["rank"]
-    assert_equal "specific_match", candidate["rank_reason"]
 
     # Empty-but-valid source still passes the self-test, flagged with zero posts found.
     assert_equal "passed", candidate["test_status"]
     assert_equal 0, candidate["posts_found"]
-    assert candidate["tested_at"].present?
   end
 
   test "#identify should fetch each source URL once across matching and testing" do

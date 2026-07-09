@@ -92,15 +92,14 @@ class FeedIdentificationFetcher
     end
   end
 
-  # Serialize each candidate with its self-test verdict. Non-AI candidates run
-  # the real pipeline; AI candidates are never tested (detection stays LLM-free).
+  # Serialize each candidate with its self-test verdict from running the real
+  # pipeline. Only deterministic profiles can appear here — the AI profile
+  # registers no matcher — so detection stays LLM-free.
   def tested_candidates(candidates)
     candidates.map { |candidate| candidate.as_json.merge(test_result(candidate)) }
   end
 
   def test_result(candidate)
-    return { "test_status" => "not_tested" } if candidate.depends_on_ai
-
     result = CandidateTester.new(
       user: @user,
       input: @input,
@@ -110,7 +109,6 @@ class FeedIdentificationFetcher
 
     {
       "test_status" => result.status.to_s,
-      "tested_at" => Time.current.iso8601,
       "posts_found" => result.posts_found
     }
   end

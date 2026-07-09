@@ -3,7 +3,6 @@ module ProfileMatcher
   # (also telegram.me). Invite links, sticker packs, and other reserved paths
   # are rejected so they fall through to the generic profiles.
   class TelegramProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     HOSTS = %w[t.me telegram.me www.t.me].freeze

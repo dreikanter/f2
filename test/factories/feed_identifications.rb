@@ -9,13 +9,7 @@ FactoryBot.define do
       status { :success }
       candidates do
         [
-          {
-            "profile_key" => "rss",
-            "rank" => 0,
-            "depends_on_ai" => false,
-            "title" => "Sample Feed",
-            "rank_reason" => "specific_match"
-          }
+          { "profile_key" => "rss", "title" => "Sample Feed" }
         ]
       end
     end

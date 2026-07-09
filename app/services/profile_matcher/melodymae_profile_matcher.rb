@@ -1,6 +1,5 @@
 module ProfileMatcher
   class MelodymaeProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     MELODYMAE_DOMAIN = "melodymae.co.uk"

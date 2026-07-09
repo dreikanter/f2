@@ -7,9 +7,7 @@ class ProfileMatcher::BaseTest < ActiveSupport::TestCase
         "ProfileMatcher::SampleProfileMatcher"
       end
 
-      input_shape :url
       match_specificity 42
-      depends_on_ai true
 
       def match?
         true
@@ -25,44 +23,13 @@ class ProfileMatcher::BaseTest < ActiveSupport::TestCase
     end
   end
 
-  test ".input_shape should return the declared symbol" do
-    assert_equal :url, declared_class.input_shape
-  end
-
   test ".match_specificity should return the declared integer" do
     assert_equal 42, declared_class.match_specificity
-  end
-
-  test ".depends_on_ai should return the declared boolean" do
-    assert declared_class.depends_on_ai
-  end
-
-  test ".depends_on_ai should default to false when not declared" do
-    quiet = Class.new(ProfileMatcher::Base) do
-      def self.name
-        "ProfileMatcher::QuietProfileMatcher"
-      end
-
-      input_shape :url
-      match_specificity 1
-    end
-
-    assert_equal false, quiet.depends_on_ai
-  end
-
-  test ".input_shape should raise NotImplementedError when not declared" do
-    error = assert_raises(NotImplementedError) { undeclared_class.input_shape }
-    assert_includes error.message, "must declare input_shape"
   end
 
   test ".match_specificity should raise NotImplementedError when not declared" do
     error = assert_raises(NotImplementedError) { undeclared_class.match_specificity }
     assert_includes error.message, "must declare match_specificity"
-  end
-
-  test ".input_shape should reject unknown shapes" do
-    klass = Class.new(ProfileMatcher::Base)
-    assert_raises(ArgumentError) { klass.input_shape :twitter }
   end
 
   test ".match_specificity should reject non-integer values" do

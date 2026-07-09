@@ -1,6 +1,5 @@
 module ProfileMatcher
   class RssProfileMatcher < Base
-    input_shape :url
     match_specificity 10
 
     RSS_INDICATORS = [

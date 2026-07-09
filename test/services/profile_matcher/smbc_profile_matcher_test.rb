@@ -5,17 +5,9 @@ class ProfileMatcher::SmbcProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::SmbcProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::SmbcProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so smbc-comics.com URLs prefer the SMBC profile.
     assert_equal 100, ProfileMatcher::SmbcProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::SmbcProfileMatcher.depends_on_ai
   end
 
   test "#match? should match smbc-comics.com URLs" do

@@ -5,17 +5,9 @@ class ProfileMatcher::RedditProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::RedditProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::RedditProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 50" do
     # Higher than RSS (10) so reddit.com URLs prefer the Reddit profile.
     assert_equal 50, ProfileMatcher::RedditProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::RedditProfileMatcher.depends_on_ai
   end
 
   test "#match? should match subreddit RSS URLs" do

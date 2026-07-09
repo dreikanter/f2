@@ -384,7 +384,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     payload = extract_candidates_payload(response.body)
     assert_equal %w[rss], payload.map { |c| c["profile_key"] }
-    assert_equal "specific_match", payload.first["rank_reason"]
+    assert_equal "passed", payload.first["test_status"]
   end
 
   test "#show should surface a multi-candidate payload ranked suggested first" do
@@ -400,10 +400,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     payload = extract_candidates_payload(response.body)
     assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
-    assert_equal 0, payload.first["rank"]
-    assert_equal "specific_match", payload.first["rank_reason"]
+    assert_equal "passed", payload.first["test_status"]
   end
-
 
   test "#show should preselect the default schedule interval with no blank option" do
     sign_in_as(user)
@@ -414,7 +412,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -437,7 +435,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -458,7 +456,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -483,7 +481,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -505,7 +503,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil }
       ]
     )
 
@@ -526,7 +524,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil }
       ]
     )
 
@@ -583,8 +581,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2, "rank" => 0, "rank_reason" => "specific_match" },
-        { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3, "rank" => 1, "rank_reason" => "generic_match" }
+        { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2 },
+        { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
       ]
     )
 
@@ -679,7 +677,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => long_title, "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => long_title }
       ]
     )
 
@@ -694,7 +692,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -710,7 +708,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -725,7 +723,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "https://xkcd.com/rss.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "xkcd" }])
+           candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "title" => "xkcd" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }

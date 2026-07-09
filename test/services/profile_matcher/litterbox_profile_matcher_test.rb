@@ -5,16 +5,8 @@ class ProfileMatcher::LitterboxProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::LitterboxProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::LitterboxProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     assert_equal 100, ProfileMatcher::LitterboxProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::LitterboxProfileMatcher.depends_on_ai
   end
 
   test "#match? should match litterboxcomics.com URLs" do
