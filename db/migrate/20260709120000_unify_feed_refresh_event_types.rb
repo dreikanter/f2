@@ -1,7 +1,6 @@
-# Feed refresh runs are now tracked as a single feed_refresh event per run
-# with a lifecycle status in metadata (started/completed/failed/interrupted)
-# instead of separate feed_refresh/feed_refresh_error types. Fold existing
-# events into the new shape so queries and rendering see uniform data.
+# Refresh runs are now one feed_refresh event per run with a lifecycle status
+# in metadata, replacing the separate feed_refresh_error type. Fold existing
+# events into that shape.
 class UnifyFeedRefreshEventTypes < ActiveRecord::Migration[8.2]
   def up
     execute <<~SQL

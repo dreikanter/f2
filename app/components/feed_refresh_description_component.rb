@@ -1,7 +1,5 @@
-# Renders a feed refresh lifecycle event according to its metadata status
-# (started, completed, failed, interrupted). Completed refreshes append the
-# imported posts count, e.g. "My Feed refreshed (+2 posts)"; refreshes that
-# imported nothing render plain.
+# Describes a feed refresh run by its lifecycle status, appending the imported
+# posts count when there is one, e.g. "My Feed refreshed (+2 posts)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
     suffix = posts_count_tag
@@ -10,8 +8,7 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
 
   private
 
-  # Events created before the status lifecycle carry no status and read as
-  # completed, which is what they were.
+  # Events predating the status lifecycle have no status; they were completed runs.
   def description_key
     case event.metadata["status"]
     when "started" then "events.feed_refresh.started_description_html"

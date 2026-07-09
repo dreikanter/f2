@@ -59,10 +59,9 @@ class FeedRefreshWorkflow
     @refresh_event = create_refresh_event
   end
 
-  # Only one refresh per feed runs at a time (FeedRefreshJob's advisory lock),
-  # so an event still "started" when a new run begins belongs to a run whose
-  # process died before it could finalize (deploy restart, OOM kill). Mark it
-  # so it doesn't read as in-progress forever.
+  # FeedRefreshJob's advisory lock allows one refresh per feed at a time, so
+  # an event still "started" when a new run begins belongs to a run whose
+  # process died before finalizing.
   def interrupt_abandoned_refresh_events
     Event.where(type: "feed_refresh", subject: feed)
          .where("metadata ->> 'status' = 'started'")
@@ -71,10 +70,8 @@ class FeedRefreshWorkflow
     end
   end
 
-  # A refresh may run for minutes, so its event is created up front and updated
-  # in place as the run finishes (see complete/fail below). Debug level keeps
-  # the in-flight record out of the user event feed; completion promotes it to
-  # a user-visible level.
+  # Debug level keeps the in-flight record out of the user event feed;
+  # completion promotes it to a user-visible level.
   def create_refresh_event
     Event.create!(
       type: "feed_refresh",
@@ -299,8 +296,8 @@ class FeedRefreshWorkflow
     feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
-  # The started event normally exists by the time an error can surface; the
-  # create fallback covers failures in steps preceding initialize_workflow.
+  # The create fallback covers failures in steps preceding initialize_workflow,
+  # before the started event exists.
   def fail_refresh_event(error)
     attributes = {
       level: :error,
