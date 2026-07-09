@@ -19,6 +19,15 @@ Rails.application.routes.draw do
     end
   end
 
+  # Token-authenticated, plain-text interface for running maintenance jobs via
+  # curl/an agent (Maintenance::BaseController). Inert unless
+  # MAINTENANCE_JOB_TOKEN is set.
+  namespace :maintenance do
+    resources :jobs, only: :index do
+      resources :runs, only: [:create, :show]
+    end
+  end
+
   constraints ->(req) {
     session = Session.find_by(id: req.cookie_jar.signed[:session_id])
     session&.user&.dev?
