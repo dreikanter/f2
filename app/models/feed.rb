@@ -321,32 +321,21 @@ class Feed < ApplicationRecord
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
-  # Resets the feed schedule to run immediately (next_run_at = now).
-  # Creates a new schedule if none exists, or updates the existing one.
-  # @return [FeedSchedule]
+  # Makes the existing schedule due immediately (next_run_at = now). No-op for
+  # a feed without one — the schedule is created when the feed is enabled.
   def reset_schedule!
-    if feed_schedule.present?
-      feed_schedule.update!(next_run_at: Time.current)
-      feed_schedule
-    else
-      create_feed_schedule!(next_run_at: Time.current, last_run_at: Time.current)
-    end
+    feed_schedule&.update!(next_run_at: Time.current)
   end
 
-  # Sets next_run_at to the next cron slot without triggering an immediate run.
-  # Use when a job has already been enqueued and the schedule should not fire again right away.
-  # Creates a new schedule if none exists, or updates the existing one.
+  # Creates the schedule pointed at the next cron slot, without triggering an
+  # immediate run. Only called when a feed gains its schedule on enable
+  # (create_schedule_on_enable guards the already-scheduled case).
   # @return [FeedSchedule]
   def defer_schedule!
-    if feed_schedule.present?
-      feed_schedule.update!(next_run_at: feed_schedule.calculate_next_run_at)
-      feed_schedule
-    else
-      schedule = build_feed_schedule(last_run_at: Time.current)
-      schedule.next_run_at = schedule.calculate_next_run_at
-      schedule.save!
-      schedule
-    end
+    schedule = build_feed_schedule(last_run_at: Time.current)
+    schedule.next_run_at = schedule.calculate_next_run_at
+    schedule.save!
+    schedule
   end
 
   # Bumps the failure streak after a failed refresh and turns the feed off once

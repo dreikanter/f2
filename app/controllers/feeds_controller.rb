@@ -116,7 +116,7 @@ class FeedsController < ApplicationController
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
       else
-        @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
+        @feed.reset_schedule! if interval_changed
         redirect_to feed_path(@feed), success: update_message_for(@feed)
       end
     else
@@ -168,7 +168,7 @@ class FeedsController < ApplicationController
     feed.transaction do
       if feed.enable
         record_feed_enabled(feed)
-        feed.reset_schedule! if interval_changed && feed.feed_schedule.present?
+        feed.reset_schedule! if interval_changed
       end
     end
 
