@@ -46,4 +46,18 @@ class StatListItemComponentTest < ViewComponent::TestCase
     assert_includes result.at_css("div")["class"], "items-baseline"
     assert_includes result.at_css("div")["class"], "justify-between"
   end
+
+  test "#render should not crop the value by default" do
+    result = render_inline(StatListItemComponent.new(label: "Posts", value: "42"))
+
+    assert_not_includes result.at_css("dd")["class"], "min-w-0"
+    assert_nil result.at_css("dd div.truncate")
+  end
+
+  test "#render should crop the value when truncate is enabled" do
+    result = render_inline(StatListItemComponent.new(label: "UID", value: "x" * 200, truncate: true))
+
+    assert_includes result.at_css("dd")["class"], "min-w-0"
+    assert_equal "x" * 200, result.at_css("dd div.truncate").text
+  end
 end

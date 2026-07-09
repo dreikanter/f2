@@ -27,11 +27,15 @@ module EventsHelper
   end
 
   def format_stat_value(key, value)
-    if key.to_s.end_with?("_at")
+    key = key.to_s
+
+    if key.end_with?("_at")
       time = Time.zone.parse(value.to_s) rescue nil
       time ? long_time_tag(time) : value
-    elsif key.to_s == "total_duration"
+    elsif key.end_with?("_duration")
       format_event_duration(value.to_f)
+    elsif value.is_a?(Integer)
+      number_with_delimiter(value)
     else
       value
     end

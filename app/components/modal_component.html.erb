@@ -12,9 +12,7 @@
     <div class="relative bg-surface rounded-lg shadow">
       <!-- Modal header -->
       <div class="flex items-center justify-between p-4 md:p-6">
-        <h3 id="<%= @modal_id %>-title" class="text-3xl font-semibold text-heading">
-          <%= @title %>
-        </h3>
+        <h3 id="<%= @modal_id %>-title" class="text-3xl font-semibold text-heading"><%= @title %></h3>
         <%= tag.button type: "button",
                        class: "text-muted bg-transparent hover:bg-surface-sunken hover:text-heading rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center",
                        data: { action: "modal#close" } do %>

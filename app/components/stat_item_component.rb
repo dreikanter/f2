@@ -1,10 +1,11 @@
 # Abstract base class — subclasses must define DEFAULT_ITEM_CLASS, LABEL_CLASSES, and VALUE_CLASSES.
 class StatItemComponent < ViewComponent::Base
-  def initialize(label:, value:, key: nil, muted: false)
+  def initialize(label:, value:, key: nil, muted: false, truncate: false)
     @label = label
     @value = value
     @key = key
     @muted = muted
+    @truncate = truncate
   end
 
   def call
@@ -20,7 +21,17 @@ class StatItemComponent < ViewComponent::Base
   end
 
   def value_element
-    content_tag(:dd, @value, class: class_names(self.class::VALUE_CLASSES, @muted ? "text-muted" : "text-heading"), data: value_data)
+    content_tag(:dd, value_content, class: class_names(self.class::VALUE_CLASSES, @muted ? "text-muted" : "text-heading", "min-w-0" => @truncate), data: value_data)
+  end
+
+  # Cropping a long value needs two cooperating pieces: min-w-0 so the flex
+  # cell can shrink below its content width, and a block wrapper that crops
+  # the overflow with an ellipsis. Bundling them behind one option keeps the
+  # contract in one place instead of split across callers.
+  def value_content
+    return @value unless @truncate
+
+    content_tag(:div, @value, class: "truncate")
   end
 
   def label_data
