@@ -251,7 +251,6 @@ class Feed < ApplicationRecord
       level: :warning,
       subject: self,
       user: user,
-      message: "",
       metadata: { dropped_model: from, fallback_model: to }
     )
   end
@@ -267,8 +266,7 @@ class Feed < ApplicationRecord
       type: "feed_refresh_ai_empty",
       level: :debug,
       subject: self,
-      user: user,
-      message: ""
+      user: user
     )
   end
 
@@ -351,24 +349,9 @@ class Feed < ApplicationRecord
   # Disables just this feed (not the whole token) and logs why, so the user can
   # fix the target group and re-enable. `reason` is a deterministic code the UI
   # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics.
-  # Mirrors disable_after_repeated_failures!.
   def disable_due_to_unavailable_target!(reason: nil, details: nil)
-    metadata = {
-      reason: reason&.to_s,
-      target_group: target_group,
-      details: details
-    }.compact
-
-    transaction do
-      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
-      Event.create!(
-        type: "feed_target_group_unavailable",
-        level: :warning,
-        subject: self,
-        user: user,
-        metadata: metadata
-      )
-    end
+    metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
+    disable_with_event!("feed_target_group_unavailable", metadata)
   end
 
   # Clears the streak after a successful refresh.
@@ -380,23 +363,20 @@ class Feed < ApplicationRecord
 
   private
 
-  # Disables the feed and records a feed_auto_disabled event stamped with the
-  # streak length, so the activity log shows how many failures it took. Resets
-  # the counter so a re-enable starts clean. update_columns flips the state and
-  # zeroes the counter in one write, skipping validations neither needs.
+  # Records a feed_auto_disabled event stamped with the streak length, so the
+  # activity log shows how many failures it took.
   def disable_after_repeated_failures!
-    failure_count = consecutive_failures
+    disable_with_event!("feed_auto_disabled", { error_count: consecutive_failures })
+  end
 
+  # Disables the feed and records why in one transaction. update_columns flips
+  # the state and zeroes the counter in one write, skipping validations neither
+  # needs; the metadata is evaluated first, so it can read pre-disable values
+  # like the failure streak.
+  def disable_with_event!(type, metadata)
     transaction do
       update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
-      Event.create!(
-        type: "feed_auto_disabled",
-        level: :warning,
-        subject: self,
-        user: user,
-        message: "",
-        metadata: { error_count: failure_count }
-      )
+      Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
     end
   end
 

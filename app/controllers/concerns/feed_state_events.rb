@@ -20,8 +20,7 @@ module FeedStateEvents
       type: type,
       level: level,
       subject: feed,
-      user: feed.user,
-      message: ""
+      user: feed.user
     )
   end
 end

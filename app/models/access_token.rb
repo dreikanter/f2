@@ -132,7 +132,6 @@ class AccessToken < ApplicationRecord
       user: user,
       subject: self,
       level: :warning,
-      message: "",
       metadata: { disabled_feed_ids: feed_ids, disabled_count: disabled_count }
     )
   end
