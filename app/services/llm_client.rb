@@ -22,33 +22,11 @@ class LlmClient
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
 
   class << self
-    def for(target, provider = nil)
-      credential = resolve_credential(target, provider)
+    def for(target)
+      credential = target.is_a?(AiCredential) ? target : target.ai_credential
       raise CredentialMissing, "no active credential found" if credential.nil?
 
       new(credential)
-    end
-
-    private
-
-    def resolve_credential(target, provider)
-      case target
-      when AiCredential
-        target
-      when Feed
-        target.ai_credential || default_credential_for(target.user, provider || LlmProvider.names.first)
-      when User
-        default_credential_for(target, provider)
-      end
-    end
-
-    def default_credential_for(user, provider)
-      return nil if provider.blank?
-
-      default = user.default_ai_credential
-      return default if default&.active? && default.provider == provider
-
-      user.ai_credentials.active.where(provider: provider).order(:id).first
     end
   end
 
