@@ -89,6 +89,15 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     assert_includes post.validation_errors, "no_images"
   end
 
+  test "#normalize should clamp a future published_at to now" do
+    entry = feed_entry
+    entry.published_at = 2.days.from_now
+
+    post = Normalizer::LlmNormalizer.new(entry).normalize
+
+    assert_operator post.published_at, :<=, Time.current
+  end
+
   test "#normalize should keep only public http(s) attachment URLs" do
     images = [
       "https://cdn.example.com/ok.png",   # public — kept
