@@ -13,8 +13,8 @@ class RedditRetrievalProbeTest < ActiveSupport::TestCase
     outcome = RedditRetrievalProbe.run(fetcher: fetcher, http_client: http)
 
     assert outcome[:passed]
-    assert_equal %w[listing single_post old_reddit rss_control], outcome[:results].map { |r| r[:check] }
-    assert_equal %w[PASS PASS PASS PASS], outcome[:results].map { |r| r[:status] }
+    assert_equal %w[listing single_post old_reddit rss_control strategies], outcome[:results].map { |r| r[:check] }
+    assert_equal %w[PASS PASS PASS PASS PASS], outcome[:results].map { |r| r[:status] }
   end
 
   test "single_post should follow the first permalink from the listing" do

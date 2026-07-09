@@ -19,12 +19,28 @@ module RedditRetrievalProbe
   SUBREDDIT = "programming".freeze
   LISTING_URL = "https://www.reddit.com/r/#{SUBREDDIT}/top.json?t=week&limit=5".freeze
   OLD_LISTING_URL = "https://old.reddit.com/r/#{SUBREDDIT}/top.json?t=week&limit=5".freeze
+  API_URL = "https://api.reddit.com/r/#{SUBREDDIT}/top?t=week&limit=5".freeze
   RSS_URL = "https://www.reddit.com/r/#{SUBREDDIT}/new.rss".freeze
+
+  BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " \
+               "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36".freeze
+
+  # Diagnostic matrix for the JSON 403: staging gets RSS 200 but .json 403 with
+  # the same IP+UA, so each strategy isolates a candidate cause (the Accept
+  # header, a datacenter-flagged UA, the host) to find an authless route or rule
+  # one out. PASS if any strategy returns 200.
+  JSON_STRATEGIES = [
+    { label: "ua+accept-json", url: LISTING_URL, ua: Reddit::VotesFetcher::USER_AGENT, accept: "application/json" },
+    { label: "ua-only",        url: LISTING_URL, ua: Reddit::VotesFetcher::USER_AGENT, accept: nil },
+    { label: "browser-ua",     url: LISTING_URL, ua: BROWSER_UA, accept: nil },
+    { label: "browser+rawjson", url: "#{LISTING_URL}&raw_json=1", ua: BROWSER_UA, accept: "application/json" },
+    { label: "api.reddit.com", url: API_URL, ua: BROWSER_UA, accept: "application/json" }
+  ].freeze
 
   def self.run(...) = Runner.new(...).run
 
   class Runner
-    CHECKS = %w[listing single_post old_reddit rss_control].freeze
+    CHECKS = %w[listing single_post old_reddit rss_control strategies].freeze
 
     def initialize(fetcher: Reddit::VotesFetcher.new, http_client: HttpClient.build, checks: CHECKS)
       @fetcher = fetcher
@@ -87,6 +103,23 @@ module RedditRetrievalProbe
       status = raw_status(RSS_URL)
       pass = status == 200
       { status: pass ? "PASS" : "FAIL", note: "new.rss → HTTP #{status}", evidence: nil }
+    end
+
+    # Tries each authless JSON strategy and reports its HTTP status as evidence.
+    def check_strategies
+      results = JSON_STRATEGIES.map do |strategy|
+        headers = { "User-Agent" => strategy[:ua] }
+        headers["Accept"] = strategy[:accept] if strategy[:accept]
+        status = begin
+          @http_client.get(strategy[:url], headers: headers).status
+        rescue HttpClient::Error => e
+          e.message[0, 60]
+        end
+        "#{strategy[:label]} → #{status}"
+      end
+
+      any_ok = results.any? { |line| line.end_with?("→ 200") }
+      { status: any_ok ? "PASS" : "FAIL", note: any_ok ? "an authless strategy works" : "all JSON strategies blocked", evidence: results }
     end
 
     def raw_status(url)
