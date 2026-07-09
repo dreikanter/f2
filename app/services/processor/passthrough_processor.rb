@@ -8,6 +8,7 @@ module Processor
       entries = items.filter_map do |item|
         next unless item.is_a?(Hash)
 
+        item = item.deep_stringify_keys
         FeedEntry.new(
           feed: feed,
           # A digest item (source_url: null) gets a period uid; a feed-style
@@ -17,9 +18,9 @@ module Processor
           uid: Uid::Resolver.call(item, clock: Time.current),
           # AI-extracted items rarely come with a reliable published_at;
           # fall back to the current time so downstream invariants hold.
-          published_at: parse_time(item["published_at"] || item[:published_at]) || Time.current,
+          published_at: parse_time(item["published_at"]) || Time.current,
           status: :pending,
-          raw_data: item.deep_stringify_keys
+          raw_data: item
         )
       end
       Result.new(entries: entries, recognized: true)

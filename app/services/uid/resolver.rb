@@ -53,7 +53,7 @@ module Uid
     end
 
     def initialize(item, clock)
-      @item = item.is_a?(Hash) ? item : {}
+      @item = item.is_a?(Hash) ? item.transform_keys(&:to_s) : {}
       @clock = clock
     end
 
@@ -72,17 +72,11 @@ module Uid
     # missing key is malformed and an empty/unusable string is dropped — neither
     # is reinterpreted as a digest (spec §3's "unusable ≠ null").
     def digest?
-      return false unless item.key?("source_url") || item.key?(:source_url)
-
-      source_url_value.nil?
-    end
-
-    def source_url_value
-      item.key?("source_url") ? item["source_url"] : item[:source_url]
+      item.key?("source_url") && item["source_url"].nil?
     end
 
     def deep_link
-      raw = (item["source_url"] || item[:source_url]).to_s.strip
+      raw = item["source_url"].to_s.strip
       return if raw.empty?
 
       uri = parse_http(raw)
