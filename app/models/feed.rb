@@ -43,9 +43,6 @@ class Feed < ApplicationRecord
     enabled: 2
   }, default: :draft
 
-  # How long a ready FeedPreview is reused before a fresh run is forced.
-  PREVIEW_FRESHNESS_WINDOW = 60.minutes
-
   # Set true by the edit controller only after a settled detection confirmed the
   # new source (spec §4). Lets `source_change_reverified` reject a Mode A source
   # move that never passed through identification.
