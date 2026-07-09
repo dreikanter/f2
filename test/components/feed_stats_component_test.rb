@@ -73,7 +73,7 @@ class FeedStatsComponentTest < ViewComponent::TestCase
     result = render_inline(FeedStatsComponent.new(feed: feed_without_data))
 
     last_refresh_value = result.css('[data-key="stats.last_refresh.value"]').first.text
-    assert_equal "Never", last_refresh_value
+    assert_equal "–", last_refresh_value
 
     most_recent_value = result.css('[data-key="stats.most_recent_repost.value"]').first.text
     assert_equal "–", most_recent_value

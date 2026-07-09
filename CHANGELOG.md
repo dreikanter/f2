@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-09
 
 - Feed pages are less cluttered: the Recent Activity and Recent Posts sections only appear once there's something to show.
+- A feed that hasn't refreshed yet shows a dash in its stats instead of "Never".
 
 ## 2026-07-08
 
