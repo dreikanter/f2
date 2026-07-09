@@ -9,13 +9,9 @@ class CandidateOptionComponent < ViewComponent::Base
     @selected = selected
   end
 
-  def before_render
-    assign_verdict
-  end
-
   private
 
-  attr_reader :candidate, :input, :badge_text, :note
+  attr_reader :candidate, :input
 
   def profile_key
     candidate.profile_key
@@ -43,9 +39,12 @@ class CandidateOptionComponent < ViewComponent::Base
 
   # Every shown candidate passed its self-test; badge the post count and note an
   # empty-but-valid source.
-  def assign_verdict
+  def badge_text
     count = candidate.posts_found
-    @badge_text = count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
-    @note = "No posts yet. We'll pick up new ones as they're published." if count.zero?
+    count.zero? ? "Tested" : "Tested · #{count} #{'post'.pluralize(count)}"
+  end
+
+  def note
+    "No posts yet. We'll pick up new ones as they're published." if candidate.posts_found.zero?
   end
 end
