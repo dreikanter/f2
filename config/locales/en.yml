@@ -55,7 +55,7 @@ en:
       description_html: "%{subject_link} refreshed"
       started_description_html: "%{subject_link} refresh is in progress"
       failed_description_html: "%{subject_link} couldn't refresh; %{message}"
-      interrupted_description_html: "%{subject_link} refresh was interrupted before it finished"
+      interrupted_description_html: "%{subject_link} refresh was interrupted"
     feed_refresh_skipped:
       name: "Feed refresh skipped"
       description_html: "%{subject_link} already produced this period's digest, so the scheduled refresh was skipped"
