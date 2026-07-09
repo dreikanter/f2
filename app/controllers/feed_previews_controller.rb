@@ -25,7 +25,7 @@ class FeedPreviewsController < ApplicationController
   def show
     preview = locate_preview
     preview = start_run(preview) if needs_run?(preview)
-    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < preview_polling_timeout.ago
+    preview.timeout! if (preview.pending? || preview.processing?) && preview.updated_at < polling_timeout(preview_max_polls).ago
     render_state(preview, inert_while_running: true)
   end
 
@@ -35,7 +35,7 @@ class FeedPreviewsController < ApplicationController
     render_state(start_run(locate_preview))
   end
 
-  helper_method :preview_max_polls
+  helper_method :preview_max_polls, :state_partial
 
   private
 
@@ -44,10 +44,6 @@ class FeedPreviewsController < ApplicationController
   # poller (view) and the server-side timeout.
   def preview_max_polls
     FeedProfile.depends_on_ai?(profile_key) ? AI_PREVIEW_MAX_POLLS : polling_max_polls
-  end
-
-  def preview_polling_timeout
-    ((preview_max_polls - 2) * polling_interval_ms).fdiv(1000).seconds
   end
 
   def guard_preview
@@ -133,11 +129,9 @@ class FeedPreviewsController < ApplicationController
     FeedProfile.source_input_for(profile_key, preview_params).to_s.strip.blank?
   end
 
+  # Only reached after guard_preview confirmed the profile exists.
   def needs_credential_gate?
-    return false unless FeedProfile.exists?(profile_key)
-    return false unless FeedProfile.depends_on_ai?(profile_key)
-
-    !Current.user.ai_credentials.active.exists?
+    FeedProfile.depends_on_ai?(profile_key) && !Current.user.ai_credentials.active.exists?
   end
 
   def render_state(preview, inert_while_running: false)

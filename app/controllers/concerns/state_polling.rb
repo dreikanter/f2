@@ -14,7 +14,7 @@ module StatePolling
   # Server-side deadline, set just before the client's final poll so that poll
   # still renders the outcome instead of leaving the spinner frozen. The first
   # poll is immediate, so the last lands at (max_polls - 1) * interval.
-  def polling_timeout
-    ((polling_max_polls - 2) * polling_interval_ms).fdiv(1000).seconds
+  def polling_timeout(max_polls = polling_max_polls)
+    ((max_polls - 2) * polling_interval_ms).fdiv(1000).seconds
   end
 end
