@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-09
 
+- Choosing between following a feed or following with AI now uses a simple two-option choice that stays readable on small screens, where the old tabs used to stack awkwardly.
 - Once you've picked a model for a feed, the "Select a model…" placeholder can't be chosen anymore — a feed can't be switched back to having no model.
 - Feed pages are less cluttered: the Recent Activity and Recent Posts sections only appear once there's something to show.
 - A feed that hasn't refreshed yet shows a dash in its stats instead of "Never".
