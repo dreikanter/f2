@@ -518,6 +518,11 @@ class FeedProfile
       !!PROFILES.dig(key, :depends_on_ai)
     end
 
+    # @return [Array<String>] keys of the AI-backed profiles
+    def ai_profile_keys
+      PROFILES.keys.select { |key| depends_on_ai?(key) }
+    end
+
     # Returns the JSON Schema describing the feed's params hash
     # @param key [String] the profile key
     # @return [Hash, nil] the parameter schema (nil if profile not found)
