@@ -8,15 +8,7 @@ class FeedIdentificationFetcher
   class UnreachableError < FetchError; end    # no answer: DNS, refused, or timeout
   class RedirectLimitError < FetchError; end  # followed too many redirects
 
-  # Reachable, but answered non-2xx. Carries the status for the log.
-  class ResponseStatusError < FetchError
-    attr_reader :status
-
-    def initialize(status)
-      @status = status
-      super("HTTP #{status}")
-    end
-  end
+  class ResponseStatusError < FetchError; end # reachable, but answered non-2xx
 
   def initialize(user:, input:, logger: Rails.logger)
     @user = user
@@ -71,7 +63,7 @@ class FeedIdentificationFetcher
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
     response = http_client.get(@input)
-    raise ResponseStatusError.new(response.status) unless response.success?
+    raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
     response.body
   rescue HttpClient::TooManyRedirectsError => e
