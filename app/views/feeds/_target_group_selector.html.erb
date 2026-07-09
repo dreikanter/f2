@@ -1,3 +1,4 @@
+<%# locals: (feed:, groups:, token: nil, token_error: nil) %>
 <div id="target-group-selector">
   <div class="space-y-2">
     <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
@@ -5,7 +6,7 @@
     <% if groups.present? %>
       <%= select_tag "feed[target_group]",
                      options_for_select(groups.sort, feed.target_group),
-                     class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
+                     class: input_field_classes(disabled: true),
                      required: true %>
       <p class="text-sm text-muted">
         The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one.
@@ -20,16 +21,16 @@
     <% else %>
       <%= select_tag "feed[target_group]",
                      options_for_select([[feed.target_group.presence || "Select a group", ""]]),
-                     class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
+                     class: input_field_classes(disabled: true),
                      disabled: true %>
       <p class="text-sm text-danger">
         <% if token.nil? %>
           Unable to load groups. Please select an access token.
         <% elsif !token.active? %>
           This token is inactive. Please select a different access token or add a new one.
-        <% elsif defined?(token_error) && token_error == :unauthorized %>
+        <% elsif token_error == :unauthorized %>
           Unable to load groups. Please select a different access token or add a new one.
-        <% elsif defined?(token_error) && token_error == :empty %>
+        <% elsif token_error == :empty %>
           This account doesn't manage any groups yet.
           <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
                       class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
