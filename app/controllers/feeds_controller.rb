@@ -23,7 +23,6 @@ class FeedsController < ApplicationController
   # Source-side fields, editable only while a feed is a draft (FR-007/008);
   # once it first leaves :draft they lock in for good.
   DRAFT_ONLY_PERMITTED_PARAMS = [
-    :url,
     :feed_profile_key,
     { params: %i[url prompt] }
   ].freeze

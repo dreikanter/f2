@@ -74,7 +74,7 @@ class SmartFeedCreationRssTest < ActionDispatch::IntegrationTest
       assert_difference("Feed.count", 1) do
         post feeds_path, params: {
           feed: {
-            url: feed_url,
+            params: { url: feed_url },
             name: "Example Feed",
             feed_profile_key: "rss",
             access_token_id: access_token.id,

@@ -15,7 +15,7 @@ class SmartFeedCreationStateGatingTest < ActionDispatch::IntegrationTest
 
   def feed_params
     feed_attrs = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Example",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
