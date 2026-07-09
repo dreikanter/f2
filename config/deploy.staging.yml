@@ -128,3 +128,6 @@ env:
     # .kamal/secrets.staging.
     - ANTHROPIC_API_KEY
     - MOONSHOT_API_KEY
+    # Bearer token for the curl/agent maintenance interface; optional — the
+    # interface is inert when unset. See .kamal/secrets.staging.
+    - MAINTENANCE_JOB_TOKEN

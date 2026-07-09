@@ -23,6 +23,8 @@ jobs:
       # Optional LLM provider keys for the capability probe job.
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+      # Optional bearer token for the curl/agent maintenance interface.
+      MAINTENANCE_JOB_TOKEN: ${{ secrets.MAINTENANCE_JOB_TOKEN }}
 
     steps:
       - name: Checkout code
