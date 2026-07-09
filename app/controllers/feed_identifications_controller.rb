@@ -4,11 +4,10 @@ class FeedIdentificationsController < ApplicationController
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/identification_error",
-      locals: base_locals.merge(url: params[:url].presence || params[:prompt], error: "Too many identification attempts. Please wait before trying again.")
-    ), status: :too_many_requests
+    render identification_error(
+      url: params[:url].presence || params[:prompt],
+      error: "Too many identification attempts. Please wait before trying again."
+    ).merge(status: :too_many_requests)
   }
 
   def create
@@ -48,11 +47,7 @@ class FeedIdentificationsController < ApplicationController
     original_url = feed_identification.persisted? ? feed_identification.input : raw_url
     feed_identification.destroy if feed_identification.persisted?
 
-    render turbo_stream: turbo_stream.replace(
-      "feed-form",
-      partial: "feeds/form_collapsed",
-      locals: { url: original_url }
-    )
+    render feed_form_stream("form_collapsed", url: original_url)
   end
 
   private
@@ -151,14 +146,14 @@ class FeedIdentificationsController < ApplicationController
     end
   end
 
-  def identification_error(error:, heading: "Feed identification failed")
-    {
-      turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_error",
-        locals: base_locals.merge(url: raw_url, error: error, heading: heading)
-      )
-    }
+  # Every response in this flow swaps the same "feed-form" frame; partial names
+  # are relative to feeds/.
+  def feed_form_stream(partial, **locals)
+    { turbo_stream: turbo_stream.replace("feed-form", partial: "feeds/#{partial}", locals: locals) }
+  end
+
+  def identification_error(error:, heading: "Feed identification failed", url: raw_url)
+    feed_form_stream("identification_error", **base_locals, url: url, error: error, heading: heading)
   end
 
   # When re-detecting an existing deterministic feed the engine is fixed, so the
@@ -187,34 +182,16 @@ class FeedIdentificationsController < ApplicationController
   # Transient: nothing connected. Retrying is the primary path; the bridge is a
   # secondary escape so the state can't dead-end (spec §7).
   def couldnt_reach_retry
-    {
-      turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_retry",
-        locals: base_locals.merge(url: raw_url)
-      )
-    }
+    feed_form_stream("identification_retry", **base_locals, url: raw_url)
   end
 
   def identification_loading
-    {
-      turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/identification_loading",
-        locals: base_locals.merge(url: source_url)
-      )
-    }
+    feed_form_stream("identification_loading", **base_locals, url: source_url)
   end
 
   def identification_success(feed, candidates: [], source_changed: false, profile_changed: false)
-    {
-      turbo_stream: turbo_stream.replace(
-        "feed-form",
-        partial: "feeds/form_expanded",
-        locals: { feed: feed, candidates: candidates, edit_mode: editing?,
-                  source_changed: source_changed, profile_changed: profile_changed }
-      )
-    }
+    feed_form_stream("form_expanded", feed: feed, candidates: candidates, edit_mode: editing?,
+                                      source_changed: source_changed, profile_changed: profile_changed)
   end
 
   # The feed being edited (spec §4 source re-detection), or nil in the creation
