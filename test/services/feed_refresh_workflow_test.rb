@@ -610,6 +610,63 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh").count
   end
 
+  test "#execute should mark an abandoned started event as interrupted" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :debug,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 1.day.ago.iso8601 } }
+    )
+
+    empty_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Empty</title></channel></rss>
+    RSS
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    abandoned.reload
+    assert_equal "interrupted", abandoned.metadata["status"]
+    assert_equal "debug", abandoned.level
+    assert_equal 1.day.ago.to_date.iso8601, abandoned.metadata.dig("stats", "started_at")[0, 10],
+                 "the rest of the abandoned event's metadata stays intact"
+  end
+
+  test "#execute should not touch other feeds' started events" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    other_feed = create(:feed)
+
+    other_started = Event.create!(
+      type: "feed_refresh",
+      level: :debug,
+      subject: other_feed,
+      user: other_feed.user,
+      metadata: { status: "started" }
+    )
+    completed = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "completed" }
+    )
+
+    empty_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Empty</title></channel></rss>
+    RSS
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal "started", other_started.reload.metadata["status"]
+    assert_equal "completed", completed.reload.metadata["status"]
+  end
+
   test "#records should create feed metrics when posts are imported" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 

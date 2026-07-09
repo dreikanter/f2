@@ -55,7 +55,20 @@ class FeedRefreshWorkflow
 
   def initialize_workflow(*)
     record_started_at
+    interrupt_abandoned_refresh_events
     @refresh_event = create_refresh_event
+  end
+
+  # Only one refresh per feed runs at a time (FeedRefreshJob's advisory lock),
+  # so an event still "started" when a new run begins belongs to a run whose
+  # process died before it could finalize (deploy restart, OOM kill). Mark it
+  # so it doesn't read as in-progress forever.
+  def interrupt_abandoned_refresh_events
+    Event.where(type: "feed_refresh", subject: feed)
+         .where("metadata ->> 'status' = 'started'")
+         .find_each do |event|
+      event.update!(metadata: event.metadata.merge("status" => "interrupted"))
+    end
   end
 
   # A refresh may run for minutes, so its event is created up front and updated
