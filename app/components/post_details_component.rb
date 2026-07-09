@@ -44,7 +44,7 @@ class PostDetailsComponent < ViewComponent::Base
 
   def add_source_url_item(component)
     value = if @post.source_url.present?
-      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", class: "text-brand underline underline-offset-4 transition hover:text-brand-hover truncate block")
+      helpers.link_to(@post.source_url, @post.source_url, target: "_blank", rel: "noopener", title: @post.source_url, class: "text-brand underline underline-offset-4 transition hover:text-brand-hover")
     else
       content_tag(:span, "None", class: "text-muted")
     end
@@ -52,7 +52,8 @@ class PostDetailsComponent < ViewComponent::Base
     component.with_item(StatListItemComponent.new(
       label: "Source URL",
       value: value,
-      key: "post.source_url"
+      key: "post.source_url",
+      truncate: @post.source_url.present?
     ))
   end
 
@@ -75,8 +76,9 @@ class PostDetailsComponent < ViewComponent::Base
   def add_uid_item(component)
     component.with_item(StatListItemComponent.new(
       label: "UID",
-      value: content_tag(:code, @post.uid, class: "text-sm truncate block", title: @post.uid),
-      key: "post.uid"
+      value: content_tag(:code, @post.uid, class: "text-sm", title: @post.uid),
+      key: "post.uid",
+      truncate: true
     ))
   end
 
@@ -96,7 +98,8 @@ class PostDetailsComponent < ViewComponent::Base
     component.with_item(StatListItemComponent.new(
       label: "FreeFeed Post ID",
       value: value,
-      key: "post.freefeed_post_id"
+      key: "post.freefeed_post_id",
+      truncate: true
     ))
   end
 end
