@@ -551,6 +551,34 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.error_count']", text: "(10 failures in a row)"
   end
 
+  test "#show should not render recent activity section when feed has no events" do
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Activity", count: 0
+  end
+
+  test "#show should render a recent posts section with the feed's posts" do
+    create(:post, feed: feed)
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Posts", count: 1
+  end
+
+  test "#show should not render recent posts section when feed has no posts" do
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Posts", count: 0
+  end
+
   test "#show should return not found for other user's feed" do
     sign_in_as(user)
     get feed_url(other_feed)

@@ -80,7 +80,7 @@ class FeedStatsComponent < ViewComponent::Base
   end
 
   def last_refresh_value
-    last_refreshed_at ? helpers.short_time_ago_tag(last_refreshed_at) : "Never"
+    last_refreshed_at ? helpers.short_time_ago_tag(last_refreshed_at) : "–"
   end
 
   def most_recent_repost_value
