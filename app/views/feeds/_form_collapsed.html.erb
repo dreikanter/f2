@@ -1,7 +1,9 @@
 <%# locals: (url: nil, prompt: nil, mode: "link", checking: false, error: nil) %>
 <%# The two creation modes (spec 005 §1) as a radio pair: the radios carry the
     mechanism choice, each panel keeps its own form, and switching is pure
-    disclosure — nothing is shared between the modes' fields.
+    disclosure — nothing is shared between the modes' fields. The action row
+    sits below the whole radio group; each mode's buttons associate with their
+    form through the `form` attribute and swap with the mode like the panels.
 
     One partial, three states (spec §7): the idle entry form; checking, which
     freezes the controls and polls for the detection outcome; and an error
@@ -37,7 +39,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "link",
                     data: { key: "entry.panel-link", mode: "link", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post do |f| %>
+          <%= form_with url: feed_identifications_path, method: :post, id: "entry-link-form" do |f| %>
             <div class="space-y-2">
               <%= f.label :url, "Source link", for: "entry-link-input", class: "block font-semibold text-heading" %>
               <%= f.text_field :url,
@@ -57,18 +59,6 @@
                 <p class="text-sm text-muted">A blog, YouTube channel, subreddit, or any site with a feed.</p>
               <% end %>
             </div>
-
-            <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-              <% if checking %>
-                <%= f.submit "Checking…", disabled: true,
-                             class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed" %>
-                <%= link_to "Cancel", feed_identifications_path(url: url), class: secondary_button_classes,
-                            data: { turbo_method: :delete, key: "entry.cancel-check" } %>
-              <% else %>
-                <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Checking…" } %>
-                <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
-              <% end %>
-            </div>
           <% end %>
         <% end %>
       </div>
@@ -83,7 +73,7 @@
 
         <%= tag.div class: "ps-7", hidden: mode != "ai",
                     data: { key: "entry.panel-ai", mode: "ai", mode_switch_target: "panel" } do %>
-          <%= form_with url: feed_identifications_path, method: :post do |f| %>
+          <%= form_with url: feed_identifications_path, method: :post, id: "entry-ai-form" do |f| %>
             <div class="space-y-2">
               <%= f.label :prompt, "What should AI follow?", for: "entry-ai-input", class: "block font-semibold text-heading" %>
               <%= f.text_area :prompt,
@@ -102,14 +92,30 @@
                 <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
               <% end %>
             </div>
-
-            <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-              <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Setting up…" } %>
-              <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
-            </div>
           <% end %>
         <% end %>
       </div>
     </div>
   </fieldset>
+
+  <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "link",
+              data: { key: "entry.actions-link", mode: "link", mode_switch_target: "panel" } do %>
+    <% if checking %>
+      <%= submit_tag "Checking…", form: "entry-link-form", disabled: true,
+                     class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed" %>
+      <%= link_to "Cancel", feed_identifications_path(url: url), class: secondary_button_classes,
+                  data: { turbo_method: :delete, key: "entry.cancel-check" } %>
+    <% else %>
+      <%= submit_tag "Continue", form: "entry-link-form", class: primary_button_classes,
+                     data: { turbo_submits_with: "Checking…" } %>
+      <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+    <% end %>
+  <% end %>
+
+  <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
+              data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
+    <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,
+                   data: { turbo_submits_with: "Setting up…" } %>
+    <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+  <% end %>
 <% end %>
