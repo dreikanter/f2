@@ -124,7 +124,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_badge(feed)
 
     assert_equal "Enabled", result.instance_variable_get(:@text)
-    assert_equal :green, result.instance_variable_get(:@color)
+    assert_equal :success, result.instance_variable_get(:@color)
   end
 
   test "#feed_status_badge should render disabled badge for disabled feed" do
@@ -132,7 +132,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_badge(feed)
 
     assert_equal "Disabled", result.instance_variable_get(:@text)
-    assert_equal :yellow, result.instance_variable_get(:@color)
+    assert_equal :warning, result.instance_variable_get(:@color)
   end
 
   test "#feed_status_badge should render draft badge for draft feed" do
@@ -140,7 +140,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_badge(feed)
 
     assert_equal "Draft", result.instance_variable_get(:@text)
-    assert_equal :gray, result.instance_variable_get(:@color)
+    assert_equal :neutral, result.instance_variable_get(:@color)
   end
 
   test "#feed_actions_menu_items should list refresh, edit, purge, and delete for an enabled feed" do
