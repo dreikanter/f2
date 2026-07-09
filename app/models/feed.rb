@@ -4,11 +4,6 @@ class Feed < ApplicationRecord
   TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
   TARGET_GROUP_MAX_LENGTH = 80
 
-  SUPPORTED_METRICS = %i[
-    posts_count
-    invalid_posts_count
-  ].freeze
-
   SCHEDULE_INTERVALS = {
     "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
     "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
@@ -301,16 +296,6 @@ class Feed < ApplicationRecord
     normalizer_class.new(feed_entry)
   end
 
-  # Returns the number of posts per day for the specified date range
-  # @param start_date [Date] start date of the range
-  # @param end_date [Date] end date of the range (inclusive)
-  # @return [Hash] hash with dates as keys and post counts as values
-  def posts_per_day(start_date, end_date)
-    posts.where(published_at: start_date.beginning_of_day..end_date.end_of_day)
-         .group("DATE(published_at)")
-         .count
-  end
-
   # Returns the date when the feed was last refreshed
   # @return [Time, nil] last refresh time or nil if never refreshed
   def last_refreshed_at
@@ -334,36 +319,6 @@ class Feed < ApplicationRecord
   # @return [Integer] number of posts published in the last week
   def posts_published_last_week_count
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
-  end
-
-  # Returns metrics for a date range, filling gaps with zeros
-  # @param start_date [Date] start date of the range
-  # @param end_date [Date] end date of the range (inclusive)
-  # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
-  # @return [Array<Hash>] array of hashes with :date and metric value
-  def metrics_for_date_range(start_date, end_date, metric: :posts_count)
-    raise ArgumentError, "Unsupported metric: #{metric}" unless SUPPORTED_METRICS.include?(metric)
-
-    sql = <<-SQL.squish
-      SELECT
-        d.date::date,
-        COALESCE(fm.#{metric}, 0) as #{metric}
-      FROM generate_series(
-        $1::date,
-        $2::date,
-        '1 day'::interval
-      ) AS d(date)
-      LEFT JOIN feed_metrics fm
-        ON fm.date = d.date::date
-        AND fm.feed_id = $3
-      ORDER BY d.date
-    SQL
-
-    ActiveRecord::Base.connection.exec_query(
-      sql,
-      "SQL",
-      [start_date.to_s, end_date.to_s, id]
-    ).to_a
   end
 
   # Resets the feed schedule to run immediately (next_run_at = now).
