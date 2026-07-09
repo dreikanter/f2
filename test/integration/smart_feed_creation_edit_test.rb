@@ -92,7 +92,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select "[data-controller='polling'][data-polling-endpoint-value*=?]", "feed_id=#{feed.id}"
+    assert_select "[data-controller*='polling'][data-polling-endpoint-value*=?]", "feed_id=#{feed.id}"
     feed.reload
     assert_equal "http://example.com/feed.xml", feed.url
     assert_equal "Renamed", feed.name

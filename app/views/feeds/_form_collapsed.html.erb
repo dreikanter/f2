@@ -1,8 +1,28 @@
-<%# locals: (url: nil, mode: "link") %>
+<%# locals: (url: nil, prompt: nil, mode: "link", checking: false, error: nil) %>
 <%# The two creation modes (spec 005 §1) as a radio pair: the radios carry the
     mechanism choice, each panel keeps its own form, and switching is pure
-    disclosure — nothing is shared between the modes' fields. %>
-<div id="feed-form" data-controller="mode-switch">
+    disclosure — nothing is shared between the modes' fields.
+
+    One partial, three states (spec §7): the idle entry form; checking, which
+    freezes the controls and polls for the detection outcome; and an error
+    re-render with the hint under the active mode's input. A non-link error
+    arrives with the AI panel pre-filled, so switching the mode radio is the
+    bridge into Mode B. %>
+<%
+  wrapper_data = { controller: "mode-switch",
+                   identification_state: checking ? "checking" : ("error" if error) }
+  if checking
+    wrapper_data.merge!(
+      controller: "mode-switch polling",
+      polling_indicate_busy_value: false,
+      polling_endpoint_value: feed_identifications_path(url: url),
+      polling_interval_value: polling_interval_ms,
+      polling_max_polls_value: polling_max_polls,
+      polling_stop_condition_value: "[data-identification-state='complete'], [data-identification-state='error']"
+    )
+  end
+%>
+<%= tag.div id: "feed-form", data: wrapper_data do %>
   <fieldset>
     <legend class="sr-only">How do you want to follow this?</legend>
 
@@ -10,6 +30,7 @@
       <div class="space-y-3">
         <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-link">
           <%= radio_button_tag "entry_mode", "link", mode == "link",
+                               disabled: checking,
                                data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
           Follow a feed or channel
         </label>
@@ -23,16 +44,30 @@
                                id: "entry-link-input",
                                value: url,
                                placeholder: "https://example.com",
-                               class: input_field_classes,
+                               class: input_field_classes(disabled: true),
                                required: true,
-                               autofocus: mode == "link",
+                               disabled: checking,
+                               autofocus: mode == "link" && !checking,
                                data: { key: "form.entry-link" } %>
-              <p class="text-sm text-muted">A blog, YouTube channel, subreddit, or any site with a feed.</p>
+              <% if checking %>
+                <p class="text-sm text-muted" role="status" data-key="entry.checking-status">Checking this feed — usually takes a few seconds.</p>
+              <% elsif error && mode == "link" %>
+                <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
+              <% else %>
+                <p class="text-sm text-muted">A blog, YouTube channel, subreddit, or any site with a feed.</p>
+              <% end %>
             </div>
 
             <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-              <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Checking…" } %>
-              <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+              <% if checking %>
+                <%= f.submit "Checking…", disabled: true,
+                             class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed" %>
+                <%= link_to "Cancel", feed_identifications_path(url: url), class: secondary_button_classes,
+                            data: { turbo_method: :delete, key: "entry.cancel-check" } %>
+              <% else %>
+                <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Checking…" } %>
+                <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+              <% end %>
             </div>
           <% end %>
         <% end %>
@@ -41,6 +76,7 @@
       <div class="space-y-3">
         <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-ai">
           <%= radio_button_tag "entry_mode", "ai", mode == "ai",
+                               disabled: checking,
                                data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
           Follow with AI
         </label>
@@ -54,12 +90,17 @@
                               id: "entry-ai-input",
                               rows: 3,
                               maxlength: 2000,
+                              value: prompt,
                               placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
                               class: input_field_classes,
                               required: true,
                               autofocus: mode == "ai",
                               data: { key: "form.entry-ai" } %>
-              <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
+              <% if error && mode == "ai" %>
+                <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
+              <% else %>
+                <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
+              <% end %>
             </div>
 
             <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
@@ -71,4 +112,4 @@
       </div>
     </div>
   </fieldset>
-</div>
+<% end %>

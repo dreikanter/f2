@@ -89,9 +89,7 @@ class FeedsController < ApplicationController
     # applied), so enable/pause/schedule bookkeeping stays in one place. Capture
     # the decision before assign_attributes moves source_input onto the new URL.
     source_change = mode_a_source_change?
-    if source_change && !source_change_confirmed?
-      return propose_source_redetection(canonical_submitted_url || submitted_source_raw)
-    end
+    return propose_source_redetection if source_change && !source_change_confirmed?
 
     @feed.assign_attributes(update_feed_params)
     # Overwrite the raw submitted URL with the canonical, verified source and its
@@ -224,21 +222,39 @@ class FeedsController < ApplicationController
   end
 
   # Persist the operational edits so they survive the async detection gap, then
-  # kick detection and paint the §7 loading state. The source itself waits for a
-  # confirmed working candidate; no state transition happens here, so a live feed
-  # keeps refreshing its verified source until the new one is confirmed.
-  def propose_source_redetection(url)
+  # kick detection and freeze the form while it polls (spec §7). The source
+  # itself waits for a confirmed working candidate; no state transition happens
+  # here, so a live feed keeps refreshing its verified source until the new one
+  # is confirmed.
+  def propose_source_redetection
     return render :edit, status: :unprocessable_entity unless @feed.update(operational_update_params)
 
-    identification = FeedIdentification.find_or_initialize_by(user: current_user, input: url)
-    identification.restart_detection!
-    FeedIdentificationJob.perform_later(current_user.id, url)
+    # A non-link never reaches detection; the engine is fixed in edit (spec §4),
+    # so there's no AI mode to bridge to — just ask for a link.
+    if canonical_submitted_url.nil?
+      return render_identification_state(
+        attempted_url: submitted_source_raw,
+        source_error: "That doesn't look like a link. Enter a feed or page URL to check it.",
+        status: :unprocessable_entity
+      )
+    end
 
+    identification = FeedIdentification.find_or_initialize_by(user: current_user, input: canonical_submitted_url)
+    identification.restart_detection!
+    FeedIdentificationJob.perform_later(current_user.id, canonical_submitted_url)
+
+    render_identification_state(attempted_url: canonical_submitted_url, checking: true)
+  end
+
+  # Re-renders the edit form in an identification state: frozen while checking,
+  # or enabled with the failure hint under the source field.
+  def render_identification_state(attempted_url:, checking: false, source_error: nil, status: :ok)
     render turbo_stream: turbo_stream.replace(
       "feed-form",
-      partial: "feeds/identification_loading",
-      locals: { url: url, feed_id: @feed.id, cancel_path: feed_path(@feed), edit_mode: true }
-    )
+      partial: "feeds/form_expanded",
+      locals: { feed: @feed, edit_mode: true, attempted_url: attempted_url,
+                checking: checking, source_error: source_error }
+    ), status: status
   end
 
   def operational_update_params

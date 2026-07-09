@@ -872,13 +872,44 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
 
     # The source isn't applied until detection confirms a working candidate; the
-    # response is the §7 loading state, and the profile/params can't be forged in.
+    # response is the §7 checking state, and the profile/params can't be forged in.
     assert_response :success
     feed.reload
     assert_equal original_url, feed.url
     assert_equal original_profile, feed.feed_profile_key
     assert_equal original_params, feed.params, "raw params jsonb must not be mass-assignable on update"
     assert_equal "Updated Name", feed.name, "operational edits still persist while detection runs"
+  end
+
+  test "#update should freeze the edit form while source re-detection runs" do
+    sign_in_as(user)
+    new_url = "https://example.com/new-feed.xml"
+
+    patch feed_url(feed), params: { feed: { params: { url: new_url } } }
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
+    assert_select "fieldset[disabled]"
+    assert_select "input[data-key='form.source-edit'][value=?]", new_url
+    assert_select "input[type=submit][value='Checking…'][disabled]"
+    assert_select "[data-controller*='polling']"
+    assert_includes response.body, "feed_id=#{feed.id}"
+  end
+
+  test "#update should re-render the edit form with a hint when the new source isn't a link" do
+    sign_in_as(user)
+    original_url = feed.url
+
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      patch feed_url(feed), params: { feed: { params: { url: "not a link" }, name: "Renamed" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "input[data-key='form.source-edit'][value=?]", "not a link"
+    assert_select "[data-key='form.source-error']", text: /look like a link/
+    feed.reload
+    assert_equal original_url, feed.url
+    assert_equal "Renamed", feed.name, "operational edits still persist on a non-link source"
   end
 
   test "#update should permit url change when feed is draft" do
