@@ -22,7 +22,7 @@ class Admin::UserEmailStatusComponent < ViewComponent::Base
   end
 
   def status_badge
-    helpers.tag.span("Deactivated", class: "inline-flex items-center rounded-md bg-warning-subtle px-2 py-1 text-xs font-medium text-warning-strong ring-1 ring-inset ring-warning/20")
+    render(BadgeComponent.new(text: "Deactivated", color: :warning))
   end
 
   def time_value(time)

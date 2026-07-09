@@ -311,15 +311,11 @@
       <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Badge</h2>
       <p class="text-body">Small status labels. Color carries meaning — green for healthy, red for problems, gray for neutral.</p>
       <div class="flex flex-wrap gap-2">
-        <%= render BadgeComponent.new(text: "Active", color: :green) %>
-        <%= render BadgeComponent.new(text: "Paused", color: :gray) %>
-        <%= render BadgeComponent.new(text: "Error", color: :red) %>
-        <%= render BadgeComponent.new(text: "Syncing", color: :blue) %>
-        <%= render BadgeComponent.new(text: "Pending", color: :yellow) %>
-        <%= render BadgeComponent.new(text: "Beta", color: :orange) %>
-        <%= render BadgeComponent.new(text: "Indigo", color: :indigo) %>
-        <%= render BadgeComponent.new(text: "Purple", color: :purple) %>
-        <%= render BadgeComponent.new(text: "Pink", color: :pink) %>
+        <%= render BadgeComponent.new(text: "Active", color: :success) %>
+        <%= render BadgeComponent.new(text: "Paused", color: :neutral) %>
+        <%= render BadgeComponent.new(text: "Error", color: :danger) %>
+        <%= render BadgeComponent.new(text: "Syncing", color: :info) %>
+        <%= render BadgeComponent.new(text: "Pending", color: :warning) %>
       </div>
     </section>
 

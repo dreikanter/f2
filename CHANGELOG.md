@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-09
+
+- Status badges now share one consistent look everywhere — softer colors with a subtle outline, the same style on feed, post, and admin pages.
+
 ## 2026-07-08
 
 - Long source URLs and UIDs on post pages no longer spill outside the page — they're neatly cropped with an ellipsis, and hovering a cropped UID shows the full value.

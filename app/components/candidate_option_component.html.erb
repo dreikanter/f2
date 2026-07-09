@@ -5,10 +5,10 @@
     <span class="flex flex-wrap items-center gap-2">
       <span class="font-semibold text-heading"><%= display_name %></span>
       <% if badge_text %>
-        <%= render BadgeComponent.new(text: badge_text, color: :green, key: "candidate.#{profile_key}.status") %>
+        <%= render BadgeComponent.new(text: badge_text, color: :success, key: "candidate.#{profile_key}.status") %>
       <% end %>
       <% if selected? %>
-        <%= render BadgeComponent.new(text: "Suggested", color: :blue, key: "candidate.suggested-badge") %>
+        <%= render BadgeComponent.new(text: "Suggested", color: :info, key: "candidate.suggested-badge") %>
       <% end %>
     </span>
     <span class="text-body text-sm"><%= description %></span>
