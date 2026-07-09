@@ -45,7 +45,7 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
       end
 
       def call(ctx, **opts)
-        @calls << opts.merge(model: ctx.model)
+        @calls << opts.merge(model: ctx.model, purpose: ctx.purpose)
         payload = opts[:output_schema] ? @structured : @gathered
         LlmClient::Result.new(payload: payload, usage_id: @calls.size)
       end
@@ -124,6 +124,20 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
 
     assert_equal [], result
     assert_equal 1, client.calls.size, "structure call must be skipped on an empty gather"
+  end
+
+  test "#load should carry the purpose option onto the call context" do
+    client = fake_client(structured: { "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client, purpose: :preview).load
+
+    assert_equal [:preview], client.calls.map { |c| c[:purpose] }
+  end
+
+  test "#load should default the call purpose to scheduled_run" do
+    client = fake_client(structured: { "items" => [] })
+    Loader::LlmLoader.new(feed, llm_client: client).load
+
+    assert_equal [:scheduled_run], client.calls.map { |c| c[:purpose] }
   end
 
   test "#load should raise when the structured payload is missing the items key" do
