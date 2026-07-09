@@ -47,7 +47,7 @@ class AiCredentialListItemComponent < ListItemComponent
   def default_badge
     return unless credential.default?
 
-    render(BadgeComponent.new(text: "Default", color: :blue, key: "ai_credential.default-badge"))
+    render(BadgeComponent.new(text: "Default", color: :info, key: "ai_credential.default-badge"))
   end
 
   def secondary_element

@@ -1,8 +1,8 @@
 class Admin::UserDetailsComponent < ViewComponent::Base
   STATUS_BADGES = {
-    "inactive" => { label: "Pending confirmation", classes: "bg-warning-subtle text-warning-strong ring-warning/20" },
-    "active" => { label: "Active", classes: "bg-success-subtle text-success-strong ring-success/20" },
-    "suspended" => { label: "Suspended", classes: "bg-danger-subtle text-danger-strong ring-danger/20" }
+    "inactive" => { label: "Pending confirmation", color: :warning },
+    "active" => { label: "Active", color: :success },
+    "suspended" => { label: "Suspended", color: :danger }
   }.freeze
 
   def initialize(user:, stats:)
@@ -29,12 +29,8 @@ class Admin::UserDetailsComponent < ViewComponent::Base
   end
 
   def status_badge
-    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, classes: "bg-surface-muted text-heading ring-muted/20" } }
-    helpers.tag.span(
-      badge[:label],
-      class: "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset #{badge[:classes]}",
-      data: { key: "user_details.status" }
-    )
+    badge = STATUS_BADGES.fetch(@user.state) { { label: @user.state.humanize, color: :neutral } }
+    render(BadgeComponent.new(text: badge[:label], color: badge[:color], key: "user_details.status"))
   end
 
   def permissions_value
