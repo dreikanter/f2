@@ -36,7 +36,7 @@
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
           <%= form.label :ai_model, "Model", class: "block font-semibold text-heading" %>
-          <%= form.select :ai_model, model_options, { include_blank: "Select a model…" },
+          <%= form.select :ai_model, model_select_options, { selected: selected_model_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
                           data: { ai_settings_target: "modelSelect", key: "form.ai-model" } %>
           <% if form.object.errors[:ai_model].any? %>

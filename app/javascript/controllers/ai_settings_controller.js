@@ -34,7 +34,9 @@ export default class extends Controller {
   }
 
   // Rebuild the model <select> from the chosen credential's models, keeping
-  // the current pick if it's still on offer.
+  // the current pick if it's still on offer. The placeholder is disabled so a
+  // pick can't be cleared by hand, but assigning value = "" below still
+  // selects it when the previous pick isn't offered by the new provider.
   refreshModels() {
     if (!this.hasModelSelectTarget || !this.hasCredentialSelectTarget) return
 
@@ -42,7 +44,7 @@ export default class extends Controller {
     const previous = this.modelSelectTarget.value
     const keep = models.some((model) => model.id === previous) ? previous : ""
 
-    const options = ['<option value="">Select a model…</option>']
+    const options = ['<option value="" disabled hidden>Select a model…</option>']
     models.forEach((model) => {
       options.push(`<option value="${this._escape(model.id)}">${this._escape(model.name)}</option>`)
     })
