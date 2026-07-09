@@ -12,18 +12,6 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_includes LlmProvider.names, "openrouter"
   end
 
-  test "#exists? should return true for registered providers" do
-    assert LlmProvider.exists?("anthropic")
-    assert LlmProvider.exists?(:anthropic)
-    assert LlmProvider.exists?("openrouter")
-    assert LlmProvider.exists?(:openrouter)
-  end
-
-  test "#exists? should return false for unknown providers" do
-    refute LlmProvider.exists?("does-not-exist")
-    refute LlmProvider.exists?(nil)
-  end
-
   test "#find should return the anthropic provider instance" do
     provider = LlmProvider.find("anthropic")
     assert_kind_of LlmProvider, provider

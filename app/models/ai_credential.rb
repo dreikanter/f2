@@ -30,8 +30,6 @@ class AiCredential < ApplicationRecord
   before_validation :assign_name_if_blank, on: :create
   before_destroy :disable_dependent_feeds
 
-  scope :for_provider, ->(provider) { where(provider: provider) }
-
   def default?
     user.default_ai_credential_id == id
   end
