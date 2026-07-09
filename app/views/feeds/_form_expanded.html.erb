@@ -1,4 +1,4 @@
-<%# locals: (edit_mode: false, feed: @feed, candidates: [], source_changed: false, profile_changed: false) %>
+<%# locals: (edit_mode: false, feed:, candidates: [], source_changed: false, profile_changed: false) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 <%# The chooser is a real choice only with two or more working candidates; one
     working candidate is shown as a read-only annotation (spec §7). In edit mode
