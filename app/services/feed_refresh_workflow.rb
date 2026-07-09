@@ -30,7 +30,7 @@ class FeedRefreshWorkflow
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(error, current_step: current_step)
     disable_credential_on_auth_error(error)
-    create_feed_refresh_error_event(error)
+    fail_refresh_event(error)
     feed.record_refresh_failure!
   end
 
@@ -55,6 +55,21 @@ class FeedRefreshWorkflow
 
   def initialize_workflow(*)
     record_started_at
+    @refresh_event = create_refresh_event
+  end
+
+  # A refresh may run for minutes, so its event is created up front and updated
+  # in place as the run finishes (see complete/fail below). Debug level keeps
+  # the in-flight record out of the user event feed; completion promotes it to
+  # a user-visible level.
+  def create_refresh_event
+    Event.create!(
+      type: "feed_refresh",
+      level: :debug,
+      subject: feed,
+      user: feed.user,
+      metadata: { status: "started", stats: stats }
+    )
   end
 
   def load_feed_contents(*)
@@ -219,7 +234,7 @@ class FeedRefreshWorkflow
     feed.reset_refresh_failures!
     record_digest_period
     Metrics.increment("feed_refresh_total", status: "ok", profile: feed.feed_profile_key)
-    create_feed_refresh_stats_event(posts)
+    complete_refresh_event(posts)
 
     # Record daily metrics (sparse data - only if there's activity)
     posts_count = posts.count { |p| p.enqueued? || p.published? }
@@ -243,17 +258,9 @@ class FeedRefreshWorkflow
     record_stats(stats_key => duration)
   end
 
-  def create_feed_refresh_stats_event(posts)
-    event = Event.create!(
-      type: "feed_refresh",
-      level: :info,
-      subject: feed,
-      user: feed.user,
-      metadata: { stats: stats }
-    )
-
-    reference_posts(event, posts)
-    event
+  def complete_refresh_event(posts)
+    @refresh_event.update!(level: :info, metadata: { status: "completed", stats: stats })
+    reference_posts(@refresh_event, posts)
   end
 
   def reference_posts(event, posts)
@@ -279,14 +286,14 @@ class FeedRefreshWorkflow
     feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
-  def create_feed_refresh_error_event(error)
-    Event.create!(
-      type: "feed_refresh_error",
+  # The started event normally exists by the time an error can surface; the
+  # create fallback covers failures in steps preceding initialize_workflow.
+  def fail_refresh_event(error)
+    attributes = {
       level: :error,
-      subject: feed,
-      user: feed.user,
       message: error.message,
       metadata: {
+        status: "failed",
         stats: stats,
         error: {
           class: error.class.name,
@@ -295,7 +302,13 @@ class FeedRefreshWorkflow
           backtrace: error.backtrace
         }
       }
-    )
+    }
+
+    if @refresh_event
+      @refresh_event.update!(attributes)
+    else
+      Event.create!(type: "feed_refresh", subject: feed, user: feed.user, **attributes)
+    end
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant

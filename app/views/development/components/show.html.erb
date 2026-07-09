@@ -539,7 +539,7 @@
           <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh", level: :info, subject: sample_feed)) %>
         <% end %>
         <%= render AlertComponent.new(variant: :error) do %>
-          <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh_error", level: :error, subject: sample_feed, message: "Connection timeout", metadata: { error: { stage: "load_feed_contents" } })) %>
+          <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh", level: :error, subject: sample_feed, message: "Connection timeout", metadata: { "status" => "failed", "error" => { "stage" => "load_feed_contents" } })) %>
         <% end %>
         <%= render AlertComponent.new(variant: :info) do %>
           <%= render EventDescriptionComponent.for(Event.new(type: "feed_refresh_skipped", level: :debug, subject: sample_feed, metadata: { period: Date.current.iso8601 })) %>

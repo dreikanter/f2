@@ -143,15 +143,15 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
 
   test "#call should include the error message for refresh errors" do
     event = Event.create!(
-      type: "feed_refresh_error",
+      type: "feed_refresh",
       level: :error,
       subject: feed,
       user: user,
       message: "Connection timeout",
-      metadata: { error: { stage: "load_feed_contents" } }
+      metadata: { status: "failed", error: { stage: "load_feed_contents" } }
     )
 
-    result = render_inline(EventDescriptionComponent.new(event: event))
+    result = render_inline(EventDescriptionComponent.for(event))
 
     assert_includes result.to_html, "Test Feed"
     assert_includes result.to_html, "couldn't refresh"
@@ -249,15 +249,15 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
   test "#call should escape HTML in error messages" do
     feed = create(:feed, user: user, name: "Test Feed")
     event = Event.create!(
-      type: "feed_refresh_error",
+      type: "feed_refresh",
       level: :error,
       subject: feed,
       user: user,
       message: "<script>alert('xss')</script>",
-      metadata: {}
+      metadata: { status: "failed" }
     )
 
-    result = render_inline(EventDescriptionComponent.new(event: event))
+    result = render_inline(EventDescriptionComponent.for(event))
 
     assert_not_includes result.to_html, "<script>"
     assert_includes result.to_html, "&lt;script&gt;"

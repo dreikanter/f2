@@ -123,9 +123,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:completed_at]
     assert workflow.stats[:total_duration] >= 0
 
-    # Verify stats event was created
+    # Verify stats event was created and promoted to a user-visible level
     events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
+    assert_equal "completed", events.first.metadata["status"]
+    assert_equal "info", events.first.level
     assert_equal 2, events.first.metadata["stats"]["new_posts"]
 
     # Verify each new post is referenced by the refresh event
@@ -337,10 +339,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:started_at]
     assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
 
-    # Verify error event was created
-    events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    # Verify the started event was updated in place with the failure
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     error_event = events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert_equal "error", error_event.level
     assert_match(/execution expired/, error_event.message)
     assert_equal "Loader::Error", error_event.metadata["error"]["class"]
@@ -366,10 +369,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, Post.where(feed: test_feed).count
 
     # Verify error event was created
-    error_events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    error_events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, error_events.count
 
     error_event = error_events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert_equal "error", error_event.level
     assert error_event.message.present?
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
@@ -433,7 +437,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Unauthorized", credential.last_error
     assert_equal "disabled", test_feed.reload.state
 
-    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh_error").count
+    failed_events = Event.where(subject: test_feed, type: "feed_refresh")
+    assert_equal 1, failed_events.count
+    assert_equal "failed", failed_events.first.metadata["status"]
     deactivated_event = Event.find_by(subject: credential, type: "ai_credential_deactivated")
     assert_not_nil deactivated_event
     assert_equal "warning", deactivated_event.level
@@ -491,9 +497,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, FeedEntry.where(feed: test_feed).count
 
     # Verify error event was created
-    events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     error_event = events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert error_event.message.present?
   end
 
@@ -529,9 +536,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal :persist_entries, workflow.stats[:failed_at_step]
 
       # Verify error event was created
-      events = Event.where(subject: test_feed, type: "feed_refresh_error")
+      events = Event.where(subject: test_feed, type: "feed_refresh")
       assert_equal 1, events.count
       error_event = events.first
+      assert_equal "failed", error_event.metadata["status"]
       assert_match(/Database error/, error_event.message)
       assert_equal "ActiveRecord::StatementInvalid", error_event.metadata["error"]["class"]
     end
@@ -572,6 +580,34 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Should still create success event
     events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
+  end
+
+  test "#execute should create a started event and complete it in place" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    empty_rss = <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Empty</title></channel></rss>
+    RSS
+
+    in_flight_event = nil
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      in_flight_event = Event.find_by(subject: test_feed, type: "feed_refresh")
+      empty_rss
+    end
+
+    test_feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(test_feed).execute }
+
+    assert_not_nil in_flight_event, "the event should exist before loading starts"
+    assert_equal "started", in_flight_event.metadata["status"]
+    assert_equal "debug", in_flight_event.level
+    assert in_flight_event.metadata["stats"]["started_at"].present?
+
+    completed_event = in_flight_event.reload
+    assert_equal "completed", completed_event.metadata["status"]
+    assert_equal "info", completed_event.level
+    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh").count
   end
 
   test "#records should create feed metrics when posts are imported" do

@@ -199,10 +199,10 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   test "#index should filter user events by type" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: user)
-    create(:event, type: "feed_refresh_error", user: user)
+    create(:event, type: "feed_auto_disabled", user: user)
     create(:event, type: "post_withdrawn", user: user)
 
-    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: %w[feed_refresh feed_refresh_error] } }
+    get events_path(format: :turbo_stream), params: { after_id: 0, filter: { type: %w[feed_refresh feed_auto_disabled] } }
 
     assert_response :success
     assert_select "[data-key='events.entry']", count: 2
