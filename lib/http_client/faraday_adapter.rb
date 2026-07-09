@@ -35,10 +35,10 @@ module HttpClient
     private
 
     def perform_request(method, url, body: nil, headers: {}, options: {})
-      validate_url = options.fetch(:validate_url, self.options[:validate_url])
-      ensure_public_url!(url, validate_url) if validate_url
+      opts = self.options.merge(options)
+      ensure_public_url!(url, opts[:validate_url]) if opts[:validate_url]
 
-      connection = build_connection(options)
+      connection = build_connection(opts)
 
       response = connection.send(method) do |request|
         request.url url
@@ -61,20 +61,18 @@ module HttpClient
       raise Error, "HTTP error: #{e.message}"
     end
 
-    def build_connection(request_options)
-      timeout = request_options.fetch(:timeout, options[:timeout])
-      follow_redirects = request_options.fetch(:follow_redirects, options[:follow_redirects])
-      max_redirects = request_options.fetch(:max_redirects, options[:max_redirects])
-      validate_url = request_options.fetch(:validate_url, options[:validate_url])
-
+    # `opts` is the merged instance + per-request options from perform_request,
+    # so the initial-URL check and the redirect guard read the same
+    # validate_url — the two halves of the SSRF defense can't diverge.
+    def build_connection(opts)
       Faraday.new do |config|
         config.request :multipart
-        config.options.timeout = timeout
-        config.options.open_timeout = timeout
+        config.options.timeout = opts[:timeout]
+        config.options.open_timeout = opts[:timeout]
 
-        if follow_redirects
-          redirect_options = { limit: max_redirects }
-          redirect_options[:callback] = redirect_guard(validate_url) if validate_url
+        if opts[:follow_redirects]
+          redirect_options = { limit: opts[:max_redirects] }
+          redirect_options[:callback] = redirect_guard(opts[:validate_url]) if opts[:validate_url]
           config.response :follow_redirects, **redirect_options
         end
 
