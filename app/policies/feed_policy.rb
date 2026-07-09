@@ -8,7 +8,7 @@ class FeedPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present?
+    authenticated?
   end
 
   def update?

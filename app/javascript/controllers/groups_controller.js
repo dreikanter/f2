@@ -1,12 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Loads the target-group selector for the chosen access token: fetches the
+// groups endpoint and lets the returned turbo-stream replace the selector
+// partial (including its server-rendered error states).
 export default class extends Controller {
-  static targets = ["select", "helpText", "tokenSelect"]
-  static values = {
-    loadingText: String,
-    defaultText: String,
-    endpoint: String
-  }
+  static targets = ["tokenSelect"]
+  static values = { endpoint: String }
 
   connect() {
     if (this.hasTokenSelectTarget && this.tokenSelectTarget.value && !this.tokenSelectTarget.disabled) {
@@ -18,98 +17,18 @@ export default class extends Controller {
     this.loadGroups(event.target.value)
   }
 
-  refreshGroups(event) {
-    event.preventDefault()
-    const tokenId = this.hasTokenSelectTarget ? this.tokenSelectTarget.value : null
-    if (tokenId) {
-      this.loadGroups(tokenId, true)
-    }
-  }
+  async loadGroups(tokenId) {
+    if (!tokenId) return
 
-  async loadGroups(tokenId, forceRefresh = false) {
-    if (!tokenId) {
-      this.showEmptyState()
-      return
-    }
-
-    // Store the current selected value to restore it after loading
-    const currentValue = this.hasSelectTarget ? this.selectTarget.value : null
-
-    this.showLoadingState()
-
-    let url = this.endpointValue.replace(':access_token_id', tokenId)
-    const params = new URLSearchParams()
-
-    if (currentValue) {
-      params.append('selected_group', currentValue)
-    }
-
-    if (forceRefresh) {
-      params.append('refresh', 'true')
-    }
-
-    if (params.toString()) {
-      url += `?${params.toString()}`
-    }
+    const url = this.endpointValue.replace(":access_token_id", tokenId)
 
     try {
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'text/vnd.turbo-stream.html',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-
+      const response = await fetch(url, { headers: { "Accept": "text/vnd.turbo-stream.html" } })
       if (response.ok) {
-        const html = await response.text()
-        Turbo.renderStreamMessage(html)
-        this.showDefaultState()
-      } else {
-        this.showErrorState()
+        Turbo.renderStreamMessage(await response.text())
       }
-    } catch (error) {
-      this.showErrorState()
-    }
-  }
-
-  showEmptyState() {
-    if (!this.hasSelectTarget) return
-
-    this.selectTarget.disabled = true
-    this.selectTarget.innerHTML = '<option value="">Choose target group…</option>'
-    if (this.hasHelpTextTarget) {
-      this.helpTextTarget.textContent = this.defaultTextValue
-      this.helpTextTarget.classList.remove('text-muted')
-    }
-  }
-
-  showLoadingState() {
-    if (!this.hasSelectTarget) return
-
-    this.selectTarget.disabled = true
-    this.selectTarget.innerHTML = '<option value="">Loading…</option>'
-    if (this.hasHelpTextTarget) {
-      this.helpTextTarget.textContent = this.loadingTextValue
-      this.helpTextTarget.classList.add('text-muted')
-    }
-  }
-
-  showDefaultState() {
-    if (!this.hasHelpTextTarget) return
-
-    this.helpTextTarget.textContent = this.defaultTextValue
-    this.helpTextTarget.classList.remove('text-muted')
-  }
-
-  showErrorState() {
-    if (!this.hasSelectTarget) return
-
-    this.selectTarget.disabled = true
-    this.selectTarget.innerHTML = '<option value="">Error loading groups</option>'
-    if (this.hasHelpTextTarget) {
-      this.helpTextTarget.textContent = "Unable to load groups. Please try again."
-      this.helpTextTarget.classList.add('text-muted')
+    } catch {
+      // Network failure: keep the current selector; a token change or reload retries.
     }
   }
 }

@@ -16,7 +16,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       input: "https://example.com/feed.xml",
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "rank" => 0, "depends_on_ai" => false, "title" => "Sample Feed" }
+        { "profile_key" => "rss", "title" => "Sample Feed" }
       ]
     )
 
@@ -24,8 +24,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
 
     assert_equal 1, identification.candidates.size
     assert_equal "rss", identification.candidates.first["profile_key"]
-    assert_equal 0, identification.candidates.first["rank"]
-    assert_equal false, identification.candidates.first["depends_on_ai"]
+    assert_equal "Sample Feed", identification.candidates.first["title"]
   end
 
   test "#invalid_processing? should be true when processing without started_at" do
@@ -143,8 +142,8 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       input: "https://example.com/article",
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "rank" => 0, "depends_on_ai" => false },
-        { "profile_key" => "llm", "rank" => 1, "depends_on_ai" => true }
+        { "profile_key" => "rss" },
+        { "profile_key" => "llm" }
       ]
     )
 

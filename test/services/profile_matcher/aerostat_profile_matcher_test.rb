@@ -5,17 +5,9 @@ class ProfileMatcher::AerostatProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::AerostatProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::AerostatProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so aerostatbg.ru URLs prefer the Aerostat profile.
     assert_equal 100, ProfileMatcher::AerostatProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::AerostatProfileMatcher.depends_on_ai
   end
 
   test "#match? should match bare aerostatbg.ru host" do

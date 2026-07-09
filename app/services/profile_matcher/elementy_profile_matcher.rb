@@ -1,6 +1,5 @@
 module ProfileMatcher
   class ElementyProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     ELEMENTY_DOMAIN = "elementy.ru"

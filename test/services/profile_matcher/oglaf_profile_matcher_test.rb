@@ -5,17 +5,9 @@ class ProfileMatcher::OglafProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::OglafProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::OglafProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so oglaf.com URLs prefer the Oglaf profile.
     assert_equal 100, ProfileMatcher::OglafProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::OglafProfileMatcher.depends_on_ai
   end
 
   test "#match? should match oglaf.com URLs" do

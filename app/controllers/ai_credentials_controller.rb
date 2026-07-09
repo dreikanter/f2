@@ -8,19 +8,19 @@ class AiCredentialsController < ApplicationController
 
   def show
     @ai_credential = find_credential
-    @feed = scoped_feed(params[:feed_id])
+    @feed = detour_feed
     authorize @ai_credential
   end
 
   def new
     @ai_credential = AiCredential.new(provider: params[:provider] || LlmProvider.names.first)
-    @feed = scoped_feed(params[:feed_id])
+    @feed = detour_feed
     authorize @ai_credential
   end
 
   def create
     @ai_credential = build_credential
-    @feed = scoped_feed(params[:feed_id])
+    @feed = detour_feed
     authorize @ai_credential
 
     if @ai_credential.save
@@ -58,10 +58,12 @@ class AiCredentialsController < ApplicationController
 
   private
 
-  def scoped_feed(feed_id)
-    return nil if feed_id.blank?
+  # The draft feed that detoured here from the feed form (feed_id round-trip),
+  # or nil when entered directly.
+  def detour_feed
+    return nil if params[:feed_id].blank?
 
-    Current.user.feeds.find_by(id: feed_id)
+    Current.user.feeds.find_by(id: params[:feed_id])
   end
 
   def updated_credential_attrs

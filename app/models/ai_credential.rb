@@ -78,7 +78,7 @@ class AiCredential < ApplicationRecord
     with_lock do
       update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
       Event.create!(type: "ai_credential_deactivated", level: :warning,
-                    subject: self, user: user, message: "")
+                    subject: self, user: user)
       feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
     end
   end

@@ -102,7 +102,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     new_url = "http://example.com/other.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     patch feed_url(feed), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
 
@@ -119,7 +119,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
                              params: { "url" => "http://example.com/feed.xml" })
     new_url = "http://example.com/other.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     patch feed_url(disabled), params: { feed: { params: { url: new_url }, feed_profile_key: "rss" }, enable_feed: "1" }
 
@@ -133,7 +133,7 @@ class SmartFeedCreationEditTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     new_url = "http://example.com/other.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "Other" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "Other" }])
 
     assert_enqueued_with(job: FeedIdentificationJob) do
       patch feed_url(feed), params: { feed: { params: { url: new_url }, feed_profile_key: "xkcd" } }

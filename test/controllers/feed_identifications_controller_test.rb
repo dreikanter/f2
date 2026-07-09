@@ -371,7 +371,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Identification session expired"
   end
 
-  test "#show should surface a single-candidate payload in the form data-candidates attribute" do
+  test "#show should render a single working candidate as a fixed feed type" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>Example</title></channel></rss>"
@@ -382,12 +382,13 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    payload = extract_candidates_payload(response.body)
-    assert_equal %w[rss], payload.map { |c| c["profile_key"] }
-    assert_equal "specific_match", payload.first["rank_reason"]
+    assert_response :success
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value=?]", "rss"
+    assert_select "input[data-key='form.feed-type-display'][value=?]", "RSS Feed"
+    assert_select "[data-key='candidates']", count: 0
   end
 
-  test "#show should surface a multi-candidate payload ranked suggested first" do
+  test "#show should render the chooser with the suggested candidate first" do
     sign_in_as(user)
     url = "https://xkcd.com/rss.xml"
     rss_body = "<?xml version=\"1.0\"?><rss><channel><title>xkcd.com</title></channel></rss>"
@@ -398,12 +399,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-    payload = extract_candidates_payload(response.body)
-    assert_equal %w[xkcd rss], payload.map { |c| c["profile_key"] }
-    assert_equal 0, payload.first["rank"]
-    assert_equal "specific_match", payload.first["rank_reason"]
+    assert_response :success
+    assert_equal ["candidate.xkcd", "candidate.rss"],
+                 css_select("label[data-key^='candidate.']").map { |node| node["data-key"] }
+    assert_select "label[data-key='candidate.xkcd'] input[type=radio][value=?][checked=checked]", "xkcd"
+    assert_select "label[data-key='candidate.xkcd'] [data-key='candidate.suggested-badge']"
   end
-
 
   test "#show should preselect the default schedule interval with no blank option" do
     sign_in_as(user)
@@ -414,7 +415,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -437,7 +438,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -458,7 +459,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -483,7 +484,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => "Example" }
       ]
     )
 
@@ -505,7 +506,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil }
       ]
     )
 
@@ -526,7 +527,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "llm", "title" => nil, "depends_on_ai" => true, "rank" => 0, "rank_reason" => "ai_fallback" }
+        { "profile_key" => "llm", "title" => nil }
       ]
     )
 
@@ -583,8 +584,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       started_at: Time.current,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2, "rank" => 0, "rank_reason" => "specific_match" },
-        { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3, "rank" => 1, "rank_reason" => "generic_match" }
+        { "profile_key" => "rss", "title" => "Example", "test_status" => "passed", "posts_found" => 2 },
+        { "profile_key" => "json_feed", "title" => "Example", "test_status" => "passed", "posts_found" => 3 }
       ]
     )
 
@@ -679,7 +680,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       input: url,
       status: :success,
       candidates: [
-        { "profile_key" => "rss", "title" => long_title, "depends_on_ai" => false, "rank" => 0, "rank_reason" => "" }
+        { "profile_key" => "rss", "title" => long_title }
       ]
     )
 
@@ -694,7 +695,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -710,7 +711,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/new.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "New" }])
+           candidates: [{ "profile_key" => "rss", "test_status" => "passed", "title" => "New" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -725,7 +726,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "https://xkcd.com/rss.xml"
     create(:feed_identification, user: user, input: new_url, status: :success, started_at: Time.current,
-           candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "rank" => 0, "depends_on_ai" => false, "title" => "xkcd" }])
+           candidates: [{ "profile_key" => "xkcd", "test_status" => "passed", "title" => "xkcd" }])
 
     get feed_identifications_path, params: { url: new_url, feed_id: feed.id },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -767,15 +768,4 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-
-  def extract_candidates_payload(body)
-    # The form swap puts data-candidates="<json>" on the wrapper. Capybara/
-    # Nokogiri would be overkill; a regex over the escaped JSON works for the
-    # contract here. The view always renders this attribute on
-    # data-identification-state="complete".
-    match = body.match(/data-candidates="(?<json>[^"]*)"/)
-    return [] unless match
-
-    JSON.parse(CGI.unescapeHTML(match[:json]))
-  end
 end

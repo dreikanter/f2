@@ -5,17 +5,9 @@ class ProfileMatcher::NextbigfutureProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::NextbigfutureProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::NextbigfutureProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so nextbigfuture.com URLs prefer the Next Big Future profile.
     assert_equal 100, ProfileMatcher::NextbigfutureProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::NextbigfutureProfileMatcher.depends_on_ai
   end
 
   test "#match? should match nextbigfuture.com URLs" do

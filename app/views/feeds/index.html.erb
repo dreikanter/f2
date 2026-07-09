@@ -27,6 +27,6 @@
 
     <%= render_pagination { |pagination| feeds_path(pagination) } %>
   <% else %>
-    <%= render "empty_state" %>
+    <%= render EmptyStateComponent.new("No feeds yet") %>
   <% end %>
 </div>

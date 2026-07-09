@@ -5,16 +5,8 @@ class ProfileMatcher::TwitterProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::TwitterProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::TwitterProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     assert_equal 100, ProfileMatcher::TwitterProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::TwitterProfileMatcher.depends_on_ai
   end
 
   test ".profile_key should be twitter" do

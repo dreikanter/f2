@@ -343,13 +343,9 @@ The seed script creates:
 
 **Expected Results:**
 - Initially (right after form expands):
-  - "Target Group" field shows as a select dropdown
-  - Field is disabled
-  - Placeholder shows "Loading groups..."
-  - Field has grayed appearance
-- After loading completes (~1-2 seconds):
-  - Field becomes enabled
-  - Placeholder changes or field becomes editable
+  - "Target Group" field shows as a disabled select dropdown with a grayed appearance
+- After the groups load (~1-2 seconds), the selector re-renders:
+  - Field becomes enabled and lists the account's groups
   - User can interact with the field
 
 **Cleanup:** Click "Cancel" button.

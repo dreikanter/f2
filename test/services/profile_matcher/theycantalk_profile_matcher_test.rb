@@ -5,16 +5,8 @@ class ProfileMatcher::TheycantalkProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::TheycantalkProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::TheycantalkProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     assert_equal 100, ProfileMatcher::TheycantalkProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::TheycantalkProfileMatcher.depends_on_ai
   end
 
   test "#match? should match theycantalk.com URLs" do

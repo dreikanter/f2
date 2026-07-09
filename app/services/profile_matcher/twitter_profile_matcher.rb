@@ -3,7 +3,6 @@ module ProfileMatcher
   # x.com/<handle> (also www/mobile subdomains). Reserved paths like /home or
   # /search are rejected so they fall through to the generic profiles.
   class TwitterProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     HOSTS = %w[twitter.com www.twitter.com mobile.twitter.com x.com www.x.com].freeze

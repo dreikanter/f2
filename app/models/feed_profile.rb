@@ -36,6 +36,27 @@ class FeedProfile
     "additionalProperties" => false
   }.freeze
 
+  # Shared parameter shape for URL-sourced profiles.
+  URL_PARAMETER_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "format" => "uri" }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
+  # Variant for profiles whose source may be a bare handle (r/name, @channel)
+  # rather than a strict URI.
+  LOOSE_URL_PARAMETER_SCHEMA = {
+    "type" => "object",
+    "properties" => {
+      "url" => { "type" => "string", "minLength" => 2 }
+    },
+    "required" => ["url"],
+    "additionalProperties" => false
+  }.freeze
+
   PROFILES = {
     "rss" => {
       display_name: "RSS Feed",
@@ -43,19 +64,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::RssProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::RssNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "json_feed" => {
       display_name: "JSON Feed",
@@ -63,19 +76,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::JsonFeedProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::JsonFeedProcessor", config: {} },
       normalizer: { class: "Normalizer::JsonFeedNormalizer", config: {} },
-      title_extractor: "TitleExtractor::JsonFeedTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::JsonFeedTitleExtractor"
     },
     "reddit" => {
       display_name: "Reddit",
@@ -83,19 +88,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::RedditProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "minLength" => 2 }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::RedditLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::RedditNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "xkcd" => {
       display_name: "XKCD",
@@ -103,19 +100,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::XkcdProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::XkcdNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "buni" => {
       display_name: "Buni Comic",
@@ -123,19 +112,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::BuniProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::BuniNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "elementy" => {
       display_name: "Elementy",
@@ -143,19 +124,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::ElementyProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::ElementyNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "melodymae" => {
       display_name: "Melody Mae",
@@ -163,19 +136,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::MelodymaeProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::MelodymaeNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "nextbigfuture" => {
       display_name: "Next Big Future",
@@ -183,19 +148,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::NextbigfutureProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::NextbigfutureNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "monkeyuser" => {
       display_name: "MonkeyUser",
@@ -203,19 +160,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::MonkeyuserProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::MonkeyuserNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "lobsters" => {
       display_name: "Lobsters",
@@ -223,19 +172,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::LobstersProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::LobstersNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "litterbox" => {
       display_name: "Litterbox Comics",
@@ -243,19 +184,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::LitterboxProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::LitterboxNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "oglaf" => {
       display_name: "Oglaf",
@@ -263,19 +196,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::OglafProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::OglafNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "pluralistic" => {
       display_name: "Pluralistic",
@@ -283,19 +208,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::PluralisticProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::PluralisticNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "smbc" => {
       display_name: "SMBC Comics",
@@ -303,19 +220,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::SmbcProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::SmbcNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "aerostat" => {
       display_name: "Aerostat",
@@ -323,19 +232,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::AerostatProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::AerostatProcessor", config: {} },
       normalizer: { class: "Normalizer::AerostatNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "theycantalk" => {
       display_name: "They Can Talk",
@@ -343,19 +244,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::TheycantalkProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::TheycantalkNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "tomorrows" => {
       display_name: "365 Tomorrows",
@@ -363,19 +256,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::TomorrowsProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
       processor: { class: "Processor::RssProcessor", config: {} },
       normalizer: { class: "Normalizer::TomorrowsNormalizer", config: {} },
-      title_extractor: "TitleExtractor::RssTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::RssTitleExtractor"
     },
     "llm" => {
       display_name: "AI",
@@ -413,8 +298,7 @@ class FeedProfile
       },
       processor: { class: "Processor::PassthroughProcessor", config: {} },
       normalizer: { class: "Normalizer::LlmNormalizer", config: {} },
-      title_extractor: nil,
-      output_schema: UNIVERSAL_OUTPUT_SCHEMA
+      title_extractor: nil
     },
     "youtube" => {
       display_name: "YouTube",
@@ -422,19 +306,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::YoutubeProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "format" => "uri" }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::YoutubeLoader", config: {} },
       processor: { class: "Processor::YoutubeProcessor", config: {} },
       normalizer: { class: "Normalizer::YoutubeNormalizer", config: {} },
-      title_extractor: "TitleExtractor::YoutubeTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::YoutubeTitleExtractor"
     },
     "telegram" => {
       display_name: "Telegram",
@@ -442,19 +318,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::TelegramProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "minLength" => 2 }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::TelegramLoader", config: {} },
       processor: { class: "Processor::TelegramProcessor", config: {} },
       normalizer: { class: "Normalizer::TelegramNormalizer", config: {} },
-      title_extractor: "TitleExtractor::TelegramTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::TelegramTitleExtractor"
     },
     "twitter" => {
       display_name: "X / Twitter",
@@ -462,19 +330,11 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::TwitterProfileMatcher",
-      parameter_schema: {
-        "type" => "object",
-        "properties" => {
-          "url" => { "type" => "string", "minLength" => 2 }
-        },
-        "required" => ["url"],
-        "additionalProperties" => false
-      },
+      parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::TwitterLoader", config: {} },
       processor: { class: "Processor::TwitterProcessor", config: {} },
       normalizer: { class: "Normalizer::TwitterNormalizer", config: {} },
-      title_extractor: "TitleExtractor::TwitterTitleExtractor",
-      output_schema: nil
+      title_extractor: "TitleExtractor::TwitterTitleExtractor"
     }
   }.freeze
 
@@ -499,17 +359,12 @@ class FeedProfile
       PROFILES[key]
     end
 
-    # Returns matcher classes whose input_shape accepts the given shape, in
-    # registration order. Pass nil/:any to get every matcher.
-    # @param input_shape [Symbol, nil] one of :url, :query, :any, nil
+    # Matcher classes for every profile that registers one, in registration
+    # order. The AI profile deliberately registers none (spec 005 §7), so it
+    # can never be detected.
     # @return [Array<Class>] matcher classes
-    def matchers_for(input_shape)
-      PROFILES.filter_map do |_key, entry|
-        next if entry[:matcher].blank?
-        next unless input_shape.nil? || input_shape == :any || entry[:input_shape] == input_shape || entry[:input_shape] == :any
-
-        entry[:matcher].constantize
-      end
+    def matchers
+      PROFILES.filter_map { |_key, entry| entry[:matcher].presence&.constantize }
     end
 
     # @param key [String] the profile key

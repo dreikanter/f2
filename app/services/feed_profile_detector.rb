@@ -1,14 +1,13 @@
 # Detects which FeedProfile candidates apply to a user's raw input,
-# returning a deterministic ranked list per
-# specs/001-smart-feed-creation/contracts/detection.md.
+# returning a deterministic list ranked by match specificity (ties broken
+# by registration order).
 #
 # Detection is pure with respect to AI: no LlmClient call may originate
 # from a matcher's #match?. The Thread.current[:llm_detection_phase]
-# flag is set for the duration of #call so LlmClient (when introduced)
-# can enforce that rule.
+# flag is set for the duration of #call so LlmClient can enforce that rule.
 class FeedProfileDetector
   DetectionResult = Data.define(:candidates)
-  DetectionCandidate = Data.define(:profile_key, :title, :depends_on_ai, :rank, :rank_reason)
+  DetectionCandidate = Data.define(:profile_key, :title)
 
   def self.call(input:, fetched_body: nil)
     new(input: input, fetched_body: fetched_body).call
@@ -37,7 +36,7 @@ class FeedProfileDetector
   attr_reader :input, :fetched_body
 
   def collect_matches
-    FeedProfile.matchers_for(:url).each_with_index.filter_map do |matcher_class, registration_index|
+    FeedProfile.matchers.each_with_index.filter_map do |matcher_class, registration_index|
       begin
         next nil unless matcher_class.new(input, fetched_body).match?
       rescue StandardError => e
@@ -48,38 +47,22 @@ class FeedProfileDetector
       {
         profile_key: matcher_class.profile_key,
         match_specificity: matcher_class.match_specificity,
-        depends_on_ai: matcher_class.depends_on_ai,
         registration_index: registration_index
       }
     end
   end
 
-  # Ranking stays AI-aware (depends_on_ai sorts last) though no registered
-  # matcher sets that flag today — the AI profile has no matcher (spec §7). It's
-  # a generic guarantee, not a live path: a deterministic AI matcher, if one were
-  # ever added, would still rank below the structured profiles.
   def rank(matches)
-    matches.sort_by do |m|
-      [m[:depends_on_ai] ? 1 : 0, -m[:match_specificity], m[:registration_index]]
-    end
+    matches.sort_by { |m| [-m[:match_specificity], m[:registration_index]] }
   end
 
   def build_candidates(ranked)
-    ranked.each_with_index.map do |match, idx|
+    ranked.map do |match|
       DetectionCandidate.new(
         profile_key: match[:profile_key],
-        title: extract_title(match[:profile_key]),
-        depends_on_ai: match[:depends_on_ai],
-        rank: idx,
-        rank_reason: rank_reason_for(match, idx)
+        title: extract_title(match[:profile_key])
       )
     end
-  end
-
-  def rank_reason_for(match, idx)
-    return :ai_fallback if match[:depends_on_ai]
-
-    idx.zero? ? :specific_match : :generic_match
   end
 
   def extract_title(profile_key)

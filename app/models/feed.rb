@@ -4,11 +4,6 @@ class Feed < ApplicationRecord
   TARGET_GROUP_PATTERN = /\A[a-z0-9_-]+\z/.freeze
   TARGET_GROUP_MAX_LENGTH = 80
 
-  SUPPORTED_METRICS = %i[
-    posts_count
-    invalid_posts_count
-  ].freeze
-
   SCHEDULE_INTERVALS = {
     "10m" => { cron: "*/10 * * * *", display: "10 minutes" },
     "20m" => { cron: "*/20 * * * *", display: "20 minutes" },
@@ -47,9 +42,6 @@ class Feed < ApplicationRecord
     disabled: 1,
     enabled: 2
   }, default: :draft
-
-  # How long a ready FeedPreview is reused before a fresh run is forced.
-  PREVIEW_FRESHNESS_WINDOW = 60.minutes
 
   # Set true by the edit controller only after a settled detection confirmed the
   # new source (spec §4). Lets `source_change_reverified` reject a Mode A source
@@ -259,7 +251,6 @@ class Feed < ApplicationRecord
       level: :warning,
       subject: self,
       user: user,
-      message: "",
       metadata: { dropped_model: from, fallback_model: to }
     )
   end
@@ -275,8 +266,7 @@ class Feed < ApplicationRecord
       type: "feed_refresh_ai_empty",
       level: :debug,
       subject: self,
-      user: user,
-      message: ""
+      user: user
     )
   end
 
@@ -299,16 +289,6 @@ class Feed < ApplicationRecord
   # @return [Normalizer::Base] normalizer instance
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
-  end
-
-  # Returns the number of posts per day for the specified date range
-  # @param start_date [Date] start date of the range
-  # @param end_date [Date] end date of the range (inclusive)
-  # @return [Hash] hash with dates as keys and post counts as values
-  def posts_per_day(start_date, end_date)
-    posts.where(published_at: start_date.beginning_of_day..end_date.end_of_day)
-         .group("DATE(published_at)")
-         .count
   end
 
   # Returns the date when the feed was last refreshed
@@ -336,62 +316,21 @@ class Feed < ApplicationRecord
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
-  # Returns metrics for a date range, filling gaps with zeros
-  # @param start_date [Date] start date of the range
-  # @param end_date [Date] end date of the range (inclusive)
-  # @param metric [Symbol] the metric to retrieve (:posts_count or :invalid_posts_count)
-  # @return [Array<Hash>] array of hashes with :date and metric value
-  def metrics_for_date_range(start_date, end_date, metric: :posts_count)
-    raise ArgumentError, "Unsupported metric: #{metric}" unless SUPPORTED_METRICS.include?(metric)
-
-    sql = <<-SQL.squish
-      SELECT
-        d.date::date,
-        COALESCE(fm.#{metric}, 0) as #{metric}
-      FROM generate_series(
-        $1::date,
-        $2::date,
-        '1 day'::interval
-      ) AS d(date)
-      LEFT JOIN feed_metrics fm
-        ON fm.date = d.date::date
-        AND fm.feed_id = $3
-      ORDER BY d.date
-    SQL
-
-    ActiveRecord::Base.connection.exec_query(
-      sql,
-      "SQL",
-      [start_date.to_s, end_date.to_s, id]
-    ).to_a
-  end
-
-  # Resets the feed schedule to run immediately (next_run_at = now).
-  # Creates a new schedule if none exists, or updates the existing one.
-  # @return [FeedSchedule]
+  # Makes the existing schedule due immediately (next_run_at = now). No-op for
+  # a feed without one — the schedule is created when the feed is enabled.
   def reset_schedule!
-    if feed_schedule.present?
-      feed_schedule.update!(next_run_at: Time.current)
-      feed_schedule
-    else
-      create_feed_schedule!(next_run_at: Time.current, last_run_at: Time.current)
-    end
+    feed_schedule&.update!(next_run_at: Time.current)
   end
 
-  # Sets next_run_at to the next cron slot without triggering an immediate run.
-  # Use when a job has already been enqueued and the schedule should not fire again right away.
-  # Creates a new schedule if none exists, or updates the existing one.
+  # Creates the schedule pointed at the next cron slot, without triggering an
+  # immediate run. Only called when a feed gains its schedule on enable
+  # (create_schedule_on_enable guards the already-scheduled case).
   # @return [FeedSchedule]
   def defer_schedule!
-    if feed_schedule.present?
-      feed_schedule.update!(next_run_at: feed_schedule.calculate_next_run_at)
-      feed_schedule
-    else
-      schedule = build_feed_schedule(last_run_at: Time.current)
-      schedule.next_run_at = schedule.calculate_next_run_at
-      schedule.save!
-      schedule
-    end
+    schedule = build_feed_schedule(last_run_at: Time.current)
+    schedule.next_run_at = schedule.calculate_next_run_at
+    schedule.save!
+    schedule
   end
 
   # Bumps the failure streak after a failed refresh and turns the feed off once
@@ -410,24 +349,9 @@ class Feed < ApplicationRecord
   # Disables just this feed (not the whole token) and logs why, so the user can
   # fix the target group and re-enable. `reason` is a deterministic code the UI
   # maps to safe copy; `details` is the raw FreeFeed response, kept for diagnostics.
-  # Mirrors disable_after_repeated_failures!.
   def disable_due_to_unavailable_target!(reason: nil, details: nil)
-    metadata = {
-      reason: reason&.to_s,
-      target_group: target_group,
-      details: details
-    }.compact
-
-    transaction do
-      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
-      Event.create!(
-        type: "feed_target_group_unavailable",
-        level: :warning,
-        subject: self,
-        user: user,
-        metadata: metadata
-      )
-    end
+    metadata = { reason: reason&.to_s, target_group: target_group, details: details }.compact
+    disable_with_event!("feed_target_group_unavailable", metadata)
   end
 
   # Clears the streak after a successful refresh.
@@ -439,23 +363,20 @@ class Feed < ApplicationRecord
 
   private
 
-  # Disables the feed and records a feed_auto_disabled event stamped with the
-  # streak length, so the activity log shows how many failures it took. Resets
-  # the counter so a re-enable starts clean. update_columns flips the state and
-  # zeroes the counter in one write, skipping validations neither needs.
+  # Records a feed_auto_disabled event stamped with the streak length, so the
+  # activity log shows how many failures it took.
   def disable_after_repeated_failures!
-    failure_count = consecutive_failures
+    disable_with_event!("feed_auto_disabled", { error_count: consecutive_failures })
+  end
 
+  # Disables the feed and records why in one transaction. update_columns flips
+  # the state and zeroes the counter in one write, skipping validations neither
+  # needs; the metadata is evaluated first, so it can read pre-disable values
+  # like the failure streak.
+  def disable_with_event!(type, metadata)
     transaction do
       update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
-      Event.create!(
-        type: "feed_auto_disabled",
-        level: :warning,
-        subject: self,
-        user: user,
-        message: "",
-        metadata: { error_count: failure_count }
-      )
+      Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
     end
   end
 

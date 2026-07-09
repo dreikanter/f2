@@ -1,7 +1,4 @@
 <%# locals: (url: nil, mode: "link") %>
-<% field_classes = "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" %>
-<% primary_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-<% cancel_button = "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
 <% active_tab = "inline-block p-4 text-brand border-b border-brand rounded-t-base" %>
 <% inactive_tab = "inline-block p-4 border-b border-transparent rounded-t-base hover:text-brand hover:border-brand" %>
 
@@ -33,7 +30,7 @@
                              id: "entry-link-input",
                              value: url,
                              placeholder: "https://example.com",
-                             class: field_classes,
+                             class: input_field_classes,
                              required: true,
                              autofocus: true,
                              data: { key: "form.entry-link" } %>
@@ -41,8 +38,8 @@
           </div>
 
           <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-            <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Checking…" } %>
-            <%= link_to "Cancel", feeds_path, class: cancel_button %>
+            <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Checking…" } %>
+            <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
           </div>
         <% end %>
       </div>
@@ -56,7 +53,7 @@
                             rows: 3,
                             maxlength: 2000,
                             placeholder: "e.g. Follow A24's blog and turn each new post into a one-line announcement",
-                            class: field_classes,
+                            class: input_field_classes,
                             required: true,
                             autofocus: true,
                             data: { key: "form.entry-ai" } %>
@@ -64,8 +61,8 @@
           </div>
 
           <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-            <%= f.submit "Continue", class: primary_button, data: { turbo_submits_with: "Setting up…" } %>
-            <%= link_to "Cancel", feeds_path, class: cancel_button %>
+            <%= f.submit "Continue", class: primary_button_classes, data: { turbo_submits_with: "Setting up…" } %>
+            <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
           </div>
         <% end %>
       </div>

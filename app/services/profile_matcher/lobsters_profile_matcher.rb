@@ -1,6 +1,5 @@
 module ProfileMatcher
   class LobstersProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     LOBSTERS_DOMAIN = "lobste.rs"

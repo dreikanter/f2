@@ -1,10 +1,6 @@
 module Sortable
   extend ActiveSupport::Concern
 
-  included do
-    helper_method :sortable_presenter if respond_to?(:helper_method)
-  end
-
   private
 
   # Builds the presenter that encapsulates available sort fields configuration

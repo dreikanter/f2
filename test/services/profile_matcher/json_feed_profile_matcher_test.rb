@@ -5,18 +5,10 @@ class ProfileMatcher::JsonFeedProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::JsonFeedProfileMatcher.new("https://example.com/feed.json", body)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::JsonFeedProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 20, above generic RSS" do
     assert_equal 20, ProfileMatcher::JsonFeedProfileMatcher.match_specificity
     assert_operator ProfileMatcher::JsonFeedProfileMatcher.match_specificity, :>,
                     ProfileMatcher::RssProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::JsonFeedProfileMatcher.depends_on_ai
   end
 
   test ".profile_key should be json_feed" do

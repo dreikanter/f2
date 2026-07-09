@@ -4,25 +4,16 @@
     working candidate is shown as a read-only annotation (spec §7). In edit mode
     it appears only after a source re-detection resolves to multiple candidates. %>
 <% show_chooser = candidates.size >= 2 %>
-<%
-  preview_source_keys =
-    if show_chooser
-      candidates.to_h { |c| [c["profile_key"], FeedProfile.source_key_for(c["profile_key"])] }
-    else
-      { feed.feed_profile_key => FeedProfile.source_key_for(feed.feed_profile_key) }
-    end
-%>
 
 <%# preview-button is mounted on the whole form so it can read the selected
     feed_profile_key (radios or hidden field) and react to candidate changes;
     the button and the modal's frame are nested targets within it. %>
 <div id="feed-form"
      data-identification-state="complete"
-     data-candidates="<%= candidates.to_json %>"
      data-controller="preview-button"
      data-preview-button-endpoint-value="<%= feed_preview_path %>"
      data-preview-button-source-value="<%= feed.source_input %>"
-     data-preview-button-source-keys-value="<%= preview_source_keys.to_json %>"
+     data-preview-button-source-keys-value="<%= preview_source_keys(feed, candidates, show_chooser: show_chooser).to_json %>"
      data-preview-button-ai-profiles-value="<%= FeedProfile.ai_profile_keys.to_json %>"
      data-preview-button-modal-id-value="feed-preview-modal">
   <%= form_with model: feed,
@@ -30,9 +21,8 @@
                 method: (edit_mode ? :patch : :post),
                 data: {
                   controller: "groups",
-                  groups_endpoint_value: edit_mode ? access_token_groups_path(":access_token_id", feed_id: feed.id) : access_token_groups_path(":access_token_id"),
-                  groups_loading_text_value: "Loading groups…",
-                  groups_default_text_value: "The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one."
+                  # feed_id is nil (and dropped from the URL) for an unpersisted feed.
+                  groups_endpoint_value: access_token_groups_path(":access_token_id", feed_id: feed.id)
                 } do |f| %>
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the entry
@@ -46,7 +36,7 @@
           §4). A deterministic feed's URL is editable when editing an existing feed
           — a change re-runs detection before saving (spec §4). %>
       <% ai_prompt_editable = FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
-      <% source_editable = edit_mode && !FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
+      <% source_editable = edit_mode && !ai_prompt_editable %>
       <div>
         <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
 
@@ -59,7 +49,7 @@
                                 rows: 3,
                                 maxlength: 2000,
                                 required: true,
-                                class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                                class: input_field_classes,
                                 data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.ai-prompt" } %>
               <% if edit_mode && !feed.draft? %>
                 <p class="text-sm text-muted" data-key="form.prompt-backfill-note">Reworking the prompt may pull in some older posts you haven't seen yet. To hold those back, switch on “Skip older posts” below.</p>
@@ -73,7 +63,7 @@
               <%= text_field_tag "feed[params][url]", feed.source_input,
                                  id: "feed_params_url",
                                  required: true,
-                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                                 class: input_field_classes,
                                  data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.source-edit" } %>
               <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
             </div>
@@ -83,7 +73,7 @@
               <%= f.text_field :url_display,
                                value: feed.source_input,
                                disabled: true,
-                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
+                               class: input_field_classes(disabled: true),
                                aria: { label: "#{source_label} (cannot be changed)" },
                                data: { key: "form.source-display" } %>
               <% feed.params&.each do |key, value| %>
@@ -103,7 +93,7 @@
                 <%= f.text_field :feed_type_display,
                                  value: candidate_summary(feed.feed_profile_key, feed.source_input),
                                  disabled: true,
-                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed",
+                                 class: input_field_classes(disabled: true),
                                  aria: { label: "Feed type" },
                                  data: { key: "form.feed-type-display" } %>
               </div>
@@ -125,17 +115,15 @@
         <%# Duplicate-risk warning for a pending source/profile change (spec §4).
             A profile change reworks how posts are identified, so it's the louder
             warning and turns the "skip older posts" threshold on by default. %>
-        <% if source_changed %>
-          <% if profile_changed %>
-            <%= render AlertComponent.new(variant: :warning, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
-              <p class="font-semibold">This changes how posts are identified</p>
-              <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back — pick a start date that suits you. It can't promise zero repeats.</p>
-            <% end %>
-          <% else %>
-            <%= render AlertComponent.new(variant: :info, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
-              <p class="font-semibold">Heads up: you're pointing this feed somewhere new</p>
-              <p class="text-sm">If the same posts live at new addresses there, they might arrive again. To skip ones you've already seen, switch on “Skip older posts” below.</p>
-            <% end %>
+        <% if source_changed && profile_changed %>
+          <%= render AlertComponent.new(variant: :warning, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
+            <p class="font-semibold">This changes how posts are identified</p>
+            <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back — pick a start date that suits you. It can't promise zero repeats.</p>
+          <% end %>
+        <% elsif source_changed %>
+          <%= render AlertComponent.new(variant: :info, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
+            <p class="font-semibold">Heads up: you're pointing this feed somewhere new</p>
+            <p class="text-sm">If the same posts live at new addresses there, they might arrive again. To skip ones you've already seen, switch on “Skip older posts” below.</p>
           <% end %>
         <% end %>
       </div>
@@ -145,7 +133,7 @@
         <%= f.text_field :name,
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
-                         class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                         class: input_field_classes,
                          data: { key: "form.name" } %>
         <% if f.object.errors[:name].any? %>
           <p class="text-sm text-danger"><%= f.object.errors[:name].to_sentence.capitalize %></p>
@@ -205,7 +193,7 @@
                              ),
                              {},
                              {
-                               class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 pb-2",
+                               class: "#{input_field_classes} pb-2",
                                data: {
                                  action: "change->groups#refresh",
                                  groups_target: "tokenSelect"
@@ -231,7 +219,7 @@
               <%= f.select :schedule_interval,
                            Feed.schedule_intervals_for_select,
                            { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
-                           { class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2" } %>
+                           { class: input_field_classes } %>
               <% if f.object.errors[:cron_expression].any? %>
                 <p class="text-sm text-danger"><%= f.object.errors[:cron_expression].first %></p>
               <% end %>
@@ -243,11 +231,14 @@
       <div class="mt-6">
         <h2 class="text-xl font-semibold text-heading mb-4">Advanced options</h2>
 
+        <%# A profile change defaults the threshold on (spec §4); checkbox and
+            panel visibility must agree. %>
+        <% import_after_on = feed.import_after_enabled || profile_changed %>
         <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
           <div class="flex items-start">
             <div class="flex h-6 items-center">
               <%= f.check_box :import_after_enabled,
-                              checked: feed.import_after_enabled || profile_changed,
+                              checked: import_after_on,
                               data: {
                                 field_toggle_target: "checkbox",
                                 action: "change->field-toggle#toggle",
@@ -263,7 +254,7 @@
           <%# mt-6 lives on the toggled panel (not a wrapper space-y) so the gap
               only appears when the fields are shown — a hidden element renders
               no margin. %>
-          <div class="mt-6 space-y-2 <%= "hidden" unless feed.import_after_enabled || profile_changed %>"
+          <div class="mt-6 space-y-2 <%= "hidden" unless import_after_on %>"
                data-field-toggle-target="panel"
                data-key="form.import-after-fields">
             <div class="grid gap-4 sm:grid-cols-2">
@@ -277,7 +268,7 @@
                                  value: feed.import_after_date || (Date.current.iso8601 if profile_changed),
                                  placeholder: "Pick a date",
                                  autocomplete: "off",
-                                 class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                                 class: input_field_classes(icon_padding: true),
                                  aria: { label: "Import posts published after this date" },
                                  data: {
                                    controller: "datepicker",
@@ -299,7 +290,7 @@
                                  placeholder: "HH:MM",
                                  pattern: "([01][0-9]|2[0-3]):[0-5][0-9]",
                                  maxlength: 5,
-                                 class: "w-full rounded-md border border-border-strong bg-surface py-2 ps-10 pe-3 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2",
+                                 class: input_field_classes(icon_padding: true),
                                  aria: { label: "Import posts published after this time (24-hour HH:MM, UTC)" },
                                  data: {
                                    field_toggle_target: "input",
@@ -341,9 +332,8 @@
     </div>
 
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-      <%= f.submit "Save feed",
-                   class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
-      <%= link_to "Cancel", feeds_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1" %>
+      <%= f.submit "Save feed", class: primary_button_classes %>
+      <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
     </div>
   <% end %>
 </div>

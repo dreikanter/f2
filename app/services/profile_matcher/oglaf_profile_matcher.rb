@@ -1,6 +1,5 @@
 module ProfileMatcher
   class OglafProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     OGLAF_DOMAIN = "oglaf.com"

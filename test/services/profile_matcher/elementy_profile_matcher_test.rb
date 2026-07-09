@@ -5,16 +5,8 @@ class ProfileMatcher::ElementyProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::ElementyProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::ElementyProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     assert_equal 100, ProfileMatcher::ElementyProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::ElementyProfileMatcher.depends_on_ai
   end
 
   test "#match? should match bare elementy.ru URLs" do

@@ -69,7 +69,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -95,7 +95,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -113,7 +113,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -131,7 +131,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -154,7 +154,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -177,7 +177,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -199,7 +199,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -223,7 +223,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       # feed_profile_key missing (required in every state, draft envelope)
       access_token_id: access_token.id,
@@ -243,7 +243,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -268,7 +268,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -291,7 +291,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Feed.count", 1) do
       post feeds_path, params: {
         feed: {
-          url: "http://example.com/feed.xml",
+          params: { url: "http://example.com/feed.xml" },
           name: "Test Feed",
           feed_profile_key: "rss",
           target_group: "testgroup",
@@ -312,7 +312,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Feed.count", 1) do
       post feeds_path, params: {
         feed: {
-          url: "http://example.com/feed.xml",
+          params: { url: "http://example.com/feed.xml" },
           name: "Test Feed",
           feed_profile_key: "rss",
           target_group: "testgroup",
@@ -333,7 +333,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -358,7 +358,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -383,7 +383,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     feed_params = {
-      url: "invalid-url",
+      params: { url: "invalid-url" },
       name: "",
       feed_profile_key: "rss"
     }
@@ -401,7 +401,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -748,7 +748,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -790,7 +790,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     access_token
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "Test Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -1019,7 +1019,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
 
     feed_params = {
-      url: "http://example.com/feed.xml",
+      params: { url: "http://example.com/feed.xml" },
       name: "New Feed",
       feed_profile_key: "rss",
       access_token_id: access_token.id,
@@ -1080,7 +1080,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     post feeds_path, params: {
       feed: {
-        url: "http://example.com/feed.xml",
+        params: { url: "http://example.com/feed.xml" },
         name: "Test Feed",
         feed_profile_key: "rss",
         access_token_id: access_token.id,

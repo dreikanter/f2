@@ -14,8 +14,6 @@ class FeedIdentification < ApplicationRecord
   # same way; the caller enqueues FeedIdentificationJob.
   def restart_detection!
     update!(status: :processing, started_at: Time.current, candidates: [], error: nil)
-  rescue ActiveRecord::RecordNotUnique
-    reload
   end
 
   # The candidate the chooser preselects and the new-feed form is built from: the

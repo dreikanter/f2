@@ -7,13 +7,12 @@ module Pagination
 
   private
 
-  def paginate_scope(scope = nil)
-    scope ||= pagination_scope
-    scope.limit(pagination_per_page).offset(pagination_offset)
+  def paginate_scope
+    pagination_scope.limit(pagination_per_page).offset(pagination_offset)
   end
 
-  def pagination_offset(page = pagination_current_page)
-    (page - 1) * pagination_per_page
+  def pagination_offset
+    (pagination_current_page - 1) * pagination_per_page
   end
 
   def pagination_current_page

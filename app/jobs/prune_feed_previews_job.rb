@@ -1,5 +1,5 @@
 # Removes stale preview rows. Ready previews are only reused within
-# Feed::PREVIEW_FRESHNESS_WINDOW, so anything older than RETENTION is safe to drop.
+# FeedPreview::PREVIEW_FRESHNESS_WINDOW, so anything older than RETENTION is safe to drop.
 class PruneFeedPreviewsJob < ApplicationJob
   queue_as :default
 

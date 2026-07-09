@@ -1,6 +1,5 @@
 module ProfileMatcher
   class SmbcProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     HOSTS = %w[smbc-comics.com www.smbc-comics.com].freeze

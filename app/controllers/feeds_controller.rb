@@ -3,37 +3,7 @@ class FeedsController < ApplicationController
   include Sortable
   include FeedStateEvents
   include StatePolling
-
-  MAX_RECENT_POSTS = 5
-  MAX_RECENT_EVENTS = 10
-
-  SORTABLE_FIELDS = {
-    name: {
-      title: "Name",
-      order_by: "LOWER(feeds.name)",
-      direction: :asc
-    },
-    status: {
-      title: "Status",
-      order_by: "CASE feeds.state WHEN #{Feed.states[:draft]} THEN 0 WHEN #{Feed.states[:enabled]} THEN 1 ELSE 2 END",
-      direction: :asc
-    },
-    target_group: {
-      title: "Target Group",
-      order_by: "LOWER(feeds.target_group)",
-      direction: :asc
-    },
-    last_refresh: {
-      title: "Last Refresh",
-      order_by: "(SELECT MAX(created_at) FROM feed_entries WHERE feed_entries.feed_id = feeds.id)",
-      direction: :desc
-    },
-    recent_post: {
-      title: "Recent Post",
-      order_by: "(SELECT MAX(published_at) FROM posts WHERE posts.feed_id = feeds.id)",
-      direction: :desc
-    }
-  }.freeze
+  include FeedListing
 
   # Operational fields, editable on any feed.
   ALWAYS_PERMITTED_PARAMS = %i[
@@ -53,7 +23,6 @@ class FeedsController < ApplicationController
   # Source-side fields, editable only while a feed is a draft (FR-007/008);
   # once it first leaves :draft they lock in for good.
   DRAFT_ONLY_PERMITTED_PARAMS = [
-    :url,
     :feed_profile_key,
     { params: %i[url prompt] }
   ].freeze
@@ -78,7 +47,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     if @feed.save
-      cleanup_feed_identification(@feed.source_input) if @feed.source_input
+      cleanup_feed_identification(@feed.source_input)
 
       if (gate_path = setup_gate_path(@feed))
         redirect_to gate_path
@@ -131,21 +100,22 @@ class FeedsController < ApplicationController
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).
-    @feed.state = :disabled if @feed.enabled? && !enable_feed? && setup_gate_path(@feed).nil?
+    gate_path = setup_gate_path(@feed)
+    @feed.state = :disabled if @feed.enabled? && !enable_feed? && gate_path.nil?
 
     if @feed.save
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression?
       record_feed_disabled(@feed) if @feed.saved_change_to_state? && @feed.disabled?
-      cleanup_feed_identification(@feed.source_input) if @feed.source_input
+      cleanup_feed_identification(@feed.source_input)
 
-      if (gate_path = setup_gate_path(@feed))
+      if gate_path
         redirect_to gate_path
       elsif enable_feed? && !@feed.enabled?
         promote_and_redirect(@feed, interval_changed)
       else
-        @feed.reset_schedule! if interval_changed && @feed.feed_schedule.present?
+        @feed.reset_schedule! if interval_changed
         redirect_to feed_path(@feed), success: update_message_for(@feed)
       end
     else
@@ -169,14 +139,6 @@ class FeedsController < ApplicationController
     params[:mode] == "ai" ? "ai" : "link"
   end
 
-  def require_ai_credentials?
-    params[:commit] == "save_as_draft_and_add_credentials"
-  end
-
-  def require_access_token?
-    params[:commit] == "save_as_draft_and_add_token"
-  end
-
   def enable_feed?
     params[:enable_feed] == "1"
   end
@@ -184,10 +146,9 @@ class FeedsController < ApplicationController
   # The user clicked one of the "save draft and set up …" buttons: detour to
   # that setup page instead of finishing on the feed.
   def setup_gate_path(feed)
-    if require_ai_credentials?
-      new_ai_credential_path(feed_id: feed.id)
-    elsif require_access_token?
-      new_access_token_path(feed_id: feed.id)
+    case params[:commit]
+    when "save_as_draft_and_add_credentials" then new_ai_credential_path(feed_id: feed.id)
+    when "save_as_draft_and_add_token" then new_access_token_path(feed_id: feed.id)
     end
   end
 
@@ -206,7 +167,7 @@ class FeedsController < ApplicationController
     feed.transaction do
       if feed.enable
         record_feed_enabled(feed)
-        feed.reset_schedule! if interval_changed && feed.feed_schedule.present?
+        feed.reset_schedule! if interval_changed
       end
     end
 
@@ -231,6 +192,10 @@ class FeedsController < ApplicationController
     @submitted_source_raw ||= params.dig(:feed, :params, :url).to_s.strip
   end
 
+  def submitted_profile_key
+    params.dig(:feed, :feed_profile_key)
+  end
+
   def canonical_submitted_url
     return @canonical_submitted_url if defined?(@canonical_submitted_url)
 
@@ -249,12 +214,12 @@ class FeedsController < ApplicationController
 
   def source_change_confirmed?
     fi = settled_working_identification
-    fi.present? && fi.working_candidate_profile_keys.include?(params.dig(:feed, :feed_profile_key))
+    fi.present? && fi.working_candidate_profile_keys.include?(submitted_profile_key)
   end
 
   def apply_confirmed_source
     @feed.url = canonical_submitted_url
-    @feed.feed_profile_key = params.dig(:feed, :feed_profile_key)
+    @feed.feed_profile_key = submitted_profile_key
     @feed.source_verified = true
   end
 
@@ -284,21 +249,8 @@ class FeedsController < ApplicationController
     current_user.feeds
   end
 
-  def sortable_fields
-    SORTABLE_FIELDS
-  end
-
   def sortable_path(sort_params)
     feeds_path(sort_params)
-  end
-
-  def recent_posts(feed)
-    feed
-      .posts
-      .includes(:feed_entry)
-      .preload(feed: :access_token)
-      .order(published_at: :desc)
-      .limit(MAX_RECENT_POSTS)
   end
 
   def recent_events(feed)
@@ -323,24 +275,26 @@ class FeedsController < ApplicationController
   end
 
   def permitted_keys
-    if @feed&.draft?
+    if @feed.draft?
       ALWAYS_PERMITTED_PARAMS + DRAFT_ONLY_PERMITTED_PARAMS
-    elsif @feed && !FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+    elsif FeedProfile.depends_on_ai?(@feed.feed_profile_key)
+      # A live AI feed's prompt stays editable (spec §4): the uid scheme is
+      # unchanged, so a prompt edit carries no duplicate risk (just possible
+      # backfill). The url isn't accepted here — an AI feed's source is its prompt.
+      ALWAYS_PERMITTED_PARAMS + [{ params: [:prompt] }]
+    else
       # A live deterministic feed can move its source, but only through detection
       # (spec §4). The URL rides operational params; the re-detected profile is
       # applied explicitly by the confirm path (from a verified chooser pick), so
       # feed_profile_key stays out of the mass-assignable set here — an unverified
       # profile switch can't leak in.
       ALWAYS_PERMITTED_PARAMS + [{ params: [:url] }]
-    else
-      # A live AI feed's prompt stays editable (spec §4): the uid scheme is
-      # unchanged, so a prompt edit carries no duplicate risk (just possible
-      # backfill). The url isn't accepted here — an AI feed's source is its prompt.
-      ALWAYS_PERMITTED_PARAMS + [{ params: [:prompt] }]
     end
   end
 
   def cleanup_feed_identification(input)
+    return if input.blank?
+
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 

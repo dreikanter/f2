@@ -8,19 +8,19 @@ class AccessTokensController < ApplicationController
 
   def show
     @access_token = find_access_token
-    @feed = load_feed
+    @feed = detour_feed
     authorize @access_token
   end
 
   def new
     @access_token = AccessToken.new
-    @feed = load_feed
+    @feed = detour_feed
     authorize @access_token
   end
 
   def create
-    @access_token = build_acces_token
-    @feed = load_feed
+    @access_token = build_access_token
+    @feed = detour_feed
     authorize @access_token
 
     unless valid_host?(@access_token.host)
@@ -67,13 +67,15 @@ class AccessTokensController < ApplicationController
 
   private
 
-  def load_feed
+  # The draft feed that detoured here from the feed form (feed_id round-trip),
+  # or nil when entered directly.
+  def detour_feed
     return nil if params[:feed_id].blank?
 
     Current.user.feeds.find_by(id: params[:feed_id])
   end
 
-  def build_acces_token
+  def build_access_token
     Current.user.access_tokens.build(**access_token_params, encrypted_token: access_token_params[:token])
   end
 

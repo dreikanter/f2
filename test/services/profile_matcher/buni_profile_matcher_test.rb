@@ -5,17 +5,9 @@ class ProfileMatcher::BuniProfileMatcherTest < ActiveSupport::TestCase
     ProfileMatcher::BuniProfileMatcher.new(url)
   end
 
-  test ".input_shape should be :url" do
-    assert_equal :url, ProfileMatcher::BuniProfileMatcher.input_shape
-  end
-
   test ".match_specificity should be 100" do
     # Higher than RSS (10) so bunicomic.com URLs prefer the Buni profile.
     assert_equal 100, ProfileMatcher::BuniProfileMatcher.match_specificity
-  end
-
-  test ".depends_on_ai should be false" do
-    assert_equal false, ProfileMatcher::BuniProfileMatcher.depends_on_ai
   end
 
   test "#match? should match bunicomic.com URLs" do

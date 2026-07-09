@@ -249,7 +249,6 @@ class FeedRefreshWorkflow
       level: :info,
       subject: feed,
       user: feed.user,
-      message: "",
       metadata: { stats: stats }
     )
 
@@ -323,7 +322,6 @@ class FeedRefreshWorkflow
       level: :debug,
       subject: feed,
       user: feed.user,
-      message: "",
       metadata: { period: period.iso8601 }
     )
 

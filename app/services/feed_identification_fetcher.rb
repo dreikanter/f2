@@ -8,15 +8,7 @@ class FeedIdentificationFetcher
   class UnreachableError < FetchError; end    # no answer: DNS, refused, or timeout
   class RedirectLimitError < FetchError; end  # followed too many redirects
 
-  # Reachable, but answered non-2xx. Carries the status for the log.
-  class ResponseStatusError < FetchError
-    attr_reader :status
-
-    def initialize(status)
-      @status = status
-      super("HTTP #{status}")
-    end
-  end
+  class ResponseStatusError < FetchError; end # reachable, but answered non-2xx
 
   def initialize(user:, input:, logger: Rails.logger)
     @user = user
@@ -71,7 +63,7 @@ class FeedIdentificationFetcher
     raise FetchError, "blocked non-public URL" unless PublicUrl.safe?(@input)
 
     response = http_client.get(@input)
-    raise ResponseStatusError.new(response.status) unless response.success?
+    raise ResponseStatusError, "HTTP #{response.status}" unless response.success?
 
     response.body
   rescue HttpClient::TooManyRedirectsError => e
@@ -100,15 +92,14 @@ class FeedIdentificationFetcher
     end
   end
 
-  # Serialize each candidate with its self-test verdict. Non-AI candidates run
-  # the real pipeline; AI candidates are never tested (detection stays LLM-free).
+  # Serialize each candidate with its self-test verdict from running the real
+  # pipeline. Only deterministic profiles can appear here — the AI profile
+  # registers no matcher — so detection stays LLM-free.
   def tested_candidates(candidates)
     candidates.map { |candidate| candidate.as_json.merge(test_result(candidate)) }
   end
 
   def test_result(candidate)
-    return { "test_status" => "not_tested" } if candidate.depends_on_ai
-
     result = CandidateTester.new(
       user: @user,
       input: @input,
@@ -118,7 +109,6 @@ class FeedIdentificationFetcher
 
     {
       "test_status" => result.status.to_s,
-      "tested_at" => Time.current.iso8601,
       "posts_found" => result.posts_found
     }
   end

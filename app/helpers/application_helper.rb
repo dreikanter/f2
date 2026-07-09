@@ -15,6 +15,31 @@ module ApplicationHelper
     truncate(content.strip, length: length, omission: "…")
   end
 
+  # Shared Tailwind class strings for form controls, so a focus-ring or
+  # padding change doesn't mean a many-file find-and-replace. Some older
+  # markup still carries inline copies and is migrated as it's touched
+  # (same posture as the color-token migration).
+  def input_field_classes(disabled: false, icon_padding: false)
+    padding = icon_padding ? "py-2 ps-10 pe-3" : "px-3 py-2"
+    classes = "w-full rounded-md border border-border-strong bg-surface #{padding} text-lg leading-normal " \
+              "shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2"
+    return classes unless disabled
+
+    "#{classes} disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed"
+  end
+
+  def primary_button_classes
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base " \
+      "font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none " \
+      "focus:ring-2 focus:ring-ring focus:ring-offset-1"
+  end
+
+  def secondary_button_classes
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface " \
+      "px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted " \
+      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+  end
+
   # Decorative separator between card footer items. Hidden from assistive tech
   # so the items read as distinct entries rather than "dot".
   def middot

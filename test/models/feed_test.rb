@@ -456,120 +456,6 @@ class FeedTest < ActiveSupport::TestCase
     assert_instance_of Normalizer::RssNormalizer, normalizer
   end
 
-  test "#posts_per_day returns empty hash when no posts exist" do
-    feed = create(:feed)
-    start_date = Date.current
-    end_date = Date.current
-
-    result = feed.posts_per_day(start_date, end_date)
-
-    assert_equal({}, result)
-  end
-
-  test "#posts_per_day returns correct counts for posts within date range" do
-    feed = create(:feed)
-
-    travel_to Date.current.beginning_of_day do
-      create(:post, feed: feed, published_at: Date.current.beginning_of_day + 2.hours)
-      create(:post, feed: feed, published_at: Date.current.beginning_of_day + 4.hours)
-      create(:post, feed: feed, published_at: 1.day.from_now.beginning_of_day + 1.hour)
-      create(:post, feed: feed, published_at: 2.days.from_now.beginning_of_day + 3.hours)
-
-      # Post outside the range
-      create(:post, feed: feed, published_at: 5.days.from_now.beginning_of_day)
-
-      result = feed.posts_per_day(Date.current, 2.days.from_now)
-
-      assert_equal 3, result.keys.length
-      assert_equal 2, result[Date.current]
-      assert_equal 1, result[1.day.from_now.to_date]
-      assert_equal 1, result[2.days.from_now.to_date]
-      assert_nil result[5.days.from_now.to_date]
-    end
-  end
-
-  test "#posts_per_day excludes posts from other feeds" do
-    feed1 = create(:feed)
-    feed2 = create(:feed)
-
-    travel_to Date.current.beginning_of_day do
-      create(:post, feed: feed1, published_at: Date.current.beginning_of_day + 1.hour)
-      create(:post, feed: feed2, published_at: Date.current.beginning_of_day + 2.hours)
-
-      result = feed1.posts_per_day(Date.current, Date.current)
-
-      assert_equal 1, result[Date.current]
-    end
-  end
-
-  test "#posts_per_day handles posts at day boundaries correctly" do
-    feed = create(:feed)
-
-    travel_to Date.current.beginning_of_day do
-      create(:post, feed: feed, published_at: Date.current.beginning_of_day)
-      create(:post, feed: feed, published_at: Date.current.end_of_day)
-
-      result = feed.posts_per_day(Date.current, Date.current)
-
-      assert_equal 2, result[Date.current]
-    end
-  end
-
-  test "#metrics_for_date_range returns metrics with gaps filled" do
-    feed = create(:feed)
-    create(:feed_metric, feed: feed, date: 3.days.ago.to_date, posts_count: 5)
-    create(:feed_metric, feed: feed, date: 1.day.ago.to_date, posts_count: 3)
-
-    result = feed.metrics_for_date_range(3.days.ago.to_date, Date.current)
-
-    assert_equal 4, result.length
-    assert_equal 5, result[0]["posts_count"]
-    assert_equal 0, result[1]["posts_count"]
-    assert_equal 3, result[2]["posts_count"]
-    assert_equal 0, result[3]["posts_count"]
-  end
-
-  test "#metrics_for_date_range accepts valid metric parameter" do
-    feed = create(:feed)
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5, invalid_posts_count: 2)
-
-    result = feed.metrics_for_date_range(Date.current, Date.current, metric: :invalid_posts_count)
-
-    assert_equal 1, result.length
-    assert_equal 2, result[0]["invalid_posts_count"]
-  end
-
-  test "#metrics_for_date_range raises error for invalid metric" do
-    feed = create(:feed)
-
-    error = assert_raises(ArgumentError) do
-      feed.metrics_for_date_range(Date.current, Date.current, metric: "malicious_column")
-    end
-  end
-
-  test "#metrics_for_date_range prevents SQL injection via metric parameter" do
-    feed = create(:feed)
-
-    error = assert_raises(ArgumentError) do
-      feed.metrics_for_date_range(
-        Date.current,
-        Date.current,
-        metric: "posts_count; DROP TABLE feed_metrics--"
-      )
-    end
-  end
-
-  test "#metrics_for_date_range safely handles date parameters" do
-    feed = create(:feed)
-    create(:feed_metric, feed: feed, date: Date.current, posts_count: 5)
-
-    # These should not cause SQL injection even with quotes
-    result = feed.metrics_for_date_range(Date.current, Date.current)
-
-    assert_equal 1, result.length
-    assert_equal 5, result[0]["posts_count"]
-  end
-
   test ".schedule_intervals_for_select should return array of display names and keys" do
     result = Feed.schedule_intervals_for_select
 
@@ -1179,33 +1065,27 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal 0, feed.reload.consecutive_failures
   end
 
-  test "#reset_schedule! should create a schedule with next_run_at = now when none exists" do
-    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
-    feed.feed_schedule&.destroy
-    feed.reload
-
-    freeze_time do
-      schedule = feed.reset_schedule!
-
-      assert_not_nil schedule
-      assert_equal Time.current, schedule.next_run_at
-      assert_equal Time.current, schedule.last_run_at
-    end
-  end
-
-  test "#reset_schedule! should update next_run_at to now when schedule already exists" do
+  test "#reset_schedule! should update next_run_at to now on the existing schedule" do
     feed = create(:feed, :enabled, cron_expression: "0 * * * *")
     existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: 1.hour.from_now)
 
     freeze_time do
-      returned = feed.reset_schedule!
+      feed.reset_schedule!
 
-      assert_equal existing_schedule.id, returned.id
-      assert_equal Time.current, returned.reload.next_run_at
+      assert_equal Time.current, existing_schedule.reload.next_run_at
     end
   end
 
-  test "#defer_schedule! should create a schedule with next_run_at in the future when none exists" do
+  test "#reset_schedule! should be a no-op when no schedule exists" do
+    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
+    feed.feed_schedule&.destroy
+    feed.reload
+
+    assert_nil feed.reset_schedule!
+    assert_nil feed.reload.feed_schedule
+  end
+
+  test "#defer_schedule! should create a schedule with next_run_at in the future" do
     feed = create(:feed, :enabled, cron_expression: "0 * * * *")
     feed.feed_schedule&.destroy
     feed.reload
@@ -1216,18 +1096,6 @@ class FeedTest < ActiveSupport::TestCase
       assert_not_nil schedule
       assert_operator schedule.next_run_at, :>, Time.current
       assert_not_nil schedule.last_run_at
-    end
-  end
-
-  test "#defer_schedule! should update next_run_at to the future when schedule already exists" do
-    feed = create(:feed, :enabled, cron_expression: "0 * * * *")
-    existing_schedule = feed.feed_schedule || create(:feed_schedule, feed: feed, next_run_at: Time.current)
-
-    freeze_time do
-      returned = feed.defer_schedule!
-
-      assert_equal existing_schedule.id, returned.id
-      assert_operator returned.reload.next_run_at, :>, Time.current
     end
   end
 end

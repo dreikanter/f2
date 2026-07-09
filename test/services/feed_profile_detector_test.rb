@@ -26,11 +26,6 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
   test ".call should detect a generic RSS feed" do
     result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
     assert_equal ["rss"], result.candidates.map(&:profile_key)
-
-    rss = result.candidates.first
-    assert_equal 0, rss.rank
-    assert_equal false, rss.depends_on_ai
-    assert_equal :specific_match, rss.rank_reason
   end
 
   test ".call should rank json_feed above rss when a JSON feed contains XML-like markup" do
@@ -53,32 +48,13 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
 
     profile_keys = result.candidates.map(&:profile_key)
     assert_equal %w[xkcd rss], profile_keys, "xkcd (100) > rss (10)"
-
-    xkcd, rss = result.candidates
-    assert_equal 0, xkcd.rank
-    assert_equal 1, rss.rank
-    assert_equal :specific_match, xkcd.rank_reason
-    assert_equal :generic_match, rss.rank_reason
-  end
-
-  test ".call should place AI-backed candidates after non-AI candidates" do
-    matchers = [ProfileMatcher::RssProfileMatcher, ai_matcher_class(specificity: 1000)]
-
-    FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
-      result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
-
-      assert_equal "rss", result.candidates.first.profile_key, "non-AI ranks above AI even when AI is more specific"
-      assert_equal "fake_ai", result.candidates.last.profile_key
-      assert_equal :specific_match, result.candidates.first.rank_reason
-      assert_equal :ai_fallback, result.candidates.last.rank_reason
-    end
   end
 
   test ".call should use registration order as the tiebreaker" do
     tie_matcher = build_matcher_class("FakeTieProfileMatcher", specificity: 10)
     matchers = [ProfileMatcher::RssProfileMatcher, tie_matcher]
 
-    FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
+    FeedProfile.stub(:matchers, matchers) do
       result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
       assert_equal "rss", result.candidates.first.profile_key, "rss registered first wins the tie"
     end
@@ -100,7 +76,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
 
     reported = []
     Rails.error.stub(:report, ->(err, **kwargs) { reported << [err.message, kwargs] }) do
-      FeedProfile.stub(:matchers_for, ->(_) { matchers }) do
+      FeedProfile.stub(:matchers, matchers) do
         result = FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: rss_feed_body)
         assert_includes result.candidates.map(&:profile_key), "rss", "rss still matches even though bomb raised"
       end
@@ -138,7 +114,7 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
       end
     end
 
-    FeedProfile.stub(:matchers_for, ->(_) { [spy] }) do
+    FeedProfile.stub(:matchers, [spy]) do
       FeedProfileDetector.call(input: "https://example.com/feed.xml", fetched_body: "")
     end
 
@@ -147,27 +123,15 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
   end
 
   # Guards the shape persisted to FeedIdentification#candidates: Rails'
-  # native Data#as_json must keep yielding string keys with rank_reason
-  # stringified, so a future field/type change can't silently break it.
+  # native Data#as_json must keep yielding string keys, so a future
+  # field/type change can't silently break it.
   test "DetectionCandidate should serialize to the persisted candidate hash" do
     candidate = FeedProfileDetector::DetectionCandidate.new(
       profile_key: "rss",
-      title: "Example Blog",
-      depends_on_ai: false,
-      rank: 0,
-      rank_reason: :specific_match
+      title: "Example Blog"
     )
 
-    assert_equal(
-      {
-        "profile_key" => "rss",
-        "title" => "Example Blog",
-        "depends_on_ai" => false,
-        "rank" => 0,
-        "rank_reason" => "specific_match"
-      },
-      candidate.as_json
-    )
+    assert_equal({ "profile_key" => "rss", "title" => "Example Blog" }, candidate.as_json)
   end
 
   private
@@ -176,28 +140,13 @@ class FeedProfileDetectorTest < ActiveSupport::TestCase
     Class.new(ProfileMatcher::Base) do
       const_set(:NAME_OVERRIDE, "ProfileMatcher::#{class_name}")
       define_singleton_method(:name) { const_get(:NAME_OVERRIDE) }
-      input_shape :url
       match_specificity specificity
-      depends_on_ai false
 
       def match?
         true
       end
 
       class_eval(&block) if block
-    end
-  end
-
-  def ai_matcher_class(specificity:)
-    Class.new(ProfileMatcher::Base) do
-      define_singleton_method(:name) { "ProfileMatcher::FakeAiProfileMatcher" }
-      input_shape :url
-      match_specificity specificity
-      depends_on_ai true
-
-      def match?
-        true
-      end
     end
   end
 end

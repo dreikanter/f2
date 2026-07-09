@@ -1,8 +1,10 @@
 class FeedPreview < ApplicationRecord
   PREVIEW_POSTS_LIMIT = 10
 
+  # How long a ready preview is reused before a fresh run is forced.
+  PREVIEW_FRESHNESS_WINDOW = 60.minutes
+
   belongs_to :user
-  belongs_to :feed, optional: true
   belongs_to :ai_credential, optional: true
 
   enum :status, { pending: 0, processing: 1, ready: 2, failed: 3 }

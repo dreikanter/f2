@@ -1,6 +1,5 @@
 module ProfileMatcher
   class LitterboxProfileMatcher < Base
-    input_shape :url
     match_specificity 100
 
     LITTERBOX_HOSTS = %w[litterboxcomics.com www.litterboxcomics.com].freeze
