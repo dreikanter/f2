@@ -130,8 +130,7 @@ class FeedPreviewsController < ApplicationController
   end
 
   def source_blank?
-    key = FeedProfile.source_key_for(profile_key) || "url"
-    preview_params[key].to_s.strip.blank?
+    FeedProfile.source_input_for(profile_key, preview_params).to_s.strip.blank?
   end
 
   def needs_credential_gate?

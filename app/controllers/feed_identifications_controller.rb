@@ -119,7 +119,7 @@ class FeedIdentificationsController < ApplicationController
   def handle_success_status
     suggested = feed_identification.suggested_candidate
     profile_key = suggested&.profile_key
-    source_key = FeedProfile.source_key_for(profile_key) || "url"
+    source_key = FeedProfile.source_key_for(profile_key)
 
     if editing?
       # Re-render the feed being edited with the proposed source + profile

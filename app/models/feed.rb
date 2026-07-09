@@ -174,10 +174,7 @@ class Feed < ApplicationRecord
   # the underlying input shape. Driven by the profile's declared source key so
   # smuggled keys in the params jsonb can't disguise the real source.
   def source_input
-    return nil if params.blank?
-
-    key = FeedProfile.source_key_for(feed_profile_key) || "url"
-    params[key]
+    FeedProfile.source_input_for(feed_profile_key, params)
   end
 
   # Whether the user's source is a URL rather than a free-text prompt.
@@ -552,7 +549,7 @@ class Feed < ApplicationRecord
   def source_input_changed_in_place?
     return false unless params_changed?
 
-    key = FeedProfile.source_key_for(feed_profile_key) || "url"
+    key = FeedProfile.source_key_for(feed_profile_key)
     before, after = params_change
     before&.dig(key) != after&.dig(key)
   end

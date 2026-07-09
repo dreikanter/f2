@@ -533,10 +533,20 @@ class FeedProfile
     # The params key holding the feed's source input (e.g. "url", "prompt").
     # Derived from the profile's single required param, so the storage key is
     # independent of input_shape (which an `:any` profile can't double as).
+    # Unknown profiles fall back to "url".
     # @param key [String] the profile key
-    # @return [String, nil] the source params key, or nil if profile not found
+    # @return [String] the source params key
     def source_key_for(key)
-      PROFILES.dig(key, :parameter_schema, "required")&.first
+      PROFILES.dig(key, :parameter_schema, "required")&.first || "url"
+    end
+
+    # The user-facing source value stored in a params hash, read by the
+    # profile's source key.
+    # @param key [String] the profile key
+    # @param params [Hash, nil] a feed/preview params hash
+    # @return [String, nil] the source value
+    def source_input_for(key, params)
+      (params || {})[source_key_for(key)]
     end
 
     # @param key [String] the profile key
