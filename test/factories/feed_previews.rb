@@ -37,7 +37,6 @@ FactoryBot.define do
       status { :processing }
     end
 
-
     trait :with_multiple_posts do
       status { :ready }
       data do
