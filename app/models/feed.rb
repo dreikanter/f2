@@ -195,7 +195,8 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    name.present? && access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
+    name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
+      cron_expression.present? && ai_enablement_requirements_met?
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If
@@ -362,6 +363,14 @@ class Feed < ApplicationRecord
   end
 
   private
+
+  # Mirrors ai_credential_required_when_enabled_ai_profile so the Enable button
+  # never shows for an AI feed the enabled-state validators would reject.
+  def ai_enablement_requirements_met?
+    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    ai_credential&.active? && ai_model.present?
+  end
 
   # Records a feed_auto_disabled event stamped with the streak length, so the
   # activity log shows how many failures it took.

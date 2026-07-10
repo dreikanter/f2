@@ -20,15 +20,23 @@ class FeedStatusesController < ApplicationController
 
   def enable(feed)
     feed.with_lock do
-      if feed.can_be_enabled?
-        feed.enabled!
+      if feed.can_be_enabled? && feed.enable
         record_feed_enabled(feed)
         respond_with_status(feed, success: "Feed enabled.")
       else
-        missing_parts = feed_missing_enablement_parts(feed)
-        respond_with_status(feed, alert: "Cannot enable feed: missing #{missing_parts.join(' and ')}.")
+        respond_with_status(feed, alert: cannot_enable_alert(feed))
       end
     end
+  end
+
+  # can_be_enabled? mirrors the enabled-state validators, but they are separate
+  # rule sets: name the missing parts when we know them, and fall back to the
+  # validator messages for any residual drift instead of raising.
+  def cannot_enable_alert(feed)
+    missing_parts = feed_missing_enablement_parts(feed)
+    return "Cannot enable feed: missing #{missing_parts.join(' and ')}." if missing_parts.any?
+
+    "Cannot enable feed: #{feed.errors.full_messages.join('; ')}."
   end
 
   def disable(feed)

@@ -173,6 +173,34 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed_with_inactive_token.state
   end
 
+  test "#update should not enable an AI feed without an AI credential" do
+    sign_in_as(user)
+    ai_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "ruby news" })
+
+    patch feed_status_path(ai_feed), params: { status: "enabled" }
+
+    assert_redirected_to ai_feed
+    follow_redirect!
+    assert_includes response.body, "Cannot enable feed: missing active AI credential and AI model"
+
+    ai_feed.reload
+    assert_equal "disabled", ai_feed.state
+  end
+
+  test "#update should surface validation errors instead of raising when rules drift" do
+    sign_in_as(user)
+    feed.update_column(:params, {})
+
+    patch feed_status_path(feed), params: { status: "enabled" }
+
+    assert_redirected_to feed
+    follow_redirect!
+    assert_includes response.body, "Cannot enable feed: missing source"
+
+    feed.reload
+    assert_equal "disabled", feed.state
+  end
+
   test "#update should redirect to login when not authenticated" do
     patch feed_status_path(feed), params: { status: "enabled" }
     assert_redirected_to new_session_url

@@ -49,6 +49,33 @@ class FeedHelperTest < ActionView::TestCase
     assert_includes result, "name"
   end
 
+  test "#feed_missing_enablement_parts should include AI credential and model for an AI feed" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
+                        ai_credential: nil, ai_model: nil)
+    result = feed_missing_enablement_parts(feed)
+
+    assert_includes result, "active AI credential"
+    assert_includes result, "AI model"
+  end
+
+  test "#feed_missing_enablement_parts should report an inactive AI credential" do
+    credential = create(:ai_credential, :inactive)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    result = feed_missing_enablement_parts(feed)
+
+    assert_equal ["active AI credential"], result
+  end
+
+  test "#feed_missing_enablement_parts should be empty for a ready AI feed" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+    result = feed_missing_enablement_parts(feed)
+
+    assert_equal [], result
+  end
+
   test "#feed_status_icon should render enabled icon" do
     feed = build(:feed, :enabled)
 
