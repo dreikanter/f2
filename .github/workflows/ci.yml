@@ -203,6 +203,15 @@ jobs:
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
 
+      # Reuses the migrated test database from the step above. Pre-existing
+      # findings are baselined in .database_consistency.todo.yml, so this only
+      # fails on newly introduced model/schema inconsistencies.
+      - name: Check model/schema consistency
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: bundle exec database_consistency -c .database_consistency.todo.yml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
         with:
