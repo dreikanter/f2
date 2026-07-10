@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
 
 // Shows the AI Settings section only for AI-backed profiles (disabling its
 // selects while hidden so a non-AI feed submits no provider/model), and
@@ -27,7 +28,7 @@ export default class extends Controller {
   }
 
   refreshVisibility() {
-    const isAi = this.aiProfilesValue.includes(this._selectedProfileKey())
+    const isAi = this.aiProfilesValue.includes(selectedProfileKey(this.form))
     this.element.hidden = !isAi
     if (this.hasCredentialSelectTarget) this.credentialSelectTarget.disabled = !isAi
     if (this.hasModelSelectTarget) this.modelSelectTarget.disabled = !isAi
@@ -50,14 +51,6 @@ export default class extends Controller {
     })
     this.modelSelectTarget.innerHTML = options.join("")
     this.modelSelectTarget.value = keep
-  }
-
-  _selectedProfileKey() {
-    if (!this.form) return null
-    const checked = this.form.querySelector("input[name='feed[feed_profile_key]']:checked")
-    if (checked) return checked.value
-    const hidden = this.form.querySelector("input[type=hidden][name='feed[feed_profile_key]']")
-    return hidden ? hidden.value : null
   }
 
   _escape(value) {
