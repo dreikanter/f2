@@ -30,6 +30,10 @@ module FeedHelper
     missing_parts << "active access token" unless feed.access_token&.active?
     missing_parts << "target group" unless feed.target_group.present?
     missing_parts << "schedule" unless feed.cron_expression.present?
+    if FeedProfile.depends_on_ai?(feed.feed_profile_key)
+      missing_parts << "active AI credential" unless feed.ai_credential&.active?
+      missing_parts << "AI model" unless feed.ai_model.present?
+    end
     missing_parts
   end
 

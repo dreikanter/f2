@@ -1,0 +1,153 @@
+# Baseline for database_consistency (run in CI; see .github/workflows/ci.yml).
+# Every entry disables one pre-existing finding so CI only fails on new ones.
+#
+# Entries marked "wontfix" are false positives — the concern is covered by a
+# pattern the tool can't see (custom validators, callbacks, RecordNotUnique
+# rescues). The rest are real findings to burn down: delete an entry once the
+# underlying issue is fixed. Regenerating this file with `database_consistency -g`
+# drops these comments, so prefer editing it by hand.
+---
+AccessToken:
+  index_access_tokens_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+AccessTokenDetail:
+  index_access_token_details_on_access_token_id:
+    # wontfix: one row per token, written only through the has_one by
+    # AccessTokenValidationService; the DB constraint is the right guard.
+    UniqueIndexChecker:
+      enabled: false
+AiCredential:
+  index_ai_credentials_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Event:
+  user:
+    # wontfix: there is no user-deletion flow; the FK on events.user_id
+    # safely blocks one until events are handled explicitly.
+    MissingDependentDestroyChecker:
+      enabled: false
+EventReference:
+  event:
+    ForeignKeyChecker:
+      enabled: false
+  index_event_references_on_event_and_reference:
+    # wontfix: rows are created via insert_all (FeedRefreshWorkflow), which
+    # skips validations — a uniqueness validator would never run.
+    UniqueIndexChecker:
+      enabled: false
+Feed:
+  access_token:
+    # wontfix: AccessToken#disable_associated_feeds (before_destroy) nullifies
+    # feeds.access_token_id before the token row is deleted.
+    MissingDependentDestroyChecker:
+      enabled: false
+  feed_profile_key:
+    ColumnPresenceChecker:
+      enabled: false
+  feed_schedule:
+    MissingIndexChecker:
+      enabled: false
+  name+user_id:
+    MissingUniqueIndexChecker:
+      enabled: false
+FeedEntry:
+  index_feed_entries_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+FeedEntryUid:
+  index_feed_entry_uids_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+FeedIdentification:
+  index_feed_identifications_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+  index_feed_identifications_on_user_id_and_input:
+    # wontfix: rows are system-managed via find_or_create_by!; the unique
+    # index backs the race, user input never hits this validation.
+    UniqueIndexChecker:
+      enabled: false
+FeedPreview:
+  ai_credential:
+    ForeignKeyChecker:
+      enabled: false
+  feed_profile_key:
+    ColumnPresenceChecker:
+      enabled: false
+  id:
+    ImplicitOrderingChecker:
+      enabled: false
+  index_feed_previews_on_owner_profile_digest:
+    # wontfix: FeedPreviewsController#start_run deliberately rescues
+    # RecordNotUnique to adopt a concurrent request's row; a uniqueness
+    # validator would raise RecordInvalid instead and break that pattern.
+    UniqueIndexChecker:
+      enabled: false
+  index_feed_previews_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+  params_digest:
+    # wontfix: assigned by before_validation :assign_params_digest, so a
+    # presence validator would be dead code.
+    NullConstraintChecker:
+      enabled: false
+Invite:
+  id:
+    ImplicitOrderingChecker:
+      enabled: false
+JobRun:
+  index_job_runs_on_job_id:
+    # wontfix: job_id is ActiveJob's generated UUID on a dev-tooling table;
+    # nothing user-supplied to validate.
+    UniqueIndexChecker:
+      enabled: false
+LlmUsage:
+  index_llm_usages_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+  index_llm_usages_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Permission:
+  index_permissions_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Post:
+  index_posts_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+RateLimit::Bucket:
+  index_rate_limit_buckets_on_key:
+    # wontfix: RateLimit uses Bucket.create_or_find_by!, which depends on the
+    # DB constraint raising; a uniqueness validator would defeat the pattern.
+    UniqueIndexChecker:
+      enabled: false
+  key:
+    # wontfix: key is always supplied by the RateLimit service, never by
+    # user input.
+    NullConstraintChecker:
+      enabled: false
+User:
+  index_users_on_email_address:
+    # wontfix: covered by the custom both_emails_are_globally_unique
+    # validator, which checks email_address and unconfirmed_email together.
+    UniqueIndexChecker:
+      enabled: false
+  invite:
+    ForeignKeyCascadeChecker:
+      enabled: false
+    MissingIndexChecker:
+      enabled: false
+  password_digest:
+    # wontfix: managed by has_secure_password; never assigned directly.
+    NullConstraintChecker:
+      enabled: false
+  password_updated_at:
+    # wontfix: set by before_save :set_password_updated_at whenever the
+    # password digest changes.
+    NullConstraintChecker:
+      enabled: false
+  unconfirmed_email:
+    MissingIndexFindByChecker:
+      enabled: false

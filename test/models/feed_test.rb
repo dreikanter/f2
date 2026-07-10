@@ -375,6 +375,37 @@ class FeedTest < ActiveSupport::TestCase
     assert_not feed.can_be_enabled?
   end
 
+  test "#can_be_enabled? returns false for an AI feed without a credential" do
+    feed = build(:feed, feed_profile_key: "llm", params: { "prompt" => "ruby news" },
+                        ai_credential: nil, ai_model: "claude-sonnet-4-6")
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "#can_be_enabled? returns false for an AI feed with an inactive credential" do
+    credential = create(:ai_credential, :inactive)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "#can_be_enabled? returns false for an AI feed without a model" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: nil)
+
+    assert_not feed.can_be_enabled?
+  end
+
+  test "#can_be_enabled? returns true for an AI feed with an active credential and a model" do
+    credential = create(:ai_credential, :active)
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "ruby news" }, ai_credential: credential, ai_model: "claude-sonnet-4-6")
+
+    assert feed.can_be_enabled?
+  end
+
   test "#can_be_previewed? should be true for a non-AI profile with a source" do
     feed = build(:feed, feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
 
@@ -994,6 +1025,23 @@ class FeedTest < ActiveSupport::TestCase
     feed = build(:feed, import_after: Time.utc(2026, 1, 15))
 
     assert feed.valid?, feed.errors.full_messages.inspect
+  end
+
+  test "should compose the same result regardless of part assignment order" do
+    feed = build(:feed)
+    feed.import_after_enabled = "1"
+    feed.import_after_date = "2026-01-15"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal Time.zone.parse("2026-01-15 00:00"), feed.import_after
+  end
+
+  test "should leave import_after alone when the parts were never assigned" do
+    time = Time.utc(2026, 1, 15, 10, 30, 45)
+    feed = build(:feed, import_after: time)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal time, feed.import_after
   end
 
   test "#record_refresh_failure! should bump the streak without disabling below the threshold" do

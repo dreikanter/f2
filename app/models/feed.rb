@@ -49,6 +49,7 @@ class Feed < ApplicationRecord
   attr_accessor :source_verified
 
   after_update :create_schedule_on_enable
+  before_validation :compose_import_after_from_parts
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
@@ -101,7 +102,10 @@ class Feed < ApplicationRecord
   # Form-facing accessors splitting import_after into a checkbox plus
   # separate date and time inputs. The checkbox drives everything: when it's
   # off, import_after resets to nil no matter what the date and time fields
-  # contain.
+  # contain. The setters only record their part; import_after itself is
+  # composed once in before_validation — composing on every part-write let
+  # earlier parts read fallbacks from a half-updated import_after, making the
+  # result depend on assignment order.
   def import_after_enabled
     return @import_after_enabled unless @import_after_enabled.nil?
 
@@ -109,8 +113,8 @@ class Feed < ApplicationRecord
   end
 
   def import_after_enabled=(value)
+    @import_after_parts_assigned = true
     @import_after_enabled = ActiveModel::Type::Boolean.new.cast(value) || false
-    recompose_import_after
   end
 
   def import_after_date
@@ -118,8 +122,8 @@ class Feed < ApplicationRecord
   end
 
   def import_after_date=(value)
+    @import_after_parts_assigned = true
     @import_after_date = value.to_s.strip
-    recompose_import_after
   end
 
   def import_after_time
@@ -127,8 +131,8 @@ class Feed < ApplicationRecord
   end
 
   def import_after_time=(value)
+    @import_after_parts_assigned = true
     @import_after_time = value.to_s.strip
-    recompose_import_after
   end
 
   # Link to the target group on its FreeFeed instance. Post#freefeed_url
@@ -195,7 +199,8 @@ class Feed < ApplicationRecord
   end
 
   def can_be_enabled?
-    name.present? && access_token&.active? && target_group.present? && feed_profile_present? && cron_expression.present?
+    name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
+      cron_expression.present? && ai_enablement_requirements_met?
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If
@@ -363,6 +368,14 @@ class Feed < ApplicationRecord
 
   private
 
+  # Mirrors ai_credential_required_when_enabled_ai_profile so the Enable button
+  # never shows for an AI feed the enabled-state validators would reject.
+  def ai_enablement_requirements_met?
+    return true unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    ai_credential&.active? && ai_model.present?
+  end
+
   # Records a feed_auto_disabled event stamped with the streak length, so the
   # activity log shows how many failures it took.
   def disable_after_repeated_failures!
@@ -380,7 +393,11 @@ class Feed < ApplicationRecord
     end
   end
 
-  def recompose_import_after
+  # Only touches import_after when the form parts were assigned, so saves that
+  # never saw the checkbox (state flips, background updates) leave it alone.
+  def compose_import_after_from_parts
+    return unless @import_after_parts_assigned
+
     self.import_after = compose_import_after
   end
 
