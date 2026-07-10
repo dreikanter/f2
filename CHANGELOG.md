@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-10
 
+- You can now follow Bluesky accounts: paste a bsky.app profile link or a handle, and their posts get reposted with pictures included.
 - Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once the refresh finishes.
 
 ## 2026-07-09
