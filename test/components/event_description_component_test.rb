@@ -106,6 +106,13 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result, "its FreeFeed group is no longer available"
   end
 
+  test "should have specific copy for every reason in the publisher taxonomy" do
+    FreefeedPublisher::TargetGroupUnavailableError::REASONS.each do |reason|
+      assert I18n.exists?("events.feed_target_group_unavailable.reasons.#{reason}"),
+             "missing locale copy for reason #{reason}"
+    end
+  end
+
   test "#call should never expose the raw API response for target-group-unavailable events" do
     event = Event.create!(
       type: "feed_target_group_unavailable",
