@@ -996,6 +996,23 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?, feed.errors.full_messages.inspect
   end
 
+  test "should compose the same result regardless of part assignment order" do
+    feed = build(:feed)
+    feed.import_after_enabled = "1"
+    feed.import_after_date = "2026-01-15"
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal Time.zone.parse("2026-01-15 00:00"), feed.import_after
+  end
+
+  test "should leave import_after alone when the parts were never assigned" do
+    time = Time.utc(2026, 1, 15, 10, 30, 45)
+    feed = build(:feed, import_after: time)
+
+    assert feed.valid?, feed.errors.full_messages.inspect
+    assert_equal time, feed.import_after
+  end
+
   test "#record_refresh_failure! should bump the streak without disabling below the threshold" do
     feed = create(:feed, :enabled, consecutive_failures: 2)
 
