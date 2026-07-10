@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-10
+
+- Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once the refresh finishes.
+
 ## 2026-07-09
 
 - Choosing between following a feed or following with AI now uses a simple two-option choice that stays readable on small screens, where the old tabs used to stack awkwardly.

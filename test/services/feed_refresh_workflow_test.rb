@@ -28,6 +28,13 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       )
   end
 
+  def empty_rss
+    <<~RSS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"><channel><title>Empty</title></channel></rss>
+    RSS
+  end
+
   test "#initialize should set feed and stats" do
     workflow = FeedRefreshWorkflow.new(feed)
 
@@ -37,6 +44,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
   test ".workflow_steps should list expected sequence" do
     expected_steps = [
+      :interrupt_abandoned_refresh_events,
       :skip_current_digest_period,
       :initialize_workflow,
       :load_feed_contents,
@@ -123,9 +131,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:completed_at]
     assert workflow.stats[:total_duration] >= 0
 
-    # Verify stats event was created
+    # Verify stats event was created and promoted to a user-visible level
     events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
+    assert_equal "completed", events.first.metadata["status"]
+    assert_equal "info", events.first.level
     assert_equal 2, events.first.metadata["stats"]["new_posts"]
 
     # Verify each new post is referenced by the refresh event
@@ -337,10 +347,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert workflow.stats[:started_at]
     assert_equal :load_feed_contents, workflow.stats[:failed_at_step]
 
-    # Verify error event was created
-    events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    # Verify the started event was updated in place with the failure
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     error_event = events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert_equal "error", error_event.level
     assert_match(/execution expired/, error_event.message)
     assert_equal "Loader::Error", error_event.metadata["error"]["class"]
@@ -366,10 +377,11 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, Post.where(feed: test_feed).count
 
     # Verify error event was created
-    error_events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    error_events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, error_events.count
 
     error_event = error_events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert_equal "error", error_event.level
     assert error_event.message.present?
     assert_equal "Feedjira::NoParserAvailable", error_event.metadata["error"]["class"]
@@ -433,7 +445,9 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "Unauthorized", credential.last_error
     assert_equal "disabled", test_feed.reload.state
 
-    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh_error").count
+    failed_events = Event.where(subject: test_feed, type: "feed_refresh")
+    assert_equal 1, failed_events.count
+    assert_equal "failed", failed_events.first.metadata["status"]
     deactivated_event = Event.find_by(subject: credential, type: "ai_credential_deactivated")
     assert_not_nil deactivated_event
     assert_equal "warning", deactivated_event.level
@@ -491,9 +505,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, FeedEntry.where(feed: test_feed).count
 
     # Verify error event was created
-    events = Event.where(subject: test_feed, type: "feed_refresh_error")
+    events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
     error_event = events.first
+    assert_equal "failed", error_event.metadata["status"]
     assert error_event.message.present?
   end
 
@@ -529,9 +544,10 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal :persist_entries, workflow.stats[:failed_at_step]
 
       # Verify error event was created
-      events = Event.where(subject: test_feed, type: "feed_refresh_error")
+      events = Event.where(subject: test_feed, type: "feed_refresh")
       assert_equal 1, events.count
       error_event = events.first
+      assert_equal "failed", error_event.metadata["status"]
       assert_match(/Database error/, error_event.message)
       assert_equal "ActiveRecord::StatementInvalid", error_event.metadata["error"]["class"]
     end
@@ -541,17 +557,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     workflow = FeedRefreshWorkflow.new(test_feed)
-
-    # Empty RSS with no items
-    empty_rss = <<~RSS
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel>
-          <title>Empty Feed</title>
-          <description>No items</description>
-        </channel>
-      </rss>
-    RSS
 
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
@@ -572,6 +577,123 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     # Should still create success event
     events = Event.where(subject: test_feed, type: "feed_refresh")
     assert_equal 1, events.count
+  end
+
+  test "#execute should replace the started event with a completed event" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    # A local, because the singleton method's body resolves methods against the
+    # loader object, not the test case.
+    rss_body = empty_rss
+
+    in_flight_event = nil
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      in_flight_event = Event.find_by(subject: test_feed, type: "feed_refresh")
+      rss_body
+    end
+
+    test_feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(test_feed).execute }
+
+    assert_not_nil in_flight_event, "the event should exist before loading starts"
+    assert_equal "started", in_flight_event.metadata["status"]
+    assert_equal "info", in_flight_event.level, "the in-flight record should be user-visible"
+    assert in_flight_event.metadata["stats"]["started_at"].present?
+
+    assert_not Event.exists?(in_flight_event.id), "the started event should be deleted on completion"
+
+    events = Event.where(subject: test_feed, type: "feed_refresh")
+    assert_equal 1, events.count
+    completed_event = events.first
+    assert_equal "completed", completed_event.metadata["status"]
+    assert_equal "info", completed_event.level
+  end
+
+  test "#execute should keep the completed event when a post-completion step fails" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedMetric.stub(:record, proc { raise ActiveRecord::StatementInvalid.new("Database error") }) do
+      assert_raises(ActiveRecord::StatementInvalid) { FeedRefreshWorkflow.new(test_feed).execute }
+    end
+
+    event = Event.find_by(subject: test_feed, type: "feed_refresh")
+    assert_equal "completed", event.metadata["status"]
+    assert_equal "info", event.level
+  end
+
+  test "#execute should mark an abandoned started event as interrupted" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    abandoned_started_at = 1.day.ago
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: abandoned_started_at.iso8601 } }
+    )
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    abandoned.reload
+    assert_equal "interrupted", abandoned.metadata["status"]
+    assert_equal "debug", abandoned.level, "the dead run's record should leave the user event feed"
+    assert_equal abandoned_started_at.iso8601, abandoned.metadata.dig("stats", "started_at"),
+                 "the rest of the abandoned event's metadata stays intact"
+  end
+
+  test "#execute should not touch other feeds' started events" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    other_feed = create(:feed)
+
+    other_started = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: other_feed,
+      user: other_feed.user,
+      metadata: { status: "started" }
+    )
+    completed = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "completed" }
+    )
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal "started", other_started.reload.metadata["status"]
+    assert_equal "completed", completed.reload.metadata["status"]
+  end
+
+  test "#execute should leave a prior failed event untouched and start a new lifecycle" do
+    test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+
+    failed = Event.create!(
+      type: "feed_refresh",
+      level: :error,
+      subject: test_feed,
+      user: test_feed.user,
+      message: "Connection timeout",
+      metadata: { status: "failed" }
+    )
+
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    assert_equal "failed", failed.reload.metadata["status"]
+    assert_equal "error", failed.level
+
+    events = Event.where(subject: test_feed, type: "feed_refresh").order(:id)
+    assert_equal 2, events.count
+    assert_equal "completed", events.last.metadata["status"]
   end
 
   test "#records should create feed metrics when posts are imported" do
@@ -653,15 +775,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should skip metrics when no posts are imported" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
-    empty_rss = <<~RSS
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0">
-        <channel>
-          <title>Empty Feed</title>
-        </channel>
-      </rss>
-    RSS
-
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
     freeze_time do
@@ -686,10 +799,6 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
   test "#execute should reset the failure streak after a successful refresh" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml",
                                          feed_profile_key: "rss", consecutive_failures: 3)
-    empty_rss = <<~RSS
-      <?xml version="1.0" encoding="UTF-8"?>
-      <rss version="2.0"><channel><title>Empty</title></channel></rss>
-    RSS
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
 
     FeedRefreshWorkflow.new(test_feed).execute
@@ -804,6 +913,25 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       assert_equal 0, loader.load_count, "the LLM loader must not run when skipping"
       assert_equal 0, feed.posts.count
       assert_equal 1, Event.where(subject: feed, type: "feed_refresh_skipped", level: "debug").count
+    end
+  end
+
+  test "#execute should sweep abandoned events even when the digest skip halts the run" do
+    freeze_time do
+      feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
+      abandoned = Event.create!(
+        type: "feed_refresh",
+        level: :info,
+        subject: feed,
+        user: feed.user,
+        metadata: { status: "started" }
+      )
+      loader = counting_loader([{ "source_url" => nil, "body" => "roundup" }])
+
+      feed.stub(:loader_instance, loader) { FeedRefreshWorkflow.new(feed).execute }
+
+      assert_equal 0, loader.load_count, "the run must still skip"
+      assert_equal "interrupted", abandoned.reload.metadata["status"]
     end
   end
 

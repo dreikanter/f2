@@ -39,4 +39,50 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "refreshed"
     assert_nil result.css("[data-key='events.posts_count']").first
   end
+
+  def event_with_status(status, **attributes)
+    Event.create!(
+      type: "feed_refresh",
+      level: :debug,
+      subject: feed,
+      user: user,
+      metadata: { status: status },
+      **attributes
+    )
+  end
+
+  test "#call should describe a started refresh as in progress" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_status("started")))
+
+    assert_includes result.to_html, "Test Feed"
+    assert_includes result.to_html, "in progress"
+  end
+
+  test "#call should describe a failed refresh with its message" do
+    event = event_with_status("failed", level: :error, message: "Connection timeout")
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_includes result.to_html, "couldn't refresh"
+    assert_includes result.to_html, "Connection timeout"
+  end
+
+  test "#call should describe an interrupted refresh" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_status("interrupted")))
+
+    assert_includes result.to_html, "interrupted"
+  end
+
+  test "#call should treat events without a status as completed" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
+
+    assert_includes result.to_html, "refreshed"
+  end
+
+  test "#call should render an unrecognized status as unknown rather than success" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_status("cancelled")))
+
+    assert_includes result.to_html, "status is unknown"
+    assert_not_includes result.to_html, "refreshed"
+  end
 end

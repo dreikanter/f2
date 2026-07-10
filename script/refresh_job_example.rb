@@ -103,7 +103,7 @@ begin
     end
   end
 
-  latest_event = feed.events.where(type: ["feed_refresh_stats", "feed_refresh_error"]).order(:created_at).last
+  latest_event = feed.events.where(type: "feed_refresh").order(:created_at).last
 
   if latest_event
     puts

@@ -228,6 +228,7 @@ if Rails.env.development?
         user_id: feed.user_id,
         message: "Feed refresh completed for #{feed.name}",
         metadata: {
+          status: "completed",
           stats: {
             started_at: (base_time - 2.hours).iso8601,
             completed_at: (base_time - 2.hours + 3.seconds).iso8601,
@@ -243,13 +244,14 @@ if Rails.env.development?
       # Add an error event for one feed
       if feed == Feed.first
         events << {
-          type: "feed_refresh_error",
+          type: "feed_refresh",
           level: :error,
           subject_type: "Feed",
           subject_id: feed.id,
           user_id: feed.user_id,
           message: "Feed refresh failed at load_feed_contents: Connection timeout",
           metadata: {
+            status: "failed",
             stats: { started_at: (base_time - 5.hours).iso8601 },
             error: {
               class: "Net::ReadTimeout",
@@ -268,8 +270,8 @@ if Rails.env.development?
     events_needed = 75 - Event.count - events.length
 
     event_templates = [
-      { type: "feed_refresh", level: :info, weight: 40 },
-      { type: "feed_refresh_error", level: :error, weight: 5 },
+      { type: "feed_refresh", level: :info, status: "completed", weight: 40 },
+      { type: "feed_refresh", level: :error, status: "failed", weight: 5 },
       { type: "email_sent", level: :info, weight: 15 },
       { type: "email_delivered", level: :info, weight: 15 },
       { type: "email_opened", level: :info, weight: 10 },
@@ -294,32 +296,25 @@ if Rails.env.development?
         feed = feeds_array.sample
         next unless feed
 
-        events << {
+        refresh_event = {
           type: template[:type],
           level: template[:level],
           subject_type: "Feed",
           subject_id: feed.id,
           user_id: feed.user_id,
-          message: "Feed refresh completed for #{feed.name}",
-          metadata: { stats: { new_entries: rand(0..5), new_posts: rand(0..3) } },
           created_at: time,
           updated_at: time
         }
-      when "feed_refresh_error"
-        feed = feeds_array.sample
-        next unless feed
 
-        events << {
-          type: template[:type],
-          level: template[:level],
-          subject_type: "Feed",
-          subject_id: feed.id,
-          user_id: feed.user_id,
-          message: "Feed refresh failed at #{['load_feed_contents', 'process_feed_contents', 'publish_posts'].sample}: #{['Connection timeout', 'Invalid XML', 'Rate limit exceeded'].sample}",
-          metadata: { error: { class: "StandardError", message: "Error occurred" } },
-          created_at: time,
-          updated_at: time
-        }
+        if template[:status] == "failed"
+          refresh_event[:message] = "Feed refresh failed at #{['load_feed_contents', 'process_feed_contents', 'publish_posts'].sample}: #{['Connection timeout', 'Invalid XML', 'Rate limit exceeded'].sample}"
+          refresh_event[:metadata] = { status: "failed", error: { class: "StandardError", message: "Error occurred" } }
+        else
+          refresh_event[:message] = "Feed refresh completed for #{feed.name}"
+          refresh_event[:metadata] = { status: "completed", stats: { new_entries: rand(0..5), new_posts: rand(0..3) } }
+        end
+
+        events << refresh_event
       else
         events << {
           type: template[:type],
