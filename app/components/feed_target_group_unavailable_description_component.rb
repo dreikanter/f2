@@ -1,11 +1,9 @@
 # Renders why a feed was turned off, from the deterministic reason code in the
 # event metadata. Unknown or missing codes fall back to generic copy.
 class FeedTargetGroupUnavailableDescriptionComponent < EventDescriptionComponent
-  # Reason codes we have specific copy for. Anything else uses the default line.
-  KNOWN_REASONS = %w[
-    group_not_found
-    posting_denied
-  ].freeze
+  # Reason codes we have specific copy for — the publisher's taxonomy, so the
+  # two lists can't drift. Anything else uses the default line.
+  KNOWN_REASONS = FreefeedPublisher::TargetGroupUnavailableError::REASONS.map(&:to_s).freeze
 
   def call
     I18n.t(

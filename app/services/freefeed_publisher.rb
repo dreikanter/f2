@@ -19,6 +19,11 @@ class FreefeedPublisher
     # The destination group no longer exists (deleted or renamed).
     GROUP_NOT_FOUND = :group_not_found
 
+    # The full reason taxonomy. The event description component derives its
+    # known-reason list (and locale copy is keyed) from this, so a new code
+    # only needs to be added here and translated.
+    REASONS = [POSTING_DENIED, GROUP_NOT_FOUND].freeze
+
     attr_reader :reason, :server_message
 
     def initialize(reason:, server_message: nil)
