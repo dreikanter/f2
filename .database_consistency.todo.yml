@@ -1,0 +1,119 @@
+---
+AccessToken:
+  index_access_tokens_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+AccessTokenDetail:
+  index_access_token_details_on_access_token_id:
+    UniqueIndexChecker:
+      enabled: false
+AiCredential:
+  index_ai_credentials_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Event:
+  user:
+    MissingDependentDestroyChecker:
+      enabled: false
+EventReference:
+  event:
+    ForeignKeyChecker:
+      enabled: false
+  index_event_references_on_event_and_reference:
+    UniqueIndexChecker:
+      enabled: false
+Feed:
+  access_token:
+    MissingDependentDestroyChecker:
+      enabled: false
+  feed_profile_key:
+    ColumnPresenceChecker:
+      enabled: false
+  feed_schedule:
+    MissingIndexChecker:
+      enabled: false
+  name+user_id:
+    MissingUniqueIndexChecker:
+      enabled: false
+FeedEntry:
+  index_feed_entries_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+FeedEntryUid:
+  index_feed_entry_uids_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+FeedIdentification:
+  index_feed_identifications_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+  index_feed_identifications_on_user_id_and_input:
+    UniqueIndexChecker:
+      enabled: false
+FeedPreview:
+  ai_credential:
+    ForeignKeyChecker:
+      enabled: false
+  feed_profile_key:
+    ColumnPresenceChecker:
+      enabled: false
+  id:
+    ImplicitOrderingChecker:
+      enabled: false
+  index_feed_previews_on_owner_profile_digest:
+    UniqueIndexChecker:
+      enabled: false
+  index_feed_previews_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+  params_digest:
+    NullConstraintChecker:
+      enabled: false
+Invite:
+  id:
+    ImplicitOrderingChecker:
+      enabled: false
+JobRun:
+  index_job_runs_on_job_id:
+    UniqueIndexChecker:
+      enabled: false
+LlmUsage:
+  index_llm_usages_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+  index_llm_usages_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Permission:
+  index_permissions_on_user_id:
+    RedundantIndexChecker:
+      enabled: false
+Post:
+  index_posts_on_feed_id:
+    RedundantIndexChecker:
+      enabled: false
+RateLimit::Bucket:
+  index_rate_limit_buckets_on_key:
+    UniqueIndexChecker:
+      enabled: false
+  key:
+    NullConstraintChecker:
+      enabled: false
+User:
+  index_users_on_email_address:
+    UniqueIndexChecker:
+      enabled: false
+  invite:
+    ForeignKeyCascadeChecker:
+      enabled: false
+    MissingIndexChecker:
+      enabled: false
+  password_digest:
+    NullConstraintChecker:
+      enabled: false
+  password_updated_at:
+    NullConstraintChecker:
+      enabled: false
+  unconfirmed_email:
+    MissingIndexFindByChecker:
+      enabled: false

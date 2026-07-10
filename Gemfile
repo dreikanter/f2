@@ -46,6 +46,9 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
+  # Detect inconsistencies between models and DB schema [https://github.com/djezzzl/database_consistency]
+  gem "database_consistency", require: false
+
   gem "ruby-lsp"
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
