@@ -26,8 +26,11 @@ class FeedIdentificationsController < ApplicationController
     return present_outcome if settled_identification?
 
     if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
-      feed_identification.restart_detection!
-      FeedIdentificationJob.perform_later(Current.user.id, source_url)
+      restarted = feed_identification.restart_detection!
+      # A losing concurrent submit skips the enqueue: the winner that just
+      # created the row owns the in-flight detection, and both requests render
+      # the same checking state.
+      FeedIdentificationJob.perform_later(Current.user.id, source_url) if restarted
     end
 
     render(entry_form(url: source_url, checking: true))

@@ -12,8 +12,16 @@ class FeedIdentification < ApplicationRecord
   # Reset the row to a fresh in-flight detection. Shared by the creation entry
   # and the edit-source re-detection so both clear stale candidates/errors the
   # same way; the caller enqueues FeedIdentificationJob.
+  #
+  # Two concurrent submits can both look the row up before either inserts; the
+  # loser's insert then hits the user+input unique index. Returns false in that
+  # case — the winner's detection is already in flight, so the stale copy
+  # should be discarded — and true when this call (re)started detection.
   def restart_detection!
     update!(status: :processing, started_at: Time.current, candidates: [], error: nil)
+    true
+  rescue ActiveRecord::RecordNotUnique
+    false
   end
 
   # The candidate the chooser preselects and the new-feed form is built from: the
