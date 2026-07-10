@@ -18,8 +18,10 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.mode-ai'] input[type=radio][value=ai]:not([checked])"
     assert_select "[data-key='entry.panel-link']:not([hidden])"
     assert_select "[data-key='entry.panel-ai'][hidden]"
-    assert_select "label[for='entry-link-input']", text: "Source link"
-    assert_select "input#entry-link-input[name='url']"
+    # The radio label is the group's single visible label; the field keeps its
+    # name for assistive tech only.
+    assert_select "input#entry-link-input[name='url'][aria-label='Source link']"
+    assert_select "label[for='entry-link-input']", count: 0
   end
 
   test "#new with mode=ai should select the AI mode" do
@@ -32,8 +34,8 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.mode-link'] input[type=radio]:not([checked])"
     assert_select "[data-key='entry.panel-ai']:not([hidden])"
     assert_select "[data-key='entry.panel-link'][hidden]"
-    assert_select "label[for='entry-ai-input']", text: "What should AI follow?"
-    assert_select "textarea#entry-ai-input[name='prompt']"
+    assert_select "textarea#entry-ai-input[name='prompt'][aria-label='What should AI follow?']"
+    assert_select "label[for='entry-ai-input']", count: 0
   end
 
   test "#new with an unknown mode should fall back to the link mode" do
