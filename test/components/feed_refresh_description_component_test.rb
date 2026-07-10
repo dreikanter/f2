@@ -78,4 +78,11 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
 
     assert_includes result.to_html, "refreshed"
   end
+
+  test "#call should render an unrecognized status as unknown rather than success" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_status("cancelled")))
+
+    assert_includes result.to_html, "status is unknown"
+    assert_not_includes result.to_html, "refreshed"
+  end
 end
