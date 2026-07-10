@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
 
 // Drives the manual feed preview:
 // - keeps the button enabled only when a profile is selected and a source is
@@ -38,7 +39,7 @@ export default class extends Controller {
 
   open(event) {
     event?.preventDefault()
-    const profileKey = this._selectedProfileKey()
+    const profileKey = selectedProfileKey(this.element)
     if (!profileKey || !this._currentSource().trim() || !this.hasFrameTarget) return
 
     const sourceKey = this.sourceKeysValue[profileKey]
@@ -73,7 +74,7 @@ export default class extends Controller {
   // when it's ready. Mirrors the enable checks so the hint never disagrees with
   // the button (spec §4 nicety).
   _unavailableReason() {
-    const profileKey = this._selectedProfileKey()
+    const profileKey = selectedProfileKey(this.element)
     if (!profileKey) return "Pick a feed type to preview."
     if (!this._currentSource().trim()) {
       return this._isAiProfile(profileKey) ? "Add a prompt to preview." : "Add a source URL to preview."
@@ -95,13 +96,6 @@ export default class extends Controller {
   // AI feed's prompt) is present — then it's whatever the user has typed.
   _currentSource() {
     return this.hasSourceTarget ? this.sourceTarget.value : this.sourceValue
-  }
-
-  _selectedProfileKey() {
-    const checked = this.element.querySelector("input[name='feed[feed_profile_key]']:checked")
-    if (checked) return checked.value
-    const hidden = this.element.querySelector("input[type=hidden][name='feed[feed_profile_key]']")
-    return hidden ? hidden.value : null
   }
 
   _isAiProfile(profileKey) {
