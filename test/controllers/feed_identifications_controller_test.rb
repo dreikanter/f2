@@ -125,6 +125,22 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Checking this feed"
   end
 
+  test "#create should freeze the entry form while detection runs" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+
+    post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
+    assert_select "input#entry-link-input[disabled][value=?]", url
+    assert_select "input[type=submit][value='Checking…'][disabled]"
+    assert_select "[data-key='entry.mode-ai'] input[type=radio][disabled]"
+    # Cancel stays live as the escape hatch: it aborts the check and re-renders
+    # the form with the URL kept.
+    assert_select "a[data-key='entry.cancel-check'][data-turbo-method='delete']"
+  end
+
   test "#create should ask for input when it is blank" do
     sign_in_as(user)
 
@@ -146,7 +162,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "ai safety news"
   end
 
-  test "#create should offer the AI bridge when a Mode A input isn't a link" do
+  test "#create should hint at the AI mode and carry the text over when a Mode A input isn't a link" do
     sign_in_as(user)
 
     assert_no_enqueued_jobs(only: FeedIdentificationJob) do
@@ -155,8 +171,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, "identification.ai-bridge"
     assert_includes response.body, "look like a link"
+    # The user stays in the mode they chose (spec §1); the AI panel carries the
+    # text so switching the radio is the bridge.
+    assert_select "[data-key='entry.mode-link'] input[type=radio][checked]"
+    assert_select "[data-key='entry.error']", text: /look like a link/
+    assert_select "textarea#entry-ai-input", text: "@alice"
   end
 
   test "#create should not persist an identification record on the AI bridge" do
@@ -311,12 +331,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # No structured profile matches and detection can't select AI (spec §7), so
-    # the form lands in the error state and offers the AI bridge.
+    # the form re-renders with the no-feed hint pointing at the AI mode.
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, "identification.ai-bridge"
+    assert_select "[data-key='entry.error']", text: /pull any posts/
   end
 
-  test "#show should show the transient retry state when the source can't be reached" do
+  test "#show should show the transient retry hint when the source can't be reached" do
     sign_in_as(user)
     url = "http://example.com/down.xml"
 
@@ -328,8 +348,11 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_select "[data-key='identification.retry']"
-    assert_select "[data-key='identification.ai-bridge']"
+    # Resubmitting the preserved URL is the retry; the AI panel stays as the
+    # secondary escape with the text carried over.
+    assert_select "[data-key='entry.error']", text: /couldn't reach that link/i
+    assert_select "input#entry-link-input[value=?]", url
+    assert_select "textarea#entry-ai-input", text: url
   end
 
   test "#create should re-run detection when retrying a couldn't-reach success" do
@@ -344,7 +367,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
       post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
-    assert_includes response.body, 'data-controller="polling"'
+    assert_select "[data-controller*='polling']"
+    assert_includes response.body, 'data-identification-state="checking"'
   end
 
   test "#show should show the terminal no-feed error when a reachable link has no working feed" do
@@ -357,8 +381,8 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, 'data-identification-state="error"'
-    assert_includes response.body, "identification.ai-bridge"
     assert_includes response.body, "pull any posts"
+    assert_select "textarea#entry-ai-input", text: url
   end
 
   test "#show should return error when feed detail is missing" do
@@ -368,7 +392,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     get feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_includes response.body, "Identification session expired"
+    assert_includes response.body, "That check expired"
   end
 
   test "#show should render a single working candidate as a fixed feed type" do
@@ -736,7 +760,7 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[data-key='form.import-after-enabled'][checked]"
   end
 
-  test "#show should drop the AI bridge and cancel to the feed when edit re-detection finds no feed" do
+  test "#show should re-render the edit form without an AI mode when edit re-detection finds no feed" do
     sign_in_as(user)
     feed = create(:feed, user: user, feed_profile_key: "rss", params: { "url" => "http://example.com/old.xml" })
     new_url = "http://example.com/none.xml"
@@ -747,8 +771,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "[data-key='identification.ai-bridge']", count: 0
-    assert_select "a[data-key='identification.cancel'][href=?]", feed_path(feed)
+    # The engine is fixed in edit (spec §4): the edit form comes back with the
+    # attempted URL and the hint, and no AI mode is on offer.
+    assert_select "form[action=?]", feed_path(feed)
+    assert_select "input[data-key='form.source-edit'][value=?]", new_url
+    assert_select "[data-key='form.source-error']", text: /pull any posts/
+    assert_select "[data-key='entry.mode-ai']", count: 0
   end
 
   test "#show should keep re-detection in the edit context on a couldn't-reach result" do
@@ -762,9 +790,12 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    assert_select "[data-key='identification.ai-bridge']", count: 0
-    assert_select "form[action=?] input[type=hidden][name='feed_id'][value=?]", feed_identifications_path, feed.id.to_s
-    assert_select "a[data-key='identification.cancel'][href=?]", feed_path(feed)
+    # Saving again with the preserved URL re-runs detection, so the edit form
+    # itself is the retry state.
+    assert_select "form[action=?]", feed_path(feed)
+    assert_select "input[data-key='form.source-edit'][value=?]", new_url
+    assert_select "[data-key='form.source-error']", text: /couldn't reach that link/i
+    assert_select "[data-key='entry.mode-ai']", count: 0
   end
 
   private

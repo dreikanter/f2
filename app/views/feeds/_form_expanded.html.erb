@@ -1,4 +1,4 @@
-<%# locals: (edit_mode: false, feed:, candidates: [], source_changed: false, profile_changed: false) %>
+<%# locals: (edit_mode: false, feed:, candidates: [], source_changed: false, profile_changed: false, checking: false, source_error: nil, attempted_url: nil) %>
 <% active_tokens = Current.user.access_tokens.active.order(:host) %>
 <%# The chooser is a real choice only with two or more working candidates; one
     working candidate is shown as a read-only annotation (spec §7). In edit mode
@@ -7,15 +7,32 @@
 
 <%# preview-button is mounted on the whole form so it can read the selected
     feed_profile_key (radios or hidden field) and react to candidate changes;
-    the button and the modal's frame are nested targets within it. %>
-<div id="feed-form"
-     data-identification-state="complete"
-     data-controller="preview-button"
-     data-preview-button-endpoint-value="<%= feed_preview_path %>"
-     data-preview-button-source-value="<%= feed.source_input %>"
-     data-preview-button-source-keys-value="<%= preview_source_keys(feed, candidates, show_chooser: show_chooser).to_json %>"
-     data-preview-button-ai-profiles-value="<%= FeedProfile.ai_profile_keys.to_json %>"
-     data-preview-button-modal-id-value="feed-preview-modal">
+    the button and the modal's frame are nested targets within it.
+
+    While an edit's source re-detection runs (spec §4), the same form freezes
+    and polls for the outcome; a failure re-renders it enabled with the hint
+    under the source field. %>
+<%
+  wrapper_data = {
+    identification_state: checking ? "checking" : (source_error ? "error" : "complete"),
+    controller: checking ? "preview-button polling" : "preview-button",
+    preview_button_endpoint_value: feed_preview_path,
+    preview_button_source_value: feed.source_input,
+    preview_button_source_keys_value: preview_source_keys(feed, candidates, show_chooser: show_chooser).to_json,
+    preview_button_ai_profiles_value: FeedProfile.ai_profile_keys.to_json,
+    preview_button_modal_id_value: "feed-preview-modal"
+  }
+  if checking
+    wrapper_data.merge!(
+      polling_indicate_busy_value: false,
+      polling_endpoint_value: feed_identifications_path(url: attempted_url, feed_id: feed.id),
+      polling_interval_value: polling_interval_ms,
+      polling_max_polls_value: polling_max_polls,
+      polling_stop_condition_value: "[data-identification-state='complete'], [data-identification-state='error']"
+    )
+  end
+%>
+<%= tag.div id: "feed-form", data: wrapper_data do %>
   <%= form_with model: feed,
                 url: (edit_mode ? feed_path(feed) : feeds_path),
                 method: (edit_mode ? :patch : :post),
@@ -24,6 +41,7 @@
                   # feed_id is nil (and dropped from the URL) for an unpersisted feed.
                   groups_endpoint_value: access_token_groups_path(":access_token_id", feed_id: feed.id)
                 } do |f| %>
+    <%= tag.fieldset disabled: checking, class: ("opacity-60" if checking) do %>
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the entry
           field staying put while the rest of the form appears below it. The
@@ -60,12 +78,18 @@
           <% elsif source_editable %>
             <div class="space-y-2">
               <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
-              <%= text_field_tag "feed[params][url]", feed.source_input,
+              <%= text_field_tag "feed[params][url]", attempted_url || feed.source_input,
                                  id: "feed_params_url",
                                  required: true,
-                                 class: input_field_classes,
+                                 class: input_field_classes(disabled: true),
                                  data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.source-edit" } %>
-              <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
+              <% if checking %>
+                <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed — usually takes a few seconds.</p>
+              <% elsif source_error %>
+                <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
+              <% else %>
+                <p class="text-sm text-muted" data-key="form.source-edit-note">Point this at a different feed and we'll re-check it before saving.</p>
+              <% end %>
             </div>
           <% else %>
             <div class="space-y-2">
@@ -330,10 +354,14 @@
         </div>
       </div>
     </div>
+    <% end %>
 
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-      <%= f.submit "Save feed", class: primary_button_classes %>
+      <%= f.submit checking ? "Checking…" : "Save feed",
+                   disabled: checking,
+                   class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed",
+                   data: { turbo_submits_with: "Saving…" } %>
       <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
     </div>
   <% end %>
-</div>
+<% end %>

@@ -4,25 +4,25 @@ class FeedIdentificationsController < ApplicationController
   before_action :require_authentication
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
-    render identification_error(
-      url: params[:url].presence || params[:prompt],
-      error: "Too many identification attempts. Please wait before trying again."
-    ).merge(status: :too_many_requests)
+    message = "Too many attempts in a row. Give it a minute, then try again."
+    state = ai_mode? ? entry_form(mode: "ai", prompt: raw_prompt, error: message) : entry_form(error: message)
+    render state.merge(status: :too_many_requests)
   }
 
   def create
     # Mode B (an explicit "Follow with AI") goes straight to a draft AI feed.
-    return handle_ai_bridge if ai_mode?
+    return handle_prompt_submission if ai_mode?
 
     return render(blank_input_error) if raw_url.blank?
 
-    # Mode A input that isn't a link can't be detected: offer the AI bridge
-    # rather than guessing (spec §1) — the user stays in the mode they chose.
-    return render(not_a_link_bridge) if source_url.nil?
+    # Mode A input that isn't a link can't be detected: the entry form re-renders
+    # with the AI panel carrying the text, so switching the mode radio is the
+    # bridge (spec §1) — the user stays in the mode they chose.
+    return render(not_a_link_error) if source_url.nil?
 
     # A settled result — a working feed, or a reachable link with no feed — is
-    # shown as-is. Everything else kicks off a fresh detection, so the retry
-    # state's Retry actually re-checks a couldn't-reach result.
+    # shown as-is. Everything else kicks off a fresh detection, so resubmitting
+    # after a couldn't-reach result actually re-checks it.
     return present_outcome if settled_identification?
 
     if feed_identification.new_record? || feed_identification.failed? || retryable_unreachable?
@@ -30,12 +30,12 @@ class FeedIdentificationsController < ApplicationController
       FeedIdentificationJob.perform_later(Current.user.id, source_url)
     end
 
-    render(identification_loading)
+    render(entry_form(url: source_url, checking: true))
   end
 
   def show
     unless feed_identification.persisted?
-      return render(identification_error(error: "Identification session expired. Please try again."))
+      return render(identification_error(error: "That check expired. Please try again."))
     end
 
     return handle_processing_status if feed_identification.processing?
@@ -52,24 +52,33 @@ class FeedIdentificationsController < ApplicationController
 
   private
 
-  # The AI form (and the bridge buttons) submit the text as `prompt`; the link
-  # form submits `url`. The param name is the mode.
+  # The AI form submits the text as `prompt`; the link form submits `url`.
+  # The param name is the mode.
   def ai_mode?
     params.key?(:prompt)
   end
 
-  # Build a draft AI feed straight from the carried prompt — no detection, the AI
-  # profile is the destination and the prompt is the source (Mode A→B bridge).
-  # AI feeds default to a daily cadence (spec §1).
-  def handle_ai_bridge
-    return render(blank_input_error) if raw_prompt.blank?
+  # Build a draft AI feed straight from the prompt — no detection, the AI
+  # profile is the destination and the prompt is the source. AI feeds default
+  # to a daily cadence (spec §1).
+  def handle_prompt_submission
+    if raw_prompt.blank?
+      return render(entry_form(mode: "ai", error: "Tell AI what to follow — a link or a few words about it."))
+    end
 
     feed = Current.user.feeds.build(feed_profile_key: "llm", params: { "prompt" => raw_prompt }, schedule_interval: "1d")
     render(identification_success(feed, candidates: []))
   end
 
   def blank_input_error
-    identification_error(error: "Enter a link, or a few words describing what to follow.")
+    entry_form(error: "Enter a link, or a few words describing what to follow.")
+  end
+
+  def not_a_link_error
+    entry_form(
+      prompt: raw_url,
+      error: "That doesn't look like a link. Paste a feed or page URL — or switch to “Follow with AI” to go after it anyway."
+    )
   end
 
   def feed_identification
@@ -82,11 +91,11 @@ class FeedIdentificationsController < ApplicationController
       return render(identification_error(error: "Error identifying feed. Oh no."))
     end
 
-    # Past the deadline: drop the row and show the friendly error so the spinner
-    # stops with a message instead of spinning forever.
+    # Past the deadline: drop the row and re-enable the form with the message,
+    # so the checking state stops with an explanation instead of freezing.
     if feed_identification.started_at < polling_timeout.ago
       feed_identification.destroy
-      return render(identification_error(error: "Feed identification is taking longer than expected. The feed URL may not be responding. Please try again."))
+      return render(identification_error(error: "This check is taking longer than expected — the link may not be responding. Please try again."))
     end
 
     head :no_content
@@ -94,7 +103,7 @@ class FeedIdentificationsController < ApplicationController
 
   # A finished identification worth showing without re-detecting: a working feed
   # or a reachable-but-featureless link. A couldn't-reach result is deliberately
-  # excluded so its Retry re-runs detection rather than re-rendering itself.
+  # excluded so resubmitting re-runs detection rather than re-rendering itself.
   def settled_identification?
     feed_identification.success? && feed_identification.outcome != :unreachable
   end
@@ -106,12 +115,12 @@ class FeedIdentificationsController < ApplicationController
   end
 
   # Present the finished identification by how many candidates actually work
-  # (spec §7): the feed form when at least one does, otherwise the transient
-  # retry state (couldn't reach) or the terminal error that offers the AI bridge.
+  # (spec §7): the feed form when at least one does, otherwise the form re-renders
+  # with the transient couldn't-reach hint or the terminal no-feed one.
   def present_outcome
     case feed_identification.outcome
     when :working then handle_success_status
-    when :unreachable then render(couldnt_reach_retry)
+    when :unreachable then render(unreachable_error)
     else render(no_feed_error)
     end
   end
@@ -152,41 +161,50 @@ class FeedIdentificationsController < ApplicationController
     { turbo_stream: turbo_stream.replace("feed-form", partial: "feeds/#{partial}", locals: locals) }
   end
 
-  def identification_error(error:, heading: "Feed identification failed", url: raw_url)
-    feed_form_stream("identification_error", **base_locals, url: url, error: error, heading: heading)
+  # Creation states re-render the entry form itself (spec §1/§7): frozen while
+  # checking, or enabled with the hint under the active mode's input.
+  def entry_form(mode: "link", url: raw_url, prompt: nil, checking: false, error: nil)
+    feed_form_stream("form_collapsed", mode: mode, url: url, prompt: prompt, checking: checking, error: error)
   end
 
-  # When re-detecting an existing deterministic feed the engine is fixed, so the
-  # AI bridge isn't offered (spec §4) — the copy just points back to a link.
-  def not_a_link_bridge
-    return identification_error(heading: "That doesn't look like a link", error: "Enter a feed or page URL to check it.") if editing?
+  # Edit states re-render the edit form — the engine is fixed (spec §4), so
+  # there's no AI mode to switch to, just the hint under the source field.
+  def edit_form(attempted_url:, error: nil)
+    feed_form_stream("form_expanded", feed: edit_feed, edit_mode: true,
+                                      attempted_url: attempted_url, source_error: error)
+  end
 
-    identification_error(
-      heading: "That doesn't look like a link",
-      error: "Follow it with AI instead, or switch back and paste a link."
-    )
+  def identification_error(error:, url: raw_url, prompt: nil)
+    return edit_form(attempted_url: url, error: error) if editing?
+
+    entry_form(url: url, prompt: prompt, error: error)
   end
 
   # Terminal: the link was reachable but no deterministic profile reads it. In
-  # creation the bridge is the way forward (spec §7); in edit the engine is fixed,
-  # so it just invites another link.
+  # creation the AI mode is the way forward (spec §7) and the panel carries the
+  # link over; in edit it just invites another link.
   def no_feed_error
-    return identification_error(heading: "Couldn't pull any posts from that link", error: "We couldn't find a feed there — try a different link, or cancel to keep the current one.") if editing?
+    if editing?
+      return identification_error(error: "We couldn't pull any posts from that link. Try a different one — your current source is untouched.")
+    end
 
     identification_error(
-      heading: "Couldn't pull any posts from that link",
-      error: "We couldn't find a feed there — but AI can still follow it, or you can try a different link."
+      prompt: raw_url,
+      error: "We couldn't pull any posts from that link. Try a different one — or switch to “Follow with AI”, which can follow pages without a feed."
     )
   end
 
-  # Transient: nothing connected. Retrying is the primary path; the bridge is a
-  # secondary escape so the state can't dead-end (spec §7).
-  def couldnt_reach_retry
-    feed_form_stream("identification_retry", **base_locals, url: raw_url)
-  end
+  # Transient: nothing connected. Resubmitting re-runs detection, and in
+  # creation the AI panel stays available as a secondary escape (spec §7).
+  def unreachable_error
+    if editing?
+      return identification_error(error: "We couldn't reach that link. It might be a temporary hiccup — save again to retry, or keep the current source.")
+    end
 
-  def identification_loading
-    feed_form_stream("identification_loading", **base_locals, url: source_url)
+    identification_error(
+      prompt: raw_url,
+      error: "We couldn't reach that link. It might be a temporary hiccup — try again in a moment, or switch to “Follow with AI”."
+    )
   end
 
   def identification_success(feed, candidates: [], source_changed: false, profile_changed: false)
@@ -204,13 +222,6 @@ class FeedIdentificationsController < ApplicationController
 
   def editing?
     edit_feed.present?
-  end
-
-  # Common locals the §7 partials read to route back to the right place: the
-  # feed_id keeps re-detection in the edit context, cancel_path returns to the
-  # feed (not the feeds index), and edit_mode suppresses the AI bridge.
-  def base_locals
-    { feed_id: edit_feed&.id, cancel_path: (editing? ? feed_path(edit_feed) : feeds_path), edit_mode: editing? }
   end
 
   def raw_url
