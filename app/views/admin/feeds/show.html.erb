@@ -18,23 +18,23 @@
     </section>
   <% end %>
 
-  <section class="space-y-4">
-    <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
-      <% if @recent_events.any? %>
+  <% if @recent_events.any? %>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
         <%= link_to "View all", admin_events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "feed.events.view_all" } %>
-      <% end %>
-    </div>
-    <%= render Admin::EventsListComponent.new(events: @recent_events) %>
-  </section>
+      </div>
+      <%= render Admin::EventsListComponent.new(events: @recent_events) %>
+    </section>
+  <% end %>
 
-  <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-0 text-heading">Recent Posts</h2>
+  <% if @recent_posts.any? %>
+    <section class="space-y-4">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <h2 class="text-2xl font-semibold mb-0 text-heading">Recent Posts</h2>
+      </div>
 
-    <% if @recent_posts.any? %>
       <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, item_component: ReadonlyPostListItemComponent) %>
-    <% else %>
-      <%= render EmptyStateComponent.new("No posts imported yet from this feed") %>
-    <% end %>
-  </section>
+    </section>
+  <% end %>
 </div>
