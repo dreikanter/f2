@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-10
 
 - Enabling an AI feed that's missing a working AI credential or a model now explains what's left to set up instead of failing with an error page.
+- Telegram feeds now tell you clearly when a channel has no public web preview (restricted, private, or not a channel), instead of quietly showing no posts.
 - Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once the refresh finishes.
 
 ## 2026-07-09

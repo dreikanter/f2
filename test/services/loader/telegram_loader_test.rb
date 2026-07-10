@@ -1,7 +1,8 @@
 require "test_helper"
 
 class Loader::TelegramLoaderTest < ActiveSupport::TestCase
-  PREVIEW_BODY = "<html>telegram preview</html>"
+  PREVIEW_BODY = '<html><section class="tgme_channel_history js-message_history"></section></html>'
+  INFO_PAGE_BODY = '<html><div class="tgme_page_extra">12 subscribers</div></html>'
 
   def mock_client(response: nil, error: nil)
     response ||= HttpClient::Response.new(status: 200, body: PREVIEW_BODY)
@@ -63,6 +64,16 @@ class Loader::TelegramLoaderTest < ActiveSupport::TestCase
   test "#load should raise when the channel cannot be determined" do
     error = assert_raises(StandardError) { loader("https://t.me/", http_client: mock_client).load }
     assert_match(/Could not determine/, error.message)
+  end
+
+  test "#load should raise when the channel has no public web preview" do
+    client = mock_client(response: HttpClient::Response.new(status: 200, body: INFO_PAGE_BODY))
+    error = assert_raises(Loader::Error) { loader("examplechannel", http_client: client).load }
+    assert_match(/No public web preview for examplechannel/, error.message)
+  end
+
+  test "#load should accept a preview page with no posts yet" do
+    assert_equal PREVIEW_BODY, loader("examplechannel", http_client: mock_client).load
   end
 
   private
