@@ -62,12 +62,13 @@ class FeedRefreshWorkflow
   # FeedRefreshJob's advisory lock allows one refresh per feed at a time, so
   # an event still "started" when a new run begins belongs to a run whose
   # process died before finalizing. Runs as the first step — before the digest
-  # skip — so even runs that halt still sweep.
+  # skip — so even runs that halt still sweep. Demoting to debug takes the dead
+  # run's "in progress" record out of the user event feed.
   def interrupt_abandoned_refresh_events(input = nil)
     feed.events.where(type: "feed_refresh")
         .where("metadata ->> 'status' = 'started'")
         .find_each do |event|
-      event.update!(metadata: event.metadata.merge("status" => "interrupted"))
+      event.update!(level: :debug, metadata: event.metadata.merge("status" => "interrupted"))
       Metrics.increment("feed_refresh_total", status: "interrupted", profile: feed.feed_profile_key)
       Rails.logger.info "Feed refresh interrupted for feed #{feed.id}: event #{event.id} was abandoned by a dead run"
     end
@@ -75,12 +76,13 @@ class FeedRefreshWorkflow
     input
   end
 
-  # Debug level keeps the in-flight record out of the user event feed;
-  # completion promotes it to a user-visible level.
+  # The in-flight record is user-visible and ephemeral: completion or failure
+  # deletes it and creates the permanent outcome event in its place, so each
+  # run leaves exactly one lasting record.
   def create_refresh_event
     Event.create!(
       type: "feed_refresh",
-      level: :debug,
+      level: :info,
       subject: feed,
       user: feed.user,
       metadata: { status: "started", stats: stats }
@@ -273,10 +275,22 @@ class FeedRefreshWorkflow
     record_stats(stats_key => duration)
   end
 
+  # Delete before create: the terminal event's fresh id is what makes open
+  # event pages re-render, and that re-render must no longer include the
+  # started record.
   def complete_refresh_event(posts)
-    @refresh_event.update!(level: :info, metadata: { status: "completed", stats: stats })
+    @refresh_event.destroy!
+
+    event = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: feed,
+      user: feed.user,
+      metadata: { status: "completed", stats: stats }
+    )
+
     @refresh_completed = true
-    reference_posts(@refresh_event, posts)
+    reference_posts(event, posts)
   end
 
   def reference_posts(event, posts)
@@ -302,14 +316,19 @@ class FeedRefreshWorkflow
     feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
   end
 
-  # A failure after completion (e.g. metrics recording) must not rewrite the
-  # completed run's record; the error still propagates to the job. A nil event
-  # means event persistence itself was failing — nothing to update.
+  # The @refresh_completed guard keeps the invariant of at most one terminal
+  # event per run: a failure after completion (e.g. metrics recording) must
+  # not add a contradictory failed record.
   def fail_refresh_event(error)
     return if @refresh_completed
 
-    @refresh_event&.update!(
+    @refresh_event&.destroy!
+
+    Event.create!(
+      type: "feed_refresh",
       level: :error,
+      subject: feed,
+      user: feed.user,
       message: error.message,
       metadata: {
         status: "failed",

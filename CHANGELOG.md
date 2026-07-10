@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-10
+
+- Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once the refresh finishes.
+
 ## 2026-07-09
 
 - Feed pages are less cluttered: the Recent Activity and Recent Posts sections only appear once there's something to show.

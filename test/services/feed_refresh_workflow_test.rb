@@ -579,7 +579,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 1, events.count
   end
 
-  test "#execute should create a started event and complete it in place" do
+  test "#execute should replace the started event with a completed event" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
     # A local, because the singleton method's body resolves methods against the
@@ -597,13 +597,16 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     assert_not_nil in_flight_event, "the event should exist before loading starts"
     assert_equal "started", in_flight_event.metadata["status"]
-    assert_equal "debug", in_flight_event.level
+    assert_equal "info", in_flight_event.level, "the in-flight record should be user-visible"
     assert in_flight_event.metadata["stats"]["started_at"].present?
 
-    completed_event = in_flight_event.reload
+    assert_not Event.exists?(in_flight_event.id), "the started event should be deleted on completion"
+
+    events = Event.where(subject: test_feed, type: "feed_refresh")
+    assert_equal 1, events.count
+    completed_event = events.first
     assert_equal "completed", completed_event.metadata["status"]
     assert_equal "info", completed_event.level
-    assert_equal 1, Event.where(subject: test_feed, type: "feed_refresh").count
   end
 
   test "#execute should keep the completed event when a post-completion step fails" do
@@ -625,7 +628,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     abandoned_started_at = 1.day.ago
     abandoned = Event.create!(
       type: "feed_refresh",
-      level: :debug,
+      level: :info,
       subject: test_feed,
       user: test_feed.user,
       metadata: { status: "started", stats: { started_at: abandoned_started_at.iso8601 } }
@@ -637,7 +640,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     abandoned.reload
     assert_equal "interrupted", abandoned.metadata["status"]
-    assert_equal "debug", abandoned.level
+    assert_equal "debug", abandoned.level, "the dead run's record should leave the user event feed"
     assert_equal abandoned_started_at.iso8601, abandoned.metadata.dig("stats", "started_at"),
                  "the rest of the abandoned event's metadata stays intact"
   end
@@ -648,7 +651,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
 
     other_started = Event.create!(
       type: "feed_refresh",
-      level: :debug,
+      level: :info,
       subject: other_feed,
       user: other_feed.user,
       metadata: { status: "started" }
@@ -918,7 +921,7 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
       feed = digest_feed_with_schedule(last_digest_period: Time.current.utc.to_date)
       abandoned = Event.create!(
         type: "feed_refresh",
-        level: :debug,
+        level: :info,
         subject: feed,
         user: feed.user,
         metadata: { status: "started" }
