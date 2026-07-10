@@ -335,6 +335,18 @@ class FeedProfile
       processor: { class: "Processor::TwitterProcessor", config: {} },
       normalizer: { class: "Normalizer::TwitterNormalizer", config: {} },
       title_extractor: "TitleExtractor::TwitterTitleExtractor"
+    },
+    "bluesky" => {
+      display_name: "Bluesky",
+      description: "Posts from a public Bluesky account, images included",
+      input_shape: :url,
+      depends_on_ai: false,
+      matcher: "ProfileMatcher::BlueskyProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::BlueskyLoader", config: {} },
+      processor: { class: "Processor::BlueskyProcessor", config: {} },
+      normalizer: { class: "Normalizer::BlueskyNormalizer", config: {} },
+      title_extractor: "TitleExtractor::BlueskyTitleExtractor"
     }
   }.freeze
 
