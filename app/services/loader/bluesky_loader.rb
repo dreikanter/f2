@@ -2,8 +2,8 @@ module Loader
   # Fetches a Bluesky author's timeline through the public AppView API
   # (public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed). It is documented,
   # needs no API key or login, and carries full-size image URLs — unlike the
-  # profile's native RSS feed, which is text-only. Accepts a bsky.app profile
-  # URL, an @handle, a bare handle, or a DID.
+  # profile's native RSS feed, which is text-only. Accepts a full bsky.app
+  # profile URL identifying the account by handle or DID.
   class BlueskyLoader < Base
     API_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed".freeze
     HOSTS = %w[bsky.app www.bsky.app].freeze
@@ -16,7 +16,7 @@ module Loader
     def load
       identifier = actor
       unless identifier.match?(HANDLE) || identifier.match?(DID)
-        raise Loader::Error, "Could not determine Bluesky handle from #{feed.url.inspect}"
+        raise Loader::Error, "Expected a bsky.app profile URL, got #{feed.url.inspect}"
       end
 
       response = http_client.get(feed_url(identifier), headers: { "Accept" => "application/json" })
@@ -35,18 +35,13 @@ module Loader
       "#{API_URL}?#{URI.encode_www_form(actor: identifier, filter: "posts_no_replies")}"
     end
 
+    # The account's handle or DID from a bsky.app/profile/<actor> URL. Only
+    # the full URL form is accepted — bare handles are ambiguous (and the
+    # params schema requires a URI anyway).
     def actor
       raw = feed.url.to_s.strip
-      return raw.delete_prefix("@") if raw.start_with?("@")
+      return "" unless raw.match?(%r{\Ahttps?://}i)
 
-      if raw.match?(%r{\Ahttps?://}i) || HOSTS.any? { |host| raw.downcase.start_with?("#{host}/") }
-        profile_url_actor(raw)
-      else
-        raw.split("/").first.to_s
-      end
-    end
-
-    def profile_url_actor(raw)
       path = raw.sub(%r{\Ahttps?://}i, "").split(/[?#]/).first.to_s
       segments = path.split("/").reject(&:empty?)
       return "" unless HOSTS.include?(segments.first.to_s.downcase)

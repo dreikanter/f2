@@ -8,8 +8,10 @@ class Loader::BlueskyLoaderTest < ActiveSupport::TestCase
     MockHttpClient.new(response: response, error: error)
   end
 
+  # Built, not created: the strict params schema rejects the non-URL inputs
+  # exercised by the rejection tests before the loader would ever see them.
   def loader(input, http_client: nil)
-    feed = create(:feed, feed_profile_key: "bluesky", url: input)
+    feed = build(:feed, feed_profile_key: "bluesky", url: input)
     opts = http_client ? { http_client: http_client } : {}
     Loader::BlueskyLoader.new(feed, opts)
   end
@@ -19,27 +21,9 @@ class Loader::BlueskyLoaderTest < ActiveSupport::TestCase
       "?actor=#{actor}&filter=posts_no_replies"
   end
 
-  test "#load should request the getAuthorFeed endpoint for a bare handle" do
-    client = mock_client
-    loader("testuser.bsky.social", http_client: client).load
-    assert_equal expected_url("testuser.bsky.social"), client.last_request_url
-  end
-
-  test "#load should strip a leading @ from the handle" do
-    client = mock_client
-    loader("@testuser.bsky.social", http_client: client).load
-    assert_equal expected_url("testuser.bsky.social"), client.last_request_url
-  end
-
-  test "#load should accept a bsky.app profile URL" do
+  test "#load should request the getAuthorFeed endpoint for a profile URL" do
     client = mock_client
     loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load
-    assert_equal expected_url("testuser.bsky.social"), client.last_request_url
-  end
-
-  test "#load should accept a schemeless bsky.app profile URL" do
-    client = mock_client
-    loader("bsky.app/profile/testuser.bsky.social", http_client: client).load
     assert_equal expected_url("testuser.bsky.social"), client.last_request_url
   end
 
@@ -55,43 +39,52 @@ class Loader::BlueskyLoaderTest < ActiveSupport::TestCase
     assert_equal expected_url("did%3Aplc%3Aabc123"), client.last_request_url
   end
 
-  test "#load should treat a bare bsky.app input as the official account handle" do
-    client = mock_client
-    loader("@bsky.app", http_client: client).load
-    assert_equal expected_url("bsky.app"), client.last_request_url
-  end
-
   test "#load should send a JSON Accept header" do
     client = mock_client
-    loader("testuser.bsky.social", http_client: client).load
+    loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load
     assert_equal "application/json", client.last_headers["Accept"]
   end
 
   test "#load should return the response body on success" do
-    assert_equal FEED_BODY, loader("testuser.bsky.social", http_client: mock_client).load
+    assert_equal FEED_BODY, loader("https://bsky.app/profile/testuser.bsky.social", http_client: mock_client).load
   end
 
   test "#load should surface the API error message on HTTP error" do
     body = '{"error":"InvalidRequest","message":"Profile not found"}'
     client = mock_client(response: HttpClient::Response.new(status: 400, body: body))
-    error = assert_raises(StandardError) { loader("testuser.bsky.social", http_client: client).load }
+    error = assert_raises(StandardError) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
     assert_equal "HTTP 400: Profile not found", error.message
   end
 
   test "#load should raise with the bare status when the error body is not JSON" do
     client = mock_client(response: HttpClient::Response.new(status: 500, body: "oops"))
-    error = assert_raises(StandardError) { loader("testuser.bsky.social", http_client: client).load }
+    error = assert_raises(StandardError) { loader("https://bsky.app/profile/testuser.bsky.social", http_client: client).load }
     assert_equal "HTTP 500", error.message
   end
 
-  test "#load should raise when the handle is not a domain" do
-    error = assert_raises(StandardError) { loader("justname", http_client: mock_client).load }
-    assert_match(/Could not determine/, error.message)
+  test "#load should reject a bare handle" do
+    error = assert_raises(StandardError) { loader("testuser.bsky.social", http_client: mock_client).load }
+    assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
-  test "#load should raise for a bsky.app URL without a profile path" do
+  test "#load should reject an @handle" do
+    error = assert_raises(StandardError) { loader("@testuser.bsky.social", http_client: mock_client).load }
+    assert_match(/Expected a bsky\.app profile URL/, error.message)
+  end
+
+  test "#load should reject a profile URL with an invalid actor" do
+    error = assert_raises(StandardError) { loader("https://bsky.app/profile/justname", http_client: mock_client).load }
+    assert_match(/Expected a bsky\.app profile URL/, error.message)
+  end
+
+  test "#load should reject a bsky.app URL without a profile path" do
     error = assert_raises(StandardError) { loader("https://bsky.app/search", http_client: mock_client).load }
-    assert_match(/Could not determine/, error.message)
+    assert_match(/Expected a bsky\.app profile URL/, error.message)
+  end
+
+  test "#load should reject a non-bsky.app URL" do
+    error = assert_raises(StandardError) { loader("https://example.com/profile/testuser.bsky.social", http_client: mock_client).load }
+    assert_match(/Expected a bsky\.app profile URL/, error.message)
   end
 
   private

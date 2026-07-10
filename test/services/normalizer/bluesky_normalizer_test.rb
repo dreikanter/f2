@@ -2,7 +2,7 @@ require "test_helper"
 
 class Normalizer::BlueskyNormalizerTest < ActiveSupport::TestCase
   def feed
-    @feed ||= create(:feed, feed_profile_key: "bluesky", url: "testuser.bsky.social")
+    @feed ||= create(:feed, feed_profile_key: "bluesky", url: "https://bsky.app/profile/testuser.bsky.social")
   end
 
   def posts

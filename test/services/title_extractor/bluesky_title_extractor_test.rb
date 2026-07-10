@@ -14,11 +14,7 @@ class TitleExtractor::BlueskyTitleExtractorTest < ActiveSupport::TestCase
     assert_equal "@testuser.bsky.social", extractor("https://bsky.app/profile/testuser.bsky.social").title
   end
 
-  test "#title should fall back to the @handle from an @handle input" do
-    assert_equal "@testuser.bsky.social", extractor("@testuser.bsky.social").title
-  end
-
-  test "#title should fall back to the @handle from a bare handle" do
-    assert_equal "@testuser.bsky.social", extractor("testuser.bsky.social").title
+  test "#title should ignore extra path segments in the fallback" do
+    assert_equal "@testuser.bsky.social", extractor("https://bsky.app/profile/testuser.bsky.social/post/3aaa").title
   end
 end

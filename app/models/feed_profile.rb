@@ -342,7 +342,7 @@ class FeedProfile
       input_shape: :url,
       depends_on_ai: false,
       matcher: "ProfileMatcher::BlueskyProfileMatcher",
-      parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
+      parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::BlueskyLoader", config: {} },
       processor: { class: "Processor::BlueskyProcessor", config: {} },
       normalizer: { class: "Normalizer::BlueskyNormalizer", config: {} },
