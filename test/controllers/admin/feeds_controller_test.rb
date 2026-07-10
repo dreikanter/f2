@@ -61,6 +61,48 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", post_path(post), count: 0
   end
 
+  test "#show should render a recent activity section with the feed's events" do
+    login_as(admin_user)
+    feed = create(:feed, user: create(:user))
+    create(:event, subject: feed, user: feed.user)
+
+    get admin_feed_path(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Activity", count: 1
+  end
+
+  test "#show should not render recent activity section when feed has no events" do
+    login_as(admin_user)
+    feed = create(:feed, user: create(:user))
+
+    get admin_feed_path(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Activity", count: 0
+  end
+
+  test "#show should render a recent posts section with the feed's posts" do
+    login_as(admin_user)
+    feed = create(:feed, user: create(:user))
+    create(:post, feed: feed)
+
+    get admin_feed_path(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Posts", count: 1
+  end
+
+  test "#show should not render recent posts section when feed has no posts" do
+    login_as(admin_user)
+    feed = create(:feed, user: create(:user))
+
+    get admin_feed_path(feed)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Posts", count: 0
+  end
+
   test "should redirect non-admin users from show" do
     login_as(regular_user)
     feed = create(:feed, user: create(:user))
