@@ -67,6 +67,7 @@ Rails.application.routes.draw do
     resources :feeds, only: [:index, :show]
   end
 
+  resource :changelog, only: :show
   resource :settings, only: :show
 
   namespace :settings do
