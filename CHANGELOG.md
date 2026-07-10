@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-10
 
+- You can now catch up on what's new right in the app: there's a Changelog page in your account menu.
 - You can now follow Bluesky accounts: paste a bsky.app profile link, and their posts get reposted with pictures included.
 - Admin feed pages now match regular feed pages: empty Recent Activity and Recent Posts sections stay hidden, and heading spacing is consistent.
 - Enabling an AI feed that's missing a working AI credential or a model now explains what's left to set up instead of failing with an error page.

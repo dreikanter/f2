@@ -1,0 +1,22 @@
+<% content_for :title, "Changelog" %>
+
+<div class="space-y-8">
+  <%= render PageHeaderComponent.new(title: "Changelog") do |header| %>
+    <% header.with_context_paragraph do %>
+      What's new in Feeder — the latest features, fixes, and improvements.
+    <% end %>
+  <% end %>
+
+  <div class="space-y-8" data-key="changelog.sections">
+    <% @sections.each do |section| %>
+      <section>
+        <h2 class="text-2xl font-semibold mb-3 text-heading"><%= changelog_date(section.date) %></h2>
+        <ul class="list-disc space-y-2 pl-5 text-body">
+          <% section.entries.each do |entry| %>
+            <li><%= changelog_entry(entry) %></li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+  </div>
+</div>
