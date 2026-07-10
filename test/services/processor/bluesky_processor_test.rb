@@ -147,6 +147,13 @@ class Processor::BlueskyProcessorTest < ActiveSupport::TestCase
     assert result.recognized?
   end
 
+  test "#process should skip feed items that are not objects" do
+    result = Processor::BlueskyProcessor.new(feed, '{"feed":["str",42,null]}').process
+
+    assert_equal [], result.entries
+    assert result.recognized?
+  end
+
   test "#process should recognize a real author feed payload" do
     assert Processor::BlueskyProcessor.new(feed, sample_json).process.recognized?
   end

@@ -43,6 +43,12 @@ class Loader::BlueskyLoaderTest < ActiveSupport::TestCase
     assert_equal expected_url("testuser.bsky.social"), client.last_request_url
   end
 
+  test "#load should ignore a query string on a profile URL" do
+    client = mock_client
+    loader("https://bsky.app/profile/testuser.bsky.social?ref=share", http_client: client).load
+    assert_equal expected_url("testuser.bsky.social"), client.last_request_url
+  end
+
   test "#load should accept a profile URL with a DID and encode it" do
     client = mock_client
     loader("https://bsky.app/profile/did:plc:abc123", http_client: client).load

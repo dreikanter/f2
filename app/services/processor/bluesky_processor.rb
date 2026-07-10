@@ -30,6 +30,7 @@ module Processor
     end
 
     def build_entry(item)
+      return nil unless item.is_a?(Hash)
       return nil if item["reason"].present? || item["reply"].present?
 
       post = item["post"]

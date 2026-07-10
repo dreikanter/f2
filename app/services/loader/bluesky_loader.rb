@@ -47,7 +47,8 @@ module Loader
     end
 
     def profile_url_actor(raw)
-      segments = raw.sub(%r{\Ahttps?://}i, "").split("/").reject(&:empty?)
+      path = raw.sub(%r{\Ahttps?://}i, "").split(/[?#]/).first.to_s
+      segments = path.split("/").reject(&:empty?)
       return "" unless HOSTS.include?(segments.first.to_s.downcase)
 
       segments.second.to_s.casecmp?("profile") ? segments.third.to_s : ""
