@@ -25,6 +25,16 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}"])
   end
 
+  test "#index should offer a text-only Run button" do
+    sign_in_as(dev_user)
+    get development_job_job_runs_path("PurgeExpiredEventsJob")
+
+    assert_response :success
+    assert_select '[data-key="development.job_runs.run"]', text: "Run" do
+      assert_select "svg", count: 0
+    end
+  end
+
   test "#index should return not found for an unregistered job" do
     sign_in_as(dev_user)
     get development_job_job_runs_path("SomeOtherJob")
