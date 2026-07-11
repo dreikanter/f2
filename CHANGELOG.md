@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-11
 
+- Disabled feeds are easier to spot in your feed list: their pause icon is now orange instead of gray.
 - Posts with an image over FreeFeed's upload size limit now publish without that image instead of failing entirely.
 
 ## 2026-07-10
