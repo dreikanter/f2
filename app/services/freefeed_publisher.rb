@@ -92,11 +92,7 @@ class FreefeedPublisher
   def upload_attachments
     return [] if post.attachment_urls.blank?
 
-    post.attachment_urls.map do |url|
-      io, content_type = FileBuffer.new.load(url)
-      attachment = client.create_attachment_from_io(io, content_type: content_type)
-      attachment[:id]
-    end
+    post.attachment_urls.filter_map { |url| upload_attachment(url) }
   rescue RateLimit::Throttled
     raise # let the job reschedule; don't bury it as a publish failure
   rescue FreefeedClient::UnauthorizedError
@@ -105,6 +101,16 @@ class FreefeedPublisher
     raise SourceContentError, "Failed to upload attachments: #{e.message}"
   rescue => e
     raise PublishError, "Failed to upload attachments: #{e.message}"
+  end
+
+  # A file over the server's upload limit is a source-content problem, not an
+  # app fault: skip it and publish the post with the remaining attachments.
+  def upload_attachment(url)
+    io, content_type = FileBuffer.new.load(url)
+    client.create_attachment_from_io(io, content_type: content_type)[:id]
+  rescue FreefeedClient::PayloadTooLargeError => e
+    Rails.logger.warn "Skipping oversized attachment #{url} for post #{post.id}: #{e.message}"
+    nil
   end
 
   def create_freefeed_post(attachment_ids)

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-11
+
+- Posts with an image over FreeFeed's upload size limit now publish without that image instead of failing entirely.
+
 ## 2026-07-10
 
 - You can now catch up on what's new right in the app: there's a Changelog page in your account menu.
