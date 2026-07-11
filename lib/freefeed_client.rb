@@ -11,6 +11,10 @@ class FreefeedClient
   # UnauthorizedError so callers don't mistake it for a dead token and disable it.
   class ForbiddenError < Error; end
   class NotFoundError < Error; end
+  # The server rejected an upload for exceeding its size limit (HTTP 413).
+  # The limit is server-configured, so callers detect it from the response
+  # rather than pre-checking against a hardcoded size.
+  class PayloadTooLargeError < Error; end
 
   USER_AGENT = "FreeFeed-Rails-Client".freeze
 
@@ -199,6 +203,9 @@ class FreefeedClient
       # Preserve the server's message ("Account '<name>' was not found") so the
       # caller can explain a vanished/renamed target group.
       raise NotFoundError, parse_error(response) || "Resource not found"
+    when 413
+      # Preserve the server's message (it states the actual size limit).
+      raise PayloadTooLargeError, parse_error(response) || "Payload too large"
     when 429
       handle_too_many_requests(response)
     else
