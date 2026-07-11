@@ -87,7 +87,7 @@
       <% @disk_usage[:table_usage].each do |row| %>
         <% list.with_item(StatListItemComponent.new(
           label: tag.code(row["table_name"]),
-          value: row["total_size"]
+          value: number_to_human_size(row["total_size"])
         )) %>
       <% end %>
     <% end %>

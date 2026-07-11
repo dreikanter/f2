@@ -89,7 +89,7 @@ class DiskUsageService
     execute_query(<<-SQL
       SELECT
         relname AS table_name,
-        pg_size_pretty(pg_total_relation_size(pg_class.oid)) AS total_size
+        pg_total_relation_size(pg_class.oid) AS total_size
       FROM
         pg_class
         JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
