@@ -280,6 +280,8 @@ class FeedRefreshWorkflow
   # started record.
   def complete_refresh_event(posts)
     @refresh_event.destroy!
+    usage_rows = run_llm_usage_rows
+    record_llm_usage_stats(usage_rows)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -291,6 +293,7 @@ class FeedRefreshWorkflow
 
     @refresh_completed = true
     reference_posts(event, posts)
+    reference_llm_usages(event, usage_rows)
   end
 
   def reference_posts(event, posts)
@@ -301,6 +304,45 @@ class FeedRefreshWorkflow
         event_id: event.id,
         reference_type: "Post",
         reference_id: post.id,
+        created_at: event.created_at,
+        updated_at: event.created_at
+      }
+    end
+
+    EventReference.insert_all(references_data)
+  end
+
+  # This run's LLM audit rows, as [id, cost_estimate_cents] pairs. The
+  # started_at window is exact: the per-feed advisory lock serializes runs,
+  # and every other LlmUsage writer either uses the preview purpose or an
+  # unpersisted feed (nil feed_id), so no foreign rows can land in it.
+  def run_llm_usage_rows
+    return [] unless stats[:started_at]
+
+    feed.llm_usages.scheduled_run
+        .where(started_at: stats[:started_at]..)
+        .pluck(:id, :cost_estimate_cents)
+  end
+
+  # Skipped when the run made no LLM calls, so deterministic feeds don't get
+  # a noisy zero-spend stat on every refresh event.
+  def record_llm_usage_stats(usage_rows)
+    return if usage_rows.empty?
+
+    record_stats(
+      llm_calls: usage_rows.size,
+      llm_cost_cents: usage_rows.sum { |_id, cents| cents }
+    )
+  end
+
+  def reference_llm_usages(event, usage_rows)
+    return if usage_rows.empty?
+
+    references_data = usage_rows.map do |usage_id, _cents|
+      {
+        event_id: event.id,
+        reference_type: "LlmUsage",
+        reference_id: usage_id,
         created_at: event.created_at,
         updated_at: event.created_at
       }
@@ -323,8 +365,10 @@ class FeedRefreshWorkflow
     return if @refresh_completed
 
     @refresh_event&.destroy!
+    usage_rows = run_llm_usage_rows
+    record_llm_usage_stats(usage_rows)
 
-    Event.create!(
+    event = Event.create!(
       type: "feed_refresh",
       level: :error,
       subject: feed,
@@ -341,6 +385,8 @@ class FeedRefreshWorkflow
         }
       }
     )
+
+    reference_llm_usages(event, usage_rows)
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant

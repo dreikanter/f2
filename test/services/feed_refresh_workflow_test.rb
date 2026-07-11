@@ -469,6 +469,105 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal "active", credential.reload.state
   end
 
+  def usage_writing_loader(test_feed, rss, cost_cents: 3)
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
+                         started_at: Time.current, finished_at: Time.current,
+                         cost_estimate_cents: cost_cents)
+      rss
+    end
+    loader
+  end
+
+  test "#execute should reference the run's LLM usage on the completed event" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+    prior_usage = create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 1.minute.ago)
+
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss)) do
+      FeedRefreshWorkflow.new(test_feed).execute
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+    run_usage = test_feed.llm_usages.where.not(id: prior_usage.id).sole
+
+    assert_equal "completed", event.metadata["status"]
+    assert_equal 1, event.metadata.dig("stats", "llm_calls")
+    assert_equal 3, event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal [run_usage], event.references
+  end
+
+  test "#execute should reference the run's LLM usage on the failed event" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
+                         started_at: Time.current, finished_at: Time.current,
+                         cost_estimate_cents: 5, outcome: :provider_error)
+      raise LlmClient::ProviderError, "server error"
+    end
+
+    test_feed.stub(:loader_instance, loader) do
+      assert_raises(LlmClient::ProviderError) { FeedRefreshWorkflow.new(test_feed).execute }
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+
+    assert_equal "failed", event.metadata["status"]
+    assert_equal 1, event.metadata.dig("stats", "llm_calls")
+    assert_equal 5, event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal test_feed.llm_usages.to_a, event.references
+  end
+
+  test "#execute should not ignore zero-cost LLM calls" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+
+    test_feed.stub(:loader_instance, usage_writing_loader(test_feed, empty_rss, cost_cents: 0)) do
+      FeedRefreshWorkflow.new(test_feed).execute
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+
+    assert_equal 1, event.metadata.dig("stats", "llm_calls")
+    assert_equal 0, event.metadata.dig("stats", "llm_cost_cents")
+  end
+
+  test "#execute should record no LLM usage stats for a run without LLM calls" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+
+    assert_equal "completed", event.metadata["status"]
+    assert_not event.metadata["stats"].key?("llm_calls")
+    assert_not event.metadata["stats"].key?("llm_cost_cents")
+    assert_empty event.event_references
+  end
+
+  test "#execute should not associate preview usage written during the run" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+    rss = empty_rss
+
+    preview_loader = Object.new
+    preview_loader.define_singleton_method(:load) do
+      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed, purpose: :preview,
+                         started_at: Time.current, finished_at: Time.current)
+      rss
+    end
+
+    test_feed.stub(:loader_instance, preview_loader) do
+      FeedRefreshWorkflow.new(test_feed).execute
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+
+    assert_not event.metadata["stats"].key?("llm_calls")
+    assert_empty event.event_references
+  end
+
   test "#execute should handle normalization errors gracefully" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
 
