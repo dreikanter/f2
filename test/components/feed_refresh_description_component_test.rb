@@ -40,6 +40,55 @@ class FeedRefreshDescriptionComponentTest < ViewComponent::TestCase
     assert_nil result.css("[data-key='events.posts_count']").first
   end
 
+  def event_with_spend(cents, **attributes)
+    Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: feed,
+      user: user,
+      metadata: { status: "completed", stats: { llm_calls: 2, llm_cost_cents: cents } },
+      **attributes
+    )
+  end
+
+  test "#call should append the estimated AI spend" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(3)))
+
+    assert_equal "(AI: $0.03)", result.css("[data-key='events.llm_cost']").first&.text
+  end
+
+  test "#call should show a zero spend when calls were made but cost nothing" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event_with_spend(0)))
+
+    assert_equal "(AI: $0.00)", result.css("[data-key='events.llm_cost']").first&.text
+  end
+
+  test "#call should append both the posts count and the AI spend" do
+    event = event_with_spend(12)
+    create(:event_reference, event: event, reference: create(:post, feed: feed))
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_equal "(+1 post)", result.css("[data-key='events.posts_count']").first&.text
+    assert_equal "(AI: $0.12)", result.css("[data-key='events.llm_cost']").first&.text
+  end
+
+  test "#call should omit the spend when the run made no LLM calls" do
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: refresh_event))
+
+    assert_nil result.css("[data-key='events.llm_cost']").first
+  end
+
+  test "#call should append the spend to a failed refresh" do
+    event = event_with_spend(5, level: :error, message: "Connection timeout")
+    event.update!(metadata: event.metadata.merge("status" => "failed"))
+
+    result = render_inline(FeedRefreshDescriptionComponent.new(event: event))
+
+    assert_includes result.to_html, "couldn't refresh"
+    assert_equal "(AI: $0.05)", result.css("[data-key='events.llm_cost']").first&.text
+  end
+
   def event_with_status(status, **attributes)
     Event.create!(
       type: "feed_refresh",

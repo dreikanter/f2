@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-11
 
 - Disabled feeds are easier to spot in your feed list: their pause icon is now orange instead of gray.
+- Feed refresh entries in the events log now show what each AI run cost: the estimated spend appears next to the entry and in the event's stats.
 - Posts with an image over FreeFeed's upload size limit now publish without that image instead of failing entirely.
 
 ## 2026-07-10
