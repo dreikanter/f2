@@ -77,6 +77,35 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"]), text: /Purged 3 expired events/
   end
 
+  test "#show should title the page with the run id" do
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
+    sign_in_as(dev_user)
+    get development_job_job_run_path("PurgeExpiredEventsJob", run)
+
+    assert_response :success
+    assert_select "h1", text: "Run ##{run.id}"
+  end
+
+  test "#show should render event metadata as formatted JSON" do
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
+    event = create(:event, subject: run, message: "Purged", metadata: { "purged_count" => 3 })
+    sign_in_as(dev_user)
+    get development_job_job_run_path("PurgeExpiredEventsJob", run)
+
+    assert_response :success
+    assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"] pre), text: /"purged_count": 3/
+  end
+
+  test "#show should omit the metadata section for events without metadata" do
+    run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
+    event = create(:event, subject: run, message: "Purged", metadata: {})
+    sign_in_as(dev_user)
+    get development_job_job_run_path("PurgeExpiredEventsJob", run)
+
+    assert_response :success
+    assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"] pre), count: 0
+  end
+
   test "#show should require dev permission" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob")
     sign_in_as(regular_user)
