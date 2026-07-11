@@ -64,9 +64,19 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal "inactive", credential.reload.state
   end
 
-  # No LlmClient stubbing: goes through the real client so a transport error
-  # the client fails to map to LlmClient::Error would escape the job's rescue
+  # No LlmClient stubbing: goes through the real client so an error the
+  # client fails to map to LlmClient::Error would escape the job's rescue
   # and strand the credential in "validating".
+  test "#perform should not strand credential in validating when the provider key does not resolve" do
+    RubyLLM::Provider.stub(:resolve, nil) do
+      AiCredentialValidationJob.perform_now(credential)
+    end
+
+    credential.reload
+    assert_equal "inactive", credential.state
+    assert_match "unknown RubyLLM provider", credential.last_error
+  end
+
   test "#perform should not strand credential in validating when the provider is unreachable" do
     moonshot = create(:ai_credential, user: user, state: :pending, provider: "moonshot",
                       credential_data: { "api_key" => "sk-moon-test" })

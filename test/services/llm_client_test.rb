@@ -294,6 +294,15 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(LlmClient::ProviderError) { client.available_models }
   end
 
+  test "#available_models should raise ProviderError when the RubyLLM provider key does not resolve" do
+    client = LlmClient.new(credential)
+
+    RubyLLM::Provider.stub(:resolve, nil) do
+      error = assert_raises(LlmClient::ProviderError) { client.available_models }
+      assert_match "unknown RubyLLM provider", error.message
+    end
+  end
+
   test "#available_models should call the provider models endpoint with the credential api_key" do
     client = LlmClient.new(credential)
 

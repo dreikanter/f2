@@ -104,11 +104,21 @@ class LlmClient
   # Single seam tests stub. Calls the provider's models listing endpoint.
   # Resolves through LlmProvider because registry names don't always match
   # RubyLLM's provider keys (Moonshot rides on :openai); resolving the raw
-  # name returns nil for those providers.
+  # name returns nil for those providers. A nil resolve (e.g. a RubyLLM
+  # upgrade renaming a key) must surface as a known error class — a bare
+  # NoMethodError escapes the validation job's rescue and strands the
+  # credential in "validating".
   def fetch_provider_models
-    RubyLLM::Provider.resolve(credential.llm_provider.ruby_llm_provider)
-                     .new(credential.ruby_llm_context.config)
-                     .list_models
+    key = credential.llm_provider.ruby_llm_provider
+    provider_class = RubyLLM::Provider.resolve(key)
+
+    if provider_class.nil?
+      error = ProviderError.new("unknown RubyLLM provider: #{key}")
+      Rails.error.report(error, context: { credential_id: credential.id, provider: credential.provider })
+      raise error
+    end
+
+    provider_class.new(credential.ruby_llm_context.config).list_models
   end
 
   # Map RubyLLM's Model::Info to a compact, stable hash. We keep only the
