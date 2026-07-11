@@ -582,6 +582,68 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
     end
   end
 
+  test "#publish should skip an attachment rejected as too large and publish with the rest" do
+    huge_url = "https://example.com/huge.png"
+    small_url = "https://example.com/small.jpg"
+    post = post_with_content("Post with images", attachment_urls: [huge_url, small_url])
+
+    stub_request(:get, huge_url)
+      .to_return(status: 200, body: "huge_image_data", headers: { "Content-Type" => "image/png" })
+    stub_request(:get, small_url)
+      .to_return(status: 200, body: "small_image_data", headers: { "Content-Type" => "image/jpeg" })
+
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(
+        { status: 413, body: { err: "This 'image' file is too large (the maximum size is 52428800 bytes)" }.to_json },
+        { status: 201, body: { attachments: { id: "attachment_ok" } }.to_json }
+      )
+
+    post_stub = stub_request(:post, "#{access_token.host}/v4/posts")
+      .with(
+        body: {
+          post: {
+            body: "Post with images",
+            attachments: ["attachment_ok"]
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
+      )
+      .to_return(status: 201, body: { posts: { id: "freefeed_post_123" } }.to_json)
+
+    assert_equal "freefeed_post_123", FreefeedPublisher.new(post).publish
+    assert_requested post_stub
+    assert_predicate post.reload, :published?
+  end
+
+  test "#publish should publish without attachments when every attachment is too large" do
+    huge_url = "https://example.com/huge.png"
+    post = post_with_content("Post with huge image", attachment_urls: [huge_url])
+
+    stub_request(:get, huge_url)
+      .to_return(status: 200, body: "huge_image_data", headers: { "Content-Type" => "image/png" })
+    stub_request(:post, "#{access_token.host}/v1/attachments")
+      .to_return(status: 413, body: { err: "This 'image' file is too large (the maximum size is 52428800 bytes)" }.to_json)
+
+    post_stub = stub_request(:post, "#{access_token.host}/v4/posts")
+      .with(
+        body: {
+          post: {
+            body: "Post with huge image"
+          },
+          meta: {
+            feeds: ["testgroup"]
+          }
+        }.to_json
+      )
+      .to_return(status: 201, body: { posts: { id: "freefeed_post_123" } }.to_json)
+
+    assert_equal "freefeed_post_123", FreefeedPublisher.new(post).publish
+    assert_requested post_stub
+    assert_predicate post.reload, :published?
+  end
+
   test "#publish should raise SourceContentError when an attachment cannot be downloaded" do
     image_url = "https://example.com/missing.jpg"
     post = post_with_content("Post with missing image", attachment_urls: [image_url])
