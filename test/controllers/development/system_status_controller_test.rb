@@ -102,7 +102,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :success
-    assert_select "[data-key='release.revision.value'] code", text: "0123456"
+    assert_select "[data-key='release.revision.value'] a[href='#{F2Rails::GITHUB_REPO_URL}/commit/0123456789abcdef'] code", text: "0123456"
     assert_select "[data-key='release.deployed_at.value'] code", text: /9 May 2026, 12:34/
     assert_select "[data-key='release.environment.value'] code", text: Rails.env
   end

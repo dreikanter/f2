@@ -32,7 +32,7 @@
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "Revision",
-        value: @release_info[:revision_short].present? ? tag.code(@release_info[:revision_short], title: @release_info[:revision]) : "—",
+        value: @release_info[:revision_short].present? ? revision_commit_link(@release_info[:revision_short], @release_info[:revision]) : "—",
         key: "release.revision"
       )) %>
       <% list.with_item(StatListItemComponent.new(

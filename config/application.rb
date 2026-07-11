@@ -21,6 +21,8 @@ require "set"
 Bundler.require(*Rails.groups)
 
 module F2Rails
+  GITHUB_REPO_URL = "https://github.com/dreikanter/f2".freeze
+
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
