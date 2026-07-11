@@ -42,7 +42,7 @@
       )) %>
       <% list.with_item(StatListItemComponent.new(
         label: "Environment",
-        value: tag.code(Rails.env),
+        value: environment_badge,
         key: "release.environment"
       )) %>
     <% end %>
