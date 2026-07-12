@@ -121,4 +121,6 @@ en:
         new_posts: "New posts"
         llm_calls: "AI calls"
         llm_cost_cents: "Estimated AI spend"
+    llm_usage:
+      section_title: "AI usage"
 
