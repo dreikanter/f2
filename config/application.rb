@@ -43,6 +43,13 @@ module F2Rails
     # Don't generate system test files.
     config.generators.system_tests = nil
 
+    # Default new models to UUIDv7 primary keys. UUIDv7 is time-ordered, so
+    # inserts stay at the right edge of the index like a bigint sequence, and
+    # ids are opaque and non-enumerable in URLs.
+    config.generators do |g|
+      g.orm :active_record, primary_key_type: :uuid
+    end
+
     # Configure ActiveJob to use SolidQueue
     config.active_job.queue_adapter = :solid_queue
 
