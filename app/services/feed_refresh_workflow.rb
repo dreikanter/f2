@@ -68,12 +68,45 @@ class FeedRefreshWorkflow
     feed.events.where(type: "feed_refresh")
         .where("metadata ->> 'status' = 'started'")
         .find_each do |event|
-      event.update!(level: :debug, metadata: event.metadata.merge("status" => "interrupted"))
+      interrupt_abandoned_event(event)
       Metrics.increment("feed_refresh_total", status: "interrupted", profile: feed.feed_profile_key)
       Rails.logger.info "Feed refresh interrupted for feed #{feed.id}: event #{event.id} was abandoned by a dead run"
     end
 
     input
+  end
+
+  # The dead run's LLM spend attaches to its interrupted event here or never:
+  # its usage rows fall outside every later run's window. The abandoned
+  # event's own started_at stat bounds them exactly — nothing ran between the
+  # death and this sweep (a later run would have swept the event already),
+  # and this run hasn't made any LLM calls yet.
+  def interrupt_abandoned_event(event)
+    usage_rows = abandoned_llm_usage_rows(event)
+    metadata = event.metadata.merge("status" => "interrupted")
+
+    if usage_rows.any?
+      metadata["stats"] = metadata.fetch("stats", {}).merge(
+        "llm_calls" => usage_rows.size,
+        "llm_cost_cents" => usage_rows.sum { |_id, cents| cents }
+      )
+    end
+
+    event.update!(level: :debug, metadata: metadata)
+    reference_llm_usages(event, usage_rows)
+  end
+
+  def abandoned_llm_usage_rows(event)
+    run_started_at = begin
+      Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
+    rescue ArgumentError
+      nil
+    end
+    return [] unless run_started_at
+
+    feed.llm_usages.scheduled_run
+        .where(started_at: run_started_at..)
+        .pluck(:id, :cost_estimate_cents)
   end
 
   # The in-flight record is user-visible and ephemeral: completion or failure

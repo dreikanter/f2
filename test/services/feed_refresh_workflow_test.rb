@@ -744,6 +744,38 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
                  "the rest of the abandoned event's metadata stays intact"
   end
 
+  test "#execute should attach the dead run's LLM usage to its interrupted event" do
+    test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
+    WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
+
+    abandoned = Event.create!(
+      type: "feed_refresh",
+      level: :info,
+      subject: test_feed,
+      user: test_feed.user,
+      metadata: { status: "started", stats: { started_at: 10.minutes.ago.iso8601 } }
+    )
+    create(:llm_usage, user: test_feed.user, feed: test_feed, started_at: 11.minutes.ago,
+                       cost_estimate_cents: 7)
+    dead_run_usage = create(:llm_usage, user: test_feed.user, feed: test_feed,
+                            started_at: 9.minutes.ago, cost_estimate_cents: 40)
+
+    FeedRefreshWorkflow.new(test_feed).execute
+
+    abandoned.reload
+    assert_equal "interrupted", abandoned.metadata["status"]
+    assert_equal 1, abandoned.metadata.dig("stats", "llm_calls")
+    assert_equal 40, abandoned.metadata.dig("stats", "llm_cost_cents")
+    assert_equal [dead_run_usage], abandoned.references,
+                 "only the dead run's rows attach; an earlier run's row stays out"
+
+    completed = Event.where(subject: test_feed, type: "feed_refresh")
+                     .where("metadata ->> 'status' = 'completed'").sole
+    assert_not completed.metadata["stats"].key?("llm_calls"),
+               "the sweeping run must not absorb the dead run's spend"
+    assert_empty completed.event_references
+  end
+
   test "#execute should not touch other feeds' started events" do
     test_feed = create(:feed, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     other_feed = create(:feed)
