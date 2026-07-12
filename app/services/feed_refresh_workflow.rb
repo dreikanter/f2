@@ -68,12 +68,43 @@ class FeedRefreshWorkflow
     feed.events.where(type: "feed_refresh")
         .where("metadata ->> 'status' = 'started'")
         .find_each do |event|
-      event.update!(level: :debug, metadata: event.metadata.merge("status" => "interrupted"))
+      interrupt_abandoned_event(event)
       Metrics.increment("feed_refresh_total", status: "interrupted", profile: feed.feed_profile_key)
       Rails.logger.info "Feed refresh interrupted for feed #{feed.id}: event #{event.id} was abandoned by a dead run"
     end
 
     input
+  end
+
+  # Attributes the dead run's spend to its interrupted event — here or never,
+  # since every later run's window starts after these rows. The event's own
+  # started_at stat bounds them exactly.
+  def interrupt_abandoned_event(event)
+    usage_rows = abandoned_llm_usage_rows(event)
+    metadata = event.metadata.merge("status" => "interrupted")
+
+    if usage_rows.any?
+      metadata["stats"] = metadata.fetch("stats", {}).merge(
+        "llm_calls" => usage_rows.size,
+        "llm_cost_cents" => usage_rows.sum { |_id, cents| cents }
+      )
+    end
+
+    event.update!(level: :debug, metadata: metadata)
+    reference_llm_usages(event, usage_rows)
+  end
+
+  def abandoned_llm_usage_rows(event)
+    run_started_at = begin
+      Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
+    rescue ArgumentError
+      nil
+    end
+    return [] unless run_started_at
+
+    feed.llm_usages.scheduled_run
+        .where(started_at: run_started_at..)
+        .pluck(:id, :cost_estimate_cents)
   end
 
   # The in-flight record is user-visible and ephemeral: completion or failure
@@ -280,6 +311,8 @@ class FeedRefreshWorkflow
   # started record.
   def complete_refresh_event(posts)
     @refresh_event.destroy!
+    usage_rows = run_llm_usage_rows
+    record_llm_usage_stats(usage_rows)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -291,6 +324,7 @@ class FeedRefreshWorkflow
 
     @refresh_completed = true
     reference_posts(event, posts)
+    reference_llm_usages(event, usage_rows)
   end
 
   def reference_posts(event, posts)
@@ -301,6 +335,43 @@ class FeedRefreshWorkflow
         event_id: event.id,
         reference_type: "Post",
         reference_id: post.id,
+        created_at: event.created_at,
+        updated_at: event.created_at
+      }
+    end
+
+    EventReference.insert_all(references_data)
+  end
+
+  # This run's usage rows as [id, cost_cents] pairs. The started_at window is
+  # exact: the advisory lock serializes runs per feed, and every other writer
+  # uses the preview purpose or an unpersisted feed.
+  def run_llm_usage_rows
+    return [] unless stats[:started_at]
+
+    feed.llm_usages.scheduled_run
+        .where(started_at: stats[:started_at]..)
+        .pluck(:id, :cost_estimate_cents)
+  end
+
+  # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
+  def record_llm_usage_stats(usage_rows)
+    return if usage_rows.empty?
+
+    record_stats(
+      llm_calls: usage_rows.size,
+      llm_cost_cents: usage_rows.sum { |_id, cents| cents }
+    )
+  end
+
+  def reference_llm_usages(event, usage_rows)
+    return if usage_rows.empty?
+
+    references_data = usage_rows.map do |usage_id, _cents|
+      {
+        event_id: event.id,
+        reference_type: "LlmUsage",
+        reference_id: usage_id,
         created_at: event.created_at,
         updated_at: event.created_at
       }
@@ -323,8 +394,10 @@ class FeedRefreshWorkflow
     return if @refresh_completed
 
     @refresh_event&.destroy!
+    usage_rows = run_llm_usage_rows
+    record_llm_usage_stats(usage_rows)
 
-    Event.create!(
+    event = Event.create!(
       type: "feed_refresh",
       level: :error,
       subject: feed,
@@ -341,6 +414,8 @@ class FeedRefreshWorkflow
         }
       }
     )
+
+    reference_llm_usages(event, usage_rows)
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant

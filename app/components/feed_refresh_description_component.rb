@@ -1,9 +1,10 @@
-# Describes a feed refresh run by its lifecycle status, appending the imported
-# posts count when there is one, e.g. "My Feed refreshed (+2 posts)".
+# Describes a feed refresh by its lifecycle status, appending the imported
+# posts count and the run's AI spend when present,
+# e.g. "My Feed refreshed (+2 posts) (AI: $0.03)".
 class FeedRefreshDescriptionComponent < EventDescriptionComponent
   def call
-    suffix = posts_count_tag
-    suffix ? safe_join([super, suffix], " ") : super
+    suffixes = [posts_count_tag, spend_tag].compact
+    suffixes.any? ? safe_join([super, *suffixes], " ") : super
   end
 
   private
@@ -26,5 +27,16 @@ class FeedRefreshDescriptionComponent < EventDescriptionComponent
     return if count.zero?
 
     helpers.tag.span("(+#{helpers.pluralize(count, "post")})", class: "text-muted", data: { key: "events.posts_count" })
+  end
+
+  # Reads the metadata snapshot, not the referenced rows, so the log renders
+  # without extra queries. Absent when the run made no LLM calls; a zero-cost
+  # call still shows.
+  def spend_tag
+    cents = event.metadata.dig("stats", "llm_cost_cents")
+    return if cents.nil?
+
+    helpers.tag.span("(AI: #{helpers.number_to_currency(cents / 100.0)})",
+                     class: "text-muted", data: { key: "events.llm_cost" })
   end
 end

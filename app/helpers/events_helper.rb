@@ -17,6 +17,8 @@ module EventsHelper
       time ? long_time_tag(time) : value
     elsif key.end_with?("_duration")
       format_event_duration(value.to_f)
+    elsif key.end_with?("_cents")
+      number_to_currency(value.to_f / 100.0)
     elsif value.is_a?(Integer)
       number_with_delimiter(value)
     else

@@ -306,6 +306,31 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.imported_posts']", false
   end
 
+  test "#show should list the AI calls referenced by the event" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    event = create(:event, type: "feed_refresh", user: user, subject: feed)
+    usage = create(:llm_usage, user: user, feed: feed, model: "claude-sonnet-4-6", cost_estimate_cents: 3)
+    create(:event_reference, event: event, reference: usage)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.ai_usage']"
+    assert_select "[data-llm-usage-id='#{usage.id}']"
+    assert_select "[data-key='events.llm_usage.model']", text: "claude-sonnet-4-6"
+  end
+
+  test "#show should not render the AI usage section without references" do
+    sign_in_as user
+    event = create(:event, type: "feed_refresh", user: user)
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.ai_usage']", false
+  end
+
   test "#show should render an owned event even with list filter params" do
     sign_in_as user
     event = create(:event, type: "feed_refresh", user: user)

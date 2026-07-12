@@ -2,6 +2,7 @@ class EventsController < ApplicationController
   include EventFiltering
   include EventCursorPagination
   include EventReferencedPosts
+  include EventReferencedLlmUsages
 
   MAX_RECENT_POSTS = 10
 
@@ -15,6 +16,7 @@ class EventsController < ApplicationController
   def show
     @event = owned_events.find(params[:id])
     @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
+    @referenced_llm_usages = referenced_llm_usages(@event)
     @previous_event = adjacent_event(:older)
     @next_event = adjacent_event(:newer)
   end

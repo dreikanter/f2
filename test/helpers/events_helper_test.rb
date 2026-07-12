@@ -46,6 +46,12 @@ class EventsHelperTest < ActionView::TestCase
     assert_equal "1m 35s", format_stat_value("persist_posts_duration", 95.0)
   end
 
+  test "#format_stat_value should format _cents keys as currency" do
+    assert_equal "$0.03", format_stat_value("llm_cost_cents", 3)
+    assert_equal "$12.00", format_stat_value("llm_cost_cents", 1200)
+    assert_equal "$0.00", format_stat_value("llm_cost_cents", 0)
+  end
+
   test "#format_stat_value should return value as-is for other keys" do
     assert_equal "foo", format_stat_value("some_key", "foo")
   end

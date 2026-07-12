@@ -2,6 +2,7 @@ class Admin::EventsController < ApplicationController
   include EventFiltering
   include EventCursorPagination
   include EventReferencedPosts
+  include EventReferencedLlmUsages
 
   def index
     authorize Event
@@ -18,6 +19,7 @@ class Admin::EventsController < ApplicationController
     authorize Event
     @event = Event.find(params[:id])
     @referenced_posts = referenced_posts(@event)
+    @referenced_llm_usages = referenced_llm_usages(@event)
     @previous_event = previous_event(@event)
     @next_event = next_event(@event)
   end
