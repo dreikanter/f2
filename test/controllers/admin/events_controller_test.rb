@@ -213,9 +213,10 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render admin events turbo stream" do
     login_as(admin_user)
-    event = create(:event, type: "NewAdminEvent")
+    cursor_event = create(:event, type: "OldAdminEvent")
+    create(:event, type: "NewAdminEvent")
 
-    get admin_events_path(format: :turbo_stream), params: { after_id: event.id - 1 }
+    get admin_events_path(format: :turbo_stream), params: { after_id: cursor_event.id }
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
@@ -249,12 +250,13 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   test "should show recorded subject when subject missing" do
     login_as(admin_user)
     event = create(:event, type: "MissingSubjectEvent", subject: nil)
-    event.update!(subject_type: "Post", subject_id: 42)
+    missing_id = SecureRandom.uuid
+    event.update!(subject_type: "Post", subject_id: missing_id)
 
     get admin_events_path
 
     assert_response :success
-    assert_select '[data-key="events.subject"]', text: "Post#42"
+    assert_select '[data-key="events.subject"]', text: "Post##{missing_id}"
   end
 
   test "should filter events by subject_type" do

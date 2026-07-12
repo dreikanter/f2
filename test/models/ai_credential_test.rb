@@ -47,7 +47,7 @@ class AiCredentialTest < ActiveSupport::TestCase
     credential = create(:ai_credential, user: user, credential_data: { "api_key" => "sk-ant-secret-12345" })
 
     raw = ActiveRecord::Base.connection.select_value(
-      "SELECT credential_data FROM ai_credentials WHERE id = #{credential.id}"
+      "SELECT credential_data FROM ai_credentials WHERE id = #{ActiveRecord::Base.connection.quote(credential.id)}"
     )
     refute_includes raw.to_s, "sk-ant-secret-12345"
     assert_equal "sk-ant-secret-12345", credential.reload.credential_data["api_key"]

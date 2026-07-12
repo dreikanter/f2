@@ -10,19 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_12_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
-  create_table "access_token_details", force: :cascade do |t|
-    t.bigint "access_token_id", null: false
+  create_table "access_token_details", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "access_token_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "data", default: {}, null: false
     t.datetime "updated_at", null: false
     t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true
   end
 
-  create_table "access_tokens", force: :cascade do |t|
+  create_table "access_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "encrypted_token"
     t.string "host", null: false
@@ -31,15 +31,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.string "owner"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.uuid "user_id", null: false
     t.string "freefeed_user_id"
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_access_tokens_on_user_id"
   end
 
-  create_table "ai_credentials", force: :cascade do |t|
-    t.bigint "user_id", null: false
+  create_table "ai_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
     t.string "provider", null: false
     t.string "display_name", null: false
     t.jsonb "credential_data", default: {}, null: false
@@ -54,27 +54,27 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["user_id"], name: "index_ai_credentials_on_user_id"
   end
 
-  create_table "event_references", force: :cascade do |t|
-    t.bigint "event_id", null: false
+  create_table "event_references", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "event_id", null: false
     t.string "reference_type", null: false
-    t.bigint "reference_id", null: false
+    t.uuid "reference_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id", "reference_type", "reference_id"], name: "index_event_references_on_event_and_reference", unique: true
     t.index ["reference_type", "reference_id"], name: "index_event_references_on_reference"
   end
 
-  create_table "events", force: :cascade do |t|
+  create_table "events", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at"
     t.integer "level", default: 1, null: false
     t.text "message", default: "", null: false
     t.jsonb "metadata", default: {}, null: false
-    t.bigint "subject_id"
+    t.uuid "subject_id"
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id"
+    t.uuid "user_id"
     t.index ["created_at", "id"], name: "index_events_on_created_at_and_id"
     t.index ["expires_at"], name: "index_events_on_expires_at", where: "(expires_at IS NOT NULL)"
     t.index ["level", "created_at"], name: "index_events_on_level_and_created_at"
@@ -83,9 +83,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
-  create_table "feed_entries", force: :cascade do |t|
+  create_table "feed_entries", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "feed_id", null: false
+    t.uuid "feed_id", null: false
     t.datetime "published_at"
     t.jsonb "raw_data"
     t.integer "status", default: 0
@@ -95,9 +95,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
   end
 
-  create_table "feed_entry_uids", force: :cascade do |t|
+  create_table "feed_entry_uids", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "feed_id", null: false
+    t.uuid "feed_id", null: false
     t.datetime "imported_at", null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
@@ -106,7 +106,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["imported_at"], name: "index_feed_entry_uids_on_imported_at"
   end
 
-  create_table "feed_identifications", force: :cascade do |t|
+  create_table "feed_identifications", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.jsonb "candidates", default: [], null: false
     t.datetime "created_at", null: false
     t.text "error"
@@ -114,15 +114,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "input", null: false
-    t.bigint "user_id", null: false
+    t.uuid "user_id", null: false
     t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
     t.index ["user_id"], name: "index_feed_identifications_on_user_id"
   end
 
-  create_table "feed_metrics", force: :cascade do |t|
+  create_table "feed_metrics", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date", null: false
-    t.bigint "feed_id", null: false
+    t.uuid "feed_id", null: false
     t.integer "invalid_posts_count", default: 0, null: false
     t.integer "posts_count", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -131,18 +131,18 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["feed_id", "date"], name: "index_feed_metrics_on_feed_id_and_date", unique: true
   end
 
-  create_table "feed_previews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "feed_previews", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.jsonb "data"
     t.string "feed_profile_key"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.uuid "user_id", null: false
     t.jsonb "params", default: {}, null: false
     t.string "params_digest", null: false
     t.datetime "ready_at"
     t.string "run_id"
-    t.bigint "ai_credential_id"
+    t.uuid "ai_credential_id"
     t.string "ai_model"
     t.index ["created_at"], name: "index_feed_previews_on_created_at"
     t.index ["status"], name: "index_feed_previews_on_status"
@@ -150,9 +150,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["user_id"], name: "index_feed_previews_on_user_id"
   end
 
-  create_table "feed_schedules", force: :cascade do |t|
+  create_table "feed_schedules", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "feed_id", null: false
+    t.uuid "feed_id", null: false
     t.datetime "last_run_at"
     t.datetime "next_run_at"
     t.datetime "updated_at", null: false
@@ -160,8 +160,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["feed_id"], name: "index_feed_schedules_on_feed_id"
   end
 
-  create_table "feeds", force: :cascade do |t|
-    t.bigint "access_token_id"
+  create_table "feeds", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "access_token_id"
     t.datetime "created_at", null: false
     t.string "cron_expression"
     t.string "description", default: "", null: false
@@ -172,8 +172,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.integer "state", default: 0, null: false
     t.string "target_group", limit: 80
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.bigint "ai_credential_id"
+    t.uuid "user_id", null: false
+    t.uuid "ai_credential_id"
     t.integer "consecutive_failures", default: 0, null: false
     t.boolean "images_only", default: false, null: false
     t.integer "imported_posts_count", default: 0, null: false
@@ -184,16 +184,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
-  create_table "invites", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "invites", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "created_by_user_id", null: false
-    t.bigint "invited_user_id"
+    t.uuid "created_by_user_id", null: false
+    t.uuid "invited_user_id"
     t.datetime "updated_at", null: false
     t.index ["created_by_user_id"], name: "index_invites_on_created_by_user_id"
     t.index ["invited_user_id"], name: "index_invites_on_invited_user_id"
   end
 
-  create_table "job_runs", force: :cascade do |t|
+  create_table "job_runs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "job_class", null: false
     t.string "status", default: "queued", null: false
     t.string "job_id"
@@ -205,10 +205,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["job_id"], name: "index_job_runs_on_job_id", unique: true
   end
 
-  create_table "llm_usages", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "feed_id"
-    t.bigint "ai_credential_id"
+  create_table "llm_usages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "feed_id"
+    t.uuid "ai_credential_id"
     t.string "profile_key"
     t.integer "stage"
     t.string "provider", null: false
@@ -235,22 +235,22 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["user_id"], name: "index_llm_usages_on_user_id"
   end
 
-  create_table "permissions", force: :cascade do |t|
+  create_table "permissions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.uuid "user_id", null: false
     t.index ["user_id", "name"], name: "index_permissions_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_permissions_on_user_id"
   end
 
-  create_table "posts", force: :cascade do |t|
+  create_table "posts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.text "attachment_urls", default: [], null: false, array: true
     t.text "comments", default: [], null: false, array: true
     t.text "content", default: "", null: false
     t.datetime "created_at", null: false
-    t.bigint "feed_entry_id", null: false
-    t.bigint "feed_id", null: false
+    t.uuid "feed_entry_id", null: false
+    t.uuid "feed_id", null: false
     t.string "freefeed_post_id"
     t.datetime "published_at", null: false
     t.string "source_url"
@@ -268,7 +268,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["status"], name: "index_posts_on_status"
   end
 
-  create_table "rate_limit_buckets", force: :cascade do |t|
+  create_table "rate_limit_buckets", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.string "key", null: false
     t.jsonb "data", default: {}, null: false
     t.datetime "blocked_until"
@@ -277,12 +277,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["key"], name: "index_rate_limit_buckets_on_key", unique: true
   end
 
-  create_table "sessions", force: :cascade do |t|
+  create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
     t.datetime "updated_at", null: false
     t.string "user_agent"
-    t.bigint "user_id", null: false
+    t.uuid "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
@@ -428,7 +428,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
-  create_table "users", force: :cascade do |t|
+  create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.integer "available_invites", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
@@ -441,7 +441,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_120000) do
     t.datetime "suspended_at"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
-    t.bigint "default_ai_credential_id"
+    t.uuid "default_ai_credential_id"
     t.index ["default_ai_credential_id"], name: "index_users_on_default_ai_credential_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"

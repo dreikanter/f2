@@ -29,9 +29,9 @@ module EventCursorPagination
   def events_page
     scope = events_scope.includes(:user, :subject, :event_references)
 
-    if before_cursor.positive?
+    if before_cursor
       scope.where(cursor_condition("<", before_cursor)).order(created_at: :desc, id: :desc).limit(events_page_size)
-    elsif after_cursor.positive?
+    elsif after_cursor
       scope.where(cursor_condition(">", after_cursor)).order(created_at: :asc, id: :asc).limit(events_page_size).reverse
     else
       scope.order(created_at: :desc, id: :desc).limit(events_page_size)
@@ -91,14 +91,14 @@ module EventCursorPagination
   end
 
   def cursor_present?
-    before_cursor.positive? || after_cursor.positive?
+    before_cursor.present? || after_cursor.present?
   end
 
   def before_cursor
-    params[:before].to_i
+    event_cursor(:before)
   end
 
   def after_cursor
-    params[:after].to_i
+    event_cursor(:after)
   end
 end

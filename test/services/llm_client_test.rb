@@ -97,7 +97,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
       assert_kind_of LlmClient::Result, result
       assert_equal({ "items" => [{ "title" => "Post 1" }] }, result.payload)
-      assert_kind_of Integer, result.usage_id
+      assert_kind_of String, result.usage_id
     end
 
     usage = LlmUsage.last
