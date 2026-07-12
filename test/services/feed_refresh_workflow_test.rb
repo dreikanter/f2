@@ -533,6 +533,30 @@ class FeedRefreshWorkflowTest < ActiveSupport::TestCase
     assert_equal 0, event.metadata.dig("stats", "llm_cost_cents")
   end
 
+  test "#execute should sum cost across a run's LLM calls" do
+    test_feed = create(:feed, :enabled, feed_profile_key: "rss")
+    rss = empty_rss
+
+    loader = Object.new
+    loader.define_singleton_method(:load) do
+      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
+                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: 2)
+      FactoryBot.create(:llm_usage, user: test_feed.user, feed: test_feed,
+                         started_at: Time.current, finished_at: Time.current, cost_estimate_cents: 5)
+      rss
+    end
+
+    test_feed.stub(:loader_instance, loader) do
+      FeedRefreshWorkflow.new(test_feed).execute
+    end
+
+    event = Event.find_by!(subject: test_feed, type: "feed_refresh")
+
+    assert_equal 2, event.metadata.dig("stats", "llm_calls")
+    assert_equal 7, event.metadata.dig("stats", "llm_cost_cents")
+    assert_equal test_feed.llm_usages.to_a, event.references
+  end
+
   test "#execute should record no LLM usage stats for a run without LLM calls" do
     test_feed = create(:feed, :enabled, url: "https://example.com/feed.xml", feed_profile_key: "rss")
     WebMock.stub_request(:get, test_feed.url).to_return(body: empty_rss, status: 200)
