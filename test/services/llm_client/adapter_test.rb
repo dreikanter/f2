@@ -1,6 +1,15 @@
 require "test_helper"
 
 class LlmClient::AdapterTest < ActiveSupport::TestCase
+  def fake_chat
+    Class.new do
+      attr_reader :tools
+
+      def initialize = @tools = []
+      def with_tool(tool) = @tools << tool
+    end.new
+  end
+
   test ".for should return the Anthropic adapter" do
     assert_instance_of LlmClient::Adapter::Anthropic, LlmClient::Adapter.for("anthropic")
   end
@@ -52,16 +61,24 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
   end
 
-  test "moonshot #apply_web should register the client-side fetch tool" do
-    chat = Class.new do
-      attr_reader :tools
+  test "moonshot #apply_web should register only the fetch tool when web search is unconfigured" do
+    chat = fake_chat
 
-      def initialize = @tools = []
-      def with_tool(tool) = @tools << tool
-    end.new
+    WebSearch.stub(:configured?, false) do
+      LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
+    end
 
-    LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
     assert_equal [LlmClient::Tools::WebFetch], chat.tools
+  end
+
+  test "moonshot #apply_web should also register the search tool when web search is configured" do
+    chat = fake_chat
+
+    WebSearch.stub(:configured?, true) do
+      LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
+    end
+
+    assert_equal [LlmClient::Tools::WebSearch, LlmClient::Tools::WebFetch], chat.tools
   end
 
   test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
