@@ -1,8 +1,6 @@
 module WebSearchProvider
   # serper.dev — Google SERP results.
   class Serper < Base
-    # Interim: env var the key comes from until search credentials are modeled.
-    ENV_KEY = "SERPER_API_KEY"
     ENDPOINT = "https://google.serper.dev/search"
 
     private

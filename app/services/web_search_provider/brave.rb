@@ -1,8 +1,6 @@
 module WebSearchProvider
   # Brave Search API — independent web index.
   class Brave < Base
-    # Interim: env var the key comes from until search credentials are modeled.
-    ENV_KEY = "BRAVE_SEARCH_API_KEY"
     ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
 
     private

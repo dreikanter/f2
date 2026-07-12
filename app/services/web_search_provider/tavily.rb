@@ -1,8 +1,6 @@
 module WebSearchProvider
   # tavily.com — LLM-oriented search with content snippets.
   class Tavily < Base
-    # Interim: env var the key comes from until search credentials are modeled.
-    ENV_KEY = "TAVILY_API_KEY"
     ENDPOINT = "https://api.tavily.com/search"
 
     private

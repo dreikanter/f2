@@ -23,6 +23,15 @@ module WebSearchProvider
     "tavily" => "Tavily"
   }.freeze
 
+  # Interim: the env var each provider's key comes from, until search
+  # credentials become a managed model. Delete this alongside `default`,
+  # `configured?`, and their helpers when that lands.
+  ENV_KEYS = {
+    "serper" => "SERPER_API_KEY",
+    "brave" => "BRAVE_SEARCH_API_KEY",
+    "tavily" => "TAVILY_API_KEY"
+  }.freeze
+
   class << self
     def for(name, api_key:)
       class_name = REGISTRY[name.to_s]
@@ -59,10 +68,8 @@ module WebSearchProvider
     end
 
     def env_key(name)
-      class_name = REGISTRY[name.to_s]
-      return nil unless class_name
-
-      ENV[const_get(class_name)::ENV_KEY].presence
+      var = ENV_KEYS[name.to_s]
+      ENV[var].presence if var
     end
   end
 end
