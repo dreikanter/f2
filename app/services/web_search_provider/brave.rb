@@ -10,13 +10,20 @@ module WebSearchProvider
     def request(query, count)
       http.get(
         "#{ENDPOINT}?#{URI.encode_www_form(q: query, count: count)}",
-        headers: { "X-Subscription-Token" => api_key, "Accept" => "application/json" }
+        headers: {
+          "X-Subscription-Token" => api_key,
+          "Accept" => "application/json"
+        }
       )
     end
 
     def map_results(json)
       Array(json.dig("web", "results")).map do |result|
-        Result.new(title: result["title"].to_s, url: result["url"].to_s, snippet: result["description"].to_s)
+        Result.new(
+          title: result["title"].to_s,
+          url: result["url"].to_s,
+          snippet: result["description"].to_s
+        )
       end
     end
   end
