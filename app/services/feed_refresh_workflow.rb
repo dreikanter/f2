@@ -76,11 +76,9 @@ class FeedRefreshWorkflow
     input
   end
 
-  # The dead run's LLM spend attaches to its interrupted event here or never:
-  # its usage rows fall outside every later run's window. The abandoned
-  # event's own started_at stat bounds them exactly — nothing ran between the
-  # death and this sweep (a later run would have swept the event already),
-  # and this run hasn't made any LLM calls yet.
+  # Attributes the dead run's spend to its interrupted event — here or never,
+  # since every later run's window starts after these rows. The event's own
+  # started_at stat bounds them exactly.
   def interrupt_abandoned_event(event)
     usage_rows = abandoned_llm_usage_rows(event)
     metadata = event.metadata.merge("status" => "interrupted")
@@ -345,10 +343,9 @@ class FeedRefreshWorkflow
     EventReference.insert_all(references_data)
   end
 
-  # This run's LLM audit rows, as [id, cost_estimate_cents] pairs. The
-  # started_at window is exact: the per-feed advisory lock serializes runs,
-  # and every other LlmUsage writer either uses the preview purpose or an
-  # unpersisted feed (nil feed_id), so no foreign rows can land in it.
+  # This run's usage rows as [id, cost_cents] pairs. The started_at window is
+  # exact: the advisory lock serializes runs per feed, and every other writer
+  # uses the preview purpose or an unpersisted feed.
   def run_llm_usage_rows
     return [] unless stats[:started_at]
 
@@ -357,8 +354,7 @@ class FeedRefreshWorkflow
         .pluck(:id, :cost_estimate_cents)
   end
 
-  # Skipped when the run made no LLM calls, so deterministic feeds don't get
-  # a noisy zero-spend stat on every refresh event.
+  # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
   def record_llm_usage_stats(usage_rows)
     return if usage_rows.empty?
 
