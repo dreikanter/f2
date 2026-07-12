@@ -94,7 +94,7 @@ class FeedHelperTest < ActionView::TestCase
     result = feed_status_icon(feed)
 
     assert_includes result, "<svg"
-    assert_includes result, "text-muted"
+    assert_includes result, "text-warning"
     assert_includes result, 'title="Disabled"'
     assert_includes result, 'aria-label="Disabled"'
     assert_includes result, 'role="img"'

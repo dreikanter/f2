@@ -1,7 +1,7 @@
-<% content_for :title, "#{@job_class.name} run" %>
+<% content_for :title, "#{@job_class.name} run ##{@run.id}" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: @job_class.name) do |header| %>
+  <%= render PageHeaderComponent.new(title: "Run ##{@run.id}") do |header| %>
     <% header.with_breadcrumb(label: @job_class.name, url: development_job_job_runs_path(@job_class.name)) %>
   <% end %>
 
@@ -14,24 +14,24 @@
   </div>
 
   <% if @events.any? %>
-    <%= render(ListComponent.new) do |list| %>
+    <div class="space-y-4">
       <% @events.each do |event| %>
-        <% item = ListItemComponent.new(data: { key: "development.job_runs.#{@run.id}.event.#{event.id}" }) %>
-        <% item.with_primary do %>
-          <span class="inline-flex items-center gap-2">
-            <%= event_level_badge(event) %>
-            <span class="text-base text-body"><%= event.message %></span>
-          </span>
+        <%= render(CardComponent.new(data: { key: "development.job_runs.#{@run.id}.event.#{event.id}" })) do |card| %>
+          <% card.with_section(class: "p-4 space-y-2") do %>
+            <div class="flex flex-wrap items-center gap-2">
+              <%= event_level_badge(event) %>
+              <span class="text-sm text-muted"><%= event.created_at.strftime("%b %d, %Y at %H:%M:%S") %></span>
+            </div>
+            <p class="text-base text-body"><%= event.message %></p>
+          <% end %>
+          <% if event.metadata.present? %>
+            <% card.with_section(class: "p-4") do %>
+              <pre class="overflow-x-auto font-mono text-xs text-body"><%= JSON.pretty_generate(event.metadata) %></pre>
+            <% end %>
+          <% end %>
         <% end %>
-        <% item.with_secondary do %>
-          <span class="text-sm text-muted"><%= safe_join([
-            tag.span(event.created_at.strftime("%b %d, %Y at %H:%M:%S")),
-            (event.metadata.present? ? tag.code(event.metadata.to_json, class: "font-mono text-xs") : nil)
-          ].compact, middot) %></span>
-        <% end %>
-        <% list.with_item(item) %>
       <% end %>
-    <% end %>
+    </div>
   <% else %>
     <%= render EmptyStateComponent.new("No output recorded for this run") %>
   <% end %>

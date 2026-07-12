@@ -24,7 +24,7 @@ class AccessTokenListItemComponent < ListItemComponent
   end
 
   def row_css_class
-    "transition duration-75 hover:bg-surface-muted"
+    HOVER_ROW_CSS_CLASS
   end
 
   def icon_element

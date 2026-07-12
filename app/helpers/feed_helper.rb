@@ -45,7 +45,9 @@ module FeedHelper
       icon("circle-dashed", css_class: "size-4 text-muted",
                   title: "Draft", aria_label: "Draft")
     else
-      icon("circle-pause", css_class: "size-4 text-muted",
+      # Warning rather than muted: matches the Disabled badge, and a stalled
+      # feed deserves attention a draft doesn't.
+      icon("circle-pause", css_class: "size-4 text-warning",
                   title: "Disabled", aria_label: "Disabled")
     end
   end

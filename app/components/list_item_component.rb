@@ -15,6 +15,11 @@
 # the slots in #before_render and override #li_id / #li_data / #row_css_class to
 # derive the <li> attributes from the record.
 class ListItemComponent < ViewComponent::Base
+  # The one hover treatment for rows that lead somewhere. Subclasses return it
+  # from #row_css_class (or pass it as css_class) so every hoverable list —
+  # feeds, posts, tokens, dev tools — highlights rows identically.
+  HOVER_ROW_CSS_CLASS = "transition duration-75 hover:bg-surface-muted".freeze
+
   renders_one :icon
   renders_one :primary
   renders_one :secondary

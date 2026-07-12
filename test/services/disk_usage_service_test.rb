@@ -41,6 +41,16 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should return table sizes in bytes" do
+    service = DiskUsageService.new(df_command: stub_df_command)
+    result = service.call
+
+    assert result[:table_usage].any?, "expected at least one table in the test database"
+    result[:table_usage].each do |row|
+      assert_instance_of Integer, row["total_size"]
+    end
+  end
+
   test "#call should return other used space as integer" do
     service = DiskUsageService.new(df_command: stub_df_command)
     result = service.call

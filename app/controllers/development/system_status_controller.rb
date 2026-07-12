@@ -3,7 +3,7 @@ class Development::SystemStatusController < ApplicationController
     authorize :access, :dev?
     @config_checks = config_checks
     @release_info = release_info
-    @disk_usage = Rails.cache.fetch("development/system_status/v3", expires_in: 5.minutes) do
+    @disk_usage = Rails.cache.fetch("development/system_status/v4", expires_in: 5.minutes) do
       DiskUsageService.new.call
     end
   end

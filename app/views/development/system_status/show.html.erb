@@ -32,7 +32,7 @@
     <%= render(DescriptionListComponent.new) do |list| %>
       <% list.with_item(StatListItemComponent.new(
         label: "Revision",
-        value: @release_info[:revision_short].present? ? tag.code(@release_info[:revision_short], title: @release_info[:revision]) : "—",
+        value: @release_info[:revision_short].present? ? revision_commit_link(@release_info[:revision_short], @release_info[:revision]) : "—",
         key: "release.revision"
       )) %>
       <% list.with_item(StatListItemComponent.new(
@@ -42,7 +42,7 @@
       )) %>
       <% list.with_item(StatListItemComponent.new(
         label: "Environment",
-        value: tag.code(Rails.env),
+        value: environment_badge,
         key: "release.environment"
       )) %>
     <% end %>
@@ -87,7 +87,7 @@
       <% @disk_usage[:table_usage].each do |row| %>
         <% list.with_item(StatListItemComponent.new(
           label: tag.code(row["table_name"]),
-          value: row["total_size"]
+          value: number_to_human_size(row["total_size"])
         )) %>
       <% end %>
     <% end %>

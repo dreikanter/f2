@@ -32,11 +32,9 @@ class PostListItemComponent < ListItemComponent
   # Rows live inside a single bordered list, so they carry no border or shadow of
   # their own; withdrawn posts get a muted background to read as inactive.
   def row_css_class
-    helpers.class_names(
-      "transition duration-75",
-      "bg-surface-muted hover:bg-surface-sunken" => withdrawn?,
-      "hover:bg-surface-muted" => !withdrawn?
-    )
+    return HOVER_ROW_CSS_CLASS unless withdrawn?
+
+    "transition duration-75 bg-surface-muted hover:bg-surface-sunken"
   end
 
   def icon_element
