@@ -64,7 +64,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "moonshot #apply_web should register only the fetch tool when web search is unconfigured" do
     chat = fake_chat
 
-    WebSearch.stub(:configured?, false) do
+    WebSearchProvider.stub(:configured?, false) do
       LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
     end
 
@@ -74,7 +74,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "moonshot #apply_web should also register the search tool when web search is configured" do
     chat = fake_chat
 
-    WebSearch.stub(:configured?, true) do
+    WebSearchProvider.stub(:configured?, true) do
       LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
     end
 
