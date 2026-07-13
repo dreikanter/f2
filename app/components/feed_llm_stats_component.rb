@@ -25,14 +25,14 @@ class FeedLlmStatsComponent < ViewComponent::Base
     @layout_items ||= [
       {
         key: "ai_calls",
-        label: "AI calls",
-        label_short: "AI calls",
+        label: "AI calls (last #{period_in_days} days)",
+        label_short: "AI calls (#{period_in_days} days)",
         value: helpers.number_with_delimiter(call_count)
       },
       {
         key: "estimated_spend",
-        label: "Estimated spend",
-        label_short: "Spend",
+        label: "Estimated spend (last #{period_in_days} days)",
+        label_short: "Spend (#{period_in_days} days)",
         value: formatted_cost
       }
     ]
@@ -55,11 +55,19 @@ class FeedLlmStatsComponent < ViewComponent::Base
   end
 
   def call_count
-    @call_count ||= @feed.llm_usages.count
+    @call_count ||= usages.count
   end
 
   def total_cost_cents
-    @total_cost_cents ||= @feed.llm_usages.sum(:cost_estimate_cents)
+    @total_cost_cents ||= usages.sum(:cost_estimate_cents)
+  end
+
+  def usages
+    @feed.llm_usages.within_stats_period
+  end
+
+  def period_in_days
+    LlmUsage::STATS_PERIOD.in_days.to_i
   end
 
   def formatted_cost

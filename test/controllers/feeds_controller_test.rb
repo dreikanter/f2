@@ -538,6 +538,26 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Stats", count: 1
   end
 
+  test "#show should render AI usage section when feed has usages within the stats period" do
+    create(:llm_usage, feed: feed, user: user)
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "AI Usage", count: 1
+  end
+
+  test "#show should not render AI usage section when all usages are older than the stats period" do
+    create(:llm_usage, feed: feed, user: user, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "h2", text: "AI Usage", count: 0
+  end
+
   test "#show should render a recent activity section with the feed's events" do
     create(:event, type: "feed_auto_disabled", subject: feed, user: user, level: :warning,
                    message: "", metadata: { error_count: Feed::MAX_CONSECUTIVE_FAILURES })

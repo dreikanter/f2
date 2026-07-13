@@ -29,20 +29,30 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
     assert_equal "$0.40", value.text.strip
   end
 
+  test "#render should exclude usages older than the stats period" do
+    create(:llm_usage, feed: feed_with_usages, user: feed_with_usages.user,
+           cost_estimate_cents: 100, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
+
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+
+    assert_equal "2", result.css('[data-key="llm_stats.ai_calls.value"]').first.text.strip
+    assert_equal "$0.40", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+  end
+
   test "#render should include mobile layout with full labels" do
     result = render_inline(FeedLlmStatsComponent.new(feed: feed))
 
     assert_not_nil result.css(".md\\:hidden").first
-    assert_equal "AI calls", result.css(".md\\:hidden [data-key=\"llm_stats.ai_calls.label\"]").first.text
-    assert_equal "Estimated spend", result.css(".md\\:hidden [data-key=\"llm_stats.estimated_spend.label\"]").first.text
+    assert_equal "AI calls (last 30 days)", result.css(".md\\:hidden [data-key=\"llm_stats.ai_calls.label\"]").first.text
+    assert_equal "Estimated spend (last 30 days)", result.css(".md\\:hidden [data-key=\"llm_stats.estimated_spend.label\"]").first.text
   end
 
   test "#render should include desktop layout with short labels" do
     result = render_inline(FeedLlmStatsComponent.new(feed: feed))
 
     assert_not_nil result.css(".hidden.md\\:flex").first
-    assert_equal "AI calls", result.css(".hidden.md\\:flex [data-key=\"llm_stats.ai_calls.label\"]").first.text
-    assert_equal "Spend", result.css(".hidden.md\\:flex [data-key=\"llm_stats.estimated_spend.label\"]").first.text
+    assert_equal "AI calls (30 days)", result.css(".hidden.md\\:flex [data-key=\"llm_stats.ai_calls.label\"]").first.text
+    assert_equal "Spend (30 days)", result.css(".hidden.md\\:flex [data-key=\"llm_stats.estimated_spend.label\"]").first.text
   end
 
   test "#render should show zero when no usages" do

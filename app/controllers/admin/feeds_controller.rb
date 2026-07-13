@@ -14,7 +14,7 @@ class Admin::FeedsController < ApplicationController
     authorize [:admin, @feed]
     @recent_posts = recent_posts(@feed)
     @recent_events = recent_events(@feed)
-    @has_llm_usages = @feed.llm_usages.exists?
+    @has_llm_usages = @feed.llm_usages.within_stats_period.exists?
   end
 
   private
