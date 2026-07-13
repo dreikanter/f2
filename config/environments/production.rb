@@ -31,14 +31,15 @@ Rails.application.configure do
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Structured JSON logs to STDOUT for the Vector accessory to ship to
-  # VictoriaLogs (docs/victorialogs.md). The file appender is off since Kamal
-  # only captures STDOUT; request_id becomes a named tag.
+  # VictoriaLogs (docs/victorialogs.md). Declaring an appender replaces the
+  # gem's default file appender, which Kamal wouldn't capture anyway;
+  # request_id becomes a named tag.
   config.log_tags = [:request_id]
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info").to_sym
-  config.rails_semantic_logger.format = :json
   config.rails_semantic_logger.semantic = true
-  config.rails_semantic_logger.add_file_appender = false
-  config.semantic_logger.add_appender(io: $stdout, level: config.log_level, formatter: :json)
+  config.rails_semantic_logger.appenders do |appenders|
+    appenders.add(io: $stdout, level: config.log_level, formatter: :json)
+  end
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
