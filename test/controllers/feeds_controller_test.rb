@@ -916,6 +916,25 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "feed_id=#{feed.id}"
   end
 
+  test "#update should not enqueue a duplicate detection when losing the restart race" do
+    sign_in_as(user)
+    new_url = "https://example.com/new-feed.xml"
+    winner = create(:feed_identification, user: user, input: new_url, started_at: Time.current).reload
+    # The loser's stale lookup result: it missed the winner's row, so its
+    # insert inside restart_detection! collides with the user+input unique index.
+    loser = FeedIdentification.new(user: user, input: new_url)
+
+    FeedIdentification.stub(:find_or_initialize_by, loser) do
+      assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+        patch feed_url(feed), params: { feed: { params: { url: new_url } } }
+      end
+    end
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
+    assert_equal winner.started_at, winner.reload.started_at, "the winner's detection should not be restarted"
+  end
+
   test "#update should re-render the edit form with a hint when the new source isn't a link" do
     sign_in_as(user)
     original_url = feed.url

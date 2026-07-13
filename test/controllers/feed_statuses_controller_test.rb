@@ -201,6 +201,24 @@ class FeedStatusesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", feed.state
   end
 
+  test "#update should surface validation errors instead of raising when disabling a drifted feed" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "taken")
+    enabled_feed = create(:feed, :enabled, user: user)
+    enabled_feed.update_column(:name, "taken")
+
+    assert_no_difference("Event.where(type: 'feed_disabled').count") do
+      patch feed_status_path(enabled_feed), params: { status: "disabled" }
+    end
+
+    assert_redirected_to enabled_feed
+    follow_redirect!
+    assert_includes response.body, "Cannot disable feed"
+
+    enabled_feed.reload
+    assert_equal "enabled", enabled_feed.state
+  end
+
   test "#update should redirect to login when not authenticated" do
     patch feed_status_path(feed), params: { status: "enabled" }
     assert_redirected_to new_session_url
