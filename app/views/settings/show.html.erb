@@ -53,6 +53,16 @@
       </div>
     <% end %>
 
+    <%= render CardComponent.new(href: search_credentials_path) do %>
+      <div class="space-y-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
+          <%= icon("search", css_class: "size-5") %>
+          <span>Search Credentials</span>
+        </h2>
+        <p class="text-body">Connect search-provider keys for AI feeds that search the web</p>
+      </div>
+    <% end %>
+
     <%= render CardComponent.new(href: invites_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
