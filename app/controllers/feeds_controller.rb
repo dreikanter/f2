@@ -240,8 +240,11 @@ class FeedsController < ApplicationController
     end
 
     identification = FeedIdentification.find_or_initialize_by(user: current_user, input: canonical_submitted_url)
-    identification.restart_detection!
-    FeedIdentificationJob.perform_later(current_user.id, canonical_submitted_url)
+    restarted = identification.restart_detection!
+    # A losing concurrent submit skips the enqueue: the winner that just
+    # created the row owns the in-flight detection, and both requests render
+    # the same checking state.
+    FeedIdentificationJob.perform_later(current_user.id, canonical_submitted_url) if restarted
 
     render_identification_state(attempted_url: canonical_submitted_url, checking: true)
   end

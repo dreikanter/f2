@@ -125,6 +125,25 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Checking this feed"
   end
 
+  test "#create should not enqueue a duplicate detection when losing the restart race" do
+    sign_in_as(user)
+    url = "http://example.com/feed.xml"
+    winner = create(:feed_identification, user: user, input: url, started_at: Time.current).reload
+    # The loser's stale lookup result: it missed the winner's row, so its
+    # insert inside restart_detection! collides with the user+input unique index.
+    loser = FeedIdentification.new(user: user, input: url)
+
+    FeedIdentification.stub(:find_or_initialize_by, loser) do
+      assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+        post feed_identifications_path, params: { url: url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+    end
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="checking"'
+    assert_equal winner.started_at, winner.reload.started_at, "the winner's detection should not be restarted"
+  end
+
   test "#create should freeze the entry form while detection runs" do
     sign_in_as(user)
     url = "http://example.com/feed.xml"
