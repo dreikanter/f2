@@ -40,6 +40,16 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert usage.valid?
   end
 
+  test ".within_stats_period should include only usages created within the period" do
+    recent = create(:llm_usage, user: user)
+    stale = create(:llm_usage, user: user, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
+
+    result = LlmUsage.within_stats_period
+
+    assert_includes result, recent
+    assert_not_includes result, stale
+  end
+
   test "should belong to a feed when provided" do
     feed = create(:feed,
                   user: user,
