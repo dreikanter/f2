@@ -43,6 +43,9 @@ class LlmClient
 
     begin
       response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema, web: web, system: system)
+    rescue WebSearchProvider::AuthError => e
+      write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+      raise
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raised = RateLimited.new(e.message)
