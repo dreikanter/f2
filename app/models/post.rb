@@ -21,6 +21,10 @@ class Post < ApplicationRecord
   belongs_to :feed
   belongs_to :feed_entry
 
+  # No FK backs the polymorphic reference, so clean these up on destroy to
+  # avoid dangling event_references.
+  has_many :event_references, as: :reference, dependent: :delete_all
+
   validates :uid, presence: true
   validates :uid, uniqueness: { scope: :feed_id }
   validates :published_at, presence: true

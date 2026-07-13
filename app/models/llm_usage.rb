@@ -6,6 +6,10 @@ class LlmUsage < ApplicationRecord
   belongs_to :feed, optional: true
   belongs_to :ai_credential, optional: true
 
+  # No FK backs the polymorphic reference, so clean these up on destroy to
+  # avoid dangling event_references.
+  has_many :event_references, as: :reference, dependent: :delete_all
+
   enum :stage, { loader: 0, processor: 1, normalizer: 2 }
   enum :purpose, { scheduled_run: 0, preview: 1 }
   enum :outcome, {

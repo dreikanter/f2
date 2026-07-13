@@ -28,9 +28,6 @@ Event:
     MissingDependentDestroyChecker:
       enabled: false
 EventReference:
-  event:
-    ForeignKeyChecker:
-      enabled: false
   index_event_references_on_event_and_reference:
     # wontfix: rows are created via insert_all (FeedRefreshWorkflow), which
     # skips validations — a uniqueness validator would never run.
