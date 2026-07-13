@@ -94,7 +94,7 @@ class AiCredential < ApplicationRecord
   def generate_unique_name
     label = provider
     existing = self.class.where(user_id: user_id, provider: provider).pluck(:display_name).map(&:downcase).to_set
-    NameGenerator.new(label, existing).generate.split.map(&:capitalize).join(" ")
+    CredentialNameGenerator.new(label, existing).generate.split.map(&:capitalize).join(" ")
   end
 
   def api_key_present
