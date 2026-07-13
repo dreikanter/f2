@@ -33,9 +33,6 @@ class SearchCredential < ApplicationRecord
     WebSearchProvider.for(provider, api_key: credential_data["api_key"])
   end
 
-  # T4 extends this lifecycle boundary to disable dependent feeds. Keeping the
-  # state/event mutation here gives validation and future runtime auth handling
-  # one atomic deactivation path.
   def deactivate!(last_error: nil)
     with_lock do
       update!(
