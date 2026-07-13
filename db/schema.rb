@@ -35,7 +35,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.string "freefeed_user_id"
     t.index ["freefeed_user_id"], name: "index_access_tokens_on_freefeed_user_id"
     t.index ["user_id", "name"], name: "index_access_tokens_on_user_id_and_name", unique: true
-    t.index ["user_id"], name: "index_access_tokens_on_user_id"
   end
 
   create_table "ai_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -51,7 +50,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.jsonb "available_models", default: [], null: false
     t.index ["user_id", "provider", "display_name"], name: "index_ai_credentials_on_user_id_and_provider_and_display_name", unique: true
     t.index ["user_id", "state"], name: "index_ai_credentials_on_user_id_and_state"
-    t.index ["user_id"], name: "index_ai_credentials_on_user_id"
   end
 
   create_table "event_references", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -92,7 +90,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["feed_id", "uid"], name: "index_feed_entries_on_feed_id_and_uid", unique: true
-    t.index ["feed_id"], name: "index_feed_entries_on_feed_id"
   end
 
   create_table "feed_entry_uids", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -102,7 +99,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["feed_id", "uid"], name: "index_feed_entry_uids_on_feed_id_and_uid", unique: true
-    t.index ["feed_id"], name: "index_feed_entry_uids_on_feed_id"
     t.index ["imported_at"], name: "index_feed_entry_uids_on_imported_at"
   end
 
@@ -116,7 +112,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.string "input", null: false
     t.uuid "user_id", null: false
     t.index ["user_id", "input"], name: "index_feed_identifications_on_user_id_and_input", unique: true
-    t.index ["user_id"], name: "index_feed_identifications_on_user_id"
   end
 
   create_table "feed_metrics", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -147,7 +142,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.index ["created_at"], name: "index_feed_previews_on_created_at"
     t.index ["status"], name: "index_feed_previews_on_status"
     t.index ["user_id", "feed_profile_key", "params_digest"], name: "index_feed_previews_on_owner_profile_digest", unique: true
-    t.index ["user_id"], name: "index_feed_previews_on_user_id"
   end
 
   create_table "feed_schedules", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -228,11 +222,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.text "error_message"
     t.index ["ai_credential_id"], name: "index_llm_usages_on_ai_credential_id"
     t.index ["feed_id", "started_at"], name: "index_llm_usages_on_feed_id_and_started_at"
-    t.index ["feed_id"], name: "index_llm_usages_on_feed_id"
     t.index ["profile_key", "started_at"], name: "index_llm_usages_on_profile_key_and_started_at"
     t.index ["purpose", "started_at"], name: "index_llm_usages_on_purpose_and_started_at"
     t.index ["user_id", "started_at"], name: "index_llm_usages_on_user_id_and_started_at"
-    t.index ["user_id"], name: "index_llm_usages_on_user_id"
   end
 
   create_table "permissions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -241,7 +233,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["user_id", "name"], name: "index_permissions_on_user_id_and_name", unique: true
-    t.index ["user_id"], name: "index_permissions_on_user_id"
   end
 
   create_table "posts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -263,7 +254,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.index ["feed_id", "reposted_at"], name: "index_posts_on_feed_id_and_reposted_at"
     t.index ["feed_id", "status"], name: "index_posts_on_feed_id_and_status"
     t.index ["feed_id", "uid"], name: "index_posts_on_feed_id_and_uid", unique: true
-    t.index ["feed_id"], name: "index_posts_on_feed_id"
     t.index ["reposted_at"], name: "index_posts_on_reposted_at", order: "DESC NULLS LAST"
     t.index ["status"], name: "index_posts_on_status"
   end
@@ -446,6 +436,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"
     t.index ["state"], name: "index_users_on_state"
+    t.index ["unconfirmed_email"], name: "index_users_on_unconfirmed_email", where: "(unconfirmed_email IS NOT NULL)"
   end
 
   add_foreign_key "access_token_details", "access_tokens"
@@ -463,7 +454,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
   add_foreign_key "feeds", "ai_credentials", on_delete: :nullify
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
-  add_foreign_key "invites", "users", column: "invited_user_id"
+  add_foreign_key "invites", "users", column: "invited_user_id", on_delete: :nullify
   add_foreign_key "llm_usages", "ai_credentials", on_delete: :nullify
   add_foreign_key "llm_usages", "feeds"
   add_foreign_key "llm_usages", "users"

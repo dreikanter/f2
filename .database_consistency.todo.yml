@@ -7,19 +7,11 @@
 # underlying issue is fixed. Regenerating this file with `database_consistency -g`
 # drops these comments, so prefer editing it by hand.
 ---
-AccessToken:
-  index_access_tokens_on_user_id:
-    RedundantIndexChecker:
-      enabled: false
 AccessTokenDetail:
   index_access_token_details_on_access_token_id:
     # wontfix: one row per token, written only through the has_one by
     # AccessTokenValidationService; the DB constraint is the right guard.
     UniqueIndexChecker:
-      enabled: false
-AiCredential:
-  index_ai_credentials_on_user_id:
-    RedundantIndexChecker:
       enabled: false
 Event:
   user:
@@ -48,18 +40,7 @@ Feed:
   name+user_id:
     MissingUniqueIndexChecker:
       enabled: false
-FeedEntry:
-  index_feed_entries_on_feed_id:
-    RedundantIndexChecker:
-      enabled: false
-FeedEntryUid:
-  index_feed_entry_uids_on_feed_id:
-    RedundantIndexChecker:
-      enabled: false
 FeedIdentification:
-  index_feed_identifications_on_user_id:
-    RedundantIndexChecker:
-      enabled: false
   index_feed_identifications_on_user_id_and_input:
     # wontfix: rows are system-managed via find_or_create_by!; the unique
     # index backs the race, user input never hits this validation.
@@ -78,9 +59,6 @@ FeedPreview:
     # validator would raise RecordInvalid instead and break that pattern.
     UniqueIndexChecker:
       enabled: false
-  index_feed_previews_on_user_id:
-    RedundantIndexChecker:
-      enabled: false
   params_digest:
     # wontfix: assigned by before_validation :assign_params_digest, so a
     # presence validator would be dead code.
@@ -91,21 +69,6 @@ JobRun:
     # wontfix: job_id is ActiveJob's generated UUID on a dev-tooling table;
     # nothing user-supplied to validate.
     UniqueIndexChecker:
-      enabled: false
-LlmUsage:
-  index_llm_usages_on_feed_id:
-    RedundantIndexChecker:
-      enabled: false
-  index_llm_usages_on_user_id:
-    RedundantIndexChecker:
-      enabled: false
-Permission:
-  index_permissions_on_user_id:
-    RedundantIndexChecker:
-      enabled: false
-Post:
-  index_posts_on_feed_id:
-    RedundantIndexChecker:
       enabled: false
 RateLimit::Bucket:
   index_rate_limit_buckets_on_key:
@@ -125,8 +88,6 @@ User:
     UniqueIndexChecker:
       enabled: false
   invite:
-    ForeignKeyCascadeChecker:
-      enabled: false
     MissingIndexChecker:
       enabled: false
   password_digest:
@@ -137,7 +98,4 @@ User:
     # wontfix: set by before_save :set_password_updated_at whenever the
     # password digest changes.
     NullConstraintChecker:
-      enabled: false
-  unconfirmed_email:
-    MissingIndexFindByChecker:
       enabled: false
