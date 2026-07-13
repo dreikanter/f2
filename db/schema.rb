@@ -279,7 +279,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_220000) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "provider", "display_name"], name: "index_search_credentials_on_owner_provider_name", unique: true
     t.index ["user_id", "state"], name: "index_search_credentials_on_user_id_and_state"
-    t.index ["user_id"], name: "index_search_credentials_on_user_id"
   end
 
   create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
