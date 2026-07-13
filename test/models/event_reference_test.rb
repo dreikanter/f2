@@ -9,6 +9,10 @@ class EventReferenceTest < ActiveSupport::TestCase
     @post ||= create(:post)
   end
 
+  def llm_usage
+    @llm_usage ||= create(:llm_usage)
+  end
+
   test "should create reference linking an event to a record" do
     reference = EventReference.create!(event: event, reference: post)
 
@@ -32,13 +36,19 @@ class EventReferenceTest < ActiveSupport::TestCase
     assert reference.errors.of_kind?(:reference, :blank)
   end
 
-  test "should survive deletion of the referenced record" do
+  test "should be deleted when its referenced post is deleted" do
     reference = EventReference.create!(event: event, reference: post)
+
     post.destroy!
 
-    reference.reload
+    assert_not EventReference.exists?(reference.id)
+  end
 
-    assert_equal "Post", reference.reference_type
-    assert_nil reference.reference
+  test "should be deleted when its referenced llm usage is deleted" do
+    reference = EventReference.create!(event: event, reference: llm_usage)
+
+    llm_usage.destroy!
+
+    assert_not EventReference.exists?(reference.id)
   end
 end

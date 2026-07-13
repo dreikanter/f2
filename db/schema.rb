@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_12_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -451,6 +451,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_12_000001) do
   add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
   add_foreign_key "ai_credentials", "users"
+  add_foreign_key "event_references", "events", on_delete: :cascade
   add_foreign_key "events", "users"
   add_foreign_key "feed_entries", "feeds"
   add_foreign_key "feed_entry_uids", "feeds", on_delete: :cascade

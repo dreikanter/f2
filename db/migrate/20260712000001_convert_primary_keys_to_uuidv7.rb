@@ -127,15 +127,36 @@ class ConvertPrimaryKeysToUuidv7 < ActiveRecord::Migration[8.2]
 
   # Retype a column via a temporary sibling: fill it from the id map (a plain
   # UPDATE join, since ALTER ... USING forbids subqueries), then swap types.
-  # Unmatched rows (NULL fk, orphan-free by construction) stay NULL.
+  # A nullable column keeps the NULL for unmatched rows; a NOT NULL one can't,
+  # so its dangling rows are pruned first (see prune_dangling_rows).
   def rewrite_column(table, column, to, join)
     quoted = quote_table_name(table)
     scratch = "uuidv7_migration_#{column}"
 
     execute("ALTER TABLE #{quoted} ADD COLUMN #{scratch} #{to}")
     execute("UPDATE #{quoted} SET #{scratch} = m.new_id FROM #{quote_table_name(map_table)} m WHERE #{join}")
+    prune_dangling_rows(table, column, scratch)
     execute("ALTER TABLE #{quoted} ALTER COLUMN #{column} TYPE #{to} USING #{scratch}")
     execute("ALTER TABLE #{quoted} DROP COLUMN #{scratch}")
+  end
+
+  # Polymorphic and unconstrained references have no foreign key, so a row can
+  # outlive its target (e.g. an event_reference to a since-deleted post). Such a
+  # row has no id to remap to and can't take NULL in a NOT NULL column, so drop
+  # it. PKs and enforced FKs always resolve, so nothing is pruned for them.
+  def prune_dangling_rows(table, column, scratch)
+    return if column_nullable?(table, column)
+
+    execute("DELETE FROM #{quote_table_name(table)} WHERE #{scratch} IS NULL")
+  end
+
+  def column_nullable?(table, column)
+    select_value(<<~SQL) == "YES"
+      SELECT is_nullable FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name = #{quote(table)}
+        AND column_name = #{quote(column)}
+    SQL
   end
 
   def restore_sequence(table)
