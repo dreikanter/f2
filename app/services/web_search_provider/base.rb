@@ -6,6 +6,9 @@ module WebSearchProvider
   class Base
     MAX_RESULTS = (1..10)
     TIMEOUT = 10
+    # 402 counts as an auth failure: an exhausted quota kills the key just as
+    # permanently as a rejected one until the owner intervenes.
+    AUTH_STATUSES = [401, 402, 403].freeze
 
     def initialize(api_key:)
       @api_key = api_key
@@ -16,7 +19,11 @@ module WebSearchProvider
 
       count = max_results.to_i.clamp(MAX_RESULTS)
       response = request(query, count)
-      raise ProviderError, "#{provider_name}: HTTP #{response.status}" unless response.success?
+
+      unless response.success?
+        error = AUTH_STATUSES.include?(response.status) ? AuthError : ProviderError
+        raise error, "#{provider_name}: HTTP #{response.status}"
+      end
 
       parse(response.body).first(count)
     rescue HttpClient::Error => e

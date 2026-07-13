@@ -16,6 +16,10 @@ module WebSearchProvider
   Error = Class.new(StandardError)
   ConfigurationError = Class.new(Error)
   ProviderError = Class.new(Error)
+  # A rejected or exhausted API key (HTTP 401/402/403), as opposed to a
+  # transient ProviderError: retrying is pointless and the credential behind
+  # the key should be deactivated, so callers must be able to tell them apart.
+  AuthError = Class.new(Error)
 
   REGISTRY = {
     "serper" => "Serper",

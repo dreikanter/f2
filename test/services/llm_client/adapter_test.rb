@@ -71,14 +71,20 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal [LlmClient::Tools::WebFetch], chat.tools
   end
 
-  test "moonshot #apply_web should also register the search tool when web search is configured" do
+  test "moonshot #apply_web should also register the search tool with the resolved provider when configured" do
     chat = fake_chat
+    provider = Object.new
 
     WebSearchProvider.stub(:configured?, true) do
-      LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
+      WebSearchProvider.stub(:default, provider) do
+        LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
+      end
     end
 
-    assert_equal [LlmClient::Tools::WebSearch, LlmClient::Tools::WebFetch], chat.tools
+    search_tool, fetch_tool = chat.tools
+    assert_instance_of LlmClient::Tools::WebSearch, search_tool
+    assert_same provider, search_tool.instance_variable_get(:@provider)
+    assert_equal LlmClient::Tools::WebFetch, fetch_tool
   end
 
   test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
