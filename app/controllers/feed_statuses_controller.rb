@@ -41,9 +41,12 @@ class FeedStatusesController < ApplicationController
 
   def disable(feed)
     feed.with_lock do
-      feed.disabled!
-      record_feed_disabled(feed)
-      respond_with_status(feed, success: "Feed disabled.")
+      if feed.disable
+        record_feed_disabled(feed)
+        respond_with_status(feed, success: "Feed disabled.")
+      else
+        respond_with_status(feed, alert: "Cannot disable feed: #{feed.errors.full_messages.join('; ')}.")
+      end
     end
   end
 

@@ -208,11 +208,14 @@ class Feed < ApplicationRecord
   # feed, and the in-memory state is rolled back to its persisted value so
   # re-renders reflect DB truth.
   def enable
-    self.state = :enabled
-    return true if save
+    transition_state(:enabled)
+  end
 
-    self.state = state_was
-    false
+  # Demote the feed to disabled with the same non-raising contract as #enable:
+  # a record that no longer passes the always-on validators surfaces errors
+  # instead of raising out of the controller.
+  def disable
+    transition_state(:disabled)
   end
 
   def can_be_previewed?
@@ -367,6 +370,14 @@ class Feed < ApplicationRecord
   end
 
   private
+
+  def transition_state(new_state)
+    self.state = new_state
+    return true if save
+
+    self.state = state_was
+    false
+  end
 
   # Mirrors ai_credential_required_when_enabled_ai_profile so the Enable button
   # never shows for an AI feed the enabled-state validators would reject.

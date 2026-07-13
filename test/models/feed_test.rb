@@ -904,6 +904,26 @@ class FeedTest < ActiveSupport::TestCase
     assert_not_empty feed.errors
   end
 
+  test "#disable should demote an enabled feed to disabled state" do
+    feed = create(:feed, :enabled)
+
+    assert feed.disable
+    assert_predicate feed, :disabled?
+    assert_predicate feed.reload, :disabled?
+  end
+
+  test "#disable should return false and roll back in-memory state on validation failure" do
+    user = create(:user)
+    create(:feed, user: user, name: "taken")
+    feed = create(:feed, :enabled, user: user)
+    feed.update_column(:name, "taken")
+
+    assert_not feed.disable
+    assert_predicate feed, :enabled?, "in-memory state should be rolled back to persisted value"
+    assert_predicate feed.reload, :enabled?
+    assert_not_empty feed.errors
+  end
+
   test "#target_group_url should return the group URL when token and group are present" do
     feed = create(:feed, target_group: "testgroup")
 
