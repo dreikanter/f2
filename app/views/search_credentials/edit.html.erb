@@ -1,0 +1,57 @@
+<% content_for :title, "Edit Search Credential" %>
+
+<div class="space-y-8" data-key="search_credentials.edit">
+  <%= render PageHeaderComponent.new(title: "Edit credential") do |header| %>
+    <% header.with_context_paragraph("Update the name or replace the API key. Only a new key triggers another check.") %>
+  <% end %>
+
+  <div class="max-w-2xl">
+    <%= form_with model: @search_credential do |f| %>
+      <% if @search_credential.errors.any? %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <ul class="list-disc list-inside text-sm">
+            <% @search_credential.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+
+      <div class="space-y-10">
+        <div class="space-y-2">
+          <%= label_tag "search_credential_provider", "Search Provider", class: "block font-semibold text-heading" %>
+          <%= text_field_tag "search_credential_provider",
+                             WebSearchProvider::REGISTRY.fetch(@search_credential.provider),
+                             disabled: true,
+                             class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2 disabled:bg-surface-sunken disabled:text-muted disabled:border-border disabled:cursor-not-allowed" %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
+          <%= f.text_field :display_name,
+                           class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                           required: true,
+                           data: { key: "search_credentials.display-name" } %>
+        </div>
+
+        <div class="space-y-2">
+          <%= label_tag "search_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
+          <%= password_field_tag "search_credential[credential_data][api_key]",
+                                 nil,
+                                 id: "search_credential_credential_data_api_key",
+                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                                 autocomplete: "off",
+                                 data: { key: "search_credentials.credential-data.api_key" } %>
+          <p class="text-sm text-muted">Leave blank to keep the current key and validation state.</p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
+        <%= f.submit "Update Credential",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring",
+                     data: { turbo_submits_with: "Saving…" } %>
+        <%= link_to "Cancel", search_credential_path(@search_credential), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
+      </div>
+    <% end %>
+  </div>
+</div>
