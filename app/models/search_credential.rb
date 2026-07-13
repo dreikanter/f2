@@ -1,6 +1,4 @@
-# A user's API credential for one web-search provider. Search credentials
-# mirror AiCredential's managed lifecycle while resolving providers through
-# WebSearchProvider instead of RubyLLM.
+# Stores a user's API credential for a web search provider.
 class SearchCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
 
