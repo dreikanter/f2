@@ -6,8 +6,6 @@ module WebSearchProvider
   class Base
     MAX_RESULTS = (1..10)
     TIMEOUT = 10
-    # 402 counts as an auth failure: an exhausted quota kills the key just as
-    # permanently as a rejected one until the owner intervenes.
     AUTH_STATUSES = [401, 402, 403].freeze
 
     def initialize(api_key:)
