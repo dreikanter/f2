@@ -1,0 +1,24 @@
+<% content_for :title, "Search Credentials" %>
+
+<div class="space-y-8" data-key="search_credentials.index">
+  <%= render PageHeaderComponent.new(title: "Search Credentials") do |header| %>
+    <% header.with_breadcrumb(label: "Settings", url: settings_path) %>
+    <% header.with_context_paragraph("AI feeds need a search key to find grounded web content. Non-AI feeds do not use search credentials.") %>
+    <% header.with_action_button do %>
+      <%= link_to "New Credential",
+                  new_search_credential_path,
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                  data: { key: "search_credentials.new-button" } %>
+    <% end %>
+  <% end %>
+
+  <div id="search_credentials_list">
+    <% if @search_credentials.any? %>
+      <%= render SearchCredentialsListComponent.new(credentials: @search_credentials) %>
+    <% else %>
+      <%= render EmptyStateComponent.new("No search credentials yet") do %>
+        <p>AI feeds need a search-provider API key to search the web. Non-AI feeds never need one.</p>
+      <% end %>
+    <% end %>
+  </div>
+</div>
