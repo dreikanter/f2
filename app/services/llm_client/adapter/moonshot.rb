@@ -9,7 +9,9 @@ class LlmClient
       FENCE = /\A```[a-z]*\n?(.*?)\n?```\z/m
 
       def apply_web(chat, _model)
-        chat.with_tool(LlmClient::Tools::WebSearch) if ::WebSearchProvider.configured?
+        if ::WebSearchProvider.configured?
+          chat.with_tool(LlmClient::Tools::WebSearch.new(provider: ::WebSearchProvider.default))
+        end
         chat.with_tool(LlmClient::Tools::WebFetch)
       end
 

@@ -173,6 +173,26 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
+  test "#search should raise AuthError on auth and quota HTTP statuses" do
+    [401, 402, 403].each do |status|
+      with_client(HttpClient::Response.new(status: status, body: "")) do
+        error = assert_raises(WebSearchProvider::AuthError) do
+          WebSearchProvider::Serper.new(api_key: "key").search("query")
+        end
+        assert_equal "Serper: HTTP #{status}", error.message
+      end
+    end
+  end
+
+  test "#search should not raise AuthError for a server error status" do
+    with_client(HttpClient::Response.new(status: 500, body: "")) do
+      error = assert_raises(WebSearchProvider::ProviderError) do
+        WebSearchProvider::Serper.new(api_key: "key").search("query")
+      end
+      assert_not_kind_of WebSearchProvider::AuthError, error
+    end
+  end
+
   test "#search should raise ProviderError on an unparseable response" do
     with_client(ok_response("<html>oops</html>")) do
       error = assert_raises(WebSearchProvider::ProviderError) do

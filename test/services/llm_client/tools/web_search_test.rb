@@ -1,8 +1,6 @@
 require "test_helper"
 
 class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
-  def tool = LlmClient::Tools::WebSearch.new
-
   def result(index)
     WebSearchProvider::Result.new(title: "T#{index}", url: "https://#{index}.example", snippet: "s#{index}")
   end
@@ -10,50 +8,61 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
   # Stands in for a resolved WebSearchProvider: returns canned results or
   # raises, so the tool can be exercised without a real provider.
   class FakeProvider
+    attr_reader :queries
+
     def initialize(results: [], error: nil)
       @results = results
       @error = error
+      @queries = []
     end
 
-    def search(_query, **)
+    def search(query, **)
+      @queries << query
       raise @error if @error
 
       @results
     end
   end
 
+  def tool(provider)
+    LlmClient::Tools::WebSearch.new(provider: provider)
+  end
+
   test "#execute should return normalized results as plain hashes" do
     provider = FakeProvider.new(results: [result(1), result(2)])
 
-    WebSearchProvider.stub(:default, provider) do
-      payload = tool.execute(query: "ruby feeds")
+    payload = tool(provider).execute(query: "ruby feeds")
 
-      assert_equal [
-        { title: "T1", url: "https://1.example", snippet: "s1" },
-        { title: "T2", url: "https://2.example", snippet: "s2" }
-      ], payload[:results]
-    end
+    assert_equal [
+      { title: "T1", url: "https://1.example", snippet: "s1" },
+      { title: "T2", url: "https://2.example", snippet: "s2" }
+    ], payload[:results]
   end
 
-  test "#execute should refuse a blank query without resolving a provider" do
-    WebSearchProvider.stub(:default, ->(*) { flunk "default should not be resolved" }) do
-      assert_match(/Refused/, tool.execute(query: "  ")[:error])
-    end
+  test "#execute should refuse a blank query without hitting the provider" do
+    provider = FakeProvider.new
+
+    assert_match(/Refused/, tool(provider).execute(query: "  ")[:error])
+    assert_empty provider.queries
   end
 
-  test "#execute should report when no provider is configured" do
-    unconfigured = -> { raise WebSearchProvider::ConfigurationError, "no web search provider configured" }
+  test "#execute should surface configuration errors as an error result" do
+    provider = FakeProvider.new(error: WebSearchProvider::ConfigurationError.new("Serper API key missing"))
 
-    WebSearchProvider.stub(:default, unconfigured) do
-      assert_equal "no web search provider configured", tool.execute(query: "ruby feeds")[:error]
-    end
+    assert_equal "Serper API key missing", tool(provider).execute(query: "ruby feeds")[:error]
   end
 
   test "#execute should surface provider errors as an error result" do
     provider = FakeProvider.new(error: WebSearchProvider::ProviderError.new("Serper: HTTP 429"))
 
-    WebSearchProvider.stub(:default, provider) do
-      assert_equal "Serper: HTTP 429", tool.execute(query: "ruby feeds")[:error]
+    assert_equal "Serper: HTTP 429", tool(provider).execute(query: "ruby feeds")[:error]
+  end
+
+  test "#execute should let auth errors escape instead of returning them to the model" do
+    provider = FakeProvider.new(error: WebSearchProvider::AuthError.new("Serper: HTTP 401"))
+
+    assert_raises(WebSearchProvider::AuthError) do
+      tool(provider).execute(query: "ruby feeds")
     end
   end
 end
