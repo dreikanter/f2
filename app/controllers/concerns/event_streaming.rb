@@ -1,6 +1,8 @@
 module EventStreaming
   extend ActiveSupport::Concern
 
+  UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+
   included do
     class_attribute :events_page_size, default: 25
     class_attribute :brief_events_limit, default: 15
@@ -17,11 +19,21 @@ module EventStreaming
   end
 
   def new_events?
-    after_id < events_scope.maximum(:id).to_i
+    scope = events_scope
+    scope = scope.where("id > ?", after_id) if after_id
+    scope.exists?
   end
 
   def after_id
-    params[:after_id].to_i
+    event_cursor(:after_id)
+  end
+
+  # Event ids are uuids, but cursors arrive as untrusted params. Anything that
+  # isn't a well-formed uuid (a stale link, a hand-edited "0") becomes nil, so
+  # the id comparisons below never feed Postgres an invalid uuid.
+  def event_cursor(key)
+    value = params[key].to_s
+    value if value.match?(UUID_FORMAT)
   end
 
   def render_events_stream

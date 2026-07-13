@@ -82,6 +82,6 @@ class EventsListComponent < ViewComponent::Base
   end
 
   def last_event_id
-    @events.map(&:id).max || 0
+    @events.map(&:id).max
   end
 end

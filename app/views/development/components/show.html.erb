@@ -531,8 +531,8 @@
       <h2 class="border-b border-border pb-2 text-xl font-semibold text-heading">Event description</h2>
       <p class="text-body">Renders a human-readable summary of a system event, usually inside an alert that matches its severity.</p>
 
-      <% sample_feed = Feed.first || Feed.new(id: 1, name: "Sample Feed") %>
-      <% sample_token = AccessToken.first || AccessToken.new(id: 1, name: "Sample Token") %>
+      <% sample_feed = Feed.first || Feed.new(id: SecureRandom.uuid, name: "Sample Feed") %>
+      <% sample_token = AccessToken.first || AccessToken.new(id: SecureRandom.uuid, name: "Sample Token") %>
 
       <div class="space-y-3">
         <%= render AlertComponent.new(variant: :info) do %>

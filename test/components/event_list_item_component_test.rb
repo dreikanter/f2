@@ -223,7 +223,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
   test "#call should omit the subject hover title when the subject is gone" do
     event = create(:event, user: user)
-    event.update!(subject_type: "Feed", subject_id: 12_345)
+    event.update!(subject_type: "Feed", subject_id: SecureRandom.uuid)
 
     result = render_admin_item(event)
 

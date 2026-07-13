@@ -155,8 +155,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
     get status_path
     assert_response :success
     assert_select "h2", "Recent Activity"
-    assert_not_nil css_select('[data-event-id="%d"]' % event1.id).first
-    assert_not_nil css_select('[data-event-id="%d"]' % event2.id).first
+    assert_not_nil css_select('[data-event-id="%s"]' % event1.id).first
+    assert_not_nil css_select('[data-event-id="%s"]' % event2.id).first
   end
 
   test "#show should display empty recent events section when no events" do
@@ -178,8 +178,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-event-id="%d"]' % user_event.id).first
-    assert css_select('[data-event-id="%d"]' % other_event.id).empty?
+    assert_not_nil css_select('[data-event-id="%s"]' % user_event.id).first
+    assert css_select('[data-event-id="%s"]' % other_event.id).empty?
   end
 
   test "#show should exclude debug level events" do
@@ -190,8 +190,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-event-id="%d"]' % info_event.id).first
-    assert css_select('[data-event-id="%d"]' % debug_event.id).empty?
+    assert_not_nil css_select('[data-event-id="%s"]' % info_event.id).first
+    assert css_select('[data-event-id="%s"]' % debug_event.id).empty?
   end
 
   test "#show should exclude expired events" do
@@ -202,8 +202,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path
     assert_response :success
-    assert_not_nil css_select('[data-event-id="%d"]' % active_event.id).first
-    assert css_select('[data-event-id="%d"]' % expired_event.id).empty?
+    assert_not_nil css_select('[data-event-id="%s"]' % active_event.id).first
+    assert css_select('[data-event-id="%s"]' % expired_event.id).empty?
   end
 
   test "#show should limit recent events to the initial limit" do
@@ -228,8 +228,8 @@ class StatusesControllerTest < ActionDispatch::IntegrationTest
 
     get status_path, params: { filter: { type: ["feed_refresh"] } }
     assert_response :success
-    assert_not_nil css_select('[data-event-id="%d"]' % refresh_event.id).first
-    assert css_select('[data-event-id="%d"]' % withdrawn_event.id).empty?
+    assert_not_nil css_select('[data-event-id="%s"]' % refresh_event.id).first
+    assert css_select('[data-event-id="%s"]' % withdrawn_event.id).empty?
   end
 
   test "#show should carry the active filter into the polling endpoint" do

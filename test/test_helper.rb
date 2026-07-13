@@ -12,6 +12,19 @@ SimpleCov.start "rails"
 
 require_relative "../config/environment"
 require "rails/test_help"
+
+# Rails gives uuid fixtures name-based (v5) ids that sort arbitrarily against the
+# uuidv7 ids created rows get, breaking `Model.last`/`order(:id)` in tests. Force
+# fixture ids into a fixed, always-earlier range so fixtures precede created rows.
+module OrderableUuidFixtures
+  def identify(label, column_type = :integer)
+    return super unless column_type == :uuid
+
+    "00000000-0000-7000-8000-#{Digest::MD5.hexdigest(label.to_s)[0, 12]}"
+  end
+end
+ActiveRecord::FixtureSet.singleton_class.prepend(OrderableUuidFixtures)
+
 require "webmock/minitest"
 require "minitest/mock"
 require "super_diff"

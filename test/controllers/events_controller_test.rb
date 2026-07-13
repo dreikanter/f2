@@ -17,11 +17,11 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "#index should render new user events as turbo stream" do
     sign_in_as user
-    create(:event, type: "old_event", user: user)
-    event = create(:event, type: "new_event", user: user)
+    old_event = create(:event, type: "old_event", user: user)
+    create(:event, type: "new_event", user: user)
     create(:event, type: "other_event", user: other_user)
 
-    get events_path(format: :turbo_stream), params: { after_id: event.id - 1 }
+    get events_path(format: :turbo_stream), params: { after_id: old_event.id }
 
     assert_response :success
     assert_equal Mime[:turbo_stream], response.media_type
