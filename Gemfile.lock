@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 2db1126cf881eb05fd99727c3b7e11cee3e8b4c3
+  revision: b9e0c77e6609c895de2c97924ed09c7d6fad6798
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -55,7 +55,7 @@ GIT
       rails-html-sanitizer (~> 1.7)
     activejob (8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
-      globalid (>= 0.3.6)
+      globalid (>= 1.4.0)
     activemodel (8.2.0.alpha)
       activesupport (= 8.2.0.alpha)
     activerecord (8.2.0.alpha)
@@ -212,7 +212,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jaro_winkler (1.7.0)
-    json (2.20.0)
+    json (2.21.0)
     json_schemer (2.5.0)
       bigdecimal
       hana (~> 1.3)
