@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-13
+
+- AI usage stats on feed pages now cover the last 30 days instead of all time, so the numbers reflect recent activity.
+
 ## 2026-07-11
 
 - Disabled feeds are easier to spot in your feed list: their pause icon is now orange instead of gray.
