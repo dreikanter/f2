@@ -20,13 +20,13 @@ class LlmClient::WebSearchAuthErrorTest < ActiveSupport::TestCase
       stage: :loader,
       model: "claude-sonnet-4-6"
     )
+    usage_count = LlmUsage.count
 
     raised = assert_raises(WebSearchProvider::AuthError) do
-      assert_difference("LlmUsage.count", 1) do
-        client.call(context, prompt: "Search", output_schema: nil, web: true)
-      end
+      client.call(context, prompt: "Search", output_schema: nil, web: true)
     end
 
+    assert_equal usage_count + 1, LlmUsage.count
     assert_same error, raised
     assert_equal "provider_error", LlmUsage.last.outcome
     assert_equal "Serper: HTTP 401", LlmUsage.last.error_message
