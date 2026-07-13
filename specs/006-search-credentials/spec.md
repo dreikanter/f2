@@ -41,7 +41,7 @@ different provider registry), zero new interaction patterns.
 | Validation | free models-endpoint call | **one real search** (`max_results: 1`) |
 | Feed link | `ai_credential_id`, required for AI feeds | `search_credential_id`, required for AI feeds |
 | Runtime consumer | `LlmClient` adapters | client-side `WebSearch` tool, all providers |
-| Usage record | `LlmUsage` rows | debug **Events** (counts now, cost later) |
+| Usage record | `LlmUsage` rows | debug **Events** + registry rate (count × rate at display) |
 
 ## Decisions
 
@@ -133,11 +133,11 @@ So search failures follow the AI-credential playbook, with no enhancement-style 
   to retry or work around; no credential state change. A run whose gather comes back empty keeps
   recording the existing empty-gather event.
 
-### 6. Usage tracking: counts now via events, cost later
+### 6. Usage tracking: event-based counts + registry-rate cost estimation
 
-No usage table and no `RateTable` mirror for now. Search pricing is flat per-query with no model
-or token dimensions, so the LLM accounting machinery is the wrong shape; counting comes first and
-cost estimation layers on later without schema work.
+No usage table and no `RateTable` mirror. Search pricing is flat per-query with no model or token
+dimensions, so the LLM accounting machinery is the wrong shape; counting plus a single per-provider
+rate covers the MVP.
 
 - **One debug-level Event per search API call**: subject = the search credential, user set, and an
   `EventReference` to the feed refresh event when the call happened inside a run.
@@ -147,8 +147,13 @@ cost estimation layers on later without schema work.
   totals — events are subject to retention, so all-time numbers would silently shrink.
 - Preview and validation searches record the same event without a feed-refresh reference; a
   reference-less event self-documents as "not a feed run".
-- Cost estimation later = count × a per-query rate on the `WebSearchProvider::REGISTRY` entry,
-  surfaced on the credential page and folded into time-scoped spend displays.
+- **Cost estimation ships in the MVP.** Each `WebSearchProvider::REGISTRY` entry carries one
+  integer: **cents per 1K requests** (Serper 100 entry-tier, Brave 500, Tavily 800 — its provider
+  uses the default basic depth, one credit per request). Cost is computed **at display time** as
+  `count × rate / 1000` over the same time-scoped windows — no per-call cost rows, so there is no
+  integer-cent rounding loss (per-call costs are fractions of a cent). A registry rate change
+  retroactively recomputes the estimates; acceptable for bounded windows framed as "Estimated
+  spend" (real pricing is tiered anyway).
 - **No per-run cap on search calls** — deliberate. Events keep the volume observable, and the
   user pays for both the LLM and the search key, so the incentive is self-limiting.
 
@@ -191,11 +196,9 @@ cost estimation layers on later without schema work.
 
 ## Open / deferred
 
-- **Cost estimation** (§6) — deferred: per-query rates on registry entries, cost columns or
-  derived display, spend fold-in on feed/event pages. Counting ships first.
 - **Anthropic fetch path** (§3) — server-side `web_fetch` vs client-side tool; decided during
   adapter work with live verification.
 - **A dedicated usage table** — only if cost tracking later outgrows event-based counting
-  (e.g. needs outcome enums or finer retention than events allow).
+  (e.g. needs outcome enums, write-time rate snapshots, or finer retention than events allow).
 - **Per-run search-call cap** — deliberately none (§6); revisit only if event data shows runaway
   volumes in practice.
