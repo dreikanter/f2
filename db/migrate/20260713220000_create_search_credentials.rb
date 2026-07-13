@@ -1,7 +1,7 @@
 class CreateSearchCredentials < ActiveRecord::Migration[8.2]
   def change
     create_table :search_credentials, id: :uuid, default: -> { "uuidv7()" } do |t|
-      t.references :user, null: false, type: :uuid, foreign_key: true
+      t.references :user, null: false, type: :uuid, foreign_key: true, index: false
       t.string :provider, null: false
       t.string :display_name, null: false
       t.jsonb :credential_data, default: {}, null: false
