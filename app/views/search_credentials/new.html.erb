@@ -1,0 +1,59 @@
+<% content_for :title, "New Search Credential" %>
+
+<div class="space-y-8" data-key="search_credentials.new">
+  <%= render PageHeaderComponent.new(title: "Add a Search Credential") do |header| %>
+    <% header.with_context_paragraph("Add a search-provider API key for AI feeds that need web search.") %>
+  <% end %>
+
+  <div class="max-w-2xl">
+    <%= form_with model: @search_credential do |f| %>
+      <% if @search_credential.errors.any? %>
+        <%= render AlertComponent.new(variant: :warning) do %>
+          <ul class="list-disc list-inside text-sm">
+            <% @search_credential.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+
+      <div class="space-y-10">
+        <div class="space-y-2">
+          <%= f.label :provider, "Search Provider", class: "block font-semibold text-heading" %>
+          <%= f.select :provider,
+                       WebSearchProvider::REGISTRY.map { |name, label| [label, name] },
+                       {},
+                       class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                       data: { key: "search_credentials.provider" } %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :display_name, "Name", class: "block font-semibold text-heading" %>
+          <%= f.text_field :display_name,
+                           placeholder: "Personal Serper key",
+                           class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                           data: { key: "search_credentials.display-name" } %>
+          <p class="text-sm text-muted">A label so you can tell credentials apart. Leave blank to get one automatically.</p>
+        </div>
+
+        <div class="space-y-2">
+          <%= label_tag "search_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
+          <%= password_field_tag "search_credential[credential_data][api_key]",
+                                 @search_credential.credential_data&.dig("api_key"),
+                                 id: "search_credential_credential_data_api_key",
+                                 class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+                                 required: true,
+                                 autocomplete: "off",
+                                 data: { key: "search_credentials.credential-data.api_key" } %>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-start gap-4">
+        <%= f.submit "Save Credential",
+                     class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring",
+                     data: { turbo_submits_with: "Saving…" } %>
+        <%= link_to "Cancel", search_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
+      </div>
+    <% end %>
+  </div>
+</div>
