@@ -211,9 +211,6 @@ class Feed < ApplicationRecord
     transition_state(:enabled)
   end
 
-  # Demote the feed to disabled with the same non-raising contract as #enable:
-  # a record that no longer passes the always-on validators surfaces errors
-  # instead of raising out of the controller.
   def disable
     transition_state(:disabled)
   end
