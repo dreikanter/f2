@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_13_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -267,6 +267,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.index ["key"], name: "index_rate_limit_buckets_on_key", unique: true
   end
 
+  create_table "search_credentials", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.string "provider", null: false
+    t.string "display_name", null: false
+    t.jsonb "credential_data", default: {}, null: false
+    t.integer "state", default: 0, null: false
+    t.datetime "last_validated_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "provider", "display_name"], name: "index_search_credentials_on_owner_provider_name", unique: true
+    t.index ["user_id", "state"], name: "index_search_credentials_on_user_id_and_state"
+    t.index ["user_id"], name: "index_search_credentials_on_user_id"
+  end
+
   create_table "sessions", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -432,7 +447,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.uuid "default_ai_credential_id"
+    t.uuid "default_search_credential_id"
     t.index ["default_ai_credential_id"], name: "index_users_on_default_ai_credential_id"
+    t.index ["default_search_credential_id"], name: "index_users_on_default_search_credential_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"
     t.index ["state"], name: "index_users_on_state"
@@ -461,6 +478,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
   add_foreign_key "permissions", "users"
   add_foreign_key "posts", "feed_entries"
   add_foreign_key "posts", "feeds"
+  add_foreign_key "search_credentials", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -469,4 +487,5 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_120000) do
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "users", "ai_credentials", column: "default_ai_credential_id", on_delete: :nullify
+  add_foreign_key "users", "search_credentials", column: "default_search_credential_id", on_delete: :nullify
 end
