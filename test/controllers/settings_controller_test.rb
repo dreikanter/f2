@@ -35,6 +35,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_settings_password_update_path
     assert_select "a[href=?]", access_tokens_path
     assert_select "a[href=?]", ai_credentials_path
+    assert_select "a[href=?]", search_credentials_path
     assert_select "a[href=?]", invites_path
   end
 
