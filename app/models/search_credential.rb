@@ -11,6 +11,7 @@ class SearchCredential < ApplicationRecord
   enum :state, { pending: 0, validating: 1, active: 2, inactive: 3 }
 
   validates :provider, presence: true, inclusion: { in: ->(_) { WebSearchProvider::REGISTRY.keys } }
+
   validates :display_name,
             presence: true,
             length: { maximum: DISPLAY_NAME_MAX_LENGTH },
@@ -37,9 +38,18 @@ class SearchCredential < ApplicationRecord
   # one atomic deactivation path.
   def deactivate!(last_error: nil)
     with_lock do
-      update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
-      Event.create!(type: "search_credential_deactivated", level: :warning,
-                    subject: self, user: user)
+      update!(
+        state: :inactive,
+        last_validated_at: Time.current,
+        last_error: last_error
+      )
+
+      Event.create!(
+        type: "search_credential_deactivated",
+        level: :warning,
+        subject: self,
+        user: user
+      )
     end
   end
 
