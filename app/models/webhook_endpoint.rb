@@ -1,8 +1,6 @@
-# The ingress identity of a push feed: a secret capability-URL token
-# (spec 006 §2). Deterministic encryption keeps the token queryable through
-# the unique index and re-displayable on the feed page, while a separate
-# table keeps secret material out of feed.attributes (attached verbatim to
-# error-tracking context).
+# Secret capability-URL token of a webhook feed (spec 006 §2). Deterministic
+# encryption keeps the token queryable and re-displayable; a separate table
+# keeps it out of feed.attributes, which error reporting attaches verbatim.
 class WebhookEndpoint < ApplicationRecord
   TOKEN_BYTES = 32
 
@@ -19,8 +17,7 @@ class WebhookEndpoint < ApplicationRecord
     SecureRandom.urlsafe_base64(TOKEN_BYTES)
   end
 
-  # Replaces the token in place — the remedy for a leaked URL. The old URL
-  # stops resolving the moment this commits.
+  # The remedy for a leaked URL: the old one stops resolving immediately.
   def rotate!
     update!(encrypted_token: self.class.generate_token)
   end

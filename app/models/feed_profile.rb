@@ -373,11 +373,9 @@ class FeedProfile
     "webhook" => {
       display_name: "Webhook",
       description: "Posts sent in from your own scripts through a secret URL",
-      # Push-ingested (spec 006): content arrives via POST /hooks/:token, so
-      # there is nothing to fetch — no loader/processor and no matcher
-      # (structurally excluded from detection, like the AI profile). The
-      # normalizer is the one pipeline stage a push feed has. Scheduling is a
-      # pull-side feature, declared off via `scheduled` (spec 007).
+      # Push-ingested (spec 006): content arrives over HTTP, so there is
+      # nothing to fetch and nothing to detect — no loader/processor, no
+      # matcher, no schedule.
       input_shape: :none,
       depends_on_ai: false,
       scheduled: false,
@@ -447,9 +445,9 @@ class FeedProfile
     # The params key holding the feed's source input (e.g. "url", "prompt").
     # Derived from the profile's single required param, so the storage key is
     # independent of input_shape (which an `:any` profile can't double as).
-    # Unknown profiles fall back to "url". An input-less (:none) profile has
-    # no source key at all — returning nil here is what keeps source_input
-    # nil (and preview off) even if a stray key lands in the params jsonb.
+    # Unknown profiles fall back to "url". An input-less (:none) profile
+    # returns nil, which keeps source_input nil even if a stray key lands in
+    # the params jsonb.
     # @param key [String] the profile key
     # @return [String, nil] the source params key
     def source_key_for(key)

@@ -58,10 +58,9 @@ module FeedProfileValidator
         failures << "FeedProfile #{key.inspect}: loader.config.output_schema is required when depends_on_ai is true"
       end
 
-      # The webhook profile is push-ingested (spec 006 §1): nothing to fetch,
-      # so it alone omits matcher, loader, and processor. Every other profile
-      # must declare a loader/processor, and a matcher unless it's AI-backed
-      # (structural detection exclusion, spec 005 §7).
+      # The webhook profile has nothing to fetch (spec 006 §1), so it alone
+      # omits matcher, loader, and processor. Every other profile declares a
+      # loader/processor, and a matcher unless it's AI-backed (spec 005 §7).
       if key == "webhook"
         %i[matcher loader processor].each do |stage|
           failures << "FeedProfile #{key.inspect}: #{stage} must be absent for the webhook profile" if entry[stage]

@@ -318,11 +318,9 @@ class FeedsController < ApplicationController
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
   end
 
-  # A webhook feed's endpoint lives with the feed record (spec 006 §2): minted
-  # when the feed is created (drafts included) so the URL is pasteable
-  # immediately, destroyed when a draft moves off the profile so the old URL
-  # stops resolving. Kept here rather than in a model callback so the model
-  # stays decoupled from WebhookEndpoint.
+  # Minted with the feed so the URL is pasteable immediately, destroyed when
+  # a draft moves off the webhook profile so the old URL stops resolving
+  # (spec 006 §2).
   def sync_webhook_endpoint(feed)
     return unless feed.saved_change_to_feed_profile_key?
 

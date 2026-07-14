@@ -9,9 +9,7 @@ class FeedRefreshJob < ApplicationJob
     feed = Feed.find_by(id: feed_id)
     return unless feed
 
-    # The webhook profile has no loader; the scheduler never picks it up
-    # (spec 007), so a kick landing here is a stray manual refresh or a bug —
-    # drop it (spec 006 §7).
+    # Webhook feeds have no loader to run; drop stray kicks (spec 006 §7).
     return if feed.feed_profile_key == "webhook"
 
     Feed.with_advisory_lock!("feed_refresh_#{feed.id}", timeout_seconds: 0) do
