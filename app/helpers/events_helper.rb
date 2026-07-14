@@ -9,6 +9,35 @@ module EventsHelper
     end
   end
 
+  def admin_event_filter_summary(filter)
+    parts = filter.to_h.map do |key, value|
+      values = Array.wrap(value).map do |item|
+        admin_event_filter_value(key, item, filter: filter)
+      end
+
+      safe_join(["#{key}: ", safe_join(values, ", ")])
+    end
+
+    safe_join(parts, " • ")
+  end
+
+  def admin_event_subject_path(subject)
+    case subject
+    when Feed
+      admin_feed_path(subject)
+    when User
+      admin_user_path(subject)
+    when Event
+      admin_event_path(subject)
+    when AccessToken
+      access_token_path(subject)
+    when AiCredential
+      ai_credential_path(subject)
+    when SearchCredential
+      search_credential_path(subject)
+    end
+  end
+
   def format_stat_value(key, value)
     key = key.to_s
 
@@ -40,5 +69,47 @@ module EventsHelper
       mail.profile_mailer.email_change_confirmation
       mail.passwords_mailer.reset
     ]
+  end
+
+  private
+
+  def admin_event_filter_value(key, value, filter:)
+    return value unless %w[user_id subject_id].include?(key.to_s)
+
+    path = admin_event_filter_reference_path(key, value, filter: filter)
+    text = short_ref(value)
+
+    if path
+      link_to(
+        text,
+        path,
+        title: value,
+        class: "font-mono underline underline-offset-2 transition hover:text-heading"
+      )
+    else
+      tag.span(text, title: value, class: "font-mono")
+    end
+  end
+
+  def admin_event_filter_reference_path(key, value, filter:)
+    case key.to_s
+    when "user_id"
+      admin_user_path(value)
+    when "subject_id"
+      case filter[:subject_type] || filter["subject_type"]
+      when "Feed"
+        admin_feed_path(value)
+      when "User"
+        admin_user_path(value)
+      when "Event"
+        admin_event_path(value)
+      when "AccessToken"
+        access_token_path(value)
+      when "AiCredential"
+        ai_credential_path(value)
+      when "SearchCredential"
+        search_credential_path(value)
+      end
+    end
   end
 end
