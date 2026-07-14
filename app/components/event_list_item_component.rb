@@ -104,16 +104,18 @@ class EventListItemComponent < ListItemComponent
     safe_join(["Type: ", link])
   end
 
-  # Admins see who an event belongs to; the user links to a filtered log.
+  # Admins see who an event belongs to; existing users link to their detail page.
   def user_label
     label = if event.user_id.blank?
       helpers.tag.em("System", data: { key: "events.user" })
     else
-      helpers.link_to("##{event.user_id}",
-                      helpers.admin_events_path(filter: { user_id: event.user_id }),
-                      class: "underline underline-offset-2 transition hover:text-heading",
-                      title: event.user&.email_address,
-                      data: { key: "events.user" })
+      helpers.uuid_reference(
+        event.user_id,
+        path: helpers.admin_user_path(event.user) if event.user,
+        title: reference_title(event.user_id, event.user&.email_address),
+        class: "font-mono underline underline-offset-2 transition hover:text-heading",
+        data: { key: "events.user" }
+      )
     end
 
     safe_join(["User: ", label])
@@ -122,17 +124,39 @@ class EventListItemComponent < ListItemComponent
   def target_label
     return if event.subject_type.blank?
 
-    value = [event.subject_type, event.subject_id].compact.join("#")
-    filter_params = { subject_type: event.subject_type }
-    filter_params[:subject_id] = event.subject_id if event.subject_id.present?
+    label = if event.subject_id.present?
+      helpers.uuid_reference(
+        event.subject_id,
+        path: target_path,
+        prefix: event.subject_type,
+        title: reference_title(event.subject_id, target_title),
+        class: "font-mono underline underline-offset-2 transition hover:text-heading",
+        data: { key: "events.subject" }
+      )
+    else
+      helpers.tag.span(event.subject_type, data: { key: "events.subject" })
+    end
 
-    link = helpers.link_to(value,
-                           helpers.admin_events_path(filter: filter_params),
-                           class: "underline underline-offset-2 transition hover:text-heading",
-                           title: target_title,
-                           data: { key: "events.subject" })
+    safe_join(["Target: ", label])
+  end
 
-    safe_join(["Target: ", link])
+  # Only records with an operator-safe detail page are linked. Deleted records
+  # and owner-scoped records such as posts remain compact, titled plain text.
+  def target_path
+    case event.subject
+    when Feed
+      helpers.admin_feed_path(event.subject)
+    when User
+      helpers.admin_user_path(event.subject)
+    when Event
+      helpers.admin_event_path(event.subject)
+    when AccessToken
+      helpers.access_token_path(event.subject)
+    when AiCredential
+      helpers.ai_credential_path(event.subject)
+    when SearchCredential
+      helpers.search_credential_path(event.subject)
+    end
   end
 
   # Resolves the subject to its human name so admins don't have to memorize
@@ -142,5 +166,9 @@ class EventListItemComponent < ListItemComponent
     return unless subject
 
     subject.try(:display_name) || subject.try(:name) || subject.try(:email_address)
+  end
+
+  def reference_title(id, description)
+    [id, description].compact_blank.join(" — ")
   end
 end
