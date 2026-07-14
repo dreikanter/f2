@@ -145,7 +145,7 @@ class LlmClient
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
-  def invoke_provider(ctx:, model:, prompt:, output_schema:, web:, system: nil)
+  def invoke_provider(ctx: nil, model:, prompt:, output_schema:, web:, system: nil)
     provider = credential.llm_provider
     chat = credential.ruby_llm_context.chat(
       model: model, provider: provider.ruby_llm_provider, assume_model_exists: provider.assume_model_exists?
