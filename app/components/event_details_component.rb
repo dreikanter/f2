@@ -23,10 +23,13 @@ class EventDetailsComponent < ViewComponent::Base
 
   def add_user_item(component)
     user_value = if @event.user_id.present?
-      helpers.link_to("User ##{@event.user_id}",
-                      helpers.admin_events_path(filter: { user_id: @event.user_id }),
-                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
-                      data: { key: "admin.event.user" })
+      helpers.uuid_reference(
+        @event.user_id,
+        path: (helpers.admin_user_path(@event.user) if @event.user),
+        title: [@event.user_id, @event.user&.email_address].compact_blank.join(" — "),
+        class: "font-mono font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
+        data: { key: "admin.event.user" }
+      )
     else
       helpers.tag.em("System", class: "text-muted", data: { key: "admin.event.user" })
     end
