@@ -38,7 +38,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", "Events Log"
     assert_select '[data-key="events.type"]', "TestEvent"
-    assert_select 'a[data-key="events.user"]', "##{user.id}"
+    assert_select 'a[data-key="events.user"]', user.id.to_s.last(5)
+    assert_select 'a[data-key="events.user"][href=?]', admin_user_path(user)
   end
 
   test "should allow admin users to view event details" do
@@ -48,8 +49,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_event_path(event)
 
     assert_response :success
-    assert_select "h1", "Event ##{event.id}"
-    assert_select "a[data-key='admin.event.user']", "User ##{event.user_id}"
+    assert_select "h1", "Event #{event.id.to_s.last(5)}"
+    assert_select "a[data-key='admin.event.user']", event.user_id.to_s.last(5)
   end
 
   test "should describe the latest page with a zero offset" do
@@ -87,7 +88,6 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.imported_posts']"
     assert_select "##{ActionView::RecordIdentifier.dom_id(post)}"
   end
-
 
   test "should link the event's feed to the admin feed page" do
     login_as(admin_user)
@@ -256,7 +256,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select '[data-key="events.subject"]', text: "Post##{missing_id}"
+    assert_select '[data-key="events.subject"]', text: "Post #{missing_id.last(5)}"
+    assert_select 'a[data-key="events.subject"]', count: 0
   end
 
   test "should filter events by subject_type" do
@@ -272,8 +273,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
-    assert_select '[data-key="events.subject"]', text: /User#/, count: 2
-    assert_select '[data-key="events.subject"]', text: /Feed#/, count: 0
+    assert_select '[data-key="events.subject"]', text: /User [0-9a-f]{5}/, count: 2
+    assert_select '[data-key="events.subject"]', text: /Feed [0-9a-f]{5}/, count: 0
   end
 
   test "should filter events by subject_id" do
@@ -290,6 +291,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
+    assert_select '[data-key="admin.events.filter-summary"] a[href=?]', admin_feed_path(feed1), text: feed1.id.to_s.last(5)
   end
 
   test "should handle invalid filter parameter gracefully" do
@@ -346,6 +348,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
+    assert_select '[data-key="admin.events.filter-summary"] a[href=?]', admin_user_path(user1), text: user1.id.to_s.last(5)
   end
 
   test "should filter events by user_id and multiple types" do
