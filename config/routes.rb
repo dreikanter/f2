@@ -90,6 +90,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :search_credentials do
+    scope module: :search_credentials do
+      resource :validation, only: :show
+      resource :default, only: :update
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   resource :resend_webhooks, only: :create, path: "resend"

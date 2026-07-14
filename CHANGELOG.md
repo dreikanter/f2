@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-14
+
+- You can now add, check, rename, choose a default, and remove search-provider API keys from a dedicated Search Credentials settings page.
+
 ## 2026-07-13
 
 - AI usage stats on feed pages now cover the last 30 days instead of all time, so the numbers reflect recent activity.

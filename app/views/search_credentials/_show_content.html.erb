@@ -1,0 +1,54 @@
+<%# locals: (search_credential:) %>
+<div class="space-y-6" data-key="search_credential.show">
+  <%= render PageHeaderComponent.new(title: search_credential.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "Search credentials", url: search_credentials_path) %>
+    <% header.with_action_button do %>
+      <%= link_to "Edit",
+                  edit_search_credential_path(search_credential),
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted",
+                  data: { key: "search_credential.edit" } %>
+    <% end %>
+    <% header.with_action_button do %>
+      <%= button_to "Delete…",
+                    search_credential_path(search_credential),
+                    method: :delete,
+                    form: { data: { turbo_confirm: "Delete this search credential?" } },
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+    <% end %>
+  <% end %>
+
+  <% case search_credential.state %>
+  <% when "pending", "validating" %>
+    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
+         data-key="search_credential.validating">
+      <div class="flex-shrink-0"><%= render SpinnerComponent.new %></div>
+      <div class="space-y-1">
+        <p class="font-semibold text-heading">Checking your credential…</p>
+        <p class="text-body">This makes one small search request and usually takes a few seconds.</p>
+      </div>
+    </div>
+  <% when "active" %>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
+                                  data: { credential_state: "active", key: "search_credential.active" }) do %>
+      <span>Credential is active</span>
+    <% end %>
+    <%= render SearchCredentialDetailsComponent.new(search_credential: search_credential) %>
+  <% when "inactive" %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
+                                  data: { credential_state: "inactive", key: "search_credential.inactive" }) do %>
+      <% if search_credential.last_error.present? %>
+        <span><%= search_credential.last_error %></span>
+      <% else %>
+        <span>This key didn't work. Get a fresh key from your search provider and replace it.</span>
+      <% end %>
+    <% end %>
+    <%= render SearchCredentialDetailsComponent.new(search_credential: search_credential) %>
+  <% end %>
+
+  <% unless search_credential.default? %>
+    <%= button_to "Make default",
+                  search_credential_default_path(search_credential),
+                  method: :patch,
+                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+  <% end %>
+</div>
