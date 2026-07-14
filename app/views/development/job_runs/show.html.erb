@@ -1,4 +1,4 @@
-<% run_title = uuid_label(@run.id, prefix: "Run") %>
+<% run_title = "Run #{short_ref(@run.id)}" %>
 <% content_for :title, "#{@job_class.name} #{run_title.downcase}" %>
 
 <div class="space-y-8">
