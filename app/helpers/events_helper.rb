@@ -12,7 +12,7 @@ module EventsHelper
   def admin_event_filter_summary(filter)
     parts = filter.to_h.map do |key, value|
       values = Array.wrap(value).map do |item|
-        admin_event_filter_value(key, item, filter: filter)
+        admin_event_filter_value(key, item, filter:)
       end
 
       safe_join(["#{key}: ", safe_join(values, ", ")])
@@ -76,7 +76,7 @@ module EventsHelper
   def admin_event_filter_value(key, value, filter:)
     return value unless %w[user_id subject_id].include?(key.to_s)
 
-    path = admin_event_filter_reference_path(key, value, filter: filter)
+    path = admin_event_filter_reference_path(key, value, filter:)
     text = short_ref(value)
 
     if path
