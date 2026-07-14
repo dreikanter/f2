@@ -44,15 +44,22 @@ namespace :ai do
   # runs the combined system prompt + universal schema + web tools against a real
   # provider and a real source, then validates the structured result. Also a
   # smoke test of the transformation contract — the request asks for one-line
-  # summaries, so the returned bodies should be short. Uses the capability-probe
-  # provider so it reads the same ENV keys the probe jobs use on staging.
+  # summaries, so the returned bodies should be short. The search credential is
+  # selected explicitly so this task exercises the same managed-key path as a
+  # feed run.
   desc "Verify AI extraction end-to-end with the production prompts against a live provider"
   task verify_extraction: :environment do
     provider_key = "anthropic"
     model = "claude-sonnet-4-6"
 
     unless LlmCapabilityProbe::Provider.configured?(provider_key)
-      puts "[#{provider_key}/#{model}] SKIP: no API key in environment"
+      puts "[#{provider_key}/#{model}] SKIP: no AI provider API key in environment"
+      next
+    end
+
+    search_credential = SearchCredential.active.find_by(id: ENV["SEARCH_CREDENTIAL_ID"])
+    unless search_credential
+      puts "[#{provider_key}/#{model}] SKIP: set SEARCH_CREDENTIAL_ID to an active managed credential"
       next
     end
 
@@ -69,7 +76,7 @@ namespace :ai do
       chat = LlmCapabilityProbe::Provider.build(provider_key).chat(model)
       chat.with_instructions(Loader::LlmPrompts::COMBINED_SYSTEM)
       chat.with_schema(schema)
-      adapter.apply_web(chat, model)
+      adapter.apply_web(chat, model, search_provider: search_credential.web_search_provider)
 
       raw = chat.ask(user_prompt).content
       payload = raw.is_a?(Hash) ? raw : JSON.parse(adapter.unwrap_json(raw.to_s))
