@@ -82,7 +82,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get post_url(user_post)
     assert_response :success
-    assert_select "h1", text: /Post \d+/
+    assert_select "h1", "Post #{user_post.id.to_s.last(5)}"
   end
 
   test "#show should reject access to other user's post" do
