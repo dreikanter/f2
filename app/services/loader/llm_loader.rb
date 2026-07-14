@@ -53,7 +53,8 @@ module Loader
         profile_key: feed.feed_profile_key,
         stage: :loader,
         model: model_for(client.credential),
-        purpose: options.fetch(:purpose, :scheduled_run)
+        purpose: options.fetch(:purpose, :scheduled_run),
+        search_credential: feed.search_credential
       )
     end
 
