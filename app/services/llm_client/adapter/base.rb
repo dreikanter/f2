@@ -11,10 +11,16 @@ class LlmClient
       # Every provider uses the same credential-backed search and fetch tools.
       # Adapters may still add provider-specific request params, but search never
       # delegates to a provider-hosted implementation.
-      def apply_web(chat, model, search_provider:)
+      def apply_web(chat, model, search_provider:, search_credential:, refresh_event: nil)
         params = web_params(model)
         chat.with_params(**params) if params.present?
-        chat.with_tool(LlmClient::Tools::WebSearch.new(provider: search_provider))
+        chat.with_tool(
+          LlmClient::Tools::WebSearch.new(
+            provider: search_provider,
+            credential: search_credential,
+            refresh_event: refresh_event
+          )
+        )
         chat.with_tool(LlmClient::Tools::WebFetch)
       end
 

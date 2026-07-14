@@ -31,9 +31,21 @@ class FeedLlmStatsComponent < ViewComponent::Base
       },
       {
         key: "estimated_spend",
-        label: "Estimated spend (last #{period_in_days} days)",
-        label_short: "Spend (#{period_in_days} days)",
+        label: "Estimated AI spend (last #{period_in_days} days)",
+        label_short: "AI spend (#{period_in_days} days)",
         value: formatted_cost
+      },
+      {
+        key: "search_calls",
+        label: "Search calls (last #{period_in_days} days)",
+        label_short: "Search calls (#{period_in_days} days)",
+        value: helpers.number_with_delimiter(search_call_count)
+      },
+      {
+        key: "search_estimated_spend",
+        label: "Estimated search spend (last #{period_in_days} days)",
+        label_short: "Search spend (#{period_in_days} days)",
+        value: formatted_search_cost
       }
     ]
   end
@@ -66,11 +78,27 @@ class FeedLlmStatsComponent < ViewComponent::Base
     @feed.llm_usages.within_stats_period
   end
 
+  def web_search_events
+    @web_search_events ||= WebSearchUsage.for_feed(@feed).to_a
+  end
+
+  def search_call_count
+    web_search_events.size
+  end
+
+  def search_cost_cents
+    @search_cost_cents ||= WebSearchUsage.estimated_cost_cents(web_search_events)
+  end
+
   def period_in_days
     LlmUsage::STATS_PERIOD.in_days.to_i
   end
 
   def formatted_cost
     helpers.number_to_currency(total_cost_cents / 100.0)
+  end
+
+  def formatted_search_cost
+    helpers.number_to_currency(search_cost_cents / 100, precision: 5)
   end
 end

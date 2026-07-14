@@ -81,14 +81,18 @@ class FeedRefreshWorkflow
   # started_at stat bounds them exactly.
   def interrupt_abandoned_event(event)
     usage_rows = abandoned_llm_usage_rows(event)
+    search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
+    stats_updates = {}
     metadata = event.metadata.merge("status" => "interrupted")
 
     if usage_rows.any?
-      metadata["stats"] = metadata.fetch("stats", {}).merge(
+      stats_updates.merge!(
         "llm_calls" => usage_rows.size,
         "llm_cost_cents" => usage_rows.sum { |_id, cents| cents }
       )
     end
+    stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
+    metadata["stats"] = metadata.fetch("stats", {}).merge(stats_updates) if stats_updates.any?
 
     event.update!(level: :debug, metadata: metadata)
     reference_llm_usages(event, usage_rows)
@@ -121,7 +125,7 @@ class FeedRefreshWorkflow
   end
 
   def load_feed_contents(*)
-    raw_data = feed.loader_instance.load
+    raw_data = feed.loader_instance(refresh_event: @refresh_event).load
     record_stats(content_size: content_bytesize(raw_data))
     raw_data
   end
@@ -310,9 +314,11 @@ class FeedRefreshWorkflow
   # event pages re-render, and that re-render must no longer include the
   # started record.
   def complete_refresh_event(posts)
-    @refresh_event.destroy!
     usage_rows = run_llm_usage_rows
+    search_event_ids = run_web_search_event_ids
+    @refresh_event.destroy!
     record_llm_usage_stats(usage_rows)
+    record_web_search_stats(search_event_ids)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -325,6 +331,7 @@ class FeedRefreshWorkflow
     @refresh_completed = true
     reference_posts(event, posts)
     reference_llm_usages(event, usage_rows)
+    reference_web_searches(event, search_event_ids)
   end
 
   def reference_posts(event, posts)
@@ -380,6 +387,29 @@ class FeedRefreshWorkflow
     EventReference.insert_all(references_data)
   end
 
+  def run_web_search_event_ids
+    @refresh_event.event_references.where(reference_type: "Event").pluck(:reference_id)
+  end
+
+  def record_web_search_stats(search_event_ids)
+    record_stats(search_calls: search_event_ids.size) if search_event_ids.any?
+  end
+
+  def reference_web_searches(event, search_event_ids)
+    return if search_event_ids.empty?
+
+    references_data = search_event_ids.map do |search_event_id|
+      {
+        event_id: event.id,
+        reference_type: "Event",
+        reference_id: search_event_id,
+        created_at: event.created_at,
+        updated_at: event.created_at
+      }
+    end
+    EventReference.insert_all(references_data)
+  end
+
   def disable_credentials_on_auth_error(error)
     case error
     when LlmClient::AuthError
@@ -395,9 +425,11 @@ class FeedRefreshWorkflow
   def fail_refresh_event(error)
     return if @refresh_completed
 
-    @refresh_event&.destroy!
     usage_rows = run_llm_usage_rows
+    search_event_ids = @refresh_event ? run_web_search_event_ids : []
+    @refresh_event&.destroy!
     record_llm_usage_stats(usage_rows)
+    record_web_search_stats(search_event_ids)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -418,6 +450,7 @@ class FeedRefreshWorkflow
     )
 
     reference_llm_usages(event, usage_rows)
+    reference_web_searches(event, search_event_ids)
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant

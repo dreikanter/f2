@@ -77,7 +77,7 @@ class FeedAiSettingsComponent < ViewComponent::Base
 
   def search_credential_options
     active_search_credentials.map do |credential|
-      ["#{credential.display_name} · #{WebSearchProvider::REGISTRY.fetch(credential.provider)}", credential.id]
+      ["#{credential.display_name} · #{credential.provider_label}", credential.id]
     end
   end
 

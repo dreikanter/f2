@@ -154,7 +154,15 @@ class LlmClient
     # by #ask travels as a separate user-role message (spec §8).
     chat.with_instructions(system) if system.present?
     chat.with_schema(output_schema) if output_schema.present?
-    adapter.apply_web(chat, model, search_provider: search_provider_for(ctx)) if web
+    if web
+      adapter.apply_web(
+        chat,
+        model,
+        search_provider: search_provider_for(ctx),
+        search_credential: ctx.search_credential,
+        refresh_event: ctx.refresh_event
+      )
+    end
 
     response = chat.ask(prompt)
     ProviderResponse.new(

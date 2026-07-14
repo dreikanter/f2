@@ -15,7 +15,7 @@ class SearchCredentialDetailsComponent < ViewComponent::Base
     result = [
       {
         label: "Provider",
-        value: WebSearchProvider::REGISTRY.fetch(@search_credential.provider),
+        value: @search_credential.provider_label,
         key: "search_credential.provider"
       },
       {

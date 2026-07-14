@@ -8,6 +8,7 @@ class SearchCredentialValidationJob < ApplicationJob
 
   def perform(credential)
     credential.validating!
+    WebSearchUsage.record!(credential: credential)
     credential.web_search_provider.search(VALIDATION_QUERY, max_results: 1)
     credential.update!(state: :active, last_validated_at: Time.current, last_error: nil)
   rescue WebSearchProvider::Error => e

@@ -3,6 +3,7 @@ class Admin::EventsController < ApplicationController
   include EventCursorPagination
   include EventReferencedPosts
   include EventReferencedLlmUsages
+  include EventReferencedWebSearches
 
   def index
     authorize Event
@@ -20,6 +21,7 @@ class Admin::EventsController < ApplicationController
     @event = Event.find(params[:id])
     @referenced_posts = referenced_posts(@event)
     @referenced_llm_usages = referenced_llm_usages(@event)
+    @referenced_web_searches = referenced_web_searches(@event)
     @previous_event = previous_event(@event)
     @next_event = next_event(@event)
   end

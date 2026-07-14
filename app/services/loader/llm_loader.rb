@@ -54,7 +54,8 @@ module Loader
         stage: :loader,
         model: model_for(client.credential),
         purpose: options.fetch(:purpose, :scheduled_run),
-        search_credential: feed.search_credential
+        search_credential: feed.search_credential,
+        refresh_event: options[:refresh_event]
       )
     end
 

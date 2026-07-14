@@ -3,6 +3,7 @@ class EventsController < ApplicationController
   include EventCursorPagination
   include EventReferencedPosts
   include EventReferencedLlmUsages
+  include EventReferencedWebSearches
 
   MAX_RECENT_POSTS = 10
 
@@ -17,6 +18,7 @@ class EventsController < ApplicationController
     @event = owned_events.find(params[:id])
     @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
     @referenced_llm_usages = referenced_llm_usages(@event)
+    @referenced_web_searches = referenced_web_searches(@event)
     @previous_event = adjacent_event(:older)
     @next_event = adjacent_event(:newer)
   end
