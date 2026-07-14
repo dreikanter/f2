@@ -48,7 +48,7 @@ class SearchCredentialListItemComponent < ListItemComponent
   end
 
   def provider_name
-    WebSearchProvider::REGISTRY.fetch(credential.provider)
+    credential.provider_label
   end
 
   def menu
