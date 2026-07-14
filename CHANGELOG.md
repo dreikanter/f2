@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-14
 
+- You can now see what web search costs: each search credential page shows how many searches ran in the last day, week, and month with an estimated cost, feed pages count searches next to AI calls and fold them into the spend figure, and feed refresh entries show how many searches each run made.
 - AI feeds now use their selected managed search-provider key consistently across every AI provider.
 - AI feeds now let you choose a managed search-provider key alongside the AI provider and model; setup points directly to whichever credential type is still missing.
 - You can now add, check, rename, choose a default, and remove search-provider API keys from a dedicated Search Credentials settings page.

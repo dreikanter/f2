@@ -286,4 +286,41 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     # by normalizing resend.email.email_bounced -> resend_email_bounced
     assert_includes result.to_html, "Email bounced"
   end
+
+  def search_credential
+    @search_credential ||= create(:search_credential, :active, user: user, display_name: "My Serper Key")
+  end
+
+  test "#call should link the search credential on a deactivation event" do
+    event = Event.create!(
+      type: "search_credential_deactivated",
+      level: :warning,
+      subject: search_credential,
+      user: user,
+      message: "",
+      metadata: {}
+    )
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    assert_includes result.to_html, "My Serper Key"
+    assert_includes result.to_html, "/search_credentials/#{search_credential.id}"
+    assert_includes result.to_html, "stopped working"
+  end
+
+  test "#call should link the search credential on a web search event" do
+    event = Event.create!(
+      type: "web_search",
+      level: :debug,
+      subject: search_credential,
+      user: user,
+      message: "",
+      metadata: { "provider" => "serper", "outcome" => "success" }
+    )
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    assert_includes result.to_html, "Web search via"
+    assert_includes result.to_html, "/search_credentials/#{search_credential.id}"
+  end
 end

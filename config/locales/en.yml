@@ -66,6 +66,12 @@ en:
     ai_credential_deactivated:
       name: "AI credential deactivated"
       description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."
+    search_credential_deactivated:
+      name: "Search credential deactivated"
+      description_html: "Search credential %{subject_link} stopped working; update the key to resume its feeds."
+    web_search:
+      name: "Web search"
+      description_html: "Web search via %{subject_link}"
     post_withdrawn:
       name: "Post withdrawn"
       description_html: "Post removed from FreeFeed"
@@ -121,6 +127,7 @@ en:
         new_posts: "New posts"
         llm_calls: "AI calls"
         llm_cost_cents: "Estimated AI spend"
+        search_calls: "Search API calls"
     llm_usage:
       section_title: "AI usage"
 

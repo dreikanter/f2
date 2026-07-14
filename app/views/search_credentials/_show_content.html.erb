@@ -45,6 +45,13 @@
     <%= render SearchCredentialDetailsComponent.new(search_credential: search_credential) %>
   <% end %>
 
+  <% if search_credential.active? || search_credential.inactive? %>
+    <section class="space-y-4" data-key="search_credential.usage">
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Usage</h2>
+      <%= render SearchCredentialUsageComponent.new(search_credential: search_credential) %>
+    </section>
+  <% end %>
+
   <% if feed_id.present? || !search_credential.default? %>
     <div class="flex flex-wrap gap-3">
       <% if feed_id.present? %>

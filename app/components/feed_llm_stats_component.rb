@@ -30,6 +30,12 @@ class FeedLlmStatsComponent < ViewComponent::Base
         value: helpers.number_with_delimiter(call_count)
       },
       {
+        key: "search_calls",
+        label: "Searches (last #{period_in_days} days)",
+        label_short: "Searches (#{period_in_days} days)",
+        value: helpers.number_with_delimiter(search_call_count)
+      },
+      {
         key: "estimated_spend",
         label: "Estimated spend (last #{period_in_days} days)",
         label_short: "Spend (#{period_in_days} days)",
@@ -66,11 +72,35 @@ class FeedLlmStatsComponent < ViewComponent::Base
     @feed.llm_usages.within_stats_period
   end
 
+  # Per-call "web_search" events carry the feed in metadata (their subject is
+  # the credential), so the feed scope goes through jsonb. Grouping by
+  # provider keeps the cost estimate right across credential switches.
+  def search_counts_by_provider
+    @search_counts_by_provider ||=
+      Event.where(type: "web_search")
+           .where("metadata->>'feed_id' = ?", @feed.id.to_s)
+           .where(created_at: LlmUsage::STATS_PERIOD.ago..)
+           .group(Arel.sql("metadata->>'provider'"))
+           .count
+  end
+
+  def search_call_count
+    search_counts_by_provider.values.sum
+  end
+
+  def search_cost_cents
+    search_counts_by_provider.sum do |provider, count|
+      WebSearchProvider.estimated_cost_cents(provider, count)
+    end
+  end
+
   def period_in_days
     LlmUsage::STATS_PERIOD.in_days.to_i
   end
 
+  # One spend figure for the whole run pipeline: LLM tokens plus estimated
+  # search fees — users think "what did this feed cost", not per-subsystem.
   def formatted_cost
-    helpers.number_to_currency(total_cost_cents / 100.0)
+    helpers.number_to_currency((total_cost_cents + search_cost_cents) / 100.0)
   end
 end

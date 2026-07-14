@@ -63,5 +63,37 @@ class FeedLlmStatsComponentTest < ViewComponent::TestCase
 
     spend_value = result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
     assert_equal "$0.00", spend_value
+
+    searches_value = result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
+    assert_equal "0", searches_value
+  end
+
+  def record_search_calls(feed, count, at: 1.hour.ago, provider: "serper")
+    credential = create(:search_credential, :active, user: feed.user, provider: provider,
+                                                     display_name: "#{provider} #{feed.id}")
+    count.times do
+      create(:event, type: "web_search", level: :debug, subject: credential, user: feed.user,
+                     metadata: { "provider" => provider, "feed_id" => feed.id, "outcome" => "success" },
+                     created_at: at)
+    end
+  end
+
+  test "#render should count the feed's searches and fold their cost into spend" do
+    record_search_calls(feed_with_usages, 10)
+
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+
+    assert_equal "10", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
+    assert_equal "$0.41", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
+  end
+
+  test "#render should exclude search calls outside the stats period and from other feeds" do
+    record_search_calls(feed_with_usages, 10, at: LlmUsage::STATS_PERIOD.ago - 1.day)
+    record_search_calls(feed, 3)
+
+    result = render_inline(FeedLlmStatsComponent.new(feed: feed_with_usages))
+
+    assert_equal "0", result.css('[data-key="llm_stats.search_calls.value"]').first.text.strip
+    assert_equal "$0.40", result.css('[data-key="llm_stats.estimated_spend.value"]').first.text.strip
   end
 end
