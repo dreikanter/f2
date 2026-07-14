@@ -1,8 +1,6 @@
 require "test_helper"
 
 class WebSearchProviderTest < ActiveSupport::TestCase
-  ENV_KEYS = %w[WEB_SEARCH_PROVIDER SERPER_API_KEY BRAVE_SEARCH_API_KEY TAVILY_API_KEY].freeze
-
   # Records every request a provider makes, so request shapes can be asserted
   # without touching the network.
   class RecordingClient
@@ -33,15 +31,6 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     HttpClient.stub(:build, ->(**) { client }) { yield client }
   end
 
-  def with_env(vars)
-    vars = ENV_KEYS.index_with { nil }.merge(vars)
-    saved = vars.keys.index_with { |key| ENV[key] }
-    vars.each { |key, value| ENV[key] = value }
-    yield
-  ensure
-    saved.each { |key, value| ENV[key] = value }
-  end
-
   test ".for should build the named provider around the given key" do
     provider = WebSearchProvider.for("serper", api_key: "key")
     assert_instance_of WebSearchProvider::Serper, provider
@@ -60,38 +49,6 @@ class WebSearchProviderTest < ActiveSupport::TestCase
   test "every registered provider should inherit from Base" do
     WebSearchProvider::REGISTRY.each_key do |name|
       assert_kind_of WebSearchProvider::Base, WebSearchProvider.for(name, api_key: "key")
-    end
-  end
-
-  test ".default should honor WEB_SEARCH_PROVIDER when its key is present" do
-    with_env("WEB_SEARCH_PROVIDER" => "tavily", "TAVILY_API_KEY" => "key") do
-      assert_instance_of WebSearchProvider::Tavily, WebSearchProvider.default
-    end
-  end
-
-  test ".default should fall back to the first provider with a key" do
-    with_env("BRAVE_SEARCH_API_KEY" => "key") do
-      assert_instance_of WebSearchProvider::Brave, WebSearchProvider.default
-    end
-  end
-
-  test ".default should raise when nothing is configured" do
-    with_env({}) do
-      assert_raises(WebSearchProvider::ConfigurationError) { WebSearchProvider.default }
-    end
-  end
-
-  test ".default should raise when the named provider has no key" do
-    with_env("WEB_SEARCH_PROVIDER" => "serper", "TAVILY_API_KEY" => "key") do
-      assert_raises(WebSearchProvider::ConfigurationError) { WebSearchProvider.default }
-    end
-  end
-
-  test ".configured? should reflect whether a provider resolves" do
-    with_env("SERPER_API_KEY" => "key") { assert WebSearchProvider.configured? }
-    with_env({}) { assert_not WebSearchProvider.configured? }
-    with_env("WEB_SEARCH_PROVIDER" => "serper", "TAVILY_API_KEY" => "key") do
-      assert_not WebSearchProvider.configured?
     end
   end
 

@@ -1,7 +1,7 @@
 # Search Credentials: Managed Per-User Keys for Web Search
 
 **Date**: 2026-07-13 |
-**Status**: Draft — nothing shipped yet. Supersedes the interim ENV-based key resolution from #980.
+**Status**: Active implementation — managed credentials and credential-only search are implemented; usage events and cost surfaces remain.
 
 **Related**: [`005-feed-creation-ux-ai-overhaul`](../005-feed-creation-ux-ai-overhaul/spec.md)
 (§5 capability matrix, §6 provider seam/retrieval),
@@ -14,9 +14,9 @@ the code is the source of truth; this document records *why* the decisions were 
 
 ## Why
 
-- #980 landed `WebSearchProvider` (Serper / Brave / Tavily behind one normalized interface) with
-  key resolution explicitly scaffolded on ENV (`WebSearchProvider.default`, `ENV_KEYS`). That seam
-  was always meant to be replaced by a managed model mirroring `AiCredential`.
+- #980 landed `WebSearchProvider` (Serper / Brave / Tavily behind one normalized interface).
+  Managed `SearchCredential` records now supply provider keys explicitly, mirroring `AiCredential`;
+  there is no process-environment fallback.
 - Search must be **personalized, managed API access**: a user brings their own search-provider
   key; searches bill to their account; usage is attributable per credential.
 - Native provider-hosted search is expensive and opaque: Anthropic bills ~$10/1K searches and
@@ -172,9 +172,8 @@ rate covers the MVP.
   event) to emit the §6 events. This context injection is the real work inside "rewire the seam" —
   nothing else in the provider layer changes, since `WebSearchProvider.for(name, api_key:)`
   already takes the key as a parameter.
-- Delete the interim ENV seam once credential resolution is live: `WebSearchProvider.default`,
-  `.configured?`, `ENV_KEYS`, `env_key`, and the Moonshot adapter's `configured?` guard. No
-  migration or deprecation window — there is no production deployment yet.
+- Credential resolution is exclusively `SearchCredential`-based. Providers receive an explicit
+  API key through `WebSearchProvider.for`; no process-environment fallback or adapter guard remains.
 
 ### 9. Wiring checklist
 
@@ -191,7 +190,7 @@ rate covers the MVP.
 3. **Feed FK + form section + gating + detours** (§4).
 4. **Adapter unification on client-side search** (§3) + capability-matrix re-verification —
    depends on 2–3 so every enabled AI feed already carries a credential to resolve.
-5. **Delete the ENV seam** (§8) — last, after nothing reads it.
+5. **Remove the temporary environment fallback** (§8) — complete after credential-backed adapters landed.
 6. **Events + usage surfaces** (§6, §9) — can land with or after 4.
 
 ## Open / deferred
