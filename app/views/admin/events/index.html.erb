@@ -10,7 +10,14 @@
             <% values = value.is_a?(Array) ? value : [value] %>
             <% rendered_values = values.map do |item| %>
               <% if %w[user_id subject_id].include?(key.to_s) %>
-                <% uuid_reference(item, path: admin_event_filter_reference_path(key, item, filter: @filter)) %>
+                <% path = admin_event_filter_reference_path(key, item, filter: @filter) %>
+                <% if path %>
+                  <% link_to short_ref(item), path,
+                             title: item,
+                             class: "font-mono underline underline-offset-2 transition hover:text-heading" %>
+                <% else %>
+                  <% tag.span short_ref(item), title: item, class: "font-mono" %>
+                <% end %>
               <% else %>
                 <% item %>
               <% end %>
