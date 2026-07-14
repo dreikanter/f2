@@ -68,8 +68,15 @@ class EventDescriptionComponent < ViewComponent::Base
     when SearchCredential
       helpers.link_to(event.subject.display_name, helpers.search_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     else
-      ""
+      orphaned_subject_placeholder
     end
+  end
+
+  # A recorded subject_type with no loadable subject means the record was
+  # deleted (credentials outlive their events' subjects); descriptions that
+  # interpolate %{subject_link} need a stand-in, not a hole in the sentence.
+  def orphaned_subject_placeholder
+    event.subject.nil? && event.subject_type.present? ? "(removed)" : ""
   end
 
   # Feeds link to the owner-facing page. Admin::EventDescriptionComponent

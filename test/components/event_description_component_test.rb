@@ -323,4 +323,20 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Web search via"
     assert_includes result.to_html, "/search_credentials/#{search_credential.id}"
   end
+
+  test "#call should show a placeholder when the event's subject was deleted" do
+    event = Event.create!(
+      type: "search_credential_deactivated",
+      level: :warning,
+      subject: search_credential,
+      user: user,
+      message: "",
+      metadata: {}
+    )
+    search_credential.destroy!
+
+    result = render_inline(EventDescriptionComponent.new(event: event.reload))
+
+    assert_includes result.to_html, "Search credential (removed) stopped working"
+  end
 end

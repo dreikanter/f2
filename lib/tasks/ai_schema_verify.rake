@@ -76,7 +76,12 @@ namespace :ai do
       chat = LlmCapabilityProbe::Provider.build(provider_key).chat(model)
       chat.with_instructions(Loader::LlmPrompts::COMBINED_SYSTEM)
       chat.with_schema(schema)
-      adapter.apply_web(chat, model, search_provider: search_credential.web_search_provider)
+      search_tool = LlmClient::Tools::WebSearch.new(
+        provider: search_credential.web_search_provider,
+        credential: search_credential,
+        purpose: :validation
+      )
+      adapter.apply_web(chat, model, search_tool: search_tool)
 
       raw = chat.ask(user_prompt).content
       payload = raw.is_a?(Hash) ? raw : JSON.parse(adapter.unwrap_json(raw.to_s))
