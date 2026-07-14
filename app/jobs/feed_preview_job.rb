@@ -4,15 +4,17 @@ class FeedPreviewJob < ApplicationJob
 
   # @param feed_preview_id [String] UUID of the FeedPreview
   # @param run_id [String] the run token captured when this job was enqueued
-  def perform(feed_preview_id, run_id)
+  # @param search_credential_id [String, nil] credential selected for this run
+  def perform(feed_preview_id, run_id, search_credential_id = nil)
     feed_preview = FeedPreview.find_by(id: feed_preview_id)
     return unless feed_preview
 
-    FeedPreviewWorkflow.new(feed_preview, run_id: run_id).execute
+    search_credential = feed_preview.user.search_credentials.active.find_by(id: search_credential_id)
+    FeedPreviewWorkflow.new(feed_preview, run_id: run_id, search_credential: search_credential).execute
   rescue LlmClient::CredentialMissing => e
-    # AI profile previewed without an active credential. The workflow already
-    # marked the preview failed; this is a user-state condition, not a crash.
-    Rails.logger.info "FeedPreviewJob: no AI credential for preview #{feed_preview_id}: #{e.message}"
+    # AI profile previewed without one of its required active credentials. The
+    # workflow already marked the preview failed; this is user state, not a crash.
+    Rails.logger.info "FeedPreviewJob: missing credential for preview #{feed_preview_id}: #{e.message}"
   rescue => e
     # The workflow already transitioned the preview to :failed. Do not re-raise:
     # retrying would reset status back to :processing (via initialize_workflow),
