@@ -247,7 +247,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(event)
 
     assert_response :success
-    assert_select "h1", "Event ##{event.id}"
+    assert_select "h1", "Event #{event.id.to_s.last(5)}"
   end
 
   test "#show should list imported posts referenced by the event" do
@@ -338,7 +338,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get event_path(event), params: { filter: { type: ["something_else"] } }
 
     assert_response :success
-    assert_select "h1", "Event ##{event.id}"
+    assert_select "h1", "Event #{event.id.to_s.last(5)}"
   end
 
   test "#show should not render another user's event" do

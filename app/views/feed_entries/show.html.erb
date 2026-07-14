@@ -1,7 +1,8 @@
-<% content_for :title, "Feed Entry #{@feed_entry.id}" %>
+<% feed_entry_title = "Feed Entry #{short_ref(@feed_entry.id)}" %>
+<% content_for :title, feed_entry_title %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Feed Entry #{@feed_entry.id}") do |header| %>
+  <%= render PageHeaderComponent.new(title: feed_entry_title) do |header| %>
     <% header.with_context_paragraph do %>
       <%= render BadgeComponent.new(
         text: @feed_entry.status.capitalize,

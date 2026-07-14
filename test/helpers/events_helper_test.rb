@@ -3,6 +3,30 @@ require "test_helper"
 class EventsHelperTest < ActionView::TestCase
   include TimeHelper
 
+  test "#admin_event_filter_summary renders a direct link for a known subject type" do
+    subject_id = SecureRandom.uuid
+
+    result = admin_event_filter_summary({ subject_type: "Feed", subject_id: subject_id })
+    fragment = Nokogiri::HTML.fragment(result)
+    link = fragment.at_css("a")
+
+    assert_equal "subject_type: Feed • subject_id: #{subject_id.last(5)}", fragment.text
+    assert_equal admin_feed_path(subject_id), link["href"]
+    assert_equal subject_id, link["title"]
+  end
+
+  test "#admin_event_filter_summary leaves an unknown subject type unlinked" do
+    subject_id = SecureRandom.uuid
+
+    result = admin_event_filter_summary({ subject_type: "Post", subject_id: subject_id })
+    fragment = Nokogiri::HTML.fragment(result)
+    label = fragment.at_css("span")
+
+    assert_equal "subject_type: Post • subject_id: #{subject_id.last(5)}", fragment.text
+    assert_equal subject_id, label["title"]
+    assert_nil fragment.at_css("a")
+  end
+
   test "#format_event_duration should format seconds under a minute" do
     assert_equal "3.2s", format_event_duration(3.2)
     assert_equal "59.0s", format_event_duration(59.0)

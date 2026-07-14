@@ -104,16 +104,25 @@ class EventListItemComponent < ListItemComponent
     safe_join(["Type: ", link])
   end
 
-  # Admins see who an event belongs to; the user links to a filtered log.
+  # Admins see who an event belongs to; existing users link to their detail page.
   def user_label
     label = if event.user_id.blank?
       helpers.tag.em("System", data: { key: "events.user" })
+    elsif event.user
+      helpers.link_to(
+        helpers.short_ref(event.user_id),
+        helpers.admin_user_path(event.user),
+        class: "font-mono underline underline-offset-2 transition hover:text-heading",
+        title: reference_title(event.user_id, event.user.email_address),
+        data: { key: "events.user" }
+      )
     else
-      helpers.link_to("##{event.user_id}",
-                      helpers.admin_events_path(filter: { user_id: event.user_id }),
-                      class: "underline underline-offset-2 transition hover:text-heading",
-                      title: event.user&.email_address,
-                      data: { key: "events.user" })
+      helpers.tag.span(
+        helpers.short_ref(event.user_id),
+        class: "font-mono",
+        title: event.user_id,
+        data: { key: "events.user" }
+      )
     end
 
     safe_join(["User: ", label])
@@ -122,17 +131,32 @@ class EventListItemComponent < ListItemComponent
   def target_label
     return if event.subject_type.blank?
 
-    value = [event.subject_type, event.subject_id].compact.join("#")
-    filter_params = { subject_type: event.subject_type }
-    filter_params[:subject_id] = event.subject_id if event.subject_id.present?
+    label = if event.subject_id.present?
+      text = "#{event.subject_type} #{helpers.short_ref(event.subject_id)}"
+      title = reference_title(event.subject_id, target_title)
+      path = helpers.admin_event_subject_path(event.subject)
 
-    link = helpers.link_to(value,
-                           helpers.admin_events_path(filter: filter_params),
-                           class: "underline underline-offset-2 transition hover:text-heading",
-                           title: target_title,
-                           data: { key: "events.subject" })
+      if path
+        helpers.link_to(
+          text,
+          path,
+          class: "font-mono underline underline-offset-2 transition hover:text-heading",
+          title: title,
+          data: { key: "events.subject" }
+        )
+      else
+        helpers.tag.span(
+          text,
+          class: "font-mono",
+          title: title,
+          data: { key: "events.subject" }
+        )
+      end
+    else
+      helpers.tag.span(event.subject_type, data: { key: "events.subject" })
+    end
 
-    safe_join(["Target: ", link])
+    safe_join(["Target: ", label])
   end
 
   # Resolves the subject to its human name so admins don't have to memorize
@@ -142,5 +166,9 @@ class EventListItemComponent < ListItemComponent
     return unless subject
 
     subject.try(:display_name) || subject.try(:name) || subject.try(:email_address)
+  end
+
+  def reference_title(id, description)
+    [id, description].compact_blank.join(" — ")
   end
 end

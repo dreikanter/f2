@@ -1,7 +1,8 @@
-<% content_for :title, "Post #{@post.id}" %>
+<% post_title = "Post #{short_ref(@post.id)}" %>
+<% content_for :title, post_title %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Post #{@post.id}") do |header| %>
+  <%= render PageHeaderComponent.new(title: post_title) do |header| %>
     <% header.with_breadcrumb(label: "Posts", url: posts_path) %>
     <% header.with_context_paragraph do %>
       <%= render BadgeComponent.new(
