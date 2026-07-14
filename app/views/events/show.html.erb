@@ -1,7 +1,8 @@
-<% content_for :title, "Event ##{@event.id}" %>
+<% event_title = uuid_label(@event.id, prefix: "Event") %>
+<% content_for :title, event_title %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Event ##{@event.id}") do |header| %>
+  <%= render PageHeaderComponent.new(title: event_title) do |header| %>
     <% header.with_breadcrumb(label: "Events Log", url: events_path) %>
     <% if @previous_event %>
       <% header.with_action_button do %>
