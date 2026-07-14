@@ -7,6 +7,7 @@ module WebSearchProvider
   DEFAULT_MAX_RESULTS = 5
 
   Result = Data.define(:title, :url, :snippet)
+  Configuration = Data.define(:class_name, :label, :cents_per_1k_requests)
 
   Error = Class.new(StandardError)
   ConfigurationError = Class.new(Error)
@@ -17,15 +18,35 @@ module WebSearchProvider
   AuthError = Class.new(Error)
 
   REGISTRY = {
-    "serper" => "Serper",
-    "brave" => "Brave",
-    "tavily" => "Tavily"
+    "serper" => Configuration.new(class_name: "Serper", label: "Serper", cents_per_1k_requests: 100),
+    "brave" => Configuration.new(class_name: "Brave", label: "Brave", cents_per_1k_requests: 500),
+    "tavily" => Configuration.new(class_name: "Tavily", label: "Tavily", cents_per_1k_requests: 800)
   }.freeze
 
-  def self.for(name, api_key:)
-    class_name = REGISTRY[name.to_s]
-    raise ConfigurationError, "unknown web search provider: #{name}" unless class_name
+  class << self
+    def for(name, api_key:)
+      configuration = configuration_for(name)
+      const_get(configuration.class_name).new(api_key: api_key)
+    end
 
-    const_get(class_name).new(api_key: api_key)
+    def label_for(name)
+      configuration_for(name).label
+    end
+
+    def cents_per_1k_requests_for(name)
+      configuration_for(name).cents_per_1k_requests
+    end
+
+    def options_for_select
+      REGISTRY.map { |name, configuration| [configuration.label, name] }
+    end
+
+    private
+
+    def configuration_for(name)
+      REGISTRY.fetch(name.to_s) do
+        raise ConfigurationError, "unknown web search provider: #{name}"
+      end
+    end
   end
 end
