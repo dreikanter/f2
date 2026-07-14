@@ -155,14 +155,14 @@ class LlmClient
     chat.with_instructions(system) if system.present?
     chat.with_schema(output_schema) if output_schema.present?
     if web
-    adapter.apply_web(
-      chat,
-      model,
-      search_provider: search_provider_for(ctx),
-      search_credential: ctx.search_credential,
-      refresh_event: ctx.refresh_event
-    )
-  end
+      adapter.apply_web(
+        chat,
+        model,
+        search_provider: search_provider_for(ctx),
+        search_credential: ctx.search_credential,
+        refresh_event: ctx.refresh_event
+      )
+    end
 
     response = chat.ask(prompt)
     ProviderResponse.new(
