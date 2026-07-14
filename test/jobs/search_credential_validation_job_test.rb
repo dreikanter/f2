@@ -25,21 +25,25 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     @credential ||= create(:search_credential, user: user, state: :pending, last_error: "old error")
   end
 
-  test "#perform should validate with one result and activate the credential" do
+  test "#perform should validate with one result, record usage, and activate the credential" do
     provider = FakeProvider.new
 
-    WebSearchProvider.stub(:for, provider) do
-      SearchCredentialValidationJob.perform_now(credential)
+    assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
+      WebSearchProvider.stub(:for, provider) do
+        SearchCredentialValidationJob.perform_now(credential)
+      end
     end
 
     credential.reload
+    search_event = Event.where(type: WebSearchUsage::EVENT_TYPE, subject: credential).sole
     assert credential.active?
     assert_not_nil credential.last_validated_at
     assert_nil credential.last_error
+    assert_empty search_event.incoming_event_references
     assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
   end
 
-  test "#perform should deactivate and record every known provider error type" do
+  test "#perform should record usage then deactivate for every known provider error type" do
     error_classes = [
       WebSearchProvider::ConfigurationError,
       WebSearchProvider::ProviderError,
@@ -51,19 +55,22 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
                                            display_name: error_class.name.demodulize)
       provider = FakeProvider.new(error: error_class.new("validation failed"))
 
-      assert_difference("Event.count", 1) do
+      assert_difference("Event.count", 2) do
         WebSearchProvider.stub(:for, provider) do
           SearchCredentialValidationJob.perform_now(current)
         end
       end
 
       current.reload
-      event = Event.where(subject: current, type: "search_credential_deactivated").order(:created_at).last
+      search_event = Event.where(subject: current, type: WebSearchUsage::EVENT_TYPE).order(:created_at).last
+      deactivation_event = Event.where(subject: current, type: "search_credential_deactivated").order(:created_at).last
       assert current.inactive?
       assert_equal "validation failed", current.last_error
       assert_not_nil current.last_validated_at
-      assert_not_nil event
-      assert_equal "warning", event.level
+      assert_not_nil search_event
+      assert_empty search_event.incoming_event_references
+      assert_not_nil deactivation_event
+      assert_equal "warning", deactivation_event.level
       assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
     end
   end
