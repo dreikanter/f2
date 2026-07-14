@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-14
 
+- AI feeds now use their selected managed search-provider key consistently across every AI provider.
 - AI feeds now let you choose a managed search-provider key alongside the AI provider and model; setup points directly to whichever credential type is still missing.
 - You can now add, check, rename, choose a default, and remove search-provider API keys from a dedicated Search Credentials settings page.
 

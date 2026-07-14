@@ -3,10 +3,15 @@ require "test_helper"
 class LlmClient::AdapterTest < ActiveSupport::TestCase
   def fake_chat
     Class.new do
-      attr_reader :tools
+      attr_reader :tools, :params
 
-      def initialize = @tools = []
+      def initialize
+        @tools = []
+        @params = {}
+      end
+
       def with_tool(tool) = @tools << tool
+      def with_params(**params) = @params.merge!(params)
     end.new
   end
 
@@ -32,22 +37,35 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "Base#web_params should raise NotImplementedError" do
-    assert_raises(NotImplementedError) { LlmClient::Adapter::Base.new.web_params("any-model") }
+  test "every adapter should attach the injected search provider and client-side fetch" do
+    provider = Object.new
+
+    LlmClient::Adapter::REGISTRY.each_key do |name|
+      chat = fake_chat
+      LlmClient::Adapter.for(name).apply_web(chat, "model", search_provider: provider)
+
+      search_tool, fetch_tool = chat.tools
+      assert_instance_of LlmClient::Tools::WebSearch, search_tool, name
+      assert_same provider, search_tool.instance_variable_get(:@provider), name
+      assert_equal LlmClient::Tools::WebFetch, fetch_tool, name
+    end
   end
 
-  test "anthropic #web_params should declare web search and fetch server tools" do
-    types = LlmClient::Adapter::Anthropic.new.web_params("claude-opus-4-8").fetch(:tools).map { |t| t[:type] }
+  test "Anthropic should not send provider-hosted web tools" do
+    chat = fake_chat
 
-    assert_includes types, "web_search_20260209"
-    assert_includes types, "web_fetch_20260209"
+    LlmClient::Adapter::Anthropic.new.apply_web(chat, "claude-opus-4-8", search_provider: Object.new)
+
+    assert_equal({}, chat.params)
   end
 
-  test "openrouter #web_params should enable the web plugin and require parameters" do
-    params = LlmClient::Adapter::OpenRouter.new.web_params("openai/gpt-4o")
+  test "OpenRouter should require structured parameters without enabling its web plugin" do
+    chat = fake_chat
 
-    assert_equal [{ id: "web" }], params.fetch(:plugins)
-    assert params.dig(:provider, :require_parameters)
+    LlmClient::Adapter::OpenRouter.new.apply_web(chat, "openai/gpt-4o", search_provider: Object.new)
+
+    assert_equal({ provider: { require_parameters: true } }, chat.params)
+    assert_not chat.params.key?(:plugins)
   end
 
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
@@ -59,32 +77,6 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
 
   test ".for should resolve the moonshot adapter" do
     assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
-  end
-
-  test "moonshot #apply_web should register only the fetch tool when web search is unconfigured" do
-    chat = fake_chat
-
-    WebSearchProvider.stub(:configured?, false) do
-      LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
-    end
-
-    assert_equal [LlmClient::Tools::WebFetch], chat.tools
-  end
-
-  test "moonshot #apply_web should also register the search tool with the resolved provider when configured" do
-    chat = fake_chat
-    provider = Object.new
-
-    WebSearchProvider.stub(:configured?, true) do
-      WebSearchProvider.stub(:default, provider) do
-        LlmClient::Adapter::Moonshot.new.apply_web(chat, "kimi-k2.5")
-      end
-    end
-
-    search_tool, fetch_tool = chat.tools
-    assert_instance_of LlmClient::Tools::WebSearch, search_tool
-    assert_same provider, search_tool.instance_variable_get(:@provider)
-    assert_equal LlmClient::Tools::WebFetch, fetch_tool
   end
 
   test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
