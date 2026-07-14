@@ -13,6 +13,7 @@ Each entry in `FeedProfile::PROFILES` is a `Hash` matching the schema below. Sch
   description:         String,           # required, ≤ 200 chars, shown in candidate chooser tooltip
   input_shape:         Symbol,           # required, one of :url, :handle, :query, :any
   depends_on_ai:       Boolean,          # required; true if any stage's class uses LlmClient
+  scheduled:           Boolean,          # required; true when feeds use cron-backed periodic refresh
   matcher:             String,           # required, fully-qualified class name (must subclass ProfileMatcher::Base)
   parameter_schema:    Hash,             # required, JSON Schema Draft 2020-12 describing the feed's `params` JSONB
   loader:              StageEntry,       # required (see below)
@@ -50,12 +51,13 @@ For LLM-using stages, `StageEntry.config` carries the LLM-specific bits:
    - **AI penalty**: profiles with `depends_on_ai: true` rank lower than any non-AI profile that matched the same input.
 4. `parameter_schema` MUST validate the `params` JSON the feed will store. Required fields surface as required form fields.
 5. `output_schema` MUST include the universal post fields (`title`, `body`, `supplementary?`, `images[]`, `source_url`, `published_at`, `uid`) — see [`../notes/profile-contracts.md`](../notes/profile-contracts.md).
+6. `scheduled` MUST be explicit. When false, the feed does not require a cron expression and must not acquire a `FeedSchedule` through enablement or scheduler recovery.
 
 ## Adding a new profile
 
 1. Write the matcher class (subclass `ProfileMatcher::Base`, declare `input_shape`, declare `match_specificity`, implement `match?(input)`).
 2. Write or reuse loader / processor / normalizer classes.
-3. Add the entry to `FeedProfile::PROFILES`.
+3. Add the entry to `FeedProfile::PROFILES` and explicitly set `scheduled`.
 4. Add a profile fixture in `test/fixtures/profiles/` and a profile-level test exercising `parameter_schema` validity, end-to-end `FeedRefreshWorkflow` for one sample item, and (if AI-backed) an `LlmClient` stub.
 5. CI fails if `FeedProfileValidator.validate!` rejects the new entry.
 
