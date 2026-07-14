@@ -277,6 +277,37 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
+  test "#due should exclude schedule-less webhook feeds" do
+    feed = create(:feed, :webhook, state: :enabled)
+
+    assert_nil feed.feed_schedule
+    assert_not_includes Feed.due, feed
+  end
+
+  test "#can_be_enabled? should not require a schedule for a webhook feed" do
+    feed = create(:feed, :webhook)
+
+    assert_nil feed.cron_expression
+    assert feed.can_be_enabled?
+  end
+
+  test "should enable a webhook feed without cron and create no schedule" do
+    feed = create(:feed, :webhook, state: :disabled)
+
+    assert feed.enable
+    assert feed.reload.enabled?
+    assert_nil feed.feed_schedule
+  end
+
+  test "should destroy the webhook endpoint when the feed is destroyed" do
+    feed = create(:feed, :webhook)
+    create(:webhook_endpoint, feed: feed)
+
+    assert_difference("WebhookEndpoint.count", -1) do
+      feed.destroy!
+    end
+  end
+
   test "should require user" do
     feed = build(:feed, user: nil)
     assert_not feed.valid?

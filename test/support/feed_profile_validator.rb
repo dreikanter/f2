@@ -15,14 +15,12 @@ module FeedProfileValidator
       depends_on_ai
       scheduled
       parameter_schema
-      loader
-      processor
       normalizer
     ],
     "properties" => {
       "display_name" => { "type" => "string", "minLength" => 1, "maxLength" => 80 },
       "description" => { "type" => "string", "minLength" => 1, "maxLength" => 200 },
-      "input_shape" => { "type" => "string", "enum" => %w[url query any] },
+      "input_shape" => { "type" => "string", "enum" => %w[url query any none] },
       "depends_on_ai" => { "type" => "boolean" },
       "scheduled" => { "type" => "boolean" },
       "matcher" => { "type" => "string", "minLength" => 1 },
@@ -60,10 +58,19 @@ module FeedProfileValidator
         failures << "FeedProfile #{key.inspect}: loader.config.output_schema is required when depends_on_ai is true"
       end
 
-      # The AI profile registers no matcher (structural detection exclusion,
-      # spec §7); every deterministic profile must declare one.
-      if !entry[:depends_on_ai] && entry[:matcher].to_s.empty?
-        failures << "FeedProfile #{key.inspect}: matcher is required for non-AI profiles"
+      # The webhook profile has nothing to fetch (spec 006 §1), so it alone
+      # omits matcher, loader, and processor. Every other profile declares a
+      # loader/processor, and a matcher unless it's AI-backed (spec 005 §7).
+      if key == "webhook"
+        %i[matcher loader processor].each do |stage|
+          failures << "FeedProfile #{key.inspect}: #{stage} must be absent for the webhook profile" if entry[stage]
+        end
+      else
+        failures << "FeedProfile #{key.inspect}: loader is required" if entry[:loader].nil?
+        failures << "FeedProfile #{key.inspect}: processor is required" if entry[:processor].nil?
+        if !entry[:depends_on_ai] && entry[:matcher].to_s.empty?
+          failures << "FeedProfile #{key.inspect}: matcher is required for non-AI profiles"
+        end
       end
     end
 

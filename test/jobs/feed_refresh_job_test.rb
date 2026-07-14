@@ -11,6 +11,16 @@ class FeedRefreshJobTest < ActiveJob::TestCase
     end
   end
 
+  test "#perform should no-op for a webhook feed instead of resolving its missing loader" do
+    webhook_feed = create(:feed, :webhook, state: :enabled)
+
+    assert_no_difference("Event.count") do
+      assert_nothing_raised do
+        FeedRefreshJob.perform_now(webhook_feed.id)
+      end
+    end
+  end
+
   test "handles unknown loader gracefully" do
     bad_feed = create(:feed, feed_profile_key: "rss")
 

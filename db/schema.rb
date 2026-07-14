@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_14_010000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -457,6 +457,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_14_010000) do
     t.index ["unconfirmed_email"], name: "index_users_on_unconfirmed_email", where: "(unconfirmed_email IS NOT NULL)"
   end
 
+  create_table "webhook_endpoints", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "feed_id", null: false
+    t.text "encrypted_token", null: false
+    t.datetime "last_received_at"
+    t.integer "received_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["encrypted_token"], name: "index_webhook_endpoints_on_encrypted_token", unique: true
+    t.index ["feed_id"], name: "index_webhook_endpoints_on_feed_id", unique: true
+  end
+
   add_foreign_key "access_token_details", "access_tokens"
   add_foreign_key "access_tokens", "users"
   add_foreign_key "ai_credentials", "users"
@@ -490,4 +501,5 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_14_010000) do
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "users", "ai_credentials", column: "default_ai_credential_id", on_delete: :nullify
   add_foreign_key "users", "search_credentials", column: "default_search_credential_id", on_delete: :nullify
+  add_foreign_key "webhook_endpoints", "feeds"
 end

@@ -31,6 +31,7 @@ class Feed < ApplicationRecord
   belongs_to :search_credential, optional: true
 
   has_one :feed_schedule, dependent: :destroy
+  has_one :webhook_endpoint, dependent: :destroy
 
   has_many :events, as: :subject, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
