@@ -21,7 +21,7 @@
         <div class="space-y-2">
           <%= f.label :provider, "Search Provider", class: "block font-semibold text-heading" %>
           <%= f.select :provider,
-                       WebSearchProvider::REGISTRY.map { |name, label| [label, name] },
+                       WebSearchProvider.options_for_select,
                        {},
                        class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                        data: { key: "search_credentials.provider" } %>
