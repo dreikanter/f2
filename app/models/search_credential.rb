@@ -4,6 +4,7 @@ class SearchCredential < ApplicationRecord
 
   belongs_to :user
   has_many :feeds
+  has_many :events, as: :subject, dependent: :destroy
 
   encrypts :credential_data
 
@@ -31,6 +32,14 @@ class SearchCredential < ApplicationRecord
 
   def web_search_provider
     WebSearchProvider.for(provider, api_key: credential_data["api_key"])
+  end
+
+  def provider_label
+    WebSearchProvider.label_for(provider)
+  end
+
+  def estimated_search_cost_cents(call_count)
+    BigDecimal(WebSearchProvider.cents_per_1k_requests_for(provider).to_s) * call_count / 1000
   end
 
   def deactivate!(last_error: nil)
