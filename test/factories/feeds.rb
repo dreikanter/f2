@@ -39,6 +39,12 @@ FactoryBot.define do
       state { :enabled }
     end
 
+    trait :webhook do
+      feed_profile_key { "webhook" }
+      params { {} }
+      cron_expression { nil }
+    end
+
     trait :without_access_token do
       access_token { nil }
       target_group { nil }

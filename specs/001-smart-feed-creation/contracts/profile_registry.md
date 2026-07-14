@@ -11,13 +11,14 @@ Each entry in `FeedProfile::PROFILES` is a `Hash` matching the schema below. Sch
 {
   display_name:        String,           # required, ≤ 80 chars, shown in candidate chooser
   description:         String,           # required, ≤ 200 chars, shown in candidate chooser tooltip
-  input_shape:         Symbol,           # required, one of :url, :handle, :query, :any
+  input_shape:         Symbol,           # required, one of :url, :handle, :query, :any, :none
   depends_on_ai:       Boolean,          # required; true if any stage's class uses LlmClient
   scheduled:           Boolean,          # required; true when feeds use cron-backed periodic refresh
-  matcher:             String,           # required, fully-qualified class name (must subclass ProfileMatcher::Base)
+  push:                true?,            # present only on push-ingested profiles (content arrives via webhook, spec 006)
+  matcher:             String,           # required for pull non-AI profiles; AI and push profiles must omit it
   parameter_schema:    Hash,             # required, JSON Schema Draft 2020-12 describing the feed's `params` JSONB
-  loader:              StageEntry,       # required (see below)
-  processor:           StageEntry,       # required
+  loader:              StageEntry,       # required for pull profiles; push profiles must omit it
+  processor:           StageEntry,       # required for pull profiles; push profiles must omit it
   normalizer:          StageEntry,       # required
   title_extractor:     String?           # optional, fully-qualified class name (TitleExtractor::Base subclass) — used during detection to pre-fill the feed name
   output_schema:       Hash?             # required IFF any stage uses LlmClient; JSON Schema for the structured LLM response
@@ -52,6 +53,7 @@ For LLM-using stages, `StageEntry.config` carries the LLM-specific bits:
 4. `parameter_schema` MUST validate the `params` JSON the feed will store. Required fields surface as required form fields.
 5. `output_schema` MUST include the universal post fields (`title`, `body`, `supplementary?`, `images[]`, `source_url`, `published_at`, `uid`) — see [`../notes/profile-contracts.md`](../notes/profile-contracts.md).
 6. `scheduled` MUST be explicit. When false, the feed does not require a cron expression and must not acquire a `FeedSchedule` through enablement or scheduler recovery.
+7. A push-ingested profile (`push: true`, spec 006) has nothing to fetch: it MUST omit `matcher`, `loader`, and `processor`, and marks ingest identity only — scheduling stays governed by `scheduled` (spec 007).
 
 ## Adding a new profile
 

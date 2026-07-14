@@ -23,11 +23,42 @@ class FeedProfileTest < ActiveSupport::TestCase
       "theycantalk",
       "tomorrows",
       "twitter",
+      "webhook",
       "xkcd",
       "youtube"
     ]
 
     assert_equal expected, FeedProfile.all.sort
+  end
+
+  test ".push? should return true only for push-ingested profiles" do
+    assert FeedProfile.push?("webhook")
+    assert_not FeedProfile.push?("rss")
+    assert_not FeedProfile.push?("llm")
+    assert_not FeedProfile.push?(nil)
+  end
+
+  test "webhook profile resolves only its normalizer stage" do
+    assert_equal "Normalizer::WebhookNormalizer", FeedProfile.normalizer_class_for("webhook").name
+    assert_raises(ArgumentError) { FeedProfile.loader_class_for("webhook") }
+    assert_raises(ArgumentError) { FeedProfile.processor_class_for("webhook") }
+  end
+
+  test "webhook profile accepts only empty params" do
+    schema = FeedProfile.parameter_schema_for("webhook")
+
+    assert JSONSchemer.schema(schema).valid?({})
+    assert_not JSONSchemer.schema(schema).valid?({ "url" => "https://example.com" })
+  end
+
+  test ".source_key_for should return nil for an input-less profile" do
+    assert_nil FeedProfile.source_key_for("webhook")
+    assert_equal "url", FeedProfile.source_key_for("rss")
+    assert_equal "prompt", FeedProfile.source_key_for("llm")
+  end
+
+  test ".source_input_for should ignore a smuggled url key on an input-less profile" do
+    assert_nil FeedProfile.source_input_for("webhook", { "url" => "https://example.com" })
   end
 
   test ".exists? returns true for valid profile key" do
@@ -58,24 +89,31 @@ class FeedProfileTest < ActiveSupport::TestCase
     FeedProfile::PROFILES.each do |key, entry|
       assert_kind_of String, entry[:display_name], "#{key}: display_name"
       assert_kind_of String, entry[:description], "#{key}: description"
-      assert_includes %i[url query any], entry[:input_shape], "#{key}: input_shape"
+      assert_includes %i[url query any none], entry[:input_shape], "#{key}: input_shape"
       assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
       assert_includes [true, false], entry[:scheduled], "#{key}: scheduled"
-      if entry[:depends_on_ai]
-        # The AI profile is structurally excluded from detection (spec §7): no matcher.
-        assert_nil entry[:matcher], "#{key}: AI profile must not register a matcher"
+      if entry[:depends_on_ai] || entry[:push]
+        # AI and push profiles are structurally excluded from detection
+        # (spec 005 §7, spec 006 §1): no matcher.
+        assert_nil entry[:matcher], "#{key}: AI/push profile must not register a matcher"
       else
         assert_kind_of String, entry[:matcher], "#{key}: matcher"
       end
       assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
 
-      assert_kind_of Hash, entry[:loader], "#{key}: loader entry must be a hash"
-      assert_kind_of String, entry[:loader][:class], "#{key}: loader.class"
-      assert_kind_of Hash, entry[:loader][:config], "#{key}: loader.config"
+      if entry[:push]
+        # Push profiles have nothing to fetch (spec 006 §1): no loader/processor.
+        assert_nil entry[:loader], "#{key}: push profile must not register a loader"
+        assert_nil entry[:processor], "#{key}: push profile must not register a processor"
+      else
+        assert_kind_of Hash, entry[:loader], "#{key}: loader entry must be a hash"
+        assert_kind_of String, entry[:loader][:class], "#{key}: loader.class"
+        assert_kind_of Hash, entry[:loader][:config], "#{key}: loader.config"
 
-      assert_kind_of Hash, entry[:processor], "#{key}: processor entry must be a hash"
-      assert_kind_of String, entry[:processor][:class], "#{key}: processor.class"
-      assert_kind_of Hash, entry[:processor][:config], "#{key}: processor.config"
+        assert_kind_of Hash, entry[:processor], "#{key}: processor entry must be a hash"
+        assert_kind_of String, entry[:processor][:class], "#{key}: processor.class"
+        assert_kind_of Hash, entry[:processor][:config], "#{key}: processor.config"
+      end
 
       assert_kind_of Hash, entry[:normalizer], "#{key}: normalizer entry must be a hash"
       assert_kind_of String, entry[:normalizer][:class], "#{key}: normalizer.class"
@@ -98,16 +136,20 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all PROFILES have resolvable loader classes" do
+  test "all pull PROFILES have resolvable loader classes" do
     FeedProfile::PROFILES.each_key do |key|
+      next if FeedProfile.push?(key)
+
       loader_class = FeedProfile.loader_class_for(key)
       assert loader_class.present?, "Profile '#{key}' should have a resolvable loader class"
       assert loader_class < Loader::Base, "Profile '#{key}' loader should inherit from Loader::Base"
     end
   end
 
-  test "all PROFILES have resolvable processor classes" do
+  test "all pull PROFILES have resolvable processor classes" do
     FeedProfile::PROFILES.each_key do |key|
+      next if FeedProfile.push?(key)
+
       processor_class = FeedProfile.processor_class_for(key)
       assert processor_class.present?, "Profile '#{key}' should have a resolvable processor class"
       assert processor_class < Processor::Base, "Profile '#{key}' processor should inherit from Processor::Base"
@@ -122,11 +164,12 @@ class FeedProfileTest < ActiveSupport::TestCase
     end
   end
 
-  test "all non-AI PROFILES have resolvable title extractor classes" do
-    # AI-backed profiles emit the universal post shape directly, so they
-    # skip the title-extractor stage.
+  test "all non-AI pull PROFILES have resolvable title extractor classes" do
+    # AI-backed profiles emit the universal post shape directly, and push
+    # profiles never go through identification, so both skip the
+    # title-extractor stage.
     FeedProfile::PROFILES.each do |key, entry|
-      next if entry[:depends_on_ai]
+      next if entry[:depends_on_ai] || entry[:push]
 
       title_extractor_class = FeedProfile.title_extractor_class_for(key)
       assert title_extractor_class.present?, "Profile '#{key}' should have a resolvable title extractor class"

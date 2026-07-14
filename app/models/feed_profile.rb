@@ -369,6 +369,27 @@ class FeedProfile
       processor: { class: "Processor::BlueskyProcessor", config: {} },
       normalizer: { class: "Normalizer::BlueskyNormalizer", config: {} },
       title_extractor: "TitleExtractor::BlueskyTitleExtractor"
+    },
+    "webhook" => {
+      display_name: "Webhook",
+      description: "Posts sent in from your own scripts through a secret URL",
+      # Push-ingested (spec 006): content arrives via POST /hooks/:token, so
+      # there is nothing to fetch — no loader/processor and no matcher
+      # (structurally excluded from detection, like the AI profile). The
+      # normalizer is the one pipeline stage a push feed has. Scheduling is a
+      # pull-side feature, declared off via `scheduled` (spec 007); `push`
+      # marks ingest identity only (webhook endpoint minting, refresh guard).
+      input_shape: :none,
+      depends_on_ai: false,
+      scheduled: false,
+      push: true,
+      parameter_schema: {
+        "type" => "object",
+        "properties" => {},
+        "additionalProperties" => false
+      }.freeze,
+      normalizer: { class: "Normalizer::WebhookNormalizer", config: {} },
+      title_extractor: nil
     }
   }.freeze
 
@@ -413,6 +434,13 @@ class FeedProfile
       !!PROFILES.dig(key, :scheduled)
     end
 
+    # @param key [String] the profile key
+    # @return [Boolean] true if the profile is push-ingested: content arrives
+    #   through a webhook endpoint instead of being fetched by a loader
+    def push?(key)
+      !!PROFILES.dig(key, :push)
+    end
+
     # @return [Array<String>] keys of the AI-backed profiles
     def ai_profile_keys
       PROFILES.keys.select { |key| depends_on_ai?(key) }
@@ -428,10 +456,14 @@ class FeedProfile
     # The params key holding the feed's source input (e.g. "url", "prompt").
     # Derived from the profile's single required param, so the storage key is
     # independent of input_shape (which an `:any` profile can't double as).
-    # Unknown profiles fall back to "url".
+    # Unknown profiles fall back to "url". An input-less (:none) profile has
+    # no source key at all — returning nil here is what keeps source_input
+    # nil (and preview off) even if a stray key lands in the params jsonb.
     # @param key [String] the profile key
-    # @return [String] the source params key
+    # @return [String, nil] the source params key
     def source_key_for(key)
+      return nil if PROFILES.dig(key, :input_shape) == :none
+
       PROFILES.dig(key, :parameter_schema, "required")&.first || "url"
     end
 
