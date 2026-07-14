@@ -80,7 +80,9 @@ class FeedRefreshWorkflow
   # since every later run's window starts after these rows. The event's own
   # started_at stat bounds them exactly.
   def interrupt_abandoned_event(event)
-    usage_rows = abandoned_llm_usage_rows(event)
+    run_started_at = abandoned_run_started_at(event)
+    usage_rows = abandoned_llm_usage_rows(run_started_at)
+    search_call_ids = search_call_event_ids(run_started_at)
     metadata = event.metadata.merge("status" => "interrupted")
 
     if usage_rows.any?
@@ -90,16 +92,22 @@ class FeedRefreshWorkflow
       )
     end
 
+    if search_call_ids.any?
+      metadata["stats"] = metadata.fetch("stats", {}).merge("search_calls" => search_call_ids.size)
+    end
+
     event.update!(level: :debug, metadata: metadata)
     reference_llm_usages(event, usage_rows)
+    reference_search_calls(event, search_call_ids)
   end
 
-  def abandoned_llm_usage_rows(event)
-    run_started_at = begin
-      Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
-    rescue ArgumentError
-      nil
-    end
+  def abandoned_run_started_at(event)
+    Time.zone.parse(event.metadata.dig("stats", "started_at").to_s)
+  rescue ArgumentError
+    nil
+  end
+
+  def abandoned_llm_usage_rows(run_started_at)
     return [] unless run_started_at
 
     feed.llm_usages.scheduled_run
@@ -312,7 +320,9 @@ class FeedRefreshWorkflow
   def complete_refresh_event(posts)
     @refresh_event.destroy!
     usage_rows = run_llm_usage_rows
+    search_call_ids = run_search_call_event_ids
     record_llm_usage_stats(usage_rows)
+    record_search_call_stats(search_call_ids)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -325,6 +335,7 @@ class FeedRefreshWorkflow
     @refresh_completed = true
     reference_posts(event, posts)
     reference_llm_usages(event, usage_rows)
+    reference_search_calls(event, search_call_ids)
   end
 
   def reference_posts(event, posts)
@@ -354,6 +365,23 @@ class FeedRefreshWorkflow
         .pluck(:id, :cost_estimate_cents)
   end
 
+  # This run's per-call search events, windowed like run_llm_usage_rows. The
+  # feed_id lives in event metadata (the subject is the credential, which
+  # other feeds may share), so the filter goes through jsonb — bounded by the
+  # type+created_at index and event retention.
+  def search_call_event_ids(from_time)
+    return [] unless from_time
+
+    Event.where(type: "web_search", created_at: from_time..)
+         .where("metadata->>'feed_id' = ?", feed.id.to_s)
+         .where("metadata->>'purpose' = ?", "scheduled_run")
+         .pluck(:id)
+  end
+
+  def run_search_call_event_ids
+    search_call_event_ids(stats[:started_at])
+  end
+
   # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
   def record_llm_usage_stats(usage_rows)
     return if usage_rows.empty?
@@ -364,6 +392,12 @@ class FeedRefreshWorkflow
     )
   end
 
+  def record_search_call_stats(search_call_ids)
+    return if search_call_ids.empty?
+
+    record_stats(search_calls: search_call_ids.size)
+  end
+
   def reference_llm_usages(event, usage_rows)
     return if usage_rows.empty?
 
@@ -372,6 +406,22 @@ class FeedRefreshWorkflow
         event_id: event.id,
         reference_type: "LlmUsage",
         reference_id: usage_id,
+        created_at: event.created_at,
+        updated_at: event.created_at
+      }
+    end
+
+    EventReference.insert_all(references_data)
+  end
+
+  def reference_search_calls(event, search_call_ids)
+    return if search_call_ids.empty?
+
+    references_data = search_call_ids.map do |search_event_id|
+      {
+        event_id: event.id,
+        reference_type: "Event",
+        reference_id: search_event_id,
         created_at: event.created_at,
         updated_at: event.created_at
       }
@@ -397,7 +447,9 @@ class FeedRefreshWorkflow
 
     @refresh_event&.destroy!
     usage_rows = run_llm_usage_rows
+    search_call_ids = run_search_call_event_ids
     record_llm_usage_stats(usage_rows)
+    record_search_call_stats(search_call_ids)
 
     event = Event.create!(
       type: "feed_refresh",
@@ -418,6 +470,7 @@ class FeedRefreshWorkflow
     )
 
     reference_llm_usages(event, usage_rows)
+    reference_search_calls(event, search_call_ids)
   end
 
   # Persist this run's regime so the next scheduled run can skip a redundant
