@@ -125,7 +125,7 @@ class FeedPreviewsController < ApplicationController
       run_id: SecureRandom.uuid
     )
 
-    FeedPreviewJob.perform_later(preview.id, preview.run_id)
+    FeedPreviewJob.perform_later(preview.id, preview.run_id, search_credential&.id)
     preview
   rescue ActiveRecord::RecordNotUnique
     previews.find_by!(feed_profile_key: profile_key, params_digest: digest)
