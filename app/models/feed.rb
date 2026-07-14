@@ -55,7 +55,7 @@ class Feed < ApplicationRecord
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
   validates :name, presence: true, if: :enabled?
 
-  validates :cron_expression, presence: true, if: :enabled?
+  validates :cron_expression, presence: true, if: -> { enabled? && scheduled? }
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
@@ -85,8 +85,8 @@ class Feed < ApplicationRecord
             allow_blank: true
 
   scope :due, -> {
-    left_joins(:feed_schedule)
-      .where("feed_schedules.next_run_at <= ? OR feed_schedules.id IS NULL", Time.current)
+    joins(:feed_schedule)
+      .where("feed_schedules.next_run_at <= ?", Time.current)
       .where(state: :enabled)
   }
 
@@ -201,9 +201,13 @@ class Feed < ApplicationRecord
     FeedProfile.normalizer_class_for(feed_profile_key)
   end
 
+  def scheduled?
+    FeedProfile.scheduled?(feed_profile_key)
+  end
+
   def can_be_enabled?
     name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
-      cron_expression.present? && ai_enablement_requirements_met?
+      (!scheduled? || cron_expression.present?) && ai_enablement_requirements_met?
   end
 
   # Promote the feed to enabled, running the enabled-state validators. If
@@ -287,7 +291,7 @@ class Feed < ApplicationRecord
   end
 
   # Creates and returns a processor instance for this feed
-  # @param raw_data [String] raw feed data to process
+  # @param raw_data [String] loader data to process
   # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
@@ -533,6 +537,7 @@ class Feed < ApplicationRecord
   def create_schedule_on_enable
     return unless saved_change_to_state?
     return unless enabled?
+    return unless scheduled?
     return if feed_schedule.present?
 
     defer_schedule!
