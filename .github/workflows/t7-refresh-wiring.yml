@@ -1,0 +1,214 @@
+name: Temporary refresh usage wiring
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/006-t7-search-usage-events
+      - name: Wire search events into refresh lifecycle
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/services/feed_refresh_workflow.rb")
+          text = path.read_text()
+          if "def run_web_search_event_ids" in text:
+              raise SystemExit(0)
+
+          replacements = [
+              (
+                  "    raw_data = feed.loader_instance.load\n",
+                  "    raw_data = feed.loader_instance(refresh_event: @refresh_event).load\n",
+              ),
+              (
+                  '''  def interrupt_abandoned_event(event)
+              usage_rows = abandoned_llm_usage_rows(event)
+              metadata = event.metadata.merge("status" => "interrupted")
+
+              if usage_rows.any?
+                metadata["stats"] = metadata.fetch("stats", {}).merge(
+                  "llm_calls" => usage_rows.size,
+                  "llm_cost_cents" => usage_rows.sum { |_id, cents| cents }
+                )
+              end
+
+              event.update!(level: :debug, metadata: metadata)
+              reference_llm_usages(event, usage_rows)
+            end
+          ''',
+                  '''  def interrupt_abandoned_event(event)
+              usage_rows = abandoned_llm_usage_rows(event)
+              search_event_ids = event.event_references.where(reference_type: "Event").pluck(:reference_id)
+              stats_updates = {}
+              metadata = event.metadata.merge("status" => "interrupted")
+
+              if usage_rows.any?
+                stats_updates.merge!(
+                  "llm_calls" => usage_rows.size,
+                  "llm_cost_cents" => usage_rows.sum { |_id, cents| cents }
+                )
+              end
+              stats_updates["search_calls"] = search_event_ids.size if search_event_ids.any?
+              metadata["stats"] = metadata.fetch("stats", {}).merge(stats_updates) if stats_updates.any?
+
+              event.update!(level: :debug, metadata: metadata)
+              reference_llm_usages(event, usage_rows)
+            end
+          ''',
+              ),
+              (
+                  '''  def complete_refresh_event(posts)
+              @refresh_event.destroy!
+              usage_rows = run_llm_usage_rows
+              record_llm_usage_stats(usage_rows)
+
+              event = Event.create!(
+                type: "feed_refresh",
+                level: :info,
+                subject: feed,
+                user: feed.user,
+                metadata: { status: "completed", stats: stats }
+              )
+
+              @refresh_completed = true
+              reference_posts(event, posts)
+              reference_llm_usages(event, usage_rows)
+            end
+          ''',
+                  '''  def complete_refresh_event(posts)
+              usage_rows = run_llm_usage_rows
+              search_event_ids = run_web_search_event_ids
+              @refresh_event.destroy!
+              record_llm_usage_stats(usage_rows)
+              record_web_search_stats(search_event_ids)
+
+              event = Event.create!(
+                type: "feed_refresh",
+                level: :info,
+                subject: feed,
+                user: feed.user,
+                metadata: { status: "completed", stats: stats }
+              )
+
+              @refresh_completed = true
+              reference_posts(event, posts)
+              reference_llm_usages(event, usage_rows)
+              reference_web_searches(event, search_event_ids)
+            end
+          ''',
+              ),
+              (
+                  '''  def disable_credentials_on_auth_error(error)
+          ''',
+                  '''  def run_web_search_event_ids
+              @refresh_event.event_references.where(reference_type: "Event").pluck(:reference_id)
+            end
+
+            def record_web_search_stats(search_event_ids)
+              record_stats(search_calls: search_event_ids.size) if search_event_ids.any?
+            end
+
+            def reference_web_searches(event, search_event_ids)
+              return if search_event_ids.empty?
+
+              references_data = search_event_ids.map do |search_event_id|
+                {
+                  event_id: event.id,
+                  reference_type: "Event",
+                  reference_id: search_event_id,
+                  created_at: event.created_at,
+                  updated_at: event.created_at
+                }
+              end
+              EventReference.insert_all(references_data)
+            end
+
+            def disable_credentials_on_auth_error(error)
+          ''',
+              ),
+              (
+                  '''  def fail_refresh_event(error)
+              return if @refresh_completed
+
+              @refresh_event&.destroy!
+              usage_rows = run_llm_usage_rows
+              record_llm_usage_stats(usage_rows)
+
+              event = Event.create!(
+                type: "feed_refresh",
+                level: :error,
+                subject: feed,
+                user: feed.user,
+                message: error.message,
+                metadata: {
+                  status: "failed",
+                  stats: stats,
+                  error: {
+                    class: error.class.name,
+                    message: error.message,
+                    stage: current_step.to_s,
+                    backtrace: error.backtrace
+                  }
+                }
+              )
+
+              reference_llm_usages(event, usage_rows)
+            end
+          ''',
+                  '''  def fail_refresh_event(error)
+              return if @refresh_completed
+
+              usage_rows = run_llm_usage_rows
+              search_event_ids = @refresh_event ? run_web_search_event_ids : []
+              @refresh_event&.destroy!
+              record_llm_usage_stats(usage_rows)
+              record_web_search_stats(search_event_ids)
+
+              event = Event.create!(
+                type: "feed_refresh",
+                level: :error,
+                subject: feed,
+                user: feed.user,
+                message: error.message,
+                metadata: {
+                  status: "failed",
+                  stats: stats,
+                  error: {
+                    class: error.class.name,
+                    message: error.message,
+                    stage: current_step.to_s,
+                    backtrace: error.backtrace
+                  }
+                }
+              )
+
+              reference_llm_usages(event, usage_rows)
+              reference_web_searches(event, search_event_ids)
+            end
+          ''',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f"Expected refresh workflow block not found: {old[:80]!r}")
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+      - name: Commit refresh usage wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/services/feed_refresh_workflow.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "Preserve search usage across refresh events"
+          git push
