@@ -15,6 +15,12 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end.new
   end
 
+  def search_context
+    credential = create(:search_credential, :active)
+    refresh_event = Event.create!(type: "feed_refresh", level: :info, user: credential.user)
+    { search_credential: credential, refresh_event: refresh_event }
+  end
+
   test ".for should return the Anthropic adapter" do
     assert_instance_of LlmClient::Adapter::Anthropic, LlmClient::Adapter.for("anthropic")
   end
@@ -37,16 +43,19 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "every adapter should attach the injected search provider and client-side fetch" do
+  test "every adapter should attach the injected search provider, credential context, and client-side fetch" do
     provider = Object.new
+    context = search_context
 
     LlmClient::Adapter::REGISTRY.each_key do |name|
       chat = fake_chat
-      LlmClient::Adapter.for(name).apply_web(chat, "model", search_provider: provider)
+      LlmClient::Adapter.for(name).apply_web(chat, "model", search_provider: provider, **context)
 
       search_tool, fetch_tool = chat.tools
       assert_instance_of LlmClient::Tools::WebSearch, search_tool, name
       assert_same provider, search_tool.instance_variable_get(:@provider), name
+      assert_same context[:search_credential], search_tool.instance_variable_get(:@credential), name
+      assert_same context[:refresh_event], search_tool.instance_variable_get(:@refresh_event), name
       assert_equal LlmClient::Tools::WebFetch, fetch_tool, name
     end
   end
@@ -54,7 +63,12 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "Anthropic should not send provider-hosted web tools" do
     chat = fake_chat
 
-    LlmClient::Adapter::Anthropic.new.apply_web(chat, "claude-opus-4-8", search_provider: Object.new)
+    LlmClient::Adapter::Anthropic.new.apply_web(
+      chat,
+      "claude-opus-4-8",
+      search_provider: Object.new,
+      **search_context
+    )
 
     assert_equal({}, chat.params)
   end
@@ -62,7 +76,12 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "OpenRouter should require structured parameters without enabling its web plugin" do
     chat = fake_chat
 
-    LlmClient::Adapter::OpenRouter.new.apply_web(chat, "openai/gpt-4o", search_provider: Object.new)
+    LlmClient::Adapter::OpenRouter.new.apply_web(
+      chat,
+      "openai/gpt-4o",
+      search_provider: Object.new,
+      **search_context
+    )
 
     assert_equal({ provider: { require_parameters: true } }, chat.params)
     assert_not chat.params.key?(:plugins)
