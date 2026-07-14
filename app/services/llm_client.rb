@@ -42,7 +42,14 @@ class LlmClient
     started_at = Time.current
 
     begin
-      response = invoke_provider(model: ctx.model, prompt: prompt, output_schema: output_schema, web: web, system: system)
+      response = invoke_provider(
+        ctx: ctx,
+        model: ctx.model,
+        prompt: prompt,
+        output_schema: output_schema,
+        web: web,
+        system: system
+      )
     rescue WebSearchProvider::AuthError => e
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise
@@ -138,7 +145,7 @@ class LlmClient
   end
 
   # Single seam tests stub. Returns a ProviderResponse.
-  def invoke_provider(model:, prompt:, output_schema:, web:, system: nil)
+  def invoke_provider(ctx:, model:, prompt:, output_schema:, web:, system: nil)
     provider = credential.llm_provider
     chat = credential.ruby_llm_context.chat(
       model: model, provider: provider.ruby_llm_provider, assume_model_exists: provider.assume_model_exists?
@@ -147,7 +154,7 @@ class LlmClient
     # by #ask travels as a separate user-role message (spec §8).
     chat.with_instructions(system) if system.present?
     chat.with_schema(output_schema) if output_schema.present?
-    adapter.apply_web(chat, model) if web
+    adapter.apply_web(chat, model, search_provider: search_provider_for(ctx)) if web
 
     response = chat.ask(prompt)
     ProviderResponse.new(
@@ -157,6 +164,13 @@ class LlmClient
       cache_write_tokens: response.try(:cached_tokens).to_i,
       cache_read_tokens: response.try(:cache_read_tokens).to_i
     )
+  end
+
+  def search_provider_for(ctx)
+    search_credential = ctx.search_credential
+    raise CredentialMissing, "no active search credential found" unless search_credential&.active?
+
+    search_credential.web_search_provider
   end
 
   def adapter
