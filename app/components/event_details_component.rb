@@ -27,7 +27,8 @@ class EventDetailsComponent < ViewComponent::Base
         @event.user_id,
         path: (helpers.admin_user_path(@event.user) if @event.user),
         title: [@event.user_id, @event.user&.email_address].compact_blank.join(" — "),
-        class: "font-mono font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
+        link_class: "font-mono font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover",
+        text_class: "font-mono font-medium text-body",
         data: { key: "admin.event.user" }
       )
     else
