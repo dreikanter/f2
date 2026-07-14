@@ -36,6 +36,17 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
+  test ".perform_now should skip schedules without an explicit next run date" do
+    feed = create(:feed, :enabled)
+    schedule = create(:feed_schedule, feed: feed, next_run_at: nil)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      FeedSchedulerJob.perform_now
+    end
+
+    assert_nil schedule.reload.last_run_at
+  end
+
   test ".perform_now should handle concurrent updates with optimistic locking" do
     feed = create(:feed, :enabled)
     schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
@@ -58,20 +69,29 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     assert_nil feed.reload.feed_schedule
   end
 
-  test "#refresh? should recreate a missing schedule for a scheduled feed selected before deletion" do
+  test "#refresh? should recreate a schedule deleted after the feed was selected as due" do
     feed = create(:feed, :enabled)
+    schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
+    selected_feed = Feed.due.find(feed.id)
+    schedule.destroy!
 
-    assert FeedSchedulerJob.new.send(:refresh?, feed)
-    assert_equal Time.current, feed.reload.feed_schedule.last_run_at
-    assert_equal Time.current, feed.feed_schedule.next_run_at
+    assert FeedSchedulerJob.new.send(:refresh?, selected_feed)
+    assert_equal Time.current, selected_feed.reload.feed_schedule.last_run_at
+    assert_equal Time.current, selected_feed.feed_schedule.next_run_at
   end
 
-  test "#refresh? should not create a schedule for an unscheduled profile" do
+  test ".perform_now should ignore an unscheduled feed with a stale due schedule" do
     FeedProfile.stub(:scheduled?, false) do
       feed = create(:feed, :enabled, cron_expression: nil)
+      schedule = create(:feed_schedule, feed: feed, next_run_at: 1.hour.ago)
 
-      assert_not FeedSchedulerJob.new.send(:refresh?, feed)
-      assert_nil feed.reload.feed_schedule
+      assert_no_enqueued_jobs(only: FeedRefreshJob) do
+        FeedSchedulerJob.perform_now
+      end
+
+      schedule.reload
+      assert_equal 1.hour.ago, schedule.next_run_at
+      assert_nil schedule.last_run_at
     end
   end
 end
