@@ -13,14 +13,17 @@ class LlmClient
 
       MAX_RESULTS = 5
 
-      def initialize(provider:)
+      def initialize(provider:, credential:, refresh_event: nil)
         super()
         @provider = provider
+        @credential = credential
+        @refresh_event = refresh_event
       end
 
       def execute(query:)
         return { error: "Refused: query must not be blank." } if query.blank?
 
+        WebSearchUsage.record!(credential: @credential, refresh_event: @refresh_event)
         results = @provider.search(query, max_results: MAX_RESULTS)
         { results: results.map(&:to_h) }
       rescue ::WebSearchProvider::AuthError
