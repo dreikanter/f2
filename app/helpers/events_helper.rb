@@ -1,4 +1,6 @@
 module EventsHelper
+  include IdentifierHelper
+
   # Explains where the current page sits in the log without leaning on page
   # numbers: the offset is how many newer events come before what's shown.
   def events_offset_summary(offset, system_wide: false)
