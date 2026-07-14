@@ -30,7 +30,7 @@ jobs:
               script = workflow.split(marker, 1)[1].split("\n          PY\n", 1)[0]
               script = "\n".join(line[10:] if line.startswith("          ") else line for line in script.splitlines())
               exec(compile(script, "t7-product-patch", "exec"))
-          except Exception:
+          except BaseException:
               Path("t7-patch-error.txt").write_text(traceback.format_exc())
           PY
       - name: Commit product wiring or traceback
