@@ -1,4 +1,4 @@
-<% feed_entry_title = uuid_label(@feed_entry.id, prefix: "Feed Entry") %>
+<% feed_entry_title = "Feed Entry #{short_ref(@feed_entry.id)}" %>
 <% content_for :title, feed_entry_title %>
 
 <div class="space-y-8">
