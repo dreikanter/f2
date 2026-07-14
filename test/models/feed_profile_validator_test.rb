@@ -7,6 +7,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
       description: "Sample profile for testing",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::RssProfileMatcher",
       parameter_schema: {
         "type" => "object",
@@ -38,6 +39,16 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     end
 
     assert_includes error.message, "display_name"
+  end
+
+  test "requires the scheduling capability to be explicit" do
+    entry = valid_entry.except(:scheduled)
+
+    error = assert_raises(FeedProfileValidator::Error) do
+      FeedProfileValidator.validate!("sample" => entry)
+    end
+
+    assert_includes error.message, "scheduled"
   end
 
   test "rejects entry with unknown input_shape" do
