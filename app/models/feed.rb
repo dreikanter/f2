@@ -318,7 +318,7 @@ class Feed < ApplicationRecord
 
   # Returns the time of the most recent repost (publication to FreeFeed),
   # regardless of the original source publication date.
-  # @return [Time, nil] last repost time or nil if no published posts
+  # @return [Time, nil] most recent repost time or nil if no published posts
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
