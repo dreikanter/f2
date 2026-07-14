@@ -6,25 +6,7 @@
     <% header.with_context_paragraph do %>
       <% if @filter.present? %>
         <span data-key="admin.events.filter-summary">
-          <% filter_parts = @filter.to_h.map do |key, value| %>
-            <% values = value.is_a?(Array) ? value : [value] %>
-            <% rendered_values = values.map do |item| %>
-              <% if %w[user_id subject_id].include?(key.to_s) %>
-                <% path = admin_event_filter_reference_path(key, item, filter: @filter) %>
-                <% if path %>
-                  <% link_to short_ref(item), path,
-                             title: item,
-                             class: "font-mono underline underline-offset-2 transition hover:text-heading" %>
-                <% else %>
-                  <% tag.span short_ref(item), title: item, class: "font-mono" %>
-                <% end %>
-              <% else %>
-                <% item %>
-              <% end %>
-            <% end %>
-            <% safe_join(["#{key}: ", safe_join(rendered_values, ", ")]) %>
-          <% end %>
-          Filtering by <%= safe_join(filter_parts, " • ") %>.
+          Filtering by <%= admin_event_filter_summary(@filter) %>.
         </span>
       <% end %>
       <span data-key="events.offset"><%= events_offset_summary(@offset, system_wide: @filter.blank?) %></span>
