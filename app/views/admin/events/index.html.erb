@@ -6,11 +6,18 @@
     <% header.with_context_paragraph do %>
       <% if @filter.present? %>
         <span data-key="admin.events.filter-summary">
-          <% filter_parts = [] %>
-          <% @filter.to_h.each do |key, value| %>
-            <% filter_parts << (value.is_a?(Array) ? "#{key}: #{value.join(', ')}" : "#{key}: #{value}") %>
+          <% filter_parts = @filter.to_h.map do |key, value| %>
+            <% values = value.is_a?(Array) ? value : [value] %>
+            <% rendered_values = values.map do |item| %>
+              <% if %w[user_id subject_id].include?(key.to_s) %>
+                <% uuid_reference(item, path: admin_event_filter_reference_path(key, item, filter: @filter)) %>
+              <% else %>
+                <% item %>
+              <% end %>
+            <% end %>
+            <% safe_join(["#{key}: ", safe_join(rendered_values, ", ")]) %>
           <% end %>
-          Filtering by <%= filter_parts.join(" • ") %>.
+          Filtering by <%= safe_join(filter_parts, " • ") %>.
         </span>
       <% end %>
       <span data-key="events.offset"><%= events_offset_summary(@offset, system_wide: @filter.blank?) %></span>
