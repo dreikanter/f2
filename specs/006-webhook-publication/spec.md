@@ -107,12 +107,15 @@ spreading `if webhook?` checks around.
 
   ```
   webhook_endpoints
-    feed_id       bigint, null: false, unique index   (has_one from Feed, dependent: :destroy)
+    feed_id       uuid, null: false, unique index   (has_one from Feed, dependent: :destroy)
     token         encrypted (deterministic), unique index — the lookup key
     last_received_at datetime
     received_count   integer, default 0, null: false
     created_at / updated_at
   ```
+
+  (`feed_id` is `uuid` like every other reference — the schema uses uuidv7 primary keys
+  throughout.)
 
   Deterministic AR encryption (`encrypts :token, deterministic: true`) gives one column that is
   both queryable (`find_by(token:)` through a unique index) and re-displayable in the UI — the
@@ -195,6 +198,11 @@ from. Precedence:
 3. **Random UUID** — each request creates a new post. A blind curl retry after a network timeout
    can double-post; the docs say "pass `uid` if your delivery can retry".
 
+Two concurrent deliveries of the same uid can both pass the pre-insert dedup check; the
+`(feed_id, uid)` unique index is the arbiter. The ingestion transaction maps
+`ActiveRecord::RecordNotUnique` to the same `200 duplicate` as the sequential case, so the
+loser of the race gets the honest answer instead of a 500.
+
 One deliberate divergence from the pull pipeline: a payload that fails validation persists
 **nothing** — no `FeedEntry`, no rejected `Post`, no uid record. Pull feeds persist rejected
 posts so their uids stay recorded across refreshes; that logic protects a *pull* loop from
@@ -253,10 +261,15 @@ expressible from one curl command.
   endpoint already minted, showing the URL and a copyable curl example.
 - **Schedule-less by design**: the `push: true` registry flag exempts webhook feeds from the
   cron requirement — `cron_expression` presence-if-enabled, `can_be_enabled?`, and
-  `create_schedule_on_enable` all consult it. With no `FeedSchedule` row, `Feed.due` never picks
-  the feed up, so the refresh pipeline is unreachable without new guards in the scheduler
-  itself. Manual refresh and preview surfaces are hidden/rejected for push profiles (both
-  actions are meaningless without a loader).
+  `create_schedule_on_enable` all consult it. A schedule-less enabled feed is **not** naturally
+  invisible to the scheduler — `Feed.due` deliberately matches enabled feeds *without* a
+  `FeedSchedule` row (`feed_schedules.id IS NULL`, its self-heal branch), and
+  `FeedSchedulerJob` would then mint an initial schedule and enqueue a refresh every minute.
+  So push profiles are excluded explicitly: `Feed.due` filters them out
+  (`where.not(feed_profile_key: ...push keys...)`), and `FeedRefreshJob` no-ops on a push feed
+  as a second layer — the exclusion is the invariant, the job guard is defense in depth, same
+  shape as the SSRF checks (§6). Manual refresh and preview surfaces are hidden/rejected for
+  push profiles (both actions are meaningless without a loader).
 - **Enable gate**: name + active access token + target group — the standard set minus cron. The
   endpoint answers 409 until the feed is enabled, so "draft → configure → enable → curl works"
   is the whole onboarding.
@@ -273,9 +286,11 @@ expressible from one curl command.
 
 - **Counters, not events, for the happy path**: `last_received_at` and `received_count` on the
   endpoint row, plus a `webhook_ingest_total{status:}` metric through the existing `Metrics`
-  service. Per-request `Event` records are deliberately avoided — a chatty hook would flood the
-  activity feed, and the synchronous response already tells the caller everything about their
-  request.
+  service. `last_received_at` updates on every authenticated, well-formed delivery (a `201`
+  or a `200 duplicate` both prove the caller's script is alive — the answer to "is my hook
+  still working"); `received_count` counts only accepted posts (`201`). Per-request `Event`
+  records are deliberately avoided — a chatty hook would flood the activity feed, and the
+  synchronous response already tells the caller everything about their request.
 - **Events where they carry news the caller can't see**: publish failures downstream produce the
   same events as today (they're feed-level, not request-level, and the user needs to see them).
 
@@ -297,7 +312,8 @@ Independent, reviewable steps; each keeps `main` shippable:
 
 1. **Profile + model plumbing** — `push` registry flag and `FeedProfile.push?`, the `webhook`
    profile entry, `WebhookEndpoint` model + migration (reversible), `Feed` schedule-requirement
-   exemptions, `Normalizer::WebhookNormalizer`. No routes yet; pure additive.
+   exemptions, the `Feed.due` push exclusion + `FeedRefreshJob` guard (§7),
+   `Normalizer::WebhookNormalizer`. No routes yet; pure additive.
 2. **Ingress** — `WebhookPostsController`, the ingestion service (payload schema, uid
    resolution, transactional persist, publish kick), the `:webhook_ingest` rate-limit policy,
    response contract + request tests, log scrubbing.
