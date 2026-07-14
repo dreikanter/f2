@@ -238,6 +238,49 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  test "#create should mint a webhook endpoint for a webhook feed" do
+    sign_in_as(user)
+
+    assert_difference("WebhookEndpoint.count", 1) do
+      post feeds_path, params: { feed: { feed_profile_key: "webhook" }, enable_feed: "0" }
+    end
+
+    feed = Feed.last
+    assert_predicate feed, :draft?
+    assert_not_nil feed.webhook_endpoint
+  end
+
+  test "#create should not mint a webhook endpoint for a pull feed" do
+    sign_in_as(user)
+    access_token
+
+    feed_params = {
+      params: { url: "http://example.com/feed.xml" },
+      feed_profile_key: "rss",
+      access_token_id: access_token.id,
+      target_group: "testgroup",
+      schedule_interval: "1h"
+    }
+
+    assert_no_difference("WebhookEndpoint.count") do
+      post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+    end
+  end
+
+  test "#update should destroy the endpoint when a draft moves off the webhook profile" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :draft, user: user)
+    endpoint = create(:webhook_endpoint, feed: webhook_feed)
+
+    patch feed_path(webhook_feed), params: {
+      feed: { feed_profile_key: "rss", params: { url: "https://example.com/feed.xml" } },
+      enable_feed: "0"
+    }
+
+    assert_nil webhook_feed.reload.webhook_endpoint
+    assert_nil WebhookEndpoint.find_by(id: endpoint.id)
+  end
+
   test "#create should enable a feed even when the only preview is for a different source" do
     sign_in_as(user)
     access_token

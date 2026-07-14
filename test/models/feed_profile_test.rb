@@ -31,13 +31,6 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_equal expected, FeedProfile.all.sort
   end
 
-  test ".push? should return true only for push-ingested profiles" do
-    assert FeedProfile.push?("webhook")
-    assert_not FeedProfile.push?("rss")
-    assert_not FeedProfile.push?("llm")
-    assert_not FeedProfile.push?(nil)
-  end
-
   test "webhook profile resolves only its normalizer stage" do
     assert_equal "Normalizer::WebhookNormalizer", FeedProfile.normalizer_class_for("webhook").name
     assert_raises(ArgumentError) { FeedProfile.loader_class_for("webhook") }
@@ -92,19 +85,19 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert_includes %i[url query any none], entry[:input_shape], "#{key}: input_shape"
       assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
       assert_includes [true, false], entry[:scheduled], "#{key}: scheduled"
-      if entry[:depends_on_ai] || entry[:push]
-        # AI and push profiles are structurally excluded from detection
+      if entry[:depends_on_ai] || key == "webhook"
+        # AI and webhook profiles are structurally excluded from detection
         # (spec 005 §7, spec 006 §1): no matcher.
-        assert_nil entry[:matcher], "#{key}: AI/push profile must not register a matcher"
+        assert_nil entry[:matcher], "#{key}: AI/webhook profile must not register a matcher"
       else
         assert_kind_of String, entry[:matcher], "#{key}: matcher"
       end
       assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
 
-      if entry[:push]
-        # Push profiles have nothing to fetch (spec 006 §1): no loader/processor.
-        assert_nil entry[:loader], "#{key}: push profile must not register a loader"
-        assert_nil entry[:processor], "#{key}: push profile must not register a processor"
+      if key == "webhook"
+        # The webhook profile has nothing to fetch (spec 006 §1): no loader/processor.
+        assert_nil entry[:loader], "#{key}: webhook profile must not register a loader"
+        assert_nil entry[:processor], "#{key}: webhook profile must not register a processor"
       else
         assert_kind_of Hash, entry[:loader], "#{key}: loader entry must be a hash"
         assert_kind_of String, entry[:loader][:class], "#{key}: loader.class"
@@ -138,7 +131,7 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test "all pull PROFILES have resolvable loader classes" do
     FeedProfile::PROFILES.each_key do |key|
-      next if FeedProfile.push?(key)
+      next if key == "webhook"
 
       loader_class = FeedProfile.loader_class_for(key)
       assert loader_class.present?, "Profile '#{key}' should have a resolvable loader class"
@@ -148,7 +141,7 @@ class FeedProfileTest < ActiveSupport::TestCase
 
   test "all pull PROFILES have resolvable processor classes" do
     FeedProfile::PROFILES.each_key do |key|
-      next if FeedProfile.push?(key)
+      next if key == "webhook"
 
       processor_class = FeedProfile.processor_class_for(key)
       assert processor_class.present?, "Profile '#{key}' should have a resolvable processor class"
@@ -165,11 +158,11 @@ class FeedProfileTest < ActiveSupport::TestCase
   end
 
   test "all non-AI pull PROFILES have resolvable title extractor classes" do
-    # AI-backed profiles emit the universal post shape directly, and push
-    # profiles never go through identification, so both skip the
+    # AI-backed profiles emit the universal post shape directly, and the
+    # webhook profile never goes through identification, so both skip the
     # title-extractor stage.
     FeedProfile::PROFILES.each do |key, entry|
-      next if entry[:depends_on_ai] || entry[:push]
+      next if entry[:depends_on_ai] || key == "webhook"
 
       title_extractor_class = FeedProfile.title_extractor_class_for(key)
       assert title_extractor_class.present?, "Profile '#{key}' should have a resolvable title extractor class"

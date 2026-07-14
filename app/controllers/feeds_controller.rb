@@ -48,6 +48,7 @@ class FeedsController < ApplicationController
     authorize @feed
 
     if @feed.save
+      sync_webhook_endpoint(@feed)
       cleanup_feed_identification(@feed.source_input)
 
       if (gate_path = setup_gate_path(@feed))
@@ -103,6 +104,7 @@ class FeedsController < ApplicationController
     @feed.state = :disabled if @feed.enabled? && !enable_feed? && gate_path.nil?
 
     if @feed.save
+      sync_webhook_endpoint(@feed)
       # Capture interval-change signal from the first save before the
       # promotion attempt's save overwrites `saved_changes`.
       interval_changed = @feed.saved_change_to_cron_expression?
@@ -314,6 +316,21 @@ class FeedsController < ApplicationController
     return if input.blank?
 
     FeedIdentification.find_by(user: current_user, input: input)&.destroy
+  end
+
+  # A webhook feed's endpoint lives with the feed record (spec 006 §2): minted
+  # when the feed is created (drafts included) so the URL is pasteable
+  # immediately, destroyed when a draft moves off the profile so the old URL
+  # stops resolving. Kept here rather than in a model callback so the model
+  # stays decoupled from WebhookEndpoint.
+  def sync_webhook_endpoint(feed)
+    return unless feed.saved_change_to_feed_profile_key?
+
+    if feed.feed_profile_key == "webhook"
+      feed.create_webhook_endpoint! unless feed.webhook_endpoint
+    else
+      feed.webhook_endpoint&.destroy
+    end
   end
 
   def success_message_for(feed)

@@ -377,12 +377,10 @@ class FeedProfile
       # there is nothing to fetch — no loader/processor and no matcher
       # (structurally excluded from detection, like the AI profile). The
       # normalizer is the one pipeline stage a push feed has. Scheduling is a
-      # pull-side feature, declared off via `scheduled` (spec 007); `push`
-      # marks ingest identity only (webhook endpoint minting, refresh guard).
+      # pull-side feature, declared off via `scheduled` (spec 007).
       input_shape: :none,
       depends_on_ai: false,
       scheduled: false,
-      push: true,
       parameter_schema: {
         "type" => "object",
         "properties" => {},
@@ -432,13 +430,6 @@ class FeedProfile
     # @return [Boolean] true if the profile uses periodic scheduling
     def scheduled?(key)
       !!PROFILES.dig(key, :scheduled)
-    end
-
-    # @param key [String] the profile key
-    # @return [Boolean] true if the profile is push-ingested: content arrives
-    #   through a webhook endpoint instead of being fetched by a loader
-    def push?(key)
-      !!PROFILES.dig(key, :push)
     end
 
     # @return [Array<String>] keys of the AI-backed profiles
