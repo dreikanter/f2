@@ -25,11 +25,14 @@ class EventDetailsComponentTest < ViewComponent::TestCase
     assert_empty result.css('[data-key="admin.event.user"]')
   end
 
-  test "#call should render admin rows and links when admin" do
+  test "#call should render a compact user link when admin" do
     event = create(:event, type: "owned_event", user: user, subject: feed)
 
     result = render_inline(EventDetailsComponent.for(event, admin: true))
+    link = result.css("a[data-key='admin.event.user']").first
 
-    assert_equal "User ##{event.user_id}", result.css("a[data-key='admin.event.user']").text
+    assert_equal event.user_id.to_s.last(5), link.text
+    assert_equal "/admin/users/#{event.user_id}", link["href"]
+    assert_equal "#{event.user_id} — #{user.email_address}", link["title"]
   end
 end
