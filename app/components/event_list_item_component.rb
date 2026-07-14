@@ -108,11 +108,19 @@ class EventListItemComponent < ListItemComponent
   def user_label
     label = if event.user_id.blank?
       helpers.tag.em("System", data: { key: "events.user" })
+    elsif event.user
+      helpers.link_to(
+        helpers.short_ref(event.user_id),
+        helpers.admin_user_path(event.user),
+        class: "font-mono underline underline-offset-2 transition hover:text-heading",
+        title: reference_title(event.user_id, event.user.email_address),
+        data: { key: "events.user" }
+      )
     else
-      helpers.uuid_reference(
-        event.user_id,
-        path: (helpers.admin_user_path(event.user) if event.user),
-        title: reference_title(event.user_id, event.user&.email_address),
+      helpers.tag.span(
+        helpers.short_ref(event.user_id),
+        class: "font-mono",
+        title: event.user_id,
         data: { key: "events.user" }
       )
     end
@@ -124,13 +132,26 @@ class EventListItemComponent < ListItemComponent
     return if event.subject_type.blank?
 
     label = if event.subject_id.present?
-      helpers.uuid_reference(
-        event.subject_id,
-        path: helpers.admin_event_subject_path(event.subject),
-        prefix: event.subject_type,
-        title: reference_title(event.subject_id, target_title),
-        data: { key: "events.subject" }
-      )
+      text = "#{event.subject_type} #{helpers.short_ref(event.subject_id)}"
+      title = reference_title(event.subject_id, target_title)
+      path = helpers.admin_event_subject_path(event.subject)
+
+      if path
+        helpers.link_to(
+          text,
+          path,
+          class: "font-mono underline underline-offset-2 transition hover:text-heading",
+          title: title,
+          data: { key: "events.subject" }
+        )
+      else
+        helpers.tag.span(
+          text,
+          class: "font-mono",
+          title: title,
+          data: { key: "events.subject" }
+        )
+      end
     else
       helpers.tag.span(event.subject_type, data: { key: "events.subject" })
     end
