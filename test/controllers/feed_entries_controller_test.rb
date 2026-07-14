@@ -34,7 +34,7 @@ class FeedEntriesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     get feed_entry_url(feed_entry)
     assert_response :success
-    assert_select "h1", text: /Feed Entry \d+/
+    assert_select "h1", "Feed Entry #{feed_entry.id.to_s.last(5)}"
   end
 
   test "#show should reject access to other user's feed entry" do
