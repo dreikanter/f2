@@ -1,0 +1,46 @@
+name: T5 test diagnostics
+
+on:
+  pull_request:
+
+jobs:
+  test-log:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --tmpfs=/var/lib/postgresql
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Prepare database
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: bin/rails db:test:prepare
+      - name: Capture test output
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: |
+          set -o pipefail
+          bin/rails test 2>&1 | tee t5-test.log
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: t5-test-log
+          path: t5-test.log
