@@ -1,12 +1,12 @@
 # Time-scoped search API call counts with estimated cost for one credential,
-# fed by the per-call "web_search" events. Windows stay inside event
-# retention (1 month), so the numbers can't silently shrink the way an
-# all-time total would (spec 006 §6).
+# fed by the per-call "web_search" events. Windows track event retention
+# (1 month), so unlike an all-time total the figures stay honest — at worst
+# the month window undercounts by a day or two around short months.
 class SearchCredentialUsageComponent < ViewComponent::Base
   WINDOWS = [
     { label: "Last 24 hours", duration: 24.hours, key: "day" },
     { label: "Last 7 days", duration: 7.days, key: "week" },
-    { label: "Last 30 days", duration: 30.days, key: "month" }
+    { label: "Last #{LlmUsage::STATS_PERIOD.in_days.to_i} days", duration: LlmUsage::STATS_PERIOD, key: "month" }
   ].freeze
 
   def initialize(search_credential:)
@@ -28,8 +28,8 @@ class SearchCredentialUsageComponent < ViewComponent::Base
   private
 
   def call_count(duration)
-    Event.for_subject(@search_credential)
-         .where(type: "web_search")
+    Event.web_search
+         .for_subject(@search_credential)
          .where(created_at: duration.ago..)
          .count
   end

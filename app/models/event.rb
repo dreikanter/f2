@@ -16,6 +16,10 @@ class Event < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
   scope :for_subject, ->(subject) { where(subject: subject) }
+  scope :web_search, -> { where(type: "web_search") }
+  # web_search events hold the credential in the subject slot, so their feed
+  # attribution rides in metadata; jsonb text comparison needs the id string.
+  scope :attributed_to_feed, ->(feed) { where("metadata->>'feed_id' = ?", feed.id.to_s) }
   # An event is expired once its explicit expiration has passed, or — when it
   # never set one — once it ages past DEFAULT_RETENTION. This is what the purge
   # job deletes.

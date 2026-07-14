@@ -31,11 +31,10 @@ class LlmClient
         results = @provider.search(query, max_results: MAX_RESULTS)
         record_call(outcome: :success)
         { results: results.map(&:to_h) }
-      rescue ::WebSearchProvider::AuthError => e
-        record_call(outcome: :error, error: e.message)
-        raise
       rescue ::WebSearchProvider::Error => e
         record_call(outcome: :error, error: e.message)
+        raise if e.is_a?(::WebSearchProvider::AuthError)
+
         { error: e.message }
       end
 

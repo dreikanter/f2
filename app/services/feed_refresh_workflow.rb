@@ -320,7 +320,7 @@ class FeedRefreshWorkflow
   def complete_refresh_event(posts)
     @refresh_event.destroy!
     usage_rows = run_llm_usage_rows
-    search_call_ids = run_search_call_event_ids
+    search_call_ids = search_call_event_ids(stats[:started_at])
     record_llm_usage_stats(usage_rows)
     record_search_call_stats(search_call_ids)
 
@@ -339,19 +339,7 @@ class FeedRefreshWorkflow
   end
 
   def reference_posts(event, posts)
-    return if posts.empty?
-
-    references_data = posts.map do |post|
-      {
-        event_id: event.id,
-        reference_type: "Post",
-        reference_id: post.id,
-        created_at: event.created_at,
-        updated_at: event.created_at
-      }
-    end
-
-    EventReference.insert_all(references_data)
+    insert_event_references(event, "Post", posts.map(&:id))
   end
 
   # This run's usage rows as [id, cost_cents] pairs. The started_at window is
@@ -368,18 +356,17 @@ class FeedRefreshWorkflow
   # This run's per-call search events, windowed like run_llm_usage_rows. The
   # feed_id lives in event metadata (the subject is the credential, which
   # other feeds may share), so the filter goes through jsonb — bounded by the
-  # type+created_at index and event retention.
+  # type+created_at index and event retention. Deterministic feeds skip the
+  # query outright: they can never emit search calls.
   def search_call_event_ids(from_time)
     return [] unless from_time
+    return [] unless FeedProfile.depends_on_ai?(feed.feed_profile_key)
 
-    Event.where(type: "web_search", created_at: from_time..)
-         .where("metadata->>'feed_id' = ?", feed.id.to_s)
+    Event.web_search
+         .attributed_to_feed(feed)
+         .where(created_at: from_time..)
          .where("metadata->>'purpose' = ?", "scheduled_run")
          .pluck(:id)
-  end
-
-  def run_search_call_event_ids
-    search_call_event_ids(stats[:started_at])
   end
 
   # No calls, no stat — keeps deterministic feeds' events free of a noisy $0.
@@ -399,29 +386,21 @@ class FeedRefreshWorkflow
   end
 
   def reference_llm_usages(event, usage_rows)
-    return if usage_rows.empty?
-
-    references_data = usage_rows.map do |usage_id, _cents|
-      {
-        event_id: event.id,
-        reference_type: "LlmUsage",
-        reference_id: usage_id,
-        created_at: event.created_at,
-        updated_at: event.created_at
-      }
-    end
-
-    EventReference.insert_all(references_data)
+    insert_event_references(event, "LlmUsage", usage_rows.map(&:first))
   end
 
   def reference_search_calls(event, search_call_ids)
-    return if search_call_ids.empty?
+    insert_event_references(event, "Event", search_call_ids)
+  end
 
-    references_data = search_call_ids.map do |search_event_id|
+  def insert_event_references(event, reference_type, reference_ids)
+    return if reference_ids.empty?
+
+    references_data = reference_ids.map do |reference_id|
       {
         event_id: event.id,
-        reference_type: "Event",
-        reference_id: search_event_id,
+        reference_type: reference_type,
+        reference_id: reference_id,
         created_at: event.created_at,
         updated_at: event.created_at
       }
@@ -447,7 +426,7 @@ class FeedRefreshWorkflow
 
     @refresh_event&.destroy!
     usage_rows = run_llm_usage_rows
-    search_call_ids = run_search_call_event_ids
+    search_call_ids = search_call_event_ids(stats[:started_at])
     record_llm_usage_stats(usage_rows)
     record_search_call_stats(search_call_ids)
 

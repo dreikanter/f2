@@ -77,8 +77,8 @@ class FeedLlmStatsComponent < ViewComponent::Base
   # provider keeps the cost estimate right across credential switches.
   def search_counts_by_provider
     @search_counts_by_provider ||=
-      Event.where(type: "web_search")
-           .where("metadata->>'feed_id' = ?", @feed.id.to_s)
+      Event.web_search
+           .attributed_to_feed(@feed)
            .where(created_at: LlmUsage::STATS_PERIOD.ago..)
            .group(Arel.sql("metadata->>'provider'"))
            .count
