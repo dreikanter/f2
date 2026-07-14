@@ -48,16 +48,31 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
-  test ".perform_now should create schedule for feeds without one" do
+  test ".perform_now should ignore feeds without an explicit schedule" do
     feed = create(:feed, :enabled)
 
-    assert_enqueued_with(job: FeedRefreshJob, args: [feed.id]) do
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
       FeedSchedulerJob.perform_now
     end
 
-    feed.reload
-    assert feed.feed_schedule.present?
-    assert_equal Time.current, feed.feed_schedule.last_run_at
+    assert_nil feed.reload.feed_schedule
+  end
+
+  test "#refresh? should recreate a missing schedule for a scheduled feed selected before deletion" do
+    feed = create(:feed, :enabled)
+
+    assert FeedSchedulerJob.new.send(:refresh?, feed)
+    assert_equal Time.current, feed.reload.feed_schedule.last_run_at
     assert_equal Time.current, feed.feed_schedule.next_run_at
+  end
+
+  test "#refresh? should not create a schedule for an unscheduled profile" do
+    feed = create(:feed, :enabled, cron_expression: nil)
+
+    FeedProfile.stub(:scheduled?, false) do
+      assert_not FeedSchedulerJob.new.send(:refresh?, feed)
+    end
+
+    assert_nil feed.reload.feed_schedule
   end
 end
