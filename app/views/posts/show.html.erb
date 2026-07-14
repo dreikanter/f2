@@ -1,4 +1,4 @@
-<% post_title = uuid_label(@post.id, prefix: "Post") %>
+<% post_title = "Post #{short_ref(@post.id)}" %>
 <% content_for :title, post_title %>
 
 <div class="space-y-8">
