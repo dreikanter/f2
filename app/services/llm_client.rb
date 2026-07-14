@@ -154,7 +154,7 @@ class LlmClient
     # by #ask travels as a separate user-role message (spec §8).
     chat.with_instructions(system) if system.present?
     chat.with_schema(output_schema) if output_schema.present?
-    adapter.apply_web(chat, model, search_provider: search_provider_for(ctx)) if web
+    adapter.apply_web(chat, model, search_tool: search_tool_for(ctx)) if web
 
     response = chat.ask(prompt)
     ProviderResponse.new(
@@ -166,11 +166,19 @@ class LlmClient
     )
   end
 
-  def search_provider_for(ctx)
+  # The context-carrying tool instance: the credential supplies the provider
+  # key, and the feed/purpose let the tool attribute its per-call usage
+  # events (spec 006 §6).
+  def search_tool_for(ctx)
     search_credential = ctx.search_credential
     raise CredentialMissing, "no active search credential found" unless search_credential&.active?
 
-    search_credential.web_search_provider
+    Tools::WebSearch.new(
+      provider: search_credential.web_search_provider,
+      credential: search_credential,
+      feed: ctx.feed,
+      purpose: ctx.purpose
+    )
   end
 
   def adapter

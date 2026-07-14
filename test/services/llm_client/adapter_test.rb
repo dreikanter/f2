@@ -37,24 +37,25 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "every adapter should attach the injected search provider and client-side fetch" do
-    provider = Object.new
+  def search_tool
+    @search_tool ||= LlmClient::Tools::WebSearch.new(provider: Object.new)
+  end
 
+  test "every adapter should attach the prebuilt search tool and client-side fetch" do
     LlmClient::Adapter::REGISTRY.each_key do |name|
       chat = fake_chat
-      LlmClient::Adapter.for(name).apply_web(chat, "model", search_provider: provider)
+      LlmClient::Adapter.for(name).apply_web(chat, "model", search_tool: search_tool)
 
-      search_tool, fetch_tool = chat.tools
-      assert_instance_of LlmClient::Tools::WebSearch, search_tool, name
-      assert_same provider, search_tool.instance_variable_get(:@provider), name
-      assert_equal LlmClient::Tools::WebFetch, fetch_tool, name
+      attached_search, attached_fetch = chat.tools
+      assert_same search_tool, attached_search, name
+      assert_equal LlmClient::Tools::WebFetch, attached_fetch, name
     end
   end
 
   test "Anthropic should not send provider-hosted web tools" do
     chat = fake_chat
 
-    LlmClient::Adapter::Anthropic.new.apply_web(chat, "claude-opus-4-8", search_provider: Object.new)
+    LlmClient::Adapter::Anthropic.new.apply_web(chat, "claude-opus-4-8", search_tool: search_tool)
 
     assert_equal({}, chat.params)
   end
@@ -62,7 +63,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
   test "OpenRouter should require structured parameters without enabling its web plugin" do
     chat = fake_chat
 
-    LlmClient::Adapter::OpenRouter.new.apply_web(chat, "openai/gpt-4o", search_provider: Object.new)
+    LlmClient::Adapter::OpenRouter.new.apply_web(chat, "openai/gpt-4o", search_tool: search_tool)
 
     assert_equal({ provider: { require_parameters: true } }, chat.params)
     assert_not chat.params.key?(:plugins)

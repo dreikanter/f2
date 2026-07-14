@@ -39,6 +39,30 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
     assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
   end
 
+  test "#perform should record the validation search call" do
+    WebSearchProvider.stub(:for, FakeProvider.new) do
+      SearchCredentialValidationJob.perform_now(credential)
+    end
+
+    event = Event.find_by!(type: "web_search", subject: credential)
+    assert_equal "validation", event.metadata["purpose"]
+    assert_equal "success", event.metadata["outcome"]
+    assert_nil event.metadata["feed_id"]
+  end
+
+  test "#perform should record the validation search call when validation fails" do
+    provider = FakeProvider.new(error: WebSearchProvider::AuthError.new("Serper: HTTP 401"))
+
+    WebSearchProvider.stub(:for, provider) do
+      SearchCredentialValidationJob.perform_now(credential)
+    end
+
+    event = Event.find_by!(type: "web_search", subject: credential)
+    assert_equal "validation", event.metadata["purpose"]
+    assert_equal "error", event.metadata["outcome"]
+    assert_equal "Serper: HTTP 401", event.metadata["error"]
+  end
+
   test "#perform should deactivate and record every known provider error type" do
     error_classes = [
       WebSearchProvider::ConfigurationError,
@@ -51,7 +75,9 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
                                            display_name: error_class.name.demodulize)
       provider = FakeProvider.new(error: error_class.new("validation failed"))
 
-      assert_difference("Event.count", 1) do
+      # Two events per failed validation: the per-call web_search record and
+      # the deactivation warning.
+      assert_difference("Event.count", 2) do
         WebSearchProvider.stub(:for, provider) do
           SearchCredentialValidationJob.perform_now(current)
         end

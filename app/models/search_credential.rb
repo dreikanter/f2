@@ -33,6 +33,26 @@ class SearchCredential < ApplicationRecord
     WebSearchProvider.for(provider, api_key: credential_data["api_key"])
   end
 
+  # One debug event per search API call — the accounting record behind the
+  # per-credential usage stats and the refresh event's search-call count
+  # (spec 006 §6). feed_id lives in metadata rather than a reference so the
+  # refresh workflow can window this credential's calls to one feed's run.
+  def record_search_call(purpose:, outcome:, feed: nil, error: nil)
+    Event.create!(
+      type: "web_search",
+      level: :debug,
+      subject: self,
+      user: user,
+      metadata: {
+        provider: provider,
+        purpose: purpose.to_s,
+        outcome: outcome.to_s,
+        feed_id: feed&.id,
+        error: error
+      }.compact
+    )
+  end
+
   def deactivate!(last_error: nil)
     with_lock do
       update!(

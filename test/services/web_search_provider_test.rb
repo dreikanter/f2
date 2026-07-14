@@ -176,4 +176,18 @@ class WebSearchProviderTest < ActiveSupport::TestCase
       assert_empty WebSearchProvider::Serper.new(api_key: "key").search("query")
     end
   end
+
+  test ".estimated_cost_cents should derive fractional cents from the per-1K rate" do
+    assert_in_delta 0.1, WebSearchProvider.estimated_cost_cents("serper", 1)
+    assert_in_delta 500.0, WebSearchProvider.estimated_cost_cents("brave", 1000)
+    assert_in_delta 1.6, WebSearchProvider.estimated_cost_cents(:tavily, 2)
+  end
+
+  test ".estimated_cost_cents should estimate zero for an unknown provider" do
+    assert_equal 0, WebSearchProvider.estimated_cost_cents("nope", 50)
+  end
+
+  test "every registered provider should have a per-1K rate" do
+    assert_equal WebSearchProvider::REGISTRY.keys.sort, WebSearchProvider::CENTS_PER_1K_REQUESTS.keys.sort
+  end
 end

@@ -148,4 +148,31 @@ class SearchCredentialTest < ActiveSupport::TestCase
 
     assert_includes user.search_credentials, credential
   end
+
+  test "#record_search_call should create a debug event with full attribution" do
+    credential = create(:search_credential, :active, user: user)
+    feed = create(:feed, user: user)
+
+    event = credential.record_search_call(
+      purpose: :scheduled_run, outcome: :success, feed: feed, error: nil
+    )
+
+    assert_equal "web_search", event.type
+    assert_equal "debug", event.level
+    assert_equal credential, event.subject
+    assert_equal user, event.user
+    assert_equal(
+      { "provider" => "serper", "purpose" => "scheduled_run", "outcome" => "success", "feed_id" => feed.id },
+      event.metadata
+    )
+  end
+
+  test "#record_search_call should omit blank feed and error from metadata" do
+    credential = create(:search_credential, :active, user: user)
+
+    event = credential.record_search_call(purpose: :validation, outcome: :error, error: "Serper: HTTP 401")
+
+    assert_not event.metadata.key?("feed_id")
+    assert_equal "Serper: HTTP 401", event.metadata["error"]
+  end
 end
