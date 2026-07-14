@@ -6,8 +6,11 @@ module WebSearchProvider
   class Base
     MAX_RESULTS = (1..10)
     TIMEOUT = 10
-    # 402 counts as an auth failure: an exhausted quota kills the key just as
-    # permanently as a rejected one until the owner intervenes.
+    # 401/403 are key rejections; 402, though no registered vendor is known
+    # to send it, could only ever mean a payment problem. Quota exhaustion is
+    # deliberately NOT here: vendors signal it through 429-shaped statuses
+    # that also cover ordinary rate limiting, and treating those as dead-key
+    # would deactivate credentials on transient throttling.
     AUTH_STATUSES = [401, 402, 403].freeze
 
     def initialize(api_key:)

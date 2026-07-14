@@ -58,11 +58,9 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     assert_equal "Serper: HTTP 429", tool(provider).execute(query: "ruby feeds")[:error]
   end
 
-  test "#execute should let auth errors escape instead of returning them to the model" do
+  test "#execute should surface auth errors as an error result" do
     provider = FakeProvider.new(error: WebSearchProvider::AuthError.new("Serper: HTTP 401"))
 
-    assert_raises(WebSearchProvider::AuthError) do
-      tool(provider).execute(query: "ruby feeds")
-    end
+    assert_equal "Serper: HTTP 401", tool(provider).execute(query: "ruby feeds")[:error]
   end
 end
