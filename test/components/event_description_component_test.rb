@@ -286,4 +286,22 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     # by normalizing resend.email.email_bounced -> resend_email_bounced
     assert_includes result.to_html, "Email bounced"
   end
+
+  test "#call should show a placeholder when the event's subject was deleted" do
+    credential = create(:ai_credential, :active, user: user)
+    event = Event.create!(
+      type: "ai_credential_deactivated",
+      level: :warning,
+      subject: credential,
+      user: user,
+      message: "",
+      metadata: {}
+    )
+    credential.destroy!
+
+    result = render_inline(EventDescriptionComponent.new(event: event.reload))
+
+    assert_includes result.to_html, "(removed)"
+    assert_not_includes result.to_html, "credential  stopped"
+  end
 end

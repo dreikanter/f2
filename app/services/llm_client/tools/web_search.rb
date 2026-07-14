@@ -23,13 +23,24 @@ class LlmClient
       def execute(query:)
         return { error: "Refused: query must not be blank." } if query.blank?
 
-        WebSearchUsage.record!(credential: @credential, refresh_event: @refresh_event)
+        record_usage
         results = @provider.search(query, max_results: MAX_RESULTS)
         { results: results.map(&:to_h) }
       rescue ::WebSearchProvider::AuthError
         raise
       rescue ::WebSearchProvider::Error => e
         { error: e.message }
+      end
+
+      private
+
+      # Best-effort: a failed accounting write must not take down the search —
+      # or the whole run, since a non-search error escapes every rescue on the
+      # way up and would abort the LLM call over a bookkeeping hiccup.
+      def record_usage
+        Rails.error.handle(StandardError, context: { search_credential_id: @credential.id }) do
+          WebSearchUsage.record!(credential: @credential, refresh_event: @refresh_event)
+        end
       end
     end
   end

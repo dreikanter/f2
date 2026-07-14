@@ -99,4 +99,15 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "#execute should not fail the search when usage recording breaks" do
+    provider = FakeProvider.new(results: [result(1)])
+    failing = ->(**) { raise ActiveRecord::RecordInvalid }
+
+    WebSearchUsage.stub(:record!, failing) do
+      payload = tool(provider).execute(query: "ruby feeds")
+
+      assert_equal 1, payload[:results].size
+    end
+  end
 end
