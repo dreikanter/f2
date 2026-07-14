@@ -8,6 +8,10 @@ class Event < ApplicationRecord
   belongs_to :subject, polymorphic: true, optional: true
 
   has_many :event_references, dependent: :delete_all
+  has_many :incoming_event_references,
+           as: :reference,
+           class_name: "EventReference",
+           dependent: :delete_all
 
   enum :level, { debug: 0, info: 1, warning: 2, error: 3 }
 
