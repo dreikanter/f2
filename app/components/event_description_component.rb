@@ -65,6 +65,8 @@ class EventDescriptionComponent < ViewComponent::Base
       helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when AiCredential
       helpers.link_to(event.subject.display_name, helpers.ai_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
+    when SearchCredential
+      helpers.link_to(event.subject.display_name, helpers.search_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     else
       ""
     end
