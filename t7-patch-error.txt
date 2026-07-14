@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<stdin>", line 14, in <module>
+  File "t7-product-patch", line 25, in <module>
+  File "t7-product-patch", line 7, in replace
+SystemExit: expected text not found in app/services/loader/llm_loader.rb: '        purpose: options.fetch(:purpose, :scheduled_run),\n    search_credential: feed.search_credent'
