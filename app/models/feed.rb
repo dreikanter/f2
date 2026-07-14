@@ -291,7 +291,7 @@ class Feed < ApplicationRecord
   end
 
   # Creates and returns a processor instance for this feed
-  # @param raw_data [String] loader data to process
+  # @param raw_data [String] raw feed data to process
   # @return [Processor::Base] processor instance
   def processor_instance(raw_data)
     processor_class.new(self, raw_data)
@@ -318,7 +318,7 @@ class Feed < ApplicationRecord
 
   # Returns the time of the most recent repost (publication to FreeFeed),
   # regardless of the original source publication date.
-  # @return [Time, nil] most recent repost time or nil if no published posts
+  # @return [Time, nil] last repost time or nil if no published posts
   def most_recent_repost_at
     posts.published.maximum(:reposted_at)
   end
