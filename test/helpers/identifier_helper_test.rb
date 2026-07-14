@@ -20,6 +20,6 @@ class IdentifierHelperTest < ActionView::TestCase
     uuid = "019f5bd6-d5b7-79e3-a943-8bdbb0fec464"
     result = uuid_reference(uuid, prefix: "Feed")
 
-    assert_dom_equal %(<span title="#{uuid}" class="#{IdentifierHelper::UUID_LINK_CLASSES}">Feed ec464</span>), result
+    assert_dom_equal %(<span title="#{uuid}" class="#{IdentifierHelper::UUID_TEXT_CLASSES}">Feed ec464</span>), result
   end
 end
