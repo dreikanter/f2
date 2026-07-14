@@ -1,17 +1,14 @@
 # Dev-time capability probe for LLM providers (spec 005 §5; issue #913).
 #
-# Live-verifies that a (provider, model) pair delivers what the AI engine
-# needs *through RubyLLM*, using the exact production call shapes from
-# LlmClient / Loader::LlmLoader: plain call, schema-only, web-search-only,
-# web-fetch-only, the two-step gather→structure pipeline, and (as evidence
-# for the two-step rationale) schema+web combined in one call.
+# Live-verifies provider-native behavior through RubyLLM: plain calls,
+# structured output, hosted search/fetch mechanisms, and one-call versus
+# two-step extraction. These checks are deliberately separate from the
+# production managed-search path, which uses LlmClient's client-side tools.
 #
-# Deliberately independent of LlmProvider/AiCredential so an unwired
-# provider can be qualified before any app code exists for it. Keys come
-# from the environment, not the credentials table. Run via the dev-area
-# jobs runner (AnthropicCapabilityProbeJob / KimiCapabilityProbeJob) or
-# script/llm_capability_probe.rb. Results — evidence included — are
-# recorded as JobRun events and feed plan-03-provider-verification.md.
+# The probe stays independent of LlmProvider and managed credentials so an
+# unwired provider can be qualified before application integration. Keys
+# come from the environment. Results — evidence included — are recorded as
+# JobRun events and feed plan-03-provider-verification.md.
 module LlmCapabilityProbe
   # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape (strict: additionalProperties false
   # everywhere — the Anthropic requirement confirmed live in Track 2).
@@ -97,11 +94,10 @@ module LlmCapabilityProbe
 
       def ruby_llm_provider = :anthropic
 
-      # Delegated so the probe qualifies exactly what production sends; the
-      # search-only/fetch-only variants below stay probe-local (production has
-      # no such split).
+      # Combined hosted-tool shape is probe-local. Production uses the managed
+      # client-side search and fetch tools instead.
       def web_params(model)
-        LlmClient::Adapter::Anthropic.new.web_params(model)
+        { tools: web_search_params(model)[:tools] + web_fetch_params(model)[:tools] }
       end
 
       def web_search_params(_model)
@@ -211,7 +207,7 @@ module LlmCapabilityProbe
       pass(text.match?(/example domain/i), "page content not quoted", text) { "web fetch grounding" }
     end
 
-    # Production pipeline: Loader::LlmLoader#load.
+    # Provider-native two-step capability comparison.
     def check_two_step
       gather = @provider.chat(@model)
       @provider.prepare_web(gather)
@@ -223,7 +219,7 @@ module LlmCapabilityProbe
       validate_items(structure.ask(STRUCTURE_PROMPT_PREFIX + gathered), gathered: gathered)
     end
 
-    # Expected to fail through RubyLLM (spec 005 §6) — recorded as evidence;
+    # Provider-native combined capability check — recorded as evidence;
     # PASS here means "works combined", which would simplify the architecture.
     def check_combined
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
