@@ -37,7 +37,7 @@ class AdminEventWebSearchUsageTest < ActionDispatch::IntegrationTest
     feed = create(:feed, user: user)
     refresh_event = Event.create!(type: "feed_refresh", level: :info, subject: feed, user: user)
     3.times { WebSearchUsage.record!(credential: credential, refresh_event: refresh_event) }
-    login_as admin
+    sign_in_as admin
 
     get admin_event_path(refresh_event)
 
