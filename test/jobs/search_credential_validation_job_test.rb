@@ -74,4 +74,17 @@ class SearchCredentialValidationJobTest < ActiveJob::TestCase
       assert_equal [{ query: SearchCredentialValidationJob::VALIDATION_QUERY, max_results: 1 }], provider.calls
     end
   end
+
+  test "#perform should still activate the credential when usage recording breaks" do
+    provider = FakeProvider.new
+    failing = ->(**) { raise ActiveRecord::RecordInvalid }
+
+    WebSearchUsage.stub(:record!, failing) do
+      WebSearchProvider.stub(:for, provider) do
+        SearchCredentialValidationJob.perform_now(credential)
+      end
+    end
+
+    assert credential.reload.active?
+  end
 end

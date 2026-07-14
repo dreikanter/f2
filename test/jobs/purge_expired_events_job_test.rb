@@ -48,4 +48,16 @@ class PurgeExpiredEventsJobTest < ActiveJob::TestCase
     assert_not EventReference.exists?(expired_reference.id)
     assert EventReference.exists?(active_reference.id)
   end
+
+  test "#perform should delete references pointing at purged events" do
+    purged_target = create(:event, type: "web_search", expires_at: 1.hour.ago)
+    referrer = create(:event, expires_at: 1.hour.from_now)
+    inbound_reference = create(:event_reference, event: referrer, reference: purged_target)
+
+    PurgeExpiredEventsJob.perform_now
+
+    assert_not Event.exists?(purged_target.id)
+    assert Event.exists?(referrer.id)
+    assert_not EventReference.exists?(inbound_reference.id)
+  end
 end
