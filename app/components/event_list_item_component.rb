@@ -113,7 +113,6 @@ class EventListItemComponent < ListItemComponent
         event.user_id,
         path: (helpers.admin_user_path(event.user) if event.user),
         title: reference_title(event.user_id, event.user&.email_address),
-        class: "font-mono underline underline-offset-2 transition hover:text-heading",
         data: { key: "events.user" }
       )
     end
@@ -130,7 +129,6 @@ class EventListItemComponent < ListItemComponent
         path: helpers.admin_event_subject_path(event.subject),
         prefix: event.subject_type,
         title: reference_title(event.subject_id, target_title),
-        class: "font-mono underline underline-offset-2 transition hover:text-heading",
         data: { key: "events.subject" }
       )
     else
