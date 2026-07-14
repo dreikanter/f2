@@ -31,6 +31,12 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     end
   end
 
+  test "accepts an explicitly unscheduled profile" do
+    assert_nothing_raised do
+      FeedProfileValidator.validate!("sample" => valid_entry.merge(scheduled: false))
+    end
+  end
+
   test "rejects entry missing required key" do
     entry = valid_entry.except(:display_name)
 
