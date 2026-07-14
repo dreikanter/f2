@@ -77,13 +77,13 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}.event.#{event.id}"]), text: /Purged 3 expired events/
   end
 
-  test "#show should title the page with the run id" do
+  test "#show should title the page with the compact run id" do
     run = create(:job_run, job_class: "PurgeExpiredEventsJob", status: :succeeded)
     sign_in_as(dev_user)
     get development_job_job_run_path("PurgeExpiredEventsJob", run)
 
     assert_response :success
-    assert_select "h1", text: "Run ##{run.id}"
+    assert_select "h1", text: "Run #{run.id.to_s.last(5)}"
   end
 
   test "#show should render event metadata as formatted JSON" do
