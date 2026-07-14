@@ -13,6 +13,7 @@ module FeedProfileValidator
       description
       input_shape
       depends_on_ai
+      scheduled
       parameter_schema
       loader
       processor
@@ -23,6 +24,7 @@ module FeedProfileValidator
       "description" => { "type" => "string", "minLength" => 1, "maxLength" => 200 },
       "input_shape" => { "type" => "string", "enum" => %w[url query any] },
       "depends_on_ai" => { "type" => "boolean" },
+      "scheduled" => { "type" => "boolean" },
       "matcher" => { "type" => "string", "minLength" => 1 },
       "parameter_schema" => { "type" => "object" },
       "loader" => { "$ref" => "#/$defs/stage_entry" },

@@ -10,6 +10,8 @@ class FeedSchedulerJob < ApplicationJob
   private
 
   def refresh?(feed)
+    return false unless feed.scheduled?
+
     schedule = feed.feed_schedule
 
     if schedule

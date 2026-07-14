@@ -63,6 +63,7 @@ class FeedProfile
       description: "Posts from a site's RSS or Atom feed",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::RssProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -75,6 +76,7 @@ class FeedProfile
       description: "Posts from a site's JSON feed (jsonfeed.org)",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::JsonFeedProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -87,6 +89,7 @@ class FeedProfile
       description: "Posts from a subreddit or Reddit user page via RSS",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::RedditProfileMatcher",
       parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::RedditLoader", config: {} },
@@ -99,6 +102,7 @@ class FeedProfile
       description: "Posts from xkcd.com with the alt text included",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::XkcdProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -111,6 +115,7 @@ class FeedProfile
       description: "Wordless Buni comic strips from bunicomic.com",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::BuniProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -123,6 +128,7 @@ class FeedProfile
       description: "Science news from elementy.ru with cover images",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::ElementyProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -135,6 +141,7 @@ class FeedProfile
       description: "Posts from Melody Mae's plus-size fashion blog at melodymae.co.uk",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::MelodymaeProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -147,6 +154,7 @@ class FeedProfile
       description: "Technology news from nextbigfuture.com with cover images",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::NextbigfutureProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -159,6 +167,7 @@ class FeedProfile
       description: "MonkeyUser comics for developers",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::MonkeyuserProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -171,6 +180,7 @@ class FeedProfile
       description: "Stories from lobste.rs with a link to the discussion",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::LobstersProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -183,6 +193,7 @@ class FeedProfile
       description: "Family life comics from Litterbox Comics, bonus panels included",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::LitterboxProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -195,6 +206,7 @@ class FeedProfile
       description: "Comic strips from oglaf.com, multi-page stories included",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::OglafProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -207,6 +219,7 @@ class FeedProfile
       description: "Cory Doctorow's Pluralistic linkblog with cover images",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::PluralisticProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -219,6 +232,7 @@ class FeedProfile
       description: "Saturday Morning Breakfast Cereal comics with the hovertext and hidden panel",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::SmbcProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -231,6 +245,7 @@ class FeedProfile
       description: "Boris Grebenshchikov's Aerostat radio show episodes",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::AerostatProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -243,6 +258,7 @@ class FeedProfile
       description: "They Can Talk comics about what animals might say",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::TheycantalkProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -255,6 +271,7 @@ class FeedProfile
       description: "Daily flash science fiction from 365tomorrows.com",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::TomorrowsProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::HttpLoader", config: {} },
@@ -271,6 +288,7 @@ class FeedProfile
       # detection (spec §7) — Mode B selects it directly, detection never can.
       input_shape: :any,
       depends_on_ai: true,
+      scheduled: true,
       parameter_schema: {
         "type" => "object",
         "properties" => {
@@ -305,6 +323,7 @@ class FeedProfile
       description: "Videos from a YouTube channel",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::YoutubeProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::YoutubeLoader", config: {} },
@@ -317,6 +336,7 @@ class FeedProfile
       description: "Posts from a public Telegram channel, images included",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::TelegramProfileMatcher",
       parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::TelegramLoader", config: {} },
@@ -329,6 +349,7 @@ class FeedProfile
       description: "Posts from a public X (Twitter) account",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::TwitterProfileMatcher",
       parameter_schema: LOOSE_URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::TwitterLoader", config: {} },
@@ -341,6 +362,7 @@ class FeedProfile
       description: "Posts from a public Bluesky account, images included",
       input_shape: :url,
       depends_on_ai: false,
+      scheduled: true,
       matcher: "ProfileMatcher::BlueskyProfileMatcher",
       parameter_schema: URL_PARAMETER_SCHEMA,
       loader: { class: "Loader::BlueskyLoader", config: {} },
@@ -383,6 +405,12 @@ class FeedProfile
     # @return [Boolean] true if any of the profile's stages calls an LLM
     def depends_on_ai?(key)
       !!PROFILES.dig(key, :depends_on_ai)
+    end
+
+    # @param key [String] the profile key
+    # @return [Boolean] true if the profile uses periodic scheduling
+    def scheduled?(key)
+      !!PROFILES.dig(key, :scheduled)
     end
 
     # @return [Array<String>] keys of the AI-backed profiles

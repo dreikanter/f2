@@ -60,6 +60,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       assert_kind_of String, entry[:description], "#{key}: description"
       assert_includes %i[url query any], entry[:input_shape], "#{key}: input_shape"
       assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
+      assert_includes [true, false], entry[:scheduled], "#{key}: scheduled"
       if entry[:depends_on_ai]
         # The AI profile is structurally excluded from detection (spec §7): no matcher.
         assert_nil entry[:matcher], "#{key}: AI profile must not register a matcher"
@@ -176,6 +177,13 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_not FeedProfile.depends_on_ai?("rss")
     assert_not FeedProfile.depends_on_ai?("xkcd")
     assert_not FeedProfile.depends_on_ai?("nonexistent")
+  end
+
+  test ".scheduled? returns the explicit scheduling capability" do
+    assert FeedProfile.scheduled?("rss")
+    assert FeedProfile.scheduled?("llm")
+    assert_not FeedProfile.scheduled?("nonexistent")
+    assert_not FeedProfile.scheduled?(nil)
   end
 
   test ".parameter_schema_for returns the schema for a profile" do
