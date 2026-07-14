@@ -277,6 +277,73 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
+  test "#due should exclude schedule-less webhook feeds" do
+    feed = create(:feed, :webhook, state: :enabled)
+
+    assert_nil feed.feed_schedule
+    assert_not_includes Feed.due, feed
+  end
+
+  test "#push_profile? should be true only for push profiles" do
+    assert build(:feed, :webhook).push_profile?
+    assert_not build(:feed).push_profile?
+  end
+
+  test "#can_be_enabled? should not require a schedule for a webhook feed" do
+    feed = create(:feed, :webhook)
+
+    assert_nil feed.cron_expression
+    assert feed.can_be_enabled?
+  end
+
+  test "should enable a webhook feed without cron and create no schedule" do
+    feed = create(:feed, :webhook, state: :disabled)
+
+    assert feed.enable
+    assert feed.reload.enabled?
+    assert_nil feed.feed_schedule
+  end
+
+  test "should mint a webhook endpoint when a webhook feed is created as a draft" do
+    feed = create(:feed, :webhook, :draft)
+
+    assert_not_nil feed.webhook_endpoint
+    assert feed.webhook_endpoint.persisted?
+  end
+
+  test "should not mint a webhook endpoint for a pull feed" do
+    feed = create(:feed)
+
+    assert_nil feed.webhook_endpoint
+  end
+
+  test "should destroy the webhook endpoint when the feed is destroyed" do
+    feed = create(:feed, :webhook)
+
+    assert_difference("WebhookEndpoint.count", -1) do
+      feed.destroy!
+    end
+  end
+
+  test "should destroy the webhook endpoint when a draft switches off the webhook profile" do
+    feed = create(:feed, :webhook, :draft)
+    old_token = feed.webhook_endpoint.encrypted_token
+
+    feed.update!(feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+
+    assert_nil feed.webhook_endpoint
+    assert_nil WebhookEndpoint.find_by(encrypted_token: old_token)
+  end
+
+  test "should mint a fresh endpoint when a draft switches back onto the webhook profile" do
+    feed = create(:feed, :webhook, :draft)
+    feed.update!(feed_profile_key: "rss", params: { "url" => "https://example.com/feed.xml" })
+
+    feed.update!(feed_profile_key: "webhook", params: {})
+
+    assert_not_nil feed.webhook_endpoint
+  end
+
   test "should require user" do
     feed = build(:feed, user: nil)
     assert_not feed.valid?

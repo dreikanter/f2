@@ -94,4 +94,14 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
       assert_nil schedule.last_run_at
     end
   end
+
+  test ".perform_now should not adopt schedule-less webhook feeds" do
+    feed = create(:feed, :webhook, state: :enabled)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      FeedSchedulerJob.perform_now
+    end
+
+    assert_nil feed.reload.feed_schedule
+  end
 end

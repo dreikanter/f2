@@ -31,6 +31,7 @@ class Feed < ApplicationRecord
   belongs_to :search_credential, optional: true
 
   has_one :feed_schedule, dependent: :destroy
+  has_one :webhook_endpoint, dependent: :destroy
 
   has_many :events, as: :subject, dependent: :destroy
   has_many :feed_entries, dependent: :destroy
@@ -50,6 +51,7 @@ class Feed < ApplicationRecord
   attr_accessor :source_verified
 
   after_update :create_schedule_on_enable
+  after_save :ensure_webhook_endpoint
   before_validation :compose_import_after_from_parts
 
   validates :name, uniqueness: { scope: :user_id }, length: { maximum: NAME_MAX_LENGTH }
@@ -203,6 +205,10 @@ class Feed < ApplicationRecord
 
   def scheduled?
     FeedProfile.scheduled?(feed_profile_key)
+  end
+
+  def push_profile?
+    FeedProfile.push?(feed_profile_key)
   end
 
   def can_be_enabled?
@@ -541,5 +547,14 @@ class Feed < ApplicationRecord
     return if feed_schedule.present?
 
     defer_schedule!
+  end
+
+  def ensure_webhook_endpoint
+    if push_profile?
+      create_webhook_endpoint! unless webhook_endpoint
+    elsif saved_change_to_feed_profile_key?
+      webhook_endpoint&.destroy
+      association(:webhook_endpoint).reset
+    end
   end
 end
