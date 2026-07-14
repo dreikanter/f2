@@ -127,7 +127,7 @@ class EventListItemComponent < ListItemComponent
     label = if event.subject_id.present?
       helpers.uuid_reference(
         event.subject_id,
-        path: target_path,
+        path: helpers.admin_event_subject_path(event.subject),
         prefix: event.subject_type,
         title: reference_title(event.subject_id, target_title),
         class: "font-mono underline underline-offset-2 transition hover:text-heading",
@@ -138,25 +138,6 @@ class EventListItemComponent < ListItemComponent
     end
 
     safe_join(["Target: ", label])
-  end
-
-  # Only records with an operator-safe detail page are linked. Deleted records
-  # and owner-scoped records such as posts remain compact, titled plain text.
-  def target_path
-    case event.subject
-    when Feed
-      helpers.admin_feed_path(event.subject)
-    when User
-      helpers.admin_user_path(event.subject)
-    when Event
-      helpers.admin_event_path(event.subject)
-    when AccessToken
-      helpers.access_token_path(event.subject)
-    when AiCredential
-      helpers.ai_credential_path(event.subject)
-    when SearchCredential
-      helpers.search_credential_path(event.subject)
-    end
   end
 
   # Resolves the subject to its human name so admins don't have to memorize
