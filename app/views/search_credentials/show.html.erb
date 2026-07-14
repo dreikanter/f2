@@ -3,13 +3,13 @@
 <% if @search_credential.pending? || @search_credential.validating? %>
   <div
     data-controller="polling"
-    data-polling-endpoint-value="<%= search_credential_validation_path(@search_credential) %>"
+    data-polling-endpoint-value="<%= search_credential_validation_path(@search_credential, feed_id: @feed&.id) %>"
     data-polling-interval-value="<%= polling_interval_ms %>"
     data-polling-max-polls-value="<%= polling_max_polls %>"
     data-polling-stop-condition-value="[data-credential-state]"
     aria-busy="true">
     <div id="search-credential-show" class="space-y-8">
-      <%= render "search_credentials/show_content", search_credential: @search_credential %>
+      <%= render "search_credentials/show_content", search_credential: @search_credential, feed_id: @feed&.id %>
     </div>
     <div data-polling-target="timeoutMessage" hidden class="mt-4">
       <%= render AlertComponent.new(variant: :warning) do %>
@@ -20,6 +20,6 @@
   </div>
 <% else %>
   <div id="search-credential-show" class="space-y-8">
-    <%= render "search_credentials/show_content", search_credential: @search_credential %>
+    <%= render "search_credentials/show_content", search_credential: @search_credential, feed_id: @feed&.id %>
   </div>
 <% end %>

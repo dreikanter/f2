@@ -8,7 +8,7 @@ class SearchCredentials::ValidationsController < ApplicationController
     render turbo_stream: turbo_stream.update(
       "search-credential-show",
       partial: "search_credentials/show_content",
-      locals: { search_credential: search_credential }
+      locals: { search_credential: search_credential, feed_id: params[:feed_id] }
     )
   end
 end

@@ -11,7 +11,7 @@
   <h2 class="text-xl font-semibold text-heading mb-4">AI Settings</h2>
 
   <div class="space-y-6">
-    <% if credentials? %>
+    <% if credential_setup_complete? %>
       <% if model_unavailable? %>
         <%= render PanelComponent.new(variant: :info) do %>
           <div class="space-y-1" data-key="form.ai-model-unavailable">
@@ -35,6 +35,18 @@
 
       <%= render PanelComponent.new do %>
         <div class="space-y-2">
+          <%= form.label :search_credential_id, "Search provider", class: "block font-semibold text-heading" %>
+          <%= form.select :search_credential_id, search_credential_options, { selected: selected_search_credential_id },
+                          class: helpers.input_field_classes, disabled: !section_visible?,
+                          data: { ai_settings_target: "searchCredentialSelect", key: "form.search-credential" } %>
+          <% if form.object.errors[:search_credential].any? %>
+            <p class="text-sm text-danger"><%= form.object.errors[:search_credential].first %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= render PanelComponent.new do %>
+        <div class="space-y-2">
           <%= form.label :ai_model, "Model", class: "block font-semibold text-heading" %>
           <%= form.select :ai_model, model_select_options, { selected: selected_model_id },
                           class: helpers.input_field_classes, disabled: !section_visible?,
@@ -48,7 +60,10 @@
       <% end %>
     <% else %>
       <%= render PanelComponent.new(variant: :info) do %>
-        <%= render "feed_previews/credential_gate", profile_key: feed.feed_profile_key %>
+        <%= render "feed_previews/credential_gate",
+                   profile_key: feed.feed_profile_key,
+                   missing_ai_credentials: !credentials?,
+                   missing_search_credentials: !search_credentials? %>
       <% end %>
     <% end %>
   </div>

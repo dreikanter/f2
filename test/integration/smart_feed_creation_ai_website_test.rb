@@ -23,6 +23,10 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
                            available_models: [{ "id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6" }])
   end
 
+  def search_credential
+    @search_credential ||= create(:search_credential, :active, user: user)
+  end
+
   def ai_url
     "https://no-rss-example.com/blog"
   end
@@ -82,49 +86,52 @@ class SmartFeedCreationAiWebsiteTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     access_token
     credential
+    search_credential
 
     with_llm_client({ "items" => sample_items }) do
       with_memory_cache do
         detect(ai_url)
 
-      get feed_identifications_path, params: { url: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      assert_response :success
-      assert_includes response.body, "Follow with AI"
+        get feed_identifications_path, params: { url: ai_url }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        assert_response :success
+        assert_includes response.body, "Follow with AI"
 
-      post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url },
-                             ai_credential_id: credential.id, ai_model: "claude-sonnet-4-6")
-      assert_response :success
-      perform_enqueued_jobs
+        post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url },
+                               ai_credential_id: credential.id,
+                               search_credential_id: search_credential.id,
+                               ai_model: "claude-sonnet-4-6")
+        assert_response :success
+        perform_enqueued_jobs
 
-      preview = FeedPreview.last
-      assert_predicate preview, :ready?
+        preview = FeedPreview.last
+        assert_predicate preview, :ready?
 
-      assert_difference("Feed.count", 1) do
-        post feeds_path, params: {
-          feed: {
-            params: { prompt: ai_url },
-            name: "No-RSS Blog",
-            feed_profile_key: "llm",
-            access_token_id: access_token.id,
-            target_group: "testgroup",
-            schedule_interval: "1h",
-            ai_credential_id: credential.id,
-            ai_model: "claude-sonnet-4-6"
-          },
-          enable_feed: "1"
-        }
-      end
+        assert_difference("Feed.count", 1) do
+          post feeds_path, params: {
+            feed: {
+              params: { prompt: ai_url },
+              name: "No-RSS Blog",
+              feed_profile_key: "llm",
+              access_token_id: access_token.id,
+              target_group: "testgroup",
+              schedule_interval: "1h",
+              ai_credential_id: credential.id,
+              search_credential_id: search_credential.id,
+              ai_model: "claude-sonnet-4-6"
+            },
+            enable_feed: "1"
+          }
+        end
 
-      assert_equal "enabled", Feed.last.state
-      assert_nil FeedIdentification.find_by(user: user, input: ai_url),
-                 "FeedIdentification should be cleaned up after saving an AI feed from a URL"
+        assert_equal "enabled", Feed.last.state
+        assert_nil FeedIdentification.find_by(user: user, input: ai_url),
+                   "FeedIdentification should be cleaned up after saving an AI feed from a URL"
       end
     end
   end
 
   test "#show should gate on credentials when an AI profile has no usable credential" do
     sign_in_as(user)
-    # no credential created
 
     with_memory_cache do
       post feed_preview_path(profile_key: "llm", "params" => { "prompt" => ai_url })

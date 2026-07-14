@@ -6,7 +6,7 @@
   <% end %>
 
   <div class="max-w-2xl">
-    <%= form_with model: @search_credential do |f| %>
+    <%= form_with model: @search_credential, url: search_credentials_path(feed_id: @feed&.id) do |f| %>
       <% if @search_credential.errors.any? %>
         <%= render AlertComponent.new(variant: :warning) do %>
           <ul class="list-disc list-inside text-sm">
@@ -52,7 +52,11 @@
         <%= f.submit "Save Credential",
                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring",
                      data: { turbo_submits_with: "Saving…" } %>
-        <%= link_to "Cancel", search_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
+        <% if @feed %>
+          <%= link_to "Back to your feed", edit_feed_path(@feed), class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted", data: { key: "search_credentials.back-to-feed" } %>
+        <% else %>
+          <%= link_to "Cancel", search_credentials_path, class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-6 py-3 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted" %>
+        <% end %>
       </div>
     <% end %>
   </div>

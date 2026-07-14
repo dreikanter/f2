@@ -53,12 +53,12 @@ class FeedPreviewsController < ApplicationController
     render_cleared if invalid_ai_selection?
   end
 
-  # Server-side backstop for the Stimulus button: an AI preview needs an owned,
-  # active credential and a verified model (matrix ∩ the credential's snapshot).
+  # Server-side backstop for the Stimulus button: an AI preview needs owned,
+  # active AI and search credentials plus a verified model.
   def invalid_ai_selection?
     return false unless FeedProfile.depends_on_ai?(profile_key)
 
-    ai_credential.blank? || !ai_credential.supports_model?(ai_model)
+    ai_credential.blank? || search_credential.blank? || !ai_credential.supports_model?(ai_model)
   end
 
   def previews
@@ -66,15 +66,34 @@ class FeedPreviewsController < ApplicationController
   end
 
   def digest
-    @digest ||= FeedPreview.digest_for(profile_key, preview_params, ai_credential&.id, ai_model)
+    @digest ||= FeedPreview.digest_for(
+      profile_key,
+      preview_params,
+      ai_credential&.id,
+      ai_model,
+      search_credential&.id
+    )
   end
 
-  # Resolve only from the user's own active credentials, so a forged
-  # ai_credential_id can't borrow someone else's key.
+  # Resolve only from the user's own active credentials, so forged ids can't
+  # borrow another user's provider keys.
   def ai_credential
     return @ai_credential if defined?(@ai_credential)
 
     @ai_credential = Current.user.ai_credentials.active.find_by(id: params[:ai_credential_id])
+  end
+
+  def search_credential
+    return @search_credential if defined?(@search_credential)
+    return unless FeedProfile.exists?(profile_key) && FeedProfile.depends_on_ai?(profile_key)
+
+    credentials = Current.user.search_credentials.active
+    @search_credential =
+      if params[:search_credential_id].present?
+        credentials.find_by(id: params[:search_credential_id])
+      else
+        credentials.find_by(id: Current.user.default_search_credential_id) || credentials.first
+      end
   end
 
   def ai_model
@@ -82,7 +101,9 @@ class FeedPreviewsController < ApplicationController
   end
 
   def locate_preview
-    previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
+    preview = previews.find_or_initialize_by(feed_profile_key: profile_key, params_digest: digest)
+    preview.search_credential_id_for_digest = search_credential&.id
+    preview
   end
 
   def needs_run?(preview)
@@ -93,6 +114,7 @@ class FeedPreviewsController < ApplicationController
   # already inserted this (user, profile, source) row, adopt the winner's row
   # rather than enqueuing a duplicate job.
   def start_run(preview)
+    preview.search_credential_id_for_digest = search_credential&.id
     preview.update!(
       params: preview_params,
       ai_credential_id: ai_credential&.id,
@@ -131,7 +153,17 @@ class FeedPreviewsController < ApplicationController
 
   # Only reached after guard_preview confirmed the profile exists.
   def needs_credential_gate?
-    FeedProfile.depends_on_ai?(profile_key) && !Current.user.ai_credentials.active.exists?
+    return false unless FeedProfile.depends_on_ai?(profile_key)
+
+    missing_ai_credentials? || missing_search_credentials?
+  end
+
+  def missing_ai_credentials?
+    !Current.user.ai_credentials.active.exists?
+  end
+
+  def missing_search_credentials?
+    !Current.user.search_credentials.active.exists?
   end
 
   def render_state(preview, inert_while_running: false)
@@ -164,7 +196,14 @@ class FeedPreviewsController < ApplicationController
   end
 
   def render_credential_gate
-    gate = { partial: "feed_previews/credential_gate", locals: { profile_key: profile_key } }
+    gate = {
+      partial: "feed_previews/credential_gate",
+      locals: {
+        profile_key: profile_key,
+        missing_ai_credentials: missing_ai_credentials?,
+        missing_search_credentials: missing_search_credentials?
+      }
+    }
     respond_to do |format|
       format.html do
         body = helpers.turbo_frame_tag("feed-preview") { render_to_string(gate).html_safe }

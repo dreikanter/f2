@@ -28,6 +28,7 @@ class Feed < ApplicationRecord
   belongs_to :user
   belongs_to :access_token, optional: true
   belongs_to :ai_credential, optional: true
+  belongs_to :search_credential, optional: true
 
   has_one :feed_schedule, dependent: :destroy
 
@@ -66,8 +67,10 @@ class Feed < ApplicationRecord
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
   validate :ai_credential_belongs_to_user
+  validate :search_credential_belongs_to_user
   validate :access_token_belongs_to_user
   validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
+  validate :search_credential_required_when_enabled_ai_profile, if: :enabled?
   validate :engine_fixed_on_edit
   validate :source_change_reverified
   validates :access_token, presence: true, if: :enabled?
@@ -219,6 +222,7 @@ class Feed < ApplicationRecord
     return false unless source_input.present? && feed_profile_present?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
     return false unless ai_credential&.active?
+    return false unless search_credential&.active?
 
     # A dropped model no longer blocks preview — a run resolves to the
     # credential's default supported model, so preview only needs some verified
@@ -376,12 +380,10 @@ class Feed < ApplicationRecord
     false
   end
 
-  # Mirrors ai_credential_required_when_enabled_ai_profile so the Enable button
-  # never shows for an AI feed the enabled-state validators would reject.
   def ai_enablement_requirements_met?
     return true unless FeedProfile.depends_on_ai?(feed_profile_key)
 
-    ai_credential&.active? && ai_model.present?
+    ai_credential&.active? && search_credential&.active? && ai_model.present?
   end
 
   # Records a feed_auto_disabled event stamped with the streak length, so the
@@ -452,6 +454,14 @@ class Feed < ApplicationRecord
     errors.add(:ai_credential, "must belong to the same user")
   end
 
+  def search_credential_belongs_to_user
+    return if search_credential.nil?
+    return if user_id.nil?
+    return if search_credential.user_id == user_id
+
+    errors.add(:search_credential, "must belong to the same user")
+  end
+
   def access_token_belongs_to_user
     return if access_token.nil?
     return if user_id.nil?
@@ -506,6 +516,17 @@ class Feed < ApplicationRecord
       # Membership is enforced only on the change that sets it, so a later-dropped
       # model never traps an unrelated edit — runs fall back gracefully instead.
       errors.add(:ai_model, "This model isn't available anymore. Pick another one.")
+    end
+  end
+
+  def search_credential_required_when_enabled_ai_profile
+    return unless feed_profile_present?
+    return unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    if search_credential.nil?
+      errors.add(:search_credential, "must be selected for AI-backed feeds")
+    elsif !search_credential.active?
+      errors.add(:search_credential, "must be active (currently #{search_credential.state})")
     end
   end
 

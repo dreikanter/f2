@@ -12,6 +12,7 @@ class FeedsController < ApplicationController
     target_group
     access_token_id
     ai_credential_id
+    search_credential_id
     ai_model
     schedule_interval
     import_after_enabled
@@ -146,6 +147,7 @@ class FeedsController < ApplicationController
   def setup_gate_path(feed)
     case params[:commit]
     when "save_as_draft_and_add_credentials" then new_ai_credential_path(feed_id: feed.id)
+    when "save_as_draft_and_add_search_credentials" then new_search_credential_path(feed_id: feed.id)
     when "save_as_draft_and_add_token" then new_access_token_path(feed_id: feed.id)
     end
   end

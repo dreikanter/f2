@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_13_220000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_14_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -173,8 +173,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_220000) do
     t.integer "imported_posts_count", default: 0, null: false
     t.integer "published_posts_count", default: 0, null: false
     t.string "ai_model"
+    t.uuid "search_credential_id"
     t.index ["access_token_id"], name: "index_feeds_on_access_token_id"
     t.index ["ai_credential_id"], name: "index_feeds_on_ai_credential_id"
+    t.index ["search_credential_id"], name: "index_feeds_on_search_credential_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
@@ -468,6 +470,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_13_220000) do
   add_foreign_key "feed_schedules", "feeds"
   add_foreign_key "feeds", "access_tokens"
   add_foreign_key "feeds", "ai_credentials", on_delete: :nullify
+  add_foreign_key "feeds", "search_credentials", on_delete: :nullify
   add_foreign_key "feeds", "users"
   add_foreign_key "invites", "users", column: "created_by_user_id"
   add_foreign_key "invites", "users", column: "invited_user_id", on_delete: :nullify
