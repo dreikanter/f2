@@ -188,15 +188,16 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_includes result.css("[data-key='events.footer']").text, "Type: custom_event"
   end
 
-  test "#call should link the user to the admin filter and reveal the email on hover" do
+  test "#call should link the compact user id to the admin user page" do
     event = create(:event, user: user)
 
     result = render_admin_item(event)
 
     link = result.css("a[data-key='events.user']").first
-    assert_equal "##{user.id}", link.text
-    assert_includes link["href"], "filter%5Buser_id%5D=#{user.id}"
-    assert_equal user.email_address, link["title"]
+    assert_equal user.id.to_s.last(5), link.text
+    assert_equal "/admin/users/#{user.id}", link["href"]
+    assert_equal "#{user.id} — #{user.email_address}", link["title"]
+    assert_not_includes link.text, "#"
   end
 
   test "#call should show System for events without a user in extended mode" do
@@ -208,28 +209,31 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_equal "System", label.text
   end
 
-  test "#call should link the subject to the admin filter and reveal its name on hover" do
+  test "#call should link the compact subject id to its application page" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
 
     result = render_admin_item(event)
 
     link = result.css("a[data-key='events.subject']").first
-    assert_equal "Feed##{feed.id}", link.text
-    assert_includes link["href"], "filter%5Bsubject_type%5D=Feed"
-    assert_includes link["href"], "filter%5Bsubject_id%5D=#{feed.id}"
-    assert_equal feed.display_name, link["title"]
+    assert_equal "Feed #{feed.id.to_s.last(5)}", link.text
+    assert_equal "/admin/feeds/#{feed.id}", link["href"]
+    assert_equal "#{feed.id} — #{feed.display_name}", link["title"]
+    assert_not_includes link.text, "#"
   end
 
-  test "#call should omit the subject hover title when the subject is gone" do
+  test "#call should render an orphaned subject as compact plain text" do
     event = create(:event, user: user)
-    event.update!(subject_type: "Feed", subject_id: SecureRandom.uuid)
+    missing_id = SecureRandom.uuid
+    event.update!(subject_type: "Feed", subject_id: missing_id)
 
     result = render_admin_item(event)
 
-    link = result.css("a[data-key='events.subject']").first
-    assert_not_nil link
-    assert_nil link["title"]
+    label = result.css("span[data-key='events.subject']").first
+    assert_not_nil label
+    assert_equal "Feed #{missing_id.last(5)}", label.text
+    assert_equal missing_id, label["title"]
+    assert_empty result.css("a[data-key='events.subject']")
   end
 
   test "#call should omit the target for events without a subject" do
