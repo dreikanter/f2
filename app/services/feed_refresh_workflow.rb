@@ -30,7 +30,7 @@ class FeedRefreshWorkflow
   def on_error(error)
     Metrics.increment("feed_refresh_total", status: "error", profile: feed.feed_profile_key)
     record_error_stats(error, current_step: current_step)
-    disable_credential_on_auth_error(error)
+    disable_credentials_on_auth_error(error)
     fail_refresh_event(error)
     feed.record_refresh_failure!
   end
@@ -380,11 +380,13 @@ class FeedRefreshWorkflow
     EventReference.insert_all(references_data)
   end
 
-  def disable_credential_on_auth_error(error)
-    return unless error.is_a?(LlmClient::AuthError)
-    return unless feed.ai_credential
-
-    feed.ai_credential.disable_credential_and_feeds(last_error: error.message)
+  def disable_credentials_on_auth_error(error)
+    case error
+    when LlmClient::AuthError
+      feed.ai_credential&.disable_credential_and_feeds(last_error: error.message)
+    when WebSearchProvider::AuthError
+      feed.search_credential&.deactivate!(last_error: error.message)
+    end
   end
 
   # The @refresh_completed guard keeps the invariant of at most one terminal
