@@ -1,7 +1,8 @@
-<% content_for :title, "#{@job_class.name} run ##{@run.id}" %>
+<% run_title = uuid_label(@run.id, prefix: "Run") %>
+<% content_for :title, "#{@job_class.name} #{run_title.downcase}" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: "Run ##{@run.id}") do |header| %>
+  <%= render PageHeaderComponent.new(title: run_title) do |header| %>
     <% header.with_breadcrumb(label: @job_class.name, url: development_job_job_runs_path(@job_class.name)) %>
   <% end %>
 
