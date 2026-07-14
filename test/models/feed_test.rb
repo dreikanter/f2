@@ -124,6 +124,14 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.errors.of_kind?(:cron_expression, :blank)
   end
 
+  test "should not require cron_expression for an unscheduled profile" do
+    FeedProfile.stub(:scheduled?, false) do
+      feed = build(:feed, state: :enabled, cron_expression: nil)
+
+      assert feed.valid?, feed.errors.full_messages.inspect
+    end
+  end
+
   test "should not require cron_expression for disabled feeds" do
     feed = build(:feed, cron_expression: nil, state: :disabled)
     feed.valid?
@@ -192,6 +200,15 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
+  test "should not create feed_schedule when enabling an unscheduled profile" do
+    FeedProfile.stub(:scheduled?, false) do
+      feed = create(:feed, state: :disabled, cron_expression: nil)
+
+      assert feed.enable
+      assert_nil feed.reload.feed_schedule
+    end
+  end
+
   test "should not create duplicate feed_schedule when already exists" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
@@ -217,11 +234,11 @@ class FeedTest < ActiveSupport::TestCase
     end
   end
 
-  test "#due should include feeds without schedule" do
+  test "#due should exclude feeds without schedule" do
     freeze_time do
       feed = create(:feed, state: :enabled)
 
-      assert_includes Feed.due, feed
+      assert_not_includes Feed.due, feed
     end
   end
 
@@ -248,6 +265,9 @@ class FeedTest < ActiveSupport::TestCase
       draft_feed = create(:feed, state: :draft)
       disabled_feed = create(:feed, state: :disabled)
       enabled_feed = create(:feed, state: :enabled)
+      create(:feed_schedule, feed: draft_feed, next_run_at: 1.hour.ago)
+      create(:feed_schedule, feed: disabled_feed, next_run_at: 1.hour.ago)
+      create(:feed_schedule, feed: enabled_feed, next_run_at: 1.hour.ago)
 
       due_feeds = Feed.due
 
@@ -325,12 +345,26 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "enabled", reloaded_feed.state
   end
 
+  test "#scheduled? delegates to the feed profile" do
+    feed = build(:feed, feed_profile_key: "rss")
+
+    assert feed.scheduled?
+  end
+
   test "#can_be_enabled? returns true when feed has active access token and target group" do
     user = create(:user)
     access_token = create(:access_token, :active, user: user)
     feed = create(:feed, user: user, access_token: access_token, target_group: "test_group")
 
     assert feed.can_be_enabled?
+  end
+
+  test "#can_be_enabled? does not require a cron expression for an unscheduled profile" do
+    FeedProfile.stub(:scheduled?, false) do
+      feed = build(:feed, cron_expression: nil)
+
+      assert feed.can_be_enabled?
+    end
   end
 
   test "#can_be_enabled? returns false when feed has a blank name" do
