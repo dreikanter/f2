@@ -9,9 +9,8 @@ class LlmClient
       FENCE = /\A```[a-z]*\n?(.*?)\n?```\z/m
 
       def apply_web(chat, _model)
-        if ::WebSearchProvider.configured?
-          chat.with_tool(LlmClient::Tools::WebSearch.new(provider: ::WebSearchProvider.default))
-        end
+        provider = web_search_provider
+        chat.with_tool(LlmClient::Tools::WebSearch.new(provider: provider)) if provider
         chat.with_tool(LlmClient::Tools::WebFetch)
       end
 
@@ -19,6 +18,17 @@ class LlmClient
         stripped = text.to_s.strip
         match = stripped.match(FENCE)
         match ? match[1].strip : stripped
+      end
+
+      private
+
+      # Interim ENV-based resolution (spec 006 §8): nil when unconfigured, so
+      # the feed runs fetch-only. Resolved once — `configured?` would build
+      # and discard the same provider just to answer the question.
+      def web_search_provider
+        ::WebSearchProvider.default
+      rescue ::WebSearchProvider::ConfigurationError
+        nil
       end
     end
   end
