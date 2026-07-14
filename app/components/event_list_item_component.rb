@@ -111,7 +111,7 @@ class EventListItemComponent < ListItemComponent
     else
       helpers.uuid_reference(
         event.user_id,
-        path: helpers.admin_user_path(event.user) if event.user,
+        path: (helpers.admin_user_path(event.user) if event.user),
         title: reference_title(event.user_id, event.user&.email_address),
         class: "font-mono underline underline-offset-2 transition hover:text-heading",
         data: { key: "events.user" }
