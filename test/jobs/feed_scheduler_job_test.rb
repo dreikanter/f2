@@ -67,12 +67,11 @@ class FeedSchedulerJobTest < ActiveJob::TestCase
   end
 
   test "#refresh? should not create a schedule for an unscheduled profile" do
-    feed = create(:feed, :enabled, cron_expression: nil)
-
     FeedProfile.stub(:scheduled?, false) do
-      assert_not FeedSchedulerJob.new.send(:refresh?, feed)
-    end
+      feed = create(:feed, :enabled, cron_expression: nil)
 
-    assert_nil feed.reload.feed_schedule
+      assert_not FeedSchedulerJob.new.send(:refresh?, feed)
+      assert_nil feed.reload.feed_schedule
+    end
   end
 end
