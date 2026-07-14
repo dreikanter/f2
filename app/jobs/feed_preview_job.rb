@@ -9,8 +9,13 @@ class FeedPreviewJob < ApplicationJob
     feed_preview = FeedPreview.find_by(id: feed_preview_id)
     return unless feed_preview
 
-    search_credential = feed_preview.user.search_credentials.active.find_by(id: search_credential_id)
-    FeedPreviewWorkflow.new(feed_preview, run_id: run_id, search_credential: search_credential).execute
+    options = { run_id: run_id }
+    if search_credential_id
+      search_credential = feed_preview.user.search_credentials.active.find_by(id: search_credential_id)
+      options[:search_credential] = search_credential
+    end
+
+    FeedPreviewWorkflow.new(feed_preview, **options).execute
   rescue LlmClient::CredentialMissing => e
     # AI profile previewed without one of its required active credentials. The
     # workflow already marked the preview failed; this is user state, not a crash.
