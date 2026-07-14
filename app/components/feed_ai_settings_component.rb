@@ -1,7 +1,5 @@
-# The "AI Settings" section of the feed form: the AI provider + model selects,
-# or the add-credentials gate when the user has none. All data prep lives here
-# so the template stays declarative; the ai-settings Stimulus controller wires
-# up visibility and the dependent model list from `models_by_credential`.
+# The "AI Settings" section of the feed form: AI and search credentials plus
+# the model select, or the credential gate when either required key is missing.
 class FeedAiSettingsComponent < ViewComponent::Base
   def initialize(feed:, form:)
     @feed = feed
@@ -31,6 +29,18 @@ class FeedAiSettingsComponent < ViewComponent::Base
     selectable_credentials.any?
   end
 
+  def active_search_credentials
+    @active_search_credentials ||= @feed.user.search_credentials.active.order(:display_name)
+  end
+
+  def search_credentials?
+    active_search_credentials.any?
+  end
+
+  def credential_setup_complete?
+    credentials? && search_credentials?
+  end
+
   # Each selectable credential's models, keyed by id and embedded so the Stimulus
   # controller can swap the model list on provider change. Gated to the capability
   # matrix ∩ the credential's live snapshot, so only dev-verified web+schema models
@@ -53,9 +63,21 @@ class FeedAiSettingsComponent < ViewComponent::Base
     ((preferred & selectable_ids).first || selectable_ids.first)&.to_s
   end
 
+  def selected_search_credential_id
+    preferred = [@feed.search_credential_id, @feed.user.default_search_credential_id].compact
+    selectable_ids = active_search_credentials.map(&:id)
+    ((preferred & selectable_ids).first || selectable_ids.first)&.to_s
+  end
+
   def credential_options
     selectable_credentials.map do |credential|
       ["#{credential.display_name} · #{credential.llm_provider.display_name}", credential.id]
+    end
+  end
+
+  def search_credential_options
+    active_search_credentials.map do |credential|
+      ["#{credential.display_name} · #{WebSearchProvider::REGISTRY.fetch(credential.provider)}", credential.id]
     end
   end
 

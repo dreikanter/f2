@@ -6,7 +6,7 @@ import { selectedProfileKey } from "controllers/helpers/selected_profile_key"
 // rebuilds the model list from the chosen provider's embedded models — no
 // server round-trip.
 export default class extends Controller {
-  static targets = ["credentialSelect", "modelSelect"]
+  static targets = ["credentialSelect", "searchCredentialSelect", "modelSelect"]
   static values = {
     models: Object, // { credentialId: [{ id, name }, ...] }
     aiProfiles: Array // profile keys whose feeds use AI
@@ -31,6 +31,7 @@ export default class extends Controller {
     const isAi = this.aiProfilesValue.includes(selectedProfileKey(this.form))
     this.element.hidden = !isAi
     if (this.hasCredentialSelectTarget) this.credentialSelectTarget.disabled = !isAi
+    if (this.hasSearchCredentialSelectTarget) this.searchCredentialSelectTarget.disabled = !isAi
     if (this.hasModelSelectTarget) this.modelSelectTarget.disabled = !isAi
   }
 

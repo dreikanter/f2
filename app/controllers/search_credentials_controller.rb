@@ -8,21 +8,25 @@ class SearchCredentialsController < ApplicationController
 
   def show
     @search_credential = find_credential
+    @feed = detour_feed
     authorize @search_credential
   end
 
   def new
     @search_credential = SearchCredential.new(provider: params[:provider] || WebSearchProvider::REGISTRY.keys.first)
+    @feed = detour_feed
     authorize @search_credential
   end
 
   def create
     @search_credential = build_credential
+    @feed = detour_feed
     authorize @search_credential
 
     if @search_credential.save
+      @feed&.update_column(:search_credential_id, @search_credential.id)
       SearchCredentialValidationJob.perform_later(@search_credential)
-      redirect_to search_credential_path(@search_credential)
+      redirect_to search_credential_path(@search_credential, feed_id: @feed&.id)
     else
       render :new, status: :unprocessable_entity
     end
@@ -54,6 +58,12 @@ class SearchCredentialsController < ApplicationController
   end
 
   private
+
+  def detour_feed
+    return nil if params[:feed_id].blank?
+
+    Current.user.feeds.find_by(id: params[:feed_id])
+  end
 
   def updated_credential_attrs(key_changed:)
     attrs = { display_name: credential_params[:display_name] }

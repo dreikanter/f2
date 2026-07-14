@@ -3,6 +3,7 @@ class SearchCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
 
   belongs_to :user
+  has_many :feeds
 
   encrypts :credential_data
 
@@ -18,6 +19,7 @@ class SearchCredential < ApplicationRecord
   validate :api_key_present
 
   before_validation :assign_name_if_blank, on: :create
+  before_destroy :disable_dependent_feeds
 
   def default?
     user.default_search_credential_id == id
@@ -45,6 +47,8 @@ class SearchCredential < ApplicationRecord
         subject: self,
         user: user
       )
+
+      feeds.where(state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
     end
   end
 
@@ -65,5 +69,13 @@ class SearchCredential < ApplicationRecord
     return if provider.blank?
 
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
+  end
+
+  def disable_dependent_feeds
+    affected_feed_ids = feeds.pluck(:id)
+    return if affected_feed_ids.empty?
+
+    Feed.where(id: affected_feed_ids).update_all(search_credential_id: nil)
+    Feed.where(id: affected_feed_ids, state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
   end
 end

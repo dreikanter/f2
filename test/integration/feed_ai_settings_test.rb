@@ -1,7 +1,7 @@
 require "test_helper"
 
-# The feed form's AI Settings section: the provider + model selectors that
-# appear for AI-backed profiles. The dependent model dropdown is wired
+# The feed form's AI Settings section: AI provider, search provider, and model
+# selectors for AI-backed profiles. The dependent model dropdown is wired
 # client-side from an embedded models map, so these tests assert the
 # server-rendered contract the Stimulus controller relies on.
 class FeedAiSettingsTest < ActionDispatch::IntegrationTest
@@ -20,11 +20,16 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @credential ||= create(:ai_credential, :active, user: user, display_name: "Main key", available_models: models)
   end
 
+  def search_credential
+    @search_credential ||= create(:search_credential, :active, user: user, display_name: "Search key")
+  end
+
   def ai_feed
     @ai_feed ||= create(:feed,
                         user: user,
                         feed_profile_key: "llm",
                         ai_credential: credential,
+                        search_credential: search_credential,
                         ai_model: "claude-sonnet-4-6",
                         params: { "prompt" => "https://no-rss.example.com" })
   end
@@ -33,9 +38,8 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     @rss_feed ||= create(:feed, user: user, feed_profile_key: "rss")
   end
 
-  test "#edit should show the AI Settings section with provider and model selects for an AI feed" do
+  test "#edit should show AI, search, and model selects for an AI feed" do
     sign_in_as(user)
-    credential
 
     get edit_feed_path(ai_feed)
 
@@ -43,6 +47,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.ai-settings']"
     assert_select "[data-key='form.ai-settings'][hidden]", false
     assert_select "select[name='feed[ai_credential_id]'][data-key='form.ai-credential']"
+    assert_select "select[name='feed[search_credential_id]'][data-key='form.search-credential']"
     assert_select "select[name='feed[ai_model]'][data-key='form.ai-model']"
     assert_select "[data-key='form.ai-model-unavailable']", false
   end
@@ -53,6 +58,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
                         user: user,
                         feed_profile_key: "llm",
                         ai_credential: credential,
+                        search_credential: search_credential,
                         ai_model: "removed-model",
                         params: { "prompt" => "https://no-rss.example.com" })
 
@@ -61,13 +67,31 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.ai-model-unavailable']"
   end
 
-  test "#edit should preselect the feed's saved provider and model" do
+  test "#edit should preselect the feed's saved credentials and model" do
     sign_in_as(user)
 
     get edit_feed_path(ai_feed)
 
     assert_select "select[data-key='form.ai-credential'] option[selected][value='#{credential.id}']"
+    assert_select "select[data-key='form.search-credential'] option[selected][value='#{search_credential.id}']"
     assert_select "select[data-key='form.ai-model'] option[selected][value='claude-sonnet-4-6']", text: "Claude Sonnet 4.6"
+  end
+
+  test "#edit should prefer the user's default search credential when the feed has none" do
+    sign_in_as(user)
+    default = create(:search_credential, :active, :default, user: user, display_name: "Default search")
+    create(:search_credential, :active, user: user, display_name: "Other search")
+    feed = create(:feed,
+                  user: user,
+                  feed_profile_key: "llm",
+                  ai_credential: credential,
+                  search_credential: nil,
+                  ai_model: "claude-sonnet-4-6",
+                  params: { "prompt" => "https://no-rss.example.com" })
+
+    get edit_feed_path(feed)
+
+    assert_select "select[data-key='form.search-credential'] option[selected][value='#{default.id}']"
   end
 
   test "#edit should render the model placeholder as disabled so a pick can't be cleared" do
@@ -85,6 +109,7 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
                         user: user,
                         feed_profile_key: "llm",
                         ai_credential: credential,
+                        search_credential: search_credential,
                         ai_model: "removed-model",
                         params: { "prompt" => "https://no-rss.example.com" })
 
@@ -122,26 +147,46 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
   test "#edit should hide and disable the section for a non-AI feed" do
     sign_in_as(user)
     credential
+    search_credential
 
     get edit_feed_path(rss_feed)
 
     assert_select "[data-key='form.ai-settings'][hidden]"
     assert_select "select[name='feed[ai_credential_id]'][disabled]"
+    assert_select "select[name='feed[search_credential_id]'][disabled]"
     assert_select "select[name='feed[ai_model]'][disabled]"
   end
 
-  test "#edit should show the credential gate when the user has no active credentials" do
+  test "#edit should show only the AI credential button when search credentials exist" do
     sign_in_as(user)
+    search_credential
     feed_without_credential = create(:feed,
                                      user: user,
                                      feed_profile_key: "llm",
                                      ai_credential: nil,
+                                     search_credential: search_credential,
                                      params: { "prompt" => "https://no-rss.example.com" })
 
     get edit_feed_path(feed_without_credential)
 
     assert_select "[data-key='credentials.gate']"
     assert_select "button[value='save_as_draft_and_add_credentials']"
+    assert_select "button[value='save_as_draft_and_add_search_credentials']", count: 0
     assert_select "select[name='feed[ai_model]']", false
+  end
+
+  test "#edit should show only the search credential button when AI credentials exist" do
+    sign_in_as(user)
+    feed_without_search = create(:feed,
+                                 user: user,
+                                 feed_profile_key: "llm",
+                                 ai_credential: credential,
+                                 search_credential: nil,
+                                 params: { "prompt" => "https://no-rss.example.com" })
+
+    get edit_feed_path(feed_without_search)
+
+    assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
+    assert_select "button[value='save_as_draft_and_add_search_credentials']"
   end
 end

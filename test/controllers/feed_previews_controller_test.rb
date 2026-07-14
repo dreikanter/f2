@@ -3,7 +3,10 @@ require "test_helper"
 class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
-  setup { clear_enqueued_jobs }
+  setup do
+    clear_enqueued_jobs
+    create(:search_credential, :active, user: user)
+  end
 
   def user
     @user ||= create(:user)

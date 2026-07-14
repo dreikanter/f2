@@ -12,7 +12,9 @@ class FeedPreview < ApplicationRecord
   validates :feed_profile_key, presence: true
   validates :feed_profile_key, inclusion: { in: ->(_) { FeedProfile.all } }, if: -> { feed_profile_key.present? }
 
-  before_validation :assign_params_digest
+  attr_accessor :search_credential_id_for_digest
+
+  before_validation :assign_params_digest, if: :preview_identity_changed?
 
   # A preview's identity is the user-provided source input (the value behind the
   # profile's source key) — NOT the whole params hash. User input for a new feed
@@ -22,13 +24,13 @@ class FeedPreview < ApplicationRecord
   # grows beyond one field, extend this to cover the new user fields (still not
   # the derived ones).
   #
-  # For AI profiles the chosen provider + model join the identity, so the same
-  # source previewed with a different model doesn't reuse a cached result.
+  # For AI profiles the chosen credentials + model join the identity, so changing
+  # either provider selection doesn't reuse a cached result.
   #
   # JSON-encode the parts before hashing so their boundaries are unambiguous:
   # otherwise ["ab", "c"] and ["a", "bc"] would hash alike.
-  def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil)
-    parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model]
+  def self.digest_for(feed_profile_key, params, ai_credential_id = nil, ai_model = nil, search_credential_id = nil)
+    parts = [FeedProfile.source_input_for(feed_profile_key, params), ai_credential_id, ai_model, search_credential_id]
     Digest::SHA256.hexdigest(parts.to_json)
   end
 
@@ -65,7 +67,31 @@ class FeedPreview < ApplicationRecord
 
   private
 
+  def preview_identity_changed?
+    new_record? ||
+      will_save_change_to_feed_profile_key? ||
+      will_save_change_to_params? ||
+      will_save_change_to_ai_credential_id? ||
+      will_save_change_to_ai_model? ||
+      search_credential_id_for_digest.present?
+  end
+
   def assign_params_digest
-    self[:params_digest] = self.class.digest_for(feed_profile_key, params, ai_credential_id, ai_model)
+    self[:params_digest] = self.class.digest_for(
+      feed_profile_key,
+      params,
+      ai_credential_id,
+      ai_model,
+      resolved_search_credential_id_for_digest
+    )
+  end
+
+  def resolved_search_credential_id_for_digest
+    return search_credential_id_for_digest if search_credential_id_for_digest.present?
+    return unless new_record? && user && FeedProfile.exists?(feed_profile_key)
+    return unless FeedProfile.depends_on_ai?(feed_profile_key)
+
+    credentials = user.search_credentials.active
+    credentials.find_by(id: user.default_search_credential_id)&.id || credentials.pick(:id)
   end
 end
