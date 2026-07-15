@@ -38,6 +38,21 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{development_components_path}']", count: 0
   end
 
+  test "should show global stats on admin panel" do
+    create(:post, :published, feed: create(:feed, user: user))
+    create(:feed_metric, :with_published_posts, feed: create(:feed, user: admin_user))
+
+    sign_in_as(admin_user)
+    get admin_url
+
+    assert_response :success
+    assert_select "h2", "Stats"
+    assert_select "[data-key='stats.total_users.value']", text: User.count.to_s
+    assert_select "[data-key='stats.total_feeds.value']", text: Feed.count.to_s
+    assert_select "[data-key='stats.total_published_posts.value']", text: "1"
+    assert_select "[data-controller='heatmap']", count: 1
+  end
+
   test "should redirect when authenticated as regular user" do
     sign_in_as(user)
     get admin_url

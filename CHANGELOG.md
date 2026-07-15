@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-15
+
+- The Admin Panel now shows app-wide stats — users, feeds, imported and published posts — along with a publishing activity heatmap.
+
 ## 2026-07-14
 
 - Search credential and feed pages now show recent search-call counts and estimated search-provider spend.

@@ -69,4 +69,22 @@ class PostsHeatmapComponentTest < ViewComponent::TestCase
     today_cell = result.css("[data-tippy-content='7']").first
     assert_not_nil today_cell
   end
+
+  test "#render? should return false when there are no metrics globally" do
+    component = PostsHeatmapComponent.new
+    render_inline(component)
+    assert_not component.render?
+  end
+
+  test "#call should aggregate published_posts_count across all users when no scope is given" do
+    other_user_feed = create(:feed, user: create(:user))
+    create(:feed_metric, feed: feed, date: Date.current, published_posts_count: 3)
+    create(:feed_metric, feed: other_user_feed, date: Date.current, published_posts_count: 4)
+
+    result = render_inline(PostsHeatmapComponent.new)
+    assert result.css("svg").any?
+
+    today_cell = result.css("[data-tippy-content='7']").first
+    assert_not_nil today_cell
+  end
 end

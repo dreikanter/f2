@@ -48,6 +48,9 @@ class PostsHeatmapComponent < ViewComponent::Base
   end
 
   def base_scope
-    @feed ? @feed.feed_metrics : FeedMetric.for_user(@user)
+    return @feed.feed_metrics if @feed
+    return FeedMetric.for_user(@user) if @user
+
+    FeedMetric.all
   end
 end
