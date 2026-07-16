@@ -5,7 +5,6 @@ class PaginationTest < ActionController::TestCase
     include Pagination
 
     def index
-      # Test action that would use pagination
     end
 
     private
@@ -38,10 +37,31 @@ class PaginationTest < ActionController::TestCase
     assert_equal 1, controller.send(:pagination_current_page)
   end
 
+  test "#pagination_current_page should reject non-positive pages" do
+    controller = TestController.new
+    controller.instance_variable_set(:@params, ActionController::Parameters.new(page: "0"))
+
+    assert_equal 1, controller.send(:pagination_current_page)
+  end
+
   test "#pagination_per_page should return default value" do
     controller = TestController.new
 
     assert_equal 25, controller.send(:pagination_per_page)
+  end
+
+  test "#pagination_per_page should reject non-positive values" do
+    controller = TestController.new
+    controller.instance_variable_set(:@params, ActionController::Parameters.new(per_page: "0"))
+
+    assert_equal 25, controller.send(:pagination_per_page)
+  end
+
+  test "#pagination_per_page should cap large values" do
+    controller = TestController.new
+    controller.instance_variable_set(:@params, ActionController::Parameters.new(per_page: "1000"))
+
+    assert_equal 100, controller.send(:pagination_per_page)
   end
 
   test "#paginate_scope should raise error when pagination_scope not implemented" do
