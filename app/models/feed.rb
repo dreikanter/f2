@@ -300,7 +300,7 @@ class Feed < ApplicationRecord
 
   # Creates and returns a normalizer instance for the given feed entry
   # @param feed_entry [FeedEntry] the feed entry to normalize
-  # @return [Normalizer::Base] normalizer instance
+  # @return [Normalizer::Base]
   def normalizer_instance(feed_entry)
     normalizer_class.new(feed_entry)
   end
@@ -368,6 +368,20 @@ class Feed < ApplicationRecord
     disable_with_event!("feed_target_group_unavailable", metadata)
   end
 
+  # Disables the feed and records why in one transaction. Already-disabled feeds
+  # are left untouched so callers can safely race or retry without duplicate events.
+  # update_columns flips the state and zeroes the counter in one write, skipping
+  # validations neither needs; metadata is evaluated first, so it can read
+  # pre-disable values like the failure streak.
+  def disable_with_event!(type, metadata)
+    return false if disabled?
+
+    transaction do
+      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
+      Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
+    end
+  end
+
   # Clears the streak after a successful refresh.
   def reset_refresh_failures!
     return if consecutive_failures.zero?
@@ -395,17 +409,6 @@ class Feed < ApplicationRecord
   # activity log shows how many failures it took.
   def disable_after_repeated_failures!
     disable_with_event!("feed_auto_disabled", { error_count: consecutive_failures })
-  end
-
-  # Disables the feed and records why in one transaction. update_columns flips
-  # the state and zeroes the counter in one write, skipping validations neither
-  # needs; the metadata is evaluated first, so it can read pre-disable values
-  # like the failure streak.
-  def disable_with_event!(type, metadata)
-    transaction do
-      update_columns(state: self.class.states[:disabled], consecutive_failures: 0)
-      Event.create!(type: type, level: :warning, subject: self, user: user, metadata: metadata)
-    end
   end
 
   # Only touches import_after when the form parts were assigned, so saves that
