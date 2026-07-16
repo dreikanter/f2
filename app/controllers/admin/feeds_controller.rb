@@ -28,8 +28,8 @@ class Admin::FeedsController < ApplicationController
   end
 
   def pagination_scope
-    policy_scope([:admin, Feed])
-      .includes(:user, :access_token, :feed_entries, :posts)
+    with_listing_stats(policy_scope([:admin, Feed]))
+      .includes(:user, :access_token)
       .order(sortable_order)
   end
 end
