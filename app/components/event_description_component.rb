@@ -12,7 +12,9 @@ class EventDescriptionComponent < ViewComponent::Base
   SUBCLASSES = {
     "feed_refresh" => "FeedRefreshDescriptionComponent",
     "feed_auto_disabled" => "FeedAutoDisabledDescriptionComponent",
-    "feed_target_group_unavailable" => "FeedTargetGroupUnavailableDescriptionComponent"
+    "feed_target_group_unavailable" => "FeedTargetGroupUnavailableDescriptionComponent",
+    "feed_ai_credential_removed" => "FeedCredentialRemovedDescriptionComponent",
+    "feed_search_credential_removed" => "FeedCredentialRemovedDescriptionComponent"
   }.freeze
 
   def self.for(event)
