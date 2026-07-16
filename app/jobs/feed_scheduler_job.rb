@@ -2,7 +2,7 @@ class FeedSchedulerJob < ApplicationJob
   queue_as :default
 
   def perform
-    Feed.due.find_each do |feed|
+    Feed.due.includes(:feed_schedule).find_each do |feed|
       FeedRefreshJob.perform_later(feed.id) if refresh?(feed)
     end
   end
@@ -12,15 +12,7 @@ class FeedSchedulerJob < ApplicationJob
   def refresh?(feed)
     return false unless feed.scheduled?
 
-    schedule = feed.feed_schedule
-
-    if schedule
-      updated_records_count = update_existing_schedule(schedule)
-      updated_records_count == 1
-    else
-      create_initial_schedule(feed)
-      true
-    end
+    update_existing_schedule(feed.feed_schedule) == 1
   end
 
   def update_existing_schedule(schedule)
@@ -30,14 +22,6 @@ class FeedSchedulerJob < ApplicationJob
         next_run_at: schedule.calculate_next_run_at,
         last_run_at: current_time
       )
-  end
-
-  def create_initial_schedule(feed)
-    FeedSchedule.create!(
-      feed: feed,
-      next_run_at: current_time,
-      last_run_at: current_time
-    )
   end
 
   def current_time
