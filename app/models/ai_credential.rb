@@ -4,6 +4,7 @@
 # encrypted at rest.
 class AiCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
+  REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
 
   belongs_to :user
   # `dependent` is handled manually by `disable_dependent_feeds` so we can
@@ -103,15 +104,23 @@ class AiCredential < ApplicationRecord
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
-  # Mirrors AccessToken#disable_associated_feeds: drop the credential
-  # reference and pull any feed left without a usable credential out of
-  # the enabled state. The feeds.user_id is already set, so we don't
-  # have to touch other ownership fields.
+  # Detach this credential from every dependent feed. Enabled feeds are disabled;
+  # drafts and already-disabled feeds keep their state. Every feed gets its own
+  # user-visible event explaining the removal and whether it caused the disable.
   def disable_dependent_feeds
-    affected_feed_ids = feeds.pluck(:id)
-    return if affected_feed_ids.empty?
+    feeds.find_each do |feed|
+      disabled = feed.enabled?
+      attributes = { ai_credential_id: nil }
+      attributes[:state] = Feed.states[:disabled] if disabled
 
-    Feed.where(id: affected_feed_ids).update_all(ai_credential_id: nil)
-    Feed.where(id: affected_feed_ids, state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
+      feed.update_columns(attributes)
+      Event.create!(
+        type: REMOVED_EVENT_TYPE,
+        level: :warning,
+        subject: feed,
+        user: user,
+        metadata: { disabled: disabled }
+      )
+    end
   end
 end
