@@ -25,6 +25,10 @@ class UserStats
     @feeds_disabled_count ||= user.feeds.count(&:disabled?)
   end
 
+  def feeds_draft_count
+    @feeds_draft_count ||= user.feeds.count(&:draft?)
+  end
+
   def access_tokens_count
     @access_tokens_count ||= user.access_tokens.size
   end
