@@ -173,9 +173,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def target_group_url
-    return unless feed.access_token && feed.target_group.present?
-
-    "#{feed.access_token.host}/#{feed.target_group}"
+    feed.target_group_url
   end
 
   def owner
@@ -187,15 +185,29 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def last_refreshed_tag
-    return "Never" unless feed.last_refreshed_at
+    refreshed_at = listing_last_refreshed_at
+    return "Never" unless refreshed_at
 
-    helpers.short_time_ago_tag(feed.last_refreshed_at)
+    helpers.short_time_ago_tag(refreshed_at)
   end
 
   def most_recent_post_tag
-    return "None" unless feed.most_recent_post_date
+    published_at = listing_most_recent_post_date
+    return "None" unless published_at
 
-    helpers.short_time_ago_tag(feed.most_recent_post_date)
+    helpers.short_time_ago_tag(published_at)
+  end
+
+  def listing_last_refreshed_at
+    return feed[:listing_last_refreshed_at] if feed.has_attribute?(:listing_last_refreshed_at)
+
+    feed.last_refreshed_at
+  end
+
+  def listing_most_recent_post_date
+    return feed[:listing_most_recent_post_date] if feed.has_attribute?(:listing_most_recent_post_date)
+
+    feed.most_recent_post_date
   end
 
   def published_posts_count_tag
