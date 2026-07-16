@@ -25,12 +25,14 @@ class Admin::UserStatisticsComponentTest < ViewComponent::TestCase
 
   test "#call should summarize feed counts with a breakdown" do
     create(:feed, :enabled, user: user)
+    create(:feed, :draft, user: user)
     result = render_component
 
     feeds = result.css('[data-key="stats.feeds.value"]').first
     assert_not_nil feeds
     assert_includes feeds.text, "total"
     assert_includes feeds.text, "enabled"
+    assert_includes feeds.text, "draft"
   end
 
   test "#call should show No posts yet when there are none" do
