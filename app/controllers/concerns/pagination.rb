@@ -20,7 +20,7 @@ module Pagination
   end
 
   def pagination_total_count
-    @pagination_total_count ||= pagination_scope.count
+    @pagination_total_count ||= pagination_scope.unscope(:select, :order).count
   end
 
   def pagination_total_pages
