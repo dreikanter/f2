@@ -1,6 +1,7 @@
 # Stores a user's API credential for a web search provider.
 class SearchCredential < ApplicationRecord
   DISPLAY_NAME_MAX_LENGTH = 80
+  REMOVED_EVENT_TYPE = "feed_search_credential_removed"
 
   belongs_to :user
   has_many :feeds
@@ -80,11 +81,21 @@ class SearchCredential < ApplicationRecord
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
+  # Detach this credential from every dependent feed. Enabled feeds reuse the
+  # feed's generic disable-and-event transition; drafts and already-disabled
+  # feeds keep their state and receive a removal-only event.
   def disable_dependent_feeds
-    affected_feed_ids = feeds.pluck(:id)
-    return if affected_feed_ids.empty?
+    feeds.find_each do |feed|
+      feed.update_column(:search_credential_id, nil)
+      next if feed.enabled? && feed.disable_with_event!(REMOVED_EVENT_TYPE, { disabled: true })
 
-    Feed.where(id: affected_feed_ids).update_all(search_credential_id: nil)
-    Feed.where(id: affected_feed_ids, state: Feed.states[:enabled]).update_all(state: Feed.states[:disabled])
+      Event.create!(
+        type: REMOVED_EVENT_TYPE,
+        level: :warning,
+        subject: feed,
+        user: user,
+        metadata: { disabled: false }
+      )
+    end
   end
 end
