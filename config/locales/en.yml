@@ -48,6 +48,14 @@ en:
     feed_ai_model_unavailable:
       name: "AI model unavailable"
       description_html: "%{subject_link}'s AI model is no longer available, so it's running on a fallback for now — pick a new model to keep it accurate."
+    feed_ai_credential_removed:
+      name: "AI credentials removed"
+      description_html: "%{subject_link}'s AI credentials were removed"
+      disabled_description_html: "%{subject_link} was disabled because its AI credentials were removed"
+    feed_search_credential_removed:
+      name: "Search credentials removed"
+      description_html: "%{subject_link}'s search credentials were removed"
+      disabled_description_html: "%{subject_link} was disabled because its search credentials were removed"
     feed_refresh:
       name: "Feed refreshed"
       description_html: "%{subject_link} refreshed"
