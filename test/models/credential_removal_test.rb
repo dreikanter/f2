@@ -5,6 +5,15 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     @user ||= create(:user)
   end
 
+  test "#disable_with_event! is public and short-circuits for disabled feeds" do
+    feed = create(:feed, :disabled, user: user)
+
+    assert_respond_to feed, :disable_with_event!
+    assert_no_difference("Event.count") do
+      assert_equal false, feed.disable_with_event!("test_disable", {})
+    end
+  end
+
   test "destroying an AI credential detaches every feed, disables enabled feeds, and records per-feed events" do
     credential = create(:ai_credential, user: user)
     draft_feed = create(:feed, :draft, user: user, ai_credential: credential)
