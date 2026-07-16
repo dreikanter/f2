@@ -52,6 +52,14 @@ class UserStatsTest < ActiveSupport::TestCase
     assert_equal 2, UserStats.new(user).feeds_disabled_count
   end
 
+  test "#feeds_draft_count should return count of draft feeds" do
+    create(:feed, :draft, user: user)
+    create(:feed, :draft, user: user)
+    create(:feed, :disabled, user: user)
+
+    assert_equal 2, UserStats.new(user).feeds_draft_count
+  end
+
   test "#access_tokens_count should return total number of access tokens" do
     create(:access_token, user: user, status: :active)
     create(:access_token, user: user, status: :inactive)
