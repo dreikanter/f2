@@ -104,12 +104,24 @@
           "expr": [
             "feeder_posts_count{status=\"enqueued\"}",
             "feeder_jobs_ready",
+            "feeder_feed_refresh_jobs_ready",
             "feeder_jobs_failed"
           ],
           "alias": [
             "enqueued posts",
             "ready jobs",
+            "ready feed refreshes",
             "failed jobs"
+          ]
+        },
+        {
+          "title": "Oldest feed refresh wait",
+          "unit": "s",
+          "expr": [
+            "feeder_feed_refresh_oldest_ready_age_seconds"
+          ],
+          "alias": [
+            "queue age"
           ]
         },
         {
