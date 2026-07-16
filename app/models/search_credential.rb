@@ -81,22 +81,20 @@ class SearchCredential < ApplicationRecord
     errors.add(:base, "Enter your API key") if credential_data.blank? || credential_data["api_key"].blank?
   end
 
-  # Detach this credential from every dependent feed. Enabled feeds are disabled;
-  # drafts and already-disabled feeds keep their state. Every feed gets its own
-  # user-visible event explaining the removal and whether it caused the disable.
+  # Detach this credential from every dependent feed. Enabled feeds reuse the
+  # feed's generic disable-and-event transition; drafts and already-disabled
+  # feeds keep their state and receive a removal-only event.
   def disable_dependent_feeds
     feeds.find_each do |feed|
-      disabled = feed.enabled?
-      attributes = { search_credential_id: nil }
-      attributes[:state] = Feed.states[:disabled] if disabled
+      feed.update_column(:search_credential_id, nil)
+      next if feed.enabled? && feed.disable_with_event!(REMOVED_EVENT_TYPE, { disabled: true })
 
-      feed.update_columns(attributes)
       Event.create!(
         type: REMOVED_EVENT_TYPE,
         level: :warning,
         subject: feed,
         user: user,
-        metadata: { disabled: disabled }
+        metadata: { disabled: false }
       )
     end
   end
