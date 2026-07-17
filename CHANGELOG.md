@@ -58,7 +58,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI feeds are steadier and safer: they now treat the pages they read as data rather than instructions to follow, and won't invent posts when a source turns up nothing — an empty check just brings in nothing.
 - A daily AI digest feed no longer wastes AI calls re-checking within the same day — once its digest is in, extra scheduled runs are skipped until the next day. Hitting Refresh yourself still runs it right away.
-- AI feeds can follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
+- AI feeds can now follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
 - AI feeds are steadier about not repeating or dropping posts: a link that only differs by `http`/`https`, `www`, or a port no longer counts as a new post, and posts with non-Latin links (like Cyrillic) come through instead of quietly disappearing.
 - AI-powered previews now get more time to finish — up to about four minutes, since they browse the web — so a slow one no longer gets cut off early, and the progress note says what's happening. A preview that does time out now stays timed out instead of quietly flipping to done after you've moved on.
 
@@ -73,11 +73,11 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-05
 
 - Added Moonshot (Kimi) as an AI provider — a lower-cost option you can connect with your own API key.
-- Paste a bare address like `example.com` and we'll treat it as a link and check for a feed. When a link has no standard feed, you can choose to follow it with AI instead.
-- New feeds start with a clear choice: follow a feed or channel by its link, or follow with AI by describing a source or topic in your own words.
+- Paste a bare address like `example.com` and we'll treat it as a link and check it for a feed. When a link has no standard feed, you can now choose to follow it with AI instead.
+- New feeds now start with a clear choice: follow a feed or channel by its link, or follow with AI by describing a source or topic in your own words.
 - When a link can't be followed, the next step is clearer: retry if it just couldn't be reached, or follow it with AI (or try a different link) when there's no feed to read.
 - The "how should we fetch posts?" step is tidier: it only asks you to choose when more than one way actually works, and a single working option is just shown to you.
-- Creating an AI feed lets you tweak the prompt before saving, and checks for new posts once a day by default.
+- Creating an AI feed now lets you tweak the prompt before saving, and it checks for new posts once a day by default.
 - You can keep editing an AI feed's prompt while it's still a draft, not just when you first create it.
 
 ## 2026-07-03
