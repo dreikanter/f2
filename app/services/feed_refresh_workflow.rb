@@ -257,7 +257,8 @@ class FeedRefreshWorkflow
           .merge(created_at: current_time, updated_at: current_time)
     end
 
-    Post.insert_all(posts_data) if posts_data.any?
+    Post.insert_all(posts_data)
+    feed.update_column(:imported_posts_count, feed.posts.count)
 
     new_uids = posts.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
