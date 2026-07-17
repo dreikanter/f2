@@ -24,7 +24,7 @@ class PublicationSchedulerJob < ApplicationJob
 
   def feeds_with_unfinished_posts
     Post.where(status: :enqueued)
-        .or(Post.where(id: PostPublication.select(:post_id)))
+        .or(Post.where(status: :published, id: PostPublication.select(:post_id)))
         .select(:feed_id)
         .distinct
   end
