@@ -43,9 +43,24 @@ class FreefeedPublisher
     validate_post!
   end
 
-  # Publish or resume the post's sequential FreeFeed publication.
+  # Start a new publication. An already-created remote post remains idempotent;
+  # interrupted publication is resumed explicitly by PostPublishJob#publish.
   # @return [String] the FreeFeed post ID
   def publish
+    return post.freefeed_post_id if already_published?
+
+    continue_publication
+  end
+
+  # Resume an existing durable publication checkpoint.
+  # @return [String] the FreeFeed post ID
+  def resume
+    continue_publication
+  end
+
+  private
+
+  def continue_publication
     publication
 
     unless already_published?
@@ -60,8 +75,6 @@ class FreefeedPublisher
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
   end
-
-  private
 
   def publication
     @publication ||= post.post_publication || post.create_post_publication!
