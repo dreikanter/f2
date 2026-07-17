@@ -56,6 +56,7 @@ class Post < ApplicationRecord
   after_destroy :recount_imported_posts
   after_destroy :recount_published_posts, if: :published?
   after_update :recount_published_posts, if: :saved_change_to_status?
+  after_update :discard_publication_checkpoint, if: :publication_no_longer_active?
 
   def freefeed_url
     group_url = feed&.target_group_url
@@ -79,6 +80,14 @@ class Post < ApplicationRecord
   end
 
   private
+
+  def publication_no_longer_active?
+    saved_change_to_status? && !enqueued? && !published?
+  end
+
+  def discard_publication_checkpoint
+    post_publication&.destroy!
+  end
 
   def validate_comments_length
     return unless comments.is_a?(Array)
