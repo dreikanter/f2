@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_14_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_17_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -235,6 +235,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_14_120000) do
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["user_id", "name"], name: "index_permissions_on_user_id_and_name", unique: true
+  end
+
+  create_table "post_publications", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "post_id", null: false
+    t.integer "attachments_processed_count", default: 0, null: false
+    t.text "uploaded_attachment_ids", default: [], null: false, array: true
+    t.integer "comments_published_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_post_publications_on_post_id", unique: true
   end
 
   create_table "posts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -489,6 +499,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_14_120000) do
   add_foreign_key "llm_usages", "feeds"
   add_foreign_key "llm_usages", "users"
   add_foreign_key "permissions", "users"
+  add_foreign_key "post_publications", "posts", on_delete: :cascade
   add_foreign_key "posts", "feed_entries"
   add_foreign_key "posts", "feeds"
   add_foreign_key "search_credentials", "users"

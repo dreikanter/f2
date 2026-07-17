@@ -5,10 +5,13 @@ class FreefeedPublisher
   class Error < StandardError; end
   class ValidationError < Error; end
   class PublishError < Error; end
+  class CommentPublishError < PublishError; end
+
   # Source content couldn't be fetched (e.g. an attachment URL returns 404). An
   # expected external condition, not an app fault: the job fails the post and
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
+
   # The target group rejected the post (lost access, restricted, or deleted), but
   # the token still works — so the job disables only this feed, not the token.
   # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
@@ -40,37 +43,42 @@ class FreefeedPublisher
     validate_post!
   end
 
-  # Publish the post to FreeFeed
+  # Start a new publication. An already-created remote post remains idempotent;
+  # interrupted publication is resumed explicitly by PostPublishJob#publish.
   # @return [String] the FreeFeed post ID
   def publish
-    # Idempotency guard: if the post already has a FreeFeed id it was created on a
-    # previous run, so skip it. This is what stops a 429 raised *after* the post
-    # was created (e.g. on a comment) from re-creating the post when the job retries.
     return post.freefeed_post_id if already_published?
 
-    attachment_ids = upload_attachments
-    freefeed_post = create_freefeed_post(attachment_ids)
-    freefeed_post_id = freefeed_post[:id]
+    continue_publication
+  end
 
-    # Persist the id (marking the post published) before comments, so a retry
-    # can't re-create the post. Comments are best-effort: a 429 on a comment
-    # leaves the post published and drops the rest — predictable, never
-    # duplicated, possibly incomplete. (A non-throttle comment error fails the
-    # post instead; see PostPublishJob.) Accepted for now; atomic/resumable
-    # publishing is the real fix (revisit). Reserving the whole cost up front
-    # (the POST-burst cap) keeps our own limiter from throttling mid-publish, so
-    # only a rare server 429 reaches here.
-    update_post_with_freefeed_id(freefeed_post_id)
-    create_comments(freefeed_post_id)
+  # Resume an existing durable publication checkpoint.
+  # @return [String] the FreeFeed post ID
+  def resume
+    continue_publication
+  end
 
-    freefeed_post_id
+  private
+
+  def continue_publication
+    publication
+
+    unless already_published?
+      attachment_ids = upload_pending_attachments
+      freefeed_post = create_freefeed_post(attachment_ids)
+      update_post_with_freefeed_id(freefeed_post[:id])
+    end
+
+    publish_pending_comments
   rescue FreefeedClient::UnauthorizedError
     raise # propagate so the workflow can disable the token and related feeds
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
   end
 
-  private
+  def publication
+    @publication ||= post.post_publication || post.create_post_publication!
+  end
 
   def validate_post!
     raise ValidationError, "Post is required" unless post
@@ -89,12 +97,21 @@ class FreefeedPublisher
     post.freefeed_post_id.present?
   end
 
-  def upload_attachments
-    return [] if post.attachment_urls.blank?
+  def upload_pending_attachments
+    post.attachment_urls.drop(publication.attachments_processed_count).each do |url|
+      attachment_id = upload_attachment(url)
+      attachment_ids = publication.uploaded_attachment_ids.dup
+      attachment_ids << attachment_id if attachment_id
 
-    post.attachment_urls.filter_map { |url| upload_attachment(url) }
+      publication.update!(
+        attachments_processed_count: publication.attachments_processed_count + 1,
+        uploaded_attachment_ids: attachment_ids
+      )
+    end
+
+    publication.uploaded_attachment_ids
   rescue RateLimit::Throttled
-    raise # let the job reschedule; don't bury it as a publish failure
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue FileBuffer::Error => e
@@ -137,23 +154,29 @@ class FreefeedPublisher
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
   end
 
-  def create_comments(freefeed_post_id)
-    return if post.comments.blank?
+  def publish_pending_comments
+    comments = post.comments.filter_map(&:presence)
 
-    post.comments.each do |comment_text|
-      next if comment_text.blank?
-
-      client.create_comment(
-        post_id: freefeed_post_id,
-        body: Post.clamp_comment(comment_text)
-      )
+    comments.drop(publication.comments_published_count).each do |comment_text|
+      create_comment(comment_text)
+      publication.increment!(:comments_published_count)
     end
+
+    publication.destroy!
+    post.freefeed_post_id
   rescue RateLimit::Throttled
     raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
-    raise PublishError, "Failed to create comments: #{e.message}"
+    raise CommentPublishError, "Failed to create comments: #{e.message}"
+  end
+
+  def create_comment(comment_text)
+    client.create_comment(
+      post_id: post.freefeed_post_id,
+      body: Post.clamp_comment(comment_text)
+    )
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)

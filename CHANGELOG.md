@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-17
+
+- If FreeFeed temporarily rate-limits a post comment, publishing now pauses and resumes from that comment later without duplicating the post or earlier comments. Other comment errors keep the post published, continue the feed, and appear in Recent Activity.
+
 ## 2026-07-15
 
 - The Admin Panel now shows app-wide stats — users, feeds, imported and published posts — along with a publishing activity heatmap.
