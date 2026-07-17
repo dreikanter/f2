@@ -1,7 +1,7 @@
 class Admin::AvailableInvitesController < ApplicationController
   def update
     user = User.find(params[:user_id])
-    authorize user
+    authorize user, :update_available_invites?
 
     if user.update(available_invites_params)
       flash.now[:success] = "Available invites updated successfully."

@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-17
+
+- Fixed a security hole where non-admins could grant themselves invites or change their email through admin-only actions.
+
 ## 2026-07-15
 
 - The Admin Panel now shows app-wide stats — users, feeds, imported and published posts — along with a publishing activity heatmap.

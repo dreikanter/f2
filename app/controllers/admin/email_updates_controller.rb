@@ -1,12 +1,12 @@
 class Admin::EmailUpdatesController < ApplicationController
   def edit
     @user = User.find(params[:user_id])
-    authorize @user, :update?
+    authorize @user, :update_email?
   end
 
   def update
     user = User.find(params[:user_id])
-    authorize user, :update?
+    authorize user, :update_email?
 
     if new_email.blank?
       redirect_to edit_admin_user_email_update_path(user), alert: "Email address cannot be blank."

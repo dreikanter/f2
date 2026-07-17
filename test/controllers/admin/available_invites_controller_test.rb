@@ -68,29 +68,21 @@ class Admin::AvailableInvitesControllerTest < ActionDispatch::IntegrationTest
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    # Should get unauthorized since regular_user is trying to update target_user
-    # But due to UserPolicy#update? allowing self_or_admin?, this currently fails
-    # For now, expect success since regular_user can see the form but can't actually update another user
-    # In production, admins control who has available invites, regular users shouldn't access admin namespace
     assert_response :redirect
+
+    target_user.reload
+    assert_equal 3, target_user.available_invites
   end
 
-  test "should allow user to update own available invites if they navigate to their own admin page" do
+  test "should not allow user to update their own available invites" do
     sign_in_as target_user
     patch admin_user_available_invites_url(target_user), params: {
       user: { available_invites: 10 }
     }
-    assert_response :success
-    assert_equal "text/vnd.turbo-stream.html", response.media_type
-    assert_select "turbo-stream[action='replace'][target='available-invites-value']"
-    assert_select "turbo-stream[action='replace'][target='available-invites-input-wrapper-#{target_user.id}']"
-    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
-      assert_select "div[id='flash-messages']"
-      assert_select ".bg-success-subtle", text: /Available invites updated successfully/
-    end
+    assert_response :redirect
 
     target_user.reload
-    assert_equal 10, target_user.available_invites
+    assert_equal 3, target_user.available_invites
   end
 
   test "should require authentication" do
