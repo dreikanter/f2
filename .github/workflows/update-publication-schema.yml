@@ -40,7 +40,7 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:create db:migrate
+        run: bin/rails db:create db:migrate db:schema:dump
 
       - name: Commit schema
         run: |
