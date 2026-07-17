@@ -39,14 +39,15 @@ jobs:
       - name: Regenerate schema
         env:
           RAILS_ENV: test
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:create db:migrate db:schema:dump
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/f2_schema_test
+        run: |
+          bin/rails db:create db:migrate db:schema:dump
+          cp db/schema.rb generated_schema.rb
 
-      - name: Commit schema
+      - name: Commit generated schema
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add db/schema.rb
-          git diff --cached --quiet && exit 0
+          git add db/schema.rb generated_schema.rb
           git commit -m "Regenerate publication schema"
           git push origin HEAD:${{ github.head_ref }}
