@@ -19,6 +19,16 @@ class PublicationSchedulerJobTest < ActiveJob::TestCase
     end
   end
 
+  test ".perform_now should ignore terminal posts with stale checkpoints" do
+    feed = create(:feed, :enabled)
+    post = create(:post, :withdrawn, feed: feed)
+    PostPublication.create!(post: post)
+
+    assert_no_enqueued_jobs(only: PostPublishJob) do
+      PublicationSchedulerJob.perform_now
+    end
+  end
+
   test ".perform_now should skip feeds whose publish chain is already running" do
     feed = create(:feed, :enabled)
     create(:post, :enqueued, feed: feed)
