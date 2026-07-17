@@ -5,10 +5,14 @@ class FreefeedPublisher
   class Error < StandardError; end
   class ValidationError < Error; end
   class PublishError < Error; end
+  class CommentPublishError < PublishError; end
+  class CommentThrottled < RateLimit::Throttled; end
+
   # Source content couldn't be fetched (e.g. an attachment URL returns 404). An
   # expected external condition, not an app fault: the job fails the post and
   # moves on without paging error tracking. See PostPublishJob.
   class SourceContentError < PublishError; end
+
   # The target group rejected the post (lost access, restricted, or deleted), but
   # the token still works — so the job disables only this feed, not the token.
   # #reason is a deterministic, UI-safe code (POSTING_DENIED/GROUP_NOT_FOUND);
@@ -44,30 +48,42 @@ class FreefeedPublisher
   # @return [String] the FreeFeed post ID
   def publish
     # Idempotency guard: if the post already has a FreeFeed id it was created on a
-    # previous run, so skip it. This is what stops a 429 raised *after* the post
-    # was created (e.g. on a comment) from re-creating the post when the job retries.
+    # previous run, so skip it. Pending comments are resumed explicitly by the job.
     return post.freefeed_post_id if already_published?
 
     attachment_ids = upload_attachments
     freefeed_post = create_freefeed_post(attachment_ids)
     freefeed_post_id = freefeed_post[:id]
 
-    # Persist the id (marking the post published) before comments, so a retry
-    # can't re-create the post. Comments are best-effort: a 429 on a comment
-    # leaves the post published and drops the rest — predictable, never
-    # duplicated, possibly incomplete. (A non-throttle comment error fails the
-    # post instead; see PostPublishJob.) Accepted for now; atomic/resumable
-    # publishing is the real fix (revisit). Reserving the whole cost up front
-    # (the POST-burst cap) keeps our own limiter from throttling mid-publish, so
-    # only a rare server 429 reaches here.
+    # Persist the id before comments so a retry can never re-create the post.
+    # next_comment_index is a durable cursor: a server 429 leaves it at the
+    # interrupted comment, and the publication queue resumes there later.
     update_post_with_freefeed_id(freefeed_post_id)
-    create_comments(freefeed_post_id)
+    publish_pending_comments
 
     freefeed_post_id
   rescue FreefeedClient::UnauthorizedError
     raise # propagate so the workflow can disable the token and related feeds
   rescue FreefeedClient::Error => e
     raise PublishError, "Failed to publish to FreeFeed: #{e.message}"
+  end
+
+  def publish_pending_comments
+    return post.freefeed_post_id if post.next_comment_index.nil?
+
+    post.comments.each_with_index.drop(post.next_comment_index).each do |comment_text, index|
+      create_comment(comment_text) if comment_text.present?
+      post.update_column(:next_comment_index, index + 1)
+    end
+
+    post.update_column(:next_comment_index, nil)
+    post.freefeed_post_id
+  rescue RateLimit::Throttled => e
+    raise CommentThrottled.new(retry_after: e.retry_after)
+  rescue FreefeedClient::UnauthorizedError
+    raise
+  rescue => e
+    raise CommentPublishError, "Failed to create comments: #{e.message}"
   end
 
   private
@@ -137,27 +153,20 @@ class FreefeedPublisher
     raise PublishError, "Failed to create FreeFeed post: #{e.message}"
   end
 
-  def create_comments(freefeed_post_id)
-    return if post.comments.blank?
-
-    post.comments.each do |comment_text|
-      next if comment_text.blank?
-
-      client.create_comment(
-        post_id: freefeed_post_id,
-        body: Post.clamp_comment(comment_text)
-      )
-    end
-  rescue RateLimit::Throttled
-    raise
-  rescue FreefeedClient::UnauthorizedError
-    raise
-  rescue => e
-    raise PublishError, "Failed to create comments: #{e.message}"
+  def create_comment(comment_text)
+    client.create_comment(
+      post_id: post.freefeed_post_id,
+      body: Post.clamp_comment(comment_text)
+    )
   end
 
   def update_post_with_freefeed_id(freefeed_post_id)
-    post.update!(freefeed_post_id: freefeed_post_id, status: :published, reposted_at: Time.current)
+    post.update!(
+      freefeed_post_id: freefeed_post_id,
+      status: :published,
+      reposted_at: Time.current,
+      next_comment_index: post.comments.any?(&:present?) ? 0 : nil
+    )
   rescue => e
     raise PublishError, "Failed to update post status: #{e.message}"
   end
