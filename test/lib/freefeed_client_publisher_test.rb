@@ -232,9 +232,10 @@ class FreefeedClientPublisherTest < ActiveSupport::TestCase
     stub_request(:post, "#{@host}/v4/posts")
       .to_return(status: 201, body: "invalid json")
 
-    assert_raises(FreefeedClient::Error, /Invalid JSON response/) do
+    error = assert_raises(FreefeedClient::Error) do
       @client.create_post(body: "Test", feeds: ["testgroup"])
     end
+    assert_match(/Invalid JSON response/, error.message)
   end
 
   test "handles missing required fields in response" do

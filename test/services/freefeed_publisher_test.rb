@@ -453,9 +453,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     service = FreefeedPublisher.new(post)
 
-    assert_raises(FreefeedPublisher::PublishError, /Failed to publish to FreeFeed/) do
+    error = assert_raises(FreefeedPublisher::PublishError) do
       service.publish
     end
+    assert_match(/Failed to create FreeFeed post: HTTP 500/, error.message)
   end
 
   test "#publish should raise error when attachment upload fails" do
@@ -463,9 +464,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     service = FreefeedPublisher.new(post)
 
-    assert_raises(FreefeedPublisher::PublishError, /Failed to upload attachments/) do
+    error = assert_raises(FreefeedPublisher::PublishError) do
       service.publish
     end
+    assert_match(/Failed to upload attachments/, error.message)
   end
 
   test "#publish should truncate an over-long comment before sending it to FreeFeed" do
@@ -514,9 +516,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     service = FreefeedPublisher.new(post)
 
-    assert_raises(FreefeedPublisher::PublishError, /Failed to create comments/) do
+    error = assert_raises(FreefeedPublisher::PublishError) do
       service.publish
     end
+    assert_match(/Failed to create comments/, error.message)
   end
 
   test "#publish should download remote image attachment to memory" do
@@ -577,9 +580,10 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     service = FreefeedPublisher.new(post)
 
-    assert_raises(FreefeedPublisher::PublishError, /Failed to download attachment from #{Regexp.escape(image_url)}/) do
+    error = assert_raises(FreefeedPublisher::PublishError) do
       service.publish
     end
+    assert_match(/Failed to download attachment from #{Regexp.escape(image_url)}/, error.message)
   end
 
   test "#publish should skip an attachment rejected as too large and publish with the rest" do
@@ -714,8 +718,9 @@ class FreefeedPublisherTest < ActiveSupport::TestCase
 
     service = FreefeedPublisher.new(post)
 
-    assert_raises(FreefeedPublisher::PublishError, /Failed to download attachment from #{Regexp.escape(image_url)}: Request timed out/) do
+    error = assert_raises(FreefeedPublisher::PublishError) do
       service.publish
     end
+    assert_match(/Failed to download attachment from #{Regexp.escape(image_url)}: Request timed out/, error.message)
   end
 end
