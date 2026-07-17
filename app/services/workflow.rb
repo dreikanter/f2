@@ -48,10 +48,9 @@ module Workflow
 
   def execute(initial_input = nil)
     workflow_start_time = Time.current
-    steps = self.class.workflow_steps
     current_input = initial_input
 
-    steps.each do |step_name|
+    self.class.workflow_steps.each do |step_name|
       @current_step = step_name
       start_step_timer(step_name)
 
@@ -59,20 +58,23 @@ module Workflow
         logger.info "#{self.class.name}: Starting step: #{step_name}"
         before_step(current_input)
         current_input = send(step_name, current_input)
+        end_step_timer(step_name)
         after_step(current_input)
         logger.info "#{self.class.name}: Completed step: #{step_name}"
       rescue HaltExecution
+        end_step_timer(step_name)
+        record_total_duration(workflow_start_time)
         logger.info "#{self.class.name}: Halted at step: #{step_name}"
         return nil
       rescue => e
+        end_step_timer(step_name)
+        record_total_duration(workflow_start_time)
         on_error(e)
         raise
       end
-
-      end_step_timer(step_name)
     end
 
-    @total_duration = Time.current - workflow_start_time
+    record_total_duration(workflow_start_time)
     current_input
   end
 
@@ -114,6 +116,10 @@ module Workflow
     duration = Time.current - start_time
     step_durations[step_name] = duration
     duration
+  end
+
+  def record_total_duration(start_time)
+    @total_duration = Time.current - start_time
   end
 
   def step_timers
