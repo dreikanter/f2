@@ -33,7 +33,7 @@ class PostPublishJob < ApplicationJob
   private
 
   def publish_next(feed)
-    post = feed.posts.where.not(next_comment_index: nil).order(:published_at, :id).first
+    post = feed.posts.joins(:post_publication).order(:published_at, :id).first
     post ||= feed.posts.enqueued.order(:published_at, :id).first
     return unless post
 
@@ -48,18 +48,17 @@ class PostPublishJob < ApplicationJob
     result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
-    publisher = FreefeedPublisher.new(post)
-    post.next_comment_index.nil? ? publisher.publish : publisher.publish_pending_comments
+    FreefeedPublisher.new(post).publish
     count_published(post) unless was_published
     schedule_next(feed)
   rescue RateLimit::Throttled => e
     count_published(post) unless was_published
 
-    if post.next_comment_index
-      # A remote post with an interrupted comment stays at the front of the feed.
-      # Stop this chain; the recurring watchdog restarts it after the cooldown.
+    if post.reload.post_publication
+      # A durable checkpoint keeps this post at the front of the feed. Stop this
+      # chain; the recurring watchdog restarts it after the provider cooldown.
       @rate_limited = true
-      Rails.logger.info "Comment publishing paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
+      Rails.logger.info "Publication paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
     else
       reschedule_for_rate_limit(e.retry_after)
     end
@@ -75,7 +74,7 @@ class PostPublishJob < ApplicationJob
     count_published(post) unless was_published
     record_comment_failure(feed, post, e)
   rescue FreefeedPublisher::SourceContentError => e
-    # Source content is gone (e.g. an attachment 404s). Expected external
+    # Source content is gone (e.g. an attachment URL returns 404). Expected external
     # condition: fail the post and move on, but don't page error tracking.
     fail_post(feed, post, e)
   rescue => e
@@ -86,7 +85,7 @@ class PostPublishJob < ApplicationJob
   # The post exists remotely, so comment delivery failure must not rewrite its
   # publication state. Record a user-visible error and continue with the queue.
   def record_comment_failure(feed, post, error)
-    post.update_column(:next_comment_index, nil)
+    post.post_publication&.destroy!
     Event.create!(
       type: "feed_post_comments_failed",
       level: :error,
@@ -103,6 +102,7 @@ class PostPublishJob < ApplicationJob
   # Mark a post failed and advance the chain. Reports to error tracking only for
   # unexpected faults; expected external failures are logged and skipped.
   def fail_post(feed, post, error, report: false)
+    post.post_publication&.destroy!
     post.update!(status: :failed)
     Metrics.increment("posts_published_total", status: "failed")
     Rails.logger.error "Failed to publish post #{post.id}: #{error.message}"
@@ -110,14 +110,16 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  # Every POST still required for this publication. A post whose remote copy
-  # already exists reserves capacity only for its remaining comments.
+  # Every FreeFeed POST still required by this sequential publication.
   def post_cost(post)
-    if post.next_comment_index
-      post.comments.drop(post.next_comment_index).count(&:present?)
-    else
-      1 + post.comments.count(&:present?) + post.attachment_urls.size
-    end
+    publication = post.post_publication
+    return 1 + post.comments.count(&:present?) + post.attachment_urls.size unless publication
+
+    remaining_attachments = post.attachment_urls.size - publication.attachments_processed_count
+    remaining_comments = post.comments.count(&:present?) - publication.comments_published_count
+    remote_post = post.freefeed_post_id.present? ? 0 : 1
+
+    remote_post + [remaining_attachments, 0].max + [remaining_comments, 0].max
   end
 
   def within_capacity?(posts)
@@ -128,6 +130,7 @@ class PostPublishJob < ApplicationJob
   # A post needing more POSTs than the bucket can ever hold would throttle
   # forever and block the queue, so fail it and move on.
   def reject_oversized(feed, post, posts)
+    post.post_publication&.destroy!
     post.update!(status: :failed)
     Metrics.increment("posts_published_total", status: "rejected")
     Rails.logger.error "Post #{post.id} needs #{posts} POSTs, over the FreeFeed limit; marking failed"
