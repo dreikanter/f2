@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-17
 
 - Fixed a security hole where non-admins could grant themselves invites or change their email through admin-only actions.
+- If FreeFeed temporarily rate-limits a post comment, publishing now pauses and resumes from that comment later without duplicating the post or earlier comments. Other comment errors keep the post published, continue the feed, and appear in Recent Activity.
 
 ## 2026-07-15
 
