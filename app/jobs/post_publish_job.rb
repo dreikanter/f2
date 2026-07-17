@@ -33,7 +33,10 @@ class PostPublishJob < ApplicationJob
   private
 
   def publish_next(feed)
-    post = feed.posts.joins(:post_publication).order(:published_at, :id).first
+    post = feed.posts.where(status: %i[enqueued published])
+               .joins(:post_publication)
+               .order(:published_at, :id)
+               .first
     post ||= feed.posts.enqueued.order(:published_at, :id).first
     return unless post
 
