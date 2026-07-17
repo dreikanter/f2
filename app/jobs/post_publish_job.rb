@@ -53,10 +53,16 @@ class PostPublishJob < ApplicationJob
     count_published(post) unless was_published
     schedule_next(feed)
   rescue RateLimit::Throttled => e
-    # Leave any partial comment cursor intact and retry this feed after the
-    # provider's cooldown. Newer posts remain behind the interrupted one.
     count_published(post) unless was_published
-    reschedule_for_rate_limit(e.retry_after)
+
+    if post.next_comment_index
+      # A remote post with an interrupted comment stays at the front of the feed.
+      # Stop this chain; the recurring watchdog restarts it after the cooldown.
+      @rate_limited = true
+      Rails.logger.info "Comment publishing paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
+    else
+      reschedule_for_rate_limit(e.retry_after)
+    end
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
     feed.access_token&.disable_token_and_feeds
