@@ -13,6 +13,5 @@ class CreatePostPublications < ActiveRecord::Migration[8.2]
 
   def down
     drop_table :post_publications
-    add_column :posts, :next_comment_index, :integer unless column_exists?(:posts, :next_comment_index)
   end
 end
