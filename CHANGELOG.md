@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-17
+
+- Admins changing a user's email with confirmation required now correctly send the confirmation link to the new address.
+
 ## 2026-07-15
 
 - The Admin Panel now shows app-wide stats — users, feeds, imported and published posts — along with a publishing activity heatmap.
