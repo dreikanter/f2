@@ -18,6 +18,7 @@ class Admin::UserStatisticsComponent < ViewComponent::Base
     parts = ["#{@stats.feeds_count} total"]
     parts << "#{@stats.feeds_enabled_count} enabled" if @stats.feeds_enabled_count > 0
     parts << "#{@stats.feeds_disabled_count} disabled" if @stats.feeds_disabled_count > 0
+    parts << "#{@stats.feeds_draft_count} draft" if @stats.feeds_draft_count > 0
     summarize(parts)
   end
 
