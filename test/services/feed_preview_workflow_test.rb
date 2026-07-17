@@ -40,29 +40,23 @@ class FeedPreviewWorkflowTest < ActiveSupport::TestCase
       .to_return(status: 200, body: rss_body, headers: { "Content-Type" => "application/xml" })
   end
 
-  test "#initialize should assign feed_preview" do
+  test "#initialize should assign feed_preview and start with empty stats" do
     assert_equal feed_preview, workflow.feed_preview
     assert_equal({}, workflow.stats)
   end
 
-  test "#initialize should produce executable workflow" do
-    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "run-1")
-    assert_equal feed_preview, wf.feed_preview
-    assert_equal({}, wf.stats)
-    assert_respond_to wf, :execute
+  test "#initialize should prefer the given run_id over the feed_preview's" do
+    wf = FeedPreviewWorkflow.new(feed_preview, run_id: "explicit-run")
+    assert_equal "explicit-run", wf.send(:run_id)
   end
 
   test "#initialize should fall back to feed_preview.run_id when run_id is omitted" do
     wf = FeedPreviewWorkflow.new(feed_preview)
-    assert_respond_to wf, :execute
+    assert_equal feed_preview.run_id, wf.send(:run_id)
   end
 
   test ".included should mix in Workflow module" do
     assert_includes FeedPreviewWorkflow.included_modules, Workflow
-  end
-
-  test "#execute should be defined as workflow step" do
-    assert_respond_to workflow, :execute
   end
 
   test "#load_feed_contents should run the loader with the preview purpose" do
