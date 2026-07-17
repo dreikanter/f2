@@ -10,7 +10,7 @@ class Admin::EmailReactivationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin to reactivate user email" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     user.deactivate_email!(reason: "bounced")
 
@@ -27,7 +27,7 @@ class Admin::EmailReactivationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should prevent non-admin from reactivating user email" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     user = create(:user)
     user.deactivate_email!(reason: "bounced")
 
@@ -36,11 +36,5 @@ class Admin::EmailReactivationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
     user.reload
     assert user.email_deactivated?
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

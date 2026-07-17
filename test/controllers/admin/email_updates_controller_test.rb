@@ -10,7 +10,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from edit" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     user = create(:user)
 
     get edit_admin_user_email_update_path(user)
@@ -19,7 +19,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin users to view email update form" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
     get edit_admin_user_email_update_path(user)
@@ -30,7 +30,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update email for user without confirmation" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "old@example.com")
 
     patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" }, require_confirmation: "0" }
@@ -41,7 +41,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should send confirmation email when checkbox is checked" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "old@example.com")
 
     assert_enqueued_emails 1 do
@@ -54,7 +54,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject blank email" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
     patch admin_user_email_update_path(user), params: { user: { email_address: "" } }
@@ -65,7 +65,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject same email" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
     patch admin_user_email_update_path(user), params: { user: { email_address: "test@example.com" } }
@@ -75,7 +75,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject duplicate email" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     existing_user = create(:user, email_address: "existing@example.com")
     user = create(:user, email_address: "test@example.com")
 
@@ -84,11 +84,5 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to edit_admin_user_email_update_path(user)
     assert_equal "Email address is already taken.", flash[:alert]
     assert_equal "test@example.com", user.reload.email_address
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

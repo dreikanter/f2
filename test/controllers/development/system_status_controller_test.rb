@@ -10,7 +10,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-dev users" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     get development_system_status_path
 
@@ -25,7 +25,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show system status for dev users" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_system_status_path
 
@@ -33,7 +33,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show configuration checklist" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_system_status_path
 
@@ -50,7 +50,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
 
   test "should flag metrics push as healthy when METRICS_URL is set" do
     Metrics.stub(:enabled?, true) do
-      login_as(dev_user)
+      sign_in_as(dev_user)
 
       get development_system_status_path
     end
@@ -61,7 +61,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
 
   test "should flag metrics push as neutral when METRICS_URL is unset" do
     Metrics.stub(:enabled?, false) do
-      login_as(dev_user)
+      sign_in_as(dev_user)
 
       get development_system_status_path
     end
@@ -72,7 +72,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
 
   test "should flag background jobs as healthy when a process is heartbeating" do
     SolidQueue::Process.create!(kind: "Worker", name: "worker-test", pid: 999, last_heartbeat_at: Time.current)
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_system_status_path
 
@@ -82,7 +82,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
 
   test "should flag background jobs as a problem when no process is heartbeating" do
     SolidQueue::Process.delete_all
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_system_status_path
 
@@ -96,7 +96,7 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
       "APP_REVISION_SHORT" => "0123456",
       "APP_DEPLOYED_AT" => "2026-05-09T12:34:56Z"
     ) do
-      login_as(dev_user)
+      sign_in_as(dev_user)
 
       get development_system_status_path
     end
@@ -109,9 +109,6 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
-  end
 
   def with_release_env(values)
     previous_values = values.keys.index_with { |key| ENV.fetch(key, nil) }

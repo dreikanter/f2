@@ -16,7 +16,7 @@ class Development::TestEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should deny users without dev permission" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     post development_email_preview_test_email_path("passwords_mailer-reset")
 
@@ -24,7 +24,7 @@ class Development::TestEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should enqueue a test email to the current user and confirm" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     assert_enqueued_with(job: EmailPreviewTestJob, args: ["passwords_mailer-reset", dev_user.email_address]) do
       post development_email_preview_test_email_path("passwords_mailer-reset")
@@ -35,7 +35,7 @@ class Development::TestEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should redirect for an unknown email type" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     assert_no_enqueued_jobs do
       post development_email_preview_test_email_path("unknown-mailer")
@@ -43,11 +43,5 @@ class Development::TestEmailsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to development_email_previews_path
     assert_equal "Unknown email type.", flash[:alert]
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

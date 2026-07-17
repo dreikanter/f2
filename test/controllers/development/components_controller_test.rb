@@ -10,7 +10,7 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should render the UI elements reference" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_components_path
 
@@ -34,7 +34,7 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should require dev permission" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     get development_components_path
 
@@ -43,7 +43,7 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should associate checkbox and radio labels with their controls" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_components_path
 
@@ -60,7 +60,7 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should render the feed profile chooser states" do
-    login_as(dev_user)
+    sign_in_as(dev_user)
 
     get development_components_path
 
@@ -71,11 +71,5 @@ class Development::ComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="section.feed-profile-chooser"] input[type=radio][disabled]', count: 0
     assert_select '[data-key="section.feed-profile-chooser"] input[type=radio][checked]'
     assert_select '[data-key="section.feed-profile-chooser"] [data-key="candidate.suggested-badge"]'
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

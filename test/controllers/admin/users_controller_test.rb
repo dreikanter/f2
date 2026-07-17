@@ -10,7 +10,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from index" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     get admin_users_path
 
@@ -25,7 +25,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin users to view users index" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     other_user = create(:user, email_address: "other@example.com")
 
     get admin_users_path
@@ -36,7 +36,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin users to view user details" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
     get admin_user_path(user)
@@ -46,7 +46,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show active suspend button for other users" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     other_user = create(:user)
 
     get admin_user_path(other_user)
@@ -57,7 +57,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should disable suspend button for the current admin" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     get admin_user_path(admin_user)
 
@@ -67,7 +67,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show confirm email button for a user with a pending email" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, :inactive)
 
     get admin_user_path(user)
@@ -77,7 +77,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should confirm email behind a confirmation dialog" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, :inactive)
 
     get admin_user_path(user)
@@ -88,7 +88,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should disable confirm email button once the email is confirmed" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, state: :active)
 
     get admin_user_path(user)
@@ -100,7 +100,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from show" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     user = create(:user)
 
     get admin_user_path(user)
@@ -109,7 +109,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should paginate users" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     4.times { create(:user) }
 
@@ -121,7 +121,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display only total when feeds counts are zero" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
 
     get admin_user_path(user)
@@ -131,7 +131,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should hide zero enabled count" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:feed, user: user, state: :disabled)
 
@@ -143,7 +143,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should hide zero disabled count" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:feed, user: user, state: :enabled)
 
@@ -155,7 +155,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display both enabled and disabled counts when non-zero" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:feed, user: user, state: :enabled)
     create(:feed, user: user, state: :disabled)
@@ -167,7 +167,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display only total when access token counts are zero" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
 
     get admin_user_path(user)
@@ -177,7 +177,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should hide zero active token count" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:access_token, :inactive, user: user)
 
@@ -188,7 +188,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should hide zero inactive token count" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:access_token, :active, user: user)
 
@@ -200,7 +200,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display both active and inactive token counts when non-zero" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:access_token, :active, user: user)
     create(:access_token, :inactive, user: user)
@@ -209,11 +209,5 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='stats.access_tokens.value']", text: "2 total (1 active, 1 not active)"
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

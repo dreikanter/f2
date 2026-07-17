@@ -14,7 +14,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     get admin_events_path
 
@@ -29,7 +29,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin users to view events index" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user)
     create(:event, type: "TestEvent", message: "Test message", user: user)
 
@@ -43,7 +43,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should allow admin users to view event details" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     event = create(:event, type: "TestEvent", message: "Test message", user: create(:user))
 
     get admin_event_path(event)
@@ -54,7 +54,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should describe the latest page with a zero offset" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     create(:event, user: create(:user))
 
     get admin_events_path
@@ -65,7 +65,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should describe the offset when paging into older events" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       events = Array.new(5) { create(:event, user: create(:user)) }
 
       get admin_events_path, params: { before: events[3].id }
@@ -76,7 +76,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should list imported posts referenced by the event" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed)
     event = create(:event, type: "feed_refresh", subject: feed, user: feed.user)
     post = create(:post, feed: feed)
@@ -90,7 +90,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should link the event's feed to the admin feed page" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed)
     event = create(:event, type: "feed_refresh", subject: feed, user: feed.user)
 
@@ -101,7 +101,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display stats from event metadata" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     event = create(:event, metadata: { "stats" => { "new_posts" => 3 } }, user: create(:user))
 
     get admin_event_path(event)
@@ -113,7 +113,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should render the most recent page of events" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       3.times { |i| create(:event, type: "Event#{i}") }
 
       get admin_events_path
@@ -126,7 +126,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show empty state when no events exist" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     get admin_events_path
 
@@ -138,7 +138,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should poll on the first page only" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       3.times { |i| create(:event, type: "Event#{i}") }
 
       get admin_events_path
@@ -152,7 +152,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should browse older pages with a stable cursor" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       events = Array.new(5) { |i| create(:event, type: "Event#{i}") }
       oldest_on_first_page = events[3]
 
@@ -169,7 +169,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should resume polling when newer navigation reaches the head" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       events = Array.new(4) { |i| create(:event, type: "Event#{i}") }
 
       # after the 2nd-oldest id returns the newest two events (the head)
@@ -184,7 +184,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should redirect to the latest page when a cursor matches no events" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       event = create(:event)
 
       get admin_events_path, params: { before: event.id }
@@ -195,7 +195,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not drift older pages when new events arrive" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       older = [create(:event, type: "Old0"), create(:event, type: "Old1")]
       boundary = create(:event, type: "Boundary")
       create(:event, type: "Newer0")
@@ -212,7 +212,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should render admin events turbo stream" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     cursor_event = create(:event, type: "OldAdminEvent")
     create(:event, type: "NewAdminEvent")
 
@@ -225,7 +225,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should return empty admin turbo stream when there are no new events" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     event = create(:event)
 
     get admin_events_path(format: :turbo_stream), params: { after_id: event.id }
@@ -236,7 +236,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should refresh only the first page when polling" do
     with_page_size(2) do
-      login_as(admin_user)
+      sign_in_as(admin_user)
       3.times { |i| create(:event, type: "admin_event_#{i}") }
 
       get admin_events_path(format: :turbo_stream), params: { after_id: 0 }
@@ -248,7 +248,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show recorded subject when subject missing" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     event = create(:event, type: "MissingSubjectEvent", subject: nil)
     missing_id = SecureRandom.uuid
     event.update!(subject_type: "Post", subject_id: missing_id)
@@ -261,7 +261,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by subject_type" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     test_user = create(:user, email_address: "test_user_#{SecureRandom.uuid}@example.com")
     feed = create(:feed, user: test_user)
 
@@ -278,7 +278,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by subject_id" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     test_user = create(:user, email_address: "test_user_#{SecureRandom.uuid}@example.com")
     feed1 = create(:feed, user: test_user, url: "https://example1.com/feed")
     feed2 = create(:feed, user: test_user, url: "https://example2.com/feed")
@@ -295,7 +295,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle invalid filter parameter gracefully" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     create(:event, type: "TestEvent")
 
     get admin_events_path, params: { filter: { invalid_field: "value" } }
@@ -305,7 +305,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by multiple types" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     create(:event, type: "TypeA", message: "Event A")
     create(:event, type: "TypeB", message: "Event B")
@@ -322,7 +322,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by level" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     create(:event, type: "InfoEvent", level: :info)
     create(:event, type: "WarningEvent", level: :warning)
@@ -335,7 +335,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by user_id" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     user1 = create(:user)
     user2 = create(:user)
@@ -352,7 +352,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should filter events by user_id and multiple types" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     user1 = create(:user)
     user2 = create(:user)
@@ -369,7 +369,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should include filter params in polling endpoint" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
 
     user1 = create(:user)
 
@@ -392,9 +392,5 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     yield
   ensure
     Admin::EventsController.events_page_size = original
-  end
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end
