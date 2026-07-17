@@ -109,7 +109,7 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
   end
 
   test "accepts AI profile with a loader output_schema" do
-    entry = valid_entry.merge(
+    entry = valid_entry.except(:matcher).merge(
       depends_on_ai: true,
       loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } }
     )
@@ -137,5 +137,16 @@ class FeedProfileValidatorTest < ActiveSupport::TestCase
     assert_nothing_raised do
       FeedProfileValidator.validate!("sample" => entry)
     end
+  end
+
+  test "rejects an AI profile that registers a matcher" do
+    entry = valid_entry.merge(depends_on_ai: true,
+                              loader: { class: "Loader::LlmLoader", config: { output_schema: { "type" => "object" } } })
+
+    error = assert_raises(FeedProfileValidator::Error) do
+      FeedProfileValidator.validate!("sample" => entry)
+    end
+
+    assert_includes error.message, "matcher must be absent for AI profiles"
   end
 end

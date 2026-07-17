@@ -78,47 +78,9 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_nil FeedProfile["nope"]
   end
 
-  test "every PROFILES entry conforms to the enriched shape" do
-    FeedProfile::PROFILES.each do |key, entry|
-      assert_kind_of String, entry[:display_name], "#{key}: display_name"
-      assert_kind_of String, entry[:description], "#{key}: description"
-      assert_includes %i[url query any none], entry[:input_shape], "#{key}: input_shape"
-      assert_includes [true, false], entry[:depends_on_ai], "#{key}: depends_on_ai"
-      assert_includes [true, false], entry[:scheduled], "#{key}: scheduled"
-      if entry[:depends_on_ai] || key == "webhook"
-        # AI and webhook profiles are structurally excluded from detection
-        # (spec 005 §7, spec 006 §1): no matcher.
-        assert_nil entry[:matcher], "#{key}: AI/webhook profile must not register a matcher"
-      else
-        assert_kind_of String, entry[:matcher], "#{key}: matcher"
-      end
-      assert_kind_of Hash, entry[:parameter_schema], "#{key}: parameter_schema"
-
-      if key == "webhook"
-        # The webhook profile has nothing to fetch (spec 006 §1): no loader/processor.
-        assert_nil entry[:loader], "#{key}: webhook profile must not register a loader"
-        assert_nil entry[:processor], "#{key}: webhook profile must not register a processor"
-      else
-        assert_kind_of Hash, entry[:loader], "#{key}: loader entry must be a hash"
-        assert_kind_of String, entry[:loader][:class], "#{key}: loader.class"
-        assert_kind_of Hash, entry[:loader][:config], "#{key}: loader.config"
-
-        assert_kind_of Hash, entry[:processor], "#{key}: processor entry must be a hash"
-        assert_kind_of String, entry[:processor][:class], "#{key}: processor.class"
-        assert_kind_of Hash, entry[:processor][:config], "#{key}: processor.config"
-      end
-
-      assert_kind_of Hash, entry[:normalizer], "#{key}: normalizer entry must be a hash"
-      assert_kind_of String, entry[:normalizer][:class], "#{key}: normalizer.class"
-      assert_kind_of Hash, entry[:normalizer][:config], "#{key}: normalizer.config"
-
-      if entry[:depends_on_ai]
-        # AI profiles declare the universal-post output_schema on the loader
-        # stage that calls the LLM.
-        assert_kind_of Hash, entry[:loader][:config][:output_schema], "#{key}: output_schema required for AI profile"
-      end
-    end
-  end
+  # Registry shape (required keys, types, matcher/loader/processor rules,
+  # AI output_schema) is validated in FeedProfileValidatorTest against
+  # FeedProfile::PROFILES; no need to re-assert it entry-by-entry here.
 
   test "every matcher-bearing PROFILES entry has a resolvable matcher class" do
     FeedProfile::PROFILES.each do |key, entry|
