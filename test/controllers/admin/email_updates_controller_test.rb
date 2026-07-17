@@ -44,13 +44,20 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     login_as(admin_user)
     user = create(:user, email_address: "old@example.com")
 
-    assert_enqueued_emails 1 do
+    perform_enqueued_jobs do
       patch admin_user_email_update_path(user), params: { user: { email_address: "new@example.com" }, require_confirmation: "1" }
     end
 
     assert_redirected_to admin_user_path(user)
     assert_equal "Confirmation email sent to new@example.com. User must confirm before change takes effect.", flash[:notice]
-    assert_equal "old@example.com", user.reload.email_address
+
+    user.reload
+    assert_equal "old@example.com", user.email_address, "email must not change until confirmed"
+    assert_equal "new@example.com", user.unconfirmed_email
+
+    delivery = ActionMailer::Base.deliveries.last
+    assert_not_nil delivery, "confirmation email should have been delivered"
+    assert_equal ["new@example.com"], delivery.to
   end
 
   test "should reject blank email" do

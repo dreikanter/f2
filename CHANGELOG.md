@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-17
 
+- Fixed admin-initiated email changes with confirmation: the confirmation email now actually gets sent, and the user's address only changes once they confirm.
 - If FreeFeed temporarily rate-limits a post comment, publishing now pauses and resumes from that comment later without duplicating the post or earlier comments. Other comment errors keep the post published, continue the feed, and appear in Recent Activity.
 
 ## 2026-07-15
