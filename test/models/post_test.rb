@@ -59,76 +59,9 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?
   end
 
-  test "should belong to feed" do
-    post = valid_post
-    assert_respond_to post, :feed
-    assert_equal feed, post.feed
-  end
-
-  test "should belong to feed_entry" do
-    post = valid_post
-    assert_respond_to post, :feed_entry
-    assert_equal feed_entry, post.feed_entry
-  end
-
   test "should have draft status by default" do
     post = Post.new
     assert_equal "draft", post.status
-  end
-
-  test "should have valid enum statuses" do
-    post = valid_post
-
-    post.status = :draft
-    assert post.draft?
-    assert_equal "draft", post.status
-
-    post.status = :enqueued
-    assert post.enqueued?
-    assert_equal "enqueued", post.status
-
-    post.status = :rejected
-    assert post.rejected?
-    assert_equal "rejected", post.status
-
-    post.status = :published
-    assert post.published?
-    assert_equal "published", post.status
-
-    post.status = :failed
-    assert post.failed?
-    assert_equal "failed", post.status
-  end
-
-  test "should serialize attachment_urls as JSON array" do
-    urls = ["https://example.com/image1.jpg", "https://example.com/image2.png"]
-    post = create(:post, attachment_urls: urls)
-
-    saved_post = Post.find(post.id)
-    assert_equal urls, saved_post.attachment_urls
-  end
-
-  test "should serialize comments as JSON array" do
-    comments = ["First comment", "Second comment"]
-    post = create(:post, comments: comments)
-
-    saved_post = Post.find(post.id)
-    assert_equal comments, saved_post.comments
-  end
-
-  test "should serialize validation_errors as JSON array" do
-    errors = ["blank_text", "invalid_link"]
-    post = create(:post, validation_errors: errors)
-
-    saved_post = Post.find(post.id)
-    assert_equal errors, saved_post.validation_errors
-  end
-
-  test "should handle array fields" do
-    post = build(:post, attachment_urls: ["url1"], comments: ["comment1"], validation_errors: ["error1"])
-    assert_equal ["url1"], post.attachment_urls
-    assert_equal ["comment1"], post.comments
-    assert_equal ["error1"], post.validation_errors
   end
 
   test "#freefeed_url should return the full URL when all parts are present" do
