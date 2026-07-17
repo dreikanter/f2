@@ -1,0 +1,52 @@
+name: Debug publication tests
+
+on:
+  pull_request:
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Run focused tests
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: |
+          set +e
+          bin/rails db:test:prepare test \
+            test/jobs/post_comment_delivery_test.rb \
+            test/models/post_publication_test.rb \
+            test/components/feed_post_comments_failed_event_test.rb \
+            > focused-test.log 2>&1
+          status=$?
+          cat focused-test.log
+          exit $status
+
+      - name: Upload focused log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: focused-test-log
+          path: focused-test.log
