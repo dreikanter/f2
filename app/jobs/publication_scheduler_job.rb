@@ -23,8 +23,8 @@ class PublicationSchedulerJob < ApplicationJob
   private
 
   def feeds_with_unfinished_posts
-    Post.enqueued
-        .or(Post.where.not(next_comment_index: nil))
+    Post.where(status: :enqueued)
+        .or(Post.where(id: PostPublication.select(:post_id)))
         .select(:feed_id)
         .distinct
   end
