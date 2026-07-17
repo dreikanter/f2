@@ -45,7 +45,7 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     end
 
     allow_rate_limit do
-      assert_no_enqueued_jobs(only: PostPublishJob) do
+      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
         PostPublishJob.perform_now(feed.id)
       end
 
@@ -54,9 +54,6 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
       assert_equal 1, first.next_comment_index
       assert_predicate second.reload, :enqueued?, "newer posts must wait behind the throttled comment"
 
-      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
-        PublicationSchedulerJob.perform_now
-      end
       perform_enqueued_jobs(only: PostPublishJob)
     end
 
@@ -64,6 +61,14 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     assert_predicate second.reload, :published?
     assert_equal 1, comment_attempts["first comment"], "a completed comment must not be duplicated"
     assert_equal 2, comment_attempts["second comment"], "the interrupted comment should be retried"
+  end
+
+  test "the watchdog should restart a feed with pending comments" do
+    post = create(:post, :published, feed: feed, comments: ["comment"], next_comment_index: 0)
+
+    assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      PublicationSchedulerJob.perform_now
+    end
   end
 
   test "an ordinary comment error should keep the post published, notify the user, and continue" do
