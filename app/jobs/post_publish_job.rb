@@ -52,16 +52,9 @@ class PostPublishJob < ApplicationJob
     post.next_comment_index.nil? ? publisher.publish : publisher.publish_pending_comments
     count_published(post) unless was_published
     schedule_next(feed)
-  rescue FreefeedPublisher::CommentThrottled => e
-    # The remote post already exists. Keep it published and leave the durable
-    # comment cursor in place. The watchdog will restart this feed later, and the
-    # pending comment remains ahead of every newer post in the queue.
-    count_published(post) unless was_published
-    @rate_limited = true
-    Rails.logger.info "Comment publishing paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
   rescue RateLimit::Throttled => e
-    # Nothing durable was partially completed, so retry this job after the
-    # provider's cooldown instead of advancing the queue.
+    # Leave any partial comment cursor intact and retry this feed after the
+    # provider's cooldown. Newer posts remain behind the interrupted one.
     count_published(post) unless was_published
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError
