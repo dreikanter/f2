@@ -69,6 +69,9 @@ en:
     feed_refresh_ai_empty:
       name: "Nothing to import"
       description_html: "%{subject_link} found no posts to import this time"
+    feed_post_comments_failed:
+      name: "Comments couldn't be published"
+      description_html: "%{subject_link} published a post, but some comments couldn't be added"
     ai_credential_deactivated:
       name: "AI credential deactivated"
       description_html: "AI credential %{subject_link} stopped working; update the key to resume its feeds."
