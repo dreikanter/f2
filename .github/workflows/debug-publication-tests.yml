@@ -35,12 +35,16 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
         run: |
           set +e
-          bin/rails db:test:prepare test \
-            test/jobs/post_comment_delivery_test.rb \
-            test/models/post_publication_test.rb \
-            test/components/feed_post_comments_failed_event_test.rb \
-            > focused-test.log 2>&1
+          bin/rails db:test:prepare > focused-test.log 2>&1
           status=$?
+          if [ $status -eq 0 ]; then
+            bin/rails test \
+              test/jobs/post_comment_delivery_test.rb \
+              test/models/post_publication_test.rb \
+              test/components/feed_post_comments_failed_event_test.rb \
+              >> focused-test.log 2>&1
+            status=$?
+          fi
           cat focused-test.log
           exit $status
 
