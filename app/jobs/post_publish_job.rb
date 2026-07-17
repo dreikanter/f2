@@ -48,18 +48,21 @@ class PostPublishJob < ApplicationJob
     result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
-    FreefeedPublisher.new(post).publish
+    publisher = FreefeedPublisher.new(post)
+    post.post_publication ? publisher.resume : publisher.publish
     count_published(post) unless was_published
     schedule_next(feed)
   rescue RateLimit::Throttled => e
     count_published(post) unless was_published
 
-    if post.reload.post_publication
-      # A durable checkpoint keeps this post at the front of the feed. Stop this
-      # chain; the recurring watchdog restarts it after the provider cooldown.
+    publication = post.reload.post_publication
+    if publication_progress?(post, publication)
+      # Completed remote operations are checkpointed, so leave the post at the
+      # front of the feed and let the recurring watchdog restart after cooldown.
       @rate_limited = true
       Rails.logger.info "Publication paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
     else
+      # Nothing remote completed yet, so the normal delayed retry is sufficient.
       reschedule_for_rate_limit(e.retry_after)
     end
   rescue FreefeedClient::UnauthorizedError
@@ -80,6 +83,10 @@ class PostPublishJob < ApplicationJob
   rescue => e
     # Poison post: mark it failed and move on so the queue isn't blocked.
     fail_post(feed, post, e, report: true)
+  end
+
+  def publication_progress?(post, publication)
+    publication && (post.freefeed_post_id.present? || publication.attachments_processed_count.positive?)
   end
 
   # The post exists remotely, so comment delivery failure must not rewrite its
