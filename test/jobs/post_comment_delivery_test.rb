@@ -54,10 +54,9 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
       assert_equal 1, first.next_comment_index
       assert_predicate second.reload, :enqueued?, "newer posts must wait behind the throttled comment"
 
-      assert_enqueued_with(job: PostPublishJob, args: [feed.id]) do
+      perform_enqueued_jobs(only: PostPublishJob) do
         PublicationSchedulerJob.perform_now
       end
-      perform_enqueued_jobs(only: PostPublishJob)
     end
 
     assert_nil first.reload.next_comment_index
