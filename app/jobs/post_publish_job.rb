@@ -1,7 +1,7 @@
 # Publishes enqueued posts to FreeFeed one at a time, in order.
 #
 # It works as a self-chaining FIFO queue: each run publishes the earliest
-# enqueued post for the feed, then schedules itself again for the next one. A
+# unfinished post for the feed, then schedules itself again for the next one. A
 # per-feed advisory lock guarantees a single active chain, so posts keep their
 # original order and are never published concurrently.
 #
@@ -33,27 +33,36 @@ class PostPublishJob < ApplicationJob
   private
 
   def publish_next(feed)
-    post = feed.posts.enqueued.order(:published_at, :id).first
+    post = feed.posts.where.not(next_comment_index: nil).order(:published_at, :id).first
+    post ||= feed.posts.enqueued.order(:published_at, :id).first
     return unless post
 
     publish(feed, post)
   end
 
   def publish(feed, post)
+    was_published = post.published?
     posts = post_cost(post)
     return reject_oversized(feed, post, posts) unless within_capacity?(posts)
 
     result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { post: posts })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
-    FreefeedPublisher.new(post).publish
-    count_published(post)
+    publisher = FreefeedPublisher.new(post)
+    post.next_comment_index.nil? ? publisher.publish : publisher.publish_pending_comments
+    count_published(post) unless was_published
     schedule_next(feed)
+  rescue FreefeedPublisher::CommentThrottled => e
+    # The remote post already exists. Keep it published and leave the durable
+    # comment cursor in place. The watchdog will restart this feed later, and the
+    # pending comment remains ahead of every newer post in the queue.
+    count_published(post) unless was_published
+    @rate_limited = true
+    Rails.logger.info "Comment publishing paused for post #{post.id}: retry after #{e.retry_after.round(2)}s"
   rescue RateLimit::Throttled => e
-    # Defer the same post (the idempotency guard keeps the retry safe). Before
-    # the generic rescue so a throttle isn't recorded as a failure. count_published
-    # still fires if a comment throttle had already created the post.
-    count_published(post)
+    # Nothing durable was partially completed, so retry this job after the
+    # provider's cooldown instead of advancing the queue.
+    count_published(post) unless was_published
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::UnauthorizedError
     # Token is no longer valid: disable it and stop the chain.
@@ -63,6 +72,9 @@ class PostPublishJob < ApplicationJob
     # so disable just this feed (with an explanation) and stop the chain; the post
     # stays enqueued and resumes if the user fixes the target and re-enables.
     feed.disable_due_to_unavailable_target!(reason: e.reason, details: e.server_message)
+  rescue FreefeedPublisher::CommentPublishError => e
+    count_published(post) unless was_published
+    record_comment_failure(feed, post, e)
   rescue FreefeedPublisher::SourceContentError => e
     # Source content is gone (e.g. an attachment 404s). Expected external
     # condition: fail the post and move on, but don't page error tracking.
@@ -70,6 +82,23 @@ class PostPublishJob < ApplicationJob
   rescue => e
     # Poison post: mark it failed and move on so the queue isn't blocked.
     fail_post(feed, post, e, report: true)
+  end
+
+  # The post exists remotely, so comment delivery failure must not rewrite its
+  # publication state. Record a user-visible error and continue with the queue.
+  def record_comment_failure(feed, post, error)
+    post.update_column(:next_comment_index, nil)
+    Event.create!(
+      type: "feed_post_comments_failed",
+      level: :error,
+      subject: feed,
+      user: feed.user,
+      message: error.message,
+      metadata: { post_id: post.id, freefeed_post_id: post.freefeed_post_id }
+    )
+    Rails.logger.error "Failed to publish comments for post #{post.id}: #{error.message}"
+    Rails.error.report(error, context: { post: post.attributes, feed: feed.attributes })
+    schedule_next(feed)
   end
 
   # Mark a post failed and advance the chain. Reports to error tracking only for
@@ -82,10 +111,14 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  # Every POST the publish will make: the post, each comment, and each
-  # attachment upload (all hit FreeFeed's POST bucket).
+  # Every POST still required for this publication. A post whose remote copy
+  # already exists reserves capacity only for its remaining comments.
   def post_cost(post)
-    1 + post.comments.to_a.count(&:present?) + post.attachment_urls.to_a.size
+    if post.next_comment_index
+      post.comments.drop(post.next_comment_index).count(&:present?)
+    else
+      1 + post.comments.count(&:present?) + post.attachment_urls.size
+    end
   end
 
   def within_capacity?(posts)
@@ -102,8 +135,6 @@ class PostPublishJob < ApplicationJob
     schedule_next(feed)
   end
 
-  # Count a post once it's actually on FreeFeed. Guarded on status: an upfront
-  # throttle (post never created) doesn't count; a mid-comment one does.
   def count_published(post)
     return unless post.published?
 
