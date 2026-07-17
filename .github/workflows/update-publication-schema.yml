@@ -1,15 +1,15 @@
 name: Update publication schema
 
 on:
-  push:
-    branches: [ agent/resume-throttled-comments ]
+  pull_request:
+    types: [ opened, reopened, synchronize ]
 
 permissions:
   contents: write
 
 jobs:
   schema:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     services:
@@ -28,6 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -47,4 +49,4 @@ jobs:
           git add db/schema.rb
           git diff --cached --quiet && exit 0
           git commit -m "Regenerate publication schema"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
