@@ -330,6 +330,17 @@ class Feed < ApplicationRecord
     posts.where(published_at: 1.week.ago.beginning_of_day..Time.current.end_of_day).count
   end
 
+  # Single source of truth for the cached post counters. Post's create/destroy
+  # callbacks keep these current on single-record writes; bulk paths that skip
+  # those callbacks (FeedRefreshWorkflow's insert_all) must call these to resync.
+  def recount_imported_posts!
+    update_column(:imported_posts_count, posts.count)
+  end
+
+  def recount_published_posts!
+    update_column(:published_posts_count, posts.published.count)
+  end
+
   # Makes the existing schedule due immediately (next_run_at = now). No-op for
   # a feed without one — the schedule is created when the feed is enabled.
   def reset_schedule!

@@ -258,7 +258,7 @@ class FeedRefreshWorkflow
     end
 
     Post.insert_all(posts_data)
-    feed.update_column(:imported_posts_count, feed.posts.count)
+    feed.recount_imported_posts!
 
     new_uids = posts.map(&:uid)
     persisted_posts = feed.posts.where(uid: new_uids).order(:published_at)
