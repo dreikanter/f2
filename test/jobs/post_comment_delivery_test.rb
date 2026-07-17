@@ -159,6 +159,51 @@ class PostCommentDeliveryTest < ActiveJob::TestCase
     assert_equal 1, reported.size
   end
 
+  test "withdrawing a post with pending comments prevents it from being resumed" do
+    first = create(:post, :enqueued, feed: feed, published_at: 2.hours.ago,
+                                            content: "first post", comments: ["comment"])
+    second = create(:post, :enqueued, feed: feed, published_at: 1.hour.ago, content: "second post")
+    published_bodies = []
+    post_number = 0
+
+    stub_request(:post, "#{access_token.host}/v4/posts").to_return do |request|
+      post_number += 1
+      published_bodies << JSON.parse(request.body).dig("post", "body")
+      {
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: { posts: { id: "ff-post-#{post_number}" } }.to_json
+      }
+    end
+    stub_request(:post, "#{access_token.host}/v4/comments")
+      .to_return(status: 429, headers: { "Retry-After" => "30" })
+    stub_request(:delete, "#{access_token.host}/v4/posts/ff-post-1").to_return(status: 200)
+
+    allow_rate_limit do
+      assert_no_enqueued_jobs(only: PostPublishJob) do
+        PostPublishJob.perform_now(feed.id)
+      end
+
+      first.reload
+      assert_predicate first, :published?
+      assert_not_nil first.post_publication
+
+      first.withdrawn!
+      PostWithdrawalJob.perform_now(feed.id, first.freefeed_post_id, first.id)
+
+      perform_enqueued_jobs(only: PostPublishJob) do
+        PublicationSchedulerJob.perform_now
+      end
+    end
+
+    first.reload
+    assert_predicate first, :withdrawn?
+    assert_nil first.freefeed_post_id
+    assert_nil first.post_publication
+    assert_predicate second.reload, :published?
+    assert_equal ["first post", "second post"], published_bodies
+  end
+
   private
 
   def allow_rate_limit(&block)
