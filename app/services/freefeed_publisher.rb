@@ -6,7 +6,6 @@ class FreefeedPublisher
   class ValidationError < Error; end
   class PublishError < Error; end
   class CommentPublishError < PublishError; end
-  class CommentThrottled < RateLimit::Throttled; end
 
   # Source content couldn't be fetched (e.g. an attachment URL returns 404). An
   # expected external condition, not an app fault: the job fails the post and
@@ -78,8 +77,8 @@ class FreefeedPublisher
 
     post.update_column(:next_comment_index, nil)
     post.freefeed_post_id
-  rescue RateLimit::Throttled => e
-    raise CommentThrottled.new(retry_after: e.retry_after)
+  rescue RateLimit::Throttled
+    raise
   rescue FreefeedClient::UnauthorizedError
     raise
   rescue => e
