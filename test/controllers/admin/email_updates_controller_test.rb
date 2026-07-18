@@ -19,7 +19,7 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from updating their own email" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     patch admin_user_email_update_path(regular_user), params: { user: { email_address: "new@example.com" }, require_confirmation: "0" }
 
