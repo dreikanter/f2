@@ -13,16 +13,27 @@ export default class extends Controller {
 
     const csrfToken = document.querySelector("meta[name='csrf-token']")?.content
 
-    await fetch(this.refreshUrlValue, {
-      method: "POST",
-      headers: {
-        Accept: "text/html",
-        "X-CSRF-Token": csrfToken,
-        "X-Requested-With": "XMLHttpRequest"
-      },
-      credentials: "same-origin"
-    })
+    try {
+      const response = await fetch(this.refreshUrlValue, {
+        method: "POST",
+        headers: {
+          Accept: "text/html",
+          "X-CSRF-Token": csrfToken,
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        credentials: "same-origin"
+      })
 
+      if (!response.ok) throw new Error(`Preview refresh failed with HTTP ${response.status}`)
+
+      this.reloadFrame()
+    } catch (error) {
+      console.error("Failed to refresh preview", error)
+      window.alert("Unable to refresh the preview. Please try again.")
+    }
+  }
+
+  reloadFrame() {
     const frame = this.element.closest("turbo-frame#feed-preview")
     if (frame && typeof frame.reload === "function") {
       frame.reload()
