@@ -5,6 +5,8 @@ class Admin::EventsController < ApplicationController
   include EventReferencedLlmUsages
   include EventReferencedWebSearches
 
+  MAX_RECENT_POSTS = 10
+
   def index
     authorize Event
 
@@ -19,7 +21,7 @@ class Admin::EventsController < ApplicationController
   def show
     authorize Event
     @event = Event.find(params[:id])
-    @referenced_posts = referenced_posts(@event)
+    @referenced_posts = referenced_posts(@event).limit(MAX_RECENT_POSTS)
     @referenced_llm_usages = referenced_llm_usages(@event)
     @referenced_web_searches = referenced_web_searches(@event)
     @previous_event = previous_event(@event)
