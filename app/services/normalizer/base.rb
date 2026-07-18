@@ -35,8 +35,6 @@ module Normalizer
     attr_reader :feed_entry
     delegate :raw_data, to: :feed_entry
 
-    # Builds Post from feed entry data
-    # @return [Post] new post instance
     def build_post
       Post.new(**extract_post_attributes.merge(default_post_attributes))
     end
@@ -51,8 +49,6 @@ module Normalizer
       }
     end
 
-    # Extracts post attributes from raw data
-    # @return [Hash] post attributes (source_url, content, attachment_urls, comments)
     def extract_post_attributes
       {
         source_url: source_url,
