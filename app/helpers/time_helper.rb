@@ -51,17 +51,6 @@ module TimeHelper
     time.strftime("%-d %b %Y, %H:%M")
   end
 
-  def time_ago_tag(time)
-    return nil unless time
-
-    content_tag(
-      :time,
-      "#{time_ago(time)} ago",
-      datetime: time.rfc3339,
-      title: long_time_format(time)
-    )
-  end
-
   def long_time_tag(time)
     return nil unless time
 
