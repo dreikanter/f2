@@ -111,7 +111,7 @@ class EventDescriptionComponent < ViewComponent::Base
     deleted_feeds_count = disabled_feed_ids.size - disabled_feeds.size
 
     if deleted_feeds_count.positive?
-      deleted_feeds_note = helpers.pluralize(deleted_feeds_count, "deleted feeds")
+      deleted_feeds_note = helpers.pluralize(deleted_feeds_count, "deleted feed")
       helpers.safe_join([linked_feeds.presence, deleted_feeds_note].compact_blank, " and ")
     else
       linked_feeds
