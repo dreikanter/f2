@@ -68,7 +68,11 @@ module FeedProfileValidator
       else
         failures << "FeedProfile #{key.inspect}: loader is required" if entry[:loader].nil?
         failures << "FeedProfile #{key.inspect}: processor is required" if entry[:processor].nil?
-        if !entry[:depends_on_ai] && entry[:matcher].to_s.empty?
+        # AI profiles are excluded from detection (spec 005 §7), so they must
+        # not register a matcher; every other non-webhook profile requires one.
+        if entry[:depends_on_ai]
+          failures << "FeedProfile #{key.inspect}: matcher must be absent for AI profiles" if entry[:matcher]
+        elsif entry[:matcher].to_s.empty?
           failures << "FeedProfile #{key.inspect}: matcher is required for non-AI profiles"
         end
       end
