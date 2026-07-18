@@ -25,9 +25,10 @@ class AccessTokens::GroupsController < ApplicationController
     else
       error_locals(:inactive_token)
     end
-  rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError => e
+  rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
     error_locals(:unauthorized)
   rescue StandardError => e
+    Rails.error.report(e, context: { access_token_id: access_token&.id, feed_id: feed&.id })
     error_locals(:api_error)
   end
 
