@@ -46,8 +46,8 @@ class FeedStatsComponent < ViewComponent::Base
       },
       {
         key: "last_refresh",
-        label: "Last refresh",
-        label_short: "Refreshed",
+        label: @feed.scheduled? ? "Last refresh" : "Last post received",
+        label_short: @feed.scheduled? ? "Refreshed" : "Received",
         value: last_refresh_value,
         muted: last_refreshed_at.nil?
       },

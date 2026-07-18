@@ -250,6 +250,22 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed.webhook_endpoint
   end
 
+  test "#create should re-render the expanded form when a webhook draft fails validation" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "Taken")
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: { feed_profile_key: "webhook", name: "Taken" }, enable_feed: "0" }
+    end
+
+    assert_response :unprocessable_entity
+    # The sourceless draft must land back on the expanded form with its fields
+    # and errors, not on the blank collapsed entry.
+    assert_select "[data-key='form.webhook-note']", count: 1
+    assert_select "input[data-key='form.name'][value='Taken']"
+    assert_select "p", text: /already been taken/
+  end
+
   test "#create should not mint a webhook endpoint for a pull feed" do
     sign_in_as(user)
     access_token
