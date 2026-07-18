@@ -1,3 +1,5 @@
+require "addressable/uri"
+
 # Ingests one webhook delivery into the existing pipeline (spec 006 §§3-4):
 # validate the payload, resolve its uid, persist FeedEntry + FeedEntryUid +
 # Post through the profile normalizer in a single transaction, then kick the
@@ -14,7 +16,7 @@ class WebhookIngestion
     "type" => "object",
     "properties" => {
       "content" => { "type" => "string" },
-      "source_url" => { "type" => "string" },
+      "source_url" => { "type" => "string", "maxLength" => Post::MAX_URL_LENGTH },
       "images" => {
         "type" => "array",
         "items" => { "type" => "string" },
@@ -103,11 +105,19 @@ class WebhookIngestion
 
       entry.update!(status: :processed)
       post.save!
-      endpoint.update!(last_received_at: Time.current, received_count: endpoint.received_count + 1)
+      # SQL-side increment: concurrent deliveries must not lose counts to a
+      # stale read-modify-write.
+      WebhookEndpoint.update_counters(endpoint.id, received_count: 1, touch: :last_received_at)
     end
 
     rejection
   end
+
+  # Percent-encoding during uid normalization can inflate a multibyte URL well
+  # past its schema-checked length; past this cap the uid would overflow the
+  # (feed_id, uid) btree index rows, so such a URL loses its identity role and
+  # the delivery falls back to a random uid instead of a 500.
+  MAX_URL_UID_BYTES = 2048
 
   # Uid precedence (spec 006 §4): explicit idempotency key, then the permalink
   # normalized exactly like pull feeds', then a random uuid (each request is a
@@ -117,6 +127,7 @@ class WebhookIngestion
     return explicit if explicit.present?
 
     from_url = source_url.present? && Uid::Resolver.call({ "source_url" => source_url }, clock: Time.current)
+    from_url = nil if from_url && from_url.bytesize > MAX_URL_UID_BYTES
     from_url.presence || SecureRandom.uuid
   end
 
@@ -159,10 +170,17 @@ class WebhookIngestion
     parsed_published_at || Time.current
   end
 
+  # Lenient like Uid::Resolver: an IDN/multibyte permalink is a valid source,
+  # so retry with Addressable's encoding before rejecting.
   def http_url?(url)
-    uri = URI.parse(url)
+    uri = begin
+      URI.parse(url)
+    rescue URI::InvalidURIError
+      URI.parse(Addressable::URI.parse(url).normalize.to_s)
+    end
+
     uri.is_a?(URI::HTTP) && uri.host.present?
-  rescue URI::InvalidURIError
+  rescue Addressable::URI::InvalidURIError, URI::InvalidURIError
     false
   end
 

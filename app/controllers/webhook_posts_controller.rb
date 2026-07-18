@@ -12,6 +12,13 @@ class WebhookPostsController < ApplicationController
 
   RESERVED_KEYS = %w[token controller action format].freeze
 
+  # Params parse lazily inside the action, so a malformed JSON body is
+  # catchable here — and the contract is JSON in all cases (spec 006 §3).
+  rescue_from ActionDispatch::Http::Parameters::ParseError do
+    count("bad_request")
+    render json: { status: "bad_request" }, status: :bad_request
+  end
+
   def create
     return reject_oversized if request.content_length.to_i > MAX_BODY_BYTES
 
@@ -26,6 +33,13 @@ class WebhookPostsController < ApplicationController
   end
 
   private
+
+  # ApplicationController's allow_browser registers an anonymous callback that
+  # can't be skipped by name; neutralize the instance hook it dispatches to.
+  # A webhook sender's User-Agent says nothing about browser support, and this
+  # endpoint must never answer 406.
+  def allow_browser(**)
+  end
 
   def payload
     params.to_unsafe_h.except(*RESERVED_KEYS)

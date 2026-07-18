@@ -144,6 +144,25 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_includes result.errors, "images/0 must be a public http(s) URL"
   end
 
+  test "#call should reject an overlong source_url" do
+    result = nil
+
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      result = ingest({ "content" => "Hello", "source_url" => "https://example.com/#{"a" * 3000}" })
+    end
+
+    assert result.invalid?
+  end
+
+  test "#call should fall back to a random uid when the normalized url overflows the index" do
+    url = "https://example.com/#{"я" * 1000}"
+
+    result = ingest({ "content" => "Hello", "source_url" => url })
+
+    assert result.enqueued?
+    assert_match(/\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/, result.uid)
+  end
+
   test "#call should reject a malformed published_at" do
     result = ingest({ "content" => "Hello", "published_at" => "yesterday" })
 

@@ -139,4 +139,20 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
   end
+
+  test "#create should answer bad_request JSON for a malformed body" do
+    post hook_url, params: "{not json", headers: { "Content-Type" => "application/json" }
+
+    assert_response :bad_request
+    assert_equal "bad_request", response_json["status"]
+  end
+
+  test "#create should ignore the outdated-browser gate" do
+    old_browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
+
+    post hook_url, params: { content: "Hello" }, headers: { "User-Agent" => old_browser }
+
+    assert_response :created
+    assert_equal "enqueued", response_json["status"]
+  end
 end
