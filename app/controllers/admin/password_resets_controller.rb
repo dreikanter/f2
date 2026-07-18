@@ -1,6 +1,6 @@
 class Admin::PasswordResetsController < ApplicationController
   def create
-    user = load_user
+    user = User.find(params[:user_id])
     authorize user, :update?
 
     if user.email_deactivated?
@@ -10,11 +10,5 @@ class Admin::PasswordResetsController < ApplicationController
       Event.create!(type: "mail.passwords_mailer.reset", user: user, subject: user, level: :info)
       redirect_to admin_user_path(user), notice: "Password reset email sent to #{user.email_address}."
     end
-  end
-
-  private
-
-  def load_user
-    User.find(params[:user_id])
   end
 end
