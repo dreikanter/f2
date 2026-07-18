@@ -1,10 +1,6 @@
 # Renders the detail list shown at the top of an event page. Admin: true adds
 # operator-only rows (user, timestamps, expiry).
 class EventDetailsComponent < ViewComponent::Base
-  def self.for(event, admin: false)
-    new(event: event, admin: admin)
-  end
-
   def initialize(event:, admin: false)
     @event = event
     @admin = admin
