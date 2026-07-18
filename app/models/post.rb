@@ -100,13 +100,11 @@ class Post < ApplicationRecord
   end
 
   def recount_imported_posts
-    count = Post.where(feed_id: feed_id).count
-    Feed.where(id: feed_id).update_all(imported_posts_count: count)
+    feed.recount_imported_posts!
   end
 
   def recount_published_posts
-    count = Post.where(feed_id: feed_id).published.count
-    Feed.where(id: feed_id).update_all(published_posts_count: count)
+    feed.recount_published_posts!
   end
 
   def validate_enqueued_status

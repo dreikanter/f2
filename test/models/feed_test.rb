@@ -1231,4 +1231,30 @@ class FeedTest < ActiveSupport::TestCase
       assert_not_nil schedule.last_run_at
     end
   end
+
+  test "#recount_imported_posts! should resync the counter after a callback-bypassing insert" do
+    feed = create(:feed)
+    feed_entry = create(:feed_entry, feed: feed)
+    now = Time.current
+    Post.insert_all([{
+      feed_id: feed.id, feed_entry_id: feed_entry.id, uid: "post-1",
+      published_at: now, source_url: "https://example.com/1", created_at: now, updated_at: now
+    }])
+    assert_equal 0, feed.reload.imported_posts_count
+
+    feed.recount_imported_posts!
+
+    assert_equal 1, feed.reload.imported_posts_count
+  end
+
+  test "#recount_published_posts! should count only published posts" do
+    feed = create(:feed)
+    create(:post, :published, feed: feed)
+    create(:post, feed: feed, status: :enqueued)
+    feed.update_column(:published_posts_count, 0)
+
+    feed.recount_published_posts!
+
+    assert_equal 1, feed.reload.published_posts_count
+  end
 end
