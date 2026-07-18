@@ -23,32 +23,20 @@ class SortablePresenter
     end
   end
 
-  # @param params [ActionController::Parameters, Hash] current request params
-  # @param fields [Hash{Symbol=>Hash}] controller sort configuration
-  # @param path_builder [Proc] callable returning a URL for the given params
   def initialize(params:, fields:, path_builder:)
     @params = params
     @fields = fields
     @path_builder = path_builder
   end
 
-  # Lazily builds the available sort options.
-  #
-  # @return [Array<Option>]
   def options
     @options ||= build_options
   end
 
-  # Title of the currently selected option.
-  #
-  # @return [String, nil]
   def current_title
     current_option&.title
   end
 
-  # Currently selected or default sorting direction.
-  #
-  # @return [String] "asc" or "desc"
   def current_direction
     @current_direction ||= begin
       value = params[:direction].presence
@@ -60,16 +48,10 @@ class SortablePresenter
 
   attr_reader :params, :fields, :path_builder
 
-  # Option hash corresponding to the current sort selection.
-  #
-  # @return [Option, nil]
   def current_option
     options.find(&:active?) || options.first
   end
 
-  # Determine which field should be used for ordering.
-  #
-  # @return [String]
   def current_sort_field
     value = params[:sort]
     field_config_for(value) ? value : default_field
@@ -94,34 +76,23 @@ class SortablePresenter
     end
   end
 
-  # @param field [String, Symbol]
-  # @return [String] default direction for the provided field
   def default_direction_for(field)
     config = field_config_for(field)
     config ? config.fetch(:direction, "desc").to_s : "desc"
   end
 
-  # @return [String] canonical default field name
   def default_field
     @default_field ||= fields.keys.first ? fields.keys.first.to_s : ""
   end
 
-  # @param direction [String]
-  # @return [String]
   def toggle_direction(direction)
     direction == "asc" ? "desc" : "asc"
   end
 
-  # @param direction [String]
-  # @return [String]
   def icon_for(direction)
     direction == "asc" ? "arrow-up" : "arrow-down"
   end
 
-  # Looks up the configuration hash for a given field.
-  #
-  # @param field [String, Symbol, nil]
-  # @return [Hash, nil]
   def field_config_for(field)
     return nil if field.blank?
 
