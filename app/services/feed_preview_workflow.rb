@@ -57,7 +57,7 @@ class FeedPreviewWorkflow
     loader = temp_feed.loader_instance(purpose: :preview)
     raw_data = loader.load
 
-    record_stats(content_size: raw_data.size)
+    record_stats(content_size: raw_data.bytesize)
     { temp_feed: temp_feed, raw_data: raw_data }
   end
 
