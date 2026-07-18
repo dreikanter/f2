@@ -28,7 +28,7 @@
     <%= render EventDescriptionComponent.for(@event) %>
   <% end %>
 
-  <%= render EventDetailsComponent.for(@event) %>
+  <%= render EventDetailsComponent.new(event: @event) %>
 
   <% if @referenced_posts.any? %>
     <section class="space-y-4" data-key="events.imported_posts">
@@ -59,7 +59,7 @@
 
   <% if (stats = @event.metadata&.fetch("stats", nil)).present? %>
     <section class="space-y-4" data-key="events.stats">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.metadata.stats.section_title") %></h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.metadata.stats.section_title", default: "Stats") %></h2>
       <%= render ListComponent.new do |list| %>
         <% stats.except("search_calls").each do |key, value| %>
           <% list.with_item(StatListItemComponent.new(
