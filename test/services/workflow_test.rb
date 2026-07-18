@@ -187,10 +187,23 @@ class WorkflowTest < ActiveSupport::TestCase
     assert durations.key?(:step_one)
     assert durations.key?(:step_two)
 
-    assert durations[:step_one].is_a?(Numeric)
-    assert durations[:step_two].is_a?(Numeric)
-    assert durations[:step_one] >= 0
-    assert durations[:step_two] >= 0
+    assert_kind_of Float, durations[:step_one]
+    assert_kind_of Float, durations[:step_two]
+  end
+
+  test "#step_durations should be recorded before after_step runs" do
+    service = TestWorkflowWithCallbacks.new
+    seen = {}
+    service.define_singleton_method(:after_step) do |_output|
+      seen[current_step] = step_durations[current_step]
+    end
+
+    service.execute({ value: 1 })
+
+    assert_equal [:step_one, :step_two], seen.keys
+    seen.each do |step, duration|
+      assert_kind_of Float, duration, "#{step} duration must be recorded before after_step runs"
+    end
   end
 
   test "#current_step should be accessible in callbacks" do
@@ -221,13 +234,12 @@ class WorkflowTest < ActiveSupport::TestCase
     service.execute({ value: 1 })
 
     total = service.total_duration
-    assert total >= 0
-    assert total.is_a?(Numeric)
+    assert_kind_of Float, total
 
     step_one_duration = service.step_durations[:step_one]
     step_two_duration = service.step_durations[:step_two]
 
-    assert total >= step_one_duration
-    assert total >= step_two_duration
+    assert total >= step_one_duration, "total should cover each step's duration"
+    assert total >= step_two_duration, "total should cover each step's duration"
   end
 end
