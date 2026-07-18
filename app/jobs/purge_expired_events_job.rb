@@ -15,7 +15,6 @@ class PurgeExpiredEventsJob < ApplicationJob
     deleted_count = 0
 
     Event.expired.in_batches(of: BATCH_SIZE) do |events|
-      EventReference.where(event_id: events.select(:id)).delete_all
       # Events can also BE references (feed_refresh → web_search); delete_all
       # skips the incoming_event_references association cleanup, so inbound
       # rows must be cleared here or they dangle until the referrer purges.
