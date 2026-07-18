@@ -60,7 +60,7 @@ class Admin::UsersController < ApplicationController
 
   def pagination_scope
     base_scope
-      .left_joins(:feeds, :access_tokens, :sessions)
+      .left_joins(:access_tokens, :sessions)
       .left_joins(feeds: :posts)
       .group("users.id")
       .select("users.*,
