@@ -1,5 +1,5 @@
 class SearchCredentialListItemComponent < ListItemComponent
-  DELETE_CONFIRM = "Delete this search credential?".freeze
+  DELETE_CONFIRM = "Delete this search credential? Feeds using it will be disabled.".freeze
 
   def initialize(credential:)
     super()
