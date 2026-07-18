@@ -101,5 +101,9 @@ Rails.application.routes.draw do
 
   resource :resend_webhooks, only: :create, path: "resend"
 
+  # Capability URL for webhook feeds: the token in the path is the credential,
+  # so this stays a bare route rather than a resource (spec 006 §2).
+  post "hooks/:token" => "webhook_posts#create", as: :webhook_posts
+
   root "landing#index"
 end
