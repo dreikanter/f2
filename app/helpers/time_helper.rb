@@ -4,16 +4,15 @@ module TimeHelper
 
     diff = Time.current - time
 
-    case diff
-    when 0..59
+    if diff < 60
       "now"
-    when 60..3599
+    elsif diff < 3600
       "#{(diff / 60).to_i}m"
-    when 3600..86399
+    elsif diff < 86400
       "#{(diff / 3600).to_i}h"
-    when 86400..2591999
+    elsif diff < 2592000
       "#{(diff / 86400).to_i}d"
-    when 2592000..31535999
+    elsif diff < 31536000
       "#{(diff / 2592000).to_i}mo"
     else
       "#{(diff / 31536000).to_i}y"
@@ -54,23 +53,13 @@ module TimeHelper
   def long_time_tag(time)
     return nil unless time
 
-    content_tag(
-      :time,
-      long_time_format(time),
-      datetime: time.rfc3339,
-      title: "#{time_ago(time)} ago"
-    )
+    content_tag(:time, long_time_format(time), datetime: time.rfc3339, title: "#{time_ago(time)} ago")
   end
 
   def short_time_ago_tag(time)
     return nil unless time
 
-    content_tag(
-      :time,
-      short_time_ago(time),
-      datetime: time.rfc3339,
-      title: long_time_format(time)
-    )
+    content_tag(:time, short_time_ago(time), datetime: time.rfc3339, title: long_time_format(time))
   end
 
   # Compact relative time as a natural phrase ("10d ago", or "just now" for the
@@ -82,12 +71,7 @@ module TimeHelper
     short = short_time_ago(time)
     phrase = short == "now" ? "just now" : "#{short} ago"
 
-    content_tag(
-      :time,
-      phrase,
-      datetime: time.rfc3339,
-      title: long_time_format(time)
-    )
+    content_tag(:time, phrase, datetime: time.rfc3339, title: long_time_format(time))
   end
 
   def datetime_with_duration_tag(time)
@@ -99,11 +83,6 @@ module TimeHelper
       content_tag(:span, "(#{short_time_ago(time)})", class: "text-muted")
     ])
 
-    content_tag(
-      :time,
-      content,
-      datetime: time.rfc3339,
-      title: "#{time_ago(time)} ago"
-    )
+    content_tag(:time, content, datetime: time.rfc3339, title: "#{time_ago(time)} ago")
   end
 end
