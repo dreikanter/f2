@@ -7,8 +7,8 @@ class Admin::SuspensionsController < ApplicationController
   end
 
   def destroy
-    authorize User, :unsuspend?
     user = find_user
+    authorize user, :unsuspend?
     unsuspend_user_and_record_event(user)
     redirect_to admin_user_path(user), success: "User unsuspended."
   end
