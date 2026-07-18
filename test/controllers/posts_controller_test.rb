@@ -37,6 +37,12 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Posts"
   end
 
+  test "#index should not load another user's feed via feed_id" do
+    sign_in_as(user)
+    get posts_url, params: { feed_id: other_feed.id }
+    assert_response :not_found
+  end
+
   test "#index should nudge users with no feeds toward adding one" do
     sign_in_as(user)
     get posts_url
