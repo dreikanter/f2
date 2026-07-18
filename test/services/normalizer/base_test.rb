@@ -29,6 +29,23 @@ class Normalizer::BaseTest < ActiveSupport::TestCase
     assert_equal "Subclasses must implement #normalize_content", error.message
   end
 
+  test "#normalize_published_at should fall back to now for an undated entry" do
+    freeze_time do
+      assert_equal Time.current, normalizer.send(:normalize_published_at, nil)
+    end
+  end
+
+  test "#normalize_published_at should clamp future timestamps to now" do
+    freeze_time do
+      assert_equal Time.current, normalizer.send(:normalize_published_at, 1.hour.from_now)
+    end
+  end
+
+  test "#normalize_published_at should keep a past timestamp" do
+    past = 3.days.ago
+    assert_equal past, normalizer.send(:normalize_published_at, past)
+  end
+
   test "#normalize_attachment_urls should return empty array by default" do
     result = normalizer.send(:normalize_attachment_urls)
     assert_equal [], result

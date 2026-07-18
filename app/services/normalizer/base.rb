@@ -119,7 +119,7 @@ module Normalizer
     end
 
     def normalize_published_at(published_at)
-      return Time.current if published_at > Time.current
+      return Time.current if published_at.nil? || published_at > Time.current
       published_at
     end
 
