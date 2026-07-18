@@ -1,4 +1,4 @@
-<%# locals: (remaining_invites_count:, invited_users_count:, unused_invites_count:) %>
+<%# locals: (remaining_invites_count:, invited_users_count:) %>
 <% if remaining_invites_count.to_i > 0 %>
   You can send <strong><%= remaining_invites_count %></strong> <%= "invite".pluralize(remaining_invites_count) %>.
 <% else %>
