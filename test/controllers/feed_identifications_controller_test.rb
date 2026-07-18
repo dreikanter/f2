@@ -169,6 +169,20 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Enter a link"
   end
 
+  test "#create should bridge the webhook mode straight to a draft webhook feed" do
+    sign_in_as(user)
+
+    assert_no_enqueued_jobs(only: FeedIdentificationJob) do
+      post feed_identifications_path, params: { webhook: "1" }, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_includes response.body, 'data-identification-state="complete"'
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='webhook']", count: 1
+    assert_select "input[type=text][name='feed[params][url]']", count: 0
+    assert_select "textarea[name='feed[params][prompt]']", count: 0
+  end
+
   test "#create should bridge a Mode B prompt straight to a draft AI feed" do
     sign_in_as(user)
 

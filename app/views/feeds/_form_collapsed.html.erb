@@ -1,9 +1,10 @@
 <%# locals: (url: nil, prompt: nil, mode: "link", checking: false, error: nil) %>
-<%# The two creation modes (spec 005 §1) as a radio pair: the radios carry the
-    mechanism choice, each panel keeps its own form, and switching is pure
-    disclosure — nothing is shared between the modes' fields. The action row
-    sits below the whole radio group; each mode's buttons associate with their
-    form through the `form` attribute and swap with the mode like the panels.
+<%# The creation modes (spec 005 §1, webhook per spec 006 §7) as a radio group:
+    the radios carry the mechanism choice, each panel keeps its own form, and
+    switching is pure disclosure — nothing is shared between the modes' fields.
+    The action row sits below the whole radio group; each mode's buttons
+    associate with their form through the `form` attribute and swap with the
+    mode like the panels.
 
     One partial, three states (spec §7): the idle entry form; checking, which
     freezes the controls and polls for the detection outcome; and an error
@@ -97,6 +98,29 @@
           <% end %>
         <% end %>
       </div>
+
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 font-semibold text-heading" data-key="entry.mode-webhook">
+          <%= radio_button_tag "entry_mode", "webhook", mode == "webhook",
+                               disabled: checking,
+                               data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
+          Post via webhook
+        </label>
+
+        <%= tag.div class: "ps-7", hidden: mode != "webhook",
+                    data: { key: "entry.panel-webhook", mode: "webhook", mode_switch_target: "panel" } do %>
+          <%= form_with url: feed_identifications_path, method: :post, id: "entry-webhook-form" do |f| %>
+            <div class="space-y-2">
+              <%= f.hidden_field :webhook, value: "1" %>
+              <% if error && mode == "webhook" %>
+                <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
+              <% else %>
+                <p class="text-sm text-muted">Nothing to follow — you send the posts. You'll get a secret link, and anything sent to it gets published. A single curl command is enough.</p>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
     </div>
   </fieldset>
 
@@ -117,6 +141,13 @@
   <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
               data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
     <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,
+                   data: { turbo_submits_with: "Setting up…" } %>
+    <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+  <% end %>
+
+  <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "webhook",
+              data: { key: "entry.actions-webhook", mode: "webhook", mode_switch_target: "panel" } do %>
+    <%= submit_tag "Continue", form: "entry-webhook-form", class: primary_button_classes,
                    data: { turbo_submits_with: "Setting up…" } %>
     <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
   <% end %>
