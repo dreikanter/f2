@@ -3,7 +3,7 @@ class ApplicationJob < ActiveJob::Base
   # retry_on ActiveRecord::Deadlocked
 
   # Most jobs are safe to ignore if the underlying records are no longer available
-  # discard_on ActiveJob::DeserializationError
+  discard_on ActiveJob::DeserializationError
 
   # Count every job run by outcome. A run that deferred itself for rate limiting
   # (RateLimited#rate_limited?) is throttled, not a real failure — it returns
