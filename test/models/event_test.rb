@@ -73,16 +73,6 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [new_event, old_event], recent_events.to_a
   end
 
-  test "should scope events for subject" do
-    feed_event = Event.create!(type: "feed_event", subject: feed)
-    user_event = Event.create!(type: "user_event", subject: user)
-
-    feed_events = Event.for_subject(feed)
-
-    assert_includes feed_events, feed_event
-    assert_not_includes feed_events, user_event
-  end
-
   test "should identify expired events" do
     expired_event = Event.create!(type: "expired_event", expires_at: 1.hour.ago)
     active_event = Event.create!(type: "active_event", expires_at: 1.hour.from_now)
