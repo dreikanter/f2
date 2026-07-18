@@ -22,7 +22,6 @@ class Development::SentEmailsController < ApplicationController
 
     unless @email
       redirect_to development_sent_emails_path, alert: "Failed to load email"
-      return
     end
   end
 
