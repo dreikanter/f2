@@ -2,9 +2,8 @@
 # regardless of outcome so users see the true cost of AI features
 # including failed calls.
 class LlmUsage < ApplicationRecord
-  # Usage rows are subject to retention pruning, so aggregate stats in the UI
-  # must cover a bounded window rather than all time — all-time totals would
-  # silently shrink as old rows expire.
+  # Aggregate stats use a bounded window so recent usage remains useful even if
+  # a retention policy is introduced later.
   STATS_PERIOD = 30.days
 
   belongs_to :user
