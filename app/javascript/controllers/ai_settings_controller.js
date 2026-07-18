@@ -46,17 +46,12 @@ export default class extends Controller {
     const previous = this.modelSelectTarget.value
     const keep = models.some((model) => model.id === previous) ? previous : ""
 
-    const options = ['<option value="" disabled hidden>Select a model…</option>']
-    models.forEach((model) => {
-      options.push(`<option value="${this._escape(model.id)}">${this._escape(model.name)}</option>`)
-    })
-    this.modelSelectTarget.innerHTML = options.join("")
-    this.modelSelectTarget.value = keep
-  }
+    const placeholder = new Option("Select a model…", "")
+    placeholder.disabled = true
+    placeholder.hidden = true
+    const options = models.map((model) => new Option(model.name, model.id))
 
-  _escape(value) {
-    const span = document.createElement("span")
-    span.textContent = value
-    return span.innerHTML.replaceAll('"', "&quot;")
+    this.modelSelectTarget.replaceChildren(placeholder, ...options)
+    this.modelSelectTarget.value = keep
   }
 }
