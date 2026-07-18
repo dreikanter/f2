@@ -1,6 +1,4 @@
 class FeedFilterDropdownComponent < ViewComponent::Base
-  include ApplicationHelper
-
   def initialize(feeds:, selected_feed:, sort_params:, menu_id:)
     @feeds = feeds
     @selected_feed = selected_feed

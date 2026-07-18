@@ -9,7 +9,7 @@
     aria-haspopup="true"
     aria-expanded="false">
     <span><%= button_label %></span>
-    <%= icon("chevron-down", css_class: "size-4 text-muted") %>
+    <%= helpers.icon("chevron-down", css_class: "size-4 text-muted") %>
   </button>
   <div
     id="<%= menu_id %>"
@@ -22,7 +22,7 @@
       <label for="<%= menu_id %>-search" class="sr-only">Search feeds</label>
       <div class="relative">
         <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-          <%= icon("search", css_class: "size-4 text-muted") %>
+          <%= helpers.icon("search", css_class: "size-4 text-muted") %>
         </div>
         <input
           type="text"

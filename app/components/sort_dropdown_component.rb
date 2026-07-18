@@ -1,6 +1,4 @@
 class SortDropdownComponent < ViewComponent::Base
-  include ApplicationHelper
-
   def initialize(presenter:, menu_id:)
     @presenter = presenter
     @menu_id = menu_id
