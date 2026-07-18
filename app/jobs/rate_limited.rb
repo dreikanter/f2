@@ -7,7 +7,7 @@
 # `perform`, a deferral never reaches the error reporter — only a give-up does.
 #
 # Reschedules wait retry_after (plus jitter), up to MAX_ATTEMPTS, then report
-# once and stop. The recurring schedulers re-kick later, so giving up isn't final.
+# once and stop.
 module RateLimited
   MAX_ATTEMPTS = 10
   JITTER_SECONDS = 5
