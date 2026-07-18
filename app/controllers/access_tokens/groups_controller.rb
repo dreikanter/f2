@@ -43,7 +43,7 @@ class AccessTokens::GroupsController < ApplicationController
     if defined?(@access_token)
       @access_token
     else
-      @access_token ||= current_user.access_tokens.find_by(id: params[:access_token_id])
+      @access_token = current_user.access_tokens.find_by(id: params[:access_token_id])
     end
   end
 
