@@ -1,10 +1,10 @@
-# Loads files to memory from URLs or local file paths
+# Loads files into memory from URLs or local file paths.
 #
 # @example Load from URL
-#   io, content_type = FileBuffer.new("https://example.com/image.jpg").load
+#   io, content_type = FileBuffer.new.load("https://example.com/image.jpg")
 #
 # @example Load from local file
-#   io, content_type = FileBuffer.new("/path/to/file.png").load
+#   io, content_type = FileBuffer.new.load("/path/to/file.png")
 #
 class FileBuffer
   DEFAULT_CONTENT_TYPE = "application/octet-stream"
@@ -15,9 +15,6 @@ class FileBuffer
 
   class Error < StandardError; end
 
-  # Initialize a new FileBuffer
-  #
-  # @param url [String] URL or local file path to load
   # @param http_client [HttpClient, nil] optional HTTP client for testing
   def initialize(http_client: nil)
     @http_client = http_client
