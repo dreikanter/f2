@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     resource :status, only: :update, controller: "feed_statuses"
     resource :refresh, only: :create, controller: "feeds/refreshes"
     resource :purge, only: :create, controller: "feeds/purges"
+    resource :webhook_token, only: :update, controller: "feeds/webhook_tokens"
   end
 
   namespace :admin do

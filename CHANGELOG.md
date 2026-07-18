@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-18
+
+- New "Post via webhook" feed type: get a secret link and publish posts by sending them from your own scripts — a single curl command is enough. Images, comments, and safe retries are supported.
+
 ## 2026-07-17
 
 - Fixed a security hole where non-admins could grant themselves invites or change their email through admin-only actions.

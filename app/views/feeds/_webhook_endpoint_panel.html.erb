@@ -1,0 +1,67 @@
+<%# locals: (feed:, endpoint:) %>
+<%
+  hook_url = webhook_posts_url(endpoint.encrypted_token)
+  curl_snippet = %(curl #{hook_url} -d content="Hello world")
+  icon_button_class = "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+%>
+<%= render PanelComponent.new(data: { key: "webhook.panel" }) do %>
+  <div class="space-y-6">
+    <div class="space-y-2">
+      <div class="flex items-center justify-between gap-3">
+        <code class="min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.url"><%= hook_url %></code>
+        <button
+          type="button"
+          class="<%= icon_button_class %>"
+          data-controller="clipboard"
+          data-clipboard-text-value="<%= hook_url %>"
+          data-action="click->clipboard#copy"
+          data-key="webhook.copy-url"
+          title="Copy posting link">
+          <%= icon("clipboard", css_class: "size-4") %>
+          <span class="sr-only">Copy posting link</span>
+        </button>
+      </div>
+      <p class="text-sm text-muted">
+        Anything sent to this link gets posted to this feed, so treat it like a password.
+        <% unless feed.enabled? %>
+          It starts accepting posts once the feed is enabled.
+        <% end %>
+      </p>
+    </div>
+
+    <div class="space-y-2">
+      <p class="font-semibold text-heading">Try it from the terminal</p>
+      <div class="flex items-start justify-between gap-3">
+        <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-surface p-3 font-mono text-sm text-heading" data-key="webhook.curl"><code><%= curl_snippet %></code></pre>
+        <button
+          type="button"
+          class="<%= icon_button_class %> mt-3"
+          data-controller="clipboard"
+          data-clipboard-text-value="<%= curl_snippet %>"
+          data-action="click->clipboard#copy"
+          data-key="webhook.copy-curl"
+          title="Copy curl example">
+          <%= icon("clipboard", css_class: "size-4") %>
+          <span class="sr-only">Copy curl example</span>
+        </button>
+      </div>
+      <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting.</p>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-muted" data-key="webhook.last-received">
+        <% if endpoint.last_received_at %>
+          Last post received <%= short_time_ago_phrase_tag(endpoint.last_received_at) %>.
+        <% else %>
+          No posts received yet.
+        <% end %>
+      </p>
+      <%= button_to "Get a new link",
+                    feed_webhook_token_path(feed),
+                    method: :patch,
+                    class: secondary_button_classes,
+                    data: { key: "webhook.rotate" },
+                    form: { data: { turbo_confirm: "Replace the posting link? The current one stops working right away." } } %>
+    </div>
+  </div>
+<% end %>

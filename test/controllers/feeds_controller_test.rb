@@ -510,6 +510,40 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.delete']", text: "Delete feed…"
   end
 
+  test "#show should render the posting link panel for a webhook feed" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :enabled, user: user)
+    endpoint = create(:webhook_endpoint, feed: webhook_feed)
+
+    get feed_url(webhook_feed)
+
+    assert_response :success
+    assert_select "[data-key='webhook.url']", text: webhook_posts_url(endpoint.encrypted_token)
+    assert_select "[data-key='webhook.curl'] code", text: /curl .+ -d content="Hello world"/
+    assert_select "form[action='#{feed_webhook_token_path(webhook_feed)}'] button", text: "Get a new link"
+    assert_select "[data-key='webhook.last-received']", text: /No posts received yet/
+  end
+
+  test "#show should mention enabling on the posting link panel of a draft" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :draft, user: user)
+    create(:webhook_endpoint, feed: webhook_feed)
+
+    get feed_url(webhook_feed)
+
+    assert_response :success
+    assert_includes response.body, "It starts accepting posts once the feed is enabled."
+  end
+
+  test "#show should not render the posting link panel for a pull feed" do
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "[data-key='webhook.panel']", count: 0
+  end
+
   test "#show should not offer Refresh for an enabled webhook feed" do
     sign_in_as(user)
     webhook_feed = create(:feed, :webhook, :enabled, user: user)
