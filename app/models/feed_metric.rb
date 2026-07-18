@@ -21,7 +21,6 @@ class FeedMetric < ApplicationRecord
   # @param posts_count [Integer] number of posts imported
   # @param invalid_posts_count [Integer] number of invalid posts
   def self.record(feed:, date:, posts_count: 0, invalid_posts_count: 0)
-    # Only record if there's actual activity
     return if posts_count.zero? && invalid_posts_count.zero?
 
     upsert(
