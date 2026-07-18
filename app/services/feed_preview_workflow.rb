@@ -68,7 +68,6 @@ class FeedPreviewWorkflow
     processor = temp_feed.processor_instance(raw_data)
     entries = processor.process.entries
 
-    # Limit to most recent entries for preview
     limited_entries = entries.first(FeedPreview::PREVIEW_POSTS_LIMIT)
 
     record_stats(total_entries: entries.size, preview_entries: limited_entries.size)
@@ -80,7 +79,6 @@ class FeedPreviewWorkflow
     entries = input[:entries]
 
     posts = entries.map do |entry|
-      # Create a temporary feed entry for normalization
       temp_feed_entry = FeedEntry.new(
         uid: entry.uid,
         published_at: entry.published_at,
@@ -91,7 +89,6 @@ class FeedPreviewWorkflow
       normalizer = temp_feed.normalizer_instance(temp_feed_entry)
       post = normalizer.normalize
 
-      # Convert post to JSON representation for storage
       {
         content: post.content,
         source_url: post.source_url,
