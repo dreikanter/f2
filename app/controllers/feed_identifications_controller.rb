@@ -1,8 +1,6 @@
 class FeedIdentificationsController < ApplicationController
   include StatePolling
 
-  before_action :require_authentication
-
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     message = "Too many attempts in a row. Give it a minute, then try again."
     state = ai_mode? ? entry_form(mode: "ai", prompt: raw_prompt, error: message) : entry_form(error: message)
