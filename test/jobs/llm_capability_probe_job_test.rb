@@ -27,7 +27,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
       job.perform_now
     end
 
-    events = Event.for_subject(job_run).where(type: "job.llm_capability_probe.skipped")
+    events = Event.where(subject: job_run, type: "job.llm_capability_probe.skipped")
     assert_equal 1, events.count
     assert_predicate events.first, :warning?
   end
@@ -53,14 +53,14 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
       end
     end
 
-    checks = Event.for_subject(job_run).where(type: "job.llm_capability_probe.check").order(:id)
+    checks = Event.where(subject: job_run, type: "job.llm_capability_probe.check").order(:id)
     assert_equal 2, checks.count
     assert_equal "pong", checks.first.metadata["evidence"]
     assert_predicate checks.first, :info?
     assert_predicate checks.second, :warning?
     assert_includes checks.second.message, "schema: FAIL"
 
-    summary = Event.for_subject(job_run).find_by(type: "job.llm_capability_probe.completed")
+    summary = Event.find_by(subject: job_run, type: "job.llm_capability_probe.completed")
     assert_includes summary.message, "plain=PASS schema=FAIL"
     assert_equal false, summary.metadata["passed"]
     assert_predicate summary, :warning?
