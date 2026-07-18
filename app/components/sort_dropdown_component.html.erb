@@ -7,12 +7,12 @@
     class="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 gap-2"
     aria-haspopup="true"
     aria-expanded="false">
-    <%= icon(direction_icon, css_class: "size-4 text-muted") %>
+    <%= helpers.icon(direction_icon, css_class: "size-4 text-muted") %>
     <span class="flex items-center gap-2">
       <span><%= presenter.current_title %></span>
       <span class="sr-only"><%= direction_label %></span>
     </span>
-    <%= icon("chevron-down", css_class: "size-4 text-muted") %>
+    <%= helpers.icon("chevron-down", css_class: "size-4 text-muted") %>
   </button>
   <div
     id="<%= menu_id %>"
@@ -26,7 +26,7 @@
             <span><%= option.title %></span>
             <% if option.icon_name.present? %>
               <span class="flex items-center text-muted">
-                <%= icon(option.icon_name, css_class: "size-4 text-muted") %>
+                <%= helpers.icon(option.icon_name, css_class: "size-4 text-muted") %>
                 <span class="sr-only"><%= option.active_direction == "asc" ? "Ascending" : "Descending" %></span>
               </span>
             <% end %>
