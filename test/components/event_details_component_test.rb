@@ -10,16 +10,10 @@ class EventDetailsComponentTest < ViewComponent::TestCase
     @feed ||= create(:feed, user: user, name: "Test Feed")
   end
 
-  test ".for should return the base component" do
-    event = create(:event, type: "generic_event")
-
-    assert_instance_of EventDetailsComponent, EventDetailsComponent.for(event)
-  end
-
   test "#call should render the created timestamp without admin extras" do
     event = create(:event, type: "owned_event", level: :warning, subject: feed)
 
-    result = render_inline(EventDetailsComponent.for(event))
+    result = render_inline(EventDetailsComponent.new(event: event))
 
     assert_includes result.to_html, "Created"
     assert_empty result.css('[data-key="admin.event.user"]')
@@ -28,7 +22,7 @@ class EventDetailsComponentTest < ViewComponent::TestCase
   test "#call should render a compact user link when admin" do
     event = create(:event, type: "owned_event", user: user, subject: feed)
 
-    result = render_inline(EventDetailsComponent.for(event, admin: true))
+    result = render_inline(EventDetailsComponent.new(event: event, admin: true))
     link = result.css("a[data-key='admin.event.user']").first
 
     assert_equal event.user_id.to_s.last(5), link.text
