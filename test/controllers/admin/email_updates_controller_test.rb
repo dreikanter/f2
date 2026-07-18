@@ -18,6 +18,15 @@ class Admin::EmailUpdatesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "should redirect non-admin users from updating their own email" do
+    login_as(regular_user)
+
+    patch admin_user_email_update_path(regular_user), params: { user: { email_address: "new@example.com" }, require_confirmation: "0" }
+
+    assert_redirected_to root_path
+    assert_not_equal "new@example.com", regular_user.reload.email_address
+  end
+
   test "should allow admin users to view email update form" do
     login_as(admin_user)
     user = create(:user, email_address: "test@example.com")

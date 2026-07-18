@@ -19,6 +19,14 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  def update_email?
+    admin?
+  end
+
+  def update_available_invites?
+    admin?
+  end
+
   def suspend?
     admin? && record != user
   end

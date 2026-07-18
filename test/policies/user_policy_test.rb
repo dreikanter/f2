@@ -124,6 +124,36 @@ class UserPolicyTest < ActiveSupport::TestCase
     assert_not policy.suspend?
   end
 
+  test "#update_email? should allow admin users" do
+    policy = policy_for_user(admin_user, other_user)
+    assert policy.update_email?
+  end
+
+  test "#update_email? should deny self" do
+    policy = policy_for_user(user, user)
+    assert_not policy.update_email?
+  end
+
+  test "#update_email? should deny regular users" do
+    policy = policy_for_user(user, other_user)
+    assert_not policy.update_email?
+  end
+
+  test "#update_available_invites? should allow admin users" do
+    policy = policy_for_user(admin_user, other_user)
+    assert policy.update_available_invites?
+  end
+
+  test "#update_available_invites? should deny self" do
+    policy = policy_for_user(user, user)
+    assert_not policy.update_available_invites?
+  end
+
+  test "#update_available_invites? should deny regular users" do
+    policy = policy_for_user(user, other_user)
+    assert_not policy.update_available_invites?
+  end
+
   test "#confirm_email? should allow admin users" do
     policy = policy_for_user(admin_user, other_user)
     assert policy.confirm_email?
