@@ -1,7 +1,6 @@
 class FeedPreviewsController < ApplicationController
   include StatePolling
 
-  before_action :require_authentication
   before_action :guard_preview, only: %i[show create]
 
   # Maps each FeedPreview status to the pane partial that renders it. `fetch`
