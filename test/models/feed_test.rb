@@ -6,6 +6,12 @@ class FeedTest < ActiveSupport::TestCase
     assert feed.valid?
   end
 
+  test "build(:feed) should not write associated records to the database" do
+    assert_no_difference ["Feed.count", "AccessToken.count"] do
+      build(:feed)
+    end
+  end
+
   test "should require name when enabled" do
     feed = build(:feed, state: :enabled, name: nil)
     assert_not feed.valid?
