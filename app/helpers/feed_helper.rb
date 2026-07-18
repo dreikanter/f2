@@ -24,12 +24,12 @@ module FeedHelper
 
   def feed_missing_enablement_parts(feed)
     missing_parts = []
-    missing_parts << "source" unless feed.source_input.present?
+    missing_parts << "source" unless feed.sourceless? || feed.source_input.present?
     missing_parts << "name" unless feed.name.present?
     missing_parts << "feed profile" unless feed.feed_profile_present?
     missing_parts << "active access token" unless feed.access_token&.active?
     missing_parts << "target group" unless feed.target_group.present?
-    missing_parts << "schedule" unless feed.cron_expression.present?
+    missing_parts << "schedule" if feed.scheduled? && feed.cron_expression.blank?
     if FeedProfile.depends_on_ai?(feed.feed_profile_key)
       missing_parts << "active AI credential" unless feed.ai_credential&.active?
       missing_parts << "AI model" unless feed.ai_model.present?
@@ -61,11 +61,11 @@ module FeedHelper
   end
 
   # Action menu items for the feed page header. Refresh applies only to an
-  # enabled feed; the destructive actions open the confirmation modals rendered
-  # alongside the feed page.
+  # enabled feed that actually pulls from a source; the destructive actions
+  # open the confirmation modals rendered alongside the feed page.
   def feed_actions_menu_items(feed)
     items = []
-    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled?
+    items << { label: "Refresh", href: feed_refresh_path(feed), method: :post, data: { key: "feed.#{feed.id}.refresh" } } if feed.enabled? && feed.scheduled?
     items << { label: "Edit", href: edit_feed_path(feed), data: { key: "feed.#{feed.id}.edit" } }
 
     if feed.target_group.present?

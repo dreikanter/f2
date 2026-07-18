@@ -112,6 +112,12 @@ class FeedPolicyTest < ActiveSupport::TestCase
     assert_not policy.refresh?
   end
 
+  test "#refresh? should deny refresh for an enabled webhook feed" do
+    webhook_feed = create(:feed, :webhook, :enabled, user: user)
+    policy = policy_for_user(user, webhook_feed)
+    assert_not policy.refresh?
+  end
+
   test "#refresh? should deny refresh for non-owner" do
     enabled_feed = create(:feed, :enabled, user: user)
     policy = policy_for_user(other_user, enabled_feed)
