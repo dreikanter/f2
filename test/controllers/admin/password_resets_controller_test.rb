@@ -10,7 +10,7 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from create" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     user = create(:user)
 
     post admin_user_password_reset_path(user)
@@ -19,7 +19,7 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should send password reset email when email is active" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
 
     assert_difference -> { Event.where(type: "mail.passwords_mailer.reset", user: user).count }, 1 do
@@ -33,7 +33,7 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not send password reset email when email is deactivated" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     user = create(:user, email_address: "test@example.com")
     user.deactivate_email!(reason: "bounced")
 
@@ -43,11 +43,5 @@ class Admin::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_user_path(user)
     assert_equal "Cannot send password reset email. Previous emails to this address were bounced by the mail server.", flash[:alert]
-  end
-
-  private
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

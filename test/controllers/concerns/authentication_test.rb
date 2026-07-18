@@ -3,7 +3,7 @@ require "test_helper"
 class AuthenticationTest < ActionDispatch::IntegrationTest
   test "#authenticated? should return true when user is signed in" do
     user = create(:user)
-    login_as(user)
+    sign_in_as(user)
     follow_redirect!
 
     get feeds_path
@@ -17,7 +17,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
 
   test "#update_session_activity should touch session after 10 minutes" do
     user = create(:user)
-    login_as(user)
+    sign_in_as(user)
     session = user.sessions.last
 
     session.update_column(:updated_at, 11.minutes.ago)
@@ -30,7 +30,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
 
   test "#update_session_activity should not touch recent session" do
     user = create(:user)
-    login_as(user)
+    sign_in_as(user)
     session = user.sessions.last
 
     session.update_column(:updated_at, 5.minutes.ago)
@@ -40,11 +40,5 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_equal old_timestamp.to_i, session.reload.updated_at.to_i
-  end
-
-  private
-
-  def login_as(user)
-    post session_url, params: { email_address: user.email_address, password: "password123" }
   end
 end

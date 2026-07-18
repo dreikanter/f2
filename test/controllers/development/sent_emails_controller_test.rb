@@ -3,7 +3,7 @@ require "test_helper"
 class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   setup do
     email_storage.purge
-    login_as(dev_user)
+    sign_in_as(dev_user)
   end
 
   def dev_user
@@ -26,7 +26,7 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#index should require dev permission" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     get development_sent_emails_path
 
     assert_redirected_to root_path
@@ -138,9 +138,6 @@ class Development::SentEmailsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
-  end
 
   def create_test_email(uuid, subject, body)
     multipart = body.is_a?(Hash)

@@ -6,7 +6,7 @@ require "test_helper"
 class Development::SentEmailsFileSystemTest < ActionDispatch::IntegrationTest
   setup do
     FileUtils.mkdir_p(storage_dir)
-    login_as(dev_user)
+    sign_in_as(dev_user)
   end
 
   teardown do
@@ -90,9 +90,5 @@ class Development::SentEmailsFileSystemTest < ActionDispatch::IntegrationTest
       },
       text_content: body
     )
-  end
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end

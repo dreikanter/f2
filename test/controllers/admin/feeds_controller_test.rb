@@ -14,7 +14,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from index" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
 
     get admin_feeds_path
 
@@ -29,7 +29,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should list feeds from every user for admins" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
 
     get admin_feeds_path
@@ -40,7 +40,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should let admins view another user's feed" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
 
     get admin_feed_path(feed)
@@ -50,7 +50,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show another user's feed posts without owner-only links" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     post = create(:post, :published, feed: feed)
 
@@ -62,7 +62,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should render a recent activity section with the feed's events" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     create(:event, subject: feed, user: feed.user)
 
@@ -73,7 +73,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not render recent activity section when feed has no events" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
 
     get admin_feed_path(feed)
@@ -83,7 +83,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should render a recent posts section with the feed's posts" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     create(:post, feed: feed)
 
@@ -94,7 +94,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not render recent posts section when feed has no posts" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
 
     get admin_feed_path(feed)
@@ -104,7 +104,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should render AI usage section when feed has usages within the stats period" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     create(:llm_usage, feed: feed, user: feed.user)
 
@@ -115,7 +115,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should not render AI usage section when all usages are older than the stats period" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
     create(:llm_usage, feed: feed, user: feed.user, created_at: LlmUsage::STATS_PERIOD.ago - 1.day)
 
@@ -126,7 +126,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should redirect non-admin users from show" do
-    login_as(regular_user)
+    sign_in_as(regular_user)
     feed = create(:feed, user: create(:user))
 
     get admin_feed_path(feed)
@@ -135,7 +135,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should render the sort dropdown on index" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     create(:feed, user: create(:user))
 
     get admin_feeds_path
@@ -146,7 +146,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should sort feeds by name" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     create(:feed, user: create(:user), name: "Z Feed")
     create(:feed, user: create(:user), name: "A Feed")
 
@@ -158,7 +158,7 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should preserve sort parameters in pagination" do
-    login_as(admin_user)
+    sign_in_as(admin_user)
     3.times { |i| create(:feed, user: create(:user), name: "Feed #{i}") }
 
     get admin_feeds_path(sort: "name", direction: "desc", per_page: 2)
@@ -166,9 +166,5 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav a[href*='sort=name']"
     assert_select "nav a[href*='direction=desc']"
-  end
-
-  def login_as(user)
-    post session_path, params: { email_address: user.email_address, password: "password123" }
   end
 end
