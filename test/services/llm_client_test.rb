@@ -113,62 +113,21 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_nil usage.error_message
   end
 
-  test "#call should populate error_message on provider error" do
+  test "#call should map a provider error to ProviderError and record the failure" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::ServerError.new("downstream failure"))
 
-    assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
+    assert_difference("LlmUsage.count", 1) do
+      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
+    end
 
     usage = LlmUsage.last
     assert_equal "provider_error", usage.outcome
-    assert_not_nil usage.error_message
     assert_includes usage.error_message, "downstream failure"
-  end
-
-  test "#call should populate error_message and duration_ms on schema error" do
-    client = LlmClient.new(credential)
-    bad_response = LlmClient::ProviderResponse.new(
-      payload: { "wrong" => "shape" },
-      input_tokens: 10, output_tokens: 5,
-      cache_write_tokens: 0, cache_read_tokens: 0
-    )
-    stub_provider_response(client, bad_response)
-
-    assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
-
-    usage = LlmUsage.last
-    assert_equal "schema_error", usage.outcome
-    assert_not_nil usage.error_message
-    assert_not_nil usage.duration_ms
-    assert_equal 10, usage.input_tokens
-    assert_equal 5, usage.output_tokens
-  end
-
-  test "#call should populate error_message on rate limit" do
-    client = LlmClient.new(credential)
-    stub_provider_to_raise(client, RubyLLM::RateLimitError.new("rate limit exceeded"))
-
-    assert_raises(LlmClient::RateLimited) { client.call(default_ctx, **call_opts) }
-
-    usage = LlmUsage.last
-    assert_equal "rate_limited", usage.outcome
-    assert_not_nil usage.error_message
     assert_not_nil usage.duration_ms
   end
 
-  test "#call should populate error_message and duration_ms on timeout" do
-    client = LlmClient.new(credential)
-    stub_provider_to_raise(client, Net::ReadTimeout.new)
-
-    assert_raises(LlmClient::Timeout) { client.call(default_ctx, **call_opts) }
-
-    usage = LlmUsage.last
-    assert_equal "timeout", usage.outcome
-    assert_not_nil usage.error_message
-    assert_not_nil usage.duration_ms
-  end
-
-  test "#call should raise SchemaError and record a failed usage row when the response violates the schema" do
+  test "#call should map a schema violation to SchemaError and record the failure" do
     client = LlmClient.new(credential)
     bad_response = LlmClient::ProviderResponse.new(
       payload: { "wrong" => "shape" },
@@ -181,32 +140,29 @@ class LlmClientTest < ActiveSupport::TestCase
       assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
     end
 
-    assert_equal "schema_error", LlmUsage.last.outcome
+    usage = LlmUsage.last
+    assert_equal "schema_error", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
+    assert_equal 10, usage.input_tokens
+    assert_equal 5, usage.output_tokens
   end
 
-  test "#call should raise RateLimited and record a usage row on RubyLLM::RateLimitError" do
+  test "#call should map a rate-limit error to RateLimited and record the failure" do
     client = LlmClient.new(credential)
-    stub_provider_to_raise(client, RubyLLM::RateLimitError.new("429"))
+    stub_provider_to_raise(client, RubyLLM::RateLimitError.new("rate limit exceeded"))
 
     assert_difference("LlmUsage.count", 1) do
       assert_raises(LlmClient::RateLimited) { client.call(default_ctx, **call_opts) }
     end
 
-    assert_equal "rate_limited", LlmUsage.last.outcome
+    usage = LlmUsage.last
+    assert_equal "rate_limited", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
   end
 
-  test "#call should raise ProviderError on generic RubyLLM::Error and record the failure" do
-    client = LlmClient.new(credential)
-    stub_provider_to_raise(client, RubyLLM::ServerError.new("500"))
-
-    assert_difference("LlmUsage.count", 1) do
-      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
-    end
-
-    assert_equal "provider_error", LlmUsage.last.outcome
-  end
-
-  test "#call should raise Timeout and record a usage row on Net::ReadTimeout" do
+  test "#call should map a timeout to Timeout and record the failure" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, Net::ReadTimeout.new)
 
@@ -214,7 +170,10 @@ class LlmClientTest < ActiveSupport::TestCase
       assert_raises(LlmClient::Timeout) { client.call(default_ctx, **call_opts) }
     end
 
-    assert_equal "timeout", LlmUsage.last.outcome
+    usage = LlmUsage.last
+    assert_equal "timeout", usage.outcome
+    assert_not_nil usage.error_message
+    assert_not_nil usage.duration_ms
   end
 
   test "#call should accept feed:nil for previews and skip the feed reference on the usage row" do
