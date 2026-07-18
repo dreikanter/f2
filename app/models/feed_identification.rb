@@ -27,8 +27,7 @@ class FeedIdentification < ApplicationRecord
   # The candidate the chooser preselects and the new-feed form is built from: the
   # highest-ranked one that can fetch the source.
   def suggested_candidate
-    attributes = working_candidates.first
-    Candidate.new(attributes) if attributes
+    working_candidates.first
   end
 
   # Candidates that can fetch the source (spec §7): the count of these drives how
@@ -36,8 +35,7 @@ class FeedIdentification < ApplicationRecord
   # and failed, or unreachable — so in practice this is the passed set (detection
   # always records a verdict). Memoized: read a few times per request.
   def working_candidates
-    @working_candidates ||= candidates.reject do |attributes|
-      candidate = Candidate.new(attributes)
+    @working_candidates ||= candidates.map { Candidate.new(_1) }.reject do |candidate|
       candidate.failed? || candidate.unreachable?
     end
   end
@@ -46,7 +44,7 @@ class FeedIdentification < ApplicationRecord
   # save (spec §4) only applies a source when the submitted profile is one of
   # these — a settled, source-reading candidate.
   def working_candidate_profile_keys
-    working_candidates.map { |attributes| attributes["profile_key"] }
+    working_candidates.map(&:profile_key)
   end
 
   # How the detection result should present (spec §7):
