@@ -140,7 +140,6 @@ class AccessToken < ApplicationRecord
     self.name = "Token #{next_available_token_number}"
   end
 
-  # TBD: Optimize this the token management flow is when stabilized
   def next_available_token_number
     counter = 1
 
