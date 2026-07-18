@@ -4,9 +4,7 @@
   <span class="flex flex-col gap-1">
     <span class="flex flex-wrap items-center gap-2">
       <span class="font-semibold text-heading"><%= display_name %></span>
-      <% if badge_text %>
-        <%= render BadgeComponent.new(text: badge_text, color: :success, key: "candidate.#{profile_key}.status") %>
-      <% end %>
+      <%= render BadgeComponent.new(text: badge_text, color: :success, key: "candidate.#{profile_key}.status") %>
       <% if selected? %>
         <%= render BadgeComponent.new(text: "Suggested", color: :info, key: "candidate.suggested-badge") %>
       <% end %>
