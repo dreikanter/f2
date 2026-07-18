@@ -305,6 +305,12 @@ class FeedTest < ActiveSupport::TestCase
     assert_nil feed.feed_schedule
   end
 
+  test "#sourceless? should be true only for input-less profiles" do
+    assert_predicate build(:feed, :webhook), :sourceless?
+    assert_not build(:feed).sourceless?
+    assert_not build(:feed, :without_feed_profile).sourceless?
+  end
+
   test "should destroy the webhook endpoint when the feed is destroyed" do
     feed = create(:feed, :webhook)
     create(:webhook_endpoint, feed: feed)

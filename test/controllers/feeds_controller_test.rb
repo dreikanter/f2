@@ -673,6 +673,20 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name='feed[params][prompt]']", text: "cat pictures"
   end
 
+  test "#edit should hide source, preview, and schedule for a webhook feed" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :draft, user: user)
+
+    get edit_feed_url(webhook_feed)
+
+    assert_response :success
+    assert_select "[data-key='form.webhook-note']", count: 1
+    assert_select "input[name='feed[params][url]']", count: 0
+    assert_select "[data-key='preview.open']", count: 0
+    assert_select "select[name='feed[schedule_interval]']", count: 0
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='webhook']", count: 1
+  end
+
   test "#edit should render Save feed button and unchecked always-interactable Enable checkbox for a draft" do
     sign_in_as(user)
     draft = create(:feed, :draft, user: user)

@@ -55,6 +55,17 @@
           — a change re-runs detection before saving (spec §4). %>
       <% ai_prompt_editable = FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
       <% source_editable = edit_mode && !ai_prompt_editable %>
+      <% if feed.sourceless? %>
+        <%# A webhook feed has no source: content arrives at its secret URL
+            (spec 006 §7), so the whole source block collapses into a note. %>
+        <div>
+          <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
+          <%= render PanelComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
+            <p class="text-sm">This feed doesn't follow anything on its own — it publishes whatever you send to its secret link. <%= feed.persisted? ? "You'll find the link on the feed's page." : "Save the feed to get your link." %></p>
+          <% end %>
+          <%= f.hidden_field :feed_profile_key %>
+        </div>
+      <% else %>
       <div>
         <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
 
@@ -151,6 +162,7 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <div class="space-y-2">
         <%= f.label :name, "Feed Name", class: "block font-semibold text-heading" %>
@@ -170,6 +182,7 @@
 
       <%= render FeedAiSettingsComponent.new(feed: feed, form: f) %>
 
+      <% unless feed.sourceless? %>
       <div class="mt-2" data-key="form.preview">
         <%= tag.button "Preview feed contents",
               type: "button",
@@ -192,6 +205,7 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <div class="mt-6">
         <h2 class="text-xl font-semibold text-heading mb-4">Reposting Settings</h2>
@@ -237,17 +251,20 @@
             <% end %>
           <% end %>
 
-          <%= render PanelComponent.new do %>
-            <div class="space-y-2">
-              <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-heading" %>
-              <%= f.select :schedule_interval,
-                           Feed.schedule_intervals_for_select,
-                           { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
-                           { class: input_field_classes } %>
-              <% if f.object.errors[:cron_expression].any? %>
-                <p class="text-sm text-danger"><%= f.object.errors[:cron_expression].first %></p>
-              <% end %>
-            </div>
+          <%# A push-ingested feed has no refresh cadence to pick (spec 006 §7). %>
+          <% if feed.scheduled? %>
+            <%= render PanelComponent.new do %>
+              <div class="space-y-2">
+                <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-heading" %>
+                <%= f.select :schedule_interval,
+                             Feed.schedule_intervals_for_select,
+                             { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
+                             { class: input_field_classes } %>
+                <% if f.object.errors[:cron_expression].any? %>
+                  <p class="text-sm text-danger"><%= f.object.errors[:cron_expression].first %></p>
+                <% end %>
+              </div>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -349,7 +366,11 @@
           </div>
           <div class="ml-3">
             <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-heading mb-0" %>
-            <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
+            <% if feed.scheduled? %>
+              <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
+            <% else %>
+              <p class="text-sm text-muted">Switch on this feed's posting link so it can publish to FreeFeed.</p>
+            <% end %>
           </div>
         </div>
       </div>

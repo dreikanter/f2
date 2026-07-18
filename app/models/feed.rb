@@ -206,6 +206,12 @@ class Feed < ApplicationRecord
     FeedProfile.scheduled?(feed_profile_key)
   end
 
+  # True for push-ingested profiles (webhook): there is no source input, so
+  # source-driven surfaces — source field, detection, preview — don't apply.
+  def sourceless?
+    FeedProfile.source_key_for(feed_profile_key).nil?
+  end
+
   def can_be_enabled?
     name.present? && access_token&.active? && target_group.present? && feed_profile_present? &&
       (!scheduled? || cron_expression.present?) && ai_enablement_requirements_met?

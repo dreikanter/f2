@@ -181,6 +181,10 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='webhook']", count: 1
     assert_select "input[type=text][name='feed[params][url]']", count: 0
     assert_select "textarea[name='feed[params][prompt]']", count: 0
+    # No source, no preview, no schedule — the webhook note takes their place.
+    assert_select "[data-key='form.webhook-note']", count: 1
+    assert_select "[data-key='preview.open']", count: 0
+    assert_select "select[name='feed[schedule_interval]']", count: 0
   end
 
   test "#create should bridge a Mode B prompt straight to a draft AI feed" do
