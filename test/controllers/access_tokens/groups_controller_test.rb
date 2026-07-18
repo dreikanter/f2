@@ -139,6 +139,21 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Retry/, response.body)
   end
 
+  test "reports unexpected API errors" do
+    sign_in_as user
+
+    stub_request(:get, "#{active_token.host}/v4/managedGroups")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    reported = nil
+    Rails.error.stub(:report, ->(error, **) { reported = error }) do
+      get access_token_groups_path(active_token)
+    end
+
+    assert_response :success
+    assert_kind_of FreefeedClient::Error, reported
+  end
+
   test "handles unauthorized token without retry link" do
     sign_in_as user
 
