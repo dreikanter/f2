@@ -35,15 +35,14 @@ class Admin::UsersController < ApplicationController
     }
   }.freeze
 
-
   def index
-    authorize User
+    authorize [:admin, User]
     @users = paginate_scope
   end
 
   def show
     @user = User.includes(:feeds, :access_tokens, :sessions, :created_invites, :permissions).find(params[:id])
-    authorize @user
+    authorize [:admin, @user]
     @stats = UserStats.new(@user)
     @last_admin = @user.admin? && User.joins(:permissions).where(permissions: { name: Permission::ADMIN }).count == 1
   end
@@ -76,6 +75,6 @@ class Admin::UsersController < ApplicationController
   end
 
   def base_scope
-    policy_scope(User)
+    policy_scope([:admin, User])
   end
 end
