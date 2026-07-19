@@ -18,6 +18,7 @@ class WebhookFeedAdvancedOptionsTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to feed_path(feed)
 
+    # Assert the persisted columns, not the form-only date/time accessors.
     feed.reload
     assert_nil feed.import_after
     assert_not feed.images_only
