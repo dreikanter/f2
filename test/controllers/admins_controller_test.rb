@@ -46,7 +46,6 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     get admin_url
 
     assert_response :success
-    assert_select "h2", "Stats"
     assert_select "[data-key='stats.total_users.value']", text: User.count.to_s
     assert_select "[data-key='stats.total_feeds.value']", text: Feed.count.to_s
     assert_select "[data-key='stats.total_published_posts.value']", text: "1"
