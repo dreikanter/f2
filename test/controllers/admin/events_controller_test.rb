@@ -256,7 +256,8 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select '[data-key="events.subject"]', text: "Post #{missing_id.last(5)}"
+    assert_select '[data-key="events.subject"]', text: missing_id.last(5)
+    assert_select '[data-key="events.footer"]', text: /Post: #{missing_id.last(5)}/
     assert_select 'a[data-key="events.subject"]', count: 0
   end
 
@@ -273,8 +274,9 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
-    assert_select '[data-key="events.subject"]', text: /User [0-9a-f]{5}/, count: 2
-    assert_select '[data-key="events.subject"]', text: /Feed [0-9a-f]{5}/, count: 0
+    assert_select '[data-key="events.subject"]', text: test_user.id.to_s.last(5), count: 2
+    assert_select '[data-key="events.footer"]', text: /User: #{test_user.id.to_s.last(5)}/, count: 2
+    assert_select '[data-key="events.footer"]', text: /Feed:/, count: 0
   end
 
   test "should filter events by subject_id" do
