@@ -1,7 +1,6 @@
-# Ingress for webhook feeds (spec 006 §§2-3): POST /hooks/:token accepts one
-# post per request and feeds it into the standard publish pipeline. This is a
-# deliberately narrow API controller: it has no session, browser gate, CSRF
-# surface, or HTML response path. The secret URL itself is the credential.
+# Public ingress for webhook feeds. Each request creates at most one post and
+# enters the standard normalization and publishing pipeline. This API-only
+# controller deliberately has no session, browser gate, CSRF, or HTML surface.
 class WebhookPostsController < ActionController::API
   wrap_parameters false
 
@@ -10,32 +9,30 @@ class WebhookPostsController < ActionController::API
   # cannot bypass the cap or force an unbounded read before parsing.
   MAX_BODY_BYTES = 128.kilobytes
 
-  # SecureRandom.urlsafe_base64(32) produces 43 unpadded URL-safe characters.
-  # Reject malformed path values before deterministic encryption and a DB query.
-  TOKEN_PATTERN = /\A[A-Za-z0-9_-]{43}\z/
+  BEARER_PATTERN = /\ABearer[ \t]+(?<token>\S+)\z/i
 
   # Params parse lazily inside the action, so malformed JSON/form bodies are
-  # catchable here — and the contract is JSON in all cases (spec 006 §3).
+  # catchable here and every response remains JSON.
   rescue_from ActionController::BadRequest, ActionDispatch::Http::Parameters::ParseError,
               with: :reject_bad_request
 
   def create
-    return reject_oversized if oversized_body?
-
-    token = request.path_parameters[:token].to_s
-    return reject_unknown_token unless TOKEN_PATTERN.match?(token)
-
-    endpoint = WebhookEndpoint.find_by(encrypted_token: token)
-    return reject_unknown_token unless endpoint
+    endpoint = WebhookEndpoint.authenticate(bearer_token)
+    return reject_unauthorized unless endpoint
     return reject_not_enabled unless endpoint.feed.enabled?
 
     limit = RateLimit.acquire(:webhook_ingest, subject: endpoint.rate_limit_subject, cost: { request: 1 })
     return reject_throttled(limit) unless limit.allowed?
+    return reject_oversized if oversized_body?
 
     respond(WebhookIngestion.new(endpoint: endpoint, payload: payload).call)
   end
 
   private
+
+  def bearer_token
+    BEARER_PATTERN.match(request.authorization.to_s)&.[](:token)
+  end
 
   def oversized_body?
     return true if request.content_length.to_i > MAX_BODY_BYTES
@@ -46,9 +43,9 @@ class WebhookPostsController < ActionController::API
     body&.rewind
   end
 
-  # Request parameters are body-only. Using the merged controller params here
-  # would silently discard caller-supplied fields named token/action/etc. rather
-  # than letting additionalProperties reject them as the contract requires.
+  # Request parameters are body-only. Using merged controller params would
+  # silently discard caller fields named controller/action rather than letting
+  # the strict payload schema reject them.
   def payload
     request.request_parameters.deep_stringify_keys
   end
@@ -78,9 +75,10 @@ class WebhookPostsController < ActionController::API
     head :content_too_large
   end
 
-  def reject_unknown_token
-    count("not_found")
-    render json: { status: "not_found" }, status: :not_found
+  def reject_unauthorized
+    count("unauthorized")
+    response.set_header("WWW-Authenticate", 'Bearer realm="webhook"')
+    render json: { status: "unauthorized" }, status: :unauthorized
   end
 
   def reject_not_enabled
