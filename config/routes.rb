@@ -101,10 +101,7 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   resource :resend_webhooks, only: :create, path: "resend"
-
-  # Capability URL for webhook feeds: the token in the path is the credential,
-  # so this stays a bare route rather than a resource (spec 006 §2).
-  post "hooks/:token" => "webhook_posts#create", as: :webhook_posts
+  resources :webhook_posts, only: :create, path: "hooks"
 
   root "landing#index"
 end
