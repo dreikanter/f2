@@ -1,42 +1,31 @@
 # Webhook feeds ingest explicitly submitted posts, so pull-feed filtering options
-# must never affect them. Keep persisted values normalized and make reads inert
-# even for records created before this guard existed.
+# do not apply. Strip those form attributes at the controller boundary even when
+# a client submits them directly.
 module WebhookFeedAdvancedOptions
-  extend ActiveSupport::Concern
-
-  prepended do
-    before_validation :clear_webhook_advanced_options
-  end
-
-  def import_after_enabled
-    sourceless? ? false : super
-  end
-
-  def import_after_date
-    sourceless? ? nil : super
-  end
-
-  def import_after_time
-    sourceless? ? nil : super
-  end
-
-  def images_only
-    sourceless? ? false : super
-  end
+  ADVANCED_OPTION_KEYS = %w[
+    import_after_enabled
+    import_after_date
+    import_after_time
+    images_only
+  ].freeze
 
   private
 
-  def clear_webhook_advanced_options
-    return unless sourceless?
+  def create_feed_params
+    permitted = super
+    webhook_profile_submitted? ? permitted.except(*ADVANCED_OPTION_KEYS) : permitted
+  end
 
-    self.import_after = nil
-    self.images_only = false
-    @import_after_enabled = false
-    @import_after_date = nil
-    @import_after_time = nil
+  def update_feed_params
+    permitted = super
+    @feed&.sourceless? ? permitted.except(*ADVANCED_OPTION_KEYS) : permitted
+  end
+
+  def webhook_profile_submitted?
+    params.dig(:feed, :feed_profile_key) == "webhook"
   end
 end
 
 Rails.application.config.to_prepare do
-  Feed.prepend(WebhookFeedAdvancedOptions) unless Feed < WebhookFeedAdvancedOptions
+  FeedsController.prepend(WebhookFeedAdvancedOptions) unless FeedsController < WebhookFeedAdvancedOptions
 end
