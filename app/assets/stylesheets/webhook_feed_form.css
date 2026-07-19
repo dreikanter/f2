@@ -1,0 +1,3 @@
+#feed-form:has([data-key="form.webhook-note"]) div:has(> [data-key="form.advanced-options"]) {
+  display: none;
+}
