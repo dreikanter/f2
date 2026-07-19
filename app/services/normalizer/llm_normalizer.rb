@@ -34,8 +34,8 @@ module Normalizer
 
     def validate_content
       errors = []
-      errors << "missing source_url" if source_url.blank? && !digest?
-      errors << "missing content" if content.blank?
+      errors << "missing_source_url" if source_url.blank? && !digest?
+      errors << "missing_content" if content.blank?
       errors.concat(images_only_errors)
       errors
     end

@@ -46,7 +46,7 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
     post = Normalizer::LlmNormalizer.new(feed_entry("source_url" => "")).normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "missing source_url"
+    assert_includes post.validation_errors, "missing_source_url"
   end
 
   test "#normalize should publish a digest post carrying a null source_url" do
@@ -55,14 +55,14 @@ class Normalizer::LlmNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "enqueued", post.status
     assert_nil post.source_url
-    assert_not_includes post.validation_errors, "missing source_url"
+    assert_not_includes post.validation_errors, "missing_source_url"
   end
 
   test "#normalize should reject when content is missing" do
     post = Normalizer::LlmNormalizer.new(feed_entry("body" => "")).normalize
 
     assert_equal "rejected", post.status
-    assert_includes post.validation_errors, "missing content"
+    assert_includes post.validation_errors, "missing_content"
   end
 
   test "#normalize should reject image-less posts when the feed is images-only" do
