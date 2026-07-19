@@ -14,7 +14,7 @@ class PostPolicy < ApplicationPolicy
   private
 
   def owner?
-    authenticated? && record.feed.user == user
+    authenticated? && record.feed.user_id == user.id
   end
 
   class Scope < ApplicationPolicy::Scope
