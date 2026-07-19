@@ -49,6 +49,13 @@ class Normalizer::WebhookNormalizerTest < ActiveSupport::TestCase
     assert_equal "enqueued", post.status
   end
 
+  test "#normalize should strip whitespace around source_url" do
+    post = Normalizer::WebhookNormalizer.new(feed_entry("source_url" => " https://example.com/a ")).normalize
+
+    assert_equal "https://example.com/a", post.source_url
+    assert_equal "Look at this - https://example.com/a", post.content
+  end
+
   test "#normalize should accept images without content" do
     post = Normalizer::WebhookNormalizer.new(
       feed_entry("content" => nil, "source_url" => nil)

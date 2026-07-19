@@ -1,14 +1,14 @@
 require "test_helper"
 
-# The two-mode entry on the new-feed page (spec 005 §1): a radio pair carries
-# the mechanism, both panels render server-side, and only the selected mode's
-# panel is visible.
+# The creation-mode entry on the new-feed page (spec 005 §1, webhook mode per
+# spec 006 §7): radios carry the mechanism, all panels render server-side, and
+# only the selected mode's panel is visible.
 class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
   def user
     @user ||= create(:user)
   end
 
-  test "#new should render both modes with the link mode selected" do
+  test "#new should render all modes with the link mode selected" do
     sign_in_as(user)
 
     get new_feed_path
@@ -16,12 +16,27 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='entry.mode-link'] input[type=radio][value=link][checked]"
     assert_select "[data-key='entry.mode-ai'] input[type=radio][value=ai]:not([checked])"
+    assert_select "[data-key='entry.mode-webhook'] input[type=radio][value=webhook]:not([checked])"
     assert_select "[data-key='entry.panel-link']:not([hidden])"
     assert_select "[data-key='entry.panel-ai'][hidden]"
+    assert_select "[data-key='entry.panel-webhook'][hidden]"
     # The radio label is the group's single visible label; the field keeps its
     # name for assistive tech only.
     assert_select "input#entry-link-input[name='url'][aria-label='Source link']"
     assert_select "label[for='entry-link-input']", count: 0
+  end
+
+  test "#new with mode=webhook should select the webhook mode" do
+    sign_in_as(user)
+
+    get new_feed_path(mode: "webhook")
+
+    assert_response :success
+    assert_select "[data-key='entry.mode-webhook'] input[type=radio][checked]"
+    assert_select "[data-key='entry.mode-link'] input[type=radio]:not([checked])"
+    assert_select "[data-key='entry.panel-webhook']:not([hidden])"
+    assert_select "[data-key='entry.panel-link'][hidden]"
+    assert_select "[data-key='entry.panel-webhook'] form input[type=hidden][name='webhook']"
   end
 
   test "#new with mode=ai should select the AI mode" do
@@ -54,9 +69,10 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
 
     get new_feed_path
 
-    # Two independent forms: the radios are disclosure only and never submit.
+    # Independent forms: the radios are disclosure only and never submit.
     assert_select "[data-key='entry.panel-link'] form input[name='url']", count: 1
     assert_select "[data-key='entry.panel-ai'] form textarea[name='prompt']", count: 1
+    assert_select "[data-key='entry.panel-webhook'] form input[name='webhook']", count: 1
     assert_select "form input[name='entry_mode']", count: 0
   end
 

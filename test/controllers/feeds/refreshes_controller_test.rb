@@ -38,6 +38,17 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "create is not allowed for webhook feeds" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :enabled, user: user)
+
+    assert_no_enqueued_jobs(only: FeedRefreshJob) do
+      post feed_refresh_path(webhook_feed)
+    end
+
+    assert_redirected_to root_path
+  end
+
   test "create is not allowed for draft feeds" do
     sign_in_as(user)
     post feed_refresh_path(draft_feed)

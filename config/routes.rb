@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     resource :status, only: :update, controller: "feed_statuses"
     resource :refresh, only: :create, controller: "feeds/refreshes"
     resource :purge, only: :create, controller: "feeds/purges"
+    resource :webhook_token, only: :update, controller: "feeds/webhook_tokens"
   end
 
   namespace :admin do
@@ -100,6 +101,14 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   resource :resend_webhooks, only: :create, path: "resend"
+
+  scope path: "v1", module: "api/v1", as: "api_v1" do
+    resources :posts, only: :create
+  end
+
+  direct :webhook_posts do
+    "/v1/posts"
+  end
 
   root "landing#index"
 end

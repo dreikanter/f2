@@ -5,8 +5,10 @@ module Normalizer
   class WebhookNormalizer < Base
     private
 
+    # Stripped to match the ingress service's reading of the field, so the
+    # truncation-warning math and the stored link agree.
     def normalize_source_url
-      raw_data["source_url"].presence
+      raw_data["source_url"].to_s.strip.presence
     end
 
     # Folds the source link into the body, same shape as pull feeds.

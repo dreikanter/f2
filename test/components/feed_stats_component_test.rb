@@ -100,4 +100,14 @@ class FeedStatsComponentTest < ViewComponent::TestCase
       end
     end
   end
+
+  test "#render should label ingestion instead of refresh for a webhook feed" do
+    webhook_feed = create(:feed, :webhook)
+
+    result = render_inline(FeedStatsComponent.new(feed: webhook_feed))
+
+    assert_equal "Last post received", result.css('.md\\:hidden [data-key="stats.last_refresh.label"]').first.text
+    assert_includes result.text, "Received"
+    assert_not_includes result.text, "Last refresh"
+  end
 end

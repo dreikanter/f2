@@ -41,6 +41,13 @@ class FeedHelperTest < ActionView::TestCase
     assert_equal [], result
   end
 
+  test "#feed_missing_enablement_parts should not expect source or schedule for a webhook feed" do
+    feed = build(:feed, :webhook, name: "")
+    result = feed_missing_enablement_parts(feed)
+
+    assert_equal ["name"], result
+  end
+
   test "#feed_missing_enablement_parts should include name when blank" do
     access_token = create(:access_token, :active)
     feed = build(:feed, access_token: access_token, target_group: "test_group", name: "")

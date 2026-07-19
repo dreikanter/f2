@@ -3,11 +3,13 @@ class FeedIdentificationsController < ApplicationController
 
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, only: :create, with: -> {
     message = "Too many attempts in a row. Give it a minute, then try again."
-    state = ai_mode? ? entry_form(mode: "ai", prompt: raw_prompt, error: message) : entry_form(error: message)
-    render state.merge(status: :too_many_requests)
+    render throttled_entry_form(message).merge(status: :too_many_requests)
   }
 
   def create
+    # Sourceless mode: nothing to detect, the webhook profile is the destination.
+    return handle_webhook_submission if webhook_mode?
+
     # Mode B (an explicit "Follow with AI") goes straight to a draft AI feed.
     return handle_prompt_submission if ai_mode?
 
@@ -53,10 +55,31 @@ class FeedIdentificationsController < ApplicationController
 
   private
 
-  # The AI form submits the text as `prompt`; the link form submits `url`.
-  # The param name is the mode.
+  # The AI form submits the text as `prompt`; the link form submits `url`; the
+  # webhook form submits a bare `webhook` marker. The param name is the mode.
   def ai_mode?
     params.key?(:prompt)
+  end
+
+  def webhook_mode?
+    params.key?(:webhook)
+  end
+
+  def throttled_entry_form(message)
+    if webhook_mode?
+      entry_form(mode: "webhook", error: message)
+    elsif ai_mode?
+      entry_form(mode: "ai", prompt: raw_prompt, error: message)
+    else
+      entry_form(error: message)
+    end
+  end
+
+  # Build a draft webhook feed straight away — there is no source input at all;
+  # the secret posting URL is minted when the draft is saved (spec 006 §7).
+  def handle_webhook_submission
+    feed = Current.user.feeds.build(feed_profile_key: "webhook")
+    render(identification_success(feed, candidates: []))
   end
 
   # Build a draft AI feed straight from the prompt — no detection, the AI

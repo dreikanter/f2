@@ -250,6 +250,22 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil feed.webhook_endpoint
   end
 
+  test "#create should re-render the expanded form when a webhook draft fails validation" do
+    sign_in_as(user)
+    create(:feed, user: user, name: "Taken")
+
+    assert_no_difference("Feed.count") do
+      post feeds_path, params: { feed: { feed_profile_key: "webhook", name: "Taken" }, enable_feed: "0" }
+    end
+
+    assert_response :unprocessable_entity
+    # The sourceless draft must land back on the expanded form with its fields
+    # and errors, not on the blank collapsed entry.
+    assert_select "[data-key='form.webhook-note']", count: 1
+    assert_select "input[data-key='form.name'][value='Taken']"
+    assert_select "p", text: /already been taken/
+  end
+
   test "#create should not mint a webhook endpoint for a pull feed" do
     sign_in_as(user)
     access_token
@@ -510,6 +526,52 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feed-header-menu-#{enabled.id} a[data-key='feed.#{enabled.id}.delete']", text: "Delete feed…"
   end
 
+  test "#show should render the webhook API panel for a webhook feed" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :enabled, user: user)
+    endpoint = create(:webhook_endpoint, feed: webhook_feed)
+
+    get feed_url(webhook_feed)
+
+    assert_response :success
+    assert_select "[data-key='webhook.url']", text: webhook_posts_url
+    assert_select "[data-key='webhook.token']", text: endpoint.encrypted_token
+    assert_select "[data-key='webhook.curl'] code", text: /Authorization: Bearer #{Regexp.escape(endpoint.encrypted_token)}/
+    assert_select "form[action='#{feed_webhook_token_path(webhook_feed)}'] button", text: "Generate new token"
+    assert_select "[data-key='webhook.last-received']", text: /No posts received yet/
+  end
+
+  test "#show should mention enabling on the webhook API panel of a draft" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :draft, user: user)
+    create(:webhook_endpoint, feed: webhook_feed)
+
+    get feed_url(webhook_feed)
+
+    assert_response :success
+    assert_includes response.body, "The endpoint starts accepting posts once the feed is enabled."
+  end
+
+  test "#show should not render the posting link panel for a pull feed" do
+    sign_in_as(user)
+
+    get feed_url(feed)
+
+    assert_response :success
+    assert_select "[data-key='webhook.panel']", count: 0
+  end
+
+  test "#show should not offer Refresh for an enabled webhook feed" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :enabled, user: user)
+
+    get feed_url(webhook_feed)
+
+    assert_response :success
+    assert_select "[data-key='feed.#{webhook_feed.id}.refresh']", count: 0
+    assert_select "#feed-header-menu-#{webhook_feed.id} a[data-key='feed.#{webhook_feed.id}.edit']", text: "Edit"
+  end
+
   test "#show should no longer render the More Actions danger zone section" do
     sign_in_as(user)
     get feed_url(feed)
@@ -671,6 +733,20 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "label", text: "What should AI follow?"
     assert_select "textarea[name='feed[params][prompt]']", text: "cat pictures"
+  end
+
+  test "#edit should hide source, preview, and schedule for a webhook feed" do
+    sign_in_as(user)
+    webhook_feed = create(:feed, :webhook, :draft, user: user)
+
+    get edit_feed_url(webhook_feed)
+
+    assert_response :success
+    assert_select "[data-key='form.webhook-note']", count: 1
+    assert_select "input[name='feed[params][url]']", count: 0
+    assert_select "[data-key='preview.open']", count: 0
+    assert_select "select[name='feed[schedule_interval]']", count: 0
+    assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='webhook']", count: 1
   end
 
   test "#edit should render Save feed button and unchecked always-interactable Enable checkbox for a draft" do
