@@ -567,12 +567,12 @@
       <%
         # selected mirrors the option the add-feed flow preselects in production.
         chooser_candidate = ->(profile_key, posts_found: 0) {
-          {
+          FeedIdentification::Candidate.new(
             "profile_key" => profile_key,
             "title" => FeedProfile.display_name_for(profile_key),
             "test_status" => "passed",
             "posts_found" => posts_found
-          }
+          )
         }
 
         chooser_examples = [
