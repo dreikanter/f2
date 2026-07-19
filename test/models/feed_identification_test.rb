@@ -114,7 +114,7 @@ class FeedIdentificationTest < ActiveSupport::TestCase
       { "profile_key" => "youtube", "test_status" => "unreachable" }
     ])
 
-    assert_equal ["rss"], id.working_candidates.map { |c| c["profile_key"] }
+    assert_equal ["rss"], id.working_candidates.map(&:profile_key)
   end
 
   test "#outcome should be :working when at least one candidate reads the source" do
