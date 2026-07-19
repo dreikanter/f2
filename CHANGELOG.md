@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-19
 
+- Webhook feed setup now asks you to choose a name and uses clearer progress messages.
 - Webhook feeds now hide options that only apply to feeds checked on a schedule.
 - Menu items in the mobile navigation are now taller, making them easier to tap.
 

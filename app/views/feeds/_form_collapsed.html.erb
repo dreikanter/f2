@@ -55,7 +55,7 @@
                                aria: { label: "Source link" },
                                data: { key: "form.entry-link" } %>
               <% if checking %>
-                <p class="text-sm text-muted" role="status" data-key="entry.checking-status">Checking this feed — usually takes a few seconds.</p>
+                <p class="text-sm text-muted" role="status" data-key="entry.checking-status">Checking this feed. This usually takes a few seconds.</p>
               <% elsif error && mode == "link" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
               <% else %>
@@ -92,7 +92,7 @@
               <% if error && mode == "ai" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
               <% else %>
-                <p class="text-sm text-muted">Describe a source or topic in your own words — a link, a few links, or what you're after. AI reads the web to keep up with it.</p>
+                <p class="text-sm text-muted">Describe a source or topic in your own words. Use a link, a few links, or explain what you're after. AI reads the web to keep up with it.</p>
               <% end %>
             </div>
           <% end %>
@@ -115,7 +115,7 @@
               <% if error && mode == "webhook" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
               <% else %>
-                <p class="text-sm text-muted">Nothing to follow — you send the posts to a webhook endpoint using a secret authorization token. A single curl command is enough.</p>
+                <p class="text-sm text-muted">There is nothing to follow. You send posts to a webhook endpoint using a secret authorization token. A single curl command is enough.</p>
               <% end %>
             </div>
           <% end %>
@@ -128,7 +128,7 @@
               data: { key: "entry.actions-link", mode: "link", mode_switch_target: "panel" } do %>
     <% if checking %>
       <%= submit_tag "Checking…", form: "entry-link-form", disabled: true,
-                     class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed" %>
+                     class: "#{primary_button_classes} disabled:bg-brand disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand" %>
       <%= link_to "Cancel", feed_identifications_path(url: url), class: secondary_button_classes,
                   data: { turbo_method: :delete, key: "entry.cancel-check" } %>
     <% else %>
@@ -141,14 +141,14 @@
   <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "ai",
               data: { key: "entry.actions-ai", mode: "ai", mode_switch_target: "panel" } do %>
     <%= submit_tag "Continue", form: "entry-ai-form", class: primary_button_classes,
-                   data: { turbo_submits_with: "Setting up…" } %>
+                   data: { turbo_submits_with: "Preparing…" } %>
     <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
   <% end %>
 
   <%= tag.div class: "mt-6 flex flex-wrap items-center justify-start gap-4 text-body", hidden: mode != "webhook",
               data: { key: "entry.actions-webhook", mode: "webhook", mode_switch_target: "panel" } do %>
     <%= submit_tag "Continue", form: "entry-webhook-form", class: primary_button_classes,
-                   data: { turbo_submits_with: "Setting up…" } %>
+                   data: { turbo_submits_with: "Preparing…" } %>
     <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
   <% end %>
 <% end %>

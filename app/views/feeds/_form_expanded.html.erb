@@ -60,8 +60,8 @@
             endpoint, so the whole source block collapses into a note. %>
         <div>
           <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
-          <%= render PanelComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
-            <p class="text-sm">This feed doesn't follow anything on its own — it publishes whatever you send to its webhook endpoint with the authorization token. <%= feed.persisted? ? "You'll find both on the feed's page." : "Save the feed to get the endpoint and token." %></p>
+          <%= render AlertComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
+            <p class="text-sm">This feed doesn't follow anything on its own. It publishes whatever you send to its webhook endpoint with the authorization token. <%= feed.persisted? ? "You'll find both on the feed's page." : "Save the feed to get the endpoint and token." %></p>
           <% end %>
           <%= f.hidden_field :feed_profile_key %>
         </div>
@@ -95,7 +95,7 @@
                                  class: input_field_classes(disabled: true),
                                  data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.source-edit" } %>
               <% if checking %>
-                <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed — usually takes a few seconds.</p>
+                <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed. This usually takes a few seconds.</p>
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
               <% else %>
@@ -153,7 +153,7 @@
         <% if source_changed && profile_changed %>
           <%= render AlertComponent.new(variant: :warning, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
             <p class="font-semibold">This changes how posts are identified</p>
-            <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back — pick a start date that suits you. It can't promise zero repeats.</p>
+            <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back. Pick a start date that suits you. It can't promise zero repeats.</p>
           <% end %>
         <% elsif source_changed %>
           <%= render AlertComponent.new(variant: :info, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
@@ -175,6 +175,8 @@
           <p class="text-sm text-danger"><%= f.object.errors[:name].to_sentence.capitalize %></p>
         <% elsif feed.name.present? %>
           <p class="text-sm text-muted">You can edit this name if you'd like.</p>
+        <% elsif feed.sourceless? %>
+          <p class="text-sm text-muted">Choose a name for this webhook feed.</p>
         <% else %>
           <p class="text-sm text-muted">We couldn't automatically detect a name. Please enter one.</p>
         <% end %>
@@ -382,7 +384,7 @@
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
       <%= f.submit checking ? "Checking…" : "Save feed",
                    disabled: checking,
-                   class: "#{primary_button_classes} disabled:opacity-60 disabled:cursor-not-allowed",
+                   class: "#{primary_button_classes} disabled:bg-brand disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand",
                    data: { turbo_submits_with: "Saving…" } %>
       <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
     </div>
