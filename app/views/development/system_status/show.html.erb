@@ -57,7 +57,7 @@
         <% if other_used_percentage > 0 %>
           <div class="bg-muted" style="width: <%= other_used_percentage %>%" title="Other Used Space"></div>
         <% end %>
-        <div class="bg-blue-500" style="width: <%= postgres_percentage %>%" title="Postgres DB"></div>
+        <div class="bg-info" style="width: <%= postgres_percentage %>%" title="Postgres DB"></div>
         <div class="bg-surface-sunken" style="width: <%= free_percentage %>%" title="Free Space"></div>
       </div>
 
@@ -70,7 +70,7 @@
           </div>
         <% end %>
         <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-sm bg-blue-500"></div>
+          <div class="h-3 w-3 rounded-sm bg-info"></div>
           <span class="text-body">Postgres DB (<%= postgres_percentage %>%, <%= number_to_human_size(postgres_size) %>)</span>
         </div>
         <div class="flex items-center gap-2">
