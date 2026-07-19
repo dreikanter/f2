@@ -12,13 +12,26 @@ class WebhookEndpoint < ApplicationRecord
   validates :encrypted_token, presence: true, uniqueness: true
 
   before_validation(on: :create) { self.encrypted_token ||= self.class.generate_token }
+  after_destroy :forget_rate_limit
 
   def self.generate_token
     SecureRandom.urlsafe_base64(TOKEN_BYTES)
   end
 
+  def rate_limit_subject
+    "webhook_endpoint:#{id}"
+  end
+
   # The remedy for a leaked URL: the old one stops resolving immediately.
   def rotate!
     update!(encrypted_token: self.class.generate_token)
+  end
+
+  private
+
+  # RateLimit stores one row per subject. The endpoint ID is never reused, so
+  # remove its bucket with the endpoint instead of leaking rows indefinitely.
+  def forget_rate_limit
+    RateLimit.forget(:webhook_ingest, subject: rate_limit_subject)
   end
 end
