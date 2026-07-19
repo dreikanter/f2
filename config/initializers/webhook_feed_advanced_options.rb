@@ -1,7 +1,13 @@
 # Webhook feeds ingest explicitly submitted posts, so pull-feed filtering options
-# must never affect them. Keep the persisted values normalized and make reads
-# inert even for records created before this guard existed.
+# must never affect them. Keep persisted values normalized and make reads inert
+# even for records created before this guard existed.
 module WebhookFeedAdvancedOptions
+  extend ActiveSupport::Concern
+
+  prepended do
+    before_validation :clear_webhook_advanced_options
+  end
+
   def import_after_enabled
     sourceless? ? false : super
   end
@@ -32,5 +38,4 @@ end
 
 Rails.application.config.to_prepare do
   Feed.prepend(WebhookFeedAdvancedOptions) unless Feed < WebhookFeedAdvancedOptions
-  Feed.before_validation :clear_webhook_advanced_options
 end
