@@ -40,7 +40,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 - Admin feed pages now match regular feed pages: empty Recent Activity and Recent Posts sections stay hidden, and heading spacing is consistent.
 - Enabling an AI feed that's missing a working AI credential or a model now explains what's left to set up instead of failing with an error page.
 - Telegram feeds now tell you clearly when a channel has no public web preview (restricted, private, or not a channel), instead of quietly showing no posts.
-- Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once it finishes.
+- Your events log now shows when a feed refresh is in progress; the entry is replaced by the result once the refresh finishes.
 
 ## 2026-07-09
 
@@ -64,7 +64,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - AI feeds are steadier and safer: they now treat the pages they read as data rather than instructions to follow, and won't invent posts when a source turns up nothing — an empty check just brings in nothing.
 - A daily AI digest feed no longer wastes AI calls re-checking within the same day — once its digest is in, extra scheduled runs are skipped until the next day. Hitting Refresh yourself still runs it right away.
-- AI feeds can now follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
+- AI feeds can follow standing queries and roundups that don't have a single link — these come through as one digest post per day that cites its sources inline, instead of being dropped.
 - AI feeds are steadier about not repeating or dropping posts: a link that only differs by `http`/`https`, `www`, or a port no longer counts as a new post, and posts with non-Latin links (like Cyrillic) come through instead of quietly disappearing.
 - AI-powered previews now get more time to finish — up to about four minutes, since they browse the web — so a slow one no longer gets cut off early, and the progress note says what's happening. A preview that does time out now stays timed out instead of quietly flipping to done after you've moved on.
 
