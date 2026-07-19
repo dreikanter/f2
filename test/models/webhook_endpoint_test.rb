@@ -39,6 +39,12 @@ class WebhookEndpointTest < ActiveSupport::TestCase
     assert_equal endpoint, WebhookEndpoint.find_by(encrypted_token: endpoint.encrypted_token)
   end
 
+  test "#rate_limit_subject should use the stable endpoint id" do
+    endpoint = create(:webhook_endpoint, feed: feed)
+
+    assert_equal "webhook_endpoint:#{endpoint.id}", endpoint.rate_limit_subject
+  end
+
   test "#rotate! should replace the token so the old one stops resolving" do
     endpoint = create(:webhook_endpoint, feed: feed)
     old_token = endpoint.encrypted_token
@@ -47,6 +53,17 @@ class WebhookEndpointTest < ActiveSupport::TestCase
 
     assert_not_equal old_token, endpoint.reload.encrypted_token
     assert_nil WebhookEndpoint.find_by(encrypted_token: old_token)
+  end
+
+  test "should remove rate-limit state when destroyed" do
+    endpoint = create(:webhook_endpoint, feed: feed)
+    key = "webhook_ingest:#{endpoint.rate_limit_subject}"
+    RateLimit.acquire(:webhook_ingest, subject: endpoint.rate_limit_subject, cost: { request: 1 })
+    assert RateLimit::Bucket.exists?(key: key)
+
+    endpoint.destroy!
+
+    assert_not RateLimit::Bucket.exists?(key: key)
   end
 
   test "should default received_count to zero" do
