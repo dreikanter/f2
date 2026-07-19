@@ -19,18 +19,14 @@ class WebhookFeedAdvancedOptionsTest < ActionDispatch::IntegrationTest
     assert_redirected_to feed_path(feed)
 
     feed.reload
-    assert_equal false, feed[:import_after_enabled]
-    assert_nil feed[:import_after_date]
-    assert_nil feed[:import_after_time]
-    assert_equal false, feed[:images_only]
+    assert_nil feed.import_after
+    assert_not feed.images_only
   end
 
   test "advanced option readers remain inert for legacy webhook values" do
     feed = create(:feed, :webhook, :draft)
     feed.update_columns(
-      import_after_enabled: true,
-      import_after_date: Date.new(2026, 1, 1),
-      import_after_time: "12:34",
+      import_after: Time.utc(2026, 1, 1, 12, 34),
       images_only: true
     )
 
