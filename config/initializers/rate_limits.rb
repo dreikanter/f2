@@ -28,10 +28,11 @@ Rails.application.config.to_prepare do
     limit :delete, 15, per: 1.minute, burst: 10 # worst window 25, under FreeFeed `all` fallback 30/min
   end
 
-  # Webhook ingress, subject = one endpoint (spec 006 §6). Protects the DB and
-  # keeps a runaway script from monopolizing the account's FreeFeed publish
-  # budget, which refills at 30 posts/min.
+  # Per-credential webhook ingress limit. This protects the database and keeps a
+  # runaway sender from monopolizing the account's FreeFeed publish budget.
+  # Public ingress fails closed if limiter storage is unavailable.
   RateLimit.define :webhook_ingest do
     limit :request, 60, per: 1.minute, burst: 10
+    fail_open false
   end
 end
