@@ -45,6 +45,7 @@ class FeedsController < ApplicationController
 
   def create
     @feed = feeds_scope.build(create_feed_params)
+    @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
     authorize @feed
 
     if @feed.save
@@ -97,6 +98,7 @@ class FeedsController < ApplicationController
     # Overwrite the raw submitted URL with the canonical, verified source and its
     # detected profile (the confirm path — spec §4).
     apply_confirmed_source if source_change
+    @feed.assign_attributes(FeedProfile.defaults_for(@feed.feed_profile_key))
 
     # Unticked Enable on an enabled feed = pause request (gate flow skips this
     # because the gate only appears for drafts without usable credentials).

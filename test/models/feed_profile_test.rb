@@ -184,6 +184,18 @@ class FeedProfileTest < ActiveSupport::TestCase
     assert_not FeedProfile.scheduled?(nil)
   end
 
+  test ".defaults_for should return fixed attributes for a profile" do
+    assert_equal(
+      { import_after_enabled: false, import_after: nil, images_only: false },
+      FeedProfile.defaults_for("webhook")
+    )
+  end
+
+  test ".defaults_for should return an empty hash when defaults are absent" do
+    assert_equal({}, FeedProfile.defaults_for("rss"))
+    assert_equal({}, FeedProfile.defaults_for("nonexistent"))
+  end
+
   test ".parameter_schema_for returns the schema for a profile" do
     schema = FeedProfile.parameter_schema_for("rss")
 

@@ -746,6 +746,8 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='feed[params][url]']", count: 0
     assert_select "[data-key='preview.open']", count: 0
     assert_select "select[name='feed[schedule_interval]']", count: 0
+    assert_select "[data-key='form.advanced-options']", count: 0
+    assert_select "[data-key='form.images-only']", count: 0
     assert_select "input[type=hidden][name='feed[feed_profile_key]'][value='webhook']", count: 1
   end
 

@@ -379,6 +379,12 @@ class FeedProfile
       input_shape: :none,
       depends_on_ai: false,
       scheduled: false,
+      defaults: {
+        # Prevent the form-facing writer state from rebuilding import_after.
+        import_after_enabled: false,
+        import_after: nil,
+        images_only: false
+      },
       parameter_schema: {
         "type" => "object",
         "properties" => {},
@@ -428,6 +434,12 @@ class FeedProfile
     # @return [Boolean] true if the profile uses periodic scheduling
     def scheduled?(key)
       !!PROFILES.dig(key, :scheduled)
+    end
+
+    # @param key [String] the profile key
+    # @return [Hash] attributes enforced after user-submitted attributes
+    def defaults_for(key)
+      PROFILES.dig(key, :defaults) || {}
     end
 
     # @return [Array<String>] keys of the AI-backed profiles
