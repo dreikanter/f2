@@ -30,6 +30,8 @@ class FileBuffer
     else
       url_to_io(url)
     end
+  rescue Error
+    raise
   rescue => e
     raise Error, "Failed to download attachment from #{url}: #{e.message}"
   end
