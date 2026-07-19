@@ -102,10 +102,12 @@ Rails.application.routes.draw do
 
   resource :resend_webhooks, only: :create, path: "resend"
 
-  namespace :api, path: nil do
-    namespace :v1 do
-      resources :posts, only: :create, as: :webhook_posts
-    end
+  scope path: "v1", module: "api/v1", as: "api_v1" do
+    resources :posts, only: :create
+  end
+
+  direct :webhook_posts do
+    "/v1/posts"
   end
 
   root "landing#index"
