@@ -16,7 +16,7 @@ module FeedHelper
   # otherwise just the feed's own profile.
   def preview_source_keys(feed, candidates, show_chooser:)
     if show_chooser
-      candidates.to_h { |c| [c["profile_key"], FeedProfile.source_key_for(c["profile_key"])] }
+      candidates.to_h { |candidate| [candidate.profile_key, FeedProfile.source_key_for(candidate.profile_key)] }
     else
       { feed.feed_profile_key => FeedProfile.source_key_for(feed.feed_profile_key) }
     end
