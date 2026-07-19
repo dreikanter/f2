@@ -11,6 +11,8 @@ class Api::V1::PostsController < ActionController::API
               with: :reject_bad_request
 
   def create
+    return reject_unsupported_media_type unless request.media_type == "application/json"
+
     endpoint = WebhookEndpoint.authenticate(bearer_token)
     return reject_unauthorized unless endpoint
     return reject_not_enabled unless endpoint.feed.enabled?
@@ -59,6 +61,11 @@ class Api::V1::PostsController < ActionController::API
   def reject_bad_request(*)
     count("bad_request")
     render json: { status: "bad_request" }, status: :bad_request
+  end
+
+  def reject_unsupported_media_type
+    count("unsupported_media_type")
+    render json: { status: "unsupported_media_type" }, status: :unsupported_media_type
   end
 
   def reject_oversized
