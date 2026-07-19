@@ -56,6 +56,13 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_equal "article-42", result.uid
   end
 
+  test "#call should reject a whitespace-only uid instead of silently replacing it" do
+    result = ingest({ "content" => "Hello", "uid" => "   " })
+
+    assert result.invalid?
+    assert_includes result.errors, "uid must not be blank"
+  end
+
   test "#call should derive the uid from source_url like pull feeds" do
     result = ingest({ "content" => "Hello", "source_url" => "http://www.example.com/a?utm_source=x" })
 
@@ -115,6 +122,24 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert result.errors.any?
   end
 
+  test "#call should reject null bytes before persistence" do
+    payloads = [
+      { "content" => "Hello\0world" },
+      { "images" => ["https://example.com/pic.jpg\0"] },
+      { "content" => "Hello", "comments" => ["Comment\0"] }
+    ]
+
+    payloads.each do |payload|
+      result = nil
+      assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+        result = ingest(payload)
+      end
+
+      assert result.invalid?
+      assert result.errors.any? { |error| error.include?("must not contain null bytes") }
+    end
+  end
+
   test "#call should reject a payload without content or images" do
     result = ingest({ "comments" => ["First"] })
 
@@ -170,6 +195,13 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_includes result.errors, "published_at must be an ISO 8601 timestamp"
   end
 
+  test "#call should reject a timestamp outside the supported database range" do
+    result = ingest({ "content" => "Hello", "published_at" => "0000-01-01T00:00:00Z" })
+
+    assert result.invalid?
+    assert_includes result.errors, "published_at must be an ISO 8601 timestamp"
+  end
+
   test "#call should persist nothing when the normalizer rejects the payload" do
     feed.update!(images_only: true)
 
@@ -189,10 +221,11 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_equal Time.iso8601("2026-07-11T12:00:00Z"), feed.feed_entries.sole.published_at
   end
 
-  test "#call should clamp a future published_at to now" do
+  test "#call should clamp a future published_at to now before persistence" do
     freeze_time do
       ingest({ "content" => "Hello", "published_at" => 2.days.from_now.iso8601 })
 
+      assert_equal Time.current, feed.feed_entries.sole.published_at
       assert_equal Time.current, feed.posts.sole.published_at
     end
   end
