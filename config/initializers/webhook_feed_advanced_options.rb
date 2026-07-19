@@ -29,10 +29,11 @@ module WebhookFeedAdvancedOptions
   def clear_webhook_advanced_options
     return unless sourceless?
 
-    self[:import_after_enabled] = false
-    self[:import_after_date] = nil
-    self[:import_after_time] = nil
-    self[:images_only] = false
+    self.import_after = nil
+    self.images_only = false
+    @import_after_enabled = false
+    @import_after_date = nil
+    @import_after_time = nil
   end
 end
 
