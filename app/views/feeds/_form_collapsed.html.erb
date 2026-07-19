@@ -115,7 +115,7 @@
               <% if error && mode == "webhook" %>
                 <p class="text-sm text-danger" data-key="entry.error"><%= error %></p>
               <% else %>
-                <p class="text-sm text-muted">Nothing to follow — you send the posts. You'll get a secret link, and anything sent to it gets published. A single curl command is enough.</p>
+                <p class="text-sm text-muted">Nothing to follow — you send the posts to a webhook endpoint using a secret authorization token. A single curl command is enough.</p>
               <% end %>
             </div>
           <% end %>
