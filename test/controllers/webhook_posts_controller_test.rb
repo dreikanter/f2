@@ -42,11 +42,13 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
     assert_nil response_json["warnings"]
   end
 
-  test "#create should enqueue a post from a form-encoded payload" do
-    post_hook params: { content: "Hello world" }
+  test "#create should reject a form-encoded payload" do
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      post_hook params: { content: "Hello world" }
+    end
 
-    assert_response :created
-    assert_equal "enqueued", response_json["status"]
+    assert_response :unsupported_media_type
+    assert_equal "unsupported_media_type", response_json["status"]
   end
 
   test "#create should accept the full payload shape" do
@@ -215,7 +217,7 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
   test "#create should ignore the outdated-browser gate" do
     old_browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36"
 
-    post_hook params: { content: "Hello" }, headers: { "User-Agent" => old_browser }
+    post_hook params: { content: "Hello" }, headers: { "User-Agent" => old_browser }, as: :json
 
     assert_response :created
     assert_equal "enqueued", response_json["status"]
