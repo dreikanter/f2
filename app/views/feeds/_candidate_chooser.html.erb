@@ -5,9 +5,9 @@
   <%= label_tag nil, "How should we fetch posts?", class: "block font-semibold text-heading" %>
 
   <div class="space-y-2">
-    <% candidates.each do |attributes| %>
+    <% candidates.each do |candidate| %>
       <%= render CandidateOptionComponent.new(
-            candidate: FeedIdentification::Candidate.new(attributes),
+            candidate: candidate,
             input: input,
             selected: selected
           ) %>
