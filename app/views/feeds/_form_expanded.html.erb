@@ -56,12 +56,12 @@
       <% ai_prompt_editable = FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
       <% source_editable = edit_mode && !ai_prompt_editable %>
       <% if feed.sourceless? %>
-        <%# A webhook feed has no source: content arrives at its secret URL
-            (spec 006 §7), so the whole source block collapses into a note. %>
+        <%# A webhook feed has no source; callers push content to its authenticated
+            endpoint, so the whole source block collapses into a note. %>
         <div>
           <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
           <%= render PanelComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
-            <p class="text-sm">This feed doesn't follow anything on its own — it publishes whatever you send to its secret link. <%= feed.persisted? ? "You'll find the link on the feed's page." : "Save the feed to get your link." %></p>
+            <p class="text-sm">This feed doesn't follow anything on its own — it publishes whatever you send to its webhook endpoint with the authorization token. <%= feed.persisted? ? "You'll find both on the feed's page." : "Save the feed to get the endpoint and token." %></p>
           <% end %>
           <%= f.hidden_field :feed_profile_key %>
         </div>
@@ -369,7 +369,7 @@
             <% if feed.scheduled? %>
               <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
             <% else %>
-              <p class="text-sm text-muted">Switch on this feed's posting link so it can publish to FreeFeed.</p>
+              <p class="text-sm text-muted">Enable this feed so its webhook endpoint can publish to FreeFeed.</p>
             <% end %>
           </div>
         </div>
