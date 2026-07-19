@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_17_130000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_18_234500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -151,7 +151,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_17_130000) do
     t.datetime "next_run_at"
     t.datetime "updated_at", null: false
     t.date "last_digest_period"
-    t.index ["feed_id"], name: "index_feed_schedules_on_feed_id"
+    t.index ["feed_id"], name: "index_feed_schedules_on_feed_id", unique: true
   end
 
   create_table "feeds", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
