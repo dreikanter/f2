@@ -22,7 +22,7 @@ class FeedIdentificationsFormTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='form.webhook-note'][role='alert']", count: 1
-    assert_select "input[data-key='form.name'] + p", text: "Choose a name for this webhook feed."
+    assert_select "input[data-key='form.name'] + p", text: "Choose a name for this feed."
     assert_not_includes response.body, "We couldn't automatically detect a name"
   end
 
