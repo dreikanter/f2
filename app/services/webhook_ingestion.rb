@@ -7,6 +7,7 @@ require "addressable/uri"
 # synchronous 422 is the rejection record, so a corrected retry goes through.
 class WebhookIngestion
   MAX_LIST_ITEMS = 8
+  SUPPORTED_PUBLISHED_AT_YEARS = (1..9999).freeze
 
   # Caps on images/comments are load-bearing: publishing costs
   # 1 + comments + images FreeFeed POSTs against a burst capacity of 20, and
@@ -70,12 +71,18 @@ class WebhookIngestion
     errors = schema_errors
     return errors if errors.any?
 
+    errors = null_byte_errors
+    return errors if errors.any?
+
     errors << "no_content_or_images" if content.blank? && images.empty?
+    errors << "uid must not be blank" if payload.key?("uid") && explicit_uid.blank?
     errors << "source_url must be an absolute http(s) URL" if source_url.present? && !http_url?(source_url)
     images.each_with_index do |url, index|
       errors << "images/#{index} must be a public http(s) URL" unless PublicUrl.safe?(url)
     end
-    errors << "published_at must be an ISO 8601 timestamp" if raw_published_at.present? && parsed_published_at.nil?
+    if raw_published_at.present? && !supported_published_at?
+      errors << "published_at must be an ISO 8601 timestamp"
+    end
     errors
   end
 
@@ -83,6 +90,21 @@ class WebhookIngestion
     JSONSchemer.schema(PAYLOAD_SCHEMA).validate(payload).map do |error|
       pointer = error["data_pointer"].to_s
       pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
+    end
+  end
+
+  # PostgreSQL text/jsonb values cannot contain a zero byte. Reject it at the
+  # request boundary instead of letting an otherwise valid payload fail during
+  # persistence with a 500.
+  def null_byte_errors
+    payload.each_with_object([]) do |(key, value), errors|
+      if value.is_a?(String)
+        errors << "#{key} must not contain null bytes" if value.include?("\0")
+      elsif value.is_a?(Array)
+        value.each_with_index do |item, index|
+          errors << "#{key}/#{index} must not contain null bytes" if item.include?("\0")
+        end
+      end
     end
   end
 
@@ -123,12 +145,15 @@ class WebhookIngestion
   # normalized exactly like pull feeds', then a random uuid (each request is a
   # new post; callers with retrying pipelines should pass uid).
   def resolve_uid
-    explicit = payload["uid"].to_s.strip
-    return explicit if explicit.present?
+    return explicit_uid if explicit_uid.present?
 
     from_url = source_url.present? && Uid::Resolver.call({ "source_url" => source_url }, clock: Time.current)
     from_url = nil if from_url && from_url.bytesize > MAX_URL_UID_BYTES
     from_url.presence || SecureRandom.uuid
+  end
+
+  def explicit_uid
+    @explicit_uid ||= payload["uid"].to_s.strip
   end
 
   def uid
@@ -161,13 +186,20 @@ class WebhookIngestion
   end
 
   def parsed_published_at
-    @parsed_published_at ||= Time.iso8601(raw_published_at)
+    return @parsed_published_at if defined?(@parsed_published_at)
+
+    @parsed_published_at = Time.iso8601(raw_published_at)
   rescue ArgumentError
-    nil
+    @parsed_published_at = nil
+  end
+
+  def supported_published_at?
+    parsed_published_at && SUPPORTED_PUBLISHED_AT_YEARS.cover?(parsed_published_at.year)
   end
 
   def published_at
-    parsed_published_at || Time.current
+    value = parsed_published_at
+    value.nil? || value > Time.current ? Time.current : value
   end
 
   # Lenient like Uid::Resolver: an IDN/multibyte permalink is a valid source,
