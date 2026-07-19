@@ -48,28 +48,16 @@ class EventDetailsComponent < ViewComponent::Base
   end
 
   def add_created_item(component)
-    value = helpers.safe_join([
-      helpers.long_time_tag(@event.created_at),
-      " ",
-      helpers.tag.span("(#{helpers.short_time_ago(@event.created_at)})", class: "text-muted")
-    ])
-
     component.with_item(StatListItemComponent.new(
       label: "Created",
-      value: value
+      value: helpers.datetime_with_duration_tag(@event.created_at)
     ))
   end
 
   def add_updated_item(component)
-    value = helpers.safe_join([
-      helpers.long_time_tag(@event.updated_at),
-      " ",
-      helpers.tag.span("(#{helpers.short_time_ago(@event.updated_at)})", class: "text-muted")
-    ])
-
     component.with_item(StatListItemComponent.new(
       label: "Updated",
-      value: value
+      value: helpers.datetime_with_duration_tag(@event.updated_at)
     ))
   end
 
