@@ -101,7 +101,12 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   resource :resend_webhooks, only: :create, path: "resend"
-  resources :webhook_posts, only: :create, path: "hooks"
+
+  namespace :api, path: nil do
+    namespace :v1 do
+      resources :posts, only: :create, as: :webhook_posts
+    end
+  end
 
   root "landing#index"
 end
