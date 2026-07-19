@@ -82,11 +82,33 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response_json["errors"], "no_content_or_images"
   end
 
+  test "#create should reject body fields that collide with route parameter names" do
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      post hook_url, params: { content: "Hello", token: "caller-value" }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "invalid", response_json["status"]
+    assert response_json["errors"].any?
+  end
+
   test "#create should answer not_found for an unknown token" do
-    post webhook_posts_path("unknown-token"), params: { content: "Hello" }, as: :json
+    post webhook_posts_path("a" * 43), params: { content: "Hello" }, as: :json
 
     assert_response :not_found
     assert_equal "not_found", response_json["status"]
+  end
+
+  test "#create should reject a malformed token without querying encrypted values" do
+    queried = false
+
+    WebhookEndpoint.stub(:find_by, ->(*) { queried = true }) do
+      post webhook_posts_path("too-short"), params: { content: "Hello" }, as: :json
+    end
+
+    assert_response :not_found
+    assert_equal "not_found", response_json["status"]
+    assert_not queried
   end
 
   test "#create should answer not_found after rotation" do
@@ -119,6 +141,18 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
     post hook_url, params: { content: "a" * (WebhookPostsController::MAX_BODY_BYTES + 1024) }, as: :json
 
     assert_response :content_too_large
+  end
+
+  test "#oversized_body? should inspect actual bytes and rewind the body" do
+    body = StringIO.new("a" * (WebhookPostsController::MAX_BODY_BYTES + 1))
+    request = Struct.new(:content_length, :body).new(nil, body)
+    controller = WebhookPostsController.new
+
+    controller.stub(:request, request) do
+      assert controller.send(:oversized_body?)
+    end
+
+    assert_equal 0, body.pos
   end
 
   test "#create should throttle a chatty endpoint with Retry-After" do
