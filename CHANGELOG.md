@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-19
+
+- Webhook feeds now hide options that only apply to feeds checked on a schedule.
+
 ## 2026-07-18
 
 - New "Post via webhook" feed type: publish posts from your own scripts through a webhook endpoint and secret authorization token — a single curl command is enough. Images, comments, and safe retries are supported.

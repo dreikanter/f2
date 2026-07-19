@@ -23,6 +23,7 @@ module FeedProfileValidator
       "input_shape" => { "type" => "string", "enum" => %w[url query any none] },
       "depends_on_ai" => { "type" => "boolean" },
       "scheduled" => { "type" => "boolean" },
+      "defaults" => { "type" => "object" },
       "matcher" => { "type" => "string", "minLength" => 1 },
       "parameter_schema" => { "type" => "object" },
       "loader" => { "$ref" => "#/$defs/stage_entry" },
