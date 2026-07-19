@@ -1,12 +1,19 @@
 <%# locals: (feed:, endpoint:) %>
 <%
-  hook_url = webhook_posts_url(endpoint.encrypted_token)
-  curl_snippet = %(curl #{hook_url} -d content="Hello world")
+  hook_url = webhook_posts_url
+  token = endpoint.encrypted_token
+  curl_snippet = <<~CURL.chomp
+    curl --request POST #{hook_url} \\
+      --header "Authorization: Bearer #{token}" \\
+      --header "Content-Type: application/json" \\
+      --data '{"content":"Hello world"}'
+  CURL
   icon_button_class = "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 %>
 <%= render PanelComponent.new(data: { key: "webhook.panel" }) do %>
   <div class="space-y-6">
     <div class="space-y-2">
+      <p class="font-semibold text-heading">Endpoint URL</p>
       <div class="flex items-center justify-between gap-3">
         <code class="min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.url"><%= hook_url %></code>
         <button
@@ -16,15 +23,33 @@
           data-clipboard-text-value="<%= hook_url %>"
           data-action="click->clipboard#copy"
           data-key="webhook.copy-url"
-          title="Copy posting link">
+          title="Copy endpoint URL">
           <%= icon("clipboard", css_class: "size-4") %>
-          <span class="sr-only">Copy posting link</span>
+          <span class="sr-only">Copy endpoint URL</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <p class="font-semibold text-heading">Authorization token</p>
+      <div class="flex items-center justify-between gap-3">
+        <code class="min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.token"><%= token %></code>
+        <button
+          type="button"
+          class="<%= icon_button_class %>"
+          data-controller="clipboard"
+          data-clipboard-text-value="<%= token %>"
+          data-action="click->clipboard#copy"
+          data-key="webhook.copy-token"
+          title="Copy authorization token">
+          <%= icon("clipboard", css_class: "size-4") %>
+          <span class="sr-only">Copy authorization token</span>
         </button>
       </div>
       <p class="text-sm text-muted">
-        Anything sent to this link gets posted to this feed, so treat it like a password.
+        Send this token as <code>Authorization: Bearer &lt;token&gt;</code> and treat it like a password.
         <% unless feed.enabled? %>
-          It starts accepting posts once the feed is enabled.
+          The endpoint starts accepting posts once the feed is enabled.
         <% end %>
       </p>
     </div>
@@ -56,12 +81,12 @@
           No posts received yet.
         <% end %>
       </p>
-      <%= button_to "Get a new link",
+      <%= button_to "Generate new token",
                     feed_webhook_token_path(feed),
                     method: :patch,
                     class: secondary_button_classes,
                     data: { key: "webhook.rotate" },
-                    form: { data: { turbo_confirm: "Replace the posting link? The current one stops working right away." } } %>
+                    form: { data: { turbo_confirm: "Replace the authorization token? The current token stops working right away." } } %>
     </div>
   </div>
 <% end %>
