@@ -9,6 +9,8 @@
    to retint every place it's used — no markup edits. Values mirror the slate/sky
    shades the UI already uses, so adopting a token is a like-for-like swap. */
 @theme {
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
   /* Surfaces */
   --color-surface:                var(--color-white);
   --color-surface-muted:          var(--color-slate-50);
