@@ -5,7 +5,7 @@
 
   <% if @feed.webhook_endpoint %>
     <section class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Posting Link</h2>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Webhook API</h2>
       <%= render "webhook_endpoint_panel", feed: @feed, endpoint: @feed.webhook_endpoint %>
     </section>
   <% end %>
