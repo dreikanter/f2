@@ -162,6 +162,13 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_includes result.errors, "source_url must be an absolute http(s) URL"
   end
 
+  test "#call should reject a source_url no parser accepts" do
+    result = ingest({ "content" => "Hello", "source_url" => "http://[" })
+
+    assert result.invalid?
+    assert_includes result.errors, "source_url must be an absolute http(s) URL"
+  end
+
   test "#call should reject a non-public image URL" do
     result = ingest({ "content" => "Hello", "images" => ["http://localhost/pic.jpg"] })
 

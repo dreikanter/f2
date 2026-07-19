@@ -835,5 +835,67 @@ class FeedIdentificationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='entry.mode-ai']", count: 0
   end
 
+  test "#create should throttle the link mode with the error under its input" do
+    sign_in_as(user)
+
+    with_rate_limit_cache do
+      exhaust_rate_limit
+
+      post feed_identifications_path, params: { url: "https://example.com/feed.xml" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :too_many_requests
+      assert_select "[data-key='entry.mode-link'] input[type=radio][checked]"
+      assert_select "[data-key='entry.panel-link'] [data-key='entry.error']", text: /Too many attempts/
+    end
+  end
+
+  test "#create should throttle the AI mode and keep the prompt" do
+    sign_in_as(user)
+
+    with_rate_limit_cache do
+      exhaust_rate_limit
+
+      post feed_identifications_path, params: { prompt: "keep me" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :too_many_requests
+      assert_select "[data-key='entry.mode-ai'] input[type=radio][checked]"
+      assert_select "[data-key='entry.panel-ai'] [data-key='entry.error']", text: /Too many attempts/
+      assert_select "textarea#entry-ai-input", text: "keep me"
+    end
+  end
+
+  test "#create should throttle the webhook mode with the error inside its panel" do
+    sign_in_as(user)
+
+    with_rate_limit_cache do
+      exhaust_rate_limit
+
+      post feed_identifications_path, params: { webhook: "1" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :too_many_requests
+      assert_select "[data-key='entry.mode-webhook'] input[type=radio][checked]"
+      assert_select "[data-key='entry.panel-webhook'] [data-key='entry.error']", text: /Too many attempts/
+    end
+  end
+
   private
+
+  def exhaust_rate_limit
+    10.times do
+      post feed_identifications_path, params: { webhook: "1" },
+                                      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      assert_response :success
+    end
+  end
+
+  # rate_limit counts in Rails.cache, which is the no-op :null_store in tests.
+  # Delegate the captured store's increment to a real MemoryStore so the limit
+  # actually engages for the duration of the block.
+  def with_rate_limit_cache(&block)
+    store = ActiveSupport::Cache::MemoryStore.new
+    ActionController::Base.cache_store.stub(:increment, ->(*args, **kwargs) { store.increment(*args, **kwargs) }, &block)
+  end
 end
