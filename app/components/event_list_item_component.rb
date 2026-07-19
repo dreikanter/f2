@@ -125,7 +125,9 @@ class EventListItemComponent < ListItemComponent
 
   def subject_label
     return if event.subject_type.blank?
-    return helpers.tag.span(event.subject_type, data: { key: "events.subject" }) if event.subject_id.blank?
+
+    subject_type = event.subject_type.demodulize.underscore.humanize
+    return helpers.tag.span(subject_type, data: { key: "events.subject" }) if event.subject_id.blank?
 
     title = reference_title(event.subject_id, target_title)
     path = helpers.admin_event_subject_path(event.subject)
@@ -146,7 +148,7 @@ class EventListItemComponent < ListItemComponent
       )
     end
 
-    safe_join(["#{event.subject_type}: ", reference])
+    safe_join(["#{subject_type}: ", reference])
   end
 
   # Resolves the subject to its human name so admins don't have to memorize
