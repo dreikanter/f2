@@ -4,16 +4,15 @@ module TimeHelper
 
     diff = Time.current - time
 
-    case diff
-    when 0..59
+    if diff < 60
       "now"
-    when 60..3599
+    elsif diff < 3600
       "#{(diff / 60).to_i}m"
-    when 3600..86399
+    elsif diff < 86400
       "#{(diff / 3600).to_i}h"
-    when 86400..2591999
+    elsif diff < 2592000
       "#{(diff / 86400).to_i}d"
-    when 2592000..31535999
+    elsif diff < 31536000
       "#{(diff / 2592000).to_i}mo"
     else
       "#{(diff / 31536000).to_i}y"
