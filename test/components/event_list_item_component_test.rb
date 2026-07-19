@@ -141,7 +141,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
     render_inline(Admin::EventListItemComponent.new(event: event, href: "/admin/events/#{event.id}"))
   end
 
-  test "#call should render a footer with type, user and target in extended mode" do
+  test "#call should render a footer with type, user and subject in extended mode" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
 
@@ -150,7 +150,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_not_nil result.css("[data-key='events.footer']").first
     assert_not_nil result.css("[data-key='events.type']").first
     assert_includes result.text, "User:"
-    assert_includes result.text, "Target:"
+    assert_includes result.text, "Feed:"
   end
 
   test "#call should link the severity icon to the level filter in extended mode" do
@@ -177,14 +177,14 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_not_includes link.parent["class"].to_s, "border-t"
   end
 
-  test "#call should link the type to the admin filter" do
+  test "#call should render the type as plain text" do
     event = create(:event, type: "custom_event", user: user)
 
     result = render_admin_item(event)
 
-    link = result.css("a[data-key='events.type']").first
-    assert_equal "custom_event", link.text
-    assert_includes link["href"], "filter%5Btype%5D%5B%5D=custom_event"
+    label = result.css("span[data-key='events.type']").first
+    assert_equal "custom_event", label.text
+    assert_empty result.css("a[data-key='events.type']")
     assert_includes result.css("[data-key='events.footer']").text, "Type: custom_event"
   end
 
@@ -197,6 +197,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_equal user.id.to_s.last(5), link.text
     assert_equal "/admin/users/#{user.id}", link["href"]
     assert_equal "#{user.id} — #{user.email_address}", link["title"]
+    assert_not_includes link["class"], "font-mono"
     assert_not_includes link.text, "#"
   end
 
@@ -209,17 +210,19 @@ class EventListItemComponentTest < ViewComponent::TestCase
     assert_equal "System", label.text
   end
 
-  test "#call should link the compact subject id to its application page" do
+  test "#call should link only the compact subject id to its application page" do
     feed = create(:feed, user: user)
     event = create(:event, type: "feed_refresh", subject: feed, user: user)
 
     result = render_admin_item(event)
 
     link = result.css("a[data-key='events.subject']").first
-    assert_equal "Feed #{feed.id.to_s.last(5)}", link.text
+    assert_equal feed.id.to_s.last(5), link.text
     assert_equal "/admin/feeds/#{feed.id}", link["href"]
     assert_equal "#{feed.id} — #{feed.display_name}", link["title"]
+    assert_not_includes link["class"], "font-mono"
     assert_not_includes link.text, "#"
+    assert_includes result.css("[data-key='events.footer']").text, "Feed: #{feed.id.to_s.last(5)}"
   end
 
   test "#call should render an orphaned subject as compact plain text" do
@@ -231,12 +234,13 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     label = result.css("span[data-key='events.subject']").first
     assert_not_nil label
-    assert_equal "Feed #{missing_id.last(5)}", label.text
+    assert_equal missing_id.last(5), label.text
     assert_equal missing_id, label["title"]
     assert_empty result.css("a[data-key='events.subject']")
+    assert_includes result.css("[data-key='events.footer']").text, "Feed: #{missing_id.last(5)}"
   end
 
-  test "#call should omit the target for events without a subject" do
+  test "#call should omit the subject for events without one" do
     event = create(:event, user: user)
 
     result = render_admin_item(event)
