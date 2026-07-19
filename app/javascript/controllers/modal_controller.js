@@ -3,7 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   connect() {
     // Add backdrop click handler
-    this.element.addEventListener('click', this.handleBackdropClick.bind(this))
+    this.backdropClickHandler = this.handleBackdropClick.bind(this)
+    this.element.addEventListener('click', this.backdropClickHandler)
 
     // Add escape key handler
     this.escapeHandler = this.handleEscape.bind(this)
@@ -17,10 +18,13 @@ export default class extends Controller {
     this.previouslyFocusedElement = null
 
     // Listen for custom show event from trigger
-    this.element.addEventListener('modal:show', this.show.bind(this))
+    this.showHandler = this.show.bind(this)
+    this.element.addEventListener('modal:show', this.showHandler)
   }
 
   disconnect() {
+    this.element.removeEventListener('click', this.backdropClickHandler)
+    this.element.removeEventListener('modal:show', this.showHandler)
     document.removeEventListener('keydown', this.escapeHandler)
     document.removeEventListener('keydown', this.focusTrapHandler)
   }
