@@ -6,6 +6,7 @@
 
   <div class="space-y-2">
     <% candidates.each do |candidate| %>
+      <% candidate = FeedIdentification::Candidate.new(candidate) if candidate.is_a?(Hash) %>
       <%= render CandidateOptionComponent.new(
             candidate: candidate,
             input: input,
