@@ -5,6 +5,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-20
 
 - The admin Feeds page now explains that it lists feeds from all users.
+- The "Follow with AI" option on the new feed page now carries a "Beta" badge, so it's clear the feature is still settling in.
+- The access token page now shows the groups you can post to right away, without a click to expand the list.
 
 ## 2026-07-19
 
