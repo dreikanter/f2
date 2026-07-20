@@ -5,8 +5,10 @@ module Normalizer
   class RedditNormalizer < RssNormalizer
     private
 
+    # Reddit HTML-escapes titles inside the feed XML, so character references
+    # like &#8217; survive the XML parse and need one more decode pass.
     def normalize_content
-      title = raw_data.dig("title").to_s.strip
+      title = strip_html(raw_data.dig("title"))
       body = extract_post_body
       body.present? ? "#{title}\n\n#{body}" : title
     end

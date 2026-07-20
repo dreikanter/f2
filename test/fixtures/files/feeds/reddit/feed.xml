@@ -32,5 +32,14 @@
       <dc:creator>newsbot</dc:creator>
     </item>
 
+    <item>
+      <title>It&amp;#8217;s a &amp;#8220;quoted&amp;#8221; title &amp;amp; more</title>
+      <link>https://www.reddit.com/r/programming/comments/ghi789/its_a_quoted_title/</link>
+      <guid isPermaLink="true">https://www.reddit.com/r/programming/comments/ghi789/its_a_quoted_title/</guid>
+      <pubDate>Fri, 12 Jun 2026 09:00:00 +0000</pubDate>
+      <description>&lt;!-- SC_OFF --&gt;&lt;div class="md"&gt;&lt;p&gt;Here&amp;#8217;s the body text.&lt;/p&gt;&lt;/div&gt;&lt;!-- SC_ON --&gt; &amp;#32; submitted by &amp;#32; &lt;a href="https://www.reddit.com/user/quoter"&gt; /u/quoter &lt;/a&gt;</description>
+      <dc:creator>quoter</dc:creator>
+    </item>
+
   </channel>
 </rss>

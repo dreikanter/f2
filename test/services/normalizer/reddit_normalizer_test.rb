@@ -52,6 +52,15 @@ class Normalizer::RedditNormalizerTest < ActiveSupport::TestCase
     assert_equal [], post.attachment_urls
   end
 
+  test "#normalize should decode HTML character references in the title" do
+    entry = feed_entry(3)
+
+    normalizer = Normalizer::RedditNormalizer.new(entry)
+    post = normalizer.normalize
+
+    assert post.content.start_with?("It’s a “quoted” title & more\n\nHere’s the body text.")
+  end
+
   test "#normalize should include Reddit permalink as source URL" do
     entry = feed_entry(0)
 
