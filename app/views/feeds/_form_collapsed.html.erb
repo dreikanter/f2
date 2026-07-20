@@ -71,7 +71,10 @@
           <%= radio_button_tag "entry_mode", "ai", mode == "ai",
                                disabled: checking,
                                data: { mode_switch_target: "radio", action: "change->mode-switch#switch" } %>
-          Follow with AI
+          <span class="inline-flex items-center gap-2">
+            Follow with AI
+            <%= render BetaBadgeComponent.new(key: "entry.ai-beta-badge") %>
+          </span>
         </label>
 
         <%= tag.div class: "ps-7", hidden: mode != "ai",

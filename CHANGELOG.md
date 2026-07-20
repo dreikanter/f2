@@ -6,6 +6,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 - Draft feeds no longer show an empty Stats section — it appears once the feed is up and running.
 - Event pages now show refresh stats right in the details list at the top instead of a separate Stats section.
+- The "Follow with AI" option on the new feed page now carries a "Beta" badge, so it's clear the feature is still settling in.
+- The access token page now shows the groups you can post to right away, without a click to expand the list.
 
 ## 2026-07-19
 
