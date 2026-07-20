@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: a2d64214943b938169dc4caea8937ab5b7bca713
+  revision: 160577bb9acc2f6d17e66b2d4aeb1392fcd690cf
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -133,7 +133,7 @@ GEM
     builder (3.3.0)
     commander (5.0.0)
       highline (~> 3.0.0)
-    concurrent-ruby (1.3.7)
+    concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
     cov-loupe (6.0.0)
       amazing_print (~> 2.0)
