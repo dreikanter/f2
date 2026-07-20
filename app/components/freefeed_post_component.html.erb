@@ -1,0 +1,67 @@
+<div class="w-full rounded-lg border border-border bg-surface p-4 shadow-xs" data-key="freefeed_post">
+  <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-4">
+    <%= image_tag "default-userpic-75.gif", alt: "", class: "size-12 rounded-md border border-border", data: { key: "freefeed_post.avatar" } %>
+
+    <div class="min-w-0 self-center text-heading">
+      <span class="font-semibold" data-key="freefeed_post.author"><%= author_name %></span>
+      <% if group_name.present? %>
+        <span class="text-muted">to</span>
+        <% if group_url %>
+          <%= link_to group_name, group_url, target: "_blank", rel: "noopener",
+                class: "font-semibold text-brand transition hover:text-brand-hover",
+                data: { key: "freefeed_post.group" } %>
+        <% else %>
+          <span class="font-semibold" data-key="freefeed_post.group"><%= group_name %></span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="col-span-2 min-w-0 space-y-4 sm:col-span-1 sm:col-start-2">
+      <% if post.content.present? %>
+        <div class="text-heading" data-key="freefeed_post.content"><%= helpers.format_post_content(post.content) %></div>
+      <% end %>
+
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted" data-key="freefeed_post.footer">
+        <%= helpers.icon("globe", css_class: "size-4", title: "This entry is public") %>
+        <% if freefeed_url %>
+          <%= link_to timestamp_tag, freefeed_url, target: "_blank", rel: "noopener",
+                class: "transition hover:text-body",
+                data: { key: "freefeed_post.timestamp" } %>
+        <% else %>
+          <span data-key="freefeed_post.timestamp"><%= timestamp_tag %></span>
+        <% end %>
+        <%# Decorative echo of FreeFeed's action links; not functional here. %>
+        <span class="flex select-none items-center gap-2" aria-hidden="true" data-key="freefeed_post.actions">
+          <span>-</span>
+          <span>Comment</span>
+          <span>Save</span>
+          <span>Hide</span>
+          <span class="inline-flex items-center gap-0.5">More<%= helpers.icon("chevron-down", css_class: "size-3.5") %></span>
+        </span>
+      </div>
+
+      <% if attachment_urls.present? %>
+        <div class="flex flex-wrap gap-3" data-key="freefeed_post.attachments">
+          <% attachment_urls.each do |url| %>
+            <%= link_to url, target: "_blank", rel: "noopener",
+                  class: "block overflow-hidden rounded-md border border-border transition hover:border-ring" do %>
+              <%= image_tag thumbnail_url(url), alt: extract_filename(url), loading: "lazy", srcset: thumbnail_srcset(url),
+                    width: thumbnail_size, height: thumbnail_size, class: "h-24 w-24 bg-surface-sunken object-cover" %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if comments.present? %>
+        <div class="space-y-3" data-key="freefeed_post.comments">
+          <% comments.each do |comment| %>
+            <div class="flex items-start gap-2" data-key="freefeed_post.comment">
+              <%= helpers.icon("message-circle", css_class: "mt-1 size-3.5 text-muted") %>
+              <div class="min-w-0 flex-1 text-heading"><%= helpers.format_post_content(comment) %></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

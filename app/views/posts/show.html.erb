@@ -29,13 +29,5 @@
 
   <%= render PostDetailsComponent.new(post: @post) %>
 
-  <div class="overflow-hidden rounded-lg border border-border bg-surface p-4">
-    <div class="text-heading">
-      <%= format_post_content(@post.content) %>
-    </div>
-  </div>
-
-  <%= render PostAttachmentsComponent.new(post: @post) %>
-
-  <%= render PostCommentsComponent.new(post: @post) %>
+  <%= render FreefeedPostComponent.new(post: @post) %>
 </div>
