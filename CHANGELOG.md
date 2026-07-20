@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-20
 
 - Admin user pages now show the user's recent activity with a link to their full events log.
+- Filtered event logs now describe the filter in plain words — "Filtering by Feed [ce23f]" — with a link to the feed, user, or other entity you're filtering by.
 - Draft feeds no longer show an empty Stats section — it appears once the feed is up and running.
 - Event pages now show refresh stats right in the details list at the top instead of a separate Stats section.
 - The admin Feeds page now explains that it lists feeds from all users.

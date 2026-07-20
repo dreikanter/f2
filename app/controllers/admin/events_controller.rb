@@ -30,6 +30,10 @@ class Admin::EventsController < ApplicationController
 
   private
 
+  def event_entity_paths
+    Admin::EventEntityPaths.new
+  end
+
   def events_log_path(**params)
     admin_events_path(filter: optional_filter.to_h.presence, **params)
   end
