@@ -16,6 +16,7 @@ class SmartFeedCreationEntryTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-key='entry.mode-link'] input[type=radio][value=link][checked]"
     assert_select "[data-key='entry.mode-ai'] input[type=radio][value=ai]:not([checked])"
+    assert_select "[data-key='entry.ai-beta-badge']", text: "Beta"
     assert_select "[data-key='entry.mode-webhook'] input[type=radio][value=webhook]:not([checked])"
     assert_select "[data-key='entry.panel-link']:not([hidden])"
     assert_select "[data-key='entry.panel-ai'][hidden]"
