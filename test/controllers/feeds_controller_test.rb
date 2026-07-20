@@ -643,6 +643,16 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Stats", count: 1
   end
 
+  test "#show should not show stats section for a draft feed" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    get feed_url(draft)
+
+    assert_response :success
+    assert_select "h2", text: "Stats", count: 0
+  end
+
   test "#show should render AI usage section when feed has usages within the stats period" do
     create(:llm_usage, feed: feed, user: user)
     sign_in_as(user)
