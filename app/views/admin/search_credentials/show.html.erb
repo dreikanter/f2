@@ -1,0 +1,46 @@
+<% content_for :title, "Search Credential" %>
+
+<div id="search-credential-show" class="space-y-6" data-key="admin.search_credential.show">
+  <%= render PageHeaderComponent.new(title: @search_credential.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% header.with_context_paragraph do %>
+      Owner:
+      <%= link_to @search_credential.user.email_address, admin_user_path(@search_credential.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+    <% end %>
+  <% end %>
+
+  <% case @search_credential.state %>
+  <% when "pending", "validating" %>
+    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
+         data-key="search_credential.validating">
+      <div class="flex-shrink-0"><%= render SpinnerComponent.new %></div>
+      <div class="space-y-1">
+        <p class="font-semibold text-heading">Checking the credential…</p>
+        <p class="text-body">This makes one small search request and usually takes a few seconds.</p>
+      </div>
+    </div>
+  <% when "active" %>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
+                                  data: { credential_state: "active", key: "search_credential.active" }) do %>
+      <span>Credential is active</span>
+    <% end %>
+    <%= render SearchCredentialDetailsComponent.new(search_credential: @search_credential) %>
+  <% when "inactive" %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
+                                  data: { credential_state: "inactive", key: "search_credential.inactive" }) do %>
+      <% if @search_credential.last_error.present? %>
+        <span><%= @search_credential.last_error %></span>
+      <% else %>
+        <span>This key didn't pass validation.</span>
+      <% end %>
+    <% end %>
+    <%= render SearchCredentialDetailsComponent.new(search_credential: @search_credential) %>
+  <% end %>
+
+  <% if @search_credential.active? || @search_credential.inactive? %>
+    <section class="space-y-4" data-key="search_credential.usage">
+      <h2 class="text-2xl font-semibold text-heading">Search usage</h2>
+      <%= render SearchCredentialUsageStatsComponent.new(search_credential: @search_credential) %>
+    </section>
+  <% end %>
+</div>

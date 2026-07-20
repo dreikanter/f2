@@ -66,6 +66,9 @@ Rails.application.routes.draw do
 
     resources :events, only: [:index, :show]
     resources :feeds, only: [:index, :show]
+    resources :access_tokens, only: :show
+    resources :ai_credentials, only: :show
+    resources :search_credentials, only: :show
   end
 
   resource :changelog, only: :show
