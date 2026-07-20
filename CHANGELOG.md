@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-20
+
+- The admin Feeds page now explains that it lists feeds from all users.
+
 ## 2026-07-19
 
 - Webhook feed setup now asks you to choose a name and uses clearer progress messages.

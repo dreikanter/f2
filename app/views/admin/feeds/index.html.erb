@@ -3,6 +3,9 @@
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: "Feeds") do |header| %>
     <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% header.with_context_paragraph do %>
+      <span data-key="admin.feeds.description">All the feeds created by every user on Feeder, in one place.</span>
+    <% end %>
     <% if @feeds.any? %>
       <% header.with_action_button do %>
         <%= render SortDropdownComponent.new(presenter: @sortable_presenter, menu_id: "admin-feed-sort-menu") %>
