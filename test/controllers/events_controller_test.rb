@@ -250,6 +250,20 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Event #{event.id.to_s.last(5)}"
   end
 
+  test "#show should merge metadata stats into the details list" do
+    sign_in_as user
+    event = create(:event, type: "feed_refresh", user: user,
+                   metadata: { "stats" => { "new_posts" => 3, "search_calls" => 2 } })
+
+    get event_path(event)
+
+    assert_response :success
+    assert_select "[data-key='events.stats.new_posts.label']", text: "New posts"
+    assert_select "[data-key='events.stats.new_posts.value']", text: "3"
+    assert_select "[data-key='events.stats.search_calls']", count: 0
+    assert_select "h2", text: "Stats", count: 0
+  end
+
   test "#show should list imported posts referenced by the event" do
     sign_in_as user
     feed = create(:feed, user: user)
