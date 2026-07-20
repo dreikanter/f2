@@ -2,6 +2,8 @@ class Admin::UsersController < ApplicationController
   include Pagination
   include Sortable
 
+  MAX_RECENT_EVENTS = 10
+
   SORTABLE_FIELDS = {
     email: {
       title: "Email",
@@ -45,6 +47,7 @@ class Admin::UsersController < ApplicationController
     authorize [:admin, @user]
     @stats = UserStats.new(@user)
     @last_admin = @user.admin? && User.joins(:permissions).where(permissions: { name: Permission::ADMIN }).count == 1
+    @recent_events = @user.events.recent.limit(MAX_RECENT_EVENTS)
   end
 
   private
