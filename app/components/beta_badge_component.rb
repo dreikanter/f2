@@ -1,9 +1,5 @@
-class BetaBadgeComponent < ViewComponent::Base
+class BetaBadgeComponent < BadgeComponent
   def initialize(key: nil)
-    @key = key
-  end
-
-  def call
-    render BadgeComponent.new(text: "Beta", color: :info, key: @key)
+    super(text: "Beta", color: :info, key: key)
   end
 end
