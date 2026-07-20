@@ -1,0 +1,45 @@
+<% content_for :title, "AI Credential" %>
+
+<div id="ai-credential-show" class="space-y-6" data-key="admin.ai_credential.show">
+  <%= render PageHeaderComponent.new(title: @ai_credential.display_name) do |header| %>
+    <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% header.with_context_paragraph do %>
+      Owner:
+      <%= link_to @ai_credential.user.email_address, admin_user_path(@ai_credential.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+    <% end %>
+  <% end %>
+
+  <% case @ai_credential.state %>
+  <% when "pending", "validating" %>
+    <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-xs"
+         data-key="ai_credential.validating">
+      <div class="flex-shrink-0">
+        <%= render SpinnerComponent.new %>
+      </div>
+      <div class="space-y-1">
+        <p class="font-semibold text-heading">Checking the credential…</p>
+        <p class="text-body">This usually takes a few seconds.</p>
+      </div>
+    </div>
+  <% when "active" %>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check",
+                                  data: { credential_state: "active", key: "ai_credential.active" }) do %>
+      <span>Credential is active</span>
+    <% end %>
+
+    <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
+
+    <%= render AiCredentialModelsComponent.new(ai_credential: @ai_credential) %>
+  <% when "inactive" %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x",
+                                  data: { credential_state: "inactive", key: "ai_credential.inactive" }) do %>
+      <% if @ai_credential.last_error.present? %>
+        <span><%= @ai_credential.last_error %></span>
+      <% else %>
+        <span>This key didn't pass validation.</span>
+      <% end %>
+    <% end %>
+
+    <%= render AiCredentialDetailsComponent.new(ai_credential: @ai_credential) %>
+  <% end %>
+</div>

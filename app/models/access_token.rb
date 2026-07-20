@@ -90,6 +90,21 @@ class AccessToken < ApplicationRecord
     URI.parse(host).host
   end
 
+  # Link to a group's page on this token's FreeFeed instance. Rebuilt through
+  # URI with the group name escaped as a path segment, so stored values can't
+  # smuggle a scheme or extra URL parts into hrefs.
+  def group_url(group_username)
+    uri = URI.parse(host)
+    return unless uri.is_a?(URI::HTTP)
+
+    uri.path = "/#{CGI.escapeURIComponent(group_username.to_s)}"
+    uri.query = nil
+    uri.fragment = nil
+    uri.to_s
+  rescue URI::InvalidURIError
+    nil
+  end
+
   def display_name
     owner = access_token_detail&.user_info&.dig("username") || name
     "#{host_domain} - #{owner}"

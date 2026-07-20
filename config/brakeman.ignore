@@ -1,0 +1,37 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "22c8b6a2bfe6a449c44812cfde114423ae4052685d83de4a75611869b1d7b667",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/access_tokens/show.html.erb",
+      "line": 48,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(group[\"username\"], AccessToken.find(params[:id]).group_url(group[\"username\"]), :target => \"_blank\", :rel => \"noopener noreferrer\", :class => \"font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "Admin::AccessTokensController",
+          "method": "show",
+          "line": 5,
+          "file": "app/controllers/admin/access_tokens_controller.rb",
+          "rendered": {
+            "name": "admin/access_tokens/show",
+            "file": "app/views/admin/access_tokens/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/access_tokens/show"
+      },
+      "user_input": "AccessToken.find(params[:id]).group_url(group[\"username\"])",
+      "confidence": "Weak",
+      "note": "AccessToken#group_url only returns http(s) URLs (the host attribute is also format-validated at write time) and escapes the group name as a path segment, so the href cannot carry a javascript: scheme or extra URL parts."
+    }
+  ],
+  "updated": "2026-07-20 17:40:00 +0000",
+  "brakeman_version": "8.0.5"
+}

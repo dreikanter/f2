@@ -1,0 +1,73 @@
+<% content_for :title, "Access Token" %>
+
+<div id="access-token-show" class="space-y-8" data-key="admin.access_token.show">
+  <%= render PageHeaderComponent.new(title: @access_token.name) do |header| %>
+    <% header.with_breadcrumb(label: "Admin Panel", url: admin_path) %>
+    <% header.with_context_paragraph do %>
+      Owner:
+      <%= link_to @access_token.user.email_address, admin_user_path(@access_token.user), class: "text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+    <% end %>
+  <% end %>
+
+  <% if @access_token.pending? || @access_token.validating? %>
+    <%= render CardComponent.new do %>
+      <div class="space-y-6">
+        <div class="flex items-center justify-center py-8">
+          <%= render SpinnerComponent.new(css_class: "mr-3") %>
+          <span class="text-lg text-body">Validating token…</span>
+        </div>
+      </div>
+    <% end %>
+  <% elsif @access_token.active? %>
+    <%= render AlertComponent.new(variant: :success, icon: "circle-check", data: { status: "active" }) do %>
+      <span>Token is valid and ready to use</span>
+    <% end %>
+
+    <%= render TokenDetailsComponent.new(access_token: @access_token) %>
+
+    <% if @access_token.access_token_detail.present? %>
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold mb-3 text-heading">Publisher</h2>
+        <p class="text-body mb-4">
+          Posts created with this token appear on FreeFeed on behalf of the user who created it.
+        </p>
+        <div class="w-fit min-w-[240px] rounded-xl border border-border bg-surface p-4 shadow-sm">
+          <%= render FreefeedUserComponent.new(user: @access_token.access_token_detail.user_info) %>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold mb-3 text-heading">Available Groups</h2>
+        <p class="text-body">
+          This access token can create new posts in the following groups:
+        </p>
+        <% @access_token.access_token_detail.managed_groups.tap do |groups| %>
+          <% if groups.any? %>
+            <ul class="list-disc list-inside space-y-1">
+              <% groups.sort_by { _1["username"] }.each do |group| %>
+                <li><%= link_to group["username"], @access_token.group_url(group["username"]), target: "_blank", rel: "noopener noreferrer", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></li>
+              <% end %>
+            </ul>
+          <% else %>
+            <%= render EmptyStateComponent.new("No groups available for posting") %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
+      <% if @access_token.feeds.any? %>
+        <%= render FeedsListComponent.new(feeds: @access_token.feeds, admin: true) %>
+      <% else %>
+        <%= render EmptyStateComponent.new("No associated feeds yet") %>
+      <% end %>
+    </div>
+  <% elsif @access_token.inactive? %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
+      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
+    <% end %>
+
+    <%= render TokenDetailsComponent.new(access_token: @access_token) %>
+  <% end %>
+</div>

@@ -389,4 +389,23 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal "disabled", disabled_feed.reload.state
     assert_nil disabled_feed.access_token_id
   end
+
+  test "#group_url should build the group page URL on the token's instance" do
+    token = build(:access_token, host: "https://candy.freefeed.net")
+
+    assert_equal "https://candy.freefeed.net/testgroup", token.group_url("testgroup")
+  end
+
+  test "#group_url should escape the group name as a path segment" do
+    token = build(:access_token, host: "https://candy.freefeed.net")
+
+    assert_equal "https://candy.freefeed.net/javascript%3Aalert%281%29", token.group_url("javascript:alert(1)")
+    assert_equal "https://candy.freefeed.net/a%2F..%2Fb", token.group_url("a/../b")
+  end
+
+  test "#group_url should return nil for a non-HTTP host" do
+    token = build(:access_token, host: "javascript:alert(1)")
+
+    assert_nil token.group_url("testgroup")
+  end
 end

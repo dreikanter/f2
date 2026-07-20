@@ -13,12 +13,6 @@ AccessTokenDetail:
     # AccessTokenValidationService; the DB constraint is the right guard.
     UniqueIndexChecker:
       enabled: false
-Event:
-  user:
-    # wontfix: there is no user-deletion flow; the FK on events.user_id
-    # safely blocks one until events are handled explicitly.
-    MissingDependentDestroyChecker:
-      enabled: false
 EventReference:
   index_event_references_on_event_and_reference:
     # wontfix: rows are created via insert_all (FeedRefreshWorkflow), which

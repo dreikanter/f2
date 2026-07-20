@@ -62,13 +62,13 @@ class EventDescriptionComponent < ViewComponent::Base
     when Feed
       helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when AccessToken
-      helpers.link_to(event.subject.name, helpers.access_tokens_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
+      helpers.link_to(event.subject.name, access_token_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when Post
       helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when AiCredential
-      helpers.link_to(event.subject.display_name, helpers.ai_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
+      helpers.link_to(event.subject.display_name, ai_credential_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     when SearchCredential
-      helpers.link_to(event.subject.display_name, helpers.search_credential_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
+      helpers.link_to(event.subject.display_name, search_credential_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
     else
       orphaned_subject_placeholder
     end
@@ -81,10 +81,24 @@ class EventDescriptionComponent < ViewComponent::Base
     event.subject.nil? && event.subject_type.present? ? "(removed)" : ""
   end
 
-  # Feeds link to the owner-facing page. Admin::EventDescriptionComponent
-  # overrides this to point at the operator-facing feed page instead.
+  # Subjects link to the owner-facing pages. Admin::EventDescriptionComponent
+  # overrides these (via Admin::EventEntityLinks) to point at the
+  # operator-facing pages instead.
   def feed_link_path(feed)
     helpers.feed_path(feed)
+  end
+
+  # Owners manage tokens from the list page, so descriptions send them there.
+  def access_token_link_path(_access_token)
+    helpers.access_tokens_path
+  end
+
+  def ai_credential_link_path(credential)
+    helpers.ai_credential_path(credential)
+  end
+
+  def search_credential_link_path(credential)
+    helpers.search_credential_path(credential)
   end
 
   def escaped_message
