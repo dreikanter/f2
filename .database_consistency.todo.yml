@@ -76,6 +76,11 @@ RateLimit::Bucket:
     NullConstraintChecker:
       enabled: false
 User:
+  events:
+    # wontfix: dependent: :nullify covers the Rails destroy flow; the plain FK
+    # deliberately blocks raw-SQL user deletes instead of orphaning events.
+    ForeignKeyCascadeChecker:
+      enabled: false
   index_users_on_email_address:
     # wontfix: covered by the custom both_emails_are_globally_unique
     # validator, which checks email_address and unconfirmed_email together.

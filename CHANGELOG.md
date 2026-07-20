@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-20
 
 - Admins can now open read-only pages for any user's access tokens, AI credentials, and search credentials straight from the events log.
+- Reddit posts no longer show raw character codes like `&#8217;` in titles — they come through as the intended characters.
 - Admin user pages now show the user's recent activity with a link to their full events log.
 - Filtered event logs now describe the filter in plain words — "Filtering by Feed [ce23f]" — with a link to the feed, user, or other entity you're filtering by.
 - Draft feeds no longer show an empty Stats section — it appears once the feed is up and running.
