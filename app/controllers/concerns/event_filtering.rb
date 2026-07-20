@@ -1,7 +1,18 @@
 module EventFiltering
   extend ActiveSupport::Concern
 
+  included do
+    helper_method :event_entity_paths
+  end
+
   private
+
+  # Resolves filter references to the owner-facing entity pages. Admin
+  # controllers override this with Admin::EventEntityPaths so the same
+  # summary links to the operator pages instead.
+  def event_entity_paths
+    EventEntityPaths.new
+  end
 
   # Narrows an events relation by the permitted `filter` query params. Returns
   # the scope untouched when no filter is present.
