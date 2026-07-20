@@ -5,6 +5,11 @@
     <% header.with_breadcrumb(label: "Status", url: status_path) %>
     <% header.with_context_paragraph "Everything Feeder has done on your feeds, newest first." %>
     <% header.with_context_paragraph do %>
+      <% if @filter.present? %>
+        <span data-key="events.filter-summary">
+          Filtering by <%= event_filter_summary(@filter, entity_paths: event_entity_paths) %>.
+        </span>
+      <% end %>
       <span data-key="events.offset"><%= events_offset_summary(@offset) %></span>
     <% end %>
     <% if @log_endpoint %>
