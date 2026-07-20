@@ -294,6 +294,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
+    assert_select '[data-key="admin.events.filter-summary"]', text: /Filtering by Feed \[#{feed1.id.to_s.last(5)}\]\./
     assert_select '[data-key="admin.events.filter-summary"] a[href=?]', admin_feed_path(feed1), text: feed1.id.to_s.last(5)
   end
 
@@ -351,6 +352,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="events.type"]', count: 2
+    assert_select '[data-key="admin.events.filter-summary"]', text: /Filtering by User \[#{user1.id.to_s.last(5)}\]\./
     assert_select '[data-key="admin.events.filter-summary"] a[href=?]', admin_user_path(user1), text: user1.id.to_s.last(5)
   end
 

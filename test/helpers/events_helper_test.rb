@@ -3,27 +3,77 @@ require "test_helper"
 class EventsHelperTest < ActionView::TestCase
   include TimeHelper
 
-  test "#admin_event_filter_summary renders a direct link for a known subject type" do
+  test "#event_filter_summary should render a bold linked subject reference" do
     subject_id = SecureRandom.uuid
 
-    result = admin_event_filter_summary({ subject_type: "Feed", subject_id: subject_id })
+    result = event_filter_summary({ subject_type: "Feed", subject_id: subject_id }, entity_paths: Admin::EventEntityPaths.new)
     fragment = Nokogiri::HTML.fragment(result)
-    link = fragment.at_css("a")
+    link = fragment.at_css("strong a")
 
-    assert_equal "subject_type: Feed • subject_id: #{subject_id.last(5)}", fragment.text
+    assert_equal "Feed [#{subject_id.last(5)}]", fragment.text
     assert_equal admin_feed_path(subject_id), link["href"]
     assert_equal subject_id, link["title"]
   end
 
-  test "#admin_event_filter_summary leaves an unknown subject type unlinked" do
+  test "#event_filter_summary should link subjects to owner pages with the base resolver" do
     subject_id = SecureRandom.uuid
 
-    result = admin_event_filter_summary({ subject_type: "Post", subject_id: subject_id })
+    result = event_filter_summary({ subject_type: "Feed", subject_id: subject_id }, entity_paths: EventEntityPaths.new)
     fragment = Nokogiri::HTML.fragment(result)
-    label = fragment.at_css("span")
 
-    assert_equal "subject_type: Post • subject_id: #{subject_id.last(5)}", fragment.text
+    assert_equal feed_path(subject_id), fragment.at_css("strong a")["href"]
+  end
+
+  test "#event_filter_summary should leave a subject type without a page unlinked" do
+    subject_id = SecureRandom.uuid
+
+    result = event_filter_summary({ subject_type: "JobRun", subject_id: subject_id }, entity_paths: Admin::EventEntityPaths.new)
+    fragment = Nokogiri::HTML.fragment(result)
+    label = fragment.at_css("strong span")
+
+    assert_equal "Job run [#{subject_id.last(5)}]", fragment.text
     assert_equal subject_id, label["title"]
+    assert_nil fragment.at_css("a")
+  end
+
+  test "#event_filter_summary should render user_id as a linked User reference" do
+    user_id = SecureRandom.uuid
+
+    result = event_filter_summary({ user_id: user_id }, entity_paths: Admin::EventEntityPaths.new)
+    fragment = Nokogiri::HTML.fragment(result)
+    link = fragment.at_css("strong a")
+
+    assert_equal "User [#{user_id.last(5)}]", fragment.text
+    assert_equal admin_user_path(user_id), link["href"]
+  end
+
+  test "#event_filter_summary should keep non-entity filter keys as plain parts" do
+    subject_id = SecureRandom.uuid
+
+    result = event_filter_summary(
+      { subject_type: "Feed", subject_id: subject_id, level: "error", type: %w[feed_refresh feed_auto_disabled] },
+      entity_paths: EventEntityPaths.new
+    )
+    fragment = Nokogiri::HTML.fragment(result)
+
+    assert_equal "Feed [#{subject_id.last(5)}] • level: error • type: feed_refresh, feed_auto_disabled", fragment.text
+  end
+
+  test "#event_filter_summary should render a type-only filter as a bare label" do
+    result = event_filter_summary({ subject_type: "Feed" }, entity_paths: EventEntityPaths.new)
+    fragment = Nokogiri::HTML.fragment(result)
+
+    assert_equal "Feed", fragment.text
+    assert_nil fragment.at_css("a")
+  end
+
+  test "#event_filter_summary should fall back to a generic label without a subject type" do
+    subject_id = SecureRandom.uuid
+
+    result = event_filter_summary({ subject_id: subject_id }, entity_paths: EventEntityPaths.new)
+    fragment = Nokogiri::HTML.fragment(result)
+
+    assert_equal "Subject [#{subject_id.last(5)}]", fragment.text
     assert_nil fragment.at_css("a")
   end
 

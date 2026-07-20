@@ -8,6 +8,8 @@ class EventsController < ApplicationController
   MAX_RECENT_POSTS = 10
 
   def index
+    @filter = optional_filter
+
     respond_to do |format|
       format.html { render_events_page }
       format.turbo_stream { render_events_stream }

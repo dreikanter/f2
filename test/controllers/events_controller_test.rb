@@ -220,6 +220,28 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='events.entry']", count: 1
   end
 
+  test "#index should describe the active filter with a link to the owner feed page" do
+    sign_in_as user
+    feed = create(:feed, user: user)
+    create(:event, type: "feed_refresh", subject: feed, user: user)
+
+    get events_path, params: { filter: { subject_type: "Feed", subject_id: feed.id } }
+
+    assert_response :success
+    assert_select '[data-key="events.filter-summary"]', text: /Filtering by Feed \[#{feed.id.to_s.last(5)}\]\./
+    assert_select '[data-key="events.filter-summary"] a[href=?]', feed_path(feed), text: feed.id.to_s.last(5)
+  end
+
+  test "#index should not describe a filter when none is active" do
+    sign_in_as user
+    create(:event, user: user)
+
+    get events_path
+
+    assert_response :success
+    assert_select '[data-key="events.filter-summary"]', count: 0
+  end
+
   test "#index should not leak other users' events through filters" do
     sign_in_as user
     create(:event, type: "feed_refresh", user: other_user)

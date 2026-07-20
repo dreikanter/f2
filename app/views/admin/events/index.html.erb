@@ -6,7 +6,7 @@
     <% header.with_context_paragraph do %>
       <% if @filter.present? %>
         <span data-key="admin.events.filter-summary">
-          Filtering by <%= admin_event_filter_summary(@filter) %>.
+          Filtering by <%= event_filter_summary(@filter, entity_paths: event_entity_paths) %>.
         </span>
       <% end %>
       <span data-key="events.offset"><%= events_offset_summary(@offset, system_wide: @filter.blank?) %></span>

@@ -11,33 +11,28 @@ module EventsHelper
     end
   end
 
-  def admin_event_filter_summary(filter)
-    parts = filter.to_h.map do |key, value|
-      values = Array.wrap(value).map do |item|
-        admin_event_filter_value(key, item, filter:)
-      end
+  # Describes the active events filter as entity references — "Feed [ce23f]",
+  # with the id linked when `entity_paths` resolves a page for the entity —
+  # plus plain `key: value` parts for the remaining filter keys.
+  def event_filter_summary(filter, entity_paths:)
+    filter = filter.to_h.stringify_keys
+    parts = []
 
-      safe_join(["#{key}: ", safe_join(values, ", ")])
+    if filter.values_at("subject_type", "subject_id").any?(&:present?)
+      parts << event_entity_reference(filter["subject_type"], filter["subject_id"], entity_paths)
+    end
+
+    parts << event_entity_reference("User", filter["user_id"], entity_paths) if filter["user_id"].present?
+
+    filter.except("subject_type", "subject_id", "user_id").each do |key, value|
+      parts << "#{key}: #{Array.wrap(value).join(', ')}"
     end
 
     safe_join(parts, " • ")
   end
 
   def admin_event_subject_path(subject)
-    case subject
-    when Feed
-      admin_feed_path(subject)
-    when User
-      admin_user_path(subject)
-    when Event
-      admin_event_path(subject)
-    when AccessToken
-      access_token_path(subject)
-    when AiCredential
-      ai_credential_path(subject)
-    when SearchCredential
-      search_credential_path(subject)
-    end
+    subject && Admin::EventEntityPaths.new.path_for(subject.class.name, subject.id)
   end
 
   def format_stat_value(key, value)
@@ -75,43 +70,25 @@ module EventsHelper
 
   private
 
-  def admin_event_filter_value(key, value, filter:)
-    return value unless %w[user_id subject_id].include?(key.to_s)
+  # "Feed [ce23f]" — a humanized entity type with a short linked id. Either
+  # half may be missing: a type-only filter renders just the label, an id
+  # without a type gets a generic label and stays unlinked.
+  def event_entity_reference(type, id, entity_paths)
+    label = type.present? ? type.demodulize.underscore.humanize : "Subject"
+    return tag.strong(label) if id.blank?
 
-    path = admin_event_filter_reference_path(key, value, filter:)
-    text = short_ref(value)
-
-    if path
+    path = type.present? ? entity_paths.path_for(type, id) : nil
+    ref = if path
       link_to(
-        text,
+        short_ref(id),
         path,
-        title: value,
+        title: id,
         class: "font-mono underline underline-offset-2 transition hover:text-heading"
       )
     else
-      tag.span(text, title: value, class: "font-mono")
+      tag.span(short_ref(id), title: id, class: "font-mono")
     end
-  end
 
-  def admin_event_filter_reference_path(key, value, filter:)
-    case key.to_s
-    when "user_id"
-      admin_user_path(value)
-    when "subject_id"
-      case filter[:subject_type] || filter["subject_type"]
-      when "Feed"
-        admin_feed_path(value)
-      when "User"
-        admin_user_path(value)
-      when "Event"
-        admin_event_path(value)
-      when "AccessToken"
-        access_token_path(value)
-      when "AiCredential"
-        ai_credential_path(value)
-      when "SearchCredential"
-        search_credential_path(value)
-      end
-    end
+    tag.strong(safe_join([label, " [", ref, "]"]))
   end
 end
