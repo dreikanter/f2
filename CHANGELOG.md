@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-20
 
+- Post pages now show the post the way it appears on FreeFeed — author and group up top, then the text, images, and comments in one card.
 - Admins can now open read-only pages for any user's access tokens, AI credentials, and search credentials straight from the events log.
 - Reddit posts no longer show raw character codes like `&#8217;` in titles — they come through as the intended characters.
 - Admin user pages now show the user's recent activity with a link to their full events log.
