@@ -121,6 +121,16 @@
     <% end %>
   </section>
 
+  <% if @recent_events.any? %>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
+        <%= link_to "View all", admin_events_path(filter: { user_id: @user.id }), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "user.events.view_all" } %>
+      </div>
+      <%= render Admin::EventsListComponent.new(events: @recent_events) %>
+    </section>
+  <% end %>
+
   <section class="space-y-4">
     <h2 class="text-2xl font-semibold mb-3 text-heading">Actions</h2>
     <div class="flex gap-2">

@@ -99,6 +99,38 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "#confirm-email-modal-#{user.id}", count: 0
   end
 
+  test "#show should render a recent activity section with the user's events" do
+    sign_in_as(admin_user)
+    user = create(:user)
+    create(:event, user: user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Activity", count: 1
+  end
+
+  test "#show should link recent activity to the events log filtered by user" do
+    sign_in_as(admin_user)
+    user = create(:user)
+    create(:event, user: user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "[data-key='user.events.view_all'][href=?]", admin_events_path(filter: { user_id: user.id }), text: "View all"
+  end
+
+  test "#show should not render recent activity section when user has no events" do
+    sign_in_as(admin_user)
+    user = create(:user)
+
+    get admin_user_path(user)
+
+    assert_response :success
+    assert_select "h2", text: "Recent Activity", count: 0
+  end
+
   test "should redirect non-admin users from show" do
     sign_in_as(regular_user)
     user = create(:user)
