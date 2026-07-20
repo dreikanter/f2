@@ -51,6 +51,29 @@ class DiskUsageServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "#call should limit table usage to the largest tables" do
+    service = DiskUsageService.new(df_command: stub_df_command)
+    result = service.call
+
+    assert_equal DiskUsageService::TOP_TABLES_COUNT, result[:table_usage].size
+
+    sizes = result[:table_usage].map { |row| row["total_size"] }
+    assert_equal sizes.sort.reverse, sizes
+  end
+
+  test "#call should aggregate remaining tables into other tables size" do
+    service = DiskUsageService.new(df_command: stub_df_command)
+    result = service.call
+
+    assert result[:other_tables_count].positive?, "expected more than #{DiskUsageService::TOP_TABLES_COUNT} tables in the test database"
+    assert_instance_of Integer, result[:other_tables_size]
+    assert result[:other_tables_size] >= 0
+
+    smallest_listed = result[:table_usage].last["total_size"]
+    average_other = result[:other_tables_size].to_f / result[:other_tables_count]
+    assert average_other <= smallest_listed, "aggregated tables should not be larger than the listed ones"
+  end
+
   test "#call should return other used space as integer" do
     service = DiskUsageService.new(df_command: stub_df_command)
     result = service.call

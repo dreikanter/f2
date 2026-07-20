@@ -1,6 +1,8 @@
 require "open3"
 
 class DiskUsageService
+  TOP_TABLES_COUNT = 10
+
   def initialize(df_command: method(:execute_df_command))
     @df_command = df_command
   end
@@ -15,7 +17,9 @@ class DiskUsageService
       postgres_percentage: postgres_percentage,
       other_used_percentage: other_used_percentage,
       free_percentage: free_percentage,
-      table_usage: table_usage
+      table_usage: table_usage,
+      other_tables_size: other_tables_size,
+      other_tables_count: other_tables_count
     }
   end
 
@@ -86,7 +90,23 @@ class DiskUsageService
   end
 
   def table_usage
-    execute_query(<<-SQL
+    all_tables.first(TOP_TABLES_COUNT)
+  end
+
+  def other_tables_size
+    remaining_tables.sum { |row| row["total_size"] }
+  end
+
+  def other_tables_count
+    remaining_tables.size
+  end
+
+  def remaining_tables
+    all_tables.drop(TOP_TABLES_COUNT)
+  end
+
+  def all_tables
+    @all_tables ||= execute_query(<<-SQL
       SELECT
         relname AS table_name,
         pg_total_relation_size(pg_class.oid) AS total_size
