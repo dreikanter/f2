@@ -89,13 +89,17 @@ class EventsHelperTest < ActionView::TestCase
     assert_equal "10m 3s", format_event_duration(603.4)
   end
 
-  test "#format_stat_value should format _at keys as time tags" do
+  test "#format_stat_value should format _at keys as time tags with duration" do
     time_str = "2026-06-17T10:00:00Z"
 
-    result = format_stat_value("started_at", time_str)
+    travel_to Time.zone.parse("2026-06-17T12:00:00Z") do
+      result = format_stat_value("started_at", time_str)
 
-    assert_includes result, "<time"
-    assert_includes result, time_str
+      assert_includes result, "<time"
+      assert_includes result, time_str
+      assert_includes result, "17 Jun 2026, 10:00"
+      assert_includes result, '<span class="text-muted">(2h)</span>'
+    end
   end
 
   test "#format_stat_value should return raw value for unparseable _at keys" do
