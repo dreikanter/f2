@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-20
 
 - Draft feeds no longer show an empty Stats section — it appears once the feed is up and running.
+- Event pages now show refresh stats right in the details list at the top instead of a separate Stats section.
 
 ## 2026-07-19
 

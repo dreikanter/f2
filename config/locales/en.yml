@@ -128,7 +128,6 @@ en:
       description_html: "Email delivery failed"
     metadata:
       stats:
-        section_title: "Stats"
         started_at: "Started at"
         completed_at: "Completed at"
         total_duration: "Duration"

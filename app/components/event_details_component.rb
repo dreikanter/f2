@@ -1,6 +1,13 @@
-# Renders the detail list shown at the top of an event page. Admin: true adds
-# operator-only rows (user, timestamps, expiry).
+# Renders the detail list shown at the top of an event page: base event
+# attributes followed by any stats captured in the event metadata. Admin: true
+# adds operator-only rows (user, timestamps, expiry). Subclasses can override
+# #items (or any individual row method) to reshape the list for specific
+# event presentations.
 class EventDetailsComponent < ViewComponent::Base
+  # Search calls are surfaced by the dedicated search usage section, so the
+  # details list skips them to avoid showing the same number twice.
+  HIDDEN_STATS = %w[search_calls].freeze
+
   def initialize(event:, admin: false)
     @event = event
     @admin = admin
@@ -8,16 +15,24 @@ class EventDetailsComponent < ViewComponent::Base
 
   def call
     render(ListComponent.new) do |list|
-      add_user_item(list) if @admin
-      add_created_item(list)
-      add_updated_item(list) if @admin
-      add_expires_item(list) if @admin && @event.expires_at.present?
+      items.each { |item| list.with_item(item) }
     end
   end
 
   private
 
-  def add_user_item(component)
+  # Ordered rows of the details list.
+  def items
+    [
+      (user_item if @admin),
+      created_item,
+      (updated_item if @admin),
+      (expires_item if @admin && @event.expires_at.present?),
+      *stat_items
+    ].compact
+  end
+
+  def user_item
     user_value = if @event.user_id.present?
       title = [@event.user_id, @event.user&.email_address].compact_blank.join(" — ")
 
@@ -41,37 +56,37 @@ class EventDetailsComponent < ViewComponent::Base
       helpers.tag.em("System", class: "text-muted", data: { key: "admin.event.user" })
     end
 
-    component.with_item(StatListItemComponent.new(
+    StatListItemComponent.new(
       label: "User",
       value: user_value
-    ))
+    )
   end
 
-  def add_created_item(component)
-    component.with_item(StatListItemComponent.new(
+  def created_item
+    StatListItemComponent.new(
       label: "Created",
       value: helpers.datetime_with_duration_tag(@event.created_at)
-    ))
+    )
   end
 
-  def add_updated_item(component)
-    component.with_item(StatListItemComponent.new(
+  def updated_item
+    StatListItemComponent.new(
       label: "Updated",
       value: helpers.datetime_with_duration_tag(@event.updated_at)
-    ))
+    )
   end
 
-  def add_expires_item(component)
+  def expires_item
     expires_value = helpers.safe_join([
       helpers.long_time_tag(@event.expires_at),
       " ",
       expires_status_badge
     ])
 
-    component.with_item(StatListItemComponent.new(
+    StatListItemComponent.new(
       label: "Expires",
       value: expires_value
-    ))
+    )
   end
 
   def expires_status_badge
@@ -80,5 +95,19 @@ class EventDetailsComponent < ViewComponent::Base
     else
       helpers.tag.span("(in #{helpers.short_time_ago(@event.expires_at)})", class: "text-muted")
     end
+  end
+
+  def stat_items
+    stats.map do |key, value|
+      StatListItemComponent.new(
+        label: helpers.t("events.metadata.stats.#{key}", default: key.humanize),
+        value: helpers.format_stat_value(key, value),
+        key: "events.stats.#{key}"
+      )
+    end
+  end
+
+  def stats
+    @event.metadata&.fetch("stats", nil).to_h.except(*HIDDEN_STATS)
   end
 end

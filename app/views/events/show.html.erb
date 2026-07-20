@@ -56,18 +56,4 @@
       <% end %>
     </section>
   <% end %>
-
-  <% if (stats = @event.metadata&.fetch("stats", nil)).present? %>
-    <section class="space-y-4" data-key="events.stats">
-      <h2 class="text-2xl font-semibold mb-3 text-heading"><%= t("events.metadata.stats.section_title") %></h2>
-      <%= render ListComponent.new do |list| %>
-        <% stats.except("search_calls").each do |key, value| %>
-          <% list.with_item(StatListItemComponent.new(
-            label: t("events.metadata.stats.#{key}", default: key.humanize),
-            value: format_stat_value(key, value)
-          )) %>
-        <% end %>
-      <% end %>
-    </section>
-  <% end %>
 </div>
