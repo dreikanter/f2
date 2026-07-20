@@ -86,7 +86,9 @@ module ApplicationHelper
     # Search
     "search"         => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     # Posts
-    "ellipsis"        => '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'
+    "ellipsis"        => '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    "globe"          => '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+    "message-circle" => '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'
   }.freeze
 
   def icon(name, css_class: nil, title: nil, aria_label: nil)

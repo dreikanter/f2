@@ -113,8 +113,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "div", text: /Test post content/
     assert_select "[data-key='post.status_badge']", text: "Published"
-    assert_select "[data-key='post.attachments']"
-    assert_select "[data-key='post.comments']"
+    assert_select "[data-key='freefeed_post.attachments']"
+    assert_select "[data-key='freefeed_post.comments']"
   end
 
   test "#show should include accessible labels for attachment thumbnails" do
@@ -123,8 +123,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     get post_url(post_with_attachments)
     assert_response :success
-    assert_select "[data-key='post.attachments'] a[href*='image1.jpg'] img[alt='image1.jpg']"
-    assert_select "[data-key='post.attachments'] a[href*='image2.png'] img[alt='image2.png']"
+    assert_select "[data-key='freefeed_post.attachments'] a[href*='image1.jpg'] img[alt='image1.jpg']"
+    assert_select "[data-key='freefeed_post.attachments'] a[href*='image2.png'] img[alt='image2.png']"
   end
 
   test "#show should display validation errors when present" do
