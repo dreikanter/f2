@@ -39,6 +39,15 @@ class Admin::FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", admin_feed_path(feed), text: feed.display_name
   end
 
+  test "should explain that index lists feeds from all users" do
+    sign_in_as(admin_user)
+
+    get admin_feeds_path
+
+    assert_response :success
+    assert_select "[data-key='admin.feeds.description']", text: "All the feeds created by every user on Feeder, in one place."
+  end
+
   test "should let admins view another user's feed" do
     sign_in_as(admin_user)
     feed = create(:feed, user: create(:user))
