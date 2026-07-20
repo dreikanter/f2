@@ -40,7 +40,7 @@ module EventsHelper
 
     if key.end_with?("_at")
       time = Time.zone.parse(value.to_s) rescue nil
-      time ? long_time_tag(time) : value
+      time ? datetime_with_duration_tag(time) : value
     elsif key.end_with?("_duration")
       format_event_duration(value.to_f)
     elsif key.end_with?("_cents")
