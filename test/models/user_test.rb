@@ -169,6 +169,17 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  test "should nullify associated events when user is destroyed" do
+    user = create(:user)
+    event = create(:event, user: user)
+
+    assert_no_difference("Event.count") do
+      user.destroy!
+    end
+
+    assert_nil event.reload.user_id
+  end
+
   test "#admin? returns true when user has admin permission" do
     user = create(:user, :admin)
 
