@@ -90,6 +90,14 @@
           value: number_to_human_size(row["total_size"])
         )) %>
       <% end %>
+      <% if @disk_usage[:other_tables_count] > 0 %>
+        <% list.with_item(StatListItemComponent.new(
+          label: "Other",
+          value: number_to_human_size(@disk_usage[:other_tables_size]),
+          key: "table_usage.other",
+          muted: true
+        )) %>
+      <% end %>
     <% end %>
   </section>
 </div>

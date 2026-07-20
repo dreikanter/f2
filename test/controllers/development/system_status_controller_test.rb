@@ -90,6 +90,16 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='config.background_jobs'][data-status='error']"
   end
 
+  test "should show other tables total in table usage" do
+    sign_in_as(dev_user)
+
+    get development_system_status_path
+
+    assert_response :success
+    assert_select "[data-key='table_usage.other.label']", text: "Other"
+    assert_select "[data-key='table_usage.other.value']"
+  end
+
   test "should show deployed version details" do
     with_release_env(
       "APP_REVISION" => "0123456789abcdef",
