@@ -4,7 +4,7 @@
       avatar spans the header and body rows, keeping both top-aligned and
       tight. flow-root contains the float when the text is shorter than the
       avatar. %>
-  <div class="flow-root sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-2">
+  <div class="flow-root sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-1">
     <%= image_tag "default-userpic-75.gif", alt: "", class: "float-left mr-3 mb-1 size-12 rounded-md border border-border sm:row-span-2 sm:mr-0 sm:mb-0", data: { key: "freefeed_post.avatar" } %>
 
     <div class="min-w-0 mb-2 text-heading sm:mb-0">
@@ -21,7 +21,7 @@
       <% end %>
     </div>
 
-    <div class="min-w-0 space-y-4">
+    <div class="min-w-0 space-y-3">
       <% if post.content.present? %>
         <div class="text-heading" data-key="freefeed_post.content"><%= helpers.format_post_content(post.content) %></div>
       <% end %>
