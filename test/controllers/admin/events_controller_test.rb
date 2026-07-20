@@ -248,6 +248,17 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "should link an access token subject to the admin token page" do
+    sign_in_as(admin_user)
+    token = create(:access_token, :active)
+    create(:event, type: "TokenEvent", subject: token, user: token.user)
+
+    get admin_events_path
+
+    assert_response :success
+    assert_select 'a[data-key="events.subject"][href=?]', admin_access_token_path(token)
+  end
+
   test "should show recorded subject when subject missing" do
     sign_in_as(admin_user)
     event = create(:event, type: "MissingSubjectEvent", subject: nil)
