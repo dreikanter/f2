@@ -82,6 +82,14 @@ class FreefeedPostComponentTest < ViewComponent::TestCase
     assert_equal 2, attachments.css("a").size
   end
 
+  test "#render should fall back to a generic alt for unparseable attachment URLs" do
+    post = create(:post, feed: feed, attachment_urls: ["https://example.com/bad path.jpg"])
+
+    result = render_inline(FreefeedPostComponent.new(post: post))
+
+    assert_equal "Attachment", result.css('[data-key="freefeed_post.attachments"] img').first["alt"]
+  end
+
   test "#render should show comments" do
     post = create(:post, :with_comments, feed: feed)
 
