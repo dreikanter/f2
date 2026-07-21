@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-21
 
+- Empty state placeholders now look the same on phones as on larger screens — rounded corners, comfortable spacing, and softer gray text.
 - The default userpic no longer flickers between white and gray backgrounds on token and post pages.
 - The sign-in page now keeps your email address in place after a wrong password, so you only need to retype the password.
 - "Back to sign in" links are now a bit taller, making them easier to tap.
