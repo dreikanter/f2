@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-21
 
+- Copy buttons now confirm with a crisp checkmark icon that matches the rest of the interface, instead of a plain text tick.
 - Warning and error events no longer highlight whole rows in amber and red — severity now shows in the icon's color, keeping activity lists calmer to scan.
 - Events in activity lists now carry icons that match what happened — an envelope for email events, arrows for feed refreshes — instead of a generic severity marker.
 - Access token pages no longer show an empty "Associated Feeds" section when no feeds use the token.
