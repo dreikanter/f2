@@ -50,6 +50,19 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-key="invites.copy"]', count: 0
   end
 
+  test "should not list other users' invites for admin" do
+    admin = create(:user).tap { |u| u.permissions.create!(name: "admin") }
+    create(:invite, created_by_user: other_user, invited_user: admin)
+    create(:invite, created_by_user: admin)
+    sign_in_as admin
+
+    get invites_url
+
+    assert_response :success
+    assert_select '[data-key="invites.card"]', count: 1
+    assert_select '[data-key="invites.invited_email"]', count: 0
+  end
+
   test "should render a copy button for an unused invite" do
     invite
     sign_in_as user

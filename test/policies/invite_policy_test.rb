@@ -83,4 +83,21 @@ class InvitePolicyTest < ActiveSupport::TestCase
     assert_equal 2, scope.count
     assert scope.all? { |i| i.created_by_user_id == user.id }
   end
+
+  test "scope returns only admin's own invites for admin" do
+    create(:invite, created_by_user: admin)
+    create(:invite, created_by_user: other_user)
+    create(:invite, created_by_user: other_user, invited_user: admin)
+
+    scope = InvitePolicy::Scope.new(admin, Invite).resolve
+    assert_equal 1, scope.count
+    assert scope.all? { |i| i.created_by_user_id == admin.id }
+  end
+
+  test "scope returns no invites for unauthenticated user" do
+    create(:invite, created_by_user: user)
+
+    scope = InvitePolicy::Scope.new(nil, Invite).resolve
+    assert_empty scope
+  end
 end
