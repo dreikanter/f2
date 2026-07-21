@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-21
+
+- The "Back to sign in" link on the password reset pages now lines up on the left on small screens, like on the other pages.
+
 ## 2026-07-20
 
 - Timestamps in event details, like "Started at" and "Completed at", now show how long ago they happened — "20 Jul 2026, 20:00 (48m)" — matching the rest of the page.
