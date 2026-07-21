@@ -62,6 +62,27 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", access_token.name
   end
 
+  test "#show should render Associated Feeds section when token has feeds" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+    create(:feed, user: user, access_token: active)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "h2", text: "Associated Feeds"
+  end
+
+  test "#show should not render Associated Feeds section when token has no feeds" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "h2", text: "Associated Feeds", count: 0
+  end
+
   test "#show should not render for other user's token" do
     other_token = create(:access_token, user: create(:user))
     sign_in_as user
