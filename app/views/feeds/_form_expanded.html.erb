@@ -182,7 +182,8 @@
         <% end %>
       </div>
 
-      <%= render FeedAiSettingsComponent.new(feed: feed, form: f) %>
+      <% ai_settings = FeedAiSettingsComponent.new(feed: feed, form: f) %>
+      <%= render ai_settings %>
 
       <% unless feed.sourceless? %>
       <div class="mt-2" data-key="form.preview">
@@ -360,17 +361,34 @@
         </div>
       <% end %>
 
+      <%# When a setup gate replaced the token or credential fields, enabling
+          can only fail — and the failure's errors would render inside the
+          missing fields, i.e. nowhere. Lock the checkbox off and say what's
+          missing instead. A (legacy) still-enabled feed keeps an interactive
+          checkbox so unchecking-to-pause stays available. %>
+      <%
+        enable_missing = []
+        enable_missing << "a FreeFeed access token" if active_tokens.empty?
+        if ai_settings.section_visible?
+          enable_missing << "AI credentials" unless ai_settings.credentials?
+          enable_missing << "search credentials" unless ai_settings.search_credentials?
+        end
+        enable_blocked = enable_missing.any? && !feed.enabled?
+      %>
       <div class="mt-6">
         <div class="flex items-start">
           <div class="flex items-center h-6">
             <%= check_box_tag "enable_feed",
                               "1",
-                              params[:enable_feed] == "1" || feed.enabled?,
-                              id: "enable_feed" %>
+                              !enable_blocked && (params[:enable_feed] == "1" || feed.enabled?),
+                              id: "enable_feed",
+                              disabled: enable_blocked %>
           </div>
           <div class="ml-3">
-            <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold text-heading mb-0" %>
-            <% if feed.scheduled? %>
+            <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold #{enable_blocked ? 'text-muted' : 'text-heading'} mb-0" %>
+            <% if enable_blocked %>
+              <p class="text-sm text-muted" data-key="form.enable-blocked-note">Add <%= enable_missing.to_sentence %> first, then you can enable this feed.</p>
+            <% elsif feed.scheduled? %>
               <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
             <% else %>
               <p class="text-sm text-muted">Enable this feed so its webhook endpoint can publish to FreeFeed.</p>
