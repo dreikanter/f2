@@ -13,7 +13,7 @@ class FeedListItemComponent < ListItemComponent
     with_icon { icon_element }
     with_primary { primary_element }
     with_secondary { secondary_element }
-    with_trailing { menu }
+    with_trailing { helpers.safe_join([menu, delete_modal].compact) }
   end
 
   private
@@ -113,9 +113,33 @@ class FeedListItemComponent < ListItemComponent
       end
 
       items << { label: "Discard…", href: feed_url, data: { key: "feed.#{feed.id}.discard", turbo_method: :delete, turbo_confirm: DISCARD_CONFIRM } } if draft?
+
+      # An inactive feed may be a dead end — its token can be gone for good —
+      # so deletion is offered right here, not just on the feed page.
+      if deletable?
+        items << { label: "Delete…", href: "#",
+                   data: { key: "feed.#{feed.id}.delete", controller: "modal-trigger",
+                           modal_trigger_modal_id_value: delete_modal_id, action: "click->modal-trigger#open" } }
+      end
     end
 
     items
+  end
+
+  def delete_modal
+    return unless deletable?
+
+    render("feeds/delete_modal", feed: feed)
+  end
+
+  # Drafts already have Discard; an enabled feed should be paused before it's
+  # removed, so the list offers deletion only for inactive feeds.
+  def deletable?
+    management_actions? && feed.disabled?
+  end
+
+  def delete_modal_id
+    "delete-feed-modal-#{feed.id}"
   end
 
   def title
