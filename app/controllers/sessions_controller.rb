@@ -10,7 +10,8 @@ class SessionsController < ApplicationController
     if user
       create_session_for(user)
     else
-      redirect_to new_session_path, alert: "Email address or password are not correct."
+      flash.now[:alert] = "Email address or password are not correct."
+      render :new, status: :unprocessable_entity
     end
   end
 

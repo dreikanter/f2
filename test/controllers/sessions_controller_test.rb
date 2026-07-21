@@ -15,7 +15,16 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "#create should reject invalid credentials" do
     post session_url, params: { email_address: "wrong@example.com", password: "wrong" }
-    assert_redirected_to new_session_path
+
+    assert_response :unprocessable_entity
+    assert_select "[role=\"alert\"]", text: /Email address or password are not correct./
+  end
+
+  test "#create should keep the email address after a failed attempt" do
+    post session_url, params: { email_address: "typed@example.com", password: "wrong" }
+
+    assert_response :unprocessable_entity
+    assert_select "input[name=?][value=?]", "email_address", "typed@example.com"
   end
 
   test "#destroy should clear session" do
