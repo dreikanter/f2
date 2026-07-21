@@ -51,6 +51,7 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
+    assert_equal "circle-x", icon["data-icon"]
     assert_includes icon["class"], "text-danger"
   end
 
@@ -61,17 +62,39 @@ class EventListItemComponentTest < ViewComponent::TestCase
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
+    assert_equal "triangle-alert", icon["data-icon"]
     assert_includes icon["class"], "text-warning"
   end
 
   test "#call should mark routine info events with a light gray info icon" do
-    event = create(:event, type: "feed_refresh", level: :info, user: user)
+    event = create(:event, type: "unconfigured_event", level: :info, user: user)
 
     result = render_item(event)
 
     icon = result.at_css("[data-key='events.severity'] svg")
     assert_not_nil icon
+    assert_equal "info", icon["data-icon"]
     assert_includes icon["class"], "text-muted"
+  end
+
+  test "#call should use the configured icon for the event type" do
+    event = create(:event, type: "feed_refresh", level: :info, user: user)
+
+    result = render_item(event)
+
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_equal "refresh-ccw", icon["data-icon"]
+    assert_includes icon["class"], "text-muted"
+  end
+
+  test "#call should keep the level color on configured icons" do
+    event = create(:event, type: "feed_refresh", level: :error, user: user)
+
+    result = render_item(event)
+
+    icon = result.at_css("[data-key='events.severity'] svg")
+    assert_equal "refresh-ccw", icon["data-icon"]
+    assert_includes icon["class"], "text-danger"
   end
 
   test "#call should tint warning rows with the alert palette" do
