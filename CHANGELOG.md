@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-21
 
+- "Back to sign in" links are now a bit taller, making them easier to tap.
 - The "Back to sign in" link on the password reset pages now lines up on the left on small screens, like on the other pages.
 
 ## 2026-07-20
