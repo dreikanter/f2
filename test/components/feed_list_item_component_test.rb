@@ -150,6 +150,48 @@ class FeedListItemComponentTest < ViewComponent::TestCase
     end
   end
 
+  test "#render should show Delete action and confirmation modal for disabled feeds" do
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: feed)
+
+      delete_item = result.css("[data-key='feed.#{feed.id}.delete']").first
+      assert_not_nil delete_item
+      assert_equal "delete-feed-modal-#{feed.id}", delete_item["data-modal-trigger-modal-id-value"]
+      assert_not_empty result.css("#delete-feed-modal-#{feed.id}")
+    end
+  end
+
+  test "#render should not show Delete action for enabled feeds" do
+    enabled_feed = create(:feed, :enabled, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: enabled_feed)
+
+      assert_empty result.css("[data-key='feed.#{enabled_feed.id}.delete']")
+      assert_empty result.css("#delete-feed-modal-#{enabled_feed.id}")
+    end
+  end
+
+  test "#render should not show Delete action for draft feeds" do
+    draft_feed = create(:feed, :draft, user: user)
+
+    with_request_url("/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: draft_feed)
+
+      assert_empty result.css("[data-key='feed.#{draft_feed.id}.delete']")
+      assert_empty result.css("#delete-feed-modal-#{draft_feed.id}")
+    end
+  end
+
+  test "#render should not show Delete action in admin mode" do
+    with_request_url("/admin/feeds") do
+      result = render_inline FeedListItemComponent.new(feed: feed, admin: true)
+
+      assert_empty result.css("[data-key='feed.#{feed.id}.delete']")
+      assert_empty result.css("#delete-feed-modal-#{feed.id}")
+    end
+  end
+
   test "#render should show refresh and post time placeholders when never refreshed" do
     result = render_inline FeedListItemComponent.new(feed: feed)
 

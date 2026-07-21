@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-21
 
 - Access token pages no longer show an empty "Associated Feeds" section when no feeds use the token.
+- Inactive feeds can now be deleted right from the feeds list — handy when a feed's access token is gone and the feed has nowhere left to go.
 - The "Enable feed" option now stays off with a note about what's missing — like a FreeFeed token or AI credentials — instead of failing with an error that didn't point anywhere.
 - The Invites page now shows only your own invitations. Admins previously saw everyone's invites there, including the one they signed up with.
 - Empty state placeholders now look the same on phones as on larger screens — rounded corners, comfortable spacing, and softer gray text.
