@@ -109,6 +109,11 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes result, 'class="shrink-0 size-4 text-warning"'
   end
 
+  test "#icon carries the icon name as a data hook" do
+    result = icon("info")
+    assert_includes result, 'data-icon="info"'
+  end
+
   test "#icon renders intrinsic width and height so it stays sized without CSS" do
     result = icon("info")
     assert_includes result, 'width="24"'

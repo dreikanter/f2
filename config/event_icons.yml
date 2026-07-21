@@ -1,0 +1,35 @@
+# Icons for event log entries, keyed by event type.
+#
+# Values are lucide.dev icon names. Each must also exist in
+# ApplicationHelper::ICONS (the app inlines its icon set) — add the icon's
+# path data there when introducing a new name. Event types without an entry,
+# and entries naming an unbundled icon, fall back to the icon for the event's
+# level (info / triangle-alert / circle-x).
+
+feed_refresh: refresh-ccw
+feed_refresh_skipped: circle-dashed
+feed_refresh_ai_empty: sparkles
+feed_ai_model_unavailable: sparkles
+feed_ai_credential_removed: sparkles
+feed_search_credential_removed: search
+feed_target_group_unavailable: users
+feed_post_comments_failed: message-circle
+feed_auto_disabled: circle-pause
+ai_credential_deactivated: sparkles
+search_credential_deactivated: search
+access_token_validation_failed: key
+email_changed: mail
+user_suspended: circle-pause
+user_unsuspended: circle-play
+group_purge_started: trash-2
+mail.passwords_mailer.reset: mail
+mail.profile_mailer.email_change_confirmation: mail
+mail.profile_mailer.account_confirmation: mail
+resend.email.email_bounced: mail
+resend.email.email_complained: mail
+resend.email.email_failed: mail
+resend.email.email_sent: mail
+resend.email.email_delivered: mail
+resend.email.email_delayed: mail
+resend.email.email_opened: mail
+resend.email.email_clicked: mail

@@ -1,17 +1,6 @@
 class EventListItemComponent < ListItemComponent
   include EventLogEntryPresentation
 
-  # Warning and error rows lean on the alert palette so problems stand out while
-  # scanning the log; routine events stay neutral. Rows sit inside a single
-  # bordered list, so only the background is tinted — separation comes from the
-  # list's dividers rather than per-row borders.
-  LEVEL_TINTS = {
-    "warning" => "bg-warning-subtle hover:bg-warning-subtle",
-    "error" => "bg-danger-subtle hover:bg-danger-subtle"
-  }.freeze
-
-  DEFAULT_TINT = "bg-surface hover:bg-surface-muted".freeze
-
   # Shows the severity, description and timestamp. Admin::EventListItemComponent
   # adds a footer with the event type, user and subject for the operator log.
   def initialize(event:, href:)
@@ -38,8 +27,10 @@ class EventListItemComponent < ListItemComponent
     }
   end
 
+  # Rows stay neutral regardless of level — severity shows in the leading
+  # icon, not the background — so all event lists hover like every other list.
   def row_css_class
-    helpers.class_names("transition duration-75", tint)
+    helpers.class_names("bg-surface", HOVER_ROW_CSS_CLASS)
   end
 
   def primary_element
@@ -69,10 +60,6 @@ class EventListItemComponent < ListItemComponent
   # enables it for the operator log.
   def show_footer?
     false
-  end
-
-  def tint
-    LEVEL_TINTS.fetch(event.level, DEFAULT_TINT)
   end
 
   # A plain marker by default. Admin::EventListItemComponent turns it into a
