@@ -1,5 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Lucide "check" (https://lucide.dev/icons/check), matching the markup the
+// server-side icon helper renders.
+const CHECK_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" ' +
+  'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+  'stroke-linejoin="round" class="shrink-0 size-4" data-icon="check" aria-hidden="true">' +
+  '<path d="M20 6 9 17l-5-5"/></svg>'
+
 export default class extends Controller {
   static values = {
     text: String
@@ -18,7 +26,7 @@ export default class extends Controller {
     clearTimeout(this.resetTimer)
 
     navigator.clipboard.writeText(this.textValue).then(() => {
-      button.innerHTML = '✓'
+      button.innerHTML = CHECK_ICON
       button.title = 'Copied!'
       button.classList.add('text-success')
       button.classList.remove('text-muted')
