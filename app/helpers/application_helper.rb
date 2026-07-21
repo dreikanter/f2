@@ -105,7 +105,9 @@ module ApplicationHelper
       "stroke-width": "2",
       "stroke-linecap": "round",
       "stroke-linejoin": "round",
-      class: class_names("shrink-0", css_class)
+      class: class_names("shrink-0", css_class),
+      # Tests select icons by name through this hook; path data carries no name.
+      "data-icon": name
     }
 
     options[:title] = title if title.present?
