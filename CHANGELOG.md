@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-21
 
+- The sign-in page now keeps your email address in place after a wrong password, so you only need to retype the password.
 - "Back to sign in" links are now a bit taller, making them easier to tap.
 - The "Back to sign in" link on the password reset pages now lines up on the left on small screens, like on the other pages.
 
