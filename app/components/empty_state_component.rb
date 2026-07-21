@@ -4,7 +4,7 @@ class EmptyStateComponent < ViewComponent::Base
   end
 
   def call
-    content_tag :div, class: "w-full rounded-lg border border-dashed border-border-strong bg-surface p-6", data: { key: "empty-state" } do
+    content_tag :div, class: "w-full rounded-lg border border-dashed border-border-strong bg-surface p-6 sm:p-4", data: { key: "empty-state" } do
       content_tag :div, class: "space-y-6 py-12 text-center text-muted", data: { key: "empty-state.body" } do
         body
       end
