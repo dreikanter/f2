@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-21
 
+- The prompt to add a FreeFeed access token on the feed form dropped its key icon, so everything now lines up along the same left edge.
 - The access tokens page now shows only your own tokens. Admins previously saw everyone's tokens there and could open or edit them.
 - Copy buttons now confirm with a crisp checkmark icon that matches the rest of the interface, instead of a plain text tick.
 - Warning and error events no longer highlight whole rows in amber and red — severity now shows in the icon's color, keeping activity lists calmer to scan.
