@@ -49,9 +49,9 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.show?
   end
 
-  test "should allow show access to admin users" do
+  test "should deny show access to admin users for other users' tokens" do
     policy = policy_for_user(admin_user, access_token)
-    assert policy.show?
+    assert_not policy.show?
   end
 
   test "should allow create access to authenticated users" do
@@ -74,9 +74,9 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.update?
   end
 
-  test "should allow update access to admin users" do
+  test "should deny update access to admin users for other users' tokens" do
     policy = policy_for_user(admin_user, access_token)
-    assert policy.update?
+    assert_not policy.update?
   end
 
   test "edit? should delegate to update?" do
@@ -94,9 +94,9 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not policy.destroy?
   end
 
-  test "should allow destroy access to admin users" do
+  test "should deny destroy access to admin users for other users' tokens" do
     policy = policy_for_user(admin_user, access_token)
-    assert policy.destroy?
+    assert_not policy.destroy?
   end
 
   test "should handle nil user gracefully" do
@@ -116,12 +116,12 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_not_includes result, other_access_token
   end
 
-  test "#scope should return all tokens for admin users" do
+  test "#scope should return only owned tokens for admin users" do
     scope = scope_for_user(admin_user)
     result = scope.resolve
 
-    assert_includes result, access_token
-    assert_includes result, other_access_token
+    assert_not_includes result, access_token
+    assert_not_includes result, other_access_token
   end
 
   test "#scope should return no tokens for nil user" do
@@ -131,23 +131,23 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_equal 0, result.count
   end
 
-  test "owner_or_admin? returns true for token owner" do
+  test "owner? returns true for token owner" do
     policy = policy_for_user(user, access_token)
-    assert policy.send(:owner_or_admin?)
+    assert policy.send(:owner?)
   end
 
-  test "owner_or_admin? returns false for other users" do
+  test "owner? returns false for other users" do
     policy = policy_for_user(user, other_access_token)
-    assert_not policy.send(:owner_or_admin?)
+    assert_not policy.send(:owner?)
   end
 
-  test "owner_or_admin? returns true for admin users" do
+  test "owner? returns false for admin users on other users' tokens" do
     policy = policy_for_user(admin_user, other_access_token)
-    assert policy.send(:owner_or_admin?)
+    assert_not policy.send(:owner?)
   end
 
-  test "owner_or_admin? returns false for nil user" do
+  test "owner? returns false for nil user" do
     policy = AccessTokenPolicy.new(nil, access_token)
-    assert_not policy.send(:owner_or_admin?)
+    assert_not policy.send(:owner?)
   end
 end
