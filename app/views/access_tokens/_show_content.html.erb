@@ -88,14 +88,12 @@
     </div>
   <% end %>
 
-  <div class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
-    <% if access_token.feeds.any? %>
+  <% if access_token.feeds.any? %>
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Associated Feeds</h2>
       <%= render FeedsListComponent.new(feeds: access_token.feeds) %>
-    <% else %>
-      <%= render EmptyStateComponent.new("No associated feeds yet") %>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 <% elsif access_token.inactive? %>
   <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
     <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
