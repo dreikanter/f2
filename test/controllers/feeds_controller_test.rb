@@ -798,6 +798,64 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=checkbox][name='enable_feed'][checked]:not([disabled])"
   end
 
+  test "#edit should lock the Enable checkbox off when the user has no active tokens" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, :without_access_token, user: user)
+
+    get edit_feed_url(draft)
+
+    assert_response :success
+    assert_select "[data-key='token.gate']", count: 1
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
+                  "Enable checkbox should be unchecked while enabling is unavailable"
+    assert_select "[data-key='form.enable-blocked-note']", text: /FreeFeed access token/
+  end
+
+  test "#edit should lock the Enable checkbox off when all tokens are inactive" do
+    sign_in_as(user)
+    create(:access_token, :inactive, user: user)
+    draft = create(:feed, :draft, :without_access_token, user: user)
+
+    get edit_feed_url(draft)
+
+    assert_response :success
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "[data-key='form.enable-blocked-note']", text: /FreeFeed access token/
+  end
+
+  test "#edit should keep the Enable checkbox interactive for an enabled feed without active tokens" do
+    sign_in_as(user)
+    enabled = create(:feed, :enabled, user: user, access_token: access_token)
+    access_token.update!(status: :inactive)
+
+    get edit_feed_url(enabled)
+
+    assert_response :success
+    assert_select "[data-key='token.gate']", count: 1
+    assert_select "input[type=checkbox][name='enable_feed'][checked]:not([disabled])"
+  end
+
+  test "#new re-render should lock the Enable checkbox off when the user has no active tokens" do
+    sign_in_as(user)
+
+    create(:feed, :draft, :without_access_token, user: user, name: "Taken")
+
+    feed_params = {
+      params: { url: "http://example.com/feed.xml" },
+      feed_profile_key: "rss",
+      # Duplicate name fails draft validation, forcing the :new re-render.
+      name: "Taken",
+      schedule_interval: "1h"
+    }
+    post feeds_path, params: { feed: feed_params, enable_feed: "0" }
+
+    assert_response :unprocessable_entity
+    assert_select "[data-key='token.gate']", count: 1
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "[data-key='form.enable-blocked-note']", text: /FreeFeed access token/
+  end
+
   test "#update should update feed with valid params" do
     sign_in_as(user)
     new_token = create(:access_token, user: user, host: "https://freefeed.net")

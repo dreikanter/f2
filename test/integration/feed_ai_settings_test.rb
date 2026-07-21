@@ -189,4 +189,46 @@ class FeedAiSettingsTest < ActionDispatch::IntegrationTest
     assert_select "button[value='save_as_draft_and_add_credentials']", count: 0
     assert_select "button[value='save_as_draft_and_add_search_credentials']"
   end
+
+  test "#edit should lock the Enable checkbox off when AI credentials are missing" do
+    sign_in_as(user)
+    search_credential
+    feed_without_credential = create(:feed,
+                                     user: user,
+                                     feed_profile_key: "llm",
+                                     ai_credential: nil,
+                                     search_credential: search_credential,
+                                     params: { "prompt" => "https://no-rss.example.com" })
+
+    get edit_feed_path(feed_without_credential)
+
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "input[type=checkbox][name='enable_feed'][checked]", false,
+                  "Enable checkbox should be unchecked while enabling is unavailable"
+    assert_select "[data-key='form.enable-blocked-note']", text: /AI credentials/
+  end
+
+  test "#edit should lock the Enable checkbox off when only search credentials are missing" do
+    sign_in_as(user)
+    feed_without_search = create(:feed,
+                                 user: user,
+                                 feed_profile_key: "llm",
+                                 ai_credential: credential,
+                                 search_credential: nil,
+                                 params: { "prompt" => "https://no-rss.example.com" })
+
+    get edit_feed_path(feed_without_search)
+
+    assert_select "input[type=checkbox][name='enable_feed'][disabled]", count: 1
+    assert_select "[data-key='form.enable-blocked-note']", text: /search credentials/
+  end
+
+  test "#edit should keep the Enable checkbox interactive when AI setup is complete" do
+    sign_in_as(user)
+
+    get edit_feed_path(ai_feed)
+
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+    assert_select "[data-key='form.enable-blocked-note']", false
+  end
 end
