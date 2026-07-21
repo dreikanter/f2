@@ -16,7 +16,7 @@ class EmptyStateComponentTest < ViewComponent::TestCase
   test "#render should render text argument as a paragraph" do
     result = render_inline EmptyStateComponent.new("Nothing here yet")
 
-    paragraph = result.css("p.text-muted").first
+    paragraph = result.css('[data-key="empty-state.body"] p').first
 
     assert_not_nil paragraph
     assert_equal "Nothing here yet", paragraph.text.strip
