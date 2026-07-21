@@ -40,6 +40,15 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='settings.access_tokens.#{access_token.id}']"
   end
 
+  test "#index should not display other users' tokens to admins" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as create(:user, :admin)
+    get access_tokens_path
+
+    assert_response :success
+    assert_select "[data-key='settings.access_tokens.#{other_token.id}']", count: 0
+  end
+
   test "#index should display host when token owner is not set" do
     sign_in_as user
     token = create(:access_token, user: user, owner: nil)
@@ -86,6 +95,14 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
   test "#show should not render for other user's token" do
     other_token = create(:access_token, user: create(:user))
     sign_in_as user
+    get access_token_path(other_token)
+
+    assert_response :not_found
+  end
+
+  test "#show should not render other user's token for admins" do
+    other_token = create(:access_token, user: create(:user))
+    sign_in_as create(:user, :admin)
     get access_token_path(other_token)
 
     assert_response :not_found
