@@ -4,7 +4,7 @@ class AccessTokenPolicy < ApplicationPolicy
   end
 
   def show?
-    owner_or_admin?
+    owner?
   end
 
   def create?
@@ -12,24 +12,22 @@ class AccessTokenPolicy < ApplicationPolicy
   end
 
   def update?
-    owner_or_admin?
+    owner?
   end
 
   def destroy?
-    owner_or_admin?
+    owner?
   end
 
   private
 
-  def owner_or_admin?
-    authenticated? && (user == record.user || admin?)
+  def owner?
+    authenticated? && user == record.user
   end
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if admin?
-        scope.all
-      elsif user
+      if user
         scope.where(user: user)
       else
         scope.none
