@@ -14,10 +14,6 @@ class EventIcons
       name if name && ApplicationHelper::ICONS.key?(name)
     end
 
-    def reload!
-      @table = nil
-    end
-
     private
 
     def table
