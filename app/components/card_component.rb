@@ -29,8 +29,9 @@ class CardComponent < ViewComponent::Base
 
   def merged_options
     classes = helpers.class_names(
-      BASE_CLASSES,
-      sections.any? ? SECTIONED_CLASSES : PADDED_CLASSES,
+      # Resolved through self.class so subclasses restyle by overriding the constants.
+      self.class::BASE_CLASSES,
+      sections.any? ? SECTIONED_CLASSES : self.class::PADDED_CLASSES,
       (@href && LINKED_CLASSES),
       @html_options[:class]
     )

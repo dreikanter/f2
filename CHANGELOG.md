@@ -5,6 +5,8 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-07-22
 
 - Picking Refresh from a feed's actions menu now closes the menu and confirms the refresh has started, instead of leaving you guessing whether the click did anything.
+- On phones, the sign-in, registration, and password pages now use the full screen width instead of a boxed card.
+- The sign-in page's "Forgot password?" and "Resend confirmation" links now stack on their own lines on phones, making them easier to tap.
 - Token pages and post previews now show your actual FreeFeed userpic instead of the generic placeholder. Newly validated tokens pick it up automatically.
 - Turning on a feed now always requires a working FreeFeed access token. Previously the feed page's Enable button checked this, but saving the feed with "Enable feed" turned on did not.
 - When a feed's access token stops working, the feed page's Enable button now says exactly what's missing, and the feed's settings explain that saving will switch it to one of your working tokens.

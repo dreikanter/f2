@@ -1,67 +1,18 @@
-<%# locals: (edit_mode: false, feed:, candidates: [], source_changed: false, profile_changed: false, checking: false, source_error: nil, attempted_url: nil) %>
-<% active_tokens = Current.user.access_tokens.active.order(:host) %>
-<%# The chooser is a real choice only with two or more working candidates; one
-    working candidate is shown as a read-only annotation (spec §7). In edit mode
-    it appears only after a source re-detection resolves to multiple candidates. %>
-<% show_chooser = candidates.size >= 2 %>
-
-<%# preview-button is mounted on the whole form so it can read the selected
-    feed_profile_key (radios or hidden field) and react to candidate changes;
-    the button and the modal's frame are nested targets within it.
-
-    While an edit's source re-detection runs (spec §4), the same form freezes
-    and polls for the outcome; a failure re-renders it enabled with the hint
-    under the source field. %>
-<%
-  wrapper_data = {
-    identification_state: checking ? "checking" : (source_error ? "error" : "complete"),
-    controller: checking ? "preview-button polling" : "preview-button",
-    preview_button_endpoint_value: feed_preview_path,
-    preview_button_source_value: feed.source_input,
-    preview_button_source_keys_value: preview_source_keys(feed, candidates, show_chooser: show_chooser).to_json,
-    preview_button_ai_profiles_value: FeedProfile.ai_profile_keys.to_json,
-    preview_button_modal_id_value: "feed-preview-modal"
-  }
-  if checking
-    wrapper_data.merge!(
-      polling_indicate_busy_value: false,
-      polling_endpoint_value: feed_identifications_path(url: attempted_url, feed_id: feed.id),
-      polling_interval_value: polling_interval_ms,
-      polling_max_polls_value: polling_max_polls,
-      polling_stop_condition_value: "[data-identification-state='complete'], [data-identification-state='error']"
-    )
-  end
-%>
 <%= tag.div id: "feed-form", data: wrapper_data do %>
-  <%= form_with model: feed,
-                url: (edit_mode ? feed_path(feed) : feeds_path),
-                method: (edit_mode ? :patch : :post),
-                data: {
-                  controller: "groups",
-                  # feed_id is nil (and dropped from the URL) for an unpersisted feed.
-                  groups_endpoint_value: access_token_groups_path(":access_token_id", feed_id: feed.id)
-                } do |f| %>
-    <%= tag.fieldset disabled: checking, class: ("opacity-60" if checking) do %>
+  <%= form_with model: feed, url: form_url, method: form_method, data: form_data do |f| %>
+    <%= tag.fieldset disabled: checking?, class: ("opacity-60" if checking?) do %>
     <div class="space-y-10">
       <%# Source stays anchored at the top so the expansion reads as the entry
           field staying put while the rest of the form appears below it. The
           source and feed type are the feed's fixed identity, so they're grouped
           under one "Source" heading. %>
-      <% source_label = feed.source_input_url? ? "Source URL" : "Source prompt" %>
-      <%# For an AI feed the prompt *is* the source: it stays an editable textarea
-          throughout, including edits to a live feed — the uid scheme is unchanged,
-          so there's no duplicate risk, at most some older posts backfilled (spec
-          §4). A deterministic feed's URL is editable when editing an existing feed
-          — a change re-runs detection before saving (spec §4). %>
-      <% ai_prompt_editable = FeedProfile.depends_on_ai?(feed.feed_profile_key) %>
-      <% source_editable = edit_mode && !ai_prompt_editable %>
       <% if feed.sourceless? %>
         <%# A webhook feed has no source; callers push content to its authenticated
             endpoint, so the whole source block collapses into a note. %>
         <div>
           <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
           <%= render AlertComponent.new(variant: :info, data: { key: "form.webhook-note" }) do %>
-            <p class="text-sm">This feed doesn't follow anything on its own. It publishes whatever you send to its webhook endpoint with the authorization token. <%= feed.persisted? ? "You'll find both on the feed's page." : "Save the feed to get the endpoint and token." %></p>
+            <p class="text-sm">This feed doesn't follow anything on its own. It publishes whatever you send to its webhook endpoint with the authorization token. <%= webhook_endpoint_hint %></p>
           <% end %>
           <%= f.hidden_field :feed_profile_key %>
         </div>
@@ -70,7 +21,7 @@
         <h2 class="text-xl font-semibold text-heading mb-4">Source</h2>
 
         <div class="space-y-6">
-          <% if ai_prompt_editable %>
+          <% if ai_prompt_editable? %>
             <div class="space-y-2">
               <%= label_tag "feed_params_prompt", "What should AI follow?", class: "block font-semibold text-heading" %>
               <%= text_area_tag "feed[params][prompt]", feed.source_input,
@@ -78,23 +29,23 @@
                                 rows: 3,
                                 maxlength: 2000,
                                 required: true,
-                                class: input_field_classes,
+                                class: helpers.input_field_classes,
                                 data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.ai-prompt" } %>
-              <% if edit_mode && !feed.draft? %>
+              <% if prompt_backfill_warning? %>
                 <p class="text-sm text-muted" data-key="form.prompt-backfill-note">Reworking the prompt may pull in some older posts you haven't seen yet. To hold those back, switch on “Skip older posts” below.</p>
               <% else %>
                 <p class="text-sm text-muted">Describe a source or topic in your own words. You can tweak this before saving.</p>
               <% end %>
             </div>
-          <% elsif source_editable %>
+          <% elsif source_editable? %>
             <div class="space-y-2">
               <%= f.label :url, source_label, class: "block font-semibold text-heading" %>
-              <%= text_field_tag "feed[params][url]", attempted_url || feed.source_input,
+              <%= text_field_tag "feed[params][url]", source_url_value,
                                  id: "feed_params_url",
                                  required: true,
-                                 class: input_field_classes(disabled: true),
+                                 class: helpers.input_field_classes(disabled: true),
                                  data: { preview_button_target: "source", action: "input->preview-button#refreshAvailability", key: "form.source-edit" } %>
-              <% if checking %>
+              <% if checking? %>
                 <p class="text-sm text-muted" role="status" data-key="form.source-checking">Checking this feed. This usually takes a few seconds.</p>
               <% elsif source_error %>
                 <p class="text-sm text-danger" data-key="form.source-error"><%= source_error %></p>
@@ -108,7 +59,7 @@
               <%= f.text_field :url_display,
                                value: feed.source_input,
                                disabled: true,
-                               class: input_field_classes(disabled: true),
+                               class: helpers.input_field_classes(disabled: true),
                                aria: { label: "#{source_label} (cannot be changed)" },
                                data: { key: "form.source-display" } %>
               <% feed.params&.each do |key, value| %>
@@ -119,16 +70,16 @@
 
           <%# Feed type belongs to every deterministic feed: the chooser after a
               multi-candidate re-detection, otherwise a read-only annotation. %>
-          <% unless ai_prompt_editable %>
-            <% if show_chooser %>
+          <% unless ai_prompt_editable? %>
+            <% if show_chooser? %>
               <%= render "feeds/candidate_chooser", candidates: candidates, input: feed.source_input, selected: feed.feed_profile_key %>
             <% else %>
               <div class="space-y-2">
                 <%= label_tag nil, "Feed type", class: "block font-semibold text-heading" %>
                 <%= f.text_field :feed_type_display,
-                                 value: candidate_summary(feed.feed_profile_key, feed.source_input),
+                                 value: feed_type_summary,
                                  disabled: true,
-                                 class: input_field_classes(disabled: true),
+                                 class: helpers.input_field_classes(disabled: true),
                                  aria: { label: "Feed type" },
                                  data: { key: "form.feed-type-display" } %>
               </div>
@@ -139,23 +90,19 @@
         <%# A read-only annotation or the editable AI prompt won't submit the
             profile key, so a hidden field carries it whenever the chooser isn't
             offering a live selection. %>
-        <% unless show_chooser %>
+        <% unless show_chooser? %>
           <%= f.hidden_field :feed_profile_key %>
-        <% end %>
-
-        <% if edit_mode && !ai_prompt_editable && !source_editable %>
-          <p class="mt-3 text-sm text-muted" data-key="form.source-locked-note">This feed's source is fixed. To follow a different source, just start a new feed.</p>
         <% end %>
 
         <%# Duplicate-risk warning for a pending source/profile change (spec §4).
             A profile change reworks how posts are identified, so it's the louder
             warning and turns the "skip older posts" threshold on by default. %>
-        <% if source_changed && profile_changed %>
+        <% if source_changed? && profile_changed? %>
           <%= render AlertComponent.new(variant: :warning, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
             <p class="font-semibold">This changes how posts are identified</p>
             <p class="text-sm">Reading this source a different way can bring some recent posts back through. We've switched on “Skip older posts” below to hold them back. Pick a start date that suits you. It can't promise zero repeats.</p>
           <% end %>
-        <% elsif source_changed %>
+        <% elsif source_changed? %>
           <%= render AlertComponent.new(variant: :info, class: "mt-4", data: { key: "form.dup-risk-warning" }) do %>
             <p class="font-semibold">Heads up: you're pointing this feed somewhere new</p>
             <p class="text-sm">If the same posts live at new addresses there, they might arrive again. To skip ones you've already seen, switch on “Skip older posts” below.</p>
@@ -169,21 +116,16 @@
         <%= f.text_field :name,
                          placeholder: "Enter a name for this feed",
                          maxlength: Feed::NAME_MAX_LENGTH,
-                         class: input_field_classes,
+                         class: helpers.input_field_classes,
                          data: { key: "form.name" } %>
         <% if f.object.errors[:name].any? %>
           <p class="text-sm text-danger"><%= f.object.errors[:name].to_sentence.capitalize %></p>
-        <% elsif feed.name.present? %>
-          <p class="text-sm text-muted">You can edit this name if you'd like.</p>
-        <% elsif feed.sourceless? %>
-          <p class="text-sm text-muted">Choose a name for this feed.</p>
         <% else %>
-          <p class="text-sm text-muted">We couldn't automatically detect a name. Please enter one.</p>
+          <p class="text-sm text-muted"><%= name_hint %></p>
         <% end %>
       </div>
 
-      <% ai_settings = FeedAiSettingsComponent.new(feed: feed, form: f) %>
-      <%= render ai_settings %>
+      <%= render ai_settings(f) %>
 
       <% unless feed.sourceless? %>
       <div class="mt-2" data-key="form.preview">
@@ -200,7 +142,7 @@
            data-key="preview.hint"></p>
 
         <%= render ModalComponent.new(title: "Feed preview", modal_id: "feed-preview-modal") do %>
-          <%= turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
+          <%= helpers.turbo_frame_tag "feed-preview", data: { preview_button_target: "frame" } do %>
             <%# Shown right away when the modal opens so the spinner is visible
                 before the frame's first response lands (the JS controller
                 re-injects this markup on each open). %>
@@ -222,23 +164,14 @@
               <%= render "feeds/token_gate" %>
             <% end %>
           <% else %>
-            <%# A token that went inactive isn't offered in the select, so the
-                feed's own choice can't be kept — preselect a working token
-                and say so below, instead of letting the browser swap silently. %>
-            <% token_swap = feed.access_token.present? && !feed.access_token.active? %>
             <%= render PanelComponent.new do %>
               <div class="space-y-2">
                 <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-heading" %>
                 <%= f.select :access_token_id,
-                             options_from_collection_for_select(
-                               active_tokens,
-                               :id,
-                               :display_name,
-                               token_swap ? active_tokens.first&.id : (feed.access_token_id || active_tokens.first&.id)
-                             ),
+                             token_options,
                              {},
                              {
-                               class: "#{input_field_classes} pb-2",
+                               class: "#{helpers.input_field_classes} pb-2",
                                data: {
                                  action: "change->groups#refresh",
                                  groups_target: "tokenSelect"
@@ -246,7 +179,7 @@
                              } %>
                 <% if f.object.errors[:access_token].any? %>
                   <p class="text-sm text-danger"><%= f.object.errors[:access_token].first %></p>
-                <% elsif token_swap %>
+                <% elsif token_swap? %>
                   <p class="text-sm text-warning" data-key="form.token-swap-note">The token this feed was using stopped working. When you save, the feed switches to the token selected here.</p>
                 <% end %>
               </div>
@@ -267,8 +200,8 @@
                 <%= f.label :schedule_interval, "Check for new posts every", class: "block font-semibold text-heading" %>
                 <%= f.select :schedule_interval,
                              Feed.schedule_intervals_for_select,
-                             { selected: feed.schedule_interval || Feed::DEFAULT_SCHEDULE_INTERVAL },
-                             { class: input_field_classes } %>
+                             { selected: selected_schedule_interval },
+                             { class: helpers.input_field_classes } %>
                 <% if f.object.errors[:cron_expression].any? %>
                   <p class="text-sm text-danger"><%= f.object.errors[:cron_expression].first %></p>
                 <% end %>
@@ -282,14 +215,11 @@
         <div class="mt-6">
           <h2 class="text-xl font-semibold text-heading mb-4">Advanced options</h2>
 
-          <%# A profile change defaults the threshold on (spec §4); checkbox and
-              panel visibility must agree. %>
-          <% import_after_on = feed.import_after_enabled || profile_changed %>
           <%= render PanelComponent.new(data: { controller: "field-toggle", key: "form.advanced-options" }) do %>
             <div class="flex items-start">
               <div class="flex h-6 items-center">
                 <%= f.check_box :import_after_enabled,
-                                checked: import_after_on,
+                                checked: import_after_on?,
                                 data: {
                                   field_toggle_target: "checkbox",
                                   action: "change->field-toggle#toggle",
@@ -305,21 +235,19 @@
             <%# mt-6 lives on the toggled panel (not a wrapper space-y) so the gap
                 only appears when the fields are shown — a hidden element renders
                 no margin. %>
-            <div class="mt-6 space-y-2 <%= "hidden" unless import_after_on %>"
+            <div class="mt-6 space-y-2 <%= "hidden" unless import_after_on? %>"
                  data-field-toggle-target="panel"
                  data-key="form.import-after-fields">
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="relative">
                   <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                    <%= icon("calendar", css_class: "size-5 text-muted") %>
+                    <%= helpers.icon("calendar", css_class: "size-5 text-muted") %>
                   </div>
-                  <%# A profile change defaults the threshold on (spec §4); seed
-                      today so "on" reads as a complete cutoff, not a blank field. %>
                   <%= f.text_field :import_after_date,
-                                   value: feed.import_after_date || (Date.current.iso8601 if profile_changed),
+                                   value: import_after_date_value,
                                    placeholder: "Pick a date",
                                    autocomplete: "off",
-                                   class: input_field_classes(icon_padding: true),
+                                   class: helpers.input_field_classes(icon_padding: true),
                                    aria: { label: "Import posts published after this date" },
                                    data: {
                                      controller: "datepicker",
@@ -330,18 +258,18 @@
                 </div>
                 <div class="relative">
                   <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-                    <%= icon("clock", css_class: "size-5 text-muted") %>
+                    <%= helpers.icon("clock", css_class: "size-5 text-muted") %>
                   </div>
                   <%# Plain 24-hour text field rather than a native time input: the
                       native control renders 12h or 24h based on the browser locale,
                       which we can't override, so we pin the format to HH:MM here. %>
                   <%= f.text_field :import_after_time,
-                                   value: feed.import_after_time.presence || "00:00",
+                                   value: import_after_time_value,
                                    inputmode: "numeric",
                                    placeholder: "HH:MM",
                                    pattern: "([01][0-9]|2[0-3]):[0-5][0-9]",
                                    maxlength: 5,
-                                   class: input_field_classes(icon_padding: true),
+                                   class: helpers.input_field_classes(icon_padding: true),
                                    aria: { label: "Import posts published after this time (24-hour HH:MM, UTC)" },
                                    data: {
                                      field_toggle_target: "input",
@@ -367,38 +295,19 @@
         </div>
       <% end %>
 
-      <%# When a setup gate replaced the token or credential fields, enabling
-          can only fail — and the failure's errors would render inside the
-          missing fields, i.e. nowhere. Lock the checkbox off and say what's
-          missing instead. A (legacy) still-enabled feed keeps an interactive
-          checkbox so unchecking-to-pause stays available. %>
-      <%
-        enable_missing = []
-        enable_missing << "a FreeFeed access token" if active_tokens.empty?
-        if ai_settings.section_visible?
-          enable_missing << "AI credentials" unless ai_settings.credentials?
-          enable_missing << "search credentials" unless ai_settings.search_credentials?
-        end
-        enable_blocked = enable_missing.any? && !feed.enabled?
-      %>
       <div class="mt-6">
         <div class="flex items-start">
           <div class="flex items-center h-6">
             <%= check_box_tag "enable_feed",
                               "1",
-                              !enable_blocked && (params[:enable_feed] == "1" || feed.enabled?),
+                              enable_checked?(f),
                               id: "enable_feed",
-                              disabled: enable_blocked %>
+                              disabled: enable_blocked?(f) %>
           </div>
           <div class="ml-3">
-            <%= label_tag "enable_feed", "Enable feed", class: "block font-semibold #{enable_blocked ? 'text-muted' : 'text-heading'} mb-0" %>
-            <% if enable_blocked %>
-              <p class="text-sm text-muted" data-key="form.enable-blocked-note">Add <%= enable_missing.to_sentence %> first, then you can enable this feed.</p>
-            <% elsif feed.scheduled? %>
-              <p class="text-sm text-muted">Start checking for new posts and publish them to FreeFeed.</p>
-            <% else %>
-              <p class="text-sm text-muted">Enable this feed so its webhook endpoint can publish to FreeFeed.</p>
-            <% end %>
+            <%= label_tag "enable_feed", "Enable feed", class: enable_label_classes(f) %>
+            <%= tag.p enable_hint(f), class: "text-sm text-muted",
+                      data: ({ key: "form.enable-blocked-note" } if enable_blocked?(f)) %>
           </div>
         </div>
       </div>
@@ -406,11 +315,11 @@
     <% end %>
 
     <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body">
-      <%= f.submit checking ? "Checking…" : "Save feed",
-                   disabled: checking,
-                   class: "#{primary_button_classes} disabled:bg-brand disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand",
+      <%= f.submit submit_label,
+                   disabled: checking?,
+                   class: submit_classes,
                    data: { turbo_submits_with: "Saving…" } %>
-      <%= link_to "Cancel", feeds_path, class: secondary_button_classes %>
+      <%= link_to "Cancel", helpers.feeds_path, class: helpers.secondary_button_classes %>
     </div>
   <% end %>
 <% end %>
