@@ -11,11 +11,18 @@ class FreefeedPostComponent < ViewComponent::Base
     post.feed
   end
 
+  def token
+    feed.access_token
+  end
+
   def author_name
-    token = feed.access_token
     token&.owner.presence ||
       token&.access_token_detail&.user_info&.dig("username").presence ||
       "You"
+  end
+
+  def userpic_url
+    token&.access_token_detail&.user_info&.dig("profile_picture_url")
   end
 
   def group_name

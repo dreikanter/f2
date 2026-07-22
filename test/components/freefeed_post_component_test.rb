@@ -25,6 +25,25 @@ class FreefeedPostComponentTest < ViewComponent::TestCase
     assert_equal "#{access_token.host}/testgroup", group["href"]
   end
 
+  test "#render should show the publisher userpic when the token has one" do
+    detail = create(:access_token_detail, :with_userpic, access_token: access_token)
+    post = create(:post, feed: feed)
+
+    result = render_inline(FreefeedPostComponent.new(post: post))
+
+    avatar = result.css('[data-key="freefeed_post.avatar"]').first
+    assert_equal ImgproxyUrl.userpic(detail.user_info["profile_picture_url"]), avatar["src"]
+  end
+
+  test "#render should fall back to the placeholder userpic" do
+    post = create(:post, feed: feed)
+
+    result = render_inline(FreefeedPostComponent.new(post: post))
+
+    avatar = result.css('[data-key="freefeed_post.avatar"]').first
+    assert_includes avatar["src"], "default-userpic-75"
+  end
+
   test "#render should fall back to a generic author without an access token" do
     post = create(:post, feed: create(:feed, :without_access_token, user: user))
 

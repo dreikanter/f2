@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-22
+
+- Token pages and post previews now show your actual FreeFeed userpic instead of the generic placeholder. Newly validated tokens pick it up automatically.
+
 ## 2026-07-21
 
 - The prompt to add a FreeFeed access token on the feed form dropped its key icon, so everything now lines up along the same left edge.
