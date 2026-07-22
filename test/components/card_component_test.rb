@@ -13,18 +13,6 @@ class CardComponentTest < ViewComponent::TestCase
     assert_includes card["class"], "p-6"
   end
 
-  test "#call should scope the card frame to sm+ when frameless_on_mobile" do
-    result = render_inline(CardComponent.new(frameless_on_mobile: true)) { "Card body" }
-
-    classes = result.at_css("div")["class"].split
-    assert_includes classes, "sm:border"
-    assert_includes classes, "sm:rounded-lg"
-    assert_includes classes, "sm:p-6"
-    refute_includes classes, "border"
-    refute_includes classes, "rounded-lg"
-    refute_includes classes, "p-6"
-  end
-
   test "#call should render sections divided border-to-border" do
     result = render_inline(CardComponent.new) do |card|
       card.with_section { "Header" }

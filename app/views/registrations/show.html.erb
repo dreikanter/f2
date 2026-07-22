@@ -1,7 +1,7 @@
 <% content_for :title, "Register" %>
 
 <% if @invite.nil? %>
-  <%= render CardComponent.new(frameless_on_mobile: true) do %>
+  <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
       <h1 class="text-4xl font-semibold mb-6 text-heading">This invite link doesn't look right</h1>
       <p class="text-body">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
@@ -21,7 +21,7 @@
     </div>
   <% end %>
 <% elsif @invite.used? %>
-  <%= render CardComponent.new(frameless_on_mobile: true) do %>
+  <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
       <h1 class="text-4xl font-semibold mb-6 text-heading">This invite was already used</h1>
       <p class="text-body">This link has already been used to create an account.</p>
@@ -48,7 +48,7 @@
     </div>
   <% end %>
 <% else %>
-  <%= render CardComponent.new(frameless_on_mobile: true) do %>
+  <%= render ModalCardComponent.new do %>
     <div class="space-y-6">
       <div class="space-y-4">
         <h1 class="text-4xl font-semibold mb-6 text-heading">Create your account</h1>
