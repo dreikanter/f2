@@ -856,6 +856,53 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.enable-blocked-note']", text: /FreeFeed access token/
   end
 
+  test "#edit should explain the token swap when the feed's token is inactive" do
+    sign_in_as(user)
+    access_token
+    inactive_token = create(:access_token, :inactive, user: user)
+    pinned = create(:feed, user: user, access_token: inactive_token)
+
+    get edit_feed_url(pinned)
+
+    assert_response :success
+    assert_select "[data-key='form.token-swap-note']", text: /stopped working/
+    assert_select "select#feed_access_token_id option[value='#{access_token.id}'][selected]"
+    assert_select "input[type=checkbox][name='enable_feed']:not([disabled])"
+  end
+
+  test "#edit should not show the token swap note when the feed's token is active" do
+    sign_in_as(user)
+    with_token = create(:feed, user: user, access_token: access_token)
+
+    get edit_feed_url(with_token)
+
+    assert_response :success
+    assert_select "[data-key='form.token-swap-note']", false
+  end
+
+  test "#update should not enable a feed still pinned to an inactive token" do
+    sign_in_as(user)
+    inactive_token = create(:access_token, :inactive, user: user)
+    pinned = create(:feed, user: user, access_token: inactive_token)
+
+    patch feed_url(pinned), params: { feed: { name: pinned.name }, enable_feed: "1" }
+
+    assert_response :unprocessable_entity
+    assert_predicate pinned.reload, :disabled?
+    assert_equal inactive_token.id, pinned.access_token_id
+  end
+
+  test "#show should name the missing piece on the disabled Enable button" do
+    sign_in_as(user)
+    inactive_token = create(:access_token, :inactive, user: user)
+    pinned = create(:feed, user: user, access_token: inactive_token)
+
+    get feed_url(pinned)
+
+    assert_response :success
+    assert_select "button[disabled][title=?]", "To enable this feed, add: active access token."
+  end
+
   test "#update should update feed with valid params" do
     sign_in_as(user)
     new_token = create(:access_token, user: user, host: "https://freefeed.net")

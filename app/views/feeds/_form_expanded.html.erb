@@ -222,6 +222,10 @@
               <%= render "feeds/token_gate" %>
             <% end %>
           <% else %>
+            <%# A token that went inactive isn't offered in the select, so the
+                feed's own choice can't be kept — preselect a working token
+                and say so below, instead of letting the browser swap silently. %>
+            <% token_swap = feed.access_token.present? && !feed.access_token.active? %>
             <%= render PanelComponent.new do %>
               <div class="space-y-2">
                 <%= f.label :access_token_id, "Access Token", class: "block font-semibold text-heading" %>
@@ -230,7 +234,7 @@
                                active_tokens,
                                :id,
                                :display_name,
-                               feed.access_token_id || active_tokens.first&.id
+                               token_swap ? active_tokens.first&.id : (feed.access_token_id || active_tokens.first&.id)
                              ),
                              {},
                              {
@@ -242,6 +246,8 @@
                              } %>
                 <% if f.object.errors[:access_token].any? %>
                   <p class="text-sm text-danger"><%= f.object.errors[:access_token].first %></p>
+                <% elsif token_swap %>
+                  <p class="text-sm text-warning" data-key="form.token-swap-note">The token this feed was using stopped working. When you save, the feed switches to the token selected here.</p>
                 <% end %>
               </div>
             <% end %>

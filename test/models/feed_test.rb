@@ -648,6 +648,27 @@ class FeedTest < ActiveSupport::TestCase
     assert_predicate feed.reload, :disabled?
   end
 
+  test "#enable should fail when the access token is inactive" do
+    feed = create(:feed, :disabled,
+      user: preview_user,
+      access_token: create(:access_token, :inactive, user: preview_user),
+      target_group: "tg",
+      feed_profile_key: "rss",
+      params: { "url" => "https://example.com/feed.xml" })
+
+    assert_not feed.enable
+    assert_includes feed.errors[:access_token], "must be active (currently inactive)"
+    assert_predicate feed.reload, :disabled?
+  end
+
+  test "#disable should still work for an enabled feed whose token went inactive" do
+    feed = create(:feed, :enabled, user: preview_user, access_token: access_token_for(preview_user))
+    feed.access_token.update!(status: :inactive)
+
+    assert feed.disable
+    assert_predicate feed.reload, :disabled?
+  end
+
   test "should reject an ai_credential belonging to a different user" do
     owner = create(:user)
     stranger = create(:user)
