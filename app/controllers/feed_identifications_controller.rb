@@ -50,7 +50,7 @@ class FeedIdentificationsController < ApplicationController
     original_url = feed_identification.persisted? ? feed_identification.input : raw_url
     feed_identification.destroy if feed_identification.persisted?
 
-    render feed_form_stream("form_collapsed", url: original_url)
+    render entry_form(url: original_url)
   end
 
   private
@@ -179,23 +179,25 @@ class FeedIdentificationsController < ApplicationController
     end
   end
 
-  # Every response in this flow swaps the same "feed-form" frame; partial names
-  # are relative to feeds/.
-  def feed_form_stream(partial, **locals)
-    { turbo_stream: turbo_stream.replace("feed-form", partial: "feeds/#{partial}", locals: locals) }
+  # Creation states re-render the entry form itself (spec §1/§7): frozen while
+  # checking, or enabled with the hint under the active mode's input. Every
+  # response in this flow swaps the same "feed-form" frame.
+  def entry_form(mode: "link", url: raw_url, prompt: nil, checking: false, error: nil)
+    { turbo_stream: turbo_stream.replace(
+      "feed-form",
+      partial: "feeds/form_collapsed",
+      locals: { mode: mode, url: url, prompt: prompt, checking: checking, error: error }
+    ) }
   end
 
-  # Creation states re-render the entry form itself (spec §1/§7): frozen while
-  # checking, or enabled with the hint under the active mode's input.
-  def entry_form(mode: "link", url: raw_url, prompt: nil, checking: false, error: nil)
-    feed_form_stream("form_collapsed", mode: mode, url: url, prompt: prompt, checking: checking, error: error)
+  def expanded_form(feed, **options)
+    { turbo_stream: turbo_stream.replace("feed-form", FeedFormComponent.new(feed: feed, **options)) }
   end
 
   # Edit states re-render the edit form — the engine is fixed (spec §4), so
   # there's no AI mode to switch to, just the hint under the source field.
   def edit_form(attempted_url:, error: nil)
-    feed_form_stream("form_expanded", feed: edit_feed, edit_mode: true,
-                                      attempted_url: attempted_url, source_error: error)
+    expanded_form(edit_feed, attempted_url: attempted_url, source_error: error)
   end
 
   def identification_error(error:, url: raw_url, prompt: nil)
@@ -232,8 +234,8 @@ class FeedIdentificationsController < ApplicationController
   end
 
   def identification_success(feed, candidates: [], source_changed: false, profile_changed: false)
-    feed_form_stream("form_expanded", feed: feed, candidates: candidates, edit_mode: editing?,
-                                      source_changed: source_changed, profile_changed: profile_changed)
+    expanded_form(feed, candidates: candidates,
+                        source_changed: source_changed, profile_changed: profile_changed)
   end
 
   # The feed being edited (spec §4 source re-detection), or nil in the creation

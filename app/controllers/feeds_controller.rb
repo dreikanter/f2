@@ -257,9 +257,8 @@ class FeedsController < ApplicationController
   def render_identification_state(attempted_url:, checking: false, source_error: nil, status: :ok)
     render turbo_stream: turbo_stream.replace(
       "feed-form",
-      partial: "feeds/form_expanded",
-      locals: { feed: @feed, edit_mode: true, attempted_url: attempted_url,
-                checking: checking, source_error: source_error }
+      FeedFormComponent.new(feed: @feed, attempted_url: attempted_url,
+                            checking: checking, source_error: source_error)
     ), status: status
   end
 
