@@ -19,3 +19,16 @@ document.addEventListener("turbo:before-cache", () => {
     }
   })
 })
+
+// Close the enclosing dropdown as soon as a menu action submits (e.g. Refresh
+// in the feed actions menu). Turbo intercepts these form submits, so no page
+// visit closes the menu, and Flowbite only reacts to clicks outside it.
+// Closing through the Flowbite instance keeps its internal open state in
+// sync — hiding the element directly would make the next trigger click a
+// no-op toggle back to hidden.
+document.addEventListener("turbo:submit-start", (event) => {
+  const menu = event.target.closest('[role="menu"]')
+  if (!menu) return
+
+  window.FlowbiteInstances?.getInstance("Dropdown", menu.id)?.hide()
+})
