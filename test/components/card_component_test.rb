@@ -45,19 +45,4 @@ class CardComponentTest < ViewComponent::TestCase
     assert_equal "Polling...", card.css("p").first.text
     assert_includes card["class"], "test"
   end
-
-  test "#call should render an anchor when href is given" do
-    result = render_inline(
-      CardComponent.new(href: "/somewhere", target: "_blank", rel: "noopener")
-    ) { "Linked card" }
-
-    card = result.at_css("a")
-    assert_not_nil card
-    assert_equal "/somewhere", card["href"]
-    assert_equal "_blank", card["target"]
-    assert_equal "noopener", card["rel"]
-    assert_includes card["class"], "hover:shadow-md"
-    assert_includes card["class"], "hover:bg-surface-muted"
-    assert_includes card["class"], "no-underline"
-  end
 end

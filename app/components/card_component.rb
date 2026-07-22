@@ -2,21 +2,15 @@ class CardComponent < ViewComponent::Base
   BASE_CLASSES = "w-full rounded-lg border border-border bg-surface shadow-xs"
   PADDED_CLASSES = "p-6"
   SECTIONED_CLASSES = "overflow-hidden divide-y divide-border"
-  LINKED_CLASSES = "block no-underline hover:bg-surface-muted hover:shadow-md transition duration-75"
 
   renders_many :sections, CardComponent::SectionComponent
 
-  def initialize(href: nil, **html_options)
-    @href = href
+  def initialize(**html_options)
     @html_options = html_options
   end
 
   def call
-    if @href
-      link_to(@href, **merged_options) { body }
-    else
-      content_tag(:div, body, merged_options)
-    end
+    content_tag(:div, body, merged_options)
   end
 
   private
@@ -32,7 +26,6 @@ class CardComponent < ViewComponent::Base
       # Resolved through self.class so subclasses restyle by overriding the constants.
       self.class::BASE_CLASSES,
       sections.any? ? SECTIONED_CLASSES : self.class::PADDED_CLASSES,
-      (@href && LINKED_CLASSES),
       @html_options[:class]
     )
     @html_options.merge(class: classes)

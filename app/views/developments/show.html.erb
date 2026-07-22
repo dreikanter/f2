@@ -4,7 +4,7 @@
   <%= render PageHeaderComponent.new(title: "Dev Tools") %>
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render CardComponent.new(href: development_system_status_path) do %>
+    <%= render LinkedCardComponent.new(href: development_system_status_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("hard-drive", css_class: "size-5") %>
@@ -14,7 +14,7 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
+    <%= render LinkedCardComponent.new(href: mission_control_jobs.root_path, target: "_blank", rel: "noopener noreferrer") do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("hard-hat", css_class: "size-5") %>
@@ -25,7 +25,7 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: development_jobs_path) do %>
+    <%= render LinkedCardComponent.new(href: development_jobs_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("circle-play", css_class: "size-5") %>
@@ -35,7 +35,7 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: development_email_previews_path) do %>
+    <%= render LinkedCardComponent.new(href: development_email_previews_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("mail", css_class: "size-5") %>
@@ -45,11 +45,10 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(
-          **(@sent_emails_available \
-            ? { href: development_sent_emails_path } \
-            : { class: "opacity-50 cursor-not-allowed", title: "Email capture is not configured" })
-        ) do %>
+    <% sent_emails_card = @sent_emails_available \
+         ? LinkedCardComponent.new(href: development_sent_emails_path) \
+         : CardComponent.new(class: "opacity-50 cursor-not-allowed", title: "Email capture is not configured") %>
+    <%= render sent_emails_card do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("inbox", css_class: "size-5") %>
@@ -59,7 +58,7 @@
       </div>
     <% end %>
 
-    <%= render CardComponent.new(href: development_components_path) do %>
+    <%= render LinkedCardComponent.new(href: development_components_path) do %>
       <div class="space-y-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
           <%= icon("layout-grid", css_class: "size-5") %>
