@@ -1,6 +1,6 @@
 require "test_helper"
 
-class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
+class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   def feed
     @feed ||= create(:feed, :webhook, :enabled)
   end
@@ -28,7 +28,7 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "controller should use the API-only stack" do
-    assert_operator WebhookPostsController, :<, ActionController::API
+    assert_operator Api::V1::PostsController, :<, ActionController::API
   end
 
   test "#create should enqueue a post from a JSON payload" do
@@ -170,15 +170,15 @@ class WebhookPostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#create should reject an oversized body before parsing" do
-    post_hook params: { content: "a" * (WebhookPostsController::MAX_BODY_BYTES + 1024) }, as: :json
+    post_hook params: { content: "a" * (Api::V1::PostsController::MAX_BODY_BYTES + 1024) }, as: :json
 
     assert_response :content_too_large
   end
 
   test "#oversized_body? should inspect actual bytes and rewind the body" do
-    body = StringIO.new("a" * (WebhookPostsController::MAX_BODY_BYTES + 1))
+    body = StringIO.new("a" * (Api::V1::PostsController::MAX_BODY_BYTES + 1))
     request = Struct.new(:content_length, :body).new(nil, body)
-    controller = WebhookPostsController.new
+    controller = Api::V1::PostsController.new
 
     controller.stub(:request, request) do
       assert controller.send(:oversized_body?)
