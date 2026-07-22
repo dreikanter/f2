@@ -45,6 +45,33 @@
 
 # Ignore development files
 /.devcontainer
+/.claude
+/.specify
+/.editorconfig
+/.gitattributes
+/.codecov.yml
+/.database_consistency.todo.yml
+/.erb_lint.yml
+/.herb.yml
+/.rubocop.yml
+/.ruby-lsp.yml
+/.tool-versions
+/AGENTS.md
+/CLAUDE.md
+/Procfile.dev
+/REVIEW.yml
+/compose.yaml
+/script
+
+# Ignore docs and design records. CHANGELOG.md must stay: the /changelog page
+# reads it at runtime (app/models/changelog.rb).
+/README.md
+/docs
+/specs
+
+# Ignore tests and coverage output.
+/test
+/coverage
 
 # Ignore Docker-related files
 /.dockerignore
