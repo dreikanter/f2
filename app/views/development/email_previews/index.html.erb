@@ -7,7 +7,7 @@
 
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
     <% @previews.each do |preview| %>
-      <%= render CardComponent.new(href: development_email_preview_path(preview[:id])) do %>
+      <%= render LinkedCardComponent.new(href: development_email_preview_path(preview[:id])) do %>
         <div class="space-y-4">
           <h2 class="flex items-center gap-2 text-lg font-semibold text-heading">
             <%= icon("mail", css_class: "size-5") %>
