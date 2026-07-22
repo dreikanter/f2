@@ -5,7 +5,7 @@ module EventsHelper
   # numbers: the offset is how many newer events come before what's shown.
   def events_offset_summary(offset, system_wide: false)
     if offset.zero?
-      system_wide ? "Showing system-wide most recent events." : "Showing the most recent events."
+      system_wide ? "System-wide most recent events." : "The most recent events."
     else
       "#{pluralize(offset, 'newer event')} above what's shown here."
     end
