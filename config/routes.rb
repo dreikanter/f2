@@ -109,9 +109,5 @@ Rails.application.routes.draw do
     resources :posts, only: :create
   end
 
-  direct :webhook_posts do
-    "/v1/posts"
-  end
-
   root "landing#index"
 end

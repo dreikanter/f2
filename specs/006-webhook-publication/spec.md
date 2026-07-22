@@ -21,7 +21,7 @@ in hand shouldn't need to stand up an RSS feed just so Feeder can poll it back.
 
 The requirements, in the user's terms:
 
-- Each webhook feed enables a **unique secret URL** that accepts data for **one post at a time**
+- Each webhook feed enables a **shared endpoint with a unique secret token** that accepts data for **one post at a time**
   and publishes to the group configured for that feed.
 - Hassle-free: a working post should be a single **curl** command with no client library, no
   signature dance, no multi-step handshake.
@@ -37,13 +37,13 @@ Only acquisition differs — push instead of pull, synchronous instead of schedu
 request instead of a batch.
 
 So the design is: a new **`webhook` feed profile** (no matcher, no loader, no schedule) plus one
-new ingress path (`POST /hooks/:token`) that validates the payload, persists a
+new ingress path (`POST /v1/posts`) that validates the payload, persists a
 `FeedEntry` + `Post` through the profile's normalizer, and kicks the existing publish chain.
 Nothing downstream changes.
 
 ```
-curl → POST /hooks/:token
-         │ resolve endpoint → feed (404 unknown, 409 not enabled, 429 throttled)
+curl → POST /v1/posts (Authorization: Bearer <token>)
+         │ authenticate token → feed (401 unknown, 409 not enabled, 429 throttled)
          │ validate payload against request schema        → 422 with details
          │ resolve uid (explicit > source_url > random)   → 200 duplicate
          │ normalize via Normalizer::WebhookNormalizer
@@ -94,13 +94,13 @@ Keeping it a profile means every generic surface — feed list, feed page, posts
 withdraw, admin — works unchanged, and profile-driven branching stays in the registry instead of
 spreading `if webhook?` checks around.
 
-### 2. The endpoint: a secret capability URL
+### 2. The endpoint: a shared URL, a secret bearer token
 
-- **Route**: `POST /hooks/:token`, handled by a dedicated single-action controller
-  (`WebhookPostsController#create`, mirroring the `ResendWebhooksController` precedent:
-  `allow_unauthenticated_access` + `skip_forgery_protection`). The token in the **path** — not a
-  header — is deliberate: the whole endpoint is one pasteable URL, the Slack-incoming-webhook
-  model the user asked for. No signature scheme; the URL *is* the credential.
+- **Route**: `POST /v1/posts`, handled by a dedicated single-action controller
+  (`Api::V1::PostsController#create`, built on `ActionController::API`, so there is no session,
+  CSRF, or browser surface to skip). The token travels in the `Authorization: Bearer` **header**
+  — the endpoint URL is shared by all webhook feeds, and the token alone identifies and
+  authenticates the feed. No signature scheme; the token *is* the credential.
 - **Token**: `SecureRandom.urlsafe_base64(32)` (256 bits, ~43 chars). Unguessable; HTTPS
   everywhere in production, so the path is protected in transit.
 - **Storage**: a new 1:1 model rather than columns on `feeds`:
@@ -119,25 +119,31 @@ spreading `if webhook?` checks around.
 
   Deterministic AR encryption (`encrypts :token, deterministic: true`) gives one column that is
   both queryable (`find_by(token:)` through a unique index) and re-displayable in the UI — the
-  user can copy the URL from the feed page any time, not only at creation. A separate table
+  user can copy the token from the feed page any time, not only at creation. A separate table
   (instead of a `feeds` column, despite the `ai_model` precedent) keeps secret material out of
   `feed.attributes`, which is attached verbatim to error-tracking context by `PostPublishJob`.
 - **Lifecycle**: the endpoint row is minted when the webhook feed is created (drafts included),
-  so the URL and a ready-to-paste curl snippet are visible immediately. It dies with the feed.
-- **Rotation**: a "Regenerate URL" action on the feed page replaces the token in place; the old
-  URL 404s from that moment. This is the remedy for a leaked URL, so it must be one click.
+  so the endpoint URL, token, and a ready-to-paste curl snippet are visible immediately. It dies
+  with the feed.
+- **Rotation**: a "Generate new token" action on the feed page replaces the token in place; the
+  old token is rejected (401) from that moment. This is the remedy for a leaked token, so it
+  must be one click.
 
 ### 3. The request contract (the curl contract)
 
-Both `application/json` and form encoding are accepted — Rails params make this free, and it
-keeps the simplest possible curl invocations working:
+Only `application/json` is accepted — other media types are rejected up front (415), so a
+misconfigured caller gets an explicit answer instead of a silently misparsed body:
 
 ```sh
-# form-encoded, minimal
-curl https://feeder.example/hooks/TOKEN -d content="Hello world"
+# minimal
+curl https://feeder.example/v1/posts \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Hello world"}'
 
-# JSON, everything
-curl https://feeder.example/hooks/TOKEN \
+# everything
+curl https://feeder.example/v1/posts \
+  -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
         "content": "Look at this",
@@ -175,9 +181,11 @@ publisher fail them silently later.
 | 201 | `{"status": "enqueued", "uid": "...", "warnings": [...]}` | Accepted; will publish asynchronously through the FIFO chain. `warnings` (e.g. `content_truncated`) present only when non-empty. |
 | 200 | `{"status": "duplicate", "uid": "..."}` | This uid was already ingested for this feed; nothing new created. Safe retry. |
 | 422 | `{"status": "invalid", "errors": ["..."]}` | Payload failed validation. **Nothing is persisted** (§4), so a corrected retry goes through cleanly. |
-| 404 | `{"status": "not_found"}` | Unknown (or rotated) token. |
+| 401 | `{"status": "unauthorized"}` + `WWW-Authenticate` | Missing, malformed, unknown, or rotated bearer token. |
 | 409 | `{"status": "feed_not_enabled"}` | Valid token, but the feed is a draft or disabled. Pausing a feed pauses its endpoint. |
 | 413 | — | Body over the ingress cap (order of 128 KB — far above any legitimate post). |
+| 415 | `{"status": "unsupported_media_type"}` | Content type other than `application/json`. |
+| 400 | `{"status": "bad_request"}` | Body isn't parseable JSON. |
 | 429 | `{"status": "throttled"}` + `Retry-After` | Ingress rate limit (§6). |
 
 The 201 means **enqueued, not on FreeFeed** — publication stays asynchronous behind the rate
@@ -233,15 +241,13 @@ expressible from one curl command.
 
 ### 6. Security
 
-- **Capability URL**: 256-bit random token; possession is authorization. Unknown token → uniform
-  404. Lookup is a unique-index equality on deterministic ciphertext — no length/timing oracle
-  worth exploiting.
+- **Bearer token**: 256-bit random token; possession is authorization. Missing, malformed, or
+  unknown token → uniform 401. Lookup is a unique-index equality on deterministic ciphertext —
+  no length/timing oracle worth exploiting.
 - **Rotation** (§2) is the leak remedy; it's instant and self-service.
-- **Log hygiene**: the token rides in the URL path, which appears in request logs.
-  `filter_parameters` doesn't cover path segments, so the ingress controller/log config must
-  scrub or truncate the token in access-log lines (semantic-logger payload filter). Accepting
-  "secret in path" is the Slack/GitHub-webhook trade-off, but we don't have to persist it in
-  plaintext logs.
+- **Log hygiene**: the token rides in the `Authorization` header — not the URL path — so it
+  stays out of request-path access logs and pasted URLs. The header still must not be echoed
+  into error-tracking context or log payloads.
 - **Ingress rate limit**: a new `RateLimit.define :webhook_ingest` policy (existing token-bucket
   service, subject = endpoint), around 60 requests/min with a small burst. It protects the DB
   and keeps one runaway script from monopolizing the account's FreeFeed publish budget. 429 +
@@ -273,8 +279,9 @@ expressible from one curl command.
 - **Enable gate**: name + active access token + target group — the standard set minus cron. The
   endpoint answers 409 until the feed is enabled, so "draft → configure → enable → curl works"
   is the whole onboarding.
-- **Feed page** additions for push feeds: the endpoint URL with copy button, the curl snippet,
-  "Regenerate URL", and "last received N minutes ago" (from `webhook_endpoints.last_received_at`).
+- **Feed page** additions for push feeds: the endpoint URL and token with copy buttons, the curl
+  snippet, "Generate new token", and "last received N minutes ago" (from
+  `webhook_endpoints.last_received_at`).
   Refresh/schedule/preview affordances disappear.
 - **Failure handling**: `consecutive_failures` auto-disable is refresh-side and simply never
   triggers (nothing increments it). Publish-side protection is inherited unchanged: an invalid
@@ -299,12 +306,11 @@ expressible from one curl command.
 - **Batch ingestion** — the contract is one post per request, per the requirements. A loop in
   the caller's script is the batch API.
 - **Editing/withdrawing posts via webhook** — the UI already handles withdrawal; a mutable HTTP
-  surface (needs per-post handles, auth semantics beyond the capability URL) is a different
-  feature.
+  surface (needs per-post handles, auth semantics beyond the feed-level bearer token) is a
+  different feature.
 - **Direct binary upload** — deferred with a sketched design (§5).
-- **HMAC signatures / custom auth headers** — the capability URL is the auth model; signature
-  verification belongs to webhooks we *consume* (Resend), not endpoints we *offer* to the user's
-  own scripts.
+- **HMAC signatures** — the bearer token is the auth model; signature verification belongs to
+  webhooks we *consume* (Resend), not endpoints we *offer* to the user's own scripts.
 
 ## Delivery plan
 
@@ -314,7 +320,7 @@ Independent, reviewable steps; each keeps `main` shippable:
    profile entry, `WebhookEndpoint` model + migration (reversible), `Feed` schedule-requirement
    exemptions, the `Feed.due` push exclusion + `FeedRefreshJob` guard (§7),
    `Normalizer::WebhookNormalizer`. No routes yet; pure additive.
-2. **Ingress** — `WebhookPostsController`, the ingestion service (payload schema, uid
+2. **Ingress** — `Api::V1::PostsController`, the ingestion service (payload schema, uid
    resolution, transactional persist, publish kick), the `:webhook_ingest` rate-limit policy,
    response contract + request tests, log scrubbing.
 3. **UX** — creation mode, feed-page endpoint panel (URL, curl snippet, rotate,

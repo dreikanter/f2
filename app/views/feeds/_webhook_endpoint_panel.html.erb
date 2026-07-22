@@ -1,6 +1,6 @@
 <%# locals: (feed:, endpoint:) %>
 <%
-  hook_url = webhook_posts_url
+  hook_url = api_v1_posts_url
   token = endpoint.encrypted_token
   curl_snippet = <<~CURL.chomp
     curl --request POST #{hook_url} \\
