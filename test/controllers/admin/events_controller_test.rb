@@ -60,7 +60,7 @@ class Admin::EventsControllerTest < ActionDispatch::IntegrationTest
     get admin_events_path
 
     assert_response :success
-    assert_select "[data-key='events.offset']", "Showing system-wide most recent events."
+    assert_select "[data-key='events.offset']", "System-wide most recent events."
   end
 
   test "should describe the offset when paging into older events" do

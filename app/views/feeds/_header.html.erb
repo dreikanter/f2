@@ -36,8 +36,12 @@
                       form: { class: "inline-block" } %>
       <% end %>
     <% else %>
+      <%# Name what's actually missing — "Complete setup" misleads when setup
+          was finished and a piece (like the token) stopped working later. %>
+      <% missing_parts = feed_missing_enablement_parts(feed) %>
+      <% enable_hint = missing_parts.any? ? "To enable this feed, add: #{missing_parts.to_sentence}." : "Complete setup to enable this feed" %>
       <% header.with_action_button do %>
-        <button type="button" disabled title="Complete setup to enable this feed" class="<%= action_button %>">Enable</button>
+        <button type="button" disabled title="<%= enable_hint %>" class="<%= action_button %>">Enable</button>
       <% end %>
     <% end %>
     <% header.with_action_button do %>

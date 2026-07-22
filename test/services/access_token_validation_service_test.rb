@@ -187,9 +187,13 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should disable enabled feeds on invalid token error" do
+    # Feeds can only become enabled while the token is active; re-validation
+    # of the live token starts after that.
+    access_token.update!(status: :active)
     feed1 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed2 = create(:feed, user: user, access_token: access_token, state: :enabled)
     feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
+    access_token.update!(status: :validating)
 
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(

@@ -45,6 +45,8 @@
 /node_modules
 bun.lock
 bun.lockb
+# yarn.lock is the single source of truth; keep npm's lockfile out.
+package-lock.json
 /coverage
 # cov-loupe writes a log file here by default.
 /cov_loupe.log

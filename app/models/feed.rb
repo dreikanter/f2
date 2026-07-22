@@ -75,6 +75,7 @@ class Feed < ApplicationRecord
   validate :engine_fixed_on_edit
   validate :source_change_reverified
   validates :access_token, presence: true, if: :enabled?
+  validate :access_token_active_when_enabled, if: -> { enabled? && will_save_change_to_state? }
   validates :target_group, presence: true, if: :enabled?
 
   validates :target_group,
@@ -525,6 +526,18 @@ class Feed < ApplicationRecord
     key = FeedProfile.source_key_for(feed_profile_key)
     before, after = params_change
     before&.dig(key) != after&.dig(key)
+  end
+
+  # A feed may only become enabled while its token is active, matching
+  # can_be_enabled?. Presence alone let the edit form enable a feed whose token
+  # had been deactivated, while the feed page's Enable button refused. Scoped to
+  # the state change: an already-enabled feed still saves while its token is
+  # mid-revalidation (validating is a routine stop for a live token). nil is
+  # left to the presence validator.
+  def access_token_active_when_enabled
+    return if access_token.nil? || access_token.active?
+
+    errors.add(:access_token, "must be active (currently #{access_token.status})")
   end
 
   def ai_credential_required_when_enabled_ai_profile
