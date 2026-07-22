@@ -8,7 +8,7 @@
       --header "Content-Type: application/json" \\
       --data '{"content":"Hello world"}'
   CURL
-  curl_before_token, curl_after_token = curl_snippet.split(token, 2)
+  field_class = "min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-3 py-2 font-mono text-sm leading-normal text-heading shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2"
   icon_button_class = "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 %>
 <%= render PanelComponent.new(data: { key: "webhook.panel" }) do %>
@@ -16,7 +16,12 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Endpoint URL</p>
       <div class="flex items-center justify-between gap-3">
-        <code class="min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.url"><%= hook_url %></code>
+        <%= tag.input type: "text",
+                      value: hook_url,
+                      readonly: true,
+                      class: field_class,
+                      aria: { label: "Endpoint URL" },
+                      data: { key: "webhook.url" } %>
         <button
           type="button"
           class="<%= icon_button_class %>"
@@ -34,7 +39,13 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Authorization token</p>
       <div class="flex items-center justify-between gap-3">
-        <code class="masked-secret min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.token"><%= token %></code>
+        <%= tag.input type: "password",
+                      value: token,
+                      readonly: true,
+                      autocomplete: "off",
+                      class: field_class,
+                      aria: { label: "Authorization token" },
+                      data: { key: "webhook.token" } %>
         <button
           type="button"
           class="<%= icon_button_class %>"
@@ -64,10 +75,17 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Try it from the terminal</p>
       <div class="flex items-start justify-between gap-3">
-        <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-surface p-3 font-mono text-sm text-heading" data-key="webhook.curl"><code><%= curl_before_token %><span class="masked-secret"><%= token %></span><%= curl_after_token %></code></pre>
+        <%= tag.textarea curl_snippet,
+                         readonly: true,
+                         rows: 4,
+                         wrap: "off",
+                         spellcheck: false,
+                         class: "#{field_class} resize-none whitespace-pre",
+                         aria: { label: "curl example" },
+                         data: { key: "webhook.curl" } %>
         <button
           type="button"
-          class="<%= icon_button_class %> mt-3"
+          class="<%= icon_button_class %> mt-2"
           data-controller="clipboard"
           data-clipboard-text-value="<%= curl_snippet %>"
           data-action="click->clipboard#copy"
