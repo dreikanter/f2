@@ -9,6 +9,9 @@ class ImgproxyUrl
   # Square edge length (px) for attachment preview thumbnails.
   THUMBNAIL_SIZE = 96
 
+  # Square edge length (px) for userpic avatars.
+  USERPIC_SIZE = 48
+
   # @param source_url [String] original image URL
   # @param width [Integer] target width in pixels
   # @param height [Integer] target height in pixels
@@ -31,10 +34,31 @@ class ImgproxyUrl
   # @param source_url [String] original image URL
   # @return [String] srcset value ("<url> 1x, <url> 2x")
   def self.preview_srcset(source_url)
-    one_x = preview(source_url)
-    two_x = thumbnail(source_url, width: THUMBNAIL_SIZE * 2, height: THUMBNAIL_SIZE * 2)
+    square_srcset(source_url, size: THUMBNAIL_SIZE)
+  end
+
+  # Square userpic avatar at the standard USERPIC_SIZE.
+  #
+  # @param source_url [String] original image URL
+  # @return [String] signed imgproxy URL, or source_url when unconfigured/blank
+  def self.userpic(source_url)
+    thumbnail(source_url, width: USERPIC_SIZE, height: USERPIC_SIZE)
+  end
+
+  # 1x/2x srcset for a square userpic (see .preview_srcset).
+  #
+  # @param source_url [String] original image URL
+  # @return [String] srcset value ("<url> 1x, <url> 2x")
+  def self.userpic_srcset(source_url)
+    square_srcset(source_url, size: USERPIC_SIZE)
+  end
+
+  def self.square_srcset(source_url, size:)
+    one_x = thumbnail(source_url, width: size, height: size)
+    two_x = thumbnail(source_url, width: size * 2, height: size * 2)
     "#{one_x} 1x, #{two_x} 2x"
   end
+  private_class_method :square_srcset
 
   def initialize(source_url, width:, height:)
     @source_url = source_url

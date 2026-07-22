@@ -1,4 +1,6 @@
 <div class="flex items-center gap-3">
-  <%= image_tag "default-userpic-75.png", alt: username, class: "w-12 h-12 rounded-md border border-border" %>
+  <%= render UserpicComponent.new(url: userpic_url, alt: username,
+        css_class: "w-12 h-12 rounded-md border border-border",
+        data: { key: "freefeed_user.userpic" }) %>
   <span class="text-lg"><%= username %></span>
 </div>

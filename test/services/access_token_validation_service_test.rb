@@ -67,7 +67,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           users: {
             id: "user123",
             username: "testuser",
-            screenName: "Test User"
+            screenName: "Test User",
+            profilePictureLargeUrl: "https://media.freefeed.net/profilepics/user123_75.jpg"
           }
         }.to_json
       )
@@ -94,6 +95,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     detail = access_token.reload.access_token_detail
     assert_not_nil detail
     assert_equal "testuser", detail.data["user_info"]["username"]
+    assert_equal "https://media.freefeed.net/profilepics/user123_75.jpg",
+      detail.data["user_info"]["profile_picture_url"]
     assert_equal 1, detail.data["managed_groups"].length
   end
 

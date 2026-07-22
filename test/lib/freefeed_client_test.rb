@@ -32,7 +32,8 @@ class FreefeedClientTest < ActiveSupport::TestCase
         "id" => "user123",
         "username" => "testuser",
         "screenName" => "Test User",
-        "email" => "test@example.com"
+        "email" => "test@example.com",
+        "profilePictureLargeUrl" => "https://media.freefeed.net/profilepics/user123_75.jpg"
       }
     }.to_json
 
@@ -51,6 +52,23 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_equal "testuser", result[:username]
     assert_equal "Test User", result[:screen_name]
     assert_equal "test@example.com", result[:email]
+    assert_equal "https://media.freefeed.net/profilepics/user123_75.jpg", result[:profile_picture_url]
+  end
+
+  test "whoami returns nil profile picture url when the field is blank" do
+    response_body = {
+      "users" => {
+        "id" => "user123",
+        "username" => "testuser",
+        "screenName" => "Test User",
+        "profilePictureLargeUrl" => ""
+      }
+    }.to_json
+
+    stub_request(:get, "#{@host}/v4/users/whoami")
+      .to_return(status: 200, body: response_body)
+
+    assert_nil @client.whoami[:profile_picture_url]
   end
 
   test "whoami raises InvalidTokenError on 401 with inactive or expired token body" do

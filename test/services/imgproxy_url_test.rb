@@ -76,4 +76,34 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
       assert two_x.end_with?(" 2x")
     end
   end
+
+  test "#userpic should build a USERPIC_SIZE thumbnail" do
+    with_imgproxy_config(endpoint: "https://imgproxy.example.com", key: KEY, salt: SALT) do
+      url = ImgproxyUrl.userpic("https://example.com/userpic.jpg")
+
+      size = ImgproxyUrl::USERPIC_SIZE
+      assert_includes url, "/rs:fill:#{size}:#{size}/"
+    end
+  end
+
+  test "#userpic should return the source url when imgproxy is not configured" do
+    with_imgproxy_config(nil) do
+      source = "https://example.com/userpic.jpg"
+      assert_equal source, ImgproxyUrl.userpic(source)
+    end
+  end
+
+  test "#userpic_srcset should offer 1x and 2x userpics for HiDPI displays" do
+    size = ImgproxyUrl::USERPIC_SIZE
+
+    with_imgproxy_config(endpoint: "https://imgproxy.example.com", key: KEY, salt: SALT) do
+      srcset = ImgproxyUrl.userpic_srcset("https://example.com/userpic.jpg")
+      one_x, two_x = srcset.split(", ")
+
+      assert_includes one_x, "/rs:fill:#{size}:#{size}/"
+      assert one_x.end_with?(" 1x")
+      assert_includes two_x, "/rs:fill:#{size * 2}:#{size * 2}/"
+      assert two_x.end_with?(" 2x")
+    end
+  end
 end
