@@ -10,7 +10,7 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   def hook_url
-    webhook_posts_path
+    api_v1_posts_path
   end
 
   def authorization_headers(token = endpoint.encrypted_token)
