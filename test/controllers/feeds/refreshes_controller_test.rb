@@ -75,6 +75,10 @@ class Feeds::RefreshesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action='replace'][target='flash-messages']" do
+      assert_select "div[id='flash-messages']"
+      assert_select ".bg-brand-subtle", text: /Feed refresh started/
+    end
   end
 
   test "create throttles repeated refreshes for the same feed" do

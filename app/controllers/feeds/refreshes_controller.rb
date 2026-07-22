@@ -13,7 +13,10 @@ class Feeds::RefreshesController < ApplicationController
     FeedRefreshJob.perform_later(@feed.id, manual: true)
 
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: "" }
+      format.turbo_stream do
+        flash.now[:notice] = "Feed refresh started"
+        render turbo_stream: turbo_stream.replace("flash-messages", partial: "layouts/flash")
+      end
       format.html { redirect_to feed_path(@feed), notice: "Feed refresh started" }
     end
   end
