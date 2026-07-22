@@ -53,6 +53,12 @@
           The endpoint starts accepting posts once the feed is enabled.
         <% end %>
       </p>
+      <%= button_to "Generate new token",
+                    feed_webhook_token_path(feed),
+                    method: :patch,
+                    class: secondary_button_classes,
+                    data: { key: "webhook.rotate" },
+                    form: { data: { turbo_confirm: "Replace the authorization token? The current token stops working right away." } } %>
     </div>
 
     <div class="space-y-2">
@@ -74,20 +80,12 @@
       <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting.</p>
     </div>
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <p class="text-sm text-muted" data-key="webhook.last-received">
-        <% if endpoint.last_received_at %>
-          Last post received <%= short_time_ago_phrase_tag(endpoint.last_received_at) %>.
-        <% else %>
-          No posts received yet.
-        <% end %>
-      </p>
-      <%= button_to "Generate new token",
-                    feed_webhook_token_path(feed),
-                    method: :patch,
-                    class: secondary_button_classes,
-                    data: { key: "webhook.rotate" },
-                    form: { data: { turbo_confirm: "Replace the authorization token? The current token stops working right away." } } %>
-    </div>
+    <p class="text-sm text-muted" data-key="webhook.last-received">
+      <% if endpoint.last_received_at %>
+        Last post received <%= short_time_ago_phrase_tag(endpoint.last_received_at) %>.
+      <% else %>
+        No posts received yet.
+      <% end %>
+    </p>
   </div>
 <% end %>
