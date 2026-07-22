@@ -1,95 +1,92 @@
 <% content_for :title, "Register" %>
-<% content_for :body_class, "sm:bg-surface-sunken" %>
 
-<div class="mx-auto w-full max-w-full space-y-6 sm:max-w-2xl sm:px-0 px-4" data-controller="autofocus">
-  <% if @invite.nil? %>
-    <%= render CardComponent.new do %>
-      <div class="space-y-6">
-        <h1 class="text-4xl font-semibold mb-6 text-heading">This invite link doesn't look right</h1>
-        <p class="text-body">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
+<% if @invite.nil? %>
+  <%= render ModalCardComponent.new do %>
+    <div class="space-y-6">
+      <h1 class="text-4xl font-semibold mb-6 text-heading">This invite link doesn't look right</h1>
+      <p class="text-body">We couldn't find an invitation with that code. It might have been removed or copied incorrectly.</p>
 
-        <div class="space-y-2">
-          <p class="font-semibold text-heading">Already have an account?</p>
-          <p class="text-body">
-            <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+      <div class="space-y-2">
+        <p class="font-semibold text-heading">Already have an account?</p>
+        <p class="text-body">
+          <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+          with your email and password.
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <p class="font-semibold text-heading">Need an invitation?</p>
+        <p class="text-body">Ask someone who already uses Feeder to send you a new link.</p>
+      </div>
+    </div>
+  <% end %>
+<% elsif @invite.used? %>
+  <%= render ModalCardComponent.new do %>
+    <div class="space-y-6">
+      <h1 class="text-4xl font-semibold mb-6 text-heading">This invite was already used</h1>
+      <p class="text-body">This link has already been used to create an account.</p>
+
+      <div class="space-y-4">
+        <p class="font-semibold text-heading">Already have an account?</p>
+        <ul class="list-disc space-y-1 ps-5 text-body">
+          <li>
+            Forgot your password?
+            <%= link_to "Reset it here", new_password_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>.
+          </li>
+          <li>
+            Otherwise,
+            <%= link_to "sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
             with your email and password.
+          </li>
+        </ul>
+      </div>
+
+      <div class="space-y-4">
+        <p class="font-semibold text-heading">Need a fresh invitation?</p>
+        <p class="text-body">Ask the person who sent this link to share a new one.</p>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <%= render ModalCardComponent.new do %>
+    <div class="space-y-6">
+      <div class="space-y-4">
+        <h1 class="text-4xl font-semibold mb-6 text-heading">Create your account</h1>
+        <% if @invite&.created_by_user %>
+          <p class="text-body">
+            <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
           </p>
-        </div>
-
-        <div class="space-y-2">
-          <p class="font-semibold text-heading">Need an invitation?</p>
-          <p class="text-body">Ask someone who already uses Feeder to send you a new link.</p>
-        </div>
-      </div>
-    <% end %>
-  <% elsif @invite.used? %>
-    <%= render CardComponent.new do %>
-      <div class="space-y-6">
-        <h1 class="text-4xl font-semibold mb-6 text-heading">This invite was already used</h1>
-        <p class="text-body">This link has already been used to create an account.</p>
-
-        <div class="space-y-4">
-          <p class="font-semibold text-heading">Already have an account?</p>
-          <ul class="list-disc space-y-1 ps-5 text-body">
-            <li>
-              Forgot your password?
-              <%= link_to "Reset it here", new_password_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>.
-            </li>
-            <li>
-              Otherwise,
-              <%= link_to "sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
-              with your email and password.
-            </li>
-          </ul>
-        </div>
-
-        <div class="space-y-4">
-          <p class="font-semibold text-heading">Need a fresh invitation?</p>
-          <p class="text-body">Ask the person who sent this link to share a new one.</p>
-        </div>
-      </div>
-    <% end %>
-  <% else %>
-    <%= render CardComponent.new do %>
-      <div class="space-y-6">
-        <div class="space-y-4">
-          <h1 class="text-4xl font-semibold mb-6 text-heading">Create your account</h1>
-          <% if @invite&.created_by_user %>
-            <p class="text-body">
-              <%= @invite.created_by_user.name.presence || "Somebody" %> invited you to join Feeder.
-            </p>
-          <% end %>
-        </div>
-        <% @user ||= User.new %>
-        <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
-          <div class="space-y-10">
-            <% if @user.errors.any? %>
-              <%= render AlertComponent.new(variant: :error) do %>
-                <span><%= @user.errors.full_messages.to_sentence.capitalize %></span>
-              <% end %>
-            <% end %>
-
-            <div class="space-y-2">
-              <%= form.label :email_address, "Email", class: "block font-semibold text-heading" %>
-              <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true, autofocus: true %>
-              <p class="text-sm text-muted">Only used for password resets—we don't send marketing emails.</p>
-            </div>
-
-            <div class="space-y-2">
-              <%= form.label :password, class: "block font-semibold text-heading" %>
-              <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true %>
-              <p class="text-sm text-muted">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
-            </div>
-          </div>
-          <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
-            <span class="text-body">
-              Already use Feeder?
-              <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
-            </span>
-          </div>
         <% end %>
       </div>
-    <% end %>
+      <% @user ||= User.new %>
+      <%= form_with model: @user, url: registration_path(code: params[:code]), method: :post, local: true do |form| %>
+        <div class="space-y-10">
+          <% if @user.errors.any? %>
+            <%= render AlertComponent.new(variant: :error) do %>
+              <span><%= @user.errors.full_messages.to_sentence.capitalize %></span>
+            <% end %>
+          <% end %>
+
+          <div class="space-y-2">
+            <%= form.label :email_address, "Email", class: "block font-semibold text-heading" %>
+            <%= form.email_field :email_address, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true, autofocus: true %>
+            <p class="text-sm text-muted">Only used for password resets—we don't send marketing emails.</p>
+          </div>
+
+          <div class="space-y-2">
+            <%= form.label :password, class: "block font-semibold text-heading" %>
+            <%= form.password_field :password, class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2", required: true %>
+            <p class="text-sm text-muted">Choose at least <%= User::PASSWORD_MIN_LENGTH %> characters to keep things secure.</p>
+          </div>
+        </div>
+        <div class="mt-6 flex flex-col items-start gap-4 text-body sm:flex-row sm:items-center sm:justify-between">
+          <%= form.submit "Create account", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
+          <span class="text-body">
+            Already use Feeder?
+            <%= link_to "Sign in", new_session_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+          </span>
+        </div>
+      <% end %>
+    </div>
   <% end %>
-</div>
+<% end %>
