@@ -8,7 +8,7 @@
         land back on the expanded form — the collapsed entry would silently
         drop the draft's fields and errors. %>
     <% if @feed.source_input.present? || @feed.sourceless? %>
-      <%= render "form_expanded", feed: @feed, edit_mode: false %>
+      <%= render FeedFormComponent.new(feed: @feed) %>
     <% else %>
       <%= render "form_collapsed", mode: mode %>
     <% end %>

@@ -4,6 +4,6 @@
   <%= render PageHeaderComponent.new(title: "Edit Feed") %>
 
   <div class="max-w-3xl">
-    <%= render "form_expanded", feed: @feed, edit_mode: true %>
+    <%= render FeedFormComponent.new(feed: @feed) %>
   </div>
 </div>
