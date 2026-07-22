@@ -1,6 +1,6 @@
 <% content_for :title, "Sign In" %>
 
-<%= render CardComponent.new do %>
+<%= render CardComponent.new(frameless_on_mobile: true) do %>
   <div class="space-y-6">
     <h1 class="text-4xl font-semibold mb-6 text-heading">Sign in to Feeder</h1>
 
@@ -17,12 +17,12 @@
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap items-center justify-start gap-4 text-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="mt-6 flex flex-col items-start gap-4 text-body sm:flex-row sm:items-center sm:justify-between">
         <%= form.submit "Sign in", class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-6 py-3 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 w-full sm:w-auto" %>
-        <div class="flex flex-wrap items-center gap-2 text-muted">
-          <%= link_to "Forgot password?", new_password_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+        <div class="text-muted sm:flex sm:items-center sm:gap-2">
+          <p><%= link_to "Forgot password?", new_password_path, class: "inline-block font-medium leading-loose text-brand underline underline-offset-4 transition hover:text-brand-hover" %></p>
           <span aria-hidden="true" class="hidden sm:inline">·</span>
-          <%= link_to "Resend confirmation", new_registration_confirmation_path, class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
+          <p><%= link_to "Resend confirmation", new_registration_confirmation_path, class: "inline-block font-medium leading-loose text-brand underline underline-offset-4 transition hover:text-brand-hover" %></p>
         </div>
       </div>
     <% end %>
