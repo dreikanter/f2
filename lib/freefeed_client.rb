@@ -254,7 +254,8 @@ class FreefeedClient
       id: user["id"],
       username: user["username"],
       screen_name: user["screenName"],
-      email: user["email"]
+      email: user["email"],
+      profile_picture_url: user["profilePictureLargeUrl"].presence
     }
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
