@@ -288,10 +288,13 @@ class AccessTokenTest < ActiveSupport::TestCase
 
   test "should disable enabled feeds when token validation service marks token inactive" do
     user = create(:user)
-    access_token = create(:access_token, status: :validating, user: user)
+    # Feeds can only become enabled while the token is active; re-validation
+    # of the live token starts after that.
+    access_token = create(:access_token, :active, user: user)
     enabled_feed = create(:feed, user: user, access_token: access_token, state: :enabled)
     another_disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
     disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
+    access_token.update!(status: :validating)
 
     # Stub HTTP request to return 401 Unauthorized, triggering the rescue block
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
