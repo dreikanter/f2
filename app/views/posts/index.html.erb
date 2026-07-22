@@ -6,7 +6,7 @@
     <% if @feed %>
       <% group = @feed.target_group.presence %>
       <% label = @feed.display_name + (group ? " (@#{group})" : "") %>
-      <% header.with_context_paragraph("Showing posts from #{label}.") %>
+      <% header.with_context_paragraph("Posts from #{label}.") %>
     <% else %>
       <% header.with_context_paragraph("Everything Feeder imports from your feeds shows up here, along with each post's status on FreeFeed.") %>
     <% end %>
@@ -39,7 +39,7 @@
 
   <% if pagination_total_pages > 1 %>
     <div class="text-center text-sm text-body">
-      Showing <%= @posts.size %> of <%= pagination_total_count %> posts
+      <%= @posts.size %> of <%= pagination_total_count %> posts
     </div>
   <% end %>
 

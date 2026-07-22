@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-07-22
+
+- Trimmed the redundant "Showing" from event summaries and list counters — they now read like simple labels, e.g. "System-wide most recent events".
+
 ## 2026-07-21
 
 - The prompt to add a FreeFeed access token on the feed form dropped its key icon, so everything now lines up along the same left edge.

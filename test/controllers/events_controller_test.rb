@@ -73,7 +73,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get events_path
 
     assert_response :success
-    assert_select "[data-key='events.offset']", "Showing the most recent events."
+    assert_select "[data-key='events.offset']", "The most recent events."
   end
 
   test "#index should describe the offset when paging into older events" do
