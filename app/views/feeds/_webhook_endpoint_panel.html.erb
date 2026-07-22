@@ -8,6 +8,7 @@
       --header "Content-Type: application/json" \\
       --data '{"content":"Hello world"}'
   CURL
+  curl_before_token, curl_after_token = curl_snippet.split(token, 2)
   icon_button_class = "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 %>
 <%= render PanelComponent.new(data: { key: "webhook.panel" }) do %>
@@ -33,7 +34,7 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Authorization token</p>
       <div class="flex items-center justify-between gap-3">
-        <code class="min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.token"><%= token %></code>
+        <code class="masked-secret min-w-0 flex-1 truncate font-mono text-sm text-heading" data-key="webhook.token"><%= token %></code>
         <button
           type="button"
           class="<%= icon_button_class %>"
@@ -57,7 +58,7 @@
     <div class="space-y-2">
       <p class="font-semibold text-heading">Try it from the terminal</p>
       <div class="flex items-start justify-between gap-3">
-        <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-surface p-3 font-mono text-sm text-heading" data-key="webhook.curl"><code><%= curl_snippet %></code></pre>
+        <pre class="min-w-0 flex-1 overflow-x-auto rounded-md bg-surface p-3 font-mono text-sm text-heading" data-key="webhook.curl"><code><%= curl_before_token %><span class="masked-secret"><%= token %></span><%= curl_after_token %></code></pre>
         <button
           type="button"
           class="<%= icon_button_class %> mt-3"

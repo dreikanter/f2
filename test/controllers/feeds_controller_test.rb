@@ -535,10 +535,11 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-key='webhook.url']", text: "http://www.example.com/v1/posts"
-    assert_select "[data-key='webhook.token']", text: endpoint.encrypted_token
+    assert_select "[data-key='webhook.token'].masked-secret", text: endpoint.encrypted_token
     assert_select "[data-key='webhook.curl'] code",
                   text: %r{curl --request POST http://www\.example\.com/v1/posts}
     assert_select "[data-key='webhook.curl'] code", text: /Authorization: Bearer #{Regexp.escape(endpoint.encrypted_token)}/
+    assert_select "[data-key='webhook.curl'] code span.masked-secret", text: endpoint.encrypted_token
     assert_select "form[action='#{feed_webhook_token_path(webhook_feed)}'] button", text: "Generate new token"
     assert_select "[data-key='webhook.last-received']", text: /No posts received yet/
   end
