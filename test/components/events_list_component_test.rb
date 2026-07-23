@@ -61,6 +61,25 @@ class EventsListComponentTest < ViewComponent::TestCase
     assert_empty result.css("[data-key='events.pagination']")
   end
 
+  test "#call should render a view all row as the last list item when url is given" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventsListComponent.new(events: [event], view_all_url: "/events"))
+
+    link = result.at_css("[data-key='events.list'] > li:last-child a[data-key='events.view_all']")
+    assert_not_nil link
+    assert_equal "/events", link["href"]
+    assert_equal "View all", link.text
+  end
+
+  test "#call should omit the view all row when no url is given" do
+    event = create(:event, user: user)
+
+    result = render_inline(EventsListComponent.new(events: [event]))
+
+    assert_empty result.css("[data-key='events.view_all']")
+  end
+
   test "#call should render the empty state when events array is empty" do
     result = render_inline(EventsListComponent.new(events: []))
 
