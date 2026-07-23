@@ -192,6 +192,32 @@ config/credentials/production.key
 
 The `.key` files are gitignored. Store and share them through the team password manager.
 
+## Deploying from GitHub Actions
+
+Both destinations can be deployed from the Actions tab. **Deploy Staging** also
+runs on every push to the `staging` branch; **Deploy Production** is
+`workflow_dispatch` only, so production deploys are always deliberate.
+
+The workflows read these repository secrets:
+
+| Secret | Used by | Purpose |
+| --- | --- | --- |
+| `GHCR_TOKEN` | both | GHCR login and `KAMAL_REGISTRY_PASSWORD` |
+| `IMGPROXY_KEY` / `IMGPROXY_SALT` | both | imgproxy URL signing (required by `.kamal/secrets-common`) |
+| `POSTGRES_PASSWORD_STAGING` | staging | staging database password |
+| `POSTGRES_PASSWORD_PRODUCTION` | production | production database password |
+| `RAILS_MASTER_KEY_STAGING` | staging | written to `config/credentials/staging.key` |
+| `RAILS_MASTER_KEY_PRODUCTION` | production | written to `config/credentials/production.key` |
+| `STAGING_SSH_PRIVATE_KEY` | staging | SSH key for `dev-origin.fffeeder.com` |
+| `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `fffeeder.com` |
+| `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | staging | Cloudflare Origin Certificate for kamal-proxy |
+| `ANTHROPIC_API_KEY` / `MOONSHOT_API_KEY` | staging | optional LLM keys for the capability probe job |
+
+Production terminates TLS with Let's Encrypt (`proxy.ssl: true`), so it needs no
+origin certificate secrets — but `fffeeder.com` must stay a DNS-only (grey)
+record that resolves straight to the server, both for the ACME challenge and
+because the workflow uses it as the SSH target.
+
 ## Database
 
 Each destination runs a Kamal PostgreSQL accessory named `db`. PostgreSQL 18 stores versioned data under `/var/lib/postgresql`, so the accessory mounts `data:/var/lib/postgresql` instead of mounting the `data` subdirectory directly.
