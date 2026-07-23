@@ -118,7 +118,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     get admin_user_path(user)
 
     assert_response :success
-    assert_select "[data-key='user.events.view_all'][href=?]", admin_events_path(filter: { user_id: user.id }), text: "View all"
+    assert_select "[data-key='events.view_all'][href=?]", admin_events_path(filter: { user_id: user.id }), text: "View all"
   end
 
   test "#show should not render recent activity section when user has no events" do

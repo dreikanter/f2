@@ -40,13 +40,11 @@
     <%= render PostsHeatmapComponent.new(user: @user) %>
 
     <section class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
-        <%= link_to "View all", events_path(filter: @filter.to_h.presence), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "recent_events.view_all" } %>
-      </div>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Activity</h2>
       <%= render(EventsListComponent.new(
         events: @recent_events,
-        endpoint: events_path(format: :turbo_stream, display: :brief, filter: @filter.to_h.presence)
+        endpoint: events_path(format: :turbo_stream, display: :brief, filter: @filter.to_h.presence),
+        view_all_url: events_path(filter: @filter.to_h.presence)
       )) %>
     </section>
   <% end %>

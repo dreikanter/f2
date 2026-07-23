@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-07-22
 
+- "View all" links moved from the Recent Activity and Recent Posts section headers to the bottom of each list, so they look the same everywhere.
 - The webhook feed page now shows the complete endpoint address (including the host) in both the Endpoint URL and the terminal example, so you can copy and run them as-is.
 - Picking Refresh from a feed's actions menu now closes the menu and confirms the refresh has started, instead of leaving you guessing whether the click did anything.
 - On phones, the sign-in, registration, and password pages now use the full screen width instead of a boxed card.

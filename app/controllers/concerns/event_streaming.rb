@@ -57,9 +57,11 @@ module EventStreaming
     helpers.render(EventsListComponent.new(events: @events, endpoint: @log_endpoint, older_url: @older_url, newer_url: @newer_url))
   end
 
+  # The brief list keeps its "View all" footer row across poll refreshes, so
+  # the stream body must mirror the initial render on the status page.
   def render_brief_events_stream
     @events = events_scope.includes(:user, :subject, :event_references).order(created_at: :desc, id: :desc).limit(brief_events_limit)
-    body = helpers.render(EventsListComponent.new(events: @events, endpoint: brief_polling_endpoint))
+    body = helpers.render(EventsListComponent.new(events: @events, endpoint: brief_polling_endpoint, view_all_url: events_log_path))
     render turbo_stream: turbo_stream.replace(EventsListComponent::DOM_ID, body)
   end
 
