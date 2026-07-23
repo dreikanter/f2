@@ -1,22 +1,36 @@
 # Deploy to these servers.
+#
+# Hosts here (and the accessory host below) are SSH targets, so they use the
+# grey DNS-only record app-origin.fffeeder.com that resolves straight to the
+# box. The public name app.fffeeder.com is Cloudflare-proxied (orange); using
+# it as an SSH target would route port 22 through Cloudflare and fail.
+# proxy.host stays the public name. See docs/deployment-setup.md.
 servers:
   web:
-    - fffeeder.com
+    - app-origin.fffeeder.com
   jobs:
     hosts:
-      - fffeeder.com
+      - app-origin.fffeeder.com
     cmd: bin/jobs
 
 # Configure proxy for web role.
+#
+# app.fffeeder.com is Cloudflare-proxied, so kamal-proxy can't use Let's
+# Encrypt here: the ACME HTTP-01 challenge would land on Cloudflare instead of
+# the origin. Instead it serves a Cloudflare Origin Certificate loaded from the
+# CERTIFICATE_PEM/PRIVATE_KEY_PEM secrets. Pair with Cloudflare SSL mode
+# Full (strict). See docs/deployment-setup.md.
 proxy:
-  ssl: true
-  host: fffeeder.com
+  ssl:
+    certificate_pem: CERTIFICATE_PEM
+    private_key_pem: PRIVATE_KEY_PEM
+  host: app.fffeeder.com
 
 # Accessories.
 accessories:
   db:
     image: postgres:18
-    host: fffeeder.com
+    host: app-origin.fffeeder.com
     port: "127.0.0.1:5432:5432"
     env:
       clear:
@@ -31,8 +45,8 @@ accessories:
 env:
   clear:
     RAILS_ENV: production
-    HOSTS: fffeeder.com
-    ACTION_MAILER_HOST: fffeeder.com
+    HOSTS: app.fffeeder.com
+    ACTION_MAILER_HOST: app.fffeeder.com
     MAILER_FROM: hello@fffeeder.com
     # Run Puma in clustered mode with 2 workers x 3 threads to use both CPU
     # cores. Kept conservative because the jobs role and the Postgres accessory

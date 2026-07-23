@@ -20,6 +20,8 @@ jobs:
       # imgproxy settings from encrypted credentials.
       IMGPROXY_KEY: ${{ secrets.IMGPROXY_KEY }}
       IMGPROXY_SALT: ${{ secrets.IMGPROXY_SALT }}
+      CF_ORIGIN_CERT: ${{ secrets.CF_ORIGIN_CERT }}
+      CF_ORIGIN_KEY: ${{ secrets.CF_ORIGIN_KEY }}
 
     steps:
       - name: Checkout code
@@ -51,7 +53,7 @@ jobs:
           chmod 700 ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan fffeeder.com >> ~/.ssh/known_hosts
+          ssh-keyscan app-origin.fffeeder.com >> ~/.ssh/known_hosts
 
       - name: Write Rails master key
         env:

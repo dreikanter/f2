@@ -14,9 +14,9 @@ bin/kamal deploy -d production
 | Destination | Domain | Rails env | Database | Config |
 | --- | --- | --- | --- | --- |
 | `staging` | `dev.fffeeder.com` | `staging` | `f2_staging` | `config/deploy.staging.yml` |
-| `production` | `fffeeder.com` | `production` | `f2_production` | `config/deploy.production.yml` |
+| `production` | `app.fffeeder.com` | `production` | `f2_production` | `config/deploy.production.yml` |
 
-`www.fffeeder.com` is redirected to `fffeeder.com` by Cloudflare, so Kamal and Rails only need to accept the apex production host.
+`fffeeder.com` and `www.fffeeder.com` are redirected to `app.fffeeder.com` by Cloudflare, so Kamal and Rails only need to accept the `app` production host.
 
 The image is currently built for `amd64`, so deployment hosts should be x86_64/amd64 servers.
 
@@ -59,18 +59,23 @@ For production:
 ```yaml
 servers:
   web:
-    - fffeeder.com
+    - app-origin.fffeeder.com
 
 proxy:
-  ssl: true
-  host: fffeeder.com
+  ssl:
+    certificate_pem: CERTIFICATE_PEM
+    private_key_pem: PRIVATE_KEY_PEM
+  host: app.fffeeder.com
 ```
 
-Before the first setup, confirm DNS points to the server so Let's Encrypt can issue certificates:
+Both destinations use the same split: a grey origin record as the SSH target and
+a Cloudflare-proxied public name — see the origin certificate section below.
+
+Before the first setup, confirm the origin records resolve straight to the servers:
 
 ```bash
-dig +short dev.fffeeder.com
-dig +short fffeeder.com
+dig +short dev-origin.fffeeder.com
+dig +short app-origin.fffeeder.com
 ```
 
 If a domain is proxied by Cloudflare and SSH does not work through it, use a direct DNS name or the server IP in `servers` and `accessories.db.host`. Keep `proxy.host` set to the public app domain.
@@ -78,24 +83,28 @@ If a domain is proxied by Cloudflare and SSH does not work through it, use a dir
 Confirm the host architecture matches the configured builder architecture:
 
 ```bash
-ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
-ssh root@fffeeder.com "uname -m"       # expected: x86_64
+ssh root@dev-origin.fffeeder.com "uname -m"   # expected: x86_64
+ssh root@app-origin.fffeeder.com "uname -m"   # expected: x86_64
 ```
 
-## Cloudflare Origin Certificate (staging)
+## Cloudflare Origin Certificate
 
-`dev.fffeeder.com` is Cloudflare-proxied (orange), so kamal-proxy can't get a
-Let's Encrypt certificate: the ACME HTTP-01 challenge lands on Cloudflare, not
-the origin. Instead kamal-proxy serves a **Cloudflare Origin Certificate** and
-Cloudflare runs in SSL mode **Full (strict)**, keeping both hops (browser↔edge
-and edge↔origin) encrypted and validated with no renewal dance.
+The public hosts (`dev.fffeeder.com`, `app.fffeeder.com`) are Cloudflare-proxied
+(orange), so kamal-proxy can't get a Let's Encrypt certificate: the ACME
+HTTP-01 challenge lands on Cloudflare, not the origin. Instead kamal-proxy
+serves a **Cloudflare Origin Certificate** and Cloudflare runs in SSL mode
+**Full (strict)**, keeping both hops (browser↔edge and edge↔origin) encrypted
+and validated with no renewal dance.
 
-This needs the deploy host split from the public host. Two DNS records:
+This needs the deploy host split from the public host. Two DNS records per
+destination:
 
 | Record | Cloudflare | Used for |
 | --- | --- | --- |
-| `dev-origin.fffeeder.com` | DNS-only (grey) → server IP | Kamal SSH, accessories, cert install |
-| `dev.fffeeder.com` | Proxied (orange) | public `proxy.host` |
+| `dev-origin.fffeeder.com` | DNS-only (grey) → staging server IP | Kamal SSH, accessories, cert install |
+| `dev.fffeeder.com` | Proxied (orange) | staging `proxy.host` |
+| `app-origin.fffeeder.com` | DNS-only (grey) → production server IP | Kamal SSH, accessories, cert install |
+| `app.fffeeder.com` | Proxied (orange) | production `proxy.host` |
 
 `servers.*` and `accessories.*.host` point at the grey record (Cloudflare proxies
 only HTTP/S, so SSH must bypass it); `proxy.host`, `HOSTS`, and
@@ -104,16 +113,17 @@ header, so host routing and Rails host authorization still match).
 
 Setup:
 
-1. Cloudflare → **SSL/TLS → Origin Server → Create Certificate**. Hostnames
-   `dev.fffeeder.com` (or `*.fffeeder.com`), validity 15 years. Keep the
+1. Cloudflare → **SSL/TLS → Origin Server → Create Certificate**. Hostname
+   `*.fffeeder.com` (covers both `dev` and `app`), validity 15 years. Keep the
    certificate (PEM) and private key blobs handy for the next step.
 2. Provide the cert/key through the environment as multi-line PEM values —
    the same flow as `IMGPROXY_KEY` and friends. kamal-proxy reads them from the
    `CERTIFICATE_PEM` / `PRIVATE_KEY_PEM` secrets, which pull from
-   `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` (see `.kamal/secrets.staging`):
+   `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` (see `.kamal/secrets.staging` and
+   `.kamal/secrets.production`):
    - **CI:** add `CF_ORIGIN_CERT` and `CF_ORIGIN_KEY` as GitHub Actions
      repository secrets (paste the full PEM, including the BEGIN/END lines). The
-     **Deploy Staging** workflow passes them through.
+     **Deploy Staging** and **Deploy Production** workflows pass them through.
    - **Local deploys:** export them first, reading from your saved files:
 
      ```bash
@@ -121,7 +131,8 @@ Setup:
      export CF_ORIGIN_KEY="$(cat cf-origin.key)"
      ```
 3. Cloudflare → **SSL/TLS → Overview** → set mode **Full (strict)**, and make the
-   `dev.fffeeder.com` DNS record **Proxied (orange)**. Keep `dev-origin` grey.
+   public DNS records (`dev.fffeeder.com`, `app.fffeeder.com`) **Proxied
+   (orange)**. Keep the `*-origin` records grey.
 4. Deploy:
 
 ```bash
@@ -209,14 +220,9 @@ The workflows read these repository secrets:
 | `RAILS_MASTER_KEY_STAGING` | staging | written to `config/credentials/staging.key` |
 | `RAILS_MASTER_KEY_PRODUCTION` | production | written to `config/credentials/production.key` |
 | `STAGING_SSH_PRIVATE_KEY` | staging | SSH key for `dev-origin.fffeeder.com` |
-| `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `fffeeder.com` |
-| `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | staging | Cloudflare Origin Certificate for kamal-proxy |
+| `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
+| `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
 | `ANTHROPIC_API_KEY` / `MOONSHOT_API_KEY` | staging | optional LLM keys for the capability probe job |
-
-Production terminates TLS with Let's Encrypt (`proxy.ssl: true`), so it needs no
-origin certificate secrets — but `fffeeder.com` must stay a DNS-only (grey)
-record that resolves straight to the server, both for the ACME challenge and
-because the workflow uses it as the SSH target.
 
 ## Database
 
@@ -242,11 +248,11 @@ test -n "$GHCR_TOKEN" && echo "GHCR_TOKEN set"
 test -n "$POSTGRES_PASSWORD_STAGING" && echo "POSTGRES_PASSWORD_STAGING set"
 test -f config/credentials/staging.key
 
-ssh root@dev.fffeeder.com "uname -m"   # expected: x86_64
+ssh root@dev-origin.fffeeder.com "uname -m"   # expected: x86_64
 bin/kamal config -d staging
 ```
 
-For production, use `$POSTGRES_PASSWORD_PRODUCTION`, `config/credentials/production.key`, `root@fffeeder.com`, and `bin/kamal config -d production`.
+For production, use `$POSTGRES_PASSWORD_PRODUCTION`, `config/credentials/production.key`, `root@app-origin.fffeeder.com`, and `bin/kamal config -d production`.
 
 ## First deploy
 
@@ -270,7 +276,7 @@ Verify:
 
 ```bash
 curl -I https://dev.fffeeder.com/up
-curl -I https://fffeeder.com/up
+curl -I https://app.fffeeder.com/up
 bin/kamal app details -d staging
 bin/kamal app details -d production
 bin/kamal accessory details db -d staging
