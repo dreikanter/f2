@@ -6,11 +6,13 @@ class EventsListComponent < ViewComponent::Base
 
   # `endpoint` enables polling (first page only). `older_url`/`newer_url` enable
   # cursor pagination links; omit them for an unpaginated list (the status page).
-  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil)
+  # `view_all_url` appends a "View all" row linking to the full events log.
+  def initialize(events:, endpoint: nil, older_url: nil, newer_url: nil, view_all_url: nil)
     @events = events
     @endpoint = endpoint
     @older_url = older_url
     @newer_url = newer_url
+    @view_all_url = view_all_url
   end
 
   def call
@@ -26,6 +28,7 @@ class EventsListComponent < ViewComponent::Base
 
     render(ListComponent.new(data: { key: "events.list" })) do |list|
       @events.each { |event| list.with_item(item_component(event)) }
+      list.with_item(ViewAllListItemComponent.new(url: @view_all_url, data: { key: "events.view_all" })) if @view_all_url
     end
   end
 

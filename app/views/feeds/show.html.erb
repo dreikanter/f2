@@ -27,22 +27,15 @@
 
   <% if @recent_events.any? %>
     <section class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-semibold text-heading">Recent Activity</h2>
-        <%= link_to "View all", events_path(filter: { subject_type: "Feed", subject_id: @feed.id }), class: "text-sm font-semibold text-brand hover:text-brand-hover", data: { key: "feed.events.view_all" } %>
-      </div>
-      <%= render EventsListComponent.new(events: @recent_events) %>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Activity</h2>
+      <%= render EventsListComponent.new(events: @recent_events, view_all_url: events_path(filter: { subject_type: "Feed", subject_id: @feed.id })) %>
     </section>
   <% end %>
 
   <% if @recent_posts.any? %>
     <section class="space-y-4">
-      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <h2 class="text-2xl font-semibold mb-0 text-heading">Recent Posts</h2>
-        <%= link_to "View all posts", posts_path(feed_id: @feed.id), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover text-sm" %>
-      </div>
-
-      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false) %>
+      <h2 class="text-2xl font-semibold mb-3 text-heading">Recent Posts</h2>
+      <%= render PostsListComponent.new(posts: @recent_posts, show_feed: false, view_all_url: posts_path(feed_id: @feed.id)) %>
     </section>
   <% end %>
 </div>
