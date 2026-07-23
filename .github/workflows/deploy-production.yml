@@ -1,0 +1,67 @@
+name: Deploy Production
+
+# Production deploys are deliberate: trigger the workflow manually from the
+# Actions tab. No push trigger on purpose.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      POSTGRES_PASSWORD_PRODUCTION: ${{ secrets.POSTGRES_PASSWORD_PRODUCTION }}
+      # Required by .kamal/secrets-common even though the production app reads
+      # imgproxy settings from encrypted credentials.
+      IMGPROXY_KEY: ${{ secrets.IMGPROXY_KEY }}
+      IMGPROXY_SALT: ${{ secrets.IMGPROXY_SALT }}
+      CF_ORIGIN_CERT: ${{ secrets.CF_ORIGIN_CERT }}
+      CF_ORIGIN_KEY: ${{ secrets.CF_ORIGIN_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan app-origin.fffeeder.com >> ~/.ssh/known_hosts
+
+      - name: Write Rails master key
+        env:
+          RAILS_MASTER_KEY_PRODUCTION: ${{ secrets.RAILS_MASTER_KEY_PRODUCTION }}
+        run: |
+          mkdir -p config/credentials
+          printf '%s' "$RAILS_MASTER_KEY_PRODUCTION" > config/credentials/production.key
+          chmod 600 config/credentials/production.key
+
+      - name: Deploy to production
+        run: bin/kamal deploy -d production
