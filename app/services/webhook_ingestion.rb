@@ -6,6 +6,8 @@ require "addressable/uri"
 # publish chain. A payload that fails validation persists nothing — the
 # synchronous 422 is the rejection record, so a corrected retry goes through.
 class WebhookIngestion
+  include HtmlTextUtils
+
   MAX_LIST_ITEMS = 8
   SUPPORTED_PUBLISHED_AT_YEARS = (1..9999).freeze
 
@@ -217,20 +219,8 @@ class WebhookIngestion
   end
 
   # Length never fails a request — the normalizer truncates instead — but the
-  # caller deserves to know. Mirrors post_content_with_url's fit math.
+  # caller deserves to know.
   def warnings
-    content_truncated? ? ["content_truncated"] : []
-  end
-
-  def content_truncated?
-    return false if content.blank?
-
-    limit = if source_url.nil? || source_url.length > Post::MAX_URL_LENGTH
-      Post::MAX_CONTENT_LENGTH
-    else
-      Post::MAX_CONTENT_LENGTH - HtmlTextUtils::CONTENT_URL_SEPARATOR.length - source_url.length
-    end
-
-    content.length > limit
+    content.present? && content.length > content_fit_limit(source_url) ? ["content_truncated"] : []
   end
 end
