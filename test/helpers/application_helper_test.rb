@@ -259,6 +259,18 @@ class ApplicationHelperTest < ActionView::TestCase
     end
   end
 
+  test "#clipboard_button should carry the copied value and label the button" do
+    result = clipboard_button("secret", label: "Copy token", key: "webhook.copy-token", css_class: "mt-2")
+
+    assert_includes result, 'data-clipboard-text-value="secret"'
+    assert_includes result, 'data-action="click-&gt;clipboard#copy"'
+    assert_includes result, 'data-key="webhook.copy-token"'
+    assert_includes result, 'title="Copy token"'
+    assert_includes result, 'data-icon="clipboard"'
+    assert_includes result, '<span class="sr-only">Copy token</span>'
+    assert_includes result, "mt-2"
+  end
+
   test "#navbar_items should include dev tools when allowed" do
     user = create(:user)
     Current.session = create(:session, user: user)

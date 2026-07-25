@@ -232,6 +232,13 @@ class FeedHelperTest < ActionView::TestCase
     assert_includes result, "source"
   end
 
+  test "#webhook_curl_example should include the endpoint URL and the token" do
+    snippet = webhook_curl_example("https://example.com/v1/posts", "secret-token")
+
+    assert_includes snippet, "curl --request POST https://example.com/v1/posts"
+    assert_includes snippet, "Authorization: Bearer secret-token"
+  end
+
   test "#candidate_summary should fall back to the profile display name for URL profiles" do
     assert_equal "RSS Feed", candidate_summary("rss", "https://example.com/feed.xml")
     assert_equal "Reddit", candidate_summary("reddit", "https://reddit.com/r/ruby/")

@@ -40,6 +40,22 @@ module ApplicationHelper
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
   end
 
+  def icon_button_classes
+    "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition " \
+      "hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  end
+
+  # Copy-to-clipboard icon button. The label serves as both the tooltip and
+  # the screen-reader text.
+  def clipboard_button(value, label:, key:, css_class: nil)
+    tag.button type: "button",
+               class: class_names(icon_button_classes, css_class),
+               title: label,
+               data: { controller: "clipboard", clipboard_text_value: value, action: "click->clipboard#copy", key: key } do
+      icon("clipboard", css_class: "size-4") + tag.span(label, class: "sr-only")
+    end
+  end
+
   # Decorative separator between card footer items. Hidden from assistive tech
   # so the items read as distinct entries rather than "dot".
   def middot
