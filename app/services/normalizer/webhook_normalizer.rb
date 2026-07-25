@@ -5,31 +5,27 @@ module Normalizer
   class WebhookNormalizer < Base
     private
 
-    # Stripped to match the ingress service's reading of the field, so the
-    # truncation-warning math and the stored link agree.
-    def normalize_source_url
-      raw_data["source_url"].to_s.strip.presence
+    def payload
+      @payload ||= WebhookPayload.new(raw_data)
     end
+
+    def normalize_source_url = payload.source_url
 
     # Folds the source link into the body, same shape as pull feeds.
     def normalize_content
-      post_content_with_url(raw_data["content"].to_s, normalize_source_url)
+      post_content_with_url(payload.content, payload.source_url)
     end
 
-    def normalize_attachment_urls
-      Array(raw_data["images"]).map(&:to_s)
-    end
+    def normalize_attachment_urls = payload.images
 
-    def normalize_comments
-      Array(raw_data["comments"]).map(&:to_s)
-    end
+    def normalize_comments = payload.comments
 
     # Content is required unless images are present (spec 006 §3). Checked on
     # the raw payload field: in the composed content a bare source_url would
     # masquerade as content.
     def validate_content
       errors = []
-      errors << "no_content_or_images" if raw_data["content"].to_s.blank? && attachment_urls.empty?
+      errors << "no_content_or_images" if payload.content.blank? && attachment_urls.empty?
       errors.concat(images_only_errors)
       errors
     end
