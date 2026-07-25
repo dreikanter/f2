@@ -1,11 +1,11 @@
 require "addressable/uri"
 
 module Uid
-  # Derives a stable post uid from an AI-extracted item, anchored to source
-  # identity rather than generated content: summaries change every run, so a
-  # content hash would break dedup. A usable deep-link permalink becomes a
-  # normalized-URL uid that matches across runs; an item without one returns
-  # nil and is dropped upstream.
+  # Derives a stable post uid from an AI-extracted item (.call) or from a bare
+  # permalink (.from_url), anchored to source identity rather than generated
+  # content: summaries change every run, so a content hash would break dedup.
+  # A usable deep-link permalink becomes a normalized-URL uid that matches
+  # across runs; an item without one returns nil and is dropped upstream.
   class Resolver
     TRACKING_PARAM = /\A(utm_|fbclid\z|gclid\z|mc_)/
 
@@ -17,6 +17,14 @@ module Uid
 
     def self.call(item, clock:)
       new(item, clock).call
+    end
+
+    # The URL-to-uid core, also used by callers that hold a permalink rather
+    # than an extracted item (webhook deliveries), so both mint the same uid
+    # for the same link. Returns nil for a URL that can't anchor an identity.
+    def self.from_url(url)
+      uri = deep_link(url)
+      uri && normalize(uri)
     end
 
     # The system-owned period for a digest run: the UTC date of the run. Shared
@@ -52,6 +60,57 @@ module Uid
       nil
     end
 
+    class << self
+      private
+
+      def deep_link(url)
+        raw = url.to_s.strip
+        return if raw.empty?
+
+        uri = parse_http(raw)
+        return unless uri.is_a?(URI::HTTP) && uri.host.present?
+        return if uri.path.delete_suffix("/").empty? && uri.query.nil? # bare homepage
+
+        uri
+      end
+
+      # Non-ASCII/IDN permalinks make URI.parse raise, which used to silently
+      # drop the item. Percent-encode the path and punycode the host via
+      # Addressable, then retry — a Cyrillic URL should yield a stable uid,
+      # not vanish (spec §3).
+      def parse_http(raw)
+        URI.parse(raw)
+      rescue URI::InvalidURIError
+        parse_encoded(raw)
+      end
+
+      def parse_encoded(raw)
+        URI.parse(Addressable::URI.parse(raw).normalize.to_s)
+      rescue Addressable::URI::InvalidURIError, URI::InvalidURIError
+        nil
+      end
+
+      def normalize(uri)
+        # The uid is an identity key, not a fetch URL. Coerce the scheme to
+        # https and drop a leading www. and default ports, so a model flipping
+        # http/https/www between runs doesn't mint a duplicate repost (spec §3).
+        uri.scheme = "https"
+        uri.host = uri.host.downcase.sub(/\Awww\./, "")
+        uri.port = nil if [80, 443].include?(uri.port)
+        uri.fragment = nil
+        uri.query = clean_query(uri.query)
+        uri.path = uri.path.delete_suffix("/") unless uri.path == "/"
+        uri.to_s
+      end
+
+      def clean_query(query)
+        return if query.nil?
+
+        kept = URI.decode_www_form(query).reject { |key, _| key.match?(TRACKING_PARAM) }
+        kept.empty? ? nil : URI.encode_www_form(kept)
+      end
+    end
+
     def initialize(item, clock)
       @item = item.is_a?(Hash) ? item.transform_keys(&:to_s) : {}
       @clock = clock
@@ -60,8 +119,7 @@ module Uid
     def call
       return self.class.digest_period_uid(@clock) if digest?
 
-      uri = deep_link
-      uri && normalize(uri)
+      self.class.from_url(item["source_url"])
     end
 
     private
@@ -73,52 +131,6 @@ module Uid
     # is reinterpreted as a digest (spec §3's "unusable ≠ null").
     def digest?
       item.key?("source_url") && item["source_url"].nil?
-    end
-
-    def deep_link
-      raw = item["source_url"].to_s.strip
-      return if raw.empty?
-
-      uri = parse_http(raw)
-      return unless uri.is_a?(URI::HTTP) && uri.host.present?
-      return if uri.path.delete_suffix("/").empty? && uri.query.nil? # bare homepage
-
-      uri
-    end
-
-    # Non-ASCII/IDN permalinks make URI.parse raise, which used to silently drop
-    # the item. Percent-encode the path and punycode the host via Addressable,
-    # then retry — a Cyrillic URL should yield a stable uid, not vanish (spec §3).
-    def parse_http(raw)
-      URI.parse(raw)
-    rescue URI::InvalidURIError
-      parse_encoded(raw)
-    end
-
-    def parse_encoded(raw)
-      URI.parse(Addressable::URI.parse(raw).normalize.to_s)
-    rescue Addressable::URI::InvalidURIError, URI::InvalidURIError
-      nil
-    end
-
-    def normalize(uri)
-      # The uid is an identity key, not a fetch URL. Coerce the scheme to https
-      # and drop a leading www. and default ports, so a model flipping
-      # http/https/www between runs doesn't mint a duplicate repost (spec §3).
-      uri.scheme = "https"
-      uri.host = uri.host.downcase.sub(/\Awww\./, "")
-      uri.port = nil if [80, 443].include?(uri.port)
-      uri.fragment = nil
-      uri.query = clean_query(uri.query)
-      uri.path = uri.path.delete_suffix("/") unless uri.path == "/"
-      uri.to_s
-    end
-
-    def clean_query(query)
-      return if query.nil?
-
-      kept = URI.decode_www_form(query).reject { |key, _| key.match?(TRACKING_PARAM) }
-      kept.empty? ? nil : URI.encode_www_form(kept)
     end
   end
 end

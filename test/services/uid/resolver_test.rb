@@ -117,4 +117,18 @@ class Uid::ResolverTest < ActiveSupport::TestCase
     assert_nil Uid::Resolver.period_from_uid("digest:2026-13-01")
     assert_nil Uid::Resolver.period_from_uid(nil)
   end
+
+  test ".from_url should mint the same uid as an item carrying that permalink" do
+    url = "https://Example.COM/Blog/Post-1/?utm_source=rss#top"
+
+    assert_equal "https://example.com/Blog/Post-1", Uid::Resolver.from_url(url)
+    assert_equal uid_for({ "source_url" => url }), Uid::Resolver.from_url(url)
+  end
+
+  test ".from_url should return nil for a url that can't anchor an identity" do
+    assert_nil Uid::Resolver.from_url(nil)
+    assert_nil Uid::Resolver.from_url("   ")
+    assert_nil Uid::Resolver.from_url("https://example.com/")
+    assert_nil Uid::Resolver.from_url("not a url")
+  end
 end

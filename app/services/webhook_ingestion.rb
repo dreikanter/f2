@@ -148,9 +148,10 @@ class WebhookIngestion
   def resolve_uid
     return explicit_uid if explicit_uid.present?
 
-    from_url = source_url.present? && Uid::Resolver.call({ "source_url" => source_url }, clock: Time.current)
-    from_url = nil if from_url && from_url.bytesize > MAX_URL_UID_BYTES
-    from_url.presence || SecureRandom.uuid
+    from_url = Uid::Resolver.from_url(source_url)
+    return SecureRandom.uuid if from_url.nil? || from_url.bytesize > MAX_URL_UID_BYTES
+
+    from_url
   end
 
   def uid
