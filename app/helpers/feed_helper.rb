@@ -69,6 +69,17 @@ module FeedHelper
     items
   end
 
+  # Copy-paste request for the webhook endpoint panel, showing the smallest
+  # payload that gets a post published.
+  def webhook_curl_example(url, token)
+    <<~CURL.chomp
+      curl --request POST #{url} \\
+        --header "Authorization: Bearer #{token}" \\
+        --header "Content-Type: application/json" \\
+        --data '{"content":"Hello world"}'
+    CURL
+  end
+
   def feed_summary_line(active_count:, inactive_count:, draft_count:)
     counts = { "active feed" => active_count, "inactive feed" => inactive_count, "draft feed" => draft_count }
     parts = counts.reject { |_label, count| count.zero? }

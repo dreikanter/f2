@@ -2,14 +2,8 @@
 <%
   hook_url = api_v1_posts_url
   token = endpoint.encrypted_token
-  curl_snippet = <<~CURL.chomp
-    curl --request POST #{hook_url} \\
-      --header "Authorization: Bearer #{token}" \\
-      --header "Content-Type: application/json" \\
-      --data '{"content":"Hello world"}'
-  CURL
+  curl_snippet = webhook_curl_example(hook_url, token)
   field_class = "min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-3 py-2 font-mono text-sm leading-normal text-heading shadow-xs ring-ring transition focus:border-ring focus:outline-none focus:ring-2"
-  icon_button_class = "inline-flex size-7 shrink-0 items-center justify-center rounded text-muted transition hover:bg-surface-sunken hover:text-body focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 %>
 <%= render PanelComponent.new(data: { key: "webhook.panel" }) do %>
   <div class="space-y-6">
@@ -22,17 +16,7 @@
                       class: field_class,
                       aria: { label: "Endpoint URL" },
                       data: { key: "webhook.url" } %>
-        <button
-          type="button"
-          class="<%= icon_button_class %>"
-          data-controller="clipboard"
-          data-clipboard-text-value="<%= hook_url %>"
-          data-action="click->clipboard#copy"
-          data-key="webhook.copy-url"
-          title="Copy endpoint URL">
-          <%= icon("clipboard", css_class: "size-4") %>
-          <span class="sr-only">Copy endpoint URL</span>
-        </button>
+        <%= clipboard_button hook_url, label: "Copy endpoint URL", key: "webhook.copy-url" %>
       </div>
     </div>
 
@@ -46,17 +30,7 @@
                       class: field_class,
                       aria: { label: "Authorization token" },
                       data: { key: "webhook.token" } %>
-        <button
-          type="button"
-          class="<%= icon_button_class %>"
-          data-controller="clipboard"
-          data-clipboard-text-value="<%= token %>"
-          data-action="click->clipboard#copy"
-          data-key="webhook.copy-token"
-          title="Copy authorization token">
-          <%= icon("clipboard", css_class: "size-4") %>
-          <span class="sr-only">Copy authorization token</span>
-        </button>
+        <%= clipboard_button token, label: "Copy authorization token", key: "webhook.copy-token" %>
       </div>
       <p class="text-sm text-muted">
         Send this token as <code>Authorization: Bearer &lt;token&gt;</code> and treat it like a password.
@@ -83,17 +57,7 @@
                          class: "#{field_class} resize-none whitespace-pre",
                          aria: { label: "curl example" },
                          data: { key: "webhook.curl" } %>
-        <button
-          type="button"
-          class="<%= icon_button_class %> mt-2"
-          data-controller="clipboard"
-          data-clipboard-text-value="<%= curl_snippet %>"
-          data-action="click->clipboard#copy"
-          data-key="webhook.copy-curl"
-          title="Copy curl example">
-          <%= icon("clipboard", css_class: "size-4") %>
-          <span class="sr-only">Copy curl example</span>
-        </button>
+        <%= clipboard_button curl_snippet, label: "Copy curl example", key: "webhook.copy-curl", css_class: "mt-2" %>
       </div>
       <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting.</p>
     </div>
