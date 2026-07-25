@@ -49,4 +49,43 @@ class HtmlTextUtilsTest < ActiveSupport::TestCase
     result = subject.truncate_text(short_text, max_length: 50)
     assert_equal "Hello world", result
   end
+
+  test "#content_fit_limit should leave room for the separator and the URL" do
+    limit = subject.content_fit_limit("https://example.com", max_content_length: 100)
+    assert_equal 100 - HtmlTextUtils::CONTENT_URL_SEPARATOR.length - "https://example.com".length, limit
+  end
+
+  test "#content_fit_limit should return the full limit without a usable URL" do
+    assert_equal 100, subject.content_fit_limit(nil, max_content_length: 100)
+    assert_equal 100, subject.content_fit_limit("https://example.com", max_content_length: 100, max_url_length: 5)
+  end
+
+  test "#post_content_with_url should append the URL to the content" do
+    result = subject.post_content_with_url("Hello", "https://example.com")
+    assert_equal "Hello - https://example.com", result
+  end
+
+  test "#post_content_with_url should truncate the content to the fit limit" do
+    url = "https://example.com"
+    result = subject.post_content_with_url("a" * 100, url, max_content_length: 50)
+
+    assert_equal 50, result.length
+    assert result.ends_with?("…#{HtmlTextUtils::CONTENT_URL_SEPARATOR}#{url}")
+  end
+
+  test "#post_content_with_url should drop a URL longer than the limit" do
+    result = subject.post_content_with_url("Hello", "https://example.com", max_url_length: 5)
+    assert_equal "Hello", result
+  end
+
+  test "#post_content_with_url should return the URL alone for blank content" do
+    assert_equal "https://example.com", subject.post_content_with_url("", "https://example.com")
+    assert_equal "", subject.post_content_with_url("", "https://example.com", max_url_length: 5)
+    assert_equal "", subject.post_content_with_url("", nil)
+  end
+
+  test "#post_content_with_url should truncate content without a URL" do
+    result = subject.post_content_with_url("a" * 100, nil, max_content_length: 50)
+    assert_equal 50, result.length
+  end
 end

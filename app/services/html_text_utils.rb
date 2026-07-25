@@ -21,22 +21,20 @@ module HtmlTextUtils
     text.truncate(max_length, separator: " ", omission: "…")
   end
 
+  # How much content survives once the URL is folded in. Callers that only
+  # need to know whether the content fits ask here instead of re-deriving it.
+  def content_fit_limit(url, max_content_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)
+    return max_content_length if url.blank? || url.length > max_url_length
+
+    max_content_length - CONTENT_URL_SEPARATOR.length - url.length
+  end
+
   def post_content_with_url(content, url, max_content_length: Post::MAX_CONTENT_LENGTH, max_url_length: Post::MAX_URL_LENGTH)
-    if url.blank?
-      return truncate_text(content, max_length: max_content_length)
-    end
-
-    if content.blank?
-      return url.length > max_url_length ? "" : url
-    end
-
     # Do not include URL to the post content if the URL is too long
-    if url.length > max_url_length
-      return truncate_text(content, max_length: max_content_length)
-    end
+    url = nil if url.present? && url.length > max_url_length
+    return url.to_s if content.blank?
 
-    max_text_length = max_content_length - CONTENT_URL_SEPARATOR.length - url.length
-    truncated_text = truncate_text(content, max_length: max_text_length)
-    "#{truncated_text}#{CONTENT_URL_SEPARATOR}#{url}"
+    text = truncate_text(content, max_length: content_fit_limit(url, max_content_length:, max_url_length:))
+    url.blank? ? text : "#{text}#{CONTENT_URL_SEPARATOR}#{url}"
   end
 end
