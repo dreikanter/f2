@@ -20,6 +20,11 @@ development:
     queue: default
     schedule: every minute
 
+  update_feed_subscribers_counts:
+    class: UpdateFeedSubscribersCountsJob
+    queue: default
+    schedule: every day at 3am
+
   prune_feed_previews:
     class: PruneFeedPreviewsJob
     queue: default
@@ -40,6 +45,11 @@ staging:
     class: PublicationSchedulerJob
     queue: default
     schedule: every minute
+
+  update_feed_subscribers_counts:
+    class: UpdateFeedSubscribersCountsJob
+    queue: default
+    schedule: every day at 3am
 
   prune_feed_previews:
     class: PruneFeedPreviewsJob
@@ -65,6 +75,11 @@ production:
     class: PublicationSchedulerJob
     queue: default
     schedule: every minute
+
+  update_feed_subscribers_counts:
+    class: UpdateFeedSubscribersCountsJob
+    queue: default
+    schedule: every day at 3am
 
   prune_feed_previews:
     class: PruneFeedPreviewsJob
