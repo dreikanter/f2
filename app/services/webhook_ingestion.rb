@@ -1,9 +1,9 @@
 require "addressable/uri"
 
 # Ingests one webhook delivery into the existing pipeline (spec 006 §§3-4):
-# validate the payload, resolve its uid, persist FeedEntry + FeedEntryUid +
-# Post through the profile normalizer in a single transaction, then kick the
-# publish chain. A payload that fails validation persists nothing — the
+# validate the payload, resolve its uid, run it through the profile normalizer,
+# then persist FeedEntry + FeedEntryUid + Post in a single transaction and kick
+# the publish chain. A payload that fails validation persists nothing — the
 # synchronous 422 is the rejection record, so a corrected retry goes through.
 class WebhookIngestion
   include HtmlTextUtils
@@ -53,9 +53,10 @@ class WebhookIngestion
     return invalid(errors) if errors.any?
     return duplicate if already_ingested?
 
-    rejection = ingest!
-    return invalid(rejection) if rejection
+    post = normalized_post
+    return invalid(post.validation_errors) if post.rejected?
 
+    persist!(post)
     PostPublishJob.perform_later(feed.id)
     Result.new(status: :enqueued, uid: uid, errors: [], warnings: warnings)
   rescue ActiveRecord::RecordNotUnique
@@ -116,27 +117,23 @@ class WebhookIngestion
     FeedEntryUid.exists?(feed_id: feed.id, uid: uid)
   end
 
-  def ingest!
-    rejection = nil
+  # Normalizers only build objects, so the entry can be normalized before it is
+  # saved (the preview workflow does the same). A rejected payload then leaves
+  # nothing behind because nothing was written yet.
+  def normalized_post
+    entry = feed.feed_entries.new(uid: uid, published_at: published_at, raw_data: payload.to_h, status: :processed)
+    feed.normalizer_instance(entry).normalize
+  end
 
+  def persist!(post)
     ActiveRecord::Base.transaction do
-      entry = feed.feed_entries.create!(uid: uid, published_at: published_at, raw_data: payload.to_h, status: :pending)
+      post.feed_entry.save!
       FeedEntryUid.create!(feed: feed, uid: uid, imported_at: Time.current)
-
-      post = feed.normalizer_instance(entry).normalize
-      if post.rejected?
-        rejection = post.validation_errors
-        raise ActiveRecord::Rollback
-      end
-
-      entry.update!(status: :processed)
       post.save!
       # SQL-side increment: concurrent deliveries must not lose counts to a
       # stale read-modify-write.
       WebhookEndpoint.update_counters(endpoint.id, received_count: 1, touch: :last_received_at)
     end
-
-    rejection
   end
 
   # Percent-encoding during uid normalization can inflate a multibyte URL well
