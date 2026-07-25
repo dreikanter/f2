@@ -45,7 +45,7 @@ class WebhookIngestion
   def initialize(endpoint:, payload:)
     @endpoint = endpoint
     @feed = endpoint.feed
-    @payload = payload
+    @payload = WebhookPayload.new(payload)
   end
 
   def call
@@ -69,6 +69,8 @@ class WebhookIngestion
 
   attr_reader :endpoint, :feed, :payload
 
+  delegate :content, :source_url, :images, :explicit_uid, :raw_published_at, to: :payload
+
   def validate_payload
     errors = schema_errors
     return errors if errors.any?
@@ -77,7 +79,7 @@ class WebhookIngestion
     return errors if errors.any?
 
     errors << "no_content_or_images" if content.blank? && images.empty?
-    errors << "uid must not be blank" if payload.key?("uid") && explicit_uid.blank?
+    errors << "uid must not be blank" if payload.uid_given? && explicit_uid.blank?
     errors << "source_url must be an absolute http(s) URL" if source_url.present? && !http_url?(source_url)
     images.each_with_index do |url, index|
       errors << "images/#{index} must be a public http(s) URL" unless PublicUrl.safe?(url)
@@ -89,7 +91,7 @@ class WebhookIngestion
   end
 
   def schema_errors
-    JSONSchemer.schema(PAYLOAD_SCHEMA).validate(payload).map do |error|
+    JSONSchemer.schema(PAYLOAD_SCHEMA).validate(payload.to_h).map do |error|
       pointer = error["data_pointer"].to_s
       pointer.empty? ? error["error"] : "#{pointer} #{error['error']}"
     end
@@ -99,7 +101,7 @@ class WebhookIngestion
   # request boundary instead of letting an otherwise valid payload fail during
   # persistence with a 500.
   def null_byte_errors
-    payload.each_with_object([]) do |(key, value), errors|
+    payload.to_h.each_with_object([]) do |(key, value), errors|
       if value.is_a?(String)
         errors << "#{key} must not contain null bytes" if value.include?("\0")
       elsif value.is_a?(Array)
@@ -118,7 +120,7 @@ class WebhookIngestion
     rejection = nil
 
     ActiveRecord::Base.transaction do
-      entry = feed.feed_entries.create!(uid: uid, published_at: published_at, raw_data: payload, status: :pending)
+      entry = feed.feed_entries.create!(uid: uid, published_at: published_at, raw_data: payload.to_h, status: :pending)
       FeedEntryUid.create!(feed: feed, uid: uid, imported_at: Time.current)
 
       post = feed.normalizer_instance(entry).normalize
@@ -154,10 +156,6 @@ class WebhookIngestion
     from_url.presence || SecureRandom.uuid
   end
 
-  def explicit_uid
-    @explicit_uid ||= payload["uid"].to_s.strip
-  end
-
   def uid
     @uid ||= resolve_uid
   end
@@ -169,22 +167,6 @@ class WebhookIngestion
 
   def invalid(errors)
     Result.new(status: :invalid, uid: nil, errors: errors, warnings: [])
-  end
-
-  def content
-    payload["content"].to_s
-  end
-
-  def source_url
-    payload["source_url"].to_s.strip.presence
-  end
-
-  def images
-    Array(payload["images"])
-  end
-
-  def raw_published_at
-    payload["published_at"].to_s
   end
 
   def parsed_published_at
