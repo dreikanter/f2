@@ -1,14 +1,16 @@
 require "test_helper"
 
 class UpdateFeedSubscribersCountsJobTest < ActiveJob::TestCase
-  test "enqueues one job for each eligible feed" do
+  test "enqueues jobs for eligible feeds only" do
     eligible = create(:feed, :enabled)
-    create(:feed, :disabled)
+    disabled = create(:feed, :disabled)
+    enqueued_feeds = []
 
-    assert_enqueued_jobs 1, only: UpdateFeedSubscribersCountJob do
+    UpdateFeedSubscribersCountJob.stub(:perform_later, ->(feed) { enqueued_feeds << feed }) do
       UpdateFeedSubscribersCountsJob.perform_now
     end
 
-    assert_enqueued_with(job: UpdateFeedSubscribersCountJob, args: [eligible])
+    assert_includes enqueued_feeds, eligible
+    refute_includes enqueued_feeds, disabled
   end
 end
