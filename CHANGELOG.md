@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-01
+
+- Renaming an AI credential no longer sends it back for re-checking. Only a new API key triggers that now, matching how search credentials already worked.
+
 ## 2026-07-22
 
 - "View all" links moved from the Recent Activity and Recent Posts section headers to the bottom of each list, so they look the same everywhere.

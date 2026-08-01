@@ -13,8 +13,8 @@
   <% end %>
 
   <div id="ai_credentials_list">
-    <% if @ai_credentials.any? %>
-      <%= render AiCredentialsListComponent.new(credentials: @ai_credentials) %>
+    <% if @credentials.any? %>
+      <%= render AiCredentialsListComponent.new(credentials: @credentials) %>
     <% else %>
       <%= render EmptyStateComponent.new("No AI credentials yet") %>
     <% end %>
