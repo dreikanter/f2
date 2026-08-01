@@ -1,14 +1,7 @@
 module ProfileMatcher
-  class BuniProfileMatcher < Base
+  class BuniProfileMatcher < DomainMatcher
     match_specificity 100
 
-    BUNI_DOMAIN = "bunicomic.com"
-
-    def match?
-      return false if input.blank?
-
-      uri = URI.parse(input)
-      [BUNI_DOMAIN, "www.#{BUNI_DOMAIN}"].include?(uri.host)
-    end
+    match_domains "bunicomic.com"
   end
 end

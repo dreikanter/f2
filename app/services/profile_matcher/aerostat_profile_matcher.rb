@@ -1,14 +1,7 @@
 module ProfileMatcher
-  class AerostatProfileMatcher < Base
+  class AerostatProfileMatcher < DomainMatcher
     match_specificity 100
 
-    AEROSTAT_DOMAIN = "aerostatbg.ru"
-
-    def match?
-      return false if input.blank?
-
-      uri = URI.parse(input)
-      [AEROSTAT_DOMAIN, "www.#{AEROSTAT_DOMAIN}"].include?(uri.host)
-    end
+    match_domains "aerostatbg.ru"
   end
 end

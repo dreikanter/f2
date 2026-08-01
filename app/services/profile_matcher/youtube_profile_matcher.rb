@@ -1,14 +1,7 @@
 module ProfileMatcher
-  class YoutubeProfileMatcher < Base
+  class YoutubeProfileMatcher < DomainMatcher
     match_specificity 100
 
-    YOUTUBE_DOMAINS = %w[youtube.com www.youtube.com youtu.be www.youtu.be].freeze
-
-    def match?
-      return false if input.blank?
-
-      uri = URI.parse(input)
-      YOUTUBE_DOMAINS.include?(uri.host)
-    end
+    match_domains "youtube.com", "youtu.be"
   end
 end
