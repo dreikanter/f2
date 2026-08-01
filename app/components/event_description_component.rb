@@ -17,6 +17,10 @@ class EventDescriptionComponent < ViewComponent::Base
     "feed_search_credential_removed" => "FeedCredentialRemovedDescriptionComponent"
   }.freeze
 
+  # Shared styling for every entity link a description interpolates, so the
+  # subject and the metadata feed list read as the same kind of link.
+  ENTITY_LINK_CLASSES = "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover".freeze
+
   def self.for(event)
     klass = SUBCLASSES[event.type]&.constantize || self
     klass.new(event: event)
@@ -58,20 +62,20 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def subject_link
-    case event.subject
-    when Feed
-      helpers.link_to(event.subject.display_name, feed_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    when AccessToken
-      helpers.link_to(event.subject.name, access_token_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    when Post
-      helpers.link_to("Post", helpers.post_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    when AiCredential
-      helpers.link_to(event.subject.display_name, ai_credential_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    when SearchCredential
-      helpers.link_to(event.subject.display_name, search_credential_link_path(event.subject), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    else
-      orphaned_subject_placeholder
+    subject = event.subject
+
+    case subject
+    when Feed then entity_link(subject.display_name, feed_link_path(subject))
+    when AccessToken then entity_link(subject.name, access_token_link_path(subject))
+    when Post then entity_link("Post", helpers.post_path(subject))
+    when AiCredential then entity_link(subject.display_name, ai_credential_link_path(subject))
+    when SearchCredential then entity_link(subject.display_name, search_credential_link_path(subject))
+    else orphaned_subject_placeholder
     end
+  end
+
+  def entity_link(label, path)
+    helpers.link_to(label, path, class: ENTITY_LINK_CLASSES)
   end
 
   # A recorded subject_type with no loadable subject means the record was
@@ -117,9 +121,7 @@ class EventDescriptionComponent < ViewComponent::Base
   def metadata_feed_links_html
     return "" if disabled_feed_ids.blank?
 
-    links = disabled_feeds.map do |feed|
-      helpers.link_to(feed.display_name, feed_link_path(feed), class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover")
-    end
+    links = disabled_feeds.map { |feed| entity_link(feed.display_name, feed_link_path(feed)) }
 
     linked_feeds = helpers.safe_join(links, ", ")
     deleted_feeds_count = disabled_feed_ids.size - disabled_feeds.size
