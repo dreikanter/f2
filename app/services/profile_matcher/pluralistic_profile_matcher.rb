@@ -1,14 +1,7 @@
 module ProfileMatcher
-  class PluralisticProfileMatcher < Base
+  class PluralisticProfileMatcher < DomainMatcher
     match_specificity 100
 
-    PLURALISTIC_DOMAIN = "pluralistic.net"
-
-    def match?
-      return false if input.blank?
-
-      uri = URI.parse(input)
-      [PLURALISTIC_DOMAIN, "www.#{PLURALISTIC_DOMAIN}"].include?(uri.host)
-    end
+    match_domains "pluralistic.net"
   end
 end
