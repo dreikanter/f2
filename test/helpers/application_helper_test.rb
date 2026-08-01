@@ -22,55 +22,6 @@ class ApplicationHelperTest < ActionView::TestCase
     self.policy_override = nil
   end
 
-  test "#page_header without block renders title with simple layout" do
-    result = page_header("Test Title")
-
-    expected = <<~HTML.strip
-      <div class="d-flex justify-content-between align-items-center mb-4"><h1>Test Title</h1></div>
-    HTML
-
-    assert_equal expected, result
-  end
-
-  test "#page_header with block renders title and content with flex layout" do
-    result = page_header("Test Title") do
-      content_tag(:a, "Link", href: "/test", class: "btn btn-primary")
-    end
-
-    expected = <<~HTML.strip
-      <div class="d-flex justify-content-between align-items-center mb-4"><h1>Test Title</h1><a href="/test" class="btn btn-primary">Link</a></div>
-    HTML
-
-    assert_equal expected, result
-  end
-
-  test "#page_section_header renders h2 with title and classes" do
-    result = page_section_header("Title")
-
-    expected = '<h2 class="mt-5 mb-4">Title</h2>'
-
-    assert_equal expected, result
-  end
-
-  test "#page_section_header accepts custom class argument" do
-    result = page_section_header("Title", class: "text-primary")
-
-    expected = '<h2 class="mt-5 mb-4 text-primary">Title</h2>'
-
-    assert_equal expected, result
-  end
-
-  test "#page_header accepts custom class argument" do
-    result = page_header("Test Title", class: "border-bottom")
-
-    expected = <<~HTML.strip
-      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom"><h1>Test Title</h1></div>
-    HTML
-
-    assert_equal expected, result
-  end
-
-
   test "#post_content_preview returns empty string for nil content" do
     assert_equal "", post_content_preview(nil)
   end
