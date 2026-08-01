@@ -12,15 +12,6 @@ module TitleExtractor
 
     private
 
-    def og_title
-      return nil if fetched_body.blank?
-
-      doc = Nokogiri::HTML.parse(fetched_body, nil, "UTF-8")
-      doc.at_css('meta[property="og:title"]')&.[]("content")&.strip
-    rescue StandardError
-      nil
-    end
-
     ATOM_NS = { "atom" => "http://www.w3.org/2005/Atom" }.freeze
 
     def atom_title

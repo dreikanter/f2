@@ -36,4 +36,20 @@ class TitleExtractor::BaseTest < ActiveSupport::TestCase
     e = TitleExtractor::Base.new("not a url")
     assert_nil e.send(:hostname_from_url)
   end
+
+  test "#og_title should return the trimmed og:title content" do
+    body = '<html><head><meta property="og:title" content="  Some Channel  "></head></html>'
+    e = TitleExtractor::Base.new("https://example.com", body)
+    assert_equal "Some Channel", e.send(:og_title)
+  end
+
+  test "#og_title should return nil when the body has no og:title" do
+    e = TitleExtractor::Base.new("https://example.com", "<html><head></head></html>")
+    assert_nil e.send(:og_title)
+  end
+
+  test "#og_title should return nil for a blank body" do
+    assert_nil TitleExtractor::Base.new("https://example.com").send(:og_title)
+    assert_nil TitleExtractor::Base.new("https://example.com", "").send(:og_title)
+  end
 end
