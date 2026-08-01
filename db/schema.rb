@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_25_130000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -124,6 +124,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_25_130000) do
     t.integer "published_posts_count", default: 0, null: false
     t.index ["date"], name: "index_feed_metrics_on_date"
     t.index ["feed_id", "date"], name: "index_feed_metrics_on_feed_id_and_date", unique: true
+    t.check_constraint "invalid_posts_count >= 0", name: "feed_metrics_invalid_posts_count_non_negative"
+    t.check_constraint "posts_count >= 0", name: "feed_metrics_posts_count_non_negative"
+    t.check_constraint "published_posts_count >= 0", name: "feed_metrics_published_posts_count_non_negative"
   end
 
   create_table "feed_previews", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -247,6 +250,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_25_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["post_id"], name: "index_post_publications_on_post_id", unique: true
+    t.check_constraint "attachments_processed_count >= 0", name: "post_publications_attachments_processed_count_non_negative"
+    t.check_constraint "comments_published_count >= 0", name: "post_publications_comments_published_count_non_negative"
   end
 
   create_table "posts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -467,6 +472,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_25_130000) do
     t.index ["email_deactivated_at"], name: "index_users_on_email_deactivated_at"
     t.index ["state"], name: "index_users_on_state"
     t.index ["unconfirmed_email"], name: "index_users_on_unconfirmed_email", where: "(unconfirmed_email IS NOT NULL)"
+    t.check_constraint "available_invites >= 0", name: "users_available_invites_non_negative"
   end
 
   create_table "webhook_endpoints", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
