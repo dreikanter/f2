@@ -6,7 +6,7 @@ class SearchCredentials::DefaultsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         flash.now[:success] = "'#{credential.display_name}' is now the default search credential."
-        @search_credentials = policy_scope(SearchCredential).order(created_at: :desc)
+        @credentials = policy_scope(SearchCredential).order(created_at: :desc)
       end
       format.html do
         redirect_to search_credentials_path,

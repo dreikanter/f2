@@ -6,11 +6,11 @@
   <% end %>
 
   <div class="max-w-2xl">
-    <%= form_with model: @ai_credential, url: ai_credentials_path(feed_id: @feed&.id) do |f| %>
-      <% if @ai_credential.errors.any? %>
+    <%= form_with model: @credential, url: ai_credentials_path(feed_id: @feed&.id) do |f| %>
+      <% if @credential.errors.any? %>
         <%= render AlertComponent.new(variant: :warning) do %>
           <ul class="list-disc list-inside text-sm">
-            <% @ai_credential.errors.full_messages.each do |message| %>
+            <% @credential.errors.full_messages.each do |message| %>
               <li><%= message %></li>
             <% end %>
           </ul>
@@ -39,7 +39,7 @@
         <div class="space-y-2">
           <%= label_tag "ai_credential_credential_data_api_key", "API key", class: "block font-semibold text-heading" %>
           <%= password_field_tag "ai_credential[credential_data][api_key]",
-                                 @ai_credential.credential_data&.dig("api_key"),
+                                 @credential.credential_data&.dig("api_key"),
                                  id: "ai_credential_credential_data_api_key",
                                  class: "w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-lg leading-normal shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
                                  required: true,

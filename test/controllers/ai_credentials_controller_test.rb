@@ -286,11 +286,11 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "#update should update display_name, reset to pending, and re-enqueue validation" do
+  test "#update should rename without resetting state or enqueuing validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
 
-    assert_enqueued_with(job: AiCredentialValidationJob) do
+    assert_no_enqueued_jobs only: AiCredentialValidationJob do
       patch ai_credential_url(active), params: {
         ai_credential: {
           display_name: "Renamed Key",
@@ -302,23 +302,26 @@ class AiCredentialsControllerTest < ActionDispatch::IntegrationTest
     active.reload
     assert_redirected_to ai_credential_path(active)
     assert_equal "Renamed Key", active.display_name
-    assert_equal "pending", active.state
+    assert_equal "active", active.state
   end
 
-  test "#update should replace credential_data when a new api_key is provided" do
+  test "#update should replace a new key, reset state, and enqueue validation" do
     sign_in_as(user)
     active = create(:ai_credential, :active, user: user)
     new_key = "sk-ant-#{SecureRandom.hex(16)}"
 
-    patch ai_credential_url(active), params: {
-      ai_credential: {
-        display_name: active.display_name,
-        credential_data: { api_key: new_key }
+    assert_enqueued_with(job: AiCredentialValidationJob) do
+      patch ai_credential_url(active), params: {
+        ai_credential: {
+          display_name: active.display_name,
+          credential_data: { api_key: new_key }
+        }
       }
-    }
+    end
 
     active.reload
     assert_equal new_key, active.credential_data["api_key"]
+    assert_equal "pending", active.state
   end
 
   test "#update should keep existing credential_data when api_key is blank" do
