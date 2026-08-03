@@ -9,15 +9,6 @@ module TitleExtractor
 
     private
 
-    def og_title
-      return nil if fetched_body.blank?
-
-      doc = Nokogiri::HTML.parse(fetched_body, nil, "UTF-8")
-      doc.at_css('meta[property="og:title"]')&.[]("content")&.strip
-    rescue StandardError
-      nil
-    end
-
     def username
       input.to_s.strip.sub(/\A@/, "").sub(%r{\Ahttps?://}i, "")
            .sub(%r{\A(?:www\.)?t\.me/}i, "").sub(%r{\Atelegram\.me/}i, "")

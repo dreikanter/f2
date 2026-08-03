@@ -28,5 +28,17 @@ module TitleExtractor
     rescue URI::InvalidURIError
       nil
     end
+
+    # og:title of the fetched page, for sources whose profile URL resolves to
+    # HTML rather than a feed. Any parse trouble means "no title here" — the
+    # caller falls back to a handle derived from the input.
+    def og_title
+      return nil if fetched_body.blank?
+
+      doc = Nokogiri::HTML.parse(fetched_body, nil, "UTF-8")
+      doc.at_css('meta[property="og:title"]')&.[]("content")&.strip
+    rescue StandardError
+      nil
+    end
   end
 end
