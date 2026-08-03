@@ -1,25 +1,9 @@
-class FeedStatsComponent < ViewComponent::Base
+class FeedStatsComponent < StatsPanelComponent
   def initialize(feed:)
     @feed = feed
   end
 
-  def call
-    tag.div { safe_join([mobile_layout, desktop_layout]) }
-  end
-
   private
-
-  def mobile_layout
-    render(DescriptionListComponent.new(css_class: class_names("md:hidden", DescriptionListComponent::DEFAULT_CSS_CLASSES))) do |list|
-      layout_items.each { |item| list.with_item(mobile_stat_cell(item)) }
-    end
-  end
-
-  def desktop_layout
-    render(StatsBarComponent.new(css_class: class_names("hidden", StatsBarComponent::DEFAULT_CSS_CLASSES))) do |bar|
-      layout_items.each { |item| bar.with_item(desktop_stat_cell(item)) }
-    end
-  end
 
   def layout_items
     @layout_items ||= [
@@ -59,24 +43,6 @@ class FeedStatsComponent < ViewComponent::Base
         muted: most_recent_repost_at.nil?
       }
     ]
-  end
-
-  def mobile_stat_cell(item)
-    StatListItemComponent.new(
-      label: item[:label],
-      value: item[:value],
-      key: "stats.#{item[:key]}",
-      muted: item[:muted]
-    )
-  end
-
-  def desktop_stat_cell(item)
-    StatBarItemComponent.new(
-      label: item[:label_short],
-      value: item[:value],
-      key: "stats.#{item[:key]}",
-      muted: item[:muted]
-    )
   end
 
   def last_refresh_value
