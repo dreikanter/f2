@@ -30,6 +30,9 @@ class Feed < ApplicationRecord
   belongs_to :ai_credential, optional: true
   belongs_to :search_credential, optional: true
 
+  # Associations a feed may only point at when the record is the owner's own.
+  USER_OWNED_ASSOCIATIONS = %i[ai_credential search_credential access_token].freeze
+
   has_one :feed_schedule, dependent: :destroy
   has_one :webhook_endpoint, dependent: :destroy
 
@@ -67,9 +70,7 @@ class Feed < ApplicationRecord
 
   validate :cron_expression_is_valid
   validate :params_against_profile_schema
-  validate :ai_credential_belongs_to_user
-  validate :search_credential_belongs_to_user
-  validate :access_token_belongs_to_user
+  validate :associations_belong_to_user
   validate :ai_credential_required_when_enabled_ai_profile, if: :enabled?
   validate :search_credential_required_when_enabled_ai_profile, if: :enabled?
   validate :engine_fixed_on_edit
@@ -472,28 +473,15 @@ class Feed < ApplicationRecord
     end
   end
 
-  def ai_credential_belongs_to_user
-    return if ai_credential.nil?
+  def associations_belong_to_user
     return if user_id.nil?
-    return if ai_credential.user_id == user_id
 
-    errors.add(:ai_credential, "must belong to the same user")
-  end
+    USER_OWNED_ASSOCIATIONS.each do |association|
+      record = public_send(association)
+      next if record.nil? || record.user_id == user_id
 
-  def search_credential_belongs_to_user
-    return if search_credential.nil?
-    return if user_id.nil?
-    return if search_credential.user_id == user_id
-
-    errors.add(:search_credential, "must belong to the same user")
-  end
-
-  def access_token_belongs_to_user
-    return if access_token.nil?
-    return if user_id.nil?
-    return if access_token.user_id == user_id
-
-    errors.add(:access_token, "must belong to the same user")
+      errors.add(association, "must belong to the same user")
+    end
   end
 
   # The engine (deterministic vs AI) is fixed at creation: an existing feed never
