@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 1e9f15ebf256a198fcc5e233b643826e1b363980
+  revision: 469fb6e643f721d392cf254095a27af54e5515f6
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -543,7 +543,7 @@ GEM
       yard (>= 0.8)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
-    zeitwerk (2.8.2)
+    zeitwerk (2.8.3)
 
 PLATFORMS
   aarch64-linux
