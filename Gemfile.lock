@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 1e9f15ebf256a198fcc5e233b643826e1b363980
+  revision: 0e8569c84cb78238d00284101f2b01f9c5546c14
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -157,7 +157,7 @@ GEM
     dotenv (3.2.0)
     drb (2.2.3)
     ed25519 (1.4.0)
-    erb (6.0.6)
+    erb (6.0.7)
     erubi (1.13.1)
     et-orbi (1.4.1)
       tzinfo
@@ -370,7 +370,7 @@ GEM
       psych (>= 4.0.0)
       tsort
     regexp_parser (2.12.0)
-    reline (0.6.3)
+    reline (0.7.0)
       io-console (~> 0.5)
     resend (1.7.0)
       base64
