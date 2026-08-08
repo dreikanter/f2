@@ -6,7 +6,7 @@
 # Including models declare their provider vocabulary, the event types they
 # record, and their own domain logic; everything else derives from the model
 # name.
-module Credential
+module ProviderCredential
   extend ActiveSupport::Concern
 
   DISPLAY_NAME_MAX_LENGTH = 80

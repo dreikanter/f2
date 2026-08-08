@@ -1,8 +1,8 @@
 # A user's API credential for one web search provider. Lifecycle, naming, and
-# feed teardown come from Credential; what's here is the cost side, since
-# search is billed per request and gets estimated before a run.
+# feed teardown come from ProviderCredential; what's here is the cost side,
+# since search is billed per request and gets estimated before a run.
 class SearchCredential < ApplicationRecord
-  include Credential
+  include ProviderCredential
 
   REMOVED_EVENT_TYPE = "feed_search_credential_removed"
   DEACTIVATED_EVENT_TYPE = "search_credential_deactivated"
