@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-08
 
+- AI usage now counts every step of a web-search run, so the costs you see reflect what the call actually spent.
 - AI cost estimates no longer count cached-prompt reads at the more expensive write rate.
 - Deleting a search credential no longer erases its entries from your activity log. Past events stay put and show the credential as "(removed)", the same way access tokens and AI credentials already worked.
 

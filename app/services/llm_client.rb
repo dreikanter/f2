@@ -167,11 +167,25 @@ class LlmClient
     response = chat.ask(prompt)
     ProviderResponse.new(
       payload: output_schema.present? ? parse_payload(response) : response_text(response),
-      input_tokens: response.try(:input_tokens).to_i,
-      output_tokens: response.try(:output_tokens).to_i,
-      cache_write_tokens: response.try(:cache_write_tokens).to_i,
-      cache_read_tokens: response.try(:cache_read_tokens).to_i
+      **usage_totals(chat, response)
     )
+  end
+
+  # A web-enabled call is several billed completions — one per tool round —
+  # but #ask returns only the final round. Each round's assistant message
+  # stays on the chat, so summing them gives the true per-call total for
+  # the single usage row. Falls back to the response when the chat doesn't
+  # retain messages.
+  def usage_totals(chat, response)
+    rounds = Array(chat.try(:messages)).select { |message| message.try(:role) == :assistant }
+    rounds = [response] if rounds.empty?
+
+    {
+      input_tokens: rounds.sum { |message| message.try(:input_tokens).to_i },
+      output_tokens: rounds.sum { |message| message.try(:output_tokens).to_i },
+      cache_write_tokens: rounds.sum { |message| message.try(:cache_write_tokens).to_i },
+      cache_read_tokens: rounds.sum { |message| message.try(:cache_read_tokens).to_i }
+    }
   end
 
   def search_provider_for(ctx)

@@ -375,6 +375,16 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
+  # Retains a message history like the real RubyLLM chat does after a
+  # multi-round tool loop.
+  class FakeToolLoopChat < FakeChat
+    attr_reader :messages
+
+    def initialize(messages)
+      @messages = messages
+    end
+  end
+
   # Returns a response carrying distinct cache counts, so a swap between the
   # read and write columns can't cancel out.
   class FakeChatWithUsage < FakeChat
@@ -403,6 +413,31 @@ class LlmClientTest < ActiveSupport::TestCase
 
     assert_equal "SYSTEM PROMPT", chat.instructions
     assert_equal "user text", chat.asked
+  end
+
+  def assistant_round(input:, output:, cached: nil, cache_creation: nil)
+    RubyLLM::Message.new(role: :assistant, content: "round", input_tokens: input, output_tokens: output,
+                         cached_tokens: cached, cache_creation_tokens: cache_creation)
+  end
+
+  test "#invoke_provider should sum usage across all rounds of a tool loop" do
+    client = LlmClient.new(credential)
+    chat = FakeToolLoopChat.new([
+      RubyLLM::Message.new(role: :user, content: "user text"),
+      assistant_round(input: 100, output: 10, cached: 7, cache_creation: 3),
+      RubyLLM::Message.new(role: :tool, content: "tool result", tool_call_id: "t1"),
+      assistant_round(input: 200, output: 20, cached: 5)
+    ])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
+                                    output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal 300, response.input_tokens
+    assert_equal 30, response.output_tokens
+    assert_equal 3, response.cache_write_tokens
+    assert_equal 12, response.cache_read_tokens
   end
 
   test "#invoke_provider should map cache reads and cache writes to their own columns" do
