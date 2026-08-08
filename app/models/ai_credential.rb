@@ -1,9 +1,10 @@
 # A user's API credential for one AI provider. `credential_data` stores
 # provider-specific fields (e.g. `{ "api_key" => "..." }`) and is encrypted at
-# rest. Lifecycle, naming, and feed teardown come from Credential; what's here
-# is the model-capability side: which models this key may actually run.
+# rest. Lifecycle, naming, and feed teardown come from ProviderCredential;
+# what's here is the model-capability side: which models this key may actually
+# run.
 class AiCredential < ApplicationRecord
-  include Credential
+  include ProviderCredential
 
   REMOVED_EVENT_TYPE = "feed_ai_credential_removed"
   DEACTIVATED_EVENT_TYPE = "ai_credential_deactivated"
