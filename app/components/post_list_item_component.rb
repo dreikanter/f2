@@ -108,8 +108,7 @@ class PostListItemComponent < ListItemComponent
   # The title links to the post page. ReadonlyPostListItemComponent overrides
   # this with plain text where those owner-scoped routes aren't reachable.
   def title_element
-    helpers.link_to(title, post_url,
-                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+    helpers.link_to(title, post_url, class: TITLE_LINK_CSS_CLASS)
   end
 
   # Whether to render the actions menu (Details/Source/Delete). Disabled by

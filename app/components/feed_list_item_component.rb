@@ -43,8 +43,7 @@ class FeedListItemComponent < ListItemComponent
   end
 
   def title_link
-    helpers.link_to(title, feed_url,
-                    class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white")
+    helpers.link_to(title, feed_url, class: TITLE_LINK_CSS_CLASS)
   end
 
   def group_element

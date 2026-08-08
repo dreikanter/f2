@@ -20,6 +20,12 @@ class ListItemComponent < ViewComponent::Base
   # feeds, posts, tokens, dev tools — highlights rows identically.
   HOVER_ROW_CSS_CLASS = "transition duration-75 hover:bg-surface-muted".freeze
 
+  # The one style for a row's primary link — the record's name, leading to it.
+  # Kept here so the truncation and focus ring stay identical across every list.
+  TITLE_LINK_CSS_CLASS = "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none " \
+                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " \
+                         "focus-visible:ring-offset-white".freeze
+
   renders_one :icon
   renders_one :primary
   renders_one :secondary
