@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-08
+
+- Deleting a search credential no longer erases its entries from your activity log. Past events stay put and show the credential as "(removed)", the same way access tokens and AI credentials already worked.
+
 ## 2026-08-01
 
 - Renaming an AI credential no longer sends it back for re-checking. Only a new API key triggers that now, matching how search credentials already worked.
