@@ -75,7 +75,7 @@ class AiCredential < ApplicationRecord
     end
   end
 
-  def disable_credential_and_feeds(last_error: nil)
+  def deactivate!(last_error: nil)
     with_lock do
       update!(state: :inactive, last_validated_at: Time.current, last_error: last_error)
       Event.create!(type: "ai_credential_deactivated", level: :warning,
