@@ -414,7 +414,7 @@ class FeedRefreshWorkflow
   def disable_credentials_on_auth_error(error)
     case error
     when LlmClient::AuthError
-      feed.ai_credential&.disable_credential_and_feeds(last_error: error.message)
+      feed.ai_credential&.deactivate!(last_error: error.message)
     when WebSearchProvider::AuthError
       feed.search_credential&.deactivate!(last_error: error.message)
     end

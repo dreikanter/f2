@@ -13,6 +13,6 @@ class AiCredentialValidationJob < ApplicationJob
     credential.update!(state: :active, available_models: models,
                        last_validated_at: Time.current, last_error: nil)
   rescue LlmClient::Error => e
-    credential.disable_credential_and_feeds(last_error: e.message)
+    credential.deactivate!(last_error: e.message)
   end
 end
