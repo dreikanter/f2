@@ -29,6 +29,15 @@ class SearchCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTes
     assert_equal credential.id, user.reload.default_search_credential_id
   end
 
+  test "#update should name the credential type in the confirmation" do
+    sign_in_as(user)
+    credential = create(:search_credential, user: user, display_name: "Working Key")
+
+    patch search_credential_default_url(credential)
+
+    assert_equal "'Working Key' is now the default search credential.", flash[:success]
+  end
+
   test "#update should 404 for another user's credential" do
     sign_in_as(user)
     other = create(:search_credential, user: other_user)
