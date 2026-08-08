@@ -29,6 +29,15 @@ class AiCredentials::DefaultsControllerTest < ActionDispatch::IntegrationTest
     assert_equal credential.id, user.reload.default_ai_credential_id
   end
 
+  test "#update should confirm the promotion without naming the credential type" do
+    sign_in_as(user)
+    credential = create(:ai_credential, user: user, provider: "anthropic", display_name: "Working Key")
+
+    patch ai_credential_default_url(credential)
+
+    assert_equal "'Working Key' is now the default credential.", flash[:success]
+  end
+
   test "#update should 404 for another user's credential" do
     sign_in_as(user)
     other = create(:ai_credential, user: other_user, provider: "anthropic")
