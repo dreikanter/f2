@@ -176,4 +176,33 @@ class AiCredentialTest < ActiveSupport::TestCase
 
     assert_nil credential.default_supported_model
   end
+
+  test "#deactivate! should persist the error and create a warning event" do
+    credential = create(:ai_credential, :active, user: user)
+
+    assert_difference("Event.count", 1) do
+      credential.deactivate!(last_error: "Anthropic: HTTP 401")
+    end
+
+    credential.reload
+    event = Event.order(:created_at).last
+    assert credential.inactive?
+    assert_equal "Anthropic: HTTP 401", credential.last_error
+    assert_not_nil credential.last_validated_at
+    assert_equal "ai_credential_deactivated", event.type
+    assert_equal "warning", event.level
+    assert_equal credential, event.subject
+    assert_equal user, event.user
+  end
+
+  test "#deactivate! should disable feeds running on the credential" do
+    credential = create(:ai_credential, :active, user: user)
+    enabled = create(:feed, :enabled, user: user, ai_credential: credential)
+    draft = create(:feed, :draft, user: user, ai_credential: credential)
+
+    credential.deactivate!
+
+    assert enabled.reload.disabled?
+    assert draft.reload.draft?
+  end
 end
