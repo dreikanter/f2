@@ -7,10 +7,6 @@ class SearchCredential < ApplicationRecord
   REMOVED_EVENT_TYPE = "feed_search_credential_removed"
   DEACTIVATED_EVENT_TYPE = "search_credential_deactivated"
 
-  # Unlike AccessToken and AiCredential, whose events outlive them and render
-  # as "(removed)", this one's history goes when the credential does.
-  has_many :events, as: :subject, dependent: :destroy
-
   validates :provider, presence: true, inclusion: { in: ->(_) { WebSearchProvider::REGISTRY.keys } }
 
   def web_search_provider

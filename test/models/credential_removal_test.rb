@@ -60,6 +60,33 @@ class CredentialRemovalTest < ActiveSupport::TestCase
     assert_removal_event(enabled_feed, SearchCredential::REMOVED_EVENT_TYPE, disabled: true)
   end
 
+  # Events are log records: what happened stays recorded even once the thing it
+  # happened to is gone. A removed subject reads as "(removed)" in the log
+  # rather than taking its history with it.
+  test "destroying an access token leaves its own events behind" do
+    token = create(:access_token, user: user)
+    event = create(:event, subject: token, user: user)
+
+    assert_no_difference("Event.count") { token.destroy! }
+    assert_nil event.reload.subject
+  end
+
+  test "destroying an AI credential leaves its own events behind" do
+    credential = create(:ai_credential, user: user)
+    event = create(:event, subject: credential, user: user)
+
+    assert_no_difference("Event.count") { credential.destroy! }
+    assert_nil event.reload.subject
+  end
+
+  test "destroying a search credential leaves its own events behind" do
+    credential = create(:search_credential, user: user)
+    event = create(:event, subject: credential, user: user)
+
+    assert_no_difference("Event.count") { credential.destroy! }
+    assert_nil event.reload.subject
+  end
+
   private
 
   def assert_removal_event(feed, type, disabled:)
