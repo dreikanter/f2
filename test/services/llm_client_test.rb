@@ -375,6 +375,17 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
+  # Returns a response carrying distinct cache counts, so a swap between the
+  # read and write columns can't cancel out.
+  class FakeChatWithUsage < FakeChat
+    def ask(prompt)
+      @asked = prompt
+      Data.define(:content, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
+          .new(content: "gathered", input_tokens: 42, output_tokens: 7,
+               cache_write_tokens: 3, cache_read_tokens: 11)
+    end
+  end
+
   def stub_chat(client, chat)
     context = Object.new
     context.define_singleton_method(:chat) { |**_| chat }
@@ -392,6 +403,21 @@ class LlmClientTest < ActiveSupport::TestCase
 
     assert_equal "SYSTEM PROMPT", chat.instructions
     assert_equal "user text", chat.asked
+  end
+
+  test "#invoke_provider should map cache reads and cache writes to their own columns" do
+    client = LlmClient.new(credential)
+    chat = FakeChatWithUsage.new
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
+                                    output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal 42, response.input_tokens
+    assert_equal 7, response.output_tokens
+    assert_equal 3, response.cache_write_tokens
+    assert_equal 11, response.cache_read_tokens
   end
 
   test "#invoke_provider should not set instructions when no system prompt is given" do

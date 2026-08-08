@@ -169,7 +169,7 @@ class LlmClient
       payload: output_schema.present? ? parse_payload(response) : response_text(response),
       input_tokens: response.try(:input_tokens).to_i,
       output_tokens: response.try(:output_tokens).to_i,
-      cache_write_tokens: response.try(:cached_tokens).to_i,
+      cache_write_tokens: response.try(:cache_write_tokens).to_i,
       cache_read_tokens: response.try(:cache_read_tokens).to_i
     )
   end
