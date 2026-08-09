@@ -189,9 +189,14 @@ class LlmClientTest < ActiveSupport::TestCase
 
   def fake_model(**attrs)
     defaults = {
-      id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", family: "claude",
-      context_window: 200_000, max_output_tokens: 8_192, capabilities: ["function_calling"]
+      id: "claude-sonnet-4-6",
+      name: "Claude Sonnet 4.6",
+      family: "claude",
+      context_window: 200_000,
+      max_output_tokens: 8_192,
+      capabilities: ["function_calling"]
     }
+
     Struct.new(*defaults.keys, keyword_init: true).new(**defaults.merge(attrs))
   end
 
@@ -277,8 +282,7 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   test "#available_models should resolve providers by their RubyLLM key, not the registry name" do
-    moonshot = create(:ai_credential, :active, user: user, provider: "moonshot",
-                      credential_data: { "api_key" => "sk-#{SecureRandom.hex(16)}" })
+    moonshot = create(:ai_credential, :active, user: user, provider: "moonshot", credential_data: { "api_key" => "sk-#{SecureRandom.hex(16)}" })
     client = LlmClient.new(moonshot)
 
     fake_provider_class = Class.new do
@@ -375,6 +379,32 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
+  # Retains a message history like the real RubyLLM chat does after a
+  # multi-round tool loop.
+  class FakeToolLoopChat < FakeChat
+    attr_reader :messages
+
+    def initialize(messages)
+      @messages = messages
+    end
+  end
+
+  # Returns a response carrying distinct cache counts, so a swap between the
+  # read and write columns can't cancel out.
+  class FakeChatWithUsage < FakeChat
+    def ask(prompt)
+      @asked = prompt
+      Data.define(:content, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
+          .new(
+            content: "gathered",
+            input_tokens: 42,
+            output_tokens: 7,
+            cache_write_tokens: 3,
+            cache_read_tokens: 11
+          )
+    end
+  end
+
   def stub_chat(client, chat)
     context = Object.new
     context.define_singleton_method(:chat) { |**_| chat }
@@ -386,12 +416,56 @@ class LlmClientTest < ActiveSupport::TestCase
     chat = FakeChat.new
 
     stub_chat(client, chat) do
-      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
-                                    output_schema: nil, web: false, system: "SYSTEM PROMPT")
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text", output_schema: nil, web: false, system: "SYSTEM PROMPT")
     end
 
     assert_equal "SYSTEM PROMPT", chat.instructions
     assert_equal "user text", chat.asked
+  end
+
+  def assistant_round(input:, output:, cached: nil, cache_creation: nil)
+    RubyLLM::Message.new(
+      role: :assistant,
+      content: "round",
+      input_tokens: input,
+      output_tokens: output,
+      cached_tokens: cached,
+      cache_creation_tokens: cache_creation
+    )
+  end
+
+  test "#invoke_provider should sum usage across all rounds of a tool loop" do
+    client = LlmClient.new(credential)
+    chat = FakeToolLoopChat.new([
+      RubyLLM::Message.new(role: :user, content: "user text"),
+      assistant_round(input: 100, output: 10, cached: 7, cache_creation: 3),
+      RubyLLM::Message.new(role: :tool, content: "tool result", tool_call_id: "t1"),
+      assistant_round(input: 200, output: 20, cached: 5)
+    ])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text", output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal 300, response.input_tokens
+    assert_equal 30, response.output_tokens
+    assert_equal 3, response.cache_write_tokens
+    assert_equal 12, response.cache_read_tokens
+  end
+
+  test "#invoke_provider should map cache reads and cache writes to their own columns" do
+    client = LlmClient.new(credential)
+    chat = FakeChatWithUsage.new
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
+                                    output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal 42, response.input_tokens
+    assert_equal 7, response.output_tokens
+    assert_equal 3, response.cache_write_tokens
+    assert_equal 11, response.cache_read_tokens
   end
 
   test "#invoke_provider should not set instructions when no system prompt is given" do
@@ -399,8 +473,7 @@ class LlmClientTest < ActiveSupport::TestCase
     chat = FakeChat.new
 
     stub_chat(client, chat) do
-      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text",
-                                    output_schema: nil, web: false, system: nil)
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "user text", output_schema: nil, web: false, system: nil)
     end
 
     assert_nil chat.instructions
