@@ -1,0 +1,50 @@
+# Reek detectors for the RubyCritic report (bin/critic). Not run in CI —
+# the report is advisory, so this file exists to keep it readable rather than
+# to enforce anything.
+#
+# Every detector below is off because it fires constantly on ordinary Rails
+# code and buries the findings worth acting on. Left on: DuplicateCode,
+# HighComplexity, and the parameter/conditional smells, which have repeatedly
+# pointed at real duplication.
+#
+# Turning any of these back on is fine for a one-off dig — pass a different
+# config with `reek -c`, rather than editing this file.
+detectors:
+  # Fires on every class without a top comment. Conflicts with the house rule
+  # of commenting only what the code can't say itself.
+  IrresponsibleModule:
+    enabled: false
+
+  # Flags calling the same method twice in one method body, e.g. params[:id]
+  # in a four-line action. Not worth a local variable.
+  DuplicateMethodCall:
+    enabled: false
+
+  # Flags every private helper that doesn't touch instance state — which is
+  # most formatting and path helpers in components.
+  UtilityFunction:
+    enabled: false
+
+  # Reads memoization and virtual attributes as unsafe assumptions.
+  InstanceVariableAssumption:
+    enabled: false
+
+  # Wants a non-bang twin for every `foo!`, which is not the Rails convention.
+  MissingSafeMethod:
+    enabled: false
+
+  # Flags a method using its argument more than `self`, which describes most
+  # presenters and normalizers by design.
+  FeatureEnvy:
+    enabled: false
+
+  # `.nil?` is fine.
+  NilCheck:
+    enabled: false
+
+  # Default is 5, which nearly every controller action exceeds.
+  TooManyStatements:
+    max_statements: 12
+
+  UncommunicativeVariableName:
+    accept: ["e", "id", "io", "_"]

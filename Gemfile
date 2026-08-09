@@ -73,6 +73,10 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Duplication and complexity report, driven by bin/critic. Local only — it is
+  # advisory, not a gate, so CI does not run it. [https://github.com/whitesmith/rubycritic]
+  gem "rubycritic", require: false
 end
 
 # Structured JSON logging for the deployed environments (docs/victorialogs.md).
