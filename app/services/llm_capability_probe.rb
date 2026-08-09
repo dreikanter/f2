@@ -115,6 +115,10 @@ module LlmCapabilityProbe
       def configure(config)
         config.openai_api_key = ENV.fetch(self.class.env_key)
         config.openai_api_base = ENV.fetch("MOONSHOT_API_BASE", "https://api.moonshot.ai/v1")
+        # Mirror production (LlmProvider#configure): Moonshot rejects the
+        # "developer" role RubyLLM sends by default, so the probe must use
+        # the same wire shape or its results won't transfer.
+        config.openai_use_system_role = true
       end
 
       def ruby_llm_provider = :openai
