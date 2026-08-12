@@ -415,7 +415,7 @@ GEM
       semantic_logger (>= 5.1)
     rainbow (3.1.1)
     rake (13.4.2)
-    rbs (4.0.3)
+    rbs (4.1.3)
       logger
       prism (>= 1.6.0)
       tsort
@@ -440,7 +440,7 @@ GEM
     rexml (3.4.4)
     rouge (5.1.0)
       strscan (~> 3.1)
-    rubocop (1.88.2)
+    rubocop (1.89.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -511,7 +511,7 @@ GEM
       rexml
       simplecov (~> 1.0)
     simpleidn (0.2.3)
-    solargraph (0.60.2)
+    solargraph (0.60.3)
       ast (~> 2.4.3)
       backport (~> 1.2)
       benchmark (~> 0.4)
@@ -552,7 +552,7 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sorbet-runtime (0.6.13351)
+    sorbet-runtime (0.6.13425)
     sord (7.1.0)
       commander (~> 5.0)
       parlour (~> 9.1)
