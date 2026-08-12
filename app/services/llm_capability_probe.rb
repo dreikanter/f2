@@ -9,6 +9,11 @@
 # unwired provider can be qualified before application integration. Keys
 # come from the environment. Results — evidence included — are recorded as
 # JobRun events and feed plan-03-provider-verification.md.
+#
+# Qualification rule (issue #1187): no (provider, model) pair enters
+# LlmModelCapability without a probe run that covers the production call
+# shape — a system prompt on the wire, the client-side tool loop, and the
+# model id confirmed against the live models listing.
 module LlmCapabilityProbe
   # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape (strict: additionalProperties false
   # everywhere — the Anthropic requirement confirmed live in Track 2).
@@ -81,6 +86,12 @@ module LlmCapabilityProbe
       context.chat(model: model, provider: ruby_llm_provider, assume_model_exists: assume_model_exists?)
     end
 
+    # The provider's live models listing, resolved the way LlmClient does it
+    # (registry names don't always match RubyLLM provider keys).
+    def list_models
+      RubyLLM::Provider.resolve(ruby_llm_provider).new(context.config).list_models
+    end
+
     def assume_model_exists? = false
     def web_fetch_params(_model) = nil
     def prepare_web(_chat) = nil
@@ -150,7 +161,7 @@ module LlmCapabilityProbe
   end
 
   class Runner
-    CHECKS = %w[plain schema web_search web_fetch two_step combined].freeze
+    CHECKS = %w[models plain schema web_search web_fetch two_step combined].freeze
 
     def initialize(provider:, model:, checks: CHECKS)
       @provider = provider
@@ -178,6 +189,19 @@ module LlmCapabilityProbe
     rescue StandardError => e
       @results << { check: check, status: "FAIL", note: "#{e.class}: #{e.message.to_s[0, 300]}",
                     evidence: nil, seconds: (Time.current - started).round(1) }
+    end
+
+    # Records the authenticated models listing as evidence and confirms the
+    # probed id is served verbatim — the capability matrix gates on exact
+    # string match, so a near-miss id qualifies nothing.
+    def check_models
+      ids = @provider.list_models.map(&:id)
+      evidence = { model_ids: ids }
+      return { status: "FAIL", note: "models endpoint returned no models", evidence: evidence } if ids.empty?
+
+      served = ids.include?(@model)
+      note = served ? "#{@model} served exactly (#{ids.size} models listed)" : "#{@model} not among #{ids.size} served ids"
+      { status: served ? "PASS" : "FAIL", note: note, evidence: evidence }
     end
 
     def check_plain

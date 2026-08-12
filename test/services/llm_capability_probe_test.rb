@@ -18,12 +18,15 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     end
   end
 
+  FakeModel = Struct.new(:id)
+
   class FakeProvider
     attr_reader :key
 
-    def initialize(responses, fetch_params: nil)
+    def initialize(responses, fetch_params: nil, models: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
       @fetch_params = fetch_params
+      @models = models
       @key = "fake"
     end
 
@@ -32,15 +35,38 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     def web_params(_model) = { tools: [] }
     def web_search_params(_model) = { tools: [] }
     def web_fetch_params(_model) = @fetch_params
+    def list_models = @models.map { |id| FakeModel.new(id) }
   end
 
-  def run_checks(responses, checks, fetch_params: nil)
-    provider = FakeProvider.new(responses, fetch_params: fetch_params)
+  def run_checks(responses, checks, fetch_params: nil, models: [])
+    provider = FakeProvider.new(responses, fetch_params: fetch_params, models: models)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: checks).run
   end
 
   def valid_payload
     { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" }] }
+  end
+
+  test "#run should pass the models check when the probed id is served exactly" do
+    outcome = run_checks([], ["models"], models: %w[other-model test-model])
+
+    assert outcome[:passed]
+    assert_equal "PASS", outcome[:results].first[:status]
+    assert_equal %w[other-model test-model], outcome[:results].first[:evidence][:model_ids]
+  end
+
+  test "#run should fail the models check when the probed id is not served" do
+    outcome = run_checks([], ["models"], models: %w[test-model-v2])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/not among 1 served ids/, outcome[:results].first[:note])
+  end
+
+  test "#run should fail the models check on an empty listing" do
+    outcome = run_checks([], ["models"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/no models/, outcome[:results].first[:note])
   end
 
   test "#run should pass the plain check on a pong reply" do
