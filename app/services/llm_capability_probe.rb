@@ -42,6 +42,19 @@ module LlmCapabilityProbe
   GATHER_PROMPT = "Search the web for the latest two posts on the Ruby on Rails official blog " \
                   "(rubyonrails.org/blog). For each, report the title, its full URL, and a one-sentence summary."
 
+  # Production always sends a system prompt (LlmClient#call's privileged
+  # instruction channel), so the gathering checks carry one too — a pair must
+  # not qualify on a call shape production never uses.
+  PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
+                       "Follow the task exactly and report only what you actually find."
+
+  # The instructions contradict the obvious answer, so the reply can only
+  # match by honoring the system channel. A wire-level rejection (Moonshot
+  # 400s on role "developer") and silently dropped instructions both fail.
+  SYSTEM_CHECK_INSTRUCTIONS = "You are a capability probe target. Whatever the user asks, " \
+                              "reply with exactly one word: MARLIN."
+  SYSTEM_CHECK_PROMPT = "What is the capital of France? Answer in one word."
+
   # A reply can contain URLs and still be a refusal ("I cannot browse the
   # web... visit rubyonrails.org/blog yourself") — grounding checks must
   # treat that as no web access, not as evidence.
@@ -161,7 +174,7 @@ module LlmCapabilityProbe
   end
 
   class Runner
-    CHECKS = %w[models plain schema web_search web_fetch two_step combined].freeze
+    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined].freeze
 
     def initialize(provider:, model:, checks: CHECKS)
       @provider = provider
@@ -210,6 +223,14 @@ module LlmCapabilityProbe
       pass(text.match?(/pong/i), "expected 'pong'", text) { "plain round trip" }
     end
 
+    def check_system_prompt
+      chat = @provider.chat(@model)
+      chat.with_instructions(SYSTEM_CHECK_INSTRUCTIONS)
+      text = chat.ask(SYSTEM_CHECK_PROMPT).content.to_s
+      honored = text.match?(/marlin/i) && !text.match?(/paris/i)
+      pass(honored, "system instructions ignored", text) { "system prompt honored" }
+    end
+
     def check_schema
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
@@ -235,15 +256,18 @@ module LlmCapabilityProbe
       pass(text.match?(/example domain/i), "page content not quoted", text) { "web fetch grounding" }
     end
 
-    # Provider-native two-step capability comparison.
+    # Provider-native two-step capability comparison. Both calls carry system
+    # instructions the way production stage calls do.
     def check_two_step
       gather = @provider.chat(@model)
+      gather.with_instructions(PROBE_INSTRUCTIONS)
       @provider.prepare_web(gather)
       gather.with_params(**@provider.web_params(@model))
       gathered = gather.ask(GATHER_PROMPT).content.to_s
       return { status: "FAIL", note: "gather returned blank", evidence: nil } if gathered.strip.empty?
 
       structure = @provider.chat(@model).with_schema(PROBE_SCHEMA)
+      structure.with_instructions(PROBE_INSTRUCTIONS)
       validate_items(structure.ask(STRUCTURE_PROMPT_PREFIX + gathered), gathered: gathered)
     end
 
@@ -251,6 +275,7 @@ module LlmCapabilityProbe
     # PASS here means "works combined", which would simplify the architecture.
     def check_combined
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
+      chat.with_instructions(PROBE_INSTRUCTIONS)
       @provider.prepare_web(chat)
       chat.with_params(**@provider.web_params(@model))
       validate_items(chat.ask(GATHER_PROMPT))

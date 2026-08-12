@@ -4,12 +4,19 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   FakeResponse = Struct.new(:content)
 
   class FakeChat
+    attr_reader :instructions
+
     def initialize(response)
       @response = response
     end
 
     def with_schema(_schema) = self
     def with_params(**) = self
+
+    def with_instructions(text)
+      @instructions = text
+      self
+    end
 
     def ask(_prompt)
       raise @response if @response.is_a?(StandardError)
@@ -21,16 +28,19 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   FakeModel = Struct.new(:id)
 
   class FakeProvider
-    attr_reader :key
+    attr_reader :key, :chats
 
     def initialize(responses, fetch_params: nil, models: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
       @fetch_params = fetch_params
       @models = models
+      @chats = []
       @key = "fake"
     end
 
-    def chat(_model) = FakeChat.new(@responses.shift)
+    def chat(_model)
+      FakeChat.new(@responses.shift).tap { |chat| @chats << chat }
+    end
     def prepare_web(_chat) = nil
     def web_params(_model) = { tools: [] }
     def web_search_params(_model) = { tools: [] }
@@ -80,6 +90,26 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     outcome = run_checks("hello", ["plain"])
 
     assert_not outcome[:passed]
+    assert_equal "FAIL", outcome[:results].first[:status]
+  end
+
+  test "#run should pass the system prompt check when instructions are honored" do
+    outcome = run_checks("MARLIN", ["system_prompt"])
+
+    assert outcome[:passed]
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the system prompt check when instructions are ignored" do
+    outcome = run_checks("Paris", ["system_prompt"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "system instructions ignored", outcome[:results].first[:note]
+  end
+
+  test "#run should fail the system prompt check on a hedged reply naming both answers" do
+    outcome = run_checks("You asked for MARLIN, but the capital is Paris.", ["system_prompt"])
+
     assert_equal "FAIL", outcome[:results].first[:status]
   end
 
@@ -159,6 +189,21 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
     assert_equal "PASS", outcome[:results].first[:status]
     assert_equal "https://example.com/p", outcome[:results].first[:evidence][:items].first["source_url"]
+  end
+
+  test "#run should send system instructions on both two_step calls" do
+    provider = FakeProvider.new(["gathered post text https://example.com/p", valid_payload])
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["two_step"]).run
+
+    assert_equal 2, provider.chats.size
+    assert(provider.chats.all? { |chat| chat.instructions == LlmCapabilityProbe::PROBE_INSTRUCTIONS })
+  end
+
+  test "#run should send system instructions on the combined call" do
+    provider = FakeProvider.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["combined"]).run
+
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
   end
 
   test "#run should record an exception as a failed check" do
