@@ -173,6 +173,9 @@ References:
   `docker compose exec app bin/rubocop -f github`. See
   [`docs/claude-remote-env.md`](docs/claude-remote-env.md) for the image build,
   GHCR publishing, and caching setup.
+- `bin/critic` reports duplication and complexity (RubyCritic). Advisory, not a
+  gate. Read [`docs/code-quality.md`](docs/code-quality.md) before acting on its
+  output — it records which findings are known false positives.
 
 ## Testing
 

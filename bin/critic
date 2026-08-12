@@ -1,0 +1,120 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs RubyCritic and reports the part of its output that tends to be
+# actionable: duplication that spans files. The raw report is ~350 findings
+# across ~380 files, most of which are per-file noise; the cross-file groups
+# are where near-identical classes show up.
+#
+#   bin/critic                  # summary + duplication spanning files
+#   bin/critic --all            # also list the worst-rated files
+#   bin/critic --raw            # RubyCritic's own console report, unfiltered
+#   bin/critic app/components   # scope to given paths (default: app lib)
+#
+# See docs/code-quality.md for what the numbers mean and which findings have
+# already been dismissed as false positives.
+
+require "open3"
+require "optparse"
+
+DEFAULT_PATHS = %w[app lib].freeze
+
+options = { all: false, raw: false }
+OptionParser.new do |parser|
+  parser.banner = "Usage: bin/critic [options] [paths...]"
+  parser.on("--all", "Also list the worst-rated files") { options[:all] = true }
+  parser.on("--raw", "Print RubyCritic's console report unfiltered") { options[:raw] = true }
+  parser.on("-h", "--help") { puts parser; exit }
+end.parse!
+
+paths = ARGV.empty? ? DEFAULT_PATHS : ARGV
+
+report, status = Open3.capture2e("bundle", "exec", "rubycritic", "--no-browser", "-f", "console", *paths)
+
+unless status.success?
+  warn report
+  warn "\nbin/critic: rubycritic failed. In a container, run it there: docker compose exec app bin/critic"
+  exit 1
+end
+
+if options[:raw]
+  puts report
+  exit
+end
+
+# One entry per analysed class, in RubyCritic's console layout:
+#
+#   ClassName:
+#     Rating:       B
+#     Smells:       3
+#       * (DuplicateCode) Similar code found in 2 nodes
+#         - app/a.rb:10
+#         - app/b.rb:12
+Finding = Struct.new(:type, :locations)
+Entry = Struct.new(:name, :rating, :duplication)
+
+findings = []
+entries = []
+ratings = Hash.new(0)
+current = nil
+entry = nil
+
+report.each_line do |line|
+  case line
+  when /^(\S.*):$/
+    entry = Entry.new(Regexp.last_match(1), nil, 0)
+    entries << entry
+    current = nil
+  when /^\s+Rating:\s+(\S+)/
+    ratings[Regexp.last_match(1)] += 1
+    entry&.rating = Regexp.last_match(1)
+  when /^\s+Duplication:\s+(\d+)/
+    entry&.duplication = Regexp.last_match(1).to_i
+  when /^\s+\* \((\w+)\)/
+    current = Finding.new(Regexp.last_match(1), [])
+    findings << current
+  when /^\s+- (\S+?):\d+\s*$/
+    current&.locations&.push(Regexp.last_match(1))
+  end
+end
+
+score = report[/^Score: (\S+)/, 1]
+
+# Each clone is reported once per participating class, so the same set of files
+# arrives several times. Key on the file set to collapse those repeats.
+cross_file = findings
+  .select { |finding| finding.type == "DuplicateCode" }
+  .map { |finding| finding.locations.uniq.sort }
+  .select { |files| files.size > 1 }
+  .uniq
+
+by_type = findings.group_by(&:type).transform_values(&:size).sort_by { |_type, count| -count }
+
+puts "Score: #{score}    Findings: #{findings.size}    Files: #{ratings.values.sum}"
+puts "Ratings: " + %w[A B C D F].map { |grade| "#{grade}=#{ratings[grade]}" }.join("  ")
+puts
+puts "Findings by type:"
+by_type.each { |type, count| puts format("  %4d  %s", count, type) }
+
+puts
+if cross_file.empty?
+  puts "No duplication spanning files."
+else
+  puts "Duplication spanning files (#{cross_file.size} group#{"s" unless cross_file.size == 1}):"
+  cross_file.sort_by { |files| [-files.size, files.first] }.each do |files|
+    puts "  #{files.size} files:"
+    files.each { |file| puts "    #{file}" }
+  end
+end
+
+return unless options[:all]
+
+# Ranked by duplication mass, not complexity: the highest-complexity files are
+# large by nature and want decomposition, which no report can hand you.
+puts
+puts "Worst by duplication mass:"
+entries
+  .select { |candidate| candidate.duplication.positive? }
+  .sort_by { |candidate| -candidate.duplication }
+  .first(15)
+  .each { |candidate| puts format("  %5d  %s  %s", candidate.duplication, candidate.rating, candidate.name) }
