@@ -70,6 +70,35 @@ module LlmCapabilityProbe
     Post: "SQLite in production" at https://example.com/blog/sqlite-prod — a guide to running SQLite at scale.
   TEXT
 
+  CLIENT_TOOLS_PROMPT = "Search the web for the IANA reserved example domain page, fetch the most " \
+                        "relevant result with the web fetch tool, and quote the exact text of its main heading."
+
+  # Wire names the production tools present to the model; the client-tools
+  # check matches the loop's observed tool calls against these.
+  SEARCH_TOOL_NAME = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil).name
+  FETCH_TOOL_NAME = LlmClient::Tools::WebFetch.new.name
+
+  # Probe-local stand-in for the production search tool: identical wire shape
+  # (name, description, parameter) but canned results pointing at fixed real
+  # URLs, so the tool loop can be qualified without managed search
+  # credentials. The follow-up fetch is the real production tool, which is
+  # credential-free.
+  class CannedWebSearch < RubyLLM::Tool
+    description LlmClient::Tools::WebSearch.description
+    param :query, desc: "Search query", required: true
+
+    RESULTS = [
+      { "title" => "Example Domain", "url" => "https://example.com/",
+        "snippet" => "Reserved domain for use in illustrative examples in documents." }
+    ].freeze
+
+    def name = SEARCH_TOOL_NAME
+
+    def execute(query:)
+      { results: RESULTS }
+    end
+  end
+
   # Moonshot's server-executed web search is invoked through a builtin tool
   # the client must acknowledge by echoing the arguments back. Modeled as a
   # RubyLLM function tool so the gem's tool loop performs that round trip.
@@ -174,7 +203,7 @@ module LlmCapabilityProbe
   end
 
   class Runner
-    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined].freeze
+    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined client_tools].freeze
 
     def initialize(provider:, model:, checks: CHECKS)
       @provider = provider
@@ -279,6 +308,35 @@ module LlmCapabilityProbe
       @provider.prepare_web(chat)
       chat.with_params(**@provider.web_params(@model))
       validate_items(chat.ask(GATHER_PROMPT))
+    end
+
+    # The production mechanism end to end: a system prompt plus the
+    # client-side search and fetch function tools driven through a real
+    # multi-round loop. The observed tool calls plus an answer grounded in
+    # the fetched page are the evidence that the model drives client tools.
+    def check_client_tools
+      chat = @provider.chat(@model)
+      chat.with_instructions(PROBE_INSTRUCTIONS)
+      chat.with_tool(CannedWebSearch)
+      chat.with_tool(LlmClient::Tools::WebFetch)
+      text = chat.ask(CLIENT_TOOLS_PROMPT).content.to_s
+
+      calls = tool_calls(chat)
+      names = calls.map { |call| call[:name] }
+      evidence = { tool_calls: calls, answer: text[0, 2000] }
+      return { status: "FAIL", note: "search tool never called", evidence: evidence } unless names.include?(SEARCH_TOOL_NAME)
+      return { status: "FAIL", note: "fetch tool never called", evidence: evidence } unless names.include?(FETCH_TOOL_NAME)
+
+      grounded = text.match?(/example domain/i) && !LlmCapabilityProbe.refusal?(text)
+      { status: grounded ? "PASS" : "FAIL",
+        note: grounded ? "#{calls.size} tool calls, answer grounded in fetched page" : "tools called but answer not grounded",
+        evidence: evidence }
+    end
+
+    def tool_calls(chat)
+      Array(chat.try(:messages)).select { |message| message.try(:tool_call?) }
+                                .flat_map { |message| message.tool_calls.values }
+                                .map { |call| { name: call.name, arguments: call.arguments } }
     end
 
     def validate_items(response, gathered: nil)
