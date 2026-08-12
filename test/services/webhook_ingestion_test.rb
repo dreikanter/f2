@@ -11,8 +11,8 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     @endpoint ||= create(:webhook_endpoint, feed: feed)
   end
 
-  def ingest(payload)
-    WebhookIngestion.new(endpoint: endpoint, payload: payload).call
+  def ingest(payload, idempotency_key: nil)
+    WebhookIngestion.new(endpoint: endpoint, payload: payload, idempotency_key: idempotency_key).call
   end
 
   test "#call should persist entry, uid record, and enqueued post" do
@@ -61,6 +61,64 @@ class WebhookIngestionTest < ActiveSupport::TestCase
 
     assert result.invalid?
     assert_includes result.errors, "uid must not be blank"
+  end
+
+  test "#call should use the Idempotency-Key header as the uid" do
+    result = ingest({ "content" => "Hello", "source_url" => "https://example.com/a" }, idempotency_key: "key-1")
+
+    assert result.enqueued?
+    assert_equal "key-1", result.uid
+  end
+
+  test "#call should treat Idempotency-Key and uid as one dedup key" do
+    ingest({ "content" => "Hello", "uid" => "article-42" })
+
+    result = nil
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      result = ingest({ "content" => "Hello" }, idempotency_key: "article-42")
+    end
+
+    assert result.duplicate?
+    assert_equal "article-42", result.uid
+  end
+
+  test "#call should accept matching uid and Idempotency-Key" do
+    result = ingest({ "content" => "Hello", "uid" => "article-42" }, idempotency_key: "article-42")
+
+    assert result.enqueued?
+    assert_equal "article-42", result.uid
+  end
+
+  test "#call should reject mismatched uid and Idempotency-Key" do
+    result = nil
+
+    assert_no_difference ["FeedEntry.count", "FeedEntryUid.count", "Post.count"] do
+      result = ingest({ "content" => "Hello", "uid" => "article-42" }, idempotency_key: "other-key")
+    end
+
+    assert result.invalid?
+    assert_includes result.errors, "uid and Idempotency-Key must match"
+  end
+
+  test "#call should reject a blank Idempotency-Key" do
+    result = ingest({ "content" => "Hello" }, idempotency_key: "   ")
+
+    assert result.invalid?
+    assert_includes result.errors, "Idempotency-Key must not be blank"
+  end
+
+  test "#call should reject an overlong Idempotency-Key" do
+    result = ingest({ "content" => "Hello" }, idempotency_key: "k" * 256)
+
+    assert result.invalid?
+    assert_includes result.errors, "Idempotency-Key must be at most 255 characters"
+  end
+
+  test "#call should reject an Idempotency-Key with null bytes" do
+    result = ingest({ "content" => "Hello" }, idempotency_key: "ke\0y")
+
+    assert result.invalid?
+    assert_includes result.errors, "Idempotency-Key must not contain null bytes"
   end
 
   test "#call should derive the uid from source_url like pull feeds" do
