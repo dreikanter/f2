@@ -51,10 +51,22 @@ class LlmProviderTest < ActiveSupport::TestCase
   end
 
   test "#configure should set the openai key and base for moonshot" do
-    config = Struct.new(:openai_api_key, :openai_api_base).new
+    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
     LlmProvider.find("moonshot").configure(config, "sk-moon-x")
     assert_equal "sk-moon-x", config.openai_api_key
     assert_equal "https://api.moonshot.ai/v1", config.openai_api_base
+  end
+
+  test "#configure should pin system prompts to role system for providers riding :openai" do
+    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
+    LlmProvider.find("moonshot").configure(config, "sk-moon-x")
+    assert config.openai_use_system_role
+  end
+
+  test "#configure should leave the system-role flag alone for other providers" do
+    config = Struct.new(:openrouter_api_key, :openai_use_system_role).new
+    LlmProvider.find("openrouter").configure(config, "sk-or-x")
+    assert_nil config.openai_use_system_role
   end
 
   test "every provider should declare a default_model with a known rate" do

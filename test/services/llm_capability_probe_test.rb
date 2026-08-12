@@ -170,6 +170,18 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_nil moonshot.web_fetch_params("m")
   end
 
+  test "moonshot provider should configure the same system-role flag as production" do
+    original = ENV.fetch("MOONSHOT_API_KEY", nil)
+    ENV["MOONSHOT_API_KEY"] = "k"
+    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
+
+    LlmCapabilityProbe::Provider.build("moonshot").configure(config)
+
+    assert config.openai_use_system_role
+  ensure
+    ENV["MOONSHOT_API_KEY"] = original
+  end
+
   test "moonshot echo tool should return its arguments verbatim" do
     tool = LlmCapabilityProbe::MoonshotWebSearchEcho.new
     assert_equal "$web_search", tool.name

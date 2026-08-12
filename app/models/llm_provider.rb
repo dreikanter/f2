@@ -33,6 +33,11 @@ class LlmProvider
   def configure(config, api_key)
     config.public_send("#{ruby_llm_provider}_api_key=", api_key)
     config.public_send("#{ruby_llm_provider}_api_base=", api_base) if api_base
+    # RubyLLM's :openai provider sends system prompts as role "developer"
+    # unless this flag is set, and OpenAI-compatible APIs like Moonshot reject
+    # that role with a 400. Scoped per-provider, not set globally, because
+    # OpenRouter reads the same attribute and expects the default.
+    config.openai_use_system_role = true if ruby_llm_provider == :openai
   end
 
   PROVIDERS = {

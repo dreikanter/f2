@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-09
+
+- Feeds and previews backed by Moonshot (Kimi) credentials work again. Every Kimi request was being rejected because of how instructions were labeled on the way to the provider.
+
 ## 2026-08-08
 
 - AI usage now counts every step of a web-search run, so the costs you see reflect what the call actually spent.
