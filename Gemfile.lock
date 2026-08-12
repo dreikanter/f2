@@ -619,9 +619,8 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    with_advisory_lock (7.5.0)
+    with_advisory_lock (7.6.0)
       activerecord (>= 7.2)
-      zeitwerk (>= 2.7)
     yard (0.9.45)
     yard-activesupport-concern (0.0.1)
       yard (>= 0.8)
