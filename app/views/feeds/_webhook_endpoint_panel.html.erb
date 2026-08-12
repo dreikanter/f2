@@ -59,7 +59,7 @@
                          data: { key: "webhook.curl" } %>
         <%= clipboard_button curl_snippet, label: "Copy curl example", key: "webhook.copy-curl", css_class: "mt-2" %>
       </div>
-      <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting.</p>
+      <p class="text-sm text-muted">You can also send <code>source_url</code>, <code>images</code>, <code>comments</code>, and a <code>uid</code> to keep retries from double-posting. The standard <code>Idempotency-Key</code> header works the same as <code>uid</code>.</p>
     </div>
 
     <p class="text-sm text-muted" data-key="webhook.last-received">

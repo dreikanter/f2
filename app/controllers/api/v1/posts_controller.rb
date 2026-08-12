@@ -21,7 +21,7 @@ class Api::V1::PostsController < ActionController::API
     return reject_throttled(limit) unless limit.allowed?
     return reject_oversized if oversized_body?
 
-    respond(WebhookIngestion.new(endpoint: endpoint, payload: payload).call)
+    respond(WebhookIngestion.new(endpoint: endpoint, payload: payload, idempotency_key: idempotency_key).call)
   end
 
   private
@@ -41,6 +41,10 @@ class Api::V1::PostsController < ActionController::API
 
   def payload
     request.request_parameters.deep_stringify_keys
+  end
+
+  def idempotency_key
+    request.headers["Idempotency-Key"]
   end
 
   def respond(result)

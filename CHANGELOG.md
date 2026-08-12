@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-12
+
+- The posting endpoint now understands the standard `Idempotency-Key` header, so HTTP clients that send it get safe retries without setting `uid` in the payload.
+
 ## 2026-08-09
 
 - Feeds and previews backed by Moonshot (Kimi) credentials work again. Every Kimi request was being rejected because of how instructions were labeled on the way to the provider.
