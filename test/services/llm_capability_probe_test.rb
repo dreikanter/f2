@@ -4,15 +4,21 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   FakeResponse = Struct.new(:content)
 
   FakeToolCallMessage = Struct.new(:tool_calls) do
-    def tool_call? = tool_calls.present?
+    def tool_call? = true
+    def tool_result? = false
+  end
+
+  FakeToolResultMessage = Struct.new(:tool_call_id, :content) do
+    def tool_call? = false
+    def tool_result? = true
   end
 
   class FakeChat
     attr_reader :instructions
 
-    def initialize(response, tool_call_names: [])
+    def initialize(response, tool_rounds: [])
       @response = response
-      @tool_call_names = tool_call_names
+      @tool_rounds = tool_rounds
     end
 
     def with_schema(_schema) = self
@@ -31,9 +37,9 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     end
 
     def messages
-      @tool_call_names.map.with_index do |name, index|
-        call = RubyLLM::ToolCall.new(id: index.to_s, name: name, arguments: { "query" => "example" })
-        FakeToolCallMessage.new({ call.id => call })
+      @tool_rounds.flat_map.with_index do |round, index|
+        call = RubyLLM::ToolCall.new(id: index.to_s, name: round[:name], arguments: { "url" => "https://example.com/" })
+        [FakeToolCallMessage.new({ call.id => call }), FakeToolResultMessage.new(call.id, round[:result])]
       end
     end
   end
@@ -43,17 +49,17 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   class FakeProvider
     attr_reader :key, :chats
 
-    def initialize(responses, fetch_params: nil, models: [], tool_call_names: [])
+    def initialize(responses, fetch_params: nil, models: [], tool_rounds: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
       @fetch_params = fetch_params
       @models = models
-      @tool_call_names = tool_call_names
+      @tool_rounds = tool_rounds
       @chats = []
       @key = "fake"
     end
 
     def chat(_model)
-      FakeChat.new(@responses.shift, tool_call_names: @tool_call_names).tap { |chat| @chats << chat }
+      FakeChat.new(@responses.shift, tool_rounds: @tool_rounds).tap { |chat| @chats << chat }
     end
     def prepare_web(_chat) = nil
     def web_params(_model) = { tools: [] }
@@ -62,10 +68,16 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     def list_models = @models.map { |id| FakeModel.new(id) }
   end
 
-  def run_checks(responses, checks, fetch_params: nil, models: [], tool_call_names: [])
-    provider = FakeProvider.new(responses, fetch_params: fetch_params, models: models,
-                                tool_call_names: tool_call_names)
+  def run_checks(responses, checks, fetch_params: nil, models: [], tool_rounds: [])
+    provider = FakeProvider.new(responses, fetch_params: fetch_params, models: models, tool_rounds: tool_rounds)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: checks).run
+  end
+
+  FETCHED_PAGE = "Example Domain This domain is for use in illustrative examples in documents.".freeze
+
+  def full_tool_loop(fetch_result: FETCHED_PAGE)
+    [{ name: LlmCapabilityProbe::SEARCH_TOOL_NAME, result: "canned results" },
+     { name: LlmCapabilityProbe::FETCH_TOOL_NAME, result: fetch_result }]
   end
 
   def valid_payload
@@ -215,27 +227,34 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
   test "#run should fail the client tools check when the fetch tool is never called" do
     outcome = run_checks("Example Domain", ["client_tools"],
-                         tool_call_names: [LlmCapabilityProbe::SEARCH_TOOL_NAME])
+                         tool_rounds: [{ name: LlmCapabilityProbe::SEARCH_TOOL_NAME, result: "canned results" }])
 
     assert_equal "FAIL", outcome[:results].first[:status]
     assert_equal "fetch tool never called", outcome[:results].first[:note]
   end
 
+  test "#run should fail the client tools check when the fetch returned no page content" do
+    outcome = run_checks("The heading is Example Domain.", ["client_tools"],
+                         tool_rounds: full_tool_loop(fetch_result: '{"error":"HTTP 403"}'))
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "fetch returned no page content", outcome[:results].first[:note]
+  end
+
   test "#run should pass the client tools check on a full loop with a grounded answer" do
-    names = [LlmCapabilityProbe::SEARCH_TOOL_NAME, LlmCapabilityProbe::FETCH_TOOL_NAME]
-    outcome = run_checks('The main heading reads: "Example Domain"', ["client_tools"], tool_call_names: names)
+    outcome = run_checks('The main heading reads: "Example Domain"', ["client_tools"], tool_rounds: full_tool_loop)
 
     assert_equal "PASS", outcome[:results].first[:status]
     assert_match(/2 tool calls/, outcome[:results].first[:note])
-    assert_equal names, outcome[:results].first[:evidence][:tool_calls].map { |call| call[:name] }
+    assert_equal [LlmCapabilityProbe::SEARCH_TOOL_NAME, LlmCapabilityProbe::FETCH_TOOL_NAME],
+                 outcome[:results].first[:evidence][:tool_rounds].map { |round| round[:name] }
   end
 
   test "#run should fail the client tools check when tools ran but the answer is not grounded" do
-    names = [LlmCapabilityProbe::SEARCH_TOOL_NAME, LlmCapabilityProbe::FETCH_TOOL_NAME]
-    outcome = run_checks("I could not determine the heading.", ["client_tools"], tool_call_names: names)
+    outcome = run_checks("I could not determine the heading.", ["client_tools"], tool_rounds: full_tool_loop)
 
     assert_equal "FAIL", outcome[:results].first[:status]
-    assert_equal "tools called but answer not grounded", outcome[:results].first[:note]
+    assert_equal "tools ran but answer not grounded", outcome[:results].first[:note]
   end
 
   test "canned web search should present the production search tool's wire shape" do
@@ -251,6 +270,14 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     result = LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything")
 
     assert_equal ["https://example.com/"], result[:results].map { |r| r["url"] }
+  end
+
+  test "the client tools check should not disclose the expected heading outside the fetched page" do
+    canned = JSON.generate(LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything"))
+
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, canned
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, LlmCapabilityProbe::CLIENT_TOOLS_PROMPT
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, LlmCapabilityProbe::PROBE_INSTRUCTIONS
   end
 
   test "#run should send system instructions on both two_step calls" do

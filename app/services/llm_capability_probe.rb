@@ -70,8 +70,13 @@ module LlmCapabilityProbe
     Post: "SQLite in production" at https://example.com/blog/sqlite-prod — a guide to running SQLite at scale.
   TEXT
 
-  CLIENT_TOOLS_PROMPT = "Search the web for the IANA reserved example domain page, fetch the most " \
-                        "relevant result with the web fetch tool, and quote the exact text of its main heading."
+  CLIENT_TOOLS_PROMPT = "Search for IANA's reserved documentation domains, fetch the top result with the " \
+                        "fetch tool, and quote the exact text of that page's main heading."
+
+  # The heading lives only on the fetched page — deliberately absent from the
+  # prompt and from the canned search results — so quoting it is evidence the
+  # model read fetched content rather than echoing what it was already told.
+  EXPECTED_HEADING = /example domain/i
 
   # Wire names the production tools present to the model; the client-tools
   # check matches the loop's observed tool calls against these.
@@ -87,9 +92,11 @@ module LlmCapabilityProbe
     description LlmClient::Tools::WebSearch.description
     param :query, desc: "Search query", required: true
 
+    # Withholds the heading the check looks for: if a result disclosed it, a
+    # model could pass by repeating the snippet without fetching anything.
     RESULTS = [
-      { "title" => "Example Domain", "url" => "https://example.com/",
-        "snippet" => "Reserved domain for use in illustrative examples in documents." }
+      { "title" => "IANA-managed Reserved Domains", "url" => "https://example.com/",
+        "snippet" => "Names set aside by IANA for use in documentation. Open the page to read it." }
     ].freeze
 
     def name = SEARCH_TOOL_NAME
@@ -321,22 +328,41 @@ module LlmCapabilityProbe
       chat.with_tool(LlmClient::Tools::WebFetch)
       text = chat.ask(CLIENT_TOOLS_PROMPT).content.to_s
 
-      calls = tool_calls(chat)
-      names = calls.map { |call| call[:name] }
-      evidence = { tool_calls: calls, answer: text[0, 2000] }
-      return { status: "FAIL", note: "search tool never called", evidence: evidence } unless names.include?(SEARCH_TOOL_NAME)
-      return { status: "FAIL", note: "fetch tool never called", evidence: evidence } unless names.include?(FETCH_TOOL_NAME)
+      rounds = tool_rounds(chat)
+      evidence = { tool_rounds: rounds, answer: text[0, 2000] }
+      failure = tool_loop_failure(rounds)
+      return failure.merge(evidence: evidence) if failure
 
-      grounded = text.match?(/example domain/i) && !LlmCapabilityProbe.refusal?(text)
+      grounded = EXPECTED_HEADING.match?(text) && !LlmCapabilityProbe.refusal?(text)
       { status: grounded ? "PASS" : "FAIL",
-        note: grounded ? "#{calls.size} tool calls, answer grounded in fetched page" : "tools called but answer not grounded",
+        note: grounded ? "#{rounds.size} tool calls, answer grounded in fetched page" : "tools ran but answer not grounded",
         evidence: evidence }
     end
 
-    def tool_calls(chat)
-      Array(chat.try(:messages)).select { |message| message.try(:tool_call?) }
-                                .flat_map { |message| message.tool_calls.values }
-                                .map { |call| { name: call.name, arguments: call.arguments } }
+    # Both tools must appear in the loop, and the fetch must have returned the
+    # page itself: a refused URL, a wrong URL or an HTTP error leaves nothing
+    # to ground on, and the heading appears nowhere else in the conversation.
+    def tool_loop_failure(rounds)
+      names = rounds.map { |round| round[:name] }
+      return { status: "FAIL", note: "search tool never called" } unless names.include?(SEARCH_TOOL_NAME)
+
+      fetch = rounds.find { |round| round[:name] == FETCH_TOOL_NAME }
+      return { status: "FAIL", note: "fetch tool never called" } if fetch.nil?
+      return { status: "FAIL", note: "fetch returned no page content" } unless EXPECTED_HEADING.match?(fetch[:result])
+
+      nil
+    end
+
+    # Pairs each tool call with the result the loop fed back, so a check can
+    # assert on what a tool returned and not merely that it was called.
+    def tool_rounds(chat)
+      messages = Array(chat.try(:messages))
+      results = messages.select { |message| message.try(:tool_result?) }.index_by(&:tool_call_id)
+      messages.select { |message| message.try(:tool_call?) }
+              .flat_map { |message| message.tool_calls.values }
+              .map do |call|
+                { name: call.name, arguments: call.arguments, result: results[call.id]&.content.to_s[0, 500] }
+              end
     end
 
     def validate_items(response, gathered: nil)
