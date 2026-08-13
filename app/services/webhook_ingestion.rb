@@ -116,12 +116,17 @@ class WebhookIngestion
     end
   end
 
+  # RFC 8941 sf-string: printable ASCII inside double quotes, with backslash
+  # escaping only quotes and backslashes.
+  SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
+
   # The Idempotency-Key header is a second spelling of uid, so it gets the same
   # constraints, plus a mismatch check: two different keys on one request almost
   # certainly mean a confused client, and dedup keys are the wrong place to
   # resolve that silently.
   def idempotency_key_errors
     return [] if @raw_idempotency_key.nil?
+    return ["Idempotency-Key must be a well-formed quoted string"] if idempotency_key.nil?
 
     errors = []
     errors << "Idempotency-Key must not be blank" if idempotency_key.blank?
@@ -133,8 +138,24 @@ class WebhookIngestion
     errors
   end
 
+  # Spec-following clients send the header as an sf-string — quotes included on
+  # the wire — so a quoted value is decoded before it is compared or persisted;
+  # otherwise the same logical key supplied via uid and via the header would
+  # never match. A bare value is kept as-is for clients that skip the
+  # structured-field encoding, and a malformed quoted value decodes to nil,
+  # which validation rejects.
   def idempotency_key
-    @raw_idempotency_key.to_s.strip
+    return @idempotency_key if defined?(@idempotency_key)
+
+    @idempotency_key = decode_idempotency_key
+  end
+
+  def decode_idempotency_key
+    raw = @raw_idempotency_key.to_s.strip
+    return raw unless raw.start_with?('"')
+
+    match = SF_STRING.match(raw)
+    match && match[:value].gsub(/\\(.)/, '\1')
   end
 
   def already_ingested?

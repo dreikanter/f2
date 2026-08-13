@@ -89,6 +89,41 @@ class WebhookIngestionTest < ActiveSupport::TestCase
     assert_equal "article-42", result.uid
   end
 
+  test "#call should decode a structured-field quoted Idempotency-Key" do
+    ingest({ "content" => "Hello", "uid" => "key-1" })
+
+    result = nil
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      result = ingest({ "content" => "Hello" }, idempotency_key: '"key-1"')
+    end
+
+    assert result.duplicate?
+    assert_equal "key-1", result.uid
+  end
+
+  test "#call should match a quoted Idempotency-Key against a bare uid" do
+    result = ingest({ "content" => "Hello", "uid" => "key-1" }, idempotency_key: '"key-1"')
+
+    assert result.enqueued?
+    assert_equal "key-1", result.uid
+  end
+
+  test "#call should unescape quoted characters in the Idempotency-Key" do
+    result = ingest({ "content" => "Hello" }, idempotency_key: '"a\\"b\\\\c"')
+
+    assert result.enqueued?
+    assert_equal 'a"b\\c', result.uid
+  end
+
+  test "#call should reject a malformed quoted Idempotency-Key" do
+    ['"unterminated', '"bad\\x"', %("tab\there")].each do |key|
+      result = ingest({ "content" => "Hello" }, idempotency_key: key)
+
+      assert result.invalid?
+      assert_includes result.errors, "Idempotency-Key must be a well-formed quoted string"
+    end
+  end
+
   test "#call should reject mismatched uid and Idempotency-Key" do
     result = nil
 
@@ -101,10 +136,12 @@ class WebhookIngestionTest < ActiveSupport::TestCase
   end
 
   test "#call should reject a blank Idempotency-Key" do
-    result = ingest({ "content" => "Hello" }, idempotency_key: "   ")
+    ["   ", '""'].each do |key|
+      result = ingest({ "content" => "Hello" }, idempotency_key: key)
 
-    assert result.invalid?
-    assert_includes result.errors, "Idempotency-Key must not be blank"
+      assert result.invalid?
+      assert_includes result.errors, "Idempotency-Key must not be blank"
+    end
   end
 
   test "#call should reject an overlong Idempotency-Key" do
