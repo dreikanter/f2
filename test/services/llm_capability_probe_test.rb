@@ -127,15 +127,27 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "PASS", outcome[:results].first[:status]
   end
 
+  test "#run should pass the system prompt check ignoring punctuation and whitespace" do
+    outcome = run_checks("  Marlin.\n", ["system_prompt"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
   test "#run should fail the system prompt check when instructions are ignored" do
     outcome = run_checks("Paris", ["system_prompt"])
 
     assert_equal "FAIL", outcome[:results].first[:status]
-    assert_equal "system instructions ignored", outcome[:results].first[:note]
+    assert_equal "system instructions not honored verbatim", outcome[:results].first[:note]
   end
 
   test "#run should fail the system prompt check on a hedged reply naming both answers" do
     outcome = run_checks("You asked for MARLIN, but the capital is Paris.", ["system_prompt"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the system prompt check on a refusal that names the word" do
+    outcome = run_checks("I cannot follow the instruction to reply MARLIN.", ["system_prompt"])
 
     assert_equal "FAIL", outcome[:results].first[:status]
   end

@@ -51,8 +51,9 @@ module LlmCapabilityProbe
   # The instructions contradict the obvious answer, so the reply can only
   # match by honoring the system channel. A wire-level rejection (Moonshot
   # 400s on role "developer") and silently dropped instructions both fail.
+  SYSTEM_CHECK_WORD = "MARLIN".freeze
   SYSTEM_CHECK_INSTRUCTIONS = "You are a capability probe target. Whatever the user asks, " \
-                              "reply with exactly one word: MARLIN."
+                              "reply with exactly one word: #{SYSTEM_CHECK_WORD}."
   SYSTEM_CHECK_PROMPT = "What is the capital of France? Answer in one word."
 
   # A reply can contain URLs and still be a refusal ("I cannot browse the
@@ -263,8 +264,16 @@ module LlmCapabilityProbe
       chat = @provider.chat(@model)
       chat.with_instructions(SYSTEM_CHECK_INSTRUCTIONS)
       text = chat.ask(SYSTEM_CHECK_PROMPT).content.to_s
-      honored = text.match?(/marlin/i) && !text.match?(/paris/i)
-      pass(honored, "system instructions ignored", text) { "system prompt honored" }
+      pass(honors_system_prompt?(text), "system instructions not honored verbatim", text) { "system prompt honored" }
+    end
+
+    # The instructions ask for exactly one word, so only that word counts:
+    # a refusal that names it, or an answer that also volunteers the user
+    # prompt's answer, means the channel was received but not obeyed.
+    # Punctuation and surrounding whitespace are ignored — a trailing period
+    # is formatting, not a second thought.
+    def honors_system_prompt?(text)
+      text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end
 
     def check_schema
