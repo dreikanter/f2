@@ -74,6 +74,9 @@ module LlmCapabilityProbe
   CLIENT_TOOLS_PROMPT = "Search for IANA's reserved documentation domains, fetch the top result with the " \
                         "fetch tool, and quote the exact text of that page's main heading."
 
+  CLIENT_TOOLS_SCHEMA_PROMPT = "#{CLIENT_TOOLS_PROMPT} Return exactly one item: body set to that heading, " \
+                               "uid and source_url set to the page's URL.".freeze
+
   # The heading lives only on the fetched page — deliberately absent from the
   # prompt and from the canned search results — so quoting it is evidence the
   # model read fetched content rather than echoing what it was already told.
@@ -211,7 +214,8 @@ module LlmCapabilityProbe
   end
 
   class Runner
-    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined client_tools].freeze
+    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined
+                client_tools client_tools_schema].freeze
 
     def initialize(provider:, model:, checks: CHECKS)
       @provider = provider
@@ -330,22 +334,61 @@ module LlmCapabilityProbe
     # client-side search and fetch function tools driven through a real
     # multi-round loop. The observed tool calls plus an answer grounded in
     # the fetched page are the evidence that the model drives client tools.
+    # This is production's gather shape for two-step providers (LlmLoader).
     def check_client_tools
+      client_tools_loop
+    end
+
+    # Production's combined shape (LlmLoader#extract when the adapter reports
+    # `combined_extraction?`): the output schema rides on the same chat as the
+    # client-side tools. Schema and tools can each work alone yet break
+    # together, so a pair qualified only by the checks above could still fail
+    # on a real feed load. A FAIL here reads as "use two-step", not as a
+    # disqualification — same as the provider-native `combined` check.
+    def check_client_tools_schema
+      client_tools_loop(schema: PROBE_SCHEMA)
+    end
+
+    def client_tools_loop(schema: nil)
+      chat = client_tools_chat(schema)
+      response = chat.ask(schema ? CLIENT_TOOLS_SCHEMA_PROMPT : CLIENT_TOOLS_PROMPT)
+      answer = answer_text(response)
+      rounds = tool_rounds(chat)
+      evidence = { tool_rounds: rounds, answer: answer[0, 2000] }
+
+      failure = tool_loop_failure(rounds) || grounding_failure(answer)
+      return failure.merge(evidence: evidence) if failure
+      return structured_result(response, rounds, evidence) if schema
+
+      { status: "PASS", note: "#{rounds.size} tool calls, answer grounded in fetched page", evidence: evidence }
+    end
+
+    def client_tools_chat(schema)
       chat = @provider.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
+      chat.with_schema(schema) if schema
       chat.with_tool(CannedWebSearch)
       chat.with_tool(LlmClient::Tools::WebFetch)
-      text = chat.ask(CLIENT_TOOLS_PROMPT).content.to_s
+      chat
+    end
 
-      rounds = tool_rounds(chat)
-      evidence = { tool_rounds: rounds, answer: text[0, 2000] }
-      failure = tool_loop_failure(rounds)
-      return failure.merge(evidence: evidence) if failure
+    def grounding_failure(answer)
+      return nil if EXPECTED_HEADING.match?(answer) && !LlmCapabilityProbe.refusal?(answer)
 
-      grounded = EXPECTED_HEADING.match?(text) && !LlmCapabilityProbe.refusal?(text)
-      { status: grounded ? "PASS" : "FAIL",
-        note: grounded ? "#{rounds.size} tool calls, answer grounded in fetched page" : "tools ran but answer not grounded",
-        evidence: evidence }
+      { status: "FAIL", note: "tools ran but answer not grounded" }
+    end
+
+    def structured_result(response, rounds, evidence)
+      result = validate_items(response)
+      result.merge(note: "#{rounds.size} tool calls, grounded; #{result[:note]}",
+                   evidence: evidence.merge(result[:evidence] || {}))
+    end
+
+    # Structured replies arrive as a Hash; serialize so grounding reads the
+    # same way for both shapes.
+    def answer_text(response)
+      content = response.content
+      content.is_a?(Hash) ? JSON.generate(content) : content.to_s
     end
 
     # Both tools must appear in the loop, and the fetch must have returned the
