@@ -88,6 +88,35 @@ class Api::V1::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "article-42", response_json["uid"]
   end
 
+  test "#create should dedupe on the Idempotency-Key header" do
+    post_hook params: { content: "Hello" }, headers: { "Idempotency-Key" => "key-1" }, as: :json
+
+    assert_response :created
+    assert_equal "key-1", response_json["uid"]
+
+    assert_no_difference ["FeedEntry.count", "Post.count"] do
+      post_hook params: { content: "Hello" }, headers: { "Idempotency-Key" => "key-1" }, as: :json
+    end
+
+    assert_response :ok
+    assert_equal "duplicate", response_json["status"]
+  end
+
+  test "#create should decode a quoted Idempotency-Key header" do
+    post_hook params: { content: "Hello" }, headers: { "Idempotency-Key" => '"key-1"' }, as: :json
+
+    assert_response :created
+    assert_equal "key-1", response_json["uid"]
+  end
+
+  test "#create should reject mismatched uid and Idempotency-Key" do
+    post_hook params: { content: "Hello", uid: "article-42" },
+              headers: { "Idempotency-Key" => "other-key" }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_includes response_json["errors"], "uid and Idempotency-Key must match"
+  end
+
   test "#create should reject an invalid payload without persisting" do
     assert_no_difference ["FeedEntry.count", "Post.count"] do
       post_hook params: { comments: ["No content here"] }, as: :json

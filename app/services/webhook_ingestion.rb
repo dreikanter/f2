@@ -9,6 +9,7 @@ class WebhookIngestion
   include HtmlTextUtils
 
   MAX_LIST_ITEMS = 8
+  MAX_UID_LENGTH = 255
   SUPPORTED_PUBLISHED_AT_YEARS = (1..9999).freeze
 
   # Caps on images/comments are load-bearing: publishing costs
@@ -30,7 +31,7 @@ class WebhookIngestion
         "items" => { "type" => "string" },
         "maxItems" => MAX_LIST_ITEMS
       },
-      "uid" => { "type" => "string", "minLength" => 1, "maxLength" => 255 },
+      "uid" => { "type" => "string", "minLength" => 1, "maxLength" => MAX_UID_LENGTH },
       "published_at" => { "type" => "string" }
     },
     "additionalProperties" => false
@@ -42,10 +43,11 @@ class WebhookIngestion
     def invalid? = status == :invalid
   end
 
-  def initialize(endpoint:, payload:)
+  def initialize(endpoint:, payload:, idempotency_key: nil)
     @endpoint = endpoint
     @feed = endpoint.feed
     @payload = WebhookPayload.new(payload)
+    @raw_idempotency_key = idempotency_key
   end
 
   def call
@@ -79,6 +81,7 @@ class WebhookIngestion
     errors = null_byte_errors
     return errors if errors.any?
 
+    errors.concat(idempotency_key_errors)
     errors << "no_content_or_images" if content.blank? && images.empty?
     errors << "uid must not be blank" if payload.uid_given? && explicit_uid.blank?
     errors << "source_url must be an absolute http(s) URL" if source_url.present? && !http_url?(source_url)
@@ -113,6 +116,48 @@ class WebhookIngestion
     end
   end
 
+  # RFC 8941 sf-string: printable ASCII inside double quotes, with backslash
+  # escaping only quotes and backslashes.
+  SF_STRING = /\A"(?<value>(?:[\x20-\x21\x23-\x5B\x5D-\x7E]|\\["\\])*)"\z/
+
+  # The Idempotency-Key header is a second spelling of uid, so it gets the same
+  # constraints, plus a mismatch check: two different keys on one request almost
+  # certainly mean a confused client, and dedup keys are the wrong place to
+  # resolve that silently.
+  def idempotency_key_errors
+    return [] if @raw_idempotency_key.nil?
+    return ["Idempotency-Key must be a well-formed quoted string"] if idempotency_key.nil?
+
+    errors = []
+    errors << "Idempotency-Key must not be blank" if idempotency_key.blank?
+    errors << "Idempotency-Key must be at most #{MAX_UID_LENGTH} characters" if idempotency_key.length > MAX_UID_LENGTH
+    errors << "Idempotency-Key must not contain null bytes" if idempotency_key.include?("\0")
+    if idempotency_key.present? && explicit_uid.present? && idempotency_key != explicit_uid
+      errors << "uid and Idempotency-Key must match"
+    end
+    errors
+  end
+
+  # Spec-following clients send the header as an sf-string — quotes included on
+  # the wire — so a quoted value is decoded before it is compared or persisted;
+  # otherwise the same logical key supplied via uid and via the header would
+  # never match. A bare value is kept as-is for clients that skip the
+  # structured-field encoding, and a malformed quoted value decodes to nil,
+  # which validation rejects.
+  def idempotency_key
+    return @idempotency_key if defined?(@idempotency_key)
+
+    @idempotency_key = decode_idempotency_key
+  end
+
+  def decode_idempotency_key
+    raw = @raw_idempotency_key.to_s.strip
+    return raw unless raw.start_with?('"')
+
+    match = SF_STRING.match(raw)
+    match && match[:value].gsub(/\\(.)/, '\1')
+  end
+
   def already_ingested?
     FeedEntryUid.exists?(feed_id: feed.id, uid: uid)
   end
@@ -142,11 +187,14 @@ class WebhookIngestion
   # the delivery falls back to a random uid instead of a 500.
   MAX_URL_UID_BYTES = 2048
 
-  # Uid precedence (spec 006 §4): explicit idempotency key, then the permalink
-  # normalized exactly like pull feeds', then a random uuid (each request is a
-  # new post; callers with retrying pipelines should pass uid).
+  # Uid precedence (spec 006 §4): explicit idempotency key (the uid field or
+  # the equivalent Idempotency-Key header — validation guarantees they agree),
+  # then the permalink normalized exactly like pull feeds', then a random uuid
+  # (each request is a new post; callers with retrying pipelines should pass a
+  # key).
   def resolve_uid
     return explicit_uid if explicit_uid.present?
+    return idempotency_key if idempotency_key.present?
 
     from_url = Uid::Resolver.from_url(source_url)
     return SecureRandom.uuid if from_url.nil? || from_url.bytesize > MAX_URL_UID_BYTES
