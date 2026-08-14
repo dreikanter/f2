@@ -506,7 +506,7 @@ GEM
     semantic_logger (5.1.0)
       concurrent-ruby (~> 1.0)
     sexp_processor (4.17.5)
-    simplecov (1.0.3)
+    simplecov (1.1.0)
     simplecov-cobertura (4.0.0)
       rexml
       simplecov (~> 1.0)
