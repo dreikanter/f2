@@ -1,0 +1,41 @@
+name: Check Deploy Key
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Which deploy key to check
+        type: choice
+        options: [staging, production]
+        default: staging
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check deploy key
+        env:
+          SSH_PRIVATE_KEY: ${{ inputs.environment == 'production' && secrets.PRODUCTION_SSH_PRIVATE_KEY || secrets.SSH_PRIVATE_KEY_STAGING }}
+          HOST: ${{ inputs.environment == 'production' && 'app-origin.fffeeder.com' || 'dev-origin.fffeeder.com' }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 </dev/null >/dev/null 2>&1; then
+            echo "::error::Secret is not a usable private key: either malformed, or passphrase-protected."
+            exit 1
+          fi
+
+          echo "Deploy key: $(ssh-keygen -y -f ~/.ssh/id_ed25519 | ssh-keygen -lf -)"
+
+          if ! ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
+                   "root@$HOST" true; then
+            echo "::error::$HOST rejected this key. Compare the fingerprint above against 'ssh-keygen -lf ~/.ssh/authorized_keys' on the host."
+            exit 1
+          fi
+
+          echo "Authenticated to $HOST."
