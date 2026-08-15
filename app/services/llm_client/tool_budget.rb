@@ -28,7 +28,7 @@ class LlmClient
     def claim
       @spent += 1
       return nil if @spent <= @rounds
-      return { error: OVER_BUDGET } if @spent <= @rounds + @grace
+      return { error: OVER_BUDGET }.to_json if @spent <= @rounds + @grace
 
       RubyLLM::Tool::Halt.new(HALTED)
     end

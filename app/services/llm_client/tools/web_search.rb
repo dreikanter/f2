@@ -22,7 +22,7 @@ class LlmClient
       end
 
       def execute(query:)
-        return { error: "Refused: query must not be blank." } if query.blank?
+        return { error: "Refused: query must not be blank." }.to_json if query.blank?
 
         over_budget = @budget&.claim
         return over_budget if over_budget
@@ -33,7 +33,7 @@ class LlmClient
       rescue ::WebSearchProvider::AuthError
         raise
       rescue ::WebSearchProvider::Error => e
-        { error: e.message }
+        { error: e.message }.to_json
       end
 
       private

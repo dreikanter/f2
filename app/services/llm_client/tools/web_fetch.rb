@@ -17,7 +17,7 @@ class LlmClient
       end
 
       def execute(url:)
-        return { error: "Refused: pass one absolute public http(s) URL." } unless PublicUrl.safe?(url)
+        return { error: "Refused: pass one absolute public http(s) URL." }.to_json unless PublicUrl.safe?(url)
 
         over_budget = @budget&.claim
         return over_budget if over_budget
@@ -26,11 +26,11 @@ class LlmClient
         # internal address (SSRF; spec 005 §8).
         response = HttpClient.build(max_redirects: MAX_REDIRECTS)
                              .get(url.to_s.strip, options: { validate_url: PublicUrl.method(:safe?) })
-        return { error: "HTTP #{response.status}" } unless response.success?
+        return { error: "HTTP #{response.status}" }.to_json unless response.success?
 
         { content: readable_text(response.body) }.to_json
       rescue HttpClient::Error => e
-        { error: e.message }
+        { error: e.message }.to_json
       end
 
       private

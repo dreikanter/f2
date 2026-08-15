@@ -69,7 +69,7 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     provider = FakeProvider.new
 
     assert_no_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count") do
-      assert_match(/Refused/, tool(provider).execute(query: "  ")[:error])
+      assert_match(/Refused/, JSON.parse(tool(provider).execute(query: "  "))["error"])
     end
     assert_empty provider.queries
   end
@@ -78,7 +78,7 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     provider = FakeProvider.new(error: WebSearchProvider::ConfigurationError.new("Serper API key missing"))
 
     assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
-      assert_equal "Serper API key missing", tool(provider).execute(query: "ruby feeds")[:error]
+      assert_equal "Serper API key missing", JSON.parse(tool(provider).execute(query: "ruby feeds"))["error"]
     end
   end
 
@@ -86,7 +86,7 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     provider = FakeProvider.new(error: WebSearchProvider::ProviderError.new("Serper: HTTP 429"))
 
     assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
-      assert_equal "Serper: HTTP 429", tool(provider).execute(query: "ruby feeds")[:error]
+      assert_equal "Serper: HTTP 429", JSON.parse(tool(provider).execute(query: "ruby feeds"))["error"]
     end
   end
 

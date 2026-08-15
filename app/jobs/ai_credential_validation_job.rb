@@ -7,7 +7,9 @@ class AiCredentialValidationJob < ApplicationJob
   queue_as :default
 
   def perform(credential)
-    previous_state = credential.state
+    # Where a transient failure puts the credential back. Never "validating":
+    # restoring that would re-strand a credential a previous run left stuck.
+    fallback_state = credential.active? ? :active : :pending
     credential.validating!
 
     models = LlmClient.for(credential).available_models
@@ -22,6 +24,6 @@ class AiCredentialValidationJob < ApplicationJob
     # low-tier accounts are rate-limited often enough that treating one as a
     # dead key would take a user's feeds down routinely. Record it, put the
     # credential back where it was, and leave the feeds alone.
-    credential.update!(state: previous_state, last_error: e.message)
+    credential.update!(state: fallback_state, last_error: e.message)
   end
 end

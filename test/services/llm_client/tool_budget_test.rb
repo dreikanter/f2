@@ -14,7 +14,7 @@ class LlmClient::ToolBudgetTest < ActiveSupport::TestCase
   test "#claim should tell the model to answer once the budget is spent" do
     2.times { budget.claim }
 
-    assert_equal({ error: LlmClient::ToolBudget::OVER_BUDGET }, budget.claim)
+    assert_equal LlmClient::ToolBudget::OVER_BUDGET, JSON.parse(budget.claim)["error"]
   end
 
   test "#claim should halt the loop when the model keeps calling past the grace" do
@@ -38,6 +38,6 @@ class LlmClient::ToolBudgetTest < ActiveSupport::TestCase
 
     assert_nil shared.claim
     assert_instance_of RubyLLM::Tool::Halt, fetch.execute(url: "https://example.com/")
-    assert_equal({ error: "Refused: query must not be blank." }, search.execute(query: ""))
+    assert_match(/Refused/, JSON.parse(search.execute(query: ""))["error"])
   end
 end
