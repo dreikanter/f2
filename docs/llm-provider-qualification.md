@@ -97,8 +97,11 @@ Before a pair can be probed, the provider needs:
   rides another provider's adapter);
 - an `LlmClient::Adapter` subclass, if it needs response repair or one-call
   extraction;
-- a `LlmCapabilityProbe::Provider` subclass with `env_key`, `configure` and
-  `ruby_llm_provider`, registered in that class's `REGISTRY`.
+- a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
+  `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
+- an `AiCredential` for it, named `LlmCapabilityProbe.credential_name(provider)`,
+  on the account that will run the probe.
 
-The probe's `configure` must mirror production's `LlmProvider#configure`. If
-they drift, the probe qualifies a wire shape the app never sends.
+There is nothing to keep in sync: the probe reaches the provider through
+`AiCredential#chat`, so it is configured by the same `LlmProvider#configure`
+production uses.
