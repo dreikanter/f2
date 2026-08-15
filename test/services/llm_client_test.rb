@@ -381,6 +381,19 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
+  # Invalid JSON in tool-call arguments would otherwise escape the taxonomy and
+  # leave the call unbilled.
+  test "#call should map malformed tool-call arguments to ProviderError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, JSON::ParserError.new("unexpected token"))
+
+    assert_difference("LlmUsage.count", 1) do
+      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
+    end
+
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
   # A chat double that records the system prompt and the asked user prompt, so we
   # can verify the system message travels via with_instructions and the user
   # prompt via #ask — the injection-defense channel separation (spec §8).
@@ -406,6 +419,49 @@ class LlmClientTest < ActiveSupport::TestCase
     def initialize(messages)
       @messages = messages
     end
+  end
+
+  # A halted tool loop: RubyLLM returns the halt notice itself rather than a
+  # message, with the model's earlier turns left on the chat.
+  class FakeHaltedChat < FakeChat
+    attr_reader :messages
+
+    def initialize(messages)
+      @messages = messages
+    end
+
+    def ask(prompt)
+      @asked = prompt
+      RubyLLM::Tool::Halt.new(LlmClient::ToolBudget::HALTED)
+    end
+  end
+
+  def assistant_message(content)
+    Data.define(:role, :content, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
+        .new(role: :assistant, content: content, input_tokens: 1, output_tokens: 1,
+             cache_write_tokens: 0, cache_read_tokens: 0)
+  end
+
+  test "#invoke_provider should keep what the model gathered when the tool loop halts" do
+    client = LlmClient.new(credential)
+    chat = FakeHaltedChat.new([assistant_message("gathered so far"), assistant_message(nil)])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal "gathered so far", response.payload
+  end
+
+  test "#invoke_provider should fall back to the halt notice when the model said nothing" do
+    client = LlmClient.new(credential)
+    chat = FakeHaltedChat.new([])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal LlmClient::ToolBudget::HALTED, response.payload
   end
 
   # Returns a response carrying distinct cache counts, so a swap between the

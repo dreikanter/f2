@@ -15,9 +15,7 @@ class LlmClient
   DetectionForbidden = Class.new(Error)
   CredentialMissing = Class.new(Error)
 
-  class RateLimited < Error
-    attr_accessor :retry_after
-  end
+  RateLimited = Class.new(Error)
 
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
 
@@ -55,9 +53,7 @@ class LlmClient
       raise
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
-      raised = RateLimited.new(e.message)
-      raised.retry_after = e.try(:retry_after)
-      raise raised
+      raise RateLimited, e.message
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
       write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
       raise Timeout, e.message
@@ -70,7 +66,10 @@ class LlmClient
            RubyLLM::PromptNotFoundError,
            RubyLLM::InvalidRoleError,
            RubyLLM::InvalidToolChoiceError,
-           RubyLLM::UnsupportedAttachmentError => e
+           RubyLLM::UnsupportedAttachmentError,
+           # Invalid JSON in tool-call arguments: a provider-communication
+           # failure like any other, and it must still write a usage row.
+           JSON::ParserError => e
       Rails.error.report(e, context: error_context(ctx))
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise ProviderError, e.message
@@ -104,7 +103,7 @@ class LlmClient
     raise AuthError, e.message
   rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
     raise Timeout, e.message
-  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed => e
+  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed, OpenSSL::SSL::SSLError => e
     Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
     raise ProviderError, e.message
   end
@@ -133,7 +132,14 @@ class LlmClient
   # fields worth showing or selecting on later; provider-specific noise
   # (metadata warnings, timestamps) is dropped. String keys so the shape
   # round-trips through jsonb unchanged.
+  #
+  # Providers whose models aren't in the gem's registry get placeholder limits
+  # rather than real ones, and those would be persisted and rendered as fact
+  # (a 4,096-token context for Kimi). Keep only what the provider itself told
+  # us; the credential page already hides missing fields.
   def serialize_model(model)
+    return { "id" => model.id, "name" => model.name } if credential.llm_provider.assume_model_exists?
+
     {
       "id" => model.id,
       "name" => model.name,
