@@ -15,7 +15,7 @@ namespace :ai do
       and source_url set to JSON null. Do not include a uid field.
     PROMPT
 
-    [%w[anthropic claude-sonnet-4-6], %w[moonshot kimi-k2.5]].each do |provider_key, model|
+    [%w[anthropic claude-sonnet-4-6], %w[moonshot kimi-k2.6]].each do |provider_key, model|
       unless LlmCapabilityProbe::Provider.configured?(provider_key)
         puts "[#{provider_key}/#{model}] SKIP: no API key in environment"
         next

@@ -222,7 +222,7 @@ The workflows read these repository secrets:
 | `STAGING_SSH_PRIVATE_KEY` | staging | SSH key for `dev-origin.fffeeder.com` |
 | `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
 | `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
-| `ANTHROPIC_API_KEY` / `MOONSHOT_API_KEY` | staging | optional LLM keys for the capability probe job |
+| `ANTHROPIC_API_KEY` / `MOONSHOT_API_KEY` | staging | optional LLM keys for the capability probe job (see [llm-provider-qualification.md](llm-provider-qualification.md)) |
 
 ## Database
 

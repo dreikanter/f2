@@ -162,14 +162,14 @@ class FeedPreviewsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(user)
     anthropic = create(:ai_credential, :active, user: user, available_models: models)
     moonshot = create(:ai_credential, :active, user: user, provider: "moonshot",
-                                                available_models: [{ "id" => "kimi-k2.5", "name" => "Kimi K2.5" }])
+                                                available_models: [{ "id" => "kimi-k2.6", "name" => "Kimi K2.6" }])
     source = { prompt: "anything here" }
 
     assert_difference("FeedPreview.count", 2) do
       get feed_preview_url(profile_key: "llm", "params" => source,
                            ai_credential_id: anthropic.id, ai_model: "claude-sonnet-4-6")
       get feed_preview_url(profile_key: "llm", "params" => source,
-                           ai_credential_id: moonshot.id, ai_model: "kimi-k2.5")
+                           ai_credential_id: moonshot.id, ai_model: "kimi-k2.6")
     end
   end
 

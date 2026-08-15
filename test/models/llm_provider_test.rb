@@ -34,7 +34,7 @@ class LlmProviderTest < ActiveSupport::TestCase
     provider = LlmProvider.find("moonshot")
     assert_equal "moonshot", provider.name
     assert_equal :openai, provider.ruby_llm_provider
-    assert_equal "kimi-k2.5", provider.default_model
+    assert_equal "kimi-k2.6", provider.default_model
     assert_equal "https://api.moonshot.ai/v1", provider.api_base
     assert provider.assume_model_exists?
   end

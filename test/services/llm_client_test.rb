@@ -312,13 +312,13 @@ class LlmClientTest < ActiveSupport::TestCase
       .with(headers: { "Authorization" => "Bearer sk-moon-test" })
       .to_return(
         status: 200,
-        body: { data: [{ id: "kimi-k2.5", object: "model", owned_by: "moonshot" }] }.to_json,
+        body: { data: [{ id: "kimi-k2.6", object: "model", owned_by: "moonshot" }] }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
 
     models = client.available_models
 
-    assert_equal ["kimi-k2.5"], models.map { |m| m["id"] }
+    assert_equal ["kimi-k2.6"], models.map { |m| m["id"] }
   end
 
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do

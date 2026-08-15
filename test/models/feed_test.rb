@@ -843,6 +843,18 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "claude-sonnet-4-6", feed.effective_ai_model
   end
 
+  # A retired model is never rewritten on the feed; it just stops being
+  # supported and resolves to the successor.
+  test "#effective_ai_model should resolve a feed pinned to the retired kimi model" do
+    credential = create(:ai_credential, :active, provider: "moonshot",
+                                                 available_models: [{ "id" => "kimi-k2.6" }, { "id" => "kimi-k2.5" }])
+    feed = build(:feed, user: credential.user, feed_profile_key: "llm",
+                        params: { "prompt" => "x" }, ai_credential: credential, ai_model: "kimi-k2.5")
+
+    assert_not feed.ai_model_supported?
+    assert_equal "kimi-k2.6", feed.effective_ai_model
+  end
+
   test "#ai_model_supported? should follow the credential's matrix-intersected snapshot" do
     credential = create(:ai_credential, :active, available_models: [{ "id" => "claude-sonnet-4-6" }])
     feed = build(:feed, user: credential.user, feed_profile_key: "llm",

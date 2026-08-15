@@ -1,28 +1,22 @@
-# Dev-verified allowlist of (provider, model) pairs the AI engine may use, and
-# the capability set each pair actually delivers through our stack (plan-03).
+# Dev-verified allowlist of (provider, model) pairs the AI engine may use.
 #
-# Membership is qualification: a pair appears only once it's verified to work —
-# there are no readiness tiers and no "experimental" rows. What the model picker
-# offers for a feed is this matrix intersected with the credential's live model
-# snapshot, so an unverified or web+schema-incapable model is never a silent,
-# async footgun. A provider with no rows here (e.g. OpenRouter) simply isn't
-# selectable for AI feeds.
+# Membership is qualification: a pair appears only once LlmCapabilityProbe has
+# shown it works on the shape production calls. The model picker offers this
+# list intersected with the credential's live snapshot, so an unverified model
+# can't be selected and fail asynchronously mid-run. A provider with no rows
+# isn't selectable for AI feeds at all.
 #
-# Capabilities:
-#   :fetch      — read a known URL's content
-#   :search     — discover content via web search
-#   :structured — return native, strict-schema JSON
+# Rows are pairs and nothing else. Per-model capability flags would describe
+# hosted retrieval, which never reaches a feed run — every provider retrieves
+# through our own tools — and the one thing that does vary between models,
+# whether schema and tools survive the same call, is an adapter property
+# (`combined_extraction?`).
+#
+# Adding a pair: docs/llm-provider-qualification.md
 class LlmModelCapability
-  CAPABILITIES = %i[fetch search structured].freeze
-
-  # Verified live on staging (plan-03): Anthropic Sonnet does all three in one
-  # combined call (#914); Kimi drives a client-side fetch tool and de-fenced JSON
-  # but its server-side search doesn't engage through RubyLLM, so no :search
-  # (#917). Only pairs actually probed appear here — Opus stays out until it's
-  # verified the same way.
   ENTRIES = [
-    { provider: "anthropic", model: "claude-sonnet-4-6", capabilities: %i[fetch search structured] },
-    { provider: "moonshot", model: "kimi-k2.5", capabilities: %i[fetch structured] }
+    { provider: "anthropic", model: "claude-sonnet-4-6" },
+    { provider: "moonshot", model: "kimi-k2.6" }
   ].freeze
 
   class << self
@@ -41,10 +35,6 @@ class LlmModelCapability
     # Verified model ids for a provider, in matrix order.
     def models_for(provider)
       ENTRIES.select { |entry| entry[:provider] == provider.to_s }.map { |entry| entry[:model] }
-    end
-
-    def capabilities_for(provider, model)
-      find(provider, model)&.fetch(:capabilities) || []
     end
   end
 end

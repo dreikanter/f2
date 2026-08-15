@@ -3,7 +3,7 @@ require "test_helper"
 class LlmModelCapabilityTest < ActiveSupport::TestCase
   test "#supported? should be true only for allowlisted pairs" do
     assert LlmModelCapability.supported?("anthropic", "claude-sonnet-4-6")
-    assert LlmModelCapability.supported?("moonshot", "kimi-k2.5")
+    assert LlmModelCapability.supported?("moonshot", "kimi-k2.6")
     assert_not LlmModelCapability.supported?("anthropic", "some-unverified-model")
     assert_not LlmModelCapability.supported?("openrouter", "anthropic/claude-sonnet-4-6")
   end
@@ -17,12 +17,6 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
     assert_empty LlmModelCapability.models_for("openrouter")
   end
 
-  test "#capabilities_for should reflect plan-03 verification (Kimi has no server search)" do
-    assert_equal %i[fetch search structured], LlmModelCapability.capabilities_for("anthropic", "claude-sonnet-4-6")
-    assert_equal %i[fetch structured], LlmModelCapability.capabilities_for("moonshot", "kimi-k2.5")
-    assert_not_includes LlmModelCapability.capabilities_for("moonshot", "kimi-k2.5"), :search
-  end
-
   test "every provider with matrix rows should have a supported default_model" do
     providers_with_rows = LlmModelCapability.all.map { |entry| entry[:provider] }.uniq
     providers_with_rows.each do |name|
@@ -32,10 +26,10 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
     end
   end
 
-  test "matrix entries should only use known capability symbols" do
+  test "matrix entries should carry a provider and model and nothing else" do
     LlmModelCapability.all.each do |entry|
-      assert (entry[:capabilities] - LlmModelCapability::CAPABILITIES).empty?,
-             "#{entry[:model]} declares an unknown capability"
+      assert_equal %i[provider model], entry.keys,
+                   "#{entry[:model]} carries metadata no production code reads"
     end
   end
 

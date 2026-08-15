@@ -165,9 +165,9 @@ class AiCredentialTest < ActiveSupport::TestCase
 
   test "#default_supported_model should resolve a moonshot credential to its verified model" do
     credential = build(:ai_credential, provider: "moonshot",
-                                       available_models: [{ "id" => "kimi-k2.5" }])
+                                       available_models: [{ "id" => "kimi-k2.6" }])
 
-    assert_equal "kimi-k2.5", credential.default_supported_model
+    assert_equal "kimi-k2.6", credential.default_supported_model
   end
 
   test "#default_supported_model should be nil when nothing is supported" do

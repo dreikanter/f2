@@ -58,9 +58,8 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   class FakeProvider
     attr_reader :key, :chats
 
-    def initialize(responses, fetch_params: nil, models: [], tool_rounds: [])
+    def initialize(responses, models: [], tool_rounds: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
-      @fetch_params = fetch_params
       @models = models
       @tool_rounds = tool_rounds
       @chats = []
@@ -70,16 +69,12 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     def chat(_model)
       FakeChat.new(@responses.shift, tool_rounds: @tool_rounds).tap { |chat| @chats << chat }
     end
-    def prepare_web(_chat) = nil
-    def web_params(_model) = { tools: [] }
-    def web_search_params(_model) = { tools: [] }
-    def web_fetch_params(_model) = @fetch_params
     def list_models = @models.map { |id| FakeModel.new(id) }
     def unwrap_json(text) = LlmClient::Adapter::Moonshot.new.unwrap_json(text)
   end
 
-  def run_checks(responses, checks, fetch_params: nil, models: [], tool_rounds: [])
-    provider = FakeProvider.new(responses, fetch_params: fetch_params, models: models, tool_rounds: tool_rounds)
+  def run_checks(responses, checks, models: [], tool_rounds: [])
+    provider = FakeProvider.new(responses, models: models, tool_rounds: tool_rounds)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: checks).run
   end
 
@@ -204,67 +199,11 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "schema-valid but the items are a refusal", outcome[:results].first[:note]
   end
 
-  test "#run should fail two_step when the gather step reports no web access" do
-    outcome = run_checks(["I don't have the ability to browse the web.", valid_payload], ["two_step"])
-
-    assert_equal "FAIL", outcome[:results].first[:status]
-    assert_equal "gather reports no web access", outcome[:results].first[:note]
-  end
-
   test "#run should fail the schema check on a non-JSON reply" do
     outcome = run_checks("not json at all", ["schema"])
 
     assert_equal "FAIL", outcome[:results].first[:status]
     assert_match(/non-JSON/, outcome[:results].first[:note])
-  end
-
-  test "#run should pass the web search check on grounded output with URLs" do
-    text = "Latest posts: https://example.com/a — release notes. #{'x' * 80}"
-    outcome = run_checks(text, ["web_search"])
-
-    assert_equal "PASS", outcome[:results].first[:status]
-  end
-
-  test "#run should fail the web search check without URLs" do
-    outcome = run_checks("no links here #{'x' * 80}", ["web_search"])
-
-    assert_equal "FAIL", outcome[:results].first[:status]
-  end
-
-  test "#run should fail the web search check on a refusal that contains URLs" do
-    refusal = "I don't have the ability to browse the live web. Visit https://rubyonrails.org/blog " \
-              "or subscribe to https://rubyonrails.org/feed.xml for updates."
-    outcome = run_checks(refusal, ["web_search"])
-
-    assert_equal "FAIL", outcome[:results].first[:status]
-    assert_equal "model reports no web access", outcome[:results].first[:note]
-  end
-
-  test "#run should skip the web fetch check when the provider has no mechanism" do
-    outcome = run_checks([], ["web_fetch"])
-
-    assert_equal "SKIP", outcome[:results].first[:status]
-    assert outcome[:passed]
-  end
-
-  test "#run should pass the web fetch check when page content is quoted" do
-    outcome = run_checks("The heading says: Example Domain", ["web_fetch"], fetch_params: { tools: [] })
-
-    assert_equal "PASS", outcome[:results].first[:status]
-  end
-
-  test "#run should fail two_step when gather returns blank" do
-    outcome = run_checks("   ", ["two_step"])
-
-    assert_equal "FAIL", outcome[:results].first[:status]
-    assert_match(/gather returned blank/, outcome[:results].first[:note])
-  end
-
-  test "#run should pass two_step when gather feeds a schema-valid structure step" do
-    outcome = run_checks(["gathered post text https://example.com/p", valid_payload], ["two_step"])
-
-    assert_equal "PASS", outcome[:results].first[:status]
-    assert_equal "https://example.com/p", outcome[:results].first[:evidence][:items].first["source_url"]
   end
 
   test "#run should fail the client tools check when the search tool is never called" do
@@ -370,21 +309,6 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, LlmCapabilityProbe::PROBE_INSTRUCTIONS
   end
 
-  test "#run should send system instructions on both two_step calls" do
-    provider = FakeProvider.new(["gathered post text https://example.com/p", valid_payload])
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["two_step"]).run
-
-    assert_equal 2, provider.chats.size
-    assert(provider.chats.all? { |chat| chat.instructions == LlmCapabilityProbe::PROBE_INSTRUCTIONS })
-  end
-
-  test "#run should send system instructions on the combined call" do
-    provider = FakeProvider.new(valid_payload)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["combined"]).run
-
-    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
-  end
-
   test "#run should record an exception as a failed check" do
     outcome = run_checks(RuntimeError.new("boom"), ["plain"])
 
@@ -409,15 +333,9 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     ENV["MOONSHOT_API_KEY"] = original
   end
 
-  test "provider web params should declare the production tool shapes" do
-    anthropic = LlmCapabilityProbe::Provider.build("anthropic")
-    assert_equal %w[web_search web_fetch], anthropic.web_params("m")[:tools].map { |t| t[:name] }
-    assert_equal 1, anthropic.web_search_params("m")[:tools].size
-    assert_equal "web_fetch_20260209", anthropic.web_fetch_params("m")[:tools].first[:type]
-
-    moonshot = LlmCapabilityProbe::Provider.build("moonshot")
-    assert_equal "$web_search", moonshot.web_params("m")[:tools].first[:function][:name]
-    assert_nil moonshot.web_fetch_params("m")
+  test "checks should cover only what production calls" do
+    assert_equal %w[models plain system_prompt schema client_tools client_tools_schema],
+                 LlmCapabilityProbe::Runner::CHECKS
   end
 
   test "moonshot provider should configure the same system-role flag as production" do
@@ -432,9 +350,8 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     ENV["MOONSHOT_API_KEY"] = original
   end
 
-  test "moonshot echo tool should return its arguments verbatim" do
-    tool = LlmCapabilityProbe::MoonshotWebSearchEcho.new
-    assert_equal "$web_search", tool.name
-    assert_equal({ query: "ruby" }, tool.execute(query: "ruby"))
+  test "probe providers should unwrap structured output the way production does" do
+    assert_equal '{"a":1}', LlmCapabilityProbe::Provider.build("moonshot").unwrap_json("```json\n{\"a\":1}\n```")
+    assert_equal '{"a":1}', LlmCapabilityProbe::Provider.build("anthropic").unwrap_json('{"a":1}')
   end
 end
