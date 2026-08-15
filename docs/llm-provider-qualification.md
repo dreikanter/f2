@@ -44,8 +44,9 @@ its own: the model picker reads `LlmModelCapability`, which is what a passing
 probe run earns.
 
 Probe runs write no `LlmUsage` rows. Usage is feed-run accounting — its
-`purpose` enum has no probe value and its rows hang off a feed — so probe cost
-is reported in the run's own events instead of the credential's usage surface.
+`purpose` enum has no probe value and its rows hang off a feed — so probe spend
+is untracked. The run's events record what each check did, not what it cost, so
+read spend off the provider's own dashboard.
 
 ## What it checks, and why only these
 

@@ -68,13 +68,14 @@ credential validation job makes — so a pass also proves the credential can be 
   applies — but LLM usage is feed-run accounting: its `purpose` enum has no probe value and its
   rows hang off a feed. Recording probe traffic there is a schema change that deserves its own
   argument, and unlike a search query, where one request is one billable unit, honest rows would
-  need per-call token totals from every check. The probe's cost is reported in the run's own
-  events instead; `docs/llm-provider-qualification.md` says so rather than leaving it silent.
+  need per-call token totals from every check. So probe spend is untracked: the run's events
+  record what each check did, not what it cost. `docs/llm-provider-qualification.md` says so
+  rather than leaving it implied.
 
 ## Out of scope
 
 The checks themselves. This changed where the key comes from, not what is verified; the
-`models`/`plain`/`system_prompt`/`schema`/`client_tools` set is unchanged.
+`models`/`plain`/`system_prompt`/`schema`/`client_tools`/`client_tools_schema` set is unchanged.
 
 One adjacent simplification became available and was deliberately not taken: with managed
 credentials in hand, `CannedWebSearch` could be replaced by the real search tool backed by a
