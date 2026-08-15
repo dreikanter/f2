@@ -29,13 +29,29 @@ class LlmClient
       # holding no JSON at all is returned as-is, to fail as the parse error it
       # is rather than as a silent truncation.
       def outermost_json(text)
-        opener = text.index(/[{\[]/)
-        return text if opener.nil?
+        candidates(text).find { |candidate| json?(candidate) } || text
+      end
 
-        closer = text.rindex(OPENERS.fetch(text[opener]))
-        return text if closer.nil? || closer < opener
+      # One candidate per bracket type, earliest opener first. Prose is
+      # unrestricted, so a bracket can precede the payload ("Response [JSON]:
+      # {...}") — parsing is the only thing that can tell a false opener from a
+      # real one, and ordering by position keeps an array payload from being
+      # read as the first object nested inside it.
+      def candidates(text)
+        OPENERS.filter_map do |opener, closer|
+          first = text.index(opener)
+          last = text.rindex(closer)
+          next if first.nil? || last.nil? || last < first
 
-        text[opener..closer]
+          [first, text[first..last]]
+        end.sort_by(&:first).map(&:last)
+      end
+
+      def json?(text)
+        JSON.parse(text)
+        true
+      rescue JSON::ParserError
+        false
       end
     end
   end
