@@ -57,7 +57,7 @@ class LlmProvider
       name: "moonshot",
       display_name: "Moonshot (Kimi)",
       ruby_llm_provider: :openai,
-      default_model: "kimi-k2.5",
+      default_model: "kimi-k2.6",
       api_base: "https://api.moonshot.ai/v1",
       assume_model_exists: true
     )

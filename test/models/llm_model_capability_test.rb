@@ -3,7 +3,7 @@ require "test_helper"
 class LlmModelCapabilityTest < ActiveSupport::TestCase
   test "#supported? should be true only for allowlisted pairs" do
     assert LlmModelCapability.supported?("anthropic", "claude-sonnet-4-6")
-    assert LlmModelCapability.supported?("moonshot", "kimi-k2.5")
+    assert LlmModelCapability.supported?("moonshot", "kimi-k2.6")
     assert_not LlmModelCapability.supported?("anthropic", "some-unverified-model")
     assert_not LlmModelCapability.supported?("openrouter", "anthropic/claude-sonnet-4-6")
   end
@@ -19,8 +19,8 @@ class LlmModelCapabilityTest < ActiveSupport::TestCase
 
   test "#capabilities_for should reflect plan-03 verification (Kimi has no server search)" do
     assert_equal %i[fetch search structured], LlmModelCapability.capabilities_for("anthropic", "claude-sonnet-4-6")
-    assert_equal %i[fetch structured], LlmModelCapability.capabilities_for("moonshot", "kimi-k2.5")
-    assert_not_includes LlmModelCapability.capabilities_for("moonshot", "kimi-k2.5"), :search
+    assert_equal %i[fetch structured], LlmModelCapability.capabilities_for("moonshot", "kimi-k2.6")
+    assert_not_includes LlmModelCapability.capabilities_for("moonshot", "kimi-k2.6"), :search
   end
 
   test "every provider with matrix rows should have a supported default_model" do
