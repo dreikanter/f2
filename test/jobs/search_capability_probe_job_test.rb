@@ -44,6 +44,11 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal WebSearchProvider::REGISTRY.keys.sort, pinned.sort
   end
 
+  test ".description should name the credential the probe needs" do
+    assert_match(/Serper Probe/, SerperCapabilityProbeJob.description)
+    assert_match(/Tavily Probe/, TavilyCapabilityProbeJob.description)
+  end
+
   test "#perform should record a skip naming the credential to create when it is missing" do
     job_run
     job.perform_now

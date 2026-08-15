@@ -8,6 +8,11 @@ class LlmCapabilityProbeJob < ApplicationJob
 
   queue_as :default
 
+  def self.description
+    "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
+      "Needs #{LlmCapabilityProbe::Provider.env_key_for(self::PROVIDER)} in the environment."
+  end
+
   def perform
     provider_key = self.class::PROVIDER
     model = self.class::MODEL

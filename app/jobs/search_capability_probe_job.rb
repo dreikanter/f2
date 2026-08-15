@@ -10,6 +10,12 @@ class SearchCapabilityProbeJob < ApplicationJob
 
   queue_as :default
 
+  def self.description
+    "Runs the search checks against the live #{WebSearchProvider.label_for(self::PROVIDER)} API. " \
+      "Needs a search credential named “#{SearchCapabilityProbe.credential_name(self::PROVIDER)}”, " \
+      "and spends two queries on it."
+  end
+
   def perform
     provider = self.class::PROVIDER
     credentials = SearchCapabilityProbe.candidate_credentials(provider).to_a

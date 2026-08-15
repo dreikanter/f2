@@ -20,6 +20,11 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
   end
 
+  test ".description should name the environment key the probe needs" do
+    assert_match(/ANTHROPIC_API_KEY/, AnthropicCapabilityProbeJob.description)
+    assert_match(/MOONSHOT_API_KEY/, KimiCapabilityProbeJob.description)
+  end
+
   test "#perform should record a skip event when the API key is not configured" do
     job_run
 

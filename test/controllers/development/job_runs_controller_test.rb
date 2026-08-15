@@ -35,6 +35,22 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "#index should show what a job needs before it can run" do
+    sign_in_as(dev_user)
+    get development_job_job_runs_path("SerperCapabilityProbeJob")
+
+    assert_response :success
+    assert_select "p", text: /Serper Probe/
+  end
+
+  test "#index should leave the header clean for a job that needs nothing" do
+    sign_in_as(dev_user)
+    get development_job_job_runs_path("PurgeExpiredEventsJob")
+
+    assert_response :success
+    assert_nil PurgeExpiredEventsJob.description
+  end
+
   test "#index should return not found for an unregistered job" do
     sign_in_as(dev_user)
     get development_job_job_runs_path("SomeOtherJob")

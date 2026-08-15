@@ -156,6 +156,10 @@ module LlmCapabilityProbe
       klass.new(key)
     end
 
+    def self.env_key_for(key)
+      REGISTRY.fetch(key).env_key
+    end
+
     def self.configured?(key)
       REGISTRY.key?(key) && ENV[REGISTRY.fetch(key).env_key].present?
     end

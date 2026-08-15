@@ -5,6 +5,10 @@ class ApplicationJob < ActiveJob::Base
   # Most jobs are safe to ignore if the underlying records are no longer available
   discard_on ActiveJob::DeserializationError
 
+  # One line shown above the job's run history in the dev area, for what a
+  # maintenance job needs before it can run. Nil when the name says enough.
+  def self.description = nil
+
   # Count every job run by outcome. A run that deferred itself for rate limiting
   # (RateLimited#rate_limited?) is throttled, not a real failure — it returns
   # normally after rescheduling, so we read the flag rather than catch anything.
