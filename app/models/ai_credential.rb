@@ -46,4 +46,15 @@ class AiCredential < ApplicationRecord
       llm_provider.configure(config, credential_data["api_key"])
     end
   end
+
+  # The chat a run is made on: this key, its provider's RubyLLM key, and its
+  # model-existence rule. Shared so a probe cannot qualify a model on a
+  # configuration production doesn't use.
+  def chat(model)
+    ruby_llm_context.chat(
+      model: model,
+      provider: llm_provider.ruby_llm_provider,
+      assume_model_exists: llm_provider.assume_model_exists?
+    )
+  end
 end
