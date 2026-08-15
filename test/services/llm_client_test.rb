@@ -450,8 +450,7 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "gathered so far", response.payload
   end
 
-  # The notice is our own text, so returning it would read downstream as content
-  # the model gathered.
+  # The notice is our own text; a caller would read it as gathered content.
   test "#invoke_provider should return nothing when a halted loop gathered nothing" do
     client = LlmClient.new(credential)
     chat = FakeHaltedChat.new([])

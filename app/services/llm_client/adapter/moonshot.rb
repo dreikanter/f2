@@ -24,19 +24,17 @@ class LlmClient
 
       private
 
-      # Preamble with no fence at all ("Here is the JSON: {...}"). Reached only
-      # when nothing fenced matched, so it can't disturb the fenced path. Text
-      # holding no JSON at all is returned as-is, to fail as the parse error it
-      # is rather than as a silent truncation.
+      # Preamble with no fence at all ("Here is the JSON: {...}"). Text holding
+      # no JSON is returned intact, so it fails as the parse error it is rather
+      # than as a mangled slice.
       def outermost_json(text)
         candidates(text).find { |candidate| json?(candidate) } || text
       end
 
-      # One candidate per bracket type, earliest opener first. Prose is
-      # unrestricted, so a bracket can precede the payload ("Response [JSON]:
-      # {...}") — parsing is the only thing that can tell a false opener from a
-      # real one, and ordering by position keeps an array payload from being
-      # read as the first object nested inside it.
+      # Prose is unrestricted, so a bracket can precede the payload ("Response
+      # [JSON]: {...}") — only a parse tells a false opener from a real one.
+      # Earliest opener first, so an array payload is not read as the first
+      # object nested inside it.
       def candidates(text)
         OPENERS.filter_map do |opener, closer|
           first = text.index(opener)

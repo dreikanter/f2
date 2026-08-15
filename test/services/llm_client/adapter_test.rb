@@ -110,8 +110,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal '{"a":1}', adapter.unwrap_json("  {\"a\":1}  ")
   end
 
-  # Kimi drops the fence but keeps the preamble often enough that the payload
-  # would otherwise fail to parse over one line of prose.
+  # Kimi drops the fence but keeps the preamble often enough to matter.
   test "moonshot #unwrap_json should recover JSON introduced by unfenced prose" do
     adapter = LlmClient::Adapter::Moonshot.new
 
@@ -127,8 +126,7 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal '{"a":1}', adapter.unwrap_json(%(Result [note: 2 items]: {"a":1}))
   end
 
-  # Prose with no JSON in it must stay intact, so it fails as the parse error it
-  # is rather than as a mangled slice.
+  # Prose with no JSON stays intact, so it fails as the parse error it is.
   test "moonshot #unwrap_json should leave text holding no JSON alone" do
     adapter = LlmClient::Adapter::Moonshot.new
 

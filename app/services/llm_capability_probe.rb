@@ -11,16 +11,14 @@
 #
 # See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
-  # Production's own schema, not a stand-in: a probe that passes a simplified
-  # copy qualifies a shape the app never sends. The nullable `source_url` union
-  # is the sharp edge — strict structured-output modes are where a union gets
-  # rejected — so it has to be the version on the wire.
+  # Production's schema verbatim: a simplified copy qualifies a shape the app
+  # never sends. The nullable `source_url` union is the part strict
+  # structured-output modes reject.
   PROBE_SCHEMA = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA
 
-  # Stands in for production's stage system prompts (Loader::LlmPrompts).
-  # Production never sends a schema or the tool loop without one, so the checks
-  # mirroring those stages carry it; `plain` stays bare on purpose, to isolate
-  # the round trip from the system channel `system_prompt` covers.
+  # Stands in for production's stage system prompts (Loader::LlmPrompts). The
+  # checks mirroring those stages carry it; `plain` stays bare so it isolates
+  # reachability from the system channel `system_prompt` covers.
   PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
                        "Follow the task exactly and report only what you actually find."
 
@@ -40,9 +38,8 @@ module LlmCapabilityProbe
   end
 
   # Mirrors production's structuring stage: fixed text in, strict JSON out. The
-  # sample ends with a roundup that has no link of its own, and the prompt asks
-  # for the null that represents it, so a provider is made to emit the union
-  # rather than merely accept it in the schema.
+  # sample's last entry has no link of its own and the prompt asks for the null
+  # that represents it, so the provider has to emit the union, not just accept it.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
                             "Use only what is present; do not invent items or fields. For an item with " \
                             "no single canonical link, set source_url to JSON null.\n\nGATHERED CONTENT:\n"
@@ -87,10 +84,9 @@ module LlmCapabilityProbe
 
     def name = SEARCH_TOOL_NAME
 
-    # Spends the shared budget like the production tool: results are canned, but
-    # every round is still a billed completion the budget has to bound.
-    #
-    # Serialized like the production tool, so the loop sees the same wire shape.
+    # Results are canned, but every round is still a billed completion, so the
+    # budget is spent as the production tool spends it. Serialized the same way
+    # too, so the loop sees the same wire shape.
     def execute(query:)
       over_budget = @budget&.claim
       return over_budget if over_budget
@@ -228,9 +224,10 @@ module LlmCapabilityProbe
       text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end
 
-    # Production's structure stage sends STRUCTURE_SYSTEM alongside the schema,
-    # and system-prompt-with-schema is its own wire shape — Moonshot rejected the
-    # role RubyLLM defaults to (#1234), which a schema-only call would not catch.
+    # Production's structure stage pairs STRUCTURE_SYSTEM with the schema, and
+    # that pairing is its own wire shape: an OpenAI-compatible provider can
+    # reject the system role RubyLLM defaults to, which a schema-only call
+    # never exercises.
     def check_schema
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
       chat.with_instructions(PROBE_INSTRUCTIONS)
@@ -266,10 +263,9 @@ module LlmCapabilityProbe
       { status: "PASS", note: "#{rounds.size} tool calls, answer grounded in fetched page", evidence: evidence }
     end
 
-    # Tools are instances sharing one budget, exactly as production builds them
-    # (LlmClient::Adapter::Base#apply_web). A model that keeps calling tools would
-    # otherwise spin against a paid API with nothing to stop it — and an
-    # unqualified model is the likeliest one to do it.
+    # Instances sharing one budget, as production builds them
+    # (LlmClient::Adapter::Base#apply_web): the probe drives a paid API, and an
+    # unqualified model is the likeliest to loop on a tool.
     def client_tools_chat(schema)
       chat = @provider.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
@@ -340,9 +336,7 @@ module LlmCapabilityProbe
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
       elsif expect_null_source_url && items.none? { |item| item["source_url"].nil? }
         # Accepting the union in the schema is not the same as emitting it, and
-        # the digest regime is the null branch (spec 005 §3). The sample's last
-        # entry has no link and the prompt asks for the null, so a model that
-        # returns none of them has not shown it can serve a digest feed.
+        # a digest feed depends on the null branch (spec 005 §3).
         { status: "FAIL", note: "schema-valid but no item emitted a null source_url", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }

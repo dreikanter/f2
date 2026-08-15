@@ -186,8 +186,8 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_match(/schema violation/, outcome[:results].first[:note])
   end
 
-  # The union is what a strict structured-output mode is most likely to reject,
-  # so the check has to be running production's schema, not a copy of it.
+  # The union is what a strict structured-output mode rejects, so the check has
+  # to run production's schema itself.
   test "PROBE_SCHEMA should be the production output schema" do
     assert_same FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, LlmCapabilityProbe::PROBE_SCHEMA
   end
@@ -198,8 +198,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "PASS", outcome[:results].first[:status]
   end
 
-  # Accepting the union in the schema is not the same as emitting it, and the
-  # digest regime is the null branch.
+  # Accepting the union is not the same as emitting it.
   test "#run should fail the schema check when no item emitted a null source_url" do
     outcome = run_checks(linked_only_payload, ["schema"])
 
@@ -315,8 +314,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
   end
 
-  # An unqualified model is the likeliest one to loop, and the probe drives a
-  # paid API, so it bounds the loop the way a feed run does.
+  # The probe drives a paid API, and an unqualified model is the likeliest to loop.
   test "#run should bound the client tools loop with one budget shared by both tools" do
     provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
@@ -335,8 +333,8 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_instance_of RubyLLM::Tool::Halt, search.execute(query: "second")
   end
 
-  # Production never sends a schema without a system prompt, and that pairing is
-  # its own wire shape — a schema-only call would not catch a rejected role.
+  # The pairing is its own wire shape: a schema-only call never exercises the
+  # system role a provider might reject.
   test "#run should send a system prompt alongside the schema" do
     provider = FakeProvider.new(valid_payload)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["schema"]).run
