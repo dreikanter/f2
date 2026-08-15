@@ -48,9 +48,8 @@ class EventDescriptionComponent < ViewComponent::Base
     ).html_safe
   end
 
-  # Types without a translated sentence fall back to the stored message, which
-  # is raw operational text ("combined: PASS (52.8s)") that says nothing about
-  # what produced it — so the event name leads and the message follows.
+  # A stored message is raw operational text that doesn't say what produced it,
+  # so the event name leads it.
   def fallback_description
     return ERB::Util.html_escape(default_description) if event.message.blank?
 
