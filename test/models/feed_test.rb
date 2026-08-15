@@ -843,8 +843,8 @@ class FeedTest < ActiveSupport::TestCase
     assert_equal "claude-sonnet-4-6", feed.effective_ai_model
   end
 
-  # The k2.5 retirement (#1186) rides this path: nothing rewrites the feed's
-  # saved model, it just stops being supported and resolves to the successor.
+  # A retired model is never rewritten on the feed; it just stops being
+  # supported and resolves to the successor.
   test "#effective_ai_model should resolve a feed pinned to the retired kimi model" do
     credential = create(:ai_credential, :active, provider: "moonshot",
                                                  available_models: [{ "id" => "kimi-k2.6" }, { "id" => "kimi-k2.5" }])

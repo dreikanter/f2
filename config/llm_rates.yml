@@ -48,15 +48,10 @@ openrouter:
     input_per_million: 0.12
     output_per_million: 0.40
 
-# Moonshot (Kimi). Approximate published rates — verify against your billing.
-# k2.6 verified 2026-08-15 against platform.kimi.ai/docs/pricing/chat-k26.
-# k2.5 is retired but kept so any straggling usage row still prices correctly.
+# Moonshot (Kimi). Verified 2026-08-15 against
+# platform.kimi.ai/docs/pricing/chat-k26.
 moonshot:
   kimi-k2.6:
     input_per_million: 0.95
     output_per_million: 4.00
     cache_read_per_million: 0.16
-  kimi-k2.5:
-    input_per_million: 0.60
-    output_per_million: 2.50
-    cache_read_per_million: 0.15

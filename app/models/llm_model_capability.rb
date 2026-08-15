@@ -1,25 +1,18 @@
 # Dev-verified allowlist of (provider, model) pairs the AI engine may use.
 #
-# Membership is qualification: a pair appears only once a capability probe run
-# has shown it works through our stack, on the shape production actually calls
-# (LlmCapabilityProbe). There are no readiness tiers and no "experimental" rows.
-# What the model picker offers for a feed is this list intersected with the
-# credential's live model snapshot, so an unverified model is never a silent,
-# async footgun. A provider with no rows here (e.g. OpenRouter) simply isn't
-# selectable for AI feeds.
+# Membership is qualification: a pair appears only once LlmCapabilityProbe has
+# shown it works on the shape production calls. The model picker offers this
+# list intersected with the credential's live snapshot, so an unverified model
+# can't be selected and fail asynchronously mid-run. A provider with no rows
+# isn't selectable for AI feeds at all.
 #
-# Rows carry no per-model capability flags. Every provider retrieves through our
-# own client-side search and fetch tools (LlmClient::Adapter::Base#apply_web),
-# so what a model's hosted retrieval can do never reaches a feed run — and the
-# one thing that does vary, whether schema and tools survive the same call, is
-# already a provider property the adapter carries (`combined_extraction?`).
+# Rows are pairs and nothing else. Per-model capability flags would describe
+# hosted retrieval, which never reaches a feed run — every provider retrieves
+# through our own tools — and the one thing that does vary between models,
+# whether schema and tools survive the same call, is an adapter property
+# (`combined_extraction?`).
 #
 # Adding a pair: docs/llm-provider-qualification.md
-#
-# Verified on staging: Anthropic Sonnet drives the tools and returns
-# strict-schema JSON in one combined call (#914). Kimi k2.6 drives the same
-# tools under a system prompt but needs two-step extraction (#1186; it replaces
-# the retired k2.5, qualified the same way).
 class LlmModelCapability
   ENTRIES = [
     { provider: "anthropic", model: "claude-sonnet-4-6" },

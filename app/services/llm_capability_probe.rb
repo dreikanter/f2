@@ -1,27 +1,18 @@
-# Dev-time capability probe for LLM providers (spec 005 §5; issue #913).
+# Dev-time capability probe: no (provider, model) pair enters
+# LlmModelCapability without a run that passes here.
 #
-# Live-verifies what production actually depends on: the model is served under
-# the id we name it by, it honors a system prompt, it returns strict-schema
-# JSON, and it drives our client-side search and fetch tools through a real
-# tool loop. Provider-hosted retrieval is deliberately not probed — every
-# provider goes through LlmClient's own tools (Adapter::Base#apply_web), so a
-# hosted mechanism working or not tells us nothing about a feed run.
+# Every check mirrors something a feed run does. Provider-hosted retrieval is
+# deliberately not probed — every provider retrieves through our own tools
+# (LlmClient::Adapter::Base#apply_web), so a hosted mechanism tells us nothing
+# about a feed run.
 #
-# The probe stays independent of LlmProvider and managed credentials so an
-# unwired provider can be qualified before application integration. Keys
-# come from the environment. Results — evidence included — are recorded as
-# JobRun events and feed plan-03-provider-verification.md.
+# Keys come from the environment rather than managed credentials, so a provider
+# can be qualified before it is wired into the app.
 #
-# Qualification rule (issue #1187): no (provider, model) pair enters
-# LlmModelCapability without a probe run that covers the production call
-# shape — a system prompt on the wire, the client-side tool loop, and the
-# model id confirmed against the live models listing.
-#
-# How to run it, read the results, and add a pair or a provider:
-# docs/llm-provider-qualification.md
+# See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
-  # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape (strict: additionalProperties false
-  # everywhere — the Anthropic requirement confirmed live in Track 2).
+  # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape. Anthropic requires strict schemas:
+  # additionalProperties false at every level.
   PROBE_SCHEMA = {
     "type" => "object",
     "properties" => {
@@ -44,30 +35,25 @@ module LlmCapabilityProbe
     "additionalProperties" => false
   }.freeze
 
-  # Production always sends a system prompt (LlmClient#call's privileged
-  # instruction channel), so the gathering checks carry one too — a pair must
-  # not qualify on a call shape production never uses.
+  # Production always sends a system prompt, so every check carries one.
   PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
                        "Follow the task exactly and report only what you actually find."
 
-  # The instructions contradict the obvious answer, so the reply can only
-  # match by honoring the system channel. A wire-level rejection (Moonshot
-  # 400s on role "developer") and silently dropped instructions both fail.
+  # The instructions contradict the obvious answer, so the expected reply is
+  # unreachable unless the system channel arrived and was obeyed.
   SYSTEM_CHECK_WORD = "MARLIN".freeze
   SYSTEM_CHECK_INSTRUCTIONS = "You are a capability probe target. Whatever the user asks, " \
                               "reply with exactly one word: #{SYSTEM_CHECK_WORD}."
   SYSTEM_CHECK_PROMPT = "What is the capital of France? Answer in one word."
 
-  # A reply can be fluent and still be a refusal ("I cannot browse the web...
-  # visit the site yourself") — grounding checks must treat that as no
-  # retrieval, not as evidence.
+  # A fluent reply can still be a refusal ("I cannot browse the web, visit the
+  # site yourself") — grounding checks must not read that as retrieval.
   REFUSAL_MARKERS = /(?:don't|do not) have the ability|(?:cannot|can't|unable to) (?:browse|access)|no ability to browse/i
 
   def self.refusal?(text)
     text.to_s.match?(REFUSAL_MARKERS)
   end
-  # Mirrors production's structuring stage (LlmPrompts::STRUCTURE_SYSTEM): fixed
-  # text in, strict JSON out, no retrieval involved.
+  # Mirrors production's structuring stage: fixed text in, strict JSON out.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
                             "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
   SAMPLE_TEXT = <<~TEXT
@@ -81,21 +67,17 @@ module LlmCapabilityProbe
   CLIENT_TOOLS_SCHEMA_PROMPT = "#{CLIENT_TOOLS_PROMPT} Return exactly one item: body set to that heading, " \
                                "uid and source_url set to the page's URL.".freeze
 
-  # The heading lives only on the fetched page — deliberately absent from the
-  # prompt and from the canned search results — so quoting it is evidence the
-  # model read fetched content rather than echoing what it was already told.
+  # Appears only on the fetched page — never in the prompt or the canned search
+  # results — so quoting it requires having read fetched content. Keep it that
+  # way when editing either.
   EXPECTED_HEADING = /example domain/i
 
-  # Wire names the production tools present to the model; the client-tools
-  # check matches the loop's observed tool calls against these.
   SEARCH_TOOL_NAME = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil).name
   FETCH_TOOL_NAME = LlmClient::Tools::WebFetch.new.name
 
-  # Probe-local stand-in for the production search tool: identical wire shape
-  # (name, description, parameter) but canned results pointing at fixed real
-  # URLs, so the tool loop can be qualified without managed search
-  # credentials. The follow-up fetch is the real production tool, which is
-  # credential-free.
+  # Stand-in for the production search tool: same wire shape, canned results, so
+  # the loop can be driven without managed search credentials. The fetch tool
+  # needs no stand-in — the production one is credential-free.
   class CannedWebSearch < RubyLLM::Tool
     description LlmClient::Tools::WebSearch.description
     param :query, desc: "Search query", required: true
@@ -129,17 +111,16 @@ module LlmCapabilityProbe
       context.chat(model: model, provider: ruby_llm_provider, assume_model_exists: assume_model_exists?)
     end
 
-    # The provider's live models listing, resolved the way LlmClient does it
-    # (registry names don't always match RubyLLM provider keys).
+    # Resolved the way LlmClient does it — registry names don't always match
+    # RubyLLM provider keys.
     def list_models
       RubyLLM::Provider.resolve(ruby_llm_provider).new(context.config).list_models
     end
 
     def assume_model_exists? = false
 
-    # Structured output is repaired exactly as production repairs it — Kimi
-    # fences its JSON, and LlmClient unwraps that before parsing. Without this
-    # the probe fails a model on a quirk the app already absorbs.
+    # Repairs structured output the way production does, so the probe doesn't
+    # fail a model on a quirk the app already absorbs (Kimi fences its JSON).
     def unwrap_json(text)
       LlmClient::Adapter.for(key).unwrap_json(text)
     end
@@ -160,9 +141,8 @@ module LlmCapabilityProbe
       def configure(config)
         config.openai_api_key = ENV.fetch(self.class.env_key)
         config.openai_api_base = ENV.fetch("MOONSHOT_API_BASE", "https://api.moonshot.ai/v1")
-        # Mirror production (LlmProvider#configure): Moonshot rejects the
-        # "developer" role RubyLLM sends by default, so the probe must use
-        # the same wire shape or its results won't transfer.
+        # Must match LlmProvider#configure or results won't transfer: Moonshot
+        # rejects the "developer" role RubyLLM sends by default.
         config.openai_use_system_role = true
       end
 
@@ -193,9 +173,9 @@ module LlmCapabilityProbe
     end
 
     # Returns { results:, passed: }. Every check is attempted; failures are
-    # recorded, never raised — the probe's job is to report what a provider
-    # does, not to crash on it. Evidence rides along in each result so the
-    # caller can persist everything (no separate transcript to chase).
+    # recorded, never raised — the job is to report what a provider does, not
+    # to crash on it. `passed` is a summary; the per-check results are the
+    # verdict (see docs/llm-provider-qualification.md).
     def run
       @checks.each { |check| record(check) { send("check_#{check}") } }
       { results: @results, passed: @results.none? { |r| r[:status] == "FAIL" } }
@@ -213,9 +193,8 @@ module LlmCapabilityProbe
                     evidence: nil, seconds: (Time.current - started).round(1) }
     end
 
-    # Records the authenticated models listing as evidence and confirms the
-    # probed id is served verbatim — the capability matrix gates on exact
-    # string match, so a near-miss id qualifies nothing.
+    # LlmModelCapability matches on exact string, so a near-miss id qualifies
+    # nothing. The listing is recorded as evidence.
     def check_models
       ids = @provider.list_models.map(&:id)
       evidence = { model_ids: ids }
@@ -239,11 +218,9 @@ module LlmCapabilityProbe
       pass(honors_system_prompt?(text), "system instructions not honored verbatim", text) { "system prompt honored" }
     end
 
-    # The instructions ask for exactly one word, so only that word counts:
-    # a refusal that names it, or an answer that also volunteers the user
-    # prompt's answer, means the channel was received but not obeyed.
-    # Punctuation and surrounding whitespace are ignored — a trailing period
-    # is formatting, not a second thought.
+    # Only the word alone counts: a refusal that names it, or an answer that
+    # also volunteers the real one, means the prompt arrived but wasn't obeyed.
+    # Punctuation is ignored — a trailing period is formatting.
     def honors_system_prompt?(text)
       text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end
@@ -254,21 +231,16 @@ module LlmCapabilityProbe
       validate_items(response)
     end
 
-    # The production mechanism end to end: a system prompt plus the
-    # client-side search and fetch function tools driven through a real
-    # multi-round loop. The observed tool calls plus an answer grounded in
-    # the fetched page are the evidence that the model drives client tools.
-    # This is production's gather shape for two-step providers (LlmLoader).
+    # Production's gather step: system prompt plus the client-side tools driven
+    # through a real multi-round loop.
     def check_client_tools
       client_tools_loop
     end
 
-    # Production's combined shape (LlmLoader#extract when the adapter reports
-    # `combined_extraction?`): the output schema rides on the same chat as the
-    # client-side tools. Schema and tools can each work alone yet break
-    # together, so a pair qualified only by the checks above could still fail
-    # on a real feed load. A FAIL here means the pair needs two-step
-    # extraction, not that it fails qualification.
+    # Production's combined shape: schema on the same chat as the tools. Schema
+    # and tools can each work alone yet break together. A FAIL means the pair
+    # needs two-step extraction (Adapter#combined_extraction?), not that it
+    # fails qualification.
     def check_client_tools_schema
       client_tools_loop(schema: PROBE_SCHEMA)
     end
@@ -308,16 +280,15 @@ module LlmCapabilityProbe
                    evidence: evidence.merge(result[:evidence] || {}))
     end
 
-    # Structured replies arrive as a Hash; serialize so grounding reads the
-    # same way for both shapes.
+    # Structured replies arrive as a Hash; serialize so grounding reads the same
+    # way for both shapes.
     def answer_text(response)
       content = response.content
       content.is_a?(Hash) ? JSON.generate(content) : content.to_s
     end
 
-    # Both tools must appear in the loop, and the fetch must have returned the
-    # page itself: a refused URL, a wrong URL or an HTTP error leaves nothing
-    # to ground on, and the heading appears nowhere else in the conversation.
+    # The fetch must have returned the page itself: a refused URL, a wrong URL
+    # or an HTTP error leaves the model nothing to ground on.
     def tool_loop_failure(rounds)
       names = rounds.map { |round| round[:name] }
       return { status: "FAIL", note: "search tool never called" } unless names.include?(SEARCH_TOOL_NAME)
@@ -352,9 +323,8 @@ module LlmCapabilityProbe
       elsif items.empty?
         { status: "FAIL", note: "valid but empty items", evidence: evidence }
       elsif LlmCapabilityProbe.refusal?(JSON.generate(items))
-        # Well-formed JSON whose content is "I cannot browse the web" is a
-        # refusal wearing the schema, not a capability. Passing it would
-        # qualify a model for gathering it never did.
+        # A refusal wearing the schema would otherwise qualify a model for
+        # gathering it never did.
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }

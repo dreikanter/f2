@@ -6,10 +6,9 @@ probe run shows it works on the shape production actually calls. The model
 picker offers that list intersected with the credential's own model snapshot, so
 an unqualified model can never be selected and fail asynchronously mid-run.
 
-The probe (`LlmCapabilityProbe`) is the gate. It runs against the real provider
-API — never recorded cassettes, because the question is live third-party
-behavior — and it stays independent of managed credentials, so a provider can be
-qualified before it is wired into the app at all.
+`LlmCapabilityProbe` is the gate. It runs against the real provider API, and
+takes its keys from the environment rather than managed credentials, so a
+provider can be qualified before it is wired into the app.
 
 ## Running it
 
@@ -17,7 +16,8 @@ Keys come from the environment: `ANTHROPIC_API_KEY`, `MOONSHOT_API_KEY`
 (`MOONSHOT_API_BASE` overrides the endpoint). Without a key the run records a
 skip event and ends.
 
-From the dev area — the usual path, and the one that keeps the evidence:
+From the dev area — the usual path, and the one that keeps the evidence
+searchable afterwards:
 
 1. Set the key on the target environment (staging; see
    [deployment-setup.md](deployment-setup.md)).
@@ -68,17 +68,14 @@ schema-valid payload whose content is a refusal fails too.
 
 1. Run the probe against the pair and confirm `models`, `system_prompt`,
    `schema` and `client_tools` pass.
-2. Add the row to `LlmModelCapability::ENTRIES`, with the verification noted in
-   the comment above it.
+2. Add the row to `LlmModelCapability::ENTRIES`.
 3. Add a rates entry in `config/llm_rates.yml`, verified against the provider's
    published pricing — costs shown to users come from it.
 4. If the pair becomes a provider's default, `LlmProvider#default_model` moves
    too; an invariant test requires every provider's default to be in the matrix.
 
-Re-run the probe when the production call shape changes, not just when adding a
-pair. Pinning system prompts to role `system` for Moonshot invalidated the
-earlier Kimi evidence, and that gap is exactly how a wire-format bug reached
-production.
+Re-run the probe when the production call shape changes, not only when adding a
+pair — a change to how requests are built invalidates earlier evidence.
 
 ## Adding a provider
 
@@ -93,6 +90,3 @@ Before a pair can be probed, the provider needs:
 
 The probe's `configure` must mirror production's `LlmProvider#configure`. If
 they drift, the probe qualifies a wire shape the app never sends.
-
-A provider with no matrix rows is simply not selectable for AI feeds, which is
-why an unqualified or unpayable provider can sit in the registry harmlessly.
