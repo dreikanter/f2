@@ -220,7 +220,7 @@ The workflows read these repository secrets. Per-environment values carry a
 | `POSTGRES_PASSWORD_PRODUCTION` | production | production database password |
 | `RAILS_MASTER_KEY_STAGING` | staging | written to `config/credentials/staging.key` |
 | `RAILS_MASTER_KEY_PRODUCTION` | production | written to `config/credentials/production.key` |
-| `STAGING_SSH_PRIVATE_KEY` | staging | SSH key for `dev-origin.fffeeder.com` |
+| `SSH_PRIVATE_KEY_STAGING` | staging | SSH key for `dev-origin.fffeeder.com` |
 | `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
 | `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
 
