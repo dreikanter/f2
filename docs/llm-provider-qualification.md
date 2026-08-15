@@ -60,7 +60,7 @@ own web search works tells us nothing about a feed.
 | `models` | The id is served verbatim by the provider's listing — the allowlist matches on exact string |
 | `plain` | Basic round trip, deliberately without a system prompt so it isolates reachability |
 | `system_prompt` | The system channel arrives and is obeyed; instructions contradict the obvious answer, so a dropped or rejected prompt fails |
-| `schema` | Strict-schema JSON under production's `UNIVERSAL_OUTPUT_SCHEMA`, repaired the way production repairs it (`Adapter#unwrap_json`). Fails unless an item comes back with `source_url` null — a digest feed depends on that branch |
+| `schema` | JSON under production's `UNIVERSAL_OUTPUT_SCHEMA`, sent at the provider's own strictness (`Adapter#schema_payload`) and repaired the way production repairs it (`Adapter#unwrap_json`). Fails unless an item comes back with `source_url` null — a digest feed depends on that branch |
 | `client_tools` | The model drives our search and fetch tools through a real multi-round loop and grounds its answer in fetched content — production's gather step |
 | `client_tools_schema` | Schema and tools survive the *same* call — production's combined shape |
 
@@ -96,8 +96,10 @@ Before a pair can be probed, the provider needs:
 
 - an `LlmProvider` entry (RubyLLM provider key, default model, API base if it
   rides another provider's adapter);
-- an `LlmClient::Adapter` subclass, if it needs response repair or one-call
-  extraction;
+- an `LlmClient::Adapter` subclass, if it needs response repair, one-call
+  extraction, or a strictness other than the default (OpenAI's strict mode
+  cannot express the optional keys `UNIVERSAL_OUTPUT_SCHEMA` carries, so it
+  sends the schema unconstrained);
 - a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
   `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
 - an `AiCredential` for it, named after that new job without the `Job` suffix
