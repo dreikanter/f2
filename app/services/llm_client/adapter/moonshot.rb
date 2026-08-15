@@ -1,9 +1,8 @@
 class LlmClient
   module Adapter
     # Moonshot (Kimi) returns structured output in markdown fences often enough
-    # that JSON must be unwrapped before parsing. The fence is matched wherever
-    # it appears and whatever its tag's case, since a model that adds a sentence
-    # of preamble or writes ```JSON is not a different failure.
+    # that JSON must be unwrapped before parsing. Matched unanchored and
+    # case-insensitively: preamble prose and a ```JSON tag are the same failure.
     class Moonshot < Base
       FENCE = /```[a-z]*\n?(.*?)\n?```/mi
 

@@ -1,12 +1,9 @@
 class LlmClient
-  # Bounds one call's tool loop. Both web tools are billable — LLM rounds plus
-  # search-API calls — and RubyLLM satisfies tool calls for as long as the model
-  # keeps emitting them, so a model stuck searching spends without limit.
+  # Bounds one call's tool loop: RubyLLM satisfies tool calls for as long as the
+  # model emits them, and both web tools cost money every round.
   #
-  # Past the budget the tools stop doing paid work and say so. That alone is
-  # advisory: a model can ignore it and call again. So a couple of rounds later
-  # the loop is halted outright, which is what actually guarantees termination.
-  # The gathered content survives either way (see LlmClient#invoke_provider).
+  # Two stages, and both are needed. Telling the model to stop is advisory — it
+  # can call again — so the halt is what actually guarantees termination.
   class ToolBudget
     ROUNDS = 8
     GRACE = 2

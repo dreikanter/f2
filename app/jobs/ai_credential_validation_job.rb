@@ -7,8 +7,8 @@ class AiCredentialValidationJob < ApplicationJob
   queue_as :default
 
   def perform(credential)
-    # Where a transient failure puts the credential back. Never "validating":
-    # restoring that would re-strand a credential a previous run left stuck.
+    # Never "validating": restoring that would re-strand a credential a
+    # previous run left stuck.
     fallback_state = credential.active? ? :active : :pending
     credential.validating!
 
@@ -16,14 +16,11 @@ class AiCredentialValidationJob < ApplicationJob
     credential.update!(state: :active, available_models: models,
                        last_validated_at: Time.current, last_error: nil)
   rescue LlmClient::AuthError => e
-    # A rejected key is dead, and a dead key cannot back a running feed.
-    # Matched before the provider error it descends from.
+    # Must precede the provider error it descends from. A rejected key is dead,
+    # and a dead key cannot back a running feed.
     credential.deactivate!(last_error: e.message)
   rescue LlmClient::Error => e
-    # A timeout, a 429 or a provider fault says nothing about the key — and
-    # low-tier accounts are rate-limited often enough that treating one as a
-    # dead key would take a user's feeds down routinely. Record it, put the
-    # credential back where it was, and leave the feeds alone.
+    # Everything else says nothing about the key, so the feeds stay up.
     credential.update!(state: fallback_state, last_error: e.message)
   end
 end

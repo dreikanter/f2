@@ -67,8 +67,7 @@ class LlmClient
            RubyLLM::InvalidRoleError,
            RubyLLM::InvalidToolChoiceError,
            RubyLLM::UnsupportedAttachmentError,
-           # Invalid JSON in tool-call arguments: a provider-communication
-           # failure like any other, and it must still write a usage row.
+           # Invalid JSON in tool-call arguments; still a billable call.
            JSON::ParserError => e
       Rails.error.report(e, context: error_context(ctx))
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
@@ -133,10 +132,9 @@ class LlmClient
   # (metadata warnings, timestamps) is dropped. String keys so the shape
   # round-trips through jsonb unchanged.
   #
-  # Providers whose models aren't in the gem's registry get placeholder limits
-  # rather than real ones, and those would be persisted and rendered as fact
-  # (a 4,096-token context for Kimi). Keep only what the provider itself told
-  # us; the credential page already hides missing fields.
+  # Models outside the gem's registry come back with invented limits, so those
+  # providers keep only what the provider itself reported. The credential page
+  # already hides missing fields.
   def serialize_model(model)
     return { "id" => model.id, "name" => model.name } if credential.llm_provider.assume_model_exists?
 
@@ -178,10 +176,8 @@ class LlmClient
     )
   end
 
-  # A halted tool loop (ToolBudget) returns the halt notice rather than the
-  # model's message, which would throw away everything gathered before the
-  # budget ran out. Fall back to the last thing the model actually said; a
-  # degraded run that keeps its content beats an empty one.
+  # A halted tool loop returns the halt notice in place of the model's message.
+  # Recover what it had already gathered; a degraded run beats an empty one.
   def recover_halted(chat, response)
     return response unless response.is_a?(RubyLLM::Tool::Halt)
 

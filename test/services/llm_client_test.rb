@@ -221,8 +221,7 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 0, LlmUsage.count
   end
 
-  # RubyLLM invents context/output limits for models it doesn't know, and those
-  # would be persisted and rendered as fact on the credential page.
+  # The invented limits would otherwise be persisted and rendered as fact.
   test "#available_models should keep only provider-supplied fields for unregistered models" do
     moonshot = create(:ai_credential, user: user, provider: "moonshot",
                                       credential_data: { "api_key" => "sk-moon" })
@@ -381,8 +380,6 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
-  # Invalid JSON in tool-call arguments would otherwise escape the taxonomy and
-  # leave the call unbilled.
   test "#call should map malformed tool-call arguments to ProviderError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, JSON::ParserError.new("unexpected token"))
@@ -421,8 +418,8 @@ class LlmClientTest < ActiveSupport::TestCase
     end
   end
 
-  # A halted tool loop: RubyLLM returns the halt notice itself rather than a
-  # message, with the model's earlier turns left on the chat.
+  # RubyLLM returns the halt notice itself rather than a message, leaving the
+  # model's earlier turns on the chat.
   class FakeHaltedChat < FakeChat
     attr_reader :messages
 
