@@ -17,7 +17,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
   test "should pin one provider and model per job" do
     assert_equal %w[anthropic claude-sonnet-4-6],
                  [AnthropicCapabilityProbeJob::PROVIDER, AnthropicCapabilityProbeJob::MODEL]
-    assert_equal %w[moonshot kimi-k2.5], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
+    assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
   end
 
   test "#perform should record a skip event when the API key is not configured" do
