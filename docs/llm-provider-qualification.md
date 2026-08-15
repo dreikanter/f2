@@ -97,10 +97,12 @@ Before a pair can be probed, the provider needs:
 
 - an `LlmProvider` entry (RubyLLM provider key, default model, API base if it
   rides another provider's adapter);
-- an `LlmClient::Adapter` subclass, if it needs response repair, one-call
-  extraction, or a strictness other than the default (OpenAI's strict mode
-  cannot express the optional keys `UNIVERSAL_OUTPUT_SCHEMA` carries, so it
-  sends the schema unconstrained);
+- an `LlmClient::Adapter::REGISTRY` entry, which a test requires for every
+  registered provider — `Adapter.for` raises `KeyError` without one, after the
+  provider has billed the call. Point it at `Base` unless the provider needs
+  response repair, one-call extraction, or a strictness other than the default
+  (OpenAI's strict mode cannot express the optional keys
+  `UNIVERSAL_OUTPUT_SCHEMA` carries, so it sends the schema unconstrained);
 - a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
   `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
 - an `AiCredential` for it, named after that new job without the `Job` suffix
