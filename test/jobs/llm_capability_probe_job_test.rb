@@ -1,8 +1,16 @@
 require "test_helper"
 
 class LlmCapabilityProbeJobTest < ActiveJob::TestCase
+  def operator
+    @operator ||= create(:user, :dev)
+  end
+
   def job
-    @job ||= AnthropicCapabilityProbeJob.new
+    @job ||= AnthropicCapabilityProbeJob.new(operator)
+  end
+
+  def credential
+    @credential ||= create(:ai_credential, user: operator, provider: "anthropic", display_name: "Anthropic Probe")
   end
 
   def job_run
@@ -20,25 +28,39 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
   end
 
-  test ".description should name the environment key the probe needs" do
-    assert_match(/ANTHROPIC_API_KEY/, AnthropicCapabilityProbeJob.description)
-    assert_match(/MOONSHOT_API_KEY/, KimiCapabilityProbeJob.description)
+  test ".description should name the credential the probe needs" do
+    assert_match(/Anthropic Probe/, AnthropicCapabilityProbeJob.description)
+    assert_match(/Moonshot \(Kimi\) Probe/, KimiCapabilityProbeJob.description)
   end
 
-  test "#perform should record a skip event when the API key is not configured" do
-    job_run
+  test ".runnable_arguments should ask the dev area for the user who pressed Run" do
+    assert_equal [operator], AnthropicCapabilityProbeJob.runnable_arguments(operator)
+  end
 
-    LlmCapabilityProbe::Provider.stub(:configured?, false) do
+  test "#perform should record a skip naming the credential to create when it is missing" do
+    job_run
+    job.perform_now
+
+    event = Event.find_by(subject: job_run, type: "job.llm_capability_probe.skipped")
+    assert_predicate event, :warning?
+    assert_includes event.message, '"Anthropic Probe"'
+    assert_equal "Anthropic Probe", event.metadata["expected_credential_name"]
+  end
+
+  test "#perform should ignore a probe-named credential owned by someone else" do
+    job_run
+    create(:ai_credential, user: create(:user, :dev), provider: "anthropic", display_name: "Anthropic Probe")
+
+    LlmCapabilityProbe::Runner.stub(:new, ->(**) { raise "should not run" }) do
       job.perform_now
     end
 
-    events = Event.where(subject: job_run, type: "job.llm_capability_probe.skipped")
-    assert_equal 1, events.count
-    assert_predicate events.first, :warning?
+    assert Event.exists?(subject: job_run, type: "job.llm_capability_probe.skipped")
   end
 
   test "#perform should record one event per check with full evidence plus a summary" do
     job_run
+    credential
 
     outcome = {
       results: [
@@ -50,12 +72,8 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     runner = Minitest::Mock.new
     runner.expect(:run, outcome)
 
-    LlmCapabilityProbe::Provider.stub(:configured?, true) do
-      LlmCapabilityProbe::Provider.stub(:build, ->(key) { key }) do
-        LlmCapabilityProbe::Runner.stub(:new, ->(**) { runner }) do
-          job.perform_now
-        end
-      end
+    LlmCapabilityProbe::Runner.stub(:new, ->(**) { runner }) do
+      job.perform_now
     end
 
     checks = Event.where(subject: job_run, type: "job.llm_capability_probe.check").order(:id)
@@ -67,6 +85,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
 
     summary = Event.find_by(subject: job_run, type: "job.llm_capability_probe.completed")
     assert_includes summary.message, "plain=PASS schema=FAIL"
+    assert_equal credential.id, summary.metadata["credential_id"]
     assert_equal false, summary.metadata["passed"]
     assert_predicate summary, :warning?
     runner.verify

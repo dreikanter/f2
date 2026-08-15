@@ -53,29 +53,38 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     end
   end
 
-  FakeModel = Struct.new(:id)
+  # Stands in for the credential the runner is built on. Moonshot, so the
+  # adapter the runner resolves is one that repairs fenced JSON.
+  class FakeCredential
+    attr_reader :provider, :chats
 
-  class FakeProvider
-    attr_reader :key, :chats
-
-    def initialize(responses, models: [], tool_rounds: [])
+    def initialize(responses, tool_rounds: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
-      @models = models
       @tool_rounds = tool_rounds
       @chats = []
-      @key = "fake"
+      @provider = "moonshot"
     end
 
     def chat(_model)
       FakeChat.new(@responses.shift, tool_rounds: @tool_rounds).tap { |chat| @chats << chat }
     end
-    def list_models = @models.map { |id| FakeModel.new(id) }
-    def unwrap_json(text) = LlmClient::Adapter::Moonshot.new.unwrap_json(text)
+  end
+
+  # The models check reads the listing through LlmClient, the same call the
+  # credential validation job makes.
+  FakeClient = Struct.new(:models) do
+    def available_models = models.map { |id| { "id" => id } }
   end
 
   def run_checks(responses, checks, models: [], tool_rounds: [])
-    provider = FakeProvider.new(responses, models: models, tool_rounds: tool_rounds)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: checks).run
+    credential = FakeCredential.new(responses, tool_rounds: tool_rounds)
+    LlmClient.stub(:new, ->(_) { FakeClient.new(models) }) do
+      LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: checks).run
+    end
+  end
+
+  def operator
+    @operator ||= create(:user, :dev)
   end
 
   FETCHED_PAGE = "Example Domain This domain is for use in illustrative examples in documents.".freeze
@@ -305,9 +314,9 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   test "#run should attach the schema and both client tools to one chat for client_tools_schema" do
-    provider = FakeProvider.new(grounded_payload, tool_rounds: full_tool_loop)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools_schema"]).run
-    chat = provider.chats.first
+    credential = FakeCredential.new(grounded_payload, tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["client_tools_schema"]).run
+    chat = credential.chats.first
 
     assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema
     assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools.map(&:class)
@@ -316,10 +325,10 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
   # The probe drives a paid API, and an unqualified model is the likeliest to loop.
   test "#run should bound the client tools loop with one budget shared by both tools" do
-    provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
+    credential = FakeCredential.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["client_tools"]).run
 
-    budgets = provider.chats.first.tools.map { |tool| tool.instance_variable_get(:@budget) }
+    budgets = credential.chats.first.tools.map { |tool| tool.instance_variable_get(:@budget) }
 
     assert_instance_of LlmClient::ToolBudget, budgets.first
     assert_same budgets.first, budgets.last
@@ -336,24 +345,24 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   # The pairing is its own wire shape: a schema-only call never exercises the
   # system role a provider might reject.
   test "#run should send a system prompt alongside the schema" do
-    provider = FakeProvider.new(valid_payload)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["schema"]).run
+    credential = FakeCredential.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["schema"]).run
 
-    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, credential.chats.first.instructions
   end
 
   test "#run should leave the plain check bare so it isolates the round trip" do
-    provider = FakeProvider.new("pong")
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["plain"]).run
+    credential = FakeCredential.new("pong")
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["plain"]).run
 
-    assert_nil provider.chats.first.instructions
+    assert_nil credential.chats.first.instructions
   end
 
   test "#run should leave the plain client tools check unstructured" do
-    provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
-    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
+    credential = FakeCredential.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["client_tools"]).run
 
-    assert_nil provider.chats.first.schema
+    assert_nil credential.chats.first.schema
   end
 
   test "#run should pass client_tools_schema on a grounded schema-valid payload" do
@@ -395,42 +404,38 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_match(/RuntimeError: boom/, outcome[:results].first[:note])
   end
 
-  test ".build should raise on an unknown provider" do
-    error = assert_raises(ArgumentError) { LlmCapabilityProbe::Provider.build("nope") }
-    assert_match(/Unknown provider/, error.message)
-  end
-
-  test ".configured? should reflect presence of the provider env key" do
-    original = ENV.fetch("MOONSHOT_API_KEY", nil)
-    ENV["MOONSHOT_API_KEY"] = nil
-    assert_not LlmCapabilityProbe::Provider.configured?("moonshot")
-
-    ENV["MOONSHOT_API_KEY"] = "k"
-    assert LlmCapabilityProbe::Provider.configured?("moonshot")
-    assert_not LlmCapabilityProbe::Provider.configured?("nope")
-  ensure
-    ENV["MOONSHOT_API_KEY"] = original
-  end
-
   test "checks should cover only what production calls" do
     assert_equal %w[models plain system_prompt schema client_tools client_tools_schema],
                  LlmCapabilityProbe::Runner::CHECKS
   end
 
-  test "moonshot provider should configure the same system-role flag as production" do
-    original = ENV.fetch("MOONSHOT_API_KEY", nil)
-    ENV["MOONSHOT_API_KEY"] = "k"
-    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
-
-    LlmCapabilityProbe::Provider.build("moonshot").configure(config)
-
-    assert config.openai_use_system_role
-  ensure
-    ENV["MOONSHOT_API_KEY"] = original
+  test ".credential_name should name the credential after the provider" do
+    assert_equal "Anthropic Probe", LlmCapabilityProbe.credential_name("anthropic")
+    assert_equal "Moonshot (Kimi) Probe", LlmCapabilityProbe.credential_name("moonshot")
   end
 
-  test "probe providers should unwrap structured output the way production does" do
-    assert_equal '{"a":1}', LlmCapabilityProbe::Provider.build("moonshot").unwrap_json("```json\n{\"a\":1}\n```")
-    assert_equal '{"a":1}', LlmCapabilityProbe::Provider.build("anthropic").unwrap_json('{"a":1}')
+  test ".credential_for should find the credential named after the probe" do
+    credential = create(:ai_credential, user: operator, provider: "anthropic", display_name: "Anthropic Probe")
+
+    assert_equal credential, LlmCapabilityProbe.credential_for("anthropic", user: operator)
+  end
+
+  test ".credential_for should ignore a credential of another provider with the same name" do
+    create(:ai_credential, user: operator, provider: "openrouter", display_name: "Anthropic Probe")
+
+    assert_nil LlmCapabilityProbe.credential_for("anthropic", user: operator)
+  end
+
+  test ".credential_for should ignore a probe-named credential belonging to someone else" do
+    create(:ai_credential, user: create(:user, :dev), provider: "anthropic", display_name: "Anthropic Probe")
+
+    assert_nil LlmCapabilityProbe.credential_for("anthropic", user: operator)
+  end
+
+  test ".missing_credential_message should name the exact credential to create" do
+    message = LlmCapabilityProbe.missing_credential_message("anthropic")
+
+    assert_match(/"Anthropic Probe"/, message)
+    assert_match(/Anthropic credential/, message)
   end
 end
