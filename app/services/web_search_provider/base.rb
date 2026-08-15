@@ -36,10 +36,9 @@ module WebSearchProvider
 
     attr_reader :api_key
 
-    # Whether a failed response means the key itself is finished — rejected,
-    # revoked, or spent — as opposed to a transient fault worth retrying.
-    # Vendors disagree on how to say it, so providers refine this; the statuses
-    # here are the ones they all use the same way.
+    # Whether a failure means the key itself is finished — rejected, revoked or
+    # spent — rather than a fault that may clear. Vendors disagree on how they
+    # say it, so providers refine this; these statuses are the ones they share.
     def auth_error?(response)
       AUTH_STATUSES.include?(response.status)
     end
