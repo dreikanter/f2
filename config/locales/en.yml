@@ -126,6 +126,23 @@ en:
     resend_email_failed:
       name: "Email failed"
       description_html: "Email delivery failed"
+    mail_profile_mailer_account_confirmation:
+      name: "Confirmation email"
+      description_html: "Account confirmation email sent"
+    mail_profile_mailer_email_change_confirmation:
+      name: "Email change confirmation"
+      description_html: "Email change confirmation sent"
+    mail_passwords_mailer_reset:
+      name: "Password reset email"
+      description_html: "Password reset email sent"
+    job_purge_expired_events_completed:
+      name: "Old events cleaned up"
+    job_llm_capability_probe_skipped:
+      name: "Capability probe skipped"
+    job_llm_capability_probe_check:
+      name: "Capability check"
+    job_llm_capability_probe_completed:
+      name: "Capability probe finished"
     metadata:
       stats:
         started_at: "Started at"

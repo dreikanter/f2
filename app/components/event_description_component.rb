@@ -48,8 +48,13 @@ class EventDescriptionComponent < ViewComponent::Base
     ).html_safe
   end
 
+  # Types without a translated sentence fall back to the stored message, which
+  # is raw operational text ("combined: PASS (52.8s)") that says nothing about
+  # what produced it — so the event name leads and the message follows.
   def fallback_description
-    (event.message.present? ? escaped_message : default_description).html_safe
+    return ERB::Util.html_escape(default_description) if event.message.blank?
+
+    helpers.safe_join([helpers.tag.span(default_description, class: "font-medium"), helpers.middot, escaped_message])
   end
 
   def description_key
@@ -115,7 +120,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def default_description
-    I18n.t("events.#{event.type}.name", default: event.type.humanize)
+    I18n.t("events.#{event_type}.name", default: event.type.tr(".", " ").humanize)
   end
 
   def metadata_feed_links_html
