@@ -16,11 +16,12 @@ class LlmClient
         @budget = budget
       end
 
+      # Claimed before the URL is judged: a refused call still cost an LLM
+      # round, and a model looping on bad URLs has to reach the halt too.
       def execute(url:)
-        return { error: "Refused: pass one absolute public http(s) URL." }.to_json unless PublicUrl.safe?(url)
-
         over_budget = @budget&.claim
         return over_budget if over_budget
+        return { error: "Refused: pass one absolute public http(s) URL." }.to_json unless PublicUrl.safe?(url)
 
         # public-only so a redirect can't slip past the check above to an
         # internal address (SSRF; spec 005 §8).

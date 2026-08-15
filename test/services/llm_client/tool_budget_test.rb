@@ -38,6 +38,18 @@ class LlmClient::ToolBudgetTest < ActiveSupport::TestCase
 
     assert_nil shared.claim
     assert_instance_of RubyLLM::Tool::Halt, fetch.execute(url: "https://example.com/")
-    assert_match(/Refused/, JSON.parse(search.execute(query: ""))["error"])
+    assert_instance_of RubyLLM::Tool::Halt, search.execute(query: "anything")
+  end
+
+  # A refused call still costs an LLM round, so a model looping on bad
+  # arguments has to reach the halt like any other.
+  test "calls refused for bad arguments should still spend the budget" do
+    shared = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
+    search = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil, budget: shared)
+    fetch = LlmClient::Tools::WebFetch.new(budget: shared)
+
+    assert_match(/Refused/, JSON.parse(search.execute(query: "  "))["error"])
+    assert_instance_of RubyLLM::Tool::Halt, fetch.execute(url: "ftp://example.com")
+    assert_equal 2, shared.spent
   end
 end

@@ -78,8 +78,20 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
       AiCredentialValidationJob.perform_now(credential)
     end
 
-    assert_equal "pending", credential.reload.state
     assert_equal "enabled", feed.reload.state
+    assert_not Event.exists?(subject: credential, type: "ai_credential_deactivated")
+  end
+
+  # The validation page polls silently while a credential is pending or
+  # validating, so a transient failure has to leave a state that settles.
+  test "#perform should settle a never-active credential rather than leave it polling" do
+    stub_available_models(LlmClient::ProviderError.new("500 upstream")) do
+      AiCredentialValidationJob.perform_now(credential)
+    end
+
+    credential.reload
+    assert_predicate credential, :inactive?
+    assert_equal "500 upstream", credential.last_error
   end
 
   # No LlmClient stubbing: goes through the real client so an error the
@@ -91,7 +103,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     end
 
     credential.reload
-    assert_equal "pending", credential.state
+    assert_equal "inactive", credential.state
     assert_match "unknown RubyLLM provider", credential.last_error
   end
 
@@ -103,7 +115,7 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     AiCredentialValidationJob.perform_now(moonshot)
 
     moonshot.reload
-    assert_equal "pending", moonshot.state
+    assert_equal "inactive", moonshot.state
     assert_not_nil moonshot.last_error
   end
 end
