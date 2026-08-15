@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-15
 
+- A search key that's been revoked or has run out of credit now switches itself off with a clear reason, instead of quietly failing on every run.
 - A temporary hiccup while checking an AI credential no longer switches off your feeds — only a key the provider actually rejects does.
 - Fixed AI feeds failing when the model wrapped its answer in a code block or added a line of preamble.
 - Kimi feeds now use K2.6, since Moonshot is retiring K2.5 at the end of August. Feeds still set to the old model switch over on their own — no action needed.

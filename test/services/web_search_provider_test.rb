@@ -141,7 +141,67 @@ class WebSearchProviderTest < ActiveSupport::TestCase
     end
   end
 
-  test "#search should not raise AuthError for a server error status" do
+  test "brave #search should raise AuthError when 422 reports a rejected subscription token" do
+  body = { type: "ErrorResponse", error: { code: "SUBSCRIPTION_TOKEN_INVALID", status: 422 } }.to_json
+
+  with_client(HttpClient::Response.new(status: 422, body: body)) do
+    assert_raises(WebSearchProvider::AuthError) do
+      WebSearchProvider::Brave.new(api_key: "key").search("query")
+    end
+  end
+end
+
+test "brave #search should raise AuthError when 422 blames the authentication component" do
+  body = { error: { code: "SOME_FUTURE_TOKEN_ERROR", meta: { component: "authentication" } } }.to_json
+
+  with_client(HttpClient::Response.new(status: 422, body: body)) do
+    assert_raises(WebSearchProvider::AuthError) do
+      WebSearchProvider::Brave.new(api_key: "key").search("query")
+    end
+  end
+end
+
+test "brave #search should raise a plain ProviderError when 422 is a parameter complaint" do
+  body = { error: { code: "VALIDATION", meta: { component: "query" } } }.to_json
+
+  with_client(HttpClient::Response.new(status: 422, body: body)) do
+    error = assert_raises(WebSearchProvider::ProviderError) do
+      WebSearchProvider::Brave.new(api_key: "key").search("query")
+    end
+    assert_not_kind_of WebSearchProvider::AuthError, error
+  end
+end
+
+test "brave #search should raise a plain ProviderError when a 422 body is unreadable" do
+  with_client(HttpClient::Response.new(status: 422, body: "<html>nope</html>")) do
+    error = assert_raises(WebSearchProvider::ProviderError) do
+      WebSearchProvider::Brave.new(api_key: "key").search("query")
+    end
+    assert_not_kind_of WebSearchProvider::AuthError, error
+  end
+end
+
+test "tavily #search should raise AuthError on its plan and pay-as-you-go limit statuses" do
+  [432, 433].each do |status|
+    with_client(HttpClient::Response.new(status: status, body: "")) do
+      error = assert_raises(WebSearchProvider::AuthError) do
+        WebSearchProvider::Tavily.new(api_key: "key").search("query")
+      end
+      assert_equal "Tavily: HTTP #{status}", error.message
+    end
+  end
+end
+
+test "#search should keep vendor-specific auth statuses out of the shared contract" do
+  with_client(HttpClient::Response.new(status: 432, body: "")) do
+    error = assert_raises(WebSearchProvider::ProviderError) do
+      WebSearchProvider::Serper.new(api_key: "key").search("query")
+    end
+    assert_not_kind_of WebSearchProvider::AuthError, error
+  end
+end
+
+test "#search should not raise AuthError for a server error status" do
     with_client(HttpClient::Response.new(status: 500, body: "")) do
       error = assert_raises(WebSearchProvider::ProviderError) do
         WebSearchProvider::Serper.new(api_key: "key").search("query")

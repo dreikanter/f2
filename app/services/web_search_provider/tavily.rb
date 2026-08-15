@@ -2,8 +2,15 @@ module WebSearchProvider
   # tavily.com — LLM-oriented search with content snippets.
   class Tavily < Base
     ENDPOINT = "https://api.tavily.com/search"
+    # Tavily reports an exhausted key with its own statuses: 432 for the plan
+    # limit, 433 for the pay-as-you-go limit. Neither clears on a retry.
+    SPENT_KEY_STATUSES = [432, 433].freeze
 
     private
+
+    def auth_error?(response)
+      super || SPENT_KEY_STATUSES.include?(response.status)
+    end
 
     def request(query, count)
       http.post(

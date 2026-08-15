@@ -19,7 +19,7 @@ module WebSearchProvider
       response = request(query, count)
 
       unless response.success?
-        error = AUTH_STATUSES.include?(response.status) ? AuthError : ProviderError
+        error = auth_error?(response) ? AuthError : ProviderError
         raise error, "#{provider_name}: HTTP #{response.status}"
       end
 
@@ -35,6 +35,14 @@ module WebSearchProvider
     private
 
     attr_reader :api_key
+
+    # Whether a failed response means the key itself is finished — rejected,
+    # revoked, or spent — as opposed to a transient fault worth retrying.
+    # Vendors disagree on how to say it, so providers refine this; the statuses
+    # here are the ones they all use the same way.
+    def auth_error?(response)
+      AUTH_STATUSES.include?(response.status)
+    end
 
     def request(query, count)
       raise NotImplementedError, "#{self.class} must implement #request"
