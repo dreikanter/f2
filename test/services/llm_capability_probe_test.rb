@@ -314,9 +314,17 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["client_tools_schema"]).run
     chat = credential.chats.first
 
-    assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema
+    assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema["schema"]
     assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools.map(&:class)
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
+  end
+
+  test "#run should send the schema through the provider's own adapter" do
+    credential = FakeCredential.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["schema"]).run
+
+    assert_equal LlmClient::Adapter.for(credential.provider).schema_payload(LlmCapabilityProbe::PROBE_SCHEMA),
+                 credential.chats.first.schema
   end
 
   # The probe drives a paid API, and an unqualified model is the likeliest to loop.

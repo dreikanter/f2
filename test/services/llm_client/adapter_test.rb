@@ -107,6 +107,35 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
   end
 
+  test "#schema_payload should carry strictness rather than leave it to the runtime default" do
+    payload = LlmClient::Adapter::Anthropic.new.schema_payload({ "type" => "object" })
+
+    assert_equal({ "schema" => { "type" => "object" }, "strict" => true }, payload)
+  end
+
+  test "#schema_strict? should be false only where strict mode cannot express the output schema" do
+    assert LlmClient::Adapter::Base.new.schema_strict?
+    assert LlmClient::Adapter::Anthropic.new.schema_strict?
+    assert LlmClient::Adapter::OpenRouter.new.schema_strict?
+    assert LlmClient::Adapter::Moonshot.new.schema_strict?
+    assert_not LlmClient::Adapter::OpenAi.new.schema_strict?
+  end
+
+  test "openai #schema_payload should turn strictness off" do
+    payload = LlmClient::Adapter::OpenAi.new.schema_payload(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
+
+    assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, payload["schema"]
+    assert_equal false, payload["strict"]
+  end
+
+  # OpenAI rejects a strict schema whose properties are not all required, and
+  # the universal schema's are not — so this is the shape that would break.
+  test "the universal output schema should leave properties out of required" do
+    item = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "items")
+
+    assert_operator item["properties"].keys.size, :>, item["required"].size
+  end
+
   test "openai #unwrap_json should pass provider JSON through untouched" do
     adapter = LlmClient::Adapter::OpenAi.new
 

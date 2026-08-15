@@ -34,6 +34,19 @@ class LlmClient
         false
       end
 
+      # RubyLLM's schema argument. The wrapper form is what carries strictness;
+      # passing the bare schema would silently default it to on.
+      def schema_payload(schema)
+        { "schema" => schema, "strict" => schema_strict? }
+      end
+
+      # Constrained decoding where the provider's strict mode can express the
+      # output schema. Off for providers whose strict mode cannot represent an
+      # optional key, since they reject such a schema rather than relax it.
+      def schema_strict?
+        true
+      end
+
       # Repairs structured-output text before JSON parsing. Default trusts clean
       # JSON; providers that wrap it (Moonshot fences) override.
       def unwrap_json(text)

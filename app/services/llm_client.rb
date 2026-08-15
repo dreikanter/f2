@@ -155,7 +155,7 @@ class LlmClient
     # System prompt is the privileged instruction channel; the user prompt sent
     # by #ask travels as a separate user-role message (spec §8).
     chat.with_instructions(system) if system.present?
-    chat.with_schema(output_schema) if output_schema.present?
+    chat.with_schema(adapter.schema_payload(output_schema)) if output_schema.present?
     if web
       adapter.apply_web(
         chat,
