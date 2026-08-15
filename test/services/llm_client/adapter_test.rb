@@ -117,6 +117,21 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal '{"a":1}', adapter.unwrap_json("```JSON\n{\"a\":1}\n```")
   end
 
+  # A gathered post can quote a code block, so a fence inside the payload is
+  # content. Unwrapping it as if it were the wrapper corrupts valid JSON.
+  test "moonshot #unwrap_json should leave a fence quoted inside the payload alone" do
+    adapter = LlmClient::Adapter::Moonshot.new
+    payload = %q({"items":[{"body":"install it: ```ruby\ngem \"foo\"\n``` done"}]})
+
+    assert_equal payload, adapter.unwrap_json(payload)
+    assert_equal payload, adapter.unwrap_json("```json\n#{payload}\n```")
+    assert JSON.parse(adapter.unwrap_json("```json\n#{payload}\n```"))
+  end
+
+  test "moonshot #unwrap_json should pass a bare JSON array through" do
+    assert_equal '[{"a":1}]', LlmClient::Adapter::Moonshot.new.unwrap_json('[{"a":1}]')
+  end
+
   test "base #unwrap_json should be identity" do
     assert_equal "```json\n{}\n```", LlmClient::Adapter::Base.new.unwrap_json("```json\n{}\n```")
   end
