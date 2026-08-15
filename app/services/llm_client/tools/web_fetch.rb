@@ -11,8 +11,16 @@ class LlmClient
       MAX_BYTES = 200_000
       MAX_TEXT = 8_000
 
+      def initialize(budget: nil)
+        super()
+        @budget = budget
+      end
+
       def execute(url:)
         return { error: "Refused: pass one absolute public http(s) URL." } unless PublicUrl.safe?(url)
+
+        over_budget = @budget&.claim
+        return over_budget if over_budget
 
         # public-only so a redirect can't slip past the check above to an
         # internal address (SSRF; spec 005 §8).
@@ -20,7 +28,7 @@ class LlmClient
                              .get(url.to_s.strip, options: { validate_url: PublicUrl.method(:safe?) })
         return { error: "HTTP #{response.status}" } unless response.success?
 
-        { content: readable_text(response.body) }
+        { content: readable_text(response.body) }.to_json
       rescue HttpClient::Error => e
         { error: e.message }
       end

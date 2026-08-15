@@ -165,10 +165,24 @@ class LlmClient
     end
 
     response = chat.ask(prompt)
+    answer = recover_halted(chat, response)
     ProviderResponse.new(
-      payload: output_schema.present? ? parse_payload(response) : response_text(response),
+      payload: output_schema.present? ? parse_payload(answer) : response_text(answer),
       **usage_totals(chat, response)
     )
+  end
+
+  # A halted tool loop (ToolBudget) returns the halt notice rather than the
+  # model's message, which would throw away everything gathered before the
+  # budget ran out. Fall back to the last thing the model actually said; a
+  # degraded run that keeps its content beats an empty one.
+  def recover_halted(chat, response)
+    return response unless response.is_a?(RubyLLM::Tool::Halt)
+
+    said = Array(chat.try(:messages)).reverse.find do |message|
+      message.try(:role) == :assistant && message.content.is_a?(String) && message.content.present?
+    end
+    said || response
   end
 
   # A web-enabled call is several billed completions — one per tool round —

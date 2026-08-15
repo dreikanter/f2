@@ -56,7 +56,11 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
       assert_same provider, search_tool.instance_variable_get(:@provider), name
       assert_same context[:search_credential], search_tool.instance_variable_get(:@credential), name
       assert_same context[:refresh_event], search_tool.instance_variable_get(:@refresh_event), name
-      assert_equal LlmClient::Tools::WebFetch, fetch_tool, name
+      assert_instance_of LlmClient::Tools::WebFetch, fetch_tool, name
+
+      budget = search_tool.instance_variable_get(:@budget)
+      assert_instance_of LlmClient::ToolBudget, budget, name
+      assert_same budget, fetch_tool.instance_variable_get(:@budget), name
     end
   end
 
@@ -104,6 +108,13 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal '{"a":1}', adapter.unwrap_json("```\n{\"a\":1}\n```")
     assert_equal '{"a":1}', adapter.unwrap_json('{"a":1}')
     assert_equal '{"a":1}', adapter.unwrap_json("  {\"a\":1}  ")
+  end
+
+  test "moonshot #unwrap_json should tolerate prose around the fence and an uppercase tag" do
+    adapter = LlmClient::Adapter::Moonshot.new
+
+    assert_equal '{"a":1}', adapter.unwrap_json("Here you go:\n```json\n{\"a\":1}\n```\nHope that helps.")
+    assert_equal '{"a":1}', adapter.unwrap_json("```JSON\n{\"a\":1}\n```")
   end
 
   test "base #unwrap_json should be identity" do

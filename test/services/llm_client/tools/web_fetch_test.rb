@@ -30,8 +30,8 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
 
   test "#execute should fetch a public URL and return stripped, capped text" do
     with_client(ok_response("<h1>Title</h1>  <p>Body   text</p>")) do
-      result = tool.execute(url: "https://example.com/post")
-      assert_equal "Title Body text", result[:content]
+      result = JSON.parse(tool.execute(url: "https://example.com/post"))
+      assert_equal "Title Body text", result["content"]
     end
   end
 

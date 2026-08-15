@@ -221,6 +221,25 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 0, LlmUsage.count
   end
 
+  # RubyLLM invents context/output limits for models it doesn't know, and those
+  # would be persisted and rendered as fact on the credential page.
+  test "#available_models should keep only provider-supplied fields for unregistered models" do
+    moonshot = create(:ai_credential, user: user, provider: "moonshot",
+                                      credential_data: { "api_key" => "sk-moon" })
+    client = LlmClient.new(moonshot)
+    model = fake_model(id: "kimi-k2.6", name: "Kimi K2.6", context_window: 4_096)
+    stub_provider_models(client) { [model] }
+
+    assert_equal [{ "id" => "kimi-k2.6", "name" => "Kimi K2.6" }], client.available_models
+  end
+
+  test "#available_models should map a TLS failure to a provider error" do
+    client = LlmClient.new(credential)
+    client.define_singleton_method(:fetch_provider_models) { raise OpenSSL::SSL::SSLError, "handshake failed" }
+
+    assert_raises(LlmClient::ProviderError) { client.available_models }
+  end
+
   test "#available_models should return an empty array when the provider lists no models" do
     client = LlmClient.new(credential)
     stub_provider_models(client) { [] }

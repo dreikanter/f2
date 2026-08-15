@@ -40,12 +40,12 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     provider = FakeProvider.new(results: [result(1), result(2)])
 
     assert_difference("Event.where(type: WebSearchUsage::EVENT_TYPE).count", 1) do
-      payload = tool(provider).execute(query: "ruby feeds")
+      payload = JSON.parse(tool(provider).execute(query: "ruby feeds"))
 
       assert_equal [
-        { title: "T1", url: "https://1.example", snippet: "s1" },
-        { title: "T2", url: "https://2.example", snippet: "s2" }
-      ], payload[:results]
+        { "title" => "T1", "url" => "https://1.example", "snippet" => "s1" },
+        { "title" => "T2", "url" => "https://2.example", "snippet" => "s2" }
+      ], payload["results"]
     end
 
     event = Event.where(type: WebSearchUsage::EVENT_TYPE).order(:id).last
@@ -105,9 +105,9 @@ class LlmClient::Tools::WebSearchTest < ActiveSupport::TestCase
     failing = ->(**) { raise ActiveRecord::RecordInvalid }
 
     WebSearchUsage.stub(:record!, failing) do
-      payload = tool(provider).execute(query: "ruby feeds")
+      payload = JSON.parse(tool(provider).execute(query: "ruby feeds"))
 
-      assert_equal 1, payload[:results].size
+      assert_equal 1, payload["results"].size
     end
   end
 end
