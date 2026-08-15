@@ -1,20 +1,20 @@
 require "test_helper"
 
 class SearchCapabilityProbeJobTest < ActiveJob::TestCase
+  def operator
+    @operator ||= create(:user, :dev)
+  end
+
   def job
-    @job ||= SerperCapabilityProbeJob.new
+    @job ||= SerperCapabilityProbeJob.new(operator)
   end
 
   def job_run
     @job_run ||= create(:job_run, job_class: "SerperCapabilityProbeJob", job_id: job.job_id)
   end
 
-  def dev_user
-    @dev_user ||= create(:user, :dev)
-  end
-
   def credential
-    @credential ||= create(:search_credential, user: dev_user, provider: "serper", display_name: "Serper Probe")
+    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "Serper Probe")
   end
 
   def outcome
@@ -44,6 +44,11 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal WebSearchProvider::REGISTRY.keys.sort, pinned.sort
   end
 
+  test ".runnable_arguments should ask the dev area for the user who pressed Run" do
+    assert_equal [operator], SerperCapabilityProbeJob.runnable_arguments(operator)
+    assert_empty PurgeExpiredEventsJob.runnable_arguments(operator)
+  end
+
   test ".description should name the credential the probe needs" do
     assert_match(/Serper Probe/, SerperCapabilityProbeJob.description)
     assert_match(/Tavily Probe/, TavilyCapabilityProbeJob.description)
@@ -68,18 +73,26 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
     assert_empty Event.where(subject: job_run, type: "job.search_capability_probe.check")
   end
 
-  test "#perform should refuse to guess when two dev users hold the probe name" do
+  test "#perform should ignore a probe-named credential owned by someone else" do
     job_run
-    credential
     create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
 
     SearchCapabilityProbe::Runner.stub(:new, ->(**) { raise "should not run" }) do
       job.perform_now
     end
 
-    event = Event.find_by(subject: job_run, type: "job.search_capability_probe.skipped")
-    assert_includes event.message, "2 dev users"
-    assert_empty Event.where(subject: job_run, type: "job.search_capability_probe.check")
+    assert Event.exists?(subject: job_run, type: "job.search_capability_probe.skipped")
+  end
+
+  test "#perform should probe the launching user's own credential" do
+    job_run
+    credential
+    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
+
+    stub_runner(outcome) { job.perform_now }
+
+    summary = Event.find_by(subject: job_run, type: "job.search_capability_probe.completed")
+    assert_equal credential.id, summary.metadata["credential_id"]
   end
 
   test "#perform should record one event per check plus a summary" do
@@ -104,7 +117,7 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
 
   test "#perform should use whichever credential carries the probe name" do
     job_run
-    create(:search_credential, user: dev_user, provider: "serper", display_name: "Some Other Key")
+    create(:search_credential, user: operator, provider: "serper", display_name: "Some Other Key")
     credential
 
     stub_runner(outcome.merge(passed: true, results: [])) { job.perform_now }

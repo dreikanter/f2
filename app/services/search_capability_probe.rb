@@ -25,26 +25,18 @@ module SearchCapabilityProbe
       "#{WebSearchProvider.label_for(provider)} Probe"
     end
 
-    # Scoped to dev users, since display names are only unique per user and the
-    # probe spends real queries: an unscoped lookup could bill a stranger's key.
-    def candidate_credentials(provider)
-      SearchCredential
-        .where(provider: provider, display_name: credential_name(provider))
-        .where(user: User.joins(:permissions).where(permissions: { name: Permission::DEV }))
+    # Scoped to whoever launched the probe: each run spends billed queries, and
+    # display names are unique per user and provider, so the owner is what makes
+    # the name resolve to one key.
+    def credential_for(provider, user:)
+      user.search_credentials.find_by(provider: provider, display_name: credential_name(provider))
     end
 
     # Says what to create, since the fix is always the same: one credential,
     # this provider, this exact name.
     def missing_credential_message(provider)
-      "no search credential named #{credential_name(provider).inspect} — " \
+      "no search credential named #{credential_name(provider).inspect} on your account — " \
         "add a #{WebSearchProvider.label_for(provider)} credential with that exact name to run this probe"
-    end
-
-    # Refused rather than guessed: picking one would spend a query on whichever
-    # dev the database happened to return first.
-    def ambiguous_credential_message(provider, count)
-      "#{count} dev users hold a search credential named #{credential_name(provider).inspect} — " \
-        "rename all but one so the probe knows whose key to spend"
     end
   end
 

@@ -25,12 +25,12 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
     WebSearchProvider::Result.new(title: title, url: url, snippet: snippet)
   end
 
-  def dev_user
-    @dev_user ||= create(:user, :dev)
+  def operator
+    @operator ||= create(:user, :dev)
   end
 
   def credential
-    @credential ||= create(:search_credential, user: dev_user, provider: "serper", display_name: "Serper Probe")
+    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "Serper Probe")
   end
 
   # Stubs the two seams a run uses: the credential's own provider (live key) and
@@ -56,25 +56,19 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "Tavily Probe", SearchCapabilityProbe.credential_name("tavily")
   end
 
-  test ".candidate_credentials should find the credential named after the probe" do
+  test ".credential_for should find the credential named after the probe" do
     credential
-    assert_equal [credential], SearchCapabilityProbe.candidate_credentials("serper").to_a
+    assert_equal credential, SearchCapabilityProbe.credential_for("serper", user: operator)
   end
 
-  test ".candidate_credentials should ignore a credential of another provider with the same name" do
-    create(:search_credential, user: dev_user, provider: "brave", display_name: "Serper Probe")
-    assert_empty SearchCapabilityProbe.candidate_credentials("serper")
+  test ".credential_for should ignore a credential of another provider with the same name" do
+    create(:search_credential, user: operator, provider: "brave", display_name: "Serper Probe")
+    assert_nil SearchCapabilityProbe.credential_for("serper", user: operator)
   end
 
-  test ".candidate_credentials should ignore a probe-named credential owned by a non-dev user" do
-    create(:search_credential, user: create(:user), provider: "serper", display_name: "Serper Probe")
-    assert_empty SearchCapabilityProbe.candidate_credentials("serper")
-  end
-
-  test ".ambiguous_credential_message should say which name to free up" do
-    message = SearchCapabilityProbe.ambiguous_credential_message("serper", 2)
-    assert_match(/2 dev users/, message)
-    assert_match(/"Serper Probe"/, message)
+  test ".credential_for should ignore a probe-named credential belonging to someone else" do
+    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
+    assert_nil SearchCapabilityProbe.credential_for("serper", user: operator)
   end
 
   test ".missing_credential_message should name the exact credential to create" do

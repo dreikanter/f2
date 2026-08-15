@@ -73,6 +73,14 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert run.job_id.present?
   end
 
+  test "#create should enqueue a user-scoped job on behalf of whoever pressed Run" do
+    sign_in_as(dev_user)
+
+    assert_enqueued_with(job: SerperCapabilityProbeJob, args: [dev_user]) do
+      post development_job_job_runs_path("SerperCapabilityProbeJob")
+    end
+  end
+
   test "#create should enqueue a job that finds its run by job_id" do
     sign_in_as(dev_user)
 

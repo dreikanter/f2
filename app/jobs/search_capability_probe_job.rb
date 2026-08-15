@@ -2,9 +2,9 @@
 # via PROVIDER. Everything the diagnosis needs lands in JobRun events: one event
 # per check with its evidence, plus a summary verdict.
 #
-# The key comes from a SearchCredential named after the probe (see
-# SearchCapabilityProbe.credential_name). Without that record the run says which
-# credential to create and ends.
+# The key comes from a SearchCredential named after the probe and owned by
+# whoever launched the run, so a probe only ever spends its own operator's
+# queries. Without that record the run says which credential to create and ends.
 class SearchCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
 
@@ -12,21 +12,19 @@ class SearchCapabilityProbeJob < ApplicationJob
 
   def self.description
     "Runs the search checks against the live #{WebSearchProvider.label_for(self::PROVIDER)} API. " \
-      "Needs a search credential named “#{SearchCapabilityProbe.credential_name(self::PROVIDER)}”, " \
-      "and spends two queries on it."
+      "Needs a search credential named “#{SearchCapabilityProbe.credential_name(self::PROVIDER)}” on " \
+      "your own account, and spends two queries on it."
   end
 
-  def perform
+  def self.runnable_arguments(user) = [user]
+
+  def perform(user)
     provider = self.class::PROVIDER
-    credentials = SearchCapabilityProbe.candidate_credentials(provider).to_a
+    credential = SearchCapabilityProbe.credential_for(provider, user: user)
 
-    return skip(provider, SearchCapabilityProbe.missing_credential_message(provider)) if credentials.empty?
+    return skip(provider, SearchCapabilityProbe.missing_credential_message(provider)) if credential.nil?
 
-    if credentials.many?
-      return skip(provider, SearchCapabilityProbe.ambiguous_credential_message(provider, credentials.size))
-    end
-
-    probe(provider, credentials.sole)
+    probe(provider, credential)
   end
 
   private
