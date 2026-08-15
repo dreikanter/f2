@@ -99,9 +99,8 @@ Before a pair can be probed, the provider needs:
   extraction;
 - a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
   `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
-- an `AiCredential` for it, named after the probe job without the `Job` suffix
-  (`LlmCapabilityProbeJob.credential_name`), on the account that will run the
-  probe.
+- an `AiCredential` for it, named after that new job without the `Job` suffix
+  (`<TheNewProbeJob>.credential_name`), on the account that will run the probe.
 
 There is nothing to keep in sync: the probe reaches the provider through
 `AiCredential#chat`, so it is configured by the same `LlmProvider#configure`
