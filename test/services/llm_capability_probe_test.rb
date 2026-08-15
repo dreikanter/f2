@@ -89,6 +89,10 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" }] }
   end
 
+  def digest_payload
+    { "items" => [{ "body" => "A summary of several sources", "source_url" => nil }] }
+  end
+
   def grounded_payload
     { "items" => [{ "uid" => "https://example.com/", "body" => "Example Domain",
                     "source_url" => "https://example.com/" }] }
@@ -172,6 +176,25 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   test "#run should fail the schema check on a schema violation" do
     payload = { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "x", "extra" => 1 }] }
     outcome = run_checks(payload, ["schema"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/schema violation/, outcome[:results].first[:note])
+  end
+
+  # The union is what a strict structured-output mode is most likely to reject,
+  # so the check has to be running production's schema, not a copy of it.
+  test "PROBE_SCHEMA should be the production output schema" do
+    assert_same FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, LlmCapabilityProbe::PROBE_SCHEMA
+  end
+
+  test "#run should pass the schema check on a digest item with a null source_url" do
+    outcome = run_checks(digest_payload, ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the schema check when a required field is missing" do
+    outcome = run_checks({ "items" => [{ "body" => "b" }] }, ["schema"])
 
     assert_equal "FAIL", outcome[:results].first[:status]
     assert_match(/schema violation/, outcome[:results].first[:note])

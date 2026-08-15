@@ -11,29 +11,11 @@
 #
 # See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
-  # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape. Anthropic requires strict schemas:
-  # additionalProperties false at every level.
-  PROBE_SCHEMA = {
-    "type" => "object",
-    "properties" => {
-      "items" => {
-        "type" => "array",
-        "items" => {
-          "type" => "object",
-          "properties" => {
-            "uid" => { "type" => "string" },
-            "title" => { "type" => "string" },
-            "body" => { "type" => "string" },
-            "source_url" => { "type" => "string" }
-          },
-          "required" => ["uid", "body", "source_url"],
-          "additionalProperties" => false
-        }
-      }
-    },
-    "required" => ["items"],
-    "additionalProperties" => false
-  }.freeze
+  # Production's own schema, not a stand-in: a probe that passes a simplified
+  # copy qualifies a shape the app never sends. The nullable `source_url` union
+  # is the sharp edge — strict structured-output modes are where a union gets
+  # rejected — so it has to be the version on the wire.
+  PROBE_SCHEMA = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA
 
   # Production always sends a system prompt, so every check carries one.
   PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
@@ -54,19 +36,24 @@ module LlmCapabilityProbe
     text.to_s.match?(REFUSAL_MARKERS)
   end
 
-  # Mirrors production's structuring stage: fixed text in, strict JSON out.
+  # Mirrors production's structuring stage: fixed text in, strict JSON out. The
+  # sample ends with a roundup that has no link of its own, and the prompt asks
+  # for the null that represents it, so a provider is made to emit the union
+  # rather than merely accept it in the schema.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
-                            "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
+                            "Use only what is present; do not invent items or fields. For an item with " \
+                            "no single canonical link, set source_url to JSON null.\n\nGATHERED CONTENT:\n"
   SAMPLE_TEXT = <<~TEXT
     Post: "Rails 8.1 released" at https://example.com/blog/rails-8-1 — the release adds a faster boot path.
     Post: "SQLite in production" at https://example.com/blog/sqlite-prod — a guide to running SQLite at scale.
+    Roundup: both posts above, summarized together — no link of its own.
   TEXT
 
   CLIENT_TOOLS_PROMPT = "Search for IANA's reserved documentation domains, fetch the top result with the " \
                         "fetch tool, and quote the exact text of that page's main heading."
 
   CLIENT_TOOLS_SCHEMA_PROMPT = "#{CLIENT_TOOLS_PROMPT} Return exactly one item: body set to that heading, " \
-                               "uid and source_url set to the page's URL.".freeze
+                               "source_url set to the page's URL.".freeze
 
   # Appears only on the fetched page — never in the prompt or the canned search
   # results — so quoting it requires having read fetched content. Keep it that
