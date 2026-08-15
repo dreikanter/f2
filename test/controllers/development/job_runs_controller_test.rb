@@ -40,7 +40,7 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     get development_job_job_runs_path("SerperCapabilityProbeJob")
 
     assert_response :success
-    assert_select "p", text: /Serper Probe/
+    assert_select "p", text: /SerperCapabilityProbe/
   end
 
   test "#index should leave the header clean for a job that needs nothing" do

@@ -14,7 +14,7 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
   end
 
   def credential
-    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "Serper Probe")
+    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "SerperCapabilityProbe")
   end
 
   def outcome
@@ -49,9 +49,27 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
     assert_empty PurgeExpiredEventsJob.runnable_arguments(operator)
   end
 
+  test ".credential_name should name the credential after the job" do
+    assert_equal "SerperCapabilityProbe", SerperCapabilityProbeJob.credential_name
+    assert_equal "TavilyCapabilityProbe", TavilyCapabilityProbeJob.credential_name
+  end
+
+  test ".credential_for should ignore a credential of another provider with the same name" do
+    create(:search_credential, user: operator, provider: "brave", display_name: "SerperCapabilityProbe")
+
+    assert_nil SerperCapabilityProbeJob.credential_for(operator)
+  end
+
+  test ".missing_credential_message should name the exact credential to create" do
+    message = BraveCapabilityProbeJob.missing_credential_message
+
+    assert_match(/"BraveCapabilityProbe"/, message)
+    assert_match(/Brave credential/, message)
+  end
+
   test ".description should name the credential the probe needs" do
-    assert_match(/Serper Probe/, SerperCapabilityProbeJob.description)
-    assert_match(/Tavily Probe/, TavilyCapabilityProbeJob.description)
+    assert_match(/SerperCapabilityProbe/, SerperCapabilityProbeJob.description)
+    assert_match(/TavilyCapabilityProbe/, TavilyCapabilityProbeJob.description)
   end
 
   test "#perform should record a skip naming the credential to create when it is missing" do
@@ -60,8 +78,8 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
 
     event = Event.find_by(subject: job_run, type: "job.search_capability_probe.skipped")
     assert_predicate event, :warning?
-    assert_includes event.message, '"Serper Probe"'
-    assert_equal "Serper Probe", event.metadata["expected_credential_name"]
+    assert_includes event.message, '"SerperCapabilityProbe"'
+    assert_equal "SerperCapabilityProbe", event.metadata["expected_credential_name"]
   end
 
   test "#perform should not run checks when the credential is missing" do
@@ -75,7 +93,7 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
 
   test "#perform should ignore a probe-named credential owned by someone else" do
     job_run
-    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
+    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "SerperCapabilityProbe")
 
     SearchCapabilityProbe::Runner.stub(:new, ->(**) { raise "should not run" }) do
       job.perform_now
@@ -87,7 +105,7 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
   test "#perform should probe the launching user's own credential" do
     job_run
     credential
-    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
+    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "SerperCapabilityProbe")
 
     stub_runner(outcome) { job.perform_now }
 

@@ -10,7 +10,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
   end
 
   def credential
-    @credential ||= create(:ai_credential, user: operator, provider: "anthropic", display_name: "Anthropic Probe")
+    @credential ||= create(:ai_credential, user: operator, provider: "anthropic", display_name: "AnthropicCapabilityProbe")
   end
 
   def job_run
@@ -28,9 +28,31 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
   end
 
+  test ".credential_name should name the credential after the job" do
+    assert_equal "AnthropicCapabilityProbe", AnthropicCapabilityProbeJob.credential_name
+    assert_equal "KimiCapabilityProbe", KimiCapabilityProbeJob.credential_name
+  end
+
+  test ".credential_for should find the credential named after the job" do
+    assert_equal credential, AnthropicCapabilityProbeJob.credential_for(operator)
+  end
+
+  test ".credential_for should ignore a credential of another provider with the same name" do
+    create(:ai_credential, user: operator, provider: "openrouter", display_name: "AnthropicCapabilityProbe")
+
+    assert_nil AnthropicCapabilityProbeJob.credential_for(operator)
+  end
+
+  test ".missing_credential_message should name the exact credential to create" do
+    message = AnthropicCapabilityProbeJob.missing_credential_message
+
+    assert_match(/"AnthropicCapabilityProbe"/, message)
+    assert_match(/Anthropic credential/, message)
+  end
+
   test ".description should name the credential the probe needs" do
-    assert_match(/Anthropic Probe/, AnthropicCapabilityProbeJob.description)
-    assert_match(/Moonshot \(Kimi\) Probe/, KimiCapabilityProbeJob.description)
+    assert_match(/AnthropicCapabilityProbe/, AnthropicCapabilityProbeJob.description)
+    assert_match(/KimiCapabilityProbe/, KimiCapabilityProbeJob.description)
   end
 
   test ".runnable_arguments should ask the dev area for the user who pressed Run" do
@@ -43,13 +65,13 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
 
     event = Event.find_by(subject: job_run, type: "job.llm_capability_probe.skipped")
     assert_predicate event, :warning?
-    assert_includes event.message, '"Anthropic Probe"'
-    assert_equal "Anthropic Probe", event.metadata["expected_credential_name"]
+    assert_includes event.message, '"AnthropicCapabilityProbe"'
+    assert_equal "AnthropicCapabilityProbe", event.metadata["expected_credential_name"]
   end
 
   test "#perform should ignore a probe-named credential owned by someone else" do
     job_run
-    create(:ai_credential, user: create(:user, :dev), provider: "anthropic", display_name: "Anthropic Probe")
+    create(:ai_credential, user: create(:user, :dev), provider: "anthropic", display_name: "AnthropicCapabilityProbe")
 
     LlmCapabilityProbe::Runner.stub(:new, ->(**) { raise "should not run" }) do
       job.perform_now

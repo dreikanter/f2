@@ -13,11 +13,11 @@ share.
 
 ## Running it
 
-The key comes from the `AiCredential` whose name matches the probe — **Anthropic
-Probe**, **Moonshot (Kimi) Probe** — on **your own account**. The dev area
-passes whoever pressed Run through to the job, so a probe only ever spends its
-own operator's tokens. Without that record the run records a skip saying which
-credential to create.
+The key comes from the `AiCredential` named after the probe job, minus the `Job`
+suffix — **AnthropicCapabilityProbe**, **KimiCapabilityProbe** — on **your own
+account**. The dev area passes whoever pressed Run through to the job, so a
+probe only ever spends its own operator's tokens. Without that record the run
+records a skip saying which credential to create.
 
 From the dev area — the usual path, and the one that keeps the evidence
 searchable afterwards:
@@ -34,8 +34,8 @@ For a one-off pair, or a subset of checks, use the CLI instead. It has no
 session to read an operator from, so name one:
 
 ```sh
-bundle exec ruby script/llm_capability_probe.rb --user me@example.com --provider moonshot --model kimi-k3
-bundle exec ruby script/llm_capability_probe.rb --user me@example.com --provider anthropic --model claude-sonnet-4-6 --checks models
+bundle exec ruby script/llm_capability_probe.rb --user me@example.com --job KimiCapabilityProbeJob --model kimi-k3
+bundle exec ruby script/llm_capability_probe.rb --user me@example.com --job AnthropicCapabilityProbeJob --checks models
 ```
 
 A provider must be in `LlmProvider`'s registry before it can be probed, since
@@ -99,8 +99,9 @@ Before a pair can be probed, the provider needs:
   extraction;
 - a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
   `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
-- an `AiCredential` for it, named `LlmCapabilityProbe.credential_name(provider)`,
-  on the account that will run the probe.
+- an `AiCredential` for it, named after the probe job without the `Job` suffix
+  (`LlmCapabilityProbeJob.credential_name`), on the account that will run the
+  probe.
 
 There is nothing to keep in sync: the probe reaches the provider through
 `AiCredential#chat`, so it is configured by the same `LlmProvider#configure`

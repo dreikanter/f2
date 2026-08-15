@@ -6,9 +6,9 @@
 # (LlmClient::Adapter::Base#apply_web), so a hosted mechanism tells us nothing
 # about a feed run.
 #
-# The key comes from an AiCredential named after the probe and owned by whoever
-# launched the run, so the checks are made on the same objects and the same
-# provider configuration a feed run uses.
+# The key comes from an AiCredential named after the probe job and owned by
+# whoever launched the run, so the checks are made on the same objects and the
+# same provider configuration a feed run uses.
 #
 # See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
@@ -93,26 +93,6 @@ module LlmCapabilityProbe
       return over_budget if over_budget
 
       { results: RESULTS }.to_json
-    end
-  end
-
-  class << self
-    def credential_name(provider)
-      "#{LlmProvider.find(provider).display_name} Probe"
-    end
-
-    # Scoped to whoever launched the probe: a run spends that key, and display
-    # names are unique per user and provider, so the owner is what makes the
-    # name resolve to one credential.
-    def credential_for(provider, user:)
-      user.ai_credentials.find_by(provider: provider, display_name: credential_name(provider))
-    end
-
-    # Says what to create, since the fix is always the same: one credential,
-    # this provider, this exact name.
-    def missing_credential_message(provider)
-      "no AI credential named #{credential_name(provider).inspect} on your account — " \
-        "add a #{LlmProvider.find(provider).display_name} credential with that exact name to run this probe"
     end
   end
 

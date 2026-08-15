@@ -83,10 +83,6 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     end
   end
 
-  def operator
-    @operator ||= create(:user, :dev)
-  end
-
   FETCHED_PAGE = "Example Domain This domain is for use in illustrative examples in documents.".freeze
 
   def full_tool_loop(fetch_result: FETCHED_PAGE)
@@ -407,35 +403,5 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   test "checks should cover only what production calls" do
     assert_equal %w[models plain system_prompt schema client_tools client_tools_schema],
                  LlmCapabilityProbe::Runner::CHECKS
-  end
-
-  test ".credential_name should name the credential after the provider" do
-    assert_equal "Anthropic Probe", LlmCapabilityProbe.credential_name("anthropic")
-    assert_equal "Moonshot (Kimi) Probe", LlmCapabilityProbe.credential_name("moonshot")
-  end
-
-  test ".credential_for should find the credential named after the probe" do
-    credential = create(:ai_credential, user: operator, provider: "anthropic", display_name: "Anthropic Probe")
-
-    assert_equal credential, LlmCapabilityProbe.credential_for("anthropic", user: operator)
-  end
-
-  test ".credential_for should ignore a credential of another provider with the same name" do
-    create(:ai_credential, user: operator, provider: "openrouter", display_name: "Anthropic Probe")
-
-    assert_nil LlmCapabilityProbe.credential_for("anthropic", user: operator)
-  end
-
-  test ".credential_for should ignore a probe-named credential belonging to someone else" do
-    create(:ai_credential, user: create(:user, :dev), provider: "anthropic", display_name: "Anthropic Probe")
-
-    assert_nil LlmCapabilityProbe.credential_for("anthropic", user: operator)
-  end
-
-  test ".missing_credential_message should name the exact credential to create" do
-    message = LlmCapabilityProbe.missing_credential_message("anthropic")
-
-    assert_match(/"Anthropic Probe"/, message)
-    assert_match(/Anthropic credential/, message)
   end
 end

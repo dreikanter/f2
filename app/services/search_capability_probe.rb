@@ -2,33 +2,13 @@
 # only confirm our reading of a vendor's docs; these checks confirm the vendor
 # still behaves that way.
 #
-# The key comes from a SearchCredential named after the probe, so the checks run
-# through the same objects a feed run uses. Two of the three spend a real query,
+# The key comes from a SearchCredential named after the probe job, so the checks
+# run through the same objects a feed run uses. Two of the three spend a real query,
 # billed to that credential and recorded as usage.
 module SearchCapabilityProbe
   # The query the credential validation job sends, so the minimal check asks for
   # exactly what a user's key has to satisfy to go active.
   QUERY = SearchCredentialValidationJob::VALIDATION_QUERY
-
-  class << self
-    def credential_name(provider)
-      "#{WebSearchProvider.label_for(provider)} Probe"
-    end
-
-    # Scoped to whoever launched the probe: each run spends billed queries, and
-    # display names are unique per user and provider, so the owner is what makes
-    # the name resolve to one key.
-    def credential_for(provider, user:)
-      user.search_credentials.find_by(provider: provider, display_name: credential_name(provider))
-    end
-
-    # Says what to create, since the fix is always the same: one credential,
-    # this provider, this exact name.
-    def missing_credential_message(provider)
-      "no search credential named #{credential_name(provider).inspect} on your account — " \
-        "add a #{WebSearchProvider.label_for(provider)} credential with that exact name to run this probe"
-    end
-  end
 
   class Runner
     CHECKS = %w[rejection search minimal].freeze
