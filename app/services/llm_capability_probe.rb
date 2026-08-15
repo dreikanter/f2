@@ -17,7 +17,10 @@ module LlmCapabilityProbe
   # rejected — so it has to be the version on the wire.
   PROBE_SCHEMA = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA
 
-  # Production always sends a system prompt, so every check carries one.
+  # Stands in for production's stage system prompts (Loader::LlmPrompts).
+  # Production never sends a schema or the tool loop without one, so the checks
+  # mirroring those stages carry it; `plain` stays bare on purpose, to isolate
+  # the round trip from the system channel `system_prompt` covers.
   PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
                        "Follow the task exactly and report only what you actually find."
 
@@ -225,8 +228,12 @@ module LlmCapabilityProbe
       text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end
 
+    # Production's structure stage sends STRUCTURE_SYSTEM alongside the schema,
+    # and system-prompt-with-schema is its own wire shape — Moonshot rejected the
+    # role RubyLLM defaults to (#1234), which a schema-only call would not catch.
     def check_schema
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
+      chat.with_instructions(PROBE_INSTRUCTIONS)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
       validate_items(response)
     end

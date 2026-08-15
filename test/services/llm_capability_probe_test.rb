@@ -313,6 +313,22 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_instance_of RubyLLM::Tool::Halt, search.execute(query: "second")
   end
 
+  # Production never sends a schema without a system prompt, and that pairing is
+  # its own wire shape — a schema-only call would not catch a rejected role.
+  test "#run should send a system prompt alongside the schema" do
+    provider = FakeProvider.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["schema"]).run
+
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
+  end
+
+  test "#run should leave the plain check bare so it isolates the round trip" do
+    provider = FakeProvider.new("pong")
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["plain"]).run
+
+    assert_nil provider.chats.first.instructions
+  end
+
   test "#run should leave the plain client tools check unstructured" do
     provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
