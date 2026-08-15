@@ -86,7 +86,16 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   def valid_payload
-    { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" }] }
+    { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" },
+                  { "body" => "A summary of several sources", "source_url" => nil }] }
+  end
+
+  def digest_payload
+    { "items" => [{ "body" => "A summary of several sources", "source_url" => nil }] }
+  end
+
+  def linked_only_payload
+    { "items" => [{ "body" => "b", "source_url" => "https://example.com/p" }] }
   end
 
   def grounded_payload
@@ -166,12 +175,47 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     outcome = run_checks(valid_payload, ["schema"])
 
     assert_equal "PASS", outcome[:results].first[:status]
-    assert_match(/1 items/, outcome[:results].first[:note])
+    assert_match(/2 items/, outcome[:results].first[:note])
   end
 
   test "#run should fail the schema check on a schema violation" do
     payload = { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "x", "extra" => 1 }] }
     outcome = run_checks(payload, ["schema"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/schema violation/, outcome[:results].first[:note])
+  end
+
+  # The union is what a strict structured-output mode rejects, so the check has
+  # to run production's schema itself.
+  test "PROBE_SCHEMA should be the production output schema" do
+    assert_same FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, LlmCapabilityProbe::PROBE_SCHEMA
+  end
+
+  test "#run should pass the schema check on a digest item with a null source_url" do
+    outcome = run_checks(digest_payload, ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  # Accepting the union is not the same as emitting it.
+  test "#run should fail the schema check when no item emitted a null source_url" do
+    outcome = run_checks(linked_only_payload, ["schema"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "schema-valid but no item emitted a null source_url", outcome[:results].first[:note]
+  end
+
+  # Only the schema check asks for the linkless roundup — the client-tools
+  # prompt asks for one item with the fetched page's own URL.
+  test "#run should not require a null source_url from client_tools_schema" do
+    outcome = run_checks(grounded_payload, ["client_tools_schema"], tool_rounds: full_tool_loop)
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the schema check when a required field is missing" do
+    outcome = run_checks({ "items" => [{ "body" => "b" }] }, ["schema"])
 
     assert_equal "FAIL", outcome[:results].first[:status]
     assert_match(/schema violation/, outcome[:results].first[:note])
@@ -266,8 +310,43 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     chat = provider.chats.first
 
     assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema
-    assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools
+    assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools.map(&:class)
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
+  end
+
+  # The probe drives a paid API, and an unqualified model is the likeliest to loop.
+  test "#run should bound the client tools loop with one budget shared by both tools" do
+    provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
+
+    budgets = provider.chats.first.tools.map { |tool| tool.instance_variable_get(:@budget) }
+
+    assert_instance_of LlmClient::ToolBudget, budgets.first
+    assert_same budgets.first, budgets.last
+  end
+
+  test "the canned search should spend the shared budget like the production tool" do
+    budget = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
+    search = LlmCapabilityProbe::CannedWebSearch.new(budget: budget)
+
+    assert_equal ["https://example.com/"], JSON.parse(search.execute(query: "first"))["results"].map { |r| r["url"] }
+    assert_instance_of RubyLLM::Tool::Halt, search.execute(query: "second")
+  end
+
+  # The pairing is its own wire shape: a schema-only call never exercises the
+  # system role a provider might reject.
+  test "#run should send a system prompt alongside the schema" do
+    provider = FakeProvider.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["schema"]).run
+
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
+  end
+
+  test "#run should leave the plain check bare so it isolates the round trip" do
+    provider = FakeProvider.new("pong")
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["plain"]).run
+
+    assert_nil provider.chats.first.instructions
   end
 
   test "#run should leave the plain client tools check unstructured" do
