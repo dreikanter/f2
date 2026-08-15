@@ -11,17 +11,21 @@ class LlmClient
       # Every provider uses the same credential-backed search and fetch tools.
       # Adapters may still add provider-specific request params, but search never
       # delegates to a provider-hosted implementation.
+      #
+      # Both tools share one budget so the pair can't outspend it between them.
       def apply_web(chat, model, search_provider:, search_credential:, refresh_event: nil)
         params = web_params(model)
         chat.with_params(**params) if params.present?
+        budget = LlmClient::ToolBudget.new
         chat.with_tool(
           LlmClient::Tools::WebSearch.new(
             provider: search_provider,
             credential: search_credential,
-            refresh_event: refresh_event
+            refresh_event: refresh_event,
+            budget: budget
           )
         )
-        chat.with_tool(LlmClient::Tools::WebFetch)
+        chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
       end
 
       # True when one web+schema call returns grounded, schema-valid JSON; false

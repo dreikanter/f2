@@ -30,15 +30,15 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
 
   test "#execute should fetch a public URL and return stripped, capped text" do
     with_client(ok_response("<h1>Title</h1>  <p>Body   text</p>")) do
-      result = tool.execute(url: "https://example.com/post")
-      assert_equal "Title Body text", result[:content]
+      result = JSON.parse(tool.execute(url: "https://example.com/post"))
+      assert_equal "Title Body text", result["content"]
     end
   end
 
   test "#execute should refuse non-http schemes without making a request" do
     with_client(ok_response) do |client|
-      assert_match(/Refused/, tool.execute(url: "ftp://example.com")[:error])
-      assert_match(/Refused/, tool.execute(url: "file:///etc/passwd")[:error])
+      assert_match(/Refused/, JSON.parse(tool.execute(url: "ftp://example.com"))["error"])
+      assert_match(/Refused/, JSON.parse(tool.execute(url: "file:///etc/passwd"))["error"])
       assert_empty client.requested
     end
   end
@@ -49,7 +49,7 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
         http://localhost/x http://127.0.0.1/x http://10.1.2.3/ http://192.168.0.1/
         http://172.16.5.5/ http://169.254.169.254/latest/meta-data/ http://[::1]/
       ].each do |url|
-        assert_match(/Refused/, tool.execute(url: url)[:error], url)
+        assert_match(/Refused/, JSON.parse(tool.execute(url: url))["error"], url)
       end
       assert_empty client.requested
     end
@@ -57,14 +57,14 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
 
   test "#execute should refuse a URL carrying credentials" do
     with_client(ok_response) do |client|
-      assert_match(/Refused/, tool.execute(url: "https://user:pass@example.com/")[:error])
+      assert_match(/Refused/, JSON.parse(tool.execute(url: "https://user:pass@example.com/"))["error"])
       assert_empty client.requested
     end
   end
 
   test "#execute should report a non-success HTTP status" do
     with_client(HttpClient::Response.new(status: 404, body: "")) do
-      assert_equal "HTTP 404", tool.execute(url: "https://example.com/missing")[:error]
+      assert_equal "HTTP 404", JSON.parse(tool.execute(url: "https://example.com/missing"))["error"]
     end
   end
 
@@ -73,7 +73,7 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
     def raising.get(_url, **) = raise(HttpClient::TimeoutError, "timed out")
 
     HttpClient.stub(:build, ->(**) { raising }) do
-      assert_equal "timed out", tool.execute(url: "https://example.com/")[:error]
+      assert_equal "timed out", JSON.parse(tool.execute(url: "https://example.com/"))["error"]
     end
   end
 
@@ -81,9 +81,9 @@ class LlmClient::Tools::WebFetchTest < ActiveSupport::TestCase
     url = "https://example.com/page"
     stub_request(:get, url).to_return(status: 302, headers: { "Location" => "http://127.0.0.1/metadata" })
 
-    result = tool.execute(url: url)
+    result = JSON.parse(tool.execute(url: url))
 
-    assert result[:error].present?
+    assert result["error"].present?
     assert_not_requested :get, "http://127.0.0.1/metadata"
   end
 end

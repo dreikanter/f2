@@ -221,6 +221,24 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 0, LlmUsage.count
   end
 
+  # The invented limits would otherwise be persisted and rendered as fact.
+  test "#available_models should keep only provider-supplied fields for unregistered models" do
+    moonshot = create(:ai_credential, user: user, provider: "moonshot",
+                                      credential_data: { "api_key" => "sk-moon" })
+    client = LlmClient.new(moonshot)
+    model = fake_model(id: "kimi-k2.6", name: "Kimi K2.6", context_window: 4_096)
+    stub_provider_models(client) { [model] }
+
+    assert_equal [{ "id" => "kimi-k2.6", "name" => "Kimi K2.6" }], client.available_models
+  end
+
+  test "#available_models should map a TLS failure to a provider error" do
+    client = LlmClient.new(credential)
+    client.define_singleton_method(:fetch_provider_models) { raise OpenSSL::SSL::SSLError, "handshake failed" }
+
+    assert_raises(LlmClient::ProviderError) { client.available_models }
+  end
+
   test "#available_models should return an empty array when the provider lists no models" do
     client = LlmClient.new(credential)
     stub_provider_models(client) { [] }
@@ -362,6 +380,17 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
+  test "#call should map malformed tool-call arguments to ProviderError" do
+    client = LlmClient.new(credential)
+    stub_provider_to_raise(client, JSON::ParserError.new("unexpected token"))
+
+    assert_difference("LlmUsage.count", 1) do
+      assert_raises(LlmClient::ProviderError) { client.call(default_ctx, **call_opts) }
+    end
+
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
   # A chat double that records the system prompt and the asked user prompt, so we
   # can verify the system message travels via with_instructions and the user
   # prompt via #ask — the injection-defense channel separation (spec §8).
@@ -387,6 +416,49 @@ class LlmClientTest < ActiveSupport::TestCase
     def initialize(messages)
       @messages = messages
     end
+  end
+
+  # RubyLLM returns the halt notice itself rather than a message, leaving the
+  # model's earlier turns on the chat.
+  class FakeHaltedChat < FakeChat
+    attr_reader :messages
+
+    def initialize(messages)
+      @messages = messages
+    end
+
+    def ask(prompt)
+      @asked = prompt
+      RubyLLM::Tool::Halt.new(LlmClient::ToolBudget::HALTED)
+    end
+  end
+
+  def assistant_message(content)
+    Data.define(:role, :content, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
+        .new(role: :assistant, content: content, input_tokens: 1, output_tokens: 1,
+             cache_write_tokens: 0, cache_read_tokens: 0)
+  end
+
+  test "#invoke_provider should keep what the model gathered when the tool loop halts" do
+    client = LlmClient.new(credential)
+    chat = FakeHaltedChat.new([assistant_message("gathered so far"), assistant_message(nil)])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal "gathered so far", response.payload
+  end
+
+  test "#invoke_provider should fall back to the halt notice when the model said nothing" do
+    client = LlmClient.new(credential)
+    chat = FakeHaltedChat.new([])
+
+    response = stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
+    end
+
+    assert_equal LlmClient::ToolBudget::HALTED, response.payload
   end
 
   # Returns a response carrying distinct cache counts, so a swap between the

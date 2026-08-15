@@ -41,10 +41,10 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert_nil credential.last_error
   end
 
-  test "#perform should move credential to inactive and record the error on provider failure" do
+  test "#perform should deactivate the credential and its feeds when the key is rejected" do
     feed = create(:feed, :enabled, user: user, ai_credential: credential)
 
-    stub_available_models(LlmClient::ProviderError.new("invalid api key")) do
+    stub_available_models(LlmClient::AuthError.new("invalid api key")) do
       AiCredentialValidationJob.perform_now(credential)
     end
 
@@ -56,12 +56,42 @@ class AiCredentialValidationJobTest < ActiveJob::TestCase
     assert Event.exists?(subject: credential, type: "ai_credential_deactivated")
   end
 
-  test "#perform should move credential to inactive on rate-limit during validation" do
+  test "#perform should leave feeds running when the provider fails transiently" do
+    active = create(:ai_credential, user: user, state: :active)
+    feed = create(:feed, :enabled, user: user, ai_credential: active)
+
+    stub_available_models(LlmClient::ProviderError.new("500 upstream")) do
+      AiCredentialValidationJob.perform_now(active)
+    end
+
+    active.reload
+    assert_equal "active", active.state
+    assert_equal "500 upstream", active.last_error
+    assert_equal "enabled", feed.reload.state
+    assert_not Event.exists?(subject: active, type: "ai_credential_deactivated")
+  end
+
+  test "#perform should not deactivate on a rate limit during validation" do
+    feed = create(:feed, :enabled, user: user, ai_credential: credential)
+
     stub_available_models(LlmClient::RateLimited.new("429")) do
       AiCredentialValidationJob.perform_now(credential)
     end
 
-    assert_equal "inactive", credential.reload.state
+    assert_equal "enabled", feed.reload.state
+    assert_not Event.exists?(subject: credential, type: "ai_credential_deactivated")
+  end
+
+  # The validation page polls silently while a credential is pending or
+  # validating, so a transient failure has to leave a state that settles.
+  test "#perform should settle a never-active credential rather than leave it polling" do
+    stub_available_models(LlmClient::ProviderError.new("500 upstream")) do
+      AiCredentialValidationJob.perform_now(credential)
+    end
+
+    credential.reload
+    assert_predicate credential, :inactive?
+    assert_equal "500 upstream", credential.last_error
   end
 
   # No LlmClient stubbing: goes through the real client so an error the

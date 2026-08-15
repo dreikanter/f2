@@ -15,9 +15,7 @@ class LlmClient
   DetectionForbidden = Class.new(Error)
   CredentialMissing = Class.new(Error)
 
-  class RateLimited < Error
-    attr_accessor :retry_after
-  end
+  RateLimited = Class.new(Error)
 
   ProviderResponse = Data.define(:payload, :input_tokens, :output_tokens, :cache_write_tokens, :cache_read_tokens)
 
@@ -55,9 +53,7 @@ class LlmClient
       raise
     rescue RubyLLM::RateLimitError => e
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
-      raised = RateLimited.new(e.message)
-      raised.retry_after = e.try(:retry_after)
-      raise raised
+      raise RateLimited, e.message
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
       write_usage(ctx, outcome: :timeout, started_at: started_at, error_message: e.message)
       raise Timeout, e.message
@@ -70,7 +66,9 @@ class LlmClient
            RubyLLM::PromptNotFoundError,
            RubyLLM::InvalidRoleError,
            RubyLLM::InvalidToolChoiceError,
-           RubyLLM::UnsupportedAttachmentError => e
+           RubyLLM::UnsupportedAttachmentError,
+           # Invalid JSON in tool-call arguments; still a billable call.
+           JSON::ParserError => e
       Rails.error.report(e, context: error_context(ctx))
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise ProviderError, e.message
@@ -104,7 +102,7 @@ class LlmClient
     raise AuthError, e.message
   rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
     raise Timeout, e.message
-  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed => e
+  rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed, OpenSSL::SSL::SSLError => e
     Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
     raise ProviderError, e.message
   end
@@ -133,7 +131,13 @@ class LlmClient
   # fields worth showing or selecting on later; provider-specific noise
   # (metadata warnings, timestamps) is dropped. String keys so the shape
   # round-trips through jsonb unchanged.
+  #
+  # Models outside the gem's registry come back with invented limits, so those
+  # providers keep only what the provider itself reported. The credential page
+  # already hides missing fields.
   def serialize_model(model)
+    return { "id" => model.id, "name" => model.name } if credential.llm_provider.assume_model_exists?
+
     {
       "id" => model.id,
       "name" => model.name,
@@ -165,10 +169,22 @@ class LlmClient
     end
 
     response = chat.ask(prompt)
+    answer = recover_halted(chat, response)
     ProviderResponse.new(
-      payload: output_schema.present? ? parse_payload(response) : response_text(response),
+      payload: output_schema.present? ? parse_payload(answer) : response_text(answer),
       **usage_totals(chat, response)
     )
+  end
+
+  # A halted tool loop returns the halt notice in place of the model's message.
+  # Recover what it had already gathered; a degraded run beats an empty one.
+  def recover_halted(chat, response)
+    return response unless response.is_a?(RubyLLM::Tool::Halt)
+
+    said = Array(chat.try(:messages)).reverse.find do |message|
+      message.try(:role) == :assistant && message.content.is_a?(String) && message.content.present?
+    end
+    said || response
   end
 
   # A web-enabled call is several billed completions — one per tool round —

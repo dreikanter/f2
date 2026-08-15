@@ -13,23 +13,28 @@ class LlmClient
 
       MAX_RESULTS = 5
 
-      def initialize(provider:, credential:, refresh_event: nil)
+      def initialize(provider:, credential:, refresh_event: nil, budget: nil)
         super()
         @provider = provider
         @credential = credential
         @refresh_event = refresh_event
+        @budget = budget
       end
 
+      # Claimed before the argument is judged: a refused call still cost an LLM
+      # round, and a model looping on bad arguments has to reach the halt too.
       def execute(query:)
-        return { error: "Refused: query must not be blank." } if query.blank?
+        over_budget = @budget&.claim
+        return over_budget if over_budget
+        return { error: "Refused: query must not be blank." }.to_json if query.blank?
 
         record_usage
         results = @provider.search(query, max_results: MAX_RESULTS)
-        { results: results.map(&:to_h) }
+        { results: results.map(&:to_h) }.to_json
       rescue ::WebSearchProvider::AuthError
         raise
       rescue ::WebSearchProvider::Error => e
-        { error: e.message }
+        { error: e.message }.to_json
       end
 
       private
