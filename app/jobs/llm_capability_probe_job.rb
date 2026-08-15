@@ -3,17 +3,40 @@
 # lands in JobRun events: one event per check with full evidence, plus a
 # summary verdict — no files to chase afterwards.
 #
-# The key comes from an AiCredential named after the probe and owned by whoever
+# The key comes from an AiCredential named after the job and owned by whoever
 # launched the run. Without that record the run says which credential to create
 # and ends.
 class LlmCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
+  include DescribesWithMarkup
 
   queue_as :default
 
+  # The credential wears the job's own class name, so what the dev area lists
+  # is what to type into the credential form — no second naming to look up.
+  def self.credential_name = name.delete_suffix("Job")
+
+  # Scoped to whoever launched the probe: a run spends that key, and display
+  # names are unique per user and provider, so the owner is what makes the name
+  # resolve to one credential.
+  def self.credential_for(user)
+    user.ai_credentials.find_by(provider: self::PROVIDER, display_name: credential_name)
+  end
+
+  # Says what to create, since the fix is always the same: one credential, this
+  # provider, this exact name.
+  def self.missing_credential_message
+    "no AI credential named #{credential_name.inspect} on your account — " \
+      "add a #{LlmProvider.find(self::PROVIDER).display_name} credential with that exact name to run this probe"
+  end
+
   def self.description
-    "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
-      "Needs an AI credential named “#{LlmCapabilityProbe.credential_name(self::PROVIDER)}” on your own account."
+    helpers.safe_join([
+      "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
+      "Needs an AI credential named ",
+      helpers.tag.code(credential_name),
+      " on your own account."
+    ])
   end
 
   def self.runnable_arguments(user) = [user]
@@ -21,13 +44,13 @@ class LlmCapabilityProbeJob < ApplicationJob
   def perform(user)
     provider_key = self.class::PROVIDER
     model = self.class::MODEL
-    credential = LlmCapabilityProbe.credential_for(provider_key, user: user)
+    credential = self.class.credential_for(user)
 
     if credential.nil?
       record_event(type: "job.llm_capability_probe.skipped",
-                   message: "#{provider_key}/#{model}: #{LlmCapabilityProbe.missing_credential_message(provider_key)}",
+                   message: "#{provider_key}/#{model}: #{self.class.missing_credential_message}",
                    level: :warning, provider: provider_key, model: model,
-                   expected_credential_name: LlmCapabilityProbe.credential_name(provider_key))
+                   expected_credential_name: self.class.credential_name)
       return
     end
 

@@ -16,13 +16,14 @@ pick one, and run it. Each check writes one event with its evidence, plus a
 summary verdict, so the run page is the whole record.
 
 The key comes from a managed credential, not the environment: the probe uses the
-`SearchCredential` whose name matches the probe — **Serper Probe**, **Brave
-Probe**, **Tavily Probe** — with the matching provider, on **your own account**.
-The dev area passes whoever pressed Run through to the job, so a probe only ever
-spends its own operator's queries, and the per-user uniqueness of display names
-makes the name resolve to exactly one key. Without that record the run records a
-skip saying which credential to create. The credential does not have to be
-active; probing a rejected key is a legitimate thing to want.
+`SearchCredential` named after the probe job, minus the `Job` suffix —
+**SerperCapabilityProbe**, **BraveCapabilityProbe**, **TavilyCapabilityProbe** —
+with the matching provider, on **your own account**. The dev area passes whoever
+pressed Run through to the job, so a probe only ever spends its own operator's
+queries, and the per-user uniqueness of display names makes the name resolve to
+exactly one key. Without that record the run records a skip saying which
+credential to create. The credential does not have to be active; probing a
+rejected key is a legitimate thing to want.
 
 Two of the three checks spend a real query, billed to that credential and
 recorded as usage like any other search.

@@ -30,7 +30,7 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   def credential
-    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "Serper Probe")
+    @credential ||= create(:search_credential, user: operator, provider: "serper", display_name: "SerperCapabilityProbe")
   end
 
   # Stubs the two seams a run uses: the credential's own provider (live key) and
@@ -49,32 +49,6 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
 
   def check(outcome, name)
     outcome[:results].find { |entry| entry[:check] == name }
-  end
-
-  test ".credential_name should name the credential after the provider label" do
-    assert_equal "Serper Probe", SearchCapabilityProbe.credential_name("serper")
-    assert_equal "Tavily Probe", SearchCapabilityProbe.credential_name("tavily")
-  end
-
-  test ".credential_for should find the credential named after the probe" do
-    credential
-    assert_equal credential, SearchCapabilityProbe.credential_for("serper", user: operator)
-  end
-
-  test ".credential_for should ignore a credential of another provider with the same name" do
-    create(:search_credential, user: operator, provider: "brave", display_name: "Serper Probe")
-    assert_nil SearchCapabilityProbe.credential_for("serper", user: operator)
-  end
-
-  test ".credential_for should ignore a probe-named credential belonging to someone else" do
-    create(:search_credential, user: create(:user, :dev), provider: "serper", display_name: "Serper Probe")
-    assert_nil SearchCapabilityProbe.credential_for("serper", user: operator)
-  end
-
-  test ".missing_credential_message should name the exact credential to create" do
-    message = SearchCapabilityProbe.missing_credential_message("brave")
-    assert_match(/"Brave Probe"/, message)
-    assert_match(/Brave credential/, message)
   end
 
   test "#run should pass every check when the vendor behaves" do
