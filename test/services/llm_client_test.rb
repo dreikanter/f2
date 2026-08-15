@@ -339,6 +339,24 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal ["kimi-k2.6"], models.map { |m| m["id"] }
   end
 
+  test "#available_models should list native openai models from OpenAI's own host" do
+    openai = create(:ai_credential, :active, user: user, provider: "openai",
+                    credential_data: { "api_key" => "sk-openai-test" })
+    client = LlmClient.new(openai)
+
+    stub_request(:get, "https://api.openai.com/v1/models")
+      .with(headers: { "Authorization" => "Bearer sk-openai-test" })
+      .to_return(
+        status: 200,
+        body: { data: [{ id: "gpt-5.4", object: "model", owned_by: "openai" }] }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    models = client.available_models
+
+    assert_equal ["gpt-5.4"], models.map { |m| m["id"] }
+  end
+
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::UnauthorizedError.new("401"))
@@ -426,10 +444,15 @@ class LlmClientTest < ActiveSupport::TestCase
   # can verify the system message travels via with_instructions and the user
   # prompt via #ask — the injection-defense channel separation (spec §8).
   class FakeChat
-    attr_reader :instructions, :asked
+    attr_reader :instructions, :asked, :schema
 
     def with_instructions(text)
       @instructions = text
+      self
+    end
+
+    def with_schema(schema)
+      @schema = schema
       self
     end
 
@@ -513,6 +536,33 @@ class LlmClientTest < ActiveSupport::TestCase
     context = Object.new
     context.define_singleton_method(:chat) { |**_| chat }
     client.credential.stub(:ruby_llm_context, context) { yield }
+  end
+
+  test "#invoke_provider should send the schema at the provider's own strictness" do
+    openai = create(:ai_credential, :active, user: user, provider: "openai",
+                    credential_data: { "api_key" => "sk-openai-test" })
+    client = LlmClient.new(openai)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "gpt-5.4", prompt: "p",
+                  output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
+    end
+
+    assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, chat.schema["schema"]
+    assert_equal false, chat.schema["strict"]
+  end
+
+  test "#invoke_provider should keep strictness on for providers whose strict mode fits the schema" do
+    client = LlmClient.new(credential)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p",
+                  output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
+    end
+
+    assert_equal true, chat.schema["strict"]
   end
 
   test "#invoke_provider should set the system prompt as instructions and ask the user prompt" do
