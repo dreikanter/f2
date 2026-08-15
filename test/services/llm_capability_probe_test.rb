@@ -255,9 +255,9 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   test "canned web search should return fixed real URLs without touching a search provider" do
-    result = LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything")
+    result = JSON.parse(LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything"))
 
-    assert_equal ["https://example.com/"], result[:results].map { |r| r["url"] }
+    assert_equal ["https://example.com/"], result["results"].map { |r| r["url"] }
   end
 
   test "#run should attach the schema and both client tools to one chat for client_tools_schema" do

@@ -53,6 +53,7 @@ module LlmCapabilityProbe
   def self.refusal?(text)
     text.to_s.match?(REFUSAL_MARKERS)
   end
+
   # Mirrors production's structuring stage: fixed text in, strict JSON out.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
                             "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
@@ -91,8 +92,9 @@ module LlmCapabilityProbe
 
     def name = SEARCH_TOOL_NAME
 
+    # Serialized like the production tool, so the loop sees the same wire shape.
     def execute(query:)
-      { results: RESULTS }
+      { results: RESULTS }.to_json
     end
   end
 
