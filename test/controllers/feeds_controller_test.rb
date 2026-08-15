@@ -736,6 +736,25 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='form.source-locked-note']", count: 0
   end
 
+  test "#edit should point Cancel to the feed page" do
+    sign_in_as(user)
+    draft = create(:feed, :draft, user: user)
+
+    get edit_feed_url(draft)
+
+    assert_response :success
+    assert_select "a[href=?]", feed_path(draft), text: "Cancel"
+  end
+
+  test "#new should point Cancel to the feeds list" do
+    sign_in_as(user)
+
+    get new_feed_url
+
+    assert_response :success
+    assert_select "a[href=?]", feeds_path, text: "Cancel"
+  end
+
   test "#edit should show the editable prompt for a query-shaped AI feed" do
     sign_in_as(user)
     prompt_feed = create(:feed, user: user, feed_profile_key: "llm", params: { "prompt" => "cat pictures" })

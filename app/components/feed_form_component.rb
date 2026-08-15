@@ -71,6 +71,10 @@ class FeedFormComponent < ViewComponent::Base
     edit_mode? ? :patch : :post
   end
 
+  def cancel_path
+    edit_mode? ? helpers.feed_path(feed) : helpers.feeds_path
+  end
+
   # feed_id is nil (and dropped from the URL) for an unpersisted feed.
   def form_data
     {
