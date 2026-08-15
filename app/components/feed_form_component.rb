@@ -71,9 +71,6 @@ class FeedFormComponent < ViewComponent::Base
     edit_mode? ? :patch : :post
   end
 
-  # Backing out of an edit returns to the feed's own page — including a draft's,
-  # which exists as soon as the feed is saved. Only an unsaved feed has no page
-  # to return to, so creation falls back to the list.
   def cancel_path
     edit_mode? ? helpers.feed_path(feed) : helpers.feeds_path
   end
