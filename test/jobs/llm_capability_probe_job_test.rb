@@ -50,9 +50,10 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_match(/Anthropic credential/, message)
   end
 
-  test ".description should name the credential the probe needs" do
-    assert_match(/AnthropicCapabilityProbe/, AnthropicCapabilityProbeJob.description)
-    assert_match(/KimiCapabilityProbe/, KimiCapabilityProbeJob.description)
+  test ".description should mark up the credential the probe needs" do
+    assert_includes AnthropicCapabilityProbeJob.description, "<code>AnthropicCapabilityProbe</code>"
+    assert_includes KimiCapabilityProbeJob.description, "<code>KimiCapabilityProbe</code>"
+    assert_predicate AnthropicCapabilityProbeJob.description, :html_safe?
   end
 
   test ".runnable_arguments should ask the dev area for the user who pressed Run" do

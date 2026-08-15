@@ -67,9 +67,10 @@ class SearchCapabilityProbeJobTest < ActiveJob::TestCase
     assert_match(/Brave credential/, message)
   end
 
-  test ".description should name the credential the probe needs" do
-    assert_match(/SerperCapabilityProbe/, SerperCapabilityProbeJob.description)
-    assert_match(/TavilyCapabilityProbe/, TavilyCapabilityProbeJob.description)
+  test ".description should mark up the credential the probe needs" do
+    assert_includes SerperCapabilityProbeJob.description, "<code>SerperCapabilityProbe</code>"
+    assert_includes TavilyCapabilityProbeJob.description, "<code>TavilyCapabilityProbe</code>"
+    assert_predicate SerperCapabilityProbeJob.description, :html_safe?
   end
 
   test "#perform should record a skip naming the credential to create when it is missing" do

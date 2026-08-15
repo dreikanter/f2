@@ -30,8 +30,12 @@ class LlmCapabilityProbeJob < ApplicationJob
   end
 
   def self.description
-    "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
-      "Needs an AI credential named “#{credential_name}” on your own account."
+    helpers.safe_join([
+      "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
+      "Needs an AI credential named ",
+      helpers.tag.code(credential_name),
+      " on your own account."
+    ])
   end
 
   def self.runnable_arguments(user) = [user]

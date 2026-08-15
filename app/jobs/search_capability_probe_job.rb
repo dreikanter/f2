@@ -29,9 +29,12 @@ class SearchCapabilityProbeJob < ApplicationJob
   end
 
   def self.description
-    "Runs the search checks against the live #{WebSearchProvider.label_for(self::PROVIDER)} API. " \
-      "Needs a search credential named “#{credential_name}” on " \
-      "your own account, and spends two queries on it."
+    helpers.safe_join([
+      "Runs the search checks against the live #{WebSearchProvider.label_for(self::PROVIDER)} API. " \
+      "Needs a search credential named ",
+      helpers.tag.code(credential_name),
+      " on your own account, and spends two queries on it."
+    ])
   end
 
   def self.runnable_arguments(user) = [user]

@@ -7,7 +7,12 @@ class ApplicationJob < ActiveJob::Base
 
   # One line shown above the job's run history in the dev area, for what a
   # maintenance job needs before it can run. Nil when the name says enough.
+  # Rendered as HTML, so a description with markup composes it through `helpers`
+  # and every interpolated value stays escaped.
   def self.description = nil
+
+  # The view's tag builders, for descriptions that carry markup.
+  def self.helpers = ApplicationController.helpers
 
   # Arguments the dev area launches this job with. Jobs that act on behalf of
   # whoever pressed Run override it to receive them.
