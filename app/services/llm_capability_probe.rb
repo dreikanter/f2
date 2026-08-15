@@ -235,7 +235,7 @@ module LlmCapabilityProbe
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
-      validate_items(response)
+      validate_items(response, expect_null_source_url: true)
     end
 
     # Production's gather step: system prompt plus the client-side tools driven
@@ -324,7 +324,7 @@ module LlmCapabilityProbe
               end
     end
 
-    def validate_items(response)
+    def validate_items(response, expect_null_source_url: false)
       raw = response.content
       payload = raw.is_a?(Hash) ? raw : JSON.parse(@provider.unwrap_json(raw.to_s))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
@@ -338,6 +338,12 @@ module LlmCapabilityProbe
         # A refusal wearing the schema would otherwise qualify a model for
         # gathering it never did.
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
+      elsif expect_null_source_url && items.none? { |item| item["source_url"].nil? }
+        # Accepting the union in the schema is not the same as emitting it, and
+        # the digest regime is the null branch (spec 005 §3). The sample's last
+        # entry has no link and the prompt asks for the null, so a model that
+        # returns none of them has not shown it can serve a digest feed.
+        { status: "FAIL", note: "schema-valid but no item emitted a null source_url", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }
       end

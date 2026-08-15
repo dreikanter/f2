@@ -86,11 +86,16 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   def valid_payload
-    { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" }] }
+    { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" },
+                  { "body" => "A summary of several sources", "source_url" => nil }] }
   end
 
   def digest_payload
     { "items" => [{ "body" => "A summary of several sources", "source_url" => nil }] }
+  end
+
+  def linked_only_payload
+    { "items" => [{ "body" => "b", "source_url" => "https://example.com/p" }] }
   end
 
   def grounded_payload
@@ -170,7 +175,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     outcome = run_checks(valid_payload, ["schema"])
 
     assert_equal "PASS", outcome[:results].first[:status]
-    assert_match(/1 items/, outcome[:results].first[:note])
+    assert_match(/2 items/, outcome[:results].first[:note])
   end
 
   test "#run should fail the schema check on a schema violation" do
@@ -189,6 +194,23 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
   test "#run should pass the schema check on a digest item with a null source_url" do
     outcome = run_checks(digest_payload, ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  # Accepting the union in the schema is not the same as emitting it, and the
+  # digest regime is the null branch.
+  test "#run should fail the schema check when no item emitted a null source_url" do
+    outcome = run_checks(linked_only_payload, ["schema"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "schema-valid but no item emitted a null source_url", outcome[:results].first[:note]
+  end
+
+  # Only the schema check asks for the linkless roundup — the client-tools
+  # prompt asks for one item with the fetched page's own URL.
+  test "#run should not require a null source_url from client_tools_schema" do
+    outcome = run_checks(grounded_payload, ["client_tools_schema"], tool_rounds: full_tool_loop)
 
     assert_equal "PASS", outcome[:results].first[:status]
   end

@@ -47,7 +47,7 @@ own web search works tells us nothing about a feed.
 | `models` | The id is served verbatim by the provider's listing — the allowlist matches on exact string |
 | `plain` | Basic round trip, deliberately without a system prompt so it isolates reachability |
 | `system_prompt` | The system channel arrives and is obeyed; instructions contradict the obvious answer, so a dropped or rejected prompt fails |
-| `schema` | Strict-schema JSON under production's own `UNIVERSAL_OUTPUT_SCHEMA`, repaired the way production repairs it (`Adapter#unwrap_json`). The sample includes a linkless roundup, so the provider has to accept *and* emit the nullable `source_url` union |
+| `schema` | Strict-schema JSON under production's own `UNIVERSAL_OUTPUT_SCHEMA`, repaired the way production repairs it (`Adapter#unwrap_json`). The sample includes a linkless roundup and the check fails unless an item comes back with `source_url` null, so the provider has to accept *and* emit the nullable union — the digest regime depends on the null branch |
 | `client_tools` | The model drives our search and fetch tools through a real multi-round loop and grounds its answer in fetched content — production's gather step |
 | `client_tools_schema` | Schema and tools survive the *same* call — production's combined shape |
 
