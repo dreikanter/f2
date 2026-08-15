@@ -14,10 +14,11 @@ share.
 ## Running it
 
 The key comes from the `AiCredential` named after the probe job, minus the `Job`
-suffix — **AnthropicCapabilityProbe**, **KimiCapabilityProbe** — on **your own
-account**. The dev area passes whoever pressed Run through to the job, so a
-probe only ever spends its own operator's tokens. Without that record the run
-records a skip saying which credential to create.
+suffix — **AnthropicCapabilityProbe**, **KimiCapabilityProbe**,
+**OpenAiCapabilityProbe** — on **your own account**. The dev area passes
+whoever pressed Run through to the job, so a probe only ever spends its own
+operator's tokens. Without that record the run records a skip saying which
+credential to create.
 
 From the dev area — the usual path, and the one that keeps the evidence
 searchable afterwards:

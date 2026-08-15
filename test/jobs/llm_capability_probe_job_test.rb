@@ -17,20 +17,32 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     @job_run ||= create(:job_run, job_class: "AnthropicCapabilityProbeJob", job_id: job.job_id)
   end
 
-  test "should register both provider probes as runnable jobs" do
+  test "should register every provider probe as a runnable job" do
     assert_includes JobRun::RUNNABLE_JOBS, AnthropicCapabilityProbeJob
     assert_includes JobRun::RUNNABLE_JOBS, KimiCapabilityProbeJob
+    assert_includes JobRun::RUNNABLE_JOBS, OpenAiCapabilityProbeJob
   end
 
   test "should pin one provider and model per job" do
     assert_equal %w[anthropic claude-sonnet-4-6],
                  [AnthropicCapabilityProbeJob::PROVIDER, AnthropicCapabilityProbeJob::MODEL]
     assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
+    assert_equal %w[openai gpt-5.4], [OpenAiCapabilityProbeJob::PROVIDER, OpenAiCapabilityProbeJob::MODEL]
+  end
+
+  test "every probe should pin a model its provider can actually be configured for" do
+    JobRun::RUNNABLE_JOBS.select { |job| job < LlmCapabilityProbeJob }.each do |job|
+      assert_includes LlmProvider.names, job::PROVIDER,
+                      "#{job.name} pins unregistered provider #{job::PROVIDER}"
+      assert LlmClient::RateTable.rate_for(provider: job::PROVIDER, model: job::MODEL),
+             "#{job.name} pins #{job::MODEL}, which has no rate entry to price a run"
+    end
   end
 
   test ".credential_name should name the credential after the job" do
     assert_equal "AnthropicCapabilityProbe", AnthropicCapabilityProbeJob.credential_name
     assert_equal "KimiCapabilityProbe", KimiCapabilityProbeJob.credential_name
+    assert_equal "OpenAiCapabilityProbe", OpenAiCapabilityProbeJob.credential_name
   end
 
   test ".credential_for should find the credential named after the job" do
@@ -53,6 +65,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
   test ".description should mark up the credential the probe needs" do
     assert_includes AnthropicCapabilityProbeJob.description, "<code>AnthropicCapabilityProbe</code>"
     assert_includes KimiCapabilityProbeJob.description, "<code>KimiCapabilityProbe</code>"
+    assert_includes OpenAiCapabilityProbeJob.description, "<code>OpenAiCapabilityProbe</code>"
     assert_predicate AnthropicCapabilityProbeJob.description, :html_safe?
   end
 
