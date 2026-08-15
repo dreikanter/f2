@@ -11,31 +11,14 @@
 #
 # See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
-  # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape. Anthropic requires strict schemas:
-  # additionalProperties false at every level.
-  PROBE_SCHEMA = {
-    "type" => "object",
-    "properties" => {
-      "items" => {
-        "type" => "array",
-        "items" => {
-          "type" => "object",
-          "properties" => {
-            "uid" => { "type" => "string" },
-            "title" => { "type" => "string" },
-            "body" => { "type" => "string" },
-            "source_url" => { "type" => "string" }
-          },
-          "required" => ["uid", "body", "source_url"],
-          "additionalProperties" => false
-        }
-      }
-    },
-    "required" => ["items"],
-    "additionalProperties" => false
-  }.freeze
+  # Production's schema verbatim: a simplified copy qualifies a shape the app
+  # never sends. The nullable `source_url` union is the part strict
+  # structured-output modes reject.
+  PROBE_SCHEMA = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA
 
-  # Production always sends a system prompt, so every check carries one.
+  # Stands in for production's stage system prompts (Loader::LlmPrompts). The
+  # checks mirroring those stages carry it; `plain` stays bare so it isolates
+  # reachability from the system channel `system_prompt` covers.
   PROBE_INSTRUCTIONS = "You are a content-gathering agent for a feed reader. " \
                        "Follow the task exactly and report only what you actually find."
 
@@ -54,19 +37,23 @@ module LlmCapabilityProbe
     text.to_s.match?(REFUSAL_MARKERS)
   end
 
-  # Mirrors production's structuring stage: fixed text in, strict JSON out.
+  # Mirrors production's structuring stage: fixed text in, strict JSON out. The
+  # sample's last entry has no link of its own and the prompt asks for the null
+  # that represents it, so the provider has to emit the union, not just accept it.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
-                            "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
+                            "Use only what is present; do not invent items or fields. For an item with " \
+                            "no single canonical link, set source_url to JSON null.\n\nGATHERED CONTENT:\n"
   SAMPLE_TEXT = <<~TEXT
     Post: "Rails 8.1 released" at https://example.com/blog/rails-8-1 — the release adds a faster boot path.
     Post: "SQLite in production" at https://example.com/blog/sqlite-prod — a guide to running SQLite at scale.
+    Roundup: both posts above, summarized together — no link of its own.
   TEXT
 
   CLIENT_TOOLS_PROMPT = "Search for IANA's reserved documentation domains, fetch the top result with the " \
                         "fetch tool, and quote the exact text of that page's main heading."
 
   CLIENT_TOOLS_SCHEMA_PROMPT = "#{CLIENT_TOOLS_PROMPT} Return exactly one item: body set to that heading, " \
-                               "uid and source_url set to the page's URL.".freeze
+                               "source_url set to the page's URL.".freeze
 
   # Appears only on the fetched page — never in the prompt or the canned search
   # results — so quoting it requires having read fetched content. Keep it that
@@ -90,10 +77,20 @@ module LlmCapabilityProbe
         "snippet" => "Names set aside by IANA for use in documentation. Open the page to read it." }
     ].freeze
 
+    def initialize(budget: nil)
+      super()
+      @budget = budget
+    end
+
     def name = SEARCH_TOOL_NAME
 
-    # Serialized like the production tool, so the loop sees the same wire shape.
+    # Results are canned, but every round is still a billed completion, so the
+    # budget is spent as the production tool spends it. Serialized the same way
+    # too, so the loop sees the same wire shape.
     def execute(query:)
+      over_budget = @budget&.claim
+      return over_budget if over_budget
+
       { results: RESULTS }.to_json
     end
   end
@@ -227,10 +224,15 @@ module LlmCapabilityProbe
       text.gsub(/[^[:alpha:]]/, "").casecmp?(SYSTEM_CHECK_WORD)
     end
 
+    # Production's structure stage pairs STRUCTURE_SYSTEM with the schema, and
+    # that pairing is its own wire shape: an OpenAI-compatible provider can
+    # reject the system role RubyLLM defaults to, which a schema-only call
+    # never exercises.
     def check_schema
       chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
+      chat.with_instructions(PROBE_INSTRUCTIONS)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
-      validate_items(response)
+      validate_items(response, expect_null_source_url: true)
     end
 
     # Production's gather step: system prompt plus the client-side tools driven
@@ -261,12 +263,16 @@ module LlmCapabilityProbe
       { status: "PASS", note: "#{rounds.size} tool calls, answer grounded in fetched page", evidence: evidence }
     end
 
+    # Instances sharing one budget, as production builds them
+    # (LlmClient::Adapter::Base#apply_web): the probe drives a paid API, and an
+    # unqualified model is the likeliest to loop on a tool.
     def client_tools_chat(schema)
       chat = @provider.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       chat.with_schema(schema) if schema
-      chat.with_tool(CannedWebSearch)
-      chat.with_tool(LlmClient::Tools::WebFetch)
+      budget = LlmClient::ToolBudget.new
+      chat.with_tool(CannedWebSearch.new(budget: budget))
+      chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
       chat
     end
 
@@ -314,7 +320,7 @@ module LlmCapabilityProbe
               end
     end
 
-    def validate_items(response)
+    def validate_items(response, expect_null_source_url: false)
       raw = response.content
       payload = raw.is_a?(Hash) ? raw : JSON.parse(@provider.unwrap_json(raw.to_s))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
@@ -328,6 +334,10 @@ module LlmCapabilityProbe
         # A refusal wearing the schema would otherwise qualify a model for
         # gathering it never did.
         { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
+      elsif expect_null_source_url && items.none? { |item| item["source_url"].nil? }
+        # Accepting the union in the schema is not the same as emitting it, and
+        # a digest feed depends on the null branch (spec 005 §3).
+        { status: "FAIL", note: "schema-valid but no item emitted a null source_url", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }
       end

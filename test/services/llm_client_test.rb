@@ -450,7 +450,8 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "gathered so far", response.payload
   end
 
-  test "#invoke_provider should fall back to the halt notice when the model said nothing" do
+  # The notice is our own text; a caller would read it as gathered content.
+  test "#invoke_provider should return nothing when a halted loop gathered nothing" do
     client = LlmClient.new(credential)
     chat = FakeHaltedChat.new([])
 
@@ -458,7 +459,7 @@ class LlmClientTest < ActiveSupport::TestCase
       client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p", output_schema: nil, web: false, system: nil)
     end
 
-    assert_equal LlmClient::ToolBudget::HALTED, response.payload
+    assert_predicate response.payload, :blank?
   end
 
   # Returns a response carrying distinct cache counts, so a swap between the
