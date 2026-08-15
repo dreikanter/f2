@@ -64,6 +64,27 @@ Local-only Rails credential keys.
 
 Not committed. Kamal reads the right key and passes it to the container as `RAILS_MASTER_KEY`.
 
+## Environment variable naming
+
+When a value differs per environment, the environment goes **last**, as a suffix:
+
+```text
+POSTGRES_PASSWORD_STAGING
+POSTGRES_PASSWORD_PRODUCTION
+RAILS_MASTER_KEY_STAGING
+SSH_PRIVATE_KEY_STAGING
+```
+
+The base name stays stable, so every variant of a value sorts and groups
+together and the environment reads as a qualifier rather than a namespace.
+Names with no suffix (`GHCR_TOKEN`, `IMGPROXY_KEY`) are shared by all
+environments.
+
+The suffix only exists where several environments' values sit side by side —
+GitHub Actions secrets and local shell exports. Inside a container the app sees
+the plain name: `.kamal/secrets.staging` maps `POSTGRES_PASSWORD_STAGING` to
+`POSTGRES_PASSWORD`.
+
 ## Why both Kamal secrets and Rails credentials?
 
 Kamal secrets answer: **where does deploy read secret values from?**

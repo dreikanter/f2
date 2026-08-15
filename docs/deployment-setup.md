@@ -209,7 +209,8 @@ Both destinations can be deployed from the Actions tab. **Deploy Staging** also
 runs on every push to the `staging` branch; **Deploy Production** is
 `workflow_dispatch` only, so production deploys are always deliberate.
 
-The workflows read these repository secrets:
+The workflows read these repository secrets. Per-environment values carry a
+`_STAGING` / `_PRODUCTION` suffix — see [Environment variable naming](configuration.md#environment-variable-naming).
 
 | Secret | Used by | Purpose |
 | --- | --- | --- |
