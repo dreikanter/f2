@@ -75,6 +75,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     def web_search_params(_model) = { tools: [] }
     def web_fetch_params(_model) = @fetch_params
     def list_models = @models.map { |id| FakeModel.new(id) }
+    def unwrap_json(text) = LlmClient::Adapter::Moonshot.new.unwrap_json(text)
   end
 
   def run_checks(responses, checks, fetch_params: nil, models: [], tool_rounds: [])
@@ -186,6 +187,28 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
     assert_equal "FAIL", outcome[:results].first[:status]
     assert_match(/empty items/, outcome[:results].first[:note])
+  end
+
+  test "#run should pass the schema check on fenced JSON the app unwraps" do
+    outcome = run_checks("```json\n#{JSON.generate(valid_payload)}\n```", ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the schema check when schema-valid items are a refusal" do
+    payload = { "items" => [{ "uid" => "u1", "source_url" => "https://example.com/",
+                              "body" => "I cannot browse the live web, so I am unable to retrieve the posts." }] }
+    outcome = run_checks(payload, ["schema"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "schema-valid but the items are a refusal", outcome[:results].first[:note]
+  end
+
+  test "#run should fail two_step when the gather step reports no web access" do
+    outcome = run_checks(["I don't have the ability to browse the web.", valid_payload], ["two_step"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "gather reports no web access", outcome[:results].first[:note]
   end
 
   test "#run should fail the schema check on a non-JSON reply" do
