@@ -149,6 +149,13 @@ module LlmCapabilityProbe
     def web_fetch_params(_model) = nil
     def prepare_web(_chat) = nil
 
+    # Structured output is repaired exactly as production repairs it — Kimi
+    # fences its JSON, and LlmClient unwraps that before parsing. Without this
+    # the probe fails a model on a quirk the app already absorbs.
+    def unwrap_json(text)
+      LlmClient::Adapter.for(key).unwrap_json(text)
+    end
+
     class Anthropic < Provider
       def self.env_key = "ANTHROPIC_API_KEY"
 
@@ -315,6 +322,12 @@ module LlmCapabilityProbe
       gathered = gather.ask(GATHER_PROMPT).content.to_s
       return { status: "FAIL", note: "gather returned blank", evidence: nil } if gathered.strip.empty?
 
+      # Mirrors LlmLoader: structuring a refusal invites fabricated items, so
+      # the gather step's refusal is the finding — don't launder it downstream.
+      if LlmCapabilityProbe.refusal?(gathered)
+        return { status: "FAIL", note: "gather reports no web access", evidence: gathered[0, 2000] }
+      end
+
       structure = @provider.chat(@model).with_schema(PROBE_SCHEMA)
       structure.with_instructions(PROBE_INSTRUCTIONS)
       validate_items(structure.ask(STRUCTURE_PROMPT_PREFIX + gathered), gathered: gathered)
@@ -419,7 +432,7 @@ module LlmCapabilityProbe
 
     def validate_items(response, gathered: nil)
       raw = response.content
-      payload = raw.is_a?(Hash) ? raw : JSON.parse(raw.to_s)
+      payload = raw.is_a?(Hash) ? raw : JSON.parse(@provider.unwrap_json(raw.to_s))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
       items = payload.is_a?(Hash) ? Array(payload["items"]) : []
       evidence = { items: items.first(3), gathered_preview: gathered&.slice(0, 2000) }.compact
@@ -427,6 +440,11 @@ module LlmCapabilityProbe
         { status: "FAIL", note: "schema violation: #{errors.first['error']}", evidence: evidence }
       elsif items.empty?
         { status: "FAIL", note: "valid but empty items", evidence: evidence }
+      elsif LlmCapabilityProbe.refusal?(JSON.generate(items))
+        # Well-formed JSON whose content is "I cannot browse the web" is a
+        # refusal wearing the schema, not a capability. Passing it would
+        # qualify a model for gathering it never did.
+        { status: "FAIL", note: "schema-valid but the items are a refusal", evidence: evidence }
       else
         { status: "PASS", note: "#{items.size} items, schema-valid", evidence: evidence }
       end
