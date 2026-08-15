@@ -41,6 +41,13 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_raises(KeyError) { LlmClient::Adapter.for("nope") }
   end
 
+  # Adapter.for raises KeyError for a provider it has no entry for, and that
+  # escapes LlmClient#call's rescue list — after the provider has already
+  # billed the round trip, and without writing the usage row.
+  test "every registered provider should have an adapter" do
+    assert_equal LlmProvider.names.sort, LlmClient::Adapter::REGISTRY.keys.sort
+  end
+
   test "every registered adapter should inherit from Base" do
     LlmClient::Adapter::REGISTRY.each_key do |provider|
       assert_kind_of LlmClient::Adapter::Base, LlmClient::Adapter.for(provider)

@@ -24,8 +24,9 @@ From the dev area — the usual path, and the one that keeps the evidence
 searchable afterwards:
 
 1. Add an AI credential for the provider, named exactly as above.
-2. Open `/development/jobs`, run `KimiCapabilityProbeJob` or
-   `AnthropicCapabilityProbeJob`, and read the run under `job_runs`.
+2. Open `/development/jobs`, run the probe job for the pair
+   (`AnthropicCapabilityProbeJob`, `KimiCapabilityProbeJob`,
+   `OpenAiCapabilityProbeJob`), and read the run under `job_runs`.
 
 Each check writes one event with its full evidence — the models listing, the
 tool calls with their arguments and results, the returned payload — so there is

@@ -12,6 +12,12 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_includes LlmProvider.names, "openrouter"
   end
 
+  # AiCredentialsController defaults the new-credential form to the first
+  # registered provider, so insertion order is user-visible.
+  test "#names should lead with anthropic" do
+    assert_equal "anthropic", LlmProvider.names.first
+  end
+
   test "#find should return the anthropic provider instance" do
     provider = LlmProvider.find("anthropic")
     assert_kind_of LlmProvider, provider
