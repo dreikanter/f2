@@ -16,6 +16,9 @@
 # LlmModelCapability without a probe run that covers the production call
 # shape — a system prompt on the wire, the client-side tool loop, and the
 # model id confirmed against the live models listing.
+#
+# How to run it, read the results, and add a pair or a provider:
+# docs/llm-provider-qualification.md
 module LlmCapabilityProbe
   # Mirrors UNIVERSAL_OUTPUT_SCHEMA's shape (strict: additionalProperties false
   # everywhere — the Anthropic requirement confirmed live in Track 2).

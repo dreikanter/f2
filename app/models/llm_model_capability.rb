@@ -14,6 +14,8 @@
 # one thing that does vary, whether schema and tools survive the same call, is
 # already a provider property the adapter carries (`combined_extraction?`).
 #
+# Adding a pair: docs/llm-provider-qualification.md
+#
 # Verified on staging: Anthropic Sonnet drives the tools and returns
 # strict-schema JSON in one combined call (#914). Kimi k2.6 drives the same
 # tools under a system prompt but needs two-step extraction (#1186; it replaces
