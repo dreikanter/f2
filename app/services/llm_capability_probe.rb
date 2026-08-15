@@ -6,8 +6,9 @@
 # (LlmClient::Adapter::Base#apply_web), so a hosted mechanism tells us nothing
 # about a feed run.
 #
-# Keys come from the environment rather than managed credentials, so a provider
-# can be qualified before it is wired into the app.
+# The key comes from an AiCredential named after the probe and owned by whoever
+# launched the run, so the checks are made on the same objects and the same
+# provider configuration a feed run uses.
 #
 # See docs/llm-provider-qualification.md.
 module LlmCapabilityProbe
@@ -95,81 +96,31 @@ module LlmCapabilityProbe
     end
   end
 
-  class Provider
-    attr_reader :key
-
-    def initialize(key)
-      @key = key
+  class << self
+    def credential_name(provider)
+      "#{LlmProvider.find(provider).display_name} Probe"
     end
 
-    def context
-      @context ||= RubyLLM.context { |config| configure(config) }
+    # Scoped to whoever launched the probe: a run spends that key, and display
+    # names are unique per user and provider, so the owner is what makes the
+    # name resolve to one credential.
+    def credential_for(provider, user:)
+      user.ai_credentials.find_by(provider: provider, display_name: credential_name(provider))
     end
 
-    def chat(model)
-      context.chat(model: model, provider: ruby_llm_provider, assume_model_exists: assume_model_exists?)
-    end
-
-    # Resolved the way LlmClient does it — registry names don't always match
-    # RubyLLM provider keys.
-    def list_models
-      RubyLLM::Provider.resolve(ruby_llm_provider).new(context.config).list_models
-    end
-
-    def assume_model_exists? = false
-
-    # Repairs structured output the way production does, so the probe doesn't
-    # fail a model on a quirk the app already absorbs (Kimi fences its JSON).
-    def unwrap_json(text)
-      LlmClient::Adapter.for(key).unwrap_json(text)
-    end
-
-    class Anthropic < Provider
-      def self.env_key = "ANTHROPIC_API_KEY"
-
-      def configure(config)
-        config.anthropic_api_key = ENV.fetch(self.class.env_key)
-      end
-
-      def ruby_llm_provider = :anthropic
-    end
-
-    class Moonshot < Provider
-      def self.env_key = "MOONSHOT_API_KEY"
-
-      def configure(config)
-        config.openai_api_key = ENV.fetch(self.class.env_key)
-        config.openai_api_base = ENV.fetch("MOONSHOT_API_BASE", "https://api.moonshot.ai/v1")
-        # Must match LlmProvider#configure or results won't transfer: Moonshot
-        # rejects the "developer" role RubyLLM sends by default.
-        config.openai_use_system_role = true
-      end
-
-      def ruby_llm_provider = :openai
-      def assume_model_exists? = true
-    end
-
-    REGISTRY = { "anthropic" => Anthropic, "moonshot" => Moonshot }.freeze
-
-    def self.build(key)
-      klass = REGISTRY.fetch(key) { raise ArgumentError, "Unknown provider '#{key}'. Known: #{REGISTRY.keys.join(', ')}" }
-      klass.new(key)
-    end
-
-    def self.env_key_for(key)
-      REGISTRY.fetch(key).env_key
-    end
-
-    def self.configured?(key)
-      REGISTRY.key?(key) && ENV[REGISTRY.fetch(key).env_key].present?
+    # Says what to create, since the fix is always the same: one credential,
+    # this provider, this exact name.
+    def missing_credential_message(provider)
+      "no AI credential named #{credential_name(provider).inspect} on your account — " \
+        "add a #{LlmProvider.find(provider).display_name} credential with that exact name to run this probe"
     end
   end
 
   class Runner
     CHECKS = %w[models plain system_prompt schema client_tools client_tools_schema].freeze
 
-    def initialize(provider:, model:, checks: CHECKS)
-      @provider = provider
+    def initialize(credential:, model:, checks: CHECKS)
+      @credential = credential
       @model = model
       @checks = checks
       @results = []
@@ -197,9 +148,10 @@ module LlmCapabilityProbe
     end
 
     # LlmModelCapability matches on exact string, so a near-miss id qualifies
-    # nothing. The listing is recorded as evidence.
+    # nothing. Goes through the listing the app itself calls, so a pass means
+    # the credential can also be validated. The listing is recorded as evidence.
     def check_models
-      ids = @provider.list_models.map(&:id)
+      ids = LlmClient.new(@credential).available_models.map { |model| model["id"] }
       evidence = { model_ids: ids }
       return { status: "FAIL", note: "models endpoint returned no models", evidence: evidence } if ids.empty?
 
@@ -209,13 +161,13 @@ module LlmCapabilityProbe
     end
 
     def check_plain
-      chat = @provider.chat(@model)
+      chat = @credential.chat(@model)
       text = chat.ask("Reply with the single word: pong").content.to_s
       pass(text.match?(/pong/i), "expected 'pong'", text) { "plain round trip" }
     end
 
     def check_system_prompt
-      chat = @provider.chat(@model)
+      chat = @credential.chat(@model)
       chat.with_instructions(SYSTEM_CHECK_INSTRUCTIONS)
       text = chat.ask(SYSTEM_CHECK_PROMPT).content.to_s
       pass(honors_system_prompt?(text), "system instructions not honored verbatim", text) { "system prompt honored" }
@@ -233,7 +185,7 @@ module LlmCapabilityProbe
     # reject the system role RubyLLM defaults to, which a schema-only call
     # never exercises.
     def check_schema
-      chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
+      chat = @credential.chat(@model).with_schema(PROBE_SCHEMA)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
       validate_items(response, expect_null_source_url: true)
@@ -271,7 +223,7 @@ module LlmCapabilityProbe
     # (LlmClient::Adapter::Base#apply_web): the probe drives a paid API, and an
     # unqualified model is the likeliest to loop on a tool.
     def client_tools_chat(schema)
-      chat = @provider.chat(@model)
+      chat = @credential.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       chat.with_schema(schema) if schema
       budget = LlmClient::ToolBudget.new
@@ -326,7 +278,7 @@ module LlmCapabilityProbe
 
     def validate_items(response, expect_null_source_url: false)
       raw = response.content
-      payload = raw.is_a?(Hash) ? raw : JSON.parse(@provider.unwrap_json(raw.to_s))
+      payload = raw.is_a?(Hash) ? raw : JSON.parse(unwrap_json(raw.to_s))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
       items = payload.is_a?(Hash) ? Array(payload["items"]) : []
       evidence = { items: items.first(3) }
@@ -347,6 +299,12 @@ module LlmCapabilityProbe
       end
     rescue JSON::ParserError => e
       { status: "FAIL", note: "non-JSON response: #{e.message[0, 120]}", evidence: raw.to_s[0, 500] }
+    end
+
+    # Repairs structured output the way production does, so the probe doesn't
+    # fail a model on a quirk the app already absorbs (Kimi fences its JSON).
+    def unwrap_json(text)
+      LlmClient::Adapter.for(@credential.provider).unwrap_json(text)
     end
 
     def pass(condition, fail_note, evidence)

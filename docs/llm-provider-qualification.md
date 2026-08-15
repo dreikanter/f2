@@ -6,21 +6,23 @@ probe run shows it works on the shape production actually calls. The model
 picker offers that list intersected with the credential's own model snapshot, so
 an unqualified model can never be selected and fail asynchronously mid-run.
 
-`LlmCapabilityProbe` is the gate. It runs against the real provider API, and
-takes its keys from the environment rather than managed credentials, so a
-provider can be qualified before it is wired into the app.
+`LlmCapabilityProbe` is the gate. It runs against the real provider API on a
+managed credential, through the same provider configuration a feed run uses
+(`AiCredential#chat`), so a pass cannot come from a setup production doesn't
+share.
 
 ## Running it
 
-Keys come from the environment: `ANTHROPIC_API_KEY`, `MOONSHOT_API_KEY`
-(`MOONSHOT_API_BASE` overrides the endpoint). Without a key the run records a
-skip event and ends.
+The key comes from the `AiCredential` whose name matches the probe — **Anthropic
+Probe**, **Moonshot (Kimi) Probe** — on **your own account**. The dev area
+passes whoever pressed Run through to the job, so a probe only ever spends its
+own operator's tokens. Without that record the run records a skip saying which
+credential to create.
 
 From the dev area — the usual path, and the one that keeps the evidence
 searchable afterwards:
 
-1. Set the key on the target environment (staging; see
-   [deployment-setup.md](deployment-setup.md)).
+1. Add an AI credential for the provider, named exactly as above.
 2. Open `/development/jobs`, run `KimiCapabilityProbeJob` or
    `AnthropicCapabilityProbeJob`, and read the run under `job_runs`.
 
@@ -28,12 +30,22 @@ Each check writes one event with its full evidence — the models listing, the
 tool calls with their arguments and results, the returned payload — so there is
 no separate transcript to chase.
 
-For a one-off pair, or a subset of checks, use the CLI instead:
+For a one-off pair, or a subset of checks, use the CLI instead. It has no
+session to read an operator from, so name one:
 
 ```sh
-bundle exec ruby script/llm_capability_probe.rb --provider moonshot --model kimi-k3
-bundle exec ruby script/llm_capability_probe.rb --provider anthropic --model claude-sonnet-4-6 --checks models,client_tools
+bundle exec ruby script/llm_capability_probe.rb --user me@example.com --provider moonshot --model kimi-k3
+bundle exec ruby script/llm_capability_probe.rb --user me@example.com --provider anthropic --model claude-sonnet-4-6 --checks models
 ```
+
+A provider must be in `LlmProvider`'s registry before it can be probed, since
+that is what a credential is created against. Registering one exposes nothing on
+its own: the model picker reads `LlmModelCapability`, which is what a passing
+probe run earns.
+
+Probe runs write no `LlmUsage` rows. Usage is feed-run accounting — its
+`purpose` enum has no probe value and its rows hang off a feed — so probe cost
+is reported in the run's own events instead of the credential's usage surface.
 
 ## What it checks, and why only these
 
@@ -85,8 +97,11 @@ Before a pair can be probed, the provider needs:
   rides another provider's adapter);
 - an `LlmClient::Adapter` subclass, if it needs response repair or one-call
   extraction;
-- a `LlmCapabilityProbe::Provider` subclass with `env_key`, `configure` and
-  `ruby_llm_provider`, registered in that class's `REGISTRY`.
+- a probe job pinning the pair, subclassing `LlmCapabilityProbeJob` with
+  `PROVIDER`/`MODEL` and registered in `JobRun::RUNNABLE_JOBS`;
+- an `AiCredential` for it, named `LlmCapabilityProbe.credential_name(provider)`,
+  on the account that will run the probe.
 
-The probe's `configure` must mirror production's `LlmProvider#configure`. If
-they drift, the probe qualifies a wire shape the app never sends.
+There is nothing to keep in sync: the probe reaches the provider through
+`AiCredential#chat`, so it is configured by the same `LlmProvider#configure`
+production uses.

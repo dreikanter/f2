@@ -3,16 +3,17 @@ namespace :ai do
   # runs the combined system prompt + universal schema + web tools against a real
   # provider and a real source, then validates the structured result. Also a
   # smoke test of the transformation contract — the request asks for one-line
-  # summaries, so the returned bodies should be short. The search credential is
-  # selected explicitly so this task exercises the same managed-key path as a
-  # feed run.
+  # summaries, so the returned bodies should be short. Both credentials are
+  # selected explicitly by id, so this task exercises the same managed-key path
+  # as a feed run.
   desc "Verify AI extraction end-to-end with the production prompts against a live provider"
   task verify_extraction: :environment do
     provider_key = "anthropic"
     model = "claude-sonnet-4-6"
 
-    unless LlmCapabilityProbe::Provider.configured?(provider_key)
-      puts "[#{provider_key}/#{model}] SKIP: no AI provider API key in environment"
+    ai_credential = AiCredential.find_by(id: ENV["AI_CREDENTIAL_ID"], provider: provider_key)
+    unless ai_credential
+      puts "[#{provider_key}/#{model}] SKIP: set AI_CREDENTIAL_ID to a managed #{provider_key} credential"
       next
     end
 
@@ -32,7 +33,7 @@ namespace :ai do
     PROMPT
 
     begin
-      chat = LlmCapabilityProbe::Provider.build(provider_key).chat(model)
+      chat = ai_credential.chat(model)
       chat.with_instructions(Loader::LlmPrompts::COMBINED_SYSTEM)
       chat.with_schema(schema)
       adapter.apply_web(
