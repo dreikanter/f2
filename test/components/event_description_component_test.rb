@@ -195,6 +195,45 @@ class EventDescriptionComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Custom message"
   end
 
+  test "#call should lead the stored message with the event name" do
+    event = Event.create!(
+      type: "job.llm_capability_probe.check",
+      level: :info,
+      user: user,
+      message: "combined: PASS (52.8s)",
+      metadata: {}
+    )
+
+    result = render_inline(EventDescriptionComponent.new(event: event))
+
+    assert_includes result.text, "Capability check"
+    assert_includes result.text, "combined: PASS (52.8s)"
+  end
+
+  test "#call should name a dotted type with no translation" do
+    event = Event.create!(
+      type: "job.something.happened",
+      level: :info,
+      user: user,
+      message: "Details",
+      metadata: {}
+    )
+
+    assert_includes render_inline(EventDescriptionComponent.new(event: event)).text, "Job something happened"
+  end
+
+  test "#call should render the translated name for a message-less event" do
+    event = Event.create!(
+      type: "job.purge_expired_events.completed",
+      level: :info,
+      user: user,
+      message: "",
+      metadata: {}
+    )
+
+    assert_includes render_inline(EventDescriptionComponent.new(event: event)).text, "Old events cleaned up"
+  end
+
   test "#call should escape HTML in fallback messages" do
     event = Event.create!(
       type: "test_event",

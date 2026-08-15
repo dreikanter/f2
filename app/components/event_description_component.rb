@@ -48,8 +48,12 @@ class EventDescriptionComponent < ViewComponent::Base
     ).html_safe
   end
 
+  # A stored message is raw operational text that doesn't say what produced it,
+  # so the event name leads it.
   def fallback_description
-    (event.message.present? ? escaped_message : default_description).html_safe
+    return ERB::Util.html_escape(default_description) if event.message.blank?
+
+    helpers.safe_join([helpers.tag.span(default_description, class: "font-medium"), helpers.middot, escaped_message])
   end
 
   def description_key
@@ -115,7 +119,7 @@ class EventDescriptionComponent < ViewComponent::Base
   end
 
   def default_description
-    I18n.t("events.#{event.type}.name", default: event.type.humanize)
+    I18n.t("events.#{event_type}.name", default: event.type.tr(".", " ").humanize)
   end
 
   def metadata_feed_links_html

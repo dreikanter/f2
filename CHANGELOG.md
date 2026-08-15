@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-15
+
+- Events in the log now start with what happened, so entries that used to show only raw technical output are readable at a glance.
+
 ## 2026-08-12
 
 - The posting endpoint now understands the standard `Idempotency-Key` header, so HTTP clients that send it get safe retries without setting `uid` in the payload.
