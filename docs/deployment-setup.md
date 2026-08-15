@@ -224,6 +224,11 @@ The workflows read these repository secrets. Per-environment values carry a
 | `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
 | `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
 
+`PRODUCTION_SSH_PRIVATE_KEY` is the one holdout from the convention. It keeps
+the old prefix form until the renamed secret exists, so don't create
+`SSH_PRIVATE_KEY_PRODUCTION` and expect the production workflow to pick it up —
+rename the workflow reference and the secret together.
+
 ## Database
 
 Each destination runs a Kamal PostgreSQL accessory named `db`. PostgreSQL 18 stores versioned data under `/var/lib/postgresql`, so the accessory mounts `data:/var/lib/postgresql` instead of mounting the `data` subdirectory directly.
