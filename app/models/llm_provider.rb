@@ -9,7 +9,8 @@
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model, :api_base
 
-  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil, assume_model_exists: false)
+  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
+                 assume_model_exists: false, pin_system_role: false)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
@@ -20,11 +21,17 @@ class LlmProvider
     # True when the provider's models aren't in RubyLLM's bundled registry, so
     # a call must assert the model exists rather than look it up.
     @assume_model_exists = assume_model_exists
+    # True when the provider rejects RubyLLM's default "developer" system role.
+    @pin_system_role = pin_system_role
     freeze
   end
 
   def assume_model_exists?
     @assume_model_exists
+  end
+
+  def pin_system_role?
+    @pin_system_role
   end
 
   # Applies this provider's credentials to a RubyLLM config. Keyed on the
@@ -33,11 +40,11 @@ class LlmProvider
   def configure(config, api_key)
     config.public_send("#{ruby_llm_provider}_api_key=", api_key)
     config.public_send("#{ruby_llm_provider}_api_base=", api_base) if api_base
-    # RubyLLM's :openai provider sends system prompts as role "developer"
-    # unless this flag is set, and OpenAI-compatible APIs like Moonshot reject
-    # that role with a 400. Scoped per-provider, not set globally, because
-    # OpenRouter reads the same attribute and expects the default.
-    config.openai_use_system_role = true if ruby_llm_provider == :openai
+    # RubyLLM's :openai provider sends system prompts as role "developer".
+    # OpenAI itself accepts that role; OpenAI-compatible APIs like Moonshot
+    # reject it with a 400. Opted into per provider rather than for everything
+    # riding :openai, so a native provider keeps the runtime's own default.
+    config.openai_use_system_role = true if pin_system_role?
   end
 
   PROVIDERS = {
@@ -59,7 +66,8 @@ class LlmProvider
       ruby_llm_provider: :openai,
       default_model: "kimi-k2.6",
       api_base: "https://api.moonshot.ai/v1",
-      assume_model_exists: true
+      assume_model_exists: true,
+      pin_system_role: true
     )
   }.freeze
 

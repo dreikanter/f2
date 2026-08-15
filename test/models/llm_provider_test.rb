@@ -57,10 +57,16 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "https://api.moonshot.ai/v1", config.openai_api_base
   end
 
-  test "#configure should pin system prompts to role system for providers riding :openai" do
+  test "#configure should pin system prompts to role system for providers that declare it" do
     config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
     LlmProvider.find("moonshot").configure(config, "sk-moon-x")
     assert config.openai_use_system_role
+  end
+
+  test "#pin_system_role? should default to false" do
+    assert_not LlmProvider.find("anthropic").pin_system_role?
+    assert_not LlmProvider.find("openrouter").pin_system_role?
+    assert LlmProvider.find("moonshot").pin_system_role?
   end
 
   test "#configure should leave the system-role flag alone for other providers" do
