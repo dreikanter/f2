@@ -30,6 +30,17 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "anthropic/claude-sonnet-4-6", provider.default_model
   end
 
+  test "#find should return the openai provider instance" do
+    provider = LlmProvider.find("openai")
+    assert_kind_of LlmProvider, provider
+    assert_equal "openai", provider.name
+    assert_equal "OpenAI", provider.display_name
+    assert_equal :openai, provider.ruby_llm_provider
+    assert_equal "gpt-5.4", provider.default_model
+    assert_nil provider.api_base
+    assert_not provider.assume_model_exists?
+  end
+
   test "#find should return the moonshot provider mapped to the openai runtime" do
     provider = LlmProvider.find("moonshot")
     assert_equal "moonshot", provider.name
@@ -66,7 +77,16 @@ class LlmProviderTest < ActiveSupport::TestCase
   test "#pin_system_role? should default to false" do
     assert_not LlmProvider.find("anthropic").pin_system_role?
     assert_not LlmProvider.find("openrouter").pin_system_role?
+    assert_not LlmProvider.find("openai").pin_system_role?
     assert LlmProvider.find("moonshot").pin_system_role?
+  end
+
+  test "#configure should leave native openai on the runtime's own system role and base" do
+    config = Struct.new(:openai_api_key, :openai_api_base, :openai_use_system_role).new
+    LlmProvider.find("openai").configure(config, "sk-openai-x")
+    assert_equal "sk-openai-x", config.openai_api_key
+    assert_nil config.openai_api_base
+    assert_nil config.openai_use_system_role
   end
 
   test "#configure should leave the system-role flag alone for other providers" do

@@ -29,6 +29,10 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_instance_of LlmClient::Adapter::OpenRouter, LlmClient::Adapter.for("openrouter")
   end
 
+  test ".for should return the OpenAI adapter" do
+    assert_instance_of LlmClient::Adapter::OpenAi, LlmClient::Adapter.for("openai")
+  end
+
   test ".for should accept a symbol provider" do
     assert_instance_of LlmClient::Adapter::Anthropic, LlmClient::Adapter.for(:anthropic)
   end
@@ -96,10 +100,18 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not LlmClient::Adapter::OpenRouter.new.combined_extraction?
     assert_not LlmClient::Adapter::Base.new.combined_extraction?
     assert_not LlmClient::Adapter::Moonshot.new.combined_extraction?
+    assert_not LlmClient::Adapter::OpenAi.new.combined_extraction?
   end
 
   test ".for should resolve the moonshot adapter" do
     assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
+  end
+
+  test "openai #unwrap_json should pass provider JSON through untouched" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert_equal '{"a":1}', adapter.unwrap_json('{"a":1}')
+    assert_equal "```\n{\"a\":1}\n```", adapter.unwrap_json("```\n{\"a\":1}\n```")
   end
 
   test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do

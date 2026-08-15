@@ -60,6 +60,12 @@ class LlmProvider
       ruby_llm_provider: :openrouter,
       default_model: "anthropic/claude-sonnet-4-6"
     ),
+    "openai" => new(
+      name: "openai",
+      display_name: "OpenAI",
+      ruby_llm_provider: :openai,
+      default_model: "gpt-5.4"
+    ),
     "moonshot" => new(
       name: "moonshot",
       display_name: "Moonshot (Kimi)",
