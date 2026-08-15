@@ -380,6 +380,37 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "provider_error", LlmUsage.last.outcome
   end
 
+  # Kimi answers a schema call in prose often enough that this is a live path,
+  # and the call is billed whether or not we can parse what came back.
+  test "#call should record usage when a schema call comes back as non-JSON" do
+    client = LlmClient.new(credential)
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: "I cannot browse the web.", input_tokens: 900, output_tokens: 40,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    assert_difference("LlmUsage.count", 1) do
+      assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
+    end
+
+    usage = LlmUsage.last
+    assert_equal "schema_error", usage.outcome
+    assert_equal 900, usage.input_tokens
+  end
+
+  test "#call should unwrap a fenced payload before validating it" do
+    client = LlmClient.new(create(:ai_credential, :active, user: user, provider: "moonshot"))
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: %(```json\n{"items":[{"title":"Post 1"}]}\n```), input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    result = client.call(default_ctx, **call_opts)
+
+    assert_equal({ "items" => [{ "title" => "Post 1" }] }, result.payload)
+    assert_equal "success", LlmUsage.last.outcome
+  end
+
   test "#call should map malformed tool-call arguments to ProviderError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, JSON::ParserError.new("unexpected token"))

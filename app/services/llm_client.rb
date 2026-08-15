@@ -77,7 +77,8 @@ class LlmClient
     finished_at = Time.current
 
     begin
-      validate_payload!(response.payload, output_schema)
+      payload = parse_payload(response.payload, output_schema)
+      validate_payload!(payload, output_schema)
     rescue SchemaError => e
       write_usage(ctx, outcome: :schema_error, started_at: started_at,
                   finished_at: finished_at, response: response, error_message: e.message)
@@ -87,7 +88,7 @@ class LlmClient
     usage = write_usage(ctx, outcome: :success, started_at: started_at,
                         finished_at: finished_at, response: response)
 
-    Result.new(payload: response.payload, usage_id: usage.id)
+    Result.new(payload: payload, usage_id: usage.id)
   end
 
   # The provider's available models, as an array of plain hashes ready to
@@ -166,9 +167,8 @@ class LlmClient
     end
 
     response = chat.ask(prompt)
-    answer = recover_halted(chat, response)
     ProviderResponse.new(
-      payload: output_schema.present? ? parse_payload(answer) : response_text(answer),
+      payload: response_content(recover_halted(chat, response)),
       **usage_totals(chat, response)
     )
   end
@@ -213,15 +213,18 @@ class LlmClient
     @adapter ||= Adapter.for(credential.provider)
   end
 
-  def response_text(response)
-    response.respond_to?(:content) ? response.content.to_s : response.to_s
+  # A Hash when the provider parsed structured output itself, text otherwise.
+  # Parsing is deliberately left to the caller: it happens after the response
+  # carries its token counts, so a reply we can't parse is still billed honestly.
+  def response_content(answer)
+    content = answer.respond_to?(:content) ? answer.content : answer
+    content.is_a?(Hash) ? content : content.to_s
   end
 
-  def parse_payload(response)
-    raw = response.respond_to?(:content) ? response.content : response.to_s
-    return raw if raw.is_a?(Hash)
+  def parse_payload(raw, output_schema)
+    return raw if output_schema.blank? || raw.is_a?(Hash)
 
-    JSON.parse(adapter.unwrap_json(raw.to_s))
+    JSON.parse(adapter.unwrap_json(raw))
   rescue JSON::ParserError => e
     raise SchemaError, "non-JSON response from provider: #{e.message}"
   end
