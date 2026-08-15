@@ -90,10 +90,21 @@ module LlmCapabilityProbe
         "snippet" => "Names set aside by IANA for use in documentation. Open the page to read it." }
     ].freeze
 
+    def initialize(budget: nil)
+      super()
+      @budget = budget
+    end
+
     def name = SEARCH_TOOL_NAME
 
+    # Spends the shared budget like the production tool: results are canned, but
+    # every round is still a billed completion the budget has to bound.
+    #
     # Serialized like the production tool, so the loop sees the same wire shape.
     def execute(query:)
+      over_budget = @budget&.claim
+      return over_budget if over_budget
+
       { results: RESULTS }.to_json
     end
   end
@@ -261,12 +272,17 @@ module LlmCapabilityProbe
       { status: "PASS", note: "#{rounds.size} tool calls, answer grounded in fetched page", evidence: evidence }
     end
 
+    # Tools are instances sharing one budget, exactly as production builds them
+    # (LlmClient::Adapter::Base#apply_web). A model that keeps calling tools would
+    # otherwise spin against a paid API with nothing to stop it — and an
+    # unqualified model is the likeliest one to do it.
     def client_tools_chat(schema)
       chat = @provider.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       chat.with_schema(schema) if schema
-      chat.with_tool(CannedWebSearch)
-      chat.with_tool(LlmClient::Tools::WebFetch)
+      budget = LlmClient::ToolBudget.new
+      chat.with_tool(CannedWebSearch.new(budget: budget))
+      chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
       chat
     end
 

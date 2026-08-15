@@ -266,8 +266,28 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     chat = provider.chats.first
 
     assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema
-    assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools
+    assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools.map(&:class)
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
+  end
+
+  # An unqualified model is the likeliest one to loop, and the probe drives a
+  # paid API, so it bounds the loop the way a feed run does.
+  test "#run should bound the client tools loop with one budget shared by both tools" do
+    provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
+
+    budgets = provider.chats.first.tools.map { |tool| tool.instance_variable_get(:@budget) }
+
+    assert_instance_of LlmClient::ToolBudget, budgets.first
+    assert_same budgets.first, budgets.last
+  end
+
+  test "the canned search should spend the shared budget like the production tool" do
+    budget = LlmClient::ToolBudget.new(rounds: 1, grace: 0)
+    search = LlmCapabilityProbe::CannedWebSearch.new(budget: budget)
+
+    assert_equal ["https://example.com/"], JSON.parse(search.execute(query: "first"))["results"].map { |r| r["url"] }
+    assert_instance_of RubyLLM::Tool::Halt, search.execute(query: "second")
   end
 
   test "#run should leave the plain client tools check unstructured" do
