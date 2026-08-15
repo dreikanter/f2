@@ -178,13 +178,17 @@ class LlmClient
 
   # A halted tool loop returns the halt notice in place of the model's message.
   # Recover what it had already gathered; a degraded run beats an empty one.
+  #
+  # Nothing gathered means nothing to return: the notice is our own text, and
+  # passing it on reads downstream as content the model found (LlmLoader would
+  # pay for a structuring call over it, and miss that the gather came back
+  # empty).
   def recover_halted(chat, response)
     return response unless response.is_a?(RubyLLM::Tool::Halt)
 
-    said = Array(chat.try(:messages)).reverse.find do |message|
+    Array(chat.try(:messages)).reverse.find do |message|
       message.try(:role) == :assistant && message.content.is_a?(String) && message.content.present?
     end
-    said || response
   end
 
   # A web-enabled call is several billed completions — one per tool round —
