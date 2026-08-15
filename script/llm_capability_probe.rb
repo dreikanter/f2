@@ -6,7 +6,7 @@
 #
 # Usage:
 #   bundle exec ruby script/llm_capability_probe.rb --provider anthropic --model claude-sonnet-4-6
-#   bundle exec ruby script/llm_capability_probe.rb --provider moonshot --model kimi-k2.6 --checks web_search,two_step
+#   bundle exec ruby script/llm_capability_probe.rb --provider moonshot --model kimi-k2.6 --checks models,client_tools
 #
 # Keys via env: ANTHROPIC_API_KEY, MOONSHOT_API_KEY (MOONSHOT_API_BASE to override).
 

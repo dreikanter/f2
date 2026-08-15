@@ -1,9 +1,11 @@
 # Dev-time capability probe for LLM providers (spec 005 §5; issue #913).
 #
-# Live-verifies provider-native behavior through RubyLLM: plain calls,
-# structured output, hosted search/fetch mechanisms, and one-call versus
-# two-step extraction. These checks are deliberately separate from the
-# production managed-search path, which uses LlmClient's client-side tools.
+# Live-verifies what production actually depends on: the model is served under
+# the id we name it by, it honors a system prompt, it returns strict-schema
+# JSON, and it drives our client-side search and fetch tools through a real
+# tool loop. Provider-hosted retrieval is deliberately not probed — every
+# provider goes through LlmClient's own tools (Adapter::Base#apply_web), so a
+# hosted mechanism working or not tells us nothing about a feed run.
 #
 # The probe stays independent of LlmProvider and managed credentials so an
 # unwired provider can be qualified before application integration. Keys
@@ -39,9 +41,6 @@ module LlmCapabilityProbe
     "additionalProperties" => false
   }.freeze
 
-  GATHER_PROMPT = "Search the web for the latest two posts on the Ruby on Rails official blog " \
-                  "(rubyonrails.org/blog). For each, report the title, its full URL, and a one-sentence summary."
-
   # Production always sends a system prompt (LlmClient#call's privileged
   # instruction channel), so the gathering checks carry one too — a pair must
   # not qualify on a call shape production never uses.
@@ -56,14 +55,16 @@ module LlmCapabilityProbe
                               "reply with exactly one word: #{SYSTEM_CHECK_WORD}."
   SYSTEM_CHECK_PROMPT = "What is the capital of France? Answer in one word."
 
-  # A reply can contain URLs and still be a refusal ("I cannot browse the
-  # web... visit rubyonrails.org/blog yourself") — grounding checks must
-  # treat that as no web access, not as evidence.
+  # A reply can be fluent and still be a refusal ("I cannot browse the web...
+  # visit the site yourself") — grounding checks must treat that as no
+  # retrieval, not as evidence.
   REFUSAL_MARKERS = /(?:don't|do not) have the ability|(?:cannot|can't|unable to) (?:browse|access)|no ability to browse/i
 
   def self.refusal?(text)
     text.to_s.match?(REFUSAL_MARKERS)
   end
+  # Mirrors production's structuring stage (LlmPrompts::STRUCTURE_SYSTEM): fixed
+  # text in, strict JSON out, no retrieval involved.
   STRUCTURE_PROMPT_PREFIX = "Convert the gathered web content below into the required JSON object. " \
                             "Use only what is present; do not invent items or fields.\n\nGATHERED CONTENT:\n"
   SAMPLE_TEXT = <<~TEXT
@@ -110,20 +111,6 @@ module LlmCapabilityProbe
     end
   end
 
-  # Moonshot's server-executed web search is invoked through a builtin tool
-  # the client must acknowledge by echoing the arguments back. Modeled as a
-  # RubyLLM function tool so the gem's tool loop performs that round trip.
-  class MoonshotWebSearchEcho < RubyLLM::Tool
-    description "Builtin server-side web search"
-    param :query, desc: "Search query", required: false
-
-    def name = "$web_search"
-
-    def execute(**args)
-      args
-    end
-  end
-
   class Provider
     attr_reader :key
 
@@ -146,8 +133,6 @@ module LlmCapabilityProbe
     end
 
     def assume_model_exists? = false
-    def web_fetch_params(_model) = nil
-    def prepare_web(_chat) = nil
 
     # Structured output is repaired exactly as production repairs it — Kimi
     # fences its JSON, and LlmClient unwraps that before parsing. Without this
@@ -164,20 +149,6 @@ module LlmCapabilityProbe
       end
 
       def ruby_llm_provider = :anthropic
-
-      # Combined hosted-tool shape is probe-local. Production uses the managed
-      # client-side search and fetch tools instead.
-      def web_params(model)
-        { tools: web_search_params(model)[:tools] + web_fetch_params(model)[:tools] }
-      end
-
-      def web_search_params(_model)
-        { tools: [{ type: "web_search_20260209", name: "web_search" }] }
-      end
-
-      def web_fetch_params(_model)
-        { tools: [{ type: "web_fetch_20260209", name: "web_fetch", citations: { enabled: false } }] }
-      end
     end
 
     class Moonshot < Provider
@@ -194,18 +165,6 @@ module LlmCapabilityProbe
 
       def ruby_llm_provider = :openai
       def assume_model_exists? = true
-
-      def web_params(_model)
-        { tools: [{ type: "builtin_function", function: { name: "$web_search" } }] }
-      end
-
-      alias web_search_params web_params
-
-      # The builtin needs the echo round trip; register the tool so RubyLLM's
-      # loop answers the tool call instead of failing on an unknown tool.
-      def prepare_web(chat)
-        chat.with_tool(MoonshotWebSearchEcho)
-      end
     end
 
     REGISTRY = { "anthropic" => Anthropic, "moonshot" => Moonshot }.freeze
@@ -221,8 +180,7 @@ module LlmCapabilityProbe
   end
 
   class Runner
-    CHECKS = %w[models plain system_prompt schema web_search web_fetch two_step combined
-                client_tools client_tools_schema].freeze
+    CHECKS = %w[models plain system_prompt schema client_tools client_tools_schema].freeze
 
     def initialize(provider:, model:, checks: CHECKS)
       @provider = provider
@@ -293,56 +251,6 @@ module LlmCapabilityProbe
       validate_items(response)
     end
 
-    def check_web_search
-      chat = @provider.chat(@model)
-      @provider.prepare_web(chat)
-      chat.with_params(**@provider.web_search_params(@model))
-      text = chat.ask(GATHER_PROMPT).content.to_s
-      return { status: "FAIL", note: "model reports no web access", evidence: text[0, 2000] } if LlmCapabilityProbe.refusal?(text)
-
-      pass(text.match?(%r{https?://}) && text.length > 80, "no URLs in response", text) { "web search grounding" }
-    end
-
-    def check_web_fetch
-      params = @provider.web_fetch_params(@model)
-      return { status: "SKIP", note: "provider declares no web-fetch mechanism", evidence: nil } if params.nil?
-
-      chat = @provider.chat(@model).with_params(**params)
-      text = chat.ask("Fetch https://example.com/ and quote the exact text of its <h1> heading.").content.to_s
-      pass(text.match?(/example domain/i), "page content not quoted", text) { "web fetch grounding" }
-    end
-
-    # Provider-native two-step capability comparison. Both calls carry system
-    # instructions the way production stage calls do.
-    def check_two_step
-      gather = @provider.chat(@model)
-      gather.with_instructions(PROBE_INSTRUCTIONS)
-      @provider.prepare_web(gather)
-      gather.with_params(**@provider.web_params(@model))
-      gathered = gather.ask(GATHER_PROMPT).content.to_s
-      return { status: "FAIL", note: "gather returned blank", evidence: nil } if gathered.strip.empty?
-
-      # Mirrors LlmLoader: structuring a refusal invites fabricated items, so
-      # the gather step's refusal is the finding — don't launder it downstream.
-      if LlmCapabilityProbe.refusal?(gathered)
-        return { status: "FAIL", note: "gather reports no web access", evidence: gathered[0, 2000] }
-      end
-
-      structure = @provider.chat(@model).with_schema(PROBE_SCHEMA)
-      structure.with_instructions(PROBE_INSTRUCTIONS)
-      validate_items(structure.ask(STRUCTURE_PROMPT_PREFIX + gathered), gathered: gathered)
-    end
-
-    # Provider-native combined capability check — recorded as evidence;
-    # PASS here means "works combined", which would simplify the architecture.
-    def check_combined
-      chat = @provider.chat(@model).with_schema(PROBE_SCHEMA)
-      chat.with_instructions(PROBE_INSTRUCTIONS)
-      @provider.prepare_web(chat)
-      chat.with_params(**@provider.web_params(@model))
-      validate_items(chat.ask(GATHER_PROMPT))
-    end
-
     # The production mechanism end to end: a system prompt plus the
     # client-side search and fetch function tools driven through a real
     # multi-round loop. The observed tool calls plus an answer grounded in
@@ -356,8 +264,8 @@ module LlmCapabilityProbe
     # `combined_extraction?`): the output schema rides on the same chat as the
     # client-side tools. Schema and tools can each work alone yet break
     # together, so a pair qualified only by the checks above could still fail
-    # on a real feed load. A FAIL here reads as "use two-step", not as a
-    # disqualification — same as the provider-native `combined` check.
+    # on a real feed load. A FAIL here means the pair needs two-step
+    # extraction, not that it fails qualification.
     def check_client_tools_schema
       client_tools_loop(schema: PROBE_SCHEMA)
     end
@@ -430,12 +338,12 @@ module LlmCapabilityProbe
               end
     end
 
-    def validate_items(response, gathered: nil)
+    def validate_items(response)
       raw = response.content
       payload = raw.is_a?(Hash) ? raw : JSON.parse(@provider.unwrap_json(raw.to_s))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
       items = payload.is_a?(Hash) ? Array(payload["items"]) : []
-      evidence = { items: items.first(3), gathered_preview: gathered&.slice(0, 2000) }.compact
+      evidence = { items: items.first(3) }
       if errors.any?
         { status: "FAIL", note: "schema violation: #{errors.first['error']}", evidence: evidence }
       elsif items.empty?
