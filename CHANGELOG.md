@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-15
 
+- A search key that's been revoked or has run out of credit now switches itself off with a clear reason, instead of quietly failing on every run.
 - Canceling out of a feed's settings now takes you back to that feed instead of the feeds list.
 - A temporary hiccup while checking an AI credential no longer switches off your feeds — only a key the provider actually rejects does.
 - Fixed AI feeds failing when the model wrapped its answer in a code block or added a line of preamble.
