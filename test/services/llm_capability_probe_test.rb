@@ -3,44 +3,121 @@ require "test_helper"
 class LlmCapabilityProbeTest < ActiveSupport::TestCase
   FakeResponse = Struct.new(:content)
 
+  FakeToolCallMessage = Struct.new(:tool_calls) do
+    def tool_call? = true
+    def tool_result? = false
+  end
+
+  FakeToolResultMessage = Struct.new(:tool_call_id, :content) do
+    def tool_call? = false
+    def tool_result? = true
+  end
+
   class FakeChat
-    def initialize(response)
+    attr_reader :instructions, :schema, :tools
+
+    def initialize(response, tool_rounds: [])
       @response = response
+      @tool_rounds = tool_rounds
+      @tools = []
     end
 
-    def with_schema(_schema) = self
     def with_params(**) = self
+
+    def with_schema(schema)
+      @schema = schema
+      self
+    end
+
+    def with_tool(tool)
+      @tools << tool
+      self
+    end
+
+    def with_instructions(text)
+      @instructions = text
+      self
+    end
 
     def ask(_prompt)
       raise @response if @response.is_a?(StandardError)
 
       FakeResponse.new(@response)
     end
+
+    def messages
+      @tool_rounds.flat_map.with_index do |round, index|
+        call = RubyLLM::ToolCall.new(id: index.to_s, name: round[:name], arguments: { "url" => "https://example.com/" })
+        [FakeToolCallMessage.new({ call.id => call }), FakeToolResultMessage.new(call.id, round[:result])]
+      end
+    end
   end
 
-  class FakeProvider
-    attr_reader :key
+  FakeModel = Struct.new(:id)
 
-    def initialize(responses, fetch_params: nil)
+  class FakeProvider
+    attr_reader :key, :chats
+
+    def initialize(responses, fetch_params: nil, models: [], tool_rounds: [])
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
       @fetch_params = fetch_params
+      @models = models
+      @tool_rounds = tool_rounds
+      @chats = []
       @key = "fake"
     end
 
-    def chat(_model) = FakeChat.new(@responses.shift)
+    def chat(_model)
+      FakeChat.new(@responses.shift, tool_rounds: @tool_rounds).tap { |chat| @chats << chat }
+    end
     def prepare_web(_chat) = nil
     def web_params(_model) = { tools: [] }
     def web_search_params(_model) = { tools: [] }
     def web_fetch_params(_model) = @fetch_params
+    def list_models = @models.map { |id| FakeModel.new(id) }
   end
 
-  def run_checks(responses, checks, fetch_params: nil)
-    provider = FakeProvider.new(responses, fetch_params: fetch_params)
+  def run_checks(responses, checks, fetch_params: nil, models: [], tool_rounds: [])
+    provider = FakeProvider.new(responses, fetch_params: fetch_params, models: models, tool_rounds: tool_rounds)
     LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: checks).run
+  end
+
+  FETCHED_PAGE = "Example Domain This domain is for use in illustrative examples in documents.".freeze
+
+  def full_tool_loop(fetch_result: FETCHED_PAGE)
+    [{ name: LlmCapabilityProbe::SEARCH_TOOL_NAME, result: "canned results" },
+     { name: LlmCapabilityProbe::FETCH_TOOL_NAME, result: fetch_result }]
   end
 
   def valid_payload
     { "items" => [{ "uid" => "u1", "body" => "b", "source_url" => "https://example.com/p" }] }
+  end
+
+  def grounded_payload
+    { "items" => [{ "uid" => "https://example.com/", "body" => "Example Domain",
+                    "source_url" => "https://example.com/" }] }
+  end
+
+  test "#run should pass the models check when the probed id is served exactly" do
+    outcome = run_checks([], ["models"], models: %w[other-model test-model])
+
+    assert outcome[:passed]
+    assert_equal "PASS", outcome[:results].first[:status]
+    assert_equal %w[other-model test-model], outcome[:results].first[:evidence][:model_ids]
+  end
+
+  test "#run should fail the models check when the probed id is not served" do
+    outcome = run_checks([], ["models"], models: %w[test-model-v2])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/not among 1 served ids/, outcome[:results].first[:note])
+  end
+
+  test "#run should fail the models check on an empty listing" do
+    outcome = run_checks([], ["models"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/no models/, outcome[:results].first[:note])
   end
 
   test "#run should pass the plain check on a pong reply" do
@@ -54,6 +131,38 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     outcome = run_checks("hello", ["plain"])
 
     assert_not outcome[:passed]
+    assert_equal "FAIL", outcome[:results].first[:status]
+  end
+
+  test "#run should pass the system prompt check when instructions are honored" do
+    outcome = run_checks("MARLIN", ["system_prompt"])
+
+    assert outcome[:passed]
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should pass the system prompt check ignoring punctuation and whitespace" do
+    outcome = run_checks("  Marlin.\n", ["system_prompt"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the system prompt check when instructions are ignored" do
+    outcome = run_checks("Paris", ["system_prompt"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "system instructions not honored verbatim", outcome[:results].first[:note]
+  end
+
+  test "#run should fail the system prompt check on a hedged reply naming both answers" do
+    outcome = run_checks("You asked for MARLIN, but the capital is Paris.", ["system_prompt"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+  end
+
+  test "#run should fail the system prompt check on a refusal that names the word" do
+    outcome = run_checks("I cannot follow the instruction to reply MARLIN.", ["system_prompt"])
+
     assert_equal "FAIL", outcome[:results].first[:status]
   end
 
@@ -133,6 +242,124 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
 
     assert_equal "PASS", outcome[:results].first[:status]
     assert_equal "https://example.com/p", outcome[:results].first[:evidence][:items].first["source_url"]
+  end
+
+  test "#run should fail the client tools check when the search tool is never called" do
+    outcome = run_checks("Example Domain", ["client_tools"])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "search tool never called", outcome[:results].first[:note]
+  end
+
+  test "#run should fail the client tools check when the fetch tool is never called" do
+    outcome = run_checks("Example Domain", ["client_tools"],
+                         tool_rounds: [{ name: LlmCapabilityProbe::SEARCH_TOOL_NAME, result: "canned results" }])
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "fetch tool never called", outcome[:results].first[:note]
+  end
+
+  test "#run should fail the client tools check when the fetch returned no page content" do
+    outcome = run_checks("The heading is Example Domain.", ["client_tools"],
+                         tool_rounds: full_tool_loop(fetch_result: '{"error":"HTTP 403"}'))
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "fetch returned no page content", outcome[:results].first[:note]
+  end
+
+  test "#run should pass the client tools check on a full loop with a grounded answer" do
+    outcome = run_checks('The main heading reads: "Example Domain"', ["client_tools"], tool_rounds: full_tool_loop)
+
+    assert_equal "PASS", outcome[:results].first[:status]
+    assert_match(/2 tool calls/, outcome[:results].first[:note])
+    assert_equal [LlmCapabilityProbe::SEARCH_TOOL_NAME, LlmCapabilityProbe::FETCH_TOOL_NAME],
+                 outcome[:results].first[:evidence][:tool_rounds].map { |round| round[:name] }
+  end
+
+  test "#run should fail the client tools check when tools ran but the answer is not grounded" do
+    outcome = run_checks("I could not determine the heading.", ["client_tools"], tool_rounds: full_tool_loop)
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "tools ran but answer not grounded", outcome[:results].first[:note]
+  end
+
+  test "canned web search should present the production search tool's wire shape" do
+    tool = LlmCapabilityProbe::CannedWebSearch.new
+    production = LlmClient::Tools::WebSearch.new(provider: nil, credential: nil)
+
+    assert_equal production.name, tool.name
+    assert_equal production.description, tool.description
+    assert_equal %i[query], tool.parameters.keys
+  end
+
+  test "canned web search should return fixed real URLs without touching a search provider" do
+    result = LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything")
+
+    assert_equal ["https://example.com/"], result[:results].map { |r| r["url"] }
+  end
+
+  test "#run should attach the schema and both client tools to one chat for client_tools_schema" do
+    provider = FakeProvider.new(grounded_payload, tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools_schema"]).run
+    chat = provider.chats.first
+
+    assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema
+    assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
+  end
+
+  test "#run should leave the plain client tools check unstructured" do
+    provider = FakeProvider.new("The main heading reads: Example Domain", tool_rounds: full_tool_loop)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["client_tools"]).run
+
+    assert_nil provider.chats.first.schema
+  end
+
+  test "#run should pass client_tools_schema on a grounded schema-valid payload" do
+    outcome = run_checks(grounded_payload, ["client_tools_schema"], tool_rounds: full_tool_loop)
+
+    assert_equal "PASS", outcome[:results].first[:status]
+    assert_match(/2 tool calls, grounded; 1 items, schema-valid/, outcome[:results].first[:note])
+    assert_equal 2, outcome[:results].first[:evidence][:tool_rounds].size
+  end
+
+  test "#run should fail client_tools_schema when the grounded payload violates the schema" do
+    payload = { "items" => [grounded_payload["items"].first.merge("extra" => 1)] }
+    outcome = run_checks(payload, ["client_tools_schema"], tool_rounds: full_tool_loop)
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_match(/schema violation/, outcome[:results].first[:note])
+  end
+
+  test "#run should fail client_tools_schema when the payload is not grounded in the fetched page" do
+    payload = { "items" => [{ "uid" => "u1", "body" => "Something else", "source_url" => "https://example.com/" }] }
+    outcome = run_checks(payload, ["client_tools_schema"], tool_rounds: full_tool_loop)
+
+    assert_equal "FAIL", outcome[:results].first[:status]
+    assert_equal "tools ran but answer not grounded", outcome[:results].first[:note]
+  end
+
+  test "the client tools check should not disclose the expected heading outside the fetched page" do
+    canned = JSON.generate(LlmCapabilityProbe::CannedWebSearch.new.execute(query: "anything"))
+
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, canned
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, LlmCapabilityProbe::CLIENT_TOOLS_PROMPT
+    assert_no_match LlmCapabilityProbe::EXPECTED_HEADING, LlmCapabilityProbe::PROBE_INSTRUCTIONS
+  end
+
+  test "#run should send system instructions on both two_step calls" do
+    provider = FakeProvider.new(["gathered post text https://example.com/p", valid_payload])
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["two_step"]).run
+
+    assert_equal 2, provider.chats.size
+    assert(provider.chats.all? { |chat| chat.instructions == LlmCapabilityProbe::PROBE_INSTRUCTIONS })
+  end
+
+  test "#run should send system instructions on the combined call" do
+    provider = FakeProvider.new(valid_payload)
+    LlmCapabilityProbe::Runner.new(provider: provider, model: "test-model", checks: ["combined"]).run
+
+    assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, provider.chats.first.instructions
   end
 
   test "#run should record an exception as a failed check" do
