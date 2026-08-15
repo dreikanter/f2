@@ -10,17 +10,7 @@ module SearchCapabilityProbe
   # exactly what a user's key has to satisfy to go active.
   QUERY = SearchCredentialValidationJob::VALIDATION_QUERY
 
-  RESULT_URL = %r{\Ahttps?://}
-
   class << self
-    # Not a key any vendor issued, generated per run so nothing key-shaped is
-    # committed. What matters is not that the search fails but how: unless the
-    # refusal reaches us as AuthError, a spent credential stays in service and
-    # every later run keeps calling it.
-    def rejected_api_key
-      "f2-probe-#{SecureRandom.hex(8)}"
-    end
-
     def credential_name(provider)
       "#{WebSearchProvider.label_for(provider)} Probe"
     end
@@ -42,6 +32,7 @@ module SearchCapabilityProbe
 
   class Runner
     CHECKS = %w[rejection search minimal].freeze
+    RESULT_URL = %r{\Ahttps?://}
 
     def initialize(credential:, checks: CHECKS)
       @credential = credential
@@ -73,7 +64,7 @@ module SearchCapabilityProbe
     # itself how it turns a dead key away. A ProviderError here means a revoked
     # or exhausted key would read as a passing fault and stay in service.
     def check_rejection
-      WebSearchProvider.for(@credential.provider, api_key: SearchCapabilityProbe.rejected_api_key).search(QUERY, max_results: 1)
+      rejected_provider.search(QUERY, max_results: 1)
       { status: "FAIL", note: "an invalid key was accepted", evidence: nil }
     rescue WebSearchProvider::AuthError => e
       { status: "PASS", note: "invalid key rejected as AuthError", evidence: { error: e.message } }
@@ -87,17 +78,23 @@ module SearchCapabilityProbe
     # which looks exactly like a query with no matches.
     def check_search
       results = search(max_results: 3)
-      evidence = { results: results.first(3).map(&:to_h) }
+      evidence = { results: results.map(&:to_h) }
       return { status: "FAIL", note: "no results for #{QUERY.inspect}", evidence: evidence } if results.empty?
 
-      unmapped = results.reject { |result| mapped?(result) }
-      if unmapped.any?
-        return { status: "FAIL",
-                 note: "#{unmapped.size}/#{results.size} results missing mapped fields — check the response shape",
+      unlinked = results.reject { |result| result.url.match?(RESULT_URL) }
+      if unlinked.any?
+        return { status: "FAIL", note: "#{unlinked.size}/#{results.size} results have no usable URL",
                  evidence: evidence }
       end
 
-      { status: "PASS", note: "#{results.size} results, all fields mapped", evidence: evidence }
+      # A renamed response field blanks that field on every result, while one
+      # sparse result is ordinary — so only a field that never arrives is a
+      # mapping failure.
+      missing = %i[title snippet].select { |field| results.all? { |result| result.public_send(field).blank? } }
+      return { status: "PASS", note: "#{results.size} results, all fields mapped", evidence: evidence } if missing.empty?
+
+      { status: "FAIL", note: "#{missing.join(' and ')} never populated — check the response shape",
+        evidence: evidence }
     end
 
     # The shape SearchCredentialValidationJob sends, down to the one-result cap:
@@ -110,8 +107,12 @@ module SearchCapabilityProbe
       { status: "PASS", note: "one-result query accepted", evidence: evidence }
     end
 
-    def mapped?(result)
-      result.title.present? && result.snippet.present? && result.url.match?(RESULT_URL)
+    # Not a key any vendor issued, generated per run so nothing key-shaped is
+    # committed. What matters is not that the search fails but how: unless the
+    # refusal reaches us as AuthError, a spent credential stays in service and
+    # every later run keeps calling it.
+    def rejected_provider
+      WebSearchProvider.for(@credential.provider, api_key: "f2-probe-#{SecureRandom.hex(8)}")
     end
 
     # Recorded like any other search: an unaccounted call would make the

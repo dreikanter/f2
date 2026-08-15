@@ -115,14 +115,24 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
     end
   end
 
-  test "#run should fail the search check when mapped fields are blank" do
+  test "#run should fail the search check when a field never arrives" do
     rejected = [WebSearchProvider::AuthError.new("Serper: HTTP 403")]
-    live = [[result, result(snippet: "")], [result]]
+    live = [[result(snippet: ""), result(snippet: "")], [result]]
 
     run_probe(live: live, rejected: rejected) do |outcome|
       failure = check(outcome, "search")
       assert_equal "FAIL", failure[:status]
-      assert_match(%r{1/2 results missing mapped fields}, failure[:note])
+      assert_match(/snippet never populated/, failure[:note])
+    end
+  end
+
+  test "#run should pass the search check when only one result is sparse" do
+    rejected = [WebSearchProvider::AuthError.new("Serper: HTTP 403")]
+    live = [[result, result(snippet: "")], [result]]
+
+    run_probe(live: live, rejected: rejected) do |outcome|
+      assert outcome[:passed]
+      assert_equal "PASS", check(outcome, "search")[:status]
     end
   end
 
@@ -131,7 +141,9 @@ class SearchCapabilityProbeTest < ActiveSupport::TestCase
     live = [[result(url: "not-a-url")], [result]]
 
     run_probe(live: live, rejected: rejected) do |outcome|
-      assert_equal "FAIL", check(outcome, "search")[:status]
+      failure = check(outcome, "search")
+      assert_equal "FAIL", failure[:status]
+      assert_match(%r{1/1 results have no usable URL}, failure[:note])
     end
   end
 
