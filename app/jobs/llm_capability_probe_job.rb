@@ -9,37 +9,24 @@
 class LlmCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
   include RunsAsMaintenanceJob
+  include ProbesProviderCapability
 
   queue_as :default
 
-  # The credential wears the job's own class name, so what the dev area lists
-  # is what to type into the credential form — no second naming to look up.
-  def self.credential_name = name.delete_suffix("Job")
+  def self.credential_scope(user) = user.ai_credentials
 
-  # Scoped to whoever launched the probe: a run spends that key, and display
-  # names are unique per user and provider, so the owner is what makes the name
-  # resolve to one credential.
-  def self.credential_for(user)
-    user.ai_credentials.find_by(provider: self::PROVIDER, display_name: credential_name)
-  end
+  def self.credential_noun = "AI credential"
 
-  # Says what to create, since the fix is always the same: one credential, this
-  # provider, this exact name.
-  def self.missing_credential_message
-    "no AI credential named #{credential_name.inspect} on your account — " \
-      "add a #{LlmProvider.find(self::PROVIDER).display_name} credential with that exact name to run this probe"
-  end
+  def self.provider_label = LlmProvider.find(self::PROVIDER).display_name
 
   def self.description
     helpers.safe_join([
-      "Runs the capability checks for #{self::MODEL} against the live #{self::PROVIDER} API. " \
-      "Needs an AI credential named ",
+      "Runs the capability checks for #{self::MODEL} against the live #{provider_label} API. " \
+      "Needs an #{credential_noun} named ",
       helpers.tag.code(credential_name),
       " on your own account."
     ])
   end
-
-  def self.runnable_arguments(user) = [user]
 
   def perform(user)
     provider_key = self.class::PROVIDER

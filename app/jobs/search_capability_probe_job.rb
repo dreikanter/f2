@@ -8,37 +8,24 @@
 class SearchCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
   include RunsAsMaintenanceJob
+  include ProbesProviderCapability
 
   queue_as :default
 
-  # The credential wears the job's own class name, so what the dev area lists
-  # is what to type into the credential form — no second naming to look up.
-  def self.credential_name = name.delete_suffix("Job")
+  def self.credential_scope(user) = user.search_credentials
 
-  # Scoped to whoever launched the probe: each run spends billed queries, and
-  # display names are unique per user and provider, so the owner is what makes
-  # the name resolve to one key.
-  def self.credential_for(user)
-    user.search_credentials.find_by(provider: self::PROVIDER, display_name: credential_name)
-  end
+  def self.credential_noun = "search credential"
 
-  # Says what to create, since the fix is always the same: one credential, this
-  # provider, this exact name.
-  def self.missing_credential_message
-    "no search credential named #{credential_name.inspect} on your account — " \
-      "add a #{WebSearchProvider.label_for(self::PROVIDER)} credential with that exact name to run this probe"
-  end
+  def self.provider_label = WebSearchProvider.label_for(self::PROVIDER)
 
   def self.description
     helpers.safe_join([
-      "Runs the search checks against the live #{WebSearchProvider.label_for(self::PROVIDER)} API. " \
-      "Needs a search credential named ",
+      "Runs the search checks against the live #{provider_label} API. " \
+      "Needs a #{credential_noun} named ",
       helpers.tag.code(credential_name),
       " on your own account, and spends two queries on it."
     ])
   end
-
-  def self.runnable_arguments(user) = [user]
 
   def perform(user)
     provider = self.class::PROVIDER
