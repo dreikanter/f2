@@ -48,11 +48,10 @@ openrouter:
     input_per_million: 0.12
     output_per_million: 0.40
 
-# OpenAI. Verified 2026-08-15 against openai.com/api/pricing. These are the
-# standard-context rates; OpenAI bills long-context requests higher, which this
-# flat table cannot express. cache_write is omitted deliberately: OpenAI does
-# charge for it, but RubyLLM's OpenAI adapter never reports a cache-write
-# count, so a rate here would price nothing.
+# OpenAI. Verified 2026-08-15 against openai.com/api/pricing. Standard-context
+# rates: OpenAI bills long context higher, which this flat table cannot
+# express. cache_write is omitted because RubyLLM never reports a cache-write
+# count for OpenAI, so a rate would price nothing.
 openai:
   gpt-5.6-luna:
     input_per_million: 0.20

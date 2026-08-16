@@ -1,4 +1,4 @@
-# Live-qualifies OpenAI on gpt-5.6-luna, the provider's default. See
+# Live-qualifies the OpenAI provider on its default model. See
 # LlmCapabilityProbeJob.
 class OpenAiCapabilityProbeJob < LlmCapabilityProbeJob
   PROVIDER = "openai".freeze

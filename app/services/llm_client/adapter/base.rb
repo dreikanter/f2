@@ -34,8 +34,7 @@ class LlmClient
         false
       end
 
-      # RubyLLM's schema argument. The wrapper form is what carries strictness;
-      # passing the bare schema would silently default it to on.
+      # RubyLLM's schema argument; the wrapper form is what carries strictness.
       def schema_payload(schema)
         { "schema" => schema, "strict" => schema_strict? }
       end

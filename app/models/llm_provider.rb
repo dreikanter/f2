@@ -9,19 +9,22 @@
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model, :api_base
 
+  # api_base            - the provider rides another's runtime at its own URL;
+  #                       native providers leave it nil.
+  # assume_model_exists - the provider's models aren't in RubyLLM's bundled
+  #                       registry, so a call asserts the id rather than looking
+  #                       it up, and the model snapshot keeps only what the
+  #                       provider itself reported.
+  # pin_system_role     - the provider rejects RubyLLM's default "developer"
+  #                       system role and needs "system".
   def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
                  assume_model_exists: false, pin_system_role: false)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
     @default_model = default_model
-    # OpenAI-compatible providers (Moonshot) reuse RubyLLM's :openai provider
-    # pointed at their own base URL; native providers leave this nil.
     @api_base = api_base
-    # True when the provider's models aren't in RubyLLM's bundled registry, so
-    # a call must assert the model exists rather than look it up.
     @assume_model_exists = assume_model_exists
-    # True when the provider rejects RubyLLM's default "developer" system role.
     @pin_system_role = pin_system_role
     freeze
   end
@@ -40,10 +43,8 @@ class LlmProvider
   def configure(config, api_key)
     config.public_send("#{ruby_llm_provider}_api_key=", api_key)
     config.public_send("#{ruby_llm_provider}_api_base=", api_base) if api_base
-    # RubyLLM's :openai provider sends system prompts as role "developer".
-    # OpenAI itself accepts that role; OpenAI-compatible APIs like Moonshot
-    # reject it with a 400. Opted into per provider rather than for everything
-    # riding :openai, so a native provider keeps the runtime's own default.
+    # RubyLLM's :openai provider sends system prompts as role "developer", which
+    # OpenAI accepts but some OpenAI-compatible APIs reject with a 400.
     config.openai_use_system_role = true if pin_system_role?
   end
 
