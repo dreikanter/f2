@@ -374,6 +374,14 @@ class AccessTokenTest < ActiveSupport::TestCase
     end
   end
 
+  test "FREEFEED_HOSTS token URLs should request every scope Feeder needs" do
+    AccessToken::FREEFEED_HOSTS.each do |key, config|
+      AccessToken::TOKEN_SCOPES.each do |scope|
+        assert_includes config[:token_url], scope, "#{key} token URL should request the #{scope} scope"
+      end
+    end
+  end
+
   test "#disable_associated_feeds should disable all feeds and clear access_token_id" do
     user = create(:user)
     token = create(:access_token, :active, user: user)

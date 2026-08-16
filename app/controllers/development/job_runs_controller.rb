@@ -22,7 +22,7 @@ class Development::JobRunsController < ApplicationController
     JobRun.create!(job_class: job_class.name, job_id: job.job_id)
     job.enqueue
 
-    redirect_to development_job_job_runs_path(job_class.name), success: "#{job_class.name} enqueued."
+    redirect_to development_job_job_runs_path(job_class.name), success: "#{job_class.display_name} enqueued."
   end
 
   private

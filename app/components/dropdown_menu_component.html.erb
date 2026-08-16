@@ -15,7 +15,11 @@
        aria-labelledby="<%= menu_id %>-button">
     <ul class="py-1">
       <% items.each do |item| %>
-        <li><%= render_item(item) %></li>
+        <% if item[:separator] %>
+          <li role="separator" class="my-1 border-t border-border"></li>
+        <% else %>
+          <li><%= render_item(item) %></li>
+        <% end %>
       <% end %>
     </ul>
   </div>
