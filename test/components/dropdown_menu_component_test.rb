@@ -58,6 +58,19 @@ class DropdownMenuComponentTest < ViewComponent::TestCase
     assert_equal "Sure?", button["data-turbo-confirm"]
   end
 
+  test "#render should draw a rule for a separator item" do
+    result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: [
+      { label: "Edit", href: "/feeds/1" },
+      { separator: true },
+      { label: "Delete…", href: "/feeds/1" }
+    ]))
+
+    separator = result.at_css("li[role='separator']")
+    assert_not_nil separator
+    assert_includes separator["class"], "border-t"
+    assert_equal 0, separator.css("a, button").size
+  end
+
   test "#render should drop nil items" do
     result = render_inline(DropdownMenuComponent.new(menu_id: "m", items: [
       { label: "Details", href: "#" },

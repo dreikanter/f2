@@ -29,7 +29,7 @@ class Development::JobsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '[data-key="development.jobs.PurgeExpiredEventsJob"]'
-    assert_select "a[href='#{development_job_job_runs_path("PurgeExpiredEventsJob")}']"
+    assert_select "a[href='#{development_job_job_runs_path("PurgeExpiredEventsJob")}']", text: "Purge Expired Events"
   end
 
   test "#index should not offer a run button" do

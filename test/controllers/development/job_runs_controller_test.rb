@@ -25,6 +25,14 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select %([data-key="development.job_runs.#{run.id}"])
   end
 
+  test "#index should title the page with the humanized job name" do
+    sign_in_as(dev_user)
+    get development_job_job_runs_path("AnthropicCapabilityProbeJob")
+
+    assert_response :success
+    assert_select "h1", text: "Anthropic Capability Probe"
+  end
+
   test "#index should offer a text-only Run button" do
     sign_in_as(dev_user)
     get development_job_job_runs_path("PurgeExpiredEventsJob")
@@ -108,6 +116,16 @@ class Development::JobRunsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Run #{run.id.to_s.last(5)}"
+  end
+
+  test "#show should link back to the job under its humanized name" do
+    run = create(:job_run, job_class: "AnthropicCapabilityProbeJob", status: :succeeded)
+    sign_in_as(dev_user)
+    get development_job_job_run_path("AnthropicCapabilityProbeJob", run)
+
+    assert_response :success
+    assert_select "a[href='#{development_job_job_runs_path("AnthropicCapabilityProbeJob")}']",
+                  text: "Anthropic Capability Probe"
   end
 
   test "#show should render event metadata as formatted JSON" do

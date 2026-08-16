@@ -1,7 +1,7 @@
-<% content_for :title, "#{@job_class.name} runs" %>
+<% content_for :title, "#{@job_class.display_name} runs" %>
 
 <div class="space-y-8">
-  <%= render PageHeaderComponent.new(title: @job_class.name) do |header| %>
+  <%= render PageHeaderComponent.new(title: @job_class.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Maintenance Jobs", url: development_jobs_path) %>
     <% if @job_class.description.present? %>
       <% header.with_context_paragraph(@job_class.description) %>

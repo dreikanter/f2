@@ -5,6 +5,7 @@
 # hold locks on the events table for one long operation.
 class PurgeExpiredEventsJob < ApplicationJob
   include RecordsJobRun
+  include RunsAsMaintenanceJob
 
   queue_as :default
 
