@@ -8,7 +8,6 @@
 # and ends.
 class LlmCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
-  include DescribesWithMarkup
   include RunsAsMaintenanceJob
 
   queue_as :default

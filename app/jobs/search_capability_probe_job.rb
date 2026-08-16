@@ -7,7 +7,6 @@
 # queries. Without that record the run says which credential to create and ends.
 class SearchCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
-  include DescribesWithMarkup
   include RunsAsMaintenanceJob
 
   queue_as :default
