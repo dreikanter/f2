@@ -17,9 +17,11 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
-  # read-users-info is what covers GET /vN/users/:username/statistics, the
-  # subscriber count endpoint.
-  TOKEN_SCOPES = %w[read-my-info read-users-info manage-posts].freeze
+  TOKEN_SCOPES = %w[
+    read-my-info
+    read-users-info
+    manage-posts
+  ].freeze
 
   def self.token_url(domain)
     "https://#{domain}/settings/app-tokens/create?scopes=#{TOKEN_SCOPES.join('%20')}"
