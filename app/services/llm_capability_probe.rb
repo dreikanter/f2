@@ -165,7 +165,7 @@ module LlmCapabilityProbe
     # reject the system role RubyLLM defaults to, which a schema-only call
     # never exercises.
     def check_schema
-      chat = @credential.chat(@model).with_schema(PROBE_SCHEMA)
+      chat = @credential.chat(@model).with_schema(adapter.schema_payload(PROBE_SCHEMA))
       chat.with_instructions(PROBE_INSTRUCTIONS)
       response = chat.ask(STRUCTURE_PROMPT_PREFIX + SAMPLE_TEXT)
       validate_items(response, expect_null_source_url: true)
@@ -205,7 +205,9 @@ module LlmCapabilityProbe
     def client_tools_chat(schema)
       chat = @credential.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
-      chat.with_schema(schema) if schema
+      chat.with_schema(adapter.schema_payload(schema)) if schema
+      params = adapter.web_params(@model)
+      chat.with_params(**params) if params.present?
       budget = LlmClient::ToolBudget.new
       chat.with_tool(CannedWebSearch.new(budget: budget))
       chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
@@ -284,7 +286,13 @@ module LlmCapabilityProbe
     # Repairs structured output the way production does, so the probe doesn't
     # fail a model on a quirk the app already absorbs (Kimi fences its JSON).
     def unwrap_json(text)
-      LlmClient::Adapter.for(@credential.provider).unwrap_json(text)
+      adapter.unwrap_json(text)
+    end
+
+    # The same adapter production builds its calls with, so schema strictness
+    # and response repair are probed as they ship.
+    def adapter
+      @adapter ||= LlmClient::Adapter.for(@credential.provider)
     end
 
     def pass(condition, fail_note, evidence)

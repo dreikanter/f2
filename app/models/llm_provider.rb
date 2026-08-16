@@ -9,22 +9,35 @@
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model, :api_base
 
-  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil, assume_model_exists: false)
+  # @param name [String]
+  # @param display_name [String]
+  # @param ruby_llm_provider [Symbol]
+  # @param default_model [String]
+  # @param api_base [String, nil] set when the provider rides another's runtime
+  #   at its own URL; native providers leave it nil
+  # @param assume_model_exists [Boolean] set when the provider's models aren't in
+  #   RubyLLM's bundled registry, so a call asserts the id rather than looking it
+  #   up, and the model snapshot keeps only what the provider itself reported
+  # @param pin_system_role [Boolean] set when the provider rejects RubyLLM's
+  #   default "developer" system role and needs "system"
+  def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
+                 assume_model_exists: false, pin_system_role: false)
     @name = name
     @display_name = display_name
     @ruby_llm_provider = ruby_llm_provider
     @default_model = default_model
-    # OpenAI-compatible providers (Moonshot) reuse RubyLLM's :openai provider
-    # pointed at their own base URL; native providers leave this nil.
     @api_base = api_base
-    # True when the provider's models aren't in RubyLLM's bundled registry, so
-    # a call must assert the model exists rather than look it up.
     @assume_model_exists = assume_model_exists
+    @pin_system_role = pin_system_role
     freeze
   end
 
   def assume_model_exists?
     @assume_model_exists
+  end
+
+  def pin_system_role?
+    @pin_system_role
   end
 
   # Applies this provider's credentials to a RubyLLM config. Keyed on the
@@ -33,11 +46,9 @@ class LlmProvider
   def configure(config, api_key)
     config.public_send("#{ruby_llm_provider}_api_key=", api_key)
     config.public_send("#{ruby_llm_provider}_api_base=", api_base) if api_base
-    # RubyLLM's :openai provider sends system prompts as role "developer"
-    # unless this flag is set, and OpenAI-compatible APIs like Moonshot reject
-    # that role with a 400. Scoped per-provider, not set globally, because
-    # OpenRouter reads the same attribute and expects the default.
-    config.openai_use_system_role = true if ruby_llm_provider == :openai
+    # RubyLLM's :openai provider sends system prompts as role "developer", which
+    # OpenAI accepts but some OpenAI-compatible APIs reject with a 400.
+    config.openai_use_system_role = true if pin_system_role?
   end
 
   PROVIDERS = {
@@ -53,13 +64,21 @@ class LlmProvider
       ruby_llm_provider: :openrouter,
       default_model: "anthropic/claude-sonnet-4-6"
     ),
+    "openai" => new(
+      name: "openai",
+      display_name: "OpenAI",
+      ruby_llm_provider: :openai,
+      default_model: "gpt-5.6-luna",
+      assume_model_exists: true
+    ),
     "moonshot" => new(
       name: "moonshot",
       display_name: "Moonshot (Kimi)",
       ruby_llm_provider: :openai,
       default_model: "kimi-k2.6",
       api_base: "https://api.moonshot.ai/v1",
-      assume_model_exists: true
+      assume_model_exists: true,
+      pin_system_role: true
     )
   }.freeze
 

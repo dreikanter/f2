@@ -6,6 +6,7 @@ class LlmClient
     REGISTRY = {
       "anthropic" => "Anthropic",
       "openrouter" => "OpenRouter",
+      "openai" => "OpenAi",
       "moonshot" => "Moonshot"
     }.freeze
 

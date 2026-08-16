@@ -48,6 +48,16 @@ openrouter:
     input_per_million: 0.12
     output_per_million: 0.40
 
+# OpenAI. Verified 2026-08-15 against openai.com/api/pricing. Standard-context
+# rates: OpenAI bills long context higher, which this flat table cannot
+# express. cache_write is omitted because RubyLLM never reports a cache-write
+# count for OpenAI, so a rate would price nothing.
+openai:
+  gpt-5.6-luna:
+    input_per_million: 0.20
+    output_per_million: 1.20
+    cache_read_per_million: 0.02
+
 # Moonshot (Kimi). Verified 2026-08-15 against
 # platform.kimi.ai/docs/pricing/chat-k26.
 moonshot:

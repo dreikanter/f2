@@ -16,7 +16,8 @@
 class LlmModelCapability
   ENTRIES = [
     { provider: "anthropic", model: "claude-sonnet-4-6" },
-    { provider: "moonshot", model: "kimi-k2.6" }
+    { provider: "moonshot", model: "kimi-k2.6" },
+    { provider: "openai", model: "gpt-5.6-luna" }
   ].freeze
 
   class << self

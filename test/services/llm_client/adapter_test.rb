@@ -29,12 +29,23 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_instance_of LlmClient::Adapter::OpenRouter, LlmClient::Adapter.for("openrouter")
   end
 
+  test ".for should return the OpenAI adapter" do
+    assert_instance_of LlmClient::Adapter::OpenAi, LlmClient::Adapter.for("openai")
+  end
+
   test ".for should accept a symbol provider" do
     assert_instance_of LlmClient::Adapter::Anthropic, LlmClient::Adapter.for(:anthropic)
   end
 
   test ".for should raise for an unknown provider" do
     assert_raises(KeyError) { LlmClient::Adapter.for("nope") }
+  end
+
+  # Adapter.for raises KeyError for a provider it has no entry for, and that
+  # escapes LlmClient#call's rescue list — after the provider has already
+  # billed the round trip, and without writing the usage row.
+  test "every registered provider should have an adapter" do
+    assert_equal LlmProvider.names.sort, LlmClient::Adapter::REGISTRY.keys.sort
   end
 
   test "every registered adapter should inherit from Base" do
@@ -91,8 +102,22 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not chat.params.key?(:plugins)
   end
 
+  test "OpenAI should opt out of reasoning on tool-enabled calls" do
+    chat = fake_chat
+
+    LlmClient::Adapter::OpenAi.new.apply_web(
+      chat,
+      "gpt-5.6-luna",
+      search_provider: Object.new,
+      **search_context
+    )
+
+    assert_equal({ reasoning_effort: "none" }, chat.params)
+  end
+
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
     assert LlmClient::Adapter::Anthropic.new.combined_extraction?
+    assert LlmClient::Adapter::OpenAi.new.combined_extraction?
     assert_not LlmClient::Adapter::OpenRouter.new.combined_extraction?
     assert_not LlmClient::Adapter::Base.new.combined_extraction?
     assert_not LlmClient::Adapter::Moonshot.new.combined_extraction?
@@ -100,6 +125,42 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
 
   test ".for should resolve the moonshot adapter" do
     assert_instance_of LlmClient::Adapter::Moonshot, LlmClient::Adapter.for("moonshot")
+  end
+
+  test "#schema_payload should carry strictness rather than leave it to the runtime default" do
+    payload = LlmClient::Adapter::Anthropic.new.schema_payload({ "type" => "object" })
+
+    assert_equal({ "schema" => { "type" => "object" }, "strict" => true }, payload)
+  end
+
+  test "#schema_strict? should be false only where strict mode cannot express the output schema" do
+    assert LlmClient::Adapter::Base.new.schema_strict?
+    assert LlmClient::Adapter::Anthropic.new.schema_strict?
+    assert LlmClient::Adapter::OpenRouter.new.schema_strict?
+    assert LlmClient::Adapter::Moonshot.new.schema_strict?
+    assert_not LlmClient::Adapter::OpenAi.new.schema_strict?
+  end
+
+  test "openai #schema_payload should turn strictness off" do
+    payload = LlmClient::Adapter::OpenAi.new.schema_payload(FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
+
+    assert_equal FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, payload["schema"]
+    assert_equal false, payload["strict"]
+  end
+
+  # OpenAI rejects a strict schema whose properties are not all required, and
+  # the universal schema's are not — so this is the shape that would break.
+  test "the universal output schema should leave properties out of required" do
+    item = FeedProfile::UNIVERSAL_OUTPUT_SCHEMA.dig("properties", "items", "items")
+
+    assert_operator item["properties"].keys.size, :>, item["required"].size
+  end
+
+  test "openai #unwrap_json should pass provider JSON through untouched" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert_equal '{"a":1}', adapter.unwrap_json('{"a":1}')
+    assert_equal "```\n{\"a\":1}\n```", adapter.unwrap_json("```\n{\"a\":1}\n```")
   end
 
   test "moonshot #unwrap_json should strip markdown fences and pass clean JSON through" do
