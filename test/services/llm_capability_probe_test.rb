@@ -14,7 +14,7 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   end
 
   class FakeChat
-    attr_reader :instructions, :schema, :tools
+    attr_reader :instructions, :schema, :tools, :params
 
     def initialize(response, tool_rounds: [])
       @response = response
@@ -22,7 +22,10 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
       @tools = []
     end
 
-    def with_params(**) = self
+    def with_params(**params)
+      (@params ||= {}).merge!(params)
+      self
+    end
 
     def with_schema(schema)
       @schema = schema
@@ -58,11 +61,11 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
   class FakeCredential
     attr_reader :provider, :chats
 
-    def initialize(responses, tool_rounds: [])
+    def initialize(responses, tool_rounds: [], provider: "moonshot")
       @responses = responses.is_a?(Array) ? responses.dup : [responses]
       @tool_rounds = tool_rounds
       @chats = []
-      @provider = "moonshot"
+      @provider = provider
     end
 
     def chat(_model)
@@ -317,6 +320,18 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal LlmCapabilityProbe::PROBE_SCHEMA, chat.schema["schema"]
     assert_equal [LlmCapabilityProbe::CannedWebSearch, LlmClient::Tools::WebFetch], chat.tools.map(&:class)
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
+  end
+
+  # The tool checks are the ones a provider-specific request param exists for,
+  # so a chat built without them probes a shape production never sends.
+  test "#run should carry the adapter's web params onto the tool chat" do
+    credential = FakeCredential.new(grounded_payload, tool_rounds: full_tool_loop, provider: "openai")
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model",
+                                   checks: ["client_tools"]).run
+
+    assert_equal LlmClient::Adapter::OpenAi.new.web_params("test-model"),
+                 credential.chats.first.params
+    assert_predicate credential.chats.first.params, :present?
   end
 
   test "#run should send the schema through the provider's own adapter" do

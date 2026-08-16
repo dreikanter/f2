@@ -206,6 +206,8 @@ module LlmCapabilityProbe
       chat = @credential.chat(@model)
       chat.with_instructions(PROBE_INSTRUCTIONS)
       chat.with_schema(adapter.schema_payload(schema)) if schema
+      params = adapter.web_params(@model)
+      chat.with_params(**params) if params.present?
       budget = LlmClient::ToolBudget.new
       chat.with_tool(CannedWebSearch.new(budget: budget))
       chat.with_tool(LlmClient::Tools::WebFetch.new(budget: budget))
