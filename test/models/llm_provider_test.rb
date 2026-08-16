@@ -42,9 +42,9 @@ class LlmProviderTest < ActiveSupport::TestCase
     assert_equal "openai", provider.name
     assert_equal "OpenAI", provider.display_name
     assert_equal :openai, provider.ruby_llm_provider
-    assert_equal "gpt-5.4", provider.default_model
+    assert_equal "gpt-5.6-luna", provider.default_model
     assert_nil provider.api_base
-    assert_not provider.assume_model_exists?
+    assert provider.assume_model_exists?
   end
 
   test "#find should return the moonshot provider mapped to the openai runtime" do

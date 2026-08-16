@@ -1,6 +1,6 @@
-# Live-qualifies OpenAI on gpt-5-mini, cheap enough to re-run freely while the
-# pair is being iterated on. See LlmCapabilityProbeJob.
+# Live-qualifies OpenAI on gpt-5.6-luna, the provider's default. See
+# LlmCapabilityProbeJob.
 class OpenAiCapabilityProbeJob < LlmCapabilityProbeJob
   PROVIDER = "openai".freeze
-  MODEL = "gpt-5-mini".freeze
+  MODEL = "gpt-5.6-luna".freeze
 end

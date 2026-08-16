@@ -348,13 +348,16 @@ class LlmClientTest < ActiveSupport::TestCase
       .with(headers: { "Authorization" => "Bearer sk-openai-test" })
       .to_return(
         status: 200,
-        body: { data: [{ id: "gpt-5.4", object: "model", owned_by: "openai" }] }.to_json,
+        body: { data: [{ id: "gpt-5.6-luna", object: "model", owned_by: "openai" }] }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
 
     models = client.available_models
 
-    assert_equal ["gpt-5.4"], models.map { |m| m["id"] }
+    assert_equal ["gpt-5.6-luna"], models.map { |m| m["id"] }
+    # openai asserts model existence, so the snapshot keeps only what the
+    # provider itself reported rather than RubyLLM's registry limits.
+    assert_equal %w[id name], models.first.keys
   end
 
   test "#call should raise AuthError for RubyLLM::UnauthorizedError" do
@@ -545,7 +548,7 @@ class LlmClientTest < ActiveSupport::TestCase
     chat = FakeChat.new
 
     stub_chat(client, chat) do
-      client.send(:invoke_provider, model: "gpt-5.4", prompt: "p",
+      client.send(:invoke_provider, model: "gpt-5.6-luna", prompt: "p",
                   output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
     end
 

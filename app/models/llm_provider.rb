@@ -64,7 +64,8 @@ class LlmProvider
       name: "openai",
       display_name: "OpenAI",
       ruby_llm_provider: :openai,
-      default_model: "gpt-5.4"
+      default_model: "gpt-5.6-luna",
+      assume_model_exists: true
     ),
     "moonshot" => new(
       name: "moonshot",
