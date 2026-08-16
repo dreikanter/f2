@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-16
+
+- Edit, Delete, and Make default on credential and access token pages now live in a single … menu, so the page header stays tidy.
+
 ## 2026-08-15
 
 - A search key that's been revoked or has run out of credit now switches itself off with a clear reason, instead of quietly failing on every run.

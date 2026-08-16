@@ -7,6 +7,9 @@
 # disable); the rest render as links. Supported keys:
 #
 #   { label:, href:, method:, params:, target:, rel:, data: }
+#
+# A `{ separator: true }` entry draws a rule between groups, keeping a
+# destructive action off the edge of the one above it.
 class DropdownMenuComponent < ViewComponent::Base
   ITEM_CLASS = "block px-4 py-2 text-sm text-heading transition hover:bg-surface-muted"
 
