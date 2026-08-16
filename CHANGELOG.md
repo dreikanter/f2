@@ -4,6 +4,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-16
 
+- New FreeFeed tokens now ask for one extra permission so Feeder can read your target group's subscriber count. Tokens you added earlier keep publishing as usual — recreate one to get the count.
 - Edit, Delete, and Make default on credential and access token pages now live in a single … menu, so the page header stays tidy.
 
 ## 2026-08-15
