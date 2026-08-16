@@ -46,10 +46,34 @@ class LlmClient
         true
       end
 
+      # Whether a failure means the key itself is finished — unfunded, overdue
+      # or expired — rather than a fault that may clear. RubyLLM maps every 429
+      # to a rate limit, but some vendors report a spent key that way, so
+      # providers refine this.
+      def dead_key?(_error)
+        false
+      end
+
       # Repairs structured-output text before JSON parsing. Default trusts clean
       # JSON; providers that wrap it (Moonshot fences) override.
       def unwrap_json(text)
         text
+      end
+
+      private
+
+      # The vendor's own identifier for a failure, read from the raw response
+      # body a RubyLLM error carries. Nil when the body is missing or not the
+      # shape the vendor documents.
+      def error_code(error)
+        body = error.try(:response).try(:body)
+        json = JSON.parse(body.to_s)
+        reported = json.is_a?(Hash) ? json["error"] : nil
+        return nil unless reported.is_a?(Hash)
+
+        reported["type"] || reported["code"]
+      rescue JSON::ParserError
+        nil
       end
     end
   end

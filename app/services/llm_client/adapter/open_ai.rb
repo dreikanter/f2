@@ -1,6 +1,14 @@
 class LlmClient
   module Adapter
     class OpenAi < Base
+      # OpenAI reports a key with no spend room left as a 429, the same status
+      # it uses for throughput throttling; only the body tells them apart.
+      SPENT_KEY_CODE = "insufficient_quota".freeze
+
+      def dead_key?(error)
+        error_code(error) == SPENT_KEY_CODE
+      end
+
       # OpenAI's reasoning models reason by default, and OpenAI rejects function
       # tools alongside reasoning on the chat-completions endpoint RubyLLM
       # speaks. Scoped to tool-enabled calls, so structuring keeps its reasoning.
