@@ -17,6 +17,14 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
+  # read-users-info is what covers GET /vN/users/:username/statistics, the
+  # subscriber count endpoint.
+  TOKEN_SCOPES = %w[read-my-info read-users-info manage-posts].freeze
+
+  def self.token_url(domain)
+    "https://#{domain}/settings/app-tokens/create?scopes=#{TOKEN_SCOPES.join('%20')}"
+  end
+
   # A user can create access token record associated with a known
   # FreeFeed instances only (see Settings::AccessTokensController).
   # Though the model allows to define any valid host URL.
@@ -25,19 +33,19 @@ class AccessToken < ApplicationRecord
       url: "https://freefeed.net",
       display_name: "freefeed.net (main)",
       domain: "freefeed.net",
-      token_url: "https://freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
+      token_url: token_url("freefeed.net")
     },
     staging: {
       url: "https://candy.freefeed.net",
       display_name: "candy.freefeed.net (staging)",
       domain: "candy.freefeed.net",
-      token_url: "https://candy.freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
+      token_url: token_url("candy.freefeed.net")
     },
     beta: {
       url: "https://beta.freefeed.net",
       display_name: "beta.freefeed.net (beta)",
       domain: "beta.freefeed.net",
-      token_url: "https://beta.freefeed.net/settings/app-tokens/create?scopes=read-my-info%20manage-posts"
+      token_url: token_url("beta.freefeed.net")
     }
   }.freeze
 

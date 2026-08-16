@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-16
+
+- New FreeFeed tokens now ask for one extra permission so Feeder can read your target group's subscriber count. Tokens you added earlier keep publishing as usual — recreate one to get the count.
+
 ## 2026-08-15
 
 - A search key that's been revoked or has run out of credit now switches itself off with a clear reason, instead of quietly failing on every run.
