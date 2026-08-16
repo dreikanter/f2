@@ -8,6 +8,7 @@
 class SearchCapabilityProbeJob < ApplicationJob
   include RecordsJobRun
   include DescribesWithMarkup
+  include RunsAsMaintenanceJob
 
   queue_as :default
 

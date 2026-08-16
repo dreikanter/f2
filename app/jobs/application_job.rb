@@ -5,10 +5,6 @@ class ApplicationJob < ActiveJob::Base
   # Most jobs are safe to ignore if the underlying records are no longer available
   discard_on ActiveJob::DeserializationError
 
-  # How the dev area names this job: the class name read as prose, so listings
-  # and breadcrumbs don't spell out Ruby constants.
-  def self.display_name = name.delete_suffix("Job").titleize
-
   # One line shown above the job's run history in the dev area, for what a
   # maintenance job needs before it can run. Nil when the name says enough.
   # Rendered as HTML — DescribesWithMarkup covers the ones carrying markup.
