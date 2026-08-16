@@ -1,9 +1,9 @@
 <% run_title = "Run #{short_ref(@run.id)}" %>
-<% content_for :title, "#{@job_class.name} #{run_title.downcase}" %>
+<% content_for :title, "#{@job_class.display_name} #{run_title.downcase}" %>
 
 <div class="space-y-8">
   <%= render PageHeaderComponent.new(title: run_title) do |header| %>
-    <% header.with_breadcrumb(label: @job_class.name, url: development_job_job_runs_path(@job_class.name)) %>
+    <% header.with_breadcrumb(label: @job_class.display_name, url: development_job_job_runs_path(@job_class.name)) %>
   <% end %>
 
   <div class="flex flex-wrap items-center gap-3" data-key="development.job_runs.<%= @run.id %>">

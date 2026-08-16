@@ -11,7 +11,7 @@
       <% @jobs.each do |job| %>
         <% item = ListItemComponent.new(css_class: ListItemComponent::HOVER_ROW_CSS_CLASS, data: { key: "development.jobs.#{job.name}" }) %>
         <% item.with_primary do %>
-          <%= link_to job.name, development_job_job_runs_path(job.name),
+          <%= link_to job.display_name, development_job_job_runs_path(job.name),
                 class: "truncate text-base text-heading transition hover:text-heading rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
         <% end %>
         <% list.with_item(item) %>
