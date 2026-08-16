@@ -71,6 +71,29 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", access_token.name
   end
 
+  test "#show should place the token actions in the header menu" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "header [role='menu']" do
+      assert_select "[data-key='access_token.edit']"
+      assert_select "li[role='separator']"
+      assert_select "[data-key='access_token.delete']", text: /Delete/
+    end
+  end
+
+  test "#show should hide the header menu while the token is validating" do
+    sign_in_as user
+
+    get access_token_path(access_token)
+
+    assert_response :success
+    assert_select "header [role='menu']", count: 0
+  end
+
   test "#show should render Associated Feeds section when token has feeds" do
     sign_in_as user
     active = create(:access_token, :active, user: user)

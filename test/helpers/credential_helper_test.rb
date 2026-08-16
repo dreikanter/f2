@@ -51,4 +51,23 @@ class CredentialHelperTest < ActionView::TestCase
 
     assert_equal ["search_credential.edit", "search_credential.make-default", nil, "search_credential.delete"], keys
   end
+
+  test "#access_token_actions_menu_items should list edit and delete around a separator" do
+    access_token = create(:access_token, user: user)
+
+    items = access_token_actions_menu_items(access_token)
+
+    assert_equal ["Edit", nil, "Delete…"], items.map { _1[:label] }
+    assert items[1][:separator]
+    assert_equal edit_access_token_path(access_token), items.first[:href]
+  end
+
+  test "#access_token_actions_menu_items should open the delete confirmation modal" do
+    access_token = create(:access_token, user: user)
+
+    delete_item = access_token_actions_menu_items(access_token).last
+
+    assert_equal "delete-token-modal", delete_item.dig(:data, :modal_trigger_modal_id_value)
+    assert_equal "click->modal-trigger#open", delete_item.dig(:data, :action)
+  end
 end
