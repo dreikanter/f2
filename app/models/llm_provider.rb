@@ -9,14 +9,17 @@
 class LlmProvider
   attr_reader :name, :display_name, :ruby_llm_provider, :default_model, :api_base
 
-  # api_base            - the provider rides another's runtime at its own URL;
-  #                       native providers leave it nil.
-  # assume_model_exists - the provider's models aren't in RubyLLM's bundled
-  #                       registry, so a call asserts the id rather than looking
-  #                       it up, and the model snapshot keeps only what the
-  #                       provider itself reported.
-  # pin_system_role     - the provider rejects RubyLLM's default "developer"
-  #                       system role and needs "system".
+  # @param name [String]
+  # @param display_name [String]
+  # @param ruby_llm_provider [Symbol]
+  # @param default_model [String]
+  # @param api_base [String, nil] set when the provider rides another's runtime
+  #   at its own URL; native providers leave it nil
+  # @param assume_model_exists [Boolean] set when the provider's models aren't in
+  #   RubyLLM's bundled registry, so a call asserts the id rather than looking it
+  #   up, and the model snapshot keeps only what the provider itself reported
+  # @param pin_system_role [Boolean] set when the provider rejects RubyLLM's
+  #   default "developer" system role and needs "system"
   def initialize(name:, display_name:, ruby_llm_provider:, default_model:, api_base: nil,
                  assume_model_exists: false, pin_system_role: false)
     @name = name
