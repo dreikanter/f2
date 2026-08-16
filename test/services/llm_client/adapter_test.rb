@@ -102,6 +102,19 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_not chat.params.key?(:plugins)
   end
 
+  test "OpenAI should opt out of reasoning on tool-enabled calls" do
+    chat = fake_chat
+
+    LlmClient::Adapter::OpenAi.new.apply_web(
+      chat,
+      "gpt-5.6-luna",
+      search_provider: Object.new,
+      **search_context
+    )
+
+    assert_equal({ reasoning_effort: "none" }, chat.params)
+  end
+
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
     assert LlmClient::Adapter::Anthropic.new.combined_extraction?
     assert_not LlmClient::Adapter::OpenRouter.new.combined_extraction?
