@@ -8,6 +8,12 @@ class LlmClient
         { reasoning_effort: "none" }
       end
 
+      # OpenAI completes a structured extraction while driving function tools,
+      # so gathering and structuring stay in one call.
+      def combined_extraction?
+        true
+      end
+
       # OpenAI's strict mode requires every key in `properties` to appear in
       # `required`, recursively; UNIVERSAL_OUTPUT_SCHEMA leaves most item keys
       # optional. Unconstrained the schema still shapes the response, and the
