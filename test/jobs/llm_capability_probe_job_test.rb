@@ -27,7 +27,7 @@ class LlmCapabilityProbeJobTest < ActiveJob::TestCase
     assert_equal %w[anthropic claude-sonnet-4-6],
                  [AnthropicCapabilityProbeJob::PROVIDER, AnthropicCapabilityProbeJob::MODEL]
     assert_equal %w[moonshot kimi-k2.6], [KimiCapabilityProbeJob::PROVIDER, KimiCapabilityProbeJob::MODEL]
-    assert_equal %w[openai gpt-5.4], [OpenAiCapabilityProbeJob::PROVIDER, OpenAiCapabilityProbeJob::MODEL]
+    assert_equal %w[openai gpt-5-mini], [OpenAiCapabilityProbeJob::PROVIDER, OpenAiCapabilityProbeJob::MODEL]
   end
 
   test "every probe should pin a model its provider can actually be configured for" do
