@@ -50,12 +50,13 @@ openrouter:
 
 # OpenAI. Verified 2026-08-15 against openai.com/api/pricing. Cached input
 # bills at 10% of the input rate and there is no separate cache-write charge,
-# so only cache_read is listed.
+# so only cache_read is listed. These are the standard-context rates; OpenAI
+# bills long-context requests higher, which this flat table cannot express.
 openai:
   gpt-5.4:
-    input_per_million: 2.75
-    output_per_million: 16.50
-    cache_read_per_million: 0.275
+    input_per_million: 2.50
+    output_per_million: 15.00
+    cache_read_per_million: 0.25
 
 # Moonshot (Kimi). Verified 2026-08-15 against
 # platform.kimi.ai/docs/pricing/chat-k26.
