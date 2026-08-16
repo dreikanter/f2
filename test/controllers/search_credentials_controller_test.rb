@@ -120,16 +120,28 @@ class SearchCredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='search_credential.show']"
   end
 
-  test "#show should place edit and delete actions in the header" do
+  test "#show should place the credential actions in the header menu" do
     sign_in_as(user)
 
     get search_credential_url(credential)
 
     assert_response :success
-    assert_select "header [data-key='search_credential.edit']"
-    assert_select "header form[action=?]", search_credential_path(credential) do
-      assert_select "button", text: /Delete/
+    assert_select "header [role='menu']" do
+      assert_select "[data-key='search_credential.edit']"
+      assert_select "[data-key='search_credential.make-default']"
+      assert_select "li[role='separator']"
+      assert_select "[data-key='search_credential.delete']", text: /Delete/
     end
+  end
+
+  test "#show should omit make default from the header menu for the default credential" do
+    sign_in_as(user)
+    default_credential = create(:search_credential, :default, user: user)
+
+    get search_credential_url(default_credential)
+
+    assert_response :success
+    assert_select "[data-key='search_credential.make-default']", count: 0
   end
 
   test "#show should render the pending state with polling" do

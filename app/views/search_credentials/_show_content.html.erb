@@ -3,17 +3,10 @@
   <%= render PageHeaderComponent.new(title: search_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "Search credentials", url: search_credentials_path) %>
     <% header.with_action_button do %>
-      <%= link_to "Edit",
-                  edit_search_credential_path(search_credential),
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted",
-                  data: { key: "search_credential.edit" } %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= button_to "Delete…",
-                    search_credential_path(search_credential),
-                    method: :delete,
-                    form: { data: { turbo_confirm: "Delete this search credential?" } },
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+      <%= render HeaderMenuComponent.new(
+        menu_id: "search-credential-header-menu-#{search_credential.id}",
+        items: credential_actions_menu_items(search_credential, delete_confirm: "Delete this search credential?")
+      ) %>
     <% end %>
   <% end %>
 
@@ -52,26 +45,18 @@
     </section>
   <% end %>
 
-  <% if feed_id.present? || !search_credential.default? %>
+  <% if feed_id.present? %>
     <div class="flex flex-wrap gap-3">
-      <% if feed_id.present? %>
-        <% if search_credential.active? %>
-          <%= link_to "Continue setting up your feed",
-                      edit_feed_path(feed_id),
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover",
-                      data: { key: "search_credential.return-to" } %>
-        <% else %>
-          <%= link_to "Back to your feed",
-                      edit_feed_path(feed_id),
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted",
-                      data: { key: "search_credential.return-to" } %>
-        <% end %>
-      <% end %>
-      <% unless search_credential.default? %>
-        <%= button_to "Make default",
-                      search_credential_default_path(search_credential),
-                      method: :patch,
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+      <% if search_credential.active? %>
+        <%= link_to "Continue setting up your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover",
+                    data: { key: "search_credential.return-to" } %>
+      <% else %>
+        <%= link_to "Back to your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted",
+                    data: { key: "search_credential.return-to" } %>
       <% end %>
     </div>
   <% end %>

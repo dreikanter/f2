@@ -3,17 +3,10 @@
   <%= render PageHeaderComponent.new(title: ai_credential.display_name) do |header| %>
     <% header.with_breadcrumb(label: "AI credentials", url: ai_credentials_path) %>
     <% header.with_action_button do %>
-      <%= link_to "Edit",
-                  edit_ai_credential_path(ai_credential),
-                  class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted",
-                  data: { key: "ai_credential.edit" } %>
-    <% end %>
-    <% header.with_action_button do %>
-      <%= button_to "Delete…",
-                    ai_credential_path(ai_credential),
-                    method: :delete,
-                    form: { data: { turbo_confirm: "Delete this AI credential? Feeds using it will be disabled." } },
-                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+      <%= render HeaderMenuComponent.new(
+        menu_id: "ai-credential-header-menu-#{ai_credential.id}",
+        items: credential_actions_menu_items(ai_credential, delete_confirm: "Delete this AI credential? Feeds using it will be disabled.")
+      ) %>
     <% end %>
   <% end %>
 
@@ -51,26 +44,18 @@
     <%= render AiCredentialDetailsComponent.new(ai_credential: ai_credential) %>
   <% end %>
 
-  <% if feed_id.present? || !ai_credential.default? %>
+  <% if feed_id.present? %>
     <div class="flex flex-wrap gap-3">
-      <% if feed_id.present? %>
-        <% if ai_credential.active? %>
-          <%= link_to "Continue setting up your feed",
-                      edit_feed_path(feed_id),
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover",
-                      data: { key: "ai_credential.return-to" } %>
-        <% else %>
-          <%= link_to "Back to your feed",
-                      edit_feed_path(feed_id),
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted",
-                      data: { key: "ai_credential.return-to" } %>
-        <% end %>
-      <% end %>
-      <% unless ai_credential.default? %>
-        <%= button_to "Make default",
-                      ai_credential_default_path(ai_credential),
-                      method: :patch,
-                      class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-heading shadow-sm transition hover:bg-surface-muted cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" %>
+      <% if ai_credential.active? %>
+        <%= link_to "Continue setting up your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md bg-brand px-4 py-2 text-base font-semibold text-on-brand shadow-sm transition hover:bg-brand-hover",
+                    data: { key: "ai_credential.return-to" } %>
+      <% else %>
+        <%= link_to "Back to your feed",
+                    edit_feed_path(feed_id),
+                    class: "inline-flex items-center justify-center whitespace-nowrap rounded-md border border-border bg-surface px-4 py-2 text-base font-semibold text-body shadow-sm transition hover:bg-surface-muted",
+                    data: { key: "ai_credential.return-to" } %>
       <% end %>
     </div>
   <% end %>
