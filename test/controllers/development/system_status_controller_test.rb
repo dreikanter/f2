@@ -32,6 +32,16 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should show the effective mail sender" do
+    sign_in_as(dev_user)
+
+    get development_system_status_path
+
+    assert_response :success
+    assert_select "[data-key='configuration.mailer_from.label']", text: "From address"
+    assert_select "[data-key='configuration.mailer_from.value'] code", text: "noreply@example.com"
+  end
+
   test "should show configuration checklist" do
     sign_in_as(dev_user)
 

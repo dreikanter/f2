@@ -16,7 +16,7 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Configuration</h2>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Health Checks</h2>
     <ul class="space-y-2">
       <% @config_checks.each do |check| %>
         <li class="flex items-center gap-2" data-key="config.<%= check[:key] %>" data-status="<%= check[:status] %>">
@@ -44,6 +44,17 @@
         label: "Environment",
         value: environment_badge,
         key: "release.environment"
+      )) %>
+    <% end %>
+  </section>
+
+  <section class="space-y-4">
+    <h2 class="text-2xl font-semibold mb-3 text-heading">Configuration</h2>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% list.with_item(StatListItemComponent.new(
+        label: "From address",
+        value: @configuration[:mailer_from].present? ? tag.code(@configuration[:mailer_from]) : "—",
+        key: "configuration.mailer_from"
       )) %>
     <% end %>
   </section>

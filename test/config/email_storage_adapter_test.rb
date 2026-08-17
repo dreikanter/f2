@@ -13,7 +13,8 @@ class EmailStorageAdapterConfigTest < ActiveSupport::TestCase
       "RAILS_ENV" => "production",
       "SECRET_KEY_BASE" => "dummy",
       "HOSTS" => "example.com",
-      "ACTION_MAILER_HOST" => "example.com"
+      "ACTION_MAILER_HOST" => "example.com",
+      "MAILER_FROM" => "noreply@example.com"
     }
 
     output = nil

@@ -62,6 +62,7 @@ RUN bundle exec bootsnap precompile app/ lib/
 RUN SECRET_KEY_BASE_DUMMY=1 \
     HOSTS=example.com \
     ACTION_MAILER_HOST=example.com \
+    MAILER_FROM=noreply@example.com \
     ./bin/rails assets:precompile
 
 

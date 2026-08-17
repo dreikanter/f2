@@ -31,6 +31,7 @@ Rails.application.configure do
   # Configure Action Mailer for testing
   config.action_mailer.delivery_method = :test
   config.action_mailer.default_url_options = { host: "example.com" }
+  config.action_mailer.default_options = { from: "noreply@example.com" }
 
   # Use test adapter for jobs - runs jobs inline during tests
   config.active_job.queue_adapter = :test
