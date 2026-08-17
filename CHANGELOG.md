@@ -2,9 +2,12 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
-## 2026-08-16
+## 2026-08-17
 
 - An AI key that's run out of credit now switches itself off with a clear reason, instead of retrying on every run.
+
+## 2026-08-16
+
 - OpenAI is now available for AI feeds. Add an OpenAI key on the credentials page and pick it when setting up a feed.
 - New FreeFeed tokens now ask for one extra permission so Feeder can read your target group's subscriber count. Tokens you added earlier keep publishing as usual — recreate one to get the count.
 - Edit, Delete, and Make default on credential and access token pages now live in a single … menu, so the page header stays tidy.
