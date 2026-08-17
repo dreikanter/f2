@@ -52,6 +52,13 @@ class LlmClient
       write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
       raise
     rescue RubyLLM::RateLimitError => e
+      # A spent key arrives as a 429 from some providers and will not clear on
+      # retry, so it has to read as a dead key rather than as backpressure.
+      if adapter.dead_key?(e)
+        write_usage(ctx, outcome: :provider_error, started_at: started_at, error_message: e.message)
+        raise AuthError, e.message
+      end
+
       write_usage(ctx, outcome: :rate_limited, started_at: started_at, error_message: e.message)
       raise RateLimited, e.message
     rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
@@ -101,6 +108,11 @@ class LlmClient
     fetch_provider_models.map { |model| serialize_model(model) }
   rescue RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError, RubyLLM::PaymentRequiredError => e
     raise AuthError, e.message
+  rescue RubyLLM::RateLimitError => e
+    raise AuthError, e.message if adapter.dead_key?(e)
+
+    Rails.error.report(e, context: { credential_id: credential.id, provider: credential.provider })
+    raise ProviderError, e.message
   rescue Net::ReadTimeout, Net::OpenTimeout, Faraday::TimeoutError => e
     raise Timeout, e.message
   rescue RubyLLM::Error, RubyLLM::ConfigurationError, Faraday::ConnectionFailed, OpenSSL::SSL::SSLError => e

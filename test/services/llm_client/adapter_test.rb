@@ -115,6 +115,47 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     assert_equal({ reasoning_effort: "none" }, chat.params)
   end
 
+  def rate_limit_error(body)
+    RubyLLM::RateLimitError.new(Struct.new(:body).new(body), "429")
+  end
+
+  test "#dead_key? should be false where a 429 only ever means throttling" do
+    assert_not LlmClient::Adapter::Base.new.dead_key?(rate_limit_error(""))
+    assert_not LlmClient::Adapter::Anthropic.new.dead_key?(
+      rate_limit_error({ error: { type: "insufficient_quota" } }.to_json)
+    )
+  end
+
+  test "#dead_key? should cover every billing stop OpenAI reports as a 429" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    LlmClient::Adapter::OpenAi::SPENT_KEY_CODES.each do |code|
+      assert adapter.dead_key?(rate_limit_error({ error: { code: code } }.to_json)),
+             "#{code} should read as a spent key"
+    end
+  end
+
+  # The machine-readable name arrives under `code` for some failures and `type`
+  # for others, so neither field can be preferred over the other.
+  test "#dead_key? should read the identifier from either body field" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert adapter.dead_key?(
+      rate_limit_error({ error: { type: "rate_limit_error", code: "project_spend_limit_exceeded" } }.to_json)
+    )
+    assert LlmClient::Adapter::Moonshot.new.dead_key?(
+      rate_limit_error({ error: { type: "exceeded_current_quota_error" } }.to_json)
+    )
+  end
+
+  test "#dead_key? should be false for a throttling 429 from the same provider" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert_not adapter.dead_key?(rate_limit_error({ error: { type: "rate_limit_exceeded" } }.to_json))
+    assert_not adapter.dead_key?(rate_limit_error("<html>502</html>"))
+    assert_not adapter.dead_key?(RubyLLM::RateLimitError.new("429"))
+  end
+
   test "#combined_extraction? should be true only for providers verified for one-call web+schema" do
     assert LlmClient::Adapter::Anthropic.new.combined_extraction?
     assert LlmClient::Adapter::OpenAi.new.combined_extraction?

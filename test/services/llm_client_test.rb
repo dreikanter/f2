@@ -148,6 +148,39 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 5, usage.output_tokens
   end
 
+  def spent_key_error
+    body = { error: { type: "insufficient_quota", code: "insufficient_quota" } }.to_json
+    RubyLLM::RateLimitError.new(Struct.new(:body).new(body), "quota exhausted")
+  end
+
+  def openai_credential
+    @openai_credential ||= create(:ai_credential, :active, user: user, provider: "openai",
+                                  credential_data: { "api_key" => "sk-openai-test" })
+  end
+
+  test "#call should map a spent key to AuthError rather than backpressure" do
+    client = LlmClient.new(openai_credential)
+    stub_provider_to_raise(client, spent_key_error)
+
+    assert_raises(LlmClient::AuthError) { client.call(default_ctx, **call_opts) }
+    assert_equal "provider_error", LlmUsage.last.outcome
+  end
+
+  test "#available_models should map a spent key to AuthError so validation disables the credential" do
+    client = LlmClient.new(openai_credential)
+    error = spent_key_error
+    stub_provider_models(client) { |*| raise error }
+
+    assert_raises(LlmClient::AuthError) { client.available_models }
+  end
+
+  test "#available_models should keep a throttling rate limit a provider error" do
+    client = LlmClient.new(openai_credential)
+    stub_provider_models(client) { |*| raise RubyLLM::RateLimitError.new("slow down") }
+
+    assert_raises(LlmClient::ProviderError) { client.available_models }
+  end
+
   test "#call should map a rate-limit error to RateLimited and record the failure" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, RubyLLM::RateLimitError.new("rate limit exceeded"))
