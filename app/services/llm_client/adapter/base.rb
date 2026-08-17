@@ -62,18 +62,19 @@ class LlmClient
 
       private
 
-      # The vendor's own identifier for a failure, read from the raw response
-      # body a RubyLLM error carries. Nil when the body is missing or not the
-      # shape the vendor documents.
-      def error_code(error)
+      # The vendor's own identifiers for a failure, read from the raw response
+      # body a RubyLLM error carries. Vendors put the machine-readable name in
+      # `type` or in `code` and not consistently the same one, so both are
+      # returned rather than one being preferred.
+      def error_codes(error)
         body = error.try(:response).try(:body)
         json = JSON.parse(body.to_s)
         reported = json.is_a?(Hash) ? json["error"] : nil
-        return nil unless reported.is_a?(Hash)
+        return [] unless reported.is_a?(Hash)
 
-        reported["type"] || reported["code"]
+        reported.values_at("type", "code").compact
       rescue JSON::ParserError
-        nil
+        []
       end
     end
   end

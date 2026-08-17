@@ -126,9 +126,22 @@ class LlmClient::AdapterTest < ActiveSupport::TestCase
     )
   end
 
-  test "#dead_key? should read the vendor's own spent-key identifier" do
-    assert LlmClient::Adapter::OpenAi.new.dead_key?(
-      rate_limit_error({ error: { type: "insufficient_quota", code: "insufficient_quota" } }.to_json)
+  test "#dead_key? should cover every billing stop OpenAI reports as a 429" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    LlmClient::Adapter::OpenAi::SPENT_KEY_CODES.each do |code|
+      assert adapter.dead_key?(rate_limit_error({ error: { code: code } }.to_json)),
+             "#{code} should read as a spent key"
+    end
+  end
+
+  # The machine-readable name arrives under `code` for some failures and `type`
+  # for others, so neither field can be preferred over the other.
+  test "#dead_key? should read the identifier from either body field" do
+    adapter = LlmClient::Adapter::OpenAi.new
+
+    assert adapter.dead_key?(
+      rate_limit_error({ error: { type: "rate_limit_error", code: "project_spend_limit_exceeded" } }.to_json)
     )
     assert LlmClient::Adapter::Moonshot.new.dead_key?(
       rate_limit_error({ error: { type: "exceeded_current_quota_error" } }.to_json)

@@ -12,10 +12,10 @@ class LlmClient
 
       # Moonshot reports an unfunded, overdue or expired account as a 429, the
       # same status it uses for throttling and for an overloaded engine.
-      SPENT_KEY_CODE = "exceeded_current_quota_error".freeze
+      SPENT_KEY_CODES = %w[exceeded_current_quota_error].freeze
 
       def dead_key?(error)
-        error_code(error) == SPENT_KEY_CODE
+        error_codes(error).intersect?(SPENT_KEY_CODES)
       end
 
       def unwrap_json(text)

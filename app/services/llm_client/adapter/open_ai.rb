@@ -1,12 +1,20 @@
 class LlmClient
   module Adapter
     class OpenAi < Base
-      # OpenAI reports a key with no spend room left as a 429, the same status
-      # it uses for throughput throttling; only the body tells them apart.
-      SPENT_KEY_CODE = "insufficient_quota".freeze
+      # OpenAI reports every billing stop as a 429, the status it also uses for
+      # throughput throttling, so only the body separates them. Each of these
+      # needs someone to add credit or raise a cap; none clears on retry.
+      # `insufficient_quota` is the older name and is still served.
+      SPENT_KEY_CODES = %w[
+        credit_balance_exhausted
+        organization_spend_limit_exceeded
+        project_spend_limit_exceeded
+        organization_usage_limit_reached
+        insufficient_quota
+      ].freeze
 
       def dead_key?(error)
-        error_code(error) == SPENT_KEY_CODE
+        error_codes(error).intersect?(SPENT_KEY_CODES)
       end
 
       # OpenAI's reasoning models reason by default, and OpenAI rejects function
