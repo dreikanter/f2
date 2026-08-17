@@ -49,8 +49,6 @@ class Development::SystemStatusController < ApplicationController
     { key: "background_jobs", label: "Background jobs are processing", status: :error }
   end
 
-  # The effective sender, not the raw MAILER_FROM value: a mismatch between the
-  # two is exactly the kind of thing this page exists to surface.
   def configuration
     { mailer_from: ApplicationMailer.default_params[:from] }
   end
