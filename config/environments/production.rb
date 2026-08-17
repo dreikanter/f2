@@ -68,6 +68,11 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: ENV.fetch("ACTION_MAILER_HOST") }
 
+  # No fallback on purpose. A sender on a domain Resend hasn't verified is
+  # rejected at send time, one delivery at a time, long after the bad config
+  # shipped. Boot loudly instead.
+  config.action_mailer.default_options = { from: ENV.fetch("MAILER_FROM") }
+
   # See resend initializer for configuration
   config.action_mailer.delivery_method = :resend
 

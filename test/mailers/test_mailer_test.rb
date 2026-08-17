@@ -7,7 +7,7 @@ class TestMailerTest < ActionMailer::TestCase
 
     assert_equal "Test email from Feeder", mail.subject
     assert_equal [email_address], mail.to
-    assert_equal ["noreply@frf.im"], mail.from
+    assert_equal ["noreply@example.com"], mail.from
   end
 
   test "ping with different email address" do

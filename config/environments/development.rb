@@ -60,6 +60,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   config.action_mailer.default_url_options = { host: ENV.fetch("ACTION_MAILER_HOST", "localhost:3000") }
+  config.action_mailer.default_options = { from: ENV.fetch("MAILER_FROM", "noreply@localhost") }
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings = {}
 
