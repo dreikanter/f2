@@ -3,6 +3,7 @@ class Development::SystemStatusController < ApplicationController
     authorize :access, :dev?
     @config_checks = config_checks
     @release_info = release_info
+    @configuration = configuration
     @disk_usage = Rails.cache.fetch("development/system_status/v5", expires_in: 5.minutes) do
       DiskUsageService.new.call
     end
@@ -46,6 +47,12 @@ class Development::SystemStatusController < ApplicationController
   rescue StandardError => e
     Rails.error.report(e)
     { key: "background_jobs", label: "Background jobs are processing", status: :error }
+  end
+
+  # The effective sender, not the raw MAILER_FROM value: a mismatch between the
+  # two is exactly the kind of thing this page exists to surface.
+  def configuration
+    { mailer_from: ApplicationMailer.default_params[:from] }
   end
 
   def release_info
