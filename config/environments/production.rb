@@ -60,18 +60,25 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [:id]
 
+  # assets:precompile boots this environment during the image build, where no
+  # runtime configuration exists yet. SECRET_KEY_BASE_DUMMY is Rails' own marker
+  # for that boot, so the build supplies placeholders and a real boot still
+  # fails loudly on anything missing.
+  build = ENV["SECRET_KEY_BASE_DUMMY"].present?
+  required_env = ->(name) { build ? "build-placeholder" : ENV.fetch(name) }
+
   # Enable DNS rebinding protection and other `Host` header attacks.
-  config.hosts = ENV.fetch("HOSTS").split(",").map(&:strip).compact_blank
+  config.hosts = required_env.call("HOSTS").split(",").map(&:strip).compact_blank
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
-  config.action_mailer.default_url_options = { host: ENV.fetch("ACTION_MAILER_HOST") }
+  config.action_mailer.default_url_options = { host: required_env.call("ACTION_MAILER_HOST") }
 
   # No fallback on purpose. A sender on a domain Resend hasn't verified is
   # rejected at send time, one delivery at a time, long after the bad config
   # shipped. Boot loudly instead.
-  config.action_mailer.default_options = { from: ENV.fetch("MAILER_FROM") }
+  config.action_mailer.default_options = { from: required_env.call("MAILER_FROM") }
 
   # See resend initializer for configuration
   config.action_mailer.delivery_method = :resend

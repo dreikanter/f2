@@ -12,6 +12,20 @@ class MailerSenderConfigTest < ActiveSupport::TestCase
     assert_includes output, "MAILER_FROM"
   end
 
+  # assets:precompile boots production during the image build with no runtime
+  # config. Without this the Dockerfile has to pass a placeholder for every
+  # fallback-free setting.
+  test "production boots without runtime config during an image build" do
+    output, status = boot_production(
+      "MAILER_FROM" => nil,
+      "HOSTS" => nil,
+      "ACTION_MAILER_HOST" => nil,
+      "SECRET_KEY_BASE_DUMMY" => "1"
+    )
+
+    assert status.success?, "image build boot failed: #{output}"
+  end
+
   test "production uses MAILER_FROM as the sender" do
     output, status = boot_production("MAILER_FROM" => "hello@example.com")
 
