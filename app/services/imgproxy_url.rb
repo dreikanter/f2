@@ -91,22 +91,18 @@ class ImgproxyUrl
   end
 
   def configured?
-    endpoint.present? && config[:key].present? && config[:salt].present?
+    AppConfig.imgproxy?
   end
 
   def endpoint
-    config[:endpoint].to_s.chomp("/").presence
+    AppConfig.imgproxy_endpoint.to_s.chomp("/").presence
   end
 
   def key
-    @key ||= [config[:key]].pack("H*")
+    @key ||= [AppConfig.imgproxy_key].pack("H*")
   end
 
   def salt
-    @salt ||= [config[:salt]].pack("H*")
-  end
-
-  def config
-    @config ||= Rails.application.credentials.imgproxy || {}
+    @salt ||= [AppConfig.imgproxy_salt].pack("H*")
   end
 end
