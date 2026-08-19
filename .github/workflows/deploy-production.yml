@@ -4,6 +4,11 @@ name: Deploy Production
 # Actions tab. No push trigger on purpose.
 on:
   workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "First-time bootstrap: run kamal setup instead of deploy"
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-production
@@ -63,5 +68,10 @@ jobs:
           printf '%s' "$RAILS_MASTER_KEY_PRODUCTION" > config/credentials/production.key
           chmod 600 config/credentials/production.key
 
+      - name: Bootstrap production
+        if: ${{ inputs.bootstrap }}
+        run: bin/kamal setup -d production
+
       - name: Deploy to production
+        if: ${{ !inputs.bootstrap }}
         run: bin/kamal deploy -d production
