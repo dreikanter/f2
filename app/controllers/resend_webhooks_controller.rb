@@ -85,7 +85,7 @@ class ResendWebhooksController < ApplicationController
   private
 
   def verify_signature!
-    secret = Rails.application.credentials.dig(:resend, :signing_secret)
+    secret = AppConfig.resend_signing_secret
     return head :unauthorized if secret.blank?
 
     payload = request.raw_post

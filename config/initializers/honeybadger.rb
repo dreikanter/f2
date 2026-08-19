@@ -1,5 +1,5 @@
 Honeybadger.configure do |config|
-  config.api_key = Rails.application.credentials.dig(:honeybadger, :api_key)
+  config.api_key = AppConfig.honeybadger_api_key
   config.env = Rails.env
   config.root = Rails.root.to_s
   # Tie reported errors to the deployed git revision. Kamal injects

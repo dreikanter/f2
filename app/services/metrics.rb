@@ -31,11 +31,11 @@ module Metrics
 
   class << self
     def enabled?
-      url.present?
+      AppConfig.metrics_url?
     end
 
     def url
-      ENV["METRICS_URL"].presence
+      AppConfig.metrics_url
     end
 
     # Bump a counter by `by` (default 1) for the given label set.
