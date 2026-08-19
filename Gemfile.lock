@@ -649,7 +649,6 @@ DEPENDENCIES
   cssbundling-rails
   database_consistency
   debug
-  dotenv
   factory_bot_rails
   faraday
   faraday-follow_redirects

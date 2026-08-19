@@ -5,7 +5,7 @@
 - Encrypted credentials are used **only in staging and production**.
 - In **development and test**, `Rails.application.credentials` is empty by design. Every read returns `nil`. There is no `config/master.key` and no base `config/credentials.yml.enc`.
 - Code that reads credentials must be nil-safe so the dev server and the test suite boot without a key.
-- Non-secret per-environment configuration goes in `.env` (gitignored). See `.env.sample` for the template. Do not put secrets in `.env`.
+- Non-secret per-environment configuration comes from plain environment variables. Development and test need none — every setting has a fallback (see `config/environments/development.rb`; metrics knobs are documented in `app/services/metrics.rb`). Staging and production get theirs from the `env` blocks in `config/deploy.<destination>.yml`. There is no dotenv: a local `.env` file is never loaded — to override a dev default, export the variable in your shell.
 
 ## Layout
 
