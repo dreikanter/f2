@@ -20,23 +20,34 @@
 
 ## Reading credentials in code
 
+Never read `Rails.application.credentials` (or a secret-bearing ENV var) at a
+call site. Declare the setting once in the `AppConfig` registry
+(`lib/app_config.rb`) and read it from there:
+
 ```ruby
-Rails.application.credentials.dig(:honeybadger, :api_key)
+AppConfig.honeybadger_api_key   # value (nil in dev/test)
+AppConfig.imgproxy?             # is the optional integration fully configured?
 ```
 
-In dev and test these return `nil`. Every call site must tolerate that:
+Each declaration states where the value comes from, whether it may be absent
+per environment, and what a present value must look like:
 
-- **Optional integrations** — pass the value through to the gem and let it self-disable. Honeybadger does this when `api_key` is `nil`. The Resend mailer is never invoked in dev because `config.action_mailer.delivery_method = :file` (development) and `:test` (test).
-- **Required values** — guard explicitly, e.g. `return head :unauthorized if secret.blank?` (see `app/controllers/resend_webhooks_controller.rb`).
-- **Tests** — stub the credential per-test:
+```ruby
+setting :resend_api_key,
+  source: -> { Rails.application.credentials.dig(:resend, :api_key) },
+  required: -> { !Rails.env.local? },
+  validate: NON_BLANK_TOKEN
+```
 
-  ```ruby
-  Rails.application.credentials.stub(:dig, "test_secret") do
-    # ...
-  end
-  ```
+A boot gate (`config/initializers/app_config.rb`) runs `AppConfig.validate!`
+after initialization and fails the boot with every violation at once, so a
+misconfigured deploy fails its `/up` healthcheck and rolls back instead of
+coming up half-working. In dev and test nothing is required, so both boot
+with no key present.
 
-When adding a new credential read, run `bin/rails server` and `bin/rails test` with no key present and confirm both still boot.
+In tests, stub the reader (`AppConfig.stub(:imgproxy_endpoint, "…")`) or the
+underlying `credentials.dig` — see `test/lib/app_config_test.rb` for both
+patterns.
 
 ## Creating the credentials file for an environment
 
@@ -89,10 +100,11 @@ Make the key available wherever the app boots in that environment:
    git status config/credentials
    ```
 
-4. Read the value in code with a nil-safe call:
+4. Declare the setting in `lib/app_config.rb` and read it through the
+   registry (see [Reading credentials in code](#reading-credentials-in-code)):
 
    ```ruby
-   Rails.application.credentials.dig(:honeybadger, :api_key)
+   AppConfig.honeybadger_api_key
    ```
 
 5. Commit the encrypted file:
