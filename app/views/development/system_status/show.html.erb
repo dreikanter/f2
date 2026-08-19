@@ -16,15 +16,18 @@
   <% end %>
 
   <section class="space-y-4">
-    <h2 class="text-2xl font-semibold mb-3 text-heading">Health Checks</h2>
-    <ul class="space-y-2">
-      <% @config_checks.each do |check| %>
-        <li class="flex items-center gap-2" data-key="config.<%= check[:key] %>" data-status="<%= check[:status] %>">
-          <%= system_check_icon(check[:status]) %>
-          <span class="text-heading"><%= check[:label] %></span>
-        </li>
+    <h2 class="text-2xl font-semibold mb-3 text-heading">External Configuration</h2>
+    <p class="text-body">Everything here is validated when the app starts — a broken value stops the boot, so a setting is either working or off.</p>
+    <%= render(DescriptionListComponent.new) do |list| %>
+      <% @app_config.each do |name, configured| %>
+        <% list.with_item(StatListItemComponent.new(
+          label: tag.code(name.to_s),
+          value: configured ? "Set" : "Not set",
+          key: "app_config.#{name}",
+          muted: !configured
+        )) %>
       <% end %>
-    </ul>
+    <% end %>
   </section>
 
   <section class="space-y-4">

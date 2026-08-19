@@ -161,17 +161,6 @@ module ApplicationHelper
     end
   end
 
-  def system_check_icon(status)
-    case status.to_sym
-    when :ok
-      icon("square-check-big", css_class: "size-5 text-success", aria_label: "OK")
-    when :error
-      icon("square", css_class: "size-5 text-danger", aria_label: "Problem")
-    else
-      icon("square", css_class: "size-5 text-muted", aria_label: "Not set")
-    end
-  end
-
   def navbar_items
     return [] unless Current.user
 
