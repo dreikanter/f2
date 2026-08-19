@@ -88,7 +88,6 @@ group :production, :staging do
 end
 
 gem "addressable"
-gem "dotenv"
 gem "faraday"
 gem "faraday-follow_redirects"
 gem "faraday-multipart"
