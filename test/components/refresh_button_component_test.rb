@@ -22,6 +22,14 @@ class RefreshButtonComponentTest < ViewComponent::TestCase
     assert_includes loading_icon["class"], "hidden"
   end
 
+  test "#render should size the button via the padding option" do
+    assert_includes render_inline(RefreshButtonComponent.new).at_css("button")["class"], "p-3"
+
+    compact = render_inline(RefreshButtonComponent.new(padding: "p-1.5")).at_css("button")
+    assert_includes compact["class"], "p-1.5"
+    assert_not_includes compact["class"], "p-3"
+  end
+
   test "#render should merge arbitrary attributes onto the button" do
     result = render_inline(RefreshButtonComponent.new(type: "submit", class: "extra", data: {
       controller: "refresh-trigger loading-button",

@@ -1,5 +1,5 @@
 class RefreshButtonComponent < ViewComponent::Base
-  BUTTON_CLASSES = "inline-flex items-center justify-center rounded-md border border-border bg-surface p-3 " \
+  BUTTON_CLASSES = "inline-flex items-center justify-center rounded-md border border-border bg-surface " \
     "text-body shadow-sm transition hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring " \
     "focus:ring-offset-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50".freeze
 
@@ -21,8 +21,12 @@ class RefreshButtonComponent < ViewComponent::Base
   # or a form submit, where the form hosts the loading-button controller:
   #
   #   render RefreshButtonComponent.new(title: "Refresh now", type: "submit")
-  def initialize(title: "Refresh", **attrs)
+  #
+  # `padding` sizes the button: the default suits page headers, "p-1.5" makes
+  # a compact inline control (e.g. next to a form label).
+  def initialize(title: "Refresh", padding: "p-3", **attrs)
     @title = title
+    @padding = padding
     @attrs = attrs
   end
 
@@ -33,7 +37,7 @@ class RefreshButtonComponent < ViewComponent::Base
     {
       type: attrs.delete(:type) || "button",
       title: @title,
-      class: [BUTTON_CLASSES, attrs.delete(:class)],
+      class: [BUTTON_CLASSES, @padding, attrs.delete(:class)],
       data: { loading_button_target: "button" }.merge(attrs.delete(:data) || {})
     }.merge(attrs)
   end
