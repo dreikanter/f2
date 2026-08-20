@@ -1,10 +1,12 @@
+require Rails.root.join("lib/config")
+
 Honeybadger.configure do |config|
-  config.api_key = AppConfig.honeybadger_api_key
+  config.api_key = Config.honeybadger_api_key
   config.env = Rails.env
   config.root = Rails.root.to_s
   # Tie reported errors to the deployed git revision. Kamal injects
   # APP_REVISION at deploy time (see config/deploy.yml).
-  config.revision = AppConfig.app_revision
+  config.revision = Config.app_revision
   config.development_environments = %w[test development]
   config.insights.enabled = true
   # Honeybadger checks ActiveRecord too early when loading this plugin.

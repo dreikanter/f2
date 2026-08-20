@@ -1,7 +1,7 @@
 class Development::SystemStatusController < ApplicationController
   def show
     authorize :access, :dev?
-    @app_config = AppConfig.status
+    @config = Config.status
     @release_info = release_info
     @configuration = configuration
     @disk_usage = Rails.cache.fetch("development/system_status/v5", expires_in: 5.minutes) do
@@ -17,9 +17,9 @@ class Development::SystemStatusController < ApplicationController
 
   def release_info
     {
-      revision: AppConfig.app_revision,
-      revision_short: AppConfig.app_revision_short,
-      deployed_at: (Time.zone.parse(AppConfig.app_deployed_at) if AppConfig.app_deployed_at)
+      revision: Config.app_revision,
+      revision_short: Config.app_revision_short,
+      deployed_at: (Time.zone.parse(Config.app_deployed_at) if Config.app_deployed_at)
     }
   end
 end

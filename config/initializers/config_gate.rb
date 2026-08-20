@@ -1,15 +1,21 @@
+# Config is excluded from zeitwerk (initializers run before the autoloader is
+# ready), so every initializer that consumes it requires it explicitly. The
+# requires live in initializers rather than application.rb so SimpleCov, which
+# starts before initialization, can instrument the file.
+require Rails.root.join("lib/config")
+
 # Boot gate: refuse to start with missing or malformed external configuration.
 # Every violation is reported at once. A bad deploy fails its /up healthcheck
 # and Kamal rolls it back. Checks are local only.
 #
 # SECRET_KEY_BASE_DUMMY marks the assets:precompile boot during the image
 # build, which has no runtime configuration by design (see
-# config/environments/production.rb). APP_CONFIG_GATE=skip is a seam for
+# config/environments/production.rb). CONFIG_GATE=skip is a seam for
 # subprocess boot tests that exercise production config without production
 # secrets (see test/config/).
 Rails.application.config.after_initialize do
   next if ENV["SECRET_KEY_BASE_DUMMY"].present?
-  next if ENV["APP_CONFIG_GATE"] == "skip"
+  next if ENV["CONFIG_GATE"] == "skip"
 
-  AppConfig.validate!
+  Config.validate!
 end

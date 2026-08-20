@@ -2,7 +2,7 @@ require "uri"
 
 # Registry for external configuration. Every credential or environment
 # setting the app consumes is declared here exactly once and read only through
-# this class (AppConfig.resend_api_key, AppConfig.imgproxy?).
+# this class (Config.resend_api_key, Config.imgproxy?).
 #
 # Each setting resolves as source, then default, then normalize, then
 # validate. required and validate are independent: an optional setting that is
@@ -11,10 +11,10 @@ require "uri"
 # such as trailing slashes.
 #
 # .validate! evaluates every declaration and raises one error listing every
-# violation. The boot gate (config/initializers/app_config.rb) runs it after
+# violation. The boot gate (config/initializers/config_gate.rb) runs it after
 # initialization, so a misconfigured process fails to start. Checks are local
 # only. Violation messages never include setting values.
-class AppConfig
+class Config
   class ConfigurationError < StandardError; end
 
   Setting = Data.define(:name, :source, :required, :default, :normalize, :validate)

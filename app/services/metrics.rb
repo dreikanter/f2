@@ -30,11 +30,11 @@ module Metrics
 
   class << self
     def enabled?
-      AppConfig.metrics_url?
+      Config.metrics_url?
     end
 
     def url
-      AppConfig.metrics_url
+      Config.metrics_url
     end
 
     # Bump a counter by `by` (default 1) for the given label set.
@@ -149,11 +149,11 @@ module Metrics
     end
 
     def flush_interval
-      Integer(AppConfig.metrics_flush_interval)
+      Integer(Config.metrics_flush_interval)
     end
 
     def instance_label
-      @instance_label ||= AppConfig.metrics_instance || "#{Socket.gethostname}:#{Process.pid}"
+      @instance_label ||= Config.metrics_instance || "#{Socket.gethostname}:#{Process.pid}"
     end
 
     def normalize_labels(labels)
@@ -189,8 +189,8 @@ module Metrics
       request = Net::HTTP::Post.new(uri)
       request.body = body
       request.content_type = "text/plain"
-      if (user = AppConfig.metrics_username)
-        request.basic_auth(user, AppConfig.metrics_password.to_s)
+      if (user = Config.metrics_username)
+        request.basic_auth(user, Config.metrics_password.to_s)
       end
 
       http.request(request)

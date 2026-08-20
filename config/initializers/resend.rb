@@ -1,1 +1,3 @@
-Resend.api_key = AppConfig.resend_api_key
+require Rails.root.join("lib/config")
+
+Resend.api_key = Config.resend_api_key

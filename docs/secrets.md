@@ -21,12 +21,12 @@
 ## Reading credentials in code
 
 Never read `Rails.application.credentials` (or a secret-bearing ENV var) at a
-call site. Declare the setting once in the `AppConfig` registry
-(`lib/app_config.rb`) and read it from there:
+call site. Declare the setting once in the `Config` registry
+(`lib/config.rb`) and read it from there:
 
 ```ruby
-AppConfig.honeybadger_api_key   # value (nil in dev/test)
-AppConfig.imgproxy?             # is the optional integration fully configured?
+Config.honeybadger_api_key   # value (nil in dev/test)
+Config.imgproxy?             # is the optional integration fully configured?
 ```
 
 Each declaration states where the value comes from, whether it may be absent
@@ -39,13 +39,13 @@ setting :resend_api_key,
   validate: NON_BLANK_TOKEN
 ```
 
-A boot gate (`config/initializers/app_config.rb`) runs `AppConfig.validate!`
+A boot gate (`config/initializers/config_gate.rb`) runs `Config.validate!`
 after initialization and fails the boot with every violation at once. A
 misconfigured deploy fails its `/up` healthcheck and rolls back. In dev and
 test nothing is required, so both boot with no key present.
 
-In tests, stub the reader (`AppConfig.stub(:imgproxy_endpoint, "…")`) or the
-underlying `credentials.dig`. See `test/lib/app_config_test.rb` for both
+In tests, stub the reader (`Config.stub(:imgproxy_endpoint, "…")`) or the
+underlying `credentials.dig`. See `test/lib/config_test.rb` for both
 patterns.
 
 ## Creating the credentials file for an environment
@@ -99,11 +99,11 @@ Make the key available wherever the app boots in that environment:
    git status config/credentials
    ```
 
-4. Declare the setting in `lib/app_config.rb` and read it through the
+4. Declare the setting in `lib/config.rb` and read it through the
    registry (see [Reading credentials in code](#reading-credentials-in-code)):
 
    ```ruby
-   AppConfig.honeybadger_api_key
+   Config.honeybadger_api_key
    ```
 
 5. Commit the encrypted file:

@@ -5,9 +5,9 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
   SALT = "5e6f7a8b"
 
   def with_imgproxy_config(endpoint: nil, key: nil, salt: nil, &block)
-    AppConfig.stub(:imgproxy_endpoint, endpoint) do
-      AppConfig.stub(:imgproxy_key, key) do
-        AppConfig.stub(:imgproxy_salt, salt, &block)
+    Config.stub(:imgproxy_endpoint, endpoint) do
+      Config.stub(:imgproxy_key, key) do
+        Config.stub(:imgproxy_salt, salt, &block)
       end
     end
   end

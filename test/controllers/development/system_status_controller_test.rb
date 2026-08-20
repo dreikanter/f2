@@ -48,23 +48,23 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     get development_system_status_path
 
     assert_response :success
-    AppConfig.status.each_key do |name|
-      assert_select "[data-key='app_config.#{name}.label'] code", text: name.to_s
+    Config.status.each_key do |name|
+      assert_select "[data-key='config.#{name}.label'] code", text: name.to_s
     end
-    assert_select "[data-key='app_config.resend_api_key.value']", text: "Not set"
+    assert_select "[data-key='config.resend_api_key.value']", text: "Not set"
     # A setting with a default counts as set.
-    assert_select "[data-key='app_config.metrics_flush_interval.value']", text: "Set"
+    assert_select "[data-key='config.metrics_flush_interval.value']", text: "Set"
   end
 
   test "should show a configured setting as set" do
-    AppConfig.stub(:status, { metrics_url: true }) do
+    Config.stub(:status, { metrics_url: true }) do
       sign_in_as(dev_user)
 
       get development_system_status_path
     end
 
     assert_response :success
-    assert_select "[data-key='app_config.metrics_url.value']", text: "Set"
+    assert_select "[data-key='config.metrics_url.value']", text: "Set"
   end
 
   test "should show other tables total in table usage" do

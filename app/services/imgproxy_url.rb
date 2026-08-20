@@ -69,7 +69,7 @@ class ImgproxyUrl
   def url
     return source_url.to_s if source_url.blank? || !configured?
 
-    "#{AppConfig.imgproxy_endpoint}/#{signature}#{path}"
+    "#{Config.imgproxy_endpoint}/#{signature}#{path}"
   end
 
   private
@@ -91,14 +91,14 @@ class ImgproxyUrl
   end
 
   def configured?
-    AppConfig.imgproxy?
+    Config.imgproxy?
   end
 
   def key
-    @key ||= [AppConfig.imgproxy_key].pack("H*")
+    @key ||= [Config.imgproxy_key].pack("H*")
   end
 
   def salt
-    @salt ||= [AppConfig.imgproxy_salt].pack("H*")
+    @salt ||= [Config.imgproxy_salt].pack("H*")
   end
 end

@@ -1,10 +1,10 @@
 require "test_helper"
 
-class AppConfigTest < ActiveSupport::TestCase
+class ConfigTest < ActiveSupport::TestCase
   # DSL machinery is exercised on throwaway registries so the tests don't
   # depend on the real settings' declarations.
   def build_registry(&block)
-    Class.new(AppConfig).tap { |registry| registry.class_eval(&block) }
+    Class.new(Config).tap { |registry| registry.class_eval(&block) }
   end
 
   def stub_credentials(values)
@@ -80,7 +80,7 @@ class AppConfigTest < ActiveSupport::TestCase
   test "#validate! should report a required setting that is missing" do
     registry = build_registry { setting :api_key, source: -> { }, required: true }
 
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+    error = assert_raises(Config::ConfigurationError) { registry.validate! }
 
     assert_includes error.message, "api_key: required in test but not set"
   end
@@ -93,7 +93,7 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_nothing_raised { registry.validate! }
 
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
-      assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+      assert_raises(Config::ConfigurationError) { registry.validate! }
     end
   end
 
@@ -102,7 +102,7 @@ class AppConfigTest < ActiveSupport::TestCase
       setting :url, source: -> { "not a url" }, validate: ->(value) { value.start_with?("https://") }
     end
 
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+    error = assert_raises(Config::ConfigurationError) { registry.validate! }
 
     assert_includes error.message, "url: present but invalid"
   end
@@ -120,7 +120,7 @@ class AppConfigTest < ActiveSupport::TestCase
       setting :url, source: -> { }, default: "ftp://example.com", validate: ->(value) { value.start_with?("https://") }
     end
 
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+    error = assert_raises(Config::ConfigurationError) { registry.validate! }
 
     assert_includes error.message, "url: present but invalid"
   end
@@ -131,7 +131,7 @@ class AppConfigTest < ActiveSupport::TestCase
       setting :second, source: -> { "bad" }, validate: ->(_value) { false }
     end
 
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+    error = assert_raises(Config::ConfigurationError) { registry.validate! }
 
     assert_includes error.message, "first: required"
     assert_includes error.message, "second: present but invalid"
@@ -142,7 +142,7 @@ class AppConfigTest < ActiveSupport::TestCase
       setting :url, source: -> { "sensitive secret value" }, validate: ->(value) { URI.parse(value).is_a?(URI::HTTP) }
     end
 
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
+    error = assert_raises(Config::ConfigurationError) { registry.validate! }
 
     assert_includes error.message, "url: evaluation raised URI::InvalidURIError"
     assert_not_includes error.message, "sensitive secret value"
@@ -158,12 +158,12 @@ class AppConfigTest < ActiveSupport::TestCase
   end
 
   test "#validate! should pass with empty credentials in test" do
-    assert_nothing_raised { AppConfig.validate! }
+    assert_nothing_raised { Config.validate! }
   end
 
   test "#validate! should require resend credentials outside development and test" do
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "resend_api_key: required in production but not set"
       assert_includes error.message, "resend_signing_secret: required in production but not set"
@@ -180,37 +180,37 @@ class AppConfigTest < ActiveSupport::TestCase
 
     Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new("production")) do
       stub_credentials(resend) do
-        assert_nothing_raised { AppConfig.validate! }
+        assert_nothing_raised { Config.validate! }
       end
     end
   end
 
   test "#validate! should accept a complete imgproxy configuration" do
     stub_credentials(IMGPROXY_CONFIG) do
-      assert_nothing_raised { AppConfig.validate! }
-      assert_predicate AppConfig, :imgproxy?
+      assert_nothing_raised { Config.validate! }
+      assert_predicate Config, :imgproxy?
     end
   end
 
   test "#validate! should reject a partial imgproxy configuration" do
     stub_credentials(IMGPROXY_CONFIG.except([:imgproxy, :key], [:imgproxy, :salt])) do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "imgproxy: partial configuration (missing: imgproxy_key, imgproxy_salt)"
-      assert_not_predicate AppConfig, :imgproxy?
+      assert_not_predicate Config, :imgproxy?
     end
   end
 
   test "#imgproxy_endpoint should strip trailing slashes" do
     stub_credentials(IMGPROXY_CONFIG.merge([:imgproxy, :endpoint] => "https://imgproxy.example.com/")) do
-      assert_equal "https://imgproxy.example.com", AppConfig.imgproxy_endpoint
-      assert_nothing_raised { AppConfig.validate! }
+      assert_equal "https://imgproxy.example.com", Config.imgproxy_endpoint
+      assert_nothing_raised { Config.validate! }
     end
   end
 
   test "#validate! should reject an imgproxy endpoint that is not an http url" do
     stub_credentials(IMGPROXY_CONFIG.merge([:imgproxy, :endpoint] => "imgproxy.example.com")) do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "imgproxy_endpoint: present but invalid"
     end
@@ -218,7 +218,7 @@ class AppConfigTest < ActiveSupport::TestCase
 
   test "#validate! should reject an imgproxy key that is not hex bytes" do
     stub_credentials(IMGPROXY_CONFIG.merge([:imgproxy, :key] => "abc")) do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "imgproxy_key: present but invalid"
       assert_not_includes error.message, "signing a sample URL", "sample check must not run on invalid members"
@@ -226,12 +226,12 @@ class AppConfigTest < ActiveSupport::TestCase
   end
 
   test "#metrics_flush_interval should default to 15 seconds" do
-    assert_equal "15", AppConfig.metrics_flush_interval
+    assert_equal "15", Config.metrics_flush_interval
   end
 
   test "#validate! should reject a non-integer METRICS_FLUSH_INTERVAL" do
     with_env("METRICS_FLUSH_INTERVAL", "soon") do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "metrics_flush_interval: present but invalid"
     end
@@ -239,13 +239,13 @@ class AppConfigTest < ActiveSupport::TestCase
 
   test "#app_revision_short should fall back to the truncated revision" do
     with_env("APP_REVISION", "0123456789abcdef") do
-      assert_equal "0123456", AppConfig.app_revision_short
+      assert_equal "0123456", Config.app_revision_short
     end
   end
 
   test "#validate! should reject an unparseable APP_DEPLOYED_AT" do
     with_env("APP_DEPLOYED_AT", "not a time") do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "app_deployed_at: present but invalid"
     end
@@ -253,7 +253,7 @@ class AppConfigTest < ActiveSupport::TestCase
 
   test "#validate! should reject a malformed METRICS_URL" do
     with_env("METRICS_URL", "not a url") do
-      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
 
       assert_includes error.message, "metrics_url: present but invalid"
     end
@@ -261,7 +261,7 @@ class AppConfigTest < ActiveSupport::TestCase
 
   test "#validate! should accept a valid METRICS_URL" do
     with_env("METRICS_URL", "https://vm.example.com/api/v1/import/prometheus") do
-      assert_nothing_raised { AppConfig.validate! }
+      assert_nothing_raised { Config.validate! }
     end
   end
 end
