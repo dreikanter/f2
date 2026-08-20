@@ -190,7 +190,8 @@ class AccessTokens::GroupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/doesn't manage any groups yet/, response.body)
-    assert_match(/Retry/, response.body)
+    assert_match(/feed\.refresh-groups/, response.body)
+    assert_no_match(/Retry/, response.body)
   end
 
   test "should purge cache when retry parameter is present" do

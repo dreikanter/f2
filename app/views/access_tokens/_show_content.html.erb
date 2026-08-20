@@ -65,23 +65,7 @@
       </div>
     </div>
 
-    <div class="space-y-4">
-      <h2 class="text-2xl font-semibold mb-3 text-heading">Available Groups</h2>
-      <p class="text-body">
-        This access token lets you create new posts in the following groups:
-      </p>
-      <% access_token.access_token_detail.managed_groups.tap do |groups| %>
-        <% if groups.any? %>
-          <ul class="list-disc list-inside space-y-1">
-            <% groups.sort_by { _1["username"] }.each do |group| %>
-              <li><%= link_to group["username"], access_token.group_url(group["username"]), target: "_blank", rel: "noopener noreferrer", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></li>
-            <% end %>
-          </ul>
-        <% else %>
-          <%= render EmptyStateComponent.new("No groups available for posting") %>
-        <% end %>
-      <% end %>
-    </div>
+    <%= render "access_tokens/available_groups", access_token: access_token %>
   <% end %>
 
   <% if access_token.feeds.any? %>

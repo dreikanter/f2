@@ -84,6 +84,27 @@ class AccessTokenPolicyTest < ActiveSupport::TestCase
     assert_equal policy.update?, policy.edit?
   end
 
+  test "should allow refresh access to the owner of an active token" do
+    policy = policy_for_user(user, access_token)
+    assert policy.refresh?
+  end
+
+  test "should deny refresh access to other users" do
+    policy = policy_for_user(user, other_access_token)
+    assert_not policy.refresh?
+  end
+
+  test "should deny refresh access when the token is not active" do
+    access_token.status = :inactive
+    policy = policy_for_user(user, access_token)
+    assert_not policy.refresh?
+  end
+
+  test "should deny refresh access to nil user" do
+    policy = AccessTokenPolicy.new(nil, access_token)
+    assert_not policy.refresh?
+  end
+
   test "should allow destroy access to token owner" do
     policy = policy_for_user(user, access_token)
     assert policy.destroy?

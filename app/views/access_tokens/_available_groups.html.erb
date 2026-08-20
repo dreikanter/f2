@@ -1,0 +1,50 @@
+<%# locals: (access_token:, refreshing: false, refresh_failed: false) %>
+<%# While a refresh runs, this fragment hosts the polling controller: the
+    groups-refresh endpoint stays silent until the background job settles, then
+    replaces the whole fragment — which disconnects the poller. %>
+<%= tag.div id: "available-groups", class: "space-y-4", data: refreshing ? {
+      controller: "polling",
+      polling_endpoint_value: access_token_groups_refresh_path(access_token),
+      polling_interval_value: polling_interval_ms,
+      polling_max_polls_value: polling_max_polls
+    } : {} do %>
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="text-2xl font-semibold text-heading">Available Groups</h2>
+    <% if refreshing %>
+      <span data-polling-target="content" data-key="access_token.groups-refreshing">
+        <%= icon("loader-circle", css_class: "size-4 animate-spin text-muted", aria_label: "Refreshing groups") %>
+      </span>
+      <span hidden data-polling-target="timeoutMessage" data-key="access_token.groups-refresh-timeout">
+        <span class="inline-flex flex-wrap items-center gap-2">
+          <%= render "access_tokens/groups_refresh_button", access_token: access_token %>
+          <span class="text-sm text-warning">This is taking longer than expected — try again in a moment.</span>
+        </span>
+      </span>
+    <% elsif access_token.active? %>
+      <%= render "access_tokens/groups_refresh_button", access_token: access_token %>
+    <% end %>
+  </div>
+  <% if refresh_failed %>
+    <p class="text-sm text-danger" data-key="access_token.groups-refresh-failed">
+      <% if access_token.active? %>
+        Couldn't refresh the list. Try again in a moment.
+      <% else %>
+        This token stopped working, so the list can't be refreshed. Reload the page to see the token's status.
+      <% end %>
+    </p>
+  <% end %>
+  <p class="text-body">
+    This access token lets you create new posts in the following groups:
+  </p>
+  <% (access_token.access_token_detail&.managed_groups || []).tap do |groups| %>
+    <% if groups.any? %>
+      <ul class="list-disc list-inside space-y-1">
+        <% groups.sort_by { _1["username"] }.each do |group| %>
+          <li><%= link_to group["username"], access_token.group_url(group["username"]), target: "_blank", rel: "noopener noreferrer", class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <%= render EmptyStateComponent.new("No groups available for posting") %>
+    <% end %>
+  <% end %>
+<% end %>

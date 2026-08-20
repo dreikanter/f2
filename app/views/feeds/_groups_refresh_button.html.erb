@@ -1,0 +1,8 @@
+<%# The feed form already wraps this in a <form>, so the trigger can't be a
+    nested form submit — the groups Stimulus controller POSTs instead. %>
+<%= render RefreshButtonComponent.new(title: "Refresh groups", padding: "p-1.5",
+                                      data: {
+                                        controller: "loading-button",
+                                        action: "click->groups#refreshGroups",
+                                        key: "feed.refresh-groups"
+                                      }) %>
