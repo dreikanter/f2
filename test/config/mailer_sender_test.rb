@@ -15,8 +15,9 @@ class MailerSenderConfigTest < ActiveSupport::TestCase
   # assets:precompile boots production during the image build with no runtime
   # config. Without this the Dockerfile has to pass a placeholder for every
   # fallback-free setting. APP_CONFIG_GATE is unset so the boot proves
-  # SECRET_KEY_BASE_DUMMY alone also silences the configuration gate — the
-  # image build has no credentials, and CI never builds the image.
+  # SECRET_KEY_BASE_DUMMY alone also silences the configuration gate. Nothing
+  # else covers that path: the image build has no credentials and CI never
+  # builds the image.
   test "production boots without runtime config during an image build" do
     output, status = boot_production(
       "MAILER_FROM" => nil,
@@ -43,7 +44,7 @@ class MailerSenderConfigTest < ActiveSupport::TestCase
 
   def boot_production(overrides)
     # The configuration gate needs production credentials this suite doesn't
-    # have; it is proven separately in app_config_gate_test.rb.
+    # have. It is proven separately in app_config_gate_test.rb.
     env = {
       "RAILS_ENV" => "production",
       "SECRET_KEY_BASE" => "dummy",

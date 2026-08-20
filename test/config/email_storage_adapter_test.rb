@@ -10,7 +10,7 @@ class EmailStorageAdapterConfigTest < ActiveSupport::TestCase
     # A marker isolates our value from any gem warnings printed to stdout.
     script = 'puts "ADAPTER:#{Rails.application.config.email_storage_adapter}"'
     # The configuration gate needs production credentials this suite doesn't
-    # have; it is proven separately in app_config_gate_test.rb.
+    # have. It is proven separately in app_config_gate_test.rb.
     env = {
       "RAILS_ENV" => "production",
       "SECRET_KEY_BASE" => "dummy",

@@ -40,13 +40,12 @@ setting :resend_api_key,
 ```
 
 A boot gate (`config/initializers/app_config.rb`) runs `AppConfig.validate!`
-after initialization and fails the boot with every violation at once, so a
-misconfigured deploy fails its `/up` healthcheck and rolls back instead of
-coming up half-working. In dev and test nothing is required, so both boot
-with no key present.
+after initialization and fails the boot with every violation at once. A
+misconfigured deploy fails its `/up` healthcheck and rolls back. In dev and
+test nothing is required, so both boot with no key present.
 
 In tests, stub the reader (`AppConfig.stub(:imgproxy_endpoint, "…")`) or the
-underlying `credentials.dig` — see `test/lib/app_config_test.rb` for both
+underlying `credentials.dig`. See `test/lib/app_config_test.rb` for both
 patterns.
 
 ## Creating the credentials file for an environment

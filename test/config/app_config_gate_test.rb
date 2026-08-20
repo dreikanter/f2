@@ -1,14 +1,12 @@
 require "test_helper"
 
 class AppConfigGateTest < ActiveSupport::TestCase
-  # Without a decryption key every credential silently reads as nil, which used
-  # to boot a production process that couldn't send mail or verify webhooks.
-  # The boot gate turns that into a startup failure listing every violation, so
-  # Kamal's /up healthcheck fails and the deploy rolls back.
+  # Without a decryption key every credential silently reads as nil. The boot
+  # gate must turn that into a startup failure listing every violation.
   test "production refuses to boot without required credentials" do
     # The subprocess must not be able to decrypt real production credentials,
     # or the gate legitimately passes. A nil env value unsets the variable for
-    # the child; the on-disk key can only be skipped around.
+    # the child. The on-disk key can only be skipped around.
     key_file = Rails.root.join("config/credentials/production.key")
     skip "#{key_file} would decrypt real credentials" if key_file.exist?
 
