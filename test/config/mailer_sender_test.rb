@@ -44,7 +44,7 @@ class MailerSenderConfigTest < ActiveSupport::TestCase
 
   def boot_production(overrides)
     # The configuration gate needs production credentials this suite doesn't
-    # have. It is proven separately in app_config_gate_test.rb.
+    # have. AppConfig.validate! is covered directly in app_config_test.rb.
     env = {
       "RAILS_ENV" => "production",
       "SECRET_KEY_BASE" => "dummy",
