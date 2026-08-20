@@ -140,6 +140,45 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal [:scheduled_run], client.calls.map { |c| c[:purpose] }
   end
 
+  def schema_failing_client
+    Class.new do
+      attr_reader :credential
+
+      def initialize(credential)
+        @credential = credential
+      end
+
+      def call(*, **)
+        raise LlmClient::SchemaError, "response did not match schema: value at root is not an object"
+      end
+    end.new(credential)
+  end
+
+  # Same contract as HTTP loaders wrapping a bad status: the source (here, the
+  # model) misbehaving is an expected loader failure, not a crash.
+  test "#load should raise Loader::Error when the model reply fails the schema" do
+    error = assert_raises(Loader::Error) do
+      Loader::LlmLoader.new(feed, llm_client: schema_failing_client).load
+    end
+    assert_match(/did not match schema/, error.message)
+  end
+
+  # FeedRefreshJob swallows Loader::Error, so the wrap must not lose the
+  # failure from central error reporting.
+  test "#load should report the schema failure via Rails.error before wrapping it" do
+    reported = []
+    Rails.error.stub(:report, ->(err, **kwargs) { reported << [err, kwargs] }) do
+      assert_raises(Loader::Error) do
+        Loader::LlmLoader.new(feed, llm_client: schema_failing_client).load
+      end
+    end
+
+    assert_equal 1, reported.size
+    error, kwargs = reported.first
+    assert_kind_of LlmClient::SchemaError, error
+    assert_equal feed.id, kwargs.dig(:context, :feed_id)
+  end
+
   test "#load should raise when the structured payload is missing the items key" do
     loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "wrong" => "shape" }))
 

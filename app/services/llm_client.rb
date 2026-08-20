@@ -236,7 +236,7 @@ class LlmClient
   def parse_payload(raw, output_schema)
     return raw if output_schema.blank? || raw.is_a?(Hash)
 
-    JSON.parse(adapter.unwrap_json(raw))
+    PayloadRepair.repair(JSON.parse(adapter.unwrap_json(raw)), output_schema)
   rescue JSON::ParserError => e
     raise SchemaError, "non-JSON response from provider: #{e.message}"
   end

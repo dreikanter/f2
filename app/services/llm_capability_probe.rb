@@ -260,7 +260,7 @@ module LlmCapabilityProbe
 
     def validate_items(response, expect_null_source_url: false)
       raw = response.content
-      payload = raw.is_a?(Hash) ? raw : JSON.parse(unwrap_json(raw.to_s))
+      payload = raw.is_a?(Hash) ? raw : repair(JSON.parse(unwrap_json(raw.to_s)))
       errors = JSONSchemer.schema(PROBE_SCHEMA).validate(payload).to_a
       items = payload.is_a?(Hash) ? Array(payload["items"]) : []
       evidence = { items: items.first(3) }
@@ -287,6 +287,12 @@ module LlmCapabilityProbe
     # fail a model on a quirk the app already absorbs (Kimi fences its JSON).
     def unwrap_json(text)
       adapter.unwrap_json(text)
+    end
+
+    # Same root repairs production applies after parsing (a bare items array,
+    # a double-encoded payload), for the same reason as unwrap_json.
+    def repair(payload)
+      LlmClient::PayloadRepair.repair(payload, PROBE_SCHEMA)
     end
 
     # The same adapter production builds its calls with, so schema strictness

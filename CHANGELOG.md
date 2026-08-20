@@ -2,6 +2,10 @@
 
 User-facing changes, newest first. Internal/technical changes are not listed here.
 
+## 2026-08-20
+
+- AI feeds now recover when the model returns its answer in a slightly off format, instead of failing the refresh.
+
 ## 2026-08-17
 
 - An AI key that's run out of credit now switches itself off with a clear reason, instead of retrying on every run.

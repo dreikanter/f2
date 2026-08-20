@@ -465,6 +465,60 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "success", LlmUsage.last.outcome
   end
 
+  # A model on the two-call structure path drops the {"items": ...} envelope
+  # often enough that the bare array is repaired rather than failed.
+  test "#call should wrap a bare array under the schema's envelope property" do
+    client = LlmClient.new(credential)
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: '[{"title":"Post 1"}]', input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    result = client.call(default_ctx, **call_opts)
+
+    assert_equal({ "items" => [{ "title" => "Post 1" }] }, result.payload)
+    assert_equal "success", LlmUsage.last.outcome
+  end
+
+  test "#call should re-parse a double-encoded JSON payload" do
+    client = LlmClient.new(credential)
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: JSON.generate('{"items":[{"title":"Post 1"}]}'), input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    result = client.call(default_ctx, **call_opts)
+
+    assert_equal({ "items" => [{ "title" => "Post 1" }] }, result.payload)
+    assert_equal "success", LlmUsage.last.outcome
+  end
+
+  test "#call should raise SchemaError when a quoted reply holds no JSON" do
+    client = LlmClient.new(credential)
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: '"I cannot browse the web."', input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    assert_raises(LlmClient::SchemaError) { client.call(default_ctx, **call_opts) }
+    assert_equal "schema_error", LlmUsage.last.outcome
+  end
+
+  # A repair never bypasses validation — a wrapped array of malformed items
+  # must still fail the full schema.
+  test "#call should still validate a repaired payload against the schema" do
+    client = LlmClient.new(credential)
+    stub_provider_response(client, LlmClient::ProviderResponse.new(
+      payload: '[{"title":"no body or source_url"}]', input_tokens: 10, output_tokens: 5,
+      cache_write_tokens: 0, cache_read_tokens: 0
+    ))
+
+    assert_raises(LlmClient::SchemaError) do
+      client.call(default_ctx, prompt: "Extract posts", output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA)
+    end
+    assert_equal "schema_error", LlmUsage.last.outcome
+  end
+
   test "#call should map malformed tool-call arguments to ProviderError" do
     client = LlmClient.new(credential)
     stub_provider_to_raise(client, JSON::ParserError.new("unexpected token"))
