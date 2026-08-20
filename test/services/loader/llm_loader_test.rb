@@ -140,6 +140,27 @@ class Loader::LlmLoaderTest < ActiveSupport::TestCase
     assert_equal [:scheduled_run], client.calls.map { |c| c[:purpose] }
   end
 
+  # Same contract as HTTP loaders wrapping a bad status: the source (here, the
+  # model) misbehaving is an expected loader failure, not a crash.
+  test "#load should raise Loader::Error when the model reply fails the schema" do
+    failing_client = Class.new do
+      attr_reader :credential
+
+      def initialize(credential)
+        @credential = credential
+      end
+
+      def call(*, **)
+        raise LlmClient::SchemaError, "response did not match schema: value at root is not an object"
+      end
+    end.new(credential)
+
+    error = assert_raises(Loader::Error) do
+      Loader::LlmLoader.new(feed, llm_client: failing_client).load
+    end
+    assert_match(/did not match schema/, error.message)
+  end
+
   test "#load should raise when the structured payload is missing the items key" do
     loader = Loader::LlmLoader.new(feed, llm_client: fake_client(structured: { "wrong" => "shape" }))
 

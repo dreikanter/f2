@@ -22,6 +22,11 @@ module Loader
       raise StandardError, "LlmLoader payload missing 'items' array" unless payload.is_a?(Hash) && payload["items"].is_a?(Array)
 
       payload["items"]
+    rescue LlmClient::SchemaError => e
+      # A reply that won't fit the schema is the source misbehaving, same as an
+      # HTTP loader's bad status: an expected failure per the LlmClient
+      # contract, already billed and recorded on the feed — not a crash.
+      raise Loader::Error, e.message
     end
 
     private
