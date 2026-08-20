@@ -1,5 +1,3 @@
-require Rails.root.join("lib/config")
-
 Honeybadger.configure do |config|
   config.api_key = Config.honeybadger_api_key
   config.env = Rails.env

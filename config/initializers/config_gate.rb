@@ -1,9 +1,3 @@
-# Config is excluded from zeitwerk (initializers run before the autoloader is
-# ready), so every initializer that consumes it requires it explicitly. The
-# requires live in initializers rather than application.rb so SimpleCov, which
-# starts before initialization, can instrument the file.
-require Rails.root.join("lib/config")
-
 # Boot gate: refuse to start with missing or malformed external configuration.
 # Every violation is reported at once. A bad deploy fails its /up healthcheck
 # and Kamal rolls it back. Checks are local only.

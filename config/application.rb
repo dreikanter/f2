@@ -20,6 +20,12 @@ require "set"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Initializers consume Config before the autoloader is ready, so it is
+# required explicitly and excluded from zeitwerk (see autoload_lib below).
+# Loading here predates SimpleCov, so the file is excluded from coverage
+# (see test/test_helper.rb).
+require_relative "../lib/config"
+
 module F2Rails
   GITHUB_REPO_URL = "https://github.com/dreikanter/f2".freeze
 
