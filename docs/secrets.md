@@ -22,7 +22,7 @@
 
 Never read `Rails.application.credentials` (or a secret-bearing ENV var) at a
 call site. Declare the setting once in the `Config` registry
-(`lib/config.rb`) and read it from there:
+(`lib/boot/config.rb`) and read it from there:
 
 ```ruby
 Config.honeybadger_api_key   # value (nil in dev/test)
@@ -45,7 +45,7 @@ misconfigured deploy fails its `/up` healthcheck and rolls back. In dev and
 test nothing is required, so both boot with no key present.
 
 In tests, stub the reader (`Config.stub(:imgproxy_endpoint, "…")`) or the
-underlying `credentials.dig`. See `test/lib/config_test.rb` for both
+underlying `credentials.dig`. See `test/lib/boot/config_test.rb` for both
 patterns.
 
 ## Creating the credentials file for an environment
@@ -99,7 +99,7 @@ Make the key available wherever the app boots in that environment:
    git status config/credentials
    ```
 
-4. Declare the setting in `lib/config.rb` and read it through the
+4. Declare the setting in `lib/boot/config.rb` and read it through the
    registry (see [Reading credentials in code](#reading-credentials-in-code)):
 
    ```ruby

@@ -9,10 +9,9 @@ SimpleCov.formatters = [
 ]
 
 SimpleCov.start "rails" do
-  # Loaded from config/application.rb, before SimpleCov starts, so their
-  # execution is invisible to coverage. Tested in test/lib/config_test.rb.
-  add_filter "lib/config.rb"
-  add_filter "lib/config_dsl.rb"
+  # Loaded from config/application.rb, before SimpleCov starts, so its
+  # execution is invisible to coverage. Tested in test/lib/boot/.
+  add_filter "lib/boot"
 end
 
 require_relative "../config/environment"
