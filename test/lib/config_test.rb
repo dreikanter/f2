@@ -251,6 +251,25 @@ class ConfigTest < ActiveSupport::TestCase
     end
   end
 
+  # An impossible date raises inside Time.zone.parse instead of returning nil.
+  test "#validate! should reject an APP_DEPLOYED_AT with an impossible date" do
+    with_env("APP_DEPLOYED_AT", "2026-99-99") do
+      error = assert_raises(Config::ConfigurationError) { Config.validate! }
+
+      assert_includes error.message, "app_deployed_at: present but invalid"
+    end
+  end
+
+  test "#validate! should report a sample check that raises" do
+    stub_credentials(IMGPROXY_CONFIG) do
+      ImgproxyUrl.stub(:preview, ->(_url) { raise "boom" }) do
+        error = assert_raises(Config::ConfigurationError) { Config.validate! }
+
+        assert_includes error.message, "imgproxy: evaluation raised RuntimeError"
+      end
+    end
+  end
+
   test "#validate! should reject a malformed METRICS_URL" do
     with_env("METRICS_URL", "not a url") do
       error = assert_raises(Config::ConfigurationError) { Config.validate! }
