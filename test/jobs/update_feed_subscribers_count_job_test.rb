@@ -92,7 +92,9 @@ class UpdateFeedSubscribersCountJobTest < ActiveJob::TestCase
     end
 
     assert_equal 7, feed.reload.subscribers_count
-    assert feed.access_token.reload.validating?
+    # The status must not change until validation actually runs, or queued
+    # publications would fail against a transiently non-active token.
+    assert feed.access_token.reload.active?
   end
 
   test "reschedules when FreeFeed responds with 429" do

@@ -15,9 +15,11 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
     reschedule_for_rate_limit(e.retry_after)
   rescue FreefeedClient::InvalidTokenError
     # A dead token can't publish either, and a dormant feed may never reach the
-    # publishing flow that would notice — send the token through validation,
-    # which owns disabling it and notifying the user.
-    feed.access_token.validate_token_async
+    # publishing flow that would notice — enqueue validation, which owns
+    # disabling the token and notifying the user. Not validate_token_async: its
+    # eager flip to `validating` would make FreefeedPublisher reject queued
+    # posts as poison while the validation job waits to run.
+    TokenValidationJob.perform_later(feed.access_token)
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError, FreefeedClient::NotFoundError => e
     # Statistics can be out of a token's reach while publishing still works:
     # scoped app tokens get 401 "token has no access to this API method", and a
