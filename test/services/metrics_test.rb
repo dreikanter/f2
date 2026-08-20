@@ -13,7 +13,7 @@ end
 class MetricsTest < ActiveSupport::TestCase
   teardown do
     Metrics.reset!
-    %w[METRICS_URL METRICS_USERNAME METRICS_PASSWORD METRICS_INSTANCE].each { |key| ENV.delete(key) }
+    %w[METRICS_URL METRICS_USERNAME METRICS_PASSWORD METRICS_INSTANCE METRICS_FLUSH_INTERVAL].each { |key| ENV.delete(key) }
   end
 
   def enable!(url: "https://vm.test/api/v1/import/prometheus")
@@ -23,6 +23,13 @@ class MetricsTest < ActiveSupport::TestCase
 
   test "#enabled? should be false without METRICS_URL" do
     assert_not Metrics.enabled?
+  end
+
+  test "#flush_interval should read METRICS_FLUSH_INTERVAL with a default" do
+    assert_equal 15, Metrics.send(:flush_interval)
+
+    ENV["METRICS_FLUSH_INTERVAL"] = "30"
+    assert_equal 30, Metrics.send(:flush_interval)
   end
 
   test "#increment should be a no-op when disabled" do
