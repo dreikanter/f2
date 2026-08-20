@@ -117,6 +117,14 @@ class AppConfig
 
   NON_BLANK_TOKEN = ->(value) { value.match?(/\A\S+\z/) }
 
+  POSITIVE_INTEGER = ->(value) { value.match?(/\A[1-9]\d*\z/) }
+
+  PARSEABLE_TIME = lambda do |value|
+    Time.zone.parse(value).present?
+  rescue ArgumentError
+    false
+  end
+
   setting :resend_api_key,
     source: -> { Rails.application.credentials.dig(:resend, :api_key) },
     required: -> { !Rails.env.local? },
@@ -147,4 +155,29 @@ class AppConfig
   setting :metrics_url,
     source: -> { ENV["METRICS_URL"].presence },
     validate: HTTP_URL
+
+  setting :metrics_username,
+    source: -> { ENV["METRICS_USERNAME"].presence }
+
+  setting :metrics_password,
+    source: -> { ENV["METRICS_PASSWORD"].presence }
+
+  setting :metrics_flush_interval,
+    source: -> { ENV["METRICS_FLUSH_INTERVAL"].presence },
+    default: "15",
+    validate: POSITIVE_INTEGER
+
+  setting :metrics_instance,
+    source: -> { ENV["METRICS_INSTANCE"].presence }
+
+  setting :app_revision,
+    source: -> { ENV["APP_REVISION"].presence }
+
+  setting :app_revision_short,
+    source: -> { ENV["APP_REVISION_SHORT"].presence },
+    default: -> { app_revision&.first(7) }
+
+  setting :app_deployed_at,
+    source: -> { ENV["APP_DEPLOYED_AT"].presence },
+    validate: PARSEABLE_TIME
 end

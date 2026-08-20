@@ -27,7 +27,6 @@ require "socket"
 # per-subject, or per-id, which would blow up series count.
 module Metrics
   PREFIX = "feeder_".freeze
-  DEFAULT_FLUSH_INTERVAL = 15
 
   class << self
     def enabled?
@@ -150,11 +149,11 @@ module Metrics
     end
 
     def flush_interval
-      Integer(ENV.fetch("METRICS_FLUSH_INTERVAL", DEFAULT_FLUSH_INTERVAL))
+      Integer(AppConfig.metrics_flush_interval)
     end
 
     def instance_label
-      @instance_label ||= ENV["METRICS_INSTANCE"].presence || "#{Socket.gethostname}:#{Process.pid}"
+      @instance_label ||= AppConfig.metrics_instance || "#{Socket.gethostname}:#{Process.pid}"
     end
 
     def normalize_labels(labels)
@@ -190,8 +189,8 @@ module Metrics
       request = Net::HTTP::Post.new(uri)
       request.body = body
       request.content_type = "text/plain"
-      if (user = ENV["METRICS_USERNAME"].presence)
-        request.basic_auth(user, ENV["METRICS_PASSWORD"].to_s)
+      if (user = AppConfig.metrics_username)
+        request.basic_auth(user, AppConfig.metrics_password.to_s)
       end
 
       http.request(request)

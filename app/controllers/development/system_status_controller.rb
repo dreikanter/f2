@@ -16,18 +16,10 @@ class Development::SystemStatusController < ApplicationController
   end
 
   def release_info
-    revision = ENV.fetch("APP_REVISION", nil)
-
     {
-      revision: revision,
-      revision_short: ENV.fetch("APP_REVISION_SHORT", nil).presence || revision&.first(7),
-      deployed_at: deployed_at
+      revision: AppConfig.app_revision,
+      revision_short: AppConfig.app_revision_short,
+      deployed_at: (Time.zone.parse(AppConfig.app_deployed_at) if AppConfig.app_deployed_at)
     }
-  end
-
-  def deployed_at
-    Time.zone.parse(ENV.fetch("APP_DEPLOYED_AT", nil))
-  rescue ArgumentError, TypeError
-    nil
   end
 end

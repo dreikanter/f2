@@ -225,6 +225,32 @@ class AppConfigTest < ActiveSupport::TestCase
     end
   end
 
+  test "#metrics_flush_interval should default to 15 seconds" do
+    assert_equal "15", AppConfig.metrics_flush_interval
+  end
+
+  test "#validate! should reject a non-integer METRICS_FLUSH_INTERVAL" do
+    with_env("METRICS_FLUSH_INTERVAL", "soon") do
+      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+
+      assert_includes error.message, "metrics_flush_interval: present but invalid"
+    end
+  end
+
+  test "#app_revision_short should fall back to the truncated revision" do
+    with_env("APP_REVISION", "0123456789abcdef") do
+      assert_equal "0123456", AppConfig.app_revision_short
+    end
+  end
+
+  test "#validate! should reject an unparseable APP_DEPLOYED_AT" do
+    with_env("APP_DEPLOYED_AT", "not a time") do
+      error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
+
+      assert_includes error.message, "app_deployed_at: present but invalid"
+    end
+  end
+
   test "#validate! should reject a malformed METRICS_URL" do
     with_env("METRICS_URL", "not a url") do
       error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }

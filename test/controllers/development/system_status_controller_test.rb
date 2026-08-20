@@ -50,8 +50,10 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     AppConfig.status.each_key do |name|
       assert_select "[data-key='app_config.#{name}.label'] code", text: name.to_s
-      assert_select "[data-key='app_config.#{name}.value']", text: "Not set"
     end
+    assert_select "[data-key='app_config.resend_api_key.value']", text: "Not set"
+    # A setting with a default counts as set.
+    assert_select "[data-key='app_config.metrics_flush_interval.value']", text: "Set"
   end
 
   test "should show a configured setting as set" do
