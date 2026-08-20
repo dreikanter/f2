@@ -71,16 +71,6 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_not_predicate registry, :unset_key?
   end
 
-  test ".group should define a predicate requiring every member" do
-    registry = build_registry do
-      setting :endpoint, source: -> { "https://example.com" }
-      setting :key, source: -> { }
-      group :feature, %i[endpoint key]
-    end
-
-    assert_not_predicate registry, :feature?
-  end
-
   test "#validate! should pass when optional settings are absent" do
     registry = build_registry { setting :api_key, source: -> { } }
 
@@ -158,64 +148,6 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_not_includes error.message, "sensitive secret value"
   end
 
-  test "#validate! should allow a fully absent group" do
-    registry = build_registry do
-      setting :endpoint, source: -> { }
-      setting :key, source: -> { }
-      group :feature, %i[endpoint key], functional: -> { raise "must not run" }
-    end
-
-    assert_nothing_raised { registry.validate! }
-  end
-
-  test "#validate! should report a partial group" do
-    registry = build_registry do
-      setting :endpoint, source: -> { "https://example.com" }
-      setting :key, source: -> { }
-      group :feature, %i[endpoint key]
-    end
-
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
-
-    assert_includes error.message, "feature: partial configuration (missing: key)"
-  end
-
-  test "#validate! should run the functional check on a complete group" do
-    ran = false
-    registry = build_registry do
-      setting :endpoint, source: -> { "https://example.com" }
-      setting :key, source: -> { "abcd" }
-      group :feature, %i[endpoint key], functional: -> { ran = true }
-    end
-
-    registry.validate!
-
-    assert ran
-  end
-
-  test "#validate! should report a functional check failure" do
-    registry = build_registry do
-      setting :endpoint, source: -> { "https://example.com" }
-      group :feature, %i[endpoint], functional: -> { raise "sample request failed" }
-    end
-
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
-
-    assert_includes error.message, "feature: sample request failed"
-  end
-
-  test "#validate! should skip the functional check when a member is invalid" do
-    registry = build_registry do
-      setting :endpoint, source: -> { "bad" }, validate: ->(_value) { false }
-      group :feature, %i[endpoint], functional: -> { raise "must not run" }
-    end
-
-    error = assert_raises(AppConfig::ConfigurationError) { registry.validate! }
-
-    assert_includes error.message, "endpoint: present but invalid"
-    assert_not_includes error.message, "must not run"
-  end
-
   test "#status should map setting names to presence booleans" do
     registry = build_registry do
       setting :set_key, source: -> { "value" }
@@ -265,6 +197,7 @@ class AppConfigTest < ActiveSupport::TestCase
       error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
 
       assert_includes error.message, "imgproxy: partial configuration (missing: imgproxy_key, imgproxy_salt)"
+      assert_not_predicate AppConfig, :imgproxy?
     end
   end
 
@@ -288,6 +221,7 @@ class AppConfigTest < ActiveSupport::TestCase
       error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
 
       assert_includes error.message, "imgproxy_key: present but invalid"
+      assert_not_includes error.message, "signing a sample URL", "sample check must not run on invalid members"
     end
   end
 

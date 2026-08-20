@@ -18,15 +18,20 @@ class AppConfig
   class ConfigurationError < StandardError; end
 
   Setting = Data.define(:name, :source, :required, :default, :normalize, :validate)
-  Group = Data.define(:name, :members, :functional)
+
+  IMGPROXY_SETTINGS = %i[imgproxy_endpoint imgproxy_key imgproxy_salt].freeze
 
   class << self
     def validate!
       violations = settings.each_value.flat_map { |setting| setting_violations(setting) }
-      violations += groups.each_value.flat_map { |group| group_violations(group) }
+      violations += imgproxy_violations
       return if violations.none?
 
       raise ConfigurationError, "Invalid application configuration:\n#{violations.map { |text| "- #{text}" }.join("\n")}"
+    end
+
+    def imgproxy?
+      IMGPROXY_SETTINGS.all? { |name| public_send("#{name}?") }
     end
 
     # Effective configuration for the system status page. Booleans only,
@@ -41,25 +46,11 @@ class AppConfig
       @settings ||= {}
     end
 
-    def groups
-      @groups ||= {}
-    end
-
     def setting(name, source:, required: false, default: nil, normalize: nil, validate: nil)
       settings[name] = Setting.new(name:, source:, required:, default:, normalize:, validate:)
 
       define_singleton_method(name) { value_of(name) }
       define_singleton_method("#{name}?") { public_send(name).present? }
-    end
-
-    # Declares members an all-or-nothing unit: the feature is off when all are
-    # absent, on when all are present, and anything in between fails the gate.
-    # The functional check runs only on a complete group whose members passed
-    # their own validations, and raises to signal failure.
-    def group(name, members, functional: nil)
-      groups[name] = Group.new(name:, members:, functional:)
-
-      define_singleton_method("#{name}?") { members.all? { |member| public_send("#{member}?") } }
     end
 
     def value_of(name)
@@ -88,29 +79,29 @@ class AppConfig
       ["#{setting.name}: evaluation raised #{e.class}"]
     end
 
-    def group_violations(group)
-      present = group.members.select { |member| public_send("#{member}?") }
-      collect_group_violations(group, present)
-    rescue StandardError => e
-      ["#{group.name}: evaluation raised #{e.class}"]
-    end
+    # imgproxy is configured all-or-nothing: off when every setting is absent,
+    # on when all are present, and anything in between fails the gate. A
+    # complete, individually valid trio must also sign a sample URL. Signing
+    # is a local HMAC, so this proves the values compose through the real
+    # ImgproxyUrl pipeline without touching the network.
+    def imgproxy_violations
+      # Throwaway test registries declare their own settings only.
+      return [] unless IMGPROXY_SETTINGS.all? { |name| settings.key?(name) }
 
-    def collect_group_violations(group, present)
+      present = IMGPROXY_SETTINGS.select { |name| public_send("#{name}?") }
       return [] if present.none?
 
-      missing = group.members - present
+      missing = IMGPROXY_SETTINGS - present
       if missing.any?
-        return ["#{group.name}: partial configuration (missing: #{missing.join(", ")}). Set all of #{group.members.join(", ")} or none"]
+        return ["imgproxy: partial configuration (missing: #{missing.join(", ")}). Set all of #{IMGPROXY_SETTINGS.join(", ")} or none"]
       end
 
-      return [] if group.members.any? { |member| setting_violations(settings.fetch(member)).any? }
+      return [] if IMGPROXY_SETTINGS.any? { |name| setting_violations(settings.fetch(name)).any? }
 
-      begin
-        group.functional&.call
-        []
-      rescue StandardError => e
-        ["#{group.name}: #{e.message}"]
-      end
+      sample = ImgproxyUrl.preview("https://example.com/sample.jpg")
+      sample.start_with?("#{imgproxy_endpoint}/") ? [] : ["imgproxy: signing a sample URL failed"]
+    rescue StandardError => e
+      ["imgproxy: evaluation raised #{e.class}"]
     end
   end
 
@@ -156,12 +147,4 @@ class AppConfig
   setting :metrics_url,
     source: -> { ENV["METRICS_URL"].presence },
     validate: HTTP_URL
-
-  # Signing is a local HMAC, so building a sample URL proves the three values
-  # compose through the real ImgproxyUrl pipeline without touching the network.
-  group :imgproxy, %i[imgproxy_endpoint imgproxy_key imgproxy_salt],
-    functional: lambda {
-      sample = ImgproxyUrl.preview("https://example.com/sample.jpg")
-      raise "signing a sample URL failed" unless sample.start_with?("#{imgproxy_endpoint}/")
-    }
 end
