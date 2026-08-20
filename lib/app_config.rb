@@ -4,23 +4,20 @@ require "uri"
 # setting the app consumes is declared here exactly once and read only through
 # this class (AppConfig.resend_api_key, AppConfig.imgproxy?).
 #
-# Each setting has two orthogonal axes:
+# Each setting resolves as source, then default, then normalize, then
+# validate. required and validate are independent: an optional setting that is
+# set still gets validated, because misconfigured is not the same as missing.
+# normalize canonicalizes a present value, so consumers never see raw quirks
+# such as trailing slashes.
 #
-# - required: may the value be absent, per environment?
-# - validate: when a value is present (after defaults), must it pass?
-#
-# Optional settings that are set still get validated — misconfigured is not
-# the same as missing.
-#
-# .validate! evaluates every declaration, collects every violation, and raises
-# one error listing them all. The boot gate (config/initializers/app_config.rb)
-# runs it after initialization, so a misconfigured process fails its /up
-# healthcheck instead of coming up half-working. Checks are local only — no
-# network at boot — and violation messages never include setting values.
+# .validate! evaluates every declaration and raises one error listing every
+# violation. The boot gate (config/initializers/app_config.rb) runs it after
+# initialization, so a misconfigured process fails to start. Checks are local
+# only. Violation messages never include setting values.
 class AppConfig
   class ConfigurationError < StandardError; end
 
-  Setting = Data.define(:name, :source, :required, :default, :validate)
+  Setting = Data.define(:name, :source, :required, :default, :normalize, :validate)
   Group = Data.define(:name, :members, :functional)
 
   class << self
@@ -32,8 +29,8 @@ class AppConfig
       raise ConfigurationError, "Invalid application configuration:\n#{violations.map { |text| "- #{text}" }.join("\n")}"
     end
 
-    # Effective configuration for the system status page: booleans only,
-    # never values — most settings are secrets.
+    # Effective configuration for the system status page. Booleans only,
+    # never values: most settings are secrets.
     def status
       settings.keys.index_with { |name| public_send("#{name}?") }
     end
@@ -48,8 +45,8 @@ class AppConfig
       @groups ||= {}
     end
 
-    def setting(name, source:, required: false, default: nil, validate: nil)
-      settings[name] = Setting.new(name:, source:, required:, default:, validate:)
+    def setting(name, source:, required: false, default: nil, normalize: nil, validate: nil)
+      settings[name] = Setting.new(name:, source:, required:, default:, normalize:, validate:)
 
       define_singleton_method(name) { value_of(name) }
       define_singleton_method("#{name}?") { public_send(name).present? }
@@ -69,6 +66,7 @@ class AppConfig
       setting = settings.fetch(name)
       value = setting.source.call
       value = resolve(setting.default) if value.blank?
+      value = setting.normalize.call(value) if setting.normalize && value.present?
       value
     end
 
@@ -102,7 +100,7 @@ class AppConfig
 
       missing = group.members - present
       if missing.any?
-        return ["#{group.name}: partial configuration (missing: #{missing.join(", ")}) — set all of #{group.members.join(", ")} or none"]
+        return ["#{group.name}: partial configuration (missing: #{missing.join(", ")}). Set all of #{group.members.join(", ")} or none"]
       end
 
       return [] if group.members.any? { |member| setting_violations(settings.fetch(member)).any? }
@@ -144,6 +142,7 @@ class AppConfig
 
   setting :imgproxy_endpoint,
     source: -> { Rails.application.credentials.dig(:imgproxy, :endpoint) },
+    normalize: ->(value) { value.sub(%r{/+\z}, "") },
     validate: HTTP_URL
 
   setting :imgproxy_key,
@@ -159,12 +158,10 @@ class AppConfig
     validate: HTTP_URL
 
   # Signing is a local HMAC, so building a sample URL proves the three values
-  # compose through the real ImgproxyUrl pipeline without touching the network
-  # (whether they match the deployed imgproxy instance is only known at
-  # request time).
+  # compose through the real ImgproxyUrl pipeline without touching the network.
   group :imgproxy, %i[imgproxy_endpoint imgproxy_key imgproxy_salt],
     functional: lambda {
       sample = ImgproxyUrl.preview("https://example.com/sample.jpg")
-      raise "signing a sample URL failed" unless sample.start_with?("#{imgproxy_endpoint.chomp("/")}/")
+      raise "signing a sample URL failed" unless sample.start_with?("#{imgproxy_endpoint}/")
     }
 end

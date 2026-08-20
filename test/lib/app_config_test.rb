@@ -41,6 +41,26 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal "15", registry.timeout
   end
 
+  test ".setting should normalize a present value before validation" do
+    registry = build_registry do
+      setting :endpoint,
+        source: -> { "https://example.com///" },
+        normalize: ->(value) { value.sub(%r{/+\z}, "") },
+        validate: ->(value) { !value.end_with?("/") }
+    end
+
+    assert_equal "https://example.com", registry.endpoint
+    assert_nothing_raised { registry.validate! }
+  end
+
+  test ".setting should not normalize an absent value" do
+    registry = build_registry do
+      setting :endpoint, source: -> { }, normalize: ->(_value) { raise "normalize must not run" }
+    end
+
+    assert_nil registry.endpoint
+  end
+
   test ".setting should define a presence predicate" do
     registry = build_registry do
       setting :set_key, source: -> { "value" }
@@ -245,6 +265,13 @@ class AppConfigTest < ActiveSupport::TestCase
       error = assert_raises(AppConfig::ConfigurationError) { AppConfig.validate! }
 
       assert_includes error.message, "imgproxy: partial configuration (missing: imgproxy_key, imgproxy_salt)"
+    end
+  end
+
+  test "#imgproxy_endpoint should strip trailing slashes" do
+    stub_credentials(IMGPROXY_CONFIG.merge([:imgproxy, :endpoint] => "https://imgproxy.example.com/")) do
+      assert_equal "https://imgproxy.example.com", AppConfig.imgproxy_endpoint
+      assert_nothing_raised { AppConfig.validate! }
     end
   end
 

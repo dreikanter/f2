@@ -37,14 +37,6 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
     end
   end
 
-  test "#thumbnail should drop a trailing slash on the endpoint" do
-    with_imgproxy_config(endpoint: "https://imgproxy.example.com/", key: KEY, salt: SALT) do
-      url = ImgproxyUrl.thumbnail("https://example.com/photo.jpg", width: 100, height: 100)
-
-      assert_not_includes url, "com//"
-    end
-  end
-
   test "#thumbnail should return the source url when imgproxy is not configured" do
     with_imgproxy_config do
       source = "https://example.com/photo.jpg"
