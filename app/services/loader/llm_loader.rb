@@ -25,7 +25,10 @@ module Loader
     rescue LlmClient::SchemaError => e
       # A reply that won't fit the schema is the source misbehaving, same as an
       # HTTP loader's bad status: an expected failure per the LlmClient
-      # contract, already billed and recorded on the feed — not a crash.
+      # contract, already billed and recorded on the feed — not a crash. The
+      # report keeps it visible as a handled error once it's wrapped, since
+      # FeedRefreshJob deliberately swallows Loader::Error.
+      Rails.error.report(e, context: { feed_id: feed.id, profile_key: feed.feed_profile_key })
       raise Loader::Error, e.message
     end
 
