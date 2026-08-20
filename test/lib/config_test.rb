@@ -29,6 +29,17 @@ class ConfigTest < ActiveSupport::TestCase
     [:imgproxy, :salt] => "5e6f7a8b"
   }.freeze
 
+  test ".setting should reject a duplicate name" do
+    error = assert_raises(ArgumentError) do
+      build_registry do
+        setting :api_key, source: -> { "one" }
+        setting :api_key, source: -> { "two" }
+      end
+    end
+
+    assert_includes error.message, "duplicate setting: api_key"
+  end
+
   test ".setting should define a reader" do
     registry = build_registry { setting :api_key, source: -> { "secret" } }
 
