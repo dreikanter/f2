@@ -74,6 +74,14 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
   end
 
+  # Cache of this token's postable group names, shared by the feed form's
+  # group selector and the background groups refresh.
+  GROUPS_CACHE_TTL = 10.minutes
+
+  def groups_cache_key
+    "access_token_groups/#{id}"
+  end
+
   # Rate-limit identity for FreeFeed calls. FreeFeed meters per authenticated
   # account (the JWT user id), shared across that account's tokens, so we key on
   # instance + user id to collapse sibling tokens onto one bucket. The user id is
