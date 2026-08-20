@@ -42,62 +42,29 @@ class Development::SystemStatusControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='configuration.mailer_from.value'] code", text: "noreply@example.com"
   end
 
-  test "should show configuration checklist" do
+  test "should list every registered setting with its effective state" do
     sign_in_as(dev_user)
 
     get development_system_status_path
 
     assert_response :success
-    assert_select "[data-key='config.resend_key']", text: /Resend key present/
-    assert_select "[data-key='config.resend_signing_secret']", text: /Resend signing secret/
-    assert_select "[data-key='config.honeybadger_key']", text: /Honeybadger/
-    assert_select "[data-key='config.imgproxy_endpoint']", text: /imgproxy endpoint/
-    assert_select "[data-key='config.imgproxy_key']", text: /imgproxy signing key/
-    assert_select "[data-key='config.imgproxy_salt']", text: /imgproxy signing salt/
-    assert_select "[data-key='config.metrics_push']", text: /Metrics push enabled/
-    assert_select "[data-key='config.background_jobs']", text: /Background jobs/
+    Config.status.each_key do |name|
+      assert_select "[data-key='config.#{name}.label'] code", text: name.to_s
+    end
+    assert_select "[data-key='config.resend_api_key.value']", text: "Not set"
+    # A setting with a default counts as set.
+    assert_select "[data-key='config.metrics_flush_interval.value']", text: "Set"
   end
 
-  test "should flag metrics push as healthy when METRICS_URL is set" do
-    Metrics.stub(:enabled?, true) do
+  test "should show a configured setting as set" do
+    Config.stub(:status, { metrics_url: true }) do
       sign_in_as(dev_user)
 
       get development_system_status_path
     end
 
     assert_response :success
-    assert_select "[data-key='config.metrics_push'][data-status='ok']"
-  end
-
-  test "should flag metrics push as neutral when METRICS_URL is unset" do
-    Metrics.stub(:enabled?, false) do
-      sign_in_as(dev_user)
-
-      get development_system_status_path
-    end
-
-    assert_response :success
-    assert_select "[data-key='config.metrics_push'][data-status='neutral']"
-  end
-
-  test "should flag background jobs as healthy when a process is heartbeating" do
-    SolidQueue::Process.create!(kind: "Worker", name: "worker-test", pid: 999, last_heartbeat_at: Time.current)
-    sign_in_as(dev_user)
-
-    get development_system_status_path
-
-    assert_response :success
-    assert_select "[data-key='config.background_jobs'][data-status='ok']"
-  end
-
-  test "should flag background jobs as a problem when no process is heartbeating" do
-    SolidQueue::Process.delete_all
-    sign_in_as(dev_user)
-
-    get development_system_status_path
-
-    assert_response :success
-    assert_select "[data-key='config.background_jobs'][data-status='error']"
+    assert_select "[data-key='config.metrics_url.value']", text: "Set"
   end
 
   test "should show other tables total in table usage" do

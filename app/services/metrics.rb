@@ -27,15 +27,14 @@ require "socket"
 # per-subject, or per-id, which would blow up series count.
 module Metrics
   PREFIX = "feeder_".freeze
-  DEFAULT_FLUSH_INTERVAL = 15
 
   class << self
     def enabled?
-      url.present?
+      Config.metrics_url?
     end
 
     def url
-      ENV["METRICS_URL"].presence
+      Config.metrics_url
     end
 
     # Bump a counter by `by` (default 1) for the given label set.
@@ -150,11 +149,11 @@ module Metrics
     end
 
     def flush_interval
-      Integer(ENV.fetch("METRICS_FLUSH_INTERVAL", DEFAULT_FLUSH_INTERVAL))
+      Integer(Config.metrics_flush_interval)
     end
 
     def instance_label
-      @instance_label ||= ENV["METRICS_INSTANCE"].presence || "#{Socket.gethostname}:#{Process.pid}"
+      @instance_label ||= Config.metrics_instance || "#{Socket.gethostname}:#{Process.pid}"
     end
 
     def normalize_labels(labels)
@@ -190,8 +189,8 @@ module Metrics
       request = Net::HTTP::Post.new(uri)
       request.body = body
       request.content_type = "text/plain"
-      if (user = ENV["METRICS_USERNAME"].presence)
-        request.basic_auth(user, ENV["METRICS_PASSWORD"].to_s)
+      if (user = Config.metrics_username)
+        request.basic_auth(user, Config.metrics_password.to_s)
       end
 
       http.request(request)

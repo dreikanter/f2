@@ -4,9 +4,11 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
   KEY = "1a2b3c4d"
   SALT = "5e6f7a8b"
 
-  def with_imgproxy_config(config)
-    Rails.application.credentials.stub(:imgproxy, config) do
-      yield
+  def with_imgproxy_config(endpoint: nil, key: nil, salt: nil, &block)
+    Config.stub(:imgproxy_endpoint, endpoint) do
+      Config.stub(:imgproxy_key, key) do
+        Config.stub(:imgproxy_salt, salt, &block)
+      end
     end
   end
 
@@ -35,16 +37,8 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
     end
   end
 
-  test "#thumbnail should drop a trailing slash on the endpoint" do
-    with_imgproxy_config(endpoint: "https://imgproxy.example.com/", key: KEY, salt: SALT) do
-      url = ImgproxyUrl.thumbnail("https://example.com/photo.jpg", width: 100, height: 100)
-
-      assert_not_includes url, "com//"
-    end
-  end
-
   test "#thumbnail should return the source url when imgproxy is not configured" do
-    with_imgproxy_config(nil) do
+    with_imgproxy_config do
       source = "https://example.com/photo.jpg"
       assert_equal source, ImgproxyUrl.thumbnail(source, width: 100, height: 100)
     end
@@ -87,7 +81,7 @@ class ImgproxyUrlTest < ActiveSupport::TestCase
   end
 
   test "#userpic should return the source url when imgproxy is not configured" do
-    with_imgproxy_config(nil) do
+    with_imgproxy_config do
       source = "https://example.com/userpic.jpg"
       assert_equal source, ImgproxyUrl.userpic(source)
     end

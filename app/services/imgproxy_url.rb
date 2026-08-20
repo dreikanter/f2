@@ -2,8 +2,8 @@
 #
 # imgproxy verifies an HMAC-SHA256 signature on every request (see
 # docs/deployment-imgproxy.md), so preview URLs must be generated here with the
-# shared key and salt. When imgproxy isn't configured — typically local
-# development and tests — the original source URL is returned unchanged so
+# shared key and salt. When imgproxy isn't configured, typically in local
+# development and tests, the original source URL is returned unchanged so
 # previews still render straight from the source image.
 class ImgproxyUrl
   # Square edge length (px) for attachment preview thumbnails.
@@ -69,7 +69,7 @@ class ImgproxyUrl
   def url
     return source_url.to_s if source_url.blank? || !configured?
 
-    "#{endpoint}/#{signature}#{path}"
+    "#{Config.imgproxy_endpoint}/#{signature}#{path}"
   end
 
   private
@@ -91,22 +91,14 @@ class ImgproxyUrl
   end
 
   def configured?
-    endpoint.present? && config[:key].present? && config[:salt].present?
-  end
-
-  def endpoint
-    config[:endpoint].to_s.chomp("/").presence
+    Config.imgproxy?
   end
 
   def key
-    @key ||= [config[:key]].pack("H*")
+    @key ||= [Config.imgproxy_key].pack("H*")
   end
 
   def salt
-    @salt ||= [config[:salt]].pack("H*")
-  end
-
-  def config
-    @config ||= Rails.application.credentials.imgproxy || {}
+    @salt ||= [Config.imgproxy_salt].pack("H*")
   end
 end

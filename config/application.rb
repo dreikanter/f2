@@ -20,6 +20,12 @@ require "set"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Initializers consume Config before the autoloader is ready, so lib/boot is
+# required explicitly and excluded from zeitwerk (see autoload_lib below).
+# Loading here predates SimpleCov, so lib/boot is also excluded from coverage
+# (see test/test_helper.rb).
+require_relative "../lib/boot/config"
+
 module F2Rails
   GITHUB_REPO_URL = "https://github.com/dreikanter/f2".freeze
 
@@ -30,7 +36,7 @@ module F2Rails
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    config.autoload_lib(ignore: %w[assets tasks boot])
 
     # Configuration for the application, engines, and railties goes here.
     #

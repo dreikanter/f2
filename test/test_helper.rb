@@ -8,7 +8,11 @@ SimpleCov.formatters = [
   SimpleCov::Formatter::CoberturaFormatter
 ]
 
-SimpleCov.start "rails"
+SimpleCov.start "rails" do
+  # Loaded from config/application.rb, before SimpleCov starts, so its
+  # execution is invisible to coverage. Tested in test/lib/boot/.
+  add_filter "lib/boot"
+end
 
 require_relative "../config/environment"
 require "rails/test_help"

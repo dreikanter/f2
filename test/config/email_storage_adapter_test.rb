@@ -9,12 +9,15 @@ class EmailStorageAdapterConfigTest < ActiveSupport::TestCase
   test "email_storage_adapter is defined without an environment override" do
     # A marker isolates our value from any gem warnings printed to stdout.
     script = 'puts "ADAPTER:#{Rails.application.config.email_storage_adapter}"'
+    # The configuration gate needs production credentials this suite doesn't
+    # have. Config.validate! is covered directly in config_test.rb.
     env = {
       "RAILS_ENV" => "production",
       "SECRET_KEY_BASE" => "dummy",
       "HOSTS" => "example.com",
       "ACTION_MAILER_HOST" => "example.com",
-      "MAILER_FROM" => "noreply@example.com"
+      "MAILER_FROM" => "noreply@example.com",
+      "CONFIG_GATE" => "skip"
     }
 
     output = nil
