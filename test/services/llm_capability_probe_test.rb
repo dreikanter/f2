@@ -242,6 +242,20 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal "PASS", outcome[:results].first[:status]
   end
 
+  # The probe must qualify a model under exactly the root repairs production
+  # applies (LlmClient::PayloadRepair), or a usable model gets blocked.
+  test "#run should pass the schema check on a bare items array the app repairs" do
+    outcome = run_checks(JSON.generate(valid_payload["items"]), ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
+  test "#run should pass the schema check on a double-encoded payload the app repairs" do
+    outcome = run_checks(JSON.generate(JSON.generate(valid_payload)), ["schema"])
+
+    assert_equal "PASS", outcome[:results].first[:status]
+  end
+
   test "#run should fail the schema check when schema-valid items are a refusal" do
     payload = { "items" => [{ "uid" => "u1", "source_url" => "https://example.com/",
                               "body" => "I cannot browse the live web, so I am unable to retrieve the posts." }] }

@@ -236,39 +236,9 @@ class LlmClient
   def parse_payload(raw, output_schema)
     return raw if output_schema.blank? || raw.is_a?(Hash)
 
-    repair_root(JSON.parse(adapter.unwrap_json(raw)), output_schema)
+    PayloadRepair.repair(JSON.parse(adapter.unwrap_json(raw)), output_schema)
   rescue JSON::ParserError => e
     raise SchemaError, "non-JSON response from provider: #{e.message}"
-  end
-
-  # Two non-object roots models emit often enough to absorb rather than fail:
-  # the whole payload JSON-encoded once more (a quoted string), and the
-  # envelope dropped (a bare array where the schema wraps it in one array
-  # property). Repairs still go through validate_payload!, so a wrong guess
-  # fails there instead of leaking a malformed payload.
-  def repair_root(payload, output_schema)
-    payload = unquote(payload) if payload.is_a?(String)
-    return payload unless payload.is_a?(Array)
-
-    key = envelope_key(output_schema)
-    key ? { key => payload } : payload
-  end
-
-  def unquote(payload)
-    JSON.parse(payload)
-  rescue JSON::ParserError
-    payload
-  end
-
-  # The array property a bare array can be re-wrapped under — only when the
-  # schema's object root has exactly one, so the repair is unambiguous.
-  def envelope_key(output_schema)
-    return nil unless output_schema.is_a?(Hash) && output_schema["type"] == "object"
-
-    array_keys = Hash(output_schema["properties"]).filter_map do |key, spec|
-      key if spec.is_a?(Hash) && spec["type"] == "array"
-    end
-    array_keys.size == 1 ? array_keys.first : nil
   end
 
   def validate_payload!(payload, output_schema)
