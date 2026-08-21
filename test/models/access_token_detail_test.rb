@@ -1,61 +1,24 @@
 require "test_helper"
 
 class AccessTokenDetailTest < ActiveSupport::TestCase
-  test "should validate presence of data" do
-    detail = build(:access_token_detail, data: nil)
-    assert_not detail.valid?
-    assert_includes detail.errors[:data], "can't be blank"
-  end
-
-  test "#user_info should return user_info hash when data is present" do
-    detail = build(:access_token_detail, data: { "user_info" => { "username" => "testuser" } })
-    assert_equal({ "username" => "testuser" }, detail.user_info)
-  end
-
-  test "#user_info should return empty hash when data is nil" do
-    detail = build(:access_token_detail, data: nil)
-    assert_equal({}, detail.user_info)
-  end
-
-  test "#user_info should return empty hash when user_info key is missing" do
-    detail = build(:access_token_detail, data: { "other_key" => "value" })
-    assert_equal({}, detail.user_info)
-  end
-
-  test "#managed_groups should return managed_groups array when data is present" do
-    groups = [{ "username" => "group1" }, { "username" => "group2" }]
-    detail = build(:access_token_detail, data: { "managed_groups" => groups })
-    assert_equal groups, detail.managed_groups
-  end
-
-  test "#managed_groups should return empty array when data is nil" do
-    detail = build(:access_token_detail, data: nil)
-    assert_equal [], detail.managed_groups
-  end
-
-  test "#managed_groups should return empty array when managed_groups key is missing" do
-    detail = build(:access_token_detail, data: { "other_key" => "value" })
-    assert_equal [], detail.managed_groups
-  end
-
   test "#group_names should extract usernames from managed groups" do
     groups = [{ "username" => "group1" }, { "username" => "group2" }, { "id" => "no-name" }]
-    detail = build(:access_token_detail, data: { "managed_groups" => groups })
+    detail = build(:access_token_detail, managed_groups: groups)
     assert_equal %w[group1 group2], detail.group_names
   end
 
-  test "#groups_refresh_running? should return false without a marker" do
+  test "#groups_refresh_running? should return false without a refresh state" do
     detail = build(:access_token_detail)
     assert_not detail.groups_refresh_running?
   end
 
-  test "#groups_refresh_running? should return true for a fresh running marker" do
+  test "#groups_refresh_running? should return true for a fresh running refresh" do
     detail = create(:access_token_detail)
     detail.begin_groups_refresh!
     assert detail.groups_refresh_running?
   end
 
-  test "#groups_refresh_running? should return false once the marker goes stale" do
+  test "#groups_refresh_running? should return false once the refresh goes stale" do
     detail = create(:access_token_detail)
     detail.begin_groups_refresh!
 
@@ -64,17 +27,12 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     end
   end
 
-  test "#groups_refresh_running? should return false for an unparsable timestamp" do
-    detail = build(:access_token_detail, data: { "groups_refresh" => { "state" => "running", "requested_at" => "bogus" } })
+  test "#groups_refresh_running? should return false for a running state without a timestamp" do
+    detail = build(:access_token_detail, groups_refresh_state: "running", groups_refresh_requested_at: nil)
     assert_not detail.groups_refresh_running?
   end
 
-  test "#groups_refresh_running? should return false for an out-of-range timestamp" do
-    detail = build(:access_token_detail, data: { "groups_refresh" => { "state" => "running", "requested_at" => "2026-99-99" } })
-    assert_not detail.groups_refresh_running?
-  end
-
-  test "#groups_refresh_failed? should reflect a failed marker" do
+  test "#groups_refresh_failed? should reflect a failed refresh" do
     detail = create(:access_token_detail)
     assert_not detail.groups_refresh_failed?
 
@@ -82,15 +40,15 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert detail.groups_refresh_failed?
   end
 
-  test "#begin_groups_refresh! should save a running marker on a new record" do
-    detail = build(:access_token_detail, data: nil)
+  test "#begin_groups_refresh! should save a running state on a new record" do
+    detail = build(:access_token_detail)
     detail.begin_groups_refresh!
 
     assert detail.persisted?
     assert detail.groups_refresh_running?
   end
 
-  test "#complete_groups_refresh! should store stringified groups and clear the marker" do
+  test "#complete_groups_refresh! should store stringified groups and clear the refresh state" do
     detail = create(:access_token_detail)
     detail.begin_groups_refresh!
 
@@ -99,10 +57,10 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert_not detail.groups_refresh_running?
     assert_not detail.groups_refresh_failed?
     assert_equal [{ "username" => "newgroup", "screenName" => "New Group" }], detail.managed_groups
-    assert_equal({ "username" => "testuser", "screen_name" => "Test User" }, detail.reload.user_info)
+    assert_equal "testuser", detail.reload.freefeed_user_info["username"]
   end
 
-  test "#fail_groups_refresh! should replace a running marker with a failed one" do
+  test "#fail_groups_refresh! should replace a running refresh with a failed one" do
     detail = create(:access_token_detail)
     detail.begin_groups_refresh!
 
@@ -110,5 +68,13 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
 
     assert_not detail.groups_refresh_running?
     assert detail.groups_refresh_failed?
+  end
+
+  test "should reject an unknown refresh state at the database level" do
+    detail = create(:access_token_detail)
+
+    assert_raises ActiveRecord::StatementInvalid do
+      detail.update!(groups_refresh_state: "bogus")
+    end
   end
 end

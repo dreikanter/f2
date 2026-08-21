@@ -32,7 +32,7 @@ class FreefeedPostComponentTest < ViewComponent::TestCase
     result = render_inline(FreefeedPostComponent.new(post: post))
 
     avatar = result.css('[data-key="freefeed_post.avatar"]').first
-    assert_equal ImgproxyUrl.userpic(detail.user_info["profile_picture_url"]), avatar["src"]
+    assert_equal ImgproxyUrl.userpic(detail.freefeed_user_info["profile_picture_url"]), avatar["src"]
   end
 
   test "#render should fall back to the placeholder userpic" do

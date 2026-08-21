@@ -124,7 +124,7 @@ class AccessToken < ApplicationRecord
   end
 
   def display_name
-    owner = access_token_detail&.user_info&.dig("username") || name
+    owner = access_token_detail&.freefeed_user_info&.dig("username") || name
     "#{host_domain} - #{owner}"
   end
 

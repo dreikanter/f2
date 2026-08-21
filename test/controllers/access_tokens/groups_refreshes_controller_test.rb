@@ -11,8 +11,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
 
   def detail
     @detail ||= create(:access_token_detail, access_token: access_token,
-                       data: { "user_info" => { "username" => "testuser" },
-                               "managed_groups" => [{ "username" => "oldgroup" }] })
+                       managed_groups: [{ "username" => "oldgroup" }])
   end
 
   test "#create should require authentication" do
@@ -164,8 +163,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
   end
 
   test "#show should blame the fetch when a failed refresh leaves no groups" do
-    @detail = create(:access_token_detail, access_token: access_token,
-                     data: { "user_info" => { "username" => "testuser" }, "managed_groups" => [] })
+    @detail = create(:access_token_detail, access_token: access_token)
     @detail.fail_groups_refresh!
     sign_in_as user
 
