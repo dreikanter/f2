@@ -1,0 +1,14 @@
+{
+  "attachment_urls": [
+    "https://signalpath.example.fm/art/ep42.jpg"
+  ],
+  "comments": [
+    "What keeps a power grid stable when demand drops after midnight? We talk to a grid operator about the quiet hours."
+  ],
+  "content": "Ep. 42: The Grid at Night\nListen: https://cdn.example.fm/signalpath/ep42.mp3 - https://signalpath.example.fm/episodes/42",
+  "published_at": "2026-08-10T06:00:00.000Z",
+  "source_url": "https://signalpath.example.fm/episodes/42",
+  "status": "enqueued",
+  "uid": "sp-ep-42",
+  "validation_errors": []
+}

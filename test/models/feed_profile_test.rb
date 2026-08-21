@@ -16,6 +16,7 @@ class FeedProfileTest < ActiveSupport::TestCase
       "nextbigfuture",
       "oglaf",
       "pluralistic",
+      "podcast",
       "reddit",
       "rss",
       "smbc",

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <atom:link href="https://signalpath.example.fm/feed.xml" rel="self" type="application/rss+xml"/>
+    <title>Signal Path</title>
+    <description>Conversations about engineering behind everyday infrastructure.</description>
+    <link>https://signalpath.example.fm</link>
+    <language>en</language>
+    <itunes:author>Signal Path Media</itunes:author>
+    <itunes:image href="https://signalpath.example.fm/art/cover.jpg"/>
+    <itunes:category text="Technology"/>
+    <item>
+      <title>Ep. 42: The Grid at Night</title>
+      <pubDate>Mon, 10 Aug 2026 06:00:00 +0000</pubDate>
+      <guid isPermaLink="false">sp-ep-42</guid>
+      <link>https://signalpath.example.fm/episodes/42</link>
+      <itunes:image href="https://signalpath.example.fm/art/ep42.jpg"/>
+      <enclosure url="https://cdn.example.fm/signalpath/ep42.mp3" length="52428800" type="audio/mpeg"/>
+      <itunes:duration>54:21</itunes:duration>
+      <description><![CDATA[What keeps a power grid stable when demand drops after midnight? We talk to a <a href="https://signalpath.example.fm/guests/marta">grid operator</a> about the quiet hours.]]></description>
+      <itunes:summary><![CDATA[What keeps a power grid stable when demand drops after midnight?]]></itunes:summary>
+    </item>
+    <item>
+      <title>Ep. 41: Water Hammer</title>
+      <pubDate>Mon, 03 Aug 2026 06:00:00 +0000</pubDate>
+      <guid isPermaLink="false">sp-ep-41</guid>
+      <link>https://signalpath.example.fm/episodes/41</link>
+      <enclosure url="https://cdn.example.fm/signalpath/ep41.mp3" length="48234496" type="audio/mpeg"/>
+      <itunes:duration>47:05</itunes:duration>
+      <description><![CDATA[Why pipes bang when you close a tap too fast, and how engineers keep it from bursting city mains.]]></description>
+    </item>
+    <item>
+      <title>Ep. 40: Elevator Algorithms</title>
+      <pubDate>Mon, 27 Jul 2026 06:00:00 +0000</pubDate>
+      <guid isPermaLink="false">sp-ep-40</guid>
+      <itunes:image href="https://signalpath.example.fm/art/ep40.jpg"/>
+      <enclosure url="https://cdn.example.fm/signalpath/ep40.mp3" length="41943040" type="audio/mpeg"/>
+      <itunes:duration>41:12</itunes:duration>
+      <description><![CDATA[How a bank of elevators decides which car answers your call.]]></description>
+    </item>
+  </channel>
+</rss>

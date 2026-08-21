@@ -84,6 +84,19 @@ class FeedProfile
       normalizer: { class: "Normalizer::JsonFeedNormalizer", config: {} },
       title_extractor: "TitleExtractor::JsonFeedTitleExtractor"
     },
+    "podcast" => {
+      display_name: "Podcast",
+      description: "Podcast episodes with cover art and show notes",
+      input_shape: :url,
+      depends_on_ai: false,
+      scheduled: true,
+      matcher: "ProfileMatcher::PodcastProfileMatcher",
+      parameter_schema: URL_PARAMETER_SCHEMA,
+      loader: { class: "Loader::HttpLoader", config: {} },
+      processor: { class: "Processor::PodcastProcessor", config: {} },
+      normalizer: { class: "Normalizer::PodcastNormalizer", config: {} },
+      title_extractor: "TitleExtractor::RssTitleExtractor"
+    },
     "reddit" => {
       display_name: "Reddit",
       description: "Posts from a subreddit or Reddit user page via RSS",
