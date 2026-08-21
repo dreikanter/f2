@@ -6,7 +6,7 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: c8d223147de1907b4bd3779b5733a55ab9ba9858
+  revision: d2cb944bff3cd0979c6320964f3d0c5f2031f073
   branch: main
   specs:
     actioncable (8.2.0.alpha)
@@ -383,7 +383,7 @@ GEM
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
       rack
-    psych (5.4.0)
+    psych (5.5.0)
       date
       stringio
     public_suffix (7.0.5)
