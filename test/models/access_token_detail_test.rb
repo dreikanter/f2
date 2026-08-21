@@ -69,6 +69,11 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert_not detail.groups_refresh_running?
   end
 
+  test "#groups_refresh_running? should return false for an out-of-range timestamp" do
+    detail = build(:access_token_detail, data: { "groups_refresh" => { "state" => "running", "requested_at" => "2026-99-99" } })
+    assert_not detail.groups_refresh_running?
+  end
+
   test "#groups_refresh_failed? should reflect a failed marker" do
     detail = create(:access_token_detail)
     assert_not detail.groups_refresh_failed?

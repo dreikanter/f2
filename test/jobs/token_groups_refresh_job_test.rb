@@ -122,4 +122,35 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     assert detail.reload.groups_refresh_running?
     assert_not_requested :get, /managedGroups/
   end
+
+  test "#perform should reschedule without failing when throttled mid-call" do
+    detail
+    stub_managed_groups(status: 429, body: "")
+
+    reported = []
+    assert_enqueued_with(job: TokenGroupsRefreshJob) do
+      Rails.error.stub(:report, ->(*args, **) { reported << args }) do
+        TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+      end
+    end
+
+    assert_empty reported, "a handled throttle must not be reported as a fault"
+    assert detail.reload.groups_refresh_running?
+  end
+
+  test "#perform should mark the refresh failed when throttle retries are exhausted" do
+    detail
+    stale_id = refresh_id
+    drain_freefeed(access_token.rate_limit_subject, :get, remaining: 0)
+
+    job = TokenGroupsRefreshJob.new(access_token, stale_id)
+    job.executions = RateLimited::MAX_ATTEMPTS
+
+    Rails.error.stub(:report, ->(*, **) { }) do
+      assert_no_enqueued_jobs { job.perform_now }
+    end
+
+    assert detail.reload.groups_refresh_failed?
+    assert_not_requested :get, /managedGroups/
+  end
 end
