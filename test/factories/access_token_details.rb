@@ -2,25 +2,21 @@ FactoryBot.define do
   factory :access_token_detail do
     association :access_token
 
-    data do
+    freefeed_user_info do
       {
-        user_info: {
-          username: "testuser",
-          screen_name: "Test User"
-        },
-        managed_groups: []
+        "username" => "testuser",
+        "screen_name" => "Test User"
       }
     end
 
+    managed_groups { [] }
+
     trait :with_userpic do
-      data do
+      freefeed_user_info do
         {
-          user_info: {
-            username: "testuser",
-            screen_name: "Test User",
-            profile_picture_url: "https://media.freefeed.net/profilepics/testuser_75.jpg"
-          },
-          managed_groups: []
+          "username" => "testuser",
+          "screen_name" => "Test User",
+          "profile_picture_url" => "https://media.freefeed.net/profilepics/testuser_75.jpg"
         }
       end
     end

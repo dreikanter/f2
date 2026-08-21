@@ -20,11 +20,13 @@ class AccessTokenValidationService
 
       access_token_detail = access_token.access_token_detail || access_token.build_access_token_detail
 
+      # Also settles any in-flight groups refresh: validation just wrote a
+      # fresh list, so pages polling for a refresh outcome can stop.
       access_token_detail.update!(
-        data: {
-          user_info: user_info,
-          managed_groups: managed_groups
-        }
+        freefeed_user_info: user_info.deep_stringify_keys,
+        managed_groups: managed_groups.map { |group| group.deep_stringify_keys },
+        groups_refresh_state: nil,
+        groups_refresh_requested_at: nil
       )
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError

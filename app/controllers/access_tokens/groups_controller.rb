@@ -1,6 +1,4 @@
 class AccessTokens::GroupsController < ApplicationController
-  GROUPS_CACHE_TTL = 10.minutes
-
   def index
     render turbo_stream: turbo_stream.replace(
       "target-group-selector",
@@ -16,7 +14,7 @@ class AccessTokens::GroupsController < ApplicationController
       error_locals(:missing_token)
     elsif access_token.active?
       Rails.cache.delete(cache_key) if bust_cache?
-      groups = Rails.cache.fetch(cache_key, expires_in: GROUPS_CACHE_TTL) { fetch_groups_from_freefeed }
+      groups = Rails.cache.fetch(cache_key, expires_in: AccessToken::GROUPS_CACHE_TTL) { fetch_groups_from_freefeed }
 
       {
         groups: groups,
@@ -52,7 +50,7 @@ class AccessTokens::GroupsController < ApplicationController
   end
 
   def cache_key
-    "access_token_groups/#{access_token.id}"
+    access_token.groups_cache_key
   end
 
   def bust_cache?

@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // partial (including its server-rendered error states).
 export default class extends Controller {
   static targets = ["tokenSelect"]
-  static values = { endpoint: String }
+  static values = { endpoint: String, refreshEndpoint: String }
 
   connect() {
     if (this.hasTokenSelectTarget && this.tokenSelectTarget.value && !this.tokenSelectTarget.disabled) {
@@ -15,6 +15,43 @@ export default class extends Controller {
 
   refresh(event) {
     this.loadGroups(event.target.value)
+  }
+
+  // Starts a background refresh of the selected token's groups. The returned
+  // turbo-stream swaps the selector into its polling state; the current
+  // (possibly unsaved) selection travels along so the swap doesn't reset it.
+  // The button can't be a form submit — the selector lives inside the feed
+  // form, and forms don't nest.
+  async refreshGroups(event) {
+    if (!this.hasRefreshEndpointValue || !this.hasTokenSelectTarget) return
+
+    const tokenId = this.tokenSelectTarget.value
+    if (!tokenId) return
+
+    const button = event.currentTarget
+    const loading = this.application.getControllerForElementAndIdentifier(button, "loading-button")
+    loading?.start()
+
+    try {
+      const url = this.refreshEndpointValue.replace(":access_token_id", tokenId)
+      const body = new URLSearchParams()
+      const groupSelect = this.element.querySelector('select[name="feed[target_group]"]')
+      if (groupSelect?.value) body.set("selected", groupSelect.value)
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Accept": "text/vnd.turbo-stream.html",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+        },
+        body
+      })
+      if (response.ok) Turbo.renderStreamMessage(await response.text())
+    } catch {
+      // Network failure: keep the current selector; the button re-enables below.
+    } finally {
+      loading?.end()
+    }
   }
 
   async loadGroups(tokenId) {

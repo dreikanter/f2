@@ -94,10 +94,10 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     detail = access_token.reload.access_token_detail
     assert_not_nil detail
-    assert_equal "testuser", detail.data["user_info"]["username"]
+    assert_equal "testuser", detail.freefeed_user_info["username"]
     assert_equal "https://media.freefeed.net/profilepics/user123_75.jpg",
-      detail.data["user_info"]["profile_picture_url"]
-    assert_equal 1, detail.data["managed_groups"].length
+      detail.freefeed_user_info["profile_picture_url"]
+    assert_equal 1, detail.managed_groups.length
   end
 
   test "#call should update access_token_detail if it exists" do
@@ -138,7 +138,37 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     detail = access_token.reload.access_token_detail
     assert_equal existing_detail.id, detail.id
-    assert_equal "newuser", detail.data["user_info"]["username"]
+    assert_equal "newuser", detail.freefeed_user_info["username"]
+  end
+
+  test "#call should settle an in-flight groups refresh" do
+    detail = create(:access_token_detail, access_token: access_token)
+    detail.begin_groups_refresh!
+
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [].to_json)
+
+    AccessTokenValidationService.new(access_token).call
+
+    detail.reload
+    assert_nil detail.groups_refresh_state
+    assert_not detail.groups_refresh_running?
+  end
+
+  test "#call should clear a failed groups refresh" do
+    detail = create(:access_token_detail, access_token: access_token)
+    detail.fail_groups_refresh!
+
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [].to_json)
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert_not detail.reload.groups_refresh_failed?
   end
 
   test "#call should deactivate token on invalid token error" do

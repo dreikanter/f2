@@ -10,16 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_01_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_21_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "access_token_details", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.uuid "access_token_id", null: false
     t.datetime "created_at", null: false
-    t.jsonb "data", default: {}, null: false
     t.datetime "updated_at", null: false
+    t.jsonb "data", default: {}, null: false
+    t.jsonb "freefeed_user_info", default: {}, null: false
+    t.jsonb "managed_groups", default: [], null: false
+    t.integer "groups_refresh_state"
+    t.datetime "groups_refresh_requested_at"
     t.index ["access_token_id"], name: "index_access_token_details_on_access_token_id", unique: true
+    t.check_constraint "groups_refresh_state = ANY (ARRAY[0, 1])", name: "access_token_details_groups_refresh_state_valid"
   end
 
   create_table "access_tokens", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

@@ -1,13 +1,47 @@
-<%# locals: (feed:, groups:, token: nil, token_error: nil) %>
-<div id="target-group-selector">
+<%# locals: (feed:, groups:, token: nil, token_error: nil, selected: nil, refreshing: false, refresh_failed: false) %>
+<%# `selected` carries the form's unsaved choice through a background groups
+    refresh, so replacing the selector doesn't reset it. While a refresh runs,
+    the wrapper hosts the polling controller; the groups-refresh endpoint
+    answers with the settled selector, which disconnects the poller. %>
+<% selected_group = selected.presence || feed.target_group %>
+<%= tag.div id: "target-group-selector", data: refreshing ? {
+      controller: "polling",
+      polling_endpoint_value: access_token_groups_refresh_path(token, context: "feed_form", feed_id: feed.id, selected: selected),
+      polling_interval_value: polling_interval_ms,
+      polling_max_polls_value: polling_max_polls
+    } : {} do %>
   <div class="space-y-2">
-    <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= label_tag "feed[target_group]", "Target Group", class: "block font-semibold text-heading" %>
+      <% if refreshing %>
+        <span data-polling-target="content" data-key="feed.groups-refreshing">
+          <%= icon("loader-circle", css_class: "size-4 animate-spin text-muted", aria_label: "Refreshing groups") %>
+        </span>
+        <span hidden data-polling-target="timeoutMessage" data-key="feed.groups-refresh-timeout">
+          <span class="inline-flex flex-wrap items-center gap-2">
+            <%= render "feeds/groups_refresh_button" %>
+            <span class="text-sm text-warning">This is taking longer than expected — try again in a moment.</span>
+          </span>
+        </span>
+      <% elsif token&.active? %>
+        <%= render "feeds/groups_refresh_button" %>
+      <% end %>
+    </div>
 
     <% if groups.present? %>
       <%= select_tag "feed[target_group]",
-                     options_for_select(groups.sort, feed.target_group),
+                     options_for_select((selected.present? ? groups | [selected] : groups).sort, selected_group),
                      class: input_field_classes(disabled: true),
                      required: true %>
+      <% if refresh_failed %>
+        <p class="text-sm text-danger" data-key="feed.groups-refresh-failed">
+          <% if token&.active? %>
+            Couldn't refresh the list. Try again in a moment.
+          <% else %>
+            This token stopped working — select a different access token or add a new one.
+          <% end %>
+        </p>
+      <% end %>
       <p class="text-sm text-muted">
         The FreeFeed group where posts will be published. Each feed can go to its own group, or you can point multiple feeds at the same one.
       </p>
@@ -20,35 +54,34 @@
       </p>
     <% else %>
       <%= select_tag "feed[target_group]",
-                     options_for_select([[feed.target_group.presence || "Select a group", ""]]),
+                     options_for_select([[selected_group.presence || "Select a group", ""]]),
                      class: input_field_classes(disabled: true),
                      disabled: true %>
-      <p class="text-sm text-danger">
-        <% if token.nil? %>
-          Unable to load groups. Please select an access token.
-        <% elsif !token.active? %>
-          This token is inactive. Please select a different access token or add a new one.
-        <% elsif token_error == :unauthorized %>
-          Unable to load groups. Please select a different access token or add a new one.
-        <% elsif token_error == :empty %>
-          This account doesn't manage any groups yet.
-          <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
-                      class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
-            Create a new group on FreeFeed <%= icon("external-link", css_class: "size-3") %>
+      <% unless refreshing %>
+        <p class="text-sm text-danger">
+          <% if token.nil? %>
+            Unable to load groups. Please select an access token.
+          <% elsif !token.active? %>
+            This token is inactive. Please select a different access token or add a new one.
+          <% elsif token_error == :unauthorized %>
+            Unable to load groups. Please select a different access token or add a new one.
+          <% elsif token_error == :empty %>
+            This account doesn't manage any groups yet.
+            <%= link_to "#{token.host}/groups/create", target: "_blank", rel: "noopener noreferrer",
+                        class: "inline-flex items-center gap-1 font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" do %>
+              Create a new group on FreeFeed <%= icon("external-link", css_class: "size-3") %>
+            <% end %>
+          <% else %>
+            Could not load groups for this account.
+            <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
+                        data: { turbo_stream: true },
+                        class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
           <% end %>
-          <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
-                      data: { turbo_stream: true },
-                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
-        <% else %>
-          Could not load groups for this account.
-          <%= link_to "Retry", access_token_groups_path(token, feed_id: feed.id, retry: 1),
-                      data: { turbo_stream: true },
-                      class: "font-medium text-brand underline underline-offset-4 transition hover:text-brand-hover" %>
-        <% end %>
-      </p>
+        </p>
+      <% end %>
     <% end %>
     <% if feed.errors[:target_group].any? %>
       <p class="text-sm text-danger"><%= feed.errors[:target_group].first %></p>
     <% end %>
   </div>
-</div>
+<% end %>

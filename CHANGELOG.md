@@ -8,6 +8,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 
 ## 2026-08-20
 
+- Group lists now have a refresh button — on the access token page and next to the feed's target group picker — so a group you just created on FreeFeed shows up without re-adding the token.
 - AI feeds now recover when the model returns its answer in a slightly off format, instead of failing the refresh.
 
 ## 2026-08-17

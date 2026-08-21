@@ -17,12 +17,12 @@ class FreefeedPostComponent < ViewComponent::Base
 
   def author_name
     token&.owner.presence ||
-      token&.access_token_detail&.user_info&.dig("username").presence ||
+      token&.access_token_detail&.freefeed_user_info&.dig("username").presence ||
       "You"
   end
 
   def userpic_url
-    token&.access_token_detail&.user_info&.dig("profile_picture_url")
+    token&.access_token_detail&.freefeed_user_info&.dig("profile_picture_url")
   end
 
   def group_name

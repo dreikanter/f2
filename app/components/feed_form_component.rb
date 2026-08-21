@@ -79,7 +79,8 @@ class FeedFormComponent < ViewComponent::Base
   def form_data
     {
       controller: "groups",
-      groups_endpoint_value: helpers.access_token_groups_path(":access_token_id", feed_id: feed.id)
+      groups_endpoint_value: helpers.access_token_groups_path(":access_token_id", feed_id: feed.id),
+      groups_refresh_endpoint_value: helpers.access_token_groups_refresh_path(":access_token_id", context: "feed_form", feed_id: feed.id)
     }
   end
 

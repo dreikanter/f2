@@ -1,40 +1,92 @@
 require "test_helper"
 
 class AccessTokenDetailTest < ActiveSupport::TestCase
-  test "should validate presence of data" do
-    detail = build(:access_token_detail, data: nil)
-    assert_not detail.valid?
-    assert_includes detail.errors[:data], "can't be blank"
+  test "#group_names should extract usernames from managed groups" do
+    groups = [{ "username" => "group1" }, { "username" => "group2" }, { "id" => "no-name" }]
+    detail = build(:access_token_detail, managed_groups: groups)
+    assert_equal %w[group1 group2], detail.group_names
   end
 
-  test "#user_info should return user_info hash when data is present" do
-    detail = build(:access_token_detail, data: { "user_info" => { "username" => "testuser" } })
-    assert_equal({ "username" => "testuser" }, detail.user_info)
+  test "#groups_refresh_running? should return false without a refresh state" do
+    detail = build(:access_token_detail)
+    assert_not detail.groups_refresh_running?
   end
 
-  test "#user_info should return empty hash when data is nil" do
-    detail = build(:access_token_detail, data: nil)
-    assert_equal({}, detail.user_info)
+  test "#groups_refresh_running? should return true for a fresh running refresh" do
+    detail = create(:access_token_detail)
+    detail.begin_groups_refresh!
+    assert detail.groups_refresh_running?
   end
 
-  test "#user_info should return empty hash when user_info key is missing" do
-    detail = build(:access_token_detail, data: { "other_key" => "value" })
-    assert_equal({}, detail.user_info)
+  test "#groups_refresh_running? should return false once the refresh goes stale" do
+    detail = create(:access_token_detail)
+    detail.begin_groups_refresh!
+
+    travel AccessTokenDetail::GROUPS_REFRESH_STALE_AFTER + 1.minute do
+      assert_not detail.groups_refresh_running?
+    end
   end
 
-  test "#managed_groups should return managed_groups array when data is present" do
-    groups = [{ "username" => "group1" }, { "username" => "group2" }]
-    detail = build(:access_token_detail, data: { "managed_groups" => groups })
-    assert_equal groups, detail.managed_groups
+  test "#groups_refresh_running? should return false for a running state without a timestamp" do
+    detail = build(:access_token_detail, groups_refresh_state: :running, groups_refresh_requested_at: nil)
+    assert_not detail.groups_refresh_running?
   end
 
-  test "#managed_groups should return empty array when data is nil" do
-    detail = build(:access_token_detail, data: nil)
-    assert_equal [], detail.managed_groups
+  test "#groups_refresh_failed? should reflect a failed refresh" do
+    detail = create(:access_token_detail)
+    assert_not detail.groups_refresh_failed?
+
+    detail.fail_groups_refresh!
+    assert detail.groups_refresh_failed?
   end
 
-  test "#managed_groups should return empty array when managed_groups key is missing" do
-    detail = build(:access_token_detail, data: { "other_key" => "value" })
-    assert_equal [], detail.managed_groups
+  test "#begin_groups_refresh! should save a running state on a new record" do
+    detail = build(:access_token_detail)
+    detail.begin_groups_refresh!
+
+    assert detail.persisted?
+    assert detail.groups_refresh_running?
+  end
+
+  test "#complete_groups_refresh! should store stringified groups and clear the refresh state" do
+    detail = create(:access_token_detail)
+    detail.begin_groups_refresh!
+
+    detail.complete_groups_refresh!([{ username: "newgroup", screenName: "New Group" }])
+
+    assert_not detail.groups_refresh_running?
+    assert_not detail.groups_refresh_failed?
+    assert_equal [{ "username" => "newgroup", "screenName" => "New Group" }], detail.managed_groups
+    assert_equal "testuser", detail.reload.freefeed_user_info["username"]
+  end
+
+  test "#fail_groups_refresh! should replace a running refresh with a failed one" do
+    detail = create(:access_token_detail)
+    detail.begin_groups_refresh!
+
+    detail.fail_groups_refresh!
+
+    assert_not detail.groups_refresh_running?
+    assert detail.groups_refresh_failed?
+  end
+
+  test "should reject an unknown refresh state" do
+    detail = create(:access_token_detail)
+
+    assert_raises ArgumentError do
+      detail.update!(groups_refresh_state: "bogus")
+    end
+  end
+
+  test "should reject an unknown refresh state at the database level" do
+    detail = create(:access_token_detail)
+
+    error = assert_raises ActiveRecord::StatementInvalid do
+      detail.class.connection.execute(
+        AccessTokenDetail.sanitize_sql(["UPDATE access_token_details SET groups_refresh_state = 99 WHERE id = ?", detail.id])
+      )
+    end
+
+    assert_match(/groups_refresh_state_valid/, error.message)
   end
 end
