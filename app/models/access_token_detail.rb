@@ -11,22 +11,20 @@ class AccessTokenDetail < ApplicationRecord
   # a perpetual in-progress state.
   GROUPS_REFRESH_STALE_AFTER = 15.minutes
 
+  enum :groups_refresh_state, { running: 0, failed: 1 }, prefix: :groups_refresh
+
   def group_names
     managed_groups.map { |group| group["username"] }.compact
   end
 
   def groups_refresh_running?
-    groups_refresh_state == "running" &&
+    super &&
       groups_refresh_requested_at.present? &&
       groups_refresh_requested_at > GROUPS_REFRESH_STALE_AFTER.ago
   end
 
-  def groups_refresh_failed?
-    groups_refresh_state == "failed"
-  end
-
   def begin_groups_refresh!
-    update!(groups_refresh_state: "running", groups_refresh_requested_at: Time.current)
+    update!(groups_refresh_state: :running, groups_refresh_requested_at: Time.current)
   end
 
   # Keys are stringified up front so readers in the same process see the shape
@@ -40,6 +38,6 @@ class AccessTokenDetail < ApplicationRecord
   end
 
   def fail_groups_refresh!
-    update!(groups_refresh_state: "failed", groups_refresh_requested_at: Time.current)
+    update!(groups_refresh_state: :failed, groups_refresh_requested_at: Time.current)
   end
 end

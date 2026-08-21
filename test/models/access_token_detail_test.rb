@@ -28,7 +28,7 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
   end
 
   test "#groups_refresh_running? should return false for a running state without a timestamp" do
-    detail = build(:access_token_detail, groups_refresh_state: "running", groups_refresh_requested_at: nil)
+    detail = build(:access_token_detail, groups_refresh_state: :running, groups_refresh_requested_at: nil)
     assert_not detail.groups_refresh_running?
   end
 
@@ -70,11 +70,21 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
     assert detail.groups_refresh_failed?
   end
 
+  test "should reject an unknown refresh state" do
+    detail = create(:access_token_detail)
+
+    assert_raises ArgumentError do
+      detail.update!(groups_refresh_state: "bogus")
+    end
+  end
+
   test "should reject an unknown refresh state at the database level" do
     detail = create(:access_token_detail)
 
     assert_raises ActiveRecord::StatementInvalid do
-      detail.update!(groups_refresh_state: "bogus")
+      detail.class.connection.execute(
+        "UPDATE access_token_details SET groups_refresh_state = 99 WHERE id = #{detail.id}"
+      )
     end
   end
 end

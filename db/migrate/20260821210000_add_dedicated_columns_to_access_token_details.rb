@@ -6,10 +6,10 @@ class AddDedicatedColumnsToAccessTokenDetails < ActiveRecord::Migration[8.0]
   def up
     add_column :access_token_details, :freefeed_user_info, :jsonb, default: {}, null: false
     add_column :access_token_details, :managed_groups, :jsonb, default: [], null: false
-    add_column :access_token_details, :groups_refresh_state, :string
+    add_column :access_token_details, :groups_refresh_state, :integer
     add_column :access_token_details, :groups_refresh_requested_at, :datetime
     add_check_constraint :access_token_details,
-                         "groups_refresh_state IN ('running', 'failed')",
+                         "groups_refresh_state IN (0, 1)",
                          name: "access_token_details_groups_refresh_state_valid"
 
     execute <<~SQL
