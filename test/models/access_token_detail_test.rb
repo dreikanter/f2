@@ -81,10 +81,12 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
   test "should reject an unknown refresh state at the database level" do
     detail = create(:access_token_detail)
 
-    assert_raises ActiveRecord::StatementInvalid do
+    error = assert_raises ActiveRecord::StatementInvalid do
       detail.class.connection.execute(
-        "UPDATE access_token_details SET groups_refresh_state = 99 WHERE id = #{detail.id}"
+        AccessTokenDetail.sanitize_sql(["UPDATE access_token_details SET groups_refresh_state = 99 WHERE id = ?", detail.id])
       )
     end
+
+    assert_match(/groups_refresh_state_valid/, error.message)
   end
 end
