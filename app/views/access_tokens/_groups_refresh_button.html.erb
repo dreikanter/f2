@@ -5,6 +5,6 @@
                 controller: "loading-button",
                 action: "turbo:submit-start->loading-button#start turbo:submit-end->loading-button#end"
               } do %>
-  <%= render RefreshButtonComponent.new(title: "Refresh groups", type: "submit", padding: "p-1.5",
+  <%= render RefreshButtonComponent.new(title: "Refresh groups", type: "submit",
                                         data: { key: "access_token.refresh-groups" }) %>
 <% end %>
