@@ -7,16 +7,19 @@ class TokenGroupsRefreshJob < ApplicationJob
 
   queue_as :default
 
-  def perform(access_token)
+  # refresh_id ties this run to the marker begin_groups_refresh! created, so a
+  # long-delayed run can't settle a newer refresh started after its marker went
+  # stale.
+  def perform(access_token, refresh_id)
     detail = access_token.access_token_detail
     return if detail.nil?
-    return detail.fail_groups_refresh! unless access_token.active?
+    return detail.fail_groups_refresh!(refresh_id) unless access_token.active?
 
     result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 1 })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 
     groups = access_token.build_client.managed_groups
-    detail.complete_groups_refresh!(groups)
+    detail.complete_groups_refresh!(groups, refresh_id)
     Rails.cache.write(
       access_token.groups_cache_key,
       groups.map { |group| group[:username] },
@@ -28,10 +31,10 @@ class TokenGroupsRefreshJob < ApplicationJob
     # The token can't even read its own groups — hand it to validation, which
     # owns disabling the token and notifying the user.
     TokenValidationJob.perform_later(access_token)
-    detail.fail_groups_refresh!
+    detail.fail_groups_refresh!(refresh_id)
   rescue StandardError => e
     Rails.error.report(e, context: { access_token_id: access_token.id })
-    detail.fail_groups_refresh!
+    detail.fail_groups_refresh!(refresh_id)
   end
 
   private
@@ -39,6 +42,7 @@ class TokenGroupsRefreshJob < ApplicationJob
   # Leave a settled marker behind when throttle retries run out, so polling
   # pages and future refreshes don't see a refresh that will never finish.
   def on_rate_limit_exhausted(_error)
-    arguments.first.access_token_detail&.fail_groups_refresh!
+    access_token, refresh_id = arguments
+    access_token.access_token_detail&.fail_groups_refresh!(refresh_id)
   end
 end

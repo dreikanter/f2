@@ -79,10 +79,33 @@ class AccessTokenDetailTest < ActiveSupport::TestCase
 
   test "#begin_groups_refresh! should save a running marker on a new record" do
     detail = build(:access_token_detail, data: nil)
-    detail.begin_groups_refresh!
+    refresh_id = detail.begin_groups_refresh!
 
     assert detail.persisted?
     assert detail.groups_refresh_running?
+    assert refresh_id.present?
+  end
+
+  test "#complete_groups_refresh! should keep a newer marker but store the groups" do
+    detail = create(:access_token_detail)
+    stale_id = detail.begin_groups_refresh!
+    detail.begin_groups_refresh!
+
+    detail.complete_groups_refresh!([{ username: "newgroup" }], stale_id)
+
+    assert detail.groups_refresh_running?
+    assert_equal ["newgroup"], detail.group_names
+  end
+
+  test "#fail_groups_refresh! should not touch a newer marker" do
+    detail = create(:access_token_detail)
+    stale_id = detail.begin_groups_refresh!
+    detail.begin_groups_refresh!
+
+    detail.fail_groups_refresh!(stale_id)
+
+    assert detail.groups_refresh_running?
+    assert_not detail.groups_refresh_failed?
   end
 
   test "#complete_groups_refresh! should store stringified groups and clear the marker" do
