@@ -6,11 +6,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
   end
 
   def detail
-    @detail ||= create(:access_token_detail, access_token: access_token)
-  end
-
-  def refresh_id
-    @refresh_id ||= detail.begin_groups_refresh!
+    @detail ||= create(:access_token_detail, access_token: access_token).tap(&:begin_groups_refresh!)
   end
 
   def stub_managed_groups(status: 200, body: [{ username: "newgroup" }].to_json)
@@ -22,7 +18,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     detail
     stub_managed_groups
 
-    TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+    TokenGroupsRefreshJob.perform_now(access_token)
 
     detail.reload
     assert_equal ["newgroup"], detail.group_names
@@ -37,51 +33,23 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
     cache = ActiveSupport::Cache::MemoryStore.new
     Rails.stub(:cache, cache) do
-      TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+      TokenGroupsRefreshJob.perform_now(access_token)
     end
 
     assert_equal ["newgroup"], cache.read(access_token.groups_cache_key)
   end
 
   test "#perform should do nothing when the token has no detail" do
-    TokenGroupsRefreshJob.perform_now(access_token, "orphaned-refresh")
+    TokenGroupsRefreshJob.perform_now(access_token)
 
     assert_not_requested :get, /managedGroups/
-  end
-
-  test "#perform should not settle a newer refresh's marker on success" do
-    detail
-    stale_id = refresh_id
-    newer_id = detail.begin_groups_refresh!
-    stub_managed_groups
-
-    TokenGroupsRefreshJob.perform_now(access_token, stale_id)
-
-    detail.reload
-    assert detail.groups_refresh_running?, "newer refresh #{newer_id} should still be running"
-    assert_equal ["newgroup"], detail.group_names
-  end
-
-  test "#perform should not fail a newer refresh's marker on error" do
-    detail
-    stale_id = refresh_id
-    detail.begin_groups_refresh!
-    stub_managed_groups(status: 500, body: "Internal Server Error")
-
-    Rails.error.stub(:report, ->(*, **) { }) do
-      TokenGroupsRefreshJob.perform_now(access_token, stale_id)
-    end
-
-    detail.reload
-    assert detail.groups_refresh_running?
-    assert_not detail.groups_refresh_failed?
   end
 
   test "#perform should mark the refresh failed for an inactive token" do
     detail
     access_token.inactive!
 
-    TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+    TokenGroupsRefreshJob.perform_now(access_token)
 
     assert detail.reload.groups_refresh_failed?
     assert_not_requested :get, /managedGroups/
@@ -92,7 +60,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     stub_managed_groups(status: 401, body: "Unauthorized")
 
     assert_enqueued_with(job: TokenValidationJob, args: [access_token]) do
-      TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+      TokenGroupsRefreshJob.perform_now(access_token)
     end
 
     assert detail.reload.groups_refresh_failed?
@@ -104,7 +72,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
     reported = nil
     Rails.error.stub(:report, ->(error, **) { reported = error }) do
-      TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+      TokenGroupsRefreshJob.perform_now(access_token)
     end
 
     assert_kind_of FreefeedClient::Error, reported
@@ -116,7 +84,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     drain_freefeed(access_token.rate_limit_subject, :get, remaining: 0)
 
     assert_enqueued_with(job: TokenGroupsRefreshJob) do
-      TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+      TokenGroupsRefreshJob.perform_now(access_token)
     end
 
     assert detail.reload.groups_refresh_running?
@@ -130,7 +98,7 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
     reported = []
     assert_enqueued_with(job: TokenGroupsRefreshJob) do
       Rails.error.stub(:report, ->(*args, **) { reported << args }) do
-        TokenGroupsRefreshJob.perform_now(access_token, refresh_id)
+        TokenGroupsRefreshJob.perform_now(access_token)
       end
     end
 
@@ -140,10 +108,9 @@ class TokenGroupsRefreshJobTest < ActiveJob::TestCase
 
   test "#perform should mark the refresh failed when throttle retries are exhausted" do
     detail
-    stale_id = refresh_id
     drain_freefeed(access_token.rate_limit_subject, :get, remaining: 0)
 
-    job = TokenGroupsRefreshJob.new(access_token, stale_id)
+    job = TokenGroupsRefreshJob.new(access_token)
     job.executions = RateLimited::MAX_ATTEMPTS
 
     Rails.error.stub(:report, ->(*, **) { }) do

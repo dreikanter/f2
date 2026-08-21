@@ -11,8 +11,8 @@ class AccessTokens::GroupsRefreshesController < ApplicationController
     authorize access_token, :refresh?
 
     unless detail.groups_refresh_running?
-      refresh_id = detail.begin_groups_refresh!
-      TokenGroupsRefreshJob.perform_later(access_token, refresh_id)
+      detail.begin_groups_refresh!
+      TokenGroupsRefreshJob.perform_later(access_token)
     end
 
     render_fragment(refreshing: true)

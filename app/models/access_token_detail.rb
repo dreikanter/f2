@@ -28,44 +28,22 @@ class AccessTokenDetail < ApplicationRecord
     groups_refresh["state"] == "failed"
   end
 
-  # Returns the new marker's id; the settle calls take it back so a job can
-  # only settle the refresh it was enqueued for. A delayed job can outlive its
-  # marker's staleness window, and without the id check it would clear or fail
-  # the marker of a newer refresh that is still running.
   def begin_groups_refresh!
-    refresh_id = SecureRandom.hex(8)
-    marker = { "id" => refresh_id, "state" => "running", "requested_at" => Time.current.iso8601 }
-    update_data! { |data| data.merge("groups_refresh" => marker) }
-    refresh_id
+    update_data! { |data| data.merge("groups_refresh" => { "state" => "running", "requested_at" => Time.current.iso8601 }) }
   end
 
   # Keys are stringified up front so readers in the same process see the shape
-  # a jsonb round-trip would produce. The fetched groups are stored even when a
-  # newer refresh owns the marker — they're fresh, and the newer job will
-  # overwrite them when it settles.
-  def complete_groups_refresh!(groups, refresh_id = nil)
+  # a jsonb round-trip would produce.
+  def complete_groups_refresh!(groups)
     stored = groups.map { |group| group.deep_stringify_keys }
-    update_data! do |data|
-      merged = data.merge("managed_groups" => stored)
-      settles_current_refresh?(merged, refresh_id) ? merged.except("groups_refresh") : merged
-    end
+    update_data! { |data| data.merge("managed_groups" => stored).except("groups_refresh") }
   end
 
-  def fail_groups_refresh!(refresh_id = nil)
-    update_data! do |data|
-      next data unless settles_current_refresh?(data, refresh_id)
-
-      data.merge("groups_refresh" => { "id" => refresh_id, "state" => "failed", "requested_at" => Time.current.iso8601 }.compact)
-    end
+  def fail_groups_refresh!
+    update_data! { |data| data.merge("groups_refresh" => { "state" => "failed", "requested_at" => Time.current.iso8601 }) }
   end
 
   private
-
-  # A nil refresh_id settles unconditionally (trusted, non-job callers); a
-  # given id only settles the marker it created.
-  def settles_current_refresh?(data, refresh_id)
-    refresh_id.nil? || data.dig("groups_refresh", "id") == refresh_id
-  end
 
   def groups_refresh
     (data && data["groups_refresh"]) || {}

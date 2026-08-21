@@ -24,7 +24,7 @@ class AccessTokens::GroupsRefreshesControllerTest < ActionDispatch::IntegrationT
     detail
     sign_in_as user
 
-    assert_enqueued_with(job: TokenGroupsRefreshJob, args: ->(args) { args.first == access_token }) do
+    assert_enqueued_with(job: TokenGroupsRefreshJob, args: [access_token]) do
       post access_token_groups_refresh_path(access_token)
     end
 
