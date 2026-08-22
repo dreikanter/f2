@@ -202,7 +202,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_not access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
   end
 
-  test "#call should leave scopes unknown for a session token" do
+  test "#call should record a session token as unrestricted" do
     stub_successful_account_calls
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(
@@ -218,16 +218,18 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
   end
 
-  test "#call should activate the token when the scopes request fails" do
+  test "#call should leave validation unfinished when the scopes request fails" do
     stub_successful_account_calls
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(status: 500, body: "Internal Server Error")
 
-    AccessTokenValidationService.new(access_token).call
+    assert_raises(FreefeedClient::Error) do
+      AccessTokenValidationService.new(access_token).call
+    end
 
     access_token.reload
-    assert access_token.active?
-    assert_nil access_token.scopes
+    assert access_token.validating?, "the job retries; the token must not settle"
+    assert_not_requested :get, "#{access_token.host}/v4/users/whoami"
   end
 
   test "#call should skip the account calls when the token lacks read-my-info" do
@@ -292,27 +294,17 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_equal "disabled", feed.reload.state
   end
 
-  test "#call should keep the token active when it just can't read its own scopes" do
-    stub_successful_account_calls
-    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
-      .to_return(status: 401, body: { err: "token has no access to this API method" }.to_json)
-
-    AccessTokenValidationService.new(access_token).call
-
-    access_token.reload
-    assert access_token.active?
-    assert_nil access_token.scopes
-  end
-
-  test "#call should reopen the gate when a revalidation can't read scopes" do
-    access_token.update!(scopes: ["read-my-info"])
+  test "#call should keep the recorded scopes when a revalidation can't read them" do
+    access_token.update!(scopes: [AccessToken::READ_MY_INFO_SCOPE])
     stub_successful_account_calls
     stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
       .to_return(status: 500, body: "Internal Server Error")
 
-    AccessTokenValidationService.new(access_token).call
+    assert_raises(FreefeedClient::Error) do
+      AccessTokenValidationService.new(access_token).call
+    end
 
-    assert_nil access_token.reload.scopes
+    assert_equal [AccessToken::READ_MY_INFO_SCOPE], access_token.reload.scopes
   end
 
   test "#call should deactivate token on invalid token error" do

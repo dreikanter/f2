@@ -90,8 +90,8 @@ class AccessToken < ApplicationRecord
   end
 
   # FreeFeed fixes an app token's scopes when it issues the token, so a missing
-  # scope is permanent. Unknown scopes (nil) stay ungated: those tokens either
-  # predate this column or are session tokens, which are unrestricted.
+  # scope is permanent. nil means a session token, which carries unrestricted
+  # access and so allows everything.
   def allows_scope?(scope)
     scopes.nil? || scopes.include?(scope)
   end

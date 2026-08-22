@@ -57,9 +57,8 @@ class AccessTokenValidationService
   end
 
   # whoami and managedGroups both sit behind read-my-info. Without it they can
-  # only be refused, so there is nothing to learn from asking. Unknown scopes
-  # (nil) still go ahead, since a session token reports none and can do
-  # everything.
+  # only be refused, so there is nothing to learn from asking. nil means a
+  # session token, which is unrestricted.
   def scopes_cover_validation?(scopes)
     scopes.nil? || scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
   end
@@ -79,21 +78,16 @@ class AccessTokenValidationService
     freefeed_client.managed_groups
   end
 
-  # A failure here must not sink an otherwise good validation. Falling back to
-  # nil reopens the gate, so callers attempt the call and handle any rejection.
-  # Keeping the previous list instead would gate wrongly once the token secret
-  # is replaced with one carrying different scopes.
+  # Errors are left to #call. A failure here means we don't know what the token
+  # can do, and guessing would either gate a capable token or clear the gate for
+  # one that can't. The route needs no scopes, so a 401 means the token is dead
+  # rather than under-permissioned, and anything else is transient: validation
+  # stays unfinished and the job retries.
+  #
+  # nil is a real answer, not a gap. It comes only from a session token, which
+  # FreeFeed rejects on this app-token-only route and which holds unrestricted
+  # access.
   def fetch_scopes
     freefeed_client.app_token_info&.fetch(:scopes)
-  rescue FreefeedClient::InvalidTokenError
-    # The one 401 that is not a scope-lookup failure. FreeFeed raises it only
-    # for "inactive or expired token", so let it reach the handler that disables
-    # the token. A token merely lacking the scope also answers 401, but as a
-    # plain UnauthorizedError. That one stays swallowed below, or it would take
-    # down every feed on a token that publishes perfectly well.
-    raise
-  rescue FreefeedClient::Error => e
-    Rails.error.report(e, context: { access_token_id: access_token.id })
-    nil
   end
 end
