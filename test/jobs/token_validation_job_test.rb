@@ -9,13 +9,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
     @access_token ||= create(:access_token, user: user)
   end
 
-  test ".perform_now should reserve two GETs and reschedule when throttled" do
+  test ".perform_now should reserve three GETs and reschedule when throttled" do
     subject = access_token.rate_limit_subject
 
     freeze_time do
-      # Leave one GET token — short of validation's cost of 2, so it throttles
-      # before either GET goes out.
-      drain_freefeed(subject, :get, remaining: 1)
+      # Leave two GET tokens — short of validation's cost of 3, so it throttles
+      # before any of the GETs goes out.
+      drain_freefeed(subject, :get, remaining: 2)
 
       assert_enqueued_with(job: TokenValidationJob) do
         TokenValidationJob.perform_now(access_token)
@@ -23,6 +23,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     end
 
     assert_not_requested :get, "#{access_token.host}/v4/users/whoami"
+    assert_not_requested :get, "#{access_token.host}/v2/app-tokens/current"
   end
 
   test ".perform_now should reset token to pending when throttle retries are exhausted" do
