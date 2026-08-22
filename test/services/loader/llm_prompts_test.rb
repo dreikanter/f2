@@ -27,6 +27,22 @@ class Loader::LlmPromptsTest < ActiveSupport::TestCase
     assert_not_includes Loader::LlmPrompts::GATHER_SYSTEM, Loader::LlmPrompts::OUTPUT_CONTRACT
   end
 
+  # Structured-output modes are advisory on some providers, so the envelope has
+  # to be stated in the prompt too — a model that only reads this text otherwise
+  # replies with a bare array, which fails schema validation.
+  test "the output contract should require the items envelope" do
+    contract = Loader::LlmPrompts::OUTPUT_CONTRACT
+
+    assert_match(/single JSON object whose only key is "items"/, contract)
+    assert_match(/bare array/, contract)
+  end
+
+  # "Return no items" reads as "reply with nothing structured" to a model that
+  # never sees the schema; the empty envelope is the shape that validates.
+  test "the structure prompt should ask for an empty items array when nothing was gathered" do
+    assert_match(/return the object with an empty items array/, Loader::LlmPrompts::STRUCTURE_SYSTEM)
+  end
+
   test "the output contract should describe the digest null-source regime and forbid uids" do
     contract = Loader::LlmPrompts::OUTPUT_CONTRACT
 
