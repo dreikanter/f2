@@ -94,6 +94,39 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "header [role='menu']", count: 0
   end
 
+  test "#show should warn when the token can't look up subscriber counts" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user, scopes: ["read-my-info", "manage-posts"])
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-subscriber-permission']" do
+      assert_select "a[href=?]", active.token_creation_url
+      assert_select "a[href=?]", edit_access_token_path(active)
+    end
+  end
+
+  test "#show should not warn when the token can look up subscriber counts" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user, scopes: AccessToken::TOKEN_SCOPES)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-subscriber-permission']", count: 0
+  end
+
+  test "#show should not warn when the token's permissions are unknown" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user, scopes: nil)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-subscriber-permission']", count: 0
+  end
+
   test "#show should render Associated Feeds section when token has feeds" do
     sign_in_as user
     active = create(:access_token, :active, user: user)

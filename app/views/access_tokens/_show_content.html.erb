@@ -45,6 +45,20 @@
     <span>Token is valid and ready to use</span>
   <% end %>
 
+  <% unless access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE) %>
+    <%= render AlertComponent.new(variant: :warning, icon: "triangle-alert", data: { key: "access_token.missing-subscriber-permission" }) do %>
+      <p>This token can't look up subscriber counts, so feeds using it won't show how many people follow their group. Everything else works as usual.</p>
+      <p>
+        A token's permissions are fixed when it's created, so this one can't be updated.
+        <%= link_to "Create a new token", access_token.token_creation_url,
+                    target: "_blank",
+                    rel: "noopener",
+                    class: "font-medium underline underline-offset-4" %>
+        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
+      </p>
+    <% end %>
+  <% end %>
+
   <% if feed_id.present? %>
     <%= link_to "Continue setting up your feed",
                 edit_feed_path(feed_id),
