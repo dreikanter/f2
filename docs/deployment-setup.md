@@ -225,13 +225,12 @@ The workflows read these repository secrets. Per-environment values carry a
 | `RAILS_MASTER_KEY_STAGING` | staging | written to `config/credentials/staging.key` |
 | `RAILS_MASTER_KEY_PRODUCTION` | production | written to `config/credentials/production.key` |
 | `SSH_PRIVATE_KEY_STAGING` | staging | SSH key for `dev-origin.fffeeder.com` |
-| `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
+| `SSH_PRIVATE_KEY_PRODUCTION` | production | SSH key for `app-origin.fffeeder.com` |
 | `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
 
-`PRODUCTION_SSH_PRIVATE_KEY` is the one holdout from the convention. It keeps
-the old prefix form until the renamed secret exists, so don't create
-`SSH_PRIVATE_KEY_PRODUCTION` and expect the production workflow to pick it up —
-rename the workflow reference and the secret together.
+Both SSH secrets now follow the `_STAGING` / `_PRODUCTION` convention. The old
+prefix-form names (`STAGING_SSH_PRIVATE_KEY`, `PRODUCTION_SSH_PRIVATE_KEY`) are
+no longer read by any workflow and can be deleted from the repository secrets.
 
 ## Database
 

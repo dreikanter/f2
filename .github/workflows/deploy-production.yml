@@ -52,13 +52,30 @@ jobs:
 
       - name: Configure SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan app-origin.fffeeder.com >> ~/.ssh/known_hosts
+
+          # net-ssh, which Kamal uses, silently skips a key it cannot load and
+          # falls back to password auth, failing far from the cause.
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 </dev/null >/dev/null 2>&1; then
+            echo "::error::SSH_PRIVATE_KEY_PRODUCTION is not a usable private key: either malformed, or passphrase-protected (CI has no way to supply a passphrase)."
+            exit 1
+          fi
+
+          echo "Deploy key: $(ssh-keygen -y -f ~/.ssh/id_ed25519 | ssh-keygen -lf -)"
+
+          # BatchMode blocks that fallback, so a refused key reports as an auth
+          # failure rather than a prompt against a runner with no TTY.
+          if ! ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
+                   root@app-origin.fffeeder.com true; then
+            echo "::error::app-origin.fffeeder.com rejected the deploy key. Compare the fingerprint above against 'ssh-keygen -lf ~/.ssh/authorized_keys' on the host."
+            exit 1
+          fi
 
       - name: Write Rails master key
         env:
