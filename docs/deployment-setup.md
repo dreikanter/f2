@@ -361,6 +361,62 @@ Common issues:
 - PostgreSQL 18 complains about `/var/lib/postgresql/data` — recreate the accessory after pulling the config that mounts `data:/var/lib/postgresql`.
 - `/up` returns `403` with `Blocked hosts` — Rails host authorization is blocking the health check; `/up` should be excluded in production config.
 - platform mismatch — confirm the server is `x86_64` and `builder.arch` is `amd64`.
+- `unable to load certificate` — see below.
+
+### `unable to load certificate`
+
+```text
+ERROR Failed to boot web on app-origin.fffeeder.com
+INFO First web container is unhealthy on app-origin.fffeeder.com, not booting any other roles
+ERROR (SSHKit::Command::Failed): docker stderr: Error: unable to load certificate
+```
+
+The container is fine — this is the `kamal-proxy deploy` step failing after the
+health check passes, so the app never gets registered for its host and the
+public domain serves kamal-proxy's own blue 404 page. (Ours is white; a blue
+404 means no target is registered.)
+
+kamal-proxy collapses every certificate problem into that one message, but logs
+the real reason inside its own container:
+
+```bash
+bin/kamal proxy logs -d production --grep "TLS certificate"
+```
+
+That prints, for example, `open /home/kamal-proxy/.apps-config/...: permission
+denied` or `tls: private key does not match public key`. Causes, in the order
+worth checking:
+
+1. **`CERTIFICATE_PEM` and `PRIVATE_KEY_PEM` are not the same pair.** Cloudflare
+   shows the private key only once, and offers both RSA and ECC keys, so it's
+   easy to end up with a cert from one and a key from another. Verify before
+   deploying:
+
+   ```bash
+   diff <(openssl x509 -noout -pubkey <<<"$CF_ORIGIN_CERT") \
+        <(openssl pkey -pubout <<<"$CF_ORIGIN_KEY") && echo "pair matches"
+   ```
+
+2. **The PEM lost its line breaks.** `printenv CF_ORIGIN_CERT | head -1` must be
+   exactly `-----BEGIN CERTIFICATE-----`, and the value must span many lines. A
+   one-line blob with literal `\n` is not a PEM. (A *missing trailing* newline
+   is fine.)
+
+3. **kamal-proxy can't see the files.** Kamal uploads them to the host and
+   points the proxy at the mounted copy:
+
+   ```bash
+   ssh root@app-origin.fffeeder.com \
+     'ls -l /root/.kamal/proxy/apps-config/f2-production/tls/web/'
+   ssh root@app-origin.fffeeder.com \
+     'docker exec kamal-proxy ls -l /home/kamal-proxy/.apps-config/f2-production/tls/web/'
+   ```
+
+   If the host has them but the container doesn't, the proxy is missing the
+   apps-config mount: `bin/kamal proxy reboot -d production`.
+
+Fix the cert, then re-run `bin/kamal deploy -d production`. Accessories and the
+database survive the failed run, so a full `setup` isn't needed.
 
 ## Useful commands
 
