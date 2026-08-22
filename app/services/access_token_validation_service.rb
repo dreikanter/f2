@@ -9,12 +9,14 @@ class AccessTokenValidationService
     access_token.validating! unless access_token.validating?
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
+    scopes = fetch_scopes
 
     access_token.with_lock do
       access_token.update!(
         status: :active,
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
+        scopes: scopes,
         last_used_at: Time.current
       )
 
@@ -55,5 +57,16 @@ class AccessTokenValidationService
 
   def fetch_managed_groups
     freefeed_client.managed_groups
+  end
+
+  # Scopes only gate optional calls, never publishing, so a failure here must
+  # not sink an otherwise good validation. Falling back to nil re-opens the
+  # gate: callers attempt the call and handle the rejection, which beats
+  # gating on a stale list after the token secret was swapped for a new one.
+  def fetch_scopes
+    freefeed_client.app_token_info&.fetch(:scopes)
+  rescue FreefeedClient::Error => e
+    Rails.error.report(e, context: { access_token_id: access_token.id })
+    nil
   end
 end

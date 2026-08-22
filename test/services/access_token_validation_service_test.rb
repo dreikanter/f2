@@ -9,6 +9,18 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     @access_token ||= create(:access_token, user: user, status: :validating)
   end
 
+  def stub_app_token_info(scopes: AccessToken::TOKEN_SCOPES)
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 200, body: { token: { id: "token-1", scopes: scopes } }.to_json)
+  end
+
+  def stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v4/users/whoami")
+      .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
+    stub_request(:get, "#{access_token.host}/v4/managedGroups")
+      .to_return(status: 200, body: [].to_json)
+  end
+
   test "#call should activate token on successful validation" do
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
@@ -44,12 +56,15 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
         ].to_json
       )
 
+    stub_app_token_info
+
     service = AccessTokenValidationService.new(access_token)
     service.call
 
     assert_equal "active", access_token.reload.status
     assert_equal "testuser", access_token.owner
     assert_equal "user123", access_token.freefeed_user_id
+    assert_equal AccessToken::TOKEN_SCOPES, access_token.scopes
     assert_not_nil access_token.last_used_at
   end
 
@@ -86,6 +101,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
           { id: "group1", username: "group1", screenName: "Group 1" }
         ].to_json
       )
+
+    stub_app_token_info
 
     service = AccessTokenValidationService.new(access_token)
     assert_nil access_token.access_token_detail
@@ -133,6 +150,8 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
         body: [].to_json
       )
 
+    stub_app_token_info
+
     service = AccessTokenValidationService.new(access_token)
     service.call
 
@@ -149,6 +168,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .to_return(status: 200, body: [].to_json)
+    stub_app_token_info
 
     AccessTokenValidationService.new(access_token).call
 
@@ -165,10 +185,60 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
       .to_return(status: 200, body: { users: { id: "user123", username: "testuser" } }.to_json)
     stub_request(:get, "#{access_token.host}/v4/managedGroups")
       .to_return(status: 200, body: [].to_json)
+    stub_app_token_info
 
     AccessTokenValidationService.new(access_token).call
 
     assert_not detail.reload.groups_refresh_failed?
+  end
+
+  test "#call should persist a partial scope list" do
+    stub_successful_account_calls
+    stub_app_token_info(scopes: ["read-my-info", "manage-posts"])
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert_equal ["read-my-info", "manage-posts"], access_token.reload.scopes
+    assert_not access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#call should leave scopes unknown for a session token" do
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(
+        status: 400,
+        body: { err: "This method is only available with the application token" }.to_json
+      )
+
+    AccessTokenValidationService.new(access_token).call
+
+    access_token.reload
+    assert access_token.active?
+    assert_nil access_token.scopes
+    assert access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#call should activate the token when the scopes request fails" do
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    AccessTokenValidationService.new(access_token).call
+
+    access_token.reload
+    assert access_token.active?
+    assert_nil access_token.scopes
+  end
+
+  test "#call should reopen the gate when a revalidation can't read scopes" do
+    access_token.update!(scopes: ["read-my-info"])
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 500, body: "Internal Server Error")
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert_nil access_token.reload.scopes
   end
 
   test "#call should deactivate token on invalid token error" do

@@ -17,15 +17,24 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
-  TOKEN_SCOPES = %w[
-    read-my-info
-    read-users-info
-    manage-posts
+  # Lets Feeder read a group's subscriber count.
+  READ_USERS_INFO_SCOPE = "read-users-info".freeze
+
+  TOKEN_SCOPES = [
+    "read-my-info",
+    READ_USERS_INFO_SCOPE,
+    "manage-posts"
   ].freeze
 
   def self.token_url(domain)
     "https://#{domain}/settings/app-tokens/create?scopes=#{TOKEN_SCOPES.join('%20')}"
   end
+
+  # Feeds whose token may hold the scope — both the granted case and the
+  # unknown one, matching #allows_scope?.
+  scope :allowing_scope, ->(scope) {
+    where("scopes IS NULL OR scopes @> ARRAY[?]::varchar[]", scope)
+  }
 
   # A user can create access token record associated with a known
   # FreeFeed instances only (see Settings::AccessTokensController).
@@ -72,6 +81,20 @@ class AccessToken < ApplicationRecord
 
   def build_client
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
+  end
+
+  # FreeFeed fixes an app token's scopes when it's issued and offers no way to
+  # widen them later, so a missing scope is permanent for this token. Unknown
+  # scopes (nil) stay ungated: the token predates this column or is a session
+  # token, which has unrestricted access.
+  def allows_scope?(scope)
+    scopes.nil? || scopes.include?(scope)
+  end
+
+  # Where the user goes to issue a replacement token on this token's instance,
+  # pre-asking for every scope Feeder uses.
+  def token_creation_url
+    self.class.token_url(host_domain)
   end
 
   # Cache of this token's postable group names, shared by the feed form's

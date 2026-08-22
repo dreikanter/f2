@@ -419,4 +419,51 @@ class AccessTokenTest < ActiveSupport::TestCase
 
     assert_nil token.group_url("testgroup")
   end
+
+  test "#allows_scope? should be true when the token holds the scope" do
+    token = build(:access_token, scopes: AccessToken::TOKEN_SCOPES)
+
+    assert token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#allows_scope? should be false when the token lacks the scope" do
+    token = build(:access_token, scopes: ["read-my-info", "manage-posts"])
+
+    assert_not token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#allows_scope? should be false for a token with no scopes at all" do
+    token = build(:access_token, scopes: [])
+
+    assert_not token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#allows_scope? should be true when scopes are unknown" do
+    token = build(:access_token, scopes: nil)
+
+    assert token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test ".allowing_scope should match the tokens #allows_scope? accepts" do
+    granted = create(:access_token, scopes: AccessToken::TOKEN_SCOPES)
+    unknown = create(:access_token, scopes: nil)
+    lacking = create(:access_token, scopes: ["read-my-info", "manage-posts"])
+    empty = create(:access_token, scopes: [])
+
+    matched = AccessToken.allowing_scope(AccessToken::READ_USERS_INFO_SCOPE)
+
+    assert_includes matched, granted
+    assert_includes matched, unknown
+    assert_not_includes matched, lacking
+    assert_not_includes matched, empty
+  end
+
+  test "#token_creation_url should request every scope on the token's own instance" do
+    token = build(:access_token, host: "https://candy.freefeed.net")
+
+    assert_equal AccessToken.token_url("candy.freefeed.net"), token.token_creation_url
+    AccessToken::TOKEN_SCOPES.each do |scope|
+      assert_includes token.token_creation_url, scope
+    end
+  end
 end

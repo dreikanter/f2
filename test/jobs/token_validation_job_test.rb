@@ -146,6 +146,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
+    stub_request(:get, "https://custom.freefeed.com/v2/app-tokens/current")
+      .to_return(
+        status: 200,
+        body: { token: { id: "token-1", scopes: AccessToken::TOKEN_SCOPES } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     TokenValidationJob.perform_now(custom_token)
 
     custom_token.reload
@@ -248,6 +255,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(
+        status: 200,
+        body: { token: { id: "token-1", scopes: AccessToken::TOKEN_SCOPES } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     # First run raises — token stays validating
     assert_raises(StandardError) do
       TokenValidationJob.perform_now(access_token)
@@ -294,6 +308,13 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .to_return(
         status: 200,
         body: [].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(
+        status: 200,
+        body: { token: { id: "token-1", scopes: AccessToken::TOKEN_SCOPES } }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
   end
