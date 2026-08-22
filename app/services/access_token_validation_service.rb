@@ -65,6 +65,13 @@ class AccessTokenValidationService
   # gating on a stale list after the token secret was swapped for a new one.
   def fetch_scopes
     freefeed_client.app_token_info&.fetch(:scopes)
+  rescue FreefeedClient::InvalidTokenError
+    # The one 401 that isn't a scope-lookup failure: FreeFeed raises this only
+    # for "inactive or expired token", so let it reach the handler that disables
+    # the token. A token merely lacking the scope answers 401 too, but as a
+    # plain UnauthorizedError — swallowed below, or it would take down every
+    # feed on a token that publishes perfectly well.
+    raise
   rescue FreefeedClient::Error => e
     Rails.error.report(e, context: { access_token_id: access_token.id })
     nil

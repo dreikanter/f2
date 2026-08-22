@@ -230,6 +230,32 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_nil access_token.scopes
   end
 
+  test "#call should disable the token when the scopes request reports it dead" do
+    access_token.update!(status: :active)
+    feed = create(:feed, user: user, access_token: access_token, state: :enabled)
+    access_token.update!(status: :validating)
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert access_token.reload.inactive?
+    assert_equal "disabled", feed.reload.state
+  end
+
+  test "#call should keep the token active when it just can't read its own scopes" do
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 401, body: { err: "token has no access to this API method" }.to_json)
+
+    AccessTokenValidationService.new(access_token).call
+
+    access_token.reload
+    assert access_token.active?
+    assert_nil access_token.scopes
+  end
+
   test "#call should reopen the gate when a revalidation can't read scopes" do
     access_token.update!(scopes: ["read-my-info"])
     stub_successful_account_calls
