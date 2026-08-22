@@ -203,6 +203,10 @@ config/credentials/production.key
 
 The `.key` files are gitignored. Store and share them through the team password manager.
 
+`.kamal/hooks/pre-connect` checks that `CERTIFICATE_PEM` and `PRIVATE_KEY_PEM`
+resolved to real PEM blobs before a `setup`, `deploy`, `redeploy`, or `rollback`
+starts, so a missing export fails in seconds instead of minutes into the run.
+
 ## Deploying from GitHub Actions
 
 Both destinations can be deployed from the Actions tab. **Deploy Staging** also
@@ -371,52 +375,45 @@ INFO First web container is unhealthy on app-origin.fffeeder.com, not booting an
 ERROR (SSHKit::Command::Failed): docker stderr: Error: unable to load certificate
 ```
 
-The container is fine — this is the `kamal-proxy deploy` step failing after the
-health check passes, so the app never gets registered for its host and the
-public domain serves kamal-proxy's own blue 404 page. (Ours is white; a blue
-404 means no target is registered.)
+The container is fine. This is `kamal-proxy deploy` failing *after* the health
+check passes, so the app never gets registered for its host and the public
+domain serves kamal-proxy's own blue 404 page. (Ours is white — a blue 404
+means no target is registered.)
 
 kamal-proxy collapses every certificate problem into that one message, but logs
-the real reason inside its own container:
+the real reason in its own container:
 
 ```bash
 bin/kamal proxy logs -d production --grep "TLS certificate"
 ```
 
-That prints, for example, `open /home/kamal-proxy/.apps-config/...: permission
-denied` or `tls: private key does not match public key`. Causes, in the order
-worth checking:
+| Logged error | Cause |
+| --- | --- |
+| `failed to find any PEM data in certificate input` | `cert.pem` is empty or isn't PEM |
+| `...did find a private key; PEM inputs may have been switched` | cert and key are swapped |
+| `private key does not match public key` | cert and key are from different pairs |
+| `no such file or directory` / `permission denied` | the proxy can't read the uploaded file |
 
-1. **`CERTIFICATE_PEM` and `PRIVATE_KEY_PEM` are not the same pair.** Cloudflare
-   shows the private key only once, and offers both RSA and ECC keys, so it's
-   easy to end up with a cert from one and a key from another. Verify before
-   deploying:
+Check what actually landed on the host, and what the proxy sees through its
+mount:
 
-   ```bash
-   diff <(openssl x509 -noout -pubkey <<<"$CF_ORIGIN_CERT") \
-        <(openssl pkey -pubout <<<"$CF_ORIGIN_KEY") && echo "pair matches"
-   ```
+```bash
+ssh root@app-origin.fffeeder.com \
+  'wc -c /root/.kamal/proxy/apps-config/f2-production/tls/web/*.pem'
+ssh root@app-origin.fffeeder.com \
+  'docker exec kamal-proxy ls -l /home/kamal-proxy/.apps-config/f2-production/tls/web/'
+```
 
-2. **The PEM lost its line breaks.** `printenv CF_ORIGIN_CERT | head -1` must be
-   exactly `-----BEGIN CERTIFICATE-----`, and the value must span many lines. A
-   one-line blob with literal `\n` is not a PEM. (A *missing trailing* newline
-   is fine.)
+A zero-byte `cert.pem` means `CF_ORIGIN_CERT` was empty in the shell that ran
+the deploy. The `|| { echo ...; exit 1; }` guards in `.kamal/secrets*` do **not**
+prevent this: Kamal evaluates each `$(...)` with backticks and ignores the exit
+status, so a failed guard yields an empty secret and the deploy carries on,
+uploading an empty certificate. `.kamal/hooks/pre-connect` now catches that
+before the build starts. If the host has the files but the container doesn't,
+the proxy is missing its apps-config mount — `bin/kamal proxy reboot -d production`.
 
-3. **kamal-proxy can't see the files.** Kamal uploads them to the host and
-   points the proxy at the mounted copy:
-
-   ```bash
-   ssh root@app-origin.fffeeder.com \
-     'ls -l /root/.kamal/proxy/apps-config/f2-production/tls/web/'
-   ssh root@app-origin.fffeeder.com \
-     'docker exec kamal-proxy ls -l /home/kamal-proxy/.apps-config/f2-production/tls/web/'
-   ```
-
-   If the host has them but the container doesn't, the proxy is missing the
-   apps-config mount: `bin/kamal proxy reboot -d production`.
-
-Fix the cert, then re-run `bin/kamal deploy -d production`. Accessories and the
-database survive the failed run, so a full `setup` isn't needed.
+Fix the secrets, then re-run `bin/kamal deploy -d production`. Accessories and
+the database survive the failed run, so a full `setup` isn't needed.
 
 ## Useful commands
 
