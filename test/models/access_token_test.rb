@@ -445,6 +445,58 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_equal [], build(:access_token).scopes
   end
 
+  test "#scopes_recorded? should be false until the scopes are read" do
+    assert_not build(:access_token, scopes: []).scopes_recorded?
+  end
+
+  test "#scopes_recorded? should be true once the token carries scopes" do
+    assert build(:access_token, scopes: [AccessToken::MANAGE_POSTS_SCOPE]).scopes_recorded?
+  end
+
+  test "#lacks_scope? should be true when the recorded scopes exclude it" do
+    token = build(:access_token, scopes: ["read-my-info", "manage-posts"])
+
+    assert token.lacks_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#lacks_scope? should be false when the recorded scopes include it" do
+    token = build(:access_token, scopes: AccessToken::TOKEN_SCOPES)
+
+    assert_not token.lacks_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test "#lacks_scope? should be false while the scopes are unread" do
+    token = build(:access_token, scopes: [])
+
+    assert_not token.lacks_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  end
+
+  test ".without_recorded_scopes should match only tokens with unread scopes" do
+    unread = create(:access_token, scopes: [])
+    recorded = create(:access_token, scopes: [AccessToken::MANAGE_POSTS_SCOPE])
+
+    matched = AccessToken.without_recorded_scopes
+
+    assert_includes matched, unread
+    assert_not_includes matched, recorded
+  end
+
+  test "#remote_scopes should return the scopes FreeFeed reports" do
+    token = create(:access_token, :active)
+    stub_request(:get, "#{token.host}/v2/app-tokens/current")
+      .to_return(status: 200, body: { token: { id: "t", scopes: ["read-my-info"] } }.to_json)
+
+    assert_equal ["read-my-info"], token.remote_scopes
+  end
+
+  test "#remote_scopes should fall back to every scope for a session token" do
+    token = create(:access_token, :active)
+    stub_request(:get, "#{token.host}/v2/app-tokens/current")
+      .to_return(status: 400, body: { err: "Not an app token" }.to_json)
+
+    assert_equal AccessToken::TOKEN_SCOPES, token.remote_scopes
+  end
+
   test ".allowing_scope should match the tokens #allows_scope? accepts" do
     granted = create(:access_token, scopes: AccessToken::TOKEN_SCOPES)
     lacking = create(:access_token, scopes: [AccessToken::READ_MY_INFO_SCOPE, AccessToken::MANAGE_POSTS_SCOPE])

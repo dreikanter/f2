@@ -82,11 +82,7 @@ class AccessTokenValidationService
   # one that can't. The route needs no scopes, so a 401 means the token is dead
   # rather than under-permissioned, and anything else is transient: validation
   # stays unfinished and the job retries.
-  #
-  # A session token has no scope list to report, and FreeFeed rejects it on this
-  # app-token-only route. It is unrestricted, so it gets everything Feeder asks
-  # for. Widening TOKEN_SCOPES later means re-reading these tokens.
   def fetch_scopes
-    freefeed_client.app_token_info&.fetch(:scopes) || AccessToken::TOKEN_SCOPES
+    access_token.remote_scopes
   end
 end

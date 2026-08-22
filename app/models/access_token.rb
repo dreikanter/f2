@@ -42,6 +42,10 @@ class AccessToken < ApplicationRecord
     where("scopes @> ARRAY[?]::varchar[]", scope)
   }
 
+  # Tokens whose scopes have never been read. SQL counterpart of
+  # #scopes_recorded?.
+  scope :without_recorded_scopes, -> { where("cardinality(scopes) = 0") }
+
   # A user can create access token record associated with a known
   # FreeFeed instances only (see Settings::AccessTokensController).
   # Though the model allows to define any valid host URL.
@@ -93,6 +97,27 @@ class AccessToken < ApplicationRecord
   # scope is permanent.
   def allows_scope?(scope)
     scopes.include?(scope)
+  end
+
+  # Scopes are recorded when a token is validated, so tokens validated before
+  # Feeder started reading them carry none. An empty set means "never asked",
+  # not "nothing allowed" — TokenScopesRefreshJob settles it.
+  def scopes_recorded?
+    scopes.any?
+  end
+
+  # Only true once the scopes are known, so nothing acts on a token's supposed
+  # limits before they have been read.
+  def lacks_scope?(scope)
+    scopes_recorded? && !allows_scope?(scope)
+  end
+
+  # What FreeFeed says this token can do, at the cost of one GET. A session
+  # token has no scope list to report and that app-token-only route rejects it;
+  # it is unrestricted, so it gets everything Feeder asks for. Widening
+  # TOKEN_SCOPES later means re-reading these tokens.
+  def remote_scopes
+    build_client.app_token_info&.fetch(:scopes) || TOKEN_SCOPES
   end
 
   # Points at this token's own instance rather than the default one.

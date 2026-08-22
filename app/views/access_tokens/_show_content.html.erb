@@ -45,7 +45,7 @@
     <span>Token is valid and ready to use</span>
   <% end %>
 
-  <% unless access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE) %>
+  <% if access_token.lacks_scope?(AccessToken::READ_USERS_INFO_SCOPE) %>
     <%= render AlertComponent.new(variant: :warning, icon: "triangle-alert", data: { key: "access_token.missing-subscriber-permission" }) do %>
       <p>This token can't look up subscriber counts, so feeds using it won't show how many people follow their group. Everything else works as usual.</p>
       <p>
@@ -89,11 +89,7 @@
     </div>
   <% end %>
 <% elsif access_token.inactive? %>
-  <% if access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
-    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
-      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
-    <% end %>
-  <% else %>
+  <% if access_token.lacks_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
     <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", key: "access_token.missing-identity-permission" }) do %>
       <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to, so there's no way to publish with it.</p>
       <p>
@@ -104,6 +100,10 @@
                     class: "font-medium underline underline-offset-4" %>
         and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
       </p>
+    <% end %>
+  <% else %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
+      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
     <% end %>
   <% end %>
 
