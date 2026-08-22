@@ -26,9 +26,11 @@ fail() {
   exit 1
 }
 
-# Both markers must stand on lines of their own, which is what separates a real
-# PEM from a one-line blob whose newlines were escaped away. Trailing whitespace
-# is tolerated so CRLF values still pass, as they do in kamal-proxy.
+# Structure first. This alone catches the realistic failure — an unset variable
+# resolving to an empty secret — and needs no tooling. Both markers must stand on
+# lines of their own, which is what separates a real PEM from a one-line blob
+# whose newlines were escaped away. Trailing whitespace is tolerated so CRLF
+# values still pass, as they do in kamal-proxy.
 pem_ok() {
   printf '%s\n' "$1" | grep -q "^-----BEGIN $2-----[[:space:]]*\$" &&
     printf '%s\n' "$1" | grep -q "^-----END $2-----[[:space:]]*\$"
@@ -39,3 +41,20 @@ pem_ok "$CERTIFICATE_PEM" "CERTIFICATE" ||
 
 pem_ok "$PRIVATE_KEY_PEM" "[A-Z ]*PRIVATE KEY" ||
   fail "PRIVATE_KEY_PEM is not a PEM private key: export CF_ORIGIN_KEY with the multi-line key itself, not a path or an escaped one-liner."
+
+# Then the contents. Well-formed wrappers around corrupt DER, and a cert and key
+# that don't belong together, both reach kamal-proxy and fail there just as
+# opaquely. Skipped rather than fatal without openssl: this is a tripwire, and
+# the structural check above already covers the common case.
+command -v openssl >/dev/null 2>&1 || exit 0
+
+cert_pubkey=$(printf '%s\n' "$CERTIFICATE_PEM" | openssl x509 -noout -pubkey 2>/dev/null)
+[ -n "$cert_pubkey" ] ||
+  fail "CERTIFICATE_PEM has PEM markers but openssl cannot read a certificate between them."
+
+key_pubkey=$(printf '%s\n' "$PRIVATE_KEY_PEM" | openssl pkey -pubout 2>/dev/null)
+[ -n "$key_pubkey" ] ||
+  fail "PRIVATE_KEY_PEM has PEM markers but openssl cannot read a private key between them."
+
+[ "$cert_pubkey" = "$key_pubkey" ] ||
+  fail "CERTIFICATE_PEM and PRIVATE_KEY_PEM are from different pairs: kamal-proxy needs the key that Cloudflare issued with this certificate."
