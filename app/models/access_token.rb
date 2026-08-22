@@ -24,10 +24,13 @@ class AccessToken < ApplicationRecord
   # Lets Feeder read a group's subscriber count.
   READ_USERS_INFO_SCOPE = "read-users-info".freeze
 
+  # Lets Feeder publish posts and comments on the user's behalf.
+  MANAGE_POSTS_SCOPE = "manage-posts".freeze
+
   TOKEN_SCOPES = [
     READ_MY_INFO_SCOPE,
     READ_USERS_INFO_SCOPE,
-    "manage-posts"
+    MANAGE_POSTS_SCOPE
   ].freeze
 
   def self.token_url(domain)
