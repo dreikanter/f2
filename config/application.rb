@@ -26,6 +26,15 @@ Bundler.require(*Rails.groups)
 # (see test/test_helper.rb).
 require_relative "../lib/boot/config"
 
+# RubyLLM reads this when ActiveRecord loads, which happens before
+# config/initializers run — hence the placement here. It opts into the
+# association-based acts_as API that replaces the legacy one in RubyLLM 2.0.
+# This app talks to the SDK directly and has no acts_as models, so the flag
+# only silences the legacy deprecation warning.
+RubyLLM.configure do |config|
+  config.use_new_acts_as = true
+end
+
 module F2Rails
   GITHUB_REPO_URL = "https://github.com/dreikanter/f2".freeze
 
