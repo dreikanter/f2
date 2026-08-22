@@ -57,10 +57,9 @@ class AccessTokenValidationService
   end
 
   # whoami and managedGroups both sit behind read-my-info. Without it they can
-  # only be refused, so there is nothing to learn from asking. nil means a
-  # session token, which is unrestricted.
+  # only be refused, so there is nothing to learn from asking.
   def scopes_cover_validation?(scopes)
-    scopes.nil? || scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
+    scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
   end
 
   # Persist the scopes on the way down. They are what lets the token page say
@@ -84,10 +83,10 @@ class AccessTokenValidationService
   # rather than under-permissioned, and anything else is transient: validation
   # stays unfinished and the job retries.
   #
-  # nil is a real answer, not a gap. It comes only from a session token, which
-  # FreeFeed rejects on this app-token-only route and which holds unrestricted
-  # access.
+  # A session token has no scope list to report, and FreeFeed rejects it on this
+  # app-token-only route. It is unrestricted, so it gets everything Feeder asks
+  # for. Widening TOKEN_SCOPES later means re-reading these tokens.
   def fetch_scopes
-    freefeed_client.app_token_info&.fetch(:scopes)
+    freefeed_client.app_token_info&.fetch(:scopes) || AccessToken::TOKEN_SCOPES
   end
 end

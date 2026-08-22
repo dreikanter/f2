@@ -214,7 +214,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
 
     access_token.reload
     assert access_token.active?
-    assert_nil access_token.scopes
+    assert_equal AccessToken::TOKEN_SCOPES, access_token.scopes
     assert access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
   end
 

@@ -20,6 +20,8 @@ FactoryBot.define do
       status { :active }
       owner { "testuser" }
       sequence(:freefeed_user_id) { |n| "ff-user-#{n}" }
+      # Validation records these, so an active token always carries them.
+      scopes { AccessToken::TOKEN_SCOPES }
     end
 
     trait :inactive do

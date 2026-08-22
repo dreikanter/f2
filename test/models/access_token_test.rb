@@ -441,24 +441,23 @@ class AccessTokenTest < ActiveSupport::TestCase
     assert_not token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
   end
 
-  test "#allows_scope? should be true when scopes are unknown" do
-    token = build(:access_token, scopes: nil)
-
-    assert token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+  test "#allows_scope? should default to no scopes" do
+    assert_equal [], build(:access_token).scopes
   end
 
   test ".allowing_scope should match the tokens #allows_scope? accepts" do
     granted = create(:access_token, scopes: AccessToken::TOKEN_SCOPES)
-    unknown = create(:access_token, scopes: nil)
-    lacking = create(:access_token, scopes: ["read-my-info", "manage-posts"])
+    lacking = create(:access_token, scopes: [AccessToken::READ_MY_INFO_SCOPE, AccessToken::MANAGE_POSTS_SCOPE])
     empty = create(:access_token, scopes: [])
 
     matched = AccessToken.allowing_scope(AccessToken::READ_USERS_INFO_SCOPE)
 
     assert_includes matched, granted
-    assert_includes matched, unknown
     assert_not_includes matched, lacking
     assert_not_includes matched, empty
+    [granted, lacking, empty].each do |token|
+      assert_equal matched.include?(token), token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+    end
   end
 
   test "#token_creation_url should request every scope on the token's own instance" do

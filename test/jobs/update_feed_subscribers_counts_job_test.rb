@@ -23,14 +23,6 @@ class UpdateFeedSubscribersCountsJobTest < ActiveJob::TestCase
     assert_equal [feed], enqueued_feeds
   end
 
-  test "#perform should enqueue feeds on a token with unknown scopes" do
-    feed = create(:feed, :enabled, user: user, access_token: token_with_scopes(nil))
-
-    UpdateFeedSubscribersCountsJob.perform_now
-
-    assert_equal [feed], enqueued_feeds
-  end
-
   test "#perform should skip feeds on a token without read-users-info" do
     create(:feed, :enabled, user: user, access_token: token_with_scopes(["read-my-info", "manage-posts"]))
 

@@ -117,16 +117,6 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-key='access_token.missing-subscriber-permission']", count: 0
   end
 
-  test "#show should not warn when the token's permissions are unknown" do
-    sign_in_as user
-    active = create(:access_token, :active, user: user, scopes: nil)
-
-    get access_token_path(active)
-
-    assert_response :success
-    assert_select "[data-key='access_token.missing-subscriber-permission']", count: 0
-  end
-
   test "#show should explain an inactive token that lacks the identity permission" do
     sign_in_as user
     token = create(:access_token, user: user, status: :inactive, scopes: ["manage-posts"])

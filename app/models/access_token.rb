@@ -39,7 +39,7 @@ class AccessToken < ApplicationRecord
 
   # SQL counterpart of #allows_scope?. Keep the two in step.
   scope :allowing_scope, ->(scope) {
-    where("scopes IS NULL OR scopes @> ARRAY[?]::varchar[]", scope)
+    where("scopes @> ARRAY[?]::varchar[]", scope)
   }
 
   # A user can create access token record associated with a known
@@ -90,10 +90,9 @@ class AccessToken < ApplicationRecord
   end
 
   # FreeFeed fixes an app token's scopes when it issues the token, so a missing
-  # scope is permanent. nil means a session token, which carries unrestricted
-  # access and so allows everything.
+  # scope is permanent.
   def allows_scope?(scope)
-    scopes.nil? || scopes.include?(scope)
+    scopes.include?(scope)
   end
 
   # Points at this token's own instance rather than the default one.
