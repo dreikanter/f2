@@ -230,6 +230,54 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     assert_nil access_token.scopes
   end
 
+  test "#call should skip the account calls when the token lacks read-my-info" do
+    stub_app_token_info(scopes: ["manage-posts"])
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert_not_requested :get, "#{access_token.host}/v4/users/whoami"
+    assert_not_requested :get, "#{access_token.host}/v4/managedGroups"
+  end
+
+  test "#call should record the scopes it disabled an under-permissioned token for" do
+    stub_app_token_info(scopes: ["manage-posts"])
+
+    AccessTokenValidationService.new(access_token).call
+
+    access_token.reload
+    assert access_token.inactive?
+    assert_equal ["manage-posts"], access_token.scopes
+    assert_not access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE)
+  end
+
+  test "#call should report a missing identity permission as its own event" do
+    access_token.update!(status: :active)
+    feed = create(:feed, user: user, access_token: access_token, state: :enabled)
+    access_token.update!(status: :validating)
+    stub_app_token_info(scopes: ["manage-posts"])
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert_equal "disabled", feed.reload.state
+    event = Event.find_by!(subject: access_token)
+    assert_equal "access_token_missing_scope", event.type
+    assert_equal [feed.id], event.metadata["disabled_feed_ids"]
+  end
+
+  test "#call should still validate a token whose scopes are unknown" do
+    stub_successful_account_calls
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(
+        status: 400,
+        body: { err: "This method is only available with the application token" }.to_json
+      )
+
+    AccessTokenValidationService.new(access_token).call
+
+    assert access_token.reload.active?
+    assert_requested :get, "#{access_token.host}/v4/users/whoami"
+  end
+
   test "#call should disable the token when the scopes request reports it dead" do
     access_token.update!(status: :active)
     feed = create(:feed, user: user, access_token: access_token, state: :enabled)
@@ -268,6 +316,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should deactivate token on invalid token error" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -284,6 +333,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should deactivate token on forbidden error" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 403, body: { err: "invalid JWT payload format" }.to_json)
 
@@ -294,6 +344,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should not disable token on transient errors" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -321,6 +372,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
     feed3 = create(:feed, user: user, access_token: access_token, state: :disabled)
     access_token.update!(status: :validating)
 
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -354,6 +406,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   test "#call should not create event when no enabled feeds exist" do
     create(:feed, user: user, access_token: access_token, state: :disabled)
 
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -373,6 +426,7 @@ class AccessTokenValidationServiceTest < ActiveSupport::TestCase
   end
 
   test "#call should deactivate token when managed_groups returns invalid token error" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {

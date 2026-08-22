@@ -17,11 +17,15 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
+  # Lets Feeder identify the account behind the token, via whoami and
+  # managedGroups. Without it there is nothing to validate.
+  READ_MY_INFO_SCOPE = "read-my-info".freeze
+
   # Lets Feeder read a group's subscriber count.
   READ_USERS_INFO_SCOPE = "read-users-info".freeze
 
   TOKEN_SCOPES = [
-    "read-my-info",
+    READ_MY_INFO_SCOPE,
     READ_USERS_INFO_SCOPE,
     "manage-posts"
   ].freeze
@@ -167,7 +171,9 @@ class AccessToken < ApplicationRecord
     RateLimit.forget(:freefeed, subject: subject)
   end
 
-  def disable_token_and_feeds
+  # `event_type` names why the token is being switched off, so the user sees a
+  # dead token and an under-permissioned one described differently.
+  def disable_token_and_feeds(event_type: "access_token_validation_failed")
     with_lock do
       inactive!
 
@@ -176,15 +182,15 @@ class AccessToken < ApplicationRecord
 
       feed_ids = enabled_feeds.pluck(:id)
       disabled_count = enabled_feeds.update_all(state: :disabled)
-      create_validation_failed_event(feed_ids: feed_ids, disabled_count: disabled_count)
+      create_validation_failed_event(event_type: event_type, feed_ids: feed_ids, disabled_count: disabled_count)
     end
   end
 
   private
 
-  def create_validation_failed_event(feed_ids:, disabled_count:)
+  def create_validation_failed_event(event_type:, feed_ids:, disabled_count:)
     Event.create!(
-      type: "access_token_validation_failed",
+      type: event_type,
       user: user,
       subject: self,
       level: :warning,

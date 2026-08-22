@@ -5,6 +5,7 @@ User-facing changes, newest first. Internal/technical changes are not listed her
 ## 2026-08-22
 
 - The access token page now tells you when a token can't look up subscriber counts, and how to swap in one that can.
+- A token that's missing the permissions Feeder needs now says so, instead of being reported as expired or revoked.
 
 ## 2026-08-21
 

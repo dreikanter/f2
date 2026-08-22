@@ -46,6 +46,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should reschedule without failing when validation is throttled mid-call" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_return(status: 429, headers: { "Retry-After" => "30" })
 
@@ -84,6 +85,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should raise and not disable token on transient HTTP error" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_raise(StandardError.new("Connection failed"))
 
@@ -98,6 +100,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should raise and not disable token when JSON parsing fails" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -183,6 +186,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should raise and not disable token when response format is invalid" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {
@@ -207,6 +211,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should raise and not disable token on timeout" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout
 
@@ -229,6 +234,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
   end
 
   test ".perform_now should succeed on retry after transient failure" do
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .to_timeout.times(1)
       .then.to_return(
@@ -253,13 +259,6 @@ class TokenValidationJobTest < ActiveJob::TestCase
       .to_return(
         status: 200,
         body: [].to_json,
-        headers: { "Content-Type" => "application/json" }
-      )
-
-    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
-      .to_return(
-        status: 200,
-        body: { token: { id: "token-1", scopes: AccessToken::TOKEN_SCOPES } }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
 
@@ -320,7 +319,17 @@ class TokenValidationJobTest < ActiveJob::TestCase
       )
   end
 
+  def stub_app_token_info(scopes: AccessToken::TOKEN_SCOPES)
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(
+        status: 200,
+        body: { token: { id: "token-1", scopes: scopes } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+  end
+
   def stub_failed_freefeed_response
+    stub_app_token_info
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
         headers: {

@@ -7,9 +7,14 @@ class AccessTokenValidationService
 
   def call
     access_token.validating! unless access_token.validating?
+
+    # Scopes lead: FreeFeed always allows this route, so it answers for any live
+    # token and says up front whether the rest of the sequence can succeed.
+    scopes = fetch_scopes
+    return disable_for_missing_scope(scopes) unless scopes_cover_validation?(scopes)
+
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
-    scopes = fetch_scopes
 
     access_token.with_lock do
       access_token.update!(
@@ -32,8 +37,8 @@ class AccessTokenValidationService
       )
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
-    # A 401/403 on whoami or managedGroups means the token can't even read its
-    # own account, so it's effectively dead — disable it and its feeds.
+    # Reaching here means the token is dead rather than under-permissioned: the
+    # scope check above already sent that case down its own path.
     access_token.disable_token_and_feeds
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
@@ -49,6 +54,20 @@ class AccessTokenValidationService
 
   def freefeed_client
     @freefeed_client ||= access_token.build_client
+  end
+
+  # whoami and managedGroups both sit behind read-my-info. Without it they can
+  # only be refused, so there is nothing to learn from asking. Unknown scopes
+  # (nil) still go ahead — a session token reports none and can do everything.
+  def scopes_cover_validation?(scopes)
+    scopes.nil? || scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
+  end
+
+  # Record the scopes on the way down: they're what lets the token page explain
+  # that the token is alive but can't be used, rather than calling it expired.
+  def disable_for_missing_scope(scopes)
+    access_token.update!(scopes: scopes)
+    access_token.disable_token_and_feeds(event_type: "access_token_missing_scope")
   end
 
   def fetch_user_info

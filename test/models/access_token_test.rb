@@ -296,6 +296,9 @@ class AccessTokenTest < ActiveSupport::TestCase
     disabled_feed = create(:feed, user: user, access_token: access_token, state: :disabled)
     access_token.update!(status: :validating)
 
+    stub_request(:get, "#{access_token.host}/v2/app-tokens/current")
+      .to_return(status: 200, body: { token: { id: "t", scopes: AccessToken::TOKEN_SCOPES } }.to_json)
+
     # Stub HTTP request to return 401 Unauthorized, triggering the rescue block
     stub_request(:get, "#{access_token.host}/v4/users/whoami")
       .with(
