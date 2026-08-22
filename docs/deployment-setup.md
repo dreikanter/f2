@@ -319,7 +319,13 @@ user.permissions.create!(name: Permission::ADMIN)
 
 Nobody needs to keep that random password. `state: :active` marks the email confirmed, so "Forgot password?" on the sign-in page delivers a reset link and you pick the real password there. `available_invites` is how many people this account can invite.
 
-If mail isn't working yet, print the same link from the console instead — it's valid for an hour:
+Use an address you can actually read — it's the only way back into the account. The same console checks that delivery works:
+
+```ruby
+TestMailer.ping(user.email_address).deliver_now
+```
+
+If mail isn't working yet, print the reset link from the console instead — it's valid for an hour:
 
 ```ruby
 Rails.application.routes.url_helpers.edit_password_url(
