@@ -8,14 +8,28 @@ class LlmClient
         {}
       end
 
+      # Provider-specific request params a schema-bearing call needs. Separate
+      # from web_params because the two-step path splits gathering and
+      # structuring across two calls: the schema rides on the one without tools,
+      # so a param that serves structured output has to travel on its own.
+      def schema_params(_model)
+        {}
+      end
+
+      # Everything one call sends, merged into a single set — RubyLLM's
+      # `with_params` replaces rather than merges, so a combined call would
+      # otherwise keep only whichever set was applied last.
+      def params_for(model, schema:, web:)
+        params = schema ? schema_params(model) : {}
+        web ? params.deep_merge(web_params(model)) : params
+      end
+
       # Every provider uses the same credential-backed search and fetch tools.
-      # Adapters may still add provider-specific request params, but search never
-      # delegates to a provider-hosted implementation.
+      # Adapters may still add provider-specific request params (#params_for),
+      # but search never delegates to a provider-hosted implementation.
       #
       # Both tools share one budget so the pair can't outspend it between them.
-      def apply_web(chat, model, search_provider:, search_credential:, refresh_event: nil)
-        params = web_params(model)
-        chat.with_params(**params) if params.present?
+      def apply_web(chat, search_provider:, search_credential:, refresh_event: nil)
         budget = LlmClient::ToolBudget.new
         chat.with_tool(
           LlmClient::Tools::WebSearch.new(

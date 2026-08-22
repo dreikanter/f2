@@ -36,9 +36,10 @@ namespace :ai do
       chat = ai_credential.chat(model)
       chat.with_instructions(Loader::LlmPrompts::COMBINED_SYSTEM)
       chat.with_schema(schema)
+      params = adapter.params_for(model, schema: true, web: true)
+      chat.with_params(**params) if params.present?
       adapter.apply_web(
         chat,
-        model,
         search_provider: search_credential.web_search_provider,
         search_credential: search_credential
       )

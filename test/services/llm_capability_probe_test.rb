@@ -336,14 +336,26 @@ class LlmCapabilityProbeTest < ActiveSupport::TestCase
     assert_equal LlmCapabilityProbe::PROBE_INSTRUCTIONS, chat.instructions
   end
 
-  # The tool checks are the ones a provider-specific request param exists for,
-  # so a chat built without them probes a shape production never sends.
+  # A chat built without the provider's request params probes a shape production
+  # never sends.
   test "#run should carry the adapter's web params onto the tool chat" do
     credential = FakeCredential.new(grounded_payload, tool_rounds: full_tool_loop, provider: "openai")
     LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model",
                                    checks: ["client_tools"]).run
 
-    assert_equal LlmClient::Adapter::OpenAi.new.web_params("test-model"),
+    assert_equal LlmClient::Adapter::OpenAi.new.params_for("test-model", schema: false, web: true),
+                 credential.chats.first.params
+    assert_predicate credential.chats.first.params, :present?
+  end
+
+  # The structure check mirrors the loader's structuring call, params included:
+  # qualifying a model on an unconstrained call says nothing about the
+  # constrained one production sends.
+  test "#run should carry the adapter's schema params onto the structure chat" do
+    credential = FakeCredential.new(valid_payload, provider: "openrouter")
+    LlmCapabilityProbe::Runner.new(credential: credential, model: "test-model", checks: ["schema"]).run
+
+    assert_equal LlmClient::Adapter::OpenRouter.new.params_for("test-model", schema: true, web: false),
                  credential.chats.first.params
     assert_predicate credential.chats.first.params, :present?
   end

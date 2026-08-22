@@ -534,10 +534,19 @@ class LlmClientTest < ActiveSupport::TestCase
   # can verify the system message travels via with_instructions and the user
   # prompt via #ask — the injection-defense channel separation (spec §8).
   class FakeChat
-    attr_reader :instructions, :asked, :schema
+    attr_reader :instructions, :asked, :schema, :params
+
+    def initialize
+      @params = {}
+    end
 
     def with_instructions(text)
       @instructions = text
+      self
+    end
+
+    def with_params(**params)
+      @params.merge!(params)
       self
     end
 
@@ -558,6 +567,7 @@ class LlmClientTest < ActiveSupport::TestCase
     attr_reader :messages
 
     def initialize(messages)
+      super()
       @messages = messages
     end
   end
@@ -568,6 +578,7 @@ class LlmClientTest < ActiveSupport::TestCase
     attr_reader :messages
 
     def initialize(messages)
+      super()
       @messages = messages
     end
 
@@ -710,6 +721,38 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal 7, response.output_tokens
     assert_equal 3, response.cache_write_tokens
     assert_equal 11, response.cache_read_tokens
+  end
+
+  def openrouter_credential
+    @openrouter_credential ||= create(:ai_credential, :active, user: user, provider: "openrouter",
+                                      credential_data: { "api_key" => "sk-or-test" })
+  end
+
+  # The structuring call of the two-step path carries the schema and no tools,
+  # and it is the one that has to be routed to an upstream honoring the schema —
+  # an upstream that ignores it answers with something no repair can fit.
+  test "#invoke_provider should send the provider's params on a schema call without web tools" do
+    client = LlmClient.new(openrouter_credential)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "anthropic/claude-sonnet-4-6", prompt: "p",
+                  output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
+    end
+
+    assert_equal({ provider: { require_parameters: true } }, chat.params)
+  end
+
+  test "#invoke_provider should send no params for a provider that asks for none" do
+    client = LlmClient.new(credential)
+    chat = FakeChat.new
+
+    stub_chat(client, chat) do
+      client.send(:invoke_provider, model: "claude-sonnet-4-6", prompt: "p",
+                  output_schema: FeedProfile::UNIVERSAL_OUTPUT_SCHEMA, web: false, system: nil)
+    end
+
+    assert_empty chat.params
   end
 
   test "#invoke_provider should not set instructions when no system prompt is given" do
