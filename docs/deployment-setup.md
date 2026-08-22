@@ -203,6 +203,10 @@ config/credentials/production.key
 
 The `.key` files are gitignored. Store and share them through the team password manager.
 
+`.kamal/hooks/pre-connect` checks that `CERTIFICATE_PEM` and `PRIVATE_KEY_PEM`
+resolved to real PEM blobs before a `setup`, `deploy`, `redeploy`, or `rollback`
+starts, so a missing export fails in seconds instead of minutes into the run.
+
 ## Deploying from GitHub Actions
 
 Both destinations can be deployed from the Actions tab. **Deploy Staging** also
@@ -221,13 +225,12 @@ The workflows read these repository secrets. Per-environment values carry a
 | `RAILS_MASTER_KEY_STAGING` | staging | written to `config/credentials/staging.key` |
 | `RAILS_MASTER_KEY_PRODUCTION` | production | written to `config/credentials/production.key` |
 | `SSH_PRIVATE_KEY_STAGING` | staging | SSH key for `dev-origin.fffeeder.com` |
-| `PRODUCTION_SSH_PRIVATE_KEY` | production | SSH key for `app-origin.fffeeder.com` |
+| `SSH_PRIVATE_KEY_PRODUCTION` | production | SSH key for `app-origin.fffeeder.com` |
 | `CF_ORIGIN_CERT` / `CF_ORIGIN_KEY` | both | Cloudflare Origin Certificate for kamal-proxy |
 
-`PRODUCTION_SSH_PRIVATE_KEY` is the one holdout from the convention. It keeps
-the old prefix form until the renamed secret exists, so don't create
-`SSH_PRIVATE_KEY_PRODUCTION` and expect the production workflow to pick it up —
-rename the workflow reference and the secret together.
+Both SSH secrets now follow the `_STAGING` / `_PRODUCTION` convention. The old
+prefix-form names (`STAGING_SSH_PRIVATE_KEY`, `PRODUCTION_SSH_PRIVATE_KEY`) are
+no longer read by any workflow and can be deleted from the repository secrets.
 
 ## Database
 
@@ -361,6 +364,55 @@ Common issues:
 - PostgreSQL 18 complains about `/var/lib/postgresql/data` — recreate the accessory after pulling the config that mounts `data:/var/lib/postgresql`.
 - `/up` returns `403` with `Blocked hosts` — Rails host authorization is blocking the health check; `/up` should be excluded in production config.
 - platform mismatch — confirm the server is `x86_64` and `builder.arch` is `amd64`.
+- `unable to load certificate` — see below.
+
+### `unable to load certificate`
+
+```text
+ERROR Failed to boot web on app-origin.fffeeder.com
+INFO First web container is unhealthy on app-origin.fffeeder.com, not booting any other roles
+ERROR (SSHKit::Command::Failed): docker stderr: Error: unable to load certificate
+```
+
+The container is fine. This is `kamal-proxy deploy` failing *after* the health
+check passes, so the app never gets registered for its host and the public
+domain serves kamal-proxy's own blue 404 page. (Ours is white — a blue 404
+means no target is registered.)
+
+kamal-proxy collapses every certificate problem into that one message, but logs
+the real reason in its own container:
+
+```bash
+bin/kamal proxy logs -d production --grep "TLS certificate"
+```
+
+| Logged error | Cause |
+| --- | --- |
+| `failed to find any PEM data in certificate input` | `cert.pem` is empty or isn't PEM |
+| `...did find a private key; PEM inputs may have been switched` | cert and key are swapped |
+| `private key does not match public key` | cert and key are from different pairs |
+| `no such file or directory` / `permission denied` | the proxy can't read the uploaded file |
+
+Check what actually landed on the host, and what the proxy sees through its
+mount:
+
+```bash
+ssh root@app-origin.fffeeder.com \
+  'wc -c /root/.kamal/proxy/apps-config/f2-production/tls/web/*.pem'
+ssh root@app-origin.fffeeder.com \
+  'docker exec kamal-proxy ls -l /home/kamal-proxy/.apps-config/f2-production/tls/web/'
+```
+
+A zero-byte `cert.pem` means `CF_ORIGIN_CERT` was empty in the shell that ran
+the deploy. The `|| { echo ...; exit 1; }` guards in `.kamal/secrets*` do **not**
+prevent this: Kamal evaluates each `$(...)` with backticks and ignores the exit
+status, so a failed guard yields an empty secret and the deploy carries on,
+uploading an empty certificate. `.kamal/hooks/pre-connect` now catches that
+before the build starts. If the host has the files but the container doesn't,
+the proxy is missing its apps-config mount — `bin/kamal proxy reboot -d production`.
+
+Fix the secrets, then re-run `bin/kamal deploy -d production`. Accessories and
+the database survive the failed run, so a full `setup` isn't needed.
 
 ## Useful commands
 
