@@ -297,6 +297,38 @@ Expected result:
 - web and jobs containers are running
 - the `db` accessory is running
 
+## First user
+
+A fresh install has no accounts, and signing up needs an invite from an existing user, so create the first account from the console:
+
+```bash
+bin/kamal console -d production
+```
+
+```ruby
+user = User.create!(
+  email_address: "you@example.com",
+  name: "Your Name",
+  state: :active,
+  available_invites: 10,
+  password: SecureRandom.alphanumeric(32)
+)
+
+user.permissions.create!(name: Permission::ADMIN)
+```
+
+Nobody needs to keep that random password. `state: :active` marks the email confirmed, so "Forgot password?" on the sign-in page delivers a reset link and you pick the real password there. `available_invites` is how many people this account can invite.
+
+If mail isn't working yet, print the same link from the console instead — it's valid for an hour:
+
+```ruby
+Rails.application.routes.url_helpers.edit_password_url(
+  user.generate_token_for(:password_reset),
+  host: "app.fffeeder.com",
+  protocol: "https"
+)
+```
+
 ## Staging database reset
 
 Staging data is disposable. To reset the schema inside the app container:
