@@ -34,8 +34,7 @@ class AccessToken < ApplicationRecord
     "https://#{domain}/settings/app-tokens/create?scopes=#{TOKEN_SCOPES.join('%20')}"
   end
 
-  # Feeds whose token may hold the scope — both the granted case and the
-  # unknown one, matching #allows_scope?.
+  # SQL counterpart of #allows_scope?. Keep the two in step.
   scope :allowing_scope, ->(scope) {
     where("scopes IS NULL OR scopes @> ARRAY[?]::varchar[]", scope)
   }
@@ -87,16 +86,14 @@ class AccessToken < ApplicationRecord
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
   end
 
-  # FreeFeed fixes an app token's scopes when it's issued and offers no way to
-  # widen them later, so a missing scope is permanent for this token. Unknown
-  # scopes (nil) stay ungated: the token predates this column or is a session
-  # token, which has unrestricted access.
+  # FreeFeed fixes an app token's scopes when it issues the token, so a missing
+  # scope is permanent. Unknown scopes (nil) stay ungated: those tokens either
+  # predate this column or are session tokens, which are unrestricted.
   def allows_scope?(scope)
     scopes.nil? || scopes.include?(scope)
   end
 
-  # Where the user goes to issue a replacement token on this token's instance,
-  # pre-asking for every scope Feeder uses.
+  # Points at this token's own instance rather than the default one.
   def token_creation_url
     self.class.token_url(host_domain)
   end
@@ -171,8 +168,8 @@ class AccessToken < ApplicationRecord
     RateLimit.forget(:freefeed, subject: subject)
   end
 
-  # `event_type` names why the token is being switched off, so the user sees a
-  # dead token and an under-permissioned one described differently.
+  # `event_type` carries the reason, so a dead token and an under-permissioned
+  # one read differently in the event log.
   def disable_token_and_feeds(event_type: "access_token_validation_failed")
     with_lock do
       inactive!

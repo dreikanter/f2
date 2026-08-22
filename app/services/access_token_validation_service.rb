@@ -8,8 +8,8 @@ class AccessTokenValidationService
   def call
     access_token.validating! unless access_token.validating?
 
-    # Scopes lead: FreeFeed always allows this route, so it answers for any live
-    # token and says up front whether the rest of the sequence can succeed.
+    # Scopes come first because that route is always allowed. It answers for any
+    # live token, and tells us whether the rest of the sequence can succeed.
     scopes = fetch_scopes
     return disable_for_missing_scope(scopes) unless scopes_cover_validation?(scopes)
 
@@ -37,8 +37,8 @@ class AccessTokenValidationService
       )
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
-    # Reaching here means the token is dead rather than under-permissioned: the
-    # scope check above already sent that case down its own path.
+    # The token is dead, not under-permissioned. The scope check above already
+    # routed that case elsewhere.
     access_token.disable_token_and_feeds
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
@@ -58,13 +58,14 @@ class AccessTokenValidationService
 
   # whoami and managedGroups both sit behind read-my-info. Without it they can
   # only be refused, so there is nothing to learn from asking. Unknown scopes
-  # (nil) still go ahead — a session token reports none and can do everything.
+  # (nil) still go ahead, since a session token reports none and can do
+  # everything.
   def scopes_cover_validation?(scopes)
     scopes.nil? || scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
   end
 
-  # Record the scopes on the way down: they're what lets the token page explain
-  # that the token is alive but can't be used, rather than calling it expired.
+  # Persist the scopes on the way down. They are what lets the token page say
+  # the token is alive but unusable, instead of calling it expired.
   def disable_for_missing_scope(scopes)
     access_token.update!(scopes: scopes)
     access_token.disable_token_and_feeds(event_type: "access_token_missing_scope")
@@ -78,18 +79,18 @@ class AccessTokenValidationService
     freefeed_client.managed_groups
   end
 
-  # Scopes only gate optional calls, never publishing, so a failure here must
-  # not sink an otherwise good validation. Falling back to nil re-opens the
-  # gate: callers attempt the call and handle the rejection, which beats
-  # gating on a stale list after the token secret was swapped for a new one.
+  # A failure here must not sink an otherwise good validation. Falling back to
+  # nil reopens the gate, so callers attempt the call and handle any rejection.
+  # Keeping the previous list instead would gate wrongly once the token secret
+  # is replaced with one carrying different scopes.
   def fetch_scopes
     freefeed_client.app_token_info&.fetch(:scopes)
   rescue FreefeedClient::InvalidTokenError
-    # The one 401 that isn't a scope-lookup failure: FreeFeed raises this only
+    # The one 401 that is not a scope-lookup failure. FreeFeed raises it only
     # for "inactive or expired token", so let it reach the handler that disables
-    # the token. A token merely lacking the scope answers 401 too, but as a
-    # plain UnauthorizedError — swallowed below, or it would take down every
-    # feed on a token that publishes perfectly well.
+    # the token. A token merely lacking the scope also answers 401, but as a
+    # plain UnauthorizedError. That one stays swallowed below, or it would take
+    # down every feed on a token that publishes perfectly well.
     raise
   rescue FreefeedClient::Error => e
     Rails.error.report(e, context: { access_token_id: access_token.id })

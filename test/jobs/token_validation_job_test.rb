@@ -13,7 +13,7 @@ class TokenValidationJobTest < ActiveJob::TestCase
     subject = access_token.rate_limit_subject
 
     freeze_time do
-      # Leave two GET tokens — short of validation's cost of 3, so it throttles
+      # Two GET tokens is short of validation's cost of 3, so it throttles
       # before any of the GETs goes out.
       drain_freefeed(subject, :get, remaining: 2)
 

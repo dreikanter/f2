@@ -11,8 +11,8 @@ class FreefeedClient
   # UnauthorizedError so callers don't mistake it for a dead token and disable it.
   class ForbiddenError < Error; end
   class NotFoundError < Error; end
-  # The server rejected the request itself (HTTP 400) — e.g. an app-token-only
-  # route called with a session token.
+  # Raised for HTTP 400. An app-token-only route answers this when it's called
+  # with a session token.
   class BadRequestError < Error; end
   # The server rejected an upload for exceeding its size limit (HTTP 413).
   # The limit is server-configured, so callers detect it from the response
@@ -65,10 +65,9 @@ class FreefeedClient
     raise Error, "Failed to fetch managed groups: #{e.message}"
   end
 
-  # Describe the app token this client authenticates with.
-  # FreeFeed always allows this route, so any live app token can read it
-  # regardless of the scopes it holds. Session tokens aren't app tokens and are
-  # rejected with 400 — they carry full access, reported here as nil.
+  # FreeFeed lists this route as always allowed, so it answers for any live app
+  # token whatever scopes that token holds. Session tokens are not app tokens
+  # and get a 400. They are unrestricted, so that case reports nil.
   # @return [Hash, nil] {scopes:, expires_at:}, or nil for a session token
   def app_token_info
     response = get("/v2/app-tokens/current")

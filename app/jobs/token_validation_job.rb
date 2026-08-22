@@ -4,7 +4,8 @@ class TokenValidationJob < ApplicationJob
   queue_as :default
 
   def perform(access_token)
-    # Validation makes three GETs: whoami, managedGroups, and the token's scopes.
+    # Validation makes up to three GETs: the token's scopes, then whoami and
+    # managedGroups when the scopes allow them.
     result = RateLimit.acquire(:freefeed, subject: access_token.rate_limit_subject, cost: { get: 3 })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 

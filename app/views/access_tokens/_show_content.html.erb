@@ -95,7 +95,7 @@
     <% end %>
   <% else %>
     <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", key: "access_token.missing-identity-permission" }) do %>
-      <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to — so there's no way to publish with it.</p>
+      <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to, so there's no way to publish with it.</p>
       <p>
         A token's permissions are fixed when it's created, so this one can't be updated.
         <%= link_to "Create a new token", access_token.token_creation_url,
