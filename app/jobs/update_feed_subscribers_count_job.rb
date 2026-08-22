@@ -6,6 +6,11 @@ class UpdateFeedSubscribersCountJob < ApplicationJob
   def perform(feed)
     return unless feed.enabled? && feed.access_token&.active? && feed.target_group.present?
 
+    # Statistics sit behind read-users-info, and a token can never gain a scope
+    # it wasn't issued with. Without it the request can only ever be refused, so
+    # skip before spending any rate-limit budget on it.
+    return unless feed.access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE)
+
     result = RateLimit.acquire(:freefeed, subject: feed.access_token.rate_limit_subject, cost: { get: 1 })
     return reschedule_for_rate_limit(result.retry_after) unless result.allowed?
 

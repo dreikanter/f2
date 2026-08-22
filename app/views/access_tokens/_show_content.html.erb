@@ -45,6 +45,20 @@
     <span>Token is valid and ready to use</span>
   <% end %>
 
+  <% unless access_token.allows_scope?(AccessToken::READ_USERS_INFO_SCOPE) %>
+    <%= render AlertComponent.new(variant: :warning, icon: "triangle-alert", data: { key: "access_token.missing-subscriber-permission" }) do %>
+      <p>This token can't look up subscriber counts, so feeds using it won't show how many people follow their group. Everything else works as usual.</p>
+      <p>
+        A token's permissions are fixed when it's created, so this one can't be updated.
+        <%= link_to "Create a new token", access_token.token_creation_url,
+                    target: "_blank",
+                    rel: "noopener",
+                    class: "font-medium underline underline-offset-4" %>
+        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
+      </p>
+    <% end %>
+  <% end %>
+
   <% if feed_id.present? %>
     <%= link_to "Continue setting up your feed",
                 edit_feed_path(feed_id),
@@ -75,8 +89,22 @@
     </div>
   <% end %>
 <% elsif access_token.inactive? %>
-  <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
-    <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
+  <% if access_token.allows_scope?(AccessToken::READ_MY_INFO_SCOPE) %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive" }) do %>
+      <span>Token is inactive and cannot be used to access FreeFeed API. This token failed validation. It may be expired, revoked, or incorrectly copied.</span>
+    <% end %>
+  <% else %>
+    <%= render AlertComponent.new(variant: :error, icon: "circle-x", data: { status: "inactive", key: "access_token.missing-identity-permission" }) do %>
+      <p>This token works, but it can't tell Feeder which FreeFeed account it belongs to, so there's no way to publish with it.</p>
+      <p>
+        A token's permissions are fixed when it's created, so this one can't be updated.
+        <%= link_to "Create a new token", access_token.token_creation_url,
+                    target: "_blank",
+                    rel: "noopener",
+                    class: "font-medium underline underline-offset-4" %>
+        and <%= link_to "paste it here", edit_access_token_path(access_token), class: "font-medium underline underline-offset-4" %> to fix this.
+      </p>
+    <% end %>
   <% end %>
 
   <%= render TokenDetailsComponent.new(access_token: access_token) %>

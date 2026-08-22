@@ -255,6 +255,98 @@ class FreefeedClientTest < ActiveSupport::TestCase
     assert_includes error.message, "Connection failed"
   end
 
+  # app_token_info method tests
+  test "#app_token_info should return scopes and expiry on success" do
+    response_body = {
+      "token" => {
+        "id" => "token-1",
+        "issue" => 1,
+        "scopes" => ["read-my-info", "read-users-info", "manage-posts"],
+        "expiresAt" => "2027-01-01T00:00:00.000Z"
+      }
+    }.to_json
+
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .with(
+        headers: {
+          "Authorization" => "Bearer #{@token}",
+          "Accept" => "application/json"
+        }
+      )
+      .to_return(status: 200, body: response_body)
+
+    result = @client.app_token_info
+
+    assert_equal ["read-my-info", "read-users-info", "manage-posts"], result[:scopes]
+    assert_equal "2027-01-01T00:00:00.000Z", result[:expires_at]
+  end
+
+  test "#app_token_info should report an empty scope list as such" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(status: 200, body: { "token" => { "id" => "token-1", "scopes" => [] } }.to_json)
+
+    assert_equal [], @client.app_token_info[:scopes]
+  end
+
+  test "#app_token_info should treat a missing scopes key as no scopes" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(status: 200, body: { "token" => { "id" => "token-1" } }.to_json)
+
+    result = @client.app_token_info
+
+    assert_equal [], result[:scopes]
+    assert_nil result[:expires_at]
+  end
+
+  test "#app_token_info should return nil for a session token" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(
+        status: 400,
+        body: { err: "This method is only available with the application token" }.to_json
+      )
+
+    assert_nil @client.app_token_info
+  end
+
+  test "#app_token_info should raise InvalidTokenError on a dead token" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(status: 401, body: { err: "inactive or expired token" }.to_json)
+
+    assert_raises(FreefeedClient::InvalidTokenError) do
+      @client.app_token_info
+    end
+  end
+
+  test "#app_token_info should raise Error on invalid JSON" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(status: 200, body: "invalid json")
+
+    error = assert_raises(FreefeedClient::Error) do
+      @client.app_token_info
+    end
+    assert_includes error.message, "Invalid JSON response"
+  end
+
+  test "#app_token_info should raise Error on an unexpected response shape" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_return(status: 200, body: '{"invalid": "format"}')
+
+    error = assert_raises(FreefeedClient::Error) do
+      @client.app_token_info
+    end
+    assert_includes error.message, "Invalid app token info response format"
+  end
+
+  test "#app_token_info should raise Error on HTTP client errors" do
+    stub_request(:get, "#{@host}/v2/app-tokens/current")
+      .to_raise(HttpClient::ConnectionError.new("Connection failed"))
+
+    error = assert_raises(FreefeedClient::Error) do
+      @client.app_token_info
+    end
+    assert_includes error.message, "Failed to fetch app token info"
+  end
+
   # Edge cases
   test "handles empty managed groups response" do
     stub_request(:get, "#{@host}/v4/managedGroups")

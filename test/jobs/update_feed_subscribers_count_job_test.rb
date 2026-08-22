@@ -39,6 +39,41 @@ class UpdateFeedSubscribersCountJobTest < ActiveJob::TestCase
     assert_not_requested :get, /\/v2\/users\//
   end
 
+  test "#perform should do nothing when the token lacks read-users-info" do
+    feed = feed_with_stale_count
+    feed.access_token.update!(scopes: ["read-my-info", "manage-posts"])
+
+    UpdateFeedSubscribersCountJob.perform_now(feed)
+
+    assert_not_requested :get, /\/v2\/users\//
+    assert_skipped_without_fallout(feed)
+  end
+
+  test "#perform should not spend rate-limit budget when the token lacks read-users-info" do
+    feed = create(:feed, :enabled)
+    feed.access_token.update!(scopes: ["manage-posts"])
+    subject = feed.access_token.rate_limit_subject
+
+    UpdateFeedSubscribersCountJob.perform_now(feed)
+
+    assert_equal RateLimit.capacity(:freefeed, :get), freefeed_tokens_left(subject, :get)
+  end
+
+  test "#perform should fetch the count when the token holds read-users-info" do
+    feed = create(:feed, :enabled)
+    feed.access_token.update!(scopes: AccessToken::TOKEN_SCOPES)
+    stub_request(:get, "#{feed.access_token.host}/v2/users/#{feed.target_group}/statistics")
+      .to_return(
+        status: 200,
+        body: { statistics: { subscribers: "42" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    UpdateFeedSubscribersCountJob.perform_now(feed)
+
+    assert_equal 42, feed.reload.subscribers_count
+  end
+
   test "reschedules when the local rate limit is exhausted" do
     feed = create(:feed, :enabled)
     drain_freefeed(feed.access_token.rate_limit_subject, :get, remaining: 0)

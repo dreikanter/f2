@@ -94,6 +94,53 @@ class AccessTokensControllerTest < ActionDispatch::IntegrationTest
     assert_select "header [role='menu']", count: 0
   end
 
+  test "#show should warn when the token can't look up subscriber counts" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user, scopes: ["read-my-info", "manage-posts"])
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-subscriber-permission']" do
+      assert_select "a[href=?]", active.token_creation_url
+      assert_select "a[href=?]", edit_access_token_path(active)
+    end
+  end
+
+  test "#show should not warn when the token can look up subscriber counts" do
+    sign_in_as user
+    active = create(:access_token, :active, user: user, scopes: AccessToken::TOKEN_SCOPES)
+
+    get access_token_path(active)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-subscriber-permission']", count: 0
+  end
+
+  test "#show should explain an inactive token that lacks the identity permission" do
+    sign_in_as user
+    token = create(:access_token, user: user, status: :inactive, scopes: ["manage-posts"])
+
+    get access_token_path(token)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-identity-permission']" do
+      assert_select "a[href=?]", token.token_creation_url
+      assert_select "a[href=?]", edit_access_token_path(token)
+    end
+  end
+
+  test "#show should call an inactive token expired when it held the identity permission" do
+    sign_in_as user
+    token = create(:access_token, user: user, status: :inactive, scopes: AccessToken::TOKEN_SCOPES)
+
+    get access_token_path(token)
+
+    assert_response :success
+    assert_select "[data-key='access_token.missing-identity-permission']", count: 0
+    assert_select "[data-status='inactive']", text: /expired, revoked, or incorrectly copied/
+  end
+
   test "#show should render Associated Feeds section when token has feeds" do
     sign_in_as user
     active = create(:access_token, :active, user: user)

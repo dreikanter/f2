@@ -80,7 +80,7 @@ class AccessTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "#show should show inactive state with data-status attribute" do
-    access_token.update!(status: :inactive)
+    access_token.update!(status: :inactive, scopes: AccessToken::TOKEN_SCOPES)
     sign_in_as user
     get access_token_validation_path(access_token)
 

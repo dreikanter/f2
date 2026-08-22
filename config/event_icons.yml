@@ -18,6 +18,7 @@ feed_auto_disabled: circle-pause
 ai_credential_deactivated: sparkles
 search_credential_deactivated: search
 access_token_validation_failed: key
+access_token_missing_scope: key
 email_changed: mail
 user_suspended: circle-pause
 user_unsuspended: circle-play

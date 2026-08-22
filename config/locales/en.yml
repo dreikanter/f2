@@ -90,6 +90,9 @@ en:
     access_token_validation_failed:
       name: "Token validation failed"
       description_html: "FreeFeed token stopped working; disabled %{feed_links}"
+    access_token_missing_scope:
+      name: "Token missing a permission"
+      description_html: "FreeFeed token is missing a permission Feeder needs; disabled %{feed_links}"
     group_purge_started:
       name: "Feed purge started"
       description_html: "Clearing out %{subject_link}"

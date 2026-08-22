@@ -11,6 +11,9 @@ class FreefeedClient
   # UnauthorizedError so callers don't mistake it for a dead token and disable it.
   class ForbiddenError < Error; end
   class NotFoundError < Error; end
+  # Raised for HTTP 400. An app-token-only route answers this when it's called
+  # with a session token.
+  class BadRequestError < Error; end
   # The server rejected an upload for exceeding its size limit (HTTP 413).
   # The limit is server-configured, so callers detect it from the response
   # rather than pre-checking against a hardcoded size.
@@ -60,6 +63,19 @@ class FreefeedClient
     parse_managed_groups_response(response.body)
   rescue HttpClient::Error => e
     raise Error, "Failed to fetch managed groups: #{e.message}"
+  end
+
+  # FreeFeed lists this route as always allowed, so it answers for any live app
+  # token whatever scopes that token holds. Session tokens are not app tokens
+  # and get a 400. They are unrestricted, so that case reports nil.
+  # @return [Hash, nil] {scopes:, expires_at:}, or nil for a session token
+  def app_token_info
+    response = get("/v2/app-tokens/current")
+    parse_app_token_info_response(response.body)
+  rescue BadRequestError
+    nil
+  rescue HttpClient::Error => e
+    raise Error, "Failed to fetch app token info: #{e.message}"
   end
 
   # Create attachment
@@ -199,6 +215,8 @@ class FreefeedClient
       else
         raise UnauthorizedError, err || "Unauthorized"
       end
+    when 400
+      raise BadRequestError, parse_error(response) || "Bad request"
     when 404
       # Preserve the server's message ("Account '<name>' was not found") so the
       # caller can explain a vanished/renamed target group.
@@ -277,6 +295,22 @@ class FreefeedClient
         is_restricted: group["isRestricted"] == "1"
       }
     end
+  rescue JSON::ParserError => e
+    raise Error, "Invalid JSON response: #{e.message}"
+  end
+
+  def parse_app_token_info_response(body)
+    data = JSON.parse(body)
+    token = data["token"]
+
+    unless token.is_a?(Hash)
+      raise Error, "Invalid app token info response format"
+    end
+
+    {
+      scopes: Array(token["scopes"]),
+      expires_at: token["expiresAt"]
+    }
   rescue JSON::ParserError => e
     raise Error, "Invalid JSON response: #{e.message}"
   end

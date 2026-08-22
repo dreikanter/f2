@@ -17,15 +17,30 @@ class AccessToken < ApplicationRecord
 
   attr_accessor :token
 
-  TOKEN_SCOPES = %w[
-    read-my-info
-    read-users-info
-    manage-posts
+  # Lets Feeder identify the account behind the token, via whoami and
+  # managedGroups. Without it there is nothing to validate.
+  READ_MY_INFO_SCOPE = "read-my-info".freeze
+
+  # Lets Feeder read a group's subscriber count.
+  READ_USERS_INFO_SCOPE = "read-users-info".freeze
+
+  # Lets Feeder publish posts and comments on the user's behalf.
+  MANAGE_POSTS_SCOPE = "manage-posts".freeze
+
+  TOKEN_SCOPES = [
+    READ_MY_INFO_SCOPE,
+    READ_USERS_INFO_SCOPE,
+    MANAGE_POSTS_SCOPE
   ].freeze
 
   def self.token_url(domain)
     "https://#{domain}/settings/app-tokens/create?scopes=#{TOKEN_SCOPES.join('%20')}"
   end
+
+  # SQL counterpart of #allows_scope?. Keep the two in step.
+  scope :allowing_scope, ->(scope) {
+    where("scopes @> ARRAY[?]::varchar[]", scope)
+  }
 
   # A user can create access token record associated with a known
   # FreeFeed instances only (see Settings::AccessTokensController).
@@ -72,6 +87,17 @@ class AccessToken < ApplicationRecord
 
   def build_client
     FreefeedClient.new(host: host, token: encrypted_token, rate_limit_subject: rate_limit_subject)
+  end
+
+  # FreeFeed fixes an app token's scopes when it issues the token, so a missing
+  # scope is permanent.
+  def allows_scope?(scope)
+    scopes.include?(scope)
+  end
+
+  # Points at this token's own instance rather than the default one.
+  def token_creation_url
+    self.class.token_url(host_domain)
   end
 
   # Cache of this token's postable group names, shared by the feed form's
@@ -144,7 +170,9 @@ class AccessToken < ApplicationRecord
     RateLimit.forget(:freefeed, subject: subject)
   end
 
-  def disable_token_and_feeds
+  # `event_type` carries the reason, so a dead token and an under-permissioned
+  # one read differently in the event log.
+  def disable_token_and_feeds(event_type: "access_token_validation_failed")
     with_lock do
       inactive!
 
@@ -153,15 +181,15 @@ class AccessToken < ApplicationRecord
 
       feed_ids = enabled_feeds.pluck(:id)
       disabled_count = enabled_feeds.update_all(state: :disabled)
-      create_validation_failed_event(feed_ids: feed_ids, disabled_count: disabled_count)
+      create_validation_failed_event(event_type: event_type, feed_ids: feed_ids, disabled_count: disabled_count)
     end
   end
 
   private
 
-  def create_validation_failed_event(feed_ids:, disabled_count:)
+  def create_validation_failed_event(event_type:, feed_ids:, disabled_count:)
     Event.create!(
-      type: "access_token_validation_failed",
+      type: event_type,
       user: user,
       subject: self,
       level: :warning,

@@ -7,6 +7,12 @@ class AccessTokenValidationService
 
   def call
     access_token.validating! unless access_token.validating?
+
+    # Scopes come first because that route is always allowed. It answers for any
+    # live token, and tells us whether the rest of the sequence can succeed.
+    scopes = fetch_scopes
+    return disable_for_missing_scope(scopes) unless scopes_cover_validation?(scopes)
+
     user_info = fetch_user_info
     managed_groups = fetch_managed_groups
 
@@ -15,6 +21,7 @@ class AccessTokenValidationService
         status: :active,
         owner: user_info[:username],
         freefeed_user_id: user_info[:id],
+        scopes: scopes,
         last_used_at: Time.current
       )
 
@@ -30,8 +37,8 @@ class AccessTokenValidationService
       )
     end
   rescue FreefeedClient::UnauthorizedError, FreefeedClient::ForbiddenError
-    # A 401/403 on whoami or managedGroups means the token can't even read its
-    # own account, so it's effectively dead — disable it and its feeds.
+    # The token is dead, not under-permissioned. The scope check above already
+    # routed that case elsewhere.
     access_token.disable_token_and_feeds
   rescue RateLimit::Throttled
     # Throttling is control flow, not a validation failure: let it propagate so
@@ -49,11 +56,37 @@ class AccessTokenValidationService
     @freefeed_client ||= access_token.build_client
   end
 
+  # whoami and managedGroups both sit behind read-my-info. Without it they can
+  # only be refused, so there is nothing to learn from asking.
+  def scopes_cover_validation?(scopes)
+    scopes.include?(AccessToken::READ_MY_INFO_SCOPE)
+  end
+
+  # Persist the scopes on the way down. They are what lets the token page say
+  # the token is alive but unusable, instead of calling it expired.
+  def disable_for_missing_scope(scopes)
+    access_token.update!(scopes: scopes)
+    access_token.disable_token_and_feeds(event_type: "access_token_missing_scope")
+  end
+
   def fetch_user_info
     freefeed_client.whoami
   end
 
   def fetch_managed_groups
     freefeed_client.managed_groups
+  end
+
+  # Errors are left to #call. A failure here means we don't know what the token
+  # can do, and guessing would either gate a capable token or clear the gate for
+  # one that can't. The route needs no scopes, so a 401 means the token is dead
+  # rather than under-permissioned, and anything else is transient: validation
+  # stays unfinished and the job retries.
+  #
+  # A session token has no scope list to report, and FreeFeed rejects it on this
+  # app-token-only route. It is unrestricted, so it gets everything Feeder asks
+  # for. Widening TOKEN_SCOPES later means re-reading these tokens.
+  def fetch_scopes
+    freefeed_client.app_token_info&.fetch(:scopes) || AccessToken::TOKEN_SCOPES
   end
 end
