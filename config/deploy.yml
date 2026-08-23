@@ -51,6 +51,12 @@ asset_path: /rails/public/assets
 builder:
   arch: amd64
 
+  # See docs/deployment-ghcr.md.
+  cache:
+    type: registry
+    image: dreikanter/f2-build-cache
+    options: mode=max
+
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
